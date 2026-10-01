@@ -1,0 +1,21 @@
+{
+  // Type checking only (`pnpm -C e2e check`). Playwright compiles the specs
+  // itself, and Node 24 runs fixtures/global-setup.ts by stripping types, so
+  // keep to erasable syntax: no enums, namespaces or parameter properties.
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["playwright.config.ts", "fixtures/**/*.ts", "lib/**/*.ts", "specs/**/*.ts"]
+}
