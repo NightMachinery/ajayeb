@@ -1,0 +1,162 @@
+# Architecture
+
+## The one big idea
+
+**The server owns the truth.** The rules engine exists once, in Go, and runs only on the server. After every accepted action, the server sends each connection a full snapshot of the game as that connection is allowed to see it. The browser is a pure function of the last snapshot it received: it draws the board, offers the moves listed in the snapshot, and sends back the key of the move the player picked.
+
+Three consequences follow, and most of the design is built on them:
+
+- **One engine.** There is no second copy of the rules in TypeScript that could drift from the Go one.
+- **Hidden information stays on the server.** A face-down card's identity never reaches a browser, so no client can cheat by reading memory or network frames.
+- **Every mode is the same machine.** A game against a bot, a hot-seat game and an online game are all rooms on the server. They differ only in who controls which seat.
+
+## System diagram
+
+```
+  Browser tab (SvelteKit SPA, no rules code)          Go binary "ajayeb" (one process)
+ +-----------------------------------------+         +------------------------------------------------+
+ | components: pure functions of           |         | httpapi: /health, /api/rooms/:code, the SPA,   |
+ |   presenter.view + local ui state       |         |          /api/dev/* (only with --dev-endpoints)|
+ |        ^                                |         |                                                |
+ | Presenter: paced view, animation queue  |         | ws: upgrade, origin check, read limit,         |
+ |        ^                                |         |     rate limit, latest-wins outbox per socket  |
+ | Session: latest authoritative view,     |  JSON   |        | client messages      ^ state snapshots |
+ |   seq, pending action, connection state |<------->|        v                      |                 |
+ |        ^                                |  over   | room actor: one goroutine per room             |
+ | Transport: WebSocket (or fixtures       |  /ws    |   seats, mode, seq dedup, undo, bot turns      |
+ |   for screenshots and tests)            |         |     |              |               |           |
+ +-----------------------------------------+         |     v              v               v           |
+                                                     |  engine         ai              store          |
+                                                     |  pure rules,    Random, Greedy, rooms/<code>   |
+                                                     |  Legal, Apply,  ISMCTS on an    .json:         |
+                                                     |  ViewFor        Observation     seed + keys    |
+                                                     |                                                |
+                                                     |  ident: browser token -> HMAC user id          |
+                                                     +------------------------------------------------+
+```
+
+In production, Caddy terminates TLS and reverse-proxies everything to the one Go process, which also serves the built web app from an embedded copy.
+
+## Server layering
+
+The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). Dependencies point inward: the engine knows nothing about rooms, sockets, files or clocks; the room knows nothing about sockets; only `ws` and `httpapi` touch the network.
+
+- **`internal/engine/catalog`**: the typed card, wonder and token data and the small effect language used to describe them. Numeric ids follow a public reference numbering (cards 1 to 73, wonders 1 to 12, tokens 1 to 10) and travel on the wire as kebab-case slugs.
+- **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog` and the view types.
+- **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
+- **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below).
+- **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo, and writes the room file after every accepted action.
+- **`internal/store`**: one JSON file per room, written atomically (temporary file, sync, rename), plus a reaper for old rooms with an injectable clock.
+- **`internal/ident`**: the server secret and the HMAC-derived user ids.
+- **`internal/wire`**: the client and server message types.
+- **`internal/ws`**: the WebSocket transport (`github.com/coder/websocket`): origin patterns, read limits, per-connection rate limits, pings, and an outbox that keeps only the newest snapshot for a slow client.
+- **`internal/httpapi`**: `/health`, the room lookup API, the development endpoints (refused unless the server runs with `--dev`), and the static handler with its SPA fallback.
+- **`internal/webdist`**: embeds the web build only under the `embedweb` build tag, so a fresh clone builds and tests without building the web app first.
+- **`cmd/ajayeb`** wires everything together. The other commands are `ajayeb-sim` (playouts, tournaments, the AI benchmark, the scenario finder, the replay verifier), `ajayeb-drive` (plays full games over WebSocket against a running server) and `ajayeb-gen` (writes the generated TypeScript).
+
+## Actions and views
+
+**Actions are canonical key strings,** so logs, replays and test scripts are readable:
+
+- `draft:<wonder>` takes a wonder during the draft.
+- `construct:<card>` builds a card into the city.
+- `discard:<card>` discards a card for coins.
+- `wonder:<wonder>:<card>` builds a wonder, using the card.
+- `destroy:<card>` and `revive:<card>` resolve the destroy and build-from-discard choices.
+- `token:<token>` picks a progress token (from the board, or from the Great Library offer).
+- `starter:<seat>` chooses who starts the next age.
+
+The engine produces each key from its own action value and parses keys strictly. The server accepts a key only if it appears in the legal list for the current state, and then applies the engine's own action for that key. Payment is never part of an action: the engine always applies the cheapest payment and reports its breakdown.
+
+**The view is built by whitelist.** `ViewFor(state, viewer)` copies into a fresh DTO only the fields that viewer may see, so a field nobody remembered to redact cannot leak. Besides the board, cities and military track, the view carries what the thin client needs to explain the game without knowing the rules:
+
+- `choices`: the legal keys for the decider, each with its kind, its cost breakdown, and disabled options with a reason, so the UI can say why a move is not available;
+- both players' cost breakdowns for every accessible card, discard values, wonder costs and trade prices;
+- the score preview, the pending choice, `events` (structured, for animations and the live region), the log, `canUndo`, who is thinking, and presence.
+
+## Wire types and generation
+
+The TypeScript types in the client are generated from the Go structs, never written twice:
+
+1. **Types.** `tygo` turns `internal/view` into `web/src/lib/wire/view.gen.ts` and `internal/wire` into `web/src/lib/wire/types.gen.ts`. tygo writes one file per package, and `types.gen.ts` imports `view.gen.ts` as `view`; every view type that a wire struct references needs a `type_mappings` entry in `server/tygo.yaml`, or it comes out as `never`. A hand-written `index.ts` next to them re-exports both and defines the message unions.
+2. **Data.** `ajayeb-gen` writes `ids.gen.ts` (the id lists as `as const` arrays, so a translation table missing a card fails to compile) and `catalog.gen.ts` (display data such as colour, cost and chain symbols, so the component gallery can draw cards with no server).
+3. **Contract fixtures.** A Go test plays a scripted game and records the real outgoing messages. `ajayeb-gen` turns them into `fixtures.gen.ts`, typed with `satisfies` against the message union, so `svelte-check` fails if real server JSON does not fit the TypeScript types (a stray `null`, a missing field, a wrong enum string).
+4. **Hygiene.** A Go reflection test walks every outgoing type: each field has an explicit `json` tag, `omitempty` appears only on pointers, and recorded messages contain no `null` arrays.
+
+`make gen-check` regenerates everything and fails if regenerating changes the files in the working tree (on a clean checkout such as CI, that means the committed files). It is part of `make verify-quick` once `server/cmd/ajayeb-gen` exists; until then `verify-quick` skips it.
+
+## The client: Transport, Session, Presenter
+
+```
+WebSocket -> Transport -> Session (authoritative) -> Presenter (paced) -> components
+```
+
+- **Transport** delivers server messages and sends client messages. The WebSocket transport reconnects with backoff and jitter. A fixture transport replays recorded views, so screenshots and component tests need neither the Go server nor a dev server.
+- **Session** holds the latest authoritative state: the room, the view (in `$state.raw`, because it is large and always replaced whole), the connection status, the next sequence number and the pending action. It works out `canAct` from the view and the seats this browser controls.
+- **Presenter** queues incoming snapshots and decides when the UI sees each one. Before swapping in a new view it records where things were on screen, then plays the animations described by the snapshot's `events` (FLIP and the Web Animations API). It holds an AI move on screen for a minimum "thinking" time, fast-forwards when updates pile up (for example after a reconnect), and applies updates at once when reduced motion is on. Moves are enabled only when the presenter is idle and the session can act.
+- **Components** are pure functions of `presenter.view` plus local UI state (selection, open sheet, armed confirmation). Every card element has `data-card="<id>"` and every actionable control has `data-act="<key>"`; the end-to-end tests drive the game through these attributes.
+
+In development and test builds the client exposes `window.__ajayeb` (the last message, the version, the current choices, the controlled seats, the mode). It contains only what the client already received, which is safe because the client never holds hidden information.
+
+## Data flow of one move
+
+An online game, seat 0 builds the Baths:
+
+1. The player taps the Baths. The client opens the card sheet and shows the cost breakdown from the `construct:baths` entry in `choices`.
+2. The player taps Build (online games ask for a second tap to confirm). The Session sends `{"t":"act","code":"K7QX2M","seq":17,"base":42,"key":"construct:baths"}` and marks the action pending. The card gets a "lifting" outline and every move control is disabled.
+3. The `ws` read loop checks the frame size and the rate limit, decodes the message and passes it to the room's inbox.
+4. The room goroutine checks, in order: the sender holds the seat that must decide; `seq` is new for this client (a duplicate only re-sends the current state); `base` equals the room's version (otherwise it replies `reject stale` followed by a fresh state); and the key is in the engine's legal list (otherwise `reject illegal`).
+5. The room applies the engine's own action for that key. `Apply` updates the state and returns the events of the move (coins paid, card built, cards revealed, and so on).
+6. The room appends the key to its action log, bumps the version and writes the room file atomically.
+7. For each connection, the room builds `ViewFor(state, viewer)` and filters the events for that viewer, then hands the snapshot to that connection's outbox. If an older snapshot is still waiting there, the new one replaces it.
+8. The Session receives the `state` message, replaces its view, and clears the pending action, because the `ack` names its `seq` and the version has moved past its `base`.
+9. The Presenter animates the events (the card flies to the city, coins move, newly uncovered cards flip) and then shows the new view. The TurnBar now says it is the opponent's turn.
+
+**A bot turn** works the same way from step 4 on. When a bot must act, the room starts a search in its own goroutine and gives it an `Observation` of the bot's seat. The bot's choice comes back to the inbox tagged with the version it was computed for; if an undo made it stale, the room drops it. A server-wide semaphore limits how many searches run at once, and a search is cancelled when the game ends or the room is abandoned.
+
+**Hot-seat** rooms belong to one browser that controls both seats; the room sends the view of whichever seat must decide. Hot-seat and bot rooms commit moves on the first tap and offer undo. Online rooms have no undo.
+
+## Determinism and replay
+
+- **All chance happens at setup.** `NewGame(seed, options)` shuffles everything once: the wonder order for the draft, the three age decks and the cards removed from each, the guilds that enter Age III, the progress tokens on the board and the order of those left in the box, and the first player. After setup, `Apply` uses no randomness.
+- **So a game is its seed plus its action keys.** The room file stores exactly that (plus seats and options), and the server restores a room by replaying it. Replay is fast because a game has roughly a hundred actions.
+- **The state is a fixed-size value struct** of arrays, bitsets and small integers, with no pointers, maps or slices. Copying it is a clone, and hashing its bytes (FNV-1a) gives a stable fingerprint. A loaded room is checked against its stored hash; a room that fails to replay, or whose rules version is incompatible, is archived instead of silently changing.
+- **Rules code avoids every source of nondeterminism:** no map iteration in logic, no floats, no clocks, no I/O, no shared mutable state. An import-guard test and the linter enforce this.
+- **Undo** (bot and hot-seat rooms only) truncates the action log back to before the human's last decision and replays from the seed. Because hidden cards were fixed at setup, an undo cannot reroll them.
+- **Golden replays** pin known games (seed, keys, winner, victory type, scores, final hash), and property sweeps replay thousands of seeded bot games, checking invariants after every action.
+- **Bots are reproducible too.** A bot's random stream is seeded from the room seed and the version, and searches with an iteration budget give the same answer every time.
+
+## Hidden information
+
+Hidden information is decided entirely by the engine's view builder and event filter. The rules of the game hide a few things from **both** players:
+
+- the **seed**, which would let anyone recompute the whole deal;
+- the **face-down cards in the structure**: a face-down slot exposes only its back (`age1`, `age2`, `age3` or `guild`), never its card;
+- the **cards removed from each age deck** at setup (only their count is shown) and the deals of later ages;
+- the **guilds left in the box**, which never enter play;
+- the **wonders left in the box** (the four never offered in the draft), and the second draft round's wonders until the first round is over;
+- the **progress tokens in the box**: only their count, never their identity or order (players can still work out which tokens they are by elimination, as at a real table).
+
+Everything else is public, as it is at the table: face-up cards, both cities, coins, the military track, the board tokens, the cards tucked under wonders, and the discard pile.
+
+**The one asymmetric secret is the Great Library offer.** When a player builds the Great Library, three tokens are drawn from the box and offered to that player alone. While the choice is open, only the decider's view contains the offer, and the event that announces the draw is filtered the same way. The token chosen then joins that player's city like any other token. The two that were not chosen go back to the box and stay hidden from both players. (In a hot-seat game both people may see the offer on the shared screen; that is accepted.)
+
+**At game over** the view reveals the removed cards and the box guilds, wonders and tokens, so players can review the game, and the result includes the seed and the full action log for a downloadable replay.
+
+**Bots cannot cheat.** A bot receives an `Observation`, which wraps the real state in unexported fields: the hidden cards are replaced by "unknown", the seed is zeroed, and the library offer is present only if it is the bot's own. To search, the bot calls `Determinize`, which samples a complete state consistent with everything the bot has seen. A fairness test checks that two observations with the same public information but different hidden cards lead to the same choice.
+
+**How this is checked:**
+
+- a redaction sweep over thousands of seeded games asserts that no hidden card id, and never the seed, appears anywhere in either seat's serialized view, and that the library offer appears only in the decider's view;
+- protocol tests capture every byte the server sends and check it against the room's true hidden ids at that moment;
+- the online end-to-end test captures the WebSocket frames in the browser and compares them with a development-only endpoint that lists the room's hidden ids.
+
+## Rooms, identity and reconnect
+
+- **Identity.** The browser keeps a random token in `localStorage`. The server derives the user id as an HMAC of the token with a server secret, so tokens never appear in logs or URLs. An invite link is just `/play/<code>`.
+- **Seats.** In an online room the first two distinct users take seats 0 and 1, and later visitors watch as spectators with a public view. Hot-seat and bot rooms accept only their creator.
+- **Idempotency.** Every action carries a per-client `seq` and the `base` version it was made against, so a double tap or a re-send after a reconnect can never apply twice.
+- **Reconnect.** After a drop, the client sends `hello` and `join` again and receives a fresh snapshot. A pending action is resolved if the version moved past its base; otherwise the client re-sends it with the same `seq`.
+- **Restarts.** On shutdown the server closes sockets with "service restart" and clients reconnect with backoff. Rooms are on disk, so a redeploy loses no game.
+
+The full message contract will be in `protocol.md` (milestone M4).
