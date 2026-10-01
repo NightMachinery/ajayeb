@@ -1,0 +1,188 @@
+# Continuous integration for Ajayeb.
+#
+# The heavy suites run here rather than on the laptop: the race detector,
+# golangci-lint, the web checks and build, and Playwright with the bundled
+# Chromium. A nightly job runs the long playout sweep and fuzzing once those
+# tests exist. Read results with `gh run list` and `gh run view --log-failed`.
+#
+# On the laptop the same steps go through the Makefile and tools/heavy.py; CI
+# runs the commands directly because a runner has memory to spare.
+
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    - cron: '23 2 * * *' # nightly, 02:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GO_VERSION: '1.26'
+  GOLANGCI_LINT_VERSION: v2.12
+  # Playwright browsers are installed only by the e2e job, explicitly.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  go:
+    name: go (fmt, vet, race tests, lint)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::These files need gofmt -w:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: go mod tidy
+        # Fails when go.mod or go.sum is not what `go mod tidy` would write.
+        run: go mod tidy -diff
+      - name: go vet
+        run: go vet ./...
+      - name: go test -race
+        run: go test -race -shuffle=on -timeout 20m ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: ${{ env.GOLANGCI_LINT_VERSION }}
+          working-directory: server
+
+  web:
+    name: web (check, lint, test, build) and e2e sources
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6 # the version comes from packageManager in package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc # Node 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: svelte-check
+        run: pnpm -C web check
+      - name: lint
+        run: pnpm -C web lint
+      - name: vitest
+        run: pnpm -C web test
+      - name: build
+        run: pnpm -C web build
+      - name: e2e type check
+        run: pnpm -C e2e check
+      - name: e2e format check
+        run: pnpm -C e2e lint
+
+  e2e:
+    name: e2e (Playwright, bundled Chromium)
+    needs: [go, web]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the server
+        run: go -C server build -o bin/ajayeb ./cmd/ajayeb
+      - name: Build the web client (test mode)
+        run: pnpm -C web build --mode test
+      - name: Install Chromium
+        run: pnpm -C e2e exec playwright install --with-deps chromium
+      - name: Playwright
+        # CI=true makes playwright.config.ts use the bundled Chromium instead
+        # of the system Chrome, and turns on retries and forbidOnly.
+        env:
+          CI: 'true'
+        run: pnpm -C e2e exec playwright test
+      - name: Keep the report and traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            .cache/e2e/report/
+            .cache/e2e/results/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 14
+
+  python:
+    name: python (tests/ unittest)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: unittest
+        run: python3 -m unittest discover -s tests -v
+
+  nightly:
+    name: nightly (10000-game sweep, 10 minute fuzz)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - name: Playout sweep (AJAYEB_SWEEP=10000)
+        env:
+          AJAYEB_SWEEP: '10000'
+        run: |
+          if grep -rqs --include='*_test.go' AJAYEB_SWEEP .; then
+            go test -shuffle=on -timeout 120m ./...
+          else
+            echo "No test reads AJAYEB_SWEEP yet (the sweep arrives with the engine, M2); skipping."
+          fi
+      - name: Fuzz FuzzPlayout for 10 minutes
+        run: |
+          if grep -rqs --include='*_test.go' 'func FuzzPlayout(' internal/engine; then
+            go test -run '^$' -fuzz '^FuzzPlayout$' -fuzztime 10m ./internal/engine
+          else
+            echo "FuzzPlayout does not exist yet (it arrives with the engine, M2); skipping."
+          fi
+      - name: Keep fuzz crashers
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-crashers
+          path: server/internal/engine/testdata/fuzz/
+          if-no-files-found: ignore
+          retention-days: 30
