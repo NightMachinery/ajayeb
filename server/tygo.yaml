@@ -1,0 +1,32 @@
+# Go -> TypeScript type generation. Run from server/: go tool tygo generate
+#
+# tygo writes one file per Go package and overwrites the output file on every
+# package, so the two packages need separate outputs. web/src/lib/wire/index.ts
+# (hand-written) re-exports both and holds the message unions.
+#
+# Conventions the Go types must follow (enforced by the wire hygiene test):
+#   - Pointer fields always carry omitempty. tygo makes them optional (x?: T),
+#     which matches an absent key but not a JSON null.
+#   - Message discriminators use literal types, for example tstype:"'state'".
+#   - 64-bit seeds are JSON strings and are tagged tstype:"string".
+#   - A type from the other package is written as view.X in Go. It needs a
+#     type_mappings entry below, or it falls back to `never` and the recorded
+#     fixtures stop type-checking, which makes the omission loud.
+type_mappings:
+  time.Time: "string /* RFC 3339 */"
+  json.RawMessage: "unknown"
+  view.View: "view.View"
+
+packages:
+  - path: github.com/NightMachinery/ajayeb/server/internal/view
+    output_path: ../web/src/lib/wire/view.gen.ts
+    indent: "  "
+    fallback_type: never
+    enum_style: union
+  - path: github.com/NightMachinery/ajayeb/server/internal/wire
+    output_path: ../web/src/lib/wire/types.gen.ts
+    indent: "  "
+    fallback_type: never
+    enum_style: union
+    frontmatter: |
+      import type * as view from "./view.gen";

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Ajayeb: web build missing</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 36rem; margin: 3rem auto; padding: 0 1rem; }
+  code { font-family: ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<h1>Ajayeb</h1>
+<p>The game server is running, but this binary has no web client to serve.</p>
+<p>To fix this, do one of the following:</p>
+<ul>
+  <li>Build the web client and pass its output directory: <code>--static web/build</code>.</li>
+  <li>Build a single binary with the client embedded: <code>make build</code>.</li>
+  <li>During development, open the Vite dev server instead of this port.</li>
+</ul>
+<p>The health check is at <a href="/health"><code>/health</code></a>.</p>
+</body>
+</html>

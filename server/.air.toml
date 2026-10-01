@@ -1,0 +1,29 @@
+# Live reload for the Go server during development. Run from server/ as
+# `go tool air` (the bare `air` name may be shadowed by a shell function).
+# The Vite dev server serves the web client; this process serves /api, /ws
+# and /health on 127.0.0.1:38951.
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/ajayeb ./cmd/ajayeb"
+entrypoint = ["./tmp/ajayeb", "--dev", "--dev-endpoints", "--data", "../.cache/dev-data"]
+include_ext = ["go"]
+exclude_dir = ["tmp", "bin", "testdata", "internal/webdist/dist"]
+# Tests and nested testdata directories never require a restart.
+exclude_regex = ["_test\\.go$", "/testdata/"]
+exclude_unchanged = true
+delay = 300 # ms
+stop_on_error = true
+# Let the server shut down gracefully (it handles SIGINT) before air kills it.
+send_interrupt = true
+kill_delay = "3s"
+
+[log]
+time = false
+
+[misc]
+clean_on_exit = true
+
+[screen]
+clear_on_rebuild = false

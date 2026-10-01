@@ -1,0 +1,10 @@
+# Build outputs
+/bin/
+/tmp/
+
+# Local data directory (the default --data ./data)
+/data/
+
+# The web build is copied here only for embedweb builds; keep the placeholder.
+/internal/webdist/dist/*
+!/internal/webdist/dist/.gitkeep

@@ -1,0 +1,112 @@
+# golangci-lint v2 configuration for the Ajayeb server module.
+# Run from server/: golangci-lint run ./...
+version: "2"
+
+run:
+  # Keep memory use low on small machines.
+  concurrency: 2
+  tests: true
+  # Paths in exclusion rules are relative to go.mod (this directory).
+  relative-path-mode: gomod
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - depguard
+    - forbidigo
+    - gocritic # default checks only: the light, stable set
+
+  settings:
+    depguard:
+      rules:
+        # The engine and its view DTOs are pure and deterministic: no I/O, no
+        # clocks, no goroutine synchronisation, no unseeded randomness. A
+        # trailing $ makes a deny entry match exactly instead of by prefix, so
+        # "math/rand$" bans only v1. Test files are exempt (golden tests read
+        # testdata).
+        pure:
+          list-mode: lax
+          files:
+            - "**/internal/engine/**"
+            - "**/internal/view/**"
+            - "!$test"
+          deny:
+            - pkg: time
+              desc: "engine and view must not read clocks; pass values in"
+            - pkg: os
+              desc: "engine and view must not do I/O"
+            - pkg: net
+              desc: "engine and view must not do I/O"
+            - pkg: log
+              desc: "engine and view must not log (this also bans log/slog); return errors or events"
+            - pkg: sync
+              desc: "engine and view are single-threaded value code"
+            - pkg: unsafe
+              desc: "engine state must stay a plain comparable value"
+            - pkg: syscall
+              desc: "engine and view must not do I/O"
+            - pkg: io/ioutil
+              desc: "deprecated, and engine and view must not do I/O"
+            - pkg: crypto/rand
+              desc: "all chance comes from the seeded RNG in engine/rng.go"
+            - pkg: math/rand$
+              desc: "math/rand v1 is banned; engine/rng.go wraps math/rand/v2 PCG"
+        # Only engine/rng.go may touch math/rand/v2, so every random choice
+        # goes through the engine's own seeded IntN and Shuffle.
+        rng-only-in-rng-go:
+          list-mode: lax
+          files:
+            - "**/internal/engine/**"
+            - "**/internal/view/**"
+            - "!**/internal/engine/rng.go"
+            - "!$test"
+          deny:
+            - pkg: math/rand/v2
+              desc: "use the engine RNG (engine/rng.go)"
+        # Bots compute only. They may use time budgets, goroutines and floats,
+        # but no I/O and no unseeded randomness.
+        ai:
+          list-mode: lax
+          files:
+            - "**/internal/ai/**"
+            - "!$test"
+          deny:
+            - pkg: os
+              desc: "bots must not do I/O"
+            - pkg: net
+              desc: "bots must not do I/O"
+            - pkg: log
+              desc: "bots must not log (this also bans log/slog)"
+            - pkg: unsafe
+              desc: "not needed for bots"
+            - pkg: io/ioutil
+              desc: "deprecated, and bots must not do I/O"
+            - pkg: math/rand$
+              desc: "math/rand v1 is banned; use the engine RNG"
+
+    forbidigo:
+      forbid:
+        - pattern: ^(fmt\.Print(f|ln)?|print|println)$
+          msg: "write to an io.Writer or use the injected *slog.Logger; fmt.Print* is allowed only in cmd/"
+
+  exclusions:
+    generated: lax
+    presets:
+      - std-error-handling
+    rules:
+      - path: ^cmd/
+        linters:
+          - forbidigo
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        - github.com/NightMachinery/ajayeb/server
+  exclusions:
+    generated: lax
