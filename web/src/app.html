@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
+    />
+    <title>Ajayeb</title>
+    <meta name="color-scheme" content="light dark" />
+    <!-- Keep these two colours in sync with --table in src/lib/styles/tokens.css
+         and THEME_COLORS in src/lib/ui/theme.svelte.ts. -->
+    <meta name="theme-color" content="#faf1df" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0a1936" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="description"
+      content="A two-player card drafting game with original art, playable in the browser."
+    />
+    <link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="%sveltekit.assets%/fonts/inter-400.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="%sveltekit.assets%/fonts/fraunces-600.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script>
+      // Theme bootstrap. It runs before the first paint, so the page never
+      // flashes the wrong theme. src/lib/ui/theme.svelte.ts owns the theme
+      // after the app starts and uses the same storage key and attributes.
+      (function () {
+        var pref = 'system';
+        try {
+          var stored = localStorage.getItem('ajayeb:theme');
+          if (stored === 'light' || stored === 'dark' || stored === 'system') pref = stored;
+        } catch (e) {
+          // Storage can be blocked (private mode, sandboxed frames).
+        }
+        var dark =
+          pref === 'dark' ||
+          (pref === 'system' &&
+            !!window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var theme = dark ? 'dark' : 'light';
+        var root = document.documentElement;
+        root.setAttribute('data-theme', theme);
+        root.setAttribute('data-theme-pref', pref);
+        root.classList.toggle('dark', dark);
+        root.style.colorScheme = theme;
+        if (pref !== 'system') {
+          var color = dark ? '#0a1936' : '#faf1df';
+          var metas = document.querySelectorAll('meta[name="theme-color"]');
+          for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', color);
+        }
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

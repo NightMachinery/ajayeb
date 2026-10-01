@@ -1,0 +1,7 @@
+# Prettier reads only the ignore file in its working directory, so the web
+# package keeps its own copy of the relevant lines from the root one.
+build/
+.svelte-kit/
+node_modules/
+static/
+src/lib/wire/*.gen.ts

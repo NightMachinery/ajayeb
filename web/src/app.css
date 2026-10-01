@@ -1,0 +1,247 @@
+/*
+ * Global styles. Tailwind 4 is configured CSS-first: the @import pulls in the
+ * engine, and @theme maps our tokens (src/lib/styles/tokens.css, the single
+ * source) to utilities such as bg-table, text-fg-muted, border-rule and
+ * font-display.
+ *
+ * Tailwind's default colour palette is switched off on purpose: use the
+ * semantic tokens, so that every colour follows the theme. A class such as
+ * bg-blue-500 generates nothing.
+ */
+@import 'tailwindcss';
+@import './lib/styles/tokens.css';
+
+/* Self-hosted OFL fonts, Latin subsets built by web/font-sources/subset.sh.
+   The unicode-range matches the subset. */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/fraunces-600.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter-400.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter-600.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/inter-700.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
+    U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* `dark:` follows the resolved theme on <html>, not the media query, so the
+   in-app System / Light / Dark choice wins. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Layout variants for whole screens. `short`: little height, such as a phone
+   in landscape. `split`: room for two columns, which is a desktop width or a
+   short landscape screen. Components that size themselves to their own box
+   use container queries (@container) instead. */
+@custom-variant short (@media (max-height: 32rem));
+/* The block form, because the shorthand would read the comma in this media
+   query list as a selector list. */
+@custom-variant split {
+  @media (min-width: 64rem), (orientation: landscape) and (max-height: 32rem) {
+    @slot;
+  }
+}
+
+/* inline: utilities reference the token variables directly, so they change
+   with the theme at run time. */
+@theme inline {
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+
+  /* Semantic, theme-aware. */
+  --color-table: var(--table);
+  --color-panel: var(--panel);
+  --color-panel-sunken: var(--panel-sunken);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-fg: var(--accent-soft-fg);
+  --color-gild: var(--gild);
+  --color-focus: var(--focus);
+
+  /* Palette. */
+  --color-paper: var(--paper);
+  --color-parchment: var(--parchment);
+  --color-ink: var(--ink);
+  --color-night: var(--night);
+  --color-gold: var(--gold);
+  --color-lapis: var(--lapis);
+  --color-turquoise: var(--turquoise);
+  --color-saffron: var(--saffron);
+  --color-cinnabar: var(--cinnabar);
+  --color-malachite: var(--malachite);
+  --color-pomegranate: var(--pomegranate);
+
+  /* Game families. */
+  --color-res-wood: var(--res-wood);
+  --color-res-clay: var(--res-clay);
+  --color-res-stone: var(--res-stone);
+  --color-res-glass: var(--res-glass);
+  --color-res-papyrus: var(--res-papyrus);
+  --color-card-paper: var(--card-paper);
+  --color-card-ink: var(--card-ink);
+  --color-card-brown: var(--card-brown);
+  --color-card-grey: var(--card-grey);
+  --color-card-blue: var(--card-blue);
+  --color-card-green: var(--card-green);
+  --color-card-yellow: var(--card-yellow);
+  --color-card-red: var(--card-red);
+  --color-card-purple: var(--card-purple);
+  --color-sun: var(--sun);
+  --color-moon: var(--moon);
+  --color-sun-ink: var(--sun-ink);
+  --color-moon-ink: var(--moon-ink);
+
+  --font-display: var(--type-display);
+  --font-sans: var(--type-ui);
+
+  --radius-control: var(--shape-control);
+  --radius-panel: var(--shape-panel);
+  --shadow-panel: var(--shadow);
+  --ease-soft: var(--curve-out);
+}
+
+@layer base {
+  /* Safe-area insets, wrapped so fixtures can override them with ?safe=
+     (see src/lib/ui/safe-area.ts). */
+  :root {
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+    color-scheme: light;
+  }
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  html {
+    height: 100%;
+    background: var(--table);
+    color: var(--fg);
+    font-family: var(--type-ui);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    min-height: 100dvh;
+    margin: 0;
+    /* An explicit background on body too, plus a soft glow at the top, like
+       light falling on the page. Bitmap textures replace this later. */
+    background:
+      radial-gradient(130% 70% at 50% -10%, var(--table-glow), transparent 70%), var(--table);
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--type-display);
+    font-weight: 600;
+  }
+
+  /* Controls: no double-tap zoom delay and no accidental text selection.
+     Pinch zoom stays enabled. */
+  button,
+  [role='button'],
+  [role='radio'],
+  label:has(> input[type='radio']) {
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* One focus ring for keyboard users everywhere. Pointer clicks show none. */
+  :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  :where(label:has(> input:focus-visible)) {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--accent) 28%, transparent);
+  }
+}
+
+/* The app shell: exactly one viewport tall and never scrolling itself. Only
+   sheets, drawers and full-page screens such as Home scroll inside it. The
+   padding is physical on purpose (physical-ok): safe-area insets belong to
+   the device, not to the reading direction. */
+@layer components {
+  .app-shell {
+    height: 100dvh;
+    overflow: hidden;
+    padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+  }
+}
+
+/* Reduced motion: the state change stays, the movement goes. Settings can
+   force the same with data-motion="reduce" on <html>. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim-scale: 0;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+:root[data-motion='reduce'] {
+  --anim-scale: 0;
+}
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

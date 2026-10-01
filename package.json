@@ -1,0 +1,26 @@
+{
+  "name": "ajayeb",
+  "private": true,
+  "description": "Ajayeb: an unofficial, original-art web implementation of a two-player card drafting board game.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "make dev",
+    "build": "make build-web",
+    "check": "make check-web",
+    "lint": "make lint-web",
+    "test": "make test-web",
+    "format": "pnpm -C web format",
+    "verify": "make verify-quick"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.9",
+    "prettier-plugin-svelte": "^4.1.1",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  }
+}

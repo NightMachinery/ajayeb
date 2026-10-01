@@ -1,0 +1,134 @@
+/*
+ * Ajayeb design tokens: the single source of colour, type and motion values.
+ *
+ * Plain CSS custom properties, so the same file works in the app (src/app.css
+ * imports it and maps it into Tailwind's theme) and in the standalone vector
+ * specimens, which inline it. Colours are OKLCH.
+ *
+ * Two layers:
+ *   1. Palette and fixed families (paper, inks, accents, resources, card
+ *      colours, players). Cards stay paper-coloured in both themes, so these
+ *      do not change with the theme.
+ *   2. Semantic surfaces (--table, --panel, --fg, --accent ...). Only these
+ *      change between the light theme (an ivory manuscript page) and the dark
+ *      theme (lapis night with gold).
+ *
+ * The theme is chosen by data-theme="light|dark" on <html>, which the inline
+ * bootstrap in src/app.html sets before the first paint. Text pairs below were
+ * checked for WCAG AA (4.5:1 or more); control borders for 3:1 or more.
+ */
+
+:root {
+  /* Paper and ink. */
+  --paper: oklch(0.96 0.025 85);
+  --paper-bright: oklch(0.985 0.012 85);
+  --parchment: oklch(0.92 0.04 80);
+  --ink: oklch(0.24 0.04 260);
+  --ink-soft: oklch(0.46 0.035 260);
+  --night: oklch(0.18 0.03 265);
+
+  /* Accents (jewel tones of the miniature palette). */
+  --gold: oklch(0.78 0.13 85);
+  --gold-deep: oklch(0.62 0.12 75);
+  --lapis: oklch(0.45 0.15 262);
+  --turquoise: oklch(0.72 0.11 195);
+  --saffron: oklch(0.8 0.15 75);
+  --cinnabar: oklch(0.58 0.19 32);
+  --malachite: oklch(0.6 0.13 160);
+  --pomegranate: oklch(0.55 0.16 10);
+
+  /* Resources, for the two-tone icons (--i1 fill, --i2 detail). */
+  --res-wood: oklch(0.5 0.09 60);
+  --res-clay: oklch(0.6 0.13 40);
+  --res-stone: oklch(0.62 0.02 250);
+  --res-glass: oklch(0.72 0.09 210);
+  --res-papyrus: oklch(0.86 0.08 95);
+
+  /* Card colours (band and frame). Patterns carry the same information for
+     colour-blind players; see the colour, pattern and glyph list in the UX
+     design. */
+  --card-paper: var(--paper);
+  --card-ink: var(--ink);
+  --card-brown: oklch(0.52 0.08 55);
+  --card-grey: oklch(0.66 0.015 250);
+  --card-blue: oklch(0.55 0.13 255);
+  --card-green: oklch(0.58 0.13 150);
+  --card-yellow: oklch(0.8 0.14 88);
+  --card-red: oklch(0.56 0.19 27);
+  --card-purple: oklch(0.48 0.14 315);
+
+  /* Players: Sun (turquoise) and Moon (pomegranate). The fills are fixed;
+     the -ink variants are the text-safe versions for the current theme. */
+  --sun: oklch(0.72 0.11 195);
+  --moon: oklch(0.55 0.16 10);
+  --sun-ink: oklch(0.5 0.09 200);
+  --moon-ink: oklch(0.5 0.16 12);
+
+  /* Type. Fraunces 600 for headings and card names; Inter for the UI, with
+     tabular figures. Vazirmatn is reserved for a future Persian locale. */
+  --type-display: 'Fraunces', ui-serif, Georgia, serif;
+  --type-ui: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --text-floor: 12px;
+
+  /* Motion. Every duration scales with --anim-scale, which reduced motion
+     sets to 0 (see src/app.css). */
+  --anim-scale: 1;
+  --dur-fast: calc(120ms * var(--anim-scale));
+  --dur-base: calc(220ms * var(--anim-scale));
+  --dur-slow: calc(350ms * var(--anim-scale));
+  --curve-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --curve-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Shape. */
+  --shape-control: 0.75rem;
+  --shape-panel: 1.25rem;
+  --border-w: 1px;
+
+  /* Semantic surfaces: light theme, the ivory manuscript page. */
+  --table: var(--paper);
+  --table-glow: oklch(0.985 0.03 85 / 0.9);
+  --panel: var(--paper-bright);
+  --panel-sunken: var(--parchment);
+  --fg: var(--ink);
+  --fg-muted: var(--ink-soft);
+  --rule: oklch(0.8 0.04 80);
+  --rule-strong: oklch(0.62 0.05 75);
+  --accent: var(--lapis);
+  --on-accent: var(--paper-bright);
+  --accent-soft: oklch(0.91 0.035 262);
+  --accent-soft-fg: var(--lapis);
+  --gild: var(--gold-deep);
+  --focus: var(--lapis);
+  --shadow: 0 1px 2px oklch(0.24 0.04 260 / 0.12), 0 6px 18px -8px oklch(0.24 0.04 260 / 0.28);
+}
+
+/* Dark theme: lapis night with gold. */
+:root[data-theme='dark'] {
+  --table: oklch(0.22 0.06 262);
+  --table-glow: oklch(0.33 0.08 262 / 0.75);
+  --panel: oklch(0.27 0.065 262);
+  --panel-sunken: oklch(0.19 0.05 262);
+  --fg: oklch(0.94 0.02 85);
+  --fg-muted: oklch(0.78 0.03 85);
+  --rule: oklch(0.42 0.07 262);
+  --rule-strong: oklch(0.58 0.07 262);
+  --accent: var(--gold);
+  --on-accent: var(--night);
+  --accent-soft: oklch(0.33 0.07 262);
+  --accent-soft-fg: var(--gold);
+  --gild: var(--gold);
+  --focus: var(--gold);
+  --sun-ink: oklch(0.8 0.1 195);
+  --moon-ink: oklch(0.72 0.14 12);
+  --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 22px -8px oklch(0 0 0 / 0.55);
+}
+
+/* More contrast on request: heavier rules and borders. The attribute selector
+   matches the dark block's specificity, and coming later wins over it. */
+@media (prefers-contrast: more) {
+  :root,
+  :root[data-theme] {
+    --border-w: 2px;
+    --rule: var(--rule-strong);
+  }
+}

@@ -1,0 +1,17 @@
+# Prettier formats only the two JavaScript packages. Go has gofmt, and the
+# docs, Python and shell files keep their own hand formatting.
+/*
+!/web/
+!/e2e/
+!/.prettierrc
+
+# Generated or built output inside the packages.
+node_modules/
+pnpm-lock.yaml
+/web/build/
+/web/.svelte-kit/
+/web/static/
+/web/src/lib/wire/*.gen.ts
+/e2e/test-results/
+/e2e/playwright-report/
+/e2e/blob-report/

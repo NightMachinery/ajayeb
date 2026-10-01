@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Placeholder mark until the vector set has a logo: an eight-pointed
+       star (khatam) in gold on lapis. -->
+  <rect width="32" height="32" rx="7" fill="#224fa7"/>
+  <path d="M16.00 1.50 L20.25 5.75 L26.25 5.75 L26.25 11.75 L30.50 16.00 L26.25 20.25 L26.25 26.25 L20.25 26.25 L16.00 30.50 L11.75 26.25 L5.75 26.25 L5.75 20.25 L1.50 16.00 L5.75 11.75 L5.75 5.75 L11.75 5.75 Z" fill="#ddb049"/>
+  <path d="M16.00 10.00 L17.76 11.76 L20.24 11.76 L20.24 14.24 L22.00 16.00 L20.24 17.76 L20.24 20.24 L17.76 20.24 L16.00 22.00 L14.24 20.24 L11.76 20.24 L11.76 17.76 L10.00 16.00 L11.76 14.24 L11.76 11.76 L14.24 11.76 Z" fill="#224fa7"/>
+</svg>
