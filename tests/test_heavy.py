@@ -1,0 +1,952 @@
+"""Tests for tools/heavy.py, the RAM, slot and mode guard.
+
+Most tests drive an in-process Guard with an injected memory reader, clock and
+liveness checks, and a run dir in a temporary directory. A few start real
+child processes (tiny Python one-liners) to check signals and stop-all.
+
+Run: python3 -m unittest discover -s tests -v
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import importlib.util
+import io
+import json
+import os
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HEAVY_PATH = os.path.join(ROOT, "tools", "heavy.py")
+
+
+def _load_heavy():
+    spec = importlib.util.spec_from_file_location("ajayeb_heavy", HEAVY_PATH)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses look the module up here
+    spec.loader.exec_module(module)
+    return module
+
+
+heavy = _load_heavy()
+
+# Far above any real pid limit (macOS 99999, Linux at most 4194304), so a real
+# liveness check would say "dead"; tests mark them alive or dead explicitly.
+FAKE_LIVE = 10_000_001
+FAKE_LIVE_2 = 10_000_002
+FAKE_DEAD = 10_000_003
+
+PY = sys.executable
+
+
+DEFAULTED = tuple(key for key, _ in heavy.DEFAULT_CHILD_ENV)
+
+
+def clean_environ():
+    """os.environ without the guard's own variables, CI markers or the defaulted ones."""
+    return {k: v for k, v in os.environ.items()
+            if not k.startswith("AJAYEB_") and k not in ("CI", "RUNNER_TEMP") + DEFAULTED}
+
+
+class FakeClock:
+    def __init__(self, now: dt.datetime):
+        self.start = now
+        self.mono = 0.0
+        self.sleeps = []
+        self.on_sleep = None
+
+    def now(self):
+        return self.start + dt.timedelta(seconds=self.mono)
+
+    def monotonic(self):
+        return self.mono
+
+    def sleep(self, secs):
+        self.sleeps.append(secs)
+        self.mono += secs
+        if self.on_sleep:
+            self.on_sleep(len(self.sleeps))
+
+
+def at(hour, minute=0):
+    return dt.datetime(2026, 10, 1, hour, minute, 0)
+
+
+class GuardCase(unittest.TestCase):
+    """Base class: a temp run dir and a Guard factory with injected readers."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = self._tmp.name
+        self.run_dir = os.path.join(self.tmp, "run")
+        os.makedirs(self.run_dir)
+        self.clock = FakeClock(at(12))
+        self.fake_live = {FAKE_LIVE, FAKE_LIVE_2}
+        self.out = io.StringIO()
+        self.err = io.StringIO()
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def pid_alive(self, pid):
+        if pid in self.fake_live:
+            return True
+        if pid == FAKE_DEAD:
+            return False
+        return heavy.default_pid_alive(pid)
+
+    def group_alive(self, pgid):
+        if pgid in self.fake_live:
+            return True
+        if pgid == FAKE_DEAD:
+            return False
+        return heavy.default_group_alive(pgid)
+
+    def guard(self, level=1, free=50.0, swap_total=8192.0, swap_free=4096.0, env=None,
+              platform="darwin", reader=None, **kw):
+        base = clean_environ()
+        base["AJAYEB_RUN_DIR"] = self.run_dir
+        base["HOME"] = self.tmp
+        base.update(env or {})
+        mem = heavy.Memory(level=level, free_pct=free, swap_total_mb=swap_total,
+                           swap_free_mb=swap_free, source="test")
+        self.out = io.StringIO()
+        self.err = io.StringIO()
+        return heavy.Guard(env=base, platform=platform, reader=reader or (lambda: mem),
+                           clock=self.clock, pid_alive=self.pid_alive, group_alive=self.group_alive,
+                           stdout=self.out, stderr=self.err, **kw)
+
+    def heavy_dir(self, *parts):
+        return os.path.join(self.run_dir, "heavy", *parts)
+
+    def hold(self, name, pid=FAKE_LIVE, kind="test", cmd="sleep forever"):
+        """Create a lock dir owned by pid, as another guard would."""
+        path = self.heavy_dir(name)
+        os.makedirs(path)
+        with open(os.path.join(path, heavy.OWNER_FILE), "w") as fh:
+            json.dump({"pid": pid, "kind": kind, "cmd": cmd, "token": "other", "t0": time.time()}, fh)
+        return path
+
+    def set_owner(self, path, **fields):
+        """Merge fields into a held lock's owner.json."""
+        owner = os.path.join(path, heavy.OWNER_FILE)
+        with open(owner) as fh:
+            info = json.load(fh)
+        info.update(fields)
+        with open(owner, "w") as fh:
+            json.dump(info, fh)
+
+    def sentinel_cmd(self, name="ran"):
+        path = os.path.join(self.tmp, name)
+        return path, [PY, "-c", f"open({path!r}, 'w').write('x')"]
+
+    def log_entries(self):
+        path = os.path.join(self.run_dir, "logs", "heavy.jsonl")
+        if not os.path.exists(path):
+            return []
+        with open(path) as fh:
+            return [json.loads(line) for line in fh]
+
+    def write_mode(self, data):
+        with open(os.path.join(self.run_dir, "mode.json"), "w") as fh:
+            fh.write(data if isinstance(data, str) else json.dumps(data))
+
+
+class WindowTests(unittest.TestCase):
+    def test_simple_window(self):
+        w = heavy.Window.parse("00:00-10:00")
+        self.assertEqual((w.start, w.end), (0, 600))
+        self.assertTrue(w.contains_time(at(0, 0)))
+        self.assertTrue(w.contains_time(at(9, 59)))
+        self.assertFalse(w.contains_time(at(10, 0)))
+        self.assertFalse(w.contains_time(at(23, 59)))
+
+    def test_window_wrapping_midnight(self):
+        w = heavy.Window.parse("22:00-06:00")
+        for inside in (at(22, 0), at(23, 59), at(0, 0), at(3, 30), at(5, 59)):
+            self.assertTrue(w.contains_time(inside), inside)
+        for outside in (at(6, 0), at(12, 0), at(21, 59)):
+            self.assertFalse(w.contains_time(outside), outside)
+
+    def test_whole_day_and_end_of_day(self):
+        self.assertTrue(heavy.Window.parse("00:00-24:00").contains_time(at(23, 59)))
+        late = heavy.Window.parse("23:00-24:00")
+        self.assertTrue(late.contains_time(at(23, 30)))
+        self.assertFalse(late.contains_time(at(0, 0)))
+
+    def test_single_digit_hours_and_round_trip(self):
+        w = heavy.Window.parse("7:05-9:30")
+        self.assertEqual(str(w), "07:05-09:30")
+        self.assertEqual(heavy.Window.parse(str(w)), w)
+
+    def test_invalid_windows(self):
+        for text in ("", "10:00", "1000-1200", "25:00-01:00", "10:60-11:00", "24:00-01:00",
+                     "10:00-24:30", "10:00-10:00", "aa:bb-cc:dd"):
+            with self.assertRaises(ValueError, msg=text):
+                heavy.Window.parse(text)
+
+
+class ModeGateTests(GuardCase):
+    def state(self, mode, window="00:00-10:00"):
+        return heavy.ModeState(mode, heavy.Window.parse(window))
+
+    def test_missing_mode_file_means_continuous(self):
+        st = heavy.load_mode(os.path.join(self.run_dir, "mode.json"))
+        self.assertEqual((st.mode, st.error, st.source), ("continuous", None, "default"))
+        self.assertIsNone(heavy.gate_mode("test", st, at(12)))
+
+    def test_paused_refuses_everything_but_light(self):
+        st = self.state("paused")
+        for kind in heavy.KINDS:
+            reason = heavy.gate_mode(kind, st, at(3))
+            if kind == "light":
+                self.assertIsNone(reason)
+            else:
+                self.assertIn("paused", reason)
+
+    def test_nightshift_window_gate(self):
+        st = self.state("nightshift", "22:00-06:00")
+        self.assertIsNone(heavy.gate_mode("build", st, at(23, 30)))
+        self.assertIsNone(heavy.gate_mode("build", st, at(2, 0)))
+        self.assertIn("outside the window 22:00-06:00", heavy.gate_mode("build", st, at(12)))
+        self.assertIsNone(heavy.gate_mode("light", st, at(12)))
+
+    def test_mode_file_with_window(self):
+        self.write_mode({"mode": "nightshift", "window": "22:00-06:00"})
+        st = heavy.load_mode(os.path.join(self.run_dir, "mode.json"))
+        self.assertEqual((st.mode, str(st.window)), ("nightshift", "22:00-06:00"))
+        self.write_mode({"mode": "nightshift"})
+        st = heavy.load_mode(os.path.join(self.run_dir, "mode.json"))
+        self.assertEqual(str(st.window), heavy.DEFAULT_WINDOW)
+
+    def test_invalid_mode_file_refuses_heavy_but_not_light(self):
+        for bad in ("{not json", json.dumps({"mode": "turbo"}),
+                    json.dumps({"mode": "nightshift", "window": "late"}), "[]"):
+            self.write_mode(bad)
+            st = heavy.load_mode(os.path.join(self.run_dir, "mode.json"))
+            self.assertIsNotNone(st.error, bad)
+            self.assertIsNotNone(heavy.gate_mode("test", st, at(3)), bad)
+            self.assertIsNone(heavy.gate_mode("light", st, at(3)), bad)
+
+    def test_mode_command_writes_and_validates(self):
+        g = self.guard()
+        self.assertEqual(g.set_mode("nightshift", "22:00-06:00"), 0)
+        with open(os.path.join(self.run_dir, "mode.json")) as fh:
+            data = json.load(fh)
+        self.assertEqual((data["mode"], data["window"]), ("nightshift", "22:00-06:00"))
+        self.assertIn("window 22:00-06:00", self.out.getvalue())
+
+        g = self.guard()
+        self.assertEqual(g.set_mode("nightshift", None), 0)
+        self.assertEqual(g.mode_state().window, heavy.Window.parse(heavy.DEFAULT_WINDOW))
+
+        g = self.guard()
+        self.assertEqual(g.set_mode("continuous", "01:00-02:00"), heavy.EX_USAGE)
+        self.assertEqual(g.set_mode("nightshift", "01:00"), heavy.EX_USAGE)
+        self.assertEqual(g.set_mode("paused", None), 0)
+        self.assertEqual(g.mode_state().mode, "paused")
+        self.assertEqual(g.set_mode(None, None), 0)
+        self.assertIn("mode: paused", self.out.getvalue())
+
+
+class CapacityTests(GuardCase):
+    def test_capacity_by_pressure(self):
+        self.assertEqual(heavy.slot_capacity(1, False), 2)
+        self.assertEqual(heavy.slot_capacity(1, True), 3)
+        self.assertEqual(heavy.slot_capacity(2, False), 1)
+        self.assertEqual(heavy.slot_capacity(2, True), 1)
+        self.assertEqual(heavy.slot_capacity(4, False), 0)
+        self.assertEqual(heavy.slot_capacity(4, True), 0)
+        self.assertEqual(heavy.slot_capacity(None, False), 1)  # unknown counts as warn
+
+    def test_max_slots_caps_but_never_raises(self):
+        self.assertEqual(heavy.slot_capacity(1, True, max_slots=1), 1)
+        self.assertEqual(heavy.slot_capacity(2, False, max_slots=5), 1)
+        g = self.guard(level=1, env={"AJAYEB_MAX_SLOTS": "1"})
+        self.assertEqual(g.capacity(g.read_memory()), 1)
+
+    def test_nightshift_window_adds_a_slot(self):
+        self.write_mode({"mode": "nightshift", "window": "22:00-06:00"})
+        self.clock = FakeClock(at(23))
+        g = self.guard(level=1)
+        self.assertEqual(g.capacity(g.read_memory()), 3)
+        self.write_mode({"mode": "continuous"})
+        self.assertEqual(g.capacity(g.read_memory()), 2)
+
+
+class BrowserThresholdTests(GuardCase):
+    def mem(self, free=50.0, swap_total=8192.0, swap_free=4096.0):
+        return heavy.Memory(level=1, free_pct=free, swap_total_mb=swap_total, swap_free_mb=swap_free)
+
+    def test_free_memory_floor(self):
+        self.assertIn("free memory 13%", heavy.browser_block_reason(self.mem(free=13), 14, 512))
+        self.assertIsNone(heavy.browser_block_reason(self.mem(free=14), 14, 512))
+
+    def test_swap_floor(self):
+        self.assertIn("free swap 500 MB", heavy.browser_block_reason(self.mem(swap_free=500), 14, 512))
+        self.assertIsNone(heavy.browser_block_reason(self.mem(swap_free=512), 14, 512))
+        # No swap allocated yet (macOS grows swap on demand): nothing to protect.
+        self.assertIsNone(heavy.browser_block_reason(self.mem(swap_total=0, swap_free=0), 14, 512))
+        # Unknown readings do not block.
+        self.assertIsNone(heavy.browser_block_reason(heavy.Memory(), 14, 512))
+
+    def test_floors_are_env_tunable(self):
+        g = self.guard(env={"AJAYEB_MIN_FREE_PCT_BROWSER": "30", "AJAYEB_MIN_SWAP_FREE_MB_BROWSER": "100"})
+        self.assertEqual(g.browser_floors(), (30.0, 100.0))
+        g = self.guard(env={"AJAYEB_MIN_FREE_PCT_BROWSER": "lots"})
+        self.assertEqual(g.browser_floors(), (14.0, 512.0))
+        self.assertIn("ignoring", self.err.getvalue())
+
+    def test_browser_refused_below_floor(self):
+        g = self.guard(free=10)
+        rc = g.run("browser", [PY, "-c", "pass"], wait=0)
+        self.assertEqual(rc, heavy.EX_TEMPFAIL)
+        self.assertIn("browser floor", self.err.getvalue())
+        self.assertFalse(os.path.exists(self.heavy_dir("browser")))
+
+    def test_browser_lock_has_capacity_one(self):
+        self.hold("browser", kind="browser")
+        g = self.guard(level=1)
+        self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        self.assertIn("browser lock is held", self.err.getvalue())
+        # A codex job is not blocked by the browser lock.
+        self.assertEqual(self.guard(level=1).run("codex", [PY, "-c", "pass"], wait=0), 0)
+
+
+class ReaderTests(unittest.TestCase):
+    def test_parse_swapusage(self):
+        total, free = heavy.parse_swapusage(
+            "total = 15360.00M  used = 14058.50M  free = 1301.50M  (encrypted)")
+        self.assertAlmostEqual(total, 15360.0)
+        self.assertAlmostEqual(free, 1301.5)
+        total, free = heavy.parse_swapusage("total = 2.00G  used = 1.50G  free = 512.00M")
+        self.assertAlmostEqual(total, 2048.0)
+        self.assertAlmostEqual(free, 512.0)
+        self.assertEqual(heavy.parse_swapusage(""), (None, None))
+
+    def test_read_darwin(self):
+        answers = {"kern.memorystatus_vm_pressure_level": "2", "kern.memorystatus_level": "16",
+                   "vm.swapusage": "total = 1024.00M  used = 512.00M  free = 512.00M  (encrypted)"}
+        mem = heavy.read_darwin(answers.get)
+        self.assertEqual((mem.level, mem.free_pct, mem.swap_free_mb), (2, 16.0, 512.0))
+        mem = heavy.read_darwin(lambda key: None)
+        self.assertEqual((mem.level, mem.free_pct, mem.swap_total_mb), (None, None, None))
+
+    def test_parse_meminfo(self):
+        text = ("MemTotal:       16000000 kB\nMemFree:         1000000 kB\n"
+                "MemAvailable:    4000000 kB\nSwapTotal:       2097152 kB\nSwapFree:        1048576 kB\n")
+        mem = heavy.parse_meminfo(text)
+        self.assertAlmostEqual(mem.free_pct, 25.0)
+        self.assertEqual(mem.level, heavy.LEVEL_NORMAL)
+        self.assertAlmostEqual(mem.swap_total_mb, 2048.0)
+        self.assertAlmostEqual(mem.swap_free_mb, 1024.0)
+
+    def test_linux_levels(self):
+        self.assertEqual(heavy.level_from_free_pct(40), heavy.LEVEL_NORMAL)
+        self.assertEqual(heavy.level_from_free_pct(10), heavy.LEVEL_WARN)
+        self.assertEqual(heavy.level_from_free_pct(3), heavy.LEVEL_CRITICAL)
+        self.assertIsNone(heavy.level_from_free_pct(None))
+
+    def test_reader_by_platform(self):
+        self.assertIs(heavy.default_reader("darwin"), heavy.read_darwin)
+        self.assertIs(heavy.default_reader("linux"), heavy.read_linux)
+        self.assertIsNone(heavy.default_reader("plan9")().level)
+
+    def test_unreadable_meminfo(self):
+        self.assertIsNone(heavy.read_linux("/nonexistent/meminfo").level)
+
+
+class MaxrssTests(unittest.TestCase):
+    def test_normalization(self):
+        self.assertEqual(heavy.normalize_maxrss(2048 * 1024, "darwin"), 2048)  # bytes
+        self.assertEqual(heavy.normalize_maxrss(2048, "linux"), 2048)  # kilobytes
+
+
+class RunTests(GuardCase):
+    def test_runs_command_and_returns_its_exit_code(self):
+        g = self.guard()
+        self.assertEqual(g.run("test", [PY, "-c", "import sys; sys.exit(3)"]), 3)
+        self.assertEqual(self.guard().run("test", [PY, "-c", "pass"]), 0)
+
+    def test_signal_death_maps_to_128_plus_n(self):
+        rc = self.guard().run("test", [PY, "-c", "import os, signal; os.kill(os.getpid(), signal.SIGTERM)"])
+        self.assertEqual(rc, 128 + signal.SIGTERM)
+
+    def test_signal_during_memory_read_is_not_swallowed(self):
+        # stop-all's SIGTERM can land while a waiting guard reads the sysctls.
+        # The reader is wrapped in `except Exception`, which must not eat it.
+        def reader():
+            os.kill(os.getpid(), signal.SIGTERM)  # the guard's handler raises here
+            time.sleep(5)
+            return heavy.Memory(level=1)
+        path, cmd = self.sentinel_cmd()
+        g = self.guard(reader=reader)
+        self.assertEqual(g.run("test", cmd, wait=0), 128 + signal.SIGTERM)
+        self.assertFalse(os.path.exists(path))
+        self.assertEqual(os.listdir(self.heavy_dir("waiting")), [])
+        self.assertFalse([n for n in os.listdir(self.heavy_dir()) if n.startswith("slot-")])
+
+    def test_command_not_found(self):
+        rc = self.guard().run("test", ["/nonexistent/definitely-not-a-command"])
+        self.assertEqual(rc, 127)
+
+    def test_usage_errors(self):
+        self.assertEqual(self.guard().run("test", []), heavy.EX_USAGE)
+        self.assertEqual(self.guard().run("huge", ["true"]), heavy.EX_USAGE)
+
+    def test_paused_refuses_with_75_and_does_not_run(self):
+        self.write_mode({"mode": "paused"})
+        path, cmd = self.sentinel_cmd()
+        g = self.guard()
+        self.assertEqual(g.run("test", cmd), heavy.EX_TEMPFAIL)
+        self.assertFalse(os.path.exists(path))
+        lines = self.err.getvalue().strip().splitlines()
+        self.assertEqual(len(lines), 1)
+        self.assertIn("paused", lines[0])
+        self.assertEqual(self.clock.sleeps, [])  # mode refusals do not wait
+        entry = self.log_entries()[-1]
+        self.assertEqual(entry["rc"], heavy.EX_TEMPFAIL)
+        self.assertIn("paused", entry["refused"])
+
+    def test_light_runs_in_paused_mode(self):
+        self.write_mode({"mode": "paused"})
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(self.guard().run("light", cmd), 0)
+        self.assertTrue(os.path.exists(path))
+
+    def test_nightshift_outside_window_refuses(self):
+        self.write_mode({"mode": "nightshift", "window": "22:00-06:00"})
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(self.guard().run("build", cmd), heavy.EX_TEMPFAIL)
+        self.assertFalse(os.path.exists(path))
+        self.clock = FakeClock(at(1))
+        self.assertEqual(self.guard().run("build", cmd), 0)
+        self.assertTrue(os.path.exists(path))
+
+    def test_slots_full_refuses_with_75(self):
+        self.hold("slot-1")
+        path, cmd = self.sentinel_cmd()
+        g = self.guard(level=2)  # warn: one slot, already taken
+        self.assertEqual(g.run("test", cmd, wait=0), heavy.EX_TEMPFAIL)
+        self.assertFalse(os.path.exists(path))
+        self.assertIn("busy at warn pressure", self.err.getvalue())
+
+    def test_second_slot_at_normal_pressure(self):
+        self.hold("slot-1")
+        g = self.guard(level=1)
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
+        self.assertTrue(os.path.isdir(self.heavy_dir("slot-1")))  # the other holder keeps its slot
+        self.assertFalse(os.path.exists(self.heavy_dir("slot-2")))  # ours is released
+
+    def test_holders_beyond_capacity_still_count(self):
+        # Two jobs got slots while capacity was higher; pressure then rose to warn.
+        self.hold("slot-2")
+        self.hold("slot-3", pid=FAKE_LIVE_2)
+        g = self.guard(level=1)  # capacity 2, both taken
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+
+    def test_critical_pressure_allows_nothing_heavy(self):
+        g = self.guard(level=4)
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        self.assertIn("critical", self.err.getvalue())
+        self.assertEqual(self.guard(level=4).run("light", [PY, "-c", "pass"], wait=0), 0)
+
+    def test_waits_with_backoff_then_gives_up(self):
+        self.hold("slot-1")
+        g = self.guard(level=2)
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=100), heavy.EX_TEMPFAIL)
+        self.assertGreater(len(self.clock.sleeps), 2)
+        self.assertAlmostEqual(sum(self.clock.sleeps), 100.0, places=6)
+        # Backoff grows and is capped.
+        self.assertLess(self.clock.sleeps[0], self.clock.sleeps[2])
+        self.assertLessEqual(max(self.clock.sleeps), heavy.BACKOFF_MAX * 1.2 + 1e-9)
+        self.assertIn("gave up after waiting", self.err.getvalue())
+        # One "waiting" line (the reason never changed) plus one refusal line.
+        self.assertEqual(len(self.err.getvalue().strip().splitlines()), 2)
+        self.assertFalse(os.listdir(self.heavy_dir("waiting")))
+
+    def test_waits_until_slot_frees(self):
+        holder = self.hold("slot-1")
+        path, cmd = self.sentinel_cmd()
+
+        def free_after_two(n):
+            if n == 2:
+                self.fake_live.discard(FAKE_LIVE)  # holder exits; its lock is now stale
+        self.clock.on_sleep = free_after_two
+        g = self.guard(level=2)
+        self.assertEqual(g.run("test", cmd, wait=600), 0)
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual(len(self.clock.sleeps), 2)
+        self.assertFalse(os.path.exists(holder))
+
+    def test_mode_change_while_waiting_refuses(self):
+        self.hold("slot-1")
+
+        def pause(n):
+            self.write_mode({"mode": "paused"})
+        self.clock.on_sleep = pause
+        g = self.guard(level=2)
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=600), heavy.EX_TEMPFAIL)
+        self.assertEqual(len(self.clock.sleeps), 1)
+        self.assertIn("paused", self.err.getvalue())
+
+    def test_stale_lock_is_recovered(self):
+        holder = self.hold("slot-1", pid=FAKE_DEAD)
+        path, cmd = self.sentinel_cmd()
+        g = self.guard(level=2)
+        self.assertEqual(g.run("test", cmd, wait=0), 0)
+        self.assertTrue(os.path.exists(path))
+        self.assertFalse(os.path.exists(holder))
+        self.assertFalse(os.path.exists(holder + ".break"))
+
+    def test_lock_alive_through_its_process_group(self):
+        # The guard was killed but the command's process group lives on.
+        path = self.hold("slot-1", pid=FAKE_DEAD)
+        with open(os.path.join(path, heavy.OWNER_FILE)) as fh:
+            info = json.load(fh)
+        info["pgid"] = FAKE_LIVE
+        with open(os.path.join(path, heavy.OWNER_FILE), "w") as fh:
+            json.dump(info, fh)
+        self.assertEqual(self.guard(level=2).run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+
+    def starts(self, table):
+        """A proc_start that answers from table for fake pids and asks ps for real ones."""
+        return lambda pid: table[pid] if pid in table else heavy.default_proc_start(pid)
+
+    def test_lock_whose_pid_was_reused_is_stale(self):
+        # The guard was killed and an unrelated long-lived process got its pid.
+        path = self.hold("slot-1", pid=FAKE_LIVE)
+        self.set_owner(path, lstart="Thu Oct  1 01:00:00 2026")
+        g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: "Thu Oct  1 05:00:00 2026"}))
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
+        self.assertFalse(os.path.exists(path))
+
+    def test_lock_with_matching_or_unreadable_start_is_kept(self):
+        path = self.hold("slot-1", pid=FAKE_LIVE)
+        self.set_owner(path, lstart="Thu Oct  1 01:00:00 2026")
+        for answer in ("Thu Oct  1 01:00:00 2026", None):
+            g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: answer}))
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL, answer)
+            self.assertTrue(os.path.isdir(path))
+
+    def test_reused_process_group_does_not_keep_the_lock(self):
+        path = self.hold("slot-1", pid=FAKE_DEAD)
+        self.set_owner(path, pgid=FAKE_LIVE, pgid_lstart="Thu Oct  1 01:00:00 2026")
+        g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: "Thu Oct  1 01:00:00 2026"}))
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: "Thu Oct  1 05:00:00 2026"}))
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
+        self.assertFalse(os.path.exists(path))
+
+    def test_owner_records_start_times(self):
+        out = os.path.join(self.tmp, "owner.json")
+        owner = os.path.join(self.heavy_dir("slot-1"), heavy.OWNER_FILE)
+        # The child waits until the guard has added its process group to the lock.
+        child = (
+            "import json, time\n"
+            "deadline = time.time() + 20\n"
+            "while True:\n"
+            f"    with open({owner!r}) as fh:\n"
+            "        info = json.load(fh)\n"
+            "    if 'pgid_lstart' in info or time.time() > deadline:\n"
+            "        break\n"
+            "    time.sleep(0.05)\n"
+            f"with open({out!r}, 'w') as fh:\n"
+            "    json.dump(info, fh)\n"
+        )
+        g = self.guard(level=2, proc_start=lambda pid: f"start-{pid}")
+        self.assertEqual(g.run("test", [PY, "-c", child], wait=0), 0)
+        with open(out) as fh:
+            info = json.load(fh)
+        self.assertEqual(info["lstart"], f"start-{os.getpid()}")
+        self.assertEqual(info["pgid_lstart"], f"start-{info['pgid']}")
+
+    def test_lock_without_owner_file(self):
+        fresh = self.heavy_dir("slot-1")
+        os.makedirs(fresh)
+        self.assertEqual(self.guard(level=2).run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        old = time.time() - heavy.FRESH_LOCK_GRACE - 5
+        os.utime(fresh, (old, old))
+        self.assertEqual(self.guard(level=2).run("test", [PY, "-c", "pass"], wait=0), 0)
+
+    def test_release_keeps_a_lock_someone_else_owns(self):
+        locks = heavy.Locks(self.heavy_dir(), self.pid_alive, self.group_alive)
+        self.hold("codex", kind="codex")
+        locks.release("codex", "not-the-owner-token")
+        self.assertTrue(os.path.isdir(self.heavy_dir("codex")))
+
+    def test_locks_released_and_records_removed(self):
+        g = self.guard(level=1)
+        self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 0)
+        self.assertEqual(sorted(os.listdir(self.heavy_dir())), ["running", "waiting"])
+        self.assertEqual(os.listdir(self.heavy_dir("running")), [])
+        self.assertEqual(os.listdir(self.heavy_dir("waiting")), [])
+
+    def test_child_env_defaults_and_markers(self):
+        out = os.path.join(self.tmp, "env.json")
+        cmd = [PY, "-c", f"import json, os; json.dump(dict(os.environ), open({out!r}, 'w'))"]
+        g = self.guard(env={"GOMAXPROCS": "2", "GOMEMLIMIT": ""})
+        self.assertEqual(g.run("browser", cmd, wait=0), 0)
+        with open(out) as fh:
+            env = json.load(fh)
+        self.assertEqual(env["NODE_OPTIONS"], "--max-old-space-size=1536")
+        self.assertEqual(env["GOMEMLIMIT"], "768MiB")  # empty counts as unset
+        self.assertEqual(env["GOMAXPROCS"], "2")  # set values are kept
+        self.assertEqual(env["GOFLAGS"], "-p=2")
+        self.assertEqual(env["AJAYEB_HEAVY_HELD"], "1")
+        self.assertEqual(env["AJAYEB_HEAVY_KIND"], "browser")
+        self.assertEqual(env["AJAYEB_HEAVY_LOCKS"], "browser")
+
+    def test_multi_flag_variables_get_missing_caps_appended(self):
+        g = self.guard(env={"NODE_OPTIONS": "--unhandled-rejections=strict", "GOFLAGS": "-mod=mod"})
+        env = g.child_env("build", True, set())
+        self.assertEqual(env["NODE_OPTIONS"], "--unhandled-rejections=strict --max-old-space-size=1536")
+        self.assertEqual(env["GOFLAGS"], "-mod=mod -p=2")
+        g = self.guard(env={"NODE_OPTIONS": "--max-old-space-size=3096 --x", "GOFLAGS": "-p=4"})
+        env = g.child_env("build", True, set())
+        self.assertEqual(env["NODE_OPTIONS"], "--max-old-space-size=3096 --x")  # explicit cap kept
+        self.assertEqual(env["GOFLAGS"], "-p=4")
+
+    def test_light_child_is_not_marked_held(self):
+        out = os.path.join(self.tmp, "env.json")
+        cmd = [PY, "-c", f"import json, os; json.dump(dict(os.environ), open({out!r}, 'w'))"]
+        self.assertEqual(self.guard().run("light", cmd), 0)
+        with open(out) as fh:
+            env = json.load(fh)
+        self.assertNotIn("AJAYEB_HEAVY_HELD", env)
+        self.assertEqual(env["AJAYEB_HEAVY_KIND"], "light")
+
+    def test_fuzz_runs_niced(self):
+        out = os.path.join(self.tmp, "nice")
+        cmd = [PY, "-c", f"import os; open({out!r}, 'w').write(str(os.nice(0)))"]
+        self.assertEqual(self.guard().run("fuzz", cmd), 0)
+        with open(out) as fh:
+            self.assertGreaterEqual(int(fh.read()), min(os.nice(0) + 10, 19))
+
+    def test_log_line(self):
+        g = self.guard()
+        g.run("test", [PY, "-c", "x = bytearray(30 * 1024 * 1024)"])
+        entry = self.log_entries()[-1]
+        for key in ("ts", "kind", "cmd", "rc", "secs", "maxrss_kb"):
+            self.assertIn(key, entry)
+        self.assertEqual((entry["kind"], entry["rc"]), ("test", 0))
+        self.assertIsInstance(entry["maxrss_kb"], int)
+        self.assertGreater(entry["maxrss_kb"], 30 * 1024)  # the 30 MB buffer, in KB
+        self.assertLess(entry["maxrss_kb"], 4 * 1024 * 1024)  # not bytes mistaken for KB
+        self.assertIn("bytearray", entry["cmd"])
+
+
+class NestedTests(GuardCase):
+    def test_nested_run_takes_no_slot(self):
+        self.hold("slot-1")
+        path, cmd = self.sentinel_cmd()
+        g = self.guard(level=2, env={"AJAYEB_HEAVY_HELD": "1"})
+        self.assertEqual(g.run("test", cmd, wait=0), 0)
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual(self.heavy_slots(), ["slot-1"])
+        self.assertTrue(self.log_entries()[-1]["nested"])
+
+    def heavy_slots(self):
+        return sorted(n for n in os.listdir(self.heavy_dir()) if n.startswith("slot-"))
+
+    def test_nested_run_skips_mode_gate(self):
+        self.write_mode({"mode": "paused"})
+        g = self.guard(env={"AJAYEB_HEAVY_HELD": "1"})
+        self.assertEqual(g.run("build", [PY, "-c", "pass"], wait=0), 0)
+
+    def test_nested_run_does_not_need_memory_readings(self):
+        calls = []
+
+        def reader():
+            calls.append(1)
+            return heavy.Memory(level=4)
+        g = self.guard(env={"AJAYEB_HEAVY_HELD": "1"}, reader=reader)
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
+        self.assertEqual(calls, [])
+
+    def test_nested_browser_uses_inherited_lock(self):
+        self.hold("browser", kind="browser")
+        g = self.guard(env={"AJAYEB_HEAVY_HELD": "1", "AJAYEB_HEAVY_LOCKS": "browser"})
+        self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 0)
+
+    def test_nested_browser_without_the_lock_must_take_it(self):
+        self.hold("browser", kind="browser")
+        g = self.guard(env={"AJAYEB_HEAVY_HELD": "1"})
+        self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        self.assertIn("browser lock is held", self.err.getvalue())
+
+    def test_held_zero_is_not_nested(self):
+        self.hold("slot-1")
+        g = self.guard(level=2, env={"AJAYEB_HEAVY_HELD": "0"})
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+
+
+class CIModeTests(GuardCase):
+    def test_ci_without_run_dir_is_continuous_with_linux_readers(self):
+        missing = os.path.join(self.tmp, "absent")
+        g = heavy.Guard(env={"CI": "true", "AJAYEB_RUN_DIR": missing, "RUNNER_TEMP": self.tmp,
+                             "HOME": self.tmp, "PATH": os.environ.get("PATH", "")},
+                        platform="darwin", clock=self.clock,
+                        stdout=io.StringIO(), stderr=io.StringIO())
+        self.assertTrue(g.ci_mode)
+        self.assertEqual(g.reader_platform, "linux")
+        self.assertEqual(g.mode_state().mode, "continuous")
+        self.assertTrue(g.run_dir.startswith(self.tmp))
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
+        self.assertFalse(os.path.exists(missing))
+
+    def test_ci_with_existing_run_dir_uses_it(self):
+        self.write_mode({"mode": "paused"})
+        g = self.guard(env={"CI": "true"})
+        self.assertFalse(g.ci_mode)
+        self.assertEqual(g.mode_state().mode, "paused")
+
+
+class StatusTests(GuardCase):
+    def test_status_lists_everything(self):
+        self.write_mode({"mode": "nightshift", "window": "22:00-06:00"})
+        self.clock = FakeClock(at(23, 15))
+        self.hold("slot-1", cmd="go test ./...")
+        self.hold("slot-2", pid=FAKE_DEAD)
+        g = self.guard(level=2, free=16, swap_total=13312, swap_free=816)
+        g.run("light", [PY, "-c", "pass"])
+        self.assertEqual(g.status(), 0)
+        text = self.out.getvalue()
+        for needle in ("mode:      nightshift", "window:    22:00-06:00", "in window: yes",
+                       "pressure:  warn (level 2)", "free mem:  16%", "816 MB free of 13312 MB",
+                       "capacity 1 (warn pressure, nightshift window), 1 held",
+                       "go test ./...", "stale", "browser:", "codex:", "recent:"):
+            self.assertIn(needle, text)
+
+    def test_status_with_unknown_pressure(self):
+        g = self.guard(reader=lambda: heavy.Memory())
+        self.assertEqual(g.status(), 0)
+        self.assertIn("unknown (treated as warn)", self.out.getvalue())
+        self.assertIn("capacity 1", self.out.getvalue())
+
+
+class ProcessTests(GuardCase):
+    """Real processes: signal forwarding and stop-all."""
+
+    def env(self, **extra):
+        env = clean_environ()
+        env["AJAYEB_RUN_DIR"] = self.run_dir
+        env.update(extra)
+        return env
+
+    def wait_for_file(self, path, timeout=15.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if os.path.exists(path) and os.path.getsize(path) > 0:
+                return
+            time.sleep(0.05)
+        self.fail(f"timed out waiting for {path}")
+
+    def assert_gone(self, pid, timeout=10.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if not heavy.default_pid_alive(pid):
+                return
+            time.sleep(0.05)
+        os.kill(pid, signal.SIGKILL)
+        self.fail(f"pid {pid} still alive")
+
+    def sleeper_cmd(self, pidfile):
+        return [PY, "-c", f"import os, time; open({pidfile!r}, 'w').write(str(os.getpid())); time.sleep(60)"]
+
+    def spawn_orphan(self, pidfile):
+        """Start a sleeper in its own session whose parent exits at once.
+
+        init then reaps it when it dies, as happens to real jobs (whose guard
+        or shell reaps them). A child of this test process would linger as a
+        zombie, and a zombie still answers kill(pid, 0).
+        """
+        launcher = ("import subprocess, sys; "
+                    "subprocess.Popen(sys.argv[1:], start_new_session=True)")
+        subprocess.run([PY, "-c", launcher] + self.sleeper_cmd(pidfile), check=True, timeout=30)
+        self.wait_for_file(pidfile)
+        with open(pidfile) as fh:
+            pid = int(fh.read())
+        self.addCleanup(self.kill_quietly, pid)
+        return pid
+
+    @staticmethod
+    def kill_quietly(pid):
+        if heavy.default_pid_alive(pid):
+            os.kill(pid, signal.SIGKILL)
+
+    def test_sigterm_is_forwarded_to_the_child(self):
+        pidfile = os.path.join(self.tmp, "child.pid")
+        guard = subprocess.Popen([PY, HEAVY_PATH, "run", "--kind", "light", "--"] + self.sleeper_cmd(pidfile),
+                                 env=self.env(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            self.wait_for_file(pidfile)
+            with open(pidfile) as fh:
+                child = int(fh.read())
+            self.assertNotEqual(os.getpgid(child), os.getpgid(guard.pid))  # own session
+            guard.send_signal(signal.SIGTERM)
+            self.assertEqual(guard.wait(timeout=10), 128 + signal.SIGTERM)
+            self.assert_gone(child)
+            self.assertEqual(os.listdir(self.heavy_dir("running")), [])
+        finally:
+            if guard.poll() is None:
+                guard.kill()
+                guard.wait()
+
+    def test_stop_all_terminates_recorded_groups_only(self):
+        recorded = self.spawn_orphan(os.path.join(self.tmp, "a.pid"))
+        by_argv0 = self.spawn_orphan(os.path.join(self.tmp, "b.pid"))
+        stranger = self.spawn_orphan(os.path.join(self.tmp, "c.pid"))
+        stranger_2 = self.spawn_orphan(os.path.join(self.tmp, "d.pid"))
+        real_argv0 = heavy.default_proc_command(by_argv0).split()[0]
+        running = self.heavy_dir("running")
+        os.makedirs(running)
+        # Every guard is gone, so stop-all must recognize the leaders on its own.
+        records = (
+            (recorded, {"argv0": PY, "lstart": heavy.default_proc_start(recorded)}),
+            (by_argv0, {"argv0": real_argv0}),  # no lstart: argv0 fallback
+            (FAKE_DEAD, {"argv0": "gone"}),  # group gone: record pruned
+            # Same pids, different processes (pid reuse): leave them alone.
+            (stranger, {"argv0": PY, "lstart": "Thu Jan  1 00:00:00 1970"}),
+            (stranger_2, {"argv0": "not-this-program"}),
+        )
+        for pid, extra in records:
+            with open(os.path.join(running, f"{pid}.json"), "w") as fh:
+                json.dump(dict({"pid": pid, "pgid": pid, "guard": FAKE_DEAD, "kind": "test",
+                                "cmd": "sleep"}, **extra), fh)
+        out = io.StringIO()
+        g = heavy.Guard(env=self.env(), stdout=out, stderr=io.StringIO())
+        self.assertEqual(g.stop_all(grace=5), 0)
+        self.assert_gone(recorded)
+        self.assert_gone(by_argv0)
+        self.assertTrue(heavy.default_pid_alive(stranger))
+        self.assertTrue(heavy.default_pid_alive(stranger_2))
+        text = out.getvalue()
+        self.assertIn(f"SIGTERM process group {recorded}", text)
+        self.assertIn(f"SIGTERM process group {by_argv0}", text)
+        self.assertNotIn("SIGKILL", text)
+        self.assertIn(f"skipping pgid {stranger}", text)
+        self.assertIn(f"skipping pgid {stranger_2}", text)
+        self.assertEqual(os.listdir(running), [])
+
+    def test_running_record_has_start_time(self):
+        seen = {}
+
+        def proc_start(pid):
+            seen["lstart"] = heavy.default_proc_start(pid)
+            return seen["lstart"]
+        rec_dir = self.heavy_dir("running")
+        # The child polls until the guard has added lstart to its record (that
+        # takes a ps call, which can be slow on a loaded machine), then prints it.
+        child = (
+            "import json, os, time\n"
+            f"d = {rec_dir!r}\n"
+            "deadline = time.time() + 20\n"
+            "while True:\n"
+            "    recs = []\n"
+            "    for n in os.listdir(d):\n"
+            "        if n.endswith('.json'):\n"
+            "            with open(os.path.join(d, n)) as fh:\n"
+            "                recs.append(json.load(fh))\n"
+            "    if (recs and all('lstart' in r for r in recs)) or time.time() > deadline:\n"
+            "        break\n"
+            "    time.sleep(0.05)\n"
+            "print(json.dumps(recs))\n"
+        )
+        cmd = [PY, "-c", child]
+        out = os.path.join(self.tmp, "records.json")
+        g = heavy.Guard(env=self.env(), proc_start=proc_start, stdout=io.StringIO(), stderr=io.StringIO())
+        with open(out, "w") as fh:
+            saved = os.dup(1)
+            os.dup2(fh.fileno(), 1)
+            try:
+                self.assertEqual(g.run("light", cmd), 0)
+            finally:
+                os.dup2(saved, 1)
+                os.close(saved)
+        with open(out) as fh:
+            records = json.load(fh)
+        self.assertEqual(len(records), 1)
+        self.assertTrue(seen["lstart"])
+        self.assertEqual(records[0]["lstart"], seen["lstart"])
+        self.assertEqual(records[0]["pgid"], records[0]["pid"])
+
+    def test_stop_all_stops_a_waiting_guard(self):
+        self.hold("slot-1", pid=os.getpid())  # a live holder: this test process
+        rcfile = os.path.join(self.tmp, "guard.rc")
+        # sh reaps the guard, as make or a login shell would, and records its exit code.
+        wrapper = subprocess.Popen(
+            ["sh", "-c", '"$@" 2>/dev/null; echo $? > "$RCFILE"', "sh",
+             PY, HEAVY_PATH, "run", "--kind", "test", "--wait", "120", "--", PY, "-c", "pass"],
+            env=self.env(AJAYEB_MAX_SLOTS="1", RCFILE=rcfile))
+        try:
+            waiting = self.heavy_dir("waiting")
+            deadline = time.monotonic() + 15
+            names = []
+            while time.monotonic() < deadline and not names:
+                time.sleep(0.05)
+                names = [n for n in os.listdir(waiting) if n.endswith(".json")] if os.path.isdir(waiting) else []
+            self.assertEqual(len(names), 1)
+            guard_pid = int(names[0].split(".")[0])
+            self.addCleanup(self.kill_quietly, guard_pid)
+            out = io.StringIO()
+            g = heavy.Guard(env=self.env(), stdout=out, stderr=io.StringIO())
+            self.assertEqual(g.stop_all(grace=5), 0)
+            self.assertIn(f"waiting guard pid {guard_pid}", out.getvalue())
+            self.assertNotIn("still alive", out.getvalue())
+            self.assertEqual(wrapper.wait(timeout=10), 0)
+            with open(rcfile) as fh:
+                self.assertEqual(int(fh.read()), 128 + signal.SIGTERM)
+            self.assertTrue(os.path.isdir(self.heavy_dir("slot-1")))  # not ours to remove
+            self.assertEqual(os.listdir(waiting), [])
+        finally:
+            if wrapper.poll() is None:
+                wrapper.kill()
+                wrapper.wait()
+
+    def test_stop_all_with_nothing_running(self):
+        out = io.StringIO()
+        heavy.Guard(env=self.env(), stdout=out, stderr=io.StringIO()).stop_all(grace=1)
+        self.assertIn("nothing to stop", out.getvalue())
+
+
+class CLITests(GuardCase):
+    def cli(self, *args):
+        env = clean_environ()
+        env["AJAYEB_RUN_DIR"] = self.run_dir
+        return subprocess.run([PY, HEAVY_PATH] + list(args), env=env, capture_output=True,
+                              text=True, timeout=60)
+
+    def test_help(self):
+        res = self.cli("--help")
+        self.assertEqual(res.returncode, 0)
+        self.assertIn("Mode gate", res.stdout)
+
+    def test_run_needs_double_dash(self):
+        res = self.cli("run", "--kind", "light", "echo", "hi")
+        self.assertEqual(res.returncode, heavy.EX_USAGE)
+        res = self.cli("run", "--kind", "light")
+        self.assertEqual(res.returncode, heavy.EX_USAGE)
+        self.assertIn("needs --", res.stderr)
+
+    def test_run_passes_flags_after_double_dash(self):
+        res = self.cli("run", "--kind", "light", "--", PY, "-c", "import sys; print(sys.argv[1:])",
+                       "--kind", "x")
+        self.assertEqual(res.returncode, 0)
+        self.assertIn("['--kind', 'x']", res.stdout)
+
+    def test_mode_round_trip(self):
+        self.assertEqual(self.cli("mode", "nightshift", "--window", "22:00-06:00").returncode, 0)
+        res = self.cli("mode")
+        self.assertIn("window 22:00-06:00", res.stdout)
+        res = self.cli("run", "--kind", "light", "--", PY, "-c", "print('ok')")
+        self.assertEqual((res.returncode, res.stdout.strip()), (0, "ok"))
+
+
+if __name__ == "__main__":
+    unittest.main()
