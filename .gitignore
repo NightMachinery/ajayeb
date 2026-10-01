@@ -1,0 +1,62 @@
+# Some global git excludes files ignore any top-level server/ directory.
+# Re-include ours; the specific server/ ignores below still apply.
+!/server/
+
+# Dependencies
+node_modules/
+
+# SvelteKit and Vite
+web/.svelte-kit/
+web/build/
+web/build-*/
+web/.vite/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+
+# Go
+server/bin/
+server/tmp/
+*.test
+*.coverprofile
+coverage.out
+# The embedded web build is copied in by `make build`; keep only the placeholder.
+server/internal/webdist/dist/*
+!server/internal/webdist/dist/.gitkeep
+
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+
+# Python
+__pycache__/
+*.pyc
+
+# Local caches, data and self-hosting state
+.cache/
+.self-host/
+# The server's default --data ./data (rooms and the identity secret) when it
+# is started from the repository root; server/.gitignore covers server/data/.
+/data/
+
+# Art scratch output (approved originals live in art/originals/ and are committed)
+art/vector/out/
+
+# Editors and OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Agent-local files (private run state lives outside the repo)
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Logs
+*.log
