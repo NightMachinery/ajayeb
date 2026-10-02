@@ -1,0 +1,414 @@
+{
+  "log": {
+    "format": "ajayeb-log/1",
+    "rules": 1,
+    "seed": "910002",
+    "options": {
+      "firstPlayer": "random",
+      "centerPawn": "lastActiveChooses",
+      "hideAtEnd": false
+    },
+    "scenario": null,
+    "actions": [
+      {
+        "ply": 0,
+        "seat": 0,
+        "action": "draft:circus-maximus"
+      },
+      {
+        "ply": 1,
+        "seat": 1,
+        "action": "draft:pyramids"
+      },
+      {
+        "ply": 2,
+        "seat": 1,
+        "action": "draft:great-lighthouse"
+      },
+      {
+        "ply": 3,
+        "seat": 1,
+        "action": "draft:great-library"
+      },
+      {
+        "ply": 4,
+        "seat": 0,
+        "action": "draft:hanging-gardens"
+      },
+      {
+        "ply": 5,
+        "seat": 0,
+        "action": "draft:sphinx"
+      },
+      {
+        "ply": 6,
+        "seat": 0,
+        "action": "discard:clay-pit"
+      },
+      {
+        "ply": 7,
+        "seat": 1,
+        "action": "construct:glassworks"
+      },
+      {
+        "ply": 8,
+        "seat": 0,
+        "action": "wonder:circus-maximus:quarry"
+      },
+      {
+        "ply": 9,
+        "seat": 0,
+        "action": "destroy:glassworks"
+      },
+      {
+        "ply": 10,
+        "seat": 1,
+        "action": "construct:press"
+      },
+      {
+        "ply": 11,
+        "seat": 0,
+        "action": "construct:tavern"
+      },
+      {
+        "ply": 12,
+        "seat": 1,
+        "action": "construct:apothecary"
+      },
+      {
+        "ply": 13,
+        "seat": 0,
+        "action": "construct:theater"
+      },
+      {
+        "ply": 14,
+        "seat": 1,
+        "action": "construct:scriptorium"
+      },
+      {
+        "ply": 15,
+        "seat": 0,
+        "action": "construct:palisade"
+      },
+      {
+        "ply": 16,
+        "seat": 1,
+        "action": "construct:logging-camp"
+      },
+      {
+        "ply": 17,
+        "seat": 0,
+        "action": "construct:stone-pit"
+      },
+      {
+        "ply": 18,
+        "seat": 1,
+        "action": "construct:guard-tower"
+      },
+      {
+        "ply": 19,
+        "seat": 0,
+        "action": "discard:wood-reserve"
+      },
+      {
+        "ply": 20,
+        "seat": 1,
+        "action": "construct:workshop"
+      },
+      {
+        "ply": 21,
+        "seat": 0,
+        "action": "construct:pharmacist"
+      },
+      {
+        "ply": 22,
+        "seat": 1,
+        "action": "construct:stable"
+      },
+      {
+        "ply": 23,
+        "seat": 0,
+        "action": "construct:baths"
+      },
+      {
+        "ply": 24,
+        "seat": 1,
+        "action": "discard:stone-reserve"
+      },
+      {
+        "ply": 25,
+        "seat": 0,
+        "action": "construct:garrison"
+      },
+      {
+        "ply": 26,
+        "seat": 1,
+        "action": "discard:clay-reserve"
+      },
+      {
+        "ply": 27,
+        "seat": 1,
+        "action": "starter:0"
+      },
+      {
+        "ply": 28,
+        "seat": 0,
+        "action": "discard:courthouse"
+      },
+      {
+        "ply": 29,
+        "seat": 1,
+        "action": "construct:library"
+      },
+      {
+        "ply": 30,
+        "seat": 1,
+        "action": "token:strategy"
+      },
+      {
+        "ply": 31,
+        "seat": 0,
+        "action": "discard:temple"
+      },
+      {
+        "ply": 32,
+        "seat": 1,
+        "action": "construct:laboratory"
+      },
+      {
+        "ply": 33,
+        "seat": 1,
+        "action": "token:theology"
+      },
+      {
+        "ply": 34,
+        "seat": 0,
+        "action": "wonder:sphinx:forum"
+      },
+      {
+        "ply": 35,
+        "seat": 0,
+        "action": "discard:school"
+      },
+      {
+        "ply": 36,
+        "seat": 1,
+        "action": "discard:caravansery"
+      },
+      {
+        "ply": 37,
+        "seat": 0,
+        "action": "construct:dispensary"
+      },
+      {
+        "ply": 38,
+        "seat": 0,
+        "action": "token:agriculture"
+      },
+      {
+        "ply": 39,
+        "seat": 1,
+        "action": "construct:sawmill"
+      },
+      {
+        "ply": 40,
+        "seat": 0,
+        "action": "wonder:appian-way:walls"
+      },
+      {
+        "ply": 41,
+        "seat": 0,
+        "action": "construct:aqueduct"
+      },
+      {
+        "ply": 42,
+        "seat": 1,
+        "action": "construct:glass-blower"
+      },
+      {
+        "ply": 43,
+        "seat": 0,
+        "action": "construct:brewery"
+      },
+      {
+        "ply": 44,
+        "seat": 1,
+        "action": "wonder:great-library:horse-breeders"
+      },
+      {
+        "ply": 45,
+        "seat": 1,
+        "action": "token:mathematics"
+      },
+      {
+        "ply": 46,
+        "seat": 1,
+        "action": "discard:shelf-quarry"
+      },
+      {
+        "ply": 47,
+        "seat": 0,
+        "action": "construct:brickyard"
+      },
+      {
+        "ply": 48,
+        "seat": 1,
+        "action": "discard:customs-house"
+      },
+      {
+        "ply": 49,
+        "seat": 0,
+        "action": "discard:archery-range"
+      },
+      {
+        "ply": 50,
+        "seat": 1,
+        "action": "discard:barracks"
+      },
+      {
+        "ply": 51,
+        "seat": 0,
+        "action": "construct:rostrum"
+      },
+      {
+        "ply": 52,
+        "seat": 1,
+        "action": "starter:1"
+      },
+      {
+        "ply": 53,
+        "seat": 1,
+        "action": "wonder:great-lighthouse:obelisk"
+      },
+      {
+        "ply": 54,
+        "seat": 1,
+        "action": "discard:gardens"
+      },
+      {
+        "ply": 55,
+        "seat": 0,
+        "action": "construct:lighthouse"
+      },
+      {
+        "ply": 56,
+        "seat": 1,
+        "action": "construct:chamber-of-commerce"
+      },
+      {
+        "ply": 57,
+        "seat": 0,
+        "action": "construct:pretorium"
+      },
+      {
+        "ply": 58,
+        "seat": 1,
+        "action": "construct:siege-workshop"
+      },
+      {
+        "ply": 59,
+        "seat": 0,
+        "action": "discard:arsenal"
+      },
+      {
+        "ply": 60,
+        "seat": 1,
+        "action": "construct:shipowners-guild"
+      },
+      {
+        "ply": 61,
+        "seat": 0,
+        "action": "construct:university"
+      },
+      {
+        "ply": 62,
+        "seat": 1,
+        "action": "wonder:pyramids:circus"
+      },
+      {
+        "ply": 63,
+        "seat": 1,
+        "action": "discard:tacticians-guild"
+      },
+      {
+        "ply": 64,
+        "seat": 0,
+        "action": "discard:scientists-guild"
+      },
+      {
+        "ply": 65,
+        "seat": 1,
+        "action": "construct:academy"
+      },
+      {
+        "ply": 66,
+        "seat": 0,
+        "action": "discard:town-hall"
+      },
+      {
+        "ply": 67,
+        "seat": 1,
+        "action": "construct:study"
+      },
+      {
+        "ply": 68,
+        "seat": 1,
+        "action": "token:philosophy"
+      },
+      {
+        "ply": 69,
+        "seat": 0,
+        "action": "construct:fortifications"
+      },
+      {
+        "ply": 70,
+        "seat": 1,
+        "action": "construct:port"
+      },
+      {
+        "ply": 71,
+        "seat": 0,
+        "action": "construct:senate"
+      },
+      {
+        "ply": 72,
+        "seat": 1,
+        "action": "construct:armory"
+      },
+      {
+        "ply": 73,
+        "seat": 0,
+        "action": "construct:arena"
+      }
+    ],
+    "finalHash": "99287a48a0f18277"
+  },
+  "result": {
+    "kind": "civilian",
+    "winner": 1,
+    "scores": [
+      {
+        "blue": 20,
+        "green": 4,
+        "yellow": 6,
+        "purple": 0,
+        "wonders": 12,
+        "tokens": 4,
+        "coins": 5,
+        "military": 5,
+        "total": 56
+      },
+      {
+        "blue": 0,
+        "green": 11,
+        "yellow": 9,
+        "purple": 4,
+        "wonders": 17,
+        "tokens": 19,
+        "coins": 1,
+        "military": 0,
+        "total": 61
+      }
+    ]
+  }
+}

@@ -1,0 +1,399 @@
+{
+  "log": {
+    "format": "ajayeb-log/1",
+    "rules": 1,
+    "seed": "910001",
+    "options": {
+      "firstPlayer": "random",
+      "centerPawn": "lastActiveChooses",
+      "hideAtEnd": false
+    },
+    "scenario": null,
+    "actions": [
+      {
+        "ply": 0,
+        "seat": 1,
+        "action": "draft:great-library"
+      },
+      {
+        "ply": 1,
+        "seat": 0,
+        "action": "draft:statue-of-zeus"
+      },
+      {
+        "ply": 2,
+        "seat": 0,
+        "action": "draft:piraeus"
+      },
+      {
+        "ply": 3,
+        "seat": 0,
+        "action": "draft:mausoleum"
+      },
+      {
+        "ply": 4,
+        "seat": 1,
+        "action": "draft:hanging-gardens"
+      },
+      {
+        "ply": 5,
+        "seat": 1,
+        "action": "draft:colossus"
+      },
+      {
+        "ply": 6,
+        "seat": 1,
+        "action": "discard:glassworks"
+      },
+      {
+        "ply": 7,
+        "seat": 0,
+        "action": "discard:clay-pool"
+      },
+      {
+        "ply": 8,
+        "seat": 1,
+        "action": "wonder:temple-of-artemis:palisade"
+      },
+      {
+        "ply": 9,
+        "seat": 1,
+        "action": "construct:clay-pit"
+      },
+      {
+        "ply": 10,
+        "seat": 0,
+        "action": "wonder:great-lighthouse:apothecary"
+      },
+      {
+        "ply": 11,
+        "seat": 1,
+        "action": "wonder:colossus:workshop"
+      },
+      {
+        "ply": 12,
+        "seat": 0,
+        "action": "discard:theater"
+      },
+      {
+        "ply": 13,
+        "seat": 1,
+        "action": "construct:tavern"
+      },
+      {
+        "ply": 14,
+        "seat": 0,
+        "action": "construct:altar"
+      },
+      {
+        "ply": 15,
+        "seat": 1,
+        "action": "discard:stable"
+      },
+      {
+        "ply": 16,
+        "seat": 0,
+        "action": "construct:garrison"
+      },
+      {
+        "ply": 17,
+        "seat": 1,
+        "action": "wonder:hanging-gardens:logging-camp"
+      },
+      {
+        "ply": 18,
+        "seat": 1,
+        "action": "wonder:great-library:clay-reserve"
+      },
+      {
+        "ply": 19,
+        "seat": 1,
+        "action": "token:urbanism"
+      },
+      {
+        "ply": 20,
+        "seat": 0,
+        "action": "discard:stone-reserve"
+      },
+      {
+        "ply": 21,
+        "seat": 1,
+        "action": "discard:pharmacist"
+      },
+      {
+        "ply": 22,
+        "seat": 0,
+        "action": "discard:baths"
+      },
+      {
+        "ply": 23,
+        "seat": 1,
+        "action": "discard:scriptorium"
+      },
+      {
+        "ply": 24,
+        "seat": 0,
+        "action": "discard:stone-pit"
+      },
+      {
+        "ply": 25,
+        "seat": 1,
+        "action": "discard:quarry"
+      },
+      {
+        "ply": 26,
+        "seat": 0,
+        "action": "wonder:statue-of-zeus:press"
+      },
+      {
+        "ply": 27,
+        "seat": 0,
+        "action": "destroy:clay-pit"
+      },
+      {
+        "ply": 28,
+        "seat": 0,
+        "action": "starter:1"
+      },
+      {
+        "ply": 29,
+        "seat": 1,
+        "action": "discard:customs-house"
+      },
+      {
+        "ply": 30,
+        "seat": 0,
+        "action": "discard:school"
+      },
+      {
+        "ply": 31,
+        "seat": 1,
+        "action": "discard:statue"
+      },
+      {
+        "ply": 32,
+        "seat": 0,
+        "action": "discard:parade-ground"
+      },
+      {
+        "ply": 33,
+        "seat": 1,
+        "action": "construct:shelf-quarry"
+      },
+      {
+        "ply": 34,
+        "seat": 0,
+        "action": "construct:rostrum"
+      },
+      {
+        "ply": 35,
+        "seat": 1,
+        "action": "construct:walls"
+      },
+      {
+        "ply": 36,
+        "seat": 0,
+        "action": "discard:courthouse"
+      },
+      {
+        "ply": 37,
+        "seat": 1,
+        "action": "discard:aqueduct"
+      },
+      {
+        "ply": 38,
+        "seat": 0,
+        "action": "construct:brickyard"
+      },
+      {
+        "ply": 39,
+        "seat": 1,
+        "action": "construct:laboratory"
+      },
+      {
+        "ply": 40,
+        "seat": 0,
+        "action": "discard:caravansery"
+      },
+      {
+        "ply": 41,
+        "seat": 1,
+        "action": "discard:dispensary"
+      },
+      {
+        "ply": 42,
+        "seat": 0,
+        "action": "discard:archery-range"
+      },
+      {
+        "ply": 43,
+        "seat": 1,
+        "action": "discard:brewery"
+      },
+      {
+        "ply": 44,
+        "seat": 0,
+        "action": "wonder:mausoleum:drying-room"
+      },
+      {
+        "ply": 45,
+        "seat": 0,
+        "action": "revive:glassworks"
+      },
+      {
+        "ply": 46,
+        "seat": 1,
+        "action": "construct:temple"
+      },
+      {
+        "ply": 47,
+        "seat": 0,
+        "action": "discard:barracks"
+      },
+      {
+        "ply": 48,
+        "seat": 1,
+        "action": "discard:library"
+      },
+      {
+        "ply": 49,
+        "seat": 0,
+        "action": "discard:glass-blower"
+      },
+      {
+        "ply": 50,
+        "seat": 0,
+        "action": "starter:0"
+      },
+      {
+        "ply": 51,
+        "seat": 0,
+        "action": "construct:senate"
+      },
+      {
+        "ply": 52,
+        "seat": 1,
+        "action": "construct:shipowners-guild"
+      },
+      {
+        "ply": 53,
+        "seat": 0,
+        "action": "discard:obelisk"
+      },
+      {
+        "ply": 54,
+        "seat": 1,
+        "action": "discard:fortifications"
+      },
+      {
+        "ply": 55,
+        "seat": 0,
+        "action": "discard:gardens"
+      },
+      {
+        "ply": 56,
+        "seat": 1,
+        "action": "construct:pantheon"
+      },
+      {
+        "ply": 57,
+        "seat": 0,
+        "action": "construct:arena"
+      },
+      {
+        "ply": 58,
+        "seat": 1,
+        "action": "construct:moneylenders-guild"
+      },
+      {
+        "ply": 59,
+        "seat": 0,
+        "action": "discard:circus"
+      },
+      {
+        "ply": 60,
+        "seat": 1,
+        "action": "discard:siege-workshop"
+      },
+      {
+        "ply": 61,
+        "seat": 0,
+        "action": "discard:study"
+      },
+      {
+        "ply": 62,
+        "seat": 1,
+        "action": "discard:port"
+      },
+      {
+        "ply": 63,
+        "seat": 0,
+        "action": "discard:pretorium"
+      },
+      {
+        "ply": 64,
+        "seat": 1,
+        "action": "discard:academy"
+      },
+      {
+        "ply": 65,
+        "seat": 0,
+        "action": "construct:palace"
+      },
+      {
+        "ply": 66,
+        "seat": 1,
+        "action": "discard:university"
+      },
+      {
+        "ply": 67,
+        "seat": 0,
+        "action": "construct:merchants-guild"
+      },
+      {
+        "ply": 68,
+        "seat": 1,
+        "action": "construct:town-hall"
+      },
+      {
+        "ply": 69,
+        "seat": 0,
+        "action": "construct:lighthouse"
+      },
+      {
+        "ply": 70,
+        "seat": 1,
+        "action": "discard:chamber-of-commerce"
+      }
+    ],
+    "finalHash": "e578a04d2bd27788"
+  },
+  "result": {
+    "kind": "civilian",
+    "winner": 1,
+    "scores": [
+      {
+        "blue": 19,
+        "green": 0,
+        "yellow": 6,
+        "purple": 2,
+        "wonders": 9,
+        "tokens": 0,
+        "coins": 6,
+        "military": 0,
+        "total": 42
+      },
+      {
+        "blue": 17,
+        "green": 1,
+        "yellow": 0,
+        "purple": 11,
+        "wonders": 10,
+        "tokens": 0,
+        "coins": 9,
+        "military": 2,
+        "total": 50
+      }
+    ]
+  }
+}

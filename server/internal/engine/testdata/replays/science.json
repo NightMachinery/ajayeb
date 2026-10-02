@@ -1,0 +1,69 @@
+{
+  "log": {
+    "format": "ajayeb-log/1",
+    "rules": 1,
+    "seed": "910004",
+    "options": {
+      "firstPlayer": "random",
+      "centerPawn": "lastActiveChooses",
+      "hideAtEnd": false
+    },
+    "scenario": {
+      "name": "scientific supremacy on a sixth distinct symbol",
+      "age": 1,
+      "players": [
+        {
+          "coins": 10,
+          "city": [
+            "workshop",
+            "apothecary",
+            "university",
+            "academy",
+            "library"
+          ]
+        },
+        {}
+      ],
+      "accessible": [
+        "pharmacist"
+      ],
+      "toMove": 0
+    },
+    "actions": [
+      {
+        "ply": 0,
+        "seat": 0,
+        "action": "construct:pharmacist"
+      }
+    ],
+    "finalHash": "fef7eec696492579"
+  },
+  "result": {
+    "kind": "science",
+    "winner": 0,
+    "scores": [
+      {
+        "blue": 0,
+        "green": 9,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 11
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      }
+    ]
+  }
+}

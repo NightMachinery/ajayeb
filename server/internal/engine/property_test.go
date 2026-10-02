@@ -25,14 +25,16 @@ import (
 //   - the game ends within maxPlies actions;
 //   - replaying the recorded log gives the same hash at every ply.
 //
-// RandomPolicy games: 500, or AJAYEB_SWEEP if larger (100 with -short).
-// SimplePolicy games: AJAYEB_SWEEP, default 300 (50 with -short).
+// RandomPolicy games: 2000, or AJAYEB_SWEEP if larger (200 with -short).
+// SimplePolicy games: AJAYEB_SWEEP, default 300 (200 with -short). AJAYEB_SWEEP
+// is also the knob for a full-rules, "slow" sweep: both counts scale up with
+// it (for example AJAYEB_SWEEP=20000; verify-full already runs with 5000).
 
 const maxPlies = 200
 
 // sweepSize returns the game counts of the sweep.
 func sweepSize(t *testing.T) (random, simple int) {
-	random, simple = 500, 300
+	random, simple = 2000, 300
 	if v := os.Getenv("AJAYEB_SWEEP"); v != "" {
 		n, err := strconv.Atoi(v)
 		if err != nil || n < 0 {
@@ -41,7 +43,7 @@ func sweepSize(t *testing.T) (random, simple int) {
 		random, simple = max(random, n), n
 	}
 	if testing.Short() {
-		random, simple = min(random, 100), min(simple, 50)
+		random, simple = min(random, 200), min(simple, 200)
 	}
 	return random, simple
 }
@@ -85,7 +87,10 @@ func TestPropertySimpleGames(t *testing.T) {
 
 // sweepStats counts what the sweep exercised, so a silent regression in the
 // flow (games that never reach Age III, wonders never built, no starter
-// choice by a weaker player, no science pair) shows up.
+// choice by a weaker player, no science pair) shows up. Civilian and military
+// victories must both occur in the default run; science supremacy is rare
+// under both policies, so it is not required here (TestGoldenReplays pins one
+// with a forced scenario instead).
 type sweepStats struct {
 	plies, maxPly, ages3, chooseStarter, wonders, sevenWonders, builds, discards, reveals int
 
@@ -102,8 +107,14 @@ func (st *sweepStats) report(t *testing.T, games int) {
 		games, st.plies, st.maxPly, st.ages3, st.chooseStarter, st.offCentre, st.builds, st.discards, st.wonders, st.sevenWonders, st.reveals,
 		st.boardPicks, st.loots, st.victories[engine.VictoryMilitary], st.victories[engine.VictoryScience], st.victories[engine.VictoryCivilian], st.early)
 	if games >= 20 && (st.ages3+st.early < games || st.builds == 0 || st.wonders == 0 || st.reveals == 0 || st.chooseStarter == 0 ||
-		st.offCentre == 0 || st.boardPicks == 0 || st.loots == 0 || st.victories[engine.VictoryCivilian] == 0) {
+		st.offCentre == 0 || st.boardPicks == 0 || st.loots == 0 ||
+		st.victories[engine.VictoryCivilian] == 0 || st.victories[engine.VictoryMilitary] == 0) {
 		t.Errorf("the sweep did not exercise the flow: %+v", *st)
+	}
+	// Science supremacy is rare, but the slow sweep (AJAYEB_SWEEP=20000)
+	// must see all three victory kinds.
+	if games >= 20_000 && st.victories[engine.VictoryScience] == 0 {
+		t.Errorf("the %d-game sweep saw no science supremacy: %+v", games, *st)
 	}
 }
 

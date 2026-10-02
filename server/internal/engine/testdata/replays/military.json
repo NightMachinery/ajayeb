@@ -1,0 +1,60 @@
+{
+  "log": {
+    "format": "ajayeb-log/1",
+    "rules": 1,
+    "seed": "910003",
+    "options": {
+      "firstPlayer": "random",
+      "centerPawn": "lastActiveChooses",
+      "hideAtEnd": false
+    },
+    "scenario": {
+      "name": "military supremacy on the last card of an age",
+      "players": [
+        {},
+        {}
+      ],
+      "onlyLeft": [
+        "guard-tower"
+      ],
+      "pawn": 8,
+      "toMove": 0
+    },
+    "actions": [
+      {
+        "ply": 0,
+        "seat": 0,
+        "action": "construct:guard-tower"
+      }
+    ],
+    "finalHash": "777dc8564a098aef"
+  },
+  "result": {
+    "kind": "military",
+    "winner": 0,
+    "scores": [
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 10,
+        "total": 12
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      }
+    ]
+  }
+}
