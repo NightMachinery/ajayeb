@@ -8,6 +8,8 @@ Ajayeb is built in twelve milestones, M0 to M11. Each milestone ends green (its 
 
 ## M0: Bootstrap
 
+Status: done on 2026-10-01. Every acceptance criterion passed, and the public repository was created and pushed.
+
 Scope:
 
 - Repository skeleton and metadata: `.gitignore`, `.editorconfig`, `.nvmrc`, LICENSE, NOTICE.md, README.
@@ -29,6 +31,8 @@ Acceptance:
 
 ## M1: Rules and data
 
+Status: done on 2026-10-02, merged with M2's data gate. Two blind verifiers built independent tables of all 95 items: one from the official rulebook, one from the BGA implementation cross-checked with 7wd-io. The three-way check (`catalog/verify_test.go`) compares them with our catalog field by field and reports zero mismatches. Each ruling is recorded in [docs/rules/data-rulings.md](../rules/data-rulings.md). The rulebook prints no cost for the Sphinx, so that cost rests on the two implementations and our rules reference. One reviewer checked `docs/rules/` both for completeness and for copied wording (by matching seven-word sequences against the rulebook text), and a separate prose audit compared every rendered effect with the rules. No owner questions remain open.
+
 Scope:
 
 - Extract the card, wonder and token data from several independent sources, each extractor blind to the others, then reconcile them field by field. Every disagreement is settled by independent refuters, and anything still unresolved becomes a question for the owner.
@@ -43,6 +47,8 @@ Acceptance:
 - `docs/rules/sources.md` lists every source with its license.
 
 ## M2: Engine
+
+Status: done on 2026-10-02. Every slice below landed after an independent review. Measured at the end: engine coverage 94.7% and catalog 97.5%; a sweep of 2000 random and 2000 simple-policy games green with invariants after every action and all three victory types reached; and ten minutes of fuzzing (about 1.9 million playouts) found no crasher. One deviation from the plan: the rules-audit loop ran a single round, in which four finders wrote 94 black-box tests from the rules and none failed, and it stopped there to save model quota instead of waiting for two empty rounds. A deeper audit with stronger finders is queued for M11.
 
 Scope, as slices (each one green and committed on its own):
 
@@ -186,6 +192,7 @@ Scope:
 - A guided first game against the easiest bot, first-time tips, and a rules reference built from the real components.
 - A Persian locale stub with a right-to-left smoke fixture, and app-shell caching.
 - Hardening: nightly fuzzing at scale, a further security pass, replay download, and complete docs.
+- A deeper rules audit, carried over from M2: lens-specific finders with the strongest model write black-box tests until two rounds in a row find no new divergence.
 
 Acceptance:
 
