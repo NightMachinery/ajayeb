@@ -586,6 +586,51 @@ func TestKnownPitfalls(t *testing.T) {
 	}
 }
 
+// TestDataRulings pins the outcome of every adjudication of the three-way
+// data check (docs/rules/data-rulings.md), so a later edit that reverses one
+// fails here with the ruling named, not only as a fixture mismatch in
+// TestVerify.
+func TestDataRulings(t *testing.T) {
+	// Building ids follow the reference numbering, not the order of the
+	// rulebook's card lists. These are cards whose rulebook position differs.
+	for slug, want := range map[string]CardID{
+		"stone-pit": 2, "guard-tower": 12, "tavern": 17, "brewery": 38,
+		"circus": 47, "pretorium": 51, "arena": 56, "obelisk": 66,
+	} {
+		if got := card(t, slug).ID; got != want {
+			t.Errorf("%s has id %d, want %d (the reference numbering)", slug, got, want)
+		}
+	}
+
+	// The 2015 rulebook's Tribunal is our Courthouse, and its Courthouse is
+	// our Pretorium. A join by printed name would pair the wrong cards.
+	if d := card(t, "courthouse"); d.ID != 44 || d.Name != "Courthouse" || d.Age != 2 || d.Color != Blue ||
+		d.Cost != MustCost("WW G") || !slices.Equal(d.Effects, Fx(Points(5))) {
+		t.Errorf("courthouse = id %d %q age %d %s %s %v, want id 44 Courthouse, the Age II blue card for WW G worth 5 VP",
+			d.ID, d.Name, d.Age, d.Color, d.Cost, d.Effects)
+	}
+	if d := card(t, "pretorium"); d.ID != 51 || d.Name != "Pretorium" || d.Age != 3 || d.Color != Red ||
+		d.Cost != MustCost("8c") || !slices.Equal(d.Effects, Fx(Shields(3))) {
+		t.Errorf("pretorium = id %d %q age %d %s %s %v, want id 51 Pretorium, the Age III red card for 8c with 3 shields",
+			d.ID, d.Name, d.Age, d.Color, d.Cost, d.Effects)
+	}
+	if _, ok := CardBySlug("tribunal"); ok {
+		t.Error("tribunal is a slug; it must stay an alternative name of courthouse only")
+	}
+
+	// Display names keep our spelling, whatever case other sources use.
+	for slug, want := range map[string]string{"glass-blower": "Glass-Blower", "chamber-of-commerce": "Chamber of Commerce"} {
+		if got := card(t, slug).Name; got != want {
+			t.Errorf("%s is named %q, want %q", slug, got, want)
+		}
+	}
+
+	// The rulebook never prints the Sphinx's cost; it is S C GG, not free.
+	if c := wonder(t, "sphinx").Cost; c != MustCost("S C GG") {
+		t.Errorf("sphinx costs %s, want S C GG", c)
+	}
+}
+
 // TestSpotValues checks values that are easy to get wrong in other ways:
 // the coin and point amounts of specific cards, wonders and tokens.
 func TestSpotValues(t *testing.T) {
