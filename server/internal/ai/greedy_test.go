@@ -267,6 +267,25 @@ func TestGreedyMaxTimeAndProgress(t *testing.T) {
 	t.Logf("%d iterations in %v, %d reports", last.Iterations, elapsed, len(reports))
 }
 
+// TestGreedyAllocatesLittle: the search itself allocates nothing per
+// evaluated move, so a whole Choose makes only a handful of allocations
+// (design section 11, group 12: no allocations per iteration in a steady
+// state).
+func TestGreedyAllocatesLittle(t *testing.T) {
+	s := greedyMid(t)
+	bot := ai.NewGreedy(1, ai.GreedyConfig{})
+	obs := engine.Observe(&s, s.ToMove)
+	ctx := t.Context()
+	n := testing.AllocsPerRun(5, func() {
+		if _, err := bot.Choose(ctx, obs, ai.Budget{MaxIterations: 3}, nil); err != nil {
+			t.Fatal(err)
+		}
+	})
+	if n > 8 {
+		t.Fatalf("Choose allocates %v times", n)
+	}
+}
+
 func BenchmarkGreedyChoose(b *testing.B) {
 	s := greedyMid(b)
 	bot := ai.NewGreedy(1, ai.GreedyConfig{})

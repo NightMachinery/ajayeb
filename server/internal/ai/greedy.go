@@ -236,6 +236,10 @@ type greedySearch struct {
 	evals    int
 	stopped  bool
 	bufs     [greedyMaxDepth][engine.MaxLegalActions]engine.Action
+	// states holds one scratch state per depth. A local copy passed to the
+	// recursion would escape to the heap (escape analysis gives up on
+	// recursive calls), costing an allocation per evaluated move.
+	states [greedyMaxDepth]engine.State
 }
 
 // mine values c, reached by one of Greedy's own actions. extra is how many
@@ -252,15 +256,16 @@ func (sr *greedySearch) mine(c *engine.State, depth, extra int) float64 {
 	}
 	best := math.Inf(-1)
 	legal := engine.LegalActions(c, sr.bufs[depth][:0])
+	x := &sr.states[depth]
 	for _, a := range legal {
-		x := *c
-		engine.ApplyTrusted(&x, a)
-		v := sr.mine(&x, depth+1, extra-1)
+		*x = *c
+		engine.ApplyTrusted(x, a)
+		v := sr.mine(x, depth+1, extra-1)
 		if sr.stopped {
 			return 0
 		}
 		best = max(best, v)
-		if sr.won(&x, sr.me) {
+		if sr.won(x, sr.me) {
 			break
 		}
 	}
@@ -273,23 +278,24 @@ func (sr *greedySearch) reply(c *engine.State, depth, extra int) float64 {
 	worst := math.Inf(1)
 	opp := sr.me.Opp()
 	legal := engine.LegalActions(c, sr.bufs[depth][:0])
+	x := &sr.states[depth]
 	for _, a := range legal {
-		x := *c
-		engine.ApplyTrusted(&x, a)
+		*x = *c
+		engine.ApplyTrusted(x, a)
 		var v float64
 		switch {
 		case x.Over() || x.ToMove == sr.me:
-			v = sr.leaf(&x, 0)
+			v = sr.leaf(x, 0)
 		case extra > 0:
-			v = sr.reply(&x, depth+1, extra-1)
+			v = sr.reply(x, depth+1, extra-1)
 		default:
-			v = sr.leaf(&x, -sr.w.Tempo)
+			v = sr.leaf(x, -sr.w.Tempo)
 		}
 		if sr.stopped {
 			return 0
 		}
 		worst = min(worst, v)
-		if sr.won(&x, opp) {
+		if sr.won(x, opp) {
 			break
 		}
 	}
