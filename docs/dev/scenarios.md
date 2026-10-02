@@ -60,12 +60,16 @@ or, to start from a sequence of actions instead of a named scenario:
   lose precision on a 64-bit number.
 - `scenario`, when present, names one of `engine.NamedScenarioNames()`. The
   server looks it up, builds the state with `NewGameFromScenario`, and the
-  room starts from there with the scenario's `Trigger` already applied, so
-  the room opens exactly where the scenario's `Expect` says it lands.
-- `actions`, when present instead of `scenario`, is applied the same way
-  `Trigger` is: each key in order, through the ordinary legality check. This
-  lets a test or a manual session reach an arbitrary position without adding
-  a new named scenario for it.
+  room opens at that starting position, before the scenario's `Trigger`.
+  The trigger is not applied for the caller: a Playwright flow plays its
+  keys itself, by clicking the matching `[data-act]` buttons, and then
+  checks that the game landed where `Expect` says. That is what makes each
+  named scenario a test of the real UI for its flow, not just of the engine.
+- `actions`, when present instead of `scenario`, are applied to an ordinary
+  `NewGame(seed)` before the room opens: each key in order, through the
+  ordinary legality check, stopping with an error at the first illegal one.
+  This lets a test or a manual session reach an arbitrary position without
+  adding a new named scenario for it.
 - Exactly one of `scenario` and `actions` is given; the response is the
   room's code and its first view, the same shape a normal room's first
   message takes.
