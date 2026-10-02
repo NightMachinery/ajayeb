@@ -84,16 +84,25 @@ func TestPropertySimpleGames(t *testing.T) {
 }
 
 // sweepStats counts what the sweep exercised, so a silent regression in the
-// flow (games that never reach Age III, wonders never built) shows up.
+// flow (games that never reach Age III, wonders never built, no starter
+// choice by a weaker player, no science pair) shows up.
 type sweepStats struct {
 	plies, maxPly, ages3, chooseStarter, wonders, sevenWonders, builds, discards, reveals int
+
+	offCentre  int    // starter choices made by the weaker player (the pawn off centre)
+	boardPicks int    // board token choices opened by a science pair
+	loots      int    // looting tokens taken
+	early      int    // games won by a supremacy before Age III
+	victories  [4]int // finished games by engine.VictoryKind
 }
 
 func (st *sweepStats) report(t *testing.T, games int) {
 	t.Helper()
-	t.Logf("%d games, %d actions (longest %d): %d reached Age III, %d starter choices, %d builds, %d discards, %d wonders, %d games with seven wonders, %d reveals",
-		games, st.plies, st.maxPly, st.ages3, st.chooseStarter, st.builds, st.discards, st.wonders, st.sevenWonders, st.reveals)
-	if games >= 20 && (st.ages3 < games || st.builds == 0 || st.wonders == 0 || st.reveals == 0 || st.chooseStarter == 0) {
+	t.Logf("%d games, %d actions (longest %d): %d reached Age III, %d starter choices (%d off centre), %d builds, %d discards, %d wonders, %d games with seven wonders, %d reveals, %d board token choices, %d looting tokens taken; victories military %d, science %d, civilian %d (%d before Age III)",
+		games, st.plies, st.maxPly, st.ages3, st.chooseStarter, st.offCentre, st.builds, st.discards, st.wonders, st.sevenWonders, st.reveals,
+		st.boardPicks, st.loots, st.victories[engine.VictoryMilitary], st.victories[engine.VictoryScience], st.victories[engine.VictoryCivilian], st.early)
+	if games >= 20 && (st.ages3+st.early < games || st.builds == 0 || st.wonders == 0 || st.reveals == 0 || st.chooseStarter == 0 ||
+		st.offCentre == 0 || st.boardPicks == 0 || st.loots == 0 || st.victories[engine.VictoryCivilian] == 0) {
 		t.Errorf("the sweep did not exercise the flow: %+v", *st)
 	}
 }
@@ -143,12 +152,21 @@ func checkGame(t *testing.T, seed uint64, opts engine.Options, pols [2]enginetes
 			st.wonders++
 		}
 		for _, e := range ev {
-			if e.Kind == engine.EvReveal {
+			switch e.Kind {
+			case engine.EvReveal:
 				st.reveals++
+			case engine.EvLoot:
+				st.loots++
 			}
 		}
-		if s.Phase == engine.PhaseChooseStarter {
+		switch s.Phase {
+		case engine.PhaseChooseStarter:
 			st.chooseStarter++
+			if s.Military != 0 {
+				st.offCentre++
+			}
+		case engine.PhasePickBoardToken:
+			st.boardPicks++
 		}
 		if s.Age == 3 {
 			reachedIII = true
@@ -158,8 +176,15 @@ func checkGame(t *testing.T, seed uint64, opts engine.Options, pols [2]enginetes
 		t.Fatalf("seed %d: %d legal actions after the game is over", seed, len(got))
 	}
 	st.maxPly = max(st.maxPly, int(s.Ply))
-	if reachedIII {
+	if s.Result.Scores != engine.Scores(&s) {
+		t.Fatalf("seed %d: the result's scores %+v are not the final score sheet %+v", seed, s.Result.Scores, engine.Scores(&s))
+	}
+	st.victories[s.Result.Kind]++
+	switch {
+	case reachedIII:
 		st.ages3++
+	case s.Result.Kind == engine.VictoryMilitary || s.Result.Kind == engine.VictoryScience:
+		st.early++
 	}
 	if s.WondersBuilt == engine.MaxWondersBuilt {
 		st.sevenWonders++
