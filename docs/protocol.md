@@ -2,11 +2,68 @@
 
 This page is a stub. The full WebSocket message contract between the client
 and the server (`hello`, `join`, `act`, `state`, `reject`, and so on) arrives
-with milestone M4, once `internal/wire` exists. For now it documents two
+with milestone M4, once `internal/wire` exists. For now it documents three
 pieces of the contract that already exist in the engine and that other
 slices (the room, the store, `ajayeb-sim`, `ajayeb-drive`) need to agree on
-today: the recorded game log and the scenario format. Both are plain JSON, so
-a tool outside Go can read and write them without linking the engine.
+today: the view a viewer receives together with its events, the recorded game
+log, and the scenario format. All three are plain JSON: the log and the
+scenario format so a tool outside Go can read and write them without linking
+the engine, and the view and its events because that is exactly what the
+client consumes.
+
+## The view and its events
+
+A game state is never sent as-is. `internal/engine.ViewFor(state, viewer)`
+builds a `view.View`, a redacted snapshot for one viewer, and
+`internal/engine.FilterEvents(events, viewer)` redacts the events an action
+produced the same way. The viewer is seat 0, seat 1, or a spectator
+(`engine.Spectator`). The DTO types themselves live in `internal/view`, whose
+package comment (`server/internal/view/doc.go`) is the authoritative list of
+what is public and what is hidden; this section summarises it and points at
+the code that enforces it, `server/internal/engine/view.go` and
+`server/internal/engine/eventfilter.go`.
+
+Both functions build a whitelist: every field of the DTO is copied in
+individually from the part of the state that viewer may see, so a field
+nobody thought to redact cannot leak by accident. Hidden from every viewer
+until the game is over: the cards in face-down slots (only their backs
+show), the cards set aside from each age's deck (only their count), the
+deals of later ages, the guilds and wonders left in the box, the second
+draft round until the first one ends, and the progress tokens in the box
+(only their count). At game over these appear under the view's `revealed`
+section, unless the game's `hideAtEnd` option (see the game log below) keeps
+them hidden even then. `choices` and `disabled`, the legal actions, are
+filled in only for the seat to move; a spectator and the waiting seat always
+get empty lists.
+
+One secret is asymmetric: the three progress tokens the Great Library draws
+from the box. While that choice is open, only the deciding seat's view lists
+the drawn tokens, in `pending.tokens` and in matching `choices` entries;
+every other viewer's view shows only how many were drawn, in
+`pending.hiddenTokens`. The events agree: a `libraryDraw` event normally
+reports the token drawn, but it is always treated as private regardless of
+its own private flag, so every viewer but the drawer instead receives a
+public summary (the drawer's seat and the token's place in the offer,
+never the token itself). More generally, a private event reaches only the
+seat it names; every other viewer simply does not receive it.
+
+The protocol fixtures in `server/internal/engine/testdata/protocol/` are
+golden JSON files, one per named position, each recording what all three
+viewers (`seat0`, `seat1`, `spectator`) receive there: the full view and the
+filtered events, side by side. `pick-library-token.json` and
+`library-token-taken.json` show the Great Library asymmetry directly: the
+drawer's `pending.tokens` lists three slugs while the other two viewers see
+`pending.tokens` empty and `pending.hiddenTokens: 3`.
+`game-over-civilian.json`, `game-over-science.json` and
+`game-over-shared.json` show an ordinary end of game, where every viewer's
+`revealed` section lists the hidden cards, guilds, wonders and tokens;
+`game-over-military-hidden.json` sets `hideAtEnd`, and its views carry no
+`revealed` section at all. These fixtures are written and checked by
+`TestProtocolFixtures` in `server/internal/engine/view_test.go`
+(`go test ./internal/engine/ -run TestProtocolFixtures -update` after a
+deliberate change), and together they cover every phase, every kind of
+choice and every kind of event at least once, so the client's own tests and
+dev pages have a real example of each to read against.
 
 ## The game log
 

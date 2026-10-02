@@ -17,6 +17,7 @@ The pages describe the behaviour the engine is built and tested against. Where t
 6. [ages-scoring.md](ages-scoring.md): the end of an age and who starts the next one, the end of the game, the eight scoring categories, the tie-break and the shared victory.
 7. [decisions.md](decisions.md): our rulings on ambiguous points, each with its reason and the alternative we did not choose.
 8. [sources.md](sources.md): where the rules and card data come from, the licences of those sources, and what we never copy.
+9. [data-rulings.md](data-rulings.md): how each disagreement found by the three-way catalog data check was settled.
 
 ## The game on one page
 
