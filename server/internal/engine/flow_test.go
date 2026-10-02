@@ -666,8 +666,8 @@ func TestIllegalReasons(t *testing.T) {
 }
 
 // TestPendingChoiceLegality checks the legal set and the reasons of each
-// pending phase, in states built by hand (the hooks that open these phases
-// belong to later slices).
+// pending phase, in states built by hand, so that each phase is checked
+// apart from the wonder or pair that opens it in play.
 func TestPendingChoiceLegality(t *testing.T) {
 	base := enginetest.New(t, 12).Age(2).FirstPlayer(0).
 		City(0, "lumber-yard", "press").City(1, "quarry", "clay-pit", "glass-blower", "baths").

@@ -279,7 +279,7 @@ func TestRevealWaitsForThePendingChoice(t *testing.T) {
 	takeAt(t, &s, 5, 1) // seat A
 	takeAt(t, &s, 5, 7) // seat B, frees nothing face down
 	// Seat A takes (5,3), which frees the face-down (4,2), and its effect
-	// opens a token choice (built by hand: the S4 hooks open none).
+	// opens a token choice (set up by hand, without a pair).
 	seat := s.Active
 	i := mustSlot(t, 1, 5, 3)
 	c := takeSlot(&s, i)

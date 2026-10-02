@@ -51,7 +51,7 @@ import "github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
 //   - takeBoardToken(s, seat, token, ev) outcome (science.go): the whole
 //     board token choice of a pair (the token leaves the board, EvToken,
 //     then resolveTokenEffects). resolvePending's PhasePickBoardToken case
-//     calls it; the interim stub in pending.go already does.
+//     calls it.
 //   - wondersPlayAgain(p) bool: p owns Theology, so every wonder p builds
 //     grants another turn (never two).
 //   - checkSupremacy(s, ev) bool (score.go) and scienceSupremacy(s, seat,
