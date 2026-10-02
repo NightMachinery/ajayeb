@@ -4,13 +4,27 @@
 //
 // The engine is the only implementation of the rules in the project. The web
 // client runs no rules code. The server applies an action only when its
-// canonical key (for example "construct:baths" or "wonder:the-pyramids:baths")
+// canonical key (for example "construct:baths" or "wonder:pyramids:baths")
 // appears in the engine's legal actions for the seat that is to move, and it
 // stores the keys, not client-built objects, in the room log.
 //
 // Subpackages: catalog holds the typed card, wonder and token data and the
 // effect vocabulary; enginetest holds test builders, scripts and playout
 // policies.
+//
+// # Where things are
+//
+//   - state.go: State and its parts, the fixed-size value the whole game
+//     lives in; action.go: Action and its canonical keys (Key, ParseKey);
+//     events.go: the events Apply reports. These three files and
+//     catalog/types.go are frozen: change them only through the coordinator.
+//   - layout.go: the three age structures (slot positions, which slots cover
+//     which, face-up parity, AccessibleMask).
+//   - rng.go: the seeded generator NewGame shuffles with.
+//   - errors.go: IllegalError and its Reason codes, ErrBadKey,
+//     ErrMalformedAction.
+//   - hooks.go: the fixed seams between the turn machine (apply.go) and the
+//     effect rules (effects.go, wonders.go, pending.go), with their contracts.
 //
 // # Purity rules
 //
