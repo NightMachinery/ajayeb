@@ -245,6 +245,13 @@ func TestRevealsAreTheNewlyAccessibleFaceDownCards(t *testing.T) {
 			if s.Age != before.Age || before.Age == 0 {
 				continue // a new age was laid out (or the draft ended): nothing to compare
 			}
+			switch s.Phase {
+			case PhaseDestroyCard, PhaseBuildFromDiscard, PhasePickBoardToken, PhasePickLibraryToken, PhaseGameOver:
+				// The turn is not over (the reveals wait for the choice; see
+				// TestRevealWaitsForThePendingChoice), or the game ended in
+				// the middle of it and nothing more happens.
+				continue
+			}
 			var want []int
 			acc := Accessible(&s)
 			for i := range s.Slots {
