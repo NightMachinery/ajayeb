@@ -1,0 +1,74 @@
+id,name,age,back,color,coins,W,C,S,G,P,produce,produce_choice,trade_fix,shields,science,vp,coins_gain,coins_per,points_per,chain_in,chain_out
+1,Lumber Yard,1,age1,brown,,,,,,,W1,,,,,,,,,,
+2,Stone Pit,1,age1,brown,1,,,,,,S1,,,,,,,,,,
+3,Clay Pool,1,age1,brown,,,,,,,C1,,,,,,,,,,
+4,Logging Camp,1,age1,brown,1,,,,,,W1,,,,,,,,,,
+5,Quarry,1,age1,brown,,,,,,,S1,,,,,,,,,,
+6,Clay Pit,1,age1,brown,1,,,,,,C1,,,,,,,,,,
+7,Glassworks,1,age1,grey,1,,,,,,G1,,,,,,,,,,
+8,Press,1,age1,grey,1,,,,,,P1,,,,,,,,,,
+9,Stable,1,age1,red,,1,,,,,,,,1,,,,,,,horseshoe
+10,Garrison,1,age1,red,,,1,,,,,,,1,,,,,,,sword
+11,Palisade,1,age1,red,2,,,,,,,,,1,,,,,,,tower
+12,Guard Tower,1,age1,red,,,,,,,,,,1,,,,,,,
+13,Scriptorium,1,age1,green,2,,,,,,,,,,quill,,,,,,book
+14,Workshop,1,age1,green,,,,,,1,,,,,set-square,1,,,,,
+15,Pharmacist,1,age1,green,2,,,,,,,,,,mortar,,,,,,gear
+16,Apothecary,1,age1,green,,,,,1,,,,,,wheel,1,,,,,
+17,Tavern,1,age1,yellow,,,,,,,,,,,,,4,,,,amphora
+18,Stone Reserve,1,age1,yellow,3,,,,,,,,S,,,,,,,,
+19,Clay Reserve,1,age1,yellow,3,,,,,,,,C,,,,,,,,
+20,Wood Reserve,1,age1,yellow,3,,,,,,,,W,,,,,,,,
+21,Theater,1,age1,blue,,,,,,,,,,,,3,,,,,mask
+22,Altar,1,age1,blue,,,,,,,,,,,,3,,,,,moon
+23,Baths,1,age1,blue,,,,1,,,,,,,,3,,,,,drop
+24,Sawmill,2,age2,brown,2,,,,,,W2,,,,,,,,,,
+25,Shelf Quarry,2,age2,brown,2,,,,,,S2,,,,,,,,,,
+26,Brickyard,2,age2,brown,2,,,,,,C2,,,,,,,,,,
+27,Glass-Blower,2,age2,grey,,,,,,,G1,,,,,,,,,,
+28,Drying Room,2,age2,grey,,,,,,,P1,,,,,,,,,,
+29,Horse Breeders,2,age2,red,,1,1,,,,,,,1,,,,,,horseshoe,
+30,Barracks,2,age2,red,3,,,,,,,,,1,,,,,,sword,
+31,Walls,2,age2,red,,,,2,,,,,,2,,,,,,,
+32,Archery Range,2,age2,red,,1,,1,,1,,,,2,,,,,,,target
+33,Parade Ground,2,age2,red,,,2,,1,,,,,2,,,,,,,helmet
+34,School,2,age2,green,,1,,,,2,,,,,wheel,1,,,,,lyre
+35,Laboratory,2,age2,green,,1,,,2,,,,,,set-square,1,,,,,lamp
+36,Dispensary,2,age2,green,,,2,1,,,,,,,mortar,2,,,,gear,
+37,Library,2,age2,green,,1,,1,1,,,,,,quill,2,,,,book,
+38,Brewery,2,age2,yellow,,,,,,,,,,,,,6,,,,barrel
+39,Forum,2,age2,yellow,3,,1,,,,,G|P,,,,,,,,,
+40,Caravansery,2,age2,yellow,2,,,,1,1,,W|C|S,,,,,,,,,
+41,Customs House,2,age2,yellow,4,,,,,,,,G|P,,,,,,,,
+42,Temple,2,age2,blue,,1,,,,1,,,,,,4,,,,moon,sun
+43,Statue,2,age2,blue,,,2,,,,,,,,,4,,,,mask,column
+44,Courthouse,2,age2,blue,,2,,,1,,,,,,,5,,,,,
+45,Aqueduct,2,age2,blue,,,,3,,,,,,,,5,,,,drop,
+46,Rostrum,2,age2,blue,,1,,1,,,,,,,,4,,,,,temple-facade
+47,Circus,3,age3,red,,,2,2,,,,,,2,,,,,,helmet,
+48,Arsenal,3,age3,red,,2,3,,,,,,,3,,,,,,,
+49,Siege Workshop,3,age3,red,,3,,,1,,,,,2,,,,,,target,
+50,Fortifications,3,age3,red,,,1,2,,1,,,,2,,,,,,tower,
+51,Pretorium,3,age3,red,8,,,,,,,,,3,,,,,,,
+52,Academy,3,age3,green,,1,,1,2,,,,,,sundial,3,,,,,
+53,University,3,age3,green,,,1,,1,1,,,,,globe,2,,,,lyre,
+54,Study,3,age3,green,,2,,,1,1,,,,,sundial,3,,,,,
+55,Observatory,3,age3,green,,,,1,,2,,,,,globe,2,,,,lamp,
+56,Arena,3,age3,yellow,,1,1,1,,,,,,,,3,,wonder:2:self,,barrel,
+57,Chamber of Commerce,3,age3,yellow,,,,,,2,,,,,,3,,grey:3:self,,,
+58,Port,3,age3,yellow,,1,,,1,1,,,,,,3,,brown:2:self,,,
+59,Lighthouse,3,age3,yellow,,,2,,1,,,,,,,3,,yellow:1:self,,amphora,
+60,Armory,3,age3,yellow,,,,2,1,,,,,,,3,,red:1:self,,,
+61,Palace,3,age3,blue,,1,1,1,2,,,,,,,7,,,,,
+62,Gardens,3,age3,blue,,2,2,,,,,,,,,6,,,,column,
+63,Pantheon,3,age3,blue,,1,1,,,2,,,,,,6,,,,sun,
+64,Town Hall,3,age3,blue,,2,,3,,,,,,,,7,,,,,
+65,Senate,3,age3,blue,,,2,1,,1,,,,,,5,,,,temple-facade,
+66,Obelisk,3,age3,blue,,,,2,1,,,,,,,5,,,,,
+67,Merchants Guild,3,guild,purple,,1,1,,1,1,,,,,,,,yellow:1:max,yellow:1:max,,
+68,Shipowners Guild,3,guild,purple,,,1,1,1,1,,,,,,,,brown+grey:1:max,brown+grey:1:max,,
+69,Builders Guild,3,guild,purple,,1,1,2,1,,,,,,,,,,wonder:2:max,,
+70,Magistrates Guild,3,guild,purple,,2,1,,,1,,,,,,,,blue:1:max,blue:1:max,,
+71,Scientists Guild,3,guild,purple,,2,2,,,,,,,,,,,green:1:max,green:1:max,,
+72,Moneylenders Guild,3,guild,purple,,2,,2,,,,,,,,,,,coins3:1:max,,
+73,Tacticians Guild,3,guild,purple,,,1,2,,1,,,,,,,,red:1:max,red:1:max,,

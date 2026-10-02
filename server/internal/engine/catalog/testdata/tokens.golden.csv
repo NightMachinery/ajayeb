@@ -1,0 +1,11 @@
+id,name,coins_gain,vp,vp_per_token,discount,trade_income,science,extra_shield,wonders_play_again,chain_bonus
+1,Agriculture,6,4,,,,,,,
+2,Architecture,,,,wonder,,,,,
+3,Economy,,,,,1,,,,
+4,Law,,,,,,scales,,,
+5,Masonry,,,,blue,,,,,
+6,Mathematics,,,3,,,,,,
+7,Philosophy,,7,,,,,,,
+8,Strategy,,,,,,,1,,
+9,Theology,,,,,,,,1,
+10,Urbanism,6,,,,,,,,4
