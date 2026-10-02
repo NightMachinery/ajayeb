@@ -1,0 +1,6 @@
+package view
+
+// SchemaVersion is the version of the view DTO. A View carries it in its
+// schema field, and an incompatible change to any type in this package bumps
+// it, so a client can refuse a view it does not understand.
+const SchemaVersion = 1
