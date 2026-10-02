@@ -1,0 +1,1895 @@
+{
+ "name": "end",
+ "about": "the end of the game",
+ "viewers": [
+  {
+   "viewer": "seat0",
+   "view": {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 69,
+    "viewer": 0,
+    "phase": "gameOver",
+    "age": 3,
+    "active": 1,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "structure": [
+     {
+      "index": 0,
+      "row": 1,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 1,
+      "row": 1,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 2,
+      "row": 2,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 3,
+      "row": 2,
+      "col": 6,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 4,
+      "row": 2,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 5,
+      "row": 3,
+      "col": 3,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 6,
+      "row": 3,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 7,
+      "row": 3,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 8,
+      "row": 3,
+      "col": 9,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 9,
+      "row": 4,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 10,
+      "row": 4,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 11,
+      "row": 5,
+      "col": 3,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 12,
+      "row": 5,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 13,
+      "row": 5,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 14,
+      "row": 5,
+      "col": 9,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 15,
+      "row": 6,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 16,
+      "row": 6,
+      "col": 6,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 17,
+      "row": 6,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 18,
+      "row": 7,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 19,
+      "row": 7,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     }
+    ],
+    "players": [
+     {
+      "seat": 0,
+      "coins": 3,
+      "city": [
+       "lumber-yard",
+       "garrison",
+       "workshop",
+       "tavern",
+       "clay-reserve",
+       "altar",
+       "baths",
+       "barracks",
+       "walls",
+       "dispensary",
+       "library",
+       "forum",
+       "aqueduct",
+       "arsenal",
+       "study",
+       "gardens",
+       "senate",
+       "obelisk",
+       "builders-guild"
+      ],
+      "tokens": [],
+      "wonders": [
+       {
+        "wonder": "mausoleum",
+        "built": true,
+        "removed": false,
+        "tucked": "chamber-of-commerce"
+       },
+       {
+        "wonder": "sphinx",
+        "built": true,
+        "removed": false,
+        "tucked": "courthouse"
+       },
+       {
+        "wonder": "great-lighthouse",
+        "built": true,
+        "removed": false,
+        "tucked": "clay-pit"
+       },
+       {
+        "wonder": "appian-way",
+        "built": true,
+        "removed": false,
+        "tucked": "laboratory"
+       }
+      ],
+      "production": {
+       "fixed": {
+        "wood": 1,
+        "clay": 0,
+        "stone": 0,
+        "glass": 0,
+        "papyrus": 0
+       },
+       "producers": [
+        {
+         "card": "forum",
+         "resources": [
+          "glass",
+          "papyrus"
+         ]
+        },
+        {
+         "wonder": "great-lighthouse",
+         "resources": [
+          "wood",
+          "clay",
+          "stone"
+         ]
+        }
+       ],
+       "tradeFix": [
+        "clay"
+       ]
+      },
+      "tradePrices": {
+       "wood": 4,
+       "clay": 1,
+       "stone": 2,
+       "glass": 3,
+       "papyrus": 2
+      },
+      "science": {
+       "symbols": [
+        {
+         "symbol": "sundial",
+         "count": 1
+        },
+        {
+         "symbol": "mortar",
+         "count": 1
+        },
+        {
+         "symbol": "set-square",
+         "count": 1
+        },
+        {
+         "symbol": "quill",
+         "count": 1
+        }
+       ],
+       "distinct": 4
+      },
+      "chains": [
+       "sword",
+       "amphora",
+       "moon",
+       "drop"
+      ],
+      "discardValue": 5
+     },
+     {
+      "seat": 1,
+      "coins": 9,
+      "city": [
+       "glassworks",
+       "palisade",
+       "guard-tower",
+       "scriptorium",
+       "apothecary",
+       "theater",
+       "sawmill",
+       "brickyard",
+       "parade-ground",
+       "circus",
+       "fortifications",
+       "academy",
+       "port",
+       "pantheon"
+      ],
+      "tokens": [],
+      "wonders": [
+       {
+        "wonder": "great-library",
+        "built": false,
+        "removed": false,
+        "cost": {
+         "affordable": true,
+         "shortfall": 0,
+         "chainFree": false,
+         "printedCoins": 0,
+         "own": {
+          "wood": 2,
+          "clay": 0,
+          "stone": 0,
+          "glass": 1,
+          "papyrus": 0
+         },
+         "producers": [],
+         "trade": [
+          {
+           "resource": "wood",
+           "units": 1,
+           "unitPrice": 3,
+           "fixed": false,
+           "coins": 3
+          },
+          {
+           "resource": "papyrus",
+           "units": 1,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 2
+          }
+         ],
+         "tradeTotal": 5,
+         "total": 5,
+         "toOpponent": 0,
+         "urbanismBonus": 0
+        }
+       },
+       {
+        "wonder": "circus-maximus",
+        "built": true,
+        "removed": false,
+        "tucked": "school"
+       },
+       {
+        "wonder": "colossus",
+        "built": true,
+        "removed": false,
+        "tucked": "quarry"
+       },
+       {
+        "wonder": "pyramids",
+        "built": false,
+        "removed": false,
+        "cost": {
+         "affordable": true,
+         "shortfall": 0,
+         "chainFree": false,
+         "printedCoins": 0,
+         "own": {
+          "wood": 0,
+          "clay": 0,
+          "stone": 0,
+          "glass": 0,
+          "papyrus": 0
+         },
+         "producers": [],
+         "trade": [
+          {
+           "resource": "stone",
+           "units": 3,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 6
+          },
+          {
+           "resource": "papyrus",
+           "units": 1,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 2
+          }
+         ],
+         "tradeTotal": 8,
+         "total": 8,
+         "toOpponent": 0,
+         "urbanismBonus": 0
+        }
+       }
+      ],
+      "production": {
+       "fixed": {
+        "wood": 2,
+        "clay": 2,
+        "stone": 0,
+        "glass": 1,
+        "papyrus": 0
+       },
+       "producers": [],
+       "tradeFix": []
+      },
+      "tradePrices": {
+       "wood": 3,
+       "clay": 2,
+       "stone": 2,
+       "glass": 2,
+       "papyrus": 2
+      },
+      "science": {
+       "symbols": [
+        {
+         "symbol": "sundial",
+         "count": 1
+        },
+        {
+         "symbol": "quill",
+         "count": 1
+        },
+        {
+         "symbol": "wheel",
+         "count": 1
+        }
+       ],
+       "distinct": 3
+      },
+      "chains": [
+       "tower",
+       "book",
+       "mask",
+       "helmet"
+      ],
+      "discardValue": 3
+     }
+    ],
+    "military": {
+     "position": -4,
+     "looting": [
+      {
+       "at": -6,
+       "seat": 0,
+       "value": 5,
+       "present": true
+      },
+      {
+       "at": -3,
+       "seat": 0,
+       "value": 2,
+       "present": false
+      },
+      {
+       "at": 3,
+       "seat": 1,
+       "value": 2,
+       "present": true
+      },
+      {
+       "at": 6,
+       "seat": 1,
+       "value": 5,
+       "present": true
+      }
+     ]
+    },
+    "boardTokens": [
+     "agriculture",
+     "architecture",
+     "philosophy",
+     "theology",
+     "urbanism"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [
+     "clay-pool",
+     "logging-camp",
+     "pharmacist",
+     "stone-reserve",
+     "wood-reserve",
+     "drying-room",
+     "horse-breeders",
+     "archery-range",
+     "brewery",
+     "customs-house",
+     "temple",
+     "statue",
+     "rostrum",
+     "pretorium",
+     "university",
+     "observatory",
+     "arena",
+     "palace",
+     "town-hall",
+     "scientists-guild",
+     "tacticians-guild"
+    ],
+    "wondersBuilt": 6,
+    "choices": [],
+    "disabled": [],
+    "scorePreview": [
+     {
+      "blue": 27,
+      "green": 8,
+      "yellow": 0,
+      "purple": 8,
+      "wonders": 15,
+      "tokens": 0,
+      "coins": 1,
+      "military": 0,
+      "total": 59
+     },
+     {
+      "blue": 9,
+      "green": 4,
+      "yellow": 3,
+      "purple": 0,
+      "wonders": 6,
+      "tokens": 0,
+      "coins": 3,
+      "military": 5,
+      "total": 30
+     }
+    ],
+    "result": {
+     "victory": "civilian",
+     "winner": 0,
+     "shared": false,
+     "scores": [
+      {
+       "blue": 27,
+       "green": 8,
+       "yellow": 0,
+       "purple": 8,
+       "wonders": 15,
+       "tokens": 0,
+       "coins": 1,
+       "military": 0,
+       "total": 59
+      },
+      {
+       "blue": 9,
+       "green": 4,
+       "yellow": 3,
+       "purple": 0,
+       "wonders": 6,
+       "tokens": 0,
+       "coins": 3,
+       "military": 5,
+       "total": 30
+      }
+     ]
+    },
+    "revealed": {
+     "removed": [
+      {
+       "age": 1,
+       "cards": [
+        "stone-pit",
+        "press",
+        "stable"
+       ]
+      },
+      {
+       "age": 2,
+       "cards": [
+        "glass-blower",
+        "shelf-quarry",
+        "caravansery"
+       ]
+      },
+      {
+       "age": 3,
+       "cards": [
+        "siege-workshop",
+        "lighthouse",
+        "armory"
+       ]
+      }
+     ],
+     "undealt": [],
+     "faceDown": [],
+     "boxGuilds": [
+      "shipowners-guild",
+      "magistrates-guild",
+      "moneylenders-guild",
+      "merchants-guild"
+     ],
+     "boxWonders": [
+      "hanging-gardens",
+      "piraeus",
+      "temple-of-artemis",
+      "statue-of-zeus"
+     ],
+     "boxTokens": [
+      "law",
+      "economy",
+      "mathematics",
+      "masonry",
+      "strategy"
+     ]
+    }
+   },
+   "events": [
+    {
+     "kind": "discard",
+     "private": false,
+     "seat": 1,
+     "card": "arena",
+     "amount": 3
+    },
+    {
+     "kind": "gameOver",
+     "private": false,
+     "victory": "civilian",
+     "winner": 0
+    }
+   ]
+  },
+  {
+   "viewer": "seat1",
+   "view": {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 69,
+    "viewer": 1,
+    "phase": "gameOver",
+    "age": 3,
+    "active": 1,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "structure": [
+     {
+      "index": 0,
+      "row": 1,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 1,
+      "row": 1,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 2,
+      "row": 2,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 3,
+      "row": 2,
+      "col": 6,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 4,
+      "row": 2,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 5,
+      "row": 3,
+      "col": 3,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 6,
+      "row": 3,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 7,
+      "row": 3,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 8,
+      "row": 3,
+      "col": 9,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 9,
+      "row": 4,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 10,
+      "row": 4,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 11,
+      "row": 5,
+      "col": 3,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 12,
+      "row": 5,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 13,
+      "row": 5,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 14,
+      "row": 5,
+      "col": 9,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 15,
+      "row": 6,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 16,
+      "row": 6,
+      "col": 6,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 17,
+      "row": 6,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 18,
+      "row": 7,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 19,
+      "row": 7,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     }
+    ],
+    "players": [
+     {
+      "seat": 0,
+      "coins": 3,
+      "city": [
+       "lumber-yard",
+       "garrison",
+       "workshop",
+       "tavern",
+       "clay-reserve",
+       "altar",
+       "baths",
+       "barracks",
+       "walls",
+       "dispensary",
+       "library",
+       "forum",
+       "aqueduct",
+       "arsenal",
+       "study",
+       "gardens",
+       "senate",
+       "obelisk",
+       "builders-guild"
+      ],
+      "tokens": [],
+      "wonders": [
+       {
+        "wonder": "mausoleum",
+        "built": true,
+        "removed": false,
+        "tucked": "chamber-of-commerce"
+       },
+       {
+        "wonder": "sphinx",
+        "built": true,
+        "removed": false,
+        "tucked": "courthouse"
+       },
+       {
+        "wonder": "great-lighthouse",
+        "built": true,
+        "removed": false,
+        "tucked": "clay-pit"
+       },
+       {
+        "wonder": "appian-way",
+        "built": true,
+        "removed": false,
+        "tucked": "laboratory"
+       }
+      ],
+      "production": {
+       "fixed": {
+        "wood": 1,
+        "clay": 0,
+        "stone": 0,
+        "glass": 0,
+        "papyrus": 0
+       },
+       "producers": [
+        {
+         "card": "forum",
+         "resources": [
+          "glass",
+          "papyrus"
+         ]
+        },
+        {
+         "wonder": "great-lighthouse",
+         "resources": [
+          "wood",
+          "clay",
+          "stone"
+         ]
+        }
+       ],
+       "tradeFix": [
+        "clay"
+       ]
+      },
+      "tradePrices": {
+       "wood": 4,
+       "clay": 1,
+       "stone": 2,
+       "glass": 3,
+       "papyrus": 2
+      },
+      "science": {
+       "symbols": [
+        {
+         "symbol": "sundial",
+         "count": 1
+        },
+        {
+         "symbol": "mortar",
+         "count": 1
+        },
+        {
+         "symbol": "set-square",
+         "count": 1
+        },
+        {
+         "symbol": "quill",
+         "count": 1
+        }
+       ],
+       "distinct": 4
+      },
+      "chains": [
+       "sword",
+       "amphora",
+       "moon",
+       "drop"
+      ],
+      "discardValue": 5
+     },
+     {
+      "seat": 1,
+      "coins": 9,
+      "city": [
+       "glassworks",
+       "palisade",
+       "guard-tower",
+       "scriptorium",
+       "apothecary",
+       "theater",
+       "sawmill",
+       "brickyard",
+       "parade-ground",
+       "circus",
+       "fortifications",
+       "academy",
+       "port",
+       "pantheon"
+      ],
+      "tokens": [],
+      "wonders": [
+       {
+        "wonder": "great-library",
+        "built": false,
+        "removed": false,
+        "cost": {
+         "affordable": true,
+         "shortfall": 0,
+         "chainFree": false,
+         "printedCoins": 0,
+         "own": {
+          "wood": 2,
+          "clay": 0,
+          "stone": 0,
+          "glass": 1,
+          "papyrus": 0
+         },
+         "producers": [],
+         "trade": [
+          {
+           "resource": "wood",
+           "units": 1,
+           "unitPrice": 3,
+           "fixed": false,
+           "coins": 3
+          },
+          {
+           "resource": "papyrus",
+           "units": 1,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 2
+          }
+         ],
+         "tradeTotal": 5,
+         "total": 5,
+         "toOpponent": 0,
+         "urbanismBonus": 0
+        }
+       },
+       {
+        "wonder": "circus-maximus",
+        "built": true,
+        "removed": false,
+        "tucked": "school"
+       },
+       {
+        "wonder": "colossus",
+        "built": true,
+        "removed": false,
+        "tucked": "quarry"
+       },
+       {
+        "wonder": "pyramids",
+        "built": false,
+        "removed": false,
+        "cost": {
+         "affordable": true,
+         "shortfall": 0,
+         "chainFree": false,
+         "printedCoins": 0,
+         "own": {
+          "wood": 0,
+          "clay": 0,
+          "stone": 0,
+          "glass": 0,
+          "papyrus": 0
+         },
+         "producers": [],
+         "trade": [
+          {
+           "resource": "stone",
+           "units": 3,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 6
+          },
+          {
+           "resource": "papyrus",
+           "units": 1,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 2
+          }
+         ],
+         "tradeTotal": 8,
+         "total": 8,
+         "toOpponent": 0,
+         "urbanismBonus": 0
+        }
+       }
+      ],
+      "production": {
+       "fixed": {
+        "wood": 2,
+        "clay": 2,
+        "stone": 0,
+        "glass": 1,
+        "papyrus": 0
+       },
+       "producers": [],
+       "tradeFix": []
+      },
+      "tradePrices": {
+       "wood": 3,
+       "clay": 2,
+       "stone": 2,
+       "glass": 2,
+       "papyrus": 2
+      },
+      "science": {
+       "symbols": [
+        {
+         "symbol": "sundial",
+         "count": 1
+        },
+        {
+         "symbol": "quill",
+         "count": 1
+        },
+        {
+         "symbol": "wheel",
+         "count": 1
+        }
+       ],
+       "distinct": 3
+      },
+      "chains": [
+       "tower",
+       "book",
+       "mask",
+       "helmet"
+      ],
+      "discardValue": 3
+     }
+    ],
+    "military": {
+     "position": -4,
+     "looting": [
+      {
+       "at": -6,
+       "seat": 0,
+       "value": 5,
+       "present": true
+      },
+      {
+       "at": -3,
+       "seat": 0,
+       "value": 2,
+       "present": false
+      },
+      {
+       "at": 3,
+       "seat": 1,
+       "value": 2,
+       "present": true
+      },
+      {
+       "at": 6,
+       "seat": 1,
+       "value": 5,
+       "present": true
+      }
+     ]
+    },
+    "boardTokens": [
+     "agriculture",
+     "architecture",
+     "philosophy",
+     "theology",
+     "urbanism"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [
+     "clay-pool",
+     "logging-camp",
+     "pharmacist",
+     "stone-reserve",
+     "wood-reserve",
+     "drying-room",
+     "horse-breeders",
+     "archery-range",
+     "brewery",
+     "customs-house",
+     "temple",
+     "statue",
+     "rostrum",
+     "pretorium",
+     "university",
+     "observatory",
+     "arena",
+     "palace",
+     "town-hall",
+     "scientists-guild",
+     "tacticians-guild"
+    ],
+    "wondersBuilt": 6,
+    "choices": [],
+    "disabled": [],
+    "scorePreview": [
+     {
+      "blue": 27,
+      "green": 8,
+      "yellow": 0,
+      "purple": 8,
+      "wonders": 15,
+      "tokens": 0,
+      "coins": 1,
+      "military": 0,
+      "total": 59
+     },
+     {
+      "blue": 9,
+      "green": 4,
+      "yellow": 3,
+      "purple": 0,
+      "wonders": 6,
+      "tokens": 0,
+      "coins": 3,
+      "military": 5,
+      "total": 30
+     }
+    ],
+    "result": {
+     "victory": "civilian",
+     "winner": 0,
+     "shared": false,
+     "scores": [
+      {
+       "blue": 27,
+       "green": 8,
+       "yellow": 0,
+       "purple": 8,
+       "wonders": 15,
+       "tokens": 0,
+       "coins": 1,
+       "military": 0,
+       "total": 59
+      },
+      {
+       "blue": 9,
+       "green": 4,
+       "yellow": 3,
+       "purple": 0,
+       "wonders": 6,
+       "tokens": 0,
+       "coins": 3,
+       "military": 5,
+       "total": 30
+      }
+     ]
+    },
+    "revealed": {
+     "removed": [
+      {
+       "age": 1,
+       "cards": [
+        "stone-pit",
+        "press",
+        "stable"
+       ]
+      },
+      {
+       "age": 2,
+       "cards": [
+        "glass-blower",
+        "shelf-quarry",
+        "caravansery"
+       ]
+      },
+      {
+       "age": 3,
+       "cards": [
+        "siege-workshop",
+        "lighthouse",
+        "armory"
+       ]
+      }
+     ],
+     "undealt": [],
+     "faceDown": [],
+     "boxGuilds": [
+      "shipowners-guild",
+      "magistrates-guild",
+      "moneylenders-guild",
+      "merchants-guild"
+     ],
+     "boxWonders": [
+      "hanging-gardens",
+      "piraeus",
+      "temple-of-artemis",
+      "statue-of-zeus"
+     ],
+     "boxTokens": [
+      "law",
+      "economy",
+      "mathematics",
+      "masonry",
+      "strategy"
+     ]
+    }
+   },
+   "events": [
+    {
+     "kind": "discard",
+     "private": false,
+     "seat": 1,
+     "card": "arena",
+     "amount": 3
+    },
+    {
+     "kind": "gameOver",
+     "private": false,
+     "victory": "civilian",
+     "winner": 0
+    }
+   ]
+  },
+  {
+   "viewer": "spectator",
+   "view": {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 69,
+    "phase": "gameOver",
+    "age": 3,
+    "active": 1,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "structure": [
+     {
+      "index": 0,
+      "row": 1,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 1,
+      "row": 1,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 2,
+      "row": 2,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 3,
+      "row": 2,
+      "col": 6,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 4,
+      "row": 2,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 5,
+      "row": 3,
+      "col": 3,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 6,
+      "row": 3,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 7,
+      "row": 3,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 8,
+      "row": 3,
+      "col": 9,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 9,
+      "row": 4,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 10,
+      "row": 4,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 11,
+      "row": 5,
+      "col": 3,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 12,
+      "row": 5,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 13,
+      "row": 5,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 14,
+      "row": 5,
+      "col": 9,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 15,
+      "row": 6,
+      "col": 4,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 16,
+      "row": 6,
+      "col": 6,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 17,
+      "row": 6,
+      "col": 8,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 18,
+      "row": 7,
+      "col": 5,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     },
+     {
+      "index": 19,
+      "row": 7,
+      "col": 7,
+      "state": "empty",
+      "accessible": false,
+      "coveredBy": []
+     }
+    ],
+    "players": [
+     {
+      "seat": 0,
+      "coins": 3,
+      "city": [
+       "lumber-yard",
+       "garrison",
+       "workshop",
+       "tavern",
+       "clay-reserve",
+       "altar",
+       "baths",
+       "barracks",
+       "walls",
+       "dispensary",
+       "library",
+       "forum",
+       "aqueduct",
+       "arsenal",
+       "study",
+       "gardens",
+       "senate",
+       "obelisk",
+       "builders-guild"
+      ],
+      "tokens": [],
+      "wonders": [
+       {
+        "wonder": "mausoleum",
+        "built": true,
+        "removed": false,
+        "tucked": "chamber-of-commerce"
+       },
+       {
+        "wonder": "sphinx",
+        "built": true,
+        "removed": false,
+        "tucked": "courthouse"
+       },
+       {
+        "wonder": "great-lighthouse",
+        "built": true,
+        "removed": false,
+        "tucked": "clay-pit"
+       },
+       {
+        "wonder": "appian-way",
+        "built": true,
+        "removed": false,
+        "tucked": "laboratory"
+       }
+      ],
+      "production": {
+       "fixed": {
+        "wood": 1,
+        "clay": 0,
+        "stone": 0,
+        "glass": 0,
+        "papyrus": 0
+       },
+       "producers": [
+        {
+         "card": "forum",
+         "resources": [
+          "glass",
+          "papyrus"
+         ]
+        },
+        {
+         "wonder": "great-lighthouse",
+         "resources": [
+          "wood",
+          "clay",
+          "stone"
+         ]
+        }
+       ],
+       "tradeFix": [
+        "clay"
+       ]
+      },
+      "tradePrices": {
+       "wood": 4,
+       "clay": 1,
+       "stone": 2,
+       "glass": 3,
+       "papyrus": 2
+      },
+      "science": {
+       "symbols": [
+        {
+         "symbol": "sundial",
+         "count": 1
+        },
+        {
+         "symbol": "mortar",
+         "count": 1
+        },
+        {
+         "symbol": "set-square",
+         "count": 1
+        },
+        {
+         "symbol": "quill",
+         "count": 1
+        }
+       ],
+       "distinct": 4
+      },
+      "chains": [
+       "sword",
+       "amphora",
+       "moon",
+       "drop"
+      ],
+      "discardValue": 5
+     },
+     {
+      "seat": 1,
+      "coins": 9,
+      "city": [
+       "glassworks",
+       "palisade",
+       "guard-tower",
+       "scriptorium",
+       "apothecary",
+       "theater",
+       "sawmill",
+       "brickyard",
+       "parade-ground",
+       "circus",
+       "fortifications",
+       "academy",
+       "port",
+       "pantheon"
+      ],
+      "tokens": [],
+      "wonders": [
+       {
+        "wonder": "great-library",
+        "built": false,
+        "removed": false,
+        "cost": {
+         "affordable": true,
+         "shortfall": 0,
+         "chainFree": false,
+         "printedCoins": 0,
+         "own": {
+          "wood": 2,
+          "clay": 0,
+          "stone": 0,
+          "glass": 1,
+          "papyrus": 0
+         },
+         "producers": [],
+         "trade": [
+          {
+           "resource": "wood",
+           "units": 1,
+           "unitPrice": 3,
+           "fixed": false,
+           "coins": 3
+          },
+          {
+           "resource": "papyrus",
+           "units": 1,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 2
+          }
+         ],
+         "tradeTotal": 5,
+         "total": 5,
+         "toOpponent": 0,
+         "urbanismBonus": 0
+        }
+       },
+       {
+        "wonder": "circus-maximus",
+        "built": true,
+        "removed": false,
+        "tucked": "school"
+       },
+       {
+        "wonder": "colossus",
+        "built": true,
+        "removed": false,
+        "tucked": "quarry"
+       },
+       {
+        "wonder": "pyramids",
+        "built": false,
+        "removed": false,
+        "cost": {
+         "affordable": true,
+         "shortfall": 0,
+         "chainFree": false,
+         "printedCoins": 0,
+         "own": {
+          "wood": 0,
+          "clay": 0,
+          "stone": 0,
+          "glass": 0,
+          "papyrus": 0
+         },
+         "producers": [],
+         "trade": [
+          {
+           "resource": "stone",
+           "units": 3,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 6
+          },
+          {
+           "resource": "papyrus",
+           "units": 1,
+           "unitPrice": 2,
+           "fixed": false,
+           "coins": 2
+          }
+         ],
+         "tradeTotal": 8,
+         "total": 8,
+         "toOpponent": 0,
+         "urbanismBonus": 0
+        }
+       }
+      ],
+      "production": {
+       "fixed": {
+        "wood": 2,
+        "clay": 2,
+        "stone": 0,
+        "glass": 1,
+        "papyrus": 0
+       },
+       "producers": [],
+       "tradeFix": []
+      },
+      "tradePrices": {
+       "wood": 3,
+       "clay": 2,
+       "stone": 2,
+       "glass": 2,
+       "papyrus": 2
+      },
+      "science": {
+       "symbols": [
+        {
+         "symbol": "sundial",
+         "count": 1
+        },
+        {
+         "symbol": "quill",
+         "count": 1
+        },
+        {
+         "symbol": "wheel",
+         "count": 1
+        }
+       ],
+       "distinct": 3
+      },
+      "chains": [
+       "tower",
+       "book",
+       "mask",
+       "helmet"
+      ],
+      "discardValue": 3
+     }
+    ],
+    "military": {
+     "position": -4,
+     "looting": [
+      {
+       "at": -6,
+       "seat": 0,
+       "value": 5,
+       "present": true
+      },
+      {
+       "at": -3,
+       "seat": 0,
+       "value": 2,
+       "present": false
+      },
+      {
+       "at": 3,
+       "seat": 1,
+       "value": 2,
+       "present": true
+      },
+      {
+       "at": 6,
+       "seat": 1,
+       "value": 5,
+       "present": true
+      }
+     ]
+    },
+    "boardTokens": [
+     "agriculture",
+     "architecture",
+     "philosophy",
+     "theology",
+     "urbanism"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [
+     "clay-pool",
+     "logging-camp",
+     "pharmacist",
+     "stone-reserve",
+     "wood-reserve",
+     "drying-room",
+     "horse-breeders",
+     "archery-range",
+     "brewery",
+     "customs-house",
+     "temple",
+     "statue",
+     "rostrum",
+     "pretorium",
+     "university",
+     "observatory",
+     "arena",
+     "palace",
+     "town-hall",
+     "scientists-guild",
+     "tacticians-guild"
+    ],
+    "wondersBuilt": 6,
+    "choices": [],
+    "disabled": [],
+    "scorePreview": [
+     {
+      "blue": 27,
+      "green": 8,
+      "yellow": 0,
+      "purple": 8,
+      "wonders": 15,
+      "tokens": 0,
+      "coins": 1,
+      "military": 0,
+      "total": 59
+     },
+     {
+      "blue": 9,
+      "green": 4,
+      "yellow": 3,
+      "purple": 0,
+      "wonders": 6,
+      "tokens": 0,
+      "coins": 3,
+      "military": 5,
+      "total": 30
+     }
+    ],
+    "result": {
+     "victory": "civilian",
+     "winner": 0,
+     "shared": false,
+     "scores": [
+      {
+       "blue": 27,
+       "green": 8,
+       "yellow": 0,
+       "purple": 8,
+       "wonders": 15,
+       "tokens": 0,
+       "coins": 1,
+       "military": 0,
+       "total": 59
+      },
+      {
+       "blue": 9,
+       "green": 4,
+       "yellow": 3,
+       "purple": 0,
+       "wonders": 6,
+       "tokens": 0,
+       "coins": 3,
+       "military": 5,
+       "total": 30
+      }
+     ]
+    },
+    "revealed": {
+     "removed": [
+      {
+       "age": 1,
+       "cards": [
+        "stone-pit",
+        "press",
+        "stable"
+       ]
+      },
+      {
+       "age": 2,
+       "cards": [
+        "glass-blower",
+        "shelf-quarry",
+        "caravansery"
+       ]
+      },
+      {
+       "age": 3,
+       "cards": [
+        "siege-workshop",
+        "lighthouse",
+        "armory"
+       ]
+      }
+     ],
+     "undealt": [],
+     "faceDown": [],
+     "boxGuilds": [
+      "shipowners-guild",
+      "magistrates-guild",
+      "moneylenders-guild",
+      "merchants-guild"
+     ],
+     "boxWonders": [
+      "hanging-gardens",
+      "piraeus",
+      "temple-of-artemis",
+      "statue-of-zeus"
+     ],
+     "boxTokens": [
+      "law",
+      "economy",
+      "mathematics",
+      "masonry",
+      "strategy"
+     ]
+    }
+   },
+   "events": [
+    {
+     "kind": "discard",
+     "private": false,
+     "seat": 1,
+     "card": "arena",
+     "amount": 3
+    },
+    {
+     "kind": "gameOver",
+     "private": false,
+     "victory": "civilian",
+     "winner": 0
+    }
+   ]
+  }
+ ]
+}
