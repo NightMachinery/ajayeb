@@ -70,12 +70,18 @@ The card data in some other implementations differs from the rulebook in ways th
 
 ## How the data is checked
 
-The card, wonder and token data in the engine catalog (`server/internal/engine/catalog`) is checked in several independent ways before the engine is trusted (see [../dev/roadmap.md](../dev/roadmap.md), milestones M1 and M2):
+The card, wonder and token data in the engine catalog (`server/internal/engine/catalog`) is checked in several independent ways before the engine is trusted (see [../dev/roadmap.md](../dev/roadmap.md), milestones M1 and M2). Some of these checks are in place today; the rest are planned for later slices of M2, and this page says which is which.
 
-- Two verification tables are built blind, without access to the catalog: one from the rulebook's card lists and our rules reference, and one from the BGA data cross-checked against 7wd-io. A test compares the catalog with both, field by field.
-- Every mismatch is settled against the rulebook, and the ruling is recorded.
-- The catalog is also printed as prose, one sentence per effect, and a fresh reviewer compares that prose with the rules, which catches mistakes such as counting your own city where a guild should count the city with the most cards.
-- Structural tests check the counts (23, 23 and 20 cards per age, 7 guilds, 12 wonders, 10 tokens), the colours per age, the 17 chains, and the six science symbols on two green cards each.
+In place today:
+
+- **Structural tests** check the counts (23, 23 and 20 cards per age, 7 guilds, 12 wonders, 10 tokens), the colours per age, the 17 chains, and the six science symbols on two green cards each, and pin the regressions listed above under "Known mistakes in other implementations".
+- **Golden CSVs.** `RecordTables` flattens the live catalog into three CSV tables (cards, wonders, tokens), one row per item, in the schema `ajayeb-gen catalog -format csv` also writes. `TestGoldenCSV` compares that output with the committed `testdata/*.golden.csv` files and fails on any difference. This catches an accidental change to the data: touching a card's cost or chain moves its row, and the test fails until the golden files are regenerated (`go test ./internal/engine/catalog -run TestGoldenCSV -update`) and the diff is reviewed by hand. It does not by itself prove the data is correct, only that it has not silently drifted.
+- **The prose dump.** `ajayeb-gen catalog -format prose` prints the catalog as one sentence per effect, meant for a reviewer who has the rules reference open but not the Go code, to catch mistakes such as counting your own city where a guild should count the city with the most cards.
+
+Planned, not yet built (engine slices S2v and S6 in [../dev/roadmap.md](../dev/roadmap.md)):
+
+- **Two independent, blind verification tables**, each built without looking at the catalog code: one from the rulebook's card lists and our own rules reference, the other from the BGA data cross-checked against 7wd-io. Built this way, by people or agents who have not seen the catalog, the two tables cannot share a mistake copied from the catalog itself.
+- **A three-way diff** in the gate (S6) that compares the catalog's own golden CSVs against both independent tables field by field. Every disagreement among the three is settled against the rulebook and the ruling is recorded in [decisions.md](decisions.md); the gate is green only once all three agree everywhere.
 
 ## What we never copy
 

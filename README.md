@@ -59,7 +59,7 @@ The server commands:
 - `ajayeb` is the game server.
 - `ajayeb-sim` runs bot playouts, tournaments, the AI benchmark, the scenario finder and the replay verifier.
 - `ajayeb-drive` plays full games over WebSocket against a running server, for smoke tests.
-- `ajayeb-gen` writes the generated TypeScript (ids, display catalog, contract fixtures).
+- `ajayeb-gen` is the TypeScript generator (ids, display catalog, contract fixtures). Today it only dumps the engine catalog for review (`ajayeb-gen catalog -format csv|json|prose`); the TypeScript output arrives with milestone M2's later slices.
 
 ## Documentation
 

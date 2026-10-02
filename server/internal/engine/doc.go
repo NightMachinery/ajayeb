@@ -10,7 +10,7 @@
 //
 // Subpackages: catalog holds the typed card, wonder and token data and the
 // effect vocabulary; enginetest holds test builders, scripts and playout
-// policies.
+// policies for tests of this package and of code built on it.
 //
 // # Where things are
 //
@@ -18,13 +18,54 @@
 //     lives in; action.go: Action and its canonical keys (Key, ParseKey);
 //     events.go: the events Apply reports. These three files and
 //     catalog/types.go are frozen: change them only through the coordinator.
+//   - setup.go: NewGame, which resolves every chance event of a game (the
+//     wonder draft order, the age deals and their removed cards, the guild
+//     draw, the token placement and box order, and the first player) from
+//     the seed, in a fixed order a golden test pins.
 //   - layout.go: the three age structures (slot positions, which slots cover
 //     which, face-up parity, AccessibleMask).
+//   - structure.go: the current age's structure in State.Slots: dealing an
+//     age, which slots are accessible, taking a card, and turning face up
+//     the face-down cards a turn has freed.
+//   - city.go: the only writer of a player's derived caches (Chains, Prod,
+//     Choice, NChoice, TradeFix, ColorN, Sci), so that they always match a
+//     recompute from scratch; CheckInvariants verifies that.
+//   - cost.go: the cheapest payment for a building or a wonder, its full
+//     breakdown (Payment) for the view, its short form for hot paths
+//     (Quote), trade prices and the discard value. The player never chooses
+//     how to pay; the engine always applies the cheapest payment.
+//   - legal.go: LegalActions and IsLegal, which always agree with each
+//     other; the server accepts a key only when LegalActions lists it for
+//     the seat to move.
+//   - apply.go: the turn machine. Apply and ApplyTrusted dispatch an action
+//     by phase, the three play actions take a card from the structure, and
+//     finishTurn ends the turn (reveals, the supremacy check, the end of an
+//     age or of the game, the extra turn, the next player).
+//   - hooks.go: the fixed seams between the turn machine (apply.go) and the
+//     effect rules (effects.go, wonders.go, pending.go), with their
+//     contracts.
+//   - invariants.go: CheckInvariants, which checks that a state (or a
+//     scenario built from one) is one the rules can reach and returns every
+//     violation it finds; tests and fuzzers call it after every step, the
+//     engine itself never does.
+//   - replay.go: Log, the ajayeb-log/1 format a game is recorded in (seed,
+//     options, an optional scenario and its action keys), Replay and
+//     ReplaySteps, which rebuild a game's states from a log, and
+//     Hash/HashString, the FNV-1a fingerprint of a state that a replay can
+//     be checked against.
+//   - scenario.go: Scenario and NewGameFromScenario, which build a test or
+//     dev-room starting position (wonders, age, cities, coins, tokens, built
+//     wonders, the discard pile, which cards are accessible, the pawn) on
+//     top of an ordinary NewGame deal, and RunTrigger, which plays a named
+//     scenario's trigger script.
 //   - rng.go: the seeded generator NewGame shuffles with.
 //   - errors.go: IllegalError and its Reason codes, ErrBadKey,
 //     ErrMalformedAction.
-//   - hooks.go: the fixed seams between the turn machine (apply.go) and the
-//     effect rules (effects.go, wonders.go, pending.go), with their contracts.
+//
+// The enginetest package is a separate, test-only package (its own tests
+// live in package engine_test) that other packages' tests import for a
+// fluent scenario builder, script helpers that apply actions by key or by a
+// short human-friendly step, and playout policies that play whole games.
 //
 // # Purity rules
 //

@@ -52,7 +52,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/ws`**: the WebSocket transport (`github.com/coder/websocket`): origin patterns, read limits, per-connection rate limits, pings, and an outbox that keeps only the newest snapshot for a slow client.
 - **`internal/httpapi`**: `/health`, the room lookup API, the development endpoints (refused unless the server runs with `--dev`), and the static handler with its SPA fallback.
 - **`internal/webdist`**: embeds the web build only under the `embedweb` build tag, so a fresh clone builds and tests without building the web app first.
-- **`cmd/ajayeb`** wires everything together. The other commands are `ajayeb-sim` (playouts, tournaments, the AI benchmark, the scenario finder, the replay verifier), `ajayeb-drive` (plays full games over WebSocket against a running server) and `ajayeb-gen` (writes the generated TypeScript).
+- **`cmd/ajayeb`** wires everything together. The other commands are `ajayeb-sim` (playouts, tournaments, the AI benchmark, the scenario finder, the replay verifier), `ajayeb-drive` (plays full games over WebSocket against a running server) and `ajayeb-gen`, the TypeScript generator. `ajayeb-gen` today is only `ajayeb-gen catalog -format csv|json|prose`, the catalog dump described in [docs/rules/sources.md](rules/sources.md); the generated-TypeScript subcommands in the next section arrive with their own slices.
 
 ## Actions and views
 
@@ -79,11 +79,11 @@ The engine produces each key from its own action value and parses keys strictly.
 The TypeScript types in the client are generated from the Go structs, never written twice:
 
 1. **Types.** `tygo` turns `internal/view` into `web/src/lib/wire/view.gen.ts` and `internal/wire` into `web/src/lib/wire/types.gen.ts`. tygo writes one file per package, and `types.gen.ts` imports `view.gen.ts` as `view`; every view type that a wire struct references needs a `type_mappings` entry in `server/tygo.yaml`, or it comes out as `never`. A hand-written `index.ts` next to them re-exports both and defines the message unions.
-2. **Data.** `ajayeb-gen` writes `ids.gen.ts` (the id lists as `as const` arrays, so a translation table missing a card fails to compile) and `catalog.gen.ts` (display data such as colour, cost and chain symbols, so the component gallery can draw cards with no server).
-3. **Contract fixtures.** A Go test plays a scripted game and records the real outgoing messages. `ajayeb-gen` turns them into `fixtures.gen.ts`, typed with `satisfies` against the message union, so `svelte-check` fails if real server JSON does not fit the TypeScript types (a stray `null`, a missing field, a wrong enum string).
+2. **Data.** `ajayeb-gen` will write `ids.gen.ts` (the id lists as `as const` arrays, so a translation table missing a card fails to compile) and `catalog.gen.ts` (display data such as colour, cost and chain symbols, so the component gallery can draw cards with no server). This subcommand does not exist yet; today `ajayeb-gen` only dumps the catalog for review (see [docs/rules/sources.md](rules/sources.md)).
+3. **Contract fixtures.** A Go test will play a scripted game and record the real outgoing messages, and `ajayeb-gen` will turn them into `fixtures.gen.ts`, typed with `satisfies` against the message union, so `svelte-check` fails if real server JSON does not fit the TypeScript types (a stray `null`, a missing field, a wrong enum string). This also arrives with a later slice.
 4. **Hygiene.** A Go reflection test walks every outgoing type: each field has an explicit `json` tag, `omitempty` appears only on pointers, and recorded messages contain no `null` arrays.
 
-`make gen-check` regenerates everything and fails if regenerating changes the files in the working tree (on a clean checkout such as CI, that means the committed files). It is part of `make verify-quick` once `server/cmd/ajayeb-gen` exists; until then `verify-quick` skips it.
+`make gen-check` will regenerate everything and fail if regenerating changes the files in the working tree (on a clean checkout such as CI, that means the committed files). It joins `make verify-quick` once the `ids.gen.ts`/`catalog.gen.ts`/`fixtures.gen.ts` subcommands of `ajayeb-gen` exist; until then `verify-quick` skips it.
 
 ## The client: Transport, Session, Presenter
 
@@ -139,7 +139,7 @@ Hidden information is decided entirely by the engine's view builder and event fi
 
 Everything else is public, as it is at the table: face-up cards, both cities, coins, the military track, the board tokens, the cards tucked under wonders, and the discard pile.
 
-**The one asymmetric secret is the Great Library offer.** When a player builds the Great Library, three tokens are drawn from the box and offered to that player alone. While the choice is open, only the decider's view contains the offer, and the event that announces the draw is filtered the same way. The token chosen then joins that player's city like any other token. The two that were not chosen go back to the box and stay hidden from both players. (In a hot-seat game both people may see the offer on the shared screen; that is accepted.)
+**The one asymmetric secret is the Great Library offer.** When a player builds the Great Library, three tokens are drawn from the box and offered to that player alone. While the choice is open, only the decider's view contains the offer, and the event that announces the draw carries the engine's `Private` flag, so the per-viewer event filter keeps it out of the other seat's event stream the same way the view keeps the offer itself out of their snapshot. The token chosen then joins that player's city like any other token. The two that were not chosen go back to the box and stay hidden from both players. (In a hot-seat game both people may see the offer on the shared screen; that is accepted.)
 
 **At game over** the view reveals the removed cards and the box guilds, wonders and tokens, so players can review the game, and the result includes the seed and the full action log for a downloadable replay.
 
