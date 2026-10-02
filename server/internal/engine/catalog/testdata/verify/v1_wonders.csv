@@ -1,0 +1,13 @@
+id,name,coins,W,C,S,G,P,vp,shields,coins_gain,produce_choice,play_again,destroy_color,build_from_discard,draw_tokens,opponent_loses
+1,Pyramids,,,,3,,1,9,,,,,,,,
+2,Colossus,,,3,,1,,3,2,,,,,,,
+3,Great Lighthouse,,1,,1,,2,4,,,W|C|S,,,,,
+4,Temple of Artemis,,1,,1,1,1,,,12,,1,,,,
+5,Mausoleum,,,2,,2,1,2,,,,,,1,,
+6,Great Library,,3,,,1,1,4,,,,,,,3,
+7,Piraeus,,2,1,1,,,2,,,G|P,1,,,,
+8,Hanging Gardens,,2,,,1,1,3,,6,,1,,,,
+9,Statue of Zeus,,1,1,1,,2,3,1,,,,brown,,,
+10,Sphinx,,,,,,,6,,,,1,,,,
+11,Appian Way,,,2,2,,1,3,,3,,1,,,,3
+12,Circus Maximus,,1,,2,1,,3,1,,,,grey,,,
