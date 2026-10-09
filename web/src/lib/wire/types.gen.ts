@@ -270,7 +270,7 @@ export interface State {
    * from the connection receiving it.
    */
   ack?: Ack;
-  events: never /* view.GameEvent */[];
+  events: view.GameEvent[];
   view: view.View;
 }
 /**
