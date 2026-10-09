@@ -20,7 +20,7 @@ import (
 // any machine; docs/ai.md records them.
 //
 // The tournaments of the levels take long: on an Apple M2 with GOMAXPROCS
-// 4, Medium against Greedy takes about 15 minutes and Hard against Medium
+// 4, Medium against Greedy takes about 25 minutes and Hard against Medium
 // about 6 hours. Run them with a long enough -timeout, or as a quicker proxy
 // with these variables:
 //
