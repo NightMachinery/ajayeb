@@ -913,3 +913,42 @@ func TestJoiningAnotherRoomLeavesTheFirst(t *testing.T) {
 		t.Fatalf("resync answered with room %s", st.Code)
 	}
 }
+
+// TestJoinWithCancelledContextLeavesNoMember checks that a join whose
+// caller stops waiting (its connection closed mid-join) does not leave the
+// connection attached: the room would otherwise keep a member that nobody
+// ever detaches, report it as present, and never go idle.
+func TestJoinWithCancelledContextLeavesNoMember(t *testing.T) {
+	h := newHarness(t)
+	owner := h.client("user-a", "tab-a", "Ann")
+	code, _ := owner.create(wire.NewCreate(wire.ModeOnline, nil, wire.SeatNumber(0), nil))
+	h.m.Leave(owner.Client, code)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	for i := range 50 {
+		c := room.NewClient("user-a", "tab-x", "Ann")
+		err := h.m.Join(ctx, c, code)
+		if err == nil {
+			// The attach won the race and the reply arrived: a real member.
+			h.m.Disconnect(c)
+			continue
+		}
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("join %d: %v", i, err)
+		}
+		if c.Joined() != "" {
+			t.Fatalf("join %d failed but the client records room %q", i, c.Joined())
+		}
+		// The attach may have been handled (and its state frame sent)
+		// before the caller gave up; only an error frame would be wrong.
+		for _, f := range c.Out.Take() {
+			if _, ok := f.(wire.Error); ok {
+				t.Fatalf("join %d with a cancelled context sent %#v", i, f)
+			}
+		}
+	}
+	if snap := h.snapshot(code); snap.Clients != 0 {
+		t.Fatalf("%d connections still attached after cancelled joins", snap.Clients)
+	}
+}

@@ -363,7 +363,7 @@ func (m *Manager) Join(ctx context.Context, c *Client, code string) error {
 	}
 	err := m.join(ctx, c, code)
 	if err != nil {
-		if !errors.Is(err, ErrClosed) {
+		if !errors.Is(err, ErrClosed) && !isContextErr(err) {
 			c.Out.Push(wire.NewError(errorCode(err), errorMsg(err)))
 		}
 		return err
@@ -389,6 +389,12 @@ func (m *Manager) join(ctx context.Context, c *Client, code string) error {
 			continue
 		}
 		if err != nil {
+			// The caller stopped waiting, but the attach may already be in
+			// the inbox. Nothing would ever detach it (the client does not
+			// record the room), so the room would report a ghost as present
+			// and never go idle. A detach queued behind it takes it back; for
+			// a client that never got in, it does nothing.
+			_ = r.post(context.Background(), msgDetach{c: c})
 			return err
 		}
 		return res
@@ -512,4 +518,10 @@ func (m *Manager) Snapshot(ctx context.Context, code string) (Snapshot, error) {
 		return snap, err
 	}
 	return Snapshot{}, ErrRoomNotFound
+}
+
+// isContextErr reports whether err means the caller stopped waiting (its
+// connection closed), so there is nobody left to tell.
+func isContextErr(err error) bool {
+	return errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
 }
