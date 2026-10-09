@@ -38,8 +38,8 @@ func runBench(args []string, stdout, stderr io.Writer) error {
 	pos := benchPlayouts(stdout, *seed, *playouts, *positions)
 	benchCalls(stdout, pos)
 
-	fmt.Fprintf(stdout, "move times over %d positions (default budgets, one core):\n", len(pos))
-	for _, name := range []string{"random", "easy", "greedy", "hard"} {
+	fmt.Fprintf(stdout, "move times over %d positions (each level's clock budget):\n", len(pos))
+	for _, name := range []string{"random", "easy", "greedy", "medium", "hard"} {
 		spec, _ := parseBot(name)
 		if err := benchMoves(stdout, spec, pos, *seed); err != nil {
 			return err
@@ -49,17 +49,18 @@ func runBench(args []string, stdout, stderr io.Writer) error {
 	for _, pair := range [][2]string{{"greedy", "random"}, {"easy", "random"}, {"greedy", "easy"}} {
 		a, _ := parseBot(pair[0])
 		b, _ := parseBot(pair[1])
-		cfg := matchConfig{a: a, b: b, games: *games + *games%2, seed: *seed, parallel: *parallel}
+		cfg := matchConfig{a: a, b: b, games: *games + *games%2, seed: *seed, parallel: *parallel, scale: 1}
 		t0 := time.Now()
-		results := playMatch(context.Background(), &cfg)
+		results := playMatch(context.Background(), &cfg, cfg.indexes())
 		for i := range results {
 			if err := results[i].err; err != nil {
 				return fmt.Errorf("%s vs %s, game %d: %w", pair[0], pair[1], i, err)
 			}
 		}
 		st := summarize(results)
+		h := cfg.header()
 		fmt.Fprintln(stdout)
-		printMatch(stdout, &cfg, &st, time.Since(t0))
+		printMatch(stdout, &h, &st, time.Since(t0), max(1, min(cfg.parallel, cfg.games)))
 	}
 	fmt.Fprintf(stdout, "\nbench done in %s\n", time.Since(start).Round(time.Millisecond))
 	return nil
@@ -129,7 +130,7 @@ func benchCalls(w io.Writer, pos []engine.State) {
 
 // benchMoves times one bot's choices over the positions that are not over.
 func benchMoves(w io.Writer, spec botSpec, pos []engine.State, seed uint64) error {
-	bot := spec.make(seed)
+	bot := spec.make(seed, nil)
 	var times []time.Duration
 	for i := range pos {
 		s := &pos[i]

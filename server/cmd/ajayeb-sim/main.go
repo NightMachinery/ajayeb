@@ -1,9 +1,13 @@
 // Command ajayeb-sim runs the bots offline: tournaments between two bots,
-// the AI benchmark, and replay checks of recorded games.
+// the calibration of the level presets, the AI benchmark, and replay checks
+// of recorded games.
 //
 // Usage:
 //
-//	ajayeb-sim match [-a BOT] [-b BOT] [-games N] [-seed S] [-p N] [-iters N] [-movetime D] [-logs DIR] [-v]
+//	ajayeb-sim match [-a BOT] [-b BOT] [-games N] [-seed S] [-p N] [-scale F] [-clock] [-wa FILE] [-wb FILE] [-shard K/N] [-json FILE] [-min R] [-logs DIR] [-v]
+//	ajayeb-sim tally [-min R] [-v] FILE...
+//	ajayeb-sim levels [-games N] [-seed S] [-moves N] [-fixed] [-scale F]
+//	ajayeb-sim weights
 //	ajayeb-sim bench [-games N] [-seed S] [-p N] [-positions N] [-playouts N]
 //	ajayeb-sim replay [-q] FILE...
 //
@@ -11,15 +15,36 @@
 // is played twice, with A in seat 0 and then in seat 1 (ai.PairedGame), so
 // neither bot profits from the deal or from moving first. It prints both
 // bots' wins by victory kind, A's score with a 95% interval, and move times.
-// The results depend only on the flags, not on -p, unless -movetime sets a
-// wall-clock budget. -logs writes every game as an ajayeb-log/1 file, which
-// replay can check.
+// medium and hard search their fixed budgets (ai.Level.FixedBudget, an
+// iteration count), so the results depend only on the flags, not on -p or
+// on the machine; -clock gives them their clock budgets of a live game
+// instead (ai.Level.Budget), which makes the results depend on the machine
+// and its load. -scale multiplies the iteration budgets of medium and hard,
+// on both sides, for a quicker proxy of a tournament. -wa and -wb give A or
+// B evaluation weights from a JSON file (as printed by weights; fields left
+// out keep their defaults), for tuning.
 //
-// A BOT is a level name (random, easy, greedy, medium or hard), optionally
-// followed by ":K" for the determinizations per move of easy and greedy, for
-// example greedy:8. greedy is the deterministic Greedy bot of the
-// tournaments; easy is Greedy with softmax sampling. Until the tree search
-// lands, medium and hard play Greedy too.
+// -shard K/N plays only the deals whose index is K modulo N, so N machines
+// can share a long tournament; -json writes the results, and tally merges
+// the shards' files into one report. -min R makes match or tally fail (exit
+// 1) when A scores less than R (a share from 0 to 1). -logs writes every
+// game as an ajayeb-log/1 file, which replay can check.
+//
+// A BOT is random, easy, greedy, medium or hard, optionally followed by ":N":
+// for easy and greedy N is the determinizations per move (for example
+// greedy:8), for medium and hard the iterations per move instead of the
+// fixed budget (for example medium:5000). greedy is the deterministic Greedy
+// bot of the tournaments; easy is Greedy with softmax sampling, the Easy
+// level.
+//
+// levels measures the clock budgets of medium and hard on positions from
+// Greedy self-play: iterations per move (by age), time per move and memory;
+// it also times easy.
+// The fixed budgets are set from its medians. With -fixed it measures the
+// fixed budgets instead (times -scale).
+//
+// weights prints the default evaluation weights as JSON, the format that -wa
+// and -wb read.
 //
 // bench (make bench runs it) measures the engine's hot paths (random
 // playouts, determinization, legal actions, evaluation), the move time of
@@ -32,15 +57,18 @@
 // checks; the final state's hash is printed and compared with the log's
 // finalHash when it has one.
 //
-// Exit status: 0 on success, 1 when a game or a replay fails, 2 for a usage
-// error.
+// Exit status: 0 on success, 1 when a game or a replay fails or a score is
+// below -min, 2 for a usage error.
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -54,6 +82,9 @@ func main() {
 
 const usage = `Usage:
   ajayeb-sim match [flags]       play a paired tournament between two bots
+  ajayeb-sim tally FILE...       merge the -json results of a sharded match
+  ajayeb-sim levels [flags]      measure the levels' iterations, time and memory per move
+  ajayeb-sim weights             print the default evaluation weights as JSON
   ajayeb-sim bench [flags]       time the engine and the bots, play short tournaments
   ajayeb-sim replay FILE...      replay ajayeb-log/1 files and check their final hash
 Run ajayeb-sim <subcommand> -help for the flags.
@@ -75,6 +106,12 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "match":
 		err = runMatch(args[1:], stdout, stderr)
+	case "tally":
+		err = runTally(args[1:], stdout, stderr)
+	case "levels":
+		err = runLevels(args[1:], stdout, stderr)
+	case "weights":
+		err = runWeights(args[1:], stdout, stderr)
 	case "bench":
 		err = runBench(args[1:], stdout, stderr)
 	case "replay":
@@ -118,54 +155,135 @@ func parseFlags(fs *flag.FlagSet, args []string) error {
 	return nil
 }
 
-// botSpec is a parsed BOT argument: a level name and an optional number of
-// determinizations.
+// botSpec is a parsed BOT argument: a bot name and an optional number.
 type botSpec struct {
 	name string // random, easy, greedy, medium or hard
-	k    int    // determinizations per move for easy and greedy; 0 for the default
+	n    int    // easy and greedy: determinizations per move; medium and hard: iterations per move; 0 for the preset
 }
 
-// parseBot parses a BOT argument such as "greedy" or "easy:5".
+// maxBotN bounds the N of a BOT argument, for each kind of bot.
+const (
+	maxGreedyK     = 1000
+	maxSearchIters = 100_000_000
+)
+
+// parseBot parses a BOT argument such as "greedy", "easy:5" or
+// "medium:5000".
 func parseBot(s string) (botSpec, error) {
-	name, kText, hasK := strings.Cut(s, ":")
+	name, nText, hasN := strings.Cut(s, ":")
 	spec := botSpec{name: name}
+	top := 0
 	switch name {
-	case "random", "easy", "greedy", "medium", "hard":
+	case "random":
+	case "easy", "greedy":
+		top = maxGreedyK
+	case "medium", "hard":
+		top = maxSearchIters
 	default:
 		return botSpec{}, fmt.Errorf("unknown bot %q (want random, easy, greedy, medium or hard)", s)
 	}
-	if hasK {
-		if name != "easy" && name != "greedy" {
-			return botSpec{}, fmt.Errorf("bot %q: only easy and greedy take :K", s)
+	if hasN {
+		if top == 0 {
+			return botSpec{}, fmt.Errorf("bot %q: random takes no :N", s)
 		}
-		k, err := strconv.Atoi(kText)
-		if err != nil || k < 1 || k > 1000 {
-			return botSpec{}, fmt.Errorf("bot %q: K must be a whole number from 1 to 1000", s)
+		n, err := strconv.Atoi(nText)
+		if err != nil || n < 1 || n > top {
+			return botSpec{}, fmt.Errorf("bot %q: N must be a whole number from 1 to %d", s, top)
 		}
-		spec.k = k
+		spec.n = n
 	}
 	return spec, nil
 }
 
 // String returns the spec as it was written.
 func (b botSpec) String() string {
-	if b.k > 0 {
-		return b.name + ":" + strconv.Itoa(b.k)
+	if b.n > 0 {
+		return b.name + ":" + strconv.Itoa(b.n)
 	}
 	return b.name
 }
 
-// make returns the bot, seeded with seed.
-func (b botSpec) make(seed uint64) ai.Bot {
+// level returns the ai level of a tree-search spec (medium or hard), and
+// false for the others.
+func (b botSpec) level() (ai.Level, bool) {
+	switch b.name {
+	case "medium":
+		return ai.Medium, true
+	case "hard":
+		return ai.Hard, true
+	}
+	return 0, false
+}
+
+// make returns the bot, seeded with seed. w, if not nil, replaces the
+// evaluation weights of the bots that use them (all but random).
+func (b botSpec) make(seed uint64, w *ai.Weights) ai.Bot {
 	switch b.name {
 	case "random":
 		return ai.NewRandom(seed)
 	case "easy":
-		return ai.NewGreedy(seed, ai.GreedyConfig{K: b.k, Temperature: ai.EasyTemperature})
+		return ai.NewGreedy(seed, ai.GreedyConfig{K: b.n, Temperature: ai.EasyTemperature, Weights: w})
 	case "greedy":
-		return ai.NewGreedy(seed, ai.GreedyConfig{K: b.k})
-	case "medium":
-		return ai.New(ai.Medium, seed)
+		return ai.NewGreedy(seed, ai.GreedyConfig{K: b.n, Weights: w})
 	}
-	return ai.New(ai.Hard, seed)
+	l, _ := b.level()
+	return ai.NewMCTS(seed, ai.MCTSConfig{Budget: l.Budget(), Weights: w})
+}
+
+// budget returns the bot's budget per move. A tree-search bot searches its
+// level's fixed budget, or N iterations, times scale (at least one), or,
+// with clock, its level's clock budget. Greedy's budget is its
+// determinizations; Random needs none.
+func (b botSpec) budget(clock bool, scale float64) ai.Budget {
+	l, search := b.level()
+	switch {
+	case !search:
+		return ai.Budget{MaxIterations: b.n}
+	case clock:
+		return l.Budget()
+	}
+	bud := l.FixedBudget()
+	if b.n > 0 {
+		bud.MaxIterations = b.n
+	}
+	bud.MaxIterations = max(1, int(math.Round(float64(bud.MaxIterations)*scale)))
+	return bud
+}
+
+// readWeights reads evaluation weights from a JSON file: the default
+// weights, with the fields the file sets replaced. An empty path gives nil
+// (the defaults).
+func readWeights(path string) (*ai.Weights, error) {
+	if path == "" {
+		return nil, nil
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	w := ai.DefaultWeights()
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&w); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	return &w, nil
+}
+
+// runWeights is the weights subcommand.
+func runWeights(args []string, stdout, stderr io.Writer) error {
+	fs := newFlags("weights", stderr)
+	if err := parseFlags(fs, args); err != nil {
+		return err
+	}
+	if fs.NArg() > 0 {
+		fmt.Fprintf(stderr, "ajayeb-sim weights: unexpected argument %q\n", fs.Arg(0))
+		return errUsage
+	}
+	b, err := json.MarshalIndent(ai.DefaultWeights(), "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintf(stdout, "%s\n", b)
+	return err
 }
