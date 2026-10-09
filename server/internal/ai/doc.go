@@ -1,7 +1,7 @@
 // Package ai implements the bots: Random, Greedy (one ply plus the opponent's
-// best reply, over a few determinizations) and, from slice S11, SO-ISMCTS
-// (single-observer information-set Monte Carlo tree search) with blind
-// reveals, evaluation cut-offs and root-parallel workers.
+// best reply, over a few determinizations) and SO-ISMCTS (single-observer
+// information-set Monte Carlo tree search) with blind reveals, evaluation
+// cut-offs and root-parallel workers.
 //
 // # Files
 //
@@ -14,11 +14,15 @@
 //     point equivalents.
 //   - greedy.go: the Greedy bot; with a softmax temperature it is the Easy
 //     level.
+//   - arena.go: the search tree's node arena and action keys.
+//   - rollout.go: the rollout policy and the reward.
+//   - mcts.go: MCTSBot, the SO-ISMCTS search (Medium and Hard).
+//   - parallel.go: root-parallel workers, merging and progress.
 //
-// Until the tree search lands, the Medium and Hard levels play the
-// deterministic Greedy bot (see New). The tournament that checks Greedy
-// against Random is in tournament_test.go, behind the slow build tag; the
-// command ajayeb-sim runs any pairing.
+// Medium and Hard are the tree search with default budgets of 0.4 s on one
+// worker and 2 s on up to four workers; slice S12 tunes them. The
+// tournament that checks Greedy against Random is in tournament_test.go,
+// behind the slow build tag; the command ajayeb-sim runs any pairing.
 //
 // # Rules
 //
