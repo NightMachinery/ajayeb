@@ -1,0 +1,209 @@
+package wire
+
+import "github.com/NightMachinery/ajayeb/server/internal/view"
+
+// This file defines the server-to-client frames (doc.go's "server frames").
+// The server only ever builds and marshals these; it never decodes its own
+// messages, so there is no DecodeServer. ServerMessage and the NewXxx
+// constructors exist so tests (the hygiene test and the testdata recorder)
+// can enumerate every type and build a well-formed value of each without
+// setting "t" by hand at every call site.
+
+// ServerMessage is implemented by every server frame type.
+type ServerMessage interface {
+	isServerMessage()
+}
+
+func (Welcome) isServerMessage() {}
+func (Created) isServerMessage() {}
+func (State) isServerMessage()   {}
+func (Reject) isServerMessage()  {}
+func (Error) isServerMessage()   {}
+
+// Welcome answers hello.
+type Welcome struct {
+	T      string     `json:"t" tstype:"'welcome'"`
+	V      int        `json:"v"` // ProtocolVersion this server speaks
+	Server ServerInfo `json:"server"`
+}
+
+// NewWelcome returns a Welcome frame with "t" filled in.
+func NewWelcome(v int, info ServerInfo) Welcome { return Welcome{T: "welcome", V: v, Server: info} }
+
+// ServerInfo identifies the running server build.
+type ServerInfo struct {
+	Version string `json:"version"` // build version (git describe)
+	Rules   int    `json:"rules"`   // engine.RulesVersion this server plays
+}
+
+// Created answers a successful create: the new room's code.
+type Created struct {
+	T    string `json:"t" tstype:"'created'"`
+	Code string `json:"code"`
+}
+
+// NewCreated returns a Created frame with "t" filled in.
+func NewCreated(code string) Created { return Created{T: "created", Code: code} }
+
+// RoomStatus is a room's lifecycle state, as a client sees it (there is no
+// wire equivalent of store.StatusArchived: an archived room simply stops
+// being reachable, as a "room-not-found" error).
+type RoomStatus string
+
+// The room statuses.
+const (
+	RoomStatusLobby    RoomStatus = "lobby"
+	RoomStatusPlaying  RoomStatus = "playing"
+	RoomStatusFinished RoomStatus = "finished"
+)
+
+// SeatKind says who holds a seat.
+type SeatKind string
+
+// The seat kinds.
+const (
+	SeatKindHuman SeatKind = "human"
+	SeatKindBot   SeatKind = "bot"
+	SeatKindOpen  SeatKind = "open" // an online room's second seat, not yet claimed
+)
+
+// SeatInfo is one seat, as the room frame reports it.
+type SeatInfo struct {
+	Seat      int      `json:"seat"`
+	Name      string   `json:"name"`
+	Kind      SeatKind `json:"kind"`
+	Connected bool     `json:"connected"`
+	You       bool     `json:"you"` // this connection holds this seat
+}
+
+// RoomInfo is the room-level information in a state frame: everything about
+// the room itself, as opposed to the game running in it (which is View).
+type RoomInfo struct {
+	Mode       Mode       `json:"mode"`
+	Status     RoomStatus `json:"status"`
+	Seats      []SeatInfo `json:"seats"`
+	Spectators int        `json:"spectators"`
+}
+
+// NewRoomInfo returns a RoomInfo with seats normalized to a non-nil,
+// possibly empty slice.
+func NewRoomInfo(mode Mode, status RoomStatus, seats []SeatInfo, spectators int) RoomInfo {
+	if seats == nil {
+		seats = []SeatInfo{}
+	}
+	return RoomInfo{Mode: mode, Status: status, Seats: seats, Spectators: spectators}
+}
+
+// YouInfo is what this connection may do.
+type YouInfo struct {
+	// Seats are the seats this connection may act for: both in a hot-seat
+	// room, one in an online or ai room, none for a spectator.
+	Seats  []int `json:"seats"`
+	CanAct bool  `json:"canAct"` // a legal action exists for one of Seats right now
+}
+
+// NewYouInfo returns a YouInfo with seats normalized to a non-nil, possibly
+// empty slice.
+func NewYouInfo(seats []int, canAct bool) YouInfo {
+	if seats == nil {
+		seats = []int{}
+	}
+	return YouInfo{Seats: seats, CanAct: canAct}
+}
+
+// Ack acknowledges the act or undo this state frame is a direct response
+// to, for the sender's own idempotency bookkeeping.
+type Ack struct {
+	ClientID string `json:"clientId"`
+	Seq      int    `json:"seq"`
+}
+
+// State is a full snapshot: the room, what this connection may do, an
+// optional ack, the events the triggering action produced (redacted for this
+// viewer) and the full game view. Every state frame is a complete snapshot,
+// not a diff, so a slow or reconnecting client only ever needs the latest
+// one (see internal/ws's latest-wins outbox).
+type State struct {
+	T       string   `json:"t" tstype:"'state'"`
+	Code    string   `json:"code"`
+	Version int      `json:"version"`
+	Room    RoomInfo `json:"room"`
+	You     YouInfo  `json:"you"`
+	// Ack is set only when this state is the direct reply to an act or undo
+	// from the connection receiving it.
+	Ack    *Ack             `json:"ack,omitempty"`
+	Events []view.GameEvent `json:"events"`
+	View   view.View        `json:"view"`
+}
+
+// NewState returns a State frame with "t" filled in. events is normalized to
+// a non-nil, possibly empty slice.
+func NewState(code string, version int, room RoomInfo, you YouInfo, ack *Ack, events []view.GameEvent, v view.View) State {
+	if events == nil {
+		events = []view.GameEvent{}
+	}
+	return State{T: "state", Code: code, Version: version, Room: room, You: you, Ack: ack, Events: events, View: v}
+}
+
+// RejectCode says why an act, undo or similar request was refused without
+// ending the connection: the client can usually recover (resync, or just
+// try again).
+type RejectCode string
+
+// The reject codes.
+const (
+	RejectCodeStale       RejectCode = "stale"         // Base did not match the room's current version; a fresh state follows
+	RejectCodeIllegal     RejectCode = "illegal"       // the key is not in the current legal set
+	RejectCodeNotYourTurn RejectCode = "not-your-turn" // this connection does not hold the seat to move
+	RejectCodeRate        RejectCode = "rate"          // the client is sending faster than the rate limit allows
+	RejectCodeBadRequest  RejectCode = "bad-request"   // the frame itself was malformed in some other way
+)
+
+// Reject answers one request (identified by its Seq) that could not be
+// applied. code is a stable, machine-readable reason; msg is a developer
+// hint, never a string to show a player (see package wire's doc comment on
+// display strings).
+type Reject struct {
+	T    string     `json:"t" tstype:"'reject'"`
+	Seq  int        `json:"seq"`
+	Code RejectCode `json:"code"`
+	Msg  string     `json:"msg"`
+}
+
+// NewReject returns a Reject frame with "t" filled in.
+func NewReject(seq int, code RejectCode, msg string) Reject {
+	return Reject{T: "reject", Seq: seq, Code: code, Msg: msg}
+}
+
+// ErrorCode says why the connection itself is being refused or closed, as
+// opposed to one request (RejectCode).
+type ErrorCode string
+
+// The error codes.
+const (
+	ErrorCodeRoomNotFound ErrorCode = "room-not-found" // no such code (or it is archived)
+	ErrorCodeRoomFull     ErrorCode = "room-full"      // both seats are taken by other users
+	ErrorCodeForbidden    ErrorCode = "forbidden"      // this user may not do that in this room
+	ErrorCodeBadHello     ErrorCode = "bad-hello"      // the hello frame itself was invalid
+	ErrorCodeProtocol     ErrorCode = "protocol"       // unsupported protocol version
+)
+
+// Error reports a connection-level problem.
+type Error struct {
+	T    string    `json:"t" tstype:"'error'"`
+	Code ErrorCode `json:"code"`
+	Msg  string    `json:"msg"`
+}
+
+// NewError returns an Error frame with "t" filled in.
+func NewError(code ErrorCode, msg string) Error { return Error{T: "error", Code: code, Msg: msg} }
+
+// serverMessageTypes lists one representative value of every server frame
+// type, for the hygiene test and the testdata recorder to walk.
+var serverMessageTypes = []ServerMessage{
+	NewWelcome(ProtocolVersion, ServerInfo{Version: "dev", Rules: 1}),
+	NewCreated("K7QX2M"),
+	NewState("K7QX2M", 1, NewRoomInfo(ModeHotseat, RoomStatusPlaying, nil, 0), NewYouInfo(nil, false), nil, nil, view.View{}),
+	NewReject(1, RejectCodeStale, "base 3 is behind the current version 5"),
+	NewError(ErrorCodeRoomNotFound, "no room with that code"),
+}

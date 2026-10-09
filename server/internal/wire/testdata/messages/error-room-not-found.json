@@ -1,0 +1,5 @@
+{
+  "t": "error",
+  "code": "room-not-found",
+  "msg": "no room with that code"
+}

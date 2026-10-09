@@ -1,0 +1,214 @@
+{
+  "t": "state",
+  "code": "DRAFTXX",
+  "version": 0,
+  "room": {
+    "mode": "hotseat",
+    "status": "playing",
+    "seats": [
+      {
+        "seat": 0,
+        "name": "Sara",
+        "kind": "human",
+        "connected": true,
+        "you": true
+      },
+      {
+        "seat": 1,
+        "name": "Bot",
+        "kind": "bot",
+        "connected": true,
+        "you": false
+      }
+    ],
+    "spectators": 0
+  },
+  "you": {
+    "seats": [
+      0
+    ],
+    "canAct": true
+  },
+  "events": [],
+  "view": {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 0,
+    "viewer": 0,
+    "phase": "wonderDraft",
+    "age": 0,
+    "toMove": 0,
+    "active": 0,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "draft": {
+      "round": 1,
+      "offer": [
+        {
+          "wonder": "appian-way"
+        },
+        {
+          "wonder": "great-lighthouse"
+        },
+        {
+          "wonder": "sphinx"
+        },
+        {
+          "wonder": "mausoleum"
+        }
+      ]
+    },
+    "structure": [],
+    "players": [
+      {
+        "seat": 0,
+        "coins": 7,
+        "city": [],
+        "tokens": [],
+        "wonders": [],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [],
+        "discardValue": 2
+      },
+      {
+        "seat": 1,
+        "coins": 7,
+        "city": [],
+        "tokens": [],
+        "wonders": [],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [],
+        "discardValue": 2
+      }
+    ],
+    "military": {
+      "position": 0,
+      "looting": [
+        {
+          "at": -6,
+          "seat": 0,
+          "value": 5,
+          "present": true
+        },
+        {
+          "at": -3,
+          "seat": 0,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 3,
+          "seat": 1,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 6,
+          "seat": 1,
+          "value": 5,
+          "present": true
+        }
+      ]
+    },
+    "boardTokens": [
+      "agriculture",
+      "economy",
+      "law",
+      "strategy",
+      "theology"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 0,
+    "discard": [],
+    "wondersBuilt": 0,
+    "choices": [
+      {
+        "key": "draft:appian-way",
+        "kind": "draft",
+        "wonder": "appian-way"
+      },
+      {
+        "key": "draft:great-lighthouse",
+        "kind": "draft",
+        "wonder": "great-lighthouse"
+      },
+      {
+        "key": "draft:sphinx",
+        "kind": "draft",
+        "wonder": "sphinx"
+      },
+      {
+        "key": "draft:mausoleum",
+        "kind": "draft",
+        "wonder": "mausoleum"
+      }
+    ],
+    "disabled": [],
+    "scorePreview": [
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "t": "reject",
+  "seq": 17,
+  "code": "stale",
+  "msg": "base 41 is behind the current version 43"
+}

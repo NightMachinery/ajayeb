@@ -1,0 +1,891 @@
+{
+  "t": "state",
+  "code": "TOKENXX",
+  "version": 1,
+  "room": {
+    "mode": "online",
+    "status": "playing",
+    "seats": [
+      {
+        "seat": 0,
+        "name": "Sara",
+        "kind": "human",
+        "connected": true,
+        "you": true
+      },
+      {
+        "seat": 1,
+        "name": "Bot",
+        "kind": "bot",
+        "connected": true,
+        "you": false
+      }
+    ],
+    "spectators": 0
+  },
+  "you": {
+    "seats": [
+      0
+    ],
+    "canAct": true
+  },
+  "events": [
+    {
+      "kind": "build",
+      "private": false,
+      "seat": 0,
+      "card": "library"
+    },
+    {
+      "kind": "pair",
+      "private": false,
+      "seat": 0,
+      "symbol": "quill"
+    }
+  ],
+  "view": {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 1,
+    "viewer": 0,
+    "phase": "pickBoardToken",
+    "age": 2,
+    "toMove": 0,
+    "active": 0,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "structure": [
+      {
+        "index": 0,
+        "row": 1,
+        "col": 1,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "horse-breeders",
+        "accessible": false,
+        "coveredBy": [
+          6
+        ]
+      },
+      {
+        "index": 1,
+        "row": 1,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "drying-room",
+        "accessible": false,
+        "coveredBy": [
+          6,
+          7
+        ]
+      },
+      {
+        "index": 2,
+        "row": 1,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "shelf-quarry",
+        "accessible": false,
+        "coveredBy": [
+          7,
+          8
+        ]
+      },
+      {
+        "index": 3,
+        "row": 1,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "barracks",
+        "accessible": false,
+        "coveredBy": [
+          8,
+          9
+        ]
+      },
+      {
+        "index": 4,
+        "row": 1,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "school",
+        "accessible": false,
+        "coveredBy": [
+          9,
+          10
+        ]
+      },
+      {
+        "index": 5,
+        "row": 1,
+        "col": 11,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "laboratory",
+        "accessible": false,
+        "coveredBy": [
+          10
+        ]
+      },
+      {
+        "index": 6,
+        "row": 2,
+        "col": 2,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11
+        ]
+      },
+      {
+        "index": 7,
+        "row": 2,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11,
+          12
+        ]
+      },
+      {
+        "index": 8,
+        "row": 2,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          12,
+          13
+        ]
+      },
+      {
+        "index": 9,
+        "row": 2,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          13,
+          14
+        ]
+      },
+      {
+        "index": 10,
+        "row": 2,
+        "col": 10,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          14
+        ]
+      },
+      {
+        "index": 11,
+        "row": 3,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "rostrum",
+        "accessible": false,
+        "coveredBy": [
+          15
+        ]
+      },
+      {
+        "index": 12,
+        "row": 3,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "customs-house",
+        "accessible": false,
+        "coveredBy": [
+          15,
+          16
+        ]
+      },
+      {
+        "index": 13,
+        "row": 3,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "sawmill",
+        "accessible": false,
+        "coveredBy": [
+          16,
+          17
+        ]
+      },
+      {
+        "index": 14,
+        "row": 3,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "aqueduct",
+        "accessible": false,
+        "coveredBy": [
+          17
+        ]
+      },
+      {
+        "index": 15,
+        "row": 4,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": true,
+        "coveredBy": []
+      },
+      {
+        "index": 16,
+        "row": 4,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          19
+        ]
+      },
+      {
+        "index": 17,
+        "row": 4,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          19
+        ]
+      },
+      {
+        "index": 18,
+        "row": 5,
+        "col": 5,
+        "state": "empty",
+        "accessible": false,
+        "coveredBy": []
+      },
+      {
+        "index": 19,
+        "row": 5,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "walls",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "stone",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "stone",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      }
+    ],
+    "players": [
+      {
+        "seat": 0,
+        "coins": 40,
+        "city": [
+          "scriptorium",
+          "library"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "piraeus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": true,
+              "shortfall": 0,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "clay",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "mausoleum",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": true,
+              "shortfall": 0,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "circus-maximus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": true,
+              "shortfall": 0,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "great-library",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": true,
+              "shortfall": 0,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 3,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [
+            {
+              "symbol": "quill",
+              "count": 2
+            }
+          ],
+          "distinct": 1
+        },
+        "chains": [
+          "book"
+        ],
+        "discardValue": 2
+      },
+      {
+        "seat": 1,
+        "coins": 7,
+        "city": [],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "colossus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 1,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 3,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "appian-way",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 3,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "pyramids",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 1,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "stone",
+                  "units": 3,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "statue-of-zeus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 3,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "clay",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [],
+        "discardValue": 2
+      }
+    ],
+    "military": {
+      "position": 0,
+      "looting": [
+        {
+          "at": -6,
+          "seat": 0,
+          "value": 5,
+          "present": true
+        },
+        {
+          "at": -3,
+          "seat": 0,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 3,
+          "seat": 1,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 6,
+          "seat": 1,
+          "value": 5,
+          "present": true
+        }
+      ]
+    },
+    "boardTokens": [
+      "agriculture",
+      "economy",
+      "masonry",
+      "mathematics",
+      "theology"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [],
+    "wondersBuilt": 0,
+    "pending": {
+      "kind": "pickBoardToken",
+      "seat": 0,
+      "cards": [],
+      "tokens": [
+        "agriculture",
+        "economy",
+        "masonry",
+        "mathematics",
+        "theology"
+      ],
+      "hiddenTokens": 0
+    },
+    "choices": [
+      {
+        "key": "token:agriculture",
+        "kind": "token",
+        "token": "agriculture"
+      },
+      {
+        "key": "token:economy",
+        "kind": "token",
+        "token": "economy"
+      },
+      {
+        "key": "token:masonry",
+        "kind": "token",
+        "token": "masonry"
+      },
+      {
+        "key": "token:mathematics",
+        "kind": "token",
+        "token": "mathematics"
+      },
+      {
+        "key": "token:theology",
+        "kind": "token",
+        "token": "theology"
+      }
+    ],
+    "disabled": [],
+    "scorePreview": [
+      {
+        "blue": 0,
+        "green": 2,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 13,
+        "military": 0,
+        "total": 15
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      }
+    ]
+  }
+}

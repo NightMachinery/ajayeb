@@ -1,0 +1,8 @@
+{
+  "t": "welcome",
+  "v": 1,
+  "server": {
+    "version": "dev",
+    "rules": 1
+  }
+}
