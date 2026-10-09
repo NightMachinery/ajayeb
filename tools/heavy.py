@@ -1014,7 +1014,10 @@ class Guard:
         secs = self.clock.monotonic() - t0
         if rc < 0:
             rc = 128 - rc
-        maxrss = normalize_maxrss(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss, self.platform)
+        # sys.platform, not self.platform: ru_maxrss's unit is fixed by the real
+        # kernel this process runs under. self.platform is injectable (tests pin
+        # it to pick a fake memory reader) and must not leak into this conversion.
+        maxrss = normalize_maxrss(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss, sys.platform)
         self._log(kind, cmd, rc, secs, maxrss, when=started, nested=nested)
         return rc
 

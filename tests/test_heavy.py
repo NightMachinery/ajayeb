@@ -640,6 +640,20 @@ class RunTests(GuardCase):
         self.assertLess(entry["maxrss_kb"], 4 * 1024 * 1024)  # not bytes mistaken for KB
         self.assertIn("bytearray", entry["cmd"])
 
+    def test_log_line_maxrss_ignores_injected_platform(self):
+        """The ru_maxrss unit is fixed by the real kernel the test runs under,
+        not by Guard's injectable `platform` (which only picks a fake memory
+        reader elsewhere in this suite). Pin it to the opposite of the real
+        host and confirm the logged value is still correct either way: this
+        is the regression that let darwin-vs-linux unit confusion pass on
+        one OS and fail on the other."""
+        other = "linux" if sys.platform != "linux" else "darwin"
+        g = self.guard(platform=other)
+        g.run("test", [PY, "-c", "x = bytearray(30 * 1024 * 1024)"])
+        entry = self.log_entries()[-1]
+        self.assertGreater(entry["maxrss_kb"], 30 * 1024)
+        self.assertLess(entry["maxrss_kb"], 4 * 1024 * 1024)
+
 
 class NestedTests(GuardCase):
     def test_nested_run_takes_no_slot(self):
