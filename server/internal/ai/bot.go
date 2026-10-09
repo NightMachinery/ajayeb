@@ -136,9 +136,9 @@ func ParseLevel(name string) (Level, error) {
 //   - Hard is the tree search with a default budget of 2 seconds on up to
 //     4 workers (no more than GOMAXPROCS).
 //
-// A Budget passed to Choose replaces the default budget (see MCTSBot). The
-// presets are first settings; slice S12 tunes and freezes them after
-// measured tournaments.
+// The default budget is the level's clock budget (Level.Budget). A Budget
+// passed to Choose replaces it (see MCTSBot); tournaments pass the level's
+// FixedBudget. levels.go holds the presets.
 func New(level Level, seed uint64) Bot {
 	switch level {
 	case Random:
@@ -146,9 +146,9 @@ func New(level Level, seed uint64) Bot {
 	case Easy:
 		return NewGreedy(seed, GreedyConfig{Temperature: EasyTemperature})
 	case Medium:
-		return NewMCTS(seed, MCTSConfig{Budget: mediumBudget()})
+		return NewMCTS(seed, MCTSConfig{Budget: Medium.Budget()})
 	case Hard:
-		return NewMCTS(seed, MCTSConfig{Budget: hardBudget()})
+		return NewMCTS(seed, MCTSConfig{Budget: Hard.Budget()})
 	}
 	panic(fmt.Sprintf("ai: New with invalid level %d", uint8(level)))
 }

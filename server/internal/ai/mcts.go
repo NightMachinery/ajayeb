@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 	"math/bits"
-	"runtime"
 	"slices"
 	"sync"
 	"time"
@@ -120,13 +119,6 @@ const (
 	maxTreeDepth = 256
 )
 
-// The level presets of the tree search. Slice S12 tunes and freezes them.
-const (
-	mediumTime    = 400 * time.Millisecond
-	hardTime      = 2 * time.Second
-	hardMaxWorker = 4
-)
-
 // MCTSConfig configures a tree-search bot. The zero value searches
 // DefaultMCTSIterations iterations on one worker, with the default UCB
 // constant, rollouts and evaluation weights.
@@ -160,13 +152,6 @@ func NewMCTS(seed uint64, cfg MCTSConfig) *MCTSBot {
 		m.w = *cfg.Weights
 	}
 	return m
-}
-
-// mediumBudget and hardBudget are the default budgets of the two levels.
-func mediumBudget() Budget { return Budget{MaxTime: mediumTime, Workers: 1} }
-
-func hardBudget() Budget {
-	return Budget{MaxTime: hardTime, Workers: min(hardMaxWorker, runtime.GOMAXPROCS(0))}
 }
 
 // Choose picks an action by tree search, as described at the top of this

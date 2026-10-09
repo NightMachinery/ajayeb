@@ -5,9 +5,11 @@
 //
 // # Files
 //
-//   - bot.go: the Bot interface, Budget and Progress, the Level presets and
-//     New, and PlayGame, which plays a whole game between two bots (for
+//   - bot.go: the Bot interface, Budget and Progress, the levels and New,
+//     and PlayGame, which plays a whole game between two bots (for
 //     tournaments and tests).
+//   - levels.go: the level presets, each a clock budget for live games and
+//     its iteration equivalent for deterministic tournaments.
 //   - pool.go: Pool, the server-wide semaphore on concurrent searches.
 //   - random.go: the Random bot.
 //   - eval.go: Evaluate and its Weights, the static evaluation in victory
@@ -19,10 +21,11 @@
 //   - mcts.go: MCTSBot, the SO-ISMCTS search (Medium and Hard).
 //   - parallel.go: root-parallel workers, merging and progress.
 //
-// Medium and Hard are the tree search with default budgets of 0.4 s on one
-// worker and 2 s on up to four workers; slice S12 tunes them. The
-// tournament that checks Greedy against Random is in tournament_test.go,
-// behind the slow build tag; the command ajayeb-sim runs any pairing.
+// Medium and Hard are the tree search with clock budgets of 0.4 s on one
+// worker and 2 s on up to four workers. The tournaments that check each
+// level against the one below are in tournament_test.go, behind the slow
+// build tag; the command ajayeb-sim runs any pairing, and docs/ai.md has the
+// measured results.
 //
 // # Rules
 //
