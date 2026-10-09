@@ -105,16 +105,23 @@ An online game, seat 0 builds the Baths:
 1. The player taps the Baths. The client opens the card sheet and shows the cost breakdown from the `construct:baths` entry in `choices`.
 2. The player taps Build (online games ask for a second tap to confirm). The Session sends `{"t":"act","code":"K7QX2M","seq":17,"base":42,"key":"construct:baths"}` and marks the action pending. The card gets a "lifting" outline and every move control is disabled.
 3. The `ws` read loop checks the frame size and the rate limit, decodes the message and passes it to the room's inbox.
-4. The room goroutine checks, in order: the sender holds the seat that must decide; `seq` is new for this client (a duplicate only re-sends the current state); `base` equals the room's version (otherwise it replies `reject stale` followed by a fresh state); and the key is in the engine's legal list (otherwise `reject illegal`).
+4. The room goroutine checks, in order:
+   - the connection has joined the room as a player, not as a spectator;
+   - `seq` is newer than the last `seq` applied for this client. An older or equal one is answered with the current state and an `ack` for that `seq`, and nothing is applied. This check comes before the turn check, so an act re-sent after a reconnect resolves even when the turn has passed;
+   - the game is running (a finished game answers `reject illegal`, an online room still waiting for its second player `reject not-your-turn`) and the sender holds the seat that must decide (otherwise `reject not-your-turn`);
+   - `base` equals the room's version (otherwise it replies `reject stale` followed by a fresh state);
+   - the key is in the engine's legal list (otherwise `reject illegal`).
+
+   Only an applied act uses up its `seq`. After a refusal the client may send the same `seq` again, and the room judges it afresh. The room stores its version with the action log, so a version never comes back after an undo, not even after the room was evicted from memory and reloaded.
 5. The room applies the engine's own action for that key. `Apply` updates the state and returns the events of the move (coins paid, card built, cards revealed, and so on).
 6. The room appends the key to its action log, bumps the version and writes the room file atomically.
 7. For each connection, the room builds `ViewFor(state, viewer)` and filters the events for that viewer, then hands the snapshot to that connection's outbox. If an older snapshot is still waiting there, the new one replaces it.
 8. The Session receives the `state` message, replaces its view, and clears the pending action, because the `ack` names its `seq` and the version has moved past its `base`.
 9. The Presenter animates the events (the card flies to the city, coins move, newly uncovered cards flip) and then shows the new view. The TurnBar now says it is the opponent's turn.
 
-**A bot turn** works the same way from step 4 on. When a bot must act, the room starts a search in its own goroutine and gives it an `Observation` of the bot's seat. The bot's choice comes back to the inbox tagged with the version it was computed for; if an undo made it stale, the room drops it. A server-wide semaphore limits how many searches run at once, and a search is cancelled when the game ends or the room is abandoned.
+**A bot turn** works the same way from step 4 on. When a bot must act, the room starts a search in its own goroutine and gives it an `Observation` of the bot's seat. The bot's seed is derived from the room seed and the game's ply, so the same position always gets the same answer. The bot's choice comes back to the inbox tagged with the version it was computed for; if an undo made it stale, the room drops it. A server-wide semaphore limits how many searches run at once, and a search is cancelled when the game ends or the room is abandoned.
 
-**Hot-seat** rooms belong to one browser that controls both seats; the room sends the view of whichever seat must decide. Hot-seat and bot rooms commit moves on the first tap and offer undo. Online rooms have no undo.
+**Hot-seat** rooms belong to one browser that controls both seats; the room sends the view of whichever seat must decide. Hot-seat and bot rooms commit moves on the first tap and offer undo until the game is over. Online rooms have no undo.
 
 ## Determinism and replay
 
@@ -122,9 +129,9 @@ An online game, seat 0 builds the Baths:
 - **So a game is its seed plus its action keys.** The room file stores exactly that (plus seats and options), and the server restores a room by replaying it. Replay is fast because a game has roughly a hundred actions.
 - **The state is a fixed-size value struct** of arrays, bitsets and small integers, with no pointers, maps or slices. Copying it is a clone, and hashing its bytes (FNV-1a) gives a stable fingerprint. A loaded room is checked against its stored hash; a room that fails to replay, or whose rules version is incompatible, is archived instead of silently changing.
 - **Rules code avoids every source of nondeterminism:** no map iteration in logic, no floats, no clocks, no I/O, no shared mutable state. An import-guard test and the linter enforce this.
-- **Undo** (bot and hot-seat rooms only) truncates the action log back to before the human's last decision and replays from the seed. Because hidden cards were fixed at setup, an undo cannot reroll them.
+- **Undo** (bot and hot-seat rooms only, and never once the game is over) truncates the action log back to before the human's last decision and replays from the seed. Because hidden cards were fixed at setup, an undo cannot reroll them.
 - **Golden replays** pin known games (seed, keys, winner, victory type, scores, final hash), and property sweeps replay thousands of seeded bot games, checking invariants after every action.
-- **Bots are reproducible too.** A bot's random stream is seeded from the room seed and the version, and searches with an iteration budget give the same answer every time.
+- **Bots are reproducible too.** A bot's random stream is seeded from the room seed and the game's ply (not the room version, which an undo moves on), and searches with an iteration budget give the same answer every time.
 
 ## Hidden information
 
@@ -154,7 +161,8 @@ Everything else is public, as it is at the table: face-up cards, both cities, co
 ## Rooms, identity and reconnect
 
 - **Identity.** The browser keeps a random token in `localStorage`. The server derives the user id as an HMAC of the token with a server secret, so tokens never appear in logs or URLs. An invite link is just `/play/<code>`.
-- **Seats.** In an online room the first two distinct users take seats 0 and 1, and later visitors watch as spectators with a public view. Hot-seat and bot rooms accept only their creator.
+- **Seats.** In an online room the first two distinct users take seats 0 and 1, and later visitors watch as spectators with a public view. Hot-seat and bot rooms accept only their creator. Leaving a room or disconnecting only detaches that connection: the seat stays with its user, who gets it back on the next join. Spectators can never lock a player out of a full room.
+- **Rematch.** Once the game is over, either player may ask for a rematch. The server creates one new room with the same mode and seats and a fresh deal, stores its code with the old room, and sends every connection of the old room a `created` frame with that one code. Every later request, from either player and even after the old room was reloaded, gets the same code.
 - **Idempotency.** Every action carries a per-client `seq` and the `base` version it was made against, so a double tap or a re-send after a reconnect can never apply twice.
 - **Reconnect.** After a drop, the client sends `hello` and `join` again and receives a fresh snapshot. A pending action is resolved if the version moved past its base; otherwise the client re-sends it with the same `seq`.
 - **Restarts.** On shutdown the server closes sockets with "service restart" and clients reconnect with backoff. Rooms are on disk, so a redeploy loses no game.
