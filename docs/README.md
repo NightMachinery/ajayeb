@@ -8,7 +8,7 @@ These docs explain how Ajayeb works and how it is built. Files marked "to come" 
 2. [rules/](rules/README.md): the rules of the game in our own words, the rulings on ambiguous points ([rules/decisions.md](rules/decisions.md)), the provenance of the card data ([rules/sources.md](rules/sources.md)) and the data rulings ([rules/data-rulings.md](rules/data-rulings.md)).
 3. [protocol.md](protocol.md): the game log and scenario formats, the per-seat view and its event redaction, and (as M4 lands) the WebSocket message contract.
 4. [ai.md](ai.md): the bots, their difficulty presets, measured strength and cost per move, and how to rerun the tournaments.
-5. `testing.md` (to come): the test layers, from engine unit tests to full playthroughs in the browser.
+5. [testing.md](testing.md): the test layers, from engine unit tests to full games played over a real WebSocket against a real server binary.
 6. [dev/decisions.md](dev/decisions.md): why things are the way they are, and what was rejected.
 
 ## Package guides
