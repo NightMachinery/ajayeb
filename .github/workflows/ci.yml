@@ -2,8 +2,9 @@
 #
 # The heavy suites run here rather than on the laptop: the race detector,
 # golangci-lint, the web checks and build, and Playwright with the bundled
-# Chromium. A nightly job runs the long playout sweep and fuzzing once those
-# tests exist. Read results with `gh run list` and `gh run view --log-failed`.
+# Chromium. Nightly jobs run the long playout sweep, fuzzing, and the full AI
+# tournaments (sharded over ten runners, then tallied against the targets in
+# docs/ai.md). Read results with `gh run list` and `gh run view --log-failed`.
 #
 # On the laptop the same steps go through the Makefile and tools/heavy.py; CI
 # runs the commands directly because a runner has memory to spare.
@@ -186,3 +187,98 @@ jobs:
           path: server/internal/engine/testdata/fuzz/
           if-no-files-found: ignore
           retention-days: 30
+
+  tournament:
+    # The AI's level targets (docs/ai.md, internal/ai/tournament_test.go):
+    # the full paired tournaments at the levels' fixed budgets, so the
+    # results do not depend on the runner. Hard against Medium needs about
+    # 20 core-hours, so every tournament is split into ten shards by deal;
+    # tournament-verdict merges them.
+    name: nightly tournaments (shard ${{ matrix.shard }} of 10)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - name: Build ajayeb-sim
+        run: go build -o bin/ajayeb-sim ./cmd/ajayeb-sim && mkdir -p tour
+      - name: Greedy vs Random (100 games)
+        run: bin/ajayeb-sim match -a greedy -b random -games 100 -seed 1 -p 4 -shard ${{ matrix.shard }}/10 -json tour/greedy-random-${{ matrix.shard }}.json
+      - name: Medium vs Greedy (100 games)
+        if: ${{ !cancelled() }}
+        run: bin/ajayeb-sim match -a medium -b greedy -games 100 -seed 1 -p 4 -shard ${{ matrix.shard }}/10 -json tour/medium-greedy-${{ matrix.shard }}.json
+      - name: Hard vs Medium (200 games)
+        if: ${{ !cancelled() }}
+        run: bin/ajayeb-sim match -a hard -b medium -games 200 -seed 1 -p 4 -shard ${{ matrix.shard }}/10 -json tour/hard-medium-${{ matrix.shard }}.json
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: tournament-shard-${{ matrix.shard }}
+          path: server/tour/
+          retention-days: 30
+
+  tournament-verdict:
+    name: nightly tournament verdict
+    needs: tournament
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && !cancelled()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: tournament-shard-*
+          path: server/tour
+          merge-multiple: true
+      - name: Build ajayeb-sim
+        run: go build -o bin/ajayeb-sim ./cmd/ajayeb-sim
+      # tally fails when a shard is missing or the score is below the target;
+      # each verdict also goes to the run's summary page.
+      - name: Greedy scores at least 90% against Random
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          out=$(bin/ajayeb-sim tally -min 0.90 tour/greedy-random-*.json 2>&1)
+          status=$?
+          echo "$out"
+          printf '```\n%s\n```\n' "$out" >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - name: Medium scores at least 65% against Greedy
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          out=$(bin/ajayeb-sim tally -min 0.65 tour/medium-greedy-*.json 2>&1)
+          status=$?
+          echo "$out"
+          printf '```\n%s\n```\n' "$out" >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - name: Hard scores at least 58% against Medium
+        if: ${{ !cancelled() }}
+        run: |
+          set +e
+          out=$(bin/ajayeb-sim tally -min 0.58 tour/hard-medium-*.json 2>&1)
+          status=$?
+          echo "$out"
+          printf '```\n%s\n```\n' "$out" >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+      - name: The Easy tournaments (go test -tags slow)
+        if: ${{ !cancelled() }}
+        run: go test -tags slow -run 'TestTournament(EasyBeatsRandom|GreedyBeatsEasy)' -v -timeout 30m ./internal/ai
