@@ -215,6 +215,13 @@ func TestAIGameWithRealBots(t *testing.T) {
 	h := newHarness(t, func(c *room.Config) {
 		c.NewBot = nil
 		c.BotPool = ai.NewPool(1)
+		// An iteration budget, not a clock one: the smallest search that
+		// still runs the real bot's code path. A game against a bot plays
+		// one real search per bot ply regardless of how small, and under
+		// -race a bigger budget (or the level's own, which for Easy is
+		// already iteration-bound but can still be slow move to move under
+		// the detector's overhead) risks a single frame missing waitLimit.
+		c.BotBudget = func(store.BotLevel) ai.Budget { return ai.Budget{MaxIterations: 1} }
 	})
 	a := h.client("user-a", "tab-a", "Ann")
 	level := wire.BotLevelEasy

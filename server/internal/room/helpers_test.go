@@ -18,8 +18,15 @@ import (
 
 // waitLimit is a safety net for a hung test, never a timing assumption:
 // every wait below returns as soon as the frame or condition it waits for
-// is there.
-const waitLimit = 20 * time.Second
+// is there. The race detector slows the room actor and any real bot search
+// enough to need a wider margin, so it is bigger under raceEnabled.
+var waitLimit = 20 * time.Second
+
+func init() {
+	if raceEnabled {
+		waitLimit = 60 * time.Second
+	}
+}
 
 // roomEpoch is the fake clock's starting time.
 var roomEpoch = time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
