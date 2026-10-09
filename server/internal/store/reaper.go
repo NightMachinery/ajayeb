@@ -39,11 +39,14 @@ func NewReaper(st *Store, now Clock) *Reaper {
 // it removed. It reads each file's header only (PeekHeader), never a full
 // replay: the reaper's job is age-based cleanup, not integrity checking
 // (Load already handles that, on demand, and archives what it cannot
-// trust). A header Sweep cannot even parse is left alone; whatever is wrong
-// with it, deleting it silently is not the reaper's call to make.
+// trust). A header Sweep cannot even parse, or one of another schema
+// (ErrSchema), is left alone; whatever is wrong with it, deleting it
+// silently is not the reaper's call to make.
 //
 //   - StatusFinished or StatusArchived: eligible once now - Updated exceeds
-//     FinishedAfter.
+//     FinishedAfter. Load stamps Updated when it archives a room, so an
+//     archived file is kept for FinishedAfter from the moment it was
+//     archived.
 //   - StatusLobby or StatusPlaying: eligible once now - Updated exceeds
 //     IdleAfter (an abandoned room that never reached an end).
 func (r *Reaper) Sweep() ([]string, error) {

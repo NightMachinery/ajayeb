@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -287,13 +288,13 @@ func TestFileJSONShape(t *testing.T) {
 	}
 	for _, key := range []string{
 		"schema", "rules", "code", "mode", "created", "updated",
-		"seats", "options", "seed", "actions", "lastSeq", "status", "hash",
+		"seats", "options", "seed", "actions", "version", "lastSeq", "status", "hash",
 	} {
 		if _, ok := raw[key]; !ok {
 			t.Errorf("room file is missing key %q", key)
 		}
 	}
-	for _, key := range []string{"scenario", "result"} {
+	for _, key := range []string{"scenario", "result", "rematch"} {
 		if _, ok := raw[key]; ok {
 			t.Errorf("room file has key %q with no value for it (omitempty should have dropped it)", key)
 		}
@@ -523,5 +524,165 @@ func rewriteField(t *testing.T, st *store.Store, code string, mutate func(raw ma
 	}
 	if err := os.WriteFile(path, out, 0o644); err != nil {
 		t.Fatalf("WriteFile: %v", err)
+	}
+}
+
+// TestVersionPersisted checks that the room version is stored with the
+// room, so a version that moved past the action count (each undo bumps the
+// version while it shortens the log) survives a reload.
+func TestVersionPersisted(t *testing.T) {
+	st := newStore(t)
+	keys, _ := playActions(t, 1, engine.Options{}, 2)
+	f := store.New("VERSN2", store.ModeHotseat, engine.Options{}, 1, time.Now())
+	f.Actions = keys
+	f.Version = 7
+	f.Status = store.StatusPlaying
+	if err := st.Save(f); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	got, _, err := st.Load("VERSN2")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Version != 7 {
+		t.Fatalf("Load version %d, want 7", got.Version)
+	}
+}
+
+// TestVersionDefaultsToActionCount checks the reading of a file written
+// before the version was stored: every action bumped the version once, so
+// the version is at least the length of the log.
+func TestVersionDefaultsToActionCount(t *testing.T) {
+	st := newStore(t)
+	keys, _ := playActions(t, 1, engine.Options{}, 3)
+	f := store.New("PREVRS", store.ModeHotseat, engine.Options{}, 1, time.Now())
+	f.Actions = keys
+	f.Status = store.StatusPlaying
+	if err := st.Save(f); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	rewriteField(t, st, "PREVRS", func(raw map[string]any) { delete(raw, "version") })
+	got, _, err := st.Load("PREVRS")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Version != len(keys) {
+		t.Fatalf("Load version %d, want the action count %d", got.Version, len(keys))
+	}
+	hdr, err := st.PeekHeader("PREVRS")
+	if err != nil || hdr.Version != len(keys) {
+		t.Fatalf("PeekHeader version %v, %v; want %d", hdr, err, len(keys))
+	}
+}
+
+// TestRematchAndSeqsPersisted checks the rematch code and the per-client
+// seqs round trip, with the seqs as plain JSON numbers like the wire's.
+func TestRematchAndSeqsPersisted(t *testing.T) {
+	st := newStore(t)
+	f := store.New("REMTCH", store.ModeOnline, engine.Options{}, 1, time.Now())
+	f.Rematch = "NEXT22"
+	f.LastSeq = map[string]int{"tab-a": 17, "tab-b": 3}
+	if err := st.Save(f); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	got, _, err := st.Load("REMTCH")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Rematch != "NEXT22" || len(got.LastSeq) != 2 || got.LastSeq["tab-a"] != 17 || got.LastSeq["tab-b"] != 3 {
+		t.Fatalf("Load: rematch %q, lastSeq %v", got.Rematch, got.LastSeq)
+	}
+	data, err := os.ReadFile(filepath.Join(st.Dir(), "REMTCH.json"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if !strings.Contains(string(data), `"tab-a": 17`) || !strings.Contains(string(data), `"rematch": "NEXT22"`) {
+		t.Fatalf("room file:\n%s", data)
+	}
+}
+
+// TestArchiveStampsUpdated checks that archiving a room counts as an update:
+// a room that was idle for most of its retention and is then archived must
+// not be reaped at the next sweep, but only once the archive itself is old.
+func TestArchiveStampsUpdated(t *testing.T) {
+	now := time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC)
+	clock := now
+	st, err := store.OpenWithClock(t.TempDir(), func() time.Time { return clock })
+	if err != nil {
+		t.Fatalf("OpenWithClock: %v", err)
+	}
+	f := store.New("ARCHVD", store.ModeAI, engine.Options{}, 1, now.Add(-13*24*time.Hour))
+	f.Status = store.StatusPlaying
+	if err := st.Save(f); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	rewriteField(t, st, "ARCHVD", func(raw map[string]any) { raw["hash"] = "0000000000000000" })
+	got, _, err := st.Load("ARCHVD")
+	if err == nil || got == nil || got.Status != store.StatusArchived || !got.Updated.Equal(now) {
+		t.Fatalf("Load: %+v, %v; want archived and updated at %v", got, err, now)
+	}
+	hdr, err := st.PeekHeader("ARCHVD")
+	if err != nil || hdr.Status != store.StatusArchived || !hdr.Updated.Equal(now) {
+		t.Fatalf("on disk: %+v, %v", hdr, err)
+	}
+
+	// Loading it again later does not stamp it again: an archived room is
+	// kept for its retention from the moment it was archived, not from the
+	// last time somebody tried to open it.
+	clock = now.Add(3 * 24 * time.Hour)
+	if again, _, err := st.Load("ARCHVD"); err == nil || again.Status != store.StatusArchived || !again.Updated.Equal(now) {
+		t.Fatalf("second Load: %+v, %v", again, err)
+	}
+
+	reaper := store.NewReaper(st, func() time.Time { return clock })
+	if removed, err := reaper.Sweep(); err != nil || len(removed) != 0 {
+		t.Fatalf("Sweep three days after archiving: removed %v, %v", removed, err)
+	}
+	clock = now.Add(reaper.FinishedAfter + time.Hour)
+	if removed, err := reaper.Sweep(); err != nil || len(removed) != 1 || removed[0] != "ARCHVD" {
+		t.Fatalf("Sweep after the retention: removed %v, %v", removed, err)
+	}
+}
+
+// TestLoadRefusesUnknownSchema checks that a file of another schema is
+// neither trusted nor rewritten: rewriting it would drop whatever fields a
+// newer server put there.
+func TestLoadRefusesUnknownSchema(t *testing.T) {
+	st := newStore(t)
+	f := store.New("SCHEMA", store.ModeAI, engine.Options{}, 1, time.Now().Add(-60*24*time.Hour))
+	f.Status = store.StatusFinished
+	if err := st.Save(f); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	for _, schema := range []any{float64(store.Schema + 1), float64(0), nil} {
+		rewriteField(t, st, "SCHEMA", func(raw map[string]any) {
+			if schema == nil {
+				delete(raw, "schema")
+			} else {
+				raw["schema"] = schema
+			}
+			raw["futureField"] = "kept"
+		})
+		path := filepath.Join(st.Dir(), "SCHEMA.json")
+		before, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile: %v", err)
+		}
+		if _, _, err := st.Load("SCHEMA"); !errors.Is(err, store.ErrSchema) {
+			t.Fatalf("schema %v: Load error %v, want ErrSchema", schema, err)
+		}
+		if _, err := st.PeekHeader("SCHEMA"); !errors.Is(err, store.ErrSchema) {
+			t.Fatalf("schema %v: PeekHeader error %v, want ErrSchema", schema, err)
+		}
+		if removed, err := store.NewReaper(st, nil).Sweep(); err != nil || len(removed) != 0 {
+			t.Fatalf("schema %v: Sweep removed %v, %v", schema, removed, err)
+		}
+		after, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("ReadFile: %v", err)
+		}
+		if string(before) != string(after) {
+			t.Fatalf("schema %v: the file was rewritten:\n%s", schema, after)
+		}
 	}
 }

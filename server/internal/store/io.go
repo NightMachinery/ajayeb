@@ -63,5 +63,8 @@ func readFile(path string) (*File, error) {
 	if err := json.Unmarshal(data, &f); err != nil {
 		return nil, fmt.Errorf("store: decoding %s: %w", path, err)
 	}
+	// Every action bumped the version once, so a file written before
+	// Version was stored (or with a smaller one) reads as the action count.
+	f.Version = max(f.Version, len(f.Actions))
 	return &f, nil
 }

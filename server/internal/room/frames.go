@@ -70,7 +70,10 @@ func (r *Room) sendState(c *Client, mem member, ack *wire.Ack) {
 // frame builds one connection's state frame.
 func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]bool, fc *frameCache) wire.State {
 	v, events := fc.get(&r.state, r.viewer(mem), ev)
-	return wire.NewState(r.code, r.version, r.roomInfo(mem, presence), r.you(mem), ack, events, v)
+	st := wire.NewState(r.code, r.version, r.roomInfo(mem, presence), r.you(mem), ack, events, v)
+	st.CanUndo = r.canUndo(mem)
+	st.Thinking = r.thinking()
+	return st
 }
 
 // presence reports, by seat, whether the seat's holder is connected: a bot
@@ -109,13 +112,18 @@ func (mem member) holds(seat engine.Seat) bool {
 func (r *Room) roomInfo(mem member, presence [2]bool) wire.RoomInfo {
 	seats := make([]wire.SeatInfo, 0, len(r.file.Seats))
 	for i, s := range r.file.Seats {
-		seats = append(seats, wire.SeatInfo{
+		info := wire.SeatInfo{
 			Seat:      i,
 			Name:      s.Name,
 			Kind:      wire.SeatKind(s.Kind),
 			Connected: presence[i],
 			You:       mem.holds(engine.Seat(i)),
-		})
+		}
+		if s.Kind == store.SeatKindBot {
+			level := wire.BotLevel(s.Bot)
+			info.Bot = &level
+		}
+		seats = append(seats, info)
 	}
 	spectators := 0
 	for _, m := range r.clients {

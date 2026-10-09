@@ -17,13 +17,23 @@ import (
 // actions.
 const maxPlies = 400
 
+// checkSeat compares one seat of a frame with want, the bot level by value.
 func checkSeat(t *testing.T, st wire.State, want wire.SeatInfo) {
 	t.Helper()
 	if len(st.Room.Seats) != 2 {
 		t.Fatalf("room has %d seats, want 2", len(st.Room.Seats))
 	}
-	if got := st.Room.Seats[want.Seat]; got != want {
-		t.Fatalf("seat %d: got %+v, want %+v", want.Seat, got, want)
+	got := st.Room.Seats[want.Seat]
+	level := func(b *wire.BotLevel) string {
+		if b == nil {
+			return "<none>"
+		}
+		return string(*b)
+	}
+	gotLevel, wantLevel := level(got.Bot), level(want.Bot)
+	got.Bot, want.Bot = nil, nil
+	if got != want || gotLevel != wantLevel {
+		t.Fatalf("seat %d: got %+v with bot %s, want %+v with bot %s", want.Seat, got, gotLevel, want, wantLevel)
 	}
 }
 
@@ -210,7 +220,7 @@ func TestAIGameWithRealBots(t *testing.T) {
 	level := wire.BotLevelEasy
 	code, st := a.create(wire.NewCreate(wire.ModeAI, &level, wire.SeatNumber(0), []string{"Ann"}))
 	checkSeat(t, st, wire.SeatInfo{Seat: 0, Name: "Ann", Kind: wire.SeatKindHuman, Connected: true, You: true})
-	checkSeat(t, st, wire.SeatInfo{Seat: 1, Kind: wire.SeatKindBot, Connected: true})
+	checkSeat(t, st, wire.SeatInfo{Seat: 1, Kind: wire.SeatKindBot, Bot: &level, Connected: true})
 
 	// A stranger may not enter a bot room.
 	b := h.client("user-b", "tab-b", "Bob")
@@ -705,7 +715,7 @@ func TestJoinErrors(t *testing.T) {
 	if !errors.Is(err, room.ErrTooManyRooms) {
 		t.Fatalf("create beyond MaxRooms: %v", err)
 	}
-	if f, ok := e.next().(wire.Error); !ok || f.Code != wire.ErrorCodeRoomFull {
+	if f, ok := e.next().(wire.Error); !ok || f.Code != wire.ErrorCodeBusy {
 		t.Fatalf("create beyond MaxRooms sent %#v", f)
 	}
 }
@@ -950,5 +960,348 @@ func TestJoinWithCancelledContextLeavesNoMember(t *testing.T) {
 	}
 	if snap := h.snapshot(code); snap.Clients != 0 {
 		t.Fatalf("%d connections still attached after cancelled joins", snap.Clients)
+	}
+}
+
+// evict detaches every given client and advances the clock until the room
+// leaves memory.
+func (h *harness) evict(code string, clients ...*tclient) {
+	h.t.Helper()
+	for _, c := range clients {
+		h.m.Disconnect(c.Client)
+	}
+	h.snapshot(code) // the detaches are handled and the countdown armed
+	h.clock.Advance(room.DefaultIdleTimeout)
+	h.waitFor("eviction of "+code, func() bool { return !h.m.Loaded(code) })
+}
+
+// TestVersionSurvivesReloadAfterUndo checks that the room version is stored:
+// after an undo the version is ahead of the action count, and a reload must
+// not take it back, or an old base could name a different position.
+func TestVersionSurvivesReloadAfterUndo(t *testing.T) {
+	h := newHarness(t)
+	a := h.client("user-a", "tab-a", "Ann")
+	code, st := a.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), nil))
+	for v := 0; v < 3; v++ {
+		a.act(st.View.Choices[0].Key, v, nil)
+		st = a.waitState(func(s wire.State) bool { return s.Version == v+1 })
+	}
+	a.undo(3)
+	a.waitState(func(s wire.State) bool { return s.Version == 4 })
+	if hdr, err := h.st.PeekHeader(code); err != nil || hdr.Version != 4 || len(hdr.Actions) != 2 {
+		t.Fatalf("room file after undo: %+v, %v", hdr, err)
+	}
+	h.evict(code, a)
+
+	a2 := h.client("user-a", "tab-a2", "Ann")
+	st = a2.join(code)
+	if st.Version != 4 || len(h.snapshot(code).Actions) != 2 {
+		t.Fatalf("reloaded room: version %d, want 4", st.Version)
+	}
+	// Version 2 was the position before the undone action; it must stay
+	// stale even though the log has two actions again.
+	seq := a2.act(st.View.Choices[0].Key, 2, nil)
+	a2.expectReject(seq, wire.RejectCodeStale)
+	a2.act(st.View.Choices[0].Key, 4, nil)
+	a2.waitState(func(s wire.State) bool { return s.Version == 5 })
+}
+
+// TestRematchSurvivesReload checks that the rematch code is stored with the
+// finished room, so a rematch asked after the room was evicted and reloaded
+// leads to the same room instead of creating a second one.
+func TestRematchSurvivesReload(t *testing.T) {
+	h := newHarness(t)
+	code, err := h.m.CreateFromSpec(room.Spec{
+		Mode: store.ModeOnline,
+		Seats: [2]store.Seat{
+			{Kind: store.SeatKindHuman, UserID: "user-a", Name: "Ann"},
+			{Kind: store.SeatKindHuman, UserID: "user-b", Name: "Bob"},
+		},
+		Seed:     3,
+		Scenario: "military-supremacy",
+		Actions:  mustScenarioTrigger(t, "military-supremacy"),
+	})
+	if err != nil {
+		t.Fatalf("CreateFromSpec: %v", err)
+	}
+	a := h.client("user-a", "tab-a", "Ann")
+	a.join(code)
+	code2, err := h.m.Rematch(context.Background(), a.Client, code)
+	if err != nil {
+		t.Fatalf("Rematch: %v", err)
+	}
+	if hdr, err := h.st.PeekHeader(code); err != nil || hdr.Rematch != code2 {
+		t.Fatalf("room file after the rematch: %+v, %v", hdr, err)
+	}
+	h.evict(code, a)
+
+	b := h.client("user-b", "tab-b", "Bob")
+	b.join(code)
+	again, err := h.m.Rematch(context.Background(), b.Client, code)
+	if err != nil || again != code2 {
+		t.Fatalf("Rematch after reload: %q, %v; want %q", again, err, code2)
+	}
+	codes, err := h.st.Codes()
+	if err != nil || len(codes) != 2 {
+		t.Fatalf("rooms on disk: %v, %v; want the room and one rematch", codes, err)
+	}
+}
+
+// TestRefusedActKeepsSeq checks that only an applied act or undo uses up its
+// seq: a refused one (stale, illegal, not your turn) may be sent again with
+// the same seq and is then judged afresh, while an applied one sent again is
+// only acknowledged.
+func TestRefusedActKeepsSeq(t *testing.T) {
+	h := newHarness(t)
+	a := h.client("user-a", "tab-a", "Ann")
+	code, st := a.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), nil))
+	key := st.View.Choices[0].Key
+	toMove := *st.View.ToMove
+
+	a.actSeq(1, key, 5, nil) // stale
+	a.expectReject(1, wire.RejectCodeStale)
+	a.actSeq(1, "construct:no-such-card", 0, nil) // illegal
+	a.expectReject(1, wire.RejectCodeIllegal)
+	a.actSeq(1, key, 0, seatPtr(1-toMove)) // not your turn
+	a.expectReject(1, wire.RejectCodeNotYourTurn)
+
+	a.actSeq(1, key, 0, nil) // now right: applied
+	st = a.waitState(func(s wire.State) bool { return s.Version == 1 })
+	if st.Ack == nil || st.Ack.Seq != 1 {
+		t.Fatalf("applied act: ack %+v", st.Ack)
+	}
+	a.actSeq(1, key, 0, nil) // applied already: only acknowledged
+	h.snapshot(code)
+	frames := a.drain()
+	if len(frames) != 1 {
+		t.Fatalf("re-sent applied act: %#v", frames)
+	}
+	if st, ok := frames[0].(wire.State); !ok || st.Version != 1 || st.Ack == nil || st.Ack.Seq != 1 {
+		t.Fatalf("re-sent applied act: %#v", frames[0])
+	}
+
+	// The same holds for undo.
+	if err := h.m.Undo(context.Background(), a.Client, wire.NewUndo(code, 2, 0)); err != nil {
+		t.Fatalf("Undo: %v", err)
+	}
+	a.expectReject(2, wire.RejectCodeStale)
+	if err := h.m.Undo(context.Background(), a.Client, wire.NewUndo(code, 2, 1)); err != nil {
+		t.Fatalf("Undo: %v", err)
+	}
+	st = a.waitState(func(s wire.State) bool { return s.Version == 2 })
+	if st.Ack == nil || st.Ack.Seq != 2 {
+		t.Fatalf("applied undo: ack %+v", st.Ack)
+	}
+	if snap := h.snapshot(code); snap.Version != 2 || len(snap.Actions) != 0 {
+		t.Fatalf("after the undo: version %d, %d actions", snap.Version, len(snap.Actions))
+	}
+	if hdr, err := h.st.PeekHeader(code); err != nil || hdr.LastSeq["tab-a"] != 2 {
+		t.Fatalf("stored seqs: %+v, %v", hdr, err)
+	}
+}
+
+// TestLastSeqIsBounded checks that the room remembers the seqs of at most
+// SeqClients client ids, the most recently used, in memory and on disk.
+func TestLastSeqIsBounded(t *testing.T) {
+	h := newHarness(t, func(c *room.Config) { c.SeqClients = 2 })
+	owner := h.client("user-a", "tab-0", "Ann")
+	code, st := owner.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), nil))
+	tabs := []*tclient{owner}
+	for _, id := range []string{"tab-1", "tab-2"} {
+		c := h.client("user-a", id, "Ann")
+		c.join(code)
+		tabs = append(tabs, c)
+	}
+	for v, c := range tabs {
+		h.snapshot(code)
+		st = c.current()
+		c.act(st.View.Choices[0].Key, v, nil)
+		c.waitState(func(s wire.State) bool { return s.Version == v+1 })
+	}
+	hdr, err := h.st.PeekHeader(code)
+	if err != nil {
+		t.Fatalf("PeekHeader: %v", err)
+	}
+	if len(hdr.LastSeq) != 2 || hdr.LastSeq["tab-1"] != 1 || hdr.LastSeq["tab-2"] != 1 {
+		t.Fatalf("stored seqs %v, want tab-1 and tab-2 only", hdr.LastSeq)
+	}
+	h.evict(code, tabs...)
+
+	// tab-2 is remembered after the reload; tab-0 was forgotten, so its
+	// re-sent act is judged again, and refused as stale by its old base.
+	t2 := h.client("user-a", "tab-2", "Ann")
+	t2.join(code)
+	t2.actSeq(1, "anything", 2, nil)
+	h.snapshot(code)
+	if frames := t2.drain(); len(frames) != 1 || frames[0].(wire.State).Ack == nil {
+		t.Fatalf("remembered seq after reload: %#v", frames)
+	}
+	t0 := h.client("user-a", "tab-0", "Ann")
+	t0.join(code)
+	t0.actSeq(1, "anything", 0, nil)
+	t0.expectReject(1, wire.RejectCodeStale)
+}
+
+// TestSeatHolderAdmittedWhenFull checks that spectators cannot lock a player
+// out: MaxClients bounds the connections a new spectator may join, while a
+// user who holds a seat is refused only once that user alone has MaxClients
+// connections.
+func TestSeatHolderAdmittedWhenFull(t *testing.T) {
+	h := newHarness(t, func(c *room.Config) { c.MaxClients = 3 })
+	a := h.client("user-a", "tab-a", "Ann")
+	code, _ := a.create(wire.NewCreate(wire.ModeOnline, nil, wire.SeatNumber(0), nil))
+	h.client("user-b", "tab-b", "Bob").join(code)
+	h.client("user-c", "tab-c", "Cy").join(code)
+	h.m.Disconnect(a.Client)
+	h.client("user-d", "tab-d", "Di").join(code) // the room is full again
+
+	a2 := h.client("user-a", "tab-a2", "Ann")
+	st := a2.join(code)
+	checkSeat(t, st, wire.SeatInfo{Seat: 0, Name: "Ann", Kind: wire.SeatKindHuman, Connected: true, You: true})
+	if e, err := h.client("user-e", "tab-e", "Ed").joinErr(code); e.Code != wire.ErrorCodeRoomFull || !errors.Is(err, room.ErrRoomFull) {
+		t.Fatalf("a new spectator in a full room: %v, %v", e, err)
+	}
+
+	// One user's own tabs are bounded too.
+	h.client("user-a", "tab-a3", "Ann").join(code)
+	h.client("user-a", "tab-a4", "Ann").join(code)
+	if e, _ := h.client("user-a", "tab-a5", "Ann").joinErr(code); e.Code != wire.ErrorCodeRoomFull {
+		t.Fatalf("a fourth tab of one user: %v", e)
+	}
+	if snap := h.snapshot(code); snap.Clients != 6 || snap.Spectators != 2 {
+		t.Fatalf("snapshot: %d clients, %d spectators", snap.Clients, snap.Spectators)
+	}
+}
+
+// TestStateFrameExtras checks the frame fields the client cannot work out
+// from the view: each seat's bot level, whether this connection may undo
+// now, and which seat's bot is searching.
+func TestStateFrameExtras(t *testing.T) {
+	gate := newGateBot()
+	h := newHarness(t, func(c *room.Config) {
+		c.NewBot = func(store.BotLevel, uint64) room.Bot { return gate }
+	})
+
+	// A bot room whose bot drafts first: it searches from the first frame.
+	code, err := h.m.CreateFromSpec(aiSpec(engine.FirstPlayerSeat1, store.BotHard))
+	if err != nil {
+		t.Fatalf("CreateFromSpec: %v", err)
+	}
+	a := h.client("user-a", "tab-a", "Ann")
+	st := a.join(code)
+	if st.Room.Seats[0].Bot != nil || st.Room.Seats[1].Bot == nil || *st.Room.Seats[1].Bot != wire.BotLevelHard {
+		t.Fatalf("seats %+v: want a hard bot on seat 1 only", st.Room.Seats)
+	}
+	if st.Thinking == nil || *st.Thinking != 1 || st.CanUndo {
+		t.Fatalf("bot to move first: thinking %v, canUndo %v", st.Thinking, st.CanUndo)
+	}
+	gate.waitStarted(t)
+	gate.release <- struct{}{}
+	st = a.waitState(func(s wire.State) bool { return s.You.CanAct })
+	if st.Thinking != nil || st.CanUndo {
+		t.Fatalf("after the bot's first pick: thinking %v, canUndo %v (the human has nothing to undo)", st.Thinking, st.CanUndo)
+	}
+	// The human plays until the bot is to move again.
+	for i := 0; ; i++ {
+		if i > 4 {
+			t.Fatalf("the bot never got the move back")
+		}
+		v := st.Version
+		a.act(st.View.Choices[0].Key, v, nil)
+		st = a.waitState(func(s wire.State) bool { return s.Version == v+1 })
+		if !st.CanUndo {
+			t.Fatalf("version %d: canUndo false after a human move", st.Version)
+		}
+		if *st.View.ToMove == 1 {
+			break
+		}
+		if st.Thinking != nil {
+			t.Fatalf("version %d: the human is to move but seat %d is thinking", st.Version, *st.Thinking)
+		}
+	}
+	if st.Thinking == nil || *st.Thinking != 1 {
+		t.Fatalf("version %d: the bot is to move but thinking is %v", st.Version, st.Thinking)
+	}
+	if snap := h.snapshot(code); !snap.BotThinking {
+		t.Fatalf("the frame says thinking but no search runs")
+	}
+	gate.waitStarted(t)
+	gate.release <- struct{}{}
+
+	// Hot-seat: no bot, undo once there is a move to take back.
+	b := h.client("user-b", "tab-b", "Bob")
+	_, st = b.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), nil))
+	if st.CanUndo || st.Thinking != nil || st.Room.Seats[0].Bot != nil || st.Room.Seats[1].Bot != nil {
+		t.Fatalf("new hot-seat room: canUndo %v, thinking %v, seats %+v", st.CanUndo, st.Thinking, st.Room.Seats)
+	}
+	b.act(st.View.Choices[0].Key, 0, nil)
+	if st = b.waitState(func(s wire.State) bool { return s.Version == 1 }); !st.CanUndo || st.Thinking != nil {
+		t.Fatalf("hot-seat after a move: canUndo %v, thinking %v", st.CanUndo, st.Thinking)
+	}
+
+	// Online: never undo, for players or spectators.
+	c := h.client("user-c", "tab-c", "Cy")
+	online, _ := c.create(wire.NewCreate(wire.ModeOnline, nil, wire.SeatNumber(0), nil))
+	d := h.client("user-d", "tab-d", "Di")
+	d.join(online)
+	e := h.client("user-e", "tab-e", "Ed")
+	e.join(online)
+	h.snapshot(online)
+	mover := [2]*tclient{c, d}[*c.current().View.ToMove]
+	mover.act(mover.current().View.Choices[0].Key, 0, nil)
+	h.snapshot(online)
+	for _, cl := range []*tclient{c, d, e} {
+		if st := cl.current(); st.Version != 1 || st.CanUndo || st.Thinking != nil {
+			t.Fatalf("online %s: version %d, canUndo %v, thinking %v", cl.ClientID, st.Version, st.CanUndo, st.Thinking)
+		}
+	}
+}
+
+// TestNoUndoAfterGameOver checks that a finished game cannot be taken back,
+// and that its frames say so.
+func TestNoUndoAfterGameOver(t *testing.T) {
+	h := newHarness(t)
+	code, err := h.m.CreateFromSpec(room.Spec{
+		Mode:     store.ModeHotseat,
+		Seats:    [2]store.Seat{{Kind: store.SeatKindOpen}, {Kind: store.SeatKindOpen}},
+		Seed:     3,
+		Scenario: "military-supremacy",
+		Actions:  mustScenarioTrigger(t, "military-supremacy"),
+	})
+	if err != nil {
+		t.Fatalf("CreateFromSpec: %v", err)
+	}
+	a := h.client("user-a", "tab-a", "Ann")
+	st := a.join(code)
+	if st.Room.Status != wire.RoomStatusFinished || st.CanUndo {
+		t.Fatalf("finished hot-seat room: status %s, canUndo %v", st.Room.Status, st.CanUndo)
+	}
+	seq := a.undo(st.Version)
+	a.expectReject(seq, wire.RejectCodeIllegal)
+	if snap := h.snapshot(code); len(snap.Actions) != len(mustScenarioTrigger(t, "military-supremacy")) {
+		t.Fatalf("the undo changed the log: %v", snap.Actions)
+	}
+}
+
+// TestUndoFrameCarriesNoUndoneEvents checks the outbox merge end to end: a
+// client that has not read the frame of a move before the move is undone
+// receives one frame, the undone position, without the move's events.
+func TestUndoFrameCarriesNoUndoneEvents(t *testing.T) {
+	h := newHarness(t)
+	a := h.client("user-a", "tab-a", "Ann")
+	code, st := a.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), nil))
+	a.act(st.View.Choices[0].Key, 0, nil)
+	seq := a.undo(1)
+	h.snapshot(code)
+	frames := a.drain()
+	if len(frames) != 1 {
+		t.Fatalf("got %d frames, want the undo's only: %#v", len(frames), frames)
+	}
+	got, ok := frames[0].(wire.State)
+	if !ok || got.Version != 2 || got.View.Ply != 0 || got.Ack == nil || got.Ack.Seq != seq {
+		t.Fatalf("frame after act and undo: %#v", frames[0])
+	}
+	if len(got.Events) != 0 {
+		t.Fatalf("the undo's frame carries %d events of the undone move", len(got.Events))
 	}
 }

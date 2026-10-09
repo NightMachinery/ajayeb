@@ -45,16 +45,17 @@ type Room struct {
 	cancel context.CancelFunc
 
 	// Owned by the actor goroutine.
-	file       *store.File  // header, seats, action log; written after every change
-	state      engine.State // file's seed and options replayed through file's actions
-	version    int          // bumped by every accepted act and undo; acts must carry it as base
+	file       *store.File   // header, seats, action log; written after every change
+	state      engine.State  // file's seed and options replayed through file's actions
+	deciders   []engine.Seat // by action of file.Actions: the seat that decided it
+	version    int           // bumped by every accepted act and undo, stored in the file; acts must carry it as base
 	clients    map[*Client]member
-	seqs       *seqLRU
-	dirty      bool // the last Save failed; retried on the next change and before eviction
+	seqs       *seqLRU // the last applied seq of each client id
+	dirty      bool    // the last Save failed; retried on the next change and before eviction
 	emptySince time.Time
 	idleStop   func() bool
 	bot        botTask
-	rematch    string // the code of the rematch room, once one exists
+	rematch    string // the code of the rematch room, once one exists (stored in the file)
 	dropped    int    // stale bot results dropped, for tests and diagnostics
 }
 
@@ -92,27 +93,29 @@ type rematchResult struct {
 	err  error
 }
 
-// newRoom builds a room around a file and the state it replays to. It does
-// not start the actor (see Manager.startRoom).
-func newRoom(m *Manager, f *store.File, s engine.State) *Room {
+// newRoom builds a room around a file, the state it replays to and the seat
+// that decided each of its actions (replayKeys). It does not start the
+// actor (see Manager.start). The version continues from the file's, which
+// is never below the length of the log.
+func newRoom(m *Manager, f *store.File, s engine.State, deciders []engine.Seat) *Room {
 	ctx, cancel := context.WithCancel(m.ctx)
 	r := &Room{
-		code:    f.Code,
-		m:       m,
-		log:     m.cfg.Logger.With("room", f.Code),
-		inbox:   make(chan any, m.cfg.InboxSize),
-		done:    make(chan struct{}),
-		ctx:     ctx,
-		cancel:  cancel,
-		file:    f,
-		state:   s,
-		version: len(f.Actions),
-		clients: make(map[*Client]member),
-		seqs:    newSeqLRU(m.cfg.SeqClients),
+		code:     f.Code,
+		m:        m,
+		log:      m.cfg.Logger.With("room", f.Code),
+		inbox:    make(chan any, m.cfg.InboxSize),
+		done:     make(chan struct{}),
+		ctx:      ctx,
+		cancel:   cancel,
+		file:     f,
+		state:    s,
+		deciders: deciders,
+		version:  max(f.Version, len(f.Actions)),
+		clients:  make(map[*Client]member),
+		seqs:     newSeqLRU(m.cfg.SeqClients),
+		rematch:  f.Rematch,
 	}
-	for id, seq := range f.LastSeq {
-		r.seqs.put(id, seq)
-	}
+	r.seqs.load(f.LastSeq)
 	return r
 }
 
@@ -217,9 +220,6 @@ func (r *Room) attach(c *Client) error {
 		r.sendState(c, mem, nil)
 		return nil
 	}
-	if len(r.clients) >= r.m.cfg.MaxClients {
-		return ErrRoomFull
-	}
 	mem, claimed, err := r.admit(c)
 	if err != nil {
 		return err
@@ -236,12 +236,21 @@ func (r *Room) attach(c *Client) error {
 
 // admit decides what c is in this room, claiming open seats for it where
 // the mode allows, and reports whether it claimed any.
+//
+// Connections are bounded so that spectators can never lock a player out:
+// a new spectator is refused once the room has MaxClients connections,
+// while a user who holds a seat is refused only once that user alone has
+// MaxClients connections here. A room thus holds at most three times
+// MaxClients connections (spectators, and each seated user's tabs).
 func (r *Room) admit(c *Client) (member, bool, error) {
 	var held []engine.Seat
 	for i, s := range r.file.Seats {
 		if s.Kind == store.SeatKindHuman && s.UserID == c.UserID {
 			held = append(held, engine.Seat(i))
 		}
+	}
+	if len(held) > 0 && r.userConns(c.UserID) >= r.m.cfg.MaxClients {
+		return member{}, false, ErrRoomFull
 	}
 	switch len(held) {
 	case 2:
@@ -254,6 +263,9 @@ func (r *Room) admit(c *Client) (member, bool, error) {
 	switch r.file.Mode {
 	case store.ModeOnline:
 		if len(open) == 0 {
+			if len(r.clients) >= r.m.cfg.MaxClients {
+				return member{}, false, ErrRoomFull
+			}
 			return member{role: roleSpectator}, false, nil
 		}
 		r.claim(open[0], c, c.Name)
@@ -273,6 +285,17 @@ func (r *Room) admit(c *Client) (member, bool, error) {
 		return member{role: rolePlayer, seat: open[0]}, true, nil
 	}
 	return member{}, false, ErrForbidden
+}
+
+// userConns counts the connections of one user attached to the room.
+func (r *Room) userConns(userID string) int {
+	n := 0
+	for c := range r.clients {
+		if c.UserID == userID {
+			n++
+		}
+	}
+	return n
 }
 
 // openSeats lists the seats nobody holds yet, in seat order.
@@ -322,12 +345,15 @@ func (r *Room) resync(c *Client) {
 
 // --- actions ---------------------------------------------------------------
 
-// act handles an act frame, in this order: the sender must be attached; a
-// seq it already used only re-sends the state (with an ack, so its pending
-// action resolves); the room must be playing; the sender must hold the seat
-// to move; base must be the current version (else reject stale, then a
-// fresh state); and the key must be in the engine's legal set. Then the
-// engine's own action for that key is applied.
+// act handles an act frame, in this order: the sender must be attached, and
+// not as a spectator; a seq not newer than the last one applied for its
+// client id only re-sends the state (with an ack, so its pending action
+// resolves); the room must be playing; the sender must hold the seat to
+// move; base must be the current version (else reject stale, then a fresh
+// state); and the key must be in the engine's legal set. Then the engine's
+// own action for that key is applied. Only an applied act uses up its seq:
+// after a refusal the client may send the same seq again, and it is judged
+// afresh.
 func (r *Room) act(c *Client, m wire.Act) {
 	mem, ok := r.clients[c]
 	if !ok {
@@ -339,7 +365,7 @@ func (r *Room) act(c *Client, m wire.Act) {
 		return
 	}
 	ack := &wire.Ack{ClientID: c.ClientID, Seq: m.Seq}
-	if r.duplicate(c, m.Seq) {
+	if r.applied(c, m.Seq) {
 		r.sendState(c, mem, ack)
 		return
 	}
@@ -367,15 +393,22 @@ func (r *Room) act(c *Client, m wire.Act) {
 	r.commit(a, c, ack)
 }
 
-// duplicate reports whether seq is not newer than the last seq seen from
-// c's client id, and records it otherwise.
-func (r *Room) duplicate(c *Client, seq int) bool {
-	s := uint64(seq) // wire.DecodeClient rejects a negative seq
-	if last, ok := r.seqs.get(c.ClientID); ok && s <= last {
-		return true
+// applied reports whether seq is not newer than the last seq applied for
+// c's client id. Such a request is only acknowledged: it was applied
+// already, or (an older seq that was refused) its client has moved on.
+// Seqs are recorded only when a request is applied (see record), so a
+// refused request does not use up its seq.
+func (r *Room) applied(c *Client, seq int) bool {
+	last, ok := r.seqs.get(c.ClientID)
+	return ok && seq <= last
+}
+
+// record notes ack's seq as the last applied seq of the sender's client id.
+// A bot's move (no sender) records nothing.
+func (r *Room) record(sender *Client, ack *wire.Ack) {
+	if sender != nil && ack != nil {
+		r.seqs.put(sender.ClientID, ack.Seq)
 	}
-	r.seqs.put(c.ClientID, s)
-	return false
 }
 
 // mayAct reports whether the member may act for the seat to move. seat is
@@ -401,10 +434,13 @@ func (r *Room) rejectStale(c *Client, mem member, seq int) {
 	r.sendState(c, mem, nil)
 }
 
-// commit applies a legal action, records and persists it, sends every
+// commit applies a legal action, records it (and the sender's seq) and
+// persists it, starts the bot if it is now to move, and sends every
 // connection the new state with the action's events (the sender's frame
-// carries ack), and starts the bot if it is now to move.
+// carries ack). The bot starts first so that the frames already say it is
+// thinking.
 func (r *Room) commit(a engine.Action, sender *Client, ack *wire.Ack) {
+	decider := r.state.ToMove
 	var ev []engine.Event
 	if err := engine.Apply(&r.state, a, &ev); err != nil {
 		// a came from LegalActions for this exact state, so this is a bug.
@@ -412,10 +448,12 @@ func (r *Room) commit(a engine.Action, sender *Client, ack *wire.Ack) {
 		return
 	}
 	r.file.Actions = append(r.file.Actions, a.Key())
+	r.deciders = append(r.deciders, decider)
 	r.version++
+	r.record(sender, ack)
 	r.persist()
-	r.broadcast(ev, sender, ack)
 	r.maybeStartBot()
+	r.broadcast(ev, sender, ack)
 }
 
 // undo takes back the previous human decision in a hot-seat or bot room:
@@ -434,7 +472,7 @@ func (r *Room) undo(c *Client, m wire.Undo) {
 		return
 	}
 	ack := &wire.Ack{ClientID: c.ClientID, Seq: m.Seq}
-	if r.duplicate(c, m.Seq) {
+	if r.applied(c, m.Seq) {
 		r.sendState(c, mem, ack)
 		return
 	}
@@ -446,19 +484,7 @@ func (r *Room) undo(c *Client, m wire.Undo) {
 		r.rejectStale(c, mem, m.Seq)
 		return
 	}
-	_, deciders, err := replayKeys(r.file, r.file.Actions)
-	if err != nil {
-		r.log.Error("replay for undo failed", "err", err)
-		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeIllegal, "the game cannot be replayed"))
-		return
-	}
-	cut := -1
-	for i := len(deciders) - 1; i >= 0; i-- {
-		if r.file.Seats[deciders[i]].Kind == store.SeatKindHuman {
-			cut = i
-			break
-		}
-	}
+	cut := r.lastHumanDecision()
 	if cut < 0 {
 		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeIllegal, "there is nothing to undo"))
 		return
@@ -473,14 +499,37 @@ func (r *Room) undo(c *Client, m wire.Undo) {
 	r.cancelBot()
 	r.state = s
 	r.file.Actions = keys
+	r.deciders = r.deciders[:cut]
 	r.version++
+	r.record(c, ack)
 	r.persist()
-	r.broadcast(nil, c, ack)
 	r.maybeStartBot()
+	r.broadcast(nil, c, ack)
+}
+
+// lastHumanDecision returns the index in the log of the last action a human
+// seat decided, or -1 when there is none.
+func (r *Room) lastHumanDecision() int {
+	for i := len(r.deciders) - 1; i >= 0; i-- {
+		if r.file.Seats[r.deciders[i]].Kind == store.SeatKindHuman {
+			return i
+		}
+	}
+	return -1
+}
+
+// canUndo reports whether an undo from mem, sent against the current
+// version, would be accepted: a hot-seat or bot room, a player, a game that
+// is not over, and a human decision to take back.
+func (r *Room) canUndo(mem member) bool {
+	return r.file.Mode != store.ModeOnline && mem.role != roleSpectator &&
+		!r.state.Over() && r.lastHumanDecision() >= 0
 }
 
 // doRematch creates (once) a new room with the same mode and seats and a
-// fresh deal, and tells every connection its code with a created frame.
+// fresh deal, and tells every connection its code with a created frame. The
+// code is stored with this room, so a later request, also after the room
+// was evicted and reloaded, leads to the same rematch room.
 func (r *Room) doRematch(c *Client) (string, error) {
 	mem, ok := r.clients[c]
 	if !ok {
@@ -500,6 +549,7 @@ func (r *Room) doRematch(c *Client) (string, error) {
 			return "", err
 		}
 		r.rematch = code
+		r.persist()
 		r.log.Info("rematch", "code", code)
 	}
 	for cl := range r.clients {
@@ -534,6 +584,8 @@ func (r *Room) persist() {
 		f.Result = &res
 	}
 	f.LastSeq = r.seqs.snapshot()
+	f.Version = r.version
+	f.Rematch = r.rematch
 	f.Updated = r.m.cfg.Clock.Now()
 	if err := r.m.cfg.Store.Save(f); err != nil {
 		r.dirty = true
@@ -625,7 +677,7 @@ func (r *Room) snapshot() Snapshot {
 		State:             r.state,
 		Clients:           len(r.clients),
 		Spectators:        spectators,
-		BotThinking:       r.bot.cancel != nil && r.bot.version == r.version,
+		BotThinking:       r.thinking() != nil,
 		DroppedBotResults: r.dropped,
 		Rematch:           r.rematch,
 		Dirty:             r.dirty,

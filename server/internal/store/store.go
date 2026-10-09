@@ -7,24 +7,35 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 )
 
 // Store is a handle on one <data>/rooms directory. The zero value is not
-// valid; use Open.
+// valid; use Open or OpenWithClock.
 type Store struct {
 	dir string
+	now Clock // stamps Updated when Load archives a room
 }
 
 // Open prepares <dataDir>/rooms, creating it (and dataDir) if neither exists
-// yet.
+// yet. The store reads the wall clock (time.Now) for the one timestamp it
+// sets itself, the Updated stamp of a room Load archives.
 func Open(dataDir string) (*Store, error) {
+	return OpenWithClock(dataDir, nil)
+}
+
+// OpenWithClock is Open with an injected clock; nil means time.Now.
+func OpenWithClock(dataDir string, now Clock) (*Store, error) {
+	if now == nil {
+		now = time.Now
+	}
 	dir := filepath.Join(dataDir, "rooms")
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("store: creating %s: %w", dir, err)
 	}
-	return &Store{dir: dir}, nil
+	return &Store{dir: dir, now: now}, nil
 }
 
 // Dir returns the rooms directory this Store reads and writes, mainly for
@@ -68,13 +79,20 @@ func (st *Store) Save(f *File) error {
 // Load reads the room at code, replays it and returns both the header and
 // the resulting engine.State.
 //
+// A file of another Schema is refused with an error wrapping ErrSchema and
+// left exactly as it is: this build cannot read it faithfully, so it must
+// not rewrite it either (a newer server's fields would be lost).
+//
 // On a rules-version mismatch, a replay failure or a hash mismatch, Load
 // does not return the state: it instead flips the file's Status to
-// StatusArchived, writes that back (best effort; a write failure here is
-// folded into the returned error but does not change the fact that the room
-// is no longer trusted), and returns the archived header alongside a
-// descriptive error wrapping ErrRulesVersion or ErrHashMismatch. The file on
-// disk is never deleted by Load, so it stays available for a bug report.
+// StatusArchived, stamps Updated with the store's clock (so the reaper's
+// retention counts from the archiving, not from the last move), writes that
+// back (best effort; a write failure here is folded into the returned error
+// but does not change the fact that the room is no longer trusted), and
+// returns the archived header alongside a descriptive error wrapping
+// ErrRulesVersion or ErrHashMismatch. A file that is already archived is
+// returned as it is, without a second stamp. The file on disk is never
+// deleted by Load, so it stays available for a bug report.
 func (st *Store) Load(code string) (*File, engine.State, error) {
 	path, err := st.path(code)
 	if err != nil {
@@ -82,6 +100,9 @@ func (st *Store) Load(code string) (*File, engine.State, error) {
 	}
 	f, err := readFile(path)
 	if err != nil {
+		return nil, engine.State{}, fmt.Errorf("store: load %s: %w", code, err)
+	}
+	if err := checkSchema(f); err != nil {
 		return nil, engine.State{}, fmt.Errorf("store: load %s: %w", code, err)
 	}
 
@@ -102,15 +123,28 @@ func (st *Store) Load(code string) (*File, engine.State, error) {
 	return f, s, nil
 }
 
-// archive flips f to StatusArchived, writes it back (best effort) and
-// returns it alongside loadErr, as Load's failure paths do.
+// archive flips f to StatusArchived, stamps Updated, writes it back (best
+// effort) and returns it alongside loadErr, as Load's failure paths do. A
+// file that is already archived is returned unchanged and not rewritten.
 func (st *Store) archive(path string, f *File, loadErr error) (*File, engine.State, error) {
+	if f.Status == StatusArchived {
+		return f, engine.State{}, loadErr
+	}
 	archived := *f
 	archived.Status = StatusArchived
+	archived.Updated = st.now()
 	if err := writeFile(path, &archived); err != nil {
 		loadErr = fmt.Errorf("%w (and archiving it failed: %v)", loadErr, err)
 	}
 	return &archived, engine.State{}, loadErr
+}
+
+// checkSchema refuses a file whose Schema is not the one this build writes.
+func checkSchema(f *File) error {
+	if f.Schema != Schema {
+		return fmt.Errorf("%w: the file has schema %d, this server reads %d", ErrSchema, f.Schema, Schema)
+	}
+	return nil
 }
 
 // Exists reports whether a room file exists for code.
@@ -155,13 +189,18 @@ func (st *Store) NewCode() (string, error) {
 // header fields (status, timestamps and so on), fast, for callers that do
 // not need a playable state, such as the reaper's sweep or a room listing.
 // An untrusted (for example StatusArchived) file is still readable this
-// way; only Load vouches for the state matching Hash.
+// way; only Load vouches for the state matching Hash. A file of another
+// Schema is refused (ErrSchema), as Load refuses it, because its header
+// fields may not mean what this build thinks.
 func (st *Store) PeekHeader(code string) (*File, error) {
 	path, err := st.path(code)
 	if err != nil {
 		return nil, err
 	}
 	f, err := readFile(path)
+	if err == nil {
+		err = checkSchema(f)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("store: peek %s: %w", code, err)
 	}

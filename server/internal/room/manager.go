@@ -175,10 +175,11 @@ func (m *Manager) createRoom(f *store.File) (string, error) {
 	if err := checkSeats(f.Mode, f.Seats); err != nil {
 		return "", err
 	}
-	s, _, err := replayKeys(f, f.Actions)
+	s, deciders, err := replayKeys(f, f.Actions)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", ErrInvalidSpec, err)
 	}
+	f.Version = max(f.Version, len(f.Actions))
 	if err := m.reserve(); err != nil {
 		return "", err
 	}
@@ -194,7 +195,7 @@ func (m *Manager) createRoom(f *store.File) (string, error) {
 			continue
 		}
 		f.Code = code
-		r := newRoom(m, f, s)
+		r := newRoom(m, f, s, deciders)
 		r.persist()
 		if r.dirty {
 			r.cancel()
@@ -338,7 +339,14 @@ func (m *Manager) get(code string) (*Room, error) {
 	if f.Status == store.StatusArchived {
 		return nil, ErrRoomNotFound
 	}
-	r := newRoom(m, f, s)
+	// The store has checked that the log replays to its hash; the room also
+	// needs the seat that decided each action, for undo.
+	_, deciders, err := replayKeys(f, f.Actions)
+	if err != nil {
+		m.log.Error("a stored room does not replay through the legal actions", "room", code, "err", err)
+		return nil, ErrRoomNotFound
+	}
+	r := newRoom(m, f, s, deciders)
 	actions := len(f.Actions) // f belongs to the actor once it starts
 	switch err := m.start(r); {
 	case errors.Is(err, errCodeTaken):

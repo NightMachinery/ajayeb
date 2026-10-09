@@ -8,7 +8,8 @@ import (
 
 // Schema is the version of the room file format below. A change to File's
 // shape that an older reader could misinterpret (not just a new optional
-// field) bumps it.
+// field) bumps it. Load and PeekHeader refuse a file of any other schema
+// (ErrSchema) and never rewrite it.
 const Schema = 1
 
 // Mode is the kind of room: who, or what, holds the two seats.
@@ -111,22 +112,34 @@ type File struct {
 	// Scenario, and Options) plus every entry of Actions, in order. Save
 	// computes it; Load checks it.
 	Hash string `json:"hash,omitempty"`
+	// Version is the room's version (see package room): it goes up with
+	// every accepted action and every undo, and never goes down, so it is
+	// at least len(Actions). It is stored so that a room reloaded after an
+	// undo does not reuse a version that already named another position. A
+	// file written before the field existed reads as len(Actions).
+	Version int `json:"version"`
 
-	// LastSeq is the last seq this room has seen from each client, keyed by
-	// clientId, for act/undo idempotency across a reconnect.
-	LastSeq map[string]uint64 `json:"lastSeq"`
+	// LastSeq is the last applied seq of each client, keyed by clientId, for
+	// act/undo idempotency across a reconnect. Seqs are the wire's (JSON
+	// numbers, never negative). The room keeps only its most recently used
+	// clients here (a bounded LRU), so the map stays small.
+	LastSeq map[string]int `json:"lastSeq"`
 
 	Status Status `json:"status"`
 	// Result is the final score sheet, set once Status is StatusFinished
 	// (or an StatusArchived room that had finished before it was archived).
 	Result *engine.Result `json:"result,omitempty"`
+	// Rematch is the code of the room created as this finished room's
+	// rematch, once one exists, so that every later rematch request (also
+	// after the room was evicted and reloaded) leads to that same room.
+	Rematch string `json:"rematch,omitempty"`
 }
 
 // New returns a fresh lobby/playing File: schema and rules at their current
-// values, Created and Updated at now, an empty action log and client-seq
-// map (never nil, so they encode as [] and {} rather than null), and no
-// result yet. Save it once to give it a correct Hash before anything reads
-// it back with Load.
+// values, Created and Updated at now, version 0, an empty action log and
+// client-seq map (never nil, so they encode as [] and {} rather than null),
+// and no result yet. Save it once to give it a correct Hash before anything
+// reads it back with Load.
 func New(code string, mode Mode, opts engine.Options, seed uint64, now time.Time) *File {
 	return &File{
 		Schema:  Schema,
@@ -138,7 +151,7 @@ func New(code string, mode Mode, opts engine.Options, seed uint64, now time.Time
 		Options: opts,
 		Seed:    seed,
 		Actions: []string{},
-		LastSeq: map[string]uint64{},
+		LastSeq: map[string]int{},
 		Status:  StatusLobby,
 	}
 }

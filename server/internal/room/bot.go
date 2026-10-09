@@ -20,6 +20,7 @@ import (
 type botTask struct {
 	cancel  context.CancelFunc // nil when no search is running
 	version int                // the version the search was started for
+	seat    engine.Seat        // the bot's seat
 }
 
 // botSeed is the seed of the bot that decides at ply: a function of the
@@ -43,7 +44,7 @@ func (r *Room) maybeStartBot() {
 	}
 	r.cancelBot()
 	ctx, cancel := context.WithCancel(r.ctx)
-	r.bot = botTask{cancel: cancel, version: r.version}
+	r.bot = botTask{cancel: cancel, version: r.version, seat: seat}
 
 	cfg := &r.m.cfg
 	job := botJob{
@@ -62,6 +63,16 @@ func (r *Room) maybeStartBot() {
 		defer r.m.wg.Done()
 		job.run(ctx)
 	}()
+}
+
+// thinking returns the seat whose bot is searching for the current
+// version, or nil: the state frames' "thinking".
+func (r *Room) thinking() *int {
+	if r.bot.cancel == nil || r.bot.version != r.version {
+		return nil
+	}
+	seat := int(r.bot.seat)
+	return &seat
 }
 
 // cancelBot cancels the running search, if any.

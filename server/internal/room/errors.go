@@ -13,15 +13,18 @@ var (
 	// ErrRoomNotFound: no room has that code, its code is malformed, or its
 	// file is archived. Frame: error room-not-found.
 	ErrRoomNotFound = errors.New("room: no such room")
-	// ErrRoomFull: the room has as many connections as it allows. Frame:
-	// error room-full.
+	// ErrRoomFull: the room takes no more connections of this kind: a new
+	// spectator once the room has MaxClients connections, or one more
+	// connection of a user who already has MaxClients there. Frame: error
+	// room-full.
 	ErrRoomFull = errors.New("room: the room is full")
 	// ErrForbidden: this user may not do that in this room (join someone
 	// else's hot-seat or bot room, rematch as a spectator). Frame: error
 	// forbidden.
 	ErrForbidden = errors.New("room: forbidden")
 	// ErrTooManyRooms: the server holds as many rooms in memory as it
-	// allows. Frame: error room-full (the wire has no closer code yet).
+	// allows (a create, a rematch, or a join that must load a room). Frame:
+	// error busy.
 	ErrTooManyRooms = errors.New("room: too many rooms in memory")
 	// ErrNotJoined: a request names a room this client has not joined.
 	// Frame: reject bad-request.
@@ -46,8 +49,10 @@ var (
 // client receives.
 func errorCode(err error) wire.ErrorCode {
 	switch {
-	case errors.Is(err, ErrRoomFull), errors.Is(err, ErrTooManyRooms):
+	case errors.Is(err, ErrRoomFull):
 		return wire.ErrorCodeRoomFull
+	case errors.Is(err, ErrTooManyRooms):
+		return wire.ErrorCodeBusy
 	case errors.Is(err, ErrForbidden), errors.Is(err, ErrInvalidSpec):
 		return wire.ErrorCodeForbidden
 	default:
@@ -60,7 +65,7 @@ func errorCode(err error) wire.ErrorCode {
 func errorMsg(err error) string {
 	switch {
 	case errors.Is(err, ErrRoomFull):
-		return "the room has as many connections as it allows"
+		return "the room takes no more connections"
 	case errors.Is(err, ErrTooManyRooms):
 		return "the server has too many rooms open; try again later"
 	case errors.Is(err, ErrForbidden):

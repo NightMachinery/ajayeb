@@ -26,8 +26,9 @@ const (
 	DefaultIdleTimeout = 30 * time.Minute
 	// DefaultMaxRooms bounds the rooms in memory at once.
 	DefaultMaxRooms = 1024
-	// DefaultMaxClients bounds the connections attached to one room
-	// (players' tabs and spectators together).
+	// DefaultMaxClients bounds the connections of one room: a new spectator
+	// is admitted while the room has fewer, a seated user while that user
+	// has fewer there (see Config.MaxClients).
 	DefaultMaxClients = 32
 	// DefaultSeqClients bounds the client ids whose last seq a room
 	// remembers (an LRU).
@@ -85,11 +86,14 @@ type Config struct {
 	IdleTimeout time.Duration
 	// MaxRooms bounds the rooms in memory. Default DefaultMaxRooms.
 	MaxRooms int
-	// MaxClients bounds the connections attached to one room. Default
-	// DefaultMaxClients.
+	// MaxClients bounds the connections of one room: a new spectator is
+	// refused once the room has MaxClients connections, and a user who
+	// holds a seat once that user has MaxClients connections there, so
+	// spectators cannot lock a player out and a room holds at most three
+	// times MaxClients connections. Default DefaultMaxClients.
 	MaxClients int
-	// SeqClients bounds the client ids whose last seq a room remembers.
-	// Default DefaultSeqClients.
+	// SeqClients bounds the client ids whose last applied seq a room
+	// remembers, in memory and in its file. Default DefaultSeqClients.
 	SeqClients int
 	// InboxSize is each room's inbox capacity. Default DefaultInboxSize.
 	InboxSize int

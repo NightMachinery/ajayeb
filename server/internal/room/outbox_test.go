@@ -203,3 +203,18 @@ func TestSeqLRU(t *testing.T) {
 		t.Fatalf("snapshot %v", snap)
 	}
 }
+
+// TestSeqLRULoadIsBoundedAndDeterministic checks that loading more stored
+// seqs than the LRU holds keeps it at its capacity, and keeps the same
+// clients whatever the map's iteration order.
+func TestSeqLRULoadIsBoundedAndDeterministic(t *testing.T) {
+	stored := map[string]int{"d": 4, "a": 1, "c": 3, "b": 2, "e": 5}
+	for range 20 {
+		l := newSeqLRU(3)
+		l.load(stored)
+		snap := l.snapshot()
+		if len(snap) != 3 || snap["c"] != 3 || snap["d"] != 4 || snap["e"] != 5 {
+			t.Fatalf("loaded %v, want the last three ids in order", snap)
+		}
+	}
+}
