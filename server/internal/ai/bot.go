@@ -78,14 +78,11 @@ var (
 type Level uint8
 
 // The levels.
-//
-// Until the tree search arrives (slice S11), Medium and Hard play the
-// deterministic Greedy bot: see New.
 const (
 	Random Level = iota // uniform over the legal actions
 	Easy                // Greedy values sampled by a softmax, so it errs like a beginner
-	Medium              // S11: tree search, 0.4 s on one worker; Greedy for now
-	Hard                // S11: tree search, 2 s on up to 4 workers; Greedy for now
+	Medium              // tree search, 0.4 s on one worker
+	Hard                // tree search, 2 s on up to 4 workers
 	numLevels
 )
 
@@ -134,18 +131,24 @@ func ParseLevel(name string) (Level, error) {
 //
 //   - Random plays uniformly at random.
 //   - Easy is Greedy with softmax sampling (EasyTemperature).
-//   - Medium and Hard are, for now, the deterministic Greedy bot. They
-//     become tree searches in slice S11; their presets (budgets and worker
-//     counts) are fixed only after the tournaments of slice S12.
+//   - Medium is the tree search (mcts.go) with a default budget of 0.4
+//     seconds on one worker.
+//   - Hard is the tree search with a default budget of 2 seconds on up to
+//     4 workers (no more than GOMAXPROCS).
+//
+// A Budget passed to Choose replaces the default budget (see MCTSBot). The
+// presets are first settings; slice S12 tunes and freezes them after
+// measured tournaments.
 func New(level Level, seed uint64) Bot {
 	switch level {
 	case Random:
 		return NewRandom(seed)
 	case Easy:
 		return NewGreedy(seed, GreedyConfig{Temperature: EasyTemperature})
-	case Medium, Hard:
-		// TODO(S11): replace with the SO-ISMCTS presets.
-		return NewGreedy(seed, GreedyConfig{})
+	case Medium:
+		return NewMCTS(seed, MCTSConfig{Budget: mediumBudget()})
+	case Hard:
+		return NewMCTS(seed, MCTSConfig{Budget: hardBudget()})
 	}
 	panic(fmt.Sprintf("ai: New with invalid level %d", uint8(level)))
 }
