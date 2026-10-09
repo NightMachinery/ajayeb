@@ -5,14 +5,16 @@ These docs explain how Ajayeb works and how it is built. Files marked "to come" 
 ## Suggested reading order
 
 1. [architecture.md](architecture.md): the big picture. The Go server owns the rules and the truth; the browser renders what it is sent. Read this first.
-2. `rules/` (to come, M1): the rules of the game in our own words, the rulings on ambiguous points (`rules/decisions.md`) and the provenance of the card data (`rules/sources.md`).
-3. `protocol.md` (to come, M4): the WebSocket message contract between client and server.
-4. `testing.md` (to come): the test layers, from engine unit tests to full playthroughs in the browser.
-5. [dev/decisions.md](dev/decisions.md): why things are the way they are, and what was rejected.
+2. [rules/](rules/README.md): the rules of the game in our own words, the rulings on ambiguous points ([rules/decisions.md](rules/decisions.md)), the provenance of the card data ([rules/sources.md](rules/sources.md)) and the data rulings ([rules/data-rulings.md](rules/data-rulings.md)).
+3. [protocol.md](protocol.md): the game log and scenario formats, the per-seat view and its event redaction, and (as M4 lands) the WebSocket message contract.
+4. [ai.md](ai.md): the bots, their difficulty presets, measured strength and cost per move, and how to rerun the tournaments.
+5. `testing.md` (to come): the test layers, from engine unit tests to full playthroughs in the browser.
+6. [dev/decisions.md](dev/decisions.md): why things are the way they are, and what was rejected.
 
 ## Package guides
 
 - [../web/README.md](../web/README.md): the web client: its layout, design tokens and Tailwind utilities, i18n, fonts and the `PUBLIC_DEV_ROUTES` flag.
+- [self-hosting.md](self-hosting.md): running Ajayeb locally for development and in production with `self_host.py`.
 - [../tools/chrome/README.md](../tools/chrome/README.md): the headless Chrome tools for screenshots, layout probes and SVG contact sheets.
 
 ## Project and legal

@@ -52,7 +52,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/ws`**: the WebSocket transport (`github.com/coder/websocket`): origin patterns, read limits, per-connection rate limits, pings, and an outbox that keeps only the newest snapshot for a slow client.
 - **`internal/httpapi`**: `/health`, the room lookup API, the development endpoints (refused unless the server runs with `--dev`), and the static handler with its SPA fallback.
 - **`internal/webdist`**: embeds the web build only under the `embedweb` build tag, so a fresh clone builds and tests without building the web app first.
-- **`cmd/ajayeb`** wires everything together. The other commands are `ajayeb-sim` (playouts, tournaments, the AI benchmark, the scenario finder, the replay verifier), `ajayeb-drive` (plays full games over WebSocket against a running server) and `ajayeb-gen`, the TypeScript generator. `ajayeb-gen` today is only `ajayeb-gen catalog -format csv|json|prose`, the catalog dump described in [docs/rules/sources.md](rules/sources.md); the generated-TypeScript subcommands in the next section arrive with their own slices.
+- **`cmd/ajayeb`** wires everything together. The other commands are `ajayeb-sim` (tournaments, the AI benchmark, level calibration, weight sweeps and the replay verifier; see [ai.md](ai.md)), `ajayeb-drive` (plays full games over WebSocket against a running server) and `ajayeb-gen`, the TypeScript generator. `ajayeb-gen` today is only `ajayeb-gen catalog -format csv|json|prose`, the catalog dump described in [docs/rules/sources.md](rules/sources.md); the generated-TypeScript subcommands in the next section arrive with their own slices.
 
 ## Actions and views
 

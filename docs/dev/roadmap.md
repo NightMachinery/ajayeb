@@ -77,6 +77,8 @@ Acceptance:
 
 ## M3: AI
 
+Status: done locally on 2026-10-09, with the full Hard measurement pending CI. Presets are frozen in `server/internal/ai/levels.go` and described in [docs/ai.md](../ai.md). Greedy beat Random in 100% of 100 paired games, and Medium beat Greedy in 71.0% of 100 (95% interval 61.5% to 79.0%). Hard against Medium was measured locally only on a proxy at a tenth of both budgets (63.7% over 200 games, interval 56.9% to 70.1%), because the full run takes about six hours here. The nightly CI job plays all three tournaments at full budget and is the authoritative check; if Hard falls short there, a follow-up slice tunes its search settings.
+
 Scope:
 
 - S10: the bot interface, the Random and Greedy bots, the evaluation function, the search pool, and self-play tournaments in `ajayeb-sim`.
