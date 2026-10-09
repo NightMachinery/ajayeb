@@ -43,7 +43,7 @@ var recordCases = []recordCase{
 	}},
 	{"state-draft", func(t *testing.T) wire.ServerMessage {
 		s := engine.NewGame(1, engine.Options{})
-		return stateFrame(t, "DRAFTXX", &s, nil, wire.ModeHotseat, wire.RoomStatusPlaying, nil)
+		return stateFrame(t, "DRAFT2", &s, nil, wire.ModeHotseat, wire.RoomStatusPlaying, nil)
 	}},
 	{"state-play", func(t *testing.T) wire.ServerMessage {
 		s := engine.NewGame(1, engine.Options{})
@@ -62,7 +62,7 @@ var recordCases = []recordCase{
 			}
 			lastEv = ev
 		}
-		return stateFrame(t, "PLAYXXX", &s, lastEv, wire.ModeHotseat, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 10})
+		return stateFrame(t, "H8TQ4R", &s, lastEv, wire.ModeHotseat, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 10})
 	}},
 	{"state-pending-token", func(t *testing.T) wire.ServerMessage {
 		sc := engine.NamedScenario("science-pair")
@@ -77,7 +77,7 @@ var recordCases = []recordCase{
 		if err := engine.RunTrigger(&s, sc, &ev); err != nil {
 			t.Fatalf("RunTrigger: %v", err)
 		}
-		return stateFrame(t, "TOKENXX", &s, ev, wire.ModeOnline, wire.RoomStatusPlaying, nil)
+		return stateFrame(t, "W3NB9P", &s, ev, wire.ModeOnline, wire.RoomStatusPlaying, nil)
 	}},
 	{"state-game-over", func(t *testing.T) wire.ServerMessage {
 		sc := engine.NamedScenario("military-supremacy")
@@ -95,7 +95,7 @@ var recordCases = []recordCase{
 		if !s.Over() {
 			t.Fatalf("military-supremacy's trigger should end the game")
 		}
-		return stateFrame(t, "OVERXXX", &s, ev, wire.ModeAI, wire.RoomStatusFinished, nil)
+		return stateFrame(t, "G5VCK2", &s, ev, wire.ModeAI, wire.RoomStatusFinished, nil)
 	}},
 }
 
