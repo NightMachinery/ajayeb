@@ -23,7 +23,7 @@ type gameSummary struct {
 }
 
 func (s gameSummary) String() string {
-	return fmt.Sprintf("mode=%s code=%s seed=%d plies=%d victory=%s winner=%s shared=%t duration=%s",
+	return fmt.Sprintf("mode=%s code=%s pick-seed=%d plies=%d victory=%s winner=%s shared=%t duration=%s",
 		s.mode, s.code, s.seed, s.plies, s.victory, s.winner, s.shared, s.elapsed.Round(time.Millisecond))
 }
 

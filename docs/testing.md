@@ -70,12 +70,15 @@ against a server that is already running, the way a real client would: it
 never computes legality or cost, it only picks a random choice from the
 view it is sent. It takes `--origin`, `--mode online|hotseat|ai`, `--games`
 and `--seed`, exits non-zero on any protocol error or a game that ends
-without a result, and prints one summary line per game.
+without a result, and prints one summary line per game. `--seed` seeds the
+driver's own random choices (game i uses seed plus i); the server deals each
+game from a seed of its own.
 
 `--concurrency` plays several games at once against the one server, which
 is how we measure the server's resident memory under load: start a test
-binary, run `ajayeb-drive --games 20 --concurrency 20`, and sample the
-server process's RSS while it is in flight. Each connection sends a
+binary and run `ajayeb-drive --games 20 --concurrency 20 --server-pid PID`,
+which samples that process's resident memory with `ps` every 100 ms while
+the games run and prints the peak. Each connection sends a
 synthetic `X-Forwarded-For` address, so a server started with `-trust-proxy`
 naming the driver's own address can be driven past its default
 per-address socket cap (16) for a true 20-connections-at-once run; without

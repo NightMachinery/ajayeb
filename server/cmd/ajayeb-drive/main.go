@@ -29,7 +29,9 @@
 // (-trust-proxy 127.0.0.1 for a driver running on the same host) to raise
 // its 16-sockets-per-address default past -concurrency; without it, the
 // header is simply ignored and every connection counts against the one
-// real address as usual.
+// real address as usual. --server-pid names the server's process (on this
+// host) so the driver samples its resident memory every 100 ms while the
+// games run and prints the peak after them.
 package main
 
 import (
@@ -65,6 +67,7 @@ type options struct {
 	concurrency int
 	bot         wire.BotLevel
 	gameTimeout time.Duration
+	serverPID   int
 }
 
 var modes = []string{"online", "hotseat", "ai"}
@@ -78,10 +81,11 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fs.StringVar(&o.origin, "origin", "", "the running server's `origin`, e.g. http://127.0.0.1:38951 (required)")
 	fs.StringVar(&o.mode, "mode", "", "room mode: "+strings.Join(modes, "|")+" (required)")
 	fs.IntVar(&o.games, "games", 1, "number of games to play")
-	fs.Uint64Var(&o.seedBase, "seed", 0, "base `seed`; game i uses seed+i (0 picks a random base)")
+	fs.Uint64Var(&o.seedBase, "seed", 0, "base `seed` of the driver's random choices; game i uses seed+i (0 picks a random base). The server deals each game from its own seed")
 	fs.IntVar(&o.concurrency, "concurrency", 1, "games to play at once against the server")
 	fs.StringVar(&botFlag, "bot", "easy", "bot level for -mode ai: "+strings.Join(botLevels, "|"))
 	fs.DurationVar(&o.gameTimeout, "game-timeout", 2*time.Minute, "fail a game that has not finished within this `duration`")
+	fs.IntVar(&o.serverPID, "server-pid", 0, "sample this local server `pid`'s resident memory while the games run and print its peak")
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), "Usage: ajayeb-drive --origin URL --mode %s [flags]\n\nFlags:\n", strings.Join(modes, "|"))
 		fs.PrintDefaults()
@@ -121,6 +125,10 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	}
 	if o.games < 1 {
 		fmt.Fprintln(stderr, "ajayeb-drive: -games must be at least 1")
+		return options{}, errBadFlags
+	}
+	if o.serverPID < 0 {
+		fmt.Fprintln(stderr, "ajayeb-drive: -server-pid must not be negative")
 		return options{}, errBadFlags
 	}
 	if o.concurrency < 1 {
@@ -185,6 +193,22 @@ func run(args []string, stdout, stderr io.Writer) int {
 		seedBase = randomSeedBase()
 	}
 
+	var sampler *rssSampler
+	stopSampling := func() {}
+	if opts.serverPID > 0 {
+		sampler = &rssSampler{pid: opts.serverPID}
+		ctx, cancel := context.WithCancel(context.Background())
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			sampler.run(ctx)
+		}()
+		stopSampling = func() {
+			cancel()
+			<-done
+		}
+	}
+
 	var out sync.Mutex // serializes stdout/stderr writes across concurrent games
 	var failed atomic.Bool
 	var wg sync.WaitGroup
@@ -211,6 +235,16 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}(i)
 	}
 	wg.Wait()
+	stopSampling()
+
+	if sampler != nil {
+		line, err := sampler.summary()
+		fmt.Fprintln(stdout, line)
+		if err != nil {
+			fmt.Fprintf(stderr, "ajayeb-drive: memory sampling: %v\n", err)
+			failed.Store(true)
+		}
+	}
 
 	if failed.Load() {
 		return 1

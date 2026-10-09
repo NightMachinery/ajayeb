@@ -2,6 +2,7 @@ package main
 
 import (
 	"io"
+	"os"
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -78,5 +79,25 @@ func TestWsURLFrom(t *testing.T) {
 func TestRunUsageError(t *testing.T) {
 	if code := run(nil, io.Discard, io.Discard); code != 2 {
 		t.Errorf("run with no flags = %d, want 2", code)
+	}
+}
+
+func TestParseFlagsServerPID(t *testing.T) {
+	opts, err := parseFlags([]string{"--origin", "http://x", "--mode", "ai", "--server-pid", "4242"}, io.Discard)
+	if err != nil || opts.serverPID != 4242 {
+		t.Fatalf("parseFlags = %+v, %v; want serverPID 4242", opts, err)
+	}
+	if _, err := parseFlags([]string{"--origin", "http://x", "--mode", "ai", "--server-pid", "-1"}, io.Discard); err == nil {
+		t.Fatal("want an error for a negative -server-pid")
+	}
+}
+
+func TestReadRSSOfThisProcess(t *testing.T) {
+	kib, err := readRSS(t.Context(), os.Getpid())
+	if err != nil {
+		t.Fatalf("readRSS: %v", err)
+	}
+	if kib <= 0 {
+		t.Fatalf("readRSS = %d KiB, want a positive size", kib)
 	}
 }
