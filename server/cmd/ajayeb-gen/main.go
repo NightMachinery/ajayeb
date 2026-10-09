@@ -3,12 +3,21 @@
 // Usage:
 //
 //	ajayeb-gen
+//	ajayeb-gen fixtures [-out PATH] [-messages DIR] [-protocol DIR]
 //	ajayeb-gen catalog [-format csv|json|prose] [-out DIR] [-table cards|wonders|tokens]
 //
-// Without a subcommand it regenerates the TypeScript under web/src/lib/wire;
-// make gen runs it that way, after tygo. That generator does not exist yet,
-// so for now it only says so on stderr and exits 0, which keeps make gen and
-// make gen-check working.
+// Without a subcommand it regenerates the TypeScript under web/src/lib/wire
+// that make gen is responsible for, after tygo has already written the
+// types themselves: today that is just the fixtures subcommand, run with
+// its defaults. A later generator that also belongs in that default sweep
+// gets its own subcommand and a call here alongside it.
+//
+// fixtures turns real recorded server output into a TypeScript fixture file
+// that make check-web type-checks against the generated wire types:
+// internal/wire/testdata/messages/*.json (whole ServerMessage frames) become
+// `export const fixtures`, and every viewer's View from
+// internal/engine/testdata/protocol/*.json becomes `export const
+// protocolFixtures`. See fixtures.go for the format in full.
 //
 // The catalog subcommand dumps the card, wonder and token catalog of the
 // engine in one of three formats:
@@ -44,7 +53,8 @@ func main() {
 }
 
 const usage = `Usage:
-  ajayeb-gen                     regenerate the TypeScript under web/src/lib/wire (none yet)
+  ajayeb-gen                     regenerate the TypeScript under web/src/lib/wire (today: fixtures, with its defaults)
+  ajayeb-gen fixtures [flags]    write the wire and protocol fixtures (ajayeb-gen fixtures -help for the flags)
   ajayeb-gen catalog [flags]     dump the catalog (ajayeb-gen catalog -help for the flags)
 `
 
@@ -55,11 +65,19 @@ var errUsage = errors.New("usage")
 // on success, 1 when writing the output failed and 2 for a usage error.
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "ajayeb-gen: no TypeScript generators yet; nothing to do (see ajayeb-gen -help)")
+		// make gen's no-subcommand call: every generator that belongs in
+		// that default sweep runs here, with its own defaults.
+		if err := generateFixtures(defaultFixturesOut, defaultMessagesDir, defaultProtocolDir); err != nil {
+			fmt.Fprintf(stderr, "ajayeb-gen: %v\n", err)
+			return 1
+		}
+		fmt.Fprintf(stdout, "wrote %s\n", defaultFixturesOut)
 		return 0
 	}
 	var err error
 	switch args[0] {
+	case "fixtures":
+		err = runFixturesCmd(args[1:], stdout, stderr)
 	case "catalog":
 		err = runCatalog(args[1:], stdout, stderr)
 	case "-h", "-help", "--help", "help":

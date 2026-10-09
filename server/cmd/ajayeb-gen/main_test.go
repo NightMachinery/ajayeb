@@ -220,7 +220,14 @@ func TestCommandLine(t *testing.T) {
 		code int
 		msg  string // a substring of stderr
 	}{
-		{nil, 0, "no TypeScript generators yet"},
+		// No subcommand runs fixtures with its defaults, which are relative
+		// to server/ (make gen's working directory): from this package's
+		// own directory (server/cmd/ajayeb-gen) they resolve to
+		// cmd/ajayeb-gen/internal/..., which does not exist, so this
+		// exercises the "can't find the input directory" error path, not a
+		// successful write. TestFixturesCommand covers the real, successful
+		// run with explicit paths.
+		{nil, 1, "reading recorded messages"},
 		{[]string{"-help"}, 0, ""},
 		{[]string{"catalog", "-help"}, 0, "-format"},
 		{[]string{"nope"}, 2, `unknown subcommand "nope"`},

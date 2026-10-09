@@ -16,6 +16,7 @@ type_mappings:
   time.Time: "string /* RFC 3339 */"
   json.RawMessage: "unknown"
   view.View: "view.View"
+  view.GameEvent: "view.GameEvent"
 
 packages:
   - path: github.com/NightMachinery/ajayeb/server/internal/view
