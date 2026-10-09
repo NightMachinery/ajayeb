@@ -26,9 +26,10 @@ const (
 // State frames are full snapshots, so the outbox keeps only the newest
 // state frame of each room (latest wins): pushing a state frame removes an
 // older one for the same room code that has not been taken yet. The newer
-// frame inherits the older one's events (in front of its own, so the client
-// can still animate everything that happened) and, when it has no ack of
-// its own, the older one's ack. Every other frame is kept, in order.
+// frame inherits, when it has no ack of its own, the older one's ack, and,
+// when its position follows from the older one's, the older one's events
+// (in front of its own, so the client can still animate everything that
+// happened; see continues). Every other frame is kept, in order.
 //
 // An Outbox is safe for one pusher and one taker at a time, from different
 // goroutines.
@@ -74,7 +75,7 @@ func (o *Outbox) pushState(st wire.State) {
 		if !ok || old.Code != st.Code {
 			continue
 		}
-		if len(old.Events) > 0 {
+		if len(old.Events) > 0 && continues(old, st) {
 			merged := make([]view.GameEvent, 0, len(old.Events)+len(st.Events))
 			merged = append(merged, old.Events...)
 			merged = append(merged, st.Events...)
@@ -90,6 +91,23 @@ func (o *Outbox) pushState(st wire.State) {
 		break
 	}
 	o.queue = append(o.queue, st)
+}
+
+// continues reports whether next's position follows from prev's by
+// forward moves only, so that prev's events still lead towards next. Events
+// animate the way from the position the client last took to the new one:
+//
+//   - a newer move (version and ply both up) continues;
+//   - a frame for the same position (same version: a presence change, a
+//     resync, the reply to a duplicate) continues, so a presence change
+//     never swallows a move's events;
+//   - an undo moves the version on but takes the ply back: the undone
+//     moves' events would animate something that no longer happened, so
+//     they are dropped and the client simply jumps to the new position;
+//   - a version that went back (which a room never sends, since it stores
+//     its version) is treated the same way.
+func continues(prev, next wire.State) bool {
+	return next.Version >= prev.Version && next.View.Ply >= prev.View.Ply
 }
 
 // signal leaves a token in ready. The caller holds mu.

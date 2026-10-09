@@ -7,13 +7,84 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
+// outboxState is a state frame at version whose game is at ply version (as
+// in a room that has seen no undo), with an event of each kind.
 func outboxState(code string, version int, ack *wire.Ack, kinds ...view.EventKind) wire.State {
+	return outboxStateAt(code, version, version, ack, kinds...)
+}
+
+// outboxStateAt is outboxState with a ply of its own, for frames after an
+// undo, which moves the version on and the ply back.
+func outboxStateAt(code string, version, ply int, ack *wire.Ack, kinds ...view.EventKind) wire.State {
 	events := make([]view.GameEvent, 0, len(kinds))
 	for _, k := range kinds {
 		events = append(events, view.GameEvent{Kind: k})
 	}
 	return wire.NewState(code, version, wire.NewRoomInfo(wire.ModeOnline, wire.RoomStatusPlaying, nil, 0),
-		wire.NewYouInfo(nil, false), ack, events, view.View{})
+		wire.NewYouInfo(nil, false), ack, events, view.View{Ply: ply})
+}
+
+// outboxKinds lists the kinds of a frame's events.
+func outboxKinds(st wire.State) []view.EventKind {
+	out := make([]view.EventKind, 0, len(st.Events))
+	for _, e := range st.Events {
+		out = append(out, e.Kind)
+	}
+	return out
+}
+
+// TestOutboxMergeFollowsThePosition pins which events a replacing state
+// frame inherits. Events animate the way from the position the client last
+// took to the new one, so they are kept while the game only moves forward
+// (a newer move, or a presence change or resync at the same version and
+// ply) and dropped when the replacing frame does not continue from the
+// replaced one: an undo (version up, ply back) or a version that went back.
+func TestOutboxMergeFollowsThePosition(t *testing.T) {
+	build, pay, reveal := view.EventKindBuild, view.EventKindPay, view.EventKindReveal
+	cases := []struct {
+		name   string
+		frames []wire.State
+		want   []view.EventKind
+	}{
+		{"same position keeps them", []wire.State{
+			outboxState("AAAAAA", 5, nil, build), outboxState("AAAAAA", 5, nil)}, []view.EventKind{build}},
+		{"a forward move appends", []wire.State{
+			outboxState("AAAAAA", 5, nil, build), outboxState("AAAAAA", 6, nil, pay)}, []view.EventKind{build, pay}},
+		{"an undo drops them", []wire.State{
+			outboxStateAt("AAAAAA", 5, 5, nil, build), outboxStateAt("AAAAAA", 6, 4, nil)}, []view.EventKind{}},
+		{"a move after an undo keeps only its own", []wire.State{
+			outboxStateAt("AAAAAA", 5, 5, nil, build), outboxStateAt("AAAAAA", 6, 4, nil), outboxStateAt("AAAAAA", 7, 5, nil, reveal)},
+			[]view.EventKind{reveal}},
+		{"an older version drops them", []wire.State{
+			outboxState("AAAAAA", 5, nil, build), outboxState("AAAAAA", 4, nil, pay)}, []view.EventKind{pay}},
+	}
+	for _, tc := range cases {
+		o := NewOutbox()
+		ack := &wire.Ack{ClientID: "c", Seq: 9}
+		for i, f := range tc.frames {
+			if i == 0 {
+				f.Ack = ack
+			}
+			o.Push(f)
+		}
+		got := o.Take()
+		if len(got) != 1 {
+			t.Fatalf("%s: %d frames, want 1", tc.name, len(got))
+		}
+		st := got[0].(wire.State)
+		if st.Ack != ack {
+			t.Fatalf("%s: the ack was lost: %+v", tc.name, st.Ack)
+		}
+		kinds := outboxKinds(st)
+		if len(kinds) != len(tc.want) {
+			t.Fatalf("%s: events %v, want %v", tc.name, kinds, tc.want)
+		}
+		for i := range kinds {
+			if kinds[i] != tc.want[i] {
+				t.Fatalf("%s: events %v, want %v", tc.name, kinds, tc.want)
+			}
+		}
+	}
 }
 
 func TestOutboxLatestStateWins(t *testing.T) {
