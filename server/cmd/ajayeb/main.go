@@ -6,6 +6,11 @@
 //	ajayeb [flags]
 //
 // Run ajayeb -help for the flags.
+//
+// On SIGINT or SIGTERM the server stops accepting connections, closes every
+// WebSocket with status 1012 (service restart, so clients reconnect with
+// backoff), stops the rooms (which are already on disk; a room whose last
+// write failed tries once more) and exits.
 package main
 
 import (
@@ -25,11 +30,17 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/httpapi"
+	"github.com/NightMachinery/ajayeb/server/internal/ident"
+	"github.com/NightMachinery/ajayeb/server/internal/room"
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/webdist"
+	"github.com/NightMachinery/ajayeb/server/internal/ws"
 )
 
 // version is the build version, set at link time with
@@ -37,13 +48,17 @@ import (
 var version = "dev"
 
 const (
-	defaultAddr     = "127.0.0.1:38951"
-	defaultData     = "./data"
-	defaultBotDelay = 400 * time.Millisecond
+	defaultAddr        = "127.0.0.1:38951"
+	defaultData        = "./data"
+	defaultBotDelay    = room.DefaultBotDelay
+	defaultBotSearches = 2
 
-	// shutdownTimeout bounds how long in-flight requests may take to finish
-	// after SIGINT or SIGTERM.
+	// shutdownTimeout bounds how long the HTTP requests and the WebSocket
+	// closing handshakes may take after SIGINT or SIGTERM.
 	shutdownTimeout = 10 * time.Second
+
+	// reapEvery is how often old room files are swept (store.Reaper).
+	reapEvery = time.Hour
 )
 
 func main() {
@@ -60,6 +75,7 @@ type options struct {
 	origins      []string
 	trustProxy   []netip.Prefix
 	botDelay     time.Duration
+	botSearches  int
 	seedBase     uint64
 	showVersion  bool
 }
@@ -91,7 +107,13 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	logger := slog.New(slog.NewTextHandler(stderr, &slog.HandlerOptions{Level: level}))
 
-	if err := serve(opts, logger); err != nil {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	// Once a signal has arrived, restore the default handling, so a second
+	// Ctrl-C kills the process at once if shutdown hangs.
+	context.AfterFunc(ctx, stop)
+
+	if err := serve(ctx, opts, logger, nil); err != nil {
 		logger.Error("server failed", "err", err)
 		return 1
 	}
@@ -112,6 +134,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.Var(listValue{&origins}, "origin", "allowed site `origin` such as https://example.org (repeatable or comma separated)")
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
+	fset.IntVar(&opts.botSearches, "bot-searches", defaultBotSearches, "how many bot searches may run at once across all rooms")
 	fset.Uint64Var(&opts.seedBase, "seed-base", 0, "derive room seeds from this `base` for reproducible tests (0 means random seeds)")
 	fset.BoolVar(&opts.showVersion, "version", false, "print the version and exit")
 	fset.Usage = func() {
@@ -133,6 +156,9 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	}
 	if opts.botDelay < 0 {
 		return options{}, errors.New("-bot-delay must not be negative")
+	}
+	if opts.botSearches < 1 {
+		return options{}, errors.New("-bot-searches must be at least 1")
 	}
 	if opts.dataDir == "" {
 		return options{}, errors.New("-data must not be empty")
@@ -247,22 +273,68 @@ func staticFS(opts options, logger *slog.Logger) (fs.FS, string, error) {
 	return webdist.Placeholder(), "placeholder", nil
 }
 
-func serve(opts options, logger *slog.Logger) error {
+// seedSource returns the seeds of new games: base, base+1, ... when base is
+// set (reproducible test runs), or nil for the default random seeds.
+func seedSource(base uint64) func() uint64 {
+	if base == 0 {
+		return nil
+	}
+	var n atomic.Uint64
+	return func() uint64 { return base + n.Add(1) - 1 }
+}
+
+// serve runs the server until ctx is done, then shuts it down gracefully.
+// ready, when set, receives the listening address once connections are
+// accepted (port 0 picks a free one).
+func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(addr string)) error {
 	if err := os.MkdirAll(opts.dataDir, 0o700); err != nil {
 		return fmt.Errorf("create data directory: %w", err)
 	}
-
+	secret, err := ident.LoadSecret(opts.dataDir)
+	if err != nil {
+		return err
+	}
+	st, err := store.Open(opts.dataDir)
+	if err != nil {
+		return err
+	}
 	static, staticSource, err := staticFS(opts, logger)
 	if err != nil {
 		return err
 	}
 
-	handler, err := httpapi.New(httpapi.Config{
+	seed := seedSource(opts.seedBase)
+	rooms, err := room.NewManager(room.Config{
+		Store:    st,
+		Logger:   logger,
+		BotPool:  ai.NewPool(opts.botSearches),
+		BotDelay: opts.botDelay,
+		Seed:     seed,
+	})
+	if err != nil {
+		return err
+	}
+	defer rooms.Close() // idempotent; the normal path closes it in order below
+
+	sockets, err := ws.New(ws.Config{
+		Rooms:          rooms,
+		Identity:       secret,
 		Version:        version,
-		Dev:            opts.dev,
-		DevEndpoints:   opts.devEndpoints,
 		Origins:        opts.origins,
+		Dev:            opts.dev,
 		TrustedProxies: opts.trustProxy,
+		Logger:         logger,
+	})
+	if err != nil {
+		return err
+	}
+	handler, err := httpapi.New(httpapi.Config{
+		Version:      version,
+		Dev:          opts.dev,
+		DevEndpoints: opts.devEndpoints,
+		WebSocket:    sockets,
+		DevRooms:     rooms,
+		Seed:         seed,
 	}, static)
 	if err != nil {
 		return err
@@ -272,7 +344,6 @@ func serve(opts options, logger *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-
 	srv := &http.Server{
 		Handler:           handler,
 		ReadHeaderTimeout: 10 * time.Second,
@@ -282,51 +353,92 @@ func serve(opts options, logger *slog.Logger) error {
 		// No WriteTimeout: it would cut long-lived WebSocket connections.
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
+	reapCtx, stopReaper := context.WithCancel(context.Background())
+	reaperDone := make(chan struct{})
+	go func() {
+		defer close(reaperDone)
+		runReaper(reapCtx, store.NewReaper(st, nil), logger)
+	}()
 
-	seedBase := "random"
+	seedLabel := "random"
 	if opts.seedBase != 0 {
-		seedBase = strconv.FormatUint(opts.seedBase, 10)
+		seedLabel = strconv.FormatUint(opts.seedBase, 10)
 	}
-	// botDelay and seedBase are validated and logged now; the room package
-	// consumes them once it exists (milestone M4).
 	logger.Info("listening",
 		"addr", ln.Addr().String(),
 		"version", version,
 		"static", staticSource,
+		"data", opts.dataDir,
 		"dev", opts.dev,
 		"devEndpoints", opts.devEndpoints,
 		"origins", strings.Join(opts.origins, ","),
 		"trustedProxies", len(opts.trustProxy),
 		"botDelay", opts.botDelay,
-		"seedBase", seedBase,
+		"botSearches", opts.botSearches,
+		"seedBase", seedLabel,
 	)
 
 	serveErr := make(chan error, 1)
 	go func() { serveErr <- srv.Serve(ln) }()
+	if ready != nil {
+		ready(ln.Addr().String())
+	}
 
+	var failed error
 	select {
 	case err := <-serveErr:
-		if errors.Is(err, http.ErrServerClosed) {
-			return nil
-		}
-		return err
+		failed = err // Serve stopped on its own: shut the rest down too
 	case <-ctx.Done():
+		logger.Info("shutting down", "timeout", shutdownTimeout)
 	}
 
-	// Restore default signal handling, so a second Ctrl-C kills the process
-	// at once if shutdown hangs.
-	stop()
-	logger.Info("shutting down", "timeout", shutdownTimeout)
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		return fmt.Errorf("shutdown: %w", err)
+	// Stop accepting connections and finish the plain HTTP requests. Upgraded
+	// sockets are not the http.Server's any more.
+	httpErr := srv.Shutdown(shutdownCtx)
+	// Close every socket with 1012 and detach its client from its room.
+	wsErr := sockets.Shutdown(shutdownCtx)
+	// Stop the rooms and their bots; a room whose last write failed tries
+	// once more.
+	rooms.Close()
+	stopReaper()
+	<-reaperDone
+
+	if failed == nil {
+		failed = <-serveErr
 	}
-	if err := <-serveErr; !errors.Is(err, http.ErrServerClosed) {
-		return err
+	if errors.Is(failed, http.ErrServerClosed) {
+		failed = nil
+	}
+	if err := errors.Join(failed, httpErr, wsErr); err != nil {
+		return fmt.Errorf("shutdown: %w", err)
 	}
 	logger.Info("stopped")
 	return nil
+}
+
+// runReaper deletes old room files now and then every reapEvery, until ctx
+// is done.
+func runReaper(ctx context.Context, r *store.Reaper, logger *slog.Logger) {
+	sweep := func() {
+		removed, err := r.Sweep()
+		if err != nil {
+			logger.Warn("sweeping old rooms failed", "err", err)
+		}
+		if len(removed) > 0 {
+			logger.Info("removed old rooms", "count", len(removed))
+		}
+	}
+	sweep()
+	tick := time.NewTicker(reapEvery)
+	defer tick.Stop()
+	for {
+		select {
+		case <-tick.C:
+			sweep()
+		case <-ctx.Done():
+			return
+		}
+	}
 }

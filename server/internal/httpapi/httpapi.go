@@ -3,7 +3,11 @@
 // (SPA) that serves the web client for every other path.
 //
 // This package routes requests and serves files. Game logic lives in the
-// engine and room packages, and connection handling in package ws.
+// engine and room packages, and connection handling in package ws, whose
+// handler New mounts at /ws. With DevEndpoints (which requires Dev), it also
+// serves the development endpoints under /api/dev/ (devrooms.go), which
+// create rooms at chosen positions for end-to-end tests; a production server
+// never enables them.
 package httpapi
 
 import (
@@ -11,35 +15,41 @@ import (
 	"errors"
 	"io/fs"
 	"net/http"
-	"net/netip"
 )
 
 // Config holds the settings the HTTP layer needs. The zero value is a valid
-// production configuration with no allowed cross-site origins.
+// production configuration whose /ws is not served yet (501).
 type Config struct {
 	// Version is the build version reported by /health.
 	Version string
 
-	// Dev enables development behaviour. The WebSocket layer then also
-	// accepts loopback origins on any port, so the Vite dev server works.
+	// Dev marks a development server. It is required for DevEndpoints.
 	Dev bool
 
 	// DevEndpoints enables the test-only endpoints under /api/dev/. It
-	// requires Dev, and New refuses a Config that sets it without Dev.
+	// requires Dev and DevRooms, and New refuses a Config that sets it
+	// without them.
 	DevEndpoints bool
 
-	// Origins lists the site origins (scheme://host[:port]) allowed to open
-	// WebSockets, in addition to the request's own host.
-	Origins []string
+	// WebSocket serves /ws (a *ws.Server). Nil keeps the path reserved,
+	// answering 501.
+	WebSocket http.Handler
 
-	// TrustedProxies lists the peers whose X-Forwarded-For header is believed
-	// when finding a client's IP address.
-	TrustedProxies []netip.Prefix
+	// DevRooms creates the rooms of POST /api/dev/rooms (a *room.Manager).
+	DevRooms DevRooms
+
+	// Seed returns the seed of a development room whose request names
+	// none. Default: crypto/rand.
+	Seed func() uint64
 }
 
 // ErrDevEndpointsWithoutDev is returned by New when DevEndpoints is set but
 // Dev is not.
 var ErrDevEndpointsWithoutDev = errors.New("httpapi: DevEndpoints requires Dev")
+
+// ErrDevEndpointsWithoutRooms is returned by New when DevEndpoints is set
+// without DevRooms.
+var ErrDevEndpointsWithoutRooms = errors.New("httpapi: DevEndpoints requires DevRooms")
 
 // New returns the root handler. static holds the web build (index.html at its
 // root, SvelteKit assets under _app/). A nil static file system serves 404 for
@@ -48,12 +58,24 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 	if cfg.DevEndpoints && !cfg.Dev {
 		return nil, ErrDevEndpointsWithoutDev
 	}
+	if cfg.DevEndpoints && cfg.DevRooms == nil {
+		return nil, ErrDevEndpointsWithoutRooms
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("GET /health", healthHandler(cfg.Version))
 	mux.HandleFunc("/api", apiNotFound)
 	mux.HandleFunc("/api/", apiNotFound)
-	mux.HandleFunc("/ws", wsNotImplemented)
+	if cfg.DevEndpoints {
+		d := newDevAPI(cfg.DevRooms, cfg.Seed)
+		mux.HandleFunc("/api/dev/rooms", d.createRoom)
+		mux.HandleFunc("/api/dev/scenarios", d.scenarios)
+	}
+	if cfg.WebSocket != nil {
+		mux.Handle("/ws", cfg.WebSocket)
+	} else {
+		mux.HandleFunc("/ws", wsNotImplemented)
+	}
 	mux.Handle("/", newSPA(static))
 	return withCommonHeaders(mux), nil
 }
@@ -88,13 +110,18 @@ type errorBody struct {
 	Msg  string `json:"msg"`
 }
 
-func apiNotFound(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusNotFound, errorBody{Code: "not-found", Msg: "no such API endpoint"})
+func writeError(w http.ResponseWriter, status int, code, msg string) {
+	writeJSON(w, status, errorBody{Code: code, Msg: msg})
 }
 
-// wsNotImplemented reserves /ws until package ws serves it.
+func apiNotFound(w http.ResponseWriter, _ *http.Request) {
+	writeError(w, http.StatusNotFound, "not-found", "no such API endpoint")
+}
+
+// wsNotImplemented reserves /ws for a server built without a WebSocket
+// handler.
 func wsNotImplemented(w http.ResponseWriter, _ *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, errorBody{Code: "not-implemented", Msg: "the WebSocket endpoint is not implemented yet"})
+	writeError(w, http.StatusNotImplemented, "not-implemented", "this server has no WebSocket endpoint")
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

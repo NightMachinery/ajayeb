@@ -15,7 +15,7 @@ func TestParseFlagsDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if opts.addr != defaultAddr || opts.dataDir != defaultData || opts.botDelay != defaultBotDelay {
+	if opts.addr != defaultAddr || opts.dataDir != defaultData || opts.botDelay != defaultBotDelay || opts.botSearches != defaultBotSearches {
 		t.Errorf("defaults = %+v", opts)
 	}
 	if opts.dev || opts.devEndpoints || opts.staticDir != "" || opts.seedBase != 0 {
@@ -37,6 +37,7 @@ func TestParseFlagsValues(t *testing.T) {
 		"--trust-proxy", "127.0.0.1,10.0.0.0/8",
 		"--trust-proxy", "::1",
 		"--bot-delay", "0s",
+		"--bot-searches", "3",
 		"--seed-base", "1000",
 	}, io.Discard)
 	if err != nil {
@@ -54,7 +55,7 @@ func TestParseFlagsValues(t *testing.T) {
 	if !slices.Equal(opts.trustProxy, wantProxies) {
 		t.Errorf("trustProxy = %v, want %v", opts.trustProxy, wantProxies)
 	}
-	if !opts.dev || !opts.devEndpoints || opts.botDelay != 0 || opts.seedBase != 1000 {
+	if !opts.dev || !opts.devEndpoints || opts.botDelay != 0 || opts.botSearches != 3 || opts.seedBase != 1000 {
 		t.Errorf("opts = %+v", opts)
 	}
 	if opts.addr != "127.0.0.1:0" || opts.dataDir != "/tmp/x" || opts.staticDir != "../web/build" {
@@ -66,6 +67,7 @@ func TestParseFlagsRejects(t *testing.T) {
 	for name, args := range map[string][]string{
 		"dev endpoints without dev": {"--dev-endpoints"},
 		"negative bot delay":        {"--bot-delay", "-1s"},
+		"no bot searches":           {"--bot-searches", "0"},
 		"empty data":                {"--data", ""},
 		"origin without scheme":     {"--origin", "example.org"},
 		"origin with path":          {"--origin", "https://example.org/app"},
@@ -108,7 +110,7 @@ func TestRunVersionAndHelp(t *testing.T) {
 	if code := run([]string{"--help"}, io.Discard, &stderr); code != 0 {
 		t.Errorf("--help exit code = %d, want 0", code)
 	}
-	for _, flagName := range []string{"-addr", "-data", "-static", "-dev-endpoints", "-origin", "-trust-proxy", "-bot-delay", "-seed-base"} {
+	for _, flagName := range []string{"-addr", "-data", "-static", "-dev-endpoints", "-origin", "-trust-proxy", "-bot-delay", "-bot-searches", "-seed-base"} {
 		if !strings.Contains(stderr.String(), flagName) {
 			t.Errorf("--help output lacks %s", flagName)
 		}

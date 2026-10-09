@@ -322,11 +322,29 @@ func TestNilStaticFS(t *testing.T) {
 }
 
 func TestDevEndpointsRequireDev(t *testing.T) {
-	if _, err := New(Config{DevEndpoints: true}, nil); !errors.Is(err, ErrDevEndpointsWithoutDev) {
+	rooms := &fakeRooms{}
+	if _, err := New(Config{DevEndpoints: true, DevRooms: rooms}, nil); !errors.Is(err, ErrDevEndpointsWithoutDev) {
 		t.Errorf("New(DevEndpoints without Dev) error = %v, want ErrDevEndpointsWithoutDev", err)
 	}
-	if _, err := New(Config{Dev: true, DevEndpoints: true}, nil); err != nil {
-		t.Errorf("New(Dev and DevEndpoints) error = %v, want nil", err)
+	if _, err := New(Config{Dev: true, DevEndpoints: true}, nil); !errors.Is(err, ErrDevEndpointsWithoutRooms) {
+		t.Errorf("New(DevEndpoints without DevRooms) error = %v, want ErrDevEndpointsWithoutRooms", err)
+	}
+	if _, err := New(Config{Dev: true, DevEndpoints: true, DevRooms: rooms}, nil); err != nil {
+		t.Errorf("New(Dev, DevEndpoints and DevRooms) error = %v, want nil", err)
+	}
+}
+
+func TestWebSocketHandlerServesWS(t *testing.T) {
+	ws := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+	h, err := New(Config{WebSocket: ws}, testFS())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec := do(t, h, http.MethodGet, "/ws", nil); rec.Code != http.StatusTeapot {
+		t.Errorf("GET /ws status = %d, want the WebSocket handler's 418", rec.Code)
+	}
+	if rec := do(t, h, http.MethodGet, "/ws/other", nil); rec.Code == http.StatusTeapot {
+		t.Error("/ws/other reached the WebSocket handler")
 	}
 }
 
