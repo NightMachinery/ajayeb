@@ -62,7 +62,24 @@ var recordCases = []recordCase{
 			}
 			lastEv = ev
 		}
-		return stateFrame(t, "H8TQ4R", &s, lastEv, wire.ModeHotseat, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 10})
+		st := stateFrame(t, "H8TQ4R", &s, lastEv, wire.ModeHotseat, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 10})
+		st.CanUndo = true
+		return st
+	}},
+	{"state-ai-thinking", func(t *testing.T) wire.ServerMessage {
+		s := engine.NewGame(4, engine.Options{FirstPlayer: engine.FirstPlayerSeat0})
+		legal := engine.LegalActions(&s, nil)
+		var ev []engine.Event
+		if err := engine.Apply(&s, legal[0], &ev); err != nil {
+			t.Fatalf("Apply: %v", err)
+		}
+		if s.ToMove != 1 {
+			t.Fatalf("after seat 0's first pick seat %d is to move, want the bot's seat 1", s.ToMove)
+		}
+		st := stateFrame(t, "B4TQ7N", &s, ev, wire.ModeAI, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 1})
+		bot := 1
+		st.CanUndo, st.Thinking = true, &bot
+		return st
 	}},
 	{"state-pending-token", func(t *testing.T) wire.ServerMessage {
 		sc := engine.NamedScenario("science-pair")
@@ -99,19 +116,35 @@ var recordCases = []recordCase{
 	}},
 }
 
-// stateFrame builds a wire.State the way the room package will: the full
-// view and filtered events for seat 0, wrapped in room/you/ack envelopes
-// representative of their kind.
+// stateFrame builds a wire.State the way the room package does: the seats
+// of the mode (Sara on seat 0; in a hot-seat room she holds seat 1 too and
+// sees the view of the seat to move, in an ai room seat 1 is a bot, online
+// it is Bob), and the view and filtered events of Sara's viewer. Cases set
+// CanUndo and Thinking themselves.
 func stateFrame(t *testing.T, code string, s *engine.State, ev []engine.Event, mode wire.Mode, status wire.RoomStatus, ack *wire.Ack) wire.State {
 	t.Helper()
-	v := engine.ViewFor(s, engine.SeatViewer(0))
-	events := engine.FilterEvents(ev, engine.SeatViewer(0))
-	room := wire.NewRoomInfo(mode, status, []wire.SeatInfo{
-		{Seat: 0, Name: "Sara", Kind: wire.SeatKindHuman, Connected: true, You: true},
-		{Seat: 1, Name: "Bot", Kind: wire.SeatKindBot, Connected: true, You: false},
-	}, 0)
-	you := wire.NewYouInfo([]int{0}, !s.Over() && s.ToMove == 0)
-	return wire.NewState(code, int(s.Ply), room, you, ack, events, v)
+	viewer := engine.Seat(0)
+	seats := []wire.SeatInfo{{Seat: 0, Name: "Sara", Kind: wire.SeatKindHuman, Connected: true, You: true}}
+	mine := []int{0}
+	switch mode {
+	case wire.ModeHotseat:
+		viewer = s.ToMove
+		seats = append(seats, wire.SeatInfo{Seat: 1, Name: "Omid", Kind: wire.SeatKindHuman, Connected: true, You: true})
+		mine = []int{0, 1}
+	case wire.ModeAI:
+		level := wire.BotLevelNormal
+		seats = append(seats, wire.SeatInfo{Seat: 1, Kind: wire.SeatKindBot, Bot: &level, Connected: true})
+	default:
+		seats = append(seats, wire.SeatInfo{Seat: 1, Name: "Bob", Kind: wire.SeatKindHuman, Connected: true})
+	}
+	v := engine.ViewFor(s, engine.SeatViewer(viewer))
+	events := engine.FilterEvents(ev, engine.SeatViewer(viewer))
+	canAct := false
+	for _, seat := range mine {
+		canAct = canAct || (!s.Over() && int(s.ToMove) == seat)
+	}
+	room := wire.NewRoomInfo(mode, status, seats, 0)
+	return wire.NewState(code, int(s.Ply), room, wire.NewYouInfo(mine, canAct), ack, events, v)
 }
 
 // TestRecordMessages drives recordCases and checks each against its golden

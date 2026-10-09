@@ -15,20 +15,22 @@
       },
       {
         "seat": 1,
-        "name": "Bot",
-        "kind": "bot",
+        "name": "Omid",
+        "kind": "human",
         "connected": true,
-        "you": false
+        "you": true
       }
     ],
     "spectators": 0
   },
   "you": {
     "seats": [
-      0
+      0,
+      1
     ],
     "canAct": true
   },
+  "canUndo": false,
   "events": [],
   "view": {
     "schema": 1,

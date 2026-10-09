@@ -208,6 +208,7 @@ export interface SeatInfo {
   seat: number /* int */;
   name: string;
   kind: SeatKind;
+  bot?: BotLevel; // the bot's level; set only when Kind is SeatKindBot
   connected: boolean;
   you: boolean; // this connection holds this seat
 }
@@ -254,6 +255,17 @@ export interface State {
   room: RoomInfo;
   you: YouInfo;
   /**
+   * CanUndo says whether an undo from this connection, sent with this
+   * frame's version as its base, would be accepted now: a hot-seat or ai
+   * room, a game that is not over, and a human decision to take back.
+   */
+  canUndo: boolean;
+  /**
+   * Thinking is the seat whose bot is searching for its move right now;
+   * absent when no bot is searching.
+   */
+  thinking?: 0 | 1;
+  /**
    * Ack is set only when this state is the direct reply to an act or undo
    * from the connection receiving it.
    */
@@ -292,14 +304,15 @@ export interface Reject {
  * opposed to one request (RejectCode).
  */
 export const ErrorCodeRoomNotFound = "room-not-found"; // no such code (or it is archived)
-export const ErrorCodeRoomFull = "room-full"; // both seats are taken by other users
+export const ErrorCodeRoomFull = "room-full"; // the room takes no more connections (spectators, or one user's tabs)
 export const ErrorCodeForbidden = "forbidden"; // this user may not do that in this room
 export const ErrorCodeBadHello = "bad-hello"; // the hello frame itself was invalid
 export const ErrorCodeProtocol = "protocol"; // unsupported protocol version
+export const ErrorCodeBusy = "busy"; // the server holds as many rooms as it can; try again later
 /**
  * The error codes.
  */
-export type ErrorCode = typeof ErrorCodeRoomNotFound | typeof ErrorCodeRoomFull | typeof ErrorCodeForbidden | typeof ErrorCodeBadHello | typeof ErrorCodeProtocol;
+export type ErrorCode = typeof ErrorCodeRoomNotFound | typeof ErrorCodeRoomFull | typeof ErrorCodeForbidden | typeof ErrorCodeBadHello | typeof ErrorCodeProtocol | typeof ErrorCodeBusy;
 /**
  * Error reports a connection-level problem.
  */

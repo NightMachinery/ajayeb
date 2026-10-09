@@ -69,11 +69,12 @@ const (
 
 // SeatInfo is one seat, as the room frame reports it.
 type SeatInfo struct {
-	Seat      int      `json:"seat"`
-	Name      string   `json:"name"`
-	Kind      SeatKind `json:"kind"`
-	Connected bool     `json:"connected"`
-	You       bool     `json:"you"` // this connection holds this seat
+	Seat      int       `json:"seat"`
+	Name      string    `json:"name"`
+	Kind      SeatKind  `json:"kind"`
+	Bot       *BotLevel `json:"bot,omitempty"` // the bot's level; set only when Kind is SeatKindBot
+	Connected bool      `json:"connected"`
+	You       bool      `json:"you"` // this connection holds this seat
 }
 
 // RoomInfo is the room-level information in a state frame: everything about
@@ -129,6 +130,13 @@ type State struct {
 	Version int      `json:"version"`
 	Room    RoomInfo `json:"room"`
 	You     YouInfo  `json:"you"`
+	// CanUndo says whether an undo from this connection, sent with this
+	// frame's version as its base, would be accepted now: a hot-seat or ai
+	// room, a game that is not over, and a human decision to take back.
+	CanUndo bool `json:"canUndo"`
+	// Thinking is the seat whose bot is searching for its move right now;
+	// absent when no bot is searching.
+	Thinking *int `json:"thinking,omitempty" tstype:"0 | 1"`
 	// Ack is set only when this state is the direct reply to an act or undo
 	// from the connection receiving it.
 	Ack    *Ack             `json:"ack,omitempty"`
@@ -137,7 +145,8 @@ type State struct {
 }
 
 // NewState returns a State frame with "t" filled in. events is normalized to
-// a non-nil, possibly empty slice.
+// a non-nil, possibly empty slice. CanUndo and Thinking start out false and
+// absent; the room sets them.
 func NewState(code string, version int, room RoomInfo, you YouInfo, ack *Ack, events []view.GameEvent, v view.View) State {
 	if events == nil {
 		events = []view.GameEvent{}
@@ -182,10 +191,11 @@ type ErrorCode string
 // The error codes.
 const (
 	ErrorCodeRoomNotFound ErrorCode = "room-not-found" // no such code (or it is archived)
-	ErrorCodeRoomFull     ErrorCode = "room-full"      // both seats are taken by other users
+	ErrorCodeRoomFull     ErrorCode = "room-full"      // the room takes no more connections (spectators, or one user's tabs)
 	ErrorCodeForbidden    ErrorCode = "forbidden"      // this user may not do that in this room
 	ErrorCodeBadHello     ErrorCode = "bad-hello"      // the hello frame itself was invalid
 	ErrorCodeProtocol     ErrorCode = "protocol"       // unsupported protocol version
+	ErrorCodeBusy         ErrorCode = "busy"           // the server holds as many rooms as it can; try again later
 )
 
 // Error reports a connection-level problem.

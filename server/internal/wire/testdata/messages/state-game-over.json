@@ -15,8 +15,9 @@
       },
       {
         "seat": 1,
-        "name": "Bot",
+        "name": "",
         "kind": "bot",
+        "bot": "normal",
         "connected": true,
         "you": false
       }
@@ -29,6 +30,7 @@
     ],
     "canAct": false
   },
+  "canUndo": false,
   "events": [
     {
       "kind": "build",

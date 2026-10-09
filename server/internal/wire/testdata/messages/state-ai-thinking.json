@@ -1,0 +1,256 @@
+{
+  "t": "state",
+  "code": "B4TQ7N",
+  "version": 1,
+  "room": {
+    "mode": "ai",
+    "status": "playing",
+    "seats": [
+      {
+        "seat": 0,
+        "name": "Sara",
+        "kind": "human",
+        "connected": true,
+        "you": true
+      },
+      {
+        "seat": 1,
+        "name": "",
+        "kind": "bot",
+        "bot": "normal",
+        "connected": true,
+        "you": false
+      }
+    ],
+    "spectators": 0
+  },
+  "you": {
+    "seats": [
+      0
+    ],
+    "canAct": false
+  },
+  "canUndo": true,
+  "thinking": 1,
+  "ack": {
+    "clientId": "c1",
+    "seq": 1
+  },
+  "events": [
+    {
+      "kind": "draft",
+      "private": false,
+      "seat": 0,
+      "wonder": "circus-maximus",
+      "auto": false
+    }
+  ],
+  "view": {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 1,
+    "viewer": 0,
+    "phase": "wonderDraft",
+    "age": 0,
+    "toMove": 1,
+    "active": 1,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "draft": {
+      "round": 1,
+      "offer": [
+        {
+          "wonder": "circus-maximus",
+          "takenBy": 0
+        },
+        {
+          "wonder": "colossus"
+        },
+        {
+          "wonder": "piraeus"
+        },
+        {
+          "wonder": "pyramids"
+        }
+      ]
+    },
+    "structure": [],
+    "players": [
+      {
+        "seat": 0,
+        "coins": 7,
+        "city": [],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "circus-maximus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 1,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [],
+        "discardValue": 2
+      },
+      {
+        "seat": 1,
+        "coins": 7,
+        "city": [],
+        "tokens": [],
+        "wonders": [],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [],
+        "discardValue": 2
+      }
+    ],
+    "military": {
+      "position": 0,
+      "looting": [
+        {
+          "at": -6,
+          "seat": 0,
+          "value": 5,
+          "present": true
+        },
+        {
+          "at": -3,
+          "seat": 0,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 3,
+          "seat": 1,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 6,
+          "seat": 1,
+          "value": 5,
+          "present": true
+        }
+      ]
+    },
+    "boardTokens": [
+      "law",
+      "masonry",
+      "mathematics",
+      "philosophy",
+      "theology"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 0,
+    "discard": [],
+    "wondersBuilt": 0,
+    "choices": [],
+    "disabled": [],
+    "scorePreview": [
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 2
+      }
+    ]
+  }
+}
