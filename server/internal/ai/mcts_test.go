@@ -251,7 +251,14 @@ func TestMCTSMaxTimeAndProgress(t *testing.T) {
 	if elapsed < budget || elapsed > budget+150*time.Millisecond {
 		t.Errorf("a %v budget took %v", budget, elapsed)
 	}
-	if len(reports) < 3 || len(reports) > 6 {
+	if raceEnabled {
+		// The race detector's overhead can stretch each iteration enough that
+		// only one intermediate tick fires before the final report; require
+		// just that much, and skip the ~100 ms cadence check below.
+		if len(reports) < 2 {
+			t.Fatalf("%d progress reports in %v, want at least one intermediate report plus the final one", len(reports), elapsed)
+		}
+	} else if len(reports) < 3 || len(reports) > 6 {
 		t.Fatalf("%d progress reports in %v, want one about every 100 ms and a final one", len(reports), elapsed)
 	}
 	for i, p := range reports {
