@@ -149,6 +149,8 @@ func TestDevRoomRefusals(t *testing.T) {
 		{"not json", `mode=hotseat`, 400, "bad-request"},
 		{"unknown field", `{"mode":"hotseat","players":2}`, 400, "bad-request"},
 		{"trailing data", `{"mode":"hotseat"} {}`, 400, "bad-request"},
+		{"trailing brace", `{"mode":"hotseat"}}`, 400, "bad-request"},
+		{"trailing bracket", `{"mode":"hotseat"}]`, 400, "bad-request"},
 		{"unknown mode", `{"mode":"solo"}`, 400, "bad-request"},
 		{"no mode", `{}`, 400, "bad-request"},
 		{"ai without bot", `{"mode":"ai"}`, 400, "bad-request"},

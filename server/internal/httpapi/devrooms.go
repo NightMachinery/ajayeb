@@ -245,7 +245,9 @@ func decodeStrict(r io.Reader, v any) error {
 	if err := dec.Decode(v); err != nil {
 		return fmt.Errorf("malformed body: %v", err)
 	}
-	if dec.More() {
+	// dec.More is not enough here: it reports false for a stray closing
+	// bracket or brace, so a second Decode must find the end of the body.
+	if err := dec.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		return errors.New("malformed body: trailing data after the JSON value")
 	}
 	return nil
