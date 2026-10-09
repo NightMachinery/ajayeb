@@ -64,8 +64,10 @@ func trueHidden(s *engine.State, viewer *engine.Seat) map[string]bool {
 			addCard(id)
 		}
 	}
-	if s.Age >= 1 && int(s.Age) <= len(s.Removed) {
-		for _, id := range s.Removed[s.Age-1] {
+	// The cards set aside from every age's deck, not just the current one's:
+	// an age that is over keeps its removed cards hidden until the game is.
+	for _, removed := range s.Removed {
+		for _, id := range removed {
 			addCard(id)
 		}
 	}
@@ -93,12 +95,14 @@ func trueHidden(s *engine.State, viewer *engine.Seat) map[string]bool {
 		addCard(id)
 	}
 
+	// The Great Library offer: drawLibrary moves the drawn tokens out of
+	// BoxTokens into Library, so they are not covered by the box above.
+	// Only the deciding seat may see them; the other seat and a spectator
+	// see only how many there are.
 	decider := viewer != nil && s.Phase == engine.PhasePickLibraryToken && *viewer == s.ToMove
-	if decider {
+	if !decider {
 		for _, id := range s.Library {
-			if d := catalog.Token(id); d != nil {
-				delete(hidden, d.Slug)
-			}
+			addToken(id)
 		}
 	}
 	return hidden

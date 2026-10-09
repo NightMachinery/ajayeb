@@ -23,7 +23,8 @@
 //     or the Great Library offer when the viewer is not its decider), plus
 //     the room's seed, which the view package never includes at all. This
 //     is a best-effort reconstruction from the exported, non-test engine
-//     API (the engine package itself exports no redaction helper), not a
+//     API (the engine exports no view redaction helper; engine.Observe is
+//     the bots' separate equivalent), not a
 //     byte-for-byte mirror of view.go's own whitelist logic, but precise
 //     enough to catch a real leak: every id it tracks is unique within one
 //     game.
@@ -33,6 +34,9 @@
 //     each turn, and checks for leaks after every turn.
 //   - fullgame_test.go, reconnect_test.go, restart_test.go,
 //     idempotency_test.go and undo_test.go hold the tests themselves.
+//   - library_test.go starts an online room at the Great Library's draw,
+//     the one asymmetric secret, so the leak check sees it in every run
+//     rather than only when a random game happens to build that wonder.
 //   - nullarrays_test.go scans internal/wire/testdata/messages for a JSON
 //     null where the "never nil slices" rule (doc.go of package wire)
 //     promises an empty array instead.

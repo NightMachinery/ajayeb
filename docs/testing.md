@@ -38,15 +38,18 @@ It covers, per game mode (online with a spectator, hot-seat, versus a bot):
 - a full playthrough to a result, with the replayed action log hashing to
   the same state as the room's own final state (`engine.Hash`);
 - that no hidden information (a face-down card's identity, a later age's
-  undealt deck, box guilds and wonders, the Great Library's undrawn tokens,
-  the seed) appears in a connection's raw frames before it is entitled to
-  see it. The check reconstructs what should still be hidden from the
+  undealt deck, the cards set aside from every age, box guilds, wonders and
+  tokens, the Great Library offer for anyone but the seat choosing from
+  it, the seed) appears in a connection's raw frames before it is entitled
+  to see it. The check reconstructs what should still be hidden from the
   room's own ground-truth state (`room.Manager.Snapshot`) and scans every
-  frame byte for it; there is no exported redaction helper to call
-  directly, so this is a best-effort mirror of `internal/engine/view.go`'s
-  documented redaction rules, not a byte-for-byte copy of its logic;
-- reconnecting mid-game (the socket drops, `hello` and `join` again,
-  resending the last unacknowledged `act` does not apply it twice);
+  frame byte for it. It is written independently of
+  `internal/engine/view.go` from that file's documented redaction rules,
+  not copied from its logic. A dedicated test starts an online room at the
+  Great Library's draw, the one secret only one seat may see, so that case
+  is checked in every run rather than only when a random game builds it;
+- reconnecting mid-game (the socket drops, `hello` and `join` again, and
+  resending the last `act` with the same `seq` does not apply it twice);
 - restarting the server on the same data directory mid-game and finishing
   the same game, with the same final hash;
 - a stale `base`, a duplicate `seq`, an illegal key and an out-of-turn
