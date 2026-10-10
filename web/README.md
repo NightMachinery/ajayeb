@@ -39,11 +39,27 @@ Ports: Vite dev listens on 38952 and `vite preview` on 38953. Both forward `/ws`
 - `rooms.svelte.ts`: the rooms this browser has played (`ajayeb:rooms`: code, mode and last seen).
 - `context.ts` shares a page's Session and Presenter with its components (`setGameContext`, `getSession`, `getPresenter`); `app.svelte.ts` holds the app's one live connection, opened the first time a page needs it.
 - `test-hook.ts` defines `window.__ajayeb` for end-to-end drivers (see [docs/testing.md](../docs/testing.md)).
-- `DebugBoard.svelte` is a temporary, plain view of a room with every choice as a `data-act` button, until the real game screen exists.
+- `DebugBoard.svelte` is a plain view of a room with every choice as a `data-act` button. No page uses it any more; it stays for debugging.
 
 `src/lib/catalog/` has typed lookups (`cardBySlug`, `wonderBySlug`, `tokenBySlug`) over `src/lib/wire/catalog.gen.ts`, the presentation catalog that `make gen` writes from the engine's data.
 
-The pages: `/play/<code>` joins a room and shows it; `/dev/new?mode=hotseat|ai|online` creates a room and opens it (with `seed=` or `scenario=`, through the server's dev endpoint); `/dev/fixture/<name>` shows a recorded game state with no server.
+The pages: `/play/<code>` joins a room and shows the game screen; `/dev/new?mode=hotseat|ai|online` creates a room and opens it (with `seed=` or `scenario=`, through the server's dev endpoint); `/dev/fixture/<name>` shows a recorded game state in the game screen with no server.
+
+## The game screen
+
+`src/lib/components/game/GameScreen.svelte` is the board of every mode. It takes the page's Session and Presenter and an `onhome` callback, and decides nothing about the game.
+
+- **Layout.** One markup, with CSS grid areas chosen by `breakpoints.viewport` (`src/lib/layout/breakpoints.svelte.ts`) through a `data-layout` attribute. Phone portrait: top bar, opponent strip, military track and progress tokens, structure (taking the remaining height), own strip, turn bar. Phone landscape: the compact track and tokens move into the top bar, and the strips take side columns. Tablet: stacked, with city bands under each strip. Desktop: city panels in 300 px side columns, 380 px from 1600 px wide. The shell is `100dvh` and never scrolls. During the wonder draft the area between the top bar and the turn bar holds the Draft screen.
+- **Who sits where.** The board region is `dir="ltr"`. The player is at the bottom (or on the left); a spectator sees seat 0 there. In hot-seat the board faces the player to move on phones and stays fixed elsewhere, with the active panel lit; the setting overrides both.
+- **The card sheet** (`CardSheet.svelte`) opens on a tapped slot. It shows the card at full tier, its category and effect, the cost breakdown from the matching choice (or disabled choice), the opponent's price and the discard gain, and the Build, Discard and Build a wonder buttons, each with its key as `data-act`. A covered card shows its cover count and no actions. Build a wonder steps to `WonderStep.svelte`, which lists the player's wonders with cost and affordability. `card-actions.ts` only sorts the view's choices for one card; it never parses keys or computes costs.
+- **Wonder first.** Tapping one of your wonders opens `sheets/WonderSheet.svelte`. "Build this wonder" starts the pick mode: the turn bar asks for a card (with Cancel), takeable cards carry a wonder badge, and tapping one opens the card sheet to confirm. Both flows send `wonder:<wonder>:<card>`.
+- **Committing.** Hot-seat and bot rooms send on the tap; online rooms use `ConfirmButton` when the confirm-moves setting asks for it. On send the sheet closes, the slot shows the pending outline and input locks until the ack; after 300 ms the turn bar shows the slow state. A refusal shows its message above the turn bar.
+- **Undo** is in the top bar, and in the toast that names the move just made (hot-seat and bot rooms only).
+- **Hot-seat** shows the pass-device screen between turns of different players when the setting is on (by default on touch screens), with the last move's summary and an undo for the previous player.
+- **Placeholders.** `screens/Draft.svelte`, `choices/ChoiceHost.svelte` and `screens/GameOver.svelte` are mounted with fixed props (`{view, canAct, onact}`, and `{view, onrematch?, onhome}`); GameOver sits in a layer over the structure.
+- **Test contract.** Structure cards keep `data-card` and action buttons `data-act`. Further hooks for drivers: `data-control="wonder-step"`, `"wonder-build"`, `"wonder-pick-cancel"`, `"undo"`, `"log"`, `"settings"`, `"open-city"`; `data-wonder` on wonder buttons; `data-marked` on pickable slots; `data-pass-device` on the pass screen; `data-toast` on toasts.
+
+The `/dev/gallery` page has a Game screen section that shows recorded states (draft, Age I, Age II, Age III, a pending choice, game over) in frames of a phone and a desktop size.
 
 ## Styling
 
