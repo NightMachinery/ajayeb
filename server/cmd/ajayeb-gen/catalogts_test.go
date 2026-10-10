@@ -26,6 +26,22 @@ func catalogTSOrFail(t *testing.T) string {
 }
 
 // tsEntries reads back the `'slug': {json},` lines of one exported object.
+// between returns src from the first from up to, not including, the first
+// to after it, and fails the test when either marker is missing.
+func between(t *testing.T, src, from, to string) string {
+	t.Helper()
+	i := strings.Index(src, from)
+	if i < 0 {
+		t.Fatalf("%q not found", from)
+	}
+	rest := src[i:]
+	j := strings.Index(rest, to)
+	if j < 0 {
+		t.Fatalf("%q not found after %q", to, from)
+	}
+	return rest[:j]
+}
+
 func tsEntries(t *testing.T, src, object string) map[string]json.RawMessage {
 	t.Helper()
 	start := strings.Index(src, "export const "+object+": ")
@@ -136,8 +152,7 @@ func TestCatalogTSHashAndSlugLists(t *testing.T) {
 	if len(used) == 0 {
 		t.Fatal("no effects found")
 	}
-	union := src[strings.Index(src, "export type EffectKind"):]
-	union = union[:strings.Index(union, "\n")]
+	union := between(t, src, "export type EffectKind", "\n")
 	for _, m := range used {
 		if !strings.Contains(union, "'"+m[1]+"'") {
 			t.Errorf("effect kind %q is used but not in EffectKind", m[1])
@@ -249,12 +264,12 @@ func TestFixtureNames(t *testing.T) {
 	if len(viewNames) != len(views) {
 		t.Fatalf("%d names for %d views", len(viewNames), len(views))
 	}
-	list := src[strings.Index(src, "export const fixtureNames"):]
-	if n := strings.Count(list[:strings.Index(list, "] as const;")], "\n  \""); n != len(names) {
+	list := between(t, src, "export const fixtureNames", "] as const;")
+	if n := strings.Count(list, "\n  \""); n != len(names) {
 		t.Errorf("fixtureNames has %d entries, want %d", n, len(names))
 	}
-	list = src[strings.Index(src, "export const protocolFixtureNames"):]
-	if n := strings.Count(list[:strings.Index(list, "] as const;")], "\n  \""); n != len(views) {
+	list = between(t, src, "export const protocolFixtureNames", "] as const;")
+	if n := strings.Count(list, "\n  \""); n != len(views) {
 		t.Errorf("protocolFixtureNames has %d entries, want %d", n, len(views))
 	}
 }
