@@ -28,13 +28,17 @@ raw attempts and contact sheets.
 
 ### `lib.mjs`
 
-Not a script; the shared module the other six import. Holds the repo and
-run-dir paths, the `<kind>/<slug>` id helpers, the presentation-catalog
+Not a script; the shared module the other scripts import. Holds the repo
+and run-dir paths, the `<kind>/<slug>` id helpers, the presentation-catalog
 reader (parses `web/src/lib/wire/catalog.gen.ts`, so no Go build is
 needed), the fixed list of non-catalog assets (backs, textures, the hero,
 the AI avatars, the victory scenes, the app icon), the per-kind generation
-size / crop / shipped sizes / byte budgets table (`KIND_SPEC`), and small
-JSON read/write helpers.
+size / crop / shipped sizes / byte budgets table (`KIND_SPEC`), small JSON
+read/write helpers, and the raw-pixel helpers `process.mjs` and `gate.mjs`
+share: `cropToRawRgb`/`rawRgbToPng` (the shipping crop as RGB bytes, and
+back to a PNG), `cornerPaperColor` (an image's own paper colour, the
+corner-median), `colorDistance`, `hexToRgb`, `PAPER_HEX` (the app's
+`--card-paper` token, `#f4ecdc`) and `imageSize` (via `magick identify`).
 
 ### `manifest.mjs`
 
@@ -57,6 +61,7 @@ node tools/art/generate.mjs --kind token --limit 3
 node tools/art/generate.mjs --ids card/lumber-yard --amend "warmer light"
 node tools/art/generate.mjs --kind card --status rejected --limit 5   # only rejected ones
 node tools/art/generate.mjs --ids card/lumber-yard --dry-run
+node tools/art/generate.mjs --ids wonder/pyramids --ref   # with a style anchor
 ```
 
 Generates one Codex `image_gen` attempt per listed asset, strictly
@@ -72,11 +77,20 @@ Flags: `--ids a,b,c` (exact ids, in order); `--kind KIND` with `--limit N`
 (default 1) and `--status S` (default: `todo` and `rejected`) to pick the next matching
 assets instead of naming ids; `--amend TEXT` to set this run's prompt
 amendment (only meaningful with `--ids`; `--kind` runs use each asset's own
-stored `promptAmend`); `--dry-run` to print the prompt and the exact
-`codex exec` command without calling Codex or touching the manifest.
+stored `promptAmend`); `--ref` to pass `art/refs/<kind>-anchor.{jpg,png}`
+to Codex as a style anchor, when one exists (**off by default**: the
+M9.B3 pilot found a same-subject reference makes Codex return a near-copy
+of the anchor instead of a new illustration; the style prefix alone keeps
+the look consistent across subjects); `--dry-run` to print the prompt and
+the exact `codex exec` command without calling Codex or touching the
+manifest.
 
 `CODEX_BIN` defaults to `~/.local/bin/codex`; `CODEX_HOME` defaults to
-`~/.codex` (where `generated_images/` is watched for the new PNG). A
+`~/.codex` (where `generated_images/` is watched for the new PNG). The
+newest new PNG's pixel size is checked against the kind's requested `gen`
+size (`magick identify`), and the attempt is rejected, with the manifest
+left untouched, if it doesn't match: Codex's `image_gen` has been seen to
+return a square request as 1254x1254 instead of 1024x1024, repeatably. A
 successful attempt is copied to
 `${AJAYEB_RUN_DIR}/art-work/raw/<kind>/<slug>/<attempt>.png` and the
 manifest's `status` becomes `generated`.
@@ -86,13 +100,40 @@ manifest's `status` becomes `generated`.
 ```
 node tools/art/sheet.mjs --ids card/lumber-yard,card/stone-pit --name pilot
 node tools/art/sheet.mjs --kind token
+node tools/art/sheet.mjs --ids card/theater#1,card/theater#2,card/theater#3
+node tools/art/sheet.mjs --ids card/theater --attempt all
 ```
 
 Builds a numbered, labelled contact sheet (ImageMagick `montage`) of chosen
-attempts (each id's latest attempt by default, or `--attempt N`), written
-to `${AJAYEB_RUN_DIR}/art-work/sheets/<name>.jpg`, never into the
-repository. Each cell is labelled `<n>. <id> #<attempt>`. `--tile` and `--cell` override the montage grid and cell size
-(`4x` and `384x288` by default).
+attempts, written to `${AJAYEB_RUN_DIR}/art-work/sheets/<name>.jpg`, never
+into the repository. By default each id contributes its latest attempt
+(`--attempt N`, or `latest` to be explicit), but any `--ids` entry can
+carry its own `#<attempt>` (a number, `latest` or `all`), so one call can
+put several attempts of several ids on the same sheet — e.g. three
+rejected variants of one card next to the one that was approved. Each cell
+is labelled `<n>. <id> #<attempt>`. `--tile` and `--cell` override the
+montage grid and cell size (`4x` and `384x288` by default).
+
+### `gate.mjs`
+
+```
+node tools/art/gate.mjs --kind card --attempt all
+node tools/art/gate.mjs --ids card/theater#1,wonder/pyramids#3
+node tools/art/gate.mjs --all                 # every attempt file on disk
+node tools/art/gate.mjs --src some.png --id card/lumber-yard
+node tools/art/gate.mjs --kind token --attempt latest --json
+```
+
+An objective full-bleed check a reviewer runs before `sheet.mjs`, not a
+replacement for looking at the images: crops each attempt to its kind's
+main shipped size (the same crop `process.mjs` ships with), finds the
+crop's own paper colour (the corner-median), and fails it if less than
+`--threshold` (default 50%) of the outer `--band` fraction (default 4% of
+`min(w,h)`) is within `--dist` (default 45) of that colour — a painting
+with no margin anywhere reads badly once the card or wonder frame feathers
+into it. `--ids` accepts the same `#<attempt>` syntax as `sheet.mjs`.
+`--json` prints one JSON object per line instead of a table; `--strict`
+exits 1 if anything failed, for scripting a hard gate.
 
 ### `apply-review.mjs`
 
@@ -118,11 +159,17 @@ node tools/art/process.mjs --id card/lumber-yard \
   --src ~/tmp/agents/ajayeb/art-work/raw/card/lumber-yard/1.png --out /scratch/dir
 ```
 
-Turns one original into the shipped AVIF sizes from `KIND_SPEC`
-(ImageMagick to crop to the exact pixel size, `avifenc` to encode, quality
-stepped down from 55 until the byte budget holds or 35 is reached; tokens
-get a circular mask composited onto the paper colour `#f4ecd8` first).
-Without `--out`, the id **must already be `"approved"`** in the manifest
+Turns one original into the shipped AVIF sizes from `KIND_SPEC`. For each
+size: crops to the exact pixel size (ImageMagick) and reads it back as raw
+RGB; maps the crop's own paper colour onto `PAPER_HEX` (`#f4ecdc`) with a
+smooth per-pixel falloff, so only paper-like pixels shift and the
+painting's other colours don't; for a progress token, detects the
+medallion's own painted rim (walking inward from each edge for the first
+non-paper pixel) and masks to that instead of always touching the square's
+edges, with a 1.5px antialiased edge, so a medallion painted with its own
+margin doesn't leave a visible ivory "halo" ring; then hands the result to
+`avifenc`, quality stepped down from 55 until the byte budget holds or 35
+is reached. Without `--out`, the id **must already be `"approved"`** in the manifest
 (set by `apply-review.mjs`); the source is copied to
 `art/originals/<kind>/<slug>.png`, the AVIFs go to
 `web/static/art/<kind>/`, and the shipped byte counts are recorded in the

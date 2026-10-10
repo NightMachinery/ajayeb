@@ -30,11 +30,15 @@ art/
   LICENSE                CC BY 4.0 notice
 
 tools/art/
-  lib.mjs          shared paths, the catalog reader, the kind/size table
+  lib.mjs          shared paths, the catalog reader, the kind/size table,
+                   the raw-pixel helpers (crop, paper-colour, PAPER_HEX)
   manifest.mjs      rebuilds art/manifest.json
   generate.mjs      one Codex image_gen call per asset
   process.mjs       original -> shipped AVIF sizes, with budgets
-  sheet.mjs         a contact sheet of chosen attempts
+  sheet.mjs         a contact sheet of chosen attempts (several ids, each
+                     at one or more attempts)
+  gate.mjs          objective full-bleed check: fails an attempt whose
+                     margin doesn't read as the image's own paper colour
   apply-review.mjs  applies a reviewer's decisions.jsonl
   index.mjs         art/manifest.json (approved only) -> available.gen.ts
 
@@ -104,13 +108,15 @@ ever disagree.
      previous attempt;
    - snapshots `${CODEX_HOME:-~/.codex}/generated_images/**`;
    - runs `codex exec --ephemeral --skip-git-repo-check -s read-only -C
-     <scratch> --enable image_generation -o <scratch>/last.txt [-i
-     art/refs/<kind>-anchor.jpg]` with an instruction to call `image_gen`
-     exactly once with the full prompt and reply `DONE`, under a 6 minute
-     timeout;
+     <scratch> --enable image_generation -o <scratch>/last.txt` with an
+     instruction to call `image_gen` exactly once with the full prompt and
+     reply `DONE`, under a 6 minute timeout;
    - finds the newest PNG that appeared since the snapshot (the script
-     does this itself, never trusting the agent to report the path) and
-     copies it to `art-work/raw/<kind>/<slug>/<attempt>.png`;
+     does this itself, never trusting the agent to report the path),
+     **verifies it actually came back the requested pixel size** (and
+     rejects the attempt outright if it didn't: the M9.B3 pilot saw a
+     square request come back 1254x1254 instead of 1024x1024, repeatably),
+     and copies it to `art-work/raw/<kind>/<slug>/<attempt>.png`;
    - records the attempt in the manifest (`status: "generated"`).
 
    `--kind KIND --limit N` (default 1) picks the next `N` assets of one
@@ -120,6 +126,14 @@ ever disagree.
    running anything. `CODEX_BIN` defaults to `~/.local/bin/codex` (never a
    shell function of the same name).
 
+   **A reference image is off by default.** `--ref` passes
+   `art/refs/<kind>-anchor.{jpg,png}` to Codex as `--image=<path>`, when
+   one exists, for a cross-subject style anchor. Without `--ref` (the
+   default), no image is sent at all: the M9.B3 pilot found a *same-subject*
+   reference makes Codex return a near-copy of the anchor rather than a new
+   illustration, and the style prefix alone already keeps the look
+   consistent across subjects.
+
    The `heavy.py run --kind codex` wrapper is what enforces "strictly one
    at a time" machine-wide, across scripts and sessions, per AGENTS.md.
    When `generate.mjs` is started without it, it re-executes itself under
@@ -127,20 +141,37 @@ ever disagree.
    kind's generation size (landscape 1536x1024, square 1024x1024 or
    portrait 1024x1536).
 
-3. **`node tools/art/sheet.mjs --ids <id>,<id>,... [--name NAME]`** (or
+3. **`node tools/art/gate.mjs --ids <id>,<id>,... --attempt all`** (or
+   `--kind KIND`, or `--all` to sweep every attempt file on disk) runs the
+   objective full-bleed check before a human ever looks at a sheet: it
+   crops each attempt to its kind's main shipped size, finds the crop's
+   own paper colour, and fails any attempt where less than half of the
+   outer 4% band reads as that paper colour (a painting with no margin
+   anywhere, "full-bleed", reads badly once the card or wonder frame
+   feathers into it). This is a margin check only, not a review; a pass
+   here is necessary, not sufficient, for approval. `--json` prints one
+   line of JSON per attempt instead of a table; `--strict` exits 1 if
+   anything failed, for scripting.
+
+4. **`node tools/art/sheet.mjs --ids <id>,<id>,... [--name NAME]`** (or
    `--kind KIND` for every generated asset of that kind) builds a
    numbered, labelled contact sheet with ImageMagick `montage`, written to
-   `art-work/sheets/<name>.jpg`. Look at it (and, ideally, the individual
-   PNGs) before writing a review decision.
+   `art-work/sheets/<name>.jpg`. An id may carry `#<attempt>` (a number,
+   `latest` or `all`) to put a specific attempt, or every attempt, of that
+   id on the sheet, so several attempts of several ids can sit on one
+   sheet, e.g. `--ids card/theater#1,card/theater#2,card/theater#3` to
+   compare three rejected variants, or `--ids card/theater --attempt all`
+   for the same thing without naming each attempt. Look at it (and,
+   ideally, the individual PNGs) before writing a review decision.
 
-4. **Review**: write a `decisions.jsonl`, one JSON object per line:
+5. **Review**: write a `decisions.jsonl`, one JSON object per line:
    `{"id": "card/lumber-yard", "attempt": 1, "verdict": "approve"}` or
    `{"id": "card/lumber-yard", "attempt": 1, "verdict": "reject",
    "reasons": ["subject too small at thumbnail size"], "promptAmend":
    "larger, closer central subject"}`. This file is not committed; it is a
    reviewer's scratch input to the next step.
 
-5. **`node tools/art/apply-review.mjs path/to/decisions.jsonl`** applies
+6. **`node tools/art/apply-review.mjs path/to/decisions.jsonl`** applies
    it to `art/manifest.json`: `approve` sets `status: "approved"`; `reject`
    sets `status: "rejected"` (with the `promptAmend` stored for the next
    `generate.mjs` run) unless the asset has already had 3 attempts, in
@@ -148,14 +179,29 @@ ever disagree.
    match the manifest's current attempt is skipped as stale (a newer
    attempt exists that the reviewer never saw).
 
-6. **`node tools/art/process.mjs --id <id> --src <raw-or-original.png>`**
-   turns an **approved** original into the shipped AVIF sizes: ImageMagick
-   crops to the exact pixel size (`-resize WxH^ -gravity center -extent
-   WxH`; tokens additionally get a circular mask composited onto the paper
-   colour, `#f4ecd8`, so there is no alpha channel in the shipped file),
-   then `avifenc` encodes it, stepping quality down (55 → 45 → 35) until
-   the asset table's byte budget holds or the lowest quality is reached
-   (reported either way). It copies the source to
+7. **`node tools/art/process.mjs --id <id> --src <raw-or-original.png>`**
+   turns an **approved** original into the shipped AVIF sizes. For each
+   shipped size it crops to the exact pixel size (the same "fill" crop
+   `gate.mjs` checks: `-resize WxH^ -gravity center -extent WxH`), reads
+   the crop back as raw RGB bytes, then does two pixel-level fixes before
+   handing it to `avifenc`:
+   - **paper-tone mapping**: finds the crop's own paper colour (the
+     corner-median) and maps it onto `PAPER_HEX` (`#f4ecdc`, the app's
+     `--card-paper` token) with a smooth per-pixel falloff, so only
+     paper-like pixels move and the painting's other colours are
+     untouched. A generated gouache ground runs warmer than the CSS
+     token; without this it shows as a visible seam against the
+     surrounding card or token frame.
+   - **token rim detection** (progress tokens only): instead of always
+     masking to a circle that touches the square's edges, it walks inward
+     from each of the 4 edges to find the medallion's own painted rim and
+     masks to that (with a 1.5px antialiased edge), so a medallion painted
+     with a margin inside the square doesn't leave a visible ivory "halo"
+     ring once masked.
+
+   `avifenc` then encodes the result, stepping quality down (55 → 45 →
+   35) until the asset table's byte budget holds or the lowest quality is
+   reached (reported either way). It copies the source to
    `art/originals/<kind>/<slug>.png` and records the shipped byte counts in
    the manifest. **`--src` must point at an asset whose manifest status is
    already `"approved"`** (set by `apply-review.mjs`); use `--out DIR` to
@@ -164,7 +210,7 @@ ever disagree.
    This is how a pipeline change or a pilot run is proved without shipping
    or approving anything.
 
-7. **`node tools/art/index.mjs`** regenerates
+8. **`node tools/art/index.mjs`** regenerates
    `web/src/lib/art/available.gen.ts` from every `"approved"` asset in the
    manifest: an id, its kind, and its shipped variants' paths, pixel sizes
    and byte counts. An id the app looks up here and doesn't find has no
@@ -177,17 +223,28 @@ An attempt is approved only when all of these hold, checked at full
 resolution and at the shipped thumbnail size (cards at 120 px, tokens at
 40 px, matching the render tiers in `design/ux.md` §4):
 
-- No text, letters, numerals or watermark anywhere in the image.
+- **Passes `gate.mjs`'s edge-band check** (step 3 above): the attempt has
+  a real margin of its own paper colour after the shipping crop, not a
+  painting that runs to every edge. This is checked before the sheet is
+  even built, so a full-bleed attempt is caught before a human looks at it.
+- No text, letters, numerals, pseudo-writing or watermark anywhere in the
+  image, including as a pedestal frieze, a ruled page or a carved wall.
 - The subject reads clearly at the shipped thumbnail size, not just at full
-  resolution.
+  resolution; one or two large figures, not a crowd.
 - The palette and accent match the category (see `art/style.md`'s palette
   section).
 - The style matches the approved anchors in `art/refs/`, once a pilot
   chooses them.
 - The paper background feathers cleanly; nothing looks like a hard
   rectangle waiting to be masked.
+- Background architecture reads as palaces, domed garden pavilions and
+  kiosks, never minarets or mosques, unless the asset's own `subject`
+  names one.
 - Culturally respectful, per `art/style.md`'s avoid list: no religious
-  figures, no political or national emblems, no anachronisms.
+  figures, no political or national emblems, no heraldic animals on
+  buildings or banners, no anachronisms.
+- No filler animals (deer, peacocks, a row of cypress trees) unless the
+  asset's own `subject` names one.
 - The shipped byte budget is met (or the quality floor is hit and the
   owner is told).
 
@@ -197,8 +254,24 @@ Before a batch run, a small pilot proves prompts and anchors work: a few
 subjects per kind, a contact sheet, a human pick of the style anchors (into
 `art/refs/`), then the batch. `M9.B0` (this slice) proves the mechanics
 end to end with one real card generation, one contact sheet and one
-scratch `process.mjs` run, but approves nothing; a later slice runs the
-actual pilot and batch.
+scratch `process.mjs` run, but approves nothing.
+
+`M9.B1`/`M9.B2` ran the actual 27-image style pilot (3 subjects x 3
+variants for card, wonder and token: `lumber-yard`, `scriptorium`,
+`theater`; `pyramids`, `colossus`, `hanging-gardens`; `agriculture`,
+`law`, `theology`). `M9.B3` applied an art critic's pass over those 27
+images to `art/style.md` and `art/subjects.json` (the gold rule, the card
+and wonder composition rules, the token template rewrite, tighter text and
+emblem negatives, a jewel accent per wonder, a distinct accent per token,
+and rewritten Colossus and Theater subjects — the Pyramids subject is an
+open owner decision and was left as is) and to `tools/art/process.mjs`
+(the paper-tone mapping and the token rim mask) and `generate.mjs`
+(reference images off by default, output size verified), and added
+`gate.mjs`. Proved on the existing pilot images plus 2 new generations
+(`card/theater`, `wonder/colossus`); a third (`token/law`) was attempted 3
+times and rejected every time by the new size check, a real, reproducible
+Codex `image_gen` behaviour for square requests (1254x1254 instead of
+1024x1024), not a bug in the check.
 
 ## Throughput
 

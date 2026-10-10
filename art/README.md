@@ -49,7 +49,9 @@ See [docs/art/bitmaps.md](../docs/art/bitmaps.md) for the full walk-through
 and [tools/art/README.md](../tools/art/README.md#bitmap-pipeline) for each
 script's flags. In short: `manifest.mjs` (rebuild the manifest) →
 `generate.mjs` (one Codex `image_gen` call per asset, through
-`python3 tools/heavy.py run --kind codex`) → `sheet.mjs` (a contact sheet
-to look at) → a reviewer writes `decisions.jsonl` → `apply-review.mjs`
-(apply it) → `process.mjs` (ship the AVIFs for an approved asset) →
+`python3 tools/heavy.py run --kind codex`) → `gate.mjs` (an objective
+full-bleed check) → `sheet.mjs` (a contact sheet to look at) → a reviewer
+writes `decisions.jsonl` → `apply-review.mjs` (apply it) → `process.mjs`
+(ship the AVIFs for an approved asset, mapping its paper tone onto
+`--card-paper` and, for a token, masking to its own painted rim) →
 `index.mjs` (regenerate `web/src/lib/art/available.gen.ts`).
