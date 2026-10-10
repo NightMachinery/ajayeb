@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . && prettier --check . && node scripts/lint-ui.mjs",
     "format": "prettier --write .",
     "test": "vitest run"
   },
