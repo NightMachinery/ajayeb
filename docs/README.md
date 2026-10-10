@@ -21,7 +21,7 @@ These docs explain how Ajayeb works and how it is built. Files marked "to come" 
 
 - [legal.md](legal.md): code and art licenses, the trademark notice, and what we never copy.
 - `self-hosting.md` (to come, M8): running your own instance with `self_host.py`, Caddy and tmux.
-- `art/` (to come, M9): the art style guide and contact sheets.
+- [art/](art/README.md): the original art: the hand-drawn vector pipeline (icons, ornaments, logo) and the Codex bitmap pipeline ([art/bitmaps.md](art/bitmaps.md)).
 
 ## Development process
 
