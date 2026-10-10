@@ -21,7 +21,7 @@
 - category-brown-sm, category-grey-sm, category-blue-sm, category-green-sm, category-yellow-sm, category-purple-sm: done (M9.VF1, iteration 1); new, for the colour swatches of EffectGlyph
 - category-red-sm: done (M9.VF1, iteration 4); new, for the colour swatches of EffectGlyph
 
-No icon used more than 3 of its 6 iterations, in the first drawing or in the M9.VG redraw (iterations vg-1 to vg-3, after a candidate round vg-0), and none is marked needs-human. Every file is lint clean. After M9.VG the whole sprite is 25392 bytes raw and 5271 gzipped (limits 40960 and 10240). Every blind check in this log was read by the author, so a fresh reader must still do the real one.
+No icon used more than 3 of its 6 iterations, in the first drawing or in the M9.VG redraw (iterations vg-1 to vg-3, after a candidate round vg-0), and none is marked needs-human. Every file is lint clean. After M9.VG the whole sprite is 25354 bytes raw and 5279 gzipped (limits 40960 and 10240). Every blind check in this log was read by the author, so a fresh reader must still do the real one.
 
 ## Iteration 0 (2026-10-10): sketches and candidates before the first specimen
 

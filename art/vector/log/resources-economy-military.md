@@ -10,7 +10,7 @@
 - coin: done (iteration 4)
 - coin-loss: done (iteration 4)
 - trade: done (iteration 4)
-- price-tag: done (iteration 4)
+- price-tag: done (iteration 4); redrawn in M9.VG (iteration vg-2): a bigger body, no string
 - choice: done (iteration 4)
 - shield: done (iteration 4)
 - military-pawn: done (iteration 4)
@@ -169,3 +169,31 @@ Reader: the author (this agent), who drew the icons and saw them labelled in eve
 ## Open points (not glyph problems)
 
 - The papyrus caller colour (`--res-papyrus`) is so pale that the glyph is faint on paper wherever it is coloured with that token rather than drawn on its tile: the resource chips, the strip chips, the badges and the specimen's column A. In greyscale it nearly vanishes on paper. The glyph cannot fix this; a deeper text tone for papyrus in `RESOURCE_TEXT_CLASS` (for example the papyrus colour mixed with the card ink) would. The same holds, less severely, for `--res-wood` on the night surface.
+
+## M9.VG: price-tag (2026-10-10)
+
+The M9b family review (art-work/vector/review/family-r1.md) found price-tag optically the smallest glyph of this set and a brown smudge on the yellow band at the desktop mini size (EffectGlyph trade-fix draws it at 0.9 em, about 9 px there). Coin and gold glyphs being pale on paper is a caller-colour problem (a deeper ink token), not an icon change, and was left alone.
+
+### Iteration vg-0: candidates
+
+Renders: art-work/vector/vg/s1-badge-tag.png and s12-tag.png (12, 15, 16 and 24 px at 600%, 96 px, silhouette).
+
+- Tried: a 12-unit body (tag-a), a 13-unit body (tag-b), the same rotated about another point (tag-c), a 14-unit body with a blunter point (tag-d, tag-e). The string went: it took the corner the body needed, and the app never shows it (the only caller sets no detail tone).
+
+### Iteration vg-1 (2026-10-10)
+
+Renders: art-work/vector/resources-economy-military/iter-vg-1/ (light, dark, DPR 1 and 2, grey, three CVD, peeps).
+Lint: clean (19 files).
+
+- Seen (tag-b): bigger than before, but in the app's desktop mini row (shots/M9/VG/crops/mini-yellow-tags.png) still the smallest glyph beside its coin.
+- Changed (vg-2): tag-e, 14 units wide and 17.5 long with a blunter point, rotated about the centre.
+
+### Iteration vg-2 (2026-10-10): final
+
+Renders: art-work/vector/resources-economy-military/iter-vg-2/: light@1x.png, light@2x.png, dark@1x.png, dark@2x.png, grey-light@1x.png, deuteranopia-light@1x.png, protanopia-light@1x.png, tritanopia-light@1x.png, peep-light@1x.png, peep-light@2x.png, peep-grey-light@1x.png, and crops/tag-all.png (the price-tag row in every pass).
+Lint: clean.
+
+- Seen: the tag is now as big optically as the shield and the coin-loss beside it, reads as a tag with a hole from 14 px and as a tag shape at 12 px, keeps its shape in greyscale and under the three emulations, and separates from all seven bands.
+- Acceptance (resources class) for price-tag: lint clean, budget met, distinct in greyscale, legible on all seven bands, no blobbing in the peep (the hole fills at 12 px DPR 1, the shape stays a tag), light and dark parity.
+- Self blind check (author-read, not blind), art-work/vector/blind/resources-economy-military-2026-10-10T18-11-06-030Z/: 12 px DPR 2 14/14, 16 px DPR 1 14/14. A fresh reader must take the real reading.
+- Spec corrected (art/vector/specs/resources-economy-military.md): no string, the body size.

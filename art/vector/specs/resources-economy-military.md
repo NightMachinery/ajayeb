@@ -83,6 +83,7 @@ These are the most frequent glyphs in the game: every cost row and most strips s
 - Meaning: fixed trading price: this resource always costs 1 coin to buy (the "=1" effect of some yellow cards).
 - Metaphor: a merchant's tag on a string, or a balance-free price marker.
 - Silhouette: a tag with a punched hole (a knockout of 2 units or more) and a tied string as the detail tone.
+- Correction (M9.VG, see the log): no string. The tag body is 14 units wide and 17.5 long with a blunter point, set at 45 degrees, so it is as big optically as the shield beside it; the string took the corner the body needed, and the only caller (EffectGlyph trade-fix) sets no detail tone, so the string never showed in the app.
 - Must differ from: badge-lock (no shackle), trade, wonder.
 - Sizes: 0.9 em of the effect band (about 10 to 14 px).
 - Contexts: EffectGlyph trade-fix, gold-deep, between the resource tiles and a Coin "1".
