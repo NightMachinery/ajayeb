@@ -45,7 +45,15 @@ export async function newDeviceContext(
     reducedMotion: 'reduce'
   });
   if (opts.clipboard) {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: ORIGIN });
+    // The permission must be scoped to the origin the context actually
+    // navigates to (use.baseURL, the same one passed to newContext above),
+    // not the fixture's own ORIGIN constant: for every local run they are
+    // the same value, but against a real site (M8.S02's production smoke,
+    // playwright.config.ts's E2E_BASE_URL) only use.baseURL is right, and
+    // granting the wrong origin fails the read silently until used.
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'], {
+      origin: use.baseURL ?? ORIGIN
+    });
   }
   return context;
 }

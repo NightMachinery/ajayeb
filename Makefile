@@ -28,6 +28,7 @@ HEAVY := python3 "$(CURDIR)/tools/heavy.py"
 GREP ?=
 PW_ARGS ?=
 E2E_BUILD ?= 1
+PROD_URL ?= https://ajayeb.pinky.lilf.ir
 AJAYEB_SWEEP ?= 300
 GO_PKGS ?= ./...
 GO_RUN ?=
@@ -44,7 +45,7 @@ E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 .PHONY: help install install-offline dev gen gen-check gen-check-if-ready \
         fmt-check vet test-go test-race lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
-        e2e e2e-smoke shots test-py verify-quick verify verify-full clean
+        e2e e2e-smoke e2e-prod shots test-py verify-quick verify verify-full clean
 
 ##@ Getting started
 
@@ -56,6 +57,7 @@ help: ## List the targets and the variables they read (the default target)
 	  'GREP=@full' 'Playwright --grep filter for e2e' \
 	  'PW_ARGS=...' 'extra Playwright flags for e2e and shots' \
 	  'E2E_BUILD=0' 'skip the server and test-mode web builds before e2e and shots' \
+	  'PROD_URL=...' 'site for e2e-prod (default https://ajayeb.pinky.lilf.ir)' \
 	  'AJAYEB_SWEEP=300' 'games in the Go playout sweep (verify-full uses 5000)' \
 	  'GO_PKGS=./...' 'packages for test-go, e.g. ./internal/engine/...' \
 	  'GO_RUN=regexp' 'go test -run filter for test-go' \
@@ -179,6 +181,9 @@ e2e: $(E2E_PREREQS) ## Playwright specs (GREP filters, PW_ARGS adds flags); buil
 
 e2e-smoke: ## The @smoke e2e specs
 	$(MAKE) --no-print-directory e2e GREP=@smoke
+
+e2e-prod: ## The production smoke (@prod specs) against PROD_URL; no local build or server (docs/testing.md)
+	E2E_BASE_URL=$(PROD_URL) $(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test $(PW_ARGS)
 
 # The ux project and its e2e/ux/ directory arrive with the UX loop (M10);
 # until then shots skips, the way test-race and gen-check do.
