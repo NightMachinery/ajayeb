@@ -4,6 +4,8 @@
   // badges as recorded views give them (normal and dimmed), and the three
   // age structures from recorded views in a phone-sized and a desktop-sized
   // box. The recorded views are a large module, so they load on demand.
+  // It opens with the art frames (ArtFrames.svelte): bitmap art in its real
+  // frames next to the placeholders.
   import { cardSlugs, wonderSlugs } from '$lib/catalog';
   import CardBack from '$lib/components/card/CardBack.svelte';
   import CardFace from '$lib/components/card/CardFace.svelte';
@@ -14,6 +16,7 @@
   import { AFFORD_STATES, affordOf, badgeSeat, type Afford } from '$lib/view/afford';
   import { describeCard, describeWonder } from '$lib/view/describe';
   import type { Back, View, WonderView } from '$lib/wire';
+  import ArtFrames from './ArtFrames.svelte';
 
   const BACKS: Back[] = ['age1', 'age2', 'age3', 'guild'];
 
@@ -79,6 +82,8 @@
 
 <div class="flex flex-col gap-6">
   <p class="max-w-prose text-sm text-fg-muted">{t('dev.cards.intro')}</p>
+
+  <ArtFrames />
 
   {#await recorded}
     <p class="text-sm text-fg-muted">{t('dev.cards.loading')}</p>
