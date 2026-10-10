@@ -27,7 +27,15 @@
 //      stepping quality down (55 -> 45 -> 35) until the size's byte budget
 //      holds, or keeping the lowest quality with a warning.
 //
+// The source: with no --src, the approved attempt's raw file,
+// art-work/raw/<kind>/<slug>/<approvedAttempt>.png (apply-review.mjs
+// records approvedAttempt, which may be earlier than the latest attempt;
+// M9.B4). A --src that is a raw attempt of this id must be that same
+// attempt. With --out and no approval, the latest attempt is used. The
+// script prints which file and attempt it processed.
+//
 // Usage:
+//   node tools/art/process.mjs --id token/agriculture
 //   node tools/art/process.mjs --id token/agriculture \
 //     --src art/originals/token/agriculture.png
 //   node tools/art/process.mjs --id card/lumber-yard \
@@ -35,6 +43,15 @@
 //     --out /scratch/dir            # write AVIFs there instead of
 //                                    # web/static/art, and skip the
 //                                    # "copy to art/originals" step
+//
+// Flags:
+//   --id ID          the asset, "<kind>/<slug>" (required)
+//   --src PATH       the original to process (default: the approved
+//                    attempt's raw file, see above)
+//   --out DIR        scratch run: write everything under DIR, skip the
+//                    approval check, touch nothing committed
+//   --manifest PATH  read (and, without --out, update) this manifest
+//                    instead of art/manifest.json
 //
 // With --out, nothing is copied to art/originals/ or web/static/art/: this
 // is how M9.B0's pilot proves the pipeline without shipping or approving
@@ -48,6 +65,12 @@ import os from 'node:os';
 
 import {
   KIND_SPEC,
+  rawDir,
+  rawAttemptPath,
+  approvedAttemptOf,
+  displayPath,
+  setManifestPath,
+  manifestLabel,
   shippedFileName,
   idKind,
   idSlug,
@@ -70,10 +93,61 @@ function parseArgs(argv) {
     if (a === '--id') args.id = argv[++i];
     else if (a === '--src') args.src = argv[++i];
     else if (a === '--out') args.out = argv[++i];
+    else if (a === '--manifest') setManifestPath(argv[++i]);
     else die(`unknown argument "${a}"`, 2);
   }
-  if (!args.id || !args.src) die('usage: process.mjs --id <id> --src <original.png> [--out DIR]', 2);
+  if (!args.id) die('usage: process.mjs --id <id> [--src <original>] [--out DIR] [--manifest PATH]', 2);
   return args;
+}
+
+/** The attempt number when `file` is one of this id's raw attempt files
+ * (art-work/raw/<kind>/<slug>/<n>.png), else null. */
+function rawAttemptOfFile(id, file) {
+  const dir = path.join(rawDir, idKind(id), idSlug(id));
+  const abs = path.resolve(file);
+  if (path.dirname(abs) !== dir) return null;
+  const m = /^(\d+)\.png$/.exec(path.basename(abs));
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Settles which file to process and says why. Without --out the asset
+ * must be approved, and the file is the approved attempt's raw file (or a
+ * --src that is not a different raw attempt, such as its committed
+ * original). With --out it is --src, else the approved attempt, else the
+ * latest attempt.
+ */
+function resolveSource(args, asset) {
+  const approved = approvedAttemptOf(asset);
+  if (!args.out && !approved) {
+    // The real (shipping) path processes "an approved original" (docs/art/
+    // bitmaps.md): apply-review.mjs is what sets status to "approved",
+    // from a reviewer's decision on the contact sheet. --out (scratch)
+    // skips this check, which is how the pipeline is proved end to end
+    // without approving or shipping anything.
+    die(
+      `${args.id} is not "approved" in ${manifestLabel()} yet; run tools/art/apply-review.mjs first, ` +
+        `or pass --out DIR to process into a scratch directory without approving`,
+    );
+  }
+  if (args.src) {
+    const srcAttempt = rawAttemptOfFile(args.id, args.src);
+    if (!args.out && srcAttempt !== null && srcAttempt !== approved) {
+      die(`${args.id}: the approved attempt is ${approved}, but --src is attempt ${srcAttempt} (${displayPath(args.src)})`);
+    }
+    const what =
+      srcAttempt !== null
+        ? `attempt ${srcAttempt}${srcAttempt === approved ? ', the approved one' : ''}`
+        : approved
+          ? `given with --src; the approved attempt is ${approved}`
+          : 'given with --src';
+    return { src: args.src, attempt: srcAttempt ?? approved, label: what };
+  }
+  if (approved) {
+    return { src: rawAttemptPath(args.id, approved), attempt: approved, label: `the approved attempt ${approved}` };
+  }
+  if (!asset?.attempt) die(`${args.id} has no attempt recorded in ${manifestLabel()}; pass --src`);
+  return { src: rawAttemptPath(args.id, asset.attempt), attempt: asset.attempt, label: `the latest attempt ${asset.attempt}, not approved` };
 }
 
 function run(cmd, args, opts = {}) {
@@ -201,23 +275,11 @@ async function main() {
   const spec = KIND_SPEC[kind];
   if (!spec) die(`no KIND_SPEC for kind "${kind}"`);
 
+  const manifestAtStart = await loadManifest();
+  const source = resolveSource(args, manifestAtStart.assets[args.id]);
+  args.src = source.src;
   await stat(args.src).catch(() => die(`no such file: ${args.src}`));
-
-  if (!args.out) {
-    // The real (shipping) path processes "an approved original" (docs/art/
-    // bitmaps.md): apply-review.mjs is what sets status to "approved",
-    // from a reviewer's decision on the contact sheet. --out (scratch)
-    // skips this check, which is how the pipeline is proved end to end
-    // without approving or shipping anything.
-    const manifestCheck = await loadManifest();
-    const assetCheck = manifestCheck.assets[args.id];
-    if (!assetCheck || assetCheck.status !== 'approved') {
-      die(
-        `${args.id} is not "approved" in art/manifest.json yet; run tools/art/apply-review.mjs first, ` +
-          `or pass --out DIR to process into a scratch directory without approving`,
-      );
-    }
-  }
+  process.stdout.write(`process.mjs: ${args.id}: processing ${displayPath(args.src)} (${source.label})\n`);
 
   // The crop scratch dir is always a true OS temp dir, never a sibling of
   // --src: --src can point inside the repo (e.g. an already-copied
@@ -265,7 +327,7 @@ async function main() {
     // Scratch run (the M9.B0 pilot proves the pipeline this way): bytes are
     // reported above, but the manifest is left untouched, so nothing looks
     // approved or shipped from this run.
-    process.stdout.write('process.mjs: scratch output only; art/manifest.json left unchanged\n');
+    process.stdout.write(`process.mjs: scratch output only; ${manifestLabel()} left unchanged\n`);
   } else {
     const manifest = await loadManifest();
     const asset = manifest.assets[args.id];
@@ -273,7 +335,7 @@ async function main() {
       asset.bytes = { ...asset.bytes, ...bytes };
       await saveManifest(manifest);
     }
-    process.stdout.write('process.mjs: shipped and recorded in art/manifest.json\n');
+    process.stdout.write(`process.mjs: shipped and recorded in ${manifestLabel()}\n`);
   }
 }
 

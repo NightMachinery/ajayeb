@@ -49,9 +49,10 @@ node tools/art/manifest.mjs           # write art/manifest.json
 node tools/art/manifest.mjs --check   # exit 1 if that would change it
 ```
 
-Rebuilds `art/manifest.json` from the catalog and `art/subjects.json`.
-Never writes `subjects.json`. Keeps every existing asset's `status`,
-`attempt`, `promptAmend` and `bytes`; only adds ids that are missing and
+Rebuilds `art/manifest.json` (or the file `AJAYEB_ART_MANIFEST` names)
+from the catalog and `art/subjects.json`. Never writes `subjects.json`.
+Keeps every existing asset's `status`, `attempt`, `promptAmend` and
+`bytes`, and the review's `approvedAttempt` and `reasons` when present; only adds ids that are missing and
 drops (with a warning on stderr) ids that no longer correspond to a
 catalog entry or a static asset.
 
@@ -158,26 +159,46 @@ scripting a hard gate.
 ```
 node tools/art/apply-review.mjs path/to/decisions.jsonl
 node tools/art/apply-review.mjs path/to/decisions.jsonl --dry-run
+node tools/art/apply-review.mjs decisions.jsonl --max-attempts 4
+node tools/art/apply-review.mjs decisions.jsonl --manifest /scratch/manifest.json
 ```
 
 Applies a reviewer's `decisions.jsonl` (one JSON object per line: `{id,
-attempt, verdict: "approve"|"reject", reasons?, promptAmend?}`) to
-`art/manifest.json`. `approve` sets `status: "approved"`. `reject` sets
-`status: "rejected"` and stores `promptAmend` for the next `generate.mjs` run,
-unless the asset is already at 3 attempts, in which case it becomes
-`needs-human`. A decision whose `attempt` does not match the manifest's
-current attempt is skipped as stale. `--dry-run` prints the summary
-without writing the manifest.
+attempt, verdict: "approve"|"reject"|"needs-human", reasons?,
+promptAmend?}`) to `art/manifest.json`.
+
+- `approve` sets `status: "approved"` and `approvedAttempt` to the
+  decision's attempt, which may be earlier than the latest one (its raw
+  file must exist); `process.mjs` and `index.mjs` use that attempt.
+- `reject` sets `status: "rejected"` and stores `promptAmend` for the next
+  `generate.mjs` run, unless the asset is already at `--max-attempts`
+  attempts (default 3), in which case it becomes `needs-human`.
+- `needs-human` sets that status directly, with its reasons, at any
+  attempt count.
+
+A rejection whose `attempt` does not match the manifest's current attempt
+is skipped as stale; an approval or `needs-human` may name an earlier
+attempt but never a later one. A decision with no `attempt` is about the
+current one. `--manifest PATH` (or `AJAYEB_ART_MANIFEST`) works on a
+scratch copy of the manifest; `--dry-run` prints the summary without
+writing it.
 
 ### `process.mjs`
 
 ```
+node tools/art/process.mjs --id token/agriculture        # the approved attempt
 node tools/art/process.mjs --id token/agriculture --src art/originals/token/agriculture.png
 node tools/art/process.mjs --id card/lumber-yard \
   --src ~/tmp/agents/ajayeb/art-work/raw/card/lumber-yard/1.png --out /scratch/dir
 ```
 
-Turns one original into the shipped AVIF sizes from `KIND_SPEC`. For each
+Turns one original into the shipped AVIF sizes from `KIND_SPEC`. With no
+`--src`, the source is the approved attempt's raw file
+(`art-work/raw/<kind>/<slug>/<approvedAttempt>.png`, or the latest attempt
+for a `--out` run of an unapproved asset); a `--src` that is another raw
+attempt of the same id is refused unless `--out` is given. The first line
+of output names the file and the attempt. `--manifest PATH` reads (and
+updates) a scratch manifest instead. For each
 size: crops to the exact pixel size (ImageMagick) and reads it back as raw
 RGB; maps the crop's own paper colour onto `PAPER_HEX` (`#f4ecdc`) with a
 smooth per-pixel falloff, so only paper-like pixels shift and the
@@ -201,11 +222,14 @@ approving or shipping anything for real.
 
 ```
 node tools/art/index.mjs
+node tools/art/index.mjs --manifest /scratch/manifest.json --out /scratch/available.gen.ts
 ```
 
 Regenerates `web/src/lib/art/available.gen.ts` from every `"approved"`
 asset in `art/manifest.json`: an id, its kind, and its shipped variants'
-paths, pixel sizes and byte counts. Run it after any `apply-review.mjs` or
+paths, pixel sizes and byte counts. It prints each approved id's approved
+attempt (and notes when it is earlier than the latest). `--manifest` and
+`--out` point it at scratch files for a proof. Run it after any `apply-review.mjs` or
 `process.mjs` call that changes which assets are approved, so the app's
 index never claims a file that was not actually shipped.
 

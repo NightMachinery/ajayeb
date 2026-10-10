@@ -4,8 +4,8 @@
 // Builds art/manifest.json from the presentation catalog
 // (web/src/lib/wire/catalog.gen.ts) and the human-written art/subjects.json.
 // It never overwrites art/subjects.json, and it keeps the progress
-// (status, attempt, promptAmend, bytes) of every asset already in the
-// manifest. Run it after a catalog change or a subjects.json edit, and
+// (status, attempt, promptAmend, bytes, and the review's approvedAttempt
+// and reasons) of every asset already in the manifest. Run it after a catalog change or a subjects.json edit, and
 // before generate.mjs picks its next asset.
 //
 // Usage:
@@ -22,6 +22,7 @@ import {
   loadSubjects,
   loadManifest,
   saveManifest,
+  manifestLabel,
   die,
 } from './lib.mjs';
 
@@ -75,6 +76,10 @@ async function build() {
       promptAmend: prior.promptAmend || '',
       bytes: prior.bytes || {},
     };
+    // Review state apply-review.mjs writes, carried forward only when it
+    // exists, so an asset nobody reviewed keeps the short entry above.
+    if (prior.approvedAttempt) nextAssets[id].approvedAttempt = prior.approvedAttempt;
+    if (prior.reasons) nextAssets[id].reasons = prior.reasons;
   }
 
   if (missingSubjects.length) {
@@ -110,14 +115,14 @@ async function main() {
     const current = JSON.stringify((await loadManifest()), null, 2) + '\n';
     const next = JSON.stringify(manifest, null, 2) + '\n';
     if (current !== next) {
-      die('art/manifest.json is out of date; run node tools/art/manifest.mjs');
+      die(`${manifestLabel()} is out of date; run node tools/art/manifest.mjs`);
     }
-    process.stdout.write('manifest.mjs: art/manifest.json is up to date\n');
+    process.stdout.write(`manifest.mjs: ${manifestLabel()} is up to date\n`);
     return;
   }
 
   await saveManifest(manifest);
-  process.stdout.write(`manifest.mjs: wrote ${Object.keys(manifest.assets).length} assets to art/manifest.json\n`);
+  process.stdout.write(`manifest.mjs: wrote ${Object.keys(manifest.assets).length} assets to ${manifestLabel()}\n`);
 }
 
 main().catch((err) => die(err.stack || String(err)));

@@ -194,22 +194,43 @@ ever disagree.
    ideally, the individual PNGs) before writing a review decision.
 
 5. **Review**: write a `decisions.jsonl`, one JSON object per line:
-   `{"id": "card/lumber-yard", "attempt": 1, "verdict": "approve"}` or
+   `{"id": "card/lumber-yard", "attempt": 1, "verdict": "approve"}`,
    `{"id": "card/lumber-yard", "attempt": 1, "verdict": "reject",
    "reasons": ["subject too small at thumbnail size"], "promptAmend":
-   "larger, closer central subject"}`. This file is not committed; it is a
-   reviewer's scratch input to the next step.
+   "larger, closer central subject"}` or `{"id": "token/law", "attempt": 2,
+   "verdict": "needs-human", "reasons": ["the subject needs rewriting"]}`.
+   This file is not committed; it is a reviewer's scratch input to the
+   next step.
 
 6. **`node tools/art/apply-review.mjs path/to/decisions.jsonl`** applies
-   it to `art/manifest.json`: `approve` sets `status: "approved"`; `reject`
-   sets `status: "rejected"` (with the `promptAmend` stored for the next
-   `generate.mjs` run) unless the asset has already had 3 attempts, in
-   which case it becomes `needs-human`. A decision whose `attempt` does not
-   match the manifest's current attempt is skipped as stale (a newer
-   attempt exists that the reviewer never saw).
+   it to `art/manifest.json`:
+   - `approve` sets `status: "approved"` and records the decision's attempt
+     as `approvedAttempt`. It may be an **earlier attempt than the
+     latest**, when the reviewer prefers it to every retry since; its raw
+     file must exist. `process.mjs` and `index.mjs` then use that attempt
+     and print which one they used.
+   - `reject` sets `status: "rejected"` (with the `promptAmend` stored for
+     the next `generate.mjs` run) unless the asset has already had
+     `--max-attempts` attempts (default 3), in which case it becomes
+     `needs-human`.
+   - `needs-human` sets that status directly, with the reasons, whatever
+     the attempt count: for an asset no prompt amendment will fix, such as
+     a subject that needs rewriting or a choice only the owner can make.
 
-7. **`node tools/art/process.mjs --id <id> --src <raw-or-original.png>`**
-   turns an **approved** original into the shipped AVIF sizes. For each
+   A rejection whose `attempt` does not match the manifest's current
+   attempt is skipped as stale (a newer attempt exists that the reviewer
+   never saw). An approval or a `needs-human` may name an earlier attempt,
+   but never one past the current. `--manifest PATH` applies the decisions
+   to a scratch copy of the manifest instead, and `--dry-run` writes
+   nothing. A new `generate.mjs` attempt clears `approvedAttempt`, and
+   `manifest.mjs` carries `approvedAttempt` and `reasons` through a
+   rebuild.
+
+7. **`node tools/art/process.mjs --id <id>`** turns an **approved**
+   attempt into the shipped AVIF sizes. With no `--src` it processes the
+   approved attempt's raw file,
+   `art-work/raw/<kind>/<slug>/<approvedAttempt>.png`, and says so; a
+   `--src` that is a different raw attempt of the same id is refused. For each
    shipped size it crops to the exact pixel size (the same "fill" crop
    `gate.mjs` checks: `-resize WxH^ -gravity center -extent WxH`), reads
    the crop back as raw RGB bytes, then does two pixel-level fixes before
@@ -232,8 +253,8 @@ ever disagree.
    35) until the asset table's byte budget holds or the lowest quality is
    reached (reported either way). It copies the source to
    `art/originals/<kind>/<slug>.png` and records the shipped byte counts in
-   the manifest. **`--src` must point at an asset whose manifest status is
-   already `"approved"`** (set by `apply-review.mjs`); use `--out DIR` to
+   the manifest. **The asset's manifest status must already be
+   `"approved"`** (set by `apply-review.mjs`); use `--out DIR` to
    process into a scratch directory instead, which skips that check and
    leaves the manifest and `art/originals/`/`web/static/art/` untouched.
    This is how a pipeline change or a pilot run is proved without shipping

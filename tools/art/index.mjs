@@ -8,12 +8,46 @@
 // art yet; the app's procedural placeholder (CardPlaceholderArt and
 // friends, per AGENTS.md "Assets") draws for it instead.
 //
-// Usage: node tools/art/index.mjs
+// For each approved id it also prints which attempt was approved (the
+// manifest's approvedAttempt, which may be earlier than the latest
+// attempt; M9.B4), so the log says exactly which image the app now shows.
+//
+// Usage:
+//   node tools/art/index.mjs
+//   node tools/art/index.mjs --manifest /scratch/manifest.json --out /scratch/available.gen.ts
+//
+// Flags:
+//   --manifest PATH  read this manifest instead of art/manifest.json
+//   --out FILE       write the module here instead of
+//                    web/src/lib/art/available.gen.ts (a scratch proof)
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { KIND_SPEC, shippedFileName, idKind, idSlug, loadManifest, availableGenPath, die } from './lib.mjs';
+import {
+  KIND_SPEC,
+  shippedFileName,
+  idKind,
+  idSlug,
+  loadManifest,
+  availableGenPath,
+  approvedAttemptOf,
+  setManifestPath,
+  manifestLabel,
+  displayPath,
+  die,
+} from './lib.mjs';
+
+function parseArgs(argv) {
+  const args = { out: availableGenPath };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--manifest') setManifestPath(argv[++i]);
+    else if (a === '--out') args.out = path.resolve(argv[++i]);
+    else die(`unknown argument "${a}"`, 2);
+  }
+  return args;
+}
 
 function buildEntries(manifest) {
   const entries = {};
@@ -88,12 +122,22 @@ export function artVariant(id: string, suffix: string = 'default'): ArtVariant |
 }
 
 async function main() {
+  const args = parseArgs(process.argv.slice(2));
   const manifest = await loadManifest();
   const entries = buildEntries(manifest);
+  for (const id of Object.keys(entries)) {
+    const asset = manifest.assets[id];
+    const approved = approvedAttemptOf(asset);
+    const earlier = approved < asset.attempt ? ` (earlier than the latest, ${asset.attempt})` : '';
+    const recorded = asset.approvedAttempt ? '' : ', no approvedAttempt recorded, so the latest';
+    process.stdout.write(`index.mjs: ${id}: approved attempt ${approved}${earlier}${recorded}\n`);
+  }
   const ts = renderTs(entries);
-  await mkdir(path.dirname(availableGenPath), { recursive: true });
-  await writeFile(availableGenPath, ts, 'utf8');
-  process.stdout.write(`index.mjs: wrote ${Object.keys(entries).length} approved id(s) to ${path.relative(process.cwd(), availableGenPath)}\n`);
+  await mkdir(path.dirname(args.out), { recursive: true });
+  await writeFile(args.out, ts, 'utf8');
+  process.stdout.write(
+    `index.mjs: wrote ${Object.keys(entries).length} approved id(s) from ${manifestLabel()} to ${displayPath(args.out)}\n`,
+  );
 }
 
 main().catch((err) => die(err.stack || String(err)));

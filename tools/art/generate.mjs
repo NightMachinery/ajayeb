@@ -375,6 +375,8 @@ async function main() {
     if (outcome.ok) {
       asset.status = 'generated';
       asset.attempt = outcome.attempt;
+      // A new attempt reopens the review: no earlier approval stands.
+      delete asset.approvedAttempt;
       if (args.amend) asset.promptAmend = args.amend;
       await saveManifest(manifest);
       process.stdout.write(

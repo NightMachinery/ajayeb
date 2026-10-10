@@ -9,6 +9,7 @@
 // art/style.md for the prompts this reads into.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
@@ -30,7 +31,35 @@ export const artWorkDir = path.join(runDir, 'art-work');
 export const rawDir = path.join(artWorkDir, 'raw');
 export const sheetsDir = path.join(artWorkDir, 'sheets');
 
-export const manifestPath = path.join(repoRoot, 'art', 'manifest.json');
+/**
+ * art/manifest.json, unless AJAYEB_ART_MANIFEST names another file, or a
+ * script's --manifest flag calls setManifestPath(). A scratch copy is how
+ * apply-review.mjs, process.mjs and index.mjs are proved without touching
+ * the committed manifest. A live binding: importers see the change.
+ */
+export let manifestPath = process.env.AJAYEB_ART_MANIFEST
+  ? path.resolve(process.env.AJAYEB_ART_MANIFEST)
+  : path.join(repoRoot, 'art', 'manifest.json');
+
+export function setManifestPath(p) {
+  manifestPath = path.resolve(p);
+}
+
+/** A path for messages: repo-relative inside the repo, `~/...` under the
+ * home directory, else absolute. */
+export function displayPath(p) {
+  const abs = path.resolve(p);
+  const rel = path.relative(repoRoot, abs);
+  if (!rel.startsWith('..') && !path.isAbsolute(rel)) return rel;
+  const home = os.homedir();
+  if (abs === home || abs.startsWith(home + path.sep)) return `~${abs.slice(home.length)}`;
+  return abs;
+}
+
+/** The manifest path for messages. */
+export function manifestLabel() {
+  return displayPath(manifestPath);
+}
 export const subjectsPath = path.join(repoRoot, 'art', 'subjects.json');
 export const styleDocPath = path.join(repoRoot, 'art', 'style.md');
 export const originalsDir = path.join(repoRoot, 'art', 'originals');
@@ -55,6 +84,22 @@ export function idSlug(id) {
 
 export function makeId(kind, slug) {
   return `${kind}/${slug}`;
+}
+
+/** The raw attempt file for an id: art-work/raw/<kind>/<slug>/<n>.png. */
+export function rawAttemptPath(id, attempt) {
+  return path.join(rawDir, idKind(id), idSlug(id), `${attempt}.png`);
+}
+
+/**
+ * Which attempt of an approved asset is the approved one: the recorded
+ * `approvedAttempt` (apply-review.mjs sets it on every approval, M9.B4),
+ * else the latest `attempt` for a manifest written before that field
+ * existed. Null when the asset is not approved.
+ */
+export function approvedAttemptOf(asset) {
+  if (!asset || asset.status !== 'approved') return null;
+  return asset.approvedAttempt || asset.attempt || null;
 }
 
 // --- Catalog (cards, wonders, tokens) ------------------------------------
@@ -262,6 +307,23 @@ export async function saveManifest(manifest) {
 export function die(message, code = 1) {
   process.stderr.write(`${path.basename(process.argv[1])}: ${message}\n`);
   process.exit(code);
+}
+
+/**
+ * Prints a script's usage, which is its leading comment block (every line
+ * after the shebang up to the first line that is not a `//` comment), and
+ * exits 0. Each script answers --help with this, so the usage text lives
+ * in one place, next to the code it describes.
+ */
+export function printUsage(metaUrl) {
+  const src = readFileSync(fileURLToPath(metaUrl), 'utf8').split('\n');
+  const out = [];
+  for (const line of src.slice(src[0]?.startsWith('#!') ? 1 : 0)) {
+    if (!line.startsWith('//')) break;
+    out.push(line.replace(/^\/\/ ?/, ''));
+  }
+  process.stdout.write(out.join('\n').trim() + '\n');
+  process.exit(0);
 }
 
 // --- Raw-pixel helpers -----------------------------------------------------
