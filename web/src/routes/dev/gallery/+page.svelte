@@ -9,6 +9,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import Board from '$lib/dev/gallery/Board.svelte';
   import Cards from '$lib/dev/gallery/Cards.svelte';
+  import Choices from '$lib/dev/gallery/Choices.svelte';
   import Screens from '$lib/dev/gallery/Screens.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import ConfirmButton from '$lib/components/shell/ConfirmButton.svelte';
@@ -130,6 +131,11 @@
   <section class="flex flex-col gap-2">
     <h2 class="font-display text-xl text-fg">{t('dev.gallery.screens')}</h2>
     <Screens />
+  </section>
+
+  <section class="flex flex-col gap-2">
+    <h2 class="font-display text-xl text-fg">{t('dev.gallery.choices')}</h2>
+    <Choices />
   </section>
 
   <p>
