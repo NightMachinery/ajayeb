@@ -5,7 +5,9 @@
 // delay with jitter (backoff.ts), except after a 1008 close whose reason is
 // "protocol" (the server runs another protocol version: reload the page) or
 // "bad-hello" (this client is wrong), which another try cannot fix. The
-// Session says hello again on every 'open'.
+// browser's 'offline' event counts as a drop of an open socket, and its
+// 'online' event cuts the wait before the next try. The Session says hello
+// again on every 'open'.
 //
 // The backoff count goes back to zero only once the server has welcomed a
 // socket, not when a socket merely opens: a server that accepts the upgrade
@@ -280,9 +282,27 @@ export class WsTransport implements Transport {
     this.#connect();
   };
 
+  // The browser lost its network. An open socket is dead from here on, even
+  // though no close event may come for a long time (until the server's pings
+  // give up, or never on this side), and a move sent on it would vanish. So
+  // drop it and retry as after any drop: the state reads 'offline', and the
+  // 'online' event tries again at once. (A socket to a server on the same
+  // machine would have survived; it simply reconnects.)
   #onOffline = (): void => {
-    if (this.#closed || this.#status.state === 'open' || this.#status.state === 'connecting')
+    if (this.#closed || this.#status.state === 'connecting') return;
+    const socket = this.#socket;
+    if (this.#status.state === 'open') {
+      if (!socket) return;
+      this.#socket = null;
+      this.#detach(socket);
+      try {
+        socket.close(NORMAL_CLOSURE);
+      } catch {
+        // Ignore: the socket is abandoned either way.
+      }
+      this.#dropped(1006, '');
       return;
+    }
     this.#setStatus({ state: 'offline', attempt: this.#status.attempt });
   };
 }

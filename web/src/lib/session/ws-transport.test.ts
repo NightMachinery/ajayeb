@@ -325,13 +325,33 @@ describe('WsTransport', () => {
     expect(sockets).toHaveLength(2);
   });
 
+  it('drops an open socket when the browser goes offline', () => {
+    const { transport, sockets, states, current, network } = setup({ offlineAfter: 100 });
+    const first = current();
+    first.open();
+    first.message(WELCOME);
+    network.fire('offline');
+    // No close event may come for a long time: the socket is given up at
+    // once, and nothing more is sent on it.
+    expect(first.closedWith).toBe(1000);
+    expect(states.at(-1)).toEqual({ state: 'offline', attempt: 1 });
+    expect(transport.send({ t: 'resync', code: 'K7QX2M' })).toBe(false);
+    expect(first.sent).toEqual([]);
+    // Its late events change nothing; the retry comes after the backoff.
+    first.drop(1006);
+    expect(sockets).toHaveLength(1);
+    vi.advanceTimersByTime(500);
+    expect(sockets).toHaveLength(2);
+    current().open();
+    expect(states.at(-1)).toEqual({ state: 'open', attempt: 0 });
+  });
+
   it('tries at once when the browser comes back online', () => {
     const { sockets, states, current, network } = setup({ offlineAfter: 100 });
     current().open();
     network.fire('offline');
-    expect(states.at(-1)?.state).toBe('open'); // the socket may still be alive
-    current().drop(1006);
     expect(states.at(-1)?.state).toBe('offline'); // navigator is offline
+    expect(sockets).toHaveLength(1);
     for (let i = 0; i < 3; i++) {
       vi.advanceTimersByTime(20_000);
       current().drop(1006);
