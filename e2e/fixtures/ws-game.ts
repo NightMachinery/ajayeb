@@ -12,6 +12,7 @@
 
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { Choice, State, View } from '../../web/src/lib/wire';
+import type { CapturedFrame, ViewerStream } from './leak-check';
 
 /** A seeded room made through the development endpoint. */
 export interface DevRoom {
@@ -84,11 +85,25 @@ class Connection {
   #waiters: Array<() => void> = [];
   #lastSent = 0;
   #closed: string | null = null;
+  #started = Date.now();
+  /** Every frame received, as text, in order (for the leak check). */
+  readonly raw: CapturedFrame[] = [];
+  /** The newest state frame received. */
+  latest: State | null = null;
 
   constructor(url: string) {
     this.#ws = new WebSocket(url);
     this.#ws.addEventListener('message', (event) => {
-      this.#frames.push(JSON.parse(String(event.data)) as Frame);
+      const text = String(event.data);
+      const frame = JSON.parse(text) as Frame;
+      this.raw.push({
+        text,
+        version: frame.t === 'state' && typeof frame.version === 'number' ? frame.version : null,
+        at: Date.now() - this.#started,
+        socket: 1
+      });
+      if (frame.t === 'state') this.latest = frame as State;
+      this.#frames.push(frame);
       this.#wake();
     });
     this.#ws.addEventListener('close', (event) => {
@@ -144,6 +159,14 @@ class Connection {
         });
       });
     }
+  }
+
+  /** Takes frames until the newest state is at `version` or later. */
+  async reach(version: number, timeoutMs = 15_000): Promise<State> {
+    while (!this.latest || this.latest.version < version) {
+      await this.next((f) => f.t === 'state', timeoutMs);
+    }
+    return this.latest;
   }
 
   close(): void {
@@ -240,5 +263,91 @@ export async function recordGame(
     throw new Error(`seed ${seed}: the game did not end within 400 actions`);
   } finally {
     conn.close();
+  }
+}
+
+export interface RecordedOnlineGame {
+  code: string;
+  /** The frames of seat 0, seat 1 and the spectator, named seat0, seat1 and spectator. */
+  streams: ViewerStream[];
+  keys: string[];
+  result: NonNullable<View['result']>;
+}
+
+/**
+ * Plays a whole online game through the protocol with two players and a
+ * spectator, each its own user on its own socket, and returns every frame
+ * each of them received. The room comes from POST /api/dev/rooms (an
+ * explicit seed, so the server's --seed-base counter is not used up), and
+ * the players join in seat order. Each move is the policy's pick from the
+ * mover's own latest state; the others wait until they have seen it.
+ */
+export async function recordOnlineGame(
+  origin: string,
+  opts: { seed: string; scenario?: string; policy?: (view: View) => Choice; maxActions?: number }
+): Promise<RecordedOnlineGame> {
+  const policy = opts.policy ?? recordPolicy;
+  const room = await createDevRoom(origin, {
+    mode: 'online',
+    seed: opts.seed,
+    ...(opts.scenario ? { scenario: opts.scenario } : {})
+  });
+  const url = origin.replace(/^http/, 'ws') + '/ws';
+  const names = ['seat0', 'seat1', 'spectator'] as const;
+  const conns = names.map(() => new Connection(url));
+  const ids = names.map(() => randomUUID());
+  try {
+    // Join one after the other, so the first takes seat 0 and the second seat 1.
+    for (const [i, conn] of conns.entries()) {
+      await conn.open();
+      await conn.send({ t: 'hello', v: 1, token: newToken(), name: names[i], clientId: ids[i] });
+      await conn.next((f) => f.t === 'welcome');
+      await conn.send({ t: 'join', code: room.code });
+      await conn.next((f) => f.t === 'state');
+    }
+    const [c0, c1] = conns as [Connection, Connection, Connection];
+    let version = c0.latest?.version ?? 0;
+    const keys: string[] = [];
+    const seqs = [0, 0];
+    for (let guard = 0; guard <= (opts.maxActions ?? 400); guard++) {
+      for (const conn of conns) await conn.reach(version);
+      const view = c0.latest!.view;
+      if (view.phase === 'gameOver') {
+        // Every viewer has its game-over frame before the streams are returned.
+        return {
+          code: room.code,
+          streams: conns.map((c, i) => ({ name: names[i]!, frames: c.raw })),
+          keys,
+          result: view.result!
+        };
+      }
+      const seat = view.toMove;
+      if (seat !== 0 && seat !== 1) throw new Error(`no seat to move at ply ${view.ply}`);
+      const mover = seat === 0 ? c0 : c1;
+      const choice = policy(mover.latest!.view);
+      seqs[seat] = (seqs[seat] ?? 0) + 1;
+      const seq = seqs[seat]!;
+      const act = { t: 'act', code: room.code, seq, base: version, key: choice.key };
+      for (let attempt = 0; ; attempt++) {
+        await mover.send(act);
+        const answer = await mover.next(
+          (f) =>
+            (f.t === 'state' && f.ack?.seq === seq && f.ack.clientId === ids[seat]) ||
+            (f.t === 'reject' && f.seq === seq)
+        );
+        if (answer.t === 'state') {
+          version = (answer as State).version;
+          break;
+        }
+        if (answer.code !== 'rate' || attempt >= 3) {
+          throw new Error(`act ${choice.key} refused: ${JSON.stringify(answer)}`);
+        }
+        await sleep(500);
+      }
+      keys.push(choice.key);
+    }
+    throw new Error(`the online game did not end within ${opts.maxActions ?? 400} actions`);
+  } finally {
+    for (const conn of conns) conn.close();
   }
 }
