@@ -509,7 +509,11 @@
   .game-screen {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+    /* The structure keeps at least 15.5rem, enough for 44 px Age III cards on
+       a 360x740 phone; when both strips grow tall (tokens, a danger line)
+       they give up height and scroll inside instead. */
+    --strip-row: minmax(0, max-content);
+    grid-template-rows: auto var(--strip-row) auto minmax(15.5rem, 1fr) var(--strip-row) auto;
     grid-template-areas: 'top' 'away' 'board' 'structure' 'home' 'turn';
     row-gap: 0.25rem;
   }
