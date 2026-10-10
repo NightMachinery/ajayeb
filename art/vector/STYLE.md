@@ -85,7 +85,7 @@ Where icons live in the app today (`web/src/lib/components`), and what each plac
 
 - **Resource tiles** (`ResourceTile.svelte`): a rounded square in the resource colour, the glyph in paper or ink, `--i2` a 55% mix of the two. On a mini card the tile is 1 em of a 10 px font and the glyph about 9 px (the `-sm` file); in the medium tier about 12 px.
 - **Cost row and effect band** of a card: the band's glyphs sit on a paper inset (92% paper over the band colour and pattern), so they need no halo. Shields are drawn in the red card colour with `--i2` paper; science symbols in the green card colour with `--i2` paper.
-- **Chain chips** (`ChainChip.svelte`): 1.3 em chips with the glyph at 0.95 em, so about 12 px on a mini card. "In" is a gold chip, "out" a paper chip with a gold-deep border; `--i2` is gold-deep.
+- **Chain chips** (`ChainChip.svelte`): chips of max(1.3 em, 14 px) with the glyph at max(0.95 em, 12 px), so 12 px on a mini card (whose cost row is 17% and effect band 23% of the card height, both ending at the 40% line). "In" is a gold chip, "out" a paper chip with a gold-deep border; `--i2` is gold-deep.
 - **Affordability badges** (`AffordBadge.svelte`): pills 1.5 em tall with the glyph at 1.05 em, so about 10.5 px on a mini card and 15 px on a sheet.
 - **Strips and panels** (`PlayerStrip`, `CityPanel`, `ResourceChips`, `ScienceTracker`, `WonderRow`): 11 to 20 px, on the panel surface in both themes. The resource chips colour the glyph with the resource colour.
 - **The military track** (`MilitaryTrack`, `LootingToken`): the pawn and looting glyphs at 10 to 12 px inside 16 to 24 px discs; crests at the ends.
