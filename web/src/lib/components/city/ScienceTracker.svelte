@@ -83,12 +83,10 @@
             : 'border-rule/40 text-fg-muted/40'}"
         title={t(labelKey(symbol))}
       >
-        <!-- Compact draws the glyph at 12 px, where the small-grid (-sm)
-             variant reads better than the scaled-down md one. -->
-        <Icon
-          name={compact ? `${SYMBOL_ICON[symbol]}-sm` : SYMBOL_ICON[symbol]}
-          class={compact ? 'text-xs' : 'text-sm'}
-        />
+        <!-- The glyph is 12 px (compact) or 14 px: both at or under the
+             14 px where the small-grid (-sm) variant reads better than the
+             scaled-down md one (art/vector/STYLE.md). -->
+        <Icon name={`${SYMBOL_ICON[symbol]}-sm`} class={compact ? 'text-xs' : 'text-sm'} />
       </li>
     {/each}
   </ul>
