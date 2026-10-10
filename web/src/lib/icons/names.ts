@@ -73,6 +73,7 @@ export const ICON_NAMES = [
   'wonder',
   'token-frame',
   'crest-sun',
+  'crest-sun-sm',
   'crest-moon',
 
   // The two capitals at the ends of the military track.

@@ -67,7 +67,7 @@
         {"id": "badge-check", "ink": "var(--malachite)", "i2": "oklch(0.47 0.1 160)", "badge": "free", "band": "green"},
         {"id": "badge-chain", "ink": "var(--fg)", "i2": "var(--gold-deep)", "badge": "chain", "band": "yellow", "cardInk": "var(--card-ink)"},
         {"id": "badge-lock", "ink": "oklch(0.47 0.12 25)", "i2": "oklch(0.93 0.015 40)", "badge": "short", "band": "red"},
-        {"id": "crest-sun", "ink": "var(--sun)", "band": "blue"},
+        {"id": "crest-sun", "sm": "crest-sun-sm", "ink": "var(--sun)", "band": "blue"},
         {"id": "crest-moon", "ink": "var(--moon)", "band": "blue"},
         {"id": "vp-laurel", "ink": "var(--gild)", "band": "blue"},
         {"id": "wonder", "ink": "var(--fg)", "band": "purple", "cardInk": "var(--card-ink)"},

@@ -22,6 +22,7 @@ Sizes for all seven: 15 to 17 px in the card's name row of the full tier, the di
 - Meaning: manufactured goods (grey cards produce glass and papyrus).
 - Metaphor: the workshop: an anvil, or a potter's kiln. Not an amphora (chain-amphora) and not a flask (resource-glass).
 - Silhouette: an anvil seen from the side: a horn to one side, a flat top, a narrow waist and a broad foot.
+- Correction (M9.VG, see the log): the horn is long and heavy (a wedge from the left edge to the waist, 4 to 5 units deep where it meets the face) and the waist and foot sit under the right half of the face, so the outline is plainly lopsided. A short horn read as an I-beam or a spool at 12 to 16 px.
 - Must differ from: resource-glass, chain-amphora, chain-barrel.
 
 ### category-blue
@@ -51,6 +52,7 @@ Sizes for all seven: 15 to 17 px in the card's name row of the full tier, the di
 - Meaning: military buildings (red cards give shields).
 - Metaphor: two crossed spears, or a war banner. Not a shield (shield is the effect icon, shown on the same red cards).
 - Silhouette: two spears crossed at the centre, points up, or a pennant on a staff.
+- Correction (M9.VG, see the log): 3-unit shafts, broad leaf heads (6 units wide) with an ogee point, short butts and a round boss of radius 3 at the crossing, the whole glyph moved down half a unit. Thin shafts with small heads read as a bare X (close, wrong, or a multiplication sign) below 16 px.
 - Must differ from: shield, chain-sword (two crossed weapons, not one upright blade), chain-target.
 
 ### category-purple
@@ -73,6 +75,7 @@ The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; th
 - Meaning: "free": the card costs nothing.
 - Metaphor: a check mark.
 - Silhouette: a heavy check, 2.5 to 3 units thick, filling the live area.
+- Correction (M9.VG, see the log): the check is about 4.5 units thick at the vertex, with a square-cut short arm and a long arm that tapers to a 2.5-unit wedge end, so it has the solid weight of the family rather than the weight of a line icon.
 - Must differ from: trade, badge-chain.
 - Contexts: AffordBadge free (paper glyph on a malachite pill), CostBreakdown, CardPickGrid, TokenChoice.
 
@@ -81,6 +84,7 @@ The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; th
 - Meaning: "chain": free thanks to a chain symbol you own; also the chain-bonus effect.
 - Metaphor: two interlocked links.
 - Silhouette: two oval links overlapping at a diagonal, each with a knockout of at least 2 units; at 10.5 px the knockouts must stay open.
+- Correction (M9.VG, see the log): each link is 9 units tall with a 3-unit rim and a 3-unit slot, so the pair has the family's solid weight; the slots stay open at 10.5 px.
 - Must differ from: the chain symbols themselves (this is the idea of chaining, not a symbol), badge-lock (no shackle on a body), trade.
 - Contexts: AffordBadge chain (card ink on a gold pill, `--i2` gold-deep), CostBreakdown, EffectGlyph chain-bonus.
 
@@ -95,8 +99,9 @@ The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; th
 ## Crests (2)
 
 - **crest-sun**: the Sun player (seat 0, turquoise). Metaphor: a sun disc with a calm face or a ring of flame-shaped rays, inside a roundel. It must differ from chain-sun (which is a plain rayed disc): give the crest its frame or face.
-- **crest-moon**: the Moon player (seat 1, pomegranate). Metaphor: a crescent cradling a small star, inside a roundel. It must differ from chain-moon (a plain crescent) and choice.
+- **crest-moon**: the Moon player (seat 1, pomegranate). Metaphor: a crescent cradling a small star, inside a roundel (see the corrections below: the star is gone). It must differ from chain-moon (a plain crescent) and choice.
 - Correction (M9.V4, see the log): neither crest has an outer roundel. A ring around the crescent read as a copyright sign at 12 to 16 px, a solid medallion blurred into a disc, and a ring around the rays read as a gear. crest-sun is a disc with twelve pointed flame rays and a calm face knocked out of it (the face and the twelve rays set it apart from chain-sun's eight separate rays); crest-moon is a crescent cradling a four-pointed star (the star sets it apart from chain-moon). The callers set no detail tone for the crests, so both are drawn in the main tone only.
+- Correction (M9.VG, see the log): a crescent cradling a star is a national-flag and religious emblem, which art/style.md rules out. crest-moon is now a fat crescent whose inner edge is a calm face in profile (brow, nose, lips and chin) with one round eye knocked out, the man-in-the-moon of folk almanacs. The profile and the eye set it apart from chain-moon's plain, thinner crescent, and the face pairs it with the sun's. crest-sun's face is now calmer: two round eyes and no mouth (the smiling face read as cheerful at 60 px). crest-sun has a `-sm` file on the 12 grid (a plain disc of radius 3.5 with eight short, broad rays, no face) for 14 px and below, chiefly the crests at the ends of the military track (about 11 px), where the twelve rays and the face blurred into a fuzzball. Eight long rays on a small disc made the `-sm` sun the same spiky star as category-green at 12 px, so the disc dominates and the rays are stubs.
 - The two crests must differ by shape, not only by colour: a round radiant figure against a crescent figure. Seen side by side at 15 px in greyscale, a player must still tell them apart.
 - Sizes: 15 to 20 px in strips, panels and the score table; 60 px on the pass-the-device screen (where detail is welcome); about 16 px at the ends of the military track, on the track surface, with a halo.
 - Contexts: PlayerStrip, CityPanel, CitySheet, Draft, AgeInterstitial, ScoreTable, GameOver, PassDevice, MilitaryTrack.
@@ -115,6 +120,7 @@ The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; th
 - Meaning: a wonder (built or to build); used for wonder counts and effects that count wonders.
 - Metaphor: a monumental gate: a tall pointed-arch portal (an iwan) between two slender towers.
 - Silhouette: wider at the base, a central pointed arch as a knockout, two minaret-like towers at the sides.
+- Correction (M9.VG, see the log): no towers. Two slender pointed towers beside an iwan read as a mosque front with minarets from 24 px, which art/style.md rules out, and as the letters "lnl" at 12 px. The wonder is now a pylon gateway: a tall central block with a cornice and the pointed-arch portal (the arch in the detail tone), flanked by two lower, slightly tapered wings, on a plinth. One solid silhouette, flat tops: no dome (category-blue), no pediment or columns (chain-temple-facade), no crenels (chain-tower), no points (category-purple).
 - Must differ from: chain-temple-facade, category-blue (no dome), chain-tower, category-purple.
 - Sizes: 12 to 14 px in the wonder rows and the structure slot, 1.1 em in effects, 16 px in the score table.
 - Contexts: WonderTile, WonderRow, StructureSlot, Draft, EffectGlyph (coins per wonder, points per wonder, wonders play again), ScoreTable.
@@ -124,6 +130,7 @@ The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; th
 - Meaning: a progress token; also the frame drawn around a token's initial.
 - Metaphor: a round medallion frame with a scalloped or beaded rim.
 - Silhouette: a ring whose inside stays empty (the inner radius at least 6.5 units), so the token's initial letter, drawn by the component, fits inside at 26 to 36 px. The rim carries the ornament.
+- Correction (M9.VG, see the log): an eight-lobed (scalloped) ring: a band from radius 6 to 8 with eight round lobes of radius 3 centred on radius 7, reaching radius 10, the inner disc clipped out. The inner radius is 6, not 6.5: with the 2-unit minimum feature, a 1.5-unit gap between lobes and the 2-unit live-area margin there is no room for lobes deep enough to show at 12 px around a 6.5 hole. The twelve-bead ring it replaces read as a zero beside a number. The initial still fits inside at 26 and 36 px (checked in the app's progress tokens).
 - Must differ from: coin (empty centre, ornamented rim), chain-target, vp-laurel.
 - Sizes: 26 and 36 px as the medallion behind the initial; 1.1 em as an effect glyph (points per token, draw tokens); 17 px in the score table.
 - Contexts: ProgressToken, EffectGlyph, ScoreTable.

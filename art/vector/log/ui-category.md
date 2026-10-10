@@ -3,24 +3,25 @@
 ## Status
 
 - category-brown: done (iteration 1)
-- category-grey: done (iteration 2, after candidates in iteration 0)
+- category-grey: done (iteration 2, after candidates in iteration 0); redrawn in M9.VG (iteration vg-1): long, heavy horn
 - category-blue: done (iteration 1)
 - category-green: done (iteration 1, after candidates in iteration 0); spec corrected, see below
 - category-yellow: done (iteration 1, after candidates in iteration 0)
-- category-red: done (iteration 3)
+- category-red: done (iteration 3); redrawn in M9.VG (iteration vg-2): 3-unit shafts, leaf heads, a boss
 - category-purple: done (iteration 1)
-- badge-check: done (iteration 1)
-- badge-chain: done (iteration 1)
+- badge-check: done (iteration 1); redrawn in M9.VG (iteration vg-1): a filled, wedge-ended check
+- badge-chain: done (iteration 1); redrawn in M9.VG (iteration vg-1): heavier links
 - badge-lock: done (iteration 1)
-- crest-sun: done (iteration 2, after candidates in iterations 0 and 1); spec corrected, see below
-- crest-moon: done (iteration 2); spec corrected, see below
-- vp-laurel: done (iteration 1, after a generated candidate round in iteration 0)
-- wonder: done (iteration 2)
-- token-frame: done (iteration 2)
+- crest-sun: done (iteration 2, after candidates in iterations 0 and 1); spec corrected, see below; M9.VG (iteration vg-1) calmed the face to two eyes
+- crest-sun-sm: done (M9.VG, iteration vg-3); new, for 14 px and below (the military track)
+- crest-moon: done (iteration 2); spec corrected, see below; redrawn in M9.VG (iteration vg-2): a crescent with a face in profile, no star
+- vp-laurel: done (iteration 1, after a generated candidate round in iteration 0); redrawn in M9.VG (iteration vg-1): three larger leaves per side
+- wonder: done (iteration 2); redrawn in M9.VG (iteration vg-1): a pylon gateway, no towers
+- token-frame: done (iteration 2); redrawn in M9.VG (iteration vg-1): eight fat lobes
 - category-brown-sm, category-grey-sm, category-blue-sm, category-green-sm, category-yellow-sm, category-purple-sm: done (M9.VF1, iteration 1); new, for the colour swatches of EffectGlyph
 - category-red-sm: done (M9.VF1, iteration 4); new, for the colour swatches of EffectGlyph
 
-No icon used more than 3 of its 6 iterations, and none is marked needs-human. Every file is lint clean and between 150 and 1008 bytes. The whole sprite is 22883 bytes raw and 4769 gzipped (limits 40960 and 10240). The blind check below was read by the author, so a fresh reader must still do the real one.
+No icon used more than 3 of its 6 iterations, in the first drawing or in the M9.VG redraw (iterations vg-1 to vg-3, after a candidate round vg-0), and none is marked needs-human. Every file is lint clean. After M9.VG the whole sprite is 25392 bytes raw and 5271 gzipped (limits 40960 and 10240). Every blind check in this log was read by the author, so a fresh reader must still do the real one.
 
 ## Iteration 0 (2026-10-10): sketches and candidates before the first specimen
 
@@ -217,3 +218,88 @@ Reader: the author of the `-sm` glyphs, who saw every icon labelled, so this is 
 ### Family check, M9.VF1
 
 art-work/vector/family/family@2x.png: the md files of this set are unchanged; the family sheet shows md files only, so it does not show the new `-sm` glyphs. In the specimen peep (ui-category/iter-vf1-2/peep-light@1x.png) the `-sm` glyphs at 12 and 14 px have the weight of the resource and science `-sm` files beside them.
+
+## M9.VG: the family critic's fixes (2026-10-10)
+
+Slice M9.VG took the "should" items of the M9b family review (art-work/vector/review/family-r1.md) that belong to icon files: in this set crest-moon, wonder, category-red, category-grey, token-frame, crest-sun, vp-laurel, badge-check and badge-chain; in the other sets price-tag (resources-economy-military log) and chain-horseshoe (chain log). The caller-colour and token items of the review (the `-ink` tokens for yellow, grey, turquoise and gold glyphs on paper, and brown, purple and pomegranate on lapis) are not icon files and were left alone.
+
+### Iteration vg-0: candidates (fast renders)
+
+Renders: art-work/vector/vg/ (s1 to s12 contact sheets made with the ui-category sheet helper: 12, 15, 16 and 24 px enlarged 600% with point filtering, 96 px, and a 16 px silhouette with `--i2` unset; candidates in cand/).
+
+- crest-moon. Critique (review): a crescent cradling a star is a national-flag and religious emblem; art/style.md rules it out. Candidates: a fat crescent whose inner edge is a face in profile with an eye knockout (moon-a, moon-b), the same thinner (moon-e, moon-f, moon-g), and a crescent with a plain disc in its lap (moon-c). The disc reads as crescent-and-dot, close to the same emblem family, so it was dropped. The thin profiles read best at 96 px, the fat one best at 12 px.
+- wonder. Critique (review): minarets beside an iwan read as a mosque front at 24 px and as "lnl" at 12 px. Candidates: a stepped gate with flat wings (wonder-a), the same with a cornice and tapered pylon wings (wonder-b), a castle-like gate (wonder-c) and a stepped pyramid with a door (wonder-d). The pyramid read as category-brown's mountain at 12 px; wonder-c as chain-tower's cousin. wonder-b reads as a monumental gateway at every size and kept the pointed arch.
+- category-red. Critique (review and peep): the lightest glyph of the family, a bare X below 16 px. Eighteen variants of shaft, head and boss (red-a to red-u). Broad lozenge or trapezoid heads near the crossing made a butterfly or a bow tie at 24 px; round heads read as spades. Kept for the specimen: 3-unit shafts, heads 7 units wide with an ogee point, short butts, a boss of radius 3, moved down half a unit (red-r).
+- category-grey. Critique (review): the horn is a sliver, the outline an I-beam or spool. The `-sm` idea at md size (grey-a), a refined anvil with a curved waist (grey-b, grey-d) and a squarer one (grey-c). grey-d (horn from x 2 to the waist, 5 units deep at the face, a 4-unit waist under the right half) is plainly lopsided from 12 px.
+- token-frame. Critique (review): a plain ring at 12 to 14 px, a zero beside a number; bead gaps 0.14 units and a 1.5-unit band. Candidates: small beads on a band (frame-a), lobes clipped by a round hole of radius 6.5 with a band to 8.5 (frame-b, frame-e: the lobes stand only 1.5 units proud and the ring stays a ring), lobes of radius 3 on radius 7.5 (frame-f: deep lobes, but they cross the live area), and lobes of radius 3 on radius 7 over a band from 6 to 8 (frame-d: 2-unit lobes, 2-unit band, gaps over 1.5). frame-d kept; the inner radius drops from 6.5 to 6 (spec corrected).
+- crest-sun. Critique (review): a fuzzball at the track size; cheerful at 60 px. Faces: two round eyes and a flat mouth (sun-a, reads as a robot at 96 px), closed-eye arcs and a soft mouth (sun-b, sun-f: serene at 96 px, a smudge at 16 px), two round eyes and no mouth (sun-d), pill eyes (sun-e: a mask). sun-d kept: calm at 48 and 96 px, two clear dots at 16 px. For `-sm`: eight thin rays on a disc of 3 (sunsm-a), broad rays (sunsm-b, a blob), a disc of 3.5 with stubby rays (sunsm-c), six rays (sunsm-6: a hexagon; sunsm-6b is a hexagram, ruled out as a religious emblem).
+- vp-laurel. Critique (review): eight small leaves alias into a speckled ring at 12 px. The generator of iteration 0 with three leaves per side splayed them out like petals and past the viewBox (laurel-a to laurel-h). Hand-placed leaves (laurel3.py and laurel4.py: base and tip points per leaf, vesica radius from length and width) with three leaves per side along a 7.5-radius stem: laurel-n (leaves 6 to 7 units long, 4 wide) is a wreath at 96 px and a clean U with two bumps a side at 12 px.
+- badge-check. Critique (review): a line-weight check. A uniform 4.2-unit check (check-b), a hairline-tipped wedge (check-a, check-c: the tip vanishes at 12 px), and a heavy check whose long arm tapers to a 2.5-unit wedge end (check-d). check-d kept.
+- badge-chain. Critique (review): outlined links. Heavier stadium links with 3-unit rims and 3-unit slots (chain-a) against a ring with an edge-on bar (chain-b, a key or a male sign at 12 px). chain-a kept.
+
+### Iteration vg-1 (2026-10-10)
+
+Renders: art-work/vector/ui-category/iter-vg-1/ (light@1x, light@2x, dark@1x, dark@2x, grey-light@1x, deuteranopia-light@1x, protanopia-light@1x, tritanopia-light@1x, the three peeps, and crops/red-2x.png, crests-2x.png, frame-2x.png).
+Lint: clean (23 files, 0 errors, 0 warnings).
+
+- category-red: no longer an X at 12 to 16 px: two heads over a knot. At 48 px the 7-unit heads still look like a bow tie. Changed (vg-2): heads 6 units wide.
+- crest-moon (moon-f): a crescent with a face at 24 px and up, but at 12 and 14 px the thinnest and palest glyph of the row. Changed (vg-2): the profile moves right by one unit (fatter body, moon-h) and the whole glyph by one unit, since the crescent's mass sat left of centre.
+- crest-sun: the specimen draws crest-sun-sm at 12 and 14 px. At 16 px and up the md sun shows two eyes, calm at 48 px.
+- wonder: a gateway at every size; no "lnl", no minarets. Dense at 12 px but its own shape.
+- token-frame: in the strip chip ("2 · 3") it reads as a scalloped medallion, not a zero; lobes visible from 14 px, a bumpy ring at 12 px.
+- category-grey, vp-laurel, badge-check, badge-chain: as in the candidates; no change.
+
+### Iteration vg-2 (2026-10-10)
+
+Renders: art-work/vector/ui-category/iter-vg-2/ (the same set of PNGs).
+Lint: clean.
+
+- category-red: crossed spears with leaf heads at 48 px; at 12 to 16 px top-heavy with a boss, no longer the lightest glyph of the family.
+- crest-moon: holds its weight beside the sun at 12 px; profile and eye from 16 px; distinct from chain-moon (fatter, a profile, an eye).
+- Greyscale peep (peep-grey-light@1x.png): crest-sun-sm at 12 and 14 px (a disc of 3 with eight thin rays) is the same spiky star as category-green there. Changed (vg-3): crest-sun-sm becomes the disc of 3.5 with stub rays (sunsm-c).
+
+### Iteration vg-3 (2026-10-10): final
+
+Renders: art-work/vector/ui-category/iter-vg-3/: light@1x.png, light@2x.png, dark@1x.png, dark@2x.png, grey-light@1x.png, deuteranopia-light@1x.png, protanopia-light@1x.png, tritanopia-light@1x.png, peep-light@1x.png, peep-light@2x.png, peep-grey-light@1x.png, crops/badges-cvd.png (the badge rows under greyscale and the three emulations), crops-cvd4.png.
+Lint: clean (23 files, 0 errors, 0 warnings).
+
+- crest-sun-sm: a round sun with a bumpy edge at 12 and 14 px, unlike category-green's thin star and unlike the crescent, in colour and greyscale.
+- Every column looked at: A (paper, silhouette with `--i2` unset: every redrawn icon reads without its detail tone; wonder's arch becomes a hole), B (night: parity with paper), C (the seven bands at 14 px: every glyph separates from every band), D (mini card, strip chip, badges at 10 and 14 px, track cell).
+- Badges in greyscale and under deuteranopia, protanopia and tritanopia: link, check and lock stay three different shapes, the check now as heavy as the lock.
+
+Acceptance against STYLE.md section 8 for this set, item by item:
+
+- Category glyphs, identifiable from the glyph alone in greyscale at card size: met (peep-grey-light@1x.png, grey-light@1x.png, and the app's full tier). The anvil is lopsided and the spears are no longer an X.
+- Badge glyphs, the five states apart in greyscale and under each emulation at the mini size: met in the specimen (crops/badges-cvd.png) and in the app's badge section (link, check, coin and number, arrows and number, lock and number; shots below).
+- Crests, shape-distinct: met; a round radiant disc against a crescent with a profile, in every pass and at every size.
+- vp-laurel (resources class): lint clean, budget met, distinct in greyscale, legible on all seven bands, no speckle in the peep (a U with two bumps a side at 12 px DPR 1, leaves from 14 px), light and dark parity. Blind: below, author-read.
+- All: lint clean, budgets met, family check looked at (below).
+
+Spec corrections (art/vector/specs/ui-category.md), each with its reason in the spec: category-grey (a long, heavy horn), category-red (the construction), badge-check and badge-chain (the weights), crest-moon (no star: a face in profile), crest-sun (a calmer face and the new `-sm`), wonder (no towers: a pylon gateway), token-frame (eight lobes, inner radius 6 instead of 6.5).
+
+### Self blind check, M9.VG (author-read, not blind)
+
+Reader: the author of these redraws, who saw every icon labelled; a smoke test only. The answers were written before scoring; only the scorer read the key.
+
+- Coloured sheets, art-work/vector/blind/ui-category-2026-10-10T17-52-11-332Z/: 12 px DPR 2 15/15, 16 px DPR 1 15/15.
+- Plain ink (`--mono`), art-work/vector/blind/ui-category-2026-10-10T17-52-37-364Z/: 12 px DPR 2 15/15, 16 px DPR 1 15/15.
+- Per icon: every icon named correctly on all four sheets (the 12 px sheets draw crest-sun-sm and the category `-sm` files). The pair to watch is still crest-sun against category-green on the mono sheets: a solid bumpy disc against a thin star.
+
+### Family check, M9.VG
+
+art-work/vector/family/family@2x.png. category-red is no longer the lightest glyph of the family; badge-check and badge-chain now sit with the solid glyphs instead of with the line icons; the crescent has the weight of the sun beside it; the wonder is a single solid mass like the tower and the temple front. token-frame, an eight-lobed ring, is a cousin of ornament-rosette (eight petals and a centre); they never share a context, the rosette being an ornament. No outlier.
+
+### The app, M9.VG
+
+Shots in shots/M9/VG/: the /dev/gallery icon grid, Affordability badges, Tier band, Tier mini, Tier full, the military track section and the progress tokens, at 360x740 (DPR 2) and 1280x800 (DPR 1), light and dark (the tokens at 360 light and 1280 dark), with enlarged crops in crops/.
+
+- Badges: in both themes and both viewports the chain, free, own, trade and short states read; the heavier check and links hold up at the desktop mini size.
+- Full tier: the anvil by the card name and in the placeholder art is plainly an anvil; the spears on Stable read as crossed spears.
+- Mini and band tiers: price-tag (resources set) is now a tag the size of the shield beside its coin.
+- Military track: the moon crest is a crescent face. The track still draws the md crest-sun, because MilitaryTrack.svelte names `crest-sun` directly; at 1280 DPR 1 it is still a fuzzy disc. Switching the track (and any crest drawn at 14 px or less) to `crest-sun-sm` is a component change outside this slice, filed as a request.
+- Progress tokens: the scalloped frame holds the initial at 36 and 26 px with a pixel or more to spare around wide letters (M) at 36 px.
+
+## Open points (M9.VG)
+
+- MilitaryTrack (and other callers at 14 px or less) should use `crest-sun-sm` for the Sun crest.
+- token-frame's inner radius is 6; if a future token initial is wider than M at 36 px, the component's letter size is the knob to turn.
