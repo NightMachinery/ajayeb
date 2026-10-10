@@ -138,6 +138,8 @@ Acceptance:
 
 - `ai.full` is green.
 
+Status: done on 2026-10-10. Bots are named by level (Apprentice, Scholar and Master), and while one thinks the turn bar and its strip or panel say so. The client holds the bot's answer until the thinking state has shown for a minimum dwell (700 ms at normal speed, 300 ms with animation off) and then highlights the card the bot takes for a moment before the board changes, so a player can follow every bot move. Undo in a bot room takes back the bot's reply with the player's move. A game menu in every mode leads Home, to Settings and to the log, and a room left that way comes back from Home's Continue until its game ends. The military track is mirrored for a player at the Moon, so their capital is always on their side. `ai.full` plays a whole game against the Apprentice on the desktop project (as the Sun) and the mobile project (as the Moon), with an undo, the thinking indicator, the bot's choice of who starts the next age and the result screen checked; a second test leaves a Scholar game and continues it with the board restored exactly. The whole e2e suite passed twice in a row. Found along the way and queued: an undo pressed in the instant the bot answers can be refused as stale (once in about ten tries), and the move toast covers the bot's strip on phones while it thinks; both are queued for M7's client slice.
+
 ## M7: Online
 
 Scope:
