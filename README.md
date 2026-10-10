@@ -32,7 +32,7 @@ make e2e           # Playwright playthroughs against a test build, in headless C
 make dev           # explains how to start the dev servers (python3 self_host.py dev-start)
 ```
 
-`make dev` starts nothing itself. `python3 self_host.py dev-start` (arriving with milestone M4) runs the Go server on 127.0.0.1:38951 and the Vite dev server on port 38952 in tmux; then open <http://localhost:38952>.
+`make dev` starts nothing itself. `python3 self_host.py dev-start` runs the Go server on 127.0.0.1:38951 and the Vite dev server on port 38952 in tmux; then open <http://localhost:38952>.
 
 Every target that compiles, tests, builds, installs or starts a browser runs through `tools/heavy.py`, a guard that waits while the machine is short of memory. If it gives up, it exits with code 75 and prints the reason. [docs/dev/ram-policy.md](docs/dev/ram-policy.md) explains the guard and its modes.
 

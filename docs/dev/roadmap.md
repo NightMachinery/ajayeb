@@ -94,6 +94,8 @@ Acceptance:
 
 ## M4: Server
 
+Status: done on 2026-10-10. The protocol tests in `server/internal/protocoltest` play full online, hot-seat and bot games over the real WebSocket, room and store stack. They cover no-leak capture (face-down cards, every age's removed cards and the Great Library offer, checked for both seats and a spectator), reconnect, idempotent resends, undo and restart persistence, and they pass under `-race` together with the room, ws and httpapi packages. `ajayeb-drive` finished 20 concurrent bot games, plus online and hot-seat runs, and the server's peak resident memory during the 20 games was about 19 MB (`--server-pid` samples it). Recorded server messages are generated into `web/src/lib/wire/fixtures.gen.ts` and type-checked against the generated TypeScript types; on its first run this check found a missing type mapping for game events. The security review reported 13 findings across its three lenses. After merging duplicates, 11 were confirmed and fixed, each with a test that failed first, and two suggested extras were refuted; the remaining risks are listed in [docs/protocol.md](../protocol.md). `self_host.py dev-start` has been wired since M0 and its server flags match, but it was not run here, because unattended work never starts a Vite dev server.
+
 Scope:
 
 - Wire types and `tygo` generation; identity and the room store; the room actor with modes, deduplication, undo and bot turns; the WebSocket transport with its limits; the dev endpoints.

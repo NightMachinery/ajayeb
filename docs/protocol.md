@@ -635,6 +635,22 @@ clock instead of waiting.
   and the next one to join starts it again.
 - **Development endpoint bodies:** 64 KiB.
 
+Known gaps, each left for a larger design change:
+
+- **Bot search queue:** the server-wide search pool has no per-user or
+  per-address fairness. One address with many bot rooms can queue up to 16
+  searches, which at Hard delays other players' bots by about 16 seconds
+  with a pool of 2.
+- **Room writes:** every applied act or undo replays the room and rewrites
+  its file at once; writes are not coalesced. Rooms banked in advance,
+  within the create limits, can therefore drive disk writes at the frame
+  rate.
+- **Loads of known codes:** a `join` of an existing room that is not in
+  memory loads it from disk, at up to the frame rate. This costs CPU but no
+  longer locks anyone out, because idle rooms are evicted to make space.
+- **Room codes:** guessable from many addresses, as described under joins
+  above.
+
 ## HTTP endpoints
 
 Beside the socket, the server answers plain HTTP:
