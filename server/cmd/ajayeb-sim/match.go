@@ -23,12 +23,13 @@ type matchConfig struct {
 	a, b     botSpec
 	games    int // rounded up to an even number
 	seed     uint64
-	parallel int            // games played at once
-	clock    bool           // medium and hard use their clock budgets
-	scale    float64        // factor on the iteration budgets of medium and hard
-	weights  [2]*ai.Weights // A's and B's evaluation weights; nil for the defaults
-	shard    shard          // which deals to play
-	logDir   string         // where to write each game's log, or ""
+	parallel int               // games played at once
+	clock    bool              // medium and hard use their clock budgets
+	scale    float64           // factor on the iteration budgets of medium and hard
+	weights  [2]*ai.Weights    // A's and B's evaluation weights; nil for the defaults
+	search   [2]*ai.MCTSConfig // A's and B's search settings; nil for their levels'
+	shard    shard             // which deals to play
+	logDir   string            // where to write each game's log, or ""
 }
 
 // budgets returns A's and B's budgets per move.
@@ -127,8 +128,8 @@ func playOne(ctx context.Context, cfg *matchConfig, i int) gameResult {
 	var bots [2]ai.Bot
 	var budgets [2]ai.Budget
 	sides := cfg.budgets()
-	bots[aSeat], budgets[aSeat] = cfg.a.make(seeds[0], cfg.weights[0]), sides[0]
-	bots[aSeat.Opp()], budgets[aSeat.Opp()] = cfg.b.make(seeds[1], cfg.weights[1]), sides[1]
+	bots[aSeat], budgets[aSeat] = cfg.a.make(seeds[0], cfg.weights[0], cfg.search[0]), sides[0]
+	bots[aSeat.Opp()], budgets[aSeat.Opp()] = cfg.b.make(seeds[1], cfg.weights[1], cfg.search[1]), sides[1]
 	opts := engine.Options{}
 	var log *engine.Log
 	if cfg.logDir != "" {
@@ -223,14 +224,15 @@ func wilson(p float64, n int) (lo, hi float64) {
 
 // matchHeader is what identifies a match: the same for every shard of it.
 type matchHeader struct {
-	A       string         `json:"a"`
-	B       string         `json:"b"`
-	Budgets [2]ai.Budget   `json:"budgets"` // A's and B's budgets per move
-	Weights [2]*ai.Weights `json:"weights"` // A's and B's evaluation weights; null for the defaults
-	Seed    uint64         `json:"seed"`
-	Games   int            `json:"games"` // in the whole match, all shards together
-	Clock   bool           `json:"clock"` // medium and hard used their clock budgets
-	Scale   float64        `json:"scale"`
+	A       string            `json:"a"`
+	B       string            `json:"b"`
+	Budgets [2]ai.Budget      `json:"budgets"` // A's and B's budgets per move
+	Weights [2]*ai.Weights    `json:"weights"` // A's and B's evaluation weights; null for the defaults
+	Search  [2]*ai.MCTSConfig `json:"search"`  // A's and B's search settings; null for their levels'
+	Seed    uint64            `json:"seed"`
+	Games   int               `json:"games"` // in the whole match, all shards together
+	Clock   bool              `json:"clock"` // medium and hard used their clock budgets
+	Scale   float64           `json:"scale"`
 
 	names [2]string  // labels for the report
 	specs [2]botSpec // A and B, parsed
@@ -238,7 +240,7 @@ type matchHeader struct {
 
 // header returns the match's header.
 func (cfg *matchConfig) header() matchHeader {
-	return matchHeader{A: cfg.a.String(), B: cfg.b.String(), Budgets: cfg.budgets(), Weights: cfg.weights,
+	return matchHeader{A: cfg.a.String(), B: cfg.b.String(), Budgets: cfg.budgets(), Weights: cfg.weights, Search: cfg.search,
 		Seed: cfg.seed, Games: cfg.games, Clock: cfg.clock, Scale: cfg.scale,
 		names: labels(cfg.a, cfg.b), specs: [2]botSpec{cfg.a, cfg.b}}
 }
@@ -296,6 +298,11 @@ func printMatch(w io.Writer, h *matchHeader, st *matchStats, elapsed time.Durati
 	for side, wt := range h.Weights {
 		if wt != nil {
 			fmt.Fprintf(w, "%s uses evaluation weights other than the defaults\n", names[side])
+		}
+	}
+	for side, sc := range h.Search {
+		if sc != nil {
+			fmt.Fprintf(w, "%s uses search settings other than its level's: %+v\n", names[side], *sc)
 		}
 	}
 	width := max(len(names[0]), len(names[1]), len("shared"))
@@ -401,6 +408,8 @@ func runMatch(args []string, stdout, stderr io.Writer) error {
 	clock := fs.Bool("clock", false, "give medium and hard their clock budgets (results then depend on the machine)")
 	waFile := fs.String("wa", "", "JSON file of evaluation weights for bot A (see ajayeb-sim weights)")
 	wbFile := fs.String("wb", "", "JSON file of evaluation weights for bot B")
+	saFile := fs.String("sa", "", "JSON file of search settings (ai.MCTSConfig) for bot A, a medium or hard bot")
+	sbFile := fs.String("sb", "", "JSON file of search settings for bot B")
 	shardText := fs.String("shard", "", "play only the deals whose index is K modulo N (K/N)")
 	jsonFile := fs.String("json", "", "write the results to this file, for tally")
 	minRate := fs.Float64("min", -1, "fail when A scores less than this share, from 0 to 1 (negative: no check)")
@@ -435,6 +444,11 @@ func runMatch(args []string, stdout, stderr io.Writer) error {
 	if err == nil {
 		if cfg.weights[0], err = readWeights(*waFile); err == nil {
 			cfg.weights[1], err = readWeights(*wbFile)
+		}
+	}
+	if err == nil {
+		if cfg.search[0], err = readSearch(*saFile, cfg.a); err == nil {
+			cfg.search[1], err = readSearch(*sbFile, cfg.b)
 		}
 	}
 	if err != nil {

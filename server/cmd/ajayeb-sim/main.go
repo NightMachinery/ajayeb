@@ -4,7 +4,7 @@
 //
 // Usage:
 //
-//	ajayeb-sim match [-a BOT] [-b BOT] [-games N] [-seed S] [-p N] [-scale F] [-clock] [-wa FILE] [-wb FILE] [-shard K/N] [-json FILE] [-min R] [-logs DIR] [-v]
+//	ajayeb-sim match [-a BOT] [-b BOT] [-games N] [-seed S] [-p N] [-scale F] [-clock] [-wa FILE] [-wb FILE] [-sa FILE] [-sb FILE] [-shard K/N] [-json FILE] [-min R] [-logs DIR] [-v]
 //	ajayeb-sim tally [-min R] [-v] FILE...
 //	ajayeb-sim levels [-games N] [-seed S] [-moves N] [-fixed] [-scale F]
 //	ajayeb-sim weights
@@ -22,7 +22,10 @@
 // and its load. -scale multiplies the iteration budgets of medium and hard,
 // on both sides, for a quicker proxy of a tournament. -wa and -wb give A or
 // B evaluation weights from a JSON file (as printed by weights; fields left
-// out keep their defaults), for tuning.
+// out keep their defaults), for tuning. -sa and -sb give a medium or hard A
+// or B other search settings from a JSON file holding fields of
+// ai.MCTSConfig (C, and Rollout with Plies, Epsilon, ModeProb and Ages);
+// fields left out keep the level's own (ai.Level.SearchConfig).
 //
 // -shard K/N plays only the deals whose index is K modulo N, so N machines
 // can share a long tournament; -json writes the results, and tally merges
@@ -216,8 +219,10 @@ func (b botSpec) level() (ai.Level, bool) {
 }
 
 // make returns the bot, seeded with seed. w, if not nil, replaces the
-// evaluation weights of the bots that use them (all but random).
-func (b botSpec) make(seed uint64, w *ai.Weights) ai.Bot {
+// evaluation weights of the bots that use them (all but random); sc, if not
+// nil, replaces the search settings of a tree-search bot (its level's
+// SearchConfig).
+func (b botSpec) make(seed uint64, w *ai.Weights, sc *ai.MCTSConfig) ai.Bot {
 	switch b.name {
 	case "random":
 		return ai.NewRandom(seed)
@@ -227,7 +232,13 @@ func (b botSpec) make(seed uint64, w *ai.Weights) ai.Bot {
 		return ai.NewGreedy(seed, ai.GreedyConfig{K: b.n, Weights: w})
 	}
 	l, _ := b.level()
-	return ai.NewMCTS(seed, ai.MCTSConfig{Budget: l.Budget(), Weights: w})
+	cfg := l.SearchConfig()
+	if sc != nil {
+		cfg = *sc
+		cfg.Budget = l.Budget()
+	}
+	cfg.Weights = w
+	return ai.NewMCTS(seed, cfg)
 }
 
 // budget returns the bot's budget per move. A tree-search bot searches its
@@ -268,6 +279,30 @@ func readWeights(path string) (*ai.Weights, error) {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	return &w, nil
+}
+
+// readSearch reads the search settings of tree-search bot spec from a JSON
+// file: its level's settings (ai.Level.SearchConfig), with the fields the
+// file sets replaced. An empty path gives nil (the level's settings).
+func readSearch(path string, spec botSpec) (*ai.MCTSConfig, error) {
+	if path == "" {
+		return nil, nil
+	}
+	l, search := spec.level()
+	if !search {
+		return nil, fmt.Errorf("%s: search settings need a medium or hard bot, not %s", path, spec)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	cfg := l.SearchConfig()
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&cfg); err != nil {
+		return nil, fmt.Errorf("%s: %w", path, err)
+	}
+	return &cfg, nil
 }
 
 // runWeights is the weights subcommand.

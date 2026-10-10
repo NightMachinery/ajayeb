@@ -130,7 +130,7 @@ func benchCalls(w io.Writer, pos []engine.State) {
 
 // benchMoves times one bot's choices over the positions that are not over.
 func benchMoves(w io.Writer, spec botSpec, pos []engine.State, seed uint64) error {
-	bot := spec.make(seed, nil)
+	bot := spec.make(seed, nil, nil)
 	var times []time.Duration
 	for i := range pos {
 		s := &pos[i]

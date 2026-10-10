@@ -56,6 +56,8 @@ func TestUsage(t *testing.T) {
 		{"match", "-shard", "x"},
 		{"match", "-min", "65"},
 		{"match", "-wa", "no-such-weights.json"},
+		{"match", "-sa", "settings-for-greedy.json"},
+		{"match", "-a", "hard", "-sa", "no-such-settings.json"},
 		{"match", "extra"},
 		{"match", "-nosuchflag"},
 		{"tally"},
@@ -82,7 +84,7 @@ func TestParseBot(t *testing.T) {
 		if err != nil || b.String() != s {
 			t.Errorf("parseBot(%q) = %v, %v", s, b, err)
 		}
-		if b.make(1, nil) == nil {
+		if b.make(1, nil, nil) == nil {
 			t.Errorf("%s: no bot", s)
 		}
 	}
@@ -320,6 +322,54 @@ func TestWeightsRoundTrip(t *testing.T) {
 	if simResultLines(plain) == simResultLines(strings.Replace(tuned, "greedy:1 (A) uses evaluation weights other than the defaults\n", "", 1)) {
 		t.Error("the weights changed no game")
 	}
+}
+
+// TestSearchSettings: -sa and -sb read a tree-search bot's settings over
+// its level's (fields left out keep the level's), refuse unknown fields and
+// bots that do not search, and a bot with other settings plays otherwise.
+func TestSearchSettings(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "s.json")
+	if err := os.WriteFile(path, []byte(`{"C": 0.3}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	hard, _ := parseBot("hard")
+	got, err := readSearch(path, hard)
+	want := ai.Hard.SearchConfig()
+	want.C = 0.3
+	if err != nil || got == nil || *got != want {
+		t.Fatalf("readSearch: %+v, %v", got, err)
+	}
+	greedy, _ := parseBot("greedy")
+	if _, err := readSearch(path, greedy); err == nil {
+		t.Error("greedy accepted search settings")
+	}
+	if err := os.WriteFile(path, []byte(`{"Rollout": {"Ages": 3, "Plies": 400}, "Widen": 1}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := readSearch(path, hard); err == nil {
+		t.Error("an unknown field was accepted")
+	}
+	if err := os.WriteFile(path, []byte(`{"Rollout": {"Ages": 3, "Plies": 400}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	args := []string{"match", "-a", "medium:40", "-b", "medium:40", "-games", "4", "-seed", "2", "-v"}
+	_, plain, _ := simRun(t, "", args...)
+	code, tuned, errOut := simRun(t, "", append(args, "-sb", path)...)
+	note := "medium:40 (B) uses search settings other than its level's"
+	if code != 0 || !strings.Contains(tuned, note) {
+		t.Fatalf("-sb: exit %d:\n%s%s", code, tuned, errOut)
+	}
+	if simResultLines(plain) == simResultLines(strings.Replace(tuned, note+": "+simSettingsLine(tuned, note), "", 1)) {
+		t.Error("the settings changed no game")
+	}
+}
+
+// simSettingsLine returns the rest of the report line that starts with
+// note, after ": ", with its newline.
+func simSettingsLine(out, note string) string {
+	_, rest, _ := strings.Cut(out, note+": ")
+	line, _, _ := strings.Cut(rest, "\n")
+	return line + "\n"
 }
 
 // TestLevelsRuns: levels measures both tree-search levels (here on a
