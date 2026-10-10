@@ -62,7 +62,7 @@
   {#if tier === 'band'}
     <span
       class="flex h-6 w-full items-center gap-1 overflow-hidden rounded-[4px] border border-black/25 px-1 text-[12px] text-card-ink
-        [--pat:color-mix(in_oklch,var(--card-ink)_18%,transparent)]"
+        [--pat:color-mix(in_oklch,var(--card-ink)_18%,transparent)] {className}"
       style:background={bandBackground(card.color)}
       data-tier="band"
       aria-hidden="true"
