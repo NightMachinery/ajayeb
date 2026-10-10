@@ -1,7 +1,7 @@
 <script lang="ts">
   // /dev/gallery: a visual check for every hand-authored icon and shell
   // primitive, plus one stub section per upcoming component slice (M5.S02
-  // cards, M5.S03 board, M5.S05 screens). Dev-only; see
+  // cards, M5.S03 board, M5.S05 screens) and the M5.S04a game screen. Dev-only; see
   // src/lib/dev/flags.ts and src/routes/dev/+layout.ts.
   import { resolve } from '$app/paths';
   import { t } from '$lib/i18n';
@@ -10,6 +10,7 @@
   import Board from '$lib/dev/gallery/Board.svelte';
   import Cards from '$lib/dev/gallery/Cards.svelte';
   import Choices from '$lib/dev/gallery/Choices.svelte';
+  import Game from '$lib/dev/gallery/Game.svelte';
   import Screens from '$lib/dev/gallery/Screens.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import ConfirmButton from '$lib/components/shell/ConfirmButton.svelte';
@@ -136,6 +137,11 @@
   <section class="flex flex-col gap-2">
     <h2 class="font-display text-xl text-fg">{t('dev.gallery.choices')}</h2>
     <Choices />
+  </section>
+
+  <section class="flex flex-col gap-2">
+    <h2 class="font-display text-xl text-fg">{t('game.gallery.title')}</h2>
+    <Game />
   </section>
 
   <p>
