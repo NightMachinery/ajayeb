@@ -6,13 +6,16 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { t } from '$lib/i18n';
-  import Button from '$lib/components/shell/Button.svelte';
   import Sheet from '$lib/components/shell/Sheet.svelte';
   import Home from '$lib/components/screens/Home.svelte';
   import HotseatSheet from '$lib/components/screens/HotseatSheet.svelte';
+  import JoinSheet from '$lib/components/screens/JoinSheet.svelte';
   import NewGameSheet from '$lib/components/screens/NewGameSheet.svelte';
+  import OnlineSheet from '$lib/components/screens/OnlineSheet.svelte';
   import Settings from '$lib/components/screens/Settings.svelte';
   import { liveGame, savedRooms } from '$lib/session/app.svelte';
+  import { loadName, saveName } from '$lib/session/identity';
+  import { suggestName } from '$lib/ui/online';
   import type { BotLevel, SeatChoice } from '$lib/wire';
 
   const rooms = savedRooms();
@@ -20,7 +23,12 @@
   let aiOpen = $state(false);
   let hotseatOpen = $state(false);
   let onlineOpen = $state(false);
+  let joinOpen = $state(false);
   let settingsOpen = $state(false);
+
+  // The stored display name, read once; the online sheet saves a new one.
+  let storedName = $state(loadName());
+  const suggestion = suggestName(t('online.name.suggestions'));
 
   function toRoom(code: string): Promise<void> {
     return goto(resolve('/play/[code]', { code }));
@@ -38,6 +46,30 @@
     await toRoom(code);
   }
 
+  async function startOnline(opts: { name: string; seat: SeatChoice }) {
+    storedName = saveName(opts.name);
+    const { session } = liveGame();
+    // The hello name is the one a joined seat gets; the create names it too.
+    session.setName(storedName);
+    const code = await session.create({
+      mode: 'online',
+      seat: opts.seat,
+      names: [storedName, storedName]
+    });
+    onlineOpen = false;
+    await toRoom(code);
+  }
+
+  function joinRoom(code: string): Promise<void> {
+    joinOpen = false;
+    return toRoom(code);
+  }
+
+  function openJoin(): void {
+    onlineOpen = false;
+    joinOpen = true;
+  }
+
   function continueRoom(code: string): Promise<void> {
     return toRoom(code);
   }
@@ -53,19 +85,21 @@
   onPlayAi={() => (aiOpen = true)}
   onPassAndPlay={() => (hotseatOpen = true)}
   onPlayOnline={() => (onlineOpen = true)}
+  onJoinCode={() => (joinOpen = true)}
   onSettings={() => (settingsOpen = true)}
 />
 
 <NewGameSheet bind:open={aiOpen} onStart={startAi} />
 <HotseatSheet bind:open={hotseatOpen} onStart={startHotseat} />
 
-<Sheet bind:open={onlineOpen} titleId="online-soon-title">
-  <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
-    <h2 id="online-soon-title" class="font-display text-xl text-fg">{t('home.online.title')}</h2>
-    <p class="text-sm text-fg-muted">{t('home.online.comingSoon')}</p>
-    <Button onclick={() => (onlineOpen = false)}>{t('shell.close')}</Button>
-  </div>
-</Sheet>
+<OnlineSheet
+  bind:open={onlineOpen}
+  name={storedName}
+  {suggestion}
+  onStart={startOnline}
+  onJoin={openJoin}
+/>
+<JoinSheet bind:open={joinOpen} onJoin={joinRoom} />
 
 <Sheet bind:open={settingsOpen} titleId="home-settings-title">
   <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">

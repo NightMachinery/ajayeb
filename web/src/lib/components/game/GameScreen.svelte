@@ -32,7 +32,19 @@
   // (or the wonder it drafts) carries data-bot-pick meanwhile. The military
   // track puts the bottom (or left) seat's capital at its left end, so a
   // player at the Moon sees it mirrored. The top bar's game menu leads Home;
-  // a bot or hot-seat room stays on Home's Continue list until its game ends.
+  // a room stays on Home's Continue list until its game ends.
+  //
+  // Online (UX design section 2, "Online lobby" and "Connection states"):
+  // until the second player takes their seat the screen is the Lobby, with
+  // the invite; it turns into the draft on its own when they join. The other
+  // player's strip shows their presence, a toast says when they leave or
+  // come back, and the turn bar says when the player to move is away. While
+  // the connection is down the board stays inspectable, the connection pill
+  // says so and the move buttons read "Waiting for connection"; the Session
+  // sends nothing until it is back. A spectator gets the same board, read
+  // only. Online rooms have no undo, and moves take the confirm step the
+  // settings ask for.
+  import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderName } from '$lib/components/card/effect-text';
@@ -41,6 +53,7 @@
   import { connMessage } from '$lib/session/messages';
   import type { Presenter } from '$lib/session/presenter.svelte';
   import type { Notice, Session } from '$lib/session/session.svelte';
+  import { inviteUrl, presenceChanges, seatPresence } from '$lib/ui/online';
   import { settings } from '$lib/ui/settings.svelte';
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
@@ -50,10 +63,12 @@
   import CardStructure from '../board/CardStructure.svelte';
   import ChoiceHost from '../choices/ChoiceHost.svelte';
   import ConnectionPill from '../hud/ConnectionPill.svelte';
+  import SpectatorCount from '../hud/SpectatorCount.svelte';
   import TopBar from '../hud/TopBar.svelte';
   import TurnBar from '../hud/TurnBar.svelte';
   import Draft from '../screens/Draft.svelte';
   import GameOver from '../screens/GameOver.svelte';
+  import Lobby from '../screens/Lobby.svelte';
   import PassDevice from '../screens/PassDevice.svelte';
   import Settings from '../screens/Settings.svelte';
   import CitySheet from '../sheets/CitySheet.svelte';
@@ -94,6 +109,8 @@
   // The request this screen sent last, to tell an act's ack from an undo's.
   let lastRequest: { seq: number; kind: 'act' | 'undo' } | null = null;
   let roomCode: string | null = null;
+  // The previous frame of this room, for the presence toasts.
+  let lastFrame: State | null = null;
   // The notice the player dismissed; a newer one shows again.
   let dismissedNotice = $state<Notice | null>(null);
 
@@ -114,11 +131,25 @@
   const inputOpen = $derived(presenter.idle && session.canAct);
   const myTurn = $derived(!!frame?.you.canAct);
   const confirm = $derived(needsConfirm(mode, settings.value.confirmMoves));
+  const connected = $derived(session.conn === 'open');
+  const spectator = $derived(!!frame && mySeats.length === 0);
+  // The online room still waits for its second player.
+  const lobby = $derived(frame?.room.status === 'lobby');
+  const presence = $derived(seatPresence(frame?.room));
+  const inviteLink = $derived(
+    frame ? inviteUrl(location.origin, resolve('/play/[code]', { code: frame.code })) : ''
+  );
+  const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   // Undo stays available while a bot's answer is held on screen: undo()
   // shows it at once and then takes it back with the player's move.
   const canUndo = $derived(mode !== 'online' && session.canUndo);
 
   const layout = $derived(breakpoints.viewport);
+  // Phone landscape in play: the turn bar's column is narrow, so the toasts
+  // sit at the foot of the structure instead of above the turn bar.
+  const toastsInStructure = $derived(
+    layout === 'phone-landscape' && !!view && view.phase !== 'wonderDraft'
+  );
   const variant = $derived(
     layout === 'desktop'
       ? ('column' as const)
@@ -164,7 +195,11 @@
       conn: session.conn,
       pending: session.pending !== null,
       slow: session.slow,
-      thinking: frame?.thinking === 0 || frame?.thinking === 1 ? frame.thinking : undefined
+      thinking: frame?.thinking === 0 || frame?.thinking === 1 ? frame.thinking : undefined,
+      connected: [
+        presence[0] === undefined ? undefined : presence[0] === 'connected',
+        presence[1] === undefined ? undefined : presence[1] === 'connected'
+      ]
     })
   );
   const thinkingSeat = $derived(turn.kind === 'aiThinking' ? turn.seat : undefined);
@@ -203,9 +238,12 @@
   function onFrame(f: State): void {
     if (f.code !== roomCode) {
       roomCode = f.code;
+      lastFrame = null;
       ui.reset();
       toasts.clear();
     }
+    announcePresence(lastFrame, f);
+    lastFrame = f;
     let acked: Acked = null;
     if (f.ack && f.ack.clientId === session.clientId && lastRequest?.seq === f.ack.seq) {
       acked = lastRequest.kind;
@@ -233,6 +271,67 @@
       }
     }
   }
+
+  // A toast when the other player joins, leaves or comes back (online).
+  function announcePresence(prev: State | null, next: State): void {
+    const names = seatNames(next.room);
+    for (const change of presenceChanges(prev, next)) {
+      const name = names[change.seat];
+      switch (change.kind) {
+        case 'joined':
+          toasts.show(t('online.toast.joined', { name }), { kind: 'success' });
+          break;
+        case 'left':
+          toasts.show(t('online.toast.left', { name }), { kind: 'warning' });
+          break;
+        case 'back':
+          toasts.show(t('online.toast.back', { name }), { kind: 'success' });
+          break;
+      }
+    }
+  }
+
+  async function copyInvite(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toasts.show(t('online.lobby.copied'), { kind: 'success', duration: 2500 });
+    } catch {
+      toasts.show(t('online.lobby.copyFailed'), { kind: 'warning' });
+    }
+  }
+
+  function shareInvite(): void {
+    if (!frame) return;
+    const code = frame.code;
+    navigator
+      .share({
+        title: t('online.lobby.shareTitle'),
+        text: t('online.lobby.shareText', { code }),
+        url: inviteLink
+      })
+      .catch(() => {
+        // Dismissed, or the share sheet failed: the link is still on screen.
+      });
+  }
+
+  // The rematch on the result screen. A player asks for it (or joins the
+  // one the other player asked for); a spectator can only follow one the
+  // players made.
+  const rematchOffer = $derived.by(() => {
+    if (!frame || frame.room.status !== 'finished') return undefined;
+    const code = session.rematchCode;
+    if (spectator) {
+      return code ? { label: t('online.rematch.watch'), note: undefined } : undefined;
+    }
+    if (mode === 'online' && code && !session.rematchAsked) {
+      const other = mySeats[0] === 1 ? 0 : 1;
+      return {
+        label: t('online.rematch.join'),
+        note: t('online.toast.rematch', { name: names[other] })
+      };
+    }
+    return { label: undefined, note: undefined };
+  });
 
   // The session prop is fixed for the screen's life (a new room is a new
   // frame on the same session, handled by the code check above).
@@ -325,6 +424,7 @@
       score={view.scorePreview[seat]}
       lit={lit === seat}
       thinking={thinkingSeat === seat}
+      presence={mySeats.includes(seat) ? undefined : presence[seat]}
       onwonder={mySeats.includes(seat) ? selectWonder : undefined}
       onopen={() => ui.openCity(seat)}
       class={cls}
@@ -332,154 +432,181 @@
   {/if}
 {/snippet}
 
-<div
-  class="game-screen h-full w-full overflow-hidden"
-  data-layout={layout}
-  data-draft={view?.phase === 'wonderDraft' ? '' : undefined}
-  data-phase={view?.phase}
-  data-home={home}
-  data-pick={ui.pickFor ?? undefined}
-  data-bot={bot}
-  data-thinking={thinkingSeat}
-  dir="ltr"
-  aria-label={t('game.board')}
-  role="region"
->
-  <div class="area-top" dir={i18n.dir}>
-    <TopBar
-      age={view?.age ?? 0}
-      {cardsLeft}
-      {canUndo}
-      onUndo={mode === 'online' ? undefined : undo}
-      onOpenLog={() => ui.openLog()}
-      onOpenSettings={() => ui.openSettings()}
-      onHome={onhome}
-      class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
-    >
-      {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}
-        {@render trackAndTokens(true)}
-      {/if}
-      {#if mode === 'online'}
-        <ConnectionPill conn={session.conn} />
-      {/if}
-    </TopBar>
-  </div>
-
-  {#if !view}
-    <div class="area-main relative grid place-items-center p-4" dir={i18n.dir}>
-      <p class="text-fg-muted" role="status" data-conn={session.conn}>
-        {session.conn === 'open' ? t('game.loading') : t(connMessage(session.conn))}
-      </p>
-    </div>
-  {:else if view.phase === 'wonderDraft'}
-    <div
-      class="area-main relative min-h-0 overflow-y-auto"
-      dir={i18n.dir}
-      {@attach markBotPick(pickWonder)}
-    >
-      <Draft {view} canAct={inputOpen} onact={act} {names} />
-    </div>
-  {:else}
-    <!-- The panels scroll inside a positioned box, so nothing absolutely
-         positioned in them (sr-only text) can reach past it and stretch the page. -->
-    <div class="area-away relative min-h-0 min-w-0" dir={i18n.dir}>
-      {@render seatPanel(away, 'relative max-h-full overflow-y-auto')}
+{#if lobby && frame}
+  <Lobby
+    code={frame.code}
+    url={inviteLink}
+    seats={frame.room.seats}
+    conn={session.conn}
+    {canShare}
+    oncopy={() => void copyInvite()}
+    onshare={shareInvite}
+    {onhome}
+  />
+  <ToastList {toasts} placement="bottom" />
+{:else}
+  <div
+    class="game-screen h-full w-full overflow-hidden"
+    data-layout={layout}
+    data-draft={view?.phase === 'wonderDraft' ? '' : undefined}
+    data-phase={view?.phase}
+    data-home={home}
+    data-pick={ui.pickFor ?? undefined}
+    data-bot={bot}
+    data-thinking={thinkingSeat}
+    dir="ltr"
+    aria-label={t('game.board')}
+    role="region"
+  >
+    <div class="area-top" dir={i18n.dir}>
+      <TopBar
+        age={view?.age ?? 0}
+        {cardsLeft}
+        {canUndo}
+        onUndo={mode === 'online' ? undefined : undo}
+        onOpenLog={() => ui.openLog()}
+        onOpenSettings={() => ui.openSettings()}
+        onHome={onhome}
+        homeHint={view?.phase !== 'gameOver'}
+        class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
+      >
+        {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}
+          {@render trackAndTokens(true)}
+        {/if}
+        {#if mode === 'online' && !spectator && frame}
+          <SpectatorCount count={frame.room.spectators} />
+        {/if}
+        <ConnectionPill conn={session.conn} compact />
+      </TopBar>
     </div>
 
-    {#if layout !== 'phone-landscape'}
-      <div class="area-board flex min-w-0 flex-col items-center gap-1.5 px-1" dir={i18n.dir}>
-        {@render trackAndTokens(false)}
+    {#if !view}
+      <div class="area-main relative grid place-items-center p-4" dir={i18n.dir}>
+        <p class="text-fg-muted" role="status" data-conn={session.conn}>
+          {session.conn === 'open' ? t('game.loading') : t(connMessage(session.conn))}
+        </p>
       </div>
-    {/if}
+    {:else if view.phase === 'wonderDraft'}
+      <div
+        class="area-main relative min-h-0 overflow-y-auto"
+        dir={i18n.dir}
+        {@attach markBotPick(pickWonder)}
+      >
+        <Draft {view} canAct={inputOpen} onact={act} {names} {confirm} {connected} />
+      </div>
+    {:else}
+      <!-- The panels scroll inside a positioned box, so nothing absolutely
+         positioned in them (sr-only text) can reach past it and stretch the page. -->
+      <div class="area-away relative min-h-0 min-w-0" dir={i18n.dir}>
+        {@render seatPanel(away, 'relative max-h-full overflow-y-auto')}
+      </div>
 
-    <div class="area-structure relative min-h-0 min-w-0" {@attach markBotPick(pickSlot)}>
-      <CardStructure
-        slots={view.structure}
-        age={view.age}
-        seat={badge}
-        toMove={view.toMove}
-        selected={ui.selected ?? undefined}
-        pending={pendingIndex}
-        {marked}
-        onselect={selectSlot}
-      />
-      {#if view.phase === 'gameOver'}
-        <!-- GameOver is its own centred dialog with a peek bar, so it needs no frame here. -->
-        <div class="contents" dir={i18n.dir}>
-          <GameOver
-            {view}
-            {names}
-            onrematch={frame?.room.status === 'finished' && mySeats.length > 0
-              ? () => session.rematch()
-              : undefined}
-            {onhome}
-          />
+      {#if layout !== 'phone-landscape'}
+        <div class="area-board flex min-w-0 flex-col items-center gap-1.5 px-1" dir={i18n.dir}>
+          {@render trackAndTokens(false)}
         </div>
       {/if}
-    </div>
 
-    <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir}>
-      {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
-    </div>
-  {/if}
+      <div class="area-structure relative min-h-0 min-w-0" {@attach markBotPick(pickSlot)}>
+        {#if toastsInStructure}
+          <!-- Sideways the turn bar's column is too narrow: the toasts sit at
+             the foot of the structure instead. -->
+          <ToastList {toasts} placement="inside" />
+        {/if}
+        <CardStructure
+          slots={view.structure}
+          age={view.age}
+          seat={badge}
+          toMove={view.toMove}
+          selected={ui.selected ?? undefined}
+          pending={pendingIndex}
+          {marked}
+          onselect={selectSlot}
+        />
+        {#if view.phase === 'gameOver'}
+          <!-- GameOver is its own centred dialog with a peek bar, so it needs no frame here. -->
+          <div class="contents" dir={i18n.dir}>
+            <GameOver
+              {view}
+              {names}
+              onrematch={rematchOffer ? () => session.rematch() : undefined}
+              rematchLabel={rematchOffer?.label}
+              rematchNote={rematchOffer?.note}
+              {onhome}
+            />
+          </div>
+        {/if}
+      </div>
 
-  <div class="area-turn flex min-w-0 flex-col" dir={i18n.dir}>
-    {#if session.notice && session.notice !== dismissedNotice}
-      <div
-        class="flex items-center gap-2 border-s-4 border-t border-cinnabar bg-panel px-3 py-1.5 text-sm text-fg"
-        role="alert"
-        data-notice={session.notice.code}
-      >
-        <span class="min-w-0 flex-1">{t(session.notice.message)}</span>
-        <button
-          type="button"
-          class="min-h-11 shrink-0 rounded-control px-2 font-semibold text-fg-muted hover:text-fg"
-          onclick={() => (dismissedNotice = session.notice)}
-        >
-          {t('shell.dismiss')}
-        </button>
+      <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir}>
+        {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
       </div>
     {/if}
-    {#if session.catalogStale}
-      <p class="border-t border-rule bg-panel px-3 py-1.5 text-sm text-fg" role="alert">
-        {t('session.catalogStale')}
-      </p>
-    {/if}
-    <!-- ChoiceHost stays mounted through the play: besides a pending choice it
+
+    <div class="area-turn relative flex min-w-0 flex-col" dir={i18n.dir}>
+      <!-- Toasts sit just above the turn bar: on a phone they cover only this
+         player's own strip, never the opponent's strip or the track, which
+         matter while the other side moves. -->
+      {#if !toastsInStructure}
+        <ToastList {toasts} placement="above" />
+      {/if}
+      {#if session.notice && session.notice !== dismissedNotice}
+        <div
+          class="flex items-center gap-2 border-s-4 border-t border-cinnabar bg-panel px-3 py-1.5 text-sm text-fg"
+          role="alert"
+          data-notice={session.notice.code}
+        >
+          <span class="min-w-0 flex-1">{t(session.notice.message)}</span>
+          <button
+            type="button"
+            class="min-h-11 shrink-0 rounded-control px-2 font-semibold text-fg-muted hover:text-fg"
+            onclick={() => (dismissedNotice = session.notice)}
+          >
+            {t('shell.dismiss')}
+          </button>
+        </div>
+      {/if}
+      {#if session.catalogStale}
+        <p class="border-t border-rule bg-panel px-3 py-1.5 text-sm text-fg" role="alert">
+          {t('session.catalogStale')}
+        </p>
+      {/if}
+      <!-- ChoiceHost stays mounted through the play: besides a pending choice it
          shows the "who starts" bar of a new age. It waits while the pass-device
          screen is up, because its panels are modal dialogs that would cover
          that screen and make it inert. -->
-    {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
-      <ChoiceHost {view} canAct={inputOpen} onact={act} {names} />
-    {/if}
-    {#if ui.pickFor}
-      <div
-        class="flex min-h-13 items-center justify-between gap-2 border-t border-rule bg-accent-soft px-3 py-1.5 text-accent-soft-fg"
-        role="status"
-        data-wonder-pick-bar={ui.pickFor}
-      >
-        <span class="text-sm font-semibold">
-          {t('game.pick.prompt', { wonder: wonderName(ui.pickFor) })}
-        </span>
-        <button
-          type="button"
-          class="min-h-11 shrink-0 rounded-control border border-rule-strong bg-panel px-3 text-sm font-semibold text-fg"
-          data-control="wonder-pick-cancel"
-          onclick={() => ui.cancelWonderPick()}
+      {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
+        <ChoiceHost {view} canAct={inputOpen} onact={act} {names} />
+      {/if}
+      {#if ui.pickFor}
+        <div
+          class="flex min-h-13 items-center justify-between gap-2 border-t border-rule bg-accent-soft px-3 py-1.5 text-accent-soft-fg"
+          role="status"
+          data-wonder-pick-bar={ui.pickFor}
         >
-          {t('game.pick.cancel')}
-        </button>
-      </div>
-    {:else}
-      <TurnBar
-        state={turn}
-        {names}
-        onRetry={() => session.retry()}
-        class="pb-[max(0.375rem,var(--safe-b))]"
-      />
-    {/if}
+          <span class="text-sm font-semibold">
+            {t('game.pick.prompt', { wonder: wonderName(ui.pickFor) })}
+          </span>
+          <button
+            type="button"
+            class="min-h-11 shrink-0 rounded-control border border-rule-strong bg-panel px-3 text-sm font-semibold text-fg"
+            data-control="wonder-pick-cancel"
+            onclick={() => ui.cancelWonderPick()}
+          >
+            {t('game.pick.cancel')}
+          </button>
+        </div>
+      {:else}
+        <TurnBar
+          state={turn}
+          {names}
+          onRetry={() => session.retry()}
+          class="pb-[max(0.375rem,var(--safe-b))]"
+        />
+      {/if}
+    </div>
   </div>
-</div>
+{/if}
 
 {#if view}
   <CardSheet
@@ -491,6 +618,8 @@
     {myTurn}
     canAct={inputOpen}
     {confirm}
+    {connected}
+    {spectator}
     step={ui.step}
     pickFor={ui.pickFor}
     onact={act}
@@ -554,7 +683,6 @@
   </div>
 {/if}
 
-<ToastList {toasts} placement="top" />
 <LiveRegion message={lastLines.join(' ')} />
 
 <style>

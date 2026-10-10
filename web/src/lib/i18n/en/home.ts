@@ -25,10 +25,8 @@ export const home = {
   'home.mode.ai': 'vs AI',
   'home.settings': 'Settings',
 
-  // The tiny "online arrives later" sheet.
-  'home.online.title': 'Play online',
-  'home.online.comingSoon':
-    'Online play arrives in a later version. For now, invite a friend to the same device with Pass and play.',
+  // Home: joining an online game by its code.
+  'home.joinCode': 'Join with a code',
 
   // NewGameSheet (vs AI).
   'home.ai.title': 'Choose your rival',
