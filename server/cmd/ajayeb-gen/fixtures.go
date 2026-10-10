@@ -96,7 +96,7 @@ func generateFixtures(out, messagesDir, protocolDir string) error {
 
 	b.WriteString("/** fixtureNames[i] names fixtures[i]: its recorded file's name without .json. */\n")
 	writeNameList(&b, "fixtureNames", messageNames)
-	b.WriteString("\n/** protocolFixtureNames[i] names protocolFixtures[i]: the scenario file and the viewer, as in age-1-start.seat0. */\n")
+	b.WriteString("\n/** protocolFixtureNames[i] names protocolFixtures[i]: the scenario file and the viewer, as in age-1-start-seat0. */\n")
 	writeNameList(&b, "protocolFixtureNames", viewNames)
 
 	if dir := filepath.Dir(out); dir != "." {
@@ -162,7 +162,8 @@ type protocolFixtureFile struct {
 // readProtocolViews reads every viewer's View out of every scenario file in
 // dir, in file and then viewer order, each re-indented to two spaces
 // regardless of how the source file was printed. Each view is named
-// "<file without .json>.<viewer>".
+// "<file without .json>-<viewer>": no dot, because the server answers a
+// path with a dot (an asset name) with 404 rather than the app.
 func readProtocolViews(dir string) (viewNames, views []string, err error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -193,7 +194,7 @@ func readProtocolViews(dir string) (viewNames, views []string, err error) {
 			if err != nil {
 				return nil, nil, fmt.Errorf("%s (%s): %w", name, viewer.Viewer, err)
 			}
-			viewNames = append(viewNames, strings.TrimSuffix(name, ".json")+"."+viewer.Viewer)
+			viewNames = append(viewNames, strings.TrimSuffix(name, ".json")+"-"+viewer.Viewer)
 			views = append(views, pretty)
 		}
 	}

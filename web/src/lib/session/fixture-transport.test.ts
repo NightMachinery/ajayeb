@@ -16,7 +16,7 @@ function viewNamed(name: string): View {
 
 describe('stateFrameFromView', () => {
   it('wraps a seat view as that seat in an online room', () => {
-    const view = viewNamed('age-1-start.seat0');
+    const view = viewNamed('age-1-start-seat0');
     const f = stateFrameFromView(view, { code: 'ABCDEF', names: ['Sara', 'Omid'] });
     expect(f).toMatchObject({ t: 'state', code: 'ABCDEF', version: view.ply });
     expect(f.room.mode).toBe('online');
@@ -29,13 +29,13 @@ describe('stateFrameFromView', () => {
   });
 
   it('wraps a spectator view with no seats and no choices', () => {
-    const f = stateFrameFromView(viewNamed('age-1-start.spectator'));
+    const f = stateFrameFromView(viewNamed('age-1-start-spectator'));
     expect(f.you).toEqual({ seats: [], canAct: false });
     expect(f.room.spectators).toBe(1);
   });
 
   it('marks a finished game', () => {
-    expect(stateFrameFromView(viewNamed('game-over-civilian.seat0')).room.status).toBe('finished');
+    expect(stateFrameFromView(viewNamed('game-over-civilian-seat0')).room.status).toBe('finished');
   });
 });
 
@@ -44,7 +44,7 @@ describe('the fixture registry', () => {
     const list = fixtureList();
     expect(list).toContain('state-play');
     expect(list).not.toContain('welcome');
-    expect(list).toContain('pick-library-token.seat1');
+    expect(list).toContain('pick-library-token-seat1');
     expect(list.length).toBe(new Set(list).size);
     for (const name of list) expect(fixtureFrames(name), name).toHaveLength(1);
     expect(fixtureFrames('nope')).toBeUndefined();
@@ -68,9 +68,9 @@ describe('FixtureTransport', () => {
   });
 
   it('steps through a script on acts and on step(), then refuses', async () => {
-    const a = stateFrameFromView(viewNamed('draft-round-1.seat0'));
-    const b = stateFrameFromView(viewNamed('draft-round-2.seat0'));
-    const c = stateFrameFromView(viewNamed('age-1-start.seat0'));
+    const a = stateFrameFromView(viewNamed('draft-round-1-seat0'));
+    const b = stateFrameFromView(viewNamed('draft-round-2-seat0'));
+    const c = stateFrameFromView(viewNamed('age-1-start-seat0'));
     const t = new FixtureTransport({ frames: [a, b, c] });
     const got: ServerMessage[] = [];
     t.onMessage((m) => got.push(m));
@@ -94,7 +94,7 @@ describe('FixtureTransport', () => {
   });
 
   it('drives a Session and a Presenter into a recorded state', async () => {
-    const frames = fixtureFrames('pick-library-token.seat1')!;
+    const frames = fixtureFrames('pick-library-token-seat1')!;
     const session = new Session({
       transport: new FixtureTransport({ frames }),
       identity: { token: 'AAAAAAAAAAAAAAAAAAAAAA', clientId: 'c1', name: '' }

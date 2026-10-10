@@ -2,7 +2,7 @@
 // src/lib/wire/fixtures.gen.ts:
 //
 //   - the recorded state frames, by file name (state-play, state-draft ...);
-//   - every recorded View, by scenario and viewer (age-1-start.seat0 ...),
+//   - every recorded View, by scenario and viewer (age-1-start-seat0 ...),
 //     wrapped in the state frame its viewer would receive.
 //
 // The generated file is large (about 1.4 MB of JSON), so pages import this

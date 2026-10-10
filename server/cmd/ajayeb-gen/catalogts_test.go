@@ -231,8 +231,8 @@ func TestFixtureNames(t *testing.T) {
 		"export const fixtureNames = [\n",
 		`  "state-play",` + "\n",
 		"export const protocolFixtureNames = [\n",
-		`  "age-1-start.seat0",` + "\n",
-		`  "age-1-start.spectator",` + "\n",
+		`  "age-1-start-seat0",` + "\n",
+		`  "age-1-start-spectator",` + "\n",
 	} {
 		if !strings.Contains(src, want) {
 			t.Errorf("fixtures.gen.ts lacks %q", want)

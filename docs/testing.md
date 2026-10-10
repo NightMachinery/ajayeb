@@ -191,8 +191,10 @@ With the dev routes on (`PUBLIC_DEV_ROUTES=1` in the build):
   a server started with `--dev --dev-endpoints`.
 - `/dev/fixture` lists the recorded game states, and
   `/dev/fixture/<name>` shows one (such as `state-play` or
-  `pick-library-token.seat1`) through the fixture transport with no
-  server. It sets `data-ready` on `<html>` once the state is on screen and
+  `pick-library-token-seat1`) through the fixture transport with no
+  server. A view is named by its scenario file and viewer joined by a
+  dash, never a dot, since the server answers a path with a dot with 404.
+  It sets `data-ready` on `<html>` once the state is on screen and
   the fonts have loaded, for screenshots.
 
 A token written into `localStorage` for a tool (`ajayeb:token`) must have
