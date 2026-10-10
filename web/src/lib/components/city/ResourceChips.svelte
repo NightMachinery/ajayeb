@@ -45,23 +45,28 @@
     return production.producers.some((p) => p.resources.includes(resource));
   }
 
-  // Tailwind's scanner needs each utility spelled out literally somewhere in
-  // the file; a template-interpolated class name such as `text-res-${r}`
-  // would not generate anything, so the five are listed once here instead.
+  // The glyph sits straight on the panel, so it takes the resource's ink
+  // tone (text-res-*-ink), which keeps 3:1 against the page surfaces in both
+  // themes; the plain text-res-* fills are for tiles. Tailwind's scanner
+  // needs each utility spelled out literally somewhere in the file; a
+  // template-interpolated class name such as `text-res-${r}-ink` would not
+  // generate anything, so the five are listed once here instead.
   const RESOURCE_TEXT_CLASS: Record<Resource, string> = {
-    wood: 'text-res-wood',
-    clay: 'text-res-clay',
-    stone: 'text-res-stone',
-    glass: 'text-res-glass',
-    papyrus: 'text-res-papyrus'
+    wood: 'text-res-wood-ink',
+    clay: 'text-res-clay-ink',
+    stone: 'text-res-stone-ink',
+    glass: 'text-res-glass-ink',
+    papyrus: 'text-res-papyrus-ink'
   };
 
+  // The chips are 11 or 12 px, so they use the small-grid (-sm) glyphs, as
+  // everything drawn at 14 px and below does.
   const RESOURCE_ICON: Record<Resource, IconName> = {
-    wood: 'resource-wood',
-    clay: 'resource-clay',
-    stone: 'resource-stone',
-    glass: 'resource-glass',
-    papyrus: 'resource-papyrus'
+    wood: 'resource-wood-sm',
+    clay: 'resource-clay-sm',
+    stone: 'resource-stone-sm',
+    glass: 'resource-glass-sm',
+    papyrus: 'resource-papyrus-sm'
   };
 </script>
 

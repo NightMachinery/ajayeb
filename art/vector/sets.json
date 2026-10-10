@@ -4,11 +4,11 @@
     "resources-economy-military": {
       "title": "Resources, economy and military",
       "icons": [
-        {"id": "resource-wood", "sm": "resource-wood-sm", "ink": "var(--res-wood)", "tile": {"bg": "var(--res-wood)", "ink": "var(--paper-bright)"}, "band": "brown"},
-        {"id": "resource-clay", "sm": "resource-clay-sm", "ink": "var(--res-clay)", "tile": {"bg": "var(--res-clay)", "ink": "var(--paper-bright)"}, "band": "brown"},
-        {"id": "resource-stone", "sm": "resource-stone-sm", "ink": "var(--res-stone)", "tile": {"bg": "var(--res-stone)", "ink": "var(--paper-bright)"}, "band": "brown"},
-        {"id": "resource-glass", "sm": "resource-glass-sm", "ink": "var(--res-glass)", "tile": {"bg": "var(--res-glass)", "ink": "var(--card-ink)"}, "band": "grey"},
-        {"id": "resource-papyrus", "sm": "resource-papyrus-sm", "ink": "var(--res-papyrus)", "tile": {"bg": "var(--res-papyrus)", "ink": "var(--card-ink)"}, "band": "grey"},
+        {"id": "resource-wood", "sm": "resource-wood-sm", "ink": "var(--res-wood-ink)", "tile": {"bg": "var(--res-wood)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-clay", "sm": "resource-clay-sm", "ink": "var(--res-clay-ink)", "tile": {"bg": "var(--res-clay)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-stone", "sm": "resource-stone-sm", "ink": "var(--res-stone-ink)", "tile": {"bg": "var(--res-stone)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-glass", "sm": "resource-glass-sm", "ink": "var(--res-glass-ink)", "tile": {"bg": "var(--res-glass)", "ink": "var(--card-ink)"}, "band": "grey"},
+        {"id": "resource-papyrus", "sm": "resource-papyrus-sm", "ink": "var(--res-papyrus-ink)", "tile": {"bg": "var(--res-papyrus)", "ink": "var(--card-ink)"}, "band": "grey"},
         {"id": "coin", "ink": "var(--gold)", "i2": "var(--gold-deep)", "badge": "own", "band": "yellow"},
         {"id": "coin-loss", "ink": "var(--cinnabar)", "band": "red"},
         {"id": "trade", "ink": "var(--fg)", "badge": "trade", "band": "yellow", "cardInk": "var(--card-ink)"},

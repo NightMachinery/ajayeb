@@ -77,7 +77,7 @@ The `/dev/gallery` page has a Game screen section that shows recorded states (dr
 
 ## Styling
 
-- Tailwind's default colour palette is switched off. Use the semantic utilities, such as `bg-table`, `bg-panel`, `text-fg`, `text-fg-muted`, `border-rule`, `bg-accent` and `text-on-accent`, so every colour follows the theme. The palette and game colours are there too (`bg-card-red`, `text-sun-ink`, `bg-res-wood` and so on).
+- Tailwind's default colour palette is switched off. Use the semantic utilities, such as `bg-table`, `bg-panel`, `text-fg`, `text-fg-muted`, `border-rule`, `bg-accent` and `text-on-accent`, so every colour follows the theme. The palette and game colours are there too (`bg-card-red`, `text-sun-ink`, `bg-res-wood` and so on). The resource colours come in two kinds: `bg-res-wood` and the like are the resource tile fills, and `text-res-wood-ink`, `text-res-clay-ink`, `text-res-stone-ink`, `text-res-glass-ink` and `text-res-papyrus-ink` are the theme-aware inks for a resource glyph drawn straight on a page surface (paper, panel, parchment, or the night panels in dark mode). The inks keep 3:1 or more against those surfaces; the fills do not (papyrus and glass vanish on paper, wood on the night panels). A glyph on a resource tile or a card uses the card ink.
 - `dark:` follows `data-theme="dark"` on `<html>`, which reflects the in-app choice, not only the system setting.
 - Two screen-level variants exist: `short:` (a height of 32rem or less, such as a phone in landscape) and `split:` (room for two columns: 64rem wide, or a short landscape screen).
 - Use logical properties only (`ms-*`, `pe-*`, `text-start` and so on). Padding by the physical safe-area insets is the one deliberate exception.

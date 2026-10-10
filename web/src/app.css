@@ -112,6 +112,11 @@
   --color-res-stone: var(--res-stone);
   --color-res-glass: var(--res-glass);
   --color-res-papyrus: var(--res-papyrus);
+  --color-res-wood-ink: var(--res-wood-ink);
+  --color-res-clay-ink: var(--res-clay-ink);
+  --color-res-stone-ink: var(--res-stone-ink);
+  --color-res-glass-ink: var(--res-glass-ink);
+  --color-res-papyrus-ink: var(--res-papyrus-ink);
   --color-card-paper: var(--card-paper);
   --color-card-ink: var(--card-ink);
   --color-card-brown: var(--card-brown);
