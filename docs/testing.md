@@ -675,7 +675,7 @@ minutes per test, 30 s per `expect`, a 40 s action timeout), and, the part
 that actually keeps a local-only spec off a real site, **every project's
 `grep` is forced to `@prod`**. `prod.smoke.spec.ts` is the only spec tagged
 `@prod`, so it is the only one that can ever be selected this way, whatever
-else is passed on the command line: `GREP=` or a bare `--grep` is ANDed in
+else is passed on the command line: a `--grep` (through `PW_ARGS`, since `e2e-prod` ignores `GREP`) is ANDed in
 on top, never used in place of the forced one, so it can narrow the five
 tests further but never add a spec that is not `@prod`. Without
 `E2E_BASE_URL`, none of this changes; `make e2e` and `make e2e-smoke` run
