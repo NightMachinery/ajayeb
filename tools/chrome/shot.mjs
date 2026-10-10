@@ -2,12 +2,14 @@
 // Screenshot and DOM probe for one page of the running app, over CDP.
 //
 //   python3 tools/heavy.py run --kind browser -- node tools/chrome/shot.mjs \
-//     --url /play/ABCD --token tok-a --name Ana --vp 390x844@3 --theme dark --probe --out x.png
+//     --url /play/ABCD --token ajayebShotTokenA000001 --name Ana --vp 390x844@3 --theme dark \
+//     --probe --out x.png
 //
 // Flags (`--flag value` or `--flag=value`):
 //   --origin URL     app origin (default $AJAYEB_ORIGIN or http://127.0.0.1:38951)
 //   --url PATH       page to open, relative to --origin (default /); a full URL also works
-//   --token T        written to localStorage ajayeb:token before the page loads
+//   --token T        written to localStorage ajayeb:token before the page loads; it
+//                    must be 22 base64url characters, or the app replaces it
 //   --name N         written to localStorage ajayeb:name
 //   --theme T        light | dark | system, written to localStorage ajayeb:theme
 //   --scheme S       light | dark: the emulated OS colour scheme (what "system" follows)
@@ -23,8 +25,11 @@
 //
 // Identity works as in the app: the token, name and theme go into
 // localStorage on the page's origin before any of its scripts run, so the
-// app starts as that player. Each run uses a fresh browser context, so
-// nothing carries over between runs.
+// app starts as that player. The token must have the real shape (22
+// characters of A-Z, a-z, 0-9, - and _): the client replaces any other
+// stored value with a fresh token, so the page would open as a stranger.
+// Each run uses a fresh browser context, so nothing carries over between
+// runs.
 
 import fs from 'node:fs';
 import path from 'node:path';

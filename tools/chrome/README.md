@@ -28,11 +28,11 @@ Environment:
 
 ```sh
 node tools/chrome/shot.mjs --origin http://127.0.0.1:38951 --url /play/ABCD \
-  --token tok-a --name Ana --vp 390x844@2 --theme dark --probe --out /tmp/a.png
+  --token ajayebShotTokenA000001 --name Ana --vp 390x844@2 --theme dark --probe --out /tmp/a.png
 ```
 
 - `--url` is relative to `--origin` (default `http://127.0.0.1:38951`, the dev server).
-- `--token`, `--name` and `--theme light|dark|system` are written to the localStorage keys `ajayeb:token`, `ajayeb:name` and `ajayeb:theme` before any page script runs. The server derives the player from the token, so `--token tok-a` shows exactly the seat that a driver client using `tok-a` holds (`ajayeb-drive` uses stable tokens like that; it arrives in milestone M4).
+- `--token`, `--name` and `--theme light|dark|system` are written to the localStorage keys `ajayeb:token`, `ajayeb:name` and `ajayeb:theme` before any page script runs. The server derives the player from the token, so a token shows exactly the seat that a driver client using the same token holds. It must have the real shape, 22 base64url characters (`A-Z`, `a-z`, `0-9`, `-` and `_`), such as `ajayebShotTokenA000001`: the client replaces any other stored value with a fresh token, and the page then opens as a stranger.
 - `--vp WxH[@dpr]`, or the presets `mobile` (390x844@2) and `desktop` (1280x800@1). The default is 390x844@2. A short side under 600 px also turns on mobile emulation and touch. The viewport is set with `Emulation.setDeviceMetricsOverride`, never by resizing a window.
 - `--scheme light|dark` emulates the system colour scheme, which the `system` theme follows. `--motion` defaults to `reduce`.
 - `--wait-ready` waits for `data-ready` on `<html>` (at most 2.5 s); otherwise the script waits a fixed `--settle` of 800 ms. Both then wait for fonts and two animation frames.
