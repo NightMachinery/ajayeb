@@ -4,9 +4,10 @@ Two independent pipelines produce Ajayeb's original art (see AGENTS.md
 "Assets"): a hand-authored SVG icon set made by Opus subagents in a
 render-screenshot-critique loop, and Codex-generated bitmap art for cards,
 wonders, tokens and the rest. `render-fast.sh` (the shared inner-loop SVG
-rasterizer, used by both the icon loop and the `chrome-cdp` skill) is
-documented in [docs/dev/](../../docs/dev/) and the `chrome-cdp` skill, not
-here.
+rasterizer, used by both the icon loop and the `chrome-cdp` skill) has its
+own usage comment at the top of the file and is covered by the
+`.claude/skills/chrome-cdp/SKILL.md` skill; this README's scope is the
+bitmap pipeline below.
 
 ## Bitmap pipeline
 
