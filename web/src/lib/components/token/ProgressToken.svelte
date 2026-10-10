@@ -1,10 +1,14 @@
 <script lang="ts">
-  // One progress token medallion: a placeholder for the real vector art
-  // (M9) -- the hand-authored token-frame icon plus the token's own first
-  // letter as a simple glyph, and its name through t() (each of the 10
-  // tokens is its own message key; see i18n/en/board.ts). A leaf
+  // One progress token medallion: the token's approved bitmap (a circular
+  // emblem, shipped on the paper colour) inside a gold ring when the
+  // generated art index has one; otherwise, or if the file fails to load,
+  // the placeholder: the hand-authored token-frame icon plus the token's
+  // own first letter. Its name goes through t() (each of the 10 tokens is
+  // its own message key; see i18n/en/board.ts). A leaf
   // component, plain props: the caller decides whether it is selectable
   // (the pending pick choice) and whether it should act as a real button.
+  import ArtImage from '$lib/art/ArtImage.svelte';
+  import { artId } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
 
@@ -73,8 +77,17 @@
 
 {#snippet medallion()}
   <span class="relative grid place-items-center {sizeClass}">
-    <Icon name="token-frame" class="absolute inset-0 size-full text-gild" />
-    <span class="relative font-display leading-none font-semibold">{initial}</span>
+    <ArtImage
+      id={artId('token', slug)}
+      size="thumb"
+      feather="none"
+      class="absolute inset-0 size-full rounded-full border-2 border-(color:--gold-deep) bg-card-paper"
+    >
+      {#snippet fallback()}
+        <Icon name="token-frame" class="absolute inset-0 size-full text-gild" />
+        <span class="relative font-display leading-none font-semibold">{initial}</span>
+      {/snippet}
+    </ArtImage>
   </span>
 {/snippet}
 

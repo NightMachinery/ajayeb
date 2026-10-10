@@ -1,16 +1,22 @@
 <script lang="ts">
   // A wonder, at one of two sizes:
   //
-  //   draft  the draft tile: 3:2 placeholder art, the name, the printed cost
+  //   draft  the draft tile: 3:2 art, the name, the printed cost
   //          and the effect glyphs (and who took it, once taken)
   //   city   a row in a city panel: a small art thumb, the name, the effect
   //          glyphs and the state: built (with the card tucked under it), out
   //          of the game, or open with its affordability badge
   //
+  // The art is the wonder's approved bitmap (3:2, feathered into the paper)
+  // when the generated art index has one, and a procedural sky with the
+  // wonder glyph otherwise or if the file fails to load.
+  //
   // A plain leaf component: printed data from the catalog, the state from
   // the server's WonderView, the badge from view/afford.ts. It renders no
   // button of its own; the parent wraps it in one (with describeWonder for
   // the name) when the tile is actionable.
+  import ArtImage from '$lib/art/ArtImage.svelte';
+  import { artId } from '$lib/art/lookup';
   import { wonderBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
@@ -52,12 +58,24 @@
   const removed = $derived(state?.removed ?? false);
 </script>
 
-{#snippet art(cls: string)}
-  <span class="wonder-art relative flex items-center justify-center overflow-hidden {cls}">
-    <Icon
-      name="wonder"
-      class="text-[length:min(56cqh,40cqw)] text-(--lapis) opacity-85 [--i2:var(--gold)]"
-    />
+{#snippet art(cls: string, small: boolean)}
+  <span class="relative flex items-center justify-center overflow-hidden bg-card-paper {cls}">
+    <ArtImage
+      id={artId('wonder', slug)}
+      size={small ? 'thumb' : 'default'}
+      sizes={small ? undefined : '(min-width: 40rem) 280px, 50vw'}
+      feather={small ? 'edge' : 'soft'}
+      class="absolute inset-0 h-full w-full"
+    >
+      {#snippet fallback()}
+        <span class="wonder-art absolute inset-0 flex items-center justify-center">
+          <Icon
+            name="wonder"
+            class="text-[length:min(56cqh,40cqw)] text-(--lapis) opacity-85 [--i2:var(--gold)]"
+          />
+        </span>
+      {/snippet}
+    </ArtImage>
   </span>
 {/snippet}
 
@@ -70,7 +88,10 @@
       data-size="draft"
       aria-hidden="true"
     >
-      {@render art(`${compactArt ? 'aspect-[2/1]' : 'aspect-[3/2]'} w-full [container-type:size]`)}
+      {@render art(
+        `${compactArt ? 'aspect-[2/1]' : 'aspect-[3/2]'} w-full [container-type:size]`,
+        false
+      )}
       <span class="flex flex-col gap-[0.35em] px-[0.6em] pt-[0.45em] pb-[0.6em] text-[13px]">
         <span class="font-display text-[15px] leading-tight">{wonderName(slug)}</span>
         <span class="flex min-h-[1.4em] items-center justify-between gap-2">
@@ -95,7 +116,7 @@
       data-built={built}
       aria-hidden="true"
     >
-      {@render art('aspect-[3/2] w-14 shrink-0 rounded-[5px] [container-type:size]')}
+      {@render art('aspect-[3/2] w-14 shrink-0 rounded-[5px] [container-type:size]', true)}
       <span class="flex min-w-0 flex-1 flex-col justify-center gap-[0.3em]">
         <span class="flex items-center gap-1">
           <span class="min-w-0 flex-1 truncate font-display text-[13px] leading-tight"

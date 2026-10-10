@@ -6,6 +6,13 @@
   // over the numeral and a checker field, so it differs from Age III by
   // shape as well as colour. Fills its container; decorative unless the
   // parent labels it.
+  //
+  // Once a back's bitmap art is approved (back/age1 and so on in the
+  // generated art index), it fills the card under the same gold frame and
+  // cartouche; until then, or if the file fails to load, the procedural
+  // lattice shows.
+  import ArtImage from '$lib/art/ArtImage.svelte';
+  import { backArtId } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import type { Back } from '$lib/wire';
   import { backAge } from './card-style';
@@ -25,6 +32,9 @@
   data-back={back}
   aria-hidden="true"
 >
+  <ArtImage id={backArtId(back)} feather="none" class="absolute inset-0 h-full w-full" />
+  <!-- The frame sits over the art (an inset shadow alone would sit under it). -->
+  <span class="back-frame pointer-events-none absolute inset-0 rounded-[inherit]"></span>
   <svg class="relative w-[64%]" viewBox="0 0 100 64" aria-hidden="true">
     <path
       d="M50 3 C64 3 70 10 86 10 C95 10 97 20 97 32 C97 44 95 54 86 54 C70 54 64 61 50 61 C36 61 30 54 14 54 C5 54 3 44 3 32 C3 20 5 10 14 10 C30 10 36 3 50 3 Z"
@@ -62,6 +72,8 @@
       repeating-linear-gradient(45deg, var(--back-line) 0 1px, transparent 1px 8.5px),
       repeating-linear-gradient(-45deg, var(--back-line) 0 1px, transparent 1px 8.5px),
       radial-gradient(circle at 50% 50%, var(--back-glow), var(--back-base) 75%);
+  }
+  .back-frame {
     box-shadow:
       inset 0 0 0 3px var(--back-base),
       inset 0 0 0 4.5px var(--gold),

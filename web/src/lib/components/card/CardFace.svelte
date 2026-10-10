@@ -4,8 +4,9 @@
   //
   //   band    a 24 px colour strip with the effect glyphs (city stacks)
   //   mini    under 72 px wide (the phone pyramid): cost row, effect band,
-  //           placeholder art
-  //   medium  72 to 139 px: as mini, plus the name and the category glyph
+  //           the placeholder pattern (never bitmap art)
+  //   medium  72 to 139 px: as mini, plus the name, and the card's art
+  //           thumbnail (CardArt; the placeholder until art is approved)
   //   full    140 px and wider (sheets): larger art, the category label and
   //           the chain-out line
   //
@@ -18,12 +19,14 @@
   // A plain leaf component: it takes a slug and the display state, fills its
   // container (give the container the card's size, or pass `width`), and is
   // decorative; the slot button around it carries the ARIA name.
+  import { artId, hasApprovedArt } from '$lib/art/lookup';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import AffordBadge from './AffordBadge.svelte';
+  import CardArt from './CardArt.svelte';
   import CardPlaceholderArt from './CardPlaceholderArt.svelte';
   import ChainChip from './ChainChip.svelte';
   import CostPips from './CostPips.svelte';
@@ -45,6 +48,7 @@
   let { slug, tier, width, afford, dim = false, class: className = '' }: Props = $props();
 
   const card = $derived(cardBySlug(slug));
+  const withArt = $derived(hasApprovedArt(artId('card', slug)));
   const small = $derived(tier === 'mini');
   // The cost row's room in em, so CostPips can collapse what would not fit.
   // Mirrors the font sizes and paddings in the style block below.
@@ -110,11 +114,23 @@
 
       <!-- Below the 40% line: art (with the badge on its lower edge), name. -->
       <span class="relative min-h-0 flex-1">
-        <CardPlaceholderArt
-          color={card.color}
-          glyph={tier !== 'mini'}
-          class="absolute inset-0 h-full w-full"
-        />
+        {#if tier === 'mini'}
+          <!-- Mini cards never show bitmap art: the phone pyramid covers
+               most of them, and the pattern keeps the colour readable. -->
+          <CardPlaceholderArt
+            color={card.color}
+            glyph={false}
+            class="absolute inset-0 h-full w-full"
+          />
+        {:else}
+          <CardArt
+            slug={card.slug}
+            color={card.color}
+            {tier}
+            {width}
+            class="absolute inset-0 h-full w-full"
+          />
+        {/if}
         {#if afford}
           <span class="pointer-events-none absolute inset-x-0 bottom-[0.3em] flex justify-center">
             <AffordBadge {afford} {dim} compact={tier === 'mini'} />
@@ -127,9 +143,11 @@
             class="line-clamp-2 min-w-0 flex-1 font-display leading-[1.1] wrap-anywhere hyphens-auto"
             >{cardName(card.slug)}</span
           >
-          <!-- The art already carries the category glyph; the full tier
-               repeats it by the name, where there is room. -->
-          {#if tier === 'full'}
+          <!-- The placeholder art carries the category glyph; the full tier
+               repeats it by the name, where there is room, and so does the
+               medium tier once bitmap art (which has no glyph) replaces the
+               placeholder, so the category never rests on colour alone. -->
+          {#if tier === 'full' || withArt}
             <Icon
               name={categoryIcon(card.color)}
               class="mt-[0.1em] text-[1.05em] text-(--band) [--i2:color-mix(in_oklch,var(--band)_45%,var(--card-paper))]"
