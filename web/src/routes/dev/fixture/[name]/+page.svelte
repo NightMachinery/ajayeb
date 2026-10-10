@@ -1,6 +1,6 @@
 <script lang="ts">
   // /dev/fixture/<name>: one recorded game state, played through the
-  // fixture transport into the debug board, with no server. Screenshots
+  // fixture transport into the game screen, with no server. Screenshots
   // wait for data-ready on <html>, set once the state is on screen and the
   // fonts have loaded.
   //
@@ -8,10 +8,12 @@
   // they load only with the /dev/fixture pages. Each fixture is opened by a
   // full page load or from the list, so the game is made once, when the
   // page starts.
+  import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { onDestroy } from 'svelte';
+  import GameScreen from '$lib/components/game/GameScreen.svelte';
   import { t } from '$lib/i18n';
-  import DebugBoard from '$lib/session/DebugBoard.svelte';
   import { setGameContext, type GameContext } from '$lib/session/context';
   import { FixtureTransport } from '$lib/session/fixture-transport';
   import { fixtureFrames } from '$lib/session/fixtures';
@@ -61,7 +63,11 @@
 </script>
 
 {#if game}
-  <DebugBoard session={game.session} presenter={game.presenter} />
+  <GameScreen
+    session={game.session}
+    presenter={game.presenter}
+    onhome={() => void goto(resolve('/'))}
+  />
 {:else}
   <main class="flex h-full items-center justify-center px-4">
     <p class="text-fg" role="alert">{t('dev.fixture.unknown', { name })}</p>

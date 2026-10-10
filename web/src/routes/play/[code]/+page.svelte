@@ -1,14 +1,14 @@
 <script lang="ts">
   // /play/<code>: every mode's room. It joins the room over the app's live
-  // connection and, for now, shows the debug board (M5.S04 brings the real
-  // game screen). The socket stays open when the page goes away; only the
-  // room is left.
+  // connection and shows the game screen. The socket stays open when the
+  // page goes away; only the room is left. A rematch's new code navigates
+  // here again, which joins the new room.
   import { afterNavigate, goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
   import { onDestroy } from 'svelte';
+  import GameScreen from '$lib/components/game/GameScreen.svelte';
   import { t } from '$lib/i18n';
-  import DebugBoard from '$lib/session/DebugBoard.svelte';
   import { liveGame } from '$lib/session/app.svelte';
   import { setGameContext } from '$lib/session/context';
   import { errorMessage, rejectMessage } from '$lib/session/messages';
@@ -45,13 +45,20 @@
     };
   });
 
-  function toRematch(code: string) {
-    void goto(resolve('/play/[code]', { code }));
+  // The server's answer to a rematch request: its room's code. Navigation
+  // only; it writes no state.
+  $effect(() => {
+    const code = session.rematchCode;
+    if (code && code !== session.code) void goto(resolve('/play/[code]', { code }));
+  });
+
+  function toHome() {
+    void goto(resolve('/'));
   }
 </script>
 
 <svelte:head>
-  <title>{t('debug.title', { code: session.code ?? '' })} · {t('app.name')}</title>
+  <title>{t('game.title', { code: session.code ?? '' })} · {t('app.name')}</title>
 </svelte:head>
 
 {#if session.roomError}
@@ -71,5 +78,5 @@
     </a>
   </main>
 {:else}
-  <DebugBoard {session} {presenter} onrematch={toRematch} />
+  <GameScreen {session} {presenter} onhome={toHome} />
 {/if}
