@@ -59,6 +59,19 @@ describe('GameUi: sheets and selection', () => {
     expect(ui.wonder).toBe('pyramids');
   });
 
+  it('ignores a late close from a sheet that is no longer the open one', () => {
+    const ui = new GameUi();
+    ui.openWonder('pyramids');
+    ui.startWonderPick('pyramids');
+    ui.selectSlot(3);
+    // The wonder sheet's dialog reports its close after the card sheet opened.
+    ui.close('wonder');
+    expect(ui.isOpen('card')).toBe(true);
+    expect(ui.selected).toBe(3);
+    ui.close('card');
+    expect(ui.sheet).toBeNull();
+  });
+
   it('keeps wonder-first mode across closing sheets until a move or cancel', () => {
     const ui = new GameUi();
     ui.openWonder('pyramids');

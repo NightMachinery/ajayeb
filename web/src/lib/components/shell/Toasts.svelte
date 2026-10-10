@@ -44,6 +44,7 @@
         item.kind
       ]}"
       role="status"
+      data-toast={item.kind}
     >
       <p class="flex-1 text-sm" dir="auto">{item.message}</p>
       {#if item.actionLabel}

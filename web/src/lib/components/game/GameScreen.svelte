@@ -193,6 +193,10 @@
     if (f.ack && f.ack.clientId === session.clientId && lastRequest?.seq === f.ack.seq) {
       acked = lastRequest.kind;
     }
+    // An undo toast speaks of the latest move only: a newer move or an undo
+    // replaces it. In a bot room the bot's reply keeps it, since Undo there
+    // takes back the player's move together with the reply.
+    if (acked !== null || f.room.mode === 'hotseat') toasts.clear();
     const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
     const holderBefore = ui.holder;
     ui.record(f, acked, passOn);
@@ -328,7 +332,7 @@
     </div>
   {:else}
     <div class="area-away min-h-0 min-w-0" dir={i18n.dir}>
-      {@render seatPanel(away, 'h-full overflow-y-auto')}
+      {@render seatPanel(away, 'max-h-full overflow-y-auto')}
     </div>
 
     {#if layout !== 'phone-landscape'}
@@ -369,7 +373,7 @@
     </div>
 
     <div class="area-home min-h-0 min-w-0" dir={i18n.dir}>
-      {@render seatPanel(home, 'h-full overflow-y-auto')}
+      {@render seatPanel(home, 'max-h-full overflow-y-auto')}
     </div>
   {/if}
 
@@ -442,7 +446,7 @@
     onact={act}
     onwonders={() => ui.showWonders()}
     onback={() => ui.backToCard()}
-    onclose={() => ui.close()}
+    onclose={() => ui.close('card')}
   />
 
   <WonderSheet
@@ -454,11 +458,11 @@
     coins={wonderOwner?.coins}
     canAct={inputOpen}
     onbuild={(slug) => ui.startWonderPick(slug)}
-    onclose={() => ui.close()}
+    onclose={() => ui.close('wonder')}
   />
 
   <CitySheet
-    bind:open={() => ui.isOpen('city'), (v) => !v && ui.close()}
+    bind:open={() => ui.isOpen('city'), (v) => !v && ui.close('city')}
     {names}
     players={view.players}
     military={view.military}
@@ -466,11 +470,15 @@
     bind:activeSeat={ui.citySeat}
   />
 
-  <LogSheet bind:open={() => ui.isOpen('log'), (v) => !v && ui.close()} events={ui.log} {names} />
+  <LogSheet
+    bind:open={() => ui.isOpen('log'), (v) => !v && ui.close('log')}
+    events={ui.log}
+    {names}
+  />
 {/if}
 
 <Sheet
-  bind:open={() => ui.isOpen('settings'), (v) => !v && ui.close()}
+  bind:open={() => ui.isOpen('settings'), (v) => !v && ui.close('settings')}
   titleId="game-settings-title"
 >
   <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
@@ -505,6 +513,9 @@
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
     grid-template-areas: 'top' 'away' 'board' 'structure' 'home' 'turn';
+    row-gap: 0.25rem;
+  }
+  .game-screen[data-layout='tablet'] {
     row-gap: 0.375rem;
   }
   .area-top {
@@ -520,7 +531,7 @@
   .area-structure {
     grid-area: structure;
     padding-inline: max(0.5rem, var(--safe-l)) max(0.5rem, var(--safe-r));
-    padding-block: 0.25rem;
+    padding-block: 0.125rem;
   }
   .area-home {
     grid-area: home;

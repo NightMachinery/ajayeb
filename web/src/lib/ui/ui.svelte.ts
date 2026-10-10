@@ -91,8 +91,13 @@ export class GameUi {
     this.sheet = 'settings';
   }
 
-  /** Closes the open sheet; wonder-first mode stays on until a move or Cancel. */
-  close(): void {
+  /**
+   * Closes the open sheet; wonder-first mode stays on until a move or Cancel.
+   * With a kind, only when that sheet is the open one: a sheet's dialog
+   * reports its close a task later, and by then another sheet may be open.
+   */
+  close(kind?: SheetKind): void {
+    if (kind !== undefined && this.sheet !== kind) return;
     this.sheet = null;
     this.selected = null;
     this.step = 'card';
