@@ -96,13 +96,13 @@ func diagPositions(t *testing.T, n int) []engine.State {
 }
 
 type diagOut struct {
-	move   engine.Action
-	share  float64
-	pv     int     // depth of the principal variation (most visited, at least 64 visits), worker 0
-	mean   float64 // mean depth of the nodes, worker 0
-	nodes  int
-	top3   float64 // share of the three most visited root children
-	dur    time.Duration
+	move  engine.Action
+	share float64
+	pv    int     // depth of the principal variation (most visited, at least 64 visits), worker 0
+	mean  float64 // mean depth of the nodes, worker 0
+	nodes int
+	top3  float64 // share of the three most visited root children
+	dur   time.Duration
 }
 
 func diagRun(m *MCTSBot, s *engine.State, iters, workers int) diagOut {
