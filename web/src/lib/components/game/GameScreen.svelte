@@ -1,0 +1,591 @@
+<script lang="ts">
+  // The game screen (UX design sections 3, 5 and 6): one board markup whose
+  // CSS grid areas switch with the viewport class (lib/layout/breakpoints),
+  // with every sheet, the wonder-first pick mode, undo, the pending and slow
+  // states and the hot-seat pass-device screen.
+  //
+  //   phone portrait   top bar / opponent strip / track and tokens /
+  //                    structure / my strip / turn bar
+  //   phone landscape  top bar with the compact track and tokens, then three
+  //                    columns: my strip and the turn bar / structure /
+  //                    opponent strip
+  //   tablet           as phone portrait, with the city's band stacks
+  //   desktop          top bar, then three columns: my city panel / track,
+  //                    tokens, structure and turn bar / opponent panel
+  //
+  // "You" are at the bottom or on the left; a spectator sees seat 0 there,
+  // and a hot-seat game either faces the player to move or stays fixed
+  // (settings). The board region is dir="ltr" because it is spatial; the
+  // text inside the bars and panels follows the locale.
+  //
+  // It decides nothing about the game. The structure, the panels and the
+  // sheets render the presented view; every move is one of the view's choice
+  // keys, sent through the Session. Input is open only while
+  // presenter.idle && session.canAct. The draft, a pending choice and the end
+  // of the game are the Draft, ChoiceHost and GameOver screens, mounted with
+  // their fixed props.
+  import { onDestroy } from 'svelte';
+  import { MediaQuery } from 'svelte/reactivity';
+  import { wonderName } from '$lib/components/card/effect-text';
+  import { i18n, t } from '$lib/i18n';
+  import { breakpoints } from '$lib/layout/breakpoints.svelte';
+  import { connMessage } from '$lib/session/messages';
+  import type { Presenter } from '$lib/session/presenter.svelte';
+  import type { Notice, Session } from '$lib/session/session.svelte';
+  import { settings } from '$lib/ui/settings.svelte';
+  import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
+  import { badgeSeat } from '$lib/view/afford';
+  import { turnState } from '$lib/view/turn';
+  import type { SlotView, State, WonderView } from '$lib/wire';
+  import MilitaryTrack from '../board/MilitaryTrack.svelte';
+  import CardStructure from '../board/CardStructure.svelte';
+  import ChoiceHost from '../choices/ChoiceHost.svelte';
+  import ConnectionPill from '../hud/ConnectionPill.svelte';
+  import TopBar from '../hud/TopBar.svelte';
+  import TurnBar from '../hud/TurnBar.svelte';
+  import Draft from '../screens/Draft.svelte';
+  import GameOver from '../screens/GameOver.svelte';
+  import PassDevice from '../screens/PassDevice.svelte';
+  import Settings from '../screens/Settings.svelte';
+  import CitySheet from '../sheets/CitySheet.svelte';
+  import LogSheet from '../sheets/LogSheet.svelte';
+  import WonderSheet from '../sheets/WonderSheet.svelte';
+  import LiveRegion from '../shell/LiveRegion.svelte';
+  import Sheet from '../shell/Sheet.svelte';
+  import ToastList from '../shell/Toasts.svelte';
+  import { Toasts } from '../shell/toast-queue.svelte';
+  import ProgressTokenRow from '../token/ProgressTokenRow.svelte';
+  import CardSheet from './CardSheet.svelte';
+  import {
+    eventLines,
+    homeSeat,
+    needsConfirm,
+    passPending,
+    pendingSlot,
+    pickableSlots,
+    wonderStatus
+  } from './card-actions';
+  import { seatNames } from './names';
+  import SeatPanel from './SeatPanel.svelte';
+
+  interface Props {
+    session: Session;
+    presenter: Presenter;
+    /** Leaves the room for the home screen. */
+    onhome: () => void;
+  }
+
+  let { session, presenter, onhome }: Props = $props();
+
+  const ui = new GameUi();
+  const toasts = new Toasts();
+  const coarsePointer = new MediaQuery('(pointer: coarse)', false);
+
+  // The request this screen sent last, to tell an act's ack from an undo's.
+  let lastRequest: { seq: number; kind: 'act' | 'undo' } | null = null;
+  let roomCode: string | null = null;
+  // The notice the player dismissed; a newer one shows again.
+  let dismissedNotice = $state<Notice | null>(null);
+
+  // Settings, with the device defaults of the hot-seat sheet.
+  const passDevice = $derived(settings.value.hotseatPassDevice ?? coarsePointer.current);
+  const orientation = $derived(
+    settings.value.hotseatOrientation ??
+      (breakpoints.viewport === 'phone-portrait' || breakpoints.viewport === 'phone-landscape'
+        ? 'face'
+        : 'fixed')
+  );
+
+  const frame = $derived(presenter.frame);
+  const view = $derived(presenter.view);
+  const mode = $derived(frame?.room.mode ?? 'online');
+  const mySeats = $derived(frame?.you.seats ?? []);
+  const names = $derived(seatNames(frame?.room));
+  const inputOpen = $derived(presenter.idle && session.canAct);
+  const myTurn = $derived(!!frame?.you.canAct);
+  const confirm = $derived(needsConfirm(mode, settings.value.confirmMoves));
+  const canUndo = $derived(mode !== 'online' && presenter.idle && session.canUndo);
+
+  const layout = $derived(breakpoints.viewport);
+  const variant = $derived(
+    layout === 'desktop'
+      ? ('column' as const)
+      : layout === 'tablet'
+        ? ('band' as const)
+        : ('strip' as const)
+  );
+
+  const home = $derived(
+    view
+      ? homeSeat({ mode, mySeats, toMove: view.toMove, active: view.active, orientation })
+      : (0 as Seat)
+  );
+  const away = $derived((home === 0 ? 1 : 0) as Seat);
+  const badge = $derived(view ? badgeSeat(view) : undefined);
+  const lit = $derived(
+    mode === 'hotseat' && orientation === 'fixed' && view?.toMove !== undefined
+      ? view.toMove
+      : undefined
+  );
+  // The track speaks of "you" only to a player with one seat.
+  const trackSeat = $derived(
+    mySeats.length === 1 && mySeats[0] !== undefined ? (mySeats[0] === 1 ? 1 : 0) : undefined
+  );
+
+  const cardsLeft = $derived(view ? view.structure.filter((s) => s.state !== 'empty').length : 0);
+  const pendingKey = $derived(
+    session.pending?.frame.t === 'act' ? session.pending.frame.key : undefined
+  );
+  const pendingIndex = $derived(pendingSlot(view, pendingKey));
+  const marked = $derived(view && ui.pickFor ? pickableSlots(view, ui.pickFor) : undefined);
+  const selectedSlot = $derived<SlotView | undefined>(
+    view && ui.selected !== null ? view.structure[ui.selected] : undefined
+  );
+
+  const turn = $derived(
+    turnState({
+      view,
+      mode,
+      mySeats: mySeats.filter((s): s is Seat => s === 0 || s === 1),
+      conn: session.conn,
+      pending: session.pending !== null,
+      slow: session.slow,
+      thinking: frame?.thinking === 0 || frame?.thinking === 1 ? frame.thinking : undefined
+    })
+  );
+
+  const showPass = $derived(
+    !!view &&
+      passPending({
+        mode,
+        enabled: passDevice,
+        phase: view.phase,
+        toMove: view.toMove,
+        holder: ui.holder
+      })
+  );
+  const lastLines = $derived(frame ? eventLines(frame.events, names) : []);
+
+  // The wonder sheet's wonder, its owner and whether the view can build it now.
+  const wonderOwner = $derived.by(() => {
+    if (!view || !ui.wonder) return undefined;
+    for (const p of view.players) {
+      const w = p.wonders.find((x) => x.wonder === ui.wonder);
+      if (w) return { seat: p.seat as Seat, state: w, coins: p.coins };
+    }
+    return undefined;
+  });
+  const wonderInfo = $derived(
+    view && ui.wonder && wonderOwner?.seat === view.toMove
+      ? wonderStatus(view, ui.wonder)
+      : { buildable: false }
+  );
+
+  // The Session's frames, in order: the log, undo bookkeeping, the hot-seat
+  // device holder and the "Built ... · Undo" toast. Runs outside any effect.
+  function onFrame(f: State): void {
+    if (f.code !== roomCode) {
+      roomCode = f.code;
+      ui.reset();
+      toasts.clear();
+    }
+    let acked: Acked = null;
+    if (f.ack && f.ack.clientId === session.clientId && lastRequest?.seq === f.ack.seq) {
+      acked = lastRequest.kind;
+    }
+    const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
+    const holderBefore = ui.holder;
+    ui.record(f, acked, passOn);
+    if (acked === 'act' && f.room.mode !== 'online' && f.canUndo) {
+      const passNext =
+        f.room.mode === 'hotseat' &&
+        passOn &&
+        f.view.toMove !== undefined &&
+        f.view.toMove !== holderBefore;
+      const line = eventLines(f.events, seatNames(f.room))[0];
+      if (line && !passNext) {
+        toasts.show(line, {
+          kind: 'success',
+          actionLabel: t('game.toast.undo'),
+          onAction: undo
+        });
+      }
+    }
+  }
+
+  // The session prop is fixed for the screen's life (a new room is a new
+  // frame on the same session, handled by the code check above).
+  function listen(): () => void {
+    return session.subscribe(onFrame);
+  }
+  const unsubscribe = listen();
+
+  onDestroy(() => {
+    unsubscribe();
+    toasts.clear();
+  });
+
+  function act(key: string): void {
+    if (!inputOpen) return;
+    if (session.act(key)) {
+      lastRequest = { seq: session.seq, kind: 'act' };
+      ui.sent();
+    }
+  }
+
+  function undo(): void {
+    if (!presenter.idle) return;
+    if (session.undo()) {
+      lastRequest = { seq: session.seq, kind: 'undo' };
+      ui.sent();
+      toasts.clear();
+    }
+  }
+
+  function selectSlot(slot: SlotView): void {
+    ui.selectSlot(slot.index);
+  }
+
+  function selectWonder(w: WonderView): void {
+    ui.openWonder(w.wonder);
+  }
+
+  function onKey(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && ui.pickFor && ui.sheet === null) ui.cancelWonderPick();
+  }
+</script>
+
+<svelte:window onkeydown={onKey} />
+
+{#snippet trackAndTokens(compact: boolean)}
+  {#if view}
+    <MilitaryTrack
+      military={view.military}
+      viewerSeat={trackSeat}
+      {compact}
+      class={compact ? 'min-w-24 flex-1' : 'w-full'}
+    />
+    <ProgressTokenRow tokens={view.boardTokens} {compact} class="justify-center" />
+  {/if}
+{/snippet}
+
+{#snippet seatPanel(seat: Seat, cls: string)}
+  {#if view}
+    <SeatPanel
+      {variant}
+      name={names[seat]}
+      {seat}
+      player={view.players[seat]}
+      military={view.military}
+      score={view.scorePreview[seat]}
+      lit={lit === seat}
+      onwonder={mySeats.includes(seat) ? selectWonder : undefined}
+      onopen={() => ui.openCity(seat)}
+      class={cls}
+    />
+  {/if}
+{/snippet}
+
+<div
+  class="game-screen h-full w-full overflow-hidden"
+  data-layout={layout}
+  data-draft={view?.phase === 'wonderDraft' ? '' : undefined}
+  data-phase={view?.phase}
+  data-home={home}
+  data-pick={ui.pickFor ?? undefined}
+  dir="ltr"
+  aria-label={t('game.board')}
+  role="region"
+>
+  <div class="area-top" dir={i18n.dir}>
+    <TopBar
+      age={view?.age ?? 0}
+      {cardsLeft}
+      {canUndo}
+      onUndo={mode === 'online' ? undefined : undo}
+      onOpenLog={() => ui.openLog()}
+      onOpenSettings={() => ui.openSettings()}
+      class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
+    >
+      {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}
+        {@render trackAndTokens(true)}
+      {/if}
+      {#if mode === 'online'}
+        <ConnectionPill conn={session.conn} />
+      {/if}
+    </TopBar>
+  </div>
+
+  {#if !view}
+    <div class="area-main grid place-items-center p-4" dir={i18n.dir}>
+      <p class="text-fg-muted" role="status" data-conn={session.conn}>
+        {session.conn === 'open' ? t('game.loading') : t(connMessage(session.conn))}
+      </p>
+    </div>
+  {:else if view.phase === 'wonderDraft'}
+    <div class="area-main min-h-0 overflow-y-auto" dir={i18n.dir}>
+      <Draft {view} canAct={inputOpen} onact={act} />
+    </div>
+  {:else}
+    <div class="area-away min-h-0 min-w-0" dir={i18n.dir}>
+      {@render seatPanel(away, 'h-full overflow-y-auto')}
+    </div>
+
+    {#if layout !== 'phone-landscape'}
+      <div class="area-board flex min-w-0 flex-col items-center gap-1.5 px-1" dir={i18n.dir}>
+        {@render trackAndTokens(false)}
+      </div>
+    {/if}
+
+    <div class="area-structure relative min-h-0 min-w-0">
+      <CardStructure
+        slots={view.structure}
+        age={view.age}
+        seat={badge}
+        toMove={view.toMove}
+        selected={ui.selected ?? undefined}
+        pending={pendingIndex}
+        {marked}
+        onselect={selectSlot}
+      />
+      {#if view.phase === 'gameOver'}
+        <div
+          class="pointer-events-none absolute inset-0 z-20 flex items-start justify-center overflow-y-auto p-2"
+          dir={i18n.dir}
+        >
+          <div
+            class="pointer-events-auto w-full max-w-lg rounded-panel border border-rule bg-panel/95 shadow-panel"
+          >
+            <GameOver
+              {view}
+              onrematch={frame?.room.status === 'finished' && mySeats.length > 0
+                ? () => session.rematch()
+                : undefined}
+              {onhome}
+            />
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <div class="area-home min-h-0 min-w-0" dir={i18n.dir}>
+      {@render seatPanel(home, 'h-full overflow-y-auto')}
+    </div>
+  {/if}
+
+  <div class="area-turn flex min-w-0 flex-col" dir={i18n.dir}>
+    {#if session.notice && session.notice !== dismissedNotice}
+      <div
+        class="flex items-center gap-2 border-s-4 border-t border-cinnabar bg-panel px-3 py-1.5 text-sm text-fg"
+        role="alert"
+        data-notice={session.notice.code}
+      >
+        <span class="min-w-0 flex-1">{t(session.notice.message)}</span>
+        <button
+          type="button"
+          class="min-h-11 shrink-0 rounded-control px-2 font-semibold text-fg-muted hover:text-fg"
+          onclick={() => (dismissedNotice = session.notice)}
+        >
+          {t('shell.dismiss')}
+        </button>
+      </div>
+    {/if}
+    {#if session.catalogStale}
+      <p class="border-t border-rule bg-panel px-3 py-1.5 text-sm text-fg" role="alert">
+        {t('session.catalogStale')}
+      </p>
+    {/if}
+    {#if view?.pending}
+      <ChoiceHost {view} canAct={inputOpen} onact={act} />
+    {/if}
+    {#if ui.pickFor}
+      <div
+        class="flex min-h-13 items-center justify-between gap-2 border-t border-rule bg-accent-soft px-3 py-1.5 text-accent-soft-fg"
+        role="status"
+        data-wonder-pick-bar={ui.pickFor}
+      >
+        <span class="text-sm font-semibold">
+          {t('game.pick.prompt', { wonder: wonderName(ui.pickFor) })}
+        </span>
+        <button
+          type="button"
+          class="min-h-11 shrink-0 rounded-control border border-rule-strong bg-panel px-3 text-sm font-semibold text-fg"
+          data-control="wonder-pick-cancel"
+          onclick={() => ui.cancelWonderPick()}
+        >
+          {t('game.pick.cancel')}
+        </button>
+      </div>
+    {:else}
+      <TurnBar
+        state={turn}
+        {names}
+        onRetry={() => session.retry()}
+        class="pb-[max(0.375rem,var(--safe-b))]"
+      />
+    {/if}
+  </div>
+</div>
+
+{#if view}
+  <CardSheet
+    open={ui.isOpen('card') && !!selectedSlot && selectedSlot.state !== 'empty'}
+    {view}
+    slot={selectedSlot}
+    seat={badge}
+    opponentName={names[badge === 1 ? 0 : 1]}
+    {myTurn}
+    canAct={inputOpen}
+    {confirm}
+    step={ui.step}
+    pickFor={ui.pickFor}
+    onact={act}
+    onwonders={() => ui.showWonders()}
+    onback={() => ui.backToCard()}
+    onclose={() => ui.close()}
+  />
+
+  <WonderSheet
+    open={ui.isOpen('wonder') && !!wonderOwner}
+    slug={ui.wonder}
+    state={wonderOwner?.state}
+    buildable={wonderInfo.buildable}
+    reason={wonderInfo.reason}
+    coins={wonderOwner?.coins}
+    canAct={inputOpen}
+    onbuild={(slug) => ui.startWonderPick(slug)}
+    onclose={() => ui.close()}
+  />
+
+  <CitySheet
+    bind:open={() => ui.isOpen('city'), (v) => !v && ui.close()}
+    {names}
+    players={view.players}
+    military={view.military}
+    scores={view.scorePreview}
+    bind:activeSeat={ui.citySeat}
+  />
+
+  <LogSheet bind:open={() => ui.isOpen('log'), (v) => !v && ui.close()} events={ui.log} {names} />
+{/if}
+
+<Sheet
+  bind:open={() => ui.isOpen('settings'), (v) => !v && ui.close()}
+  titleId="game-settings-title"
+>
+  <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
+    <h2 id="game-settings-title" class="font-display text-xl text-fg">
+      {t('game.settings.title')}
+    </h2>
+    <Settings />
+  </div>
+</Sheet>
+
+{#if showPass && view && view.toMove !== undefined}
+  {@const next = view.toMove === 1 ? 1 : 0}
+  <div class="fixed inset-0 z-40" data-pass-device={next}>
+    <PassDevice
+      nextName={names[next]}
+      nextSeat={next}
+      summary={lastLines}
+      {canUndo}
+      previousName={ui.holder !== null ? names[ui.holder] : undefined}
+      onReady={() => ui.ready(view?.toMove)}
+      onUndo={undo}
+    />
+  </div>
+{/if}
+
+<ToastList {toasts} placement="top" />
+<LiveRegion message={lastLines.join(' ')} />
+
+<style>
+  .game-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'top' 'away' 'board' 'structure' 'home' 'turn';
+    row-gap: 0.375rem;
+  }
+  .area-top {
+    grid-area: top;
+  }
+  .area-away {
+    grid-area: away;
+    padding-inline: max(0.5rem, var(--safe-l)) max(0.5rem, var(--safe-r));
+  }
+  .area-board {
+    grid-area: board;
+  }
+  .area-structure {
+    grid-area: structure;
+    padding-inline: max(0.5rem, var(--safe-l)) max(0.5rem, var(--safe-r));
+    padding-block: 0.25rem;
+  }
+  .area-home {
+    grid-area: home;
+    padding-inline: max(0.5rem, var(--safe-l)) max(0.5rem, var(--safe-r));
+  }
+  .area-turn {
+    grid-area: turn;
+  }
+  .area-main {
+    grid-area: main;
+  }
+
+  /* The draft and the loading state: the top bar, one main area, the turn bar. */
+  .game-screen[data-draft],
+  .game-screen:has(> .area-main) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'top' 'main' 'turn';
+  }
+
+  /* Phone landscape: my strip and the turn bar / structure / opponent strip,
+     with the track and tokens in the top bar. */
+  .game-screen[data-layout='phone-landscape']:not([data-draft]):not(:has(> .area-main)) {
+    grid-template-columns: minmax(0, 11.5rem) minmax(0, 1fr) minmax(0, 11.5rem);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'top top top'
+      'home structure away'
+      'turn structure away';
+    row-gap: 0.25rem;
+  }
+  .game-screen[data-layout='phone-landscape'] .area-home,
+  .game-screen[data-layout='phone-landscape'] .area-away {
+    padding-inline: max(0.25rem, var(--safe-l)) 0.25rem;
+    padding-block-end: 0.25rem;
+  }
+  .game-screen[data-layout='phone-landscape'] .area-away {
+    padding-inline: 0.25rem max(0.25rem, var(--safe-r));
+  }
+  .game-screen[data-layout='phone-landscape'] .area-structure {
+    padding-inline: 0.25rem;
+  }
+
+  /* Desktop: my city panel / board / opponent's city panel. */
+  .game-screen[data-layout='desktop']:not([data-draft]):not(:has(> .area-main)) {
+    grid-template-columns: 300px minmax(0, 1fr) 300px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'top top top'
+      'home board away'
+      'home structure away'
+      'home turn away';
+    column-gap: 0.75rem;
+    row-gap: 0.5rem;
+  }
+  .game-screen[data-layout='desktop'] .area-home,
+  .game-screen[data-layout='desktop'] .area-away {
+    padding-block: 0.25rem 0.75rem;
+  }
+  .game-screen[data-layout='desktop'] .area-board {
+    padding-block-start: 0.25rem;
+  }
+  @media (min-width: 100rem) {
+    .game-screen[data-layout='desktop']:not([data-draft]):not(:has(> .area-main)) {
+      grid-template-columns: 380px minmax(0, 1fr) 380px;
+    }
+  }
+</style>
