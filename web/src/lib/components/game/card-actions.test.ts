@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { protocolFixtureNames, protocolFixtures } from '$lib/wire/fixtures.gen';
 import type { GameEvent, View } from '$lib/wire';
 import {
+  botPick,
   cardActions,
   eventLines,
   hasActions,
@@ -163,5 +164,43 @@ describe('eventLines', () => {
       'Sara built Lumber Yard.',
       'Omid discarded Baths for 2 coins.'
     ]);
+  });
+});
+
+describe('botPick', () => {
+  const v = view('age-1-start-seat0');
+  const faceUp = v.structure.find((s) => s.state === 'faceUp' && s.accessible && s.card);
+  const ev = (e: Partial<GameEvent> & Pick<GameEvent, 'kind'>): GameEvent => ({
+    private: false,
+    ...e
+  });
+
+  it('finds the slot of the card the bot builds, discards or puts under a wonder', () => {
+    if (!faceUp?.card) throw new Error('no face-up card in the fixture');
+    for (const kind of ['build', 'discard', 'wonder'] as const) {
+      const next = { events: [ev({ kind, seat: 1, card: faceUp.card, wonder: 'pyramids' })] };
+      expect(botPick(v, next, 1)).toEqual({ slot: faceUp.index });
+    }
+  });
+
+  it('names the wonder the bot drafts', () => {
+    const next = { events: [ev({ kind: 'draft', seat: 1, wonder: 'colossus' })] };
+    expect(botPick(v, next, 1)).toEqual({ wonder: 'colossus' });
+  });
+
+  it('ignores the other seat, other events and cards not on screen', () => {
+    if (!faceUp?.card) throw new Error('no face-up card in the fixture');
+    expect(botPick(v, { events: [ev({ kind: 'build', seat: 0, card: faceUp.card })] }, 1)).toBe(
+      undefined
+    );
+    expect(botPick(v, { events: [ev({ kind: 'token', seat: 1, token: 'law' })] }, 1)).toBe(
+      undefined
+    );
+    expect(botPick(v, { events: [ev({ kind: 'build', seat: 1, card: 'no-such-card' })] }, 1)).toBe(
+      undefined
+    );
+    expect(botPick(null, { events: [] }, 1)).toBe(undefined);
+    expect(botPick(v, null, 1)).toBe(undefined);
+    expect(botPick(v, { events: [] }, undefined)).toBe(undefined);
   });
 });

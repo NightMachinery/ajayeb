@@ -14,6 +14,7 @@ import type {
   Mode,
   Phase,
   Reason,
+  State,
   View
 } from '$lib/wire';
 import { formatLogEvent, type SeatNames } from '$lib/view/log-format';
@@ -185,4 +186,35 @@ export function eventLines(events: readonly GameEvent[], names: SeatNames): stri
     if (line) out.push(line.text);
   }
   return out;
+}
+
+/** What a bot's move is about to take, for the pre-roll highlight. */
+export interface BotPick {
+  /** The structure slot of the card it takes (build, discard or a wonder). */
+  slot?: number;
+  /** The wonder it takes in the draft. */
+  wonder?: string;
+}
+
+/**
+ * What the bot's answer `next` takes from the view on screen: the slot of
+ * the card it builds, discards or puts under a wonder, or the wonder it
+ * drafts. Read from the answer's own events (by the seat that was thinking)
+ * and the slots on screen; undefined when it takes nothing visible.
+ */
+export function botPick(
+  view: Pick<View, 'structure'> | null,
+  next: Pick<State, 'events'> | null,
+  seat: number | undefined
+): BotPick | undefined {
+  if (!view || !next || seat === undefined) return undefined;
+  for (const e of next.events) {
+    if (e.seat !== seat) continue;
+    if (e.kind === 'draft' && e.wonder !== undefined) return { wonder: e.wonder };
+    if ((e.kind === 'build' || e.kind === 'discard' || e.kind === 'wonder') && e.card) {
+      const slot = view.structure.find((s) => s.card === e.card && s.state === 'faceUp');
+      return slot ? { slot: slot.index } : undefined;
+    }
+  }
+  return undefined;
 }

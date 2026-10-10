@@ -25,7 +25,8 @@ export interface TurnContext {
   pending: boolean;
   /** The pending request has been in flight 300ms or more. */
   slow: boolean;
-  /** The seat whose bot is searching right now, if any. */
+  /** The seat whose bot is searching right now (the state frame's
+   *  `thinking`), if any. */
   thinking?: Seat;
 }
 
@@ -64,7 +65,14 @@ export function turnState(ctx: TurnContext): TurnState {
   const toMove = view.toMove as Seat | undefined;
   if (toMove === undefined) return { kind: 'connecting' };
 
-  if (!ctx.mySeats.includes(toMove)) return { kind: 'waitingOpponent', seat: toMove };
+  // In a bot room the other seat is always the bot: between its thinking
+  // frames (a resync, a frame the outbox merged) it is still the one to
+  // answer, so it reads as thinking rather than as an opponent to wait for.
+  if (!ctx.mySeats.includes(toMove)) {
+    return ctx.mode === 'ai'
+      ? { kind: 'aiThinking', seat: toMove }
+      : { kind: 'waitingOpponent', seat: toMove };
+  }
 
   if (view.pending && view.pending.seat === toMove) {
     return { kind: 'pendingChoice', seat: toMove, pendingKind: view.pending.kind };

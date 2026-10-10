@@ -1,13 +1,15 @@
 <script lang="ts">
   // The tablet/desktop column for one seat (UX design sec. 3): name, crest,
   // coins and score, city cards as band stacks grouped by colour, wonders
-  // as a readable list, science and owned tokens. The same data as
-  // PlayerStrip, laid out as a column instead of a wrapping row.
+  // as a readable list, science and owned tokens, and a calm thinking
+  // indicator while this seat's bot thinks. The same data as PlayerStrip,
+  // laid out as a column instead of a wrapping row.
   import { t } from '$lib/i18n';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
   import type { Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import CityBand from './CityBand.svelte';
   import ResourceChips from './ResourceChips.svelte';
@@ -22,10 +24,21 @@
     score?: ScoreView;
     /** When given, the wonders still to build are buttons (the wonder-first flow). */
     onwonder?: (wonder: WonderView) => void;
+    /** This seat's bot is thinking: a calm indicator shows by the name. */
+    thinking?: boolean;
     class?: string;
   }
 
-  let { name, seat, player, military, score, onwonder, class: className = '' }: Props = $props();
+  let {
+    name,
+    seat,
+    player,
+    military,
+    score,
+    onwonder,
+    thinking = false,
+    class: className = ''
+  }: Props = $props();
 
   const COLORS = [
     'brown',
@@ -69,6 +82,15 @@
     <div class="flex min-w-0 items-center gap-1.5">
       <Icon name={crestName} class="shrink-0 text-xl {crestTextClass}" />
       <span class="min-w-0 truncate font-display text-base text-fg" dir="auto">{name}</span>
+      {#if thinking}
+        <span
+          class="flex shrink-0 items-center gap-1 text-xs font-semibold text-fg-muted"
+          data-thinking={seat}
+        >
+          <ThinkingDots class={crestTextClass} />
+          {t('board.player.thinking')}
+        </span>
+      {/if}
     </div>
     <div class="flex items-center gap-2 text-sm font-semibold tabular-nums">
       <span class="flex items-center gap-0.5" title={t('coins.count', { count: player.coins })}>

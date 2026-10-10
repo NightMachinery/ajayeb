@@ -198,3 +198,65 @@ describe('turnState: non-hot-seat turns, from real protocol fixtures', () => {
     expect(turnState(ctx)).toEqual({ kind: 'playAgain', seat: 0 });
   });
 });
+
+describe('turnState: the bot thinking', () => {
+  const thinkingFrame = () => state('state-ai-thinking');
+
+  it('reads the thinking seat from the frame, whatever the view says', () => {
+    const f = thinkingFrame();
+    expect(f.room.mode).toBe('ai');
+    const ctx: TurnContext = {
+      view: f.view,
+      mode: 'ai',
+      mySeats: [0],
+      thinking: 1,
+      ...baseConn
+    };
+    expect(turnState(ctx)).toEqual({ kind: 'aiThinking', seat: 1 });
+  });
+
+  it('a bot seat to move reads as thinking even between thinking frames', () => {
+    const v = view('card-destroyed-seat0');
+    expect(v.toMove).toBe(1);
+    const ctx: TurnContext = { view: v, mode: 'ai', mySeats: [0], ...baseConn };
+    expect(turnState(ctx)).toEqual({ kind: 'aiThinking', seat: 1 });
+  });
+
+  it('the human seat to move in a bot room is the human turn, not thinking', () => {
+    const ctx: TurnContext = {
+      view: view('age-1-start-seat0'),
+      mode: 'ai',
+      mySeats: [0],
+      ...baseConn
+    };
+    expect(turnState(ctx)).toEqual({ kind: 'yourTurn', seat: 0 });
+  });
+
+  it('the human sitting at the Moon sees the Sun bot thinking', () => {
+    const v = view('age-1-start-seat1');
+    expect(v.toMove).toBe(0);
+    expect(turnState({ view: v, mode: 'ai', mySeats: [1], ...baseConn })).toEqual({
+      kind: 'aiThinking',
+      seat: 0
+    });
+    expect(turnState({ view: v, mode: 'ai', mySeats: [1], thinking: 0, ...baseConn })).toEqual({
+      kind: 'aiThinking',
+      seat: 0
+    });
+  });
+
+  it('a request in flight and a dropped connection still win over thinking', () => {
+    const f = thinkingFrame();
+    const ctx: TurnContext = { view: f.view, mode: 'ai', mySeats: [0], thinking: 1, ...baseConn };
+    expect(turnState({ ...ctx, pending: true })).toEqual({ kind: 'sent', slow: false });
+    expect(turnState({ ...ctx, conn: 'reconnecting' })).toEqual({ kind: 'reconnecting' });
+  });
+
+  it('an online opponent to move is still waited for', () => {
+    const v = view('card-destroyed-seat0');
+    expect(turnState({ view: v, mode: 'online', mySeats: [0], ...baseConn })).toEqual({
+      kind: 'waitingOpponent',
+      seat: 1
+    });
+  });
+});

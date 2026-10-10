@@ -23,7 +23,16 @@
   // keys, sent through the Session. Input is open only while
   // presenter.idle && session.canAct. The draft, a pending choice and the end
   // of the game are the Draft, ChoiceHost and GameOver screens, mounted with
-  // their fixed props.
+  // their fixed props and the seat names (a bot seat is named by its
+  // persona).
+  //
+  // Against the bot (UX design section 5, "AI thinking"): the turn bar and
+  // the bot's strip or panel say it is thinking; the Presenter holds its
+  // answer for the thinking dwell, then previews it, and the slot it takes
+  // (or the wonder it drafts) carries data-bot-pick meanwhile. The military
+  // track puts the bottom (or left) seat's capital at its left end, so a
+  // player at the Moon sees it mirrored. The top bar's game menu leads Home;
+  // a bot or hot-seat room stays on Home's Continue list.
   import { onDestroy } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderName } from '$lib/components/card/effect-text';
@@ -57,6 +66,7 @@
   import ProgressTokenRow from '../token/ProgressTokenRow.svelte';
   import CardSheet from './CardSheet.svelte';
   import {
+    botPick,
     eventLines,
     homeSeat,
     needsConfirm,
@@ -65,7 +75,7 @@
     pickableSlots,
     wonderStatus
   } from './card-actions';
-  import { seatNames } from './names';
+  import { botSeat, seatNames } from './names';
   import SeatPanel from './SeatPanel.svelte';
 
   interface Props {
@@ -104,7 +114,9 @@
   const inputOpen = $derived(presenter.idle && session.canAct);
   const myTurn = $derived(!!frame?.you.canAct);
   const confirm = $derived(needsConfirm(mode, settings.value.confirmMoves));
-  const canUndo = $derived(mode !== 'online' && presenter.idle && session.canUndo);
+  // Undo stays available while a bot's answer is held on screen: undo()
+  // shows it at once and then takes it back with the player's move.
+  const canUndo = $derived(mode !== 'online' && session.canUndo);
 
   const layout = $derived(breakpoints.viewport);
   const variant = $derived(
@@ -127,6 +139,8 @@
       ? view.toMove
       : undefined
   );
+  // The bot of an ai room, and the seat thinking now (the turn bar's state).
+  const bot = $derived(botSeat(frame?.room));
   // The track speaks of "you" only to a player with one seat.
   const trackSeat = $derived(
     mySeats.length === 1 && mySeats[0] !== undefined ? (mySeats[0] === 1 ? 1 : 0) : undefined
@@ -153,6 +167,9 @@
       thinking: frame?.thinking === 0 || frame?.thinking === 1 ? frame.thinking : undefined
     })
   );
+  const thinkingSeat = $derived(turn.kind === 'aiThinking' ? turn.seat : undefined);
+  // During the Presenter's pre-roll: what the bot's answer takes.
+  const pick = $derived(botPick(view, presenter.preview, frame?.thinking));
 
   const showPass = $derived(
     !!view &&
@@ -227,6 +244,9 @@
   onDestroy(() => {
     unsubscribe();
     toasts.clear();
+    // The room is left with this screen: the next one starts blank rather
+    // than with this room's last frame.
+    presenter.clear();
   });
 
   function act(key: string): void {
@@ -238,7 +258,9 @@
   }
 
   function undo(): void {
-    if (!presenter.idle) return;
+    // A bot's answer held for its dwell is shown at once, so the undo takes
+    // back what the player can see.
+    presenter.hurry();
     if (session.undo()) {
       lastRequest = { seq: session.seq, kind: 'undo' };
       ui.sent();
@@ -254,6 +276,24 @@
     ui.openWonder(w.wonder);
   }
 
+  /**
+   * Marks the element the bot's answer takes, for the pre-roll: the slot of
+   * its card, or the draft offer of its wonder. DOM only (an attribute the
+   * stylesheet below draws); it never writes state.
+   */
+  function markBotPick(selector: string | undefined) {
+    return (el: HTMLElement) => {
+      if (!selector) return;
+      const target = el.querySelector(selector);
+      target?.setAttribute('data-bot-pick', '');
+      return () => target?.removeAttribute('data-bot-pick');
+    };
+  }
+  const pickSlot = $derived(pick?.slot !== undefined ? `[data-slot="${pick.slot}"]` : undefined);
+  const pickWonder = $derived(
+    pick?.wonder !== undefined ? `[data-wonder-offer="${CSS.escape(pick.wonder)}"]` : undefined
+  );
+
   function onKey(event: KeyboardEvent): void {
     if (event.key === 'Escape' && ui.pickFor && ui.sheet === null) ui.cancelWonderPick();
   }
@@ -266,6 +306,7 @@
     <MilitaryTrack
       military={view.military}
       viewerSeat={trackSeat}
+      leftSeat={home}
       {compact}
       class={compact ? 'min-w-24 flex-1' : 'w-full'}
     />
@@ -283,6 +324,7 @@
       military={view.military}
       score={view.scorePreview[seat]}
       lit={lit === seat}
+      thinking={thinkingSeat === seat}
       onwonder={mySeats.includes(seat) ? selectWonder : undefined}
       onopen={() => ui.openCity(seat)}
       class={cls}
@@ -297,6 +339,8 @@
   data-phase={view?.phase}
   data-home={home}
   data-pick={ui.pickFor ?? undefined}
+  data-bot={bot}
+  data-thinking={thinkingSeat}
   dir="ltr"
   aria-label={t('game.board')}
   role="region"
@@ -309,6 +353,7 @@
       onUndo={mode === 'online' ? undefined : undo}
       onOpenLog={() => ui.openLog()}
       onOpenSettings={() => ui.openSettings()}
+      onHome={onhome}
       class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
     >
       {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}
@@ -321,18 +366,24 @@
   </div>
 
   {#if !view}
-    <div class="area-main grid place-items-center p-4" dir={i18n.dir}>
+    <div class="area-main relative grid place-items-center p-4" dir={i18n.dir}>
       <p class="text-fg-muted" role="status" data-conn={session.conn}>
         {session.conn === 'open' ? t('game.loading') : t(connMessage(session.conn))}
       </p>
     </div>
   {:else if view.phase === 'wonderDraft'}
-    <div class="area-main min-h-0 overflow-y-auto" dir={i18n.dir}>
-      <Draft {view} canAct={inputOpen} onact={act} />
+    <div
+      class="area-main relative min-h-0 overflow-y-auto"
+      dir={i18n.dir}
+      {@attach markBotPick(pickWonder)}
+    >
+      <Draft {view} canAct={inputOpen} onact={act} {names} />
     </div>
   {:else}
-    <div class="area-away min-h-0 min-w-0" dir={i18n.dir}>
-      {@render seatPanel(away, 'max-h-full overflow-y-auto')}
+    <!-- The panels scroll inside a positioned box, so nothing absolutely
+         positioned in them (sr-only text) can reach past it and stretch the page. -->
+    <div class="area-away relative min-h-0 min-w-0" dir={i18n.dir}>
+      {@render seatPanel(away, 'relative max-h-full overflow-y-auto')}
     </div>
 
     {#if layout !== 'phone-landscape'}
@@ -341,7 +392,7 @@
       </div>
     {/if}
 
-    <div class="area-structure relative min-h-0 min-w-0">
+    <div class="area-structure relative min-h-0 min-w-0" {@attach markBotPick(pickSlot)}>
       <CardStructure
         slots={view.structure}
         age={view.age}
@@ -357,6 +408,7 @@
         <div class="contents" dir={i18n.dir}>
           <GameOver
             {view}
+            {names}
             onrematch={frame?.room.status === 'finished' && mySeats.length > 0
               ? () => session.rematch()
               : undefined}
@@ -366,8 +418,8 @@
       {/if}
     </div>
 
-    <div class="area-home min-h-0 min-w-0" dir={i18n.dir}>
-      {@render seatPanel(home, 'max-h-full overflow-y-auto')}
+    <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir}>
+      {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
     </div>
   {/if}
 
@@ -398,7 +450,7 @@
          screen is up, because its panels are modal dialogs that would cover
          that screen and make it inert. -->
     {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
-      <ChoiceHost {view} canAct={inputOpen} onact={act} />
+      <ChoiceHost {view} canAct={inputOpen} onact={act} {names} />
     {/if}
     {#if ui.pickFor}
       <div
@@ -544,6 +596,26 @@
   }
   .area-main {
     grid-area: main;
+  }
+
+  /* The pre-roll: the card (or draft wonder) the bot is about to take, ringed
+     in its crest colour while its thinking frame is still up. A static ring,
+     so it reads the same with reduced motion. */
+  .game-screen :global([data-bot-pick]) {
+    outline: 3px solid var(--bot-ink, var(--accent));
+    outline-offset: 3px;
+    box-shadow:
+      0 0 0 6px color-mix(in oklch, var(--bot-ink, var(--accent)) 28%, transparent),
+      0 6px 14px -4px oklch(0.2 0.04 260 / 0.5);
+  }
+  .game-screen :global(li[data-bot-pick]) {
+    border-radius: var(--radius-panel, 0.75rem);
+  }
+  .game-screen[data-bot='0'] {
+    --bot-ink: var(--sun);
+  }
+  .game-screen[data-bot='1'] {
+    --bot-ink: var(--moon);
   }
 
   /* The draft and the loading state: the top bar, one main area, the turn bar. */

@@ -3,12 +3,14 @@
   // the running score preview, the five resource chips, science, wonders
   // and owned tokens, in one compact row that wraps onto two lines at 360px
   // wide. Glows when this seat is in military or scientific danger
-  // (lib/view/threats.ts). A leaf component: every number comes from the
+  // (lib/view/threats.ts), and shows a calm thinking indicator while this
+  // seat's bot is thinking. A leaf component: every number comes from the
   // view through plain props, nothing computed here but the danger check.
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
   import type { MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import ResourceChips from './ResourceChips.svelte';
   import ScienceTracker from './ScienceTracker.svelte';
@@ -24,6 +26,8 @@
     score?: ScoreView;
     /** When given, the wonders still to build are buttons (the wonder-first flow). */
     onwonder?: (wonder: WonderView) => void;
+    /** This seat's bot is thinking: a calm indicator shows by the name. */
+    thinking?: boolean;
     /** When given, the crest and name are a button that opens this city in full. */
     onopen?: () => void;
     /** The label of that button. */
@@ -38,6 +42,7 @@
     military,
     score,
     onwonder,
+    thinking = false,
     onopen,
     openLabel,
     class: className = ''
@@ -70,6 +75,16 @@
       <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
       <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
     </div>
+  {/if}
+
+  {#if thinking}
+    <span
+      class="-ms-1.5 flex items-center gap-1 text-xs font-semibold text-fg-muted"
+      data-thinking={seat}
+    >
+      <ThinkingDots class={crestTextClass} />
+      {t('board.player.thinking')}
+    </span>
   {/if}
 
   <div class="flex items-center gap-2 text-sm font-semibold tabular-nums">

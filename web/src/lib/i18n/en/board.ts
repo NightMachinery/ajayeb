@@ -92,6 +92,8 @@ export const board = {
   'board.player.points': { one: '{count} point', other: '{count} points' },
   'board.player.scorePreview': 'If the game ended now: {total} points',
   'board.player.chains': 'Builds free: {count}',
+  // The calm indicator on a bot's strip or panel while it thinks.
+  'board.player.thinking': 'thinking',
 
   // TurnBar (lib/view/turn.ts supplies the state; this file supplies the
   // wording). 'turn.player' (common.ts) covers the plain "{name}'s turn".

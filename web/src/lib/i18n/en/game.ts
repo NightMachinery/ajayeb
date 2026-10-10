@@ -111,6 +111,18 @@ export const game = {
   'game.pick.effectLost': 'Its effect is lost: the card goes face down under the wonder.',
   'game.pick.notThisCard': '{card} cannot go under {wonder} now.',
 
+  // The bot's persona, by level (the room's seat names a bot by it).
+  'game.persona.easy': 'Apprentice',
+  'game.persona.normal': 'Scholar',
+  'game.persona.hard': 'Master',
+
+  // The game menu in the top bar.
+  'game.menu.open': 'Game menu',
+  'game.menu.home': 'Home',
+  'game.menu.homeHint': 'You can continue this game from Home.',
+  'game.menu.settings': 'Settings',
+  'game.menu.log': 'Log',
+
   // Toasts after a move in a local room.
   'game.toast.undo': 'Undo',
 

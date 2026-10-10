@@ -8,7 +8,8 @@
   //   column  desktop: the full CityPanel
   //
   // `lit` rings the panel in the seat's crest colour: the player to move in
-  // a hot-seat game with fixed orientation. Wonder taps (the wonder-first
+  // a hot-seat game with fixed orientation. `thinking` shows the calm
+  // indicator of a bot seat that is thinking. Wonder taps (the wonder-first
   // flow) are reported through onwonder when the caller passes it.
   import type { Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import { cardBySlug } from '$lib/catalog';
@@ -25,6 +26,8 @@
     military: MilitaryView;
     score?: ScoreView;
     lit?: boolean;
+    /** This seat's bot is thinking. */
+    thinking?: boolean;
     onwonder?: (wonder: WonderView) => void;
     onopen?: () => void;
     class?: string;
@@ -38,6 +41,7 @@
     military,
     score,
     lit = false,
+    thinking = false,
     onwonder,
     onopen,
     class: className = ''
@@ -77,9 +81,10 @@
   class="seat-panel min-w-0 rounded-panel {ring} {className}"
   data-seat={seat}
   data-lit={lit ? '' : undefined}
+  data-thinking={thinking ? '' : undefined}
 >
   {#if variant === 'column'}
-    <CityPanel {name} {seat} {player} {military} {score} {onwonder} class="bg-panel" />
+    <CityPanel {name} {seat} {player} {military} {score} {onwonder} {thinking} class="bg-panel" />
   {:else}
     <PlayerStrip
       {name}
@@ -88,6 +93,7 @@
       {military}
       {score}
       {onwonder}
+      {thinking}
       {onopen}
       openLabel={t('game.openCity', { name })}
       class="bg-panel"

@@ -7,6 +7,7 @@
   import { t } from '$lib/i18n';
   import type { TurnState } from '$lib/view/turn';
   import Loader2 from '@lucide/svelte/icons/loader-2';
+  import ThinkingDots from './ThinkingDots.svelte';
 
   interface Props {
     state: TurnState;
@@ -68,7 +69,8 @@
     }
   });
 
-  const spinning = $derived(state.kind === 'sent' || state.kind === 'aiThinking');
+  const spinning = $derived(state.kind === 'sent');
+  const thinking = $derived(state.kind === 'aiThinking');
   const offerRetry = $derived(state.kind === 'sent' && state.slow && !!onRetry);
 </script>
 
@@ -77,12 +79,19 @@
     py-1.5 {className}"
   role="status"
   aria-live="polite"
+  data-turn={state.kind}
 >
-  <span class="flex items-center gap-2 text-sm font-semibold text-fg" data-must-fit>
+  <span class="flex min-w-0 items-center gap-2 text-sm font-semibold text-fg" data-must-fit>
     {#if spinning}
-      <Loader2 class="size-4 animate-spin text-fg-muted" aria-hidden="true" />
+      <Loader2 class="size-4 shrink-0 animate-spin text-fg-muted" aria-hidden="true" />
+    {:else if thinking}
+      <ThinkingDots
+        class="shrink-0 {state.kind === 'aiThinking' && state.seat === 1
+          ? 'text-moon-ink'
+          : 'text-sun-ink'}"
+      />
     {/if}
-    {text}
+    <span class="min-w-0" dir="auto">{text}</span>
   </span>
   {#if offerRetry}
     <button
