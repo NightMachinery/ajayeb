@@ -27,7 +27,9 @@
     'wheel'
   ] as const satisfies readonly ScienceSymbol[];
 
-  const SYMBOL_ICON: Record<ScienceSymbol, IconName> = {
+  // `as const satisfies` keeps each literal name, so `${SYMBOL_ICON[s]}-sm`
+  // types as the seven -sm names rather than as every icon name plus "-sm".
+  const SYMBOL_ICON = {
     globe: 'science-globe',
     scales: 'science-scales',
     sundial: 'science-sundial',
@@ -35,7 +37,7 @@
     'set-square': 'science-set-square',
     quill: 'science-quill',
     wheel: 'science-wheel'
-  };
+  } as const satisfies Record<ScienceSymbol, IconName>;
 
   function labelKey(symbol: ScienceSymbol) {
     switch (symbol) {
@@ -81,7 +83,12 @@
             : 'border-rule/40 text-fg-muted/40'}"
         title={t(labelKey(symbol))}
       >
-        <Icon name={SYMBOL_ICON[symbol]} class={compact ? 'text-xs' : 'text-sm'} />
+        <!-- Compact draws the glyph at 12 px, where the small-grid (-sm)
+             variant reads better than the scaled-down md one. -->
+        <Icon
+          name={compact ? `${SYMBOL_ICON[symbol]}-sm` : SYMBOL_ICON[symbol]}
+          class={compact ? 'text-xs' : 'text-sm'}
+        />
       </li>
     {/each}
   </ul>
