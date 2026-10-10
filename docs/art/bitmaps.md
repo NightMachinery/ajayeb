@@ -37,8 +37,9 @@ tools/art/
   process.mjs       original -> shipped AVIF sizes, with budgets
   sheet.mjs         a contact sheet of chosen attempts (several ids, each
                      at one or more attempts)
-  gate.mjs          objective full-bleed check: fails an attempt whose
-                     margin doesn't read as the image's own paper colour
+  gate.mjs          objective paper and margin check: fails an attempt whose
+                     margin doesn't read as its own paper colour, or whose
+                     paper is too far from PAPER_HEX
   apply-review.mjs  applies a reviewer's decisions.jsonl
   index.mjs         art/manifest.json (approved only) -> available.gen.ts
 
@@ -147,15 +148,39 @@ ever disagree.
 
 3. **`node tools/art/gate.mjs --ids <id>,<id>,... --attempt all`** (or
    `--kind KIND`, or `--all` to sweep every attempt file on disk) runs the
-   objective full-bleed check before a human ever looks at a sheet: it
-   crops each attempt to its kind's main shipped size, finds the crop's
-   own paper colour, and fails any attempt where less than half of the
-   outer 4% band reads as that paper colour (a painting with no margin
-   anywhere, "full-bleed", reads badly once the card or wonder frame
-   feathers into it). This is a margin check only, not a review; a pass
-   here is necessary, not sufficient, for approval. `--json` prints one
-   line of JSON per attempt instead of a table; `--strict` exits 1 if
-   anything failed, for scripting.
+   objective paper and margin check before a human ever looks at a
+   sheet. It crops each attempt to its kind's main shipped size, finds
+   the crop's own paper colour (the corner median), and runs two checks;
+   an attempt passes only when both do:
+   - **The band check** (relative) fails any attempt where less than half
+     of the outer 4% band reads as that paper colour: a painting with no
+     margin anywhere, "full-bleed", reads badly once the card or wonder
+     frame feathers into it.
+   - **The paper check** (absolute, added in `M9.B4`) fails any attempt
+     whose detected paper is more than a CIEDE2000 difference of 18 from
+     `PAPER_HEX` (`#f4ecdc`). The band check alone compares the edge with
+     the image's own corners, so an attempt with gold-leaf corners passed
+     it as if gold were its paper (`wonder/colossus` attempt 1 reads
+     paper `rgb(212,165,84)`). CIEDE2000, a perceptual colour difference,
+     is used instead of RGB distance so one threshold means about the same
+     visible step anywhere in the ivory-to-gold range.
+
+   The threshold was calibrated on all 30 pilot attempts plus the one
+   surviving thumbnail of the lost `card/theater` attempt 1. Every paper a
+   reviewer accepts sits at 14.2 or less (`wonder/colossus` attempt 2, a
+   warm sand about 83 RGB from `PAPER_HEX`, is the 14.2; every card and
+   token is at 10.8 or less). The gold and brown grounds sit at 21.8 or
+   more (the theater thumbnail 21.8, `wonder/colossus` attempt 1 23.6,
+   `wonder/pyramids` attempt 3 27.9). 18 is the middle of that gap.
+   `wonder/pyramids` attempt 1 and `wonder/hanging-gardens` attempt 3 have
+   an ivory-enough paper (13.5 and 13.6) and fail the band check instead.
+   `--paper-max N` moves the threshold (0 turns the paper check off).
+
+   This is a margin and ground check only, not a review; a pass here is
+   necessary, not sufficient, for approval. `--json` prints one line of
+   JSON per attempt instead of a table (with `paperDE` and the list of
+   checks that `failed`); `--strict` exits 1 if anything failed, for
+   scripting.
 
 4. **`node tools/art/sheet.mjs --ids <id>,<id>,... [--name NAME]`** (or
    `--kind KIND` for every generated asset of that kind) builds a
@@ -227,9 +252,9 @@ An attempt is approved only when all of these hold, checked at full
 resolution and at the shipped thumbnail size (cards at 120 px, tokens at
 40 px, matching the render tiers in `design/ux.md` §4):
 
-- **Passes `gate.mjs`'s edge-band check** (step 3 above): the attempt has
-  a real margin of its own paper colour after the shipping crop, not a
-  painting that runs to every edge. This is checked before the sheet is
+- **Passes `gate.mjs`** (step 3 above): the attempt has a real margin of
+  its own paper colour after the shipping crop, not a painting that runs
+  to every edge, and that paper is ivory, not gold leaf or brown. This is checked before the sheet is
   even built, so a full-bleed attempt is caught before a human looks at it.
 - No text, letters, numerals, pseudo-writing or watermark anywhere in the
   image, including as a pedestal frieze, a ruled page or a carved wall.

@@ -13,9 +13,31 @@
 // (the corner-median, like process.mjs), then look at the outer 4% band
 // around all four edges. If at least 50% of that band is within an RGB
 // distance of 45 from the paper colour, the margin reads as paper and the
-// image passes; otherwise the painting runs to the edge and it fails.
+// band check passes; otherwise the painting runs to the edge and it fails.
 // Both numbers are flags (--band, --dist, --threshold), not hardcoded
 // policy, but these are the pilot's agreed defaults (M9.B3).
+//
+// The band check alone is relative: it compares the edge band with the
+// image's own corner colour, so an image whose corners are gold leaf
+// passes as if gold were its paper (the pilot's wonder/colossus #1 reads
+// paper=rgb(212,165,84) and still had 47% of its band "on paper"). So a
+// second, absolute check (M9.B4) also requires the detected paper colour
+// to lie within a CIEDE2000 difference of --paper-max (default 18) of
+// PAPER_HEX, the app's own --card-paper ivory. An attempt passes only when
+// both checks pass.
+//
+// Calibration of --paper-max on every pilot attempt (M9.B4), as the
+// CIEDE2000 difference of each attempt's detected paper from PAPER_HEX:
+// every attempt a reviewer would accept as ivory paper sits at 14.2 or
+// below (wonder/colossus #2, a warm-sand paper about 83 RGB from
+// PAPER_HEX and the warmest paper the pilot review accepts, is the 14.2;
+// every card and token is at 10.8 or below), and the gold or brown grounds
+// sit at 21.8 or above (the lost card/theater #1 thumb 21.8,
+// wonder/colossus #1 23.6, wonder/pyramids #3 27.9). 18 is the midpoint of that gap, about 3.8
+// from each side. Two attempts that must fail are not caught by it on
+// purpose: wonder/pyramids #1 (13.5) and wonder/hanging-gardens #3 (13.6)
+// have a paper as ivory as colossus #2's, and they fail the band check
+// instead, because their paintings run to the edge.
 //
 // This is a margin check only, not a full review: it does not know about
 // text, emblems, crowds or anything else in art/style.md's Do/Don't list.
@@ -43,17 +65,33 @@
 //   --band FRAC     outer band width as a fraction of min(w,h) (default 0.04)
 //   --dist N        RGB distance threshold (default 45)
 //   --threshold FRAC  required in-band fraction to pass (default 0.5)
+//   --paper-max DE  largest CIEDE2000 difference between the detected
+//                   paper and PAPER_HEX that still passes (default 18);
+//                   0 turns the absolute check off
 //   --json          print one JSON object per line instead of a table
 //   --strict        exit 1 if anything failed (default: always exit 0,
 //                   since this is a reporting aid, not a CI gate)
+//   --help          print this usage and exit
 
 import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { rawDir, KIND_SPEC, idKind, idSlug, loadManifest, cropToRawRgb, cornerPaperColor, die } from './lib.mjs';
+import {
+  rawDir,
+  KIND_SPEC,
+  idKind,
+  idSlug,
+  loadManifest,
+  cropToRawRgb,
+  cornerPaperColor,
+  hexToRgb,
+  deltaE2000,
+  PAPER_HEX,
+  die,
+} from './lib.mjs';
 
 function parseArgs(argv) {
-  const args = { attempt: 'latest', band: 0.04, dist: 45, threshold: 0.5 };
+  const args = { attempt: 'latest', band: 0.04, dist: 45, threshold: 0.5, paperMax: 18 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
@@ -65,6 +103,7 @@ function parseArgs(argv) {
     else if (a === '--band') args.band = Number(argv[++i]);
     else if (a === '--dist') args.dist = Number(argv[++i]);
     else if (a === '--threshold') args.threshold = Number(argv[++i]);
+    else if (a === '--paper-max') args.paperMax = Number(argv[++i]);
     else if (a === '--json') args.json = true;
     else if (a === '--strict') args.strict = true;
     else die(`unknown argument "${a}"`, 2);
@@ -162,10 +201,11 @@ async function resolveTargets(args, manifest) {
   return targets;
 }
 
-/** The outer-band pass/fail check itself: crops to the kind's main shipped
- * size, finds the crop's own paper colour, and measures how much of the
- * outer `band` fraction is within `dist` of that colour. */
-async function checkOne(id, file, band, dist, threshold) {
+/** The pass/fail check itself: crops to the kind's main shipped size,
+ * finds the crop's own paper colour, measures how much of the outer `band`
+ * fraction is within `dist` of that colour (the relative band check), and
+ * how far that paper colour is from PAPER_HEX (the absolute paper check). */
+async function checkOne(id, file, band, dist, threshold, paperMax) {
   const kind = idKind(id);
   const spec = KIND_SPEC[kind];
   if (!spec) throw new Error(`gate.mjs: no KIND_SPEC for kind "${kind}" (${id})`);
@@ -191,7 +231,13 @@ async function checkOne(id, file, band, dist, threshold) {
     }
   }
   const frac = total ? within / total : 0;
-  return { paper, bandWidth, w, h, frac, pass: frac >= threshold };
+  const paperDE = deltaE2000(paper, hexToRgb(PAPER_HEX));
+  const bandPass = frac >= threshold;
+  const paperPass = !paperMax || paperDE <= paperMax;
+  const failed = [];
+  if (!bandPass) failed.push('band');
+  if (!paperPass) failed.push('paper');
+  return { paper, paperDE, bandWidth, w, h, frac, bandPass, paperPass, failed, pass: bandPass && paperPass };
 }
 
 async function main() {
@@ -207,7 +253,7 @@ async function main() {
   for (const { id, attempt, file } of targets) {
     let result;
     try {
-      result = await checkOne(id, file, args.band, args.dist, args.threshold);
+      result = await checkOne(id, file, args.band, args.dist, args.threshold, args.paperMax);
     } catch (err) {
       process.stderr.write(`gate.mjs: ${id}${attempt ? ` #${attempt}` : ''}: ${err.message}\n`);
       continue;
@@ -226,6 +272,8 @@ async function main() {
           pass: r.pass,
           fraction: Number(r.frac.toFixed(4)),
           paper: r.paper,
+          paperDE: Number(r.paperDE.toFixed(2)),
+          failed: r.failed,
           bandPx: r.bandWidth,
           size: `${r.w}x${r.h}`,
         }) + '\n',
@@ -235,11 +283,17 @@ async function main() {
     for (const r of rows) {
       const label = `${r.id}${r.attempt ? ` #${r.attempt}` : ''}`;
       const pct = (r.frac * 100).toFixed(1);
-      const paperStr = `rgb(${r.paper.join(',')})`;
+      const paperStr = `rgb(${r.paper.join(',')})`.padEnd(16);
+      const de = r.paperDE.toFixed(1).padStart(4);
+      const why = r.failed.length ? `  failed: ${r.failed.join('+')}` : '';
       process.stdout.write(
-        `${r.pass ? 'PASS' : 'FAIL'}  ${label.padEnd(28)} band=${pct.padStart(5)}%  paper=${paperStr}  (${r.w}x${r.h}, band ${r.bandWidth}px)\n`,
+        `${r.pass ? 'PASS' : 'FAIL'}  ${label.padEnd(28)} band=${pct.padStart(5)}%  paper=${paperStr} dE00=${de}  (${r.w}x${r.h}, band ${r.bandWidth}px)${why}\n`,
       );
     }
+    const paperRule = args.paperMax ? `dE00 <= ${args.paperMax} from ${PAPER_HEX}` : 'absolute paper check off';
+    process.stdout.write(
+      `gate.mjs: band >= ${(args.threshold * 100).toFixed(0)}% within RGB ${args.dist} of the corner paper; ${paperRule}\n`,
+    );
     process.stdout.write(`gate.mjs: ${passCount} pass, ${failCount} fail, ${rows.length} checked\n`);
   }
 

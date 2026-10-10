@@ -375,3 +375,97 @@ export function colorDistance(a, b) {
   const db = a[2] - b[2];
   return Math.sqrt(dr * dr + dg * dg + db * db);
 }
+
+// --- Perceptual colour difference ---------------------------------------
+//
+// gate.mjs's absolute paper check asks "is this image's paper close enough
+// to PAPER_HEX?", which is a question about how different two colours look,
+// so it uses CIEDE2000 (the CIE's current colour-difference formula) on
+// CIELAB (D65 white) rather than the straight-line RGB distance above. RGB
+// distance weighs a step in blue the same as a step in green and treats
+// lightness and saturation alike; CIEDE2000 corrects for both, so one
+// threshold means roughly the same visible difference anywhere in the warm
+// ivory-to-gold range the generated papers fall in.
+
+function srgbToLinear(c) {
+  const v = c / 255;
+  return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+}
+
+/** An 8-bit sRGB triple to CIELAB (D65), as [L, a, b]. */
+export function rgbToLab([r8, g8, b8]) {
+  const r = srgbToLinear(r8);
+  const g = srgbToLinear(g8);
+  const b = srgbToLinear(b8);
+  const x = (0.4124564 * r + 0.3575761 * g + 0.1804375 * b) / 0.95047;
+  const y = 0.2126729 * r + 0.7151522 * g + 0.072175 * b;
+  const z = (0.0193339 * r + 0.119192 * g + 0.9503041 * b) / 1.08883;
+  const f = (t) => (t > 216 / 24389 ? Math.cbrt(t) : ((24389 / 27) * t + 16) / 116);
+  const fx = f(x);
+  const fy = f(y);
+  const fz = f(z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+/**
+ * CIEDE2000 colour difference between two 8-bit sRGB triples (kL = kC =
+ * kH = 1). About 1 is a just-noticeable difference; the pilot's papers sit
+ * between 2 and 28 from PAPER_HEX (see gate.mjs for the calibration).
+ */
+export function deltaE2000(rgb1, rgb2) {
+  return deltaE2000Lab(rgbToLab(rgb1), rgbToLab(rgb2));
+}
+
+/** CIEDE2000 between two CIELAB triples (the formula itself; Sharma, Wu
+ * and Dalal 2005, whose published test pairs it reproduces). */
+export function deltaE2000Lab([L1, a1, b1], [L2, a2, b2]) {
+  const rad = Math.PI / 180;
+  const C1 = Math.hypot(a1, b1);
+  const C2 = Math.hypot(a2, b2);
+  const Cbar7 = ((C1 + C2) / 2) ** 7;
+  const G = 0.5 * (1 - Math.sqrt(Cbar7 / (Cbar7 + 25 ** 7)));
+  const ap1 = (1 + G) * a1;
+  const ap2 = (1 + G) * a2;
+  const Cp1 = Math.hypot(ap1, b1);
+  const Cp2 = Math.hypot(ap2, b2);
+  const hue = (x, y) => {
+    if (x === 0 && y === 0) return 0;
+    const t = Math.atan2(y, x) / rad;
+    return t < 0 ? t + 360 : t;
+  };
+  const hp1 = hue(ap1, b1);
+  const hp2 = hue(ap2, b2);
+  const dL = L2 - L1;
+  const dC = Cp2 - Cp1;
+  let dh = 0;
+  if (Cp1 * Cp2 !== 0) {
+    dh = hp2 - hp1;
+    if (dh > 180) dh -= 360;
+    else if (dh < -180) dh += 360;
+  }
+  const dH = 2 * Math.sqrt(Cp1 * Cp2) * Math.sin((dh * rad) / 2);
+  const Lbar = (L1 + L2) / 2;
+  const Cpbar = (Cp1 + Cp2) / 2;
+  let hbar = hp1 + hp2;
+  if (Cp1 * Cp2 !== 0) {
+    if (Math.abs(hp1 - hp2) > 180) hbar += hbar < 360 ? 360 : -360;
+    hbar /= 2;
+  }
+  const T =
+    1 -
+    0.17 * Math.cos((hbar - 30) * rad) +
+    0.24 * Math.cos(2 * hbar * rad) +
+    0.32 * Math.cos((3 * hbar + 6) * rad) -
+    0.2 * Math.cos((4 * hbar - 63) * rad);
+  const dTheta = 30 * Math.exp(-(((hbar - 275) / 25) ** 2));
+  const Cpbar7 = Cpbar ** 7;
+  const RC = 2 * Math.sqrt(Cpbar7 / (Cpbar7 + 25 ** 7));
+  const SL = 1 + (0.015 * (Lbar - 50) ** 2) / Math.sqrt(20 + (Lbar - 50) ** 2);
+  const SC = 1 + 0.045 * Cpbar;
+  const SH = 1 + 0.015 * Cpbar * T;
+  const RT = -Math.sin(2 * dTheta * rad) * RC;
+  const tL = dL / SL;
+  const tC = dC / SC;
+  const tH = dH / SH;
+  return Math.sqrt(tL * tL + tC * tC + tH * tH + RT * tC * tH);
+}

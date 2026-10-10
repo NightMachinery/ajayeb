@@ -38,7 +38,9 @@ read/write helpers, and the raw-pixel helpers `process.mjs` and `gate.mjs`
 share: `cropToRawRgb`/`rawRgbToPng` (the shipping crop as RGB bytes, and
 back to a PNG), `cornerPaperColor` (an image's own paper colour, the
 corner-median), `colorDistance`, `hexToRgb`, `PAPER_HEX` (the app's
-`--card-paper` token, `#f4ecdc`) and `imageSize` (via `magick identify`).
+`--card-paper` token, `#f4ecdc`), `rgbToLab` and `deltaE2000` (the
+perceptual colour difference `gate.mjs`'s paper check uses) and
+`imageSize` (via `magick identify`).
 
 ### `manifest.mjs`
 
@@ -128,16 +130,28 @@ node tools/art/gate.mjs --src some.png --id card/lumber-yard
 node tools/art/gate.mjs --kind token --attempt latest --json
 ```
 
-An objective full-bleed check a reviewer runs before `sheet.mjs`, not a
-replacement for looking at the images: crops each attempt to its kind's
-main shipped size (the same crop `process.mjs` ships with), finds the
-crop's own paper colour (the corner-median), and fails it if less than
-`--threshold` (default 50%) of the outer `--band` fraction (default 4% of
-`min(w,h)`) is within `--dist` (default 45) of that colour, because a painting
-with no margin anywhere reads badly once the card or wonder frame feathers
-into it. `--ids` accepts the same `#<attempt>` syntax as `sheet.mjs`.
-`--json` prints one JSON object per line instead of a table; `--strict`
-exits 1 if anything failed, for scripting a hard gate.
+An objective paper and margin check a reviewer runs before `sheet.mjs`,
+not a replacement for looking at the images. It crops each attempt to its
+kind's main shipped size (the same crop `process.mjs` ships with) and finds
+the crop's own paper colour (the corner-median). Then it runs two checks,
+and an attempt passes only when both do:
+
+- the band check fails it if less than `--threshold` (default 50%) of the
+  outer `--band` fraction (default 4% of `min(w,h)`) is within `--dist`
+  (default 45, RGB) of that colour, because a painting with no margin
+  anywhere reads badly once the card or wonder frame feathers into it;
+- the paper check fails it if that paper colour is more than `--paper-max`
+  (default 18, CIEDE2000) from `PAPER_HEX`, because the band check is
+  relative and passes an image whose corners are gold leaf as if gold were
+  its paper. `--paper-max 0` turns it off. The threshold's calibration on
+  the pilot is in `docs/art/bitmaps.md` (step 3) and at the top of the
+  script.
+
+Each line shows the band fraction, the detected paper, its `dE00` from
+`PAPER_HEX` and, on a failure, which check failed. `--ids` accepts the same
+`#<attempt>` syntax as `sheet.mjs`. `--json` prints one JSON object per
+line instead of a table; `--strict` exits 1 if anything failed, for
+scripting a hard gate.
 
 ### `apply-review.mjs`
 
