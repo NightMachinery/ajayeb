@@ -1102,7 +1102,7 @@ func TestRefusedActKeepsSeq(t *testing.T) {
 	if snap := h.snapshot(code); snap.Version != 2 || len(snap.Actions) != 0 {
 		t.Fatalf("after the undo: version %d, %d actions", snap.Version, len(snap.Actions))
 	}
-	if hdr, err := h.st.PeekHeader(code); err != nil || hdr.LastSeq["tab-a"] != 2 {
+	if hdr, err := h.st.PeekHeader(code); err != nil || hdr.LastSeq["user-a:tab-a"] != 2 {
 		t.Fatalf("stored seqs: %+v, %v", hdr, err)
 	}
 }
@@ -1129,8 +1129,8 @@ func TestLastSeqIsBounded(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PeekHeader: %v", err)
 	}
-	if len(hdr.LastSeq) != 2 || hdr.LastSeq["tab-1"] != 1 || hdr.LastSeq["tab-2"] != 1 {
-		t.Fatalf("stored seqs %v, want tab-1 and tab-2 only", hdr.LastSeq)
+	if len(hdr.LastSeq) != 2 || hdr.LastSeq["user-a:tab-1"] != 1 || hdr.LastSeq["user-a:tab-2"] != 1 {
+		t.Fatalf("stored seqs %v, want user-a's tab-1 and tab-2 only", hdr.LastSeq)
 	}
 	h.evict(code, tabs...)
 

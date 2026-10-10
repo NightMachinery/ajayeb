@@ -42,15 +42,26 @@ const (
 	DefaultMaxRateRejects = 20
 	// DefaultMaxConns bounds the open sockets of the whole server.
 	DefaultMaxConns = 1024
-	// DefaultMaxConnsPerIP bounds the open sockets of one client address.
+	// DefaultMaxConnsPerIP bounds the open sockets of one client address
+	// (an IPv4 address, or an IPv6 /64; see limitKey).
 	DefaultMaxConnsPerIP = 16
 	// DefaultCreatesPerUser and DefaultCreatesPerIP bound room creation:
 	// token buckets that hold that many creates and refill at that many
 	// per hour.
 	DefaultCreatesPerUser = 20
 	DefaultCreatesPerIP   = 60
-	// DefaultLimiterKeys bounds the user ids and the addresses each
-	// creation limiter remembers.
+	// DefaultJoinMissesPerIP bounds the joins of one client address that
+	// name no room: a token bucket that holds that many and refills at that
+	// many per hour. Past it every join of the address is refused, so one
+	// address cannot guess room codes at the frame rate (many addresses
+	// still can; see the package doc).
+	DefaultJoinMissesPerIP = 30
+	// DefaultUndosPerIP bounds the undo frames of one client address: a
+	// token bucket that holds that many and refills at that many per
+	// minute. Every applied undo replays and rewrites a room file.
+	DefaultUndosPerIP = 60
+	// DefaultLimiterKeys bounds the user ids and the addresses each keyed
+	// limiter remembers.
 	DefaultLimiterKeys = 4096
 	// DefaultPingInterval is the time between two pings of a connection.
 	DefaultPingInterval = 25 * time.Second
@@ -86,18 +97,20 @@ type Identity interface {
 // Limits holds the abuse limits. A zero field takes the default of the
 // same name.
 type Limits struct {
-	HelloTimeout   time.Duration
-	FrameRate      int // frames per second
-	FrameBurst     int
-	MaxRateRejects int
-	MaxConns       int
-	MaxConnsPerIP  int
-	CreatesPerUser int // per hour
-	CreatesPerIP   int // per hour
-	LimiterKeys    int
-	PingInterval   time.Duration
-	MaxMissedPongs int
-	WriteTimeout   time.Duration
+	HelloTimeout    time.Duration
+	FrameRate       int // frames per second
+	FrameBurst      int
+	MaxRateRejects  int
+	MaxConns        int
+	MaxConnsPerIP   int
+	CreatesPerUser  int // per hour
+	CreatesPerIP    int // per hour
+	JoinMissesPerIP int // per hour
+	UndosPerIP      int // per minute
+	LimiterKeys     int
+	PingInterval    time.Duration
+	MaxMissedPongs  int
+	WriteTimeout    time.Duration
 }
 
 func (l Limits) withDefaults() Limits {
@@ -119,6 +132,8 @@ func (l Limits) withDefaults() Limits {
 	def(&l.MaxConnsPerIP, DefaultMaxConnsPerIP)
 	def(&l.CreatesPerUser, DefaultCreatesPerUser)
 	def(&l.CreatesPerIP, DefaultCreatesPerIP)
+	def(&l.JoinMissesPerIP, DefaultJoinMissesPerIP)
+	def(&l.UndosPerIP, DefaultUndosPerIP)
 	def(&l.LimiterKeys, DefaultLimiterKeys)
 	defDur(&l.PingInterval, DefaultPingInterval)
 	def(&l.MaxMissedPongs, DefaultMaxMissedPongs)
@@ -155,20 +170,22 @@ type Config struct {
 
 // Server serves the /ws endpoint. Make one with New; it is an http.Handler.
 type Server struct {
-	cfg      Config
-	lim      Limits
-	clock    room.Clock
-	log      *slog.Logger
-	accept   websocket.AcceptOptions
-	frame    rate
-	welcome  wire.Welcome
-	createMu sync.Mutex // guards the two creation limiters
-	byUser   *keyedLimiter[string]
-	byIP     *keyedLimiter[netip.Addr]
+	cfg     Config
+	lim     Limits
+	clock   room.Clock
+	log     *slog.Logger
+	accept  websocket.AcceptOptions
+	frame   rate
+	welcome wire.Welcome
+	limitMu sync.Mutex                  // guards the keyed limiters below
+	byUser  *keyedLimiter[string]       // creates per user id
+	byIP    *keyedLimiter[netip.Prefix] // creates per client address
+	misses  *keyedLimiter[netip.Prefix] // joins that named no room, per client address
+	undos   *keyedLimiter[netip.Prefix] // undo frames per client address
 
 	mu     sync.Mutex
 	conns  map[*conn]struct{}
-	perIP  map[netip.Addr]int
+	perIP  map[netip.Prefix]int
 	total  int // sockets reserved, including those still upgrading
 	closed bool
 	wg     sync.WaitGroup // one per reserved socket
@@ -200,9 +217,11 @@ func New(cfg Config) (*Server, error) {
 		frame:   newRate(lim.FrameRate, time.Second, lim.FrameBurst),
 		welcome: wire.NewWelcome(wire.ProtocolVersion, wire.ServerInfo{Version: cfg.Version, Rules: engine.RulesVersion}),
 		byUser:  newKeyedLimiter[string](newRate(lim.CreatesPerUser, time.Hour, lim.CreatesPerUser), lim.LimiterKeys),
-		byIP:    newKeyedLimiter[netip.Addr](newRate(lim.CreatesPerIP, time.Hour, lim.CreatesPerIP), lim.LimiterKeys),
+		byIP:    newKeyedLimiter[netip.Prefix](newRate(lim.CreatesPerIP, time.Hour, lim.CreatesPerIP), lim.LimiterKeys),
+		misses:  newKeyedLimiter[netip.Prefix](newRate(lim.JoinMissesPerIP, time.Hour, lim.JoinMissesPerIP), lim.LimiterKeys),
+		undos:   newKeyedLimiter[netip.Prefix](newRate(lim.UndosPerIP, time.Minute, lim.UndosPerIP), lim.LimiterKeys),
 		conns:   make(map[*conn]struct{}),
-		perIP:   make(map[netip.Addr]int),
+		perIP:   make(map[netip.Prefix]int),
 	}
 	return s, nil
 }
@@ -214,7 +233,8 @@ func New(cfg Config) (*Server, error) {
 // 426.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ip := clientIP(r, s.cfg.TrustedProxies)
-	if status, code := s.reserve(ip); status != 0 {
+	key := limitKey(ip)
+	if status, code := s.reserve(key); status != 0 {
 		writeError(w, status, code)
 		return
 	}
@@ -222,21 +242,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ws, err := websocket.Accept(w, r, &s.accept)
 	if err != nil {
-		s.release(ip)
+		s.release(key)
 		s.log.Debug("websocket upgrade refused", "ip", ip, "err", err)
 		return
 	}
 	ws.SetReadLimit(ReadLimit)
 
-	c := newConn(s, ws, ip)
+	c := newConn(s, ws, ip, key)
 	s.register(c)
 	c.serve()
 	s.unregister(c)
 }
 
-// reserve counts a socket from ip against the limits, or returns the HTTP
-// status and error code that refuse it.
-func (s *Server) reserve(ip netip.Addr) (int, string) {
+// reserve counts a socket from the client address key against the limits,
+// or returns the HTTP status and error code that refuse it.
+func (s *Server) reserve(key netip.Prefix) (int, string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	switch {
@@ -244,26 +264,26 @@ func (s *Server) reserve(ip netip.Addr) (int, string) {
 		return http.StatusServiceUnavailable, "shutting-down"
 	case s.total >= s.lim.MaxConns:
 		return http.StatusServiceUnavailable, "busy"
-	case s.perIP[ip] >= s.lim.MaxConnsPerIP:
+	case s.perIP[key] >= s.lim.MaxConnsPerIP:
 		return http.StatusTooManyRequests, "too-many-connections"
 	}
 	s.total++
-	s.perIP[ip]++
+	s.perIP[key]++
 	s.wg.Add(1)
 	return 0, ""
 }
 
-// release gives back a socket reserved for ip.
-func (s *Server) release(ip netip.Addr) {
+// release gives back a socket reserved for the client address key.
+func (s *Server) release(key netip.Prefix) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.releaseLocked(ip)
+	s.releaseLocked(key)
 }
 
-func (s *Server) releaseLocked(ip netip.Addr) {
+func (s *Server) releaseLocked(key netip.Prefix) {
 	s.total--
-	if s.perIP[ip]--; s.perIP[ip] <= 0 {
-		delete(s.perIP, ip)
+	if s.perIP[key]--; s.perIP[key] <= 0 {
+		delete(s.perIP, key)
 	}
 }
 
@@ -284,7 +304,7 @@ func (s *Server) unregister(c *conn) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.conns, c)
-	s.releaseLocked(c.ip)
+	s.releaseLocked(c.key)
 }
 
 // Shutdown refuses new sockets, closes every open one with status 1012
@@ -330,18 +350,49 @@ func (s *Server) Conns() int {
 	return len(s.conns)
 }
 
-// allowCreate reports whether a user at ip may create a room now, and
-// counts the creation if so. Both the user's and the address's limit must
-// allow it; a refusal uses up neither.
-func (s *Server) allowCreate(userID string, ip netip.Addr) bool {
+// allowCreate reports whether a user at the client address key may create
+// a room now, and counts the creation if so. Both the user's and the
+// address's limit must allow it; a refusal uses up neither.
+func (s *Server) allowCreate(userID string, key netip.Prefix) bool {
 	now := s.clock.Now()
-	s.createMu.Lock()
-	defer s.createMu.Unlock()
-	if !s.byUser.check(userID, now) || !s.byIP.check(ip, now) {
+	s.limitMu.Lock()
+	defer s.limitMu.Unlock()
+	if !s.byUser.check(userID, now) || !s.byIP.check(key, now) {
 		return false
 	}
 	s.byUser.take(userID, now)
-	s.byIP.take(ip, now)
+	s.byIP.take(key, now)
+	return true
+}
+
+// allowJoin reports whether the client address key may join a room now: it
+// may until its joins have named too many rooms that do not exist (see
+// joinMissed).
+func (s *Server) allowJoin(key netip.Prefix) bool {
+	now := s.clock.Now()
+	s.limitMu.Lock()
+	defer s.limitMu.Unlock()
+	return !s.misses.limited(key, now)
+}
+
+// joinMissed counts a join of the client address key that named no room.
+func (s *Server) joinMissed(key netip.Prefix) {
+	now := s.clock.Now()
+	s.limitMu.Lock()
+	defer s.limitMu.Unlock()
+	s.misses.record(key, now)
+}
+
+// allowUndo reports whether the client address key may send an undo now,
+// and counts it if so.
+func (s *Server) allowUndo(key netip.Prefix) bool {
+	now := s.clock.Now()
+	s.limitMu.Lock()
+	defer s.limitMu.Unlock()
+	if s.undos.limited(key, now) {
+		return false
+	}
+	s.undos.record(key, now)
 	return true
 }
 

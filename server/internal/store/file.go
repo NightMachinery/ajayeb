@@ -119,7 +119,8 @@ type File struct {
 	// file written before the field existed reads as len(Actions).
 	Version int `json:"version"`
 
-	// LastSeq is the last applied seq of each client, keyed by clientId, for
+	// LastSeq is the last applied seq of each client, keyed by user id and
+	// clientId as "<userId>:<clientId>" (package room's seqKey), for
 	// act/undo idempotency across a reconnect. Seqs are the wire's (JSON
 	// numbers, never negative). The room keeps only its most recently used
 	// clients here (a bounded LRU), so the map stays small.

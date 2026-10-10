@@ -9,16 +9,22 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 )
 
-// This file runs the bot seat of a bot room. When the bot is to move, the
-// room starts one search in its own goroutine, under a context that the
-// room cancels when the search goes stale (an undo) or the room stops. The
+// This file runs the bot seat of a bot room. When the bot is to move and its
+// human is attached, the room starts one search in its own goroutine, under
+// a context that the room cancels when the search goes stale (an undo), when
+// the last connection leaves, or when the room stops. The
 // search sees only an engine Observation of the bot's seat. Its answer comes
-// back through the inbox tagged with the version it was computed for, and
-// the room drops it unless that is still the current version.
+// back through the inbox tagged with the generation of the search, and the
+// room drops it unless that search is still the one running for the
+// current version. The generation, not the version, is what tells searches
+// apart: a detach cancels a search without changing the version, and the
+// next attach starts another for the same version, so the cancelled one
+// may still answer while the new one runs.
 
 // botTask is the search the room has running, if any.
 type botTask struct {
 	cancel  context.CancelFunc // nil when no search is running
+	gen     uint64             // the search's generation: Room.botGen when it started
 	version int                // the version the search was started for
 	seat    engine.Seat        // the bot's seat
 }
@@ -28,10 +34,13 @@ type botTask struct {
 // way and an undo cannot reroll the bot's answer.
 func botSeed(roomSeed uint64, ply uint16) uint64 { return ai.MixSeed(roomSeed, uint64(ply)) }
 
-// maybeStartBot starts a search if a bot is to move in a running game and
-// none is running for the current version yet.
+// maybeStartBot starts a search if a bot is to move in a running game, a
+// connection is attached, and no search is running for the current version
+// yet. A room nobody is attached to never searches: it would spend the bot
+// pool on a game nobody is watching (detach cancels the search, and the
+// next attach starts it again).
 func (r *Room) maybeStartBot() {
-	if r.file.Mode != store.ModeAI || r.status() != store.StatusPlaying {
+	if r.file.Mode != store.ModeAI || r.status() != store.StatusPlaying || len(r.clients) == 0 {
 		return
 	}
 	seat := r.state.ToMove
@@ -44,13 +53,15 @@ func (r *Room) maybeStartBot() {
 	}
 	r.cancelBot()
 	ctx, cancel := context.WithCancel(r.ctx)
-	r.bot = botTask{cancel: cancel, version: r.version, seat: seat}
+	r.botGen++
+	r.bot = botTask{cancel: cancel, gen: r.botGen, version: r.version, seat: seat}
 
 	cfg := &r.m.cfg
 	job := botJob{
 		bot:     cfg.NewBot(sd.Bot, botSeed(r.file.Seed, r.state.Ply)),
 		obs:     engine.Observe(&r.state, seat),
 		budget:  cfg.BotBudget(sd.Bot),
+		gen:     r.botGen,
 		version: r.version,
 		pool:    cfg.BotPool,
 		clock:   cfg.Clock,
@@ -83,14 +94,17 @@ func (r *Room) cancelBot() {
 	r.bot = botTask{}
 }
 
-// botResult applies the bot's answer if it is still current. A bot that
+// botResult applies the bot's answer if it comes from the search that is
+// running for the current version. Any other answer is stale: a search
+// cancelled by an undo, by the last detach (even if a new search for the
+// same version has started since), or by an earlier answer. A bot that
 // failed, or answered with an action that is not legal, is a bug in the
 // bot; the room then plays the first legal action instead, so the game
 // never stalls, and logs it.
 func (r *Room) botResult(m msgBotResult) {
-	if m.version != r.version || r.bot.version != m.version || r.bot.cancel == nil {
+	if r.bot.cancel == nil || m.gen != r.bot.gen || m.version != r.version {
 		r.dropped++
-		r.log.Debug("dropped a stale bot result", "for", m.version, "now", r.version)
+		r.log.Debug("dropped a stale bot result", "gen", m.gen, "running", r.bot.gen, "for", m.version, "now", r.version)
 		return
 	}
 	r.cancelBot()
@@ -121,6 +135,7 @@ type botJob struct {
 	bot     Bot
 	obs     engine.Observation
 	budget  ai.Budget
+	gen     uint64
 	version int
 	pool    *ai.Pool
 	clock   Clock
@@ -132,7 +147,7 @@ type botJob struct {
 // run searches, waits out the rest of the think delay, and posts the
 // result. A cancelled search posts nothing once the delay is cut short;
 // otherwise the result is posted even if it went stale meanwhile, and the
-// room drops it.
+// room drops it by its generation.
 func (j botJob) run(ctx context.Context) {
 	start := j.clock.Now()
 	var a engine.Action
@@ -153,7 +168,7 @@ func (j botJob) run(ctx context.Context) {
 		}
 	}
 	select {
-	case j.inbox <- msgBotResult{version: j.version, action: a, err: err}:
+	case j.inbox <- msgBotResult{gen: j.gen, version: j.version, action: a, err: err}:
 	case <-j.done:
 	}
 }

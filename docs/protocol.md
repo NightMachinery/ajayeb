@@ -84,16 +84,20 @@ plain text.
 
 ### The client address
 
-Two limits count per **client address**: sockets, and rooms created. The
-client address is the TCP peer's address, unless that peer is one of the
-reverse proxies given with `-trust-proxy` (IP addresses or CIDR prefixes,
-repeatable or comma separated). For a trusted peer the server reads
-`X-Forwarded-For` from the right: each trusted proxy appends the address it
-received the request from, so the rightmost entry that is not itself a
-trusted proxy is the client. Entries further left were written by the client
-and are never believed, and a malformed entry stops the walk at the last
-believable address. A peer that is not trusted cannot change its address,
-whatever headers it sends.
+Four limits count per **client address**: sockets, rooms created, joins of
+codes that name no room, and undos. The client address is the TCP peer's
+address, unless that peer is one of the reverse proxies given with
+`-trust-proxy` (IP addresses or CIDR prefixes, repeatable or comma
+separated). For a trusted peer the server reads `X-Forwarded-For` from the
+right: each trusted proxy appends the address it received the request from,
+so the rightmost entry that is not itself a trusted proxy is the client.
+Entries further left were written by the client and are never believed, and
+a malformed entry stops the walk at the last believable address. A peer that
+is not trusted cannot change its address, whatever headers it sends.
+
+The limits count an IPv4 address on its own and an IPv6 address by its /64
+prefix: one host normally holds a whole /64 and can send from any address in
+it, so all of them count as one client address.
 
 ### The life of a connection
 
@@ -132,8 +136,8 @@ there is one:
   - `bad-hello`: an invalid first frame (after an `error` frame);
   - `rate limit`: more than 20 frames in a row were refused by the frame
     rate limit;
-  - `client too slow`: the connection let 32 frames other than `state` pile
-    up unread.
+  - `client too slow`: the connection let 32 frames other than `state`, or
+    the `state` frames of 4 rooms, pile up unread.
 - 1009 (message too big): a frame over 8192 bytes.
 - 1012 (service restart): the server is shutting down or restarting.
 
@@ -168,7 +172,9 @@ of an undone move describe a position that no longer exists, so the client
 simply jumps to the new one). A slow client therefore skips intermediate
 snapshots, but never loses an `ack` and still receives the events that lead
 to the newest snapshot (up to 256 of them). Other
-frames (`created`, `reject`, `error`) queue in order, at most 32 of them; a
+frames (`created`, `reject`, `error`) queue in order, at most 32 of them, and
+the pending `state` frames may belong to at most 4 rooms (a connection is in
+one room at a time; a few cover a switch from one room to the next). A
 connection that lets more pile up is closed with 1008 `client too slow`.
 
 ## Client frames
@@ -196,11 +202,12 @@ The first frame of every connection.
   secret, so the token itself is never stored, logged or sent back. The same
   token on two devices is the same user.
 - `name` is the display name to use for a seat the user takes, up to 64
-  characters with no control characters. Empty means a default.
+  characters with no control characters and no invisible formatting
+  characters (see the limits below). Empty means a default.
 - `clientId` names this tab, for idempotency (see below): 1 to 128
-  characters with no control characters. Make it random, keep it for the
-  life of the tab together with the tab's `seq` counter, and give every tab
-  its own.
+  characters, under the same character rules as `name`. Make it random
+  (`crypto.randomUUID()`), keep it for the life of the tab together with the
+  tab's `seq` counter, and give every tab its own.
 
 The answer is `welcome`, or an `error` and the end of the connection.
 
@@ -246,8 +253,14 @@ in just sends a fresh `state`.
 
 The answer is a `state`, and every other connection of the room receives a
 `state` with the new presence. The refusals are `error room-not-found`,
-`error room-full`, `error forbidden` (another user's hot-seat or `ai` room)
-and `error busy` (the room must be loaded and the server is full).
+`error room-full`, `error forbidden` (another user's hot-seat or `ai` room;
+the server tells this from the room file's header, without loading the
+room) and `error busy` (the room must be loaded and every room in memory has
+a connection). A client address whose joins have named too many rooms that
+do not exist (30, earning one back every 2 minutes) gets `reject rate` with
+seq 0 for every `join`. That bounds how fast one address can guess codes,
+not how fast anyone can: see the joins of unknown rooms under
+[Limits](#limits) for what is left.
 
 ### act
 
@@ -289,7 +302,9 @@ Because the room replays the shortened log from the seed, hidden cards
 cannot change. The `canUndo` field of the latest `state` says whether an
 undo would be accepted now. The answer is a `state` with an `ack`, or a
 `reject`: `bad-request` (not joined, an online room, a spectator),
-`illegal` (the game is over, or there is nothing to undo) or `stale`.
+`illegal` (the game is over, or there is nothing to undo), `stale`, or
+`rate` (the client address sent more than its undo limit, 60 at once and
+then one a second; the `seq` is not used up).
 
 ### resync
 
@@ -327,8 +342,10 @@ every connection of the old room a `created` frame with that code. Each
 client then sends `join` with the new code. However many players ask, and
 even after the old room was reloaded from disk, every rematch request of a
 room answers the same code. The refusals are `reject bad-request` (not
-joined, or the game is not over), `error forbidden` (a spectator) and `error
-busy`. A rematch does not count against the room creation limit.
+joined, or the game is not over), `error forbidden` (a spectator), `error
+busy`, and `reject rate` with seq 0: the request that creates the rematch
+room counts against the requester's room creation limits, like a `create`.
+A request answered with a rematch code that already exists counts nothing.
 
 ## Server frames
 
@@ -456,8 +473,10 @@ A reject refuses one request, and the client can usually recover.
   `seat` is not the seat to move); also an act from a spectator, and an act
   in an online room still waiting for its second player.
 - `rate`: the frame came faster than the frame rate limit allows and was
-  dropped unhandled (its `seq` is echoed when it has one), or a `create` went
-  over the room creation limit (seq 0).
+  dropped unhandled (its `seq` is echoed when it has one); a `create`, or a
+  `rematch` that would create a room, went over the room creation limit
+  (seq 0); a `join` came from a client address over its limit of joins that
+  named no room (seq 0); or an `undo` went over the undo limit (its `seq`).
 - `bad-request`: the frame is malformed; a second `hello`; a request for a
   room this connection has not joined; an `undo` in an online room or from a
   spectator; a `rematch` before the game is over.
@@ -479,8 +498,9 @@ it again with the same `seq`.
   closes (1008).
 - `protocol`: the `hello` asked for a protocol version the server does not
   speak. The connection closes (1008).
-- `busy`: the server holds as many rooms in memory as it can (a `create`, a
-  `rematch`, or a `join` that must load a room). Try again later.
+- `busy`: the server holds as many rooms in memory as it can, and every one
+  of them has a connection (a `create`, a `rematch`, or a `join` that must
+  load a room). Try again later.
 
 ## Versions, idempotency and reconnecting
 
@@ -501,16 +521,18 @@ Each `act` and `undo` carries a `seq`. The rules:
 
 - `seq` is a counter per client id: start at 1 and add one for every `act`
   and `undo` the tab sends, in any room.
-- The room remembers, for each client id, the last `seq` it applied. A
-  request whose `seq` is not newer than that is not applied again: the
-  sender only receives the current `state` with an `ack` for that `seq`. A
-  double tap, a frame sent twice, or a request re-sent after a reconnect
-  therefore takes effect at most once.
+- The room remembers, for each user and client id, the last `seq` it
+  applied. A request whose `seq` is not newer than that is not applied
+  again: the sender only receives the current `state` with an `ack` for that
+  `seq`. A double tap, a frame sent twice, or a request re-sent after a
+  reconnect therefore takes effect at most once. Keying by the user as well
+  means another user who picks the same client id cannot make the room take
+  this tab's new requests for old ones.
 - Only an applied request uses up its `seq`. After a refusal the client may
   send the same `seq` again, and the room judges it afresh.
 - The `seq` check comes before the turn check, so a request re-sent after
   the turn has passed resolves with an `ack` instead of a refusal.
-- A room remembers the last `seq` of 32 client ids, in memory and in its
+- A room remembers the last `seq` of 32 clients, in memory and in its
   file. For a client id it has forgotten, `base` is the second guard: the
   first copy of a request moved the version past the copy's `base`, so a
   late duplicate is refused as `stale`.
@@ -552,13 +574,20 @@ clock instead of waiting.
   up to 128, a room code up to 32, an action key up to 96, at most two
   `names`, a token of exactly 22 characters, and `seq` and `base` not
   negative.
+- **Characters:** no string in a client frame may hold a control character
+  or an invisible formatting character (Unicode category Cf): no bidi
+  override, embedding, isolate or mark, which would reorder the text around
+  a name wherever it is shown, and no zero width space or byte order mark,
+  which would let a name pass for another. The zero width non-joiner and
+  joiner (Persian and other scripts, emoji sequences) and the tag characters
+  of emoji flags are allowed.
 - **Frame rate:** per connection, a token bucket that holds 20 frames and
   refills at 10 per second. Every frame counts, `hello` included. A frame
   over it gets `reject rate` and is not handled; more than 20 such frames in
   a row close the socket with 1008 `rate limit`.
 - **Hello:** within 10 seconds of the upgrade.
-- **Sockets:** 16 per client address (429 beyond) and 1024 per server (503
-  beyond).
+- **Sockets:** 16 per client address, an IPv4 address or an IPv6 /64 (429
+  beyond), and 1024 per server (503 beyond).
 - **Room creation:** 20 per hour per user id and 60 per hour per client
   address. Each is a token bucket whose burst is its hourly count, so a user
   may create 20 rooms at once and then one every 3 minutes. A refused
@@ -566,19 +595,44 @@ clock instead of waiting.
   and 4096 addresses: buckets that have refilled are forgotten first, and
   when every remembered bucket is still refilling, a new user or address is
   refused too, rather than letting a flood push out the limits of others.
-  Rematches do not count.
+  A `rematch` that creates the rematch room counts as a create.
+- **Joins of unknown rooms:** 30 per hour per client address (an IPv4
+  address or an IPv6 /64), as a token bucket of 30. A `join` that finds no
+  room (no such code, a malformed one, an archived room) uses one up; past
+  the limit every `join` from the address gets `reject rate` (seq 0). An
+  address the limiter does not remember is never refused.
+  This stops one address from guessing codes at the frame rate, but it
+  does not make codes unguessable. Someone who holds many /64s (a free
+  tunnel-broker IPv6 /48 holds 65,536 of them) gets 30 misses an hour from
+  each, and once the limiter remembers 4096 addresses whose buckets are all
+  still refilling, the misses of any address it does not remember go
+  uncounted, so they are not limited at all. A room code is 6 characters
+  from a 31-character alphabet, about 8.9e8 codes, so such an attacker can
+  find stored rooms, watch games in progress, and take the open seat of an
+  online lobby before the invited friend does. Whether online rooms should
+  get a longer code, or an invite secret kept apart from the code and
+  required to claim a seat, is an open question.
+- **Undo:** 60 per minute per client address, as a token bucket of 60; an
+  `undo` over it gets `reject rate` with its `seq`. Every applied undo
+  replays and rewrites the room file.
 - **Liveness:** a ping every 25 seconds; dropped at the tick after two pings
   in a row went unanswered.
 - **Writes:** each frame must be written within 10 seconds, or the socket is
   dropped.
-- **Outbox:** at most 32 pending frames other than `state` (1008 `client too
-  slow` beyond); a merged `state` keeps at most the 256 newest events.
-- **Rooms:** at most 1024 rooms in memory (`error busy` beyond); a room
-  admits a new spectator only while it has fewer than 32 connections, and a
-  seated user only while that user has fewer than 32 connections there
-  (`error room-full`); each room's inbox holds 64 messages; a room with no
-  connection for 30 minutes leaves memory and is reloaded from disk on the
-  next `join`.
+- **Outbox:** at most 32 pending frames other than `state` and the pending
+  `state` frames of at most 4 rooms (1008 `client too slow` beyond); a
+  merged `state` keeps at most the 256 newest events.
+- **Rooms:** at most 1024 rooms in memory. When a create or a load finds
+  them all there, the room with no connection that has been idle longest
+  leaves memory to make room (it is on disk, and comes back on its next
+  `join`); only when every room in memory has a connection is the answer
+  `error busy`. A room admits a new spectator only while it has fewer than
+  32 connections, and a seated user only while that user has fewer than 32
+  connections there (`error room-full`); each room's inbox holds 64
+  messages; a room with no connection for 30 minutes leaves memory and is
+  reloaded from disk on the next `join`. A bot searches only while its
+  room has a connection: the last connection to leave cancels the search,
+  and the next one to join starts it again.
 - **Development endpoint bodies:** 64 KiB.
 
 ## HTTP endpoints
@@ -604,7 +658,12 @@ no-store`. An API error always has the shape
 With `-dev-endpoints`, which the server refuses to start without `-dev`, two
 more endpoints exist. A production server never enables them. They let
 end-to-end tests and manual sessions open a room at a chosen position
-instead of playing toward it.
+instead of playing toward it. They answer only a client on the same machine:
+a request from a peer that is not a loopback address, or one that a proxy
+forwarded (it carries `X-Forwarded-For`, `Forwarded` or `X-Real-IP`), gets
+403 `forbidden`. A room made from a chosen seed hides nothing from whoever
+chose it, so a remote player must never be able to make one and invite
+someone to it.
 
 `POST /api/dev/rooms` creates a room. The body must be JSON, sent with
 `Content-Type: application/json` (otherwise 415 `unsupported-media-type`),
@@ -621,8 +680,9 @@ so a page on another site cannot post it with a plain form.
 - `mode` (required) is `online`, `hotseat` or `ai`.
 - `seed` is the game's 64-bit seed as a decimal string, so a JavaScript
   caller keeps every bit (a JSON integer is accepted too). Absent means a
-  random seed or, when the server was started with `-seed-base`, the next
-  seed of the sequence base, base+1, and so on.
+  random seed or, when the server was started with `-seed-base` (which it
+  refuses without `-dev`, since such seeds make every deal predictable), the
+  next seed of the sequence base, base+1, and so on.
 - `scenario` names a named scenario (see `GET /api/dev/scenarios` and
   `docs/dev/scenarios.md`). The room opens at the scenario's position,
   before its trigger, so the test plays the trigger itself through the UI.
@@ -653,6 +713,7 @@ The errors:
 - 400 `unknown-scenario`: no scenario has that name (`msg` lists the names);
 - 400 `invalid-room`: the position cannot be built, such as an action that
   is not legal when its turn comes;
+- 403 `forbidden`: the client is not on the same machine (see above);
 - 405 `method-not-allowed`: not a POST;
 - 415 `unsupported-media-type`: the body is not declared as JSON;
 - 503 `busy`: the server holds as many rooms as it can;

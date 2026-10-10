@@ -55,8 +55,16 @@ type Room struct {
 	emptySince time.Time
 	idleStop   func() bool
 	bot        botTask
+	botGen     uint64 // the generation of the last search started (see botTask)
 	rematch    string // the code of the rematch room, once one exists (stored in the file)
 	dropped    int    // stale bot results dropped, for tests and diagnostics
+	shownIdle  bool   // what the actor last published as idle (see publishIdle)
+
+	// Guarded by the Manager's mu: what the Manager knows about this room
+	// when it must evict one to make room for another (see Manager.reserve).
+	evictable bool      // no connection is attached and nothing is left to save
+	idleSince time.Time // when the last connection left
+	evicting  bool      // a Manager is asking the room to leave memory
 }
 
 // The messages a room's inbox carries.
@@ -80,11 +88,13 @@ type (
 		reply chan rematchResult
 	}
 	msgBotResult struct {
+		gen     uint64 // the generation of the search that answers
 		version int
 		action  engine.Action
 		err     error
 	}
 	msgIdle     struct{}
+	msgEvict    struct{ reply chan bool }
 	msgSnapshot struct{ reply chan Snapshot }
 )
 
@@ -114,18 +124,22 @@ func newRoom(m *Manager, f *store.File, s engine.State, deciders []engine.Seat) 
 		clients:  make(map[*Client]member),
 		seqs:     newSeqLRU(m.cfg.SeqClients),
 		rematch:  f.Rematch,
+		// A new room has nobody attached; it is idle from now on, which is
+		// what it reports to the Manager (publishIdle), possibly even
+		// before its actor starts (createRoom saves it first).
+		emptySince: m.cfg.Clock.Now(),
 	}
 	r.seqs.load(f.LastSeq)
 	return r
 }
 
-// run is the actor loop.
+// run is the actor loop. A room starts with no connection, so its bot (if
+// any) waits for the first attach.
 func (r *Room) run() {
 	defer r.m.wg.Done()
 	defer r.exit()
-	r.emptySince = r.m.cfg.Clock.Now()
 	r.armIdle()
-	r.maybeStartBot()
+	r.publishIdle()
 	for {
 		select {
 		case <-r.ctx.Done():
@@ -169,6 +183,10 @@ func (r *Room) handle(msg any) bool {
 		r.botResult(msg)
 	case msgIdle:
 		return r.idle()
+	case msgEvict:
+		evicted := r.evict()
+		msg.reply <- evicted
+		return evicted
 	case msgSnapshot:
 		msg.reply <- r.snapshot()
 	}
@@ -226,10 +244,11 @@ func (r *Room) attach(c *Client) error {
 	}
 	r.clients[c] = mem
 	r.stopIdle()
+	r.publishIdle()
 	if claimed {
 		r.persist()
-		r.maybeStartBot()
 	}
+	r.maybeStartBot()
 	r.broadcast(nil, nil, nil)
 	return nil
 }
@@ -258,6 +277,9 @@ func (r *Room) admit(c *Client) (member, bool, error) {
 	case 1:
 		return member{role: rolePlayer, seat: held[0]}, false, nil
 	}
+	if closedTo(r.file.Mode, r.file.Seats, c.UserID) {
+		return member{}, false, ErrForbidden
+	}
 
 	open := r.openSeats()
 	switch r.file.Mode {
@@ -271,20 +293,39 @@ func (r *Room) admit(c *Client) (member, bool, error) {
 		r.claim(open[0], c, c.Name)
 		return member{role: rolePlayer, seat: open[0]}, true, nil
 	case store.ModeHotseat:
-		if len(open) != 2 {
-			return member{}, false, ErrForbidden
-		}
 		r.claim(0, c, c.Name)
 		r.claim(1, c, "")
 		return member{role: roleHotseat}, true, nil
-	case store.ModeAI:
-		if len(open) != 1 {
-			return member{}, false, ErrForbidden
-		}
+	default: // store.ModeAI, the only other mode closedTo lets through
 		r.claim(open[0], c, c.Name)
 		return member{role: rolePlayer, seat: open[0]}, true, nil
 	}
-	return member{}, false, ErrForbidden
+}
+
+// closedTo reports whether a room with this mode and these seats refuses
+// userID outright: a hot-seat or bot room in which the user holds no seat
+// and finds no seat to claim (both seats of a hot-seat room, the human seat
+// of a bot room). The Manager also asks it of a room file's header, so that
+// such a join is refused without loading the room (see Manager.get).
+func closedTo(mode store.Mode, seats [2]store.Seat, userID string) bool {
+	open := 0
+	for _, s := range seats {
+		switch {
+		case s.Kind == store.SeatKindHuman && s.UserID == userID:
+			return false
+		case s.Kind == store.SeatKindOpen:
+			open++
+		}
+	}
+	switch mode {
+	case store.ModeOnline:
+		return false
+	case store.ModeHotseat:
+		return open != 2
+	case store.ModeAI:
+		return open != 1
+	}
+	return true
 }
 
 // userConns counts the connections of one user attached to the room.
@@ -319,15 +360,19 @@ func (r *Room) claim(seat engine.Seat, c *Client, name string) {
 }
 
 // detach removes c and tells the others about the presence change. The
-// last connection to leave starts the idle countdown.
+// last connection to leave starts the idle countdown and cancels a running
+// bot search: a bot thinks only while its human is there, so rooms left
+// behind cannot keep the bot pool busy. The next attach starts it again.
 func (r *Room) detach(c *Client) {
 	if _, ok := r.clients[c]; !ok {
 		return
 	}
 	delete(r.clients, c)
 	if len(r.clients) == 0 {
+		r.cancelBot()
 		r.emptySince = r.m.cfg.Clock.Now()
 		r.armIdle()
+		r.publishIdle()
 		return
 	}
 	r.broadcast(nil, nil, nil)
@@ -394,22 +439,29 @@ func (r *Room) act(c *Client, m wire.Act) {
 }
 
 // applied reports whether seq is not newer than the last seq applied for
-// c's client id. Such a request is only acknowledged: it was applied
-// already, or (an older seq that was refused) its client has moved on.
-// Seqs are recorded only when a request is applied (see record), so a
+// c's user and client id. Such a request is only acknowledged: it was
+// applied already, or (an older seq that was refused) its client has moved
+// on. Seqs are recorded only when a request is applied (see record), so a
 // refused request does not use up its seq.
 func (r *Room) applied(c *Client, seq int) bool {
-	last, ok := r.seqs.get(c.ClientID)
+	last, ok := r.seqs.get(seqKey(c))
 	return ok && seq <= last
 }
 
-// record notes ack's seq as the last applied seq of the sender's client id.
-// A bot's move (no sender) records nothing.
+// record notes ack's seq as the last applied seq of the sender's user and
+// client id. A bot's move (no sender) records nothing.
 func (r *Room) record(sender *Client, ack *wire.Ack) {
 	if sender != nil && ack != nil {
-		r.seqs.put(sender.ClientID, ack.Seq)
+		r.seqs.put(seqKey(sender), ack.Seq)
 	}
 }
+
+// seqKey is the key of a client's seqs: its user id and its client id. The
+// client id alone is not enough, because every client picks its own: another
+// user who chose (or learned) the same one could otherwise send a huge seq
+// and make the room take this client's next requests for old ones. User ids
+// are hex (package ident), so the colon keeps keys of different users apart.
+func seqKey(c *Client) string { return c.UserID + ":" + c.ClientID }
 
 // mayAct reports whether the member may act for the seat to move. seat is
 // the act frame's optional seat, which must then be that seat.
@@ -542,6 +594,11 @@ func (r *Room) doRematch(c *Client) (string, error) {
 		return "", ErrNotOver
 	}
 	if r.rematch == "" {
+		// Creating a room counts against the requester's creation limits,
+		// or rematches would be a way around them.
+		if c.AllowCreate != nil && !c.AllowCreate() {
+			return "", ErrRateLimited
+		}
 		f := store.New("", r.file.Mode, r.file.Options, r.m.cfg.Seed(), r.m.cfg.Clock.Now())
 		f.Seats = r.file.Seats
 		code, err := r.m.createRoom(f)
@@ -589,10 +646,12 @@ func (r *Room) persist() {
 	f.Updated = r.m.cfg.Clock.Now()
 	if err := r.m.cfg.Store.Save(f); err != nil {
 		r.dirty = true
+		r.publishIdle()
 		r.log.Error("saving the room failed", "err", err)
 		return
 	}
 	r.dirty = false
+	r.publishIdle()
 	if got := engine.HashString(&r.state); got != f.Hash {
 		r.log.Error("the saved log does not replay to the room's state", "want", got, "file", f.Hash)
 	}
@@ -639,6 +698,31 @@ func (r *Room) idle() bool {
 	r.m.remove(r)
 	r.log.Info("evicted idle room")
 	return true
+}
+
+// evict leaves memory at once, if the room is still idle, because the
+// Manager needs its slot for another room; it reports whether it did. A
+// connection may have attached since the Manager chose this room, and a
+// dirty room must stay until a write succeeds.
+func (r *Room) evict() bool {
+	if len(r.clients) > 0 || r.dirty {
+		return false
+	}
+	r.m.remove(r)
+	r.log.Info("evicted to make room for another")
+	return true
+}
+
+// publishIdle tells the Manager whether the room may be evicted to make room
+// for another: no connection attached and nothing left to save. It only
+// takes the Manager's lock when that changes.
+func (r *Room) publishIdle() {
+	idle := len(r.clients) == 0 && !r.dirty
+	if idle == r.shownIdle {
+		return
+	}
+	r.shownIdle = idle
+	r.m.setIdle(r, idle, r.emptySince)
 }
 
 // Snapshot is a copy of a room's state for tests, diagnostics and

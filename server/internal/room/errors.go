@@ -32,6 +32,9 @@ var (
 	// ErrNotOver: rematch before the game is over. Frame: reject
 	// bad-request.
 	ErrNotOver = errors.New("room: the game is not over")
+	// ErrRateLimited: the client's AllowCreate refused a room creation (a
+	// rematch that would create the rematch room). Frame: reject rate, seq 0.
+	ErrRateLimited = errors.New("room: too many rooms created")
 	// ErrClosed: the Manager is shutting down. No frame: the transport
 	// closes the connection with "service restart".
 	ErrClosed = errors.New("room: the server is shutting down")

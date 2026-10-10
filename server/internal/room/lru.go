@@ -5,16 +5,16 @@ import (
 	"slices"
 )
 
-// seqLRU remembers the last applied seq of each client id, for at most cap
-// clients: the least recently used entry goes first when it is full. A
-// forgotten client is not a safety problem, because a re-sent act also
-// carries its old base and is then refused as stale; the LRU only saves the
-// client a reject. Seqs are the wire's ints (never negative: package wire
-// refuses a negative seq).
+// seqLRU remembers the last applied seq of each client (keyed by user id
+// and client id, see seqKey), for at most cap clients: the least recently
+// used entry goes first when it is full. A forgotten client is not a safety
+// problem, because a re-sent act also carries its old base and is then
+// refused as stale; the LRU only saves the client a reject. Seqs are the
+// wire's ints (never negative: package wire refuses a negative seq).
 type seqLRU struct {
 	cap   int
 	order *list.List               // front is the most recently used; values are *seqEntry
-	byID  map[string]*list.Element // client id -> its element in order
+	byID  map[string]*list.Element // seq key -> its element in order
 }
 
 type seqEntry struct {

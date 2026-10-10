@@ -218,3 +218,30 @@ func TestSeqLRULoadIsBoundedAndDeterministic(t *testing.T) {
 		}
 	}
 }
+
+// TestOutboxBoundsStateFramesOfOtherRooms checks that the state frames of
+// distinct rooms are bounded too: a client that is not reading while it
+// joins one room after another would otherwise pile up one full snapshot
+// per room. Past MaxPendingStates rooms the outbox reports Overflowed, while
+// a newer frame of a room already queued still replaces the older one.
+func TestOutboxBoundsStateFramesOfOtherRooms(t *testing.T) {
+	o := NewOutbox()
+	codes := []string{"AAAAAA", "BBBBBB", "CCCCCC", "DDDDDD", "EEEEEE", "FFFFFF", "GGGGGG", "HHHHHH"}
+	if len(codes) <= MaxPendingStates {
+		t.Fatalf("the test needs more than %d codes", MaxPendingStates)
+	}
+	for _, code := range codes[:MaxPendingStates] {
+		o.Push(outboxState(code, 1, nil))
+	}
+	o.Push(outboxState(codes[0], 2, nil)) // replaces, so it never counts twice
+	if o.Overflowed() {
+		t.Fatalf("overflowed with %d rooms' states pending", MaxPendingStates)
+	}
+	o.Push(outboxState(codes[MaxPendingStates], 1, nil))
+	if !o.Overflowed() {
+		t.Fatalf("not overflowed with %d rooms' states pending", MaxPendingStates+1)
+	}
+	if n := len(o.Take()); n != MaxPendingStates {
+		t.Fatalf("Take returned %d frames, want %d", n, MaxPendingStates)
+	}
+}

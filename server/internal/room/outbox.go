@@ -14,6 +14,12 @@ const (
 	// is not reading; the outbox then reports Overflowed and the transport
 	// should drop the connection.
 	MaxPendingFrames = 32
+	// MaxPendingStates bounds the rooms whose state frames wait in one
+	// outbox at once (each room keeps only its newest one). A connection is
+	// in one room at a time, so a few are enough to cover a switch from one
+	// room to another; a client that lets more pile up is not reading, and
+	// the outbox reports Overflowed.
+	MaxPendingStates = 4
 	// MaxMergedEvents bounds the events a pending state frame accumulates
 	// from the frames it replaced (see Outbox.Push); the oldest go first.
 	MaxMergedEvents = 256
@@ -29,7 +35,10 @@ const (
 // frame inherits, when it has no ack of its own, the older one's ack, and,
 // when its position follows from the older one's, the older one's events
 // (in front of its own, so the client can still animate everything that
-// happened; see continues). Every other frame is kept, in order.
+// happened; see continues). Every other frame is kept, in order. Both kinds
+// are bounded: MaxPendingFrames other frames and the state frames of
+// MaxPendingStates rooms; past either, the frame is dropped and the outbox
+// reports Overflowed.
 //
 // An Outbox is safe for one pusher and one taker at a time, from different
 // goroutines.
@@ -37,6 +46,7 @@ type Outbox struct {
 	mu       sync.Mutex
 	queue    []wire.ServerMessage
 	other    int // frames in queue that are not wire.State
+	states   int // frames in queue that are wire.State, one per room
 	overflow bool
 	closed   bool
 	ready    chan struct{} // capacity 1: a token means "queue may be non-empty"
@@ -68,8 +78,10 @@ func (o *Outbox) Push(m wire.ServerMessage) {
 }
 
 // pushState replaces the pending state frame of the same room, if any, and
-// appends st. The caller holds mu.
+// appends st. A state frame of one more room than MaxPendingStates is
+// dropped and sets overflow. The caller holds mu.
 func (o *Outbox) pushState(st wire.State) {
+	replaced := false
 	for i, m := range o.queue {
 		old, ok := m.(wire.State)
 		if !ok || old.Code != st.Code {
@@ -88,7 +100,15 @@ func (o *Outbox) pushState(st wire.State) {
 			st.Ack = old.Ack
 		}
 		o.queue = append(o.queue[:i], o.queue[i+1:]...)
+		replaced = true
 		break
+	}
+	if !replaced {
+		if o.states >= MaxPendingStates {
+			o.overflow = true
+			return
+		}
+		o.states++
 	}
 	o.queue = append(o.queue, st)
 }
@@ -133,6 +153,7 @@ func (o *Outbox) Take() []wire.ServerMessage {
 	out := o.queue
 	o.queue = nil
 	o.other = 0
+	o.states = 0
 	return out
 }
 
@@ -151,5 +172,6 @@ func (o *Outbox) Close() {
 	o.closed = true
 	o.queue = nil
 	o.other = 0
+	o.states = 0
 	o.signal()
 }

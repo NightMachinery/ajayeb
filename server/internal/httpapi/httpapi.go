@@ -6,8 +6,8 @@
 // engine and room packages, and connection handling in package ws, whose
 // handler New mounts at /ws. With DevEndpoints (which requires Dev), it also
 // serves the development endpoints under /api/dev/ (devrooms.go), which
-// create rooms at chosen positions for end-to-end tests; a production server
-// never enables them.
+// create rooms at chosen positions for end-to-end tests, to clients on the
+// same machine only; a production server never enables them.
 package httpapi
 
 import (
@@ -68,8 +68,8 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 	mux.HandleFunc("/api/", apiNotFound)
 	if cfg.DevEndpoints {
 		d := newDevAPI(cfg.DevRooms, cfg.Seed)
-		mux.HandleFunc("/api/dev/rooms", d.createRoom)
-		mux.HandleFunc("/api/dev/scenarios", d.scenarios)
+		mux.Handle("/api/dev/rooms", localOnly(http.HandlerFunc(d.createRoom)))
+		mux.Handle("/api/dev/scenarios", localOnly(http.HandlerFunc(d.scenarios)))
 	}
 	if cfg.WebSocket != nil {
 		mux.Handle("/ws", cfg.WebSocket)

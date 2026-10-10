@@ -143,18 +143,20 @@ func TestKeyedLimiterIsBounded(t *testing.T) {
 func TestLimitsDefaults(t *testing.T) {
 	got := Limits{}.withDefaults()
 	want := Limits{
-		HelloTimeout:   10 * time.Second,
-		FrameRate:      10,
-		FrameBurst:     20,
-		MaxRateRejects: 20,
-		MaxConns:       1024,
-		MaxConnsPerIP:  16,
-		CreatesPerUser: 20,
-		CreatesPerIP:   60,
-		LimiterKeys:    4096,
-		PingInterval:   25 * time.Second,
-		MaxMissedPongs: 2,
-		WriteTimeout:   10 * time.Second,
+		HelloTimeout:    10 * time.Second,
+		FrameRate:       10,
+		FrameBurst:      20,
+		MaxRateRejects:  20,
+		MaxConns:        1024,
+		MaxConnsPerIP:   16,
+		CreatesPerUser:  20,
+		CreatesPerIP:    60,
+		JoinMissesPerIP: 30,
+		UndosPerIP:      60,
+		LimiterKeys:     4096,
+		PingInterval:    25 * time.Second,
+		MaxMissedPongs:  2,
+		WriteTimeout:    10 * time.Second,
 	}
 	if got != want {
 		t.Errorf("defaults = %+v\nwant %+v", got, want)
@@ -162,5 +164,49 @@ func TestLimitsDefaults(t *testing.T) {
 	custom := Limits{FrameRate: 3, PingInterval: time.Second}.withDefaults()
 	if custom.FrameRate != 3 || custom.PingInterval != time.Second || custom.FrameBurst != 20 {
 		t.Errorf("explicit limits were not kept: %+v", custom)
+	}
+}
+
+// TestKeyedLimiterLimitedAndRecord pins the pair the join-miss and undo
+// limits use: a key the limiter does not remember is never limited, and a
+// full table of refilling keys leaves a newcomer uncounted (rather than
+// refused, or pushing out another key's limit).
+func TestKeyedLimiterLimitedAndRecord(t *testing.T) {
+	const capacity = 4
+	l := newKeyedLimiter[netip.Prefix](newRate(2, time.Hour, 2), capacity)
+	now := limitEpoch
+	key := func(i int) netip.Prefix { return limitKey(netip.MustParseAddr(fmt.Sprintf("192.0.2.%d", i))) }
+
+	if l.limited(key(0), now) {
+		t.Fatal("an unknown key is limited")
+	}
+	l.record(key(0), now)
+	if l.limited(key(0), now) {
+		t.Fatal("limited after one of two")
+	}
+	l.record(key(0), now)
+	if !l.limited(key(0), now) {
+		t.Fatal("not limited after two of two")
+	}
+	l.record(key(0), now) // over the limit: changes nothing
+	if !l.limited(key(0), now.Add(30*time.Minute-time.Nanosecond)) || l.limited(key(0), now.Add(30*time.Minute)) {
+		t.Fatal("the key does not earn one back after half an hour")
+	}
+
+	for i := 1; i < capacity; i++ {
+		l.record(key(i), now)
+	}
+	l.record(key(100), now)
+	if l.len() != capacity || l.limited(key(100), now) {
+		t.Fatalf("a newcomer on a full table: %d keys, limited %v", l.len(), l.limited(key(100), now))
+	}
+	if !l.limited(key(0), now) {
+		t.Fatal("a newcomer pushed out a limited key")
+	}
+	// Once the buckets have refilled they are forgotten to make room.
+	now = now.Add(time.Hour)
+	l.record(key(100), now)
+	if l.len() != 1 {
+		t.Fatalf("remembers %d keys after pruning, want 1", l.len())
 	}
 }

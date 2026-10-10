@@ -16,6 +16,14 @@ type Client struct {
 	Name     string
 	Out      *Outbox
 
+	// AllowCreate, when set, is asked (on a room's goroutine) before the
+	// rooms create a room on this client's behalf other than through
+	// Manager.Create: today, a rematch that must create its rematch room. It
+	// reports whether the creation may go ahead, and counts it if so; a
+	// refusal reaches the client as reject rate. The transport points it at
+	// its room creation limits. Nil allows every creation.
+	AllowCreate func() bool
+
 	joined string // the code of the room this client is attached to, or ""
 }
 

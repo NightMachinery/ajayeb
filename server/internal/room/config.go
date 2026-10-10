@@ -24,7 +24,10 @@ const (
 	// memory before it is evicted. It stays on disk and is reloaded on the
 	// next join.
 	DefaultIdleTimeout = 30 * time.Minute
-	// DefaultMaxRooms bounds the rooms in memory at once.
+	// DefaultMaxRooms bounds the rooms in memory at once. It equals the
+	// transport's default socket limit, and a socket is attached to one room
+	// at most, so the rooms that have a connection (the only ones that
+	// cannot be evicted to make room) never outnumber it.
 	DefaultMaxRooms = 1024
 	// DefaultMaxClients bounds the connections of one room: a new spectator
 	// is admitted while the room has fewer, a seated user while that user
@@ -39,11 +42,13 @@ const (
 
 // Storage is what the rooms need from package store; *store.Store
 // satisfies it. Save must replay the file and set its Hash, and Load must
-// return the replayed state, as store does.
+// return the replayed state, as store does. PeekHeader reads a file without
+// replaying it (a join that the room would refuse is refused from it).
 type Storage interface {
 	NewCode() (string, error)
 	Save(f *store.File) error
 	Load(code string) (*store.File, engine.State, error)
+	PeekHeader(code string) (*store.File, error)
 }
 
 // Bot is what a room needs from a bot. Every bot of package ai satisfies
@@ -84,7 +89,10 @@ type Config struct {
 	// IdleTimeout is how long a room with no connection stays in memory.
 	// Default DefaultIdleTimeout.
 	IdleTimeout time.Duration
-	// MaxRooms bounds the rooms in memory. Default DefaultMaxRooms.
+	// MaxRooms bounds the rooms in memory. When it is reached, a create or
+	// a load evicts the room that has been idle longest (no connection, on
+	// disk) instead of refusing; only a Manager whose rooms all have
+	// connections answers busy. Default DefaultMaxRooms.
 	MaxRooms int
 	// MaxClients bounds the connections of one room: a new spectator is
 	// refused once the room has MaxClients connections, and a user who

@@ -32,10 +32,25 @@
 //   - Sockets: at most 16 per client address and 1024 in all; more are
 //     refused before the upgrade (429 and 503). The client address is the
 //     TCP peer, or, from a trusted proxy only, the rightmost untrusted
-//     address of X-Forwarded-For.
+//     address of X-Forwarded-For. Every per-address limit counts an IPv4
+//     address on its own and an IPv6 address by its /64 (limitKey), since
+//     one host can use every address of its /64.
 //   - Room creation: token buckets of 20 per hour per user id and 60 per
 //     hour per client address; a create over either is answered with reject
-//     rate. The limiters remember a bounded number of keys.
+//     rate, and so is a rematch that would create its room (the rooms ask
+//     room.Client.AllowCreate).
+//   - Joins of unknown rooms: a token bucket of 30 per hour per client
+//     address, used up by every join that finds no room; past it every join
+//     of the address is answered with reject rate. This bounds guessing
+//     from one address only. Someone with many /64s gets 30 misses an hour
+//     from each, and misses go uncounted once the limiter is full of
+//     addresses that are all still refilling (keyedLimiter.record), while a
+//     room code has only 31^6 (about 8.9e8) values. A longer code, or an
+//     invite secret for online rooms, is an open question.
+//   - Undo: a token bucket of 60 per minute per client address, since every
+//     applied undo rewrites a room file; an undo over it is answered with
+//     reject rate.
+//   - The keyed limiters remember a bounded number of keys.
 //   - Liveness: a ping every 25 seconds; at the tick after two pings in a
 //     row went unanswered the socket is dropped.
 //

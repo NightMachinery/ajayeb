@@ -35,7 +35,8 @@ import (
 type conn struct {
 	s   *Server
 	ws  *websocket.Conn
-	ip  netip.Addr
+	ip  netip.Addr   // the client address, for logs
+	key netip.Prefix // the client address as the per-address limits count it (limitKey)
 	log *slog.Logger
 	out *room.Outbox
 
@@ -63,12 +64,13 @@ type conn struct {
 }
 
 // newConn starts the hello deadline and the pings of a new connection.
-func newConn(s *Server, ws *websocket.Conn, ip netip.Addr) *conn {
+func newConn(s *Server, ws *websocket.Conn, ip netip.Addr, key netip.Prefix) *conn {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &conn{
 		s:          s,
 		ws:         ws,
 		ip:         ip,
+		key:        key,
 		log:        s.log.With("ip", ip),
 		out:        room.NewOutbox(),
 		ctx:        ctx,
@@ -242,16 +244,27 @@ func (c *conn) handle(data []byte) bool {
 	case wire.Hello:
 		c.out.Push(wire.NewReject(0, wire.RejectCodeBadRequest, "hello was already received"))
 	case wire.Create:
-		if !c.s.allowCreate(c.client.UserID, c.ip) {
+		if !c.s.allowCreate(c.client.UserID, c.key) {
 			c.out.Push(wire.NewReject(0, wire.RejectCodeRate, "too many rooms created; try again later"))
 			return true
 		}
 		_, err = rooms.Create(c.ctx, c.client, m)
 	case wire.Join:
+		if !c.s.allowJoin(c.key) {
+			c.out.Push(wire.NewReject(0, wire.RejectCodeRate, "too many joins of unknown rooms; try again later"))
+			return true
+		}
 		err = rooms.Join(c.ctx, c.client, m.Code)
+		if errors.Is(err, room.ErrRoomNotFound) {
+			c.s.joinMissed(c.key)
+		}
 	case wire.Act:
 		err = rooms.Act(c.ctx, c.client, m)
 	case wire.Undo:
+		if !c.s.allowUndo(c.key) {
+			c.out.Push(wire.NewReject(m.Seq, wire.RejectCodeRate, "too many undos; slow down"))
+			return true
+		}
 		err = rooms.Undo(c.ctx, c.client, m)
 	case wire.Resync:
 		err = rooms.Resync(c.ctx, c.client, m.Code)
@@ -304,7 +317,15 @@ func (c *conn) hello(data []byte) bool {
 	}
 	c.mu.Unlock()
 
-	c.client = &room.Client{UserID: userID, ClientID: h.ClientID, Name: h.Name, Out: c.out}
+	c.client = &room.Client{
+		UserID:   userID,
+		ClientID: h.ClientID,
+		Name:     h.Name,
+		Out:      c.out,
+		// A rematch that creates a room counts against the same limits as
+		// a create.
+		AllowCreate: func() bool { return c.s.allowCreate(userID, c.key) },
+	}
 	c.log.Debug("hello", "user", userID)
 	c.out.Push(c.s.welcome)
 	return true

@@ -234,3 +234,48 @@ func TestDecodeClientRejectsOverlongFields(t *testing.T) {
 		})
 	}
 }
+
+// TestDecodeClientRejectsInvisibleFormatCharacters checks that display
+// names (and the other bounded strings) refuse Unicode format characters
+// that can disguise a name or reorder the text around it: the bidi
+// overrides, embeddings, isolates and marks, and the invisible ones such as
+// a zero width space. The joiners that real names and emoji need (ZWNJ,
+// ZWJ, the emoji tag characters) stay allowed. The frames spell each
+// character as a JSON escape, so this file stays ASCII.
+func TestDecodeClientRejectsInvisibleFormatCharacters(t *testing.T) {
+	hello := func(name, clientID string) string {
+		return `{"t":"hello","v":1,"token":"` + validToken(t) + `","name":"` + name + `","clientId":"` + clientID + `"}`
+	}
+	for _, name := range []string{
+		`Sara\u202e`,       // right-to-left override
+		`\u202aSara`,       // left-to-right embedding
+		`Sa\u2066ra\u2069`, // isolates
+		`Sa\u200era`,       // left-to-right mark
+		`Sa\u061cra`,       // Arabic letter mark
+		`Sa\u200bra`,       // zero width space
+		`Sa\u2060ra`,       // word joiner
+		`\ufeffsara`,       // byte order mark
+		`Sa\u00adra`,       // soft hyphen
+	} {
+		if _, err := DecodeClient([]byte(hello(name, "c1"))); !errors.Is(err, ErrBadFrame) {
+			t.Errorf("hello with name %s: err = %v, want ErrBadFrame", name, err)
+		}
+	}
+	if _, err := DecodeClient([]byte(hello("Sara", `c\u202e1`))); !errors.Is(err, ErrBadFrame) {
+		t.Errorf("hello with a bidi override in clientId: err = %v, want ErrBadFrame", err)
+	}
+	create := `{"t":"create","mode":"hotseat","names":["Sara","Om\u202eid"]}`
+	if _, err := DecodeClient([]byte(create)); !errors.Is(err, ErrBadFrame) {
+		t.Errorf("create with a bidi override in a name: err = %v, want ErrBadFrame", err)
+	}
+
+	for _, name := range []string{
+		`\u0645\u06cc\u200c\u062e\u0648\u0627\u0647\u0645`,                                     // Persian with a zero width non-joiner
+		`\ud83d\udc69\u200d\ud83d\udcbb`,                                                       // an emoji ZWJ sequence
+		`\ud83c\udff4\udb40\udc67\udb40\udc62\udb40\udc65\udb40\udc6e\udb40\udc67\udb40\udc7f`, // a flag tag sequence
+	} {
+		if _, err := DecodeClient([]byte(hello(name, "c1"))); err != nil {
+			t.Errorf("hello with name %s: %v, want it accepted", name, err)
+		}
+	}
+}

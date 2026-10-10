@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"sync"
+	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -262,17 +263,72 @@ func checkSeats(mode store.Mode, seats [2]store.Seat) error {
 }
 
 // reserve counts a room about to be created or loaded against MaxRooms.
+// When the Manager is full, it first evicts the room that has been idle
+// longest (no connection attached, nothing left to save: it is on disk and
+// comes back on the next join), so rooms nobody uses can never lock anyone
+// out. Only when every room in memory has a connection is the answer
+// ErrTooManyRooms.
 func (m *Manager) reserve() error {
+	// Each round either reserves, gives up, or evicts one room. A room may
+	// refuse (a connection attached after it was chosen), so the rounds are
+	// bounded rather than looping on a busy server.
+	const rounds = 8
+	for range rounds {
+		victim, err := m.reserveOrChoose()
+		if err != nil || victim == nil {
+			return err
+		}
+		m.evict(victim)
+	}
+	return ErrTooManyRooms
+}
+
+// reserveOrChoose reserves a slot if one is free. Otherwise it returns the
+// room idle longest, marked as being evicted so that no other caller picks
+// it too, or ErrTooManyRooms when no room is idle.
+func (m *Manager) reserveOrChoose() (*Room, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.closed {
-		return ErrClosed
+		return nil, ErrClosed
 	}
-	if len(m.rooms)+m.pending >= m.cfg.MaxRooms {
-		return ErrTooManyRooms
+	if len(m.rooms)+m.pending < m.cfg.MaxRooms {
+		m.pending++
+		return nil, nil
 	}
-	m.pending++
-	return nil
+	var victim *Room
+	for _, r := range m.rooms {
+		if !r.evictable || r.evicting {
+			continue
+		}
+		if victim == nil || r.idleSince.Before(victim.idleSince) ||
+			(r.idleSince.Equal(victim.idleSince) && r.code < victim.code) {
+			victim = r
+		}
+	}
+	if victim == nil {
+		return nil, ErrTooManyRooms
+	}
+	victim.evicting = true
+	return victim, nil
+}
+
+// evict asks a room chosen by reserveOrChoose to leave memory, and waits
+// until it has answered (it leaves only if it is still idle) or is gone.
+func (m *Manager) evict(r *Room) {
+	_, _ = request(m.ctx, r, func(reply chan bool) any { return msgEvict{reply: reply} })
+	m.mu.Lock()
+	r.evicting = false
+	m.mu.Unlock()
+}
+
+// setIdle records what a room's actor publishes about itself: whether it
+// may be evicted, and since when nobody is attached.
+func (m *Manager) setIdle(r *Room, idle bool, since time.Time) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	r.evictable = idle
+	r.idleSince = since
 }
 
 func (m *Manager) unreserve() {
@@ -317,13 +373,31 @@ func (m *Manager) lookup(code string) (*Room, error) {
 }
 
 // get returns the room for code, loading it from the store if it is not in
-// memory.
-func (m *Manager) get(code string) (*Room, error) {
+// memory. Before a load, check (when set) sees the room file's header and
+// may refuse with its own error; the room is then not loaded at all, so a
+// join the room would refuse costs a read of the file, never a slot among
+// the rooms in memory.
+func (m *Manager) get(code string, check func(*store.File) error) (*Room, error) {
 	if store.ValidateCode(code) != nil {
 		return nil, ErrRoomNotFound
 	}
 	if r, err := m.lookup(code); r != nil || err != nil {
 		return r, err
+	}
+	if check != nil {
+		hdr, err := m.cfg.Store.PeekHeader(code)
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				m.log.Warn("reading a room's header failed", "room", code, "err", err)
+			}
+			return nil, ErrRoomNotFound
+		}
+		if hdr.Status == store.StatusArchived {
+			return nil, ErrRoomNotFound
+		}
+		if err := check(hdr); err != nil {
+			return nil, err
+		}
 	}
 	if err := m.reserve(); err != nil {
 		return nil, err
@@ -381,11 +455,19 @@ func (m *Manager) Join(ctx context.Context, c *Client, code string) error {
 }
 
 func (m *Manager) join(ctx context.Context, c *Client, code string) error {
+	// A room this user could never enter is refused from its file's header,
+	// without loading it (see get); a room in memory decides in admit.
+	check := func(f *store.File) error {
+		if closedTo(f.Mode, f.Seats, c.UserID) {
+			return ErrForbidden
+		}
+		return nil
+	}
 	// A room can exit (idle eviction) between the lookup and the attach;
 	// the retry then loads it again from disk.
 	const attempts = 3
 	for range attempts {
-		r, err := m.get(code)
+		r, err := m.get(code, check)
 		if err != nil {
 			return err
 		}
@@ -487,6 +569,9 @@ func (m *Manager) Rematch(ctx context.Context, c *Client, code string) (string, 
 	case errors.Is(err, ErrForbidden), errors.Is(err, ErrTooManyRooms), errors.Is(err, ErrStorage), errors.Is(err, ErrInvalidSpec):
 		c.Out.Push(wire.NewError(errorCode(err), errorMsg(err)))
 		return "", err
+	case errors.Is(err, ErrRateLimited):
+		c.Out.Push(wire.NewReject(0, wire.RejectCodeRate, "too many rooms created; try again later"))
+		return "", err
 	default:
 		return "", m.requestFailed(c, 0, err)
 	}
@@ -512,7 +597,7 @@ func (m *Manager) requestFailed(c *Client, seq int, err error) error {
 // endpoints only, never for a client.
 func (m *Manager) Snapshot(ctx context.Context, code string) (Snapshot, error) {
 	for range 3 {
-		r, err := m.get(code)
+		r, err := m.get(code, nil)
 		if err != nil {
 			return Snapshot{}, err
 		}

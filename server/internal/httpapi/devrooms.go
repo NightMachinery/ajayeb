@@ -10,6 +10,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"strings"
 
@@ -38,7 +39,8 @@ const maxDevBody = 64 << 10
 //   - GET /api/dev/scenarios lists the named scenarios.
 //
 // The body must be JSON (Content-Type application/json), so a page on
-// another site cannot post to it with a simple form or fetch.
+// another site cannot post to it with a simple form or fetch. Both answer
+// only a client on the same machine (localOnly).
 type devAPI struct {
 	rooms DevRooms
 	seed  func() uint64
@@ -49,6 +51,25 @@ func newDevAPI(rooms DevRooms, seed func() uint64) *devAPI {
 		seed = cryptoSeed
 	}
 	return &devAPI{rooms: rooms, seed: seed}
+}
+
+// localOnly serves only requests from a loopback peer that no proxy
+// forwarded, and answers every other one with 403 forbidden. A room made
+// from a chosen seed hides nothing from whoever chose it: a remote player
+// who could make an online room that way could invite someone to it and
+// know all of their hidden cards. A reverse proxy on the same machine
+// connects from loopback too, so a forwarded request (X-Forwarded-For,
+// Forwarded or X-Real-IP) counts as remote, whatever the proxy's address.
+func localOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ap, err := netip.ParseAddrPort(r.RemoteAddr)
+		forwarded := r.Header.Get("X-Forwarded-For") != "" || r.Header.Get("Forwarded") != "" || r.Header.Get("X-Real-IP") != ""
+		if err != nil || !ap.Addr().Unmap().IsLoopback() || forwarded {
+			writeError(w, http.StatusForbidden, "forbidden", "the development endpoints answer clients on this machine only")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // cryptoSeed returns 64 random bits from crypto/rand.

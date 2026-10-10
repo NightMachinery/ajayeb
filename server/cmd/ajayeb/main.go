@@ -135,7 +135,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
 	fset.IntVar(&opts.botSearches, "bot-searches", defaultBotSearches, "how many bot searches may run at once across all rooms")
-	fset.Uint64Var(&opts.seedBase, "seed-base", 0, "derive room seeds from this `base` for reproducible tests (0 means random seeds)")
+	fset.Uint64Var(&opts.seedBase, "seed-base", 0, "derive room seeds from this `base` for reproducible tests (requires -dev; 0 means random seeds)")
 	fset.BoolVar(&opts.showVersion, "version", false, "print the version and exit")
 	fset.Usage = func() {
 		fmt.Fprintf(fset.Output(), "Usage: ajayeb [flags]\n\nThe Ajayeb game server.\n\nFlags:\n")
@@ -153,6 +153,11 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	}
 	if opts.devEndpoints && !opts.dev {
 		return options{}, errors.New("-dev-endpoints requires -dev; refusing to start")
+	}
+	// Seeds from a counter make every deal predictable: whoever recognizes
+	// one game's deal knows the hidden cards of every later one.
+	if opts.seedBase != 0 && !opts.dev {
+		return options{}, errors.New("-seed-base requires -dev; refusing to start")
 	}
 	if opts.botDelay < 0 {
 		return options{}, errors.New("-bot-delay must not be negative")

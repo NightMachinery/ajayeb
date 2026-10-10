@@ -90,6 +90,33 @@ func (l *keyedLimiter[K]) check(key K, now time.Time) bool {
 	return ok
 }
 
+// limited reports whether key is over its limit at now. A key the limiter
+// does not remember is never limited: its bucket would be full. Unlike
+// check, it never refuses a newcomer, for limits that must not lock out
+// everyone else while a flood of keys fills the table (see record).
+func (l *keyedLimiter[K]) limited(key K, now time.Time) bool {
+	b, known := l.buckets[key]
+	if !known {
+		return false
+	}
+	_, ok := l.rate.next(b, now)
+	return !ok
+}
+
+// record counts a request for key at now, if the limiter can remember the
+// key: when it remembers capacity keys whose buckets are all still
+// refilling, a new key goes uncounted rather than pushing out another key's
+// limit. Only a flood of capacity distinct keys gets that far.
+func (l *keyedLimiter[K]) record(key K, now time.Time) {
+	if _, known := l.buckets[key]; !known && len(l.buckets) >= l.capacity {
+		l.prune(now)
+		if len(l.buckets) >= l.capacity {
+			return
+		}
+	}
+	l.take(key, now)
+}
+
 // take records a request for key at now. The caller has just checked that
 // it is allowed.
 func (l *keyedLimiter[K]) take(key K, now time.Time) {

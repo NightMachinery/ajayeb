@@ -74,16 +74,22 @@ const (
 )
 
 // checkNonEmptyBounded rejects an empty string, one longer than max runes,
-// or one containing a control character (which would make a poor display
-// name and could be used to smuggle terminal escapes into a log).
+// or one containing a character refused by unsafeRune.
 func checkNonEmptyBounded(field, s string, max int) error {
 	if s == "" {
 		return fmt.Errorf("%s must not be empty", field)
 	}
+	return checkBounded(field, s, max)
+}
+
+// checkBounded is checkNonEmptyBounded without the non-empty requirement,
+// for fields that may legitimately be absent (an empty display name means
+// "use a default").
+func checkBounded(field, s string, max int) error {
 	n := 0
 	for _, r := range s {
-		if unicode.IsControl(r) {
-			return fmt.Errorf("%s contains a control character", field)
+		if unsafeRune(r) {
+			return fmt.Errorf("%s contains a control or invisible formatting character", field)
 		}
 		n++
 		if n > max {
@@ -93,24 +99,23 @@ func checkNonEmptyBounded(field, s string, max int) error {
 	return nil
 }
 
-// checkBounded is checkNonEmptyBounded without the non-empty requirement,
-// for fields that may legitimately be absent (an empty display name means
-// "use a default").
-func checkBounded(field, s string, max int) error {
-	if s == "" {
-		return nil
+// unsafeRune reports whether r may not appear in a client string. Control
+// characters would make a poor display name and could smuggle terminal
+// escapes into a log. Format characters (Unicode category Cf) are invisible:
+// the bidi overrides, embeddings, isolates and marks reorder the text
+// around a name wherever it is shown (dir="auto" does not undo an explicit
+// override), and the zero width ones let a name look like another. Three
+// kinds of Cf stay allowed because real text needs them: the zero width
+// non-joiner and joiner (Persian and other scripts, emoji sequences) and the
+// tag characters of emoji flag sequences.
+func unsafeRune(r rune) bool {
+	switch {
+	case unicode.IsControl(r):
+		return true
+	case r == 0x200C, r == 0x200D, r >= 0xE0020 && r <= 0xE007F: // ZWNJ, ZWJ, tags
+		return false
 	}
-	n := 0
-	for _, r := range s {
-		if unicode.IsControl(r) {
-			return fmt.Errorf("%s contains a control character", field)
-		}
-		n++
-		if n > max {
-			return fmt.Errorf("%s is longer than %d characters", field, max)
-		}
-	}
-	return nil
+	return unicode.Is(unicode.Cf, r)
 }
 
 // discriminator extracts the literal T.-field value tygo emits for a message

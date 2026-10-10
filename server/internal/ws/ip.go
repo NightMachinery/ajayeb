@@ -34,6 +34,24 @@ func clientIP(r *http.Request, trusted []netip.Prefix) netip.Addr {
 	return ip
 }
 
+// limitKey is the key the per-address limits count a client under: an
+// IPv4 address on its own, and an IPv6 address by its /64. A single host
+// usually holds a whole /64 (it is the smallest network a subscriber or a
+// server is given) and can use any address in it, so counting IPv6
+// addresses one by one would give it billions of allowances. The zero
+// address (an unparsable peer) gives the zero prefix, one shared key.
+func limitKey(a netip.Addr) netip.Prefix {
+	bits := 64
+	if a.Is4() {
+		bits = 32
+	}
+	p, err := a.Prefix(bits)
+	if err != nil {
+		return netip.Prefix{}
+	}
+	return p
+}
+
 // forwardedHops splits X-Forwarded-For header values into their entries,
 // in order. A request may carry the header more than once; the values then
 // read as one comma separated list.

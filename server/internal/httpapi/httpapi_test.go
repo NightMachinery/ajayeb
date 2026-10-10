@@ -47,6 +47,7 @@ func newTestHandler(t *testing.T) http.Handler {
 func do(t *testing.T, h http.Handler, method, target string, header http.Header) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(method, target, nil)
+	req.RemoteAddr = "127.0.0.1:40000" // a local client, which the development endpoints require
 	for k, vs := range header {
 		for _, v := range vs {
 			req.Header.Add(k, v)

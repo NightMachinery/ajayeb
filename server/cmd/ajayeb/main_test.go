@@ -78,6 +78,7 @@ func TestParseFlagsRejects(t *testing.T) {
 		"stray argument":            {"serve"},
 		"unknown flag":              {"--nope"},
 		"bad seed base":             {"--seed-base", "-1"},
+		"seed base without dev":     {"--seed-base", "1000"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			if _, err := parseFlags(args, io.Discard); err == nil {
@@ -94,6 +95,24 @@ func TestRunRefusesDevEndpointsWithoutDev(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "-dev-endpoints requires -dev") {
 		t.Errorf("stderr = %q, want the refusal reason", stderr.String())
+	}
+}
+
+// TestRunRefusesSeedBaseWithoutDev checks that predictable seeds are for
+// development servers only: from -seed-base, a player who recognizes one
+// deal knows every later game's hidden cards.
+func TestRunRefusesSeedBaseWithoutDev(t *testing.T) {
+	var stderr bytes.Buffer
+	// --version makes run return at once should the check ever go, instead
+	// of starting a real server on the default address.
+	if code := run([]string{"--seed-base", "1000", "--version"}, io.Discard, &stderr); code != 2 {
+		t.Errorf("exit code = %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "-seed-base requires -dev") {
+		t.Errorf("stderr = %q, want the refusal reason", stderr.String())
+	}
+	if _, err := parseFlags([]string{"--dev", "--seed-base", "1000"}, io.Discard); err != nil {
+		t.Errorf("-seed-base with -dev: %v", err)
 	}
 }
 

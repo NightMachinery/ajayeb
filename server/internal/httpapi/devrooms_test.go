@@ -41,10 +41,18 @@ func newDevHandler(t *testing.T, rooms DevRooms) http.Handler {
 	return h
 }
 
+// devRequest is a request to a development endpoint from a loopback peer,
+// the only kind they answer.
+func devRequest(method, target, body string) *http.Request {
+	req := httptest.NewRequest(method, target, strings.NewReader(body))
+	req.RemoteAddr = "127.0.0.1:40000"
+	return req
+}
+
 // post sends a JSON body to POST /api/dev/rooms.
 func post(t *testing.T, h http.Handler, body string) *httptest.ResponseRecorder {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodPost, "/api/dev/rooms", strings.NewReader(body))
+	req := devRequest(http.MethodPost, "/api/dev/rooms", body)
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -196,7 +204,7 @@ func TestDevRoomMethodAndContentType(t *testing.T) {
 		t.Errorf("GET /api/dev/rooms = %d (Allow %q), want 405 Allow POST", rec.Code, rec.Header().Get("Allow"))
 	}
 	for _, ct := range []string{"", "text/plain", "application/x-www-form-urlencoded"} {
-		req := httptest.NewRequest(http.MethodPost, "/api/dev/rooms", strings.NewReader(`{"mode":"hotseat"}`))
+		req := devRequest(http.MethodPost, "/api/dev/rooms", `{"mode":"hotseat"}`)
 		if ct != "" {
 			req.Header.Set("Content-Type", ct)
 		}
@@ -206,7 +214,7 @@ func TestDevRoomMethodAndContentType(t *testing.T) {
 			t.Errorf("Content-Type %q: status %d, want 415", ct, rec.Code)
 		}
 	}
-	req := httptest.NewRequest(http.MethodPost, "/api/dev/rooms", strings.NewReader(`{"mode":"hotseat"}`))
+	req := devRequest(http.MethodPost, "/api/dev/rooms", `{"mode":"hotseat"}`)
 	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	rec = httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -297,5 +305,58 @@ func TestDevRoomsWithTheRealManager(t *testing.T) {
 	rec = post(t, h, `{"mode":"ai","bot":"easy","actions":["construct:baths"]}`)
 	if rec.Code != http.StatusBadRequest || decodeBody[errorBody](t, rec).Code != "invalid-room" {
 		t.Errorf("an illegal action log: %d %s, want 400 invalid-room", rec.Code, rec.Body.String())
+	}
+}
+
+// TestDevEndpointsAnswerLoopbackOnly checks that the development endpoints
+// answer only a client on the same machine, even on a server started with
+// them: a room made from a chosen seed hides nothing from whoever chose it,
+// so a remote player must not be able to make one and invite someone to it.
+// A request forwarded by a proxy is not local, whatever the proxy's own
+// address.
+func TestDevEndpointsAnswerLoopbackOnly(t *testing.T) {
+	rooms := &fakeRooms{}
+	h := newDevHandler(t, rooms)
+	for _, tc := range []struct {
+		name   string
+		remote string
+		header http.Header
+	}{
+		{"remote ipv4", "192.0.2.1:1234", nil},
+		{"remote ipv6", "[2001:db8::1]:1234", nil},
+		{"unparsable peer", "pipe", nil},
+		{"forwarded by a local proxy", "127.0.0.1:1234", http.Header{"X-Forwarded-For": {"192.0.2.1"}}},
+		{"forwarded (RFC 7239) by a local proxy", "[::1]:1234", http.Header{"Forwarded": {"for=192.0.2.1"}}},
+	} {
+		for _, target := range []string{"/api/dev/rooms", "/api/dev/scenarios"} {
+			method := http.MethodGet
+			if target == "/api/dev/rooms" {
+				method = http.MethodPost
+			}
+			req := httptest.NewRequest(method, target, strings.NewReader(`{"mode":"online","seed":"42"}`))
+			req.RemoteAddr = tc.remote
+			req.Header.Set("Content-Type", "application/json")
+			for k, vs := range tc.header {
+				req.Header[k] = vs
+			}
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+			if rec.Code != http.StatusForbidden || decodeBody[errorBody](t, rec).Code != "forbidden" {
+				t.Errorf("%s, %s %s: %d %s, want 403 forbidden", tc.name, method, target, rec.Code, rec.Body.String())
+			}
+		}
+	}
+	if len(rooms.specs) != 0 {
+		t.Fatalf("a refused request created %d rooms", len(rooms.specs))
+	}
+	for _, remote := range []string{"127.0.0.1:1234", "[::1]:1234"} {
+		req := devRequest(http.MethodPost, "/api/dev/rooms", `{"mode":"hotseat"}`)
+		req.RemoteAddr = remote
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != http.StatusCreated {
+			t.Errorf("from %s: %d %s, want 201", remote, rec.Code, rec.Body.String())
+		}
 	}
 }
