@@ -39,6 +39,7 @@ import {
   getSet,
   isMain,
   printHeader,
+  runMain,
   setFiles,
   shown,
   symbolsFor,
@@ -320,9 +321,4 @@ async function main() {
   console.error(`specimen: wrote ${shown(out)}`);
 }
 
-if (isMain(import.meta.url)) {
-  main().catch((err) => {
-    console.error(`${err.stack ?? err}`);
-    process.exit(1);
-  });
-}
+if (isMain(import.meta.url)) runMain(main);

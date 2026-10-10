@@ -363,14 +363,39 @@ export async function withShooter(fn, { force = false } = {}) {
   }
 }
 
-/** Shared CLI error handling: a refused launch exits 2, any other error 1. */
+/** An expected error with a message for the user, such as a bad flag. */
+export class UsageError extends Error {
+  name = 'UsageError';
+}
+
+/**
+ * True for an error the tools raise on purpose: a UsageError, a plain Error
+ * (every `throw new Error('--set NAME is required')` and the like), or a
+ * flag that node:util parseArgs refused. Those are reported by their message
+ * alone. Built-in subclasses (TypeError, RangeError, ReferenceError ...)
+ * and anything that is not an Error are real crashes and keep the stack.
+ */
+export function isExpectedError(err) {
+  if (!(err instanceof Error)) return false;
+  if (err instanceof UsageError) return true;
+  if (typeof err.code === 'string' && err.code.startsWith('ERR_PARSE_ARGS_')) return true;
+  return Object.getPrototypeOf(err) === Error.prototype;
+}
+
+/**
+ * Shared CLI error handling: a refused launch exits 2, any other error 1.
+ * Expected errors print their message only, crashes their stack;
+ * AJAYEB_STACK=1 prints the stack for every error.
+ */
 export async function runMain(main) {
   try {
     await main();
   } catch (err) {
     const { LaunchRefused } = await import('../../chrome/launch.mjs');
-    console.error(err instanceof LaunchRefused ? err.message : `${err.stack ?? err}`);
-    process.exit(err instanceof LaunchRefused ? 2 : 1);
+    const refused = err instanceof LaunchRefused;
+    const brief = refused || (isExpectedError(err) && process.env.AJAYEB_STACK !== '1');
+    console.error(brief ? `${err.message}` : `${err?.stack ?? err}`);
+    process.exit(refused ? 2 : 1);
   }
 }
 
