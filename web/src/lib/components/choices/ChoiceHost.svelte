@@ -168,6 +168,15 @@
     summaryOpen = false;
   }
 
+  // The who-starts bar has done its job once the player turns to the board:
+  // the first tap on the structure closes it, so on a short phone it gives
+  // the height it took back to the strips.
+  function onBoardTap(event: PointerEvent): void {
+    if (!freshAge) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('.card-structure')) beginAge();
+  }
+
   function title(kind: PendingKind): string {
     switch (kind) {
       case 'destroyCard':
@@ -204,6 +213,8 @@
 
   const titleId = 'choice-panel-title';
 </script>
+
+<svelte:window onpointerdown={onBoardTap} />
 
 {#snippet peekButton()}
   <button
@@ -252,6 +263,7 @@
       </Sheet>
       {#if !sheetOpen}
         <PeekBar
+          inline
           text={mine ? title(pending.kind) : waitingText(pending.kind, decider)}
           onopen={() => setOpen(true)}
         />
@@ -299,15 +311,16 @@
         </div>
       </Sheet>
       {#if !sheetOpen}
-        <PeekBar text={title(pending.kind)} onopen={() => setOpen(true)} />
+        <PeekBar inline text={title(pending.kind)} onopen={() => setOpen(true)} />
       {/if}
     {:else}
-      <PeekBar text={waitingText(pending.kind, decider)} />
+      <PeekBar inline text={waitingText(pending.kind, decider)} />
     {/if}
   </div>
 {:else if freshAge}
   <div data-age-start={view.age}>
     <PeekBar
+      inline
       text={startsText}
       openLabel={t('choices.age.summaryOpen')}
       onopen={() => (summaryOpen = true)}
