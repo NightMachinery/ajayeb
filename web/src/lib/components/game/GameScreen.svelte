@@ -88,6 +88,7 @@
     passPending,
     pendingSlot,
     pickableSlots,
+    toastLines,
     wonderStatus
   } from './card-actions';
   import { botSeat, seatNames } from './names';
@@ -264,19 +265,29 @@
     const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
     const holderBefore = ui.holder;
     ui.record(f, acked, passOn);
-    if (acked === 'act' && f.room.mode !== 'online' && f.canUndo) {
+    if (acked === 'act') {
       const passNext =
         f.room.mode === 'hotseat' &&
         passOn &&
         f.view.toMove !== undefined &&
         f.view.toMove !== holderBefore;
-      const line = eventLines(f.events, seatNames(f.room))[0];
-      if (line && !passNext) {
-        toasts.show(line, {
-          kind: 'success',
-          actionLabel: t('game.toast.undo'),
-          onAction: undo
-        });
+      // The move's line, and why a choice it should have opened was skipped
+      // (UX design: "the server skips it and a toast explains why"). The
+      // pass-device screen shows the same lines in its summary instead.
+      const lines = toastLines(f.events, seatNames(f.room));
+      const skipped = f.events.some((e) => e.kind === 'effectSkipped');
+      if (lines.length > 0 && !passNext) {
+        if (f.room.mode !== 'online' && f.canUndo) {
+          toasts.show(lines.join(' '), {
+            kind: 'success',
+            actionLabel: t('game.toast.undo'),
+            onAction: undo,
+            duration: skipped ? 8000 : undefined
+          });
+        } else if (skipped) {
+          // Online moves have no undo toast, but a skip still needs saying.
+          toasts.show(lines.join(' '), { kind: 'info', duration: 8000 });
+        }
       }
     }
   }

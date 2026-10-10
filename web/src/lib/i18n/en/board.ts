@@ -155,6 +155,14 @@ export const board = {
   'board.log.rebuild': '{name} builds {card} from the discard pile.',
   'board.log.wonderRemoved': "{name}'s unbuilt wonder {wonder} leaves the game.",
   'board.log.effectSkipped': '{name} has no option for that choice.',
+  // effectSkipped by the choice that had no option ({source} is the wonder,
+  // {opponent} the other player): the move toast says why nothing happened.
+  'board.log.skipped.destroyCard':
+    'Nothing to destroy for {source}: {opponent} has no card of that colour.',
+  'board.log.skipped.buildFromDiscard': 'Nothing to build for {source}: the discard pile is empty.',
+  'board.log.skipped.pickBoardToken': 'No progress token is left on the board to take.',
+  'board.log.skipped.pickLibraryToken':
+    'Nothing to draw for {source}: no progress token is left in the box.',
   'board.log.extraTurn': '{name} plays again.',
   'board.log.extraTurnLost': "{name}'s extra turn is lost at the end of the age.",
   'board.log.starterChosen': '{name} chooses {starter} to start the next age.'

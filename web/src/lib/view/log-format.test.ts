@@ -180,3 +180,43 @@ describe('groupLogByAge', () => {
     expect(groups[0]!.age).toBe(0);
   });
 });
+
+describe('formatLogEvent: a skipped choice says why', () => {
+  // The Statue of Zeus with no brown card to destroy, as the server recorded
+  // it (server/internal/engine/testdata/protocol/effect-skipped.json).
+  const zeus: GameEvent = {
+    kind: 'effectSkipped',
+    private: false,
+    seat: 0,
+    wonder: 'statue-of-zeus',
+    skipped: 'destroyCard'
+  };
+
+  it('nothing to destroy names the wonder and the opponent', () => {
+    expect(formatLogEvent(zeus, names)?.text).toBe(
+      'Nothing to destroy for Statue of Zeus: Omid has no card of that colour.'
+    );
+  });
+
+  it('an empty discard pile, an empty board and an empty box', () => {
+    const at = (skipped: GameEvent['skipped'], wonder?: string) =>
+      formatLogEvent({ kind: 'effectSkipped', private: false, seat: 1, wonder, skipped }, names)
+        ?.text;
+    expect(at('buildFromDiscard', 'mausoleum')).toBe(
+      'Nothing to build for Mausoleum: the discard pile is empty.'
+    );
+    expect(at('pickBoardToken')).toBe('No progress token is left on the board to take.');
+    expect(at('pickLibraryToken', 'great-library')).toBe(
+      'Nothing to draw for Great Library: no progress token is left in the box.'
+    );
+  });
+
+  it('falls back to the plain line when the event names no source', () => {
+    expect(
+      formatLogEvent(
+        { kind: 'effectSkipped', private: false, seat: 0, skipped: 'destroyCard' },
+        names
+      )?.text
+    ).toBe('Sara has no option for that choice.');
+  });
+});

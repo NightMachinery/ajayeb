@@ -192,7 +192,7 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.effectSkipped', { name })
+        text: skippedText(event, names, name)
       };
     case 'extraTurn':
       return {
@@ -216,6 +216,36 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
     default:
       return null;
   }
+}
+
+/**
+ * Why a choice was skipped, from the choice it would have opened and the
+ * wonder (or card) that opened it. Falls back to the plain line when the
+ * event names neither.
+ */
+function skippedText(event: GameEvent, names: SeatNames, name: string): string {
+  const source = event.wonder
+    ? wonderName(event.wonder)
+    : event.card
+      ? cardName(event.card)
+      : undefined;
+  const opponent = seatName(names, event.seat === 0 ? 1 : event.seat === 1 ? 0 : undefined);
+  switch (event.skipped) {
+    case 'destroyCard':
+      if (source && opponent) return t('board.log.skipped.destroyCard', { source, opponent });
+      break;
+    case 'buildFromDiscard':
+      if (source) return t('board.log.skipped.buildFromDiscard', { source });
+      break;
+    case 'pickBoardToken':
+      return t('board.log.skipped.pickBoardToken');
+    case 'pickLibraryToken':
+      if (source) return t('board.log.skipped.pickLibraryToken', { source });
+      break;
+    default:
+      break;
+  }
+  return t('board.log.effectSkipped', { name });
 }
 
 /**

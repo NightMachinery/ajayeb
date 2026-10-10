@@ -188,6 +188,23 @@ export function eventLines(events: readonly GameEvent[], names: SeatNames): stri
   return out;
 }
 
+/**
+ * The lines of the move toast after this client's own move: the move's own
+ * line (the first one the log shows), then the line of every choice the
+ * server skipped because it had no option (an empty discard pile, nothing
+ * to destroy), which would otherwise pass in silence. Empty when the
+ * events show nothing.
+ */
+export function toastLines(events: readonly GameEvent[], names: SeatNames): string[] {
+  const out: string[] = [];
+  for (const e of events) {
+    const line = formatLogEvent(e, names);
+    if (!line) continue;
+    if (out.length === 0 || e.kind === 'effectSkipped') out.push(line.text);
+  }
+  return out;
+}
+
 /** What a bot's move is about to take, for the pre-roll highlight. */
 export interface BotPick {
   /** The structure slot of the card it takes (build, discard or a wonder). */
