@@ -63,6 +63,11 @@
 
   const SEATS = [0, 1] as const;
 
+  /** A div and label[for], not a wrapping label: the app's ring for an
+   *  input inside a label is meant for hidden radio inputs. */
+  const uid = $props.id();
+  const linkId = `${uid}-link`;
+
   function seatName(seat: 0 | 1): string {
     const name = seats.find((s) => s.seat === seat)?.name.trim();
     return name || t(seat === 0 ? 'board.crest.sun' : 'board.crest.moon');
@@ -122,20 +127,21 @@
           </span>
         </div>
 
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        <div class="flex flex-col gap-1">
+          <label for={linkId} class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
             {t('online.lobby.link')}
-          </span>
+          </label>
           <input
             class="min-h-11 w-full rounded-control border border-rule bg-panel-sunken px-3 text-sm text-fg"
             type="text"
+            id={linkId}
             readonly
             value={url}
             dir="ltr"
             data-invite-link
             onfocus={selectAll}
           />
-        </label>
+        </div>
 
         <div class="grid gap-2 {canShare && onshare ? 'grid-cols-2' : 'grid-cols-1'}">
           <Button variant="primary" full onclick={oncopy} data-control="copy-link">

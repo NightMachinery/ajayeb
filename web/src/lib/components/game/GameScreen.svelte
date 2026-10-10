@@ -145,10 +145,20 @@
   const canUndo = $derived(mode !== 'online' && session.canUndo);
 
   const layout = $derived(breakpoints.viewport);
-  // Phone landscape in play: the turn bar's column is narrow, so the toasts
-  // sit at the foot of the structure instead of above the turn bar.
-  const toastsInStructure = $derived(
-    layout === 'phone-landscape' && !!view && view.phase !== 'wonderDraft'
+  // Where the toasts sit in play. Above the turn bar by default (on a phone
+  // that covers only this player's own strip). On a desktop the turn bar is
+  // under the structure, whose bottom row holds the cards a player can take,
+  // so they sit at the foot of this player's own column instead. In phone
+  // landscape the turn bar's column is too narrow, so they sit at the foot
+  // of the structure.
+  const toastSpot = $derived(
+    !view || view.phase === 'wonderDraft'
+      ? ('turn' as const)
+      : layout === 'desktop'
+        ? ('home' as const)
+        : layout === 'phone-landscape'
+          ? ('structure' as const)
+          : ('turn' as const)
   );
   const variant = $derived(
     layout === 'desktop'
@@ -508,7 +518,7 @@
       {/if}
 
       <div class="area-structure relative min-h-0 min-w-0" {@attach markBotPick(pickSlot)}>
-        {#if toastsInStructure}
+        {#if toastSpot === 'structure'}
           <!-- Sideways the turn bar's column is too narrow: the toasts sit at
              the foot of the structure instead. -->
           <ToastList {toasts} placement="inside" />
@@ -540,6 +550,11 @@
 
       <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir}>
         {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
+        {#if toastSpot === 'home'}
+          <!-- Desktop: the foot of this player's own column, clear of the
+             structure's takeable bottom row, the track and the opponent. -->
+          <ToastList {toasts} placement="inside" />
+        {/if}
       </div>
     {/if}
 
@@ -547,7 +562,7 @@
       <!-- Toasts sit just above the turn bar: on a phone they cover only this
          player's own strip, never the opponent's strip or the track, which
          matter while the other side moves. -->
-      {#if !toastsInStructure}
+      {#if toastSpot === 'turn'}
         <ToastList {toasts} placement="above" />
       {/if}
       {#if session.notice && session.notice !== dismissedNotice}
