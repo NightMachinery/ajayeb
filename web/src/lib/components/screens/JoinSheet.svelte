@@ -25,6 +25,7 @@
    *  input inside a label is meant for hidden radio inputs. */
   const uid = $props.id();
   const inputId = `${uid}-input`;
+  const hintId = `${uid}-hint`;
 
   let typed = $state<string | null>(null);
   const code = $derived(normalizeCodeInput(typed ?? initial));
@@ -58,7 +59,7 @@
         spellcheck="false"
         dir="ltr"
         aria-invalid={wrong}
-        aria-describedby="join-code-hint"
+        aria-describedby={hintId}
         value={code}
         oninput={(event) => {
           typed = event.currentTarget.value;
@@ -68,7 +69,7 @@
         data-code-input
       />
       <span
-        id="join-code-hint"
+        id={hintId}
         class="text-xs {wrong ? 'text-cinnabar' : 'text-fg-muted'}"
         role={wrong ? 'alert' : undefined}
       >

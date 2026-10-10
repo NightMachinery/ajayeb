@@ -67,6 +67,8 @@
    *  input inside a label is meant for hidden radio inputs. */
   const uid = $props.id();
   const linkId = `${uid}-link`;
+  const codeLabelId = `${uid}-code-label`;
+  const playersId = `${uid}-players`;
 
   function seatName(seat: 0 | 1): string {
     const name = seats.find((s) => s.seat === seat)?.name.trim();
@@ -108,12 +110,12 @@
 
     <section
       class="grid gap-4 rounded-panel border border-rule bg-panel p-4 shadow-panel split:grid-cols-[minmax(0,1fr)_auto] split:items-center split:gap-6"
-      aria-labelledby="lobby-code-label"
+      aria-labelledby={codeLabelId}
     >
       <div class="flex min-w-0 flex-col gap-3">
         <div class="flex flex-col items-center gap-1 split:items-start">
           <span
-            id="lobby-code-label"
+            id={codeLabelId}
             class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
           >
             {t('online.lobby.code')}
@@ -180,8 +182,8 @@
       </figure>
     </section>
 
-    <section class="flex flex-col gap-2" aria-labelledby="lobby-players">
-      <h2 id="lobby-players" class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
+    <section class="flex flex-col gap-2" aria-labelledby={playersId}>
+      <h2 id={playersId} class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
         {t('online.lobby.players')}
       </h2>
       <ul class="flex flex-col gap-2">
