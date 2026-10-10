@@ -606,7 +606,7 @@
     outline-offset: 3px;
     box-shadow:
       0 0 0 6px color-mix(in oklch, var(--bot-ink, var(--accent)) 28%, transparent),
-      0 6px 14px -4px oklch(0.2 0.04 260 / 0.5);
+      var(--shadow);
   }
   .game-screen :global(li[data-bot-pick]) {
     border-radius: var(--radius-panel, 0.75rem);
