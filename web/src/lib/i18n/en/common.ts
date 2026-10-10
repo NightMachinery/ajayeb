@@ -1,4 +1,5 @@
-// English messages shared by the app shell and the Home screen.
+// English messages shared by the whole app (the shell, error pages, the
+// developer pages). The Home screen's own keys live in home.ts.
 //
 // Conventions (see ../index.ts):
 //   - Keys are flat and dotted: '<area>.<name>'. Other areas get their own
@@ -25,17 +26,6 @@ export const common = {
   'error.notFound': 'This page does not exist.',
   'error.generic': 'Something went wrong.',
   'error.status': 'Error {status}',
-
-  'home.modes': 'Game modes',
-  'home.playAi': 'Play vs AI',
-  'home.playAiHint': 'Against the computer',
-  'home.passAndPlay': 'Pass and play',
-  'home.passAndPlayHint': 'Two players, one device',
-  'home.playOnline': 'Play online',
-  'home.playOnlineHint': 'Invite a friend with a link',
-  'home.soon': 'Soon',
-  'home.comingSoon':
-    'Coming soon. The game is still being built, and each mode opens here as soon as it is ready.',
 
   'theme.label': 'Theme',
   'theme.system': 'System',

@@ -1,15 +1,22 @@
 // English messages for the Home and setup screens
 // (components/screens/Home, NewGameSheet, HotseatSheet, Settings,
-// PassDevice). The home.modes/playAi/passAndPlay/playOnline/soon/comingSoon
-// keys Home itself still uses stay in common.ts: that file is not part of
-// this slice's owned files (see AGENTS.md's per-slice ownership), so the
-// planned move of those keys into this one waits for a slice that owns
-// both. Everything new in this slice lives here. See ../index.ts for the
-// conventions.
+// PassDevice). See ../index.ts for the conventions.
 
 import type { Messages } from '../types';
 
 export const home = {
+  // Home: the game modes.
+  'home.modes': 'Game modes',
+  'home.playAi': 'Play vs AI',
+  'home.playAiHint': 'Against the computer',
+  'home.passAndPlay': 'Pass and play',
+  'home.passAndPlayHint': 'Two players, one device',
+  'home.playOnline': 'Play online',
+  'home.playOnlineHint': 'Invite a friend with a link',
+  'home.soon': 'Soon',
+  'home.comingSoon':
+    'Coming soon. The game is still being built, and each mode opens here as soon as it is ready.',
+
   // Home: the saved-rooms "Continue" list and the Settings entry point.
   'home.continueLabel': 'Continue a game',
   'home.continueEntry': 'Continue: {mode} · {code}',
