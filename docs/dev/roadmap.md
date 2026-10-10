@@ -77,7 +77,7 @@ Acceptance:
 
 ## M3: AI
 
-Status: done locally on 2026-10-09, with the full Hard measurement pending CI. Presets are frozen in `server/internal/ai/levels.go` and described in [docs/ai.md](../ai.md). Greedy beat Random in 100% of 100 paired games, and Medium beat Greedy in 71.0% of 100 (95% interval 61.5% to 79.0%). Hard against Medium was measured locally only on a proxy at a tenth of both budgets (63.7% over 200 games, interval 56.9% to 70.1%), because the full run takes about six hours here. The nightly CI job plays all three tournaments at full budget and is the authoritative check; if Hard falls short there, a follow-up slice tunes its search settings.
+Status: done on 2026-10-10. Presets are frozen in `server/internal/ai/levels.go` and described in [docs/ai.md](../ai.md). The authoritative measurement is the CI tournament at the levels' fixed budgets (run 38020386167): Greedy beat Random in 100% of 100 paired games, Medium beat Greedy in 68.0% of 100 (95% interval 58.3% to 76.3%), and Hard beat Medium in 96.0% of 200 (interval 92.3% to 98.0%). The first full run had Hard at only 53.5%, because more iterations bought little once the search converged: the leaf value was the limit. Follow-up slice S13 made Hard's rollouts play to the end of the game, and since each iteration now costs about twice as much, its fixed budget went from 500,000 to 200,000 iterations (the low end of the measured range) for the same 2 seconds. The step from Medium to Hard is now large; whether to smooth it is an open question for the owner.
 
 Scope:
 
