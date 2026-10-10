@@ -101,6 +101,7 @@ export const board = {
   'board.turn.playAgain': 'Play again',
   'board.turn.aiThinking': '{name} is thinking…',
   'board.turn.waitingFor': 'Waiting for {name}…',
+  'board.turn.waitingAway': '{name} is away. Waiting for them to come back…',
   'board.turn.sent': 'Sending…',
   'board.turn.sentSlow': 'Still waiting for the server…',
   'board.turn.retry': 'Retry',

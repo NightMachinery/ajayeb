@@ -259,4 +259,54 @@ describe('turnState: the bot thinking', () => {
       seat: 1
     });
   });
+
+  it('an online opponent to move who dropped is waited for as away', () => {
+    const v = view('card-destroyed-seat0');
+    const ctx: TurnContext = {
+      view: v,
+      mode: 'online',
+      mySeats: [0],
+      connected: [true, false],
+      ...baseConn
+    };
+    expect(turnState(ctx)).toEqual({ kind: 'waitingOpponent', seat: 1, away: true });
+    expect(turnState({ ...ctx, connected: [true, true] })).toEqual({
+      kind: 'waitingOpponent',
+      seat: 1
+    });
+  });
+
+  it('an away opponent does not matter on your own turn', () => {
+    const ctx: TurnContext = {
+      view: view('age-1-start-seat0'),
+      mode: 'online',
+      mySeats: [0],
+      connected: [true, false],
+      ...baseConn
+    };
+    expect(turnState(ctx)).toEqual({ kind: 'yourTurn', seat: 0 });
+  });
+
+  it('reconnecting and offline win over an away opponent', () => {
+    const ctx: TurnContext = {
+      view: view('card-destroyed-seat0'),
+      mode: 'online',
+      mySeats: [0],
+      connected: [true, false],
+      ...baseConn
+    };
+    expect(turnState({ ...ctx, conn: 'reconnecting' })).toEqual({ kind: 'reconnecting' });
+    expect(turnState({ ...ctx, conn: 'offline' })).toEqual({ kind: 'offline' });
+  });
+
+  it('a spectator watches whoever is away', () => {
+    const ctx: TurnContext = {
+      view: view('age-1-start-spectator'),
+      mode: 'online',
+      mySeats: [],
+      connected: [false, false],
+      ...baseConn
+    };
+    expect(turnState(ctx)).toEqual({ kind: 'spectating' });
+  });
 });

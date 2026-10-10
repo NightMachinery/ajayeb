@@ -28,6 +28,9 @@ export interface TurnContext {
   /** The seat whose bot is searching right now (the state frame's
    *  `thinking`), if any. */
   thinking?: Seat;
+  /** Whether each seat's player is connected (the room's seats, online
+   *  rooms only): false for a player who dropped. */
+  connected?: readonly [boolean | undefined, boolean | undefined];
 }
 
 export type TurnState =
@@ -38,7 +41,7 @@ export type TurnState =
   | { kind: 'gameOver' }
   | { kind: 'spectating' }
   | { kind: 'aiThinking'; seat: Seat }
-  | { kind: 'waitingOpponent'; seat: Seat }
+  | { kind: 'waitingOpponent'; seat: Seat; away?: true }
   | { kind: 'pendingChoice'; seat: Seat; pendingKind: PendingKind }
   | { kind: 'playAgain'; seat: Seat }
   | { kind: 'hotseatTurn'; seat: Seat }
@@ -69,8 +72,10 @@ export function turnState(ctx: TurnContext): TurnState {
   // frames (a resync, a frame the outbox merged) it is still the one to
   // answer, so it reads as thinking rather than as an opponent to wait for.
   if (!ctx.mySeats.includes(toMove)) {
-    return ctx.mode === 'ai'
-      ? { kind: 'aiThinking', seat: toMove }
+    if (ctx.mode === 'ai') return { kind: 'aiThinking', seat: toMove };
+    // Online, the player to move may have dropped: the bar says so.
+    return ctx.connected?.[toMove] === false
+      ? { kind: 'waitingOpponent', seat: toMove, away: true }
       : { kind: 'waitingOpponent', seat: toMove };
   }
 
