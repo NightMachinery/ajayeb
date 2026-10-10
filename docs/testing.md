@@ -289,6 +289,21 @@ git). The config stops the server and the browser at the end of a run.
   screen, the pass-device screen and every button of an open sheet).
 - `hygiene.ts`: console errors, uncaught exceptions, failed requests and
   HTTP errors, collected for a spec to expect empty.
+- `scenario.ts`, the helpers of the scenario specs below.
+  `openHotseatRoom` opens a hot-seat room at a named scenario (or at the
+  ordinary start) through the test build's `/dev/new` page, always with an
+  explicit seed (7 unless a spec names another), so these rooms never use
+  up a seed from the server's `--seed-base` counter and the games the other
+  specs create over the socket stay the same whether or not these ran
+  first. `playKey` plays one action key of a scenario's trigger with the
+  driver's clicks (the panel for a pending choice, the card sheet for a
+  build or discard, card first for a wonder unless the spec asks for wonder
+  first) and waits for the room to move on. `logLines` reads the game log
+  from the top bar's log sheet. `expectResultScreen` checks a finished
+  game: the server's result has the expected kind and winner, the result
+  screen says the same (`data-victory`, `data-winner`, the kind line and
+  the headline), the tie-break note shows exactly when the totals tie, and
+  the score table shows the server's score sheet line by line.
 
 ### `hotseat.full.spec.ts` (`@mobile @full`)
 
@@ -404,3 +419,74 @@ The spec logs one line per position with the layout class, the smallest
 takeable card and control, and the document's scroll size. At 360x740 the
 smallest takeable cards measured 54x83 px in Ages I and II and 46x71 px in
 Age III.
+
+### `victory.spec.ts` (`@mobile`)
+
+One test per way a game ends, each from a named scenario
+(`server/internal/engine/scenarios_named.go`, listed in
+[dev/scenarios.md](dev/scenarios.md)) whose trigger the spec plays
+through the UI:
+
+- military supremacy: `military-supremacy` (Walls' two shields reach the
+  capital) and `military-via-wonder` (the Statue of Zeus's shield, played
+  wonder first, ends the game before its destroy choice can open);
+- scientific supremacy: `science-supremacy` (University's globe as a
+  sixth distinct symbol) and `law-supremacy` (a science pair's board token
+  choice, then Law's scales as the sixth);
+- the civilian count at the end of Age III: `civilian-end`;
+- the ties: `tie-blue` (equal totals, broken on blue points, with the
+  tie-break note) and `draw` (equal totals and equal blue points: a shared
+  victory, with no winner).
+
+Each test checks the result screen with `expectResultScreen` against the
+server's result, then a few facts of the scenario's Expect from the final
+view (the pawn in the capital and no destroy choice, Law in the winner's
+tokens, the equal totals of a tie), that the turn bar says the game is
+over and no move is offered, and that the page logged no error. Each test
+takes 2 to 4 s.
+
+### `flows.spec.ts` (`@mobile`)
+
+One test per special choice, each checking that the pending panel opens
+for the right seat (`data-choice-host`, `data-decider`, `data-mine`) with
+exactly the options the view offers (its `data-pick` tiles and the
+`choices` keys), that the choice is made with a player's clicks, and that
+it lands in the server's next view:
+
+- the wonder draft of an ordinary new game (seed 4242): six picks by hand
+  in the draft order (the first player, then the second twice, and the
+  reverse in round 2), each pick on the draft screen and in the picker's
+  wonders, and Age I beginning with four wonders each, all eight of them
+  the ones offered;
+- a progress token from the board (`science-pair`): the board untouched
+  while the choice is open, every board token an option, the taken one
+  moved to the player;
+- the Great Library (`great-library`): the decider's view and panel show
+  the three drawn tokens, Law first, with the "only you can see" note;
+  after Law is taken, the next view (seat 1's) names the two returned
+  tokens nowhere, and neither does the page. A hot-seat room has no other
+  viewer, so the waiting side of this secret is covered by
+  `internal/protocoltest` until an online spec covers it in the browser;
+- reviving from the discard pile (`mausoleum`), and the Mausoleum with an
+  empty pile (`mausoleum-empty`), whose choice is skipped with a log line;
+- destroying a card (`zeus-destroy` for a brown card, `circus-maximus` for
+  a grey one), and the Statue of Zeus with nothing to destroy
+  (`zeus-no-target`), skipped with a log line;
+- the next age's starter (`age-transition-chooser`): the trailing seat
+  chooses, not the one who took the last card, and the panel says why;
+- the extra turn: lost on an age's last card (`extra-turn-lost`, with the
+  log line and the starter choice that follows), and an ordinary one from
+  the Appian Way (`appian-economy`): the same seat moves again, the log
+  says so, and after that move the turn passes.
+
+Each test takes 3 to 8 s (the draft is the longest). On mobile the
+pass-device screen is on, and the driver passes it wherever it appears.
+
+Measured on the laptop with `make e2e E2E_BUILD=0 GREP='victory|flows'`
+(both projects, 36 tests), green on two runs in a row, about two and a
+half minutes each:
+
+- desktop: `victory` about 26 s for its 7 tests, `flows` about 46 to 48 s
+  for its 11;
+- mobile: `victory` about 21 to 22 s, `flows` about 46 s.
+
