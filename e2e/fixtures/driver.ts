@@ -1,5 +1,5 @@
-// The shared game driver for full playthroughs (hot-seat now; versus the bot
-// and online later). It plays through the visible UI only: it reads the
+// The shared game driver for full playthroughs (hot-seat and versus the bot
+// now; online later). It plays through the visible UI only: it reads the
 // legal moves from window.__ajayeb (docs/testing.md, "The client test
 // hook"), picks one with a policy, performs it by clicking the controls a
 // player would click (a structure slot, a sheet button, a panel button, the
@@ -7,6 +7,11 @@
 // move before it looks again. It never sends a frame itself and never
 // decides what is legal: every key it clicks is a [data-act] the page shows
 // for one of the view's choices.
+//
+// Against the bot it waits out the bot's turns the way a player does: until
+// the page is ready again with a move of this client's to make (the bot's
+// thinking frame, the Presenter's dwell and the bot's move have all been
+// shown by then), or the game is over. It never sleeps a fixed time.
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { Choice, PendingKind, Phase, RoomInfo, View, YouInfo } from '../../web/src/lib/wire';
@@ -41,6 +46,12 @@ export interface Snapshot {
   result: View['result'] | null;
   /** The hot-seat pass-device screen is up. */
   pass: boolean;
+  /** The seats this connection acts for (you.seats). */
+  seats: number[];
+  /** The seat whose bot is searching, if any (the state frame's thinking). */
+  thinking: number | null;
+  /** The server would accept an undo now (the state frame's canUndo). */
+  canUndo: boolean;
 }
 
 /** How a move is performed on screen. */
@@ -61,6 +72,8 @@ export interface DriverStats {
   pendingKinds: Partial<Record<PendingKind, number>>;
   /** Pass-device screens dismissed. */
   passScreens: number;
+  /** Undos sent from the top bar. */
+  undos: number;
 }
 
 export type Policy = (snap: Snapshot, stats: DriverStats) => Move;
@@ -121,7 +134,8 @@ export class GameDriver {
       wonderFirst: 0
     },
     pendingKinds: {},
-    passScreens: 0
+    passScreens: 0,
+    undos: 0
   };
 
   constructor(page: Page) {
@@ -145,6 +159,28 @@ export class GameDriver {
     );
   }
 
+  /**
+   * Waits until this client has a move to make (the page ready, a seat of
+   * its own to move, and you.canAct), or the game is over. In a bot room
+   * that is after the bot's thinking frame, its dwell and its move; in a
+   * hot-seat room it is at once.
+   */
+  async waitTurn(timeout = 60_000): Promise<void> {
+    await this.page.waitForFunction(
+      () => {
+        const hook = window.__ajayeb;
+        if (!hook || !hook.ready()) return false;
+        const view = hook.view();
+        const you = hook.you();
+        if (!view || !you) return false;
+        if (view.phase === 'gameOver') return true;
+        return you.canAct && view.toMove !== undefined && you.seats.includes(view.toMove);
+      },
+      null,
+      { timeout, polling: 50 }
+    );
+  }
+
   async snapshot(): Promise<Snapshot> {
     return this.page.evaluate(() => {
       const hook = window.__ajayeb;
@@ -160,7 +196,10 @@ export class GameDriver {
         pending: view.pending?.kind ?? null,
         choices: hook.choices(),
         result: view.result ?? null,
-        pass: document.querySelector('[data-pass-device]') !== null
+        pass: document.querySelector('[data-pass-device]') !== null,
+        seats: hook.you()?.seats ?? [],
+        thinking: room.thinking,
+        canUndo: room.canUndo
       };
     });
   }
@@ -286,23 +325,94 @@ export class GameDriver {
   }
 
   /**
+   * Waits for this client's next move (see waitTurn), dismissing the
+   * pass-device screen whenever it is up, and returns the snapshot there:
+   * a move to make, or the game over.
+   */
+  async nextTurn(): Promise<Snapshot> {
+    for (;;) {
+      await this.waitTurn();
+      const snap = await this.snapshot();
+      if (!snap.pass) return snap;
+      await this.passDevice();
+    }
+  }
+
+  /** Performs the policy's move in `snap` and waits for the room to move on. */
+  async play(snap: Snapshot, policy: Policy = hotseatPolicy): Promise<Move> {
+    const move = policy(snap, this.stats);
+    await this.perform(move, snap);
+    await this.waitAdvance(snap.version);
+    return move;
+  }
+
+  /**
    * Plays the game on screen to its end and returns the final snapshot.
-   * Dismisses the pass-device screen whenever it is up.
+   * Dismisses the pass-device screen whenever it is up, and waits through
+   * the bot's turns in a bot room.
    */
   async playToEnd(policy: Policy = hotseatPolicy, maxActions = 300): Promise<Snapshot> {
     for (;;) {
-      await this.waitReady();
-      const snap = await this.snapshot();
-      if (snap.pass) {
-        await this.passDevice();
-        continue;
-      }
+      const snap = await this.nextTurn();
       if (snap.phase === 'gameOver') return snap;
       if (this.stats.actions >= maxActions) {
         throw new Error(`the game did not end within ${maxActions} actions`);
       }
-      await this.perform(policy(snap, this.stats), snap);
-      await this.waitAdvance(snap.version);
+      await this.play(snap, policy);
     }
+  }
+
+  /**
+   * Undo from the top bar (after closing any toast that could cover it),
+   * then waits for the room to move on. Returns the snapshot after it.
+   */
+  async undo(): Promise<Snapshot> {
+    const before = await this.snapshot();
+    await this.dismissToasts();
+    const button = this.visible('[data-control="undo"]');
+    await expect(button).toBeEnabled();
+    await button.click();
+    await this.waitAdvance(before.version);
+    this.stats.undos += 1;
+    return this.snapshot();
+  }
+
+  /**
+   * Starts counting how often the bot's thinking indicator appears: the
+   * turn bar's thinking state (`[data-turn="aiThinking"]`) and a seat
+   * panel's thinking dots (`.seat-panel[data-thinking]`), each counted on
+   * the change from absent to shown. It runs in the page from its next
+   * load on, so call it before page.goto; read it with thinkingSeen().
+   */
+  async watchThinking(): Promise<void> {
+    await this.page.addInitScript(() => {
+      const seen = { turnBar: 0, panel: 0 };
+      (window as unknown as { __e2eThinking: typeof seen }).__e2eThinking = seen;
+      let turnBar = false;
+      let panel = false;
+      const look = () => {
+        const nowTurnBar = document.querySelector('[data-turn="aiThinking"]') !== null;
+        const nowPanel = document.querySelector('.seat-panel[data-thinking]') !== null;
+        if (nowTurnBar && !turnBar) seen.turnBar += 1;
+        if (nowPanel && !panel) seen.panel += 1;
+        turnBar = nowTurnBar;
+        panel = nowPanel;
+      };
+      new MutationObserver(look).observe(document, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['data-turn', 'data-thinking']
+      });
+    });
+  }
+
+  /** How many times the thinking indicator has appeared (see watchThinking). */
+  async thinkingSeen(): Promise<{ turnBar: number; panel: number }> {
+    return this.page.evaluate(
+      () =>
+        (window as unknown as { __e2eThinking?: { turnBar: number; panel: number } })
+          .__e2eThinking ?? { turnBar: 0, panel: 0 }
+    );
   }
 }
