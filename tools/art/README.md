@@ -24,7 +24,9 @@ they can be run from anywhere with `node tools/art/<script>.mjs ...` as
 long as the path is correct; in practice, run them from the repository
 root. `AJAYEB_RUN_DIR` (default `~/tmp/agents/ajayeb`, same as
 `tools/heavy.py`) is where the private, not-committed working state lives:
-raw attempts and contact sheets.
+raw attempts and contact sheets. Every script prints its usage, the
+comment block at its top, with `--help`, and rejects an unknown flag with
+exit code 2.
 
 ### `lib.mjs`
 

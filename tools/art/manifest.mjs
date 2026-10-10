@@ -11,6 +11,10 @@
 // Usage:
 //   node tools/art/manifest.mjs           write art/manifest.json
 //   node tools/art/manifest.mjs --check   exit 1 if that would change the file
+//   node tools/art/manifest.mjs --help    print this usage and exit
+//
+// AJAYEB_ART_MANIFEST names another manifest file to rebuild or check (a
+// scratch copy).
 //
 // See docs/art/bitmaps.md for the pipeline this is step 1 of.
 
@@ -23,6 +27,7 @@ import {
   loadManifest,
   saveManifest,
   manifestLabel,
+  printUsage,
   die,
 } from './lib.mjs';
 
@@ -102,7 +107,12 @@ async function build() {
 }
 
 async function main() {
-  const check = process.argv.includes('--check');
+  let check = false;
+  for (const a of process.argv.slice(2)) {
+    if (a === '--help' || a === '-h') printUsage(import.meta.url);
+    else if (a === '--check') check = true;
+    else die(`unknown argument "${a}" (see --help)`, 2);
+  }
   const { manifest, stale } = await build();
 
   if (stale.length) {

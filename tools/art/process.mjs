@@ -60,6 +60,7 @@
 //                    approval check, touch nothing committed
 //   --manifest PATH  read (and, without --out, update) this manifest
 //                    instead of art/manifest.json
+//   --help           print this usage and exit
 //
 // With --out, nothing is written to art/originals/ or web/static/art/: the
 // WebP original goes to DIR/originals/<kind>/<slug>.webp and the AVIFs to
@@ -93,6 +94,7 @@ import {
   rawRgba16,
   hexToRgb,
   PAPER_HEX,
+  printUsage,
   die,
 } from './lib.mjs';
 
@@ -100,13 +102,14 @@ function parseArgs(argv) {
   const args = { qualities: [55, 45, 35] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--id') args.id = argv[++i];
+    if (a === '--help' || a === '-h') printUsage(import.meta.url);
+    else if (a === '--id') args.id = argv[++i];
     else if (a === '--src') args.src = argv[++i];
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--manifest') setManifestPath(argv[++i]);
-    else die(`unknown argument "${a}"`, 2);
+    else die(`unknown argument "${a}" (see --help)`, 2);
   }
-  if (!args.id) die('usage: process.mjs --id <id> [--src <original>] [--out DIR] [--manifest PATH]', 2);
+  if (!args.id) die('usage: process.mjs --id <id> [--src <original>] [--out DIR] [--manifest PATH] (see --help)', 2);
   return args;
 }
 

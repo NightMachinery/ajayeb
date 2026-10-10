@@ -87,6 +87,7 @@ import {
   hexToRgb,
   deltaE2000,
   PAPER_HEX,
+  printUsage,
   die,
 } from './lib.mjs';
 
@@ -94,7 +95,8 @@ function parseArgs(argv) {
   const args = { attempt: 'latest', band: 0.04, dist: 45, threshold: 0.5, paperMax: 18 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
+    if (a === '--help' || a === '-h') printUsage(import.meta.url);
+    else if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--kind') args.kind = argv[++i];
     else if (a === '--attempt') args.attempt = argv[++i];
     else if (a === '--all') args.all = true;
@@ -106,7 +108,7 @@ function parseArgs(argv) {
     else if (a === '--paper-max') args.paperMax = Number(argv[++i]);
     else if (a === '--json') args.json = true;
     else if (a === '--strict') args.strict = true;
-    else die(`unknown argument "${a}"`, 2);
+    else die(`unknown argument "${a}" (see --help)`, 2);
   }
   return args;
 }

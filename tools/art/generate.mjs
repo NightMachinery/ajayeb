@@ -50,6 +50,7 @@
 //                 anchor, when one exists (default: no reference image at
 //                 all; see "Reference images" above)
 //   --dry-run     print the prompt and the codex command, run nothing
+//   --help        print this usage and exit
 
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -67,6 +68,7 @@ import {
   styleDocPath,
   refsDir,
   imageSize,
+  printUsage,
   die,
 } from './lib.mjs';
 
@@ -79,14 +81,15 @@ function parseArgs(argv) {
   const args = { limit: 1, status: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
+    if (a === '--help' || a === '-h') printUsage(import.meta.url);
+    else if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--kind') args.kind = argv[++i];
     else if (a === '--limit') args.limit = Number(argv[++i]);
     else if (a === '--status') args.status = argv[++i];
     else if (a === '--amend') args.amend = argv[++i];
     else if (a === '--ref') args.ref = true;
     else if (a === '--dry-run') args.dryRun = true;
-    else die(`unknown argument "${a}"`, 2);
+    else die(`unknown argument "${a}" (see --help)`, 2);
   }
   return args;
 }

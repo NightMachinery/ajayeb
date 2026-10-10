@@ -24,6 +24,7 @@
 //   --manifest PATH  read this manifest instead of art/manifest.json
 //   --out FILE       write the module here instead of
 //                    web/src/lib/art/available.gen.ts (a scratch proof)
+//   --help           print this usage and exit
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -40,6 +41,7 @@ import {
   setManifestPath,
   manifestLabel,
   displayPath,
+  printUsage,
   die,
 } from './lib.mjs';
 
@@ -47,7 +49,8 @@ function parseArgs(argv) {
   const args = { out: availableGenPath };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--manifest') setManifestPath(argv[++i]);
+    if (a === '--help' || a === '-h') printUsage(import.meta.url);
+    else if (a === '--manifest') setManifestPath(argv[++i]);
     else if (a === '--out') args.out = path.resolve(argv[++i]);
     else die(`unknown argument "${a}"`, 2);
   }

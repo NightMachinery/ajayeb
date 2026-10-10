@@ -24,13 +24,26 @@
 // as a per-id override via --attempt all. Labels are "<n>. <id> #<attempt>"
 // (n counts from 1 across the sheet), drawn by montage itself (not baked
 // into the raw PNGs), so they never leak into a shipped file.
+//
+// Flags:
+//   --ids a,b,c     ids to put on the sheet, each optionally "#<attempt>",
+//                   "#latest" or "#all"
+//   --kind KIND     every asset of one kind that has an attempt, when
+//                   --ids is not given
+//   --attempt N|latest|all   the default attempt for entries with no "#"
+//                   (default: latest)
+//   --name NAME     the sheet's file name, art-work/sheets/NAME.jpg
+//                   (default: sheet-<timestamp>)
+//   --tile COLSxROWS  montage grid (default: up to 4 columns)
+//   --cell WxH      each cell's size (default 384x288)
+//   --help          print this usage and exit
 
 import { spawn } from 'node:child_process';
 import { mkdir, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { rawDir, sheetsDir, idKind, idSlug, loadManifest, die } from './lib.mjs';
+import { rawDir, sheetsDir, idKind, idSlug, loadManifest, printUsage, die } from './lib.mjs';
 
 // montage's -label needs a font it can rasterize; a bare install (notably
 // this repo's macOS machines) registers none by default, so point at a
@@ -50,12 +63,14 @@ function parseArgs(argv) {
   const args = { tile: null, cell: '384x288' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
+    if (a === '--help' || a === '-h') printUsage(import.meta.url);
+    else if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--kind') args.kind = argv[++i];
     else if (a === '--attempt') args.attempt = argv[++i]; // 'latest' or a number
     else if (a === '--name') args.name = argv[++i];
     else if (a === '--tile') args.tile = argv[++i];
-    else die(`unknown argument "${a}"`, 2);
+    else if (a === '--cell') args.cell = argv[++i];
+    else die(`unknown argument "${a}" (see --help)`, 2);
   }
   return args;
 }
