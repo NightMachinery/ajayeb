@@ -24,13 +24,18 @@
     view: View;
     /** Asks the server for a rematch; absent when the room cannot offer one. */
     onrematch?: () => void;
+    /** The rematch button's label, when it is not a plain Rematch (joining
+     *  the one the other player asked for, or watching it). */
+    rematchLabel?: string;
+    /** A line above the button, such as who asked for the rematch. */
+    rematchNote?: string;
     /** Leaves the room for the home screen. */
     onhome: () => void;
     /** Display names by seat; read from the room when not given. */
     names?: SeatNames;
   }
 
-  let { view, onrematch, onhome, names: namesProp }: Props = $props();
+  let { view, onrematch, rematchLabel, rematchNote, onhome, names: namesProp }: Props = $props();
 
   const ctx = tryGameContext();
   const names = $derived(namesProp ?? seatNames(ctx?.presenter.frame?.room));
@@ -122,9 +127,18 @@
 
       <div class="grid grid-cols-2 gap-2 pb-2">
         {#if onrematch}
+          {#if rematchNote}
+            <p
+              class="col-span-2 text-center text-sm font-semibold text-fg"
+              dir="auto"
+              role="status"
+            >
+              {rematchNote}
+            </p>
+          {/if}
           <Button variant="primary" class="col-span-2" onclick={onrematch} data-rematch>
             <RotateCw class="size-4" aria-hidden="true" />
-            {t('choices.over.rematch')}
+            {rematchLabel ?? t('choices.over.rematch')}
           </Button>
         {/if}
         <Button

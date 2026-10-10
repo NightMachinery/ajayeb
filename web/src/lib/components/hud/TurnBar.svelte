@@ -57,7 +57,9 @@
       case 'aiThinking':
         return t('board.turn.aiThinking', { name: nameOf(state.seat) });
       case 'waitingOpponent':
-        return t('board.turn.waitingFor', { name: nameOf(state.seat) });
+        return state.away
+          ? t('board.turn.waitingAway', { name: nameOf(state.seat) })
+          : t('board.turn.waitingFor', { name: nameOf(state.seat) });
       case 'pendingChoice':
         return pendingText(state);
       case 'playAgain':
@@ -69,7 +71,9 @@
     }
   });
 
-  const spinning = $derived(state.kind === 'sent');
+  const spinning = $derived(
+    state.kind === 'sent' || state.kind === 'reconnecting' || state.kind === 'connecting'
+  );
   const thinking = $derived(state.kind === 'aiThinking');
   const offerRetry = $derived(state.kind === 'sent' && state.slow && !!onRetry);
 </script>
@@ -80,6 +84,7 @@
   role="status"
   aria-live="polite"
   data-turn={state.kind}
+  data-away={state.kind === 'waitingOpponent' && state.away ? '' : undefined}
 >
   <span class="flex min-w-0 items-center gap-2 text-sm font-semibold text-fg" data-must-fit>
     {#if spinning}

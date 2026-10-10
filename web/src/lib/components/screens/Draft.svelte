@@ -21,6 +21,7 @@
   import { describeWonder } from '$lib/view/describe';
   import type { View } from '$lib/wire';
   import { costText, effectSentence, wonderName } from '../card/effect-text';
+  import ConfirmButton from '../shell/ConfirmButton.svelte';
   import Sheet from '../shell/Sheet.svelte';
   import WonderTile from '../wonder/WonderTile.svelte';
   import {
@@ -40,9 +41,20 @@
     onact: (key: string) => void;
     /** Display names by seat; read from the room when not given. */
     names?: SeatNames;
+    /** Ask for a second tap before sending (online rooms by default). */
+    confirm?: boolean;
+    /** The connection is up; while it is down Take says it waits for it. */
+    connected?: boolean;
   }
 
-  let { view, canAct, onact, names: namesProp }: Props = $props();
+  let {
+    view,
+    canAct,
+    onact,
+    names: namesProp,
+    confirm = false,
+    connected = true
+  }: Props = $props();
 
   const ctx = tryGameContext();
   const names = $derived(namesProp ?? seatNames(ctx?.presenter.frame?.room));
@@ -112,16 +124,29 @@
 </script>
 
 {#snippet takeButton(slug: string, key: string | undefined)}
-  <button
-    type="button"
-    class="inline-flex h-12 w-full items-center justify-center rounded-control bg-accent px-4 text-[15px] font-semibold
-      text-on-accent hover:brightness-105 active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-    data-act={key}
-    disabled={!canAct || key === undefined}
-    onclick={() => key !== undefined && take(key)}
-  >
-    {t('choices.draft.take', { wonder: wonderName(slug) })}
-  </button>
+  {@const label = connected
+    ? t('choices.draft.take', { wonder: wonderName(slug) })
+    : t('online.waitingConnection')}
+  {#if confirm && key !== undefined}
+    <ConfirmButton
+      {label}
+      class="h-auto! min-h-12 w-full px-4 py-2 leading-tight"
+      data-act={key}
+      disabled={!canAct}
+      onConfirm={() => take(key)}
+    />
+  {:else}
+    <button
+      type="button"
+      class="inline-flex h-12 w-full items-center justify-center rounded-control bg-accent px-4 text-[15px] font-semibold
+        text-on-accent hover:brightness-105 active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+      data-act={key}
+      disabled={!canAct || key === undefined}
+      onclick={() => key !== undefined && take(key)}
+    >
+      {label}
+    </button>
+  {/if}
 {/snippet}
 
 {#snippet effects(slug: string, cls: string)}

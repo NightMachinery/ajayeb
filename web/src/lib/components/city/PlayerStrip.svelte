@@ -4,12 +4,16 @@
   // and owned tokens, in one compact row that wraps onto two lines at 360px
   // wide. Glows when this seat is in military or scientific danger
   // (lib/view/threats.ts), and shows a calm thinking indicator while this
-  // seat's bot is thinking. A leaf component: every number comes from the
-  // view through plain props, nothing computed here but the danger check.
+  // seat's bot is thinking. In an online room the other player's strip
+  // shows their presence (connected, or away once they drop). A leaf
+  // component: every number comes from the view through plain props,
+  // nothing computed here but the danger check.
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
+  import type { Presence } from '$lib/ui/online';
   import type { MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import ResourceChips from './ResourceChips.svelte';
@@ -28,6 +32,8 @@
     onwonder?: (wonder: WonderView) => void;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
     thinking?: boolean;
+    /** The player's presence in an online room; nothing shows without it. */
+    presence?: Presence;
     /** When given, the crest and name are a button that opens this city in full. */
     onopen?: () => void;
     /** The label of that button. */
@@ -43,6 +49,7 @@
     score,
     onwonder,
     thinking = false,
+    presence,
     onopen,
     openLabel,
     class: className = ''
@@ -75,6 +82,10 @@
       <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
       <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
     </div>
+  {/if}
+
+  {#if presence}
+    <PresenceDot {presence} {name} class="-ms-1.5" />
   {/if}
 
   {#if thinking}

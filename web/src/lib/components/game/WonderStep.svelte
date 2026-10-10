@@ -23,13 +23,25 @@
     coins?: number;
     canAct: boolean;
     confirm: boolean;
+    /** The connection is up; while it is down the buttons say they wait for it. */
+    connected?: boolean;
     titleId: string;
     onact: (key: string) => void;
     onback: () => void;
   }
 
-  let { card, options, wondersBuilt, coins, canAct, confirm, titleId, onact, onback }: Props =
-    $props();
+  let {
+    card,
+    options,
+    wondersBuilt,
+    coins,
+    canAct,
+    confirm,
+    connected = true,
+    titleId,
+    onact,
+    onback
+  }: Props = $props();
 
   // Legal wonders first, in the order the server listed them.
   const sorted = $derived([
@@ -79,10 +91,12 @@
         {#if option.choice}
           <ActionButton
             key={option.key}
-            label={t('game.action.buildWonder', {
-              wonder: wonderName(option.wonder),
-              count: option.cost?.total ?? 0
-            })}
+            label={connected
+              ? t('game.action.buildWonder', {
+                  wonder: wonderName(option.wonder),
+                  count: option.cost?.total ?? 0
+                })
+              : t('online.waitingConnection')}
             {confirm}
             disabled={!canAct}
             {onact}

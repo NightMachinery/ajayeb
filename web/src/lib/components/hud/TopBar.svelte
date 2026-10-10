@@ -25,6 +25,8 @@
     onOpenSettings?: () => void;
     /** Leaves the room for Home; when given, the game menu shows. */
     onHome?: () => void;
+    /** Under Home, say the game can be continued from there (not once it is over). */
+    homeHint?: boolean;
     /** Extra content between the age and the buttons (the compact military
      *  track and tokens of the phone landscape layout). */
     children?: Snippet;
@@ -39,6 +41,7 @@
     onOpenLog,
     onOpenSettings,
     onHome,
+    homeHint = true,
     children,
     class: className = ''
   }: Props = $props();
@@ -147,7 +150,11 @@
       <House class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
       <span class="flex min-w-0 flex-col py-1.5">
         <span>{t('game.menu.home')}</span>
-        <span class="text-xs font-normal text-fg-muted">{t('game.menu.homeHint')}</span>
+        {#if homeHint}
+          <span class="text-xs font-normal text-fg-muted" data-home-hint>
+            {t('game.menu.homeHint')}
+          </span>
+        {/if}
       </span>
     </button>
     {#if onOpenSettings}

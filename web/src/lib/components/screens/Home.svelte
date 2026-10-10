@@ -9,6 +9,7 @@
   // footer link carry over unchanged from the M1 placeholder this replaces.
   import Bot from '@lucide/svelte/icons/bot';
   import Globe from '@lucide/svelte/icons/globe';
+  import KeyRound from '@lucide/svelte/icons/key-round';
   import Monitor from '@lucide/svelte/icons/monitor';
   import Moon from '@lucide/svelte/icons/moon';
   import SettingsIcon from '@lucide/svelte/icons/settings';
@@ -27,10 +28,13 @@
     onPlayAi: () => void;
     onPassAndPlay: () => void;
     onPlayOnline: () => void;
+    /** Opens the join-by-code sheet; the link shows only when given. */
+    onJoinCode?: () => void;
     onSettings: () => void;
   }
 
-  let { rooms, onContinue, onPlayAi, onPassAndPlay, onPlayOnline, onSettings }: Props = $props();
+  let { rooms, onContinue, onPlayAi, onPassAndPlay, onPlayOnline, onJoinCode, onSettings }: Props =
+    $props();
 
   /** Home shows at most this many; the full list lives in localStorage. */
   const MAX_CONTINUE = 3;
@@ -189,6 +193,17 @@
               </li>
             {/each}
           </ul>
+          {#if onJoinCode}
+            <button
+              type="button"
+              class="mx-auto mt-2 flex min-h-11 items-center gap-2 rounded-control px-3 text-sm font-semibold text-fg underline decoration-gild underline-offset-2"
+              data-control="home-join"
+              onclick={onJoinCode}
+            >
+              <KeyRound size={16} aria-hidden="true" />
+              {t('home.joinCode')}
+            </button>
+          {/if}
         </nav>
       </div>
     </div>

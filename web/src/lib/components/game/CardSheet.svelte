@@ -44,6 +44,10 @@
     canAct: boolean;
     /** Ask for a second tap before sending (online rooms by default). */
     confirm: boolean;
+    /** The connection is up; while it is down the buttons say they wait for it. */
+    connected?: boolean;
+    /** This connection watches (an online spectator): nothing to play. */
+    spectator?: boolean;
     step: 'card' | 'wonders';
     /** Wonder-first mode: the wonder waiting for a card. */
     pickFor: string | null;
@@ -62,6 +66,8 @@
     myTurn,
     canAct,
     confirm,
+    connected = true,
+    spectator = false,
     step,
     pickFor,
     onact,
@@ -88,6 +94,10 @@
   const pickChoice = $derived(
     pickFor && slug ? wonderChoicesByCard(view, pickFor).get(slug) : undefined
   );
+  /** A move button's label, or the wait for the connection while it is down. */
+  function moveLabel(label: string): string {
+    return connected ? label : t('online.waitingConnection');
+  }
 </script>
 
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
@@ -100,6 +110,7 @@
         {coins}
         {canAct}
         {confirm}
+        {connected}
         {titleId}
         {onact}
         {onback}
@@ -172,10 +183,12 @@
               {/if}
               <ActionButton
                 key={pickChoice.key}
-                label={t('game.action.buildWonder', {
-                  wonder: wonderName(pickFor),
-                  count: pickChoice.cost?.total ?? 0
-                })}
+                label={moveLabel(
+                  t('game.action.buildWonder', {
+                    wonder: wonderName(pickFor),
+                    count: pickChoice.cost?.total ?? 0
+                  })
+                )}
                 {confirm}
                 disabled={!canAct}
                 {onact}
@@ -213,14 +226,18 @@
               </p>
             {/if}
 
-            {#if !myTurn}
+            {#if spectator}
+              <p class="text-sm text-fg-muted" data-watching>{t('online.watching')}</p>
+            {:else if !myTurn}
               <p class="text-sm text-fg-muted">{t('game.card.notYourTurn')}</p>
             {:else}
               <div class="flex flex-col gap-2">
                 {#if actions.build}
                   <ActionButton
                     key={actions.build.key}
-                    label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
+                    label={moveLabel(
+                      t('game.action.build', { count: actions.build.cost?.total ?? 0 })
+                    )}
                     {confirm}
                     disabled={!canAct}
                     {onact}
@@ -237,7 +254,9 @@
                   {#if actions.discard}
                     <ActionButton
                       key={actions.discard.key}
-                      label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}
+                      label={moveLabel(
+                        t('game.action.discard', { count: actions.discard.gain ?? 0 })
+                      )}
                       variant="secondary"
                       {confirm}
                       disabled={!canAct}
@@ -256,7 +275,7 @@
                     </Button>
                   {/if}
                 </div>
-                {#if !canAct}
+                {#if !canAct && connected}
                   <p class="text-sm text-fg-muted">{t('game.card.locked')}</p>
                 {/if}
               </div>

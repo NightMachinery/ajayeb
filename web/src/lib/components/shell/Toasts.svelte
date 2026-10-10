@@ -1,6 +1,9 @@
 <script lang="ts">
-  // The visible toast list for a Toasts queue (toast-queue.svelte.ts), fixed
-  // at the bottom of the viewport, above the safe-area inset. A polite live
+  // The visible toast list for a Toasts queue (toast-queue.svelte.ts). By
+  // default it is fixed at the bottom of the viewport, above the safe-area
+  // inset; the game screen anchors it to a box of its own instead (just
+  // above the turn bar, or at the foot of the structure), so it covers
+  // neither the opponent's strip nor the military track. A polite live
   // region, so a screen reader announces a new toast without stealing focus.
   //
   // The queue class lives in its own toast-queue.svelte.ts file, not
@@ -15,12 +18,22 @@
 
   interface Props {
     toasts: Toasts;
-    /** Where the list sits: above the bottom edge (default) or below the
-     *  top bar, where it covers no move controls on the game screen. */
-    placement?: 'bottom' | 'top';
+    /**
+     * Where the list sits: fixed above the bottom edge (default) or below
+     * the top bar; or anchored to its positioned parent, just above it
+     * ('above') or at its foot ('inside').
+     */
+    placement?: 'bottom' | 'top' | 'above' | 'inside';
   }
 
   let { toasts, placement = 'bottom' }: Props = $props();
+
+  const PLACEMENT_CLASS: Record<NonNullable<Props['placement']>, string> = {
+    bottom: 'fixed inset-x-0 bottom-[calc(var(--safe-b)+1rem)] px-4',
+    top: 'fixed inset-x-0 top-[calc(var(--safe-t)+3.25rem)] px-4',
+    above: 'absolute inset-x-0 bottom-full mb-1.5 px-2',
+    inside: 'absolute inset-x-0 bottom-1 px-2'
+  };
 
   const KIND_CLASS: Record<ToastKind, string> = {
     info: 'border-rule',
@@ -31,10 +44,7 @@
 </script>
 
 <div
-  class="pointer-events-none fixed inset-x-0 z-50 flex flex-col items-center gap-2 px-4 {placement ===
-  'top'
-    ? 'top-[calc(var(--safe-t)+3.25rem)]'
-    : 'bottom-[calc(var(--safe-b)+1rem)]'}"
+  class="pointer-events-none z-50 flex flex-col items-center gap-2 {PLACEMENT_CLASS[placement]}"
   aria-live="polite"
   aria-atomic="false"
 >

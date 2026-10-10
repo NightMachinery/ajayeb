@@ -17,6 +17,7 @@ import { choices } from './en/choices';
 import { common } from './en/common';
 import { game } from './en/game';
 import { home } from './en/home';
+import { online } from './en/online';
 import { session } from './en/session';
 import { shell } from './en/shell';
 import { i18n, type Locale } from './locale.svelte';
@@ -36,7 +37,8 @@ export const en = {
   ...board,
   ...home,
   ...game,
-  ...choices
+  ...choices,
+  ...online
 } as const;
 
 export type MessageKey = keyof typeof en;
