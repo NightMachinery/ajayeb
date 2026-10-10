@@ -3,26 +3,11 @@
 // it (and `verify` does, through that target).
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { watchHygiene } from '../fixtures/hygiene';
 
 // WCAG 2.2 AA, the level the UX plan targets.
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
-
-/** Collects console errors, uncaught exceptions and failed requests. */
-function watchHygiene(page: Page): string[] {
-  const problems: string[] = [];
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') problems.push(`console error: ${msg.text()}`);
-  });
-  page.on('pageerror', (err) => problems.push(`uncaught: ${err.message}`));
-  page.on('requestfailed', (req) =>
-    problems.push(`request failed: ${req.url()} (${req.failure()?.errorText ?? 'unknown'})`)
-  );
-  page.on('response', (res) => {
-    if (res.status() >= 400) problems.push(`HTTP ${res.status()}: ${res.url()}`);
-  });
-  return problems;
-}
 
 test.describe('smoke', { tag: ['@smoke', '@mobile'] }, () => {
   test('GET /health reports ok', async ({ request }) => {
