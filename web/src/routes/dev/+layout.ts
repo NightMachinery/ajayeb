@@ -1,6 +1,6 @@
 // Every /dev route (fixtures, specimens, gallery) answers 404 unless dev
-// routes are enabled: always under `vite dev`, and in a build only with
-// PUBLIC_DEV_ROUTES=1 (src/lib/dev/flags.ts).
+// routes are enabled: always under `vite dev` and in the test-mode build, and
+// in any other build only with PUBLIC_DEV_ROUTES=1 (src/lib/dev/flags.ts).
 import { error } from '@sveltejs/kit';
 import { devRoutesEnabled } from '$lib/dev/flags';
 import type { LayoutLoad } from './$types';

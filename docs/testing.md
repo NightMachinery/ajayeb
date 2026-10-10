@@ -183,7 +183,7 @@ build with the dev routes), then repeats: wait for `ready()`, read
 
 ### Dev pages for the client
 
-With the dev routes on (`PUBLIC_DEV_ROUTES=1` in the build):
+With the dev routes on (they are on in the test-mode build from `make build-web-test`, and in any build with `PUBLIC_DEV_ROUTES=1`):
 
 - `/dev/new?mode=hotseat|ai|online&level=easy|normal|hard&seat=0|1|random`
   creates a room over the WebSocket and opens it at `/play/<code>`. With

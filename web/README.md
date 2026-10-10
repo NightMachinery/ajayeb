@@ -51,6 +51,7 @@ The pages: `/play/<code>` joins a room and shows it; `/dev/new?mode=hotseat|ai|o
 - `dark:` follows `data-theme="dark"` on `<html>`, which reflects the in-app choice, not only the system setting.
 - Two screen-level variants exist: `short:` (a height of 32rem or less, such as a phone in landscape) and `split:` (room for two columns: 64rem wide, or a short landscape screen).
 - Use logical properties only (`ms-*`, `pe-*`, `text-start` and so on). Padding by the physical safe-area insets is the one deliberate exception.
+- The two players' crests are fixed by seat: seat 0 is the Sun (turquoise, `sun` colours) and seat 1 is the Moon (pomegranate, `moon` colours), in every mode and on every screen.
 
 ## Strings
 
@@ -77,4 +78,4 @@ Fraunces (600, headings) and Inter (400, 600 and 700, the interface) are self-ho
 
 ## Environment
 
-`PUBLIC_DEV_ROUTES=1` turns on the `/dev` routes in a build; they are always on under `vite dev`. When it is unset they answer 404. See `.env.example`.
+`PUBLIC_DEV_ROUTES=1` turns on the `/dev` routes in a build; they are always on under `vite dev` and in the test-mode build (`make build-web-test`). When it is unset they answer 404. See `.env.example`.
