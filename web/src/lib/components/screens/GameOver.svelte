@@ -98,10 +98,10 @@
       <header class="flex flex-col items-center gap-1 text-center">
         <span class="flex items-center gap-1 text-3xl" aria-hidden="true">
           {#if winner === null}
-            <Icon name="crest-sun" class="text-sun" />
-            <Icon name="crest-moon" class="text-moon" />
+            <Icon name="crest-sun" class="text-sun-ink" />
+            <Icon name="crest-moon" class="text-moon-ink" />
           {:else}
-            <Icon name={crest} class={winner === 0 ? 'text-sun' : 'text-moon'} />
+            <Icon name={crest} class={winner === 0 ? 'text-sun-ink' : 'text-moon-ink'} />
           {/if}
         </span>
         <p class="text-xs font-semibold tracking-wider text-fg-muted uppercase">{kindText}</p>
@@ -120,7 +120,7 @@
           class="rounded-control border border-rule bg-panel-sunken px-3 py-2 text-sm text-fg"
           data-tie-break
         >
-          <Icon name="category-blue" class="me-1 text-card-blue" />
+          <Icon name="category-blue" class="me-1 text-card-blue-ink" />
           {t('choices.over.tieBreak')}
         </p>
       {/if}

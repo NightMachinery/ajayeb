@@ -72,7 +72,7 @@
         </span>
         <dl class="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-1 text-sm text-fg">
           <dt class="flex items-center gap-1 text-fg-muted">
-            <Icon name="coin" class="text-gold [--i2:var(--gold-deep)]" />
+            <Icon name="coin" class="text-coin-ink" />
             {t('choices.age.coins')}
           </dt>
           <dd class="text-end font-semibold tabular-nums" data-must-fit>
@@ -91,7 +91,7 @@
   </div>
 
   <p class="flex items-center justify-center gap-1.5 text-center text-sm text-fg">
-    <Icon name="shield" class="shrink-0 text-card-red" />
+    <Icon name="shield" class="shrink-0 text-card-red-ink" />
     <span dir="auto">{militaryText}</span>
   </p>
 

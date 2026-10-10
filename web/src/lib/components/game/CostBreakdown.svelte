@@ -112,7 +112,7 @@
           {:else if line.id === 'chain'}
             <Icon name="badge-chain" class="text-[16px] text-gild" />
           {:else}
-            <Icon name="coin" class="text-[16px] text-gild" />
+            <Icon name="coin" class="text-[16px] text-coin-ink" />
           {/if}
           <span class="min-w-0 flex-1">{line.text}</span>
           {#if line.amount !== undefined}

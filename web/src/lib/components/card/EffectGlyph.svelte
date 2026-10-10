@@ -164,12 +164,12 @@
     {#if effect.target === 'wonder'}
       <Icon name="wonder" class="text-[1.1em]" />
     {:else}
-      <Icon name="category-blue" class="text-[1.1em] text-(--card-blue)" />
+      <Icon name="category-blue" class="text-[1.1em] text-(--card-blue-paper-ink)" />
     {/if}
   {:else if effect.kind === 'trade-income'}
     <Icon name="trade" class="text-[1.1em]" /><Icon
       name="coin"
-      class="text-[1.1em] text-(--gold-deep)"
+      class="text-[1.1em] text-(--coin-paper-ink)"
     />
   {:else if effect.kind === 'extra-shield'}
     <Icon name="shield" class="text-[1.15em] text-(--card-red) [--i2:var(--paper-bright)]" />

@@ -84,6 +84,7 @@
       class:full={tier === 'full'}
       style:--cw={width === undefined ? undefined : `${width}px`}
       style:--band={bandColor(card.color)}
+      style:--glyph-ink="var(--card-{card.color}-paper-ink)"
       data-tier={tier}
       data-color={card.color}
       aria-hidden="true"
@@ -146,11 +147,13 @@
           <!-- The placeholder art carries the category glyph; the full tier
                repeats it by the name, where there is room, and so does the
                medium tier once bitmap art (which has no glyph) replaces the
-               placeholder, so the category never rests on colour alone. -->
+               placeholder, so the category never rests on colour alone. On
+               the paper it takes the card colour's paper ink, since the band
+               colour itself (yellow, grey) is too pale there. -->
           {#if tier === 'full' || withArt}
             <Icon
               name={categoryIcon(card.color)}
-              class="mt-[0.1em] text-[1.05em] text-(--band) [--i2:color-mix(in_oklch,var(--band)_45%,var(--card-paper))]"
+              class="mt-[0.1em] text-[1.05em] text-(--glyph-ink) [--i2:color-mix(in_oklch,var(--glyph-ink)_45%,var(--card-paper))]"
             />
           {/if}
         </span>

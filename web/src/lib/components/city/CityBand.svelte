@@ -38,14 +38,17 @@
     purple: 'bg-card-purple'
   };
 
+  // The glyph sits on the panel, so it takes the theme-aware card ink (the
+  // band colours fall under 3:1 there: yellow and grey on paper, brown and
+  // purple on the lapis panels). The ticks are fills and keep the band colour.
   const TEXT_CLASS: Record<Color, string> = {
-    brown: 'text-card-brown',
-    grey: 'text-card-grey',
-    blue: 'text-card-blue',
-    green: 'text-card-green',
-    yellow: 'text-card-yellow',
-    red: 'text-card-red',
-    purple: 'text-card-purple'
+    brown: 'text-card-brown-ink',
+    grey: 'text-card-grey-ink',
+    blue: 'text-card-blue-ink',
+    green: 'text-card-green-ink',
+    yellow: 'text-card-yellow-ink',
+    red: 'text-card-red-ink',
+    purple: 'text-card-purple-ink'
   };
 
   const ticks = $derived(Array.from({ length: Math.min(count, 10) }, (_unused, i) => i));

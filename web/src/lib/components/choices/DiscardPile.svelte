@@ -8,7 +8,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import type { Color } from '$lib/wire';
-  import { bandColor, categoryIcon } from '../card/card-style';
+  import { categoryIcon } from '../card/card-style';
   import CardPickGrid from './CardPickGrid.svelte';
 
   interface Props {
@@ -82,7 +82,7 @@
             aria-pressed={active === color}
             onclick={() => (filter = color)}
           >
-            <span class="inline-flex" style:color={bandColor(color)}
+            <span class="inline-flex" style:color="var(--card-{color}-ink)"
               ><Icon name={categoryIcon(color)} class="text-[15px]" /></span
             >
             {t(`board.color.${color}`)}

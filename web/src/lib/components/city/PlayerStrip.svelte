@@ -100,7 +100,7 @@
 
   <div class="flex items-center gap-2 text-sm font-semibold tabular-nums">
     <span class="flex items-center gap-0.5" title={t('coins.count', { count: player.coins })}>
-      <Icon name="coin" class="text-gild" />
+      <Icon name="coin" class="text-coin-ink" />
       <span data-must-fit>{player.coins}</span>
     </span>
     {#if score}

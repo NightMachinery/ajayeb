@@ -48,26 +48,28 @@
     return t(`choices.score.${category}`);
   }
 
-  // The glyph tint per row: the card colours for the four card rows, the
-  // game colours for the rest. The name always sits next to it.
+  // The glyph tint per row: the card-colour inks for the four card rows (the
+  // band colours fall under 3:1 on the sheet: yellow on paper, purple on the
+  // lapis panels), the game colours for the rest. The name always sits next
+  // to it.
   function tint(category: ScoreRow['category']): string {
     switch (category) {
       case 'blue':
-        return 'text-card-blue';
+        return 'text-card-blue-ink';
       case 'green':
-        return 'text-card-green';
+        return 'text-card-green-ink';
       case 'yellow':
-        return 'text-card-yellow [--i2:var(--ink)]';
+        return 'text-card-yellow-ink';
       case 'purple':
-        return 'text-card-purple';
+        return 'text-card-purple-ink';
       case 'wonders':
         return 'text-gild';
       case 'tokens':
         return 'text-gild';
       case 'coins':
-        return 'text-gold [--i2:var(--gold-deep)]';
+        return 'text-coin-ink';
       case 'military':
-        return 'text-card-red';
+        return 'text-card-red-ink';
       case 'total':
         return 'text-gild';
     }
