@@ -23,16 +23,16 @@ paper, with a soft vignette fading to the paper colour at the edges.
 Jewel tones only, named so every prompt and every reviewer uses the same
 words:
 
-- **lapis** — deep blue, the night sky and water
-- **turquoise** — the Sun player's accent, cool green-blue
-- **saffron** — warm yellow-orange, commerce and sunlight
-- **vermilion** — warm red, military and fire
-- **malachite** — green, growth and science
-- **ochre** — warm earth brown, raw materials and ground
-- **violet** — the guild colour, used sparingly
-- **gold** — leaf accents only: borders of a robe, a dome's finial, a coin.
+- **lapis**: deep blue, the night sky and water
+- **turquoise**: the Sun player's accent, cool green-blue
+- **saffron**: warm yellow-orange, commerce and sunlight
+- **vermilion**: warm red, military and fire
+- **malachite**: green, growth and science
+- **ochre**: warm earth brown, raw materials and ground
+- **violet**: the guild colour, used sparingly
+- **gold**: leaf accents only: borders of a robe, a dome's finial, a coin.
   Never a flat fill; gold reads as a highlight, not a background.
-- **ivory** — the paper ground everything sits on
+- **ivory**: the paper ground everything sits on
 
 These are the same hues as the interface's OKLCH tokens in
 `web/src/lib/styles/tokens.css` (`--lapis`, `--turquoise`, `--saffron`,
