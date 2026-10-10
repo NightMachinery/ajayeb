@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import platform
+import shlex
 import shutil
 import socket
 import subprocess
@@ -39,14 +40,29 @@ CONFIG_FILE = CONFIG_DIR / "config.json"
 BIN_DIR = CONFIG_DIR / "bin"
 BIN_PATH = BIN_DIR / "ajayeb"
 BIN_NEW_PATH = BIN_DIR / "ajayeb.new"
+BIN_PREV_PATH = BIN_DIR / "ajayeb.prev"
 DATA_DIR = CONFIG_DIR / "data"
 BACKUPS_DIR = CONFIG_DIR / "backups"
+DIST_DIR = CONFIG_DIR / "dist"
 ROOMS_BACKUP_KEEP = 10
 CADDYFILE = Path.home() / "Caddyfile"
 DEFAULT_URL = "https://ajayeb.pinky.lilf.ir"
 DEFAULT_NODE_VERSION = "24"
 HEALTH_POLL_TIMEOUT = 10.0
 HEALTH_POLL_INTERVAL = 0.3
+
+# ship: cross-compile on this machine and install a prebuilt binary remotely.
+HEAVY_SCRIPT = ROOT / "tools" / "heavy.py"
+HEAVY_REFUSED = 75
+DEFAULT_REMOTE_DIR = "ajayeb"
+REMOTE_UPLOAD_BIN = ".self-host/bin/ajayeb.upload"
+SHIP_BUILD_WAIT = 1800.0
+SHIP_HEALTH_POLL_TIMEOUT = 30.0
+SHIP_HEALTH_POLL_INTERVAL = 1.0
+UNAME_TO_GOOS_GOARCH: dict[tuple[str, str], tuple[str, str]] = {
+    ("Linux", "x86_64"): ("linux", "amd64"),
+    ("Linux", "aarch64"): ("linux", "arm64"),
+}
 
 DEFAULT_SERVER_PORT = 38951
 DEFAULT_WEB_DEV_PORT = 38952
@@ -123,17 +139,41 @@ class Site:
 
 
 @dataclass(frozen=True)
+class ShipTarget:
+    """The remembered ship destination: an SSH target and a remote directory."""
+
+    target: str
+    remote_dir: str = DEFAULT_REMOTE_DIR
+
+    def to_json(self) -> dict[str, str]:
+        return {"target": self.target, "remote_dir": self.remote_dir}
+
+    @classmethod
+    def from_json(cls, raw: object) -> "ShipTarget | None":
+        if not isinstance(raw, dict):
+            return None
+        target = raw.get("target")
+        if not target:
+            return None
+        return cls(target=str(target), remote_dir=str(raw.get("remote_dir") or DEFAULT_REMOTE_DIR))
+
+
+@dataclass(frozen=True)
 class Config:
     site: Site
     mode: Mode
     ports: Ports = Ports()
+    ship: ShipTarget | None = None
 
     def to_json(self) -> str:
-        return json.dumps(
-            {"url": self.site.origin, "mode": self.mode.value, "ports": self.ports.to_json()},
-            indent=2,
-            sort_keys=True,
-        )
+        payload: dict[str, object] = {
+            "url": self.site.origin,
+            "mode": self.mode.value,
+            "ports": self.ports.to_json(),
+        }
+        if self.ship is not None:
+            payload["ship"] = self.ship.to_json()
+        return json.dumps(payload, indent=2, sort_keys=True)
 
     @classmethod
     def from_json(cls, payload: str) -> "Config":
@@ -142,6 +182,7 @@ class Config:
             site=parse_site_url(raw.get("url")),
             mode=Mode(raw.get("mode", Mode.PROD.value)),
             ports=Ports.from_json(raw.get("ports")),
+            ship=ShipTarget.from_json(raw.get("ship")),
         )
 
 
@@ -371,13 +412,56 @@ def go_build_release_command(version: str) -> list[str]:
     ]
 
 
-def build_server_release() -> None:
+def build_server_release() -> Path:
+    """Compile the release binary to BIN_NEW_PATH. Does not touch BIN_PATH.
+
+    Compiling and swapping are separate steps so the running server is only
+    stopped right before the swap (see swap_in_binary): a failing compile
+    never takes it down.
+    """
     BIN_DIR.mkdir(parents=True, exist_ok=True)
     if BIN_NEW_PATH.exists():
         BIN_NEW_PATH.unlink()
     run(go_build_release_command(git_version()), cwd=SERVER_DIR)
     BIN_NEW_PATH.chmod(0o755)
-    # Atomic rename: the server reads BIN_PATH wholesale, never a half-written file.
+    return BIN_NEW_PATH
+
+
+def check_prebuilt_binary(path: Path) -> None:
+    """Refuse a --prebuilt path that is not a runnable executable.
+
+    Called before anything is stopped, so a bad --prebuilt path never takes
+    down a running server.
+    """
+    if not path.is_file():
+        raise RuntimeError(f"--prebuilt {path} does not exist or is not a regular file")
+    if not os.access(path, os.X_OK):
+        raise RuntimeError(f"--prebuilt {path} is not executable")
+    result = subprocess.run([str(path), "--version"], capture_output=True, text=True, check=False)
+    version = result.stdout.strip()
+    if result.returncode != 0 or not version:
+        detail = result.stderr.strip() or version or f"exit {result.returncode}"
+        raise RuntimeError(f"--prebuilt {path} --version did not print a version: {detail}")
+
+
+def swap_in_binary(source: Path) -> None:
+    """Back up the current binary to .prev, then atomically replace it with source.
+
+    source is copied into BIN_NEW_PATH (unless it already is BIN_NEW_PATH,
+    the normal case right after build_server_release) and then renamed into
+    BIN_PATH, so a half-written copy never becomes the live binary and the
+    caller's own file (which may be an arbitrary --prebuilt path we must not
+    delete or move) is left untouched.
+    """
+    BIN_DIR.mkdir(parents=True, exist_ok=True)
+    if BIN_PATH.exists():
+        shutil.copy2(BIN_PATH, BIN_PREV_PATH)
+    source = Path(source)
+    if source.resolve() != BIN_NEW_PATH.resolve():
+        if BIN_NEW_PATH.exists():
+            BIN_NEW_PATH.unlink()
+        shutil.copy2(source, BIN_NEW_PATH)
+    BIN_NEW_PATH.chmod(0o755)
     BIN_NEW_PATH.replace(BIN_PATH)
 
 
@@ -514,16 +598,260 @@ def prune_room_backups(*, keep: int = ROOMS_BACKUP_KEEP) -> None:
         stale.unlink(missing_ok=True)
 
 
-def command_setup(url: str | None) -> None:
-    command_stop()
-    config = resolve_runtime_config(url, Mode.PROD)
-    ensure_tools(["caddy", "tmux", "zsh", "rsync"])
-    find_go()
-    install_web(dedupe=True)
-    build_web()
+# --- ship: build here, install a prebuilt binary on a remote host ----------
+#
+# The production host is small and shared, so it must never build: `ship`
+# cross-compiles on this (dev) machine and uploads one static binary plus
+# self_host.py itself, then runs `setup --prebuilt` or `redeploy --prebuilt`
+# over ssh on the remote side.
+
+
+def parse_uname(output: str) -> tuple[str, str]:
+    """Map `uname -sm` output to a (GOOS, GOARCH) pair, or raise."""
+    parts = output.split()
+    if len(parts) != 2:
+        raise ValueError(f"unexpected 'uname -sm' output: {output!r}")
+    mapped = UNAME_TO_GOOS_GOARCH.get((parts[0], parts[1]))
+    if mapped is None:
+        raise ValueError(
+            f"unsupported remote platform {parts[0]} {parts[1]}: "
+            "ship only supports Linux x86_64 and Linux aarch64"
+        )
+    return mapped
+
+
+def ssh_command(target: str, remote_command: str) -> list[str]:
+    return ["ssh", target, remote_command]
+
+
+def remote_uname_command(target: str) -> list[str]:
+    return ssh_command(target, "uname -sm")
+
+
+def detect_remote_platform(target: str) -> tuple[str, str]:
+    result = subprocess.run(remote_uname_command(target), capture_output=True, text=True, check=True)
+    return parse_uname(result.stdout.strip())
+
+
+def dist_binary_path(goos: str, goarch: str) -> Path:
+    return DIST_DIR / f"ajayeb-{goos}-{goarch}"
+
+
+def go_build_cross_env(goos: str, goarch: str) -> dict[str, str]:
+    return {"CGO_ENABLED": "0", "GOOS": goos, "GOARCH": goarch}
+
+
+def go_build_cross_command(version: str, goos: str, goarch: str) -> list[str]:
+    return [
+        find_go(),
+        "build",
+        "-tags",
+        "embedweb",
+        "-trimpath",
+        "-ldflags",
+        f"-s -w -X main.version={version}",
+        "-o",
+        str(dist_binary_path(goos, goarch)),
+        "./cmd/ajayeb",
+    ]
+
+
+def heavy_wrap(cmd: list[str], *, kind: str, wait: float = SHIP_BUILD_WAIT) -> list[str]:
+    """Wrap cmd in tools/heavy.py's guard when this checkout has one.
+
+    The production host never gets tools/heavy.py (ship only rsyncs
+    self_host.py and the binary there), so this is a no-op on the remote
+    side and only ever wraps the build steps run here, on the dev machine.
+    """
+    if not HEAVY_SCRIPT.exists():
+        return cmd
+    return [sys.executable, str(HEAVY_SCRIPT), "run", "--kind", kind, "--wait", str(wait), "--", *cmd]
+
+
+def run_build_step(
+    cmd: list[str], *, cwd: Path = ROOT, env: dict[str, str] | None = None, kind: str = "build"
+) -> None:
+    """Run one ship build step, refusing clearly if tools/heavy.py's guard refuses it.
+
+    Exit code 75 from the guard means "wait and retry", not "this command is
+    broken", so it gets its own error message instead of a bare
+    CalledProcessError.
+    """
+    wrapped = heavy_wrap(cmd, kind=kind)
+    full_env = {**os.environ, **env} if env else None
+    print("+", " ".join(wrapped))
+    result = subprocess.run(wrapped, cwd=cwd, env=full_env, text=True)
+    if result.returncode == HEAVY_REFUSED and wrapped is not cmd:
+        raise RuntimeError(
+            f"tools/heavy.py refused the {kind} step (exit 75): memory pressure or a busy slot; wait and retry"
+        )
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, wrapped)
+
+
+def cross_build(version: str, goos: str, goarch: str) -> Path:
+    """Build the production web bundle and a static Go binary for goos/goarch."""
+    run_build_step(["zsh", "-lc", node_command(pnpm_install_command())])
+    run_build_step(["zsh", "-lc", node_command("pnpm -C web build")])
     sync_webdist()
-    build_server_release()
+    DIST_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = dist_binary_path(goos, goarch)
+    if out_path.exists():
+        out_path.unlink()
+    run_build_step(
+        go_build_cross_command(version, goos, goarch), cwd=SERVER_DIR, env=go_build_cross_env(goos, goarch)
+    )
+    out_path.chmod(0o755)
+    return out_path
+
+
+def remote_bin_dir(remote_dir: str) -> str:
+    return f"{remote_dir}/.self-host/bin"
+
+
+def remote_mkdir_command(target: str, remote_dir: str) -> list[str]:
+    return ssh_command(target, f"mkdir -p {shlex.quote(remote_bin_dir(remote_dir))}")
+
+
+def rsync_self_host_command(target: str, remote_dir: str) -> list[str]:
+    local = str(ROOT / "self_host.py")
+    return ["rsync", "-a", local, f"{target}:{shlex.quote(remote_dir)}/"]
+
+
+def rsync_binary_command(target: str, remote_dir: str, binary_path: Path) -> list[str]:
+    dest = f"{target}:{shlex.quote(remote_dir)}/{REMOTE_UPLOAD_BIN}"
+    return ["rsync", "-a", str(binary_path), dest]
+
+
+def upload_to_remote(target: str, remote_dir: str, binary_path: Path) -> None:
+    run(remote_mkdir_command(target, remote_dir))
+    run(rsync_self_host_command(target, remote_dir))
+    run(rsync_binary_command(target, remote_dir, binary_path))
+
+
+def remote_config_exists_command(target: str, remote_dir: str) -> list[str]:
+    remote_path = f"{remote_dir}/.self-host/config.json"
+    return ssh_command(target, f"test -e {shlex.quote(remote_path)}")
+
+
+def determine_deploy_command(target: str, remote_dir: str) -> str:
+    """'redeploy' when the remote already has a config, else 'setup'."""
+    result = subprocess.run(remote_config_exists_command(target, remote_dir), capture_output=True, text=True)
+    return "redeploy" if result.returncode == 0 else "setup"
+
+
+def remote_deploy_command(target: str, remote_dir: str, deploy_command: str, url: str | None) -> list[str]:
+    parts = [
+        "cd",
+        shlex.quote(remote_dir),
+        "&&",
+        "python3",
+        "self_host.py",
+        deploy_command,
+        "--prebuilt",
+        shlex.quote(REMOTE_UPLOAD_BIN),
+    ]
+    if url:
+        parts.append(shlex.quote(url))
+    return ssh_command(target, " ".join(parts))
+
+
+def deploy_remote(target: str, remote_dir: str, deploy_command: str, url: str | None) -> None:
+    run(remote_deploy_command(target, remote_dir, deploy_command, url))
+
+
+def poll_remote_version(
+    url: str, *, timeout: float = SHIP_HEALTH_POLL_TIMEOUT, interval: float = SHIP_HEALTH_POLL_INTERVAL
+) -> str | None:
+    """Poll <url>/health and return its reported version, or None on timeout."""
+    deadline = time.monotonic() + timeout
+    health_url = url.rstrip("/") + "/health"
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(health_url, timeout=2.0) as resp:
+                if resp.status == 200:
+                    payload = json.loads(resp.read().decode("utf-8"))
+                    version = payload.get("version")
+                    return str(version) if version else None
+        except (urllib.error.URLError, OSError, TimeoutError, ValueError):
+            pass
+        time.sleep(interval)
+    return None
+
+
+def remember_ship_target(target: str, remote_dir: str) -> None:
+    existing = load_config()
+    ship = ShipTarget(target, remote_dir)
+    if existing is None:
+        config = Config(site=parse_site_url(None), mode=Mode.PROD, ship=ship)
+    else:
+        config = Config(existing.site, existing.mode, existing.ports, ship)
     save_config(config)
+
+
+def resolve_ship_target(target: str | None, remote_dir: str | None) -> ShipTarget:
+    existing = load_config()
+    remembered = existing.ship if existing else None
+    if target is None:
+        if remembered is None:
+            raise RuntimeError("no TARGET given and none remembered yet; run: self_host.py ship user@example.host")
+        target = remembered.target
+    if remote_dir is None:
+        remote_dir = remembered.remote_dir if remembered else DEFAULT_REMOTE_DIR
+    return ShipTarget(target, remote_dir)
+
+
+def command_ship(target: str | None, url: str | None, remote_dir: str | None) -> None:
+    resolved = resolve_ship_target(target, remote_dir)
+    target, remote_dir = resolved.target, resolved.remote_dir
+
+    goos, goarch = detect_remote_platform(target)
+    print(f"remote platform: {goos}/{goarch}")
+
+    version = git_version()
+    binary_path = cross_build(version, goos, goarch)
+    print(f"built {binary_path} ({version})")
+
+    upload_to_remote(target, remote_dir, binary_path)
+
+    deploy_command = determine_deploy_command(target, remote_dir)
+    print(f"remote command: {deploy_command}")
+    deploy_remote(target, remote_dir, deploy_command, url)
+
+    remember_ship_target(target, remote_dir)
+
+    if not url:
+        print("no url given; skipping the post-deploy health poll")
+        return
+    remote_version = poll_remote_version(url)
+    if remote_version is None:
+        print(f"warning: {url}/health did not respond within {SHIP_HEALTH_POLL_TIMEOUT:g}s", file=sys.stderr)
+    elif remote_version != version:
+        print(f"warning: remote reports version {remote_version}, expected {version}", file=sys.stderr)
+    else:
+        print(f"remote is running version {remote_version}")
+
+
+def command_setup(url: str | None, prebuilt: str | None = None) -> None:
+    config = resolve_runtime_config(url, Mode.PROD)
+    ensure_tools(["caddy", "tmux"])
+    prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
+    if prebuilt_path is not None:
+        check_prebuilt_binary(prebuilt_path)
+        new_binary = prebuilt_path
+    else:
+        ensure_tools(["zsh", "rsync"])
+        find_go()
+        install_web(dedupe=True)
+        build_web()
+        sync_webdist()
+        new_binary = build_server_release()
+    save_config(config)
+    # Everything above only builds and checks; nothing has been stopped yet,
+    # so a failing build or a bad --prebuilt path never takes a running
+    # server down. The swap below is the first thing that touches it.
+    command_stop()
+    swap_in_binary(new_binary)
     apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):
@@ -531,19 +859,30 @@ def command_setup(url: str | None) -> None:
     announce_serving(config)
 
 
-def command_redeploy(url: str | None) -> None:
-    command_stop()
+def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
     config = resolve_runtime_config(url, Mode.PROD)
-    ensure_tools(["caddy", "tmux", "zsh", "rsync"])
-    find_go()
+    ensure_tools(["caddy", "tmux"])
+    prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
+    if prebuilt_path is not None:
+        check_prebuilt_binary(prebuilt_path)
+        new_binary = prebuilt_path
+    else:
+        ensure_tools(["zsh", "rsync"])
+        find_go()
+        install_web()
+        build_web()
+        sync_webdist()
+        new_binary = build_server_release()
+    save_config(config)
+    # See command_setup: stop moves to just before the swap, after every
+    # build and check, so a failing one never takes the running server down.
+    # The rooms archive still runs with the server already stopped (so it
+    # never captures a file mid-write), and still before the swap.
+    command_stop()
     archived = archive_rooms()
     if archived is not None:
         print(f"archived rooms: {archived}")
-    install_web()
-    build_web()
-    sync_webdist()
-    build_server_release()
-    save_config(config)
+    swap_in_binary(new_binary)
     apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):
@@ -561,7 +900,7 @@ def command_start(url: str | None) -> None:
         install_web()
         build_web()
         sync_webdist()
-        build_server_release()
+        swap_in_binary(build_server_release())
     save_config(config)
     apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
     start_server_prod(config.ports, config.site)
@@ -642,17 +981,60 @@ def command_status() -> None:
         print(f"server health: {health.stdout.strip() if health.returncode == 0 else 'unavailable'}")
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Self-host Ajayeb with Caddy and tmux.")
-    parser.add_argument("command", choices=["setup", "redeploy", "start", "stop", "dev-start", "status"])
-    parser.add_argument("url", nargs="?", help=f"Site origin, default {DEFAULT_URL}")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    def add_url(p: argparse.ArgumentParser) -> None:
+        p.add_argument("url", nargs="?", help=f"Site origin, default {DEFAULT_URL}")
+
+    def add_prebuilt(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "--prebuilt",
+            metavar="PATH",
+            help="use this already-built binary instead of installing, building and syncing here",
+        )
+
+    setup_p = sub.add_parser("setup", help="first-time install")
+    add_url(setup_p)
+    add_prebuilt(setup_p)
+
+    redeploy_p = sub.add_parser("redeploy", help="rebuild and restart for a new version")
+    add_url(redeploy_p)
+    add_prebuilt(redeploy_p)
+
+    start_p = sub.add_parser("start", help="start the already-built server")
+    add_url(start_p)
+
+    sub.add_parser("stop", help="stop every tmux session this script manages")
+
+    dev_p = sub.add_parser("dev-start", help="start a development setup instead of production")
+    add_url(dev_p)
+
+    status_p = sub.add_parser("status", help="print the recorded configuration and health")
+    add_url(status_p)
+
+    ship_p = sub.add_parser("ship", help="build on this machine and install a prebuilt binary on a remote host")
+    ship_p.add_argument("target", nargs="?", default=None, help="SSH target, e.g. user@example.host")
+    ship_p.add_argument("url", nargs="?", default=None, help="Remote site origin")
+    ship_p.add_argument(
+        "--remote-dir",
+        default=None,
+        help=f"Remote directory, relative to the remote home (default {DEFAULT_REMOTE_DIR})",
+    )
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     try:
         if args.command == "setup":
-            command_setup(args.url)
+            command_setup(args.url, args.prebuilt)
         elif args.command == "redeploy":
-            command_redeploy(args.url)
+            command_redeploy(args.url, args.prebuilt)
         elif args.command == "start":
             command_start(args.url)
         elif args.command == "dev-start":
@@ -661,6 +1043,8 @@ def main(argv: list[str] | None = None) -> int:
             command_stop()
         elif args.command == "status":
             command_status()
+        elif args.command == "ship":
+            command_ship(args.target, args.url, args.remote_dir)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
