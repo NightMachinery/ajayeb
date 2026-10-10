@@ -14,7 +14,10 @@
     | 'game.gallery.scene.ageTwoLate'
     | 'game.gallery.scene.ageThree'
     | 'game.gallery.scene.pending'
-    | 'game.gallery.scene.gameOver';
+    | 'game.gallery.scene.gameOver'
+    | 'game.gallery.scene.lobby'
+    | 'game.gallery.scene.away'
+    | 'game.gallery.scene.watching';
 
   interface Scene {
     fixture: string;
@@ -35,6 +38,13 @@
     { fixture: 'looting-seat1', label: 'game.gallery.scene.ageThree' },
     { fixture: 'destroy-card-seat0', label: 'game.gallery.scene.pending' },
     { fixture: 'game-over-civilian-seat0', label: 'game.gallery.scene.gameOver' }
+  ];
+
+  // M7.S01: online rooms (session/fixtures.ts makes them from recorded views).
+  const ONLINE_SCENES: readonly Scene[] = [
+    { fixture: 'online-lobby-seat0', label: 'game.gallery.scene.lobby' },
+    { fixture: 'online-away-seat0', label: 'game.gallery.scene.away' },
+    { fixture: 'online-watching-spectator', label: 'game.gallery.scene.watching' }
   ];
 
   const PHONE: Frame = { width: 390, height: 844, scale: 0.55 };
@@ -88,6 +98,16 @@
     {@render framed(SCENES[3]!, LANDSCAPE)}
     {@render framed(SCENES[3]!, DESKTOP)}
     {@render framed(SCENES[4]!, DESKTOP)}
+  </div>
+  <div class="flex flex-wrap gap-4">
+    {#each ONLINE_SCENES as scene (scene.fixture)}
+      {@render framed(scene, PHONE)}
+    {/each}
+  </div>
+  <div class="flex flex-wrap gap-4">
+    {#each ONLINE_SCENES as scene (scene.fixture)}
+      {@render framed(scene, DESKTOP)}
+    {/each}
   </div>
 </div>
 

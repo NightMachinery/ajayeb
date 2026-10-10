@@ -141,5 +141,8 @@ export const game = {
   'game.gallery.scene.ageTwoLate': 'Late Age II',
   'game.gallery.scene.ageThree': 'Age III',
   'game.gallery.scene.pending': 'A pending choice',
-  'game.gallery.scene.gameOver': 'Game over'
+  'game.gallery.scene.gameOver': 'Game over',
+  'game.gallery.scene.lobby': 'Online lobby',
+  'game.gallery.scene.away': 'Opponent away',
+  'game.gallery.scene.watching': 'Spectator'
 } as const satisfies Messages;

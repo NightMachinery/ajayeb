@@ -50,6 +50,21 @@ describe('the fixture registry', () => {
     expect(fixtureFrames('nope')).toBeUndefined();
     expect(fixtureFrames('welcome')).toBeUndefined();
   });
+
+  it('makes the online room states from recorded views', () => {
+    const lobby = fixtureFrames('online-lobby-seat0')![0]!;
+    expect(lobby.room.status).toBe('lobby');
+    expect(lobby.room.seats[1]?.kind).toBe('open');
+    expect(lobby.you).toEqual({ seats: [0], canAct: false });
+
+    const away = fixtureFrames('online-away-seat0')![0]!;
+    expect(away.room.seats.map((s) => s.connected)).toEqual([true, false]);
+    expect(away.view.toMove).toBe(1);
+
+    const watching = fixtureFrames('online-watching-spectator')![0]!;
+    expect(watching.you.seats).toEqual([]);
+    expect(watching.room.spectators).toBe(3);
+  });
 });
 
 describe('FixtureTransport', () => {

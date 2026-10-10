@@ -10,6 +10,7 @@
   import NewGameSheet from '$lib/components/screens/NewGameSheet.svelte';
   import PassDevice from '$lib/components/screens/PassDevice.svelte';
   import Settings from '$lib/components/screens/Settings.svelte';
+  import Online from './Online.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
 
   const sampleRooms: readonly SavedRoom[] = [
@@ -33,6 +34,7 @@
         onPlayAi={noop}
         onPassAndPlay={noop}
         onPlayOnline={noop}
+        onJoinCode={noop}
         onSettings={noop}
       />
     </div>
@@ -111,4 +113,6 @@
       />
     </div>
   </section>
+
+  <Online />
 </div>
