@@ -72,6 +72,46 @@
   --card-red: oklch(0.56 0.19 27);
   --card-purple: oklch(0.48 0.14 315);
 
+  /* Card-colour inks: a category glyph (or another glyph inked by its card
+     colour) drawn straight on paper or a page surface rather than on a band.
+     The colours above are band fills; yellow and grey on paper fall under
+     3:1, and brown, blue, red and purple under it on the lapis panels.
+     Two kinds, as with the resource inks:
+       --card-<colour>-paper-ink  fixed, for a glyph on a card face (cards
+                                  stay paper in both themes): 3:1 or more on
+                                  card paper, paper, panel, parchment and the
+                                  light accent-soft chip.
+       --card-<colour>-ink        theme-aware, for a glyph on a page surface:
+                                  the paper ink in the light theme, and the
+                                  dark values (below) at 3:1 or more on the
+                                  table, panel, sunken panel, night and the
+                                  dark accent-soft chip.
+     Each keeps its colour's hue. The category glyphs differ by shape, so
+     these inks need not differ in grey. A glyph on a band uses the band
+     ink. */
+  --card-brown-paper-ink: oklch(0.5 0.08 55);
+  --card-grey-paper-ink: oklch(0.54 0.02 250);
+  --card-blue-paper-ink: oklch(0.53 0.13 255);
+  --card-green-paper-ink: oklch(0.55 0.13 150);
+  --card-yellow-paper-ink: oklch(0.58 0.115 88);
+  --card-red-paper-ink: oklch(0.55 0.19 27);
+  --card-purple-paper-ink: oklch(0.46 0.14 315);
+  --card-brown-ink: var(--card-brown-paper-ink);
+  --card-grey-ink: var(--card-grey-paper-ink);
+  --card-blue-ink: var(--card-blue-paper-ink);
+  --card-green-ink: var(--card-green-paper-ink);
+  --card-yellow-ink: var(--card-yellow-paper-ink);
+  --card-red-ink: var(--card-red-paper-ink);
+  --card-purple-ink: var(--card-purple-paper-ink);
+
+  /* Coin ink: the coin glyph outside the gold badges and printed coins,
+     on paper or a page surface. Gold (L 0.78) is about 1.8:1 on paper and
+     gold-deep under 3:1 on parchment; these keep the gold hue, deepened.
+     --coin-paper-ink is fixed (card faces); --coin-ink follows the theme
+     and is gold itself on the dark surfaces. */
+  --coin-paper-ink: oklch(0.56 0.115 75);
+  --coin-ink: var(--coin-paper-ink);
+
   /* Players: Sun (turquoise) and Moon (pomegranate). The fills are fixed;
      the -ink variants are the text-safe versions for the current theme. */
   --sun: oklch(0.72 0.11 195);
@@ -140,6 +180,14 @@
   --res-stone-ink: oklch(0.76 0.02 250);
   --res-glass-ink: oklch(0.82 0.09 210);
   --res-papyrus-ink: oklch(0.9 0.08 95);
+  --card-brown-ink: oklch(0.68 0.09 58);
+  --card-grey-ink: oklch(0.78 0.015 250);
+  --card-blue-ink: oklch(0.72 0.11 255);
+  --card-green-ink: oklch(0.74 0.13 150);
+  --card-yellow-ink: oklch(0.84 0.14 88);
+  --card-red-ink: oklch(0.68 0.16 27);
+  --card-purple-ink: oklch(0.68 0.13 315);
+  --coin-ink: var(--gold);
   --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 22px -8px oklch(0 0 0 / 0.55);
 }
 

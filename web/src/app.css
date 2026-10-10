@@ -126,6 +126,14 @@
   --color-card-yellow: var(--card-yellow);
   --color-card-red: var(--card-red);
   --color-card-purple: var(--card-purple);
+  --color-card-brown-ink: var(--card-brown-ink);
+  --color-card-grey-ink: var(--card-grey-ink);
+  --color-card-blue-ink: var(--card-blue-ink);
+  --color-card-green-ink: var(--card-green-ink);
+  --color-card-yellow-ink: var(--card-yellow-ink);
+  --color-card-red-ink: var(--card-red-ink);
+  --color-card-purple-ink: var(--card-purple-ink);
+  --color-coin-ink: var(--coin-ink);
   --color-sun: var(--sun);
   --color-moon: var(--moon);
   --color-sun-ink: var(--sun-ink);
