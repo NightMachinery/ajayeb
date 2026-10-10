@@ -25,7 +25,7 @@ Ports: Vite dev listens on 38952 and `vite preview` on 38953. Both forward `/ws`
 - `src/lib/ui/` holds UI state classes, such as the theme (`theme.svelte.ts`) and the safe-area override (`safe-area.ts`), and small display mappers such as the military track's side (`track.ts`) and the online helpers (`online.ts`: the room-code input normaliser and alphabet, the invite link, seat presence and its changes, the QR path).
 - `src/lib/dev/flags.ts` decides whether the `/dev` routes exist.
 - `src/routes/` holds the pages. `/` is Home, `/play/<code>` is a room, and `/dev/*` holds the developer pages.
-- `static/` is served as is: the fonts with their licenses, and the favicon.
+- `static/` is served as is: the fonts with their licenses, the favicon, and the approved bitmap art under `static/art/` (see Bitmap art).
 - `font-sources/` keeps the original TTF fonts and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `static/fonts/`.
 
 ## Session: talking to the server
@@ -92,6 +92,23 @@ Every user-visible string goes through `t(key, params)` from `$lib/i18n`. The En
 `src/lib/icons/svg/*.svg` are the hand-authored icon sources: one standalone `<svg viewBox="0 0 24 24">` (or `0 0 12 12` for a `-sm` variant) per file, two-tone through `fill="var(--i1, currentColor)"` for the primary shape and `var(--i2, rgba(128,128,128,0.65))` for the secondary accent. The `--i2` fallback is an opaque neutral grey, not `currentColor` or `transparent`: nothing in the app sets `--i1`/`--i2` yet, and a transparent or same-colour fallback made the secondary detail invisible wherever it sits over an `--i1`-filled region of the same resolved colour (opacity cannot separate two coincident fills of one colour). `names.ts` lists every icon name; `sprite.ts` builds them into one inline sprite (`import.meta.glob('./svg/*.svg', { query: '?raw' })`) and throws at build time if a name has no source file or a source file is missing from the list. `IconSprite.svelte` inlines the sprite once, in the root layout; `Icon.svelte` renders one icon (`<Icon name="resource-wood" />`), sized in `em`, decorative (`aria-hidden`) unless given a `label`.
 
 This is the placeholder set for M5: simple, clean, geometric shapes, never copied or traced from official iconography. The M9 milestone replaces it through its own Opus render-critique loop (see `art/vector/` once that milestone starts); `/dev/gallery` renders every icon at a glance for a visual check in both themes.
+
+## Bitmap art
+
+The card, wonder, token, card-back and bot-avatar art comes from the bitmap pipeline ([docs/art/bitmaps.md](../docs/art/bitmaps.md)). The app shows only approved art, through the generated index `src/lib/art/available.gen.ts` (`node tools/art/index.mjs`; never edit it by hand), and draws its procedural placeholder for every other id. Approving an asset and regenerating the index is all it takes for the art to appear: no component changes.
+
+- `src/lib/art/lookup.ts` answers which file a frame shows: `pickArt(id, size)` prefers the requested shipped size (`'default'`, `'thumb'`), then the default, then the widest variant, and returns `undefined` when the id has no approved art. Ids are `<kind>/<slug>` (`artId`, `backArtId`, `avatarArtId` with the bot levels mapped to the apprentice, scholar and master avatars). Index paths are root-absolute, because the app is served at the site root.
+- `src/lib/art/ArtImage.svelte` draws one piece of art as a lazy, async-decoded, decorative `<img>` that fades in once loaded (instantly under reduced motion). With no approved art, or when the file fails to load, it renders its `fallback` snippet instead, so there is never a broken image. Its `feather` prop melts the art into the paper with a CSS mask (no alpha channel, no hard rectangle): `soft` for cards and wonder panoramas, `edge` for small thumbnails, `none` for art that is already shaped.
+- Where art shows:
+  - Cards: `components/card/CardArt.svelte` at the medium tier (the 240x180 thumbnail) and the full tier (a srcset of both sizes, chosen by width). **Mini cards never show art**: a covered card's cost and effect must stay readable in its top 40%, so the mini tier keeps the placeholder pattern. Once a card has art, the medium tier also shows the category glyph by the name, since the bitmap carries no glyph.
+  - Wonders: `WonderTile` (the draft tile with a srcset, the city row with the thumbnail).
+  - Progress tokens: `ProgressToken` (the 96 px thumbnail, round, in a gold ring).
+  - Card backs: `CardBack`, under the gold frame and the numeral cartouche, which stay SVG.
+  - Bot avatars: `src/lib/art/BotAvatar.svelte`, with the persona's initial as its placeholder.
+- `src/lib/art/prefetch.ts` and `ArtPrefetch.svelte` (mounted once on the game screen) fetch the next age's approved backs and card thumbnails while the current age is played, one file at a time when the browser is idle, within 200 KB per age. The client cannot know which cards the next age deals, so it takes them in catalog order until the budget runs out. With nothing approved the plan is empty and nothing is fetched.
+- `/dev/gallery` opens its Cards section with the art frames: the approved art of each kind in its real frames (mini, medium and full cards, wonder tiles, tokens, backs and avatars), next to one placeholder, in the current theme. `?art=card/theater,wonder/pyramids` puts named ids first. Unit tests (`src/lib/art/*.test.ts`) cover the lookup, the fallback and the prefetch plan, and render the frames on the server against a stand-in index.
+
+To look at art that is not approved yet, process it into a scratch directory (`process.mjs --out`), copy the AVIFs under `static/art/<kind>/`, point a scratch copy of `available.gen.ts` at them and build the test bundle. Restore the generated index and delete the scratch files before committing.
 
 ## UI lints
 
