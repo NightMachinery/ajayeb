@@ -36,6 +36,7 @@ Sizes for all seven: 15 to 17 px in the card's name row of the full tier, the di
 - Meaning: science buildings.
 - Metaphor: the eight-pointed star (khatam) of two overlapping squares, a mark of learning in manuscript ornament.
 - Silhouette: an eight-pointed star of 20 units with a round or octagonal centre as the detail tone.
+- Correction (M9.V4, see the log): the star is drawn as two overlapping four-pointed stars, not two squares, so its points are sharp. The two-square khatam with a centre read as chain-gear at 12 to 16 px. The octagonal centre is painted in the detail tone over a solid star, so the silhouette has no hole.
 - Must differ from: chain-sun (no disc, straight star points), chain-gear, ornament-rosette (the rosette is an ornament, not a glyph; keep the star sharper and simpler).
 
 ### category-yellow
@@ -91,6 +92,7 @@ The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; th
 
 - **crest-sun**: the Sun player (seat 0, turquoise). Metaphor: a sun disc with a calm face or a ring of flame-shaped rays, inside a roundel. It must differ from chain-sun (which is a plain rayed disc): give the crest its frame or face.
 - **crest-moon**: the Moon player (seat 1, pomegranate). Metaphor: a crescent cradling a small star, inside a roundel. It must differ from chain-moon (a plain crescent) and choice.
+- Correction (M9.V4, see the log): neither crest has an outer roundel. A ring around the crescent read as a copyright sign at 12 to 16 px, a solid medallion blurred into a disc, and a ring around the rays read as a gear. crest-sun is a disc with twelve pointed flame rays and a calm face knocked out of it (the face and the twelve rays set it apart from chain-sun's eight separate rays); crest-moon is a crescent cradling a four-pointed star (the star sets it apart from chain-moon). The callers set no detail tone for the crests, so both are drawn in the main tone only.
 - The two crests must differ by shape, not only by colour: a round radiant figure against a crescent figure. Seen side by side at 15 px in greyscale, a player must still tell them apart.
 - Sizes: 15 to 20 px in strips, panels and the score table; 60 px on the pass-the-device screen (where detail is welcome); about 16 px at the ends of the military track, on the track surface, with a halo.
 - Contexts: PlayerStrip, CityPanel, CitySheet, Draft, AgeInterstitial, ScoreTable, GameOver, PassDevice, MilitaryTrack.
