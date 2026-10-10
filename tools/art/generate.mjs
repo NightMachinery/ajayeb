@@ -9,8 +9,9 @@
 //   3. Runs `codex exec` (ephemeral, read-only sandbox, a scratch -C dir,
 //      --enable image_generation, -o for the last message) asking it to
 //      call image_gen exactly once.
-//   4. Finds the newest PNG that appeared since the snapshot and copies it
-//      to <AJAYEB_RUN_DIR>/art-work/raw/<kind>/<slug>/<attempt>.png.
+//   4. Finds the newest PNG that appeared since the snapshot, verifies it
+//      actually came back the size asked for, and copies it to
+//      <AJAYEB_RUN_DIR>/art-work/raw/<kind>/<slug>/<attempt>.png.
 //   5. Records the attempt in art/manifest.json (status "generated",
 //      attempt incremented), never overwriting an "approved" asset.
 //
@@ -20,10 +21,17 @@
 // one-codex-at-a-time rule (AGENTS.md "Assets") holds even when a caller
 // forgets the wrapper. --dry-run runs no codex and skips the lane.
 //
+// Reference images (`-i`/`--image`) are **off by default**. M9.B3's pilot
+// found a same-subject anchor makes Codex return a near-copy of the
+// reference rather than a new illustration, and the style prefix alone
+// already keeps the style consistent across subjects; pass --ref to opt
+// back in for a cross-subject style anchor.
+//
 // Usage:
 //   node tools/art/generate.mjs --ids card/lumber-yard
 //   node tools/art/generate.mjs --kind token --limit 3
 //   node tools/art/generate.mjs --ids card/lumber-yard --amend "warmer light"
+//   node tools/art/generate.mjs --ids card/lumber-yard --ref
 //
 // Flags:
 //   --ids a,b,c   generate exactly these ids (comma-separated), in order
@@ -37,6 +45,9 @@
 //                 back with a promptAmend are retried too)
 //   --amend TEXT  append TEXT as this run's promptAmend before generating
 //                 (overrides the manifest's stored promptAmend for --ids)
+//   --ref         pass art/refs/<kind>-anchor.{jpg,png} to Codex as a style
+//                 anchor, when one exists (default: no reference image at
+//                 all; see "Reference images" above)
 //   --dry-run     print the prompt and the codex command, run nothing
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -45,7 +56,18 @@ import { readdir, stat, mkdir, copyFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 
-import { repoRoot, rawDir, loadManifest, saveManifest, idKind, idSlug, styleDocPath, refsDir, die } from './lib.mjs';
+import {
+  repoRoot,
+  rawDir,
+  loadManifest,
+  saveManifest,
+  idKind,
+  idSlug,
+  styleDocPath,
+  refsDir,
+  imageSize,
+  die,
+} from './lib.mjs';
 
 const CODEX_BIN = process.env.CODEX_BIN || path.join(os.homedir(), '.local', 'bin', 'codex');
 const CODEX_HOME = process.env.CODEX_HOME || path.join(os.homedir(), '.codex');
@@ -61,6 +83,7 @@ function parseArgs(argv) {
     else if (a === '--limit') args.limit = Number(argv[++i]);
     else if (a === '--status') args.status = argv[++i];
     else if (a === '--amend') args.amend = argv[++i];
+    else if (a === '--ref') args.ref = true;
     else if (a === '--dry-run') args.dryRun = true;
     else die(`unknown argument "${a}"`, 2);
   }
@@ -192,12 +215,16 @@ async function runCodex(prompt, gen, scratchDir, refImage) {
   });
 }
 
-async function generateOne(asset, amendOverride, dryRun) {
+async function generateOne(asset, amendOverride, dryRun, useRef) {
   const kind = asset.kind;
   const slug = idSlug(asset.id);
   const prompt = await buildPrompt(asset, amendOverride);
   const scratchDir = path.join(os.tmpdir(), `ajayeb-art-gen-${process.pid}-${Date.now()}`);
-  const refImage = await firstExistingRef(kind);
+  // Off by default (M9.B3): a same-subject reference made Codex return a
+  // near-copy of the anchor rather than a new illustration in the pilot,
+  // and the style prefix alone keeps the look consistent. --ref opts back
+  // in for a cross-subject style anchor.
+  const refImage = useRef ? await firstExistingRef(kind) : null;
 
   const cmdForLog = [
     CODEX_BIN,
@@ -238,6 +265,20 @@ async function generateOne(asset, amendOverride, dryRun) {
     process.stderr.write(
       `generate.mjs: codex exec finished but no new PNG appeared under ${GENERATED_IMAGES_DIR}\n` +
         `  codex's last message: ${await safeRead(result.outFile)}\n`,
+    );
+    return { ok: false, tookMs, cmd: cmdForLog };
+  }
+
+  // The pilot saw a reference-image run come back 1254x1254 against a
+  // requested 1024x1024 (M9.B3): verify every generation's actual pixel
+  // size before it ever reaches raw/ and the manifest, and reject a wrong
+  // size outright rather than shipping an asset process.mjs would then
+  // crop unpredictably.
+  const [wantW, wantH] = asset.gen.split('x').map(Number);
+  const got = await imageSize(newPng);
+  if (got.w !== wantW || got.h !== wantH) {
+    process.stderr.write(
+      `generate.mjs: codex image_gen returned ${got.w}x${got.h}, expected ${wantW}x${wantH} (${newPng}); rejecting this attempt\n`,
     );
     return { ok: false, tookMs, cmd: cmdForLog };
   }
@@ -318,7 +359,7 @@ async function main() {
       process.stdout.write(`generate.mjs: skipping ${id}, already approved\n`);
       continue;
     }
-    const outcome = await generateOne(asset, args.ids ? args.amend : undefined, args.dryRun);
+    const outcome = await generateOne(asset, args.ids ? args.amend : undefined, args.dryRun, args.ref);
     if (!outcome || args.dryRun) continue;
 
     if (outcome.ok) {
