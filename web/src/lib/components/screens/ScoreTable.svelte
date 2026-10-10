@@ -3,7 +3,7 @@
   // glyph and its name (never colour alone), a column per player, and the
   // total. A plain leaf: the rows come from lib/view/score.ts, which only
   // re-shapes the server's numbers.
-  import Crown from '@lucide/svelte/icons/crown';
+  import Trophy from '@lucide/svelte/icons/trophy';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
@@ -130,8 +130,14 @@
             data-must-fit
           >
             <span class="inline-flex items-center justify-end gap-1">
+              <!-- A trophy, not a crown: the crown is the guilds' category
+                   glyph, one row up. -->
               {#if total && winner === seat}
-                <Crown class="size-4 text-gild" role="img" aria-label={t('choices.score.winner')} />
+                <Trophy
+                  class="size-4 text-gild"
+                  role="img"
+                  aria-label={t('choices.score.winner')}
+                />
               {/if}
               {formatNumber(row.values[seat])}
             </span>
