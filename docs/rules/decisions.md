@@ -60,7 +60,7 @@ A ruling changes only with a deliberate decision. Changing one changes how games
 
 ### Reveal at game end
 
-- **Ruling.** When the game ends, every view shows what was hidden: the cards removed from each age deck and the guilds, wonders and progress tokens left in the box. The result also carries the seed and the full action log, so the game can be replayed. This is an engine option, on by default.
+- **Ruling.** When the game ends, every view shows what was hidden: the cards removed from each age deck and the guilds, wonders and progress tokens left in the box. The seed and the full action log stay on the server, in the room's file, so the game can be replayed there; no view ever carries the seed. This is an engine option, on by default.
 - **Why.** Hidden information has no game value once the game is over, and seeing it helps players review the game and learn.
 - **Alternative.** Keep it hidden forever, as at a real table, where nobody looks into the box.
 
