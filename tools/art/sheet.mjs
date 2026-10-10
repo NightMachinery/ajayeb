@@ -14,7 +14,7 @@
 // Each id contributes its chosen attempt's PNG from
 // <AJAYEB_RUN_DIR>/art-work/raw/<kind>/<slug>/<attempt>.png (default
 // attempt: the manifest's recorded `attempt`, i.e. the latest one).
-// Labels are "<id> #<attempt>", drawn by montage itself (not baked into
+// Labels are "<n>. <id> #<attempt>" (n counts from 1 across the sheet), drawn by montage itself (not baked into
 // the raw PNGs), so they never leak into a shipped file.
 
 import { spawn } from 'node:child_process';
@@ -39,7 +39,7 @@ function findFont() {
 }
 
 function parseArgs(argv) {
-  const args = { tile: '4x', cell: '384x288' };
+  const args = { tile: null, cell: '384x288' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
@@ -105,7 +105,7 @@ async function main() {
       continue;
     }
     files.push(file);
-    labels.push(`${id} #${attempt || '?'}`);
+    labels.push(`${files.length}. ${id} #${attempt || '?'}`);
   }
   if (!files.length) die('no attempt files found for any requested id');
 
@@ -129,7 +129,9 @@ async function main() {
     '-resize',
     args.cell,
     '-tile',
-    args.tile,
+    // Up to 4 columns; fewer when there are fewer attempts, so a short
+    // sheet is not padded with empty cells.
+    args.tile || `${Math.min(4, files.length)}x`,
     '-geometry',
     '+6+6',
     '-background',

@@ -4,8 +4,9 @@
 // Applies a reviewer's decisions.jsonl to art/manifest.json. Each line is
 // one JSON object: { id, attempt, verdict, reasons, promptAmend }.
 //   verdict "approve"  -> status "approved" (process.mjs may now ship it)
-//   verdict "reject"   -> status "todo" if under 3 attempts (promptAmend is
-//                         appended for generate.mjs's next run), else
+//   verdict "reject"   -> status "rejected" if under 3 attempts (its
+//                         promptAmend is stored for generate.mjs's next
+//                         run, which retries "rejected" assets), else
 //                         "needs-human"
 // A decision for an id whose current `attempt` does not match the
 // decision's `attempt` is skipped (stale: a newer attempt exists that this
@@ -85,7 +86,7 @@ async function main() {
         asset.status = 'needs-human';
         summary.needsHuman++;
       } else {
-        asset.status = 'todo';
+        asset.status = 'rejected';
         summary.rejected++;
       }
       if (d.promptAmend) asset.promptAmend = d.promptAmend;

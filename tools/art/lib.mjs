@@ -189,7 +189,11 @@ export const KIND_SPEC = {
     outDir: 'ui',
     mask: 'none',
     // Named "hero", not "hero/hero.avif", because it is the one hero image.
-    sizes: [{ suffix: '', w: 1600, h: 900, budgetBytes: 120 * 1024, nameOverride: 'hero' }],
+    // The 800-wide variant is for phones (the asset table's hero-800).
+    sizes: [
+      { suffix: '', w: 1600, h: 900, budgetBytes: 120 * 1024, nameOverride: 'hero' },
+      { suffix: '800', w: 800, h: 450, budgetBytes: 60 * 1024, nameOverride: 'hero' },
+    ],
   },
   avatar: {
     gen: '1024x1024',

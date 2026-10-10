@@ -14,10 +14,11 @@
 //   5. Records the attempt in art/manifest.json (status "generated",
 //      attempt incremented), never overwriting an "approved" asset.
 //
-// This script does not take the codex lock itself: run it under
-// `python3 tools/heavy.py run --kind codex -- node tools/art/generate.mjs ...`
-// so the machine-wide one-codex-at-a-time rule (AGENTS.md "Assets") holds
-// even across different scripts and sessions.
+// The codex lane: unless it already runs inside
+// `python3 tools/heavy.py run --kind codex` (AJAYEB_HEAVY_KIND=codex), the
+// script re-executes itself under that wrapper, so the machine-wide
+// one-codex-at-a-time rule (AGENTS.md "Assets") holds even when a caller
+// forgets the wrapper. --dry-run runs no codex and skips the lane.
 //
 // Usage:
 //   node tools/art/generate.mjs --ids card/lumber-yard
@@ -31,14 +32,15 @@
 //   --limit N     generate at most N assets (default 1; this script is the
 //                 "strictly one asset at a time" step, so a caller sweeping
 //                 a kind still gets one codex run per asset, sequentially)
-//   --status S    with --kind, only assets whose status is S (default
-//                 "todo"; "rejected" picks up assets a review round sent
-//                 back with a promptAmend)
+//   --status S    with --kind, only assets whose status is S (default:
+//                 "todo" and "rejected", so assets a review round sent
+//                 back with a promptAmend are retried too)
 //   --amend TEXT  append TEXT as this run's promptAmend before generating
 //                 (overrides the manifest's stored promptAmend for --ids)
 //   --dry-run     print the prompt and the codex command, run nothing
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { readdir, stat, mkdir, copyFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -51,7 +53,7 @@ const GENERATED_IMAGES_DIR = path.join(CODEX_HOME, 'generated_images');
 const TIMEOUT_MS = 6 * 60 * 1000;
 
 function parseArgs(argv) {
-  const args = { limit: 1, status: 'todo' };
+  const args = { limit: 1, status: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--ids') args.ids = argv[++i].split(',').map((s) => s.trim()).filter(Boolean);
@@ -129,12 +131,25 @@ async function findNewestNewPng(before) {
   return newest?.file ?? null;
 }
 
-async function runCodex(prompt, scratchDir, refImage) {
+/** "landscape 1536x1024", "square 1024x1024" or "portrait 1024x1536",
+ * from the manifest's per-kind generation size. */
+function sizePhrase(gen) {
+  const [w, h] = gen.split('x').map(Number);
+  const shape = w > h ? 'landscape' : w < h ? 'portrait' : 'square';
+  return `${shape} ${gen}`;
+}
+
+function codexInstruction(prompt, gen) {
+  return (
+    `Call the image_gen tool exactly once with this prompt (${sizePhrase(gen)}): ` +
+    `${prompt} Do nothing else. Reply DONE.`
+  );
+}
+
+async function runCodex(prompt, gen, scratchDir, refImage) {
   await mkdir(scratchDir, { recursive: true });
   const outFile = path.join(scratchDir, 'last.txt');
-  const instruction =
-    `Call the image_gen tool exactly once with this prompt (landscape 1536x1024 ` +
-    `unless the prompt says otherwise): ${prompt} Do nothing else. Reply DONE.`;
+  const instruction = codexInstruction(prompt, gen);
 
   const args = [
     'exec',
@@ -194,7 +209,7 @@ async function generateOne(asset, amendOverride, dryRun) {
     '-o',
     path.join(scratchDir, 'last.txt'),
     ...(refImage ? ['-i', refImage] : []),
-    `"Call the image_gen tool exactly once with this prompt...: ${prompt}"`,
+    JSON.stringify(codexInstruction(prompt, asset.gen)),
   ].join(' ');
 
   if (dryRun) {
@@ -206,7 +221,7 @@ async function generateOne(asset, amendOverride, dryRun) {
 
   const before = await snapshotGeneratedImages();
   const started = Date.now();
-  const result = await runCodex(prompt, scratchDir, refImage);
+  const result = await runCodex(prompt, asset.gen, scratchDir, refImage);
   const tookMs = Date.now() - started;
 
   if (result.code !== 0) {
@@ -234,13 +249,30 @@ async function generateOne(asset, amendOverride, dryRun) {
 }
 
 async function firstExistingRef(kind) {
-  const candidate = path.join(refsDir, `${kind}-anchor.jpg`);
-  try {
-    await stat(candidate);
-    return candidate;
-  } catch {
-    return null; // art/refs/ anchors are optional; the pilot runs without one
+  // art/refs/ anchors are optional; the pilot runs without one.
+  for (const ext of ['jpg', 'png']) {
+    const candidate = path.join(refsDir, `${kind}-anchor.${ext}`);
+    try {
+      await stat(candidate);
+      return candidate;
+    } catch {
+      // try the next extension
+    }
   }
+  return null;
+}
+
+/** Re-runs this script under `heavy.py run --kind codex` unless it already
+ * holds the codex lane, and exits with the wrapper's status. */
+function ensureCodexLane(argv) {
+  if (process.env.AJAYEB_HEAVY_KIND === 'codex') return;
+  const self = fileURLToPath(import.meta.url);
+  const heavy = path.join(repoRoot, 'tools', 'heavy.py');
+  const r = spawnSync('python3', [heavy, 'run', '--kind', 'codex', '--', process.execPath, self, ...argv], {
+    stdio: 'inherit',
+  });
+  if (r.error) die(`could not start tools/heavy.py: ${r.error.message}`);
+  process.exit(r.status ?? 1);
 }
 
 async function safeRead(file) {
@@ -252,7 +284,9 @@ async function safeRead(file) {
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  const args = parseArgs(argv);
+  if (!args.dryRun) ensureCodexLane(argv);
   const manifest = await loadManifest();
   const assetsById = manifest.assets;
 
@@ -263,7 +297,7 @@ async function main() {
   } else {
     ids = Object.values(assetsById)
       .filter((a) => (args.kind ? a.kind === args.kind : true))
-      .filter((a) => a.status === args.status)
+      .filter((a) => (args.status ? a.status === args.status : a.status === 'todo' || a.status === 'rejected'))
       .slice(0, args.limit)
       .map((a) => a.id);
   }

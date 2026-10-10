@@ -81,14 +81,10 @@ function run(cmd, args, opts = {}) {
 function magickArgs(src, dest, w, h, mask) {
   const args = [src, '-resize', `${w}x${h}^`, '-gravity', 'center', '-extent', `${w}x${h}`, '-strip'];
   if (mask === 'circle') {
-    // Draw a white-filled circle on black, use it as an alpha mask, then
-    // flatten onto the paper colour so there is no transparency in the
-    // shipped file (AVIF alpha costs bytes the budget does not have).
+    // A white-on-black circle becomes the alpha channel (CopyOpacity), then
+    // the result is flattened onto the paper colour, so the shipped file
+    // has no transparency (AVIF alpha costs bytes the budget does not have).
     args.push(
-      '(',
-      '+clone',
-      '-alpha',
-      'extract',
       '(',
       '-size',
       `${w}x${h}`,
@@ -98,17 +94,15 @@ function magickArgs(src, dest, w, h, mask) {
       '-draw',
       `circle ${w / 2},${h / 2} ${w / 2},0`,
       ')',
-      '-compose',
-      'multiply',
-      '-composite',
-      ')',
       '-alpha',
       'off',
       '-compose',
-      'copy_opacity',
+      'CopyOpacity',
       '-composite',
       '-background',
       PAPER_HEX,
+      '-compose',
+      'Over',
       '-flatten',
     );
   }

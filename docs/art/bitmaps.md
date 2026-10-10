@@ -65,22 +65,23 @@ wonder and token slugs come from the engine's presentation catalog
 
 109 assets in total, matching the UX design's asset table:
 
-- 73 cards (23 Age I, 23 Age II, 20 Age III, 7 guilds) — generated
+- 73 cards (23 Age I, 23 Age II, 20 Age III, 7 guilds): generated
   1536x1024, cropped 4:3, shipped at 480x360 (<=35 KB) and a 240x180 thumb
   (<=10 KB)
-- 12 wonders — 1536x1024, 3:2, shipped 960x640 (<=70 KB) and a 480x320
+- 12 wonders: 1536x1024, 3:2, shipped 960x640 (<=70 KB) and a 480x320
   thumb (<=20 KB)
-- 10 progress tokens — 1024x1024, circle-masked onto the paper colour,
+- 10 progress tokens: 1024x1024, circle-masked onto the paper colour,
   shipped 256px (<=14 KB) and a 96px thumb (<=5 KB)
-- 4 card backs (age1, age2, age3, guild) — 1024x1536, 1:1.545, shipped
+- 4 card backs (age1, age2, age3, guild): 1024x1536, 1:1.545, shipped
   320x495 (<=30 KB)
-- 2 textures (paper, night) — 1024x1024, tileable, shipped 512px (<=60 KB)
-- 1 hero — 1536x1024, 16:9, shipped 1600x900 (<=120 KB)
-- 3 AI avatars (apprentice, scholar, master) — 1024x1024, shipped 192px
+- 2 textures (paper, night): 1024x1024, tileable, shipped 512px (<=60 KB)
+- 1 hero: 1536x1024, 16:9, shipped 1600x900 (<=120 KB) and an 800x450
+  `hero@800` for phones (<=60 KB)
+- 3 AI avatars (apprentice, scholar, master): 1024x1024, shipped 192px
   (<=12 KB)
-- 3 victory scenes (military, science, civilian) — 1536x1024, 16:9,
+- 3 victory scenes (military, science, civilian): 1536x1024, 16:9,
   shipped 960x540 (<=60 KB)
-- 1 app icon — 1024x1024, shipped 512/192/180/32px AVIF (<=60/20/20/4 KB)
+- 1 app icon: 1024x1024, shipped 512/192/180/32px AVIF (<=60/20/20/4 KB)
 
 The exact numbers live in one place, `KIND_SPEC` in `tools/art/lib.mjs`, so
 this list and the code cannot drift silently; check the code first if they
@@ -112,16 +113,19 @@ ever disagree.
      copies it to `art-work/raw/<kind>/<slug>/<attempt>.png`;
    - records the attempt in the manifest (`status: "generated"`).
 
-   `--kind KIND --limit N` (default 1) picks the next `N` `todo` assets of
-   one kind instead of naming ids; `--status rejected` picks up a kind's
-   rejected assets with their stored `promptAmend` for a second pass.
+   `--kind KIND --limit N` (default 1) picks the next `N` assets of one
+   kind whose status is `todo` or `rejected` (a rejected asset is retried
+   with its stored `promptAmend`); `--status S` narrows that to one status.
    `--dry-run` prints the prompt and the exact `codex exec` command without
    running anything. `CODEX_BIN` defaults to `~/.local/bin/codex` (never a
    shell function of the same name).
 
-   `generate.mjs` does not take the `codex` lock itself — the `heavy.py
-   run --kind codex` wrapper around it is what enforces "strictly one at a
-   time" machine-wide, across scripts and sessions, per AGENTS.md.
+   The `heavy.py run --kind codex` wrapper is what enforces "strictly one
+   at a time" machine-wide, across scripts and sessions, per AGENTS.md.
+   When `generate.mjs` is started without it, it re-executes itself under
+   that wrapper, so the lane is never skipped. The instruction names the
+   kind's generation size (landscape 1536x1024, square 1024x1024 or
+   portrait 1024x1536).
 
 3. **`node tools/art/sheet.mjs --ids <id>,<id>,... [--name NAME]`** (or
    `--kind KIND` for every generated asset of that kind) builds a
@@ -138,7 +142,7 @@ ever disagree.
 
 5. **`node tools/art/apply-review.mjs path/to/decisions.jsonl`** applies
    it to `art/manifest.json`: `approve` sets `status: "approved"`; `reject`
-   sets `status: "todo"` (with the `promptAmend` stored for the next
+   sets `status: "rejected"` (with the `promptAmend` stored for the next
    `generate.mjs` run) unless the asset has already had 3 attempts, in
    which case it becomes `needs-human`. A decision whose `attempt` does not
    match the manifest's current attempt is skipped as stale (a newer
@@ -156,8 +160,8 @@ ever disagree.
    the manifest. **`--src` must point at an asset whose manifest status is
    already `"approved"`** (set by `apply-review.mjs`); use `--out DIR` to
    process into a scratch directory instead, which skips that check and
-   leaves the manifest and `art/originals/`/`web/static/art/` untouched —
-   this is how a pipeline change or a pilot run is proved without shipping
+   leaves the manifest and `art/originals/`/`web/static/art/` untouched.
+   This is how a pipeline change or a pilot run is proved without shipping
    or approving anything.
 
 7. **`node tools/art/index.mjs`** regenerates
@@ -199,5 +203,5 @@ actual pilot and batch.
 ## Throughput
 
 About 109 assets, 1-2 minutes each for `generate.mjs` plus whatever
-rejections cost, so a full batch is a few hours sequentially — fine
+rejections cost, so a full batch is a few hours sequentially, which is fine
 overnight, under `nightshift` mode (see `AGENTS.md` "Owner phrases").

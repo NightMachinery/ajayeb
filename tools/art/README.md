@@ -54,20 +54,21 @@ catalog entry or a static asset.
 node tools/art/generate.mjs --ids card/lumber-yard,card/stone-pit
 node tools/art/generate.mjs --kind token --limit 3
 node tools/art/generate.mjs --ids card/lumber-yard --amend "warmer light"
-node tools/art/generate.mjs --kind card --status rejected --limit 5
+node tools/art/generate.mjs --kind card --status rejected --limit 5   # only rejected ones
 node tools/art/generate.mjs --ids card/lumber-yard --dry-run
 ```
 
 Generates one Codex `image_gen` attempt per listed asset, strictly
-sequentially (never in parallel, even across ids in one invocation). Always
-run it under the codex lane:
+sequentially (never in parallel, even across ids in one invocation). It
+always runs under the codex lane; started without the wrapper below, it
+re-executes itself under it:
 
 ```
 python3 tools/heavy.py run --kind codex -- node tools/art/generate.mjs --ids card/lumber-yard
 ```
 
 Flags: `--ids a,b,c` (exact ids, in order); `--kind KIND` with `--limit N`
-(default 1) and `--status S` (default `todo`) to pick the next matching
+(default 1) and `--status S` (default: `todo` and `rejected`) to pick the next matching
 assets instead of naming ids; `--amend TEXT` to set this run's prompt
 amendment (only meaningful with `--ids`; `--kind` runs use each asset's own
 stored `promptAmend`); `--dry-run` to print the prompt and the exact
@@ -88,8 +89,8 @@ node tools/art/sheet.mjs --kind token
 
 Builds a numbered, labelled contact sheet (ImageMagick `montage`) of chosen
 attempts (each id's latest attempt by default, or `--attempt N`), written
-to `${AJAYEB_RUN_DIR}/art-work/sheets/<name>.jpg` — never into the
-repository. `--tile` and `--cell` override the montage grid and cell size
+to `${AJAYEB_RUN_DIR}/art-work/sheets/<name>.jpg`, never into the
+repository. Each cell is labelled `<n>. <id> #<attempt>`. `--tile` and `--cell` override the montage grid and cell size
 (`4x` and `384x288` by default).
 
 ### `apply-review.mjs`
@@ -102,7 +103,7 @@ node tools/art/apply-review.mjs path/to/decisions.jsonl --dry-run
 Applies a reviewer's `decisions.jsonl` (one JSON object per line: `{id,
 attempt, verdict: "approve"|"reject", reasons?, promptAmend?}`) to
 `art/manifest.json`. `approve` sets `status: "approved"`. `reject` sets
-`status: "todo"` and stores `promptAmend` for the next `generate.mjs` run,
+`status: "rejected"` and stores `promptAmend` for the next `generate.mjs` run,
 unless the asset is already at 3 attempts, in which case it becomes
 `needs-human`. A decision whose `attempt` does not match the manifest's
 current attempt is skipped as stale. `--dry-run` prints the summary
@@ -125,7 +126,7 @@ Without `--out`, the id **must already be `"approved"`** in the manifest
 `art/originals/<kind>/<slug>.png`, the AVIFs go to
 `web/static/art/<kind>/`, and the shipped byte counts are recorded in the
 manifest. With `--out DIR`, that approval check is skipped and everything
-is written under `DIR` instead — nothing is shipped, nothing is copied to
+is written under `DIR` instead: nothing is shipped, nothing is copied to
 `art/originals/`, and the manifest is left untouched. This is how a
 pipeline change (or `M9.B0`'s pilot) is proved end to end without
 approving or shipping anything for real.
