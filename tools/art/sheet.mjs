@@ -10,12 +10,20 @@
 //   node tools/art/sheet.mjs --ids card/lumber-yard,card/stone-pit
 //   node tools/art/sheet.mjs --kind token --attempt latest
 //   node tools/art/sheet.mjs --ids card/lumber-yard --name lumber-pilot
+//   node tools/art/sheet.mjs --ids card/theater#1,card/theater#2,card/theater#3
+//   node tools/art/sheet.mjs --ids card/theater --attempt all
 //
 // Each id contributes its chosen attempt's PNG from
-// <AJAYEB_RUN_DIR>/art-work/raw/<kind>/<slug>/<attempt>.png (default
-// attempt: the manifest's recorded `attempt`, i.e. the latest one).
-// Labels are "<n>. <id> #<attempt>" (n counts from 1 across the sheet), drawn by montage itself (not baked into
-// the raw PNGs), so they never leak into a shipped file.
+// <AJAYEB_RUN_DIR>/art-work/raw/<kind>/<slug>/<attempt>.png. By default
+// that is the manifest's recorded `attempt` (the latest one), but any
+// --ids entry can carry its own "#<attempt>" (or "#latest", or "#all" for
+// every attempt found on disk), so one call can put several attempts of
+// several ids on the same sheet, e.g. comparing three rejected variants of
+// one card next to the attempt that was approved. --attempt sets the
+// default for entries with no "#", and alone (with no --ids) still works
+// as a per-id override via --attempt all. Labels are "<n>. <id> #<attempt>"
+// (n counts from 1 across the sheet), drawn by montage itself (not baked
+// into the raw PNGs), so they never leak into a shipped file.
 
 import { spawn } from 'node:child_process';
 import { mkdir, readdir, stat } from 'node:fs/promises';
@@ -68,40 +76,74 @@ async function latestAttemptFile(kind, slug) {
   return nums.length ? path.join(dir, `${nums[0]}.png`) : null;
 }
 
-async function resolveIds(args, manifest) {
-  if (args.ids) return args.ids;
+async function listAttemptNumbers(kind, slug) {
+  const dir = path.join(rawDir, kind, slug);
+  let entries;
+  try {
+    entries = await readdir(dir);
+  } catch {
+    return [];
+  }
+  return entries
+    .map((f) => /^(\d+)\.png$/.exec(f))
+    .filter(Boolean)
+    .map((m) => Number(m[1]))
+    .sort((a, b) => a - b);
+}
+
+/** Resolves --ids/--kind into a list of { id, attemptSpec } entries. An id
+ * in --ids may carry "#<attempt>" (a number, "latest" or "all") to
+ * override --attempt for just that one id. */
+async function resolveEntries(args, manifest) {
+  if (args.ids) {
+    return args.ids.map((spec) => {
+      const hashIdx = spec.indexOf('#');
+      return hashIdx === -1
+        ? { id: spec, attemptSpec: args.attempt || 'latest' }
+        : { id: spec.slice(0, hashIdx), attemptSpec: spec.slice(hashIdx + 1) };
+    });
+  }
   if (!args.kind) die('pass --ids a,b,c or --kind KIND', 2);
   return Object.values(manifest.assets)
     .filter((a) => a.kind === args.kind && a.attempt > 0)
-    .map((a) => a.id);
+    .map((a) => ({ id: a.id, attemptSpec: args.attempt || 'latest' }));
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const manifest = await loadManifest();
-  const ids = await resolveIds(args, manifest);
-  if (!ids.length) die('no ids resolved (nothing generated yet for this selection?)');
+  const entries = await resolveEntries(args, manifest);
+  if (!entries.length) die('no ids resolved (nothing generated yet for this selection?)');
+
+  // Expand each entry to one or more concrete (id, attempt) picks: "all"
+  // becomes every attempt found on disk, a bare id with no "#" falls back
+  // to latestAttemptFile when the manifest has no recorded attempt.
+  const picks = [];
+  for (const { id, attemptSpec } of entries) {
+    const kind = idKind(id);
+    const slug = idSlug(id);
+    if (attemptSpec === 'all') {
+      const nums = await listAttemptNumbers(kind, slug);
+      for (const n of nums) picks.push({ id, attempt: n, file: path.join(rawDir, kind, slug, `${n}.png`) });
+      continue;
+    }
+    const asset = manifest.assets[id];
+    let attempt = attemptSpec === 'latest' ? asset?.attempt || 0 : Number(attemptSpec);
+    let file = attempt > 0 ? path.join(rawDir, kind, slug, `${attempt}.png`) : null;
+    if (!file) {
+      file = await latestAttemptFile(kind, slug);
+      attempt = 0;
+    }
+    if (file) picks.push({ id, attempt, file });
+  }
 
   const files = [];
   const labels = [];
-  for (const id of ids) {
-    const kind = idKind(id);
-    const slug = idSlug(id);
-    const asset = manifest.assets[id];
-    const attempt =
-      args.attempt === 'latest' || !args.attempt ? asset?.attempt || 0 : Number(args.attempt);
-    const file =
-      attempt > 0
-        ? path.join(rawDir, kind, slug, `${attempt}.png`)
-        : await latestAttemptFile(kind, slug);
-    if (!file) {
-      process.stderr.write(`sheet.mjs: no raw attempt found for ${id}, skipping\n`);
-      continue;
-    }
+  for (const { id, attempt, file } of picks) {
     try {
       await stat(file);
     } catch {
-      process.stderr.write(`sheet.mjs: ${file} does not exist, skipping ${id}\n`);
+      process.stderr.write(`sheet.mjs: ${file} does not exist, skipping ${id}${attempt ? ` #${attempt}` : ''}\n`);
       continue;
     }
     files.push(file);
