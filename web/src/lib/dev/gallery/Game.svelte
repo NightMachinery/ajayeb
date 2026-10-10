@@ -28,7 +28,7 @@
   }
 
   const SCENES: readonly Scene[] = [
-    { fixture: 'draft-round-1-seat0', label: 'game.gallery.scene.draft' },
+    { fixture: 'draft-round-1-seat1', label: 'game.gallery.scene.draft' },
     { fixture: 'age-1-start-seat0', label: 'game.gallery.scene.ageOne' },
     { fixture: 'appian-economy-seat0', label: 'game.gallery.scene.ageTwo' },
     { fixture: 'costs-seat0', label: 'game.gallery.scene.ageTwoLate' },

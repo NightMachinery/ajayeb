@@ -43,7 +43,7 @@
 
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
   {#if slug && wonder}
-    <div class="flex flex-col gap-3 px-4 pt-1 pb-2" data-wonder-sheet={slug}>
+    <div class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4" data-wonder-sheet={slug}>
       <h2 id={titleId} class="font-display text-xl text-fg">{wonderName(slug)}</h2>
       <div class="mx-auto w-full max-w-[280px]">
         <WonderTile

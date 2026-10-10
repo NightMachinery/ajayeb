@@ -38,7 +38,7 @@
   ]);
 </script>
 
-<div class="flex flex-col gap-3 px-4 pt-1 pb-2" data-wonder-step>
+<div class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4" data-wonder-step>
   <div class="flex items-center gap-2">
     <button
       type="button"

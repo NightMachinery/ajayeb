@@ -105,7 +105,10 @@
         {onback}
       />
     {:else}
-      <div class="flex flex-col gap-3 px-4 pt-1 pb-2" data-card-sheet={slug ?? 'face-down'}>
+      <div
+        class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4"
+        data-card-sheet={slug ?? 'face-down'}
+      >
         <div class="flex gap-3">
           <div class="h-[216px] w-[140px] shrink-0">
             {#if slug}
