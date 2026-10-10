@@ -54,7 +54,7 @@
       {/if}
       <button
         type="button"
-        class="shrink-0 text-fg-muted hover:text-fg"
+        class="-me-2 grid size-11 shrink-0 place-items-center text-fg-muted hover:text-fg"
         aria-label={t('shell.dismiss')}
         onclick={() => toasts.dismiss(item.id)}
       >

@@ -18,18 +18,9 @@
   import ToastList from '$lib/components/shell/Toasts.svelte';
   import { Toasts } from '$lib/components/shell/toast-queue.svelte';
   import { theme, THEME_PREFS, type ThemePref } from '$lib/ui/theme.svelte';
+  import { innerHeight, innerWidth } from 'svelte/reactivity/window';
 
   const themeOptions = THEME_PREFS.map((pref) => ({ value: pref, label: t(`theme.${pref}`) }));
-
-  let viewport = $state({ width: 0, height: 0 });
-  $effect(() => {
-    function measure(): void {
-      viewport = { width: window.innerWidth, height: window.innerHeight };
-    }
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  });
 
   const toasts = new Toasts();
 
@@ -46,8 +37,8 @@
       <p class="mt-1 max-w-prose text-sm text-fg-muted">{t('dev.gallery.intro')}</p>
       <p class="mt-1 text-xs text-fg-muted" data-testid="gallery-viewport">
         {t('dev.gallery.viewport', {
-          width: String(viewport.width),
-          height: String(viewport.height)
+          width: String(innerWidth.current ?? 0),
+          height: String(innerHeight.current ?? 0)
         })}
       </p>
     </div>
@@ -69,7 +60,9 @@
       {#each ICON_NAMES as name (name)}
         <div class="flex flex-col items-center gap-1 rounded-control p-2 text-center">
           <Icon {name} class="text-[28px] text-fg" />
-          <code class="text-[10px] leading-tight break-all text-fg-muted">{name}</code>
+          <code class="text-[10px] leading-tight break-all text-fg-muted" data-min-font="10"
+            >{name}</code
+          >
         </div>
       {/each}
     </div>
@@ -141,7 +134,7 @@
 
   <p>
     <a
-      class="font-semibold text-fg underline decoration-gild underline-offset-2"
+      class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"
       href={resolve('/dev')}
     >
       {t('app.home')}

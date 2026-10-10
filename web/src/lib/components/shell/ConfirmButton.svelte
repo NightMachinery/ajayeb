@@ -65,7 +65,7 @@
 >
   {#if armed}
     <span
-      class="confirm-ring pointer-events-none absolute inset-0 -z-10 origin-left bg-[color-mix(in_oklch,var(--on-accent)_20%,transparent)]"
+      class="confirm-ring pointer-events-none absolute inset-0 -z-10 bg-[color-mix(in_oklch,var(--on-accent)_20%,transparent)]"
       style:--arm-ms="{armMs}ms"
       aria-hidden="true"
     ></span>
@@ -74,8 +74,14 @@
 </Button>
 
 <style>
+  /* The countdown shrinks toward the inline start; transform-origin has no
+     logical keyword, so the RTL case is spelled out. */
   .confirm-ring {
+    transform-origin: left; /* physical-ok */
     animation: confirm-shrink var(--arm-ms) linear forwards;
+  }
+  .confirm-ring:dir(rtl) {
+    transform-origin: right; /* physical-ok */
   }
   @keyframes confirm-shrink {
     from {
