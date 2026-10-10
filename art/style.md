@@ -16,7 +16,9 @@ Original, Persian-miniature-influenced illustration (the idiom of a
 vanishing-point realism, fine dark ink outlines, opaque gouache in jewel
 tones, and small touches of gold leaf. One clear central subject that stays
 readable as a small thumbnail. A calm, uncluttered background of warm ivory
-paper, with a soft vignette fading to the paper colour at the edges.
+paper. Most kinds also fade into that paper with a soft vignette at the
+edges; a progress token instead sits on flat paper inside a crisp rim, and
+a texture runs evenly to every edge so it can tile (see the kind templates).
 
 ## Palette
 
@@ -119,41 +121,58 @@ inscriptions" and "not photorealistic") followed by one kind template.
 The kind template fills in the asset's `subject` and `accent` from
 `art/subjects.json`.
 
+The edge treatment lives in the kind templates, not in the prefix, because
+the kinds disagree about it (M9.B4). Cards, wonders, backs, the hero, the
+avatars, the victory scenes and the app icon fade to the paper with a soft
+vignette, so a frame can feather into them. A token is a medallion with a
+crisp gold rim on flat paper, which `tools/art/process.mjs` finds and masks
+to; a vignette there would blur the rim and darken the margin. A texture
+must tile, so it has no vignette at all.
+
 - **card**: "`{subject}`. Landscape vignette, subject centered, dominant
   accent `{accent}`. Keep every figure and object inside the central area;
   leave a wide margin of plain ivory paper on all four sides, widest at
   left and right. One or two large figures doing the named activity,
   filling the central third; no crowds, no distant city skyline, no filler
-  animals unless the subject names them."
+  animals unless the subject names them. Soft vignette fading to the paper
+  colour at the edges."
 - **wonder**: "Panoramic view of `{subject}` as monumental architecture in
   the Persian-miniature idiom, landscape, dominant accent `{accent}`. The
   monument centered and whole, occupying the middle third, not cut by the
-  frame."
-- **token**: "Circular medallion filling the square almost edge to edge,
-  flat `{accent}` ground, one bold symmetric emblem of `{subject}` filling
-  the central 60 percent, a thin gold rim only; no landscape, trees, rocks,
-  ground or clouds inside the medallion; no ornamental border band."
+  frame. Soft vignette fading to the paper colour at the edges."
+- **token**: "Circular medallion centered on a square of plain ivory paper,
+  filling the square except for a narrow, even margin of paper (about 4
+  percent of the width) on every side; the paper outside the rim is flat
+  and clean, with no vignette, fade, shadow or ornament. Inside: a flat
+  `{accent}` ground, one bold symmetric emblem of `{subject}` filling the
+  central 60 percent, a thin crisp gold rim only; no landscape, trees,
+  rocks, ground or clouds inside the medallion; no ornamental border
+  band."
 - **back**: "Symmetric ornamental illumination (tazhib / girih strapwork),
-  portrait orientation, no figures: `{subject}`."
+  portrait orientation, no figures: `{subject}`. Soft vignette fading to
+  the paper colour at the edges."
 - **texture**: "Seamless fine paper grain, `{subject}`, no figures, no
   objects, suitable for tiling."
 - **hero**: "Wide panoramic scene: `{subject}`, landscape, warm inviting
-  light, dominant accent `{accent}`."
+  light, dominant accent `{accent}`. Soft vignette fading to the paper
+  colour at the edges."
 - **avatar**: "Portrait bust, shoulders up, one figure, centered:
   `{subject}`. Dominant accent `{accent}`, plain ivory background, no
-  scenery."
+  scenery. Soft vignette fading to the paper colour at the edges."
 - **victory**: "Wide celebratory scene: `{subject}`, landscape, dominant
-  accent `{accent}`."
+  accent `{accent}`. Soft vignette fading to the paper colour at the
+  edges."
 - **icon**: "Simple bold emblem on a plain ivory ground, readable at 32
   pixels: `{subject}`. Dominant accent `{accent}`, no scenery, no
-  background detail."
+  background detail. Soft vignette fading to the paper colour at the
+  edges."
 
 ## Style prefix (verbatim)
 
 > Original illustration in the manner of a 16th-century Persian miniature
 > painting (Safavid manuscript illumination): flat decorative perspective,
-> fine dark ink outlines, opaque gouache in jewel tones — lapis lazuli blue,
-> turquoise, saffron, vermilion, malachite green, ochre — with small touches
+> fine dark ink outlines, opaque gouache in jewel tones (lapis lazuli blue,
+> turquoise, saffron, vermilion, malachite green, ochre) with small touches
 > of gold leaf; stylized cypress trees, rounded rocky hills with pastel
 > edges, patterned tilework, ornamental clouds, tiny figures in period
 > dress. The sky and background are plain ivory paper, never gold leaf;
@@ -161,8 +180,7 @@ The kind template fills in the asset's `subject` and `accent` from
 > Background buildings are palaces, domed garden pavilions and kiosks;
 > no minarets, no mosques, no religious buildings unless the subject names
 > one. One clear central subject readable as a small thumbnail, calm
-> uncluttered background of warm ivory paper, soft vignette fading to the
-> paper colour at the edges. No inscriptions, no glyph friezes, no writing
-> on scrolls, pages, banners or buildings; scrolls and pages are blank. No
-> border, no frame, no watermark, no signature. Not photorealistic, not
-> 3D, no modern objects.
+> uncluttered background of warm ivory paper. No inscriptions, no glyph
+> friezes, no writing on scrolls, pages, banners or buildings; scrolls and
+> pages are blank. No border, no frame, no watermark, no signature. Not
+> photorealistic, not 3D, no modern objects.

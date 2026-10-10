@@ -122,10 +122,11 @@ function mapPaperTone(buf, w, h, paperRgb, targetRgb, fadeDist = 60) {
  * for the first pixel that is not paper-coloured; the smallest of the 4
  * estimates is the safe radius (whichever direction the margin is
  * narrowest), so no ivory ring from any direction survives the mask.
- * Falls back to the full `min(w,h)/2` (the old behaviour: mask to the
- * square's edge) when an axis never leaves the paper colour, e.g. a
- * medallion painted edge to edge, which the amended token template asks
- * for by default.
+ * The token template (art/style.md, M9.B4) asks for exactly this case: a
+ * crisp gold rim inset by a narrow, flat margin of paper. Falls back to
+ * the full `min(w,h)/2` (the old behaviour: mask to the square's edge)
+ * when an axis never leaves the paper colour, e.g. a medallion painted
+ * edge to edge.
  */
 function detectTokenRadius(buf, w, h, paperRgb, distThresh = 30) {
   const cx = (w - 1) / 2;
