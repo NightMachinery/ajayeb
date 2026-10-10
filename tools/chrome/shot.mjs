@@ -27,6 +27,13 @@
 //                    An element taller than the viewport grows the emulated
 //                    viewport's height (not its width) until it fits.
 //   --pad PX         the margin kept around the --selector box (default 8)
+//   --vision V       greyscale | deuteranopia | protanopia | tritanopia: render as
+//                    seen with that colour vision. The three deficiencies use
+//                    Chrome's own emulation (Emulation.setEmulatedVisionDeficiency);
+//                    greyscale is a grayscale(1) filter on <html>.
+//   --no-autofocus   keep autofocus from scrolling the page: focus() is made to
+//                    pass preventScroll, the autofocus property is ignored, and the
+//                    active element is blurred before the probe and the capture
 //   --force          launch Chrome without the heavy.py browser lock
 //
 // Identity works as in the app: the token, name and theme go into
@@ -45,6 +52,32 @@ import { isMain, launch, printHeader, reportAndExit } from './launch.mjs';
 
 const PRESETS = { mobile: '390x844@2', desktop: '1280x800@1' };
 const THEMES = ['light', 'dark', 'system'];
+/** --vision values: greyscale is a CSS filter, the rest Chrome's emulation. */
+const VISIONS = ['greyscale', 'deuteranopia', 'protanopia', 'tritanopia'];
+
+// Installed before any page script with --no-autofocus. An autofocused
+// field (the name prompt's input) otherwise scrolls its scrolling container
+// to itself, which moves /dev/gallery off its top and leaves a --full
+// capture blank. Scripted focus keeps working, it just never scrolls, and
+// the autofocus property (which Svelte sets) is ignored, so the browser's
+// own autofocus never fires either.
+const NO_AUTOFOCUS = `(() => {
+  const focus = HTMLElement.prototype.focus;
+  HTMLElement.prototype.focus = function (options) {
+    return focus.call(this, { ...options, preventScroll: true });
+  };
+  const svgFocus = SVGElement.prototype.focus;
+  if (svgFocus) {
+    SVGElement.prototype.focus = function (options) {
+      return svgFocus.call(this, { ...options, preventScroll: true });
+    };
+  }
+  Object.defineProperty(HTMLElement.prototype, 'autofocus', {
+    configurable: true,
+    get() { return false; },
+    set() {}
+  });
+})();`;
 /** The tallest viewport --selector grows to, in CSS px. */
 const MAX_GROWN_HEIGHT = 12_000;
 
@@ -232,6 +265,8 @@ async function main() {
       full: { type: 'boolean', default: false },
       selector: { type: 'string' },
       pad: { type: 'string', default: '8' },
+      vision: { type: 'string' },
+      'no-autofocus': { type: 'boolean', default: false },
       force: { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h', default: false }
     }
@@ -251,6 +286,8 @@ async function main() {
   if (o.scheme && !['light', 'dark'].includes(o.scheme)) throw new Error('--scheme: light or dark');
   if (!['reduce', 'no-preference'].includes(o.motion))
     throw new Error('--motion: reduce or no-preference');
+  if (o.vision !== undefined && !VISIONS.includes(o.vision))
+    throw new Error(`--vision: one of ${VISIONS.join(', ')}, got ${o.vision}`);
   const vp = parseViewport(o.vp);
   const target = new URL(o.url, o.origin);
 
@@ -304,6 +341,12 @@ async function main() {
     const features = [{ name: 'prefers-reduced-motion', value: o.motion }];
     if (o.scheme) features.push({ name: 'prefers-color-scheme', value: o.scheme });
     await page.send('Emulation.setEmulatedMedia', { features });
+    if (o.vision && o.vision !== 'greyscale') {
+      await page.send('Emulation.setEmulatedVisionDeficiency', { type: o.vision });
+    }
+    if (o['no-autofocus']) {
+      await page.send('Page.addScriptToEvaluateOnNewDocument', { source: NO_AUTOFOCUS });
+    }
 
     const storage = [];
     if (o.token !== undefined) storage.push(['ajayeb:token', o.token]);
@@ -341,6 +384,20 @@ async function main() {
       await document.fonts.ready;
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });
+    if (o['no-autofocus']) {
+      // Drop the focus (and its ring) that an autofocused field still took.
+      await evaluate(page, async () => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      });
+    }
+    if (o.vision === 'greyscale') {
+      // A filter on the root element greys everything, fixed layers included.
+      await evaluate(page, async () => {
+        document.documentElement.style.setProperty('filter', 'grayscale(1)', 'important');
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      });
+    }
 
     if (o.probe) {
       const report = await evaluate(page, probePage);
@@ -403,6 +460,7 @@ async function main() {
       const { data } = await page.send('Page.captureScreenshot', params);
       fs.mkdirSync(path.dirname(path.resolve(o.out)), { recursive: true });
       fs.writeFileSync(o.out, Buffer.from(data, 'base64'));
+      if (o.vision) what += `, vision ${o.vision}`;
       console.error(`saved ${o.out} (${vp.width}x${vp.height}@${vp.dpr}${what})`);
     }
   } finally {
