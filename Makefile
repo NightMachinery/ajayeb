@@ -67,6 +67,8 @@ help: ## List the targets and the variables they read (the default target)
 	  'BENCH_ARGS=...' 'extra flags for ajayeb-sim bench' \
   'SET=chain' 'the icon set (art/vector/sets.json) for vec-shot and vec-blind' \
   'ITER=2' 'vec-shot writes into <set>/iter-N/ to keep iterations apart' \
+  'SIZES=12@2,16@1' 'vec-blind sheet sizes as px@dpr' \
+  'READER=<dir>' 'vec-blind also copies the sheets and names, never the key, to <dir>' \
 	  'GEN_ARGS=...' 'extra flags for ajayeb-gen' \
 	  'VERSION=...' 'version stamped into the release build (default: git describe)'
 	@printf '\nA step that fails with "Error 75" was refused by tools/heavy.py; run python3 tools/heavy.py status.\n'
@@ -207,9 +209,9 @@ vec-shot: ## Specimen shots of SET (light, dark, greyscale, colour-vision) and t
 	$(HEAVY) run --kind browser -- node tools/art/vector/shoot.mjs --set '$(SET)' $(if $(ITER),--iter '$(ITER)')
 	node tools/art/vector/peep.mjs --set '$(SET)' $(if $(ITER),--iter '$(ITER)')
 
-vec-blind: ## Shuffled, unlabelled blind-test sheets of SET; the key stays in the run dir
+vec-blind: ## Shuffled, unlabelled blind-test sheets of SET (SIZES=12@2,14@2,16@1, READER=<dir> for a key-free copy); the key stays in the run dir
 	@test -n "$(SET)" || { echo "vec-blind: set SET=<name> (art/vector/sets.json)"; exit 2; }
-	$(HEAVY) run --kind browser -- node tools/art/vector/blind.mjs make --set '$(SET)'
+	$(HEAVY) run --kind browser -- node tools/art/vector/blind.mjs make --set '$(SET)' $(if $(SIZES),--sizes '$(SIZES)') $(if $(READER),--reader-dir '$(READER)')
 
 vec-family: ## Every drawn icon of every set at 16 and 24 px, on paper and night, for cross-set review
 	$(HEAVY) run --kind browser -- node tools/art/vector/family.mjs
@@ -219,7 +221,7 @@ vec-family: ## Every drawn icon of every set at 16 and 24 px, on paper and night
 test-py: ## Python unit tests for tools/heavy.py and self_host.py (guard kind light)
 	$(HEAVY) run --kind light -- python3 -m unittest discover -s tests
 
-verify-quick: fmt-check vet gen-check-if-ready test-go lint-web check-web test-web test-py ## gofmt, go vet, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests
+verify-quick: fmt-check vet gen-check-if-ready test-go lint-web check-web test-web test-py vec-lint ## gofmt, go vet, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, icon lint
 
 verify: verify-quick lint-go test-race build e2e-smoke ## verify-quick, then golangci-lint, -race on room and ws, the release build and the e2e smoke
 

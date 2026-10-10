@@ -86,6 +86,8 @@ jobs:
         run: pnpm -C web check
       - name: lint
         run: pnpm -C web lint
+      - name: icon lint
+        run: node tools/art/vector/lint.mjs
       - name: vitest
         run: pnpm -C web test
       - name: build

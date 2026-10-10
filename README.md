@@ -27,7 +27,7 @@ You need Go 1.26, Node 24 (see `.nvmrc`), pnpm 10, Python 3 and GNU Make. The en
 
 ```sh
 make install       # download the Go modules, then install the web and e2e dependencies
-make verify-quick  # fast checks: gofmt, Go vet and tests, web lint, svelte-check, unit tests, wire-type check
+make verify-quick  # fast checks: gofmt, Go vet and tests, web lint, svelte-check, unit tests, wire-type check, icon lint
 make e2e           # Playwright playthroughs against a test build, in headless Chrome
 make dev           # explains how to start the dev servers (python3 self_host.py dev-start)
 ```
