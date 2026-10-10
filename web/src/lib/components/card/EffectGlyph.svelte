@@ -13,7 +13,7 @@
   import type { Color } from '$lib/wire';
   import Coin from './Coin.svelte';
   import ResourceTile from './ResourceTile.svelte';
-  import { bandBackground } from './card-style';
+  import { bandColor, bandInk } from './card-style';
 
   interface Props {
     effect: CatalogEffect;
@@ -33,23 +33,39 @@
 <!-- Victory points: a green laurel disc with the numeral, the counterpart of
      the gold coin disc (dark on light for coins, light on dark for points,
      so the two differ in greyscale too). -->
-{#snippet laurel(value: number)}
+{#snippet laurel(value: number, stacked = false)}
   <span
-    class="inline-grid h-[1.25em] min-w-[1.25em] shrink-0 place-items-center rounded-[0.45em] border border-(color:--vp-edge) bg-(--vp) px-[0.15em] leading-none font-bold text-(--paper-bright) tabular-nums"
+    class="{stacked
+      ? '-ms-[0.4em]'
+      : ''} inline-grid h-[1.25em] min-w-[1.25em] shrink-0 place-items-center rounded-[0.45em] border border-(color:--vp-edge) bg-(--vp) px-[0.15em] leading-none font-bold text-(--paper-bright) tabular-nums"
     data-min-font="10">{formatNumber(value)}</span
   >
 {/snippet}
 
+<!-- A card colour counted by an effect ("per brown card"): a small card
+     shape in the band colour with the colour's category glyph on it. The
+     glyph, not the hue, names the colour, so it reads in greyscale and for
+     colour-blind players (green, red and brown share one olive under
+     deuteranopia). -->
 {#snippet swatches(colors: readonly Color[])}
   <span
-    class="inline-flex items-center gap-[0.1em] rounded-[0.2em] p-[0.08em]
-      {max ? 'outline-[1.5px] outline-(--card-ink) outline-dashed' : ''}"
+    class="inline-flex items-center rounded-[0.2em] {small
+      ? 'gap-0 p-[0.05em]'
+      : 'gap-[0.1em] p-[0.08em]'} {max
+      ? 'outline-[1.5px] outline-(--card-ink) outline-dashed'
+      : ''}"
   >
     {#each colors as color (color)}
       <span
-        class="inline-block h-[1.1em] w-[0.6em] rounded-[0.15em] border border-(--card-ink)/40 [--pat:color-mix(in_oklch,var(--card-ink)_30%,transparent)]"
-        style:background={bandBackground(color)}
-      ></span>
+        class="inline-grid shrink-0 place-items-center rounded-[0.2em] border border-(--card-ink)/40
+          {small ? 'h-[1.2em] w-[0.9em]' : 'h-[1.35em] w-[1.15em]'}"
+        style:background={bandColor(color)}
+        style:color={bandInk(color)}
+        style:--i2="color-mix(in oklch, {bandInk(color)} 45%, {bandColor(color)})"
+        data-swatch={color}
+      >
+        <Icon name={`category-${color}-sm`} class={small ? 'text-[0.9em]' : 'text-[1em]'} />
+      </span>
     {/each}
   </span>
 {/snippet}
@@ -98,8 +114,12 @@
   {:else if effect.kind === 'coins'}
     <Coin {n} />
   {:else if effect.kind === 'coins-per-card'}
+    <!-- A guild's coins and points per card share one glyph; on mini cards
+         the laurel overlaps the coin, which keeps both numerals clear and
+         leaves room for two colour swatches on a 54 px card. -->
     <Coin {n} />{#if points !== undefined}{@render laurel(
-        points
+        points,
+        small
       )}{/if}{@render per()}{@render swatches(effect.colors ?? [])}
   {:else if effect.kind === 'coins-per-wonder'}
     <Coin {n} />{@render per()}<Icon name="wonder" class="text-[1.1em]" />
@@ -121,9 +141,15 @@
   {:else if effect.kind === 'play-again'}
     {@render playAgain()}
   {:else if effect.kind === 'destroy'}
-    <span class="relative inline-flex">
+    <!-- The cross sits on the swatch's corner, so the category glyph under
+         it stays readable. -->
+    <span class="relative me-[0.3em] inline-flex">
       {@render swatches(effect.colors ?? [])}
-      <X size="1.1em" strokeWidth={3.5} class="absolute inset-0 m-auto text-(--cinnabar)" />
+      <span
+        class="absolute -end-[0.45em] -bottom-[0.3em] inline-grid size-[0.8em] place-items-center rounded-full bg-(--paper-bright) text-(--cinnabar) ring-1 ring-(--cinnabar)/50"
+      >
+        <X size="0.7em" strokeWidth={4} />
+      </span>
     </span>
   {:else if effect.kind === 'build-from-discard'}
     <ArchiveRestore size="1.1em" strokeWidth={2.5} class="shrink-0" />
