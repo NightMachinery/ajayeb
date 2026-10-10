@@ -79,14 +79,22 @@ export const ICON_NAMES = [
   'capital-sun',
   'capital-moon',
 
-  // Card-category glyphs (7), one per Color in the catalog.
+  // Card-category glyphs (7), one per Color in the catalog, each with a -sm
+  // variant for the colour swatches of "per card of colour X" effects.
   'category-brown',
+  'category-brown-sm',
   'category-grey',
+  'category-grey-sm',
   'category-blue',
+  'category-blue-sm',
   'category-green',
+  'category-green-sm',
   'category-yellow',
+  'category-yellow-sm',
   'category-red',
+  'category-red-sm',
   'category-purple',
+  'category-purple-sm',
 
   // Affordability badge glyphs. "trade" above doubles as the trade badge.
   'badge-check',

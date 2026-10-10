@@ -60,6 +60,10 @@ Sizes for all seven: 15 to 17 px in the card's name row of the full tier, the di
 - Silhouette: a crown with three to five points ending in balls or pointed leaves, on a solid band, wider than tall.
 - Must differ from: chain-tower (points, not crenels), wonder, chain-temple-facade.
 
+### Category -sm variants (added in M9.VF1)
+
+Correction (M9.VF1, see the log): each category glyph has a `-sm` file on the 12 grid, for the colour swatches of `EffectGlyph.svelte` ("per card of colour X" on commerce cards and guilds, and the destroy effect of two wonders). The swatch is a small card shape in the band colour with the glyph in the band ink, about 9 px on a mini card and 15 px on a medium one, so the glyph, not the hue, names the colour. The `-sm` files keep the md ideas with fewer, fatter parts: the anvil gets a long wedge horn so its outline is asymmetric, the star loses its centre, and the spears get broad heads and a boss at the crossing so they do not read as an X. The md files stay in use everywhere else.
+
 ## Affordability badge glyphs (3, with coin and trade)
 
 The badge on a takeable card (`AffordBadge.svelte`) shows one of five states; three glyphs live here, and the other two are `coin` (own) and `trade` (trade) from the resources set. All five must separate by shape alone, since the pills' colours collapse in greyscale (malachite and saffron become similar greys). Sizes: about 10.5 px on a mini card (1.05 em of the 10 px badge), 14 to 16 px in the card sheet's cost breakdown and the token picker.
