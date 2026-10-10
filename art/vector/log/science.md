@@ -131,3 +131,13 @@ Shots in the run directory under shots/M9/V2/: the /dev/gallery sections Icons, 
 - Mini cards: the `-sm` glyphs in the green band's paper inset (about 12 px) are all identifiable: wheel, set-square, mortar, quill, globe and sundial each read at a glance.
 - Medium and full cards: the md glyphs sit well beside the chain chips and the coin.
 - Science tracker (city panel): the unowned slots draw the md icons at 40% opacity in the muted ink with no `--i2`, so every detail is a hole. All seven stay recognisable. The compact tracker draws the md files at 12 px; they hold up, but the `-sm` files are drawn for that size (see the slice's requests).
+
+## Second reader (2026-10-10, M9.V2 review)
+
+Reader: the slice reviewer, who had read the spec and the SVG sources but had not seen any labelled render. I wrote down each tile before opening the key, using the candidate list in names.txt.
+
+- On-card ink, the 12 px DPR 2 sheet (`-sm` files): 7/7.
+- On-card ink, the 16 px DPR 1 sheet (md files): 7/7.
+- Plain ink (`--mono`), the 12 px DPR 2 sheet: 7/7.
+
+Misses: none. At 12 px two readings came close to another object, but neither was close to another symbol of the set. The `-sm` sundial looks a little like a pointed hat on a brim, and the `-sm` globe a little like a round tree. A reader who knows nothing about the set is still worth a run before the first release. The 14 px DPR 2 target sheet still does not exist (see the slice's request for blind.mjs).
