@@ -25,7 +25,7 @@ art/
   style.md              style prefix, palette, motifs, do/don't, kind templates
   subjects.json         human-written: one subject + accent per asset id
   manifest.json         generated: catalog + subjects.json, with status per asset
-  refs/                 approved style anchors (committed, small JPEG)
+  refs/                 the owner's style anchors, one JPEG per kind, and a README
   originals/<kind>/<id>.png   approved originals (committed, as generated)
   LICENSE                CC BY 4.0 notice
 
@@ -237,8 +237,9 @@ resolution and at the shipped thumbnail size (cards at 120 px, tokens at
   resolution; one or two large figures, not a crowd.
 - The palette and accent match the category (see `art/style.md`'s palette
   section).
-- The style matches the approved anchors in `art/refs/`, once a pilot
-  chooses them.
+- The style matches the anchors in `art/refs/` (line, palette, paper
+  margin and density; see `art/refs/README.md` for what each one anchors
+  and what it does not).
 - The paper background feathers cleanly; nothing looks like a hard
   rectangle waiting to be masked.
 - Background architecture reads as palaces, domed garden pavilions and

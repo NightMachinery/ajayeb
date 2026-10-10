@@ -22,9 +22,11 @@ license and what this art is never allowed to copy.
   `rejected`, `needs-human`), attempt count, prompt amendment and shipped
   byte counts. Committed, because it is the pipeline's record of what has
   and hasn't been approved.
-- `refs/`: approved style anchors (small JPEGs), committed once the pilot
-  picks them. Optional: `generate.mjs` passes one to Codex as `-i` only
-  when `refs/<kind>-anchor.jpg` exists.
+- `refs/`: the style anchors the owner picked from the pilot, one small
+  JPEG per kind (`card-anchor.jpg`, `wonder-anchor.jpg`,
+  `token-anchor.jpg`), with a README naming each source attempt and what it
+  anchors. They are review references: `generate.mjs` sends one to Codex
+  only when run with `--ref`, and the batch never does.
 - `originals/<kind>/<id>.png`: approved bitmap originals, committed as
   generated (no hand-editing). `web/static/art/**.avif` is derived from
   these by `tools/art/process.mjs`; a shipped file is never hand-edited,
