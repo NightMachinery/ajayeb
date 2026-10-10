@@ -4,6 +4,7 @@
   // component -- it reads nothing from the session itself, the caller
   // passes the age, the count and whether undo is available right now
   // (view.canUndo) and gets a click back for each button.
+  import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import Undo2 from '@lucide/svelte/icons/undo-2';
   import Settings from '@lucide/svelte/icons/settings';
@@ -17,6 +18,9 @@
     onUndo?: () => void;
     onOpenLog?: () => void;
     onOpenSettings?: () => void;
+    /** Extra content between the age and the buttons (the compact military
+     *  track and tokens of the phone landscape layout). */
+    children?: Snippet;
     class?: string;
   }
 
@@ -27,6 +31,7 @@
     onUndo,
     onOpenLog,
     onOpenSettings,
+    children,
     class: className = ''
   }: Props = $props();
 </script>
@@ -43,12 +48,17 @@
     {/if}
   </div>
 
+  {#if children}
+    <div class="flex min-w-0 flex-1 items-center justify-center gap-2">{@render children()}</div>
+  {/if}
+
   <div class="flex items-center gap-1">
     {#if onUndo}
       <button
         type="button"
         onclick={onUndo}
         disabled={!canUndo}
+        data-control="undo"
         aria-label={t('board.topbar.undo')}
         title={t('board.topbar.undo')}
         class="grid size-11 place-items-center rounded-control text-fg transition-colors hover:bg-panel-sunken disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
@@ -60,6 +70,7 @@
       <button
         type="button"
         onclick={onOpenLog}
+        data-control="log"
         aria-label={t('board.topbar.log')}
         title={t('board.topbar.log')}
         class="grid size-11 place-items-center rounded-control text-fg transition-colors hover:bg-panel-sunken"
@@ -71,6 +82,7 @@
       <button
         type="button"
         onclick={onOpenSettings}
+        data-control="settings"
         aria-label={t('board.topbar.settings')}
         title={t('board.topbar.settings')}
         class="grid size-11 place-items-center rounded-control text-fg transition-colors hover:bg-panel-sunken"

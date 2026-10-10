@@ -15,9 +15,12 @@
 
   interface Props {
     toasts: Toasts;
+    /** Where the list sits: above the bottom edge (default) or below the
+     *  top bar, where it covers no move controls on the game screen. */
+    placement?: 'bottom' | 'top';
   }
 
-  let { toasts }: Props = $props();
+  let { toasts, placement = 'bottom' }: Props = $props();
 
   const KIND_CLASS: Record<ToastKind, string> = {
     info: 'border-rule',
@@ -28,7 +31,10 @@
 </script>
 
 <div
-  class="pointer-events-none fixed inset-x-0 bottom-[calc(var(--safe-b)+1rem)] z-50 flex flex-col items-center gap-2 px-4"
+  class="pointer-events-none fixed inset-x-0 z-50 flex flex-col items-center gap-2 px-4 {placement ===
+  'top'
+    ? 'top-[calc(var(--safe-t)+3.25rem)]'
+    : 'bottom-[calc(var(--safe-b)+1rem)]'}"
   aria-live="polite"
   aria-atomic="false"
 >

@@ -8,7 +8,7 @@
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
-  import type { MilitaryView, PlayerView, ScoreView } from '$lib/wire';
+  import type { MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import ProgressToken from '../token/ProgressToken.svelte';
   import ResourceChips from './ResourceChips.svelte';
   import ScienceTracker from './ScienceTracker.svelte';
@@ -22,10 +22,26 @@
     player: PlayerView;
     military: MilitaryView;
     score?: ScoreView;
+    /** When given, the wonders still to build are buttons (the wonder-first flow). */
+    onwonder?: (wonder: WonderView) => void;
+    /** When given, the crest and name are a button that opens this city in full. */
+    onopen?: () => void;
+    /** The label of that button. */
+    openLabel?: string;
     class?: string;
   }
 
-  let { name, seat, player, military, score, class: className = '' }: Props = $props();
+  let {
+    name,
+    seat,
+    player,
+    military,
+    score,
+    onwonder,
+    onopen,
+    openLabel,
+    class: className = ''
+  }: Props = $props();
 
   const crestName = $derived(seat === 0 ? ('crest-sun' as const) : ('crest-moon' as const));
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
@@ -38,10 +54,23 @@
   class="player-strip flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-panel border px-2.5 py-1.5
     {danger ? 'border-cinnabar ring-2 ring-cinnabar/25' : 'border-rule'} {className}"
 >
-  <div class="flex min-w-0 items-center gap-1.5">
-    <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
-    <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
-  </div>
+  {#if onopen}
+    <button
+      type="button"
+      class="-ms-1 flex min-h-8 min-w-0 items-center gap-1.5 rounded-control px-1 hover:bg-panel-sunken"
+      aria-label={openLabel}
+      data-control="open-city"
+      onclick={onopen}
+    >
+      <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
+      <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
+    </button>
+  {:else}
+    <div class="flex min-w-0 items-center gap-1.5">
+      <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
+      <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
+    </div>
+  {/if}
 
   <div class="flex items-center gap-2 text-sm font-semibold tabular-nums">
     <span class="flex items-center gap-0.5" title={t('coins.count', { count: player.coins })}>
@@ -76,7 +105,7 @@
 
   <ResourceChips production={player.production} tradePrices={player.tradePrices} compact />
   <ScienceTracker science={player.science} compact />
-  <WonderRow wonders={player.wonders} variant="chips" />
+  <WonderRow wonders={player.wonders} variant="chips" onselect={onwonder} />
 
   {#if player.tokens.length > 0}
     <ul class="flex gap-1" aria-label={t('board.citySheet.tokens')}>

@@ -4,10 +4,15 @@
   // a second tap within that window confirms, but a 350ms guard after arming
   // ignores an accidental double tap. A local room (AI, hot-seat) does not
   // use this; it commits on the first tap through a plain Button.
+  import type { HTMLButtonAttributes } from 'svelte/elements';
   import { t } from '$lib/i18n';
   import Button from './Button.svelte';
 
-  interface Props {
+  // Other attributes (data-act, aria-*) go to the button itself.
+  interface Props extends Omit<
+    HTMLButtonAttributes,
+    'class' | 'type' | 'onclick' | 'children' | 'disabled'
+  > {
     /** Already translated, e.g. t('board.buildFor', { coins: 4 }). */
     label: string;
     onConfirm: () => void;
@@ -27,7 +32,8 @@
     disabled = false,
     class: className = '',
     armMs = 3000,
-    guardMs = 350
+    guardMs = 350,
+    ...rest
   }: Props = $props();
 
   let armed = $state(false);
@@ -58,8 +64,10 @@
 </script>
 
 <Button
+  {...rest}
   {variant}
   {disabled}
+  data-armed={armed ? '' : undefined}
   class="relative isolate overflow-hidden {className}"
   onclick={handleClick}
 >

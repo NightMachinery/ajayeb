@@ -32,6 +32,8 @@
     selected?: number;
     /** The slot index of a move on its way to the server. */
     pending?: number;
+    /** Wonder-first mode: the slots whose card can go under the chosen wonder. */
+    marked?: ReadonlySet<number>;
     /** The gap between cards in px; by default 4, 6 or 8 by viewport class. */
     gap?: number;
     onselect?: (slot: SlotView) => void;
@@ -45,6 +47,7 @@
     toMove,
     selected,
     pending,
+    marked,
     gap,
     onselect,
     class: className = ''
@@ -109,6 +112,7 @@
           {ring}
           selected={selected === slot.index}
           pending={pending === slot.index}
+          marked={marked?.has(slot.index) ?? false}
           {onselect}
         />
       {/each}

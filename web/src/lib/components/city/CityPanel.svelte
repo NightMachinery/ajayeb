@@ -7,7 +7,7 @@
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
-  import type { Color, MilitaryView, PlayerView, ScoreView } from '$lib/wire';
+  import type { Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import ProgressToken from '../token/ProgressToken.svelte';
   import CityBand from './CityBand.svelte';
   import ResourceChips from './ResourceChips.svelte';
@@ -20,10 +20,12 @@
     player: PlayerView;
     military: MilitaryView;
     score?: ScoreView;
+    /** When given, the wonders still to build are buttons (the wonder-first flow). */
+    onwonder?: (wonder: WonderView) => void;
     class?: string;
   }
 
-  let { name, seat, player, military, score, class: className = '' }: Props = $props();
+  let { name, seat, player, military, score, onwonder, class: className = '' }: Props = $props();
 
   const COLORS = [
     'brown',
@@ -122,7 +124,7 @@
     <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
       {t('board.citySheet.wonders')}
     </h3>
-    <WonderRow wonders={player.wonders} variant="list" />
+    <WonderRow wonders={player.wonders} variant="list" onselect={onwonder} />
   </div>
 
   {#if player.tokens.length > 0}

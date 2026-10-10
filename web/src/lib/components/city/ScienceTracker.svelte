@@ -64,7 +64,7 @@
 </script>
 
 <div
-  class="science-tracker flex items-center {compact ? 'gap-1' : 'gap-2'} {className}"
+  class="science-tracker flex flex-wrap items-center {compact ? 'gap-1' : 'gap-2'} {className}"
   role="group"
   aria-label={t('board.science.label', { count: science.distinct })}
 >

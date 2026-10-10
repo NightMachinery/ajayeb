@@ -12,6 +12,7 @@
   //
   // The button only reports the tap (onselect); what a tap opens, and which
   // actions exist, is the parent's business and the view's choices.
+  import Icon from '$lib/icons/Icon.svelte';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import type { SlotPlace } from '$lib/view/geometry';
@@ -35,6 +36,8 @@
     selected?: boolean;
     /** A move with this card is on its way to the server. */
     pending?: boolean;
+    /** Wonder-first mode: this card can go under the chosen wonder. */
+    marked?: boolean;
     onselect?: (slot: SlotView) => void;
   }
 
@@ -49,6 +52,7 @@
     ring,
     selected = false,
     pending = false,
+    marked = false,
     onselect
   }: Props = $props();
 
@@ -73,6 +77,7 @@
     class:covered={!takeable}
     class:selected
     class:pending
+    class:marked
     style:--x={place.x}
     style:--y={place.y}
     style:z-index={selected ? 50 : place.z}
@@ -81,6 +86,7 @@
     data-state={slot.state}
     data-card={slot.state === 'faceUp' ? slot.card : undefined}
     data-accessible={slot.accessible ? '' : undefined}
+    data-marked={marked ? '' : undefined}
     aria-label={label}
     aria-disabled={takeable ? undefined : 'true'}
     aria-pressed={selected ? 'true' : undefined}
@@ -90,6 +96,14 @@
       <CardFace slug={slot.card} {tier} {width} {afford} {dim} />
     {:else}
       <CardBack back={slot.back ?? 'age1'} class="h-full w-full" />
+    {/if}
+    {#if marked}
+      <span
+        class="wonder-mark pointer-events-none absolute -end-1.5 -top-1.5 grid size-6 place-items-center rounded-full border-2 border-(color:--gold-deep) bg-gold text-card-ink shadow-sm"
+        aria-hidden="true"
+      >
+        <Icon name="wonder" class="text-[13px]" />
+      </span>
     {/if}
   </button>
 {/if}
@@ -141,5 +155,11 @@
   .pending {
     outline: 2px dashed var(--accent);
     outline-offset: 3px;
+  }
+  /* Wonder-first mode: a gold ring on the cards that can go under the wonder. */
+  .marked {
+    box-shadow:
+      0 0 0 3px var(--gold),
+      0 4px 10px -3px oklch(0.2 0.04 260 / 0.45);
   }
 </style>
