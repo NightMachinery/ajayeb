@@ -123,12 +123,14 @@
   // its real pending choice wired straight into ProgressTokenRow's
   // `pickable`. ---
 
-  function tokenChoices(view: View): ReadonlySet<string> {
-    const slugs: string[] = [];
+  function tokenChoices(view: View): ReadonlyMap<string, string> {
+    const keys: [string, string][] = [];
     for (const choice of view.choices) {
-      if (choice.kind === 'token' && choice.token !== undefined) slugs.push(choice.token);
+      if (choice.kind === 'token' && choice.token !== undefined) {
+        keys.push([choice.token, choice.key]);
+      }
     }
-    return new Set(slugs);
+    return new Map(keys);
   }
 
   const boardPickView = viewFixture('pick-board-token-seat0');

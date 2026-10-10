@@ -1,12 +1,10 @@
 <script lang="ts">
   // A seat's wonders: small status chips for the phone PlayerStrip
   // ("chips"), or a readable column for the tablet/desktop CityPanel and
-  // the CitySheet ("list"). Wonder *names* come straight from the
-  // presentation catalog, the same way a player's own display name does
-  // (see lib/view/log-format.ts's file comment): they are not retranslated,
-  // since 12 wonders is M5.S02/M5.S04 territory, not this slice's.
+  // the CitySheet ("list"). Wonder and card names come from the translated
+  // 'wonder.name.*' and 'card.name.*' messages (components/card/effect-text).
   import { t } from '$lib/i18n';
-  import { cardBySlug, wonderBySlug } from '$lib/catalog';
+  import { cardName, wonderName } from '$lib/components/card/effect-text';
   import Icon from '$lib/icons/Icon.svelte';
   import type { WonderView } from '$lib/wire';
 
@@ -28,7 +26,7 @@
 {#if variant === 'chips'}
   <ul class="wonder-row flex flex-wrap gap-1 {className}" aria-label={t('board.citySheet.wonders')}>
     {#each wonders as wonder (wonder.wonder)}
-      {@const name = wonderBySlug(wonder.wonder)?.name ?? wonder.wonder}
+      {@const name = wonderName(wonder.wonder)}
       <li
         class="grid size-6 place-items-center rounded-control border {wonder.built
           ? 'border-gild bg-accent-soft text-accent-soft-fg'
@@ -44,7 +42,7 @@
 {:else}
   <ul class="wonder-row flex flex-col gap-1 {className}" aria-label={t('board.citySheet.wonders')}>
     {#each wonders as wonder (wonder.wonder)}
-      {@const name = wonderBySlug(wonder.wonder)?.name ?? wonder.wonder}
+      {@const name = wonderName(wonder.wonder)}
       <li
         class="flex items-center gap-2 rounded-control border border-rule bg-panel px-2 py-1 text-sm
           {wonder.removed ? 'opacity-50' : ''}"
@@ -55,7 +53,7 @@
         {#if wonder.tucked}
           <span class="text-xs text-fg-muted">
             {t('board.wonder.tuckedUnder', {
-              card: cardBySlug(wonder.tucked)?.name ?? wonder.tucked
+              card: cardName(wonder.tucked)
             })}
           </span>
         {/if}

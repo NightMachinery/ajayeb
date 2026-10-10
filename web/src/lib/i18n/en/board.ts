@@ -3,13 +3,10 @@
 // Sheet.svelte) and their view mappers (lib/view/{threats,turn,log-format}.ts).
 // See ../index.ts for the conventions.
 //
-// Card, wonder and token *names* are presentation data from the catalog
-// (lib/catalog), not translated here, with one exception: the 10 progress
-// tokens are few enough and shown on their own (ProgressToken's medallion)
-// that they get real message keys, same as the 7 science symbols and the 7
-// card colours below. Building and wonder names stay as the catalog's own
-// English text, interpolated into a message the same way a player's own
-// display name is: as data, not UI copy.
+// Card and wonder names live in card.ts ('card.name.*', 'wonder.name.*').
+// The 10 progress token names are keyed here by engine id, along with the
+// science symbols, card colours and resources as the board chrome shows
+// them.
 
 import type { Messages } from '../types';
 

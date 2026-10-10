@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { cardBySlug, wonderBySlug } from '$lib/catalog';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
 import type { GameEvent, State } from '$lib/wire';
 import { formatLogEvent, groupLogByAge } from './log-format';
@@ -27,7 +26,7 @@ describe('formatLogEvent: real recorded events', () => {
     expect(event.kind).toBe('draft');
     const line = formatLogEvent(event, names);
     expect(line?.seat).toBe(0);
-    expect(line?.text).toBe(`Sara drafted ${wonderBySlug('circus-maximus')?.name}.`);
+    expect(line?.text).toBe('Sara drafted Circus Maximus.');
   });
 
   it('build, pay, pawn and gameOver from a real end-of-game sequence', () => {
@@ -41,7 +40,7 @@ describe('formatLogEvent: real recorded events', () => {
     expect(formatLogEvent(build, names)).toEqual({
       kind: 'build',
       seat: 0,
-      text: `Sara built ${cardBySlug('walls')?.name}.`
+      text: 'Sara built Walls.'
     });
     // Mechanical kinds that another line already covers are left out.
     expect(formatLogEvent(pay, names)).toBeNull();
@@ -62,7 +61,7 @@ describe('formatLogEvent: real recorded events', () => {
     expect(formatLogEvent(build, names)).toEqual({
       kind: 'build',
       seat: 0,
-      text: `Sara built ${cardBySlug('library')?.name}.`
+      text: 'Sara built Library.'
     });
     expect(pair.symbol).toBe('quill');
     expect(formatLogEvent(pair, names)).toEqual({
@@ -79,7 +78,7 @@ describe('formatLogEvent: real recorded events', () => {
     expect(formatLogEvent(build, names)).toEqual({
       kind: 'build',
       seat: 1,
-      text: `Omid built ${cardBySlug('clay-pool')?.name}.`
+      text: 'Omid built Clay Pool.'
     });
     expect(formatLogEvent(reveal, names)).toBeNull();
   });
@@ -100,7 +99,7 @@ describe('formatLogEvent: kinds with no recorded fixture', () => {
       event({ kind: 'discard', seat: 1, card: 'baths', amount: 3 }),
       names
     );
-    expect(line?.text).toBe(`Omid discarded ${cardBySlug('baths')?.name} for 3 coins.`);
+    expect(line?.text).toBe('Omid discarded Baths for 3 coins.');
   });
 
   it('wonder, with the card tucked beneath it', () => {
@@ -108,9 +107,7 @@ describe('formatLogEvent: kinds with no recorded fixture', () => {
       event({ kind: 'wonder', seat: 0, wonder: 'pyramids', card: 'baths' }),
       names
     );
-    expect(line?.text).toBe(
-      `Sara built the wonder ${wonderBySlug('pyramids')?.name}, using ${cardBySlug('baths')?.name}.`
-    );
+    expect(line?.text).toBe('Sara built the wonder Pyramids, using Baths.');
   });
 
   it('loot', () => {
@@ -125,10 +122,10 @@ describe('formatLogEvent: kinds with no recorded fixture', () => {
 
   it('destroy and rebuild', () => {
     expect(formatLogEvent(event({ kind: 'destroy', seat: 0, card: 'quarry' }), names)?.text).toBe(
-      `Sara destroys ${cardBySlug('quarry')?.name}.`
+      'Sara destroys Quarry.'
     );
     expect(formatLogEvent(event({ kind: 'rebuild', seat: 1, card: 'quarry' }), names)?.text).toBe(
-      `Omid builds ${cardBySlug('quarry')?.name} from the discard pile.`
+      'Omid builds Quarry from the discard pile.'
     );
   });
 

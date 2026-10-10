@@ -1,18 +1,18 @@
 // log-format.ts: turns the server's structured GameEvents into the text the
 // LogSheet shows, grouped by age. Pure display mapping, never a rules
 // decision: it reads only the fields each event kind already carries (see
-// view.gen.ts's GameEvent doc comment) and the presentation catalog for
-// building and wonder names. Four purely mechanical kinds (pay, reveal,
+// view.gen.ts's GameEvent doc comment). Building and wonder names come
+// from the translated 'card.name.*' and 'wonder.name.*' messages (through
+// components/card/effect-text.ts). Four purely mechanical kinds (pay, reveal,
 // coins, gameOver) are left out of the text log: their effect already shows
 // up in the line for the move that caused them (a build, a discard, a
 // wonder, a token), or, for gameOver, in the GameOver screen itself.
 //
 // Player names are not in the view (PlayerView has no `name`; that is
-// RoomInfo.seats[].name, a different message), so callers pass them in,
-// the same way CardFace and WonderRow show the catalog's own English names:
+// RoomInfo.seats[].name, a different message), so callers pass them in
 // as data to interpolate, not as translated UI copy.
 
-import { cardBySlug, wonderBySlug } from '$lib/catalog';
+import { cardName, wonderName } from '$lib/components/card/effect-text';
 import { t } from '$lib/i18n';
 import type { GameEvent, ScienceSymbol } from '$lib/wire';
 
@@ -32,14 +32,6 @@ export interface LogAgeGroup {
 
 function seatName(names: SeatNames, seat: number | undefined): string {
   return seat === 0 || seat === 1 ? names[seat] : '';
-}
-
-function cardName(slug: string): string {
-  return cardBySlug(slug)?.name ?? slug;
-}
-
-function wonderName(slug: string): string {
-  return wonderBySlug(slug)?.name ?? slug;
 }
 
 function tokenName(slug: string): string {
