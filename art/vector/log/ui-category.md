@@ -17,6 +17,8 @@
 - vp-laurel: done (iteration 1, after a generated candidate round in iteration 0)
 - wonder: done (iteration 2)
 - token-frame: done (iteration 2)
+- category-brown-sm, category-grey-sm, category-blue-sm, category-green-sm, category-yellow-sm, category-purple-sm: done (M9.VF1, iteration 1); new, for the colour swatches of EffectGlyph
+- category-red-sm: done (M9.VF1, iteration 4); new, for the colour swatches of EffectGlyph
 
 No icon used more than 3 of its 6 iterations, and none is marked needs-human. Every file is lint clean and between 150 and 1008 bytes. The whole sprite is 22883 bytes raw and 4769 gzipped (limits 40960 and 10240). The blind check below was read by the author, so a fresh reader must still do the real one.
 
@@ -158,3 +160,60 @@ Shots in the run directory under shots/M9/V4/: the /dev/gallery sections Icons, 
 
 - The score table marks the winner with Lucide's outline crown next to the total, while the guild row uses category-purple, also a crown. A player could take the winner mark for a guild figure. A different winner mark (for example vp-laurel) would remove the clash; that is a component change, outside this set's files.
 - token-frame at 12 px is a plain ring; its scallops show from 16 px. Its smallest use is 1.1 em in an effect on a mini card (about 11 px), where it still differs from the coin (a solid disc) and the target.
+
+## Blind reading round 1 (fresh reader), M9.VF1 (2026-10-10)
+
+Slice M9.VF1 owned only the EffectGlyph colour swatches (the "per card of colour X" chips of commerce cards, guilds and the two destroy wonders) and their `-sm` glyphs, so this section records the round 1 results for that item. The round 1 brief passed this slice an empty list of blind results: no per-sheet scores and no misses were reported for any icon of this set, so there is nothing to copy here. The scores of the fresh reader, if they exist, belong to whichever slice received them.
+
+Critic findings received (the family review, round 1):
+
+- must, EffectGlyph colour swatches: the swatch was hue only (its CSS pattern is invisible at the mini and medium sizes). Green, red and brown became one grey in greyscale and one olive under deuteranopia and protanopia, so a colour-blind player could not tell which colour an effect counts. Evidence: shots/M9/review-r1/crops/mini-swatch-cvd.png. Fixed below.
+- should, owned by other icons of this set and not by this slice (no change here): category-red reads as a bare X below 16 px; token-frame reads as a zero; crest-moon's star is a flag emblem; wonder reads as a mosque front, and as "lnl" at 12 px; crest-sun blurs at the track size; vp-laurel speckles at 12 px; category-grey reads as an I-beam at 12 to 16 px; category-yellow and the coin are faint on paper (a token task: `--card-yellow-ink` and friends); brown, purple and pomegranate inks are faint on the dark panels; badge-check and badge-chain are line-weight. These are listed in the slice result as requests. The new `-sm` glyphs below already address the red and grey readings for the swatch context only.
+
+### Iteration 1 (swatches): category glyph chips
+
+Renders: shots/M9/VF1/iter1-mini-1280-light.png, iter1-mini-rows-x2.png.
+
+- Changed: each swatch is now a small card shape in the band colour (plain, no pattern) with the colour's category glyph on it, drawn in the band ink (paper on brown, blue, green, red and purple; card ink on grey and yellow) with `--i2` a 45% mix of ink and band. The hue still says "colour"; the glyph names which one.
+- Seen: green, blue, yellow and brown read, at the medium size and on the mini card. Three problems. The red chip at the mini size (glyph about 9 px) showed a white X on red: a close button, exactly the misreading the critic gave for category-red. The grey anvil was a spool. The Shipowners Guild (brown and grey) overflowed its 54 px card: the band pill clipped the coin on the left and the anvil chip on the right.
+
+### Iteration 2 (category -sm glyphs, first drawing)
+
+Renders: art-work/vector/swatch/fast1/ and fast2/ (fast.mjs at 9, 10, 12, 16 and 48 px).
+
+The swatch glyph is 9 px on a mini card and 15 px on a medium one, so it is a `-sm` use (STYLE.md section 1). Seven new files on the 12 grid, each one idea:
+
+- category-brown-sm: two peaks on a 10-unit base, a zigzag snow cap in the detail tone.
+- category-grey-sm: an anvil whose face runs into a long, heavy horn to the left (a 3-unit wedge tapering to a point), a 3-unit waist set to the right and a splayed foot, so the outline is plainly asymmetric.
+- category-blue-sm: the pointed dome on its wall with the arched door knocked out.
+- category-green-sm: two four-pointed stars with deep inner points and no centre detail (the light centre turned the star into a gear ring at 9 px).
+- category-yellow-sm: the purse, its tie a 1-unit detail band across a 1-unit gap.
+- category-red-sm: see iterations 2 to 4.
+- category-purple-sm: three points on a band, a ball on each point, the detail stripe between.
+
+Seen: the first anvil (horn curving into the face, as in md) was still an I-beam at 9 and 10 px; redrawn with the long wedge horn above, which reads as an anvil at 9 px. The first red (thin shafts, small lozenge heads, a diamond boss) was a plain X at 9 to 12 px. The green with a centre was a ring.
+
+### Iterations 3 and 4 (category-red-sm)
+
+Renders: art-work/vector/swatch/fast3/ to fast6/.
+
+- Tried: spears crossing low, heads up and apart (a V with short legs). At 48 px a wishbone; at 12 px still an x. Two subpaths of opposite winding also punched a hole at the crossing (nonzero fill); the second spear is now wound the same way.
+- Tried: leaf-shaped heads (pointed at both ends) on a 45 degree crossing. The best spear at 48 px, but the heads vanish at 9 to 12 px and it is an X again.
+- Kept: broad, near-triangular heads (about 3 units wide against 1.4-unit shafts), short butts and a round boss of radius 1.5 at the crossing. At 9 to 14 px it is top-heavy, two blades over a knot, and no longer a symmetric X. At 48 px it looks more like a bow than spears; that size never uses the `-sm` file.
+
+### Iteration 4 (swatches, final)
+
+Renders: shots/M9/VF1/it4-mini-*.png (Chrome's own colour-vision emulation through `Emulation.setEmulatedVisionDeficiency`, DPR 2), it4-commerce-cvd.png, it4-guild-cvd.png, it4-medium-rows.png, it4-medium-guilds.png, it4-destroy.png; the final app shots are in shots/M9/VF1/final/.
+
+- Layout: on a mini card the chip is 0.9 by 1.2 em with the glyph at 0.9 em; on medium and larger it is 1.15 by 1.35 em with the glyph at 1 em. Several chips sit edge to edge on a mini card. A guild's paired coin and laurel now overlap by 0.4 em on mini cards (both numerals stay clear), which with the narrower chips fits Shipowners (two chips) inside its 54 px card. A probe of every mini and medium effect pill in /dev/gallery finds none overflowing.
+- Destroy (Statue of Zeus, Circus Maximus): the red cross used to sit over the middle of the swatch, which would hide the glyph. It is now a small paper disc with a cinnabar cross on the swatch's bottom end corner, so mountain and anvil stay readable.
+- Seen, greyscale (achromatopsia), deuteranopia and protanopia: the commerce row reads wonder, anvil, mountain, purse, spears; the guild row purse, mountain plus anvil, wonder, dome, star, spears. Brown, green and red are three different shapes (mountain, star, blades over a knot) where they used to be three equal olive or grey bars. At DPR 1 on a desktop mini card (glyph about 8 px) the mountain, anvil, purse and dome still read; the star is a plus-shaped blob and the spears an x-shaped blob, which still differ from each other and from the mountain.
+- Acceptance: the must issue is fixed. Lint is clean for the set (22 files) and the whole sprite is 25635 bytes raw and 5246 gzipped.
+
+### Self blind check (author-read, not blind), M9.VF1
+
+Reader: the author of the `-sm` glyphs, who saw every icon labelled, so this is a smoke test, not a blind reading. art-work/vector/blind/ui-category-2026-10-10T17-17-30-303Z/: 12 px DPR 2 15/15 (the 12 px sheet now draws the category `-sm` files), 16 px DPR 1 15/15. A fresh reader must take the next round.
+
+### Family check, M9.VF1
+
+art-work/vector/family/family@2x.png: the md files of this set are unchanged; the family sheet shows md files only, so it does not show the new `-sm` glyphs. In the specimen peep (ui-category/iter-vf1-2/peep-light@1x.png) the `-sm` glyphs at 12 and 14 px have the weight of the resource and science `-sm` files beside them.
