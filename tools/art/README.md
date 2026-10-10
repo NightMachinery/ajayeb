@@ -6,8 +6,9 @@ render-screenshot-critique loop, and Codex-generated bitmap art for cards,
 wonders, tokens and the rest. `render-fast.sh` (the shared inner-loop SVG
 rasterizer, used by both the icon loop and the `chrome-cdp` skill) has its
 own usage comment at the top of the file and is covered by the
-`.claude/skills/chrome-cdp/SKILL.md` skill; this README's scope is the
-bitmap pipeline below.
+`.claude/skills/chrome-cdp/SKILL.md` skill. This README covers both
+pipelines' scripts: the bitmap pipeline first, then the vector tools in
+`tools/art/vector/`.
 
 ## Bitmap pipeline
 
@@ -142,3 +143,42 @@ asset in `art/manifest.json`: an id, its kind, and its shipped variants'
 paths, pixel sizes and byte counts. Run it after any `apply-review.mjs` or
 `process.mjs` call that changes which assets are approved, so the app's
 index never claims a file that was not actually shipped.
+
+## Vector pipeline (`vector/`)
+
+The vector icons, ornaments and logo are hand-authored SVG, drawn by Opus
+agents in a render, look and critique loop; Codex is never used for them.
+[art/vector/STYLE.md](../../art/vector/STYLE.md) holds the rules and the
+loop, [docs/art/README.md](../../docs/art/README.md) the overview. These
+scripts are dependency-free Node 24, plus `rsvg-convert` (librsvg) and
+ImageMagick 7 (`magick`) where noted. Their outputs go under
+`${AJAYEB_RUN_DIR:-~/tmp/agents/ajayeb}/art-work/vector/`, never into the
+repository. `render-fast.sh` resolves only the fallbacks of `var()` paints,
+so it shows an icon's `--i2` detail as transparent; `vector/fast.mjs`
+substitutes both tones.
+
+Run from the repository root. Commands that launch Chrome must run inside the guard's browser lock (`python3 tools/heavy.py run --kind browser -- ...`), which keeps the machine to one headless Chrome; each of them starts one Chrome and closes it before it exits. The others need no lock.
+
+- `lint.mjs`: checks icon SVGs against STYLE.md and prints one line per problem, `path:line: error|warn rule: <element> #n: message`, then a summary on stderr. It exits 1 on any error (with `--strict`, on any warning too) and 2 when it cannot run.
+  - `node tools/art/vector/lint.mjs` lints the whole sprite directory, checks it against `names.ts`, and checks the sprite budget.
+  - `node tools/art/vector/lint.mjs --set chain` lints one set from `art/vector/sets.json`.
+  - `node tools/art/vector/lint.mjs path/to/a.svg path/to/dir` lints files and directories.
+- `fast.mjs` (no browser; needs `rsvg-convert` and `magick`): the inner-loop render. `node tools/art/vector/fast.mjs a.svg b.svg` writes one PNG per file, sizes 12 to 96 px on paper above the same on night, with the two tones substituted (`--i1`, `--i2`, and their `-dark` twins).
+- `specimen.mjs`: `node tools/art/vector/specimen.mjs --set <set>` writes the self-contained specimen HTML of a set (tokens, a font and the set's SVGs inlined). `shoot.mjs` calls it for you.
+- `shoot.mjs` (browser): `python3 tools/heavy.py run --kind browser -- node tools/art/vector/shoot.mjs --set <set> [--iter N]` writes `specimen.html`, `lint.txt`, `light@1x.png`, `light@2x.png`, `dark@1x.png`, `dark@2x.png`, `grey-light@1x.png`, `deuteranopia-light@1x.png`, `protanopia-light@1x.png`, `tritanopia-light@1x.png` and `shots.json` into `art-work/vector/<set>/` (or `iter-N/` under it). `--cvd-themes light,dark` adds the dark theme to the greyscale and colour-vision passes.
+- `peep.mjs` (no browser; needs `magick`): `node tools/art/vector/peep.mjs --set <set> [--iter N]` crops the 12 to 16 px strip of the shots and enlarges it 800% with point filtering, into `peep-light@1x.png`, `peep-light@2x.png` and `peep-grey-light@1x.png`.
+- `blind.mjs` (browser for `make`): `python3 tools/heavy.py run --kind browser -- node tools/art/vector/blind.mjs make --set <set>` writes shuffled, numbered, unlabelled sheets at 12 px (DPR 2) and 16 px (DPR 1), the candidate names, an answer template and the key into `art-work/vector/blind/<set>-<stamp>/`. Answer every tile before you open the key, then `node tools/art/vector/blind.mjs score --dir <dir> --answers <dir>/answers.txt`. `--mono` draws plain ink shapes only.
+- `family.mjs` (browser): `python3 tools/heavy.py run --kind browser -- node tools/art/vector/family.mjs` writes `art-work/vector/family/family@1x.png` and `family@2x.png`: every drawn icon of every set at 16 and 24 px, on paper and on night.
+- `lib.mjs`: shared helpers (paths, `sets.json`, the XML reader, sprite symbols, the Chrome page). Not a command.
+
+Every script prints its usage with `--help`.
+
+### Make targets
+
+The `Makefile` belongs to the coordinator. Until it has vector targets, use the plain commands above. Proposed targets:
+
+- `make vec-lint` runs `node tools/art/vector/lint.mjs` (guard kind `light`).
+- `make vec-shot SET=<set> [ITER=<n>]` runs `shoot.mjs` under `--kind browser`, then `peep.mjs`.
+- `make vec-blind SET=<set>` runs `blind.mjs make` under `--kind browser`.
+- `make vec-family` runs `family.mjs` under `--kind browser`.
+
