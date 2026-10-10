@@ -114,6 +114,45 @@ func TestRolloutStopsAtTheCut(t *testing.T) {
 	}
 }
 
+// TestRolloutPlaysThroughAges: a rollout allowed to play through the ends
+// of the ages (Hard's) plays every position to the end of the game, so its
+// reward is a game result; one allowed to cross one end stops in the next
+// age at the latest.
+func TestRolloutPlaysThroughAges(t *testing.T) {
+	r := engine.NewRNG(9)
+	full := itestPolicy(HardRollout)
+	one := itestPolicy(RolloutConfig{Plies: MaxGamePlies, Ages: 1})
+	crossed := 0
+	for seed := uint64(1); seed <= 3; seed++ {
+		for _, s := range itestPositions(t, seed) {
+			if s.Over() {
+				continue
+			}
+			d := s
+			if reward := full.run(&d, &r); !d.Over() || (reward != 0 && reward != 0.5 && reward != 1) {
+				t.Fatalf("from ply %d (age %d), a game-end rollout stopped in phase %s with reward %v", s.Ply, s.Age, d.Phase, reward)
+			}
+			if err := engine.CheckInvariants(&d); err != nil {
+				t.Fatalf("after a rollout from ply %d: %v", s.Ply, err)
+			}
+			d = s
+			one.run(&d, &r)
+			if !d.Over() && int(d.Age) > int(s.Age)+2 {
+				t.Fatalf("from age %d, a rollout through one age end reached age %d", s.Age, d.Age)
+			}
+			if d.Age > s.Age && s.Age >= 1 {
+				crossed++
+			}
+		}
+	}
+	if crossed == 0 {
+		t.Error("no rollout crossed an age")
+	}
+	if c := (RolloutConfig{Ages: 99}).resolved(); c.Ages != engine.NumAges {
+		t.Errorf("99 ages resolve to %d", c.Ages)
+	}
+}
+
 // TestRolloutTakesASupremacy: with no random moves, the policy plays the
 // move that wins at once in the named supremacy scenarios, and takes Law
 // when Law completes six symbols.

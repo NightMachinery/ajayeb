@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
+	"github.com/NightMachinery/ajayeb/server/internal/engine"
 )
 
 // TestLevelPresetsAreFrozen pins the presets that docs/ai.md measured: a
@@ -14,11 +15,29 @@ func TestLevelPresetsAreFrozen(t *testing.T) {
 	if ai.MediumTime != 400*time.Millisecond || ai.MediumWorkers != 1 || ai.MediumIterations != 40_000 {
 		t.Errorf("Medium: %v on %d workers, fixed %d iterations", ai.MediumTime, ai.MediumWorkers, ai.MediumIterations)
 	}
-	if ai.HardTime != 2*time.Second || ai.HardWorkers != 4 || ai.HardIterations != 500_000 {
+	if ai.HardTime != 2*time.Second || ai.HardWorkers != 4 || ai.HardIterations != 200_000 {
 		t.Errorf("Hard: %v on %d workers, fixed %d iterations", ai.HardTime, ai.HardWorkers, ai.HardIterations)
+	}
+	if ai.HardRollout != (ai.RolloutConfig{Plies: ai.MaxGamePlies, Ages: engine.NumAges}) {
+		t.Errorf("Hard's rollout: %+v", ai.HardRollout)
 	}
 	if ai.EasyTemperature != 1.5 || ai.DefaultGreedyK != 3 {
 		t.Errorf("Easy: temperature %v, %d determinizations", ai.EasyTemperature, ai.DefaultGreedyK)
+	}
+}
+
+// TestLevelSearchConfigs: Medium searches with the default settings, Hard
+// with its rollouts to the end of the game, and both default to their clock
+// budgets.
+func TestLevelSearchConfigs(t *testing.T) {
+	if c := ai.Medium.SearchConfig(); c != (ai.MCTSConfig{Budget: ai.Medium.Budget()}) {
+		t.Errorf("Medium: %+v", c)
+	}
+	if c := ai.Hard.SearchConfig(); c != (ai.MCTSConfig{Budget: ai.Hard.Budget(), Rollout: ai.HardRollout}) {
+		t.Errorf("Hard: %+v", c)
+	}
+	if c := ai.Easy.SearchConfig(); c != (ai.MCTSConfig{}) {
+		t.Errorf("Easy: %+v", c)
 	}
 }
 
@@ -31,7 +50,7 @@ func TestLevelBudgets(t *testing.T) {
 		{ai.Random, ai.Budget{}, ai.Budget{}},
 		{ai.Easy, ai.Budget{MaxIterations: 3}, ai.Budget{MaxIterations: 3}},
 		{ai.Medium, ai.Budget{MaxTime: 400 * time.Millisecond, Workers: 1}, ai.Budget{MaxIterations: 40_000, Workers: 1}},
-		{ai.Hard, ai.Budget{MaxTime: 2 * time.Second, Workers: min(4, procs)}, ai.Budget{MaxIterations: 500_000, Workers: 4}},
+		{ai.Hard, ai.Budget{MaxTime: 2 * time.Second, Workers: min(4, procs)}, ai.Budget{MaxIterations: 200_000, Workers: 4}},
 	}
 	for _, c := range cases {
 		if got := c.l.Budget(); got != c.clock {

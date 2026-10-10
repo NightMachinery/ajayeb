@@ -133,8 +133,9 @@ func ParseLevel(name string) (Level, error) {
 //   - Easy is Greedy with softmax sampling (EasyTemperature).
 //   - Medium is the tree search (mcts.go) with a default budget of 0.4
 //     seconds on one worker.
-//   - Hard is the tree search with a default budget of 2 seconds on up to
-//     4 workers (no more than GOMAXPROCS).
+//   - Hard is the tree search with rollouts to the end of the game
+//     (HardRollout) and a default budget of 2 seconds on up to 4 workers
+//     (no more than GOMAXPROCS).
 //
 // The default budget is the level's clock budget (Level.Budget). A Budget
 // passed to Choose replaces it (see MCTSBot); tournaments pass the level's
@@ -146,9 +147,9 @@ func New(level Level, seed uint64) Bot {
 	case Easy:
 		return NewGreedy(seed, GreedyConfig{Temperature: EasyTemperature})
 	case Medium:
-		return NewMCTS(seed, MCTSConfig{Budget: Medium.Budget()})
+		return NewMCTS(seed, Medium.SearchConfig())
 	case Hard:
-		return NewMCTS(seed, MCTSConfig{Budget: Hard.Budget()})
+		return NewMCTS(seed, Hard.SearchConfig())
 	}
 	panic(fmt.Sprintf("ai: New with invalid level %d", uint8(level)))
 }

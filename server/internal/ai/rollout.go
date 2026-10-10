@@ -18,7 +18,12 @@ import (
 // reward for seat 0 is sigmoid(Evaluate(s, 0) / 8), a number between 0 and
 // 1, and a finished game is worth 1, 0.5 or 0 (a win, a shared victory or a
 // loss for seat 0). Stopping at the end of the age keeps the rollout from
-// guessing at an age whose cards nobody has seen yet.
+// guessing at an age whose cards nobody has seen yet. RolloutConfig.Ages
+// lets a rollout play through the ends of ages instead: Hard's rollouts
+// (HardRollout) play every game to its end, so their reward is the game's
+// result, which costs about twice the time per iteration over a game but
+// judges a position far better than the evaluation at the end of the age
+// (docs/ai.md).
 //
 // The policy, in the play phase:
 //
@@ -73,6 +78,10 @@ type RolloutConfig struct {
 	Plies    int     // plies before a rollout is cut off; 0 means DefaultRolloutPlies
 	Epsilon  float64 // share of random moves; 0 means DefaultRolloutEpsilon, a negative value none
 	ModeProb float64 // chance of each mode; 0 means DefaultRolloutModeProb, a negative value none
+	// Ages is how many ends of an age a rollout may play through: 0 stops
+	// it at the end of the age it starts in, 2 or more lets it play to the
+	// end of the game (within Plies).
+	Ages int
 }
 
 // resolved returns the configuration with the defaults filled in and the
@@ -81,6 +90,7 @@ func (c RolloutConfig) resolved() RolloutConfig {
 	if c.Plies <= 0 {
 		c.Plies = DefaultRolloutPlies
 	}
+	c.Ages = min(max(c.Ages, 0), engine.NumAges)
 	c.Epsilon = rolloutShare(c.Epsilon, DefaultRolloutEpsilon, 1)
 	c.ModeProb = rolloutShare(c.ModeProb, DefaultRolloutModeProb, 0.5)
 	return c
@@ -156,6 +166,7 @@ var rollTokenValue = [catalog.NumTokens + 1]float64{
 type rolloutPolicy struct {
 	w     *Weights
 	plies int
+	ages  int    // ends of an age a rollout may play through
 	eps   uint64 // random-move threshold out of rollChance
 	modeP uint64 // each mode's threshold out of rollChance
 	mode  [2]rollMode
@@ -167,6 +178,7 @@ type rolloutPolicy struct {
 func (p *rolloutPolicy) init(c RolloutConfig, w *Weights) {
 	p.w = w
 	p.plies = c.Plies
+	p.ages = c.Ages
 	p.eps = uint64(c.Epsilon * rollChance)
 	p.modeP = uint64(c.ModeProb * rollChance)
 	p.mode = [2]rollMode{}
@@ -192,8 +204,8 @@ func (p *rolloutPolicy) run(d *engine.State, r *engine.RNG) float64 {
 			}
 		}
 	}
-	age := d.Age
-	for n := 0; n < p.plies && !d.Over() && d.Age == age; n++ {
+	last := int(d.Age) + p.ages
+	for n := 0; n < p.plies && !d.Over() && int(d.Age) <= last; n++ {
 		engine.ApplyTrusted(d, p.move(d, r))
 	}
 	return p.reward(d)

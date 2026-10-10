@@ -98,8 +98,9 @@ import (
 // as the tree grows, 24 KiB (1024 nodes of 24 bytes) at a time, and
 // recycles it between searches. An iteration allocates nothing. At the
 // rates measured on an Apple M2, a Medium search (0.4 s, one worker) grows
-// a tree of about 1 MB, and a Hard search (2 s, four workers) about 4 MB
-// per worker in the middle game and up to 11 MB per worker late in Age III.
+// a tree of about 1 MB, and a Hard search (2 s, four workers, rollouts to
+// the end of the game) about 1 to 2 MB per worker in the middle game and up
+// to 5 MB per worker late in Age III.
 
 // Defaults of the tree search.
 const (
@@ -126,10 +127,10 @@ type MCTSConfig struct {
 	// Budget is the default budget: Choose uses its MaxIterations and
 	// MaxTime when its own Budget sets neither, and its Workers when its
 	// own Budget's Workers is 0.
-	Budget  Budget
+	Budget  Budget        `json:"-"`
 	C       float64       // the UCB exploration constant; 0 means DefaultUCBC
 	Rollout RolloutConfig // the rollouts; the zero value is the default policy
-	Weights *Weights      // the evaluation's weights; nil means DefaultWeights
+	Weights *Weights      `json:"-"` // the evaluation's weights; nil means DefaultWeights
 }
 
 // MCTSBot is the tree-search bot (the Medium and Hard levels). It holds no

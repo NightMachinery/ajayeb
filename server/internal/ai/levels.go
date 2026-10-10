@@ -3,11 +3,15 @@ package ai
 import (
 	"runtime"
 	"time"
+
+	"github.com/NightMachinery/ajayeb/server/internal/engine"
 )
 
 // This file holds the level presets: how much each level the rooms offer
-// searches per move. Slice S12 froze them after measured tournaments;
-// docs/ai.md has the measurements and the commands that rerun them.
+// searches per move. Slice S12 froze them after measured tournaments, and
+// slice S13 gave Hard rollouts to the end of the game (HardRollout) with a
+// fixed budget re-measured for them; docs/ai.md has the measurements and
+// the commands that rerun them.
 //
 // Every level has two budgets:
 //
@@ -28,13 +32,15 @@ import (
 //     DefaultGreedyK determinizations per move (a few milliseconds).
 //   - Medium is the tree search for MediumTime on MediumWorkers worker;
 //     its fixed budget is MediumIterations.
-//   - Hard is the tree search for HardTime on up to HardWorkers workers,
-//     never more than GOMAXPROCS in a live game; its fixed budget is
-//     HardIterations over exactly HardWorkers workers, whatever the machine,
-//     since the worker count changes the trees and so the moves.
+//   - Hard is the tree search with HardRollout for HardTime on up to
+//     HardWorkers workers, never more than GOMAXPROCS in a live game; its
+//     fixed budget is HardIterations over exactly HardWorkers workers,
+//     whatever the machine, since the worker count changes the trees and so
+//     the moves.
 //
-// A fixed budget is a median: the tree search runs about twice as many
-// iterations per second late in Age III as in the draft, so in a live game
+// A fixed budget is a median: Medium's search runs about twice as many
+// iterations per second late in Age III as in the draft, and Hard's, whose
+// rollouts are longest early on, about six times as many, so in a live game
 // Medium and Hard search less than their fixed budgets early on and more
 // late in the game.
 
@@ -46,8 +52,13 @@ const (
 
 	HardTime       = 2 * time.Second // Hard's thinking time per move
 	HardWorkers    = 4               // Hard's search workers (in a live game, at most GOMAXPROCS)
-	HardIterations = 500_000         // Hard's fixed budget: iterations per move, over all the workers
+	HardIterations = 200_000         // Hard's fixed budget: iterations per move, over all the workers
 )
+
+// HardRollout is Hard's rollout: the default policy played to the end of
+// the game instead of being cut off at the end of the age or after 16 plies
+// and scored by the evaluation. docs/ai.md explains why.
+var HardRollout = RolloutConfig{Plies: MaxGamePlies, Ages: engine.NumAges}
 
 // Budget returns the level's clock budget, the default budget of the bot
 // that New returns for it: what a live game uses.
@@ -76,4 +87,17 @@ func (l Level) FixedBudget() Budget {
 		return Budget{MaxIterations: HardIterations, Workers: HardWorkers}
 	}
 	return Budget{}
+}
+
+// SearchConfig returns the tree-search settings of Medium or Hard, with the
+// level's clock budget as the default budget; the zero MCTSConfig for the
+// other levels. New builds the level's bot from it.
+func (l Level) SearchConfig() MCTSConfig {
+	switch l {
+	case Medium:
+		return MCTSConfig{Budget: l.Budget()}
+	case Hard:
+		return MCTSConfig{Budget: l.Budget(), Rollout: HardRollout}
+	}
+	return MCTSConfig{}
 }
