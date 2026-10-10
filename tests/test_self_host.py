@@ -1,7 +1,11 @@
 import io
+import os
+import shlex
+import subprocess
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 import self_host
 
@@ -344,6 +348,598 @@ class SelfHostTests(unittest.TestCase):
 
     def test_tmux_tail_returns_none_for_missing_session(self):
         self.assertIsNone(self_host.tmux_tail("ajayeb-self-host-test-missing-session"))
+
+    def test_config_roundtrip_preserves_ship_target(self):
+        cfg = self_host.Config(
+            site=self_host.parse_site_url("https://game.example.test"),
+            mode=self_host.Mode.PROD,
+            ship=self_host.ShipTarget("user@example.host", "a-dir"),
+        )
+        restored = self_host.Config.from_json(cfg.to_json())
+        self.assertEqual(restored.ship, self_host.ShipTarget("user@example.host", "a-dir"))
+
+    def test_config_without_ship_omits_it_from_json(self):
+        cfg = self_host.Config(site=self_host.parse_site_url(None), mode=self_host.Mode.PROD)
+        self.assertNotIn("ship", cfg.to_json())
+        self.assertIsNone(self_host.Config.from_json(cfg.to_json()).ship)
+
+    def test_help_lists_ship_command(self):
+        help_text = self_host.build_parser().format_help()
+        self.assertIn("ship", help_text)
+
+    def test_parser_parses_setup_with_prebuilt(self):
+        args = self_host.build_parser().parse_args(["setup", "https://x.test", "--prebuilt", "/tmp/bin"])
+        self.assertEqual(args.command, "setup")
+        self.assertEqual(args.url, "https://x.test")
+        self.assertEqual(args.prebuilt, "/tmp/bin")
+
+    def test_parser_parses_redeploy_with_prebuilt_and_no_url(self):
+        args = self_host.build_parser().parse_args(["redeploy", "--prebuilt", "/tmp/bin"])
+        self.assertIsNone(args.url)
+        self.assertEqual(args.prebuilt, "/tmp/bin")
+
+    def test_parser_start_has_no_prebuilt_option(self):
+        args = self_host.build_parser().parse_args(["start"])
+        self.assertFalse(hasattr(args, "prebuilt"))
+
+    def test_parser_ship_target_url_and_remote_dir_are_optional(self):
+        args = self_host.build_parser().parse_args(["ship"])
+        self.assertIsNone(args.target)
+        self.assertIsNone(args.url)
+        self.assertIsNone(args.remote_dir)
+
+    def test_parser_parses_ship_with_all_arguments(self):
+        args = self_host.build_parser().parse_args(
+            ["ship", "user@example.host", "https://x.test", "--remote-dir", "custom"]
+        )
+        self.assertEqual(args.target, "user@example.host")
+        self.assertEqual(args.url, "https://x.test")
+        self.assertEqual(args.remote_dir, "custom")
+
+
+class UnameMappingTests(unittest.TestCase):
+    def test_parse_uname_maps_known_platforms(self):
+        self.assertEqual(self_host.parse_uname("Linux x86_64"), ("linux", "amd64"))
+        self.assertEqual(self_host.parse_uname("Linux aarch64\n"), ("linux", "arm64"))
+
+    def test_parse_uname_refuses_unknown_platform(self):
+        with self.assertRaises(ValueError):
+            self_host.parse_uname("Darwin arm64")
+        with self.assertRaises(ValueError):
+            self_host.parse_uname("Linux armv7l")
+        with self.assertRaises(ValueError):
+            self_host.parse_uname("")
+
+    def test_detect_remote_platform_runs_uname_over_ssh_and_parses_it(self):
+        with mock.patch("self_host.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], returncode=0, stdout="Linux x86_64\n")
+            goos, goarch = self_host.detect_remote_platform("user@example.host")
+            self.assertEqual((goos, goarch), ("linux", "amd64"))
+            run.assert_called_once_with(
+                ["ssh", "user@example.host", "uname -sm"], capture_output=True, text=True, check=True
+            )
+
+
+class CrossCompileTests(unittest.TestCase):
+    def test_go_build_cross_command_sets_tags_trimpath_output_and_version(self):
+        cmd = self_host.go_build_cross_command("v9.9.9", "linux", "arm64")
+        self.assertIn("-tags", cmd)
+        self.assertIn("embedweb", cmd)
+        self.assertIn("-trimpath", cmd)
+        self.assertIn(str(self_host.dist_binary_path("linux", "arm64")), cmd)
+        self.assertIn("./cmd/ajayeb", cmd)
+        self.assertTrue(any("main.version=v9.9.9" in part for part in cmd))
+
+    def test_go_build_cross_env_disables_cgo_and_sets_target(self):
+        self.assertEqual(
+            self_host.go_build_cross_env("linux", "arm64"), {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "arm64"}
+        )
+
+    def test_heavy_wrap_passes_through_when_heavy_py_is_absent(self):
+        orig = self_host.HEAVY_SCRIPT
+        self_host.HEAVY_SCRIPT = Path("/nonexistent/tools/heavy.py")
+        try:
+            self.assertEqual(self_host.heavy_wrap(["echo", "hi"], kind="build"), ["echo", "hi"])
+        finally:
+            self_host.HEAVY_SCRIPT = orig
+
+    def test_heavy_wrap_wraps_the_command_when_heavy_py_exists(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            heavy = Path(tmp) / "heavy.py"
+            heavy.write_text("# fake\n")
+            orig = self_host.HEAVY_SCRIPT
+            self_host.HEAVY_SCRIPT = heavy
+            try:
+                wrapped = self_host.heavy_wrap(["echo", "hi"], kind="build", wait=42)
+                self.assertEqual(
+                    wrapped,
+                    [self_host.sys.executable, str(heavy), "run", "--kind", "build", "--wait", "42", "--", "echo", "hi"],
+                )
+            finally:
+                self_host.HEAVY_SCRIPT = orig
+
+    def test_run_build_step_raises_a_clear_error_on_heavy_refusal(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            heavy = Path(tmp) / "heavy.py"
+            heavy.write_text("# fake\n")
+            orig = self_host.HEAVY_SCRIPT
+            self_host.HEAVY_SCRIPT = heavy
+            try:
+                with mock.patch("self_host.subprocess.run") as run:
+                    run.return_value = subprocess.CompletedProcess([], returncode=75)
+                    with self.assertRaisesRegex(RuntimeError, "refused"):
+                        self_host.run_build_step(["true"], kind="build")
+            finally:
+                self_host.HEAVY_SCRIPT = orig
+
+    def test_run_build_step_raises_called_process_error_on_other_failures(self):
+        orig = self_host.HEAVY_SCRIPT
+        self_host.HEAVY_SCRIPT = Path("/nonexistent/tools/heavy.py")
+        try:
+            with mock.patch("self_host.subprocess.run") as run:
+                run.return_value = subprocess.CompletedProcess([], returncode=1)
+                with self.assertRaises(subprocess.CalledProcessError):
+                    self_host.run_build_step(["false"], kind="build")
+        finally:
+            self_host.HEAVY_SCRIPT = orig
+
+
+class RemoteCommandQuotingTests(unittest.TestCase):
+    def test_remote_mkdir_command_quotes_a_remote_dir_with_a_space(self):
+        cmd = self_host.remote_mkdir_command("user@example.host", "a dir")
+        self.assertEqual(cmd[:2], ["ssh", "user@example.host"])
+        self.assertIn(shlex.quote("a dir/.self-host/bin"), cmd[2])
+
+    def test_rsync_self_host_command_quotes_remote_dir(self):
+        cmd = self_host.rsync_self_host_command("user@example.host", "a dir")
+        self.assertEqual(cmd[0], "rsync")
+        self.assertEqual(cmd[-1], f"user@example.host:{shlex.quote('a dir')}/")
+
+    def test_rsync_binary_command_quotes_remote_dir(self):
+        cmd = self_host.rsync_binary_command("user@example.host", "a dir", Path("/tmp/ajayeb-linux-amd64"))
+        self.assertIn(str(Path("/tmp/ajayeb-linux-amd64")), cmd)
+        self.assertEqual(cmd[-1], f"user@example.host:{shlex.quote('a dir')}/{self_host.REMOTE_UPLOAD_BIN}")
+
+    def test_remote_config_exists_command_quotes_remote_dir(self):
+        cmd = self_host.remote_config_exists_command("user@example.host", "a dir")
+        self.assertEqual(cmd[:2], ["ssh", "user@example.host"])
+        self.assertIn(shlex.quote("a dir/.self-host/config.json"), cmd[2])
+
+    def test_remote_deploy_command_quotes_dir_and_url_but_keeps_shell_operators(self):
+        cmd = self_host.remote_deploy_command("user@example.host", "a dir", "setup", "https://ex ample.test")
+        self.assertEqual(cmd[:2], ["ssh", "user@example.host"])
+        remote = cmd[2]
+        self.assertIn("cd " + shlex.quote("a dir") + " &&", remote)
+        self.assertIn("--prebuilt " + shlex.quote(self_host.REMOTE_UPLOAD_BIN), remote)
+        self.assertIn(shlex.quote("https://ex ample.test"), remote)
+
+    def test_remote_deploy_command_omits_url_when_none(self):
+        cmd = self_host.remote_deploy_command("user@example.host", "ajayeb", "redeploy", None)
+        remote = cmd[2]
+        self.assertTrue(remote.endswith(self_host.REMOTE_UPLOAD_BIN))
+        self.assertIn(" redeploy ", remote)
+
+
+class DeployChoiceTests(unittest.TestCase):
+    def test_determine_deploy_command_picks_setup_when_no_remote_config(self):
+        with mock.patch("self_host.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], returncode=1)
+            self.assertEqual(self_host.determine_deploy_command("user@example.host", "ajayeb"), "setup")
+
+    def test_determine_deploy_command_picks_redeploy_when_remote_config_exists(self):
+        with mock.patch("self_host.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], returncode=0)
+            self.assertEqual(self_host.determine_deploy_command("user@example.host", "ajayeb"), "redeploy")
+
+
+class PrebuiltBinaryTests(unittest.TestCase):
+    def test_check_prebuilt_binary_refuses_a_missing_file(self):
+        with self.assertRaises(RuntimeError):
+            self_host.check_prebuilt_binary(Path("/nonexistent/ajayeb-binary-xyz"))
+
+    def test_check_prebuilt_binary_refuses_a_non_executable_file(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ajayeb"
+            path.write_text("not a binary")
+            path.chmod(0o644)
+            with self.assertRaises(RuntimeError):
+                self_host.check_prebuilt_binary(path)
+
+    def test_check_prebuilt_binary_refuses_when_version_flag_fails(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ajayeb"
+            path.write_text("#!/bin/sh\nexit 1\n")
+            path.chmod(0o755)
+            with self.assertRaises(RuntimeError):
+                self_host.check_prebuilt_binary(path)
+
+    def test_check_prebuilt_binary_accepts_a_runnable_executable(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ajayeb"
+            path.write_text("#!/bin/sh\necho v1.2.3\n")
+            path.chmod(0o755)
+            self_host.check_prebuilt_binary(path)  # must not raise
+
+
+class SwapInBinaryTests(unittest.TestCase):
+    def _with_bin_dir(self, tmp):
+        bin_dir = Path(tmp) / "bin"
+        bin_dir.mkdir(parents=True)
+        originals = (self_host.BIN_DIR, self_host.BIN_PATH, self_host.BIN_NEW_PATH, self_host.BIN_PREV_PATH)
+        self_host.BIN_DIR = bin_dir
+        self_host.BIN_PATH = bin_dir / "ajayeb"
+        self_host.BIN_NEW_PATH = bin_dir / "ajayeb.new"
+        self_host.BIN_PREV_PATH = bin_dir / "ajayeb.prev"
+        return bin_dir, originals
+
+    def _restore(self, originals):
+        self_host.BIN_DIR, self_host.BIN_PATH, self_host.BIN_NEW_PATH, self_host.BIN_PREV_PATH = originals
+
+    def test_swap_in_binary_backs_up_the_current_binary_and_installs_the_new_one(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, originals = self._with_bin_dir(tmp)
+            try:
+                self_host.BIN_PATH.write_text("old-binary")
+                new_source = Path(tmp) / "new-binary"
+                new_source.write_text("new-binary")
+                self_host.swap_in_binary(new_source)
+                self.assertEqual(self_host.BIN_PATH.read_text(), "new-binary")
+                self.assertEqual(self_host.BIN_PREV_PATH.read_text(), "old-binary")
+                self.assertTrue(os.access(self_host.BIN_PATH, os.X_OK))
+                # The caller's own file (e.g. their --prebuilt path) is never touched.
+                self.assertTrue(new_source.exists())
+                self.assertEqual(new_source.read_text(), "new-binary")
+            finally:
+                self._restore(originals)
+
+    def test_swap_in_binary_skips_the_backup_when_there_is_no_current_binary(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, originals = self._with_bin_dir(tmp)
+            try:
+                new_source = Path(tmp) / "new-binary"
+                new_source.write_text("new-binary")
+                self_host.swap_in_binary(new_source)
+                self.assertEqual(self_host.BIN_PATH.read_text(), "new-binary")
+                self.assertFalse(self_host.BIN_PREV_PATH.exists())
+            finally:
+                self._restore(originals)
+
+    def test_swap_in_binary_handles_an_already_built_bin_new_path(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, originals = self._with_bin_dir(tmp)
+            try:
+                self_host.BIN_NEW_PATH.write_text("freshly-built")
+                self_host.swap_in_binary(self_host.BIN_NEW_PATH)
+                self.assertEqual(self_host.BIN_PATH.read_text(), "freshly-built")
+            finally:
+                self._restore(originals)
+
+
+class SetupRedeployOrderingTests(unittest.TestCase):
+    """setup/redeploy: --prebuilt skips every build step, and stop only runs
+    right before the swap, after every build and check."""
+
+    def _config(self):
+        return self_host.Config(
+            site=self_host.parse_site_url("https://game.example.test"),
+            mode=self_host.Mode.PROD,
+            ports=self_host.Ports(server=1, web_dev=2),
+        )
+
+    def test_command_setup_with_prebuilt_skips_every_build_step(self):
+        with mock.patch.multiple(
+            self_host,
+            resolve_runtime_config=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            check_prebuilt_binary=mock.DEFAULT,
+            find_go=mock.DEFAULT,
+            install_web=mock.DEFAULT,
+            build_web=mock.DEFAULT,
+            sync_webdist=mock.DEFAULT,
+            build_server_release=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            command_stop=mock.DEFAULT,
+            swap_in_binary=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        ) as mocks:
+            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["poll_health"].return_value = True
+            self_host.command_setup("https://game.example.test", "/tmp/prebuilt-ajayeb")
+            mocks["check_prebuilt_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"))
+            mocks["find_go"].assert_not_called()
+            mocks["install_web"].assert_not_called()
+            mocks["build_web"].assert_not_called()
+            mocks["sync_webdist"].assert_not_called()
+            mocks["build_server_release"].assert_not_called()
+            mocks["swap_in_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"))
+
+    def test_command_setup_builds_and_checks_before_stopping_the_server(self):
+        calls: list = []
+        with mock.patch.multiple(
+            self_host,
+            resolve_runtime_config=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            find_go=mock.DEFAULT,
+            install_web=mock.DEFAULT,
+            build_web=mock.DEFAULT,
+            sync_webdist=mock.DEFAULT,
+            build_server_release=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            command_stop=mock.DEFAULT,
+            swap_in_binary=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        ) as mocks:
+            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["poll_health"].return_value = True
+            mocks["build_server_release"].side_effect = lambda: calls.append("build") or Path("/tmp/new")
+            mocks["command_stop"].side_effect = lambda: calls.append("stop")
+            mocks["swap_in_binary"].side_effect = lambda source: calls.append("swap")
+            self_host.command_setup("https://game.example.test")
+            self.assertEqual(calls, ["build", "stop", "swap"])
+
+    def test_command_setup_refuses_a_bad_prebuilt_before_anything_stops(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "bad-binary"
+            bad.write_text("not runnable")
+            bad.chmod(0o644)
+            with mock.patch.multiple(
+                self_host,
+                resolve_runtime_config=mock.DEFAULT,
+                ensure_tools=mock.DEFAULT,
+                command_stop=mock.DEFAULT,
+                swap_in_binary=mock.DEFAULT,
+                apply_caddyfile_safely=mock.DEFAULT,
+                start_server_prod=mock.DEFAULT,
+            ) as mocks:
+                mocks["resolve_runtime_config"].return_value = self._config()
+                with self.assertRaises(RuntimeError):
+                    self_host.command_setup("https://game.example.test", str(bad))
+                mocks["command_stop"].assert_not_called()
+                mocks["swap_in_binary"].assert_not_called()
+
+    def test_command_redeploy_with_prebuilt_skips_every_build_step(self):
+        with mock.patch.multiple(
+            self_host,
+            resolve_runtime_config=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            check_prebuilt_binary=mock.DEFAULT,
+            find_go=mock.DEFAULT,
+            archive_rooms=mock.DEFAULT,
+            install_web=mock.DEFAULT,
+            build_web=mock.DEFAULT,
+            sync_webdist=mock.DEFAULT,
+            build_server_release=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            command_stop=mock.DEFAULT,
+            swap_in_binary=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        ) as mocks:
+            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["archive_rooms"].return_value = None
+            mocks["poll_health"].return_value = True
+            self_host.command_redeploy("https://game.example.test", "/tmp/prebuilt-ajayeb")
+            mocks["find_go"].assert_not_called()
+            mocks["install_web"].assert_not_called()
+            mocks["build_web"].assert_not_called()
+            mocks["sync_webdist"].assert_not_called()
+            mocks["build_server_release"].assert_not_called()
+            mocks["swap_in_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"))
+
+    def test_command_redeploy_archives_and_builds_before_stopping_the_server(self):
+        calls: list = []
+        with mock.patch.multiple(
+            self_host,
+            resolve_runtime_config=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            find_go=mock.DEFAULT,
+            archive_rooms=mock.DEFAULT,
+            install_web=mock.DEFAULT,
+            build_web=mock.DEFAULT,
+            sync_webdist=mock.DEFAULT,
+            build_server_release=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            command_stop=mock.DEFAULT,
+            swap_in_binary=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        ) as mocks:
+            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["poll_health"].return_value = True
+            mocks["archive_rooms"].side_effect = lambda: calls.append("archive") or None
+            mocks["build_server_release"].side_effect = lambda: calls.append("build") or Path("/tmp/new")
+            mocks["command_stop"].side_effect = lambda: calls.append("stop")
+            mocks["swap_in_binary"].side_effect = lambda source: calls.append("swap")
+            self_host.command_redeploy("https://game.example.test")
+            # The archive still runs with the server already stopped (so it
+            # never captures a file mid-write), and still before the swap.
+            self.assertEqual(calls, ["build", "stop", "archive", "swap"])
+
+
+class ShipTargetMemoryTests(unittest.TestCase):
+    def _with_config_file(self, tmp):
+        config_dir = Path(tmp) / ".self-host"
+        config_file = config_dir / "config.json"
+        originals = (self_host.CONFIG_DIR, self_host.CONFIG_FILE)
+        self_host.CONFIG_DIR, self_host.CONFIG_FILE = config_dir, config_file
+        return originals
+
+    def _restore(self, originals):
+        self_host.CONFIG_DIR, self_host.CONFIG_FILE = originals
+
+    def test_resolve_ship_target_uses_given_target_and_remembers_it(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            originals = self._with_config_file(tmp)
+            try:
+                resolved = self_host.resolve_ship_target("user@example.host", "custom-dir")
+                self.assertEqual(resolved, self_host.ShipTarget("user@example.host", "custom-dir"))
+                self_host.remember_ship_target("user@example.host", "custom-dir")
+
+                again = self_host.resolve_ship_target(None, None)
+                self.assertEqual(again, self_host.ShipTarget("user@example.host", "custom-dir"))
+            finally:
+                self._restore(originals)
+
+    def test_resolve_ship_target_defaults_remote_dir_when_nothing_remembered(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            originals = self._with_config_file(tmp)
+            try:
+                resolved = self_host.resolve_ship_target("user@example.host", None)
+                self.assertEqual(resolved, self_host.ShipTarget("user@example.host", self_host.DEFAULT_REMOTE_DIR))
+            finally:
+                self._restore(originals)
+
+    def test_resolve_ship_target_raises_without_target_or_memory(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            originals = self._with_config_file(tmp)
+            try:
+                with self.assertRaises(RuntimeError):
+                    self_host.resolve_ship_target(None, None)
+            finally:
+                self._restore(originals)
+
+    def test_remember_ship_target_preserves_existing_site_and_mode(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            originals = self._with_config_file(tmp)
+            try:
+                self_host.save_config(
+                    self_host.Config(site=self_host.parse_site_url("https://game.example.test"), mode=self_host.Mode.DEV)
+                )
+                self_host.remember_ship_target("user@example.host", "ajayeb")
+                reloaded = self_host.load_config()
+                self.assertEqual(reloaded.site.origin, "https://game.example.test")
+                self.assertEqual(reloaded.mode, self_host.Mode.DEV)
+                self.assertEqual(reloaded.ship, self_host.ShipTarget("user@example.host", "ajayeb"))
+            finally:
+                self._restore(originals)
+
+
+class PollRemoteVersionTests(unittest.TestCase):
+    def test_poll_remote_version_returns_the_version_from_the_health_payload(self):
+        import http.server
+        import json as _json
+        import threading
+
+        class Handler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(_json.dumps({"version": "v1.2.3"}).encode("utf-8"))
+
+            def log_message(self, *args):
+                pass
+
+        server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            version = self_host.poll_remote_version(f"http://127.0.0.1:{port}", timeout=2.0, interval=0.05)
+            self.assertEqual(version, "v1.2.3")
+        finally:
+            server.shutdown()
+            thread.join(timeout=2)
+
+    def test_poll_remote_version_returns_none_when_nothing_listens(self):
+        port = self_host.find_free_port(45100)
+        self.assertIsNone(self_host.poll_remote_version(f"http://127.0.0.1:{port}", timeout=0.3, interval=0.05))
+
+
+class CommandShipTests(unittest.TestCase):
+    def _patched(self, **overrides):
+        base = dict(
+            resolve_ship_target=mock.DEFAULT,
+            detect_remote_platform=mock.DEFAULT,
+            git_version=mock.DEFAULT,
+            cross_build=mock.DEFAULT,
+            upload_to_remote=mock.DEFAULT,
+            determine_deploy_command=mock.DEFAULT,
+            deploy_remote=mock.DEFAULT,
+            remember_ship_target=mock.DEFAULT,
+            poll_remote_version=mock.DEFAULT,
+        )
+        return mock.patch.multiple(self_host, **base)
+
+    def test_command_ship_warns_on_a_version_mismatch(self):
+        with self._patched() as mocks:
+            mocks["resolve_ship_target"].return_value = self_host.ShipTarget("user@example.host", "ajayeb")
+            mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+            mocks["git_version"].return_value = "v1.0.0"
+            mocks["cross_build"].return_value = Path("/tmp/ajayeb-linux-amd64")
+            mocks["determine_deploy_command"].return_value = "setup"
+            mocks["poll_remote_version"].return_value = "v0.9.0"
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr):
+                self_host.command_ship(None, "https://game.example.test", None)
+            self.assertIn("v0.9.0", stderr.getvalue())
+            self.assertIn("v1.0.0", stderr.getvalue())
+            mocks["remember_ship_target"].assert_called_once_with("user@example.host", "ajayeb")
+            mocks["deploy_remote"].assert_called_once_with(
+                "user@example.host", "ajayeb", "setup", "https://game.example.test"
+            )
+
+    def test_command_ship_reports_matching_version(self):
+        with self._patched() as mocks:
+            mocks["resolve_ship_target"].return_value = self_host.ShipTarget("user@example.host", "ajayeb")
+            mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+            mocks["git_version"].return_value = "v1.0.0"
+            mocks["cross_build"].return_value = Path("/tmp/ajayeb-linux-amd64")
+            mocks["determine_deploy_command"].return_value = "redeploy"
+            mocks["poll_remote_version"].return_value = "v1.0.0"
+
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                self_host.command_ship(None, "https://game.example.test", None)
+            self.assertIn("v1.0.0", stdout.getvalue())
+
+    def test_command_ship_skips_the_poll_without_a_url(self):
+        with self._patched() as mocks:
+            mocks["resolve_ship_target"].return_value = self_host.ShipTarget("user@example.host", "ajayeb")
+            mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+            mocks["git_version"].return_value = "v1.0.0"
+            mocks["cross_build"].return_value = Path("/tmp/ajayeb-linux-amd64")
+            mocks["determine_deploy_command"].return_value = "setup"
+
+            self_host.command_ship(None, None, None)
+            mocks["poll_remote_version"].assert_not_called()
 
 
 if __name__ == "__main__":
