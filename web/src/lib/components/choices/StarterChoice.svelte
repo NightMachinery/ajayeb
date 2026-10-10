@@ -8,6 +8,8 @@
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryEndangered } from '$lib/view/threats';
   import type { Choice, MilitaryView } from '$lib/wire';
+  import { actButtonState } from '../game/act-button';
+  import ConfirmButton from '../shell/ConfirmButton.svelte';
   import { asSeat, type Seat, type SeatNames } from './room';
 
   interface Props {
@@ -22,10 +24,25 @@
     /** The view's starter choices; empty when this client is not the chooser. */
     choices: readonly Choice[];
     canAct: boolean;
+    /** Ask for a second tap before sending (the act-button rule). */
+    confirm?: boolean;
+    /** The connection is up. */
+    connected?: boolean;
     onact: (key: string) => void;
   }
 
-  let { age, chooser, names, you, military, choices, canAct, onact }: Props = $props();
+  let {
+    age,
+    chooser,
+    names,
+    you,
+    military,
+    choices,
+    canAct,
+    confirm = false,
+    connected = true,
+    onact
+  }: Props = $props();
 
   const chooserIsYou = $derived(you === chooser);
 
@@ -68,22 +85,42 @@
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {#each options as choice (choice.key)}
         {@const seat = asSeat(choice.starter ?? 0)}
-        <button
-          type="button"
-          class="flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-control border-2 bg-panel px-3 py-2
-            font-semibold text-fg transition-colors duration-(--dur-fast) hover:bg-panel-sunken
-            disabled:cursor-not-allowed disabled:opacity-50
-            {seat === 0 ? 'border-sun' : 'border-moon'}"
-          data-act={choice.key}
-          disabled={!canAct}
-          onclick={() => onact(choice.key)}
-        >
-          <Icon
-            name={seat === 0 ? 'crest-sun' : 'crest-moon'}
-            class="shrink-0 text-xl {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
+        {@const rule = actButtonState({
+          label: optionLabel(choice),
+          canAct,
+          connected,
+          confirm
+        })}
+        {#if rule.confirm}
+          <!-- The confirm step (online rooms): the crest colour stays on the
+               border; the button's label names the player. -->
+          <ConfirmButton
+            label={rule.label}
+            variant="secondary"
+            class="h-auto! min-h-14 min-w-0 border-2! px-3 py-2 leading-tight
+              {seat === 0 ? 'border-sun!' : 'border-moon!'}"
+            data-act={choice.key}
+            disabled={rule.disabled}
+            onConfirm={() => onact(choice.key)}
           />
-          <span class="min-w-0 truncate" dir="auto">{optionLabel(choice)}</span>
-        </button>
+        {:else}
+          <button
+            type="button"
+            class="flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-control border-2 bg-panel px-3 py-2
+              font-semibold text-fg transition-colors duration-(--dur-fast) hover:bg-panel-sunken
+              disabled:cursor-not-allowed disabled:opacity-50
+              {seat === 0 ? 'border-sun' : 'border-moon'}"
+            data-act={choice.key}
+            disabled={rule.disabled}
+            onclick={() => onact(choice.key)}
+          >
+            <Icon
+              name={seat === 0 ? 'crest-sun' : 'crest-moon'}
+              class="shrink-0 text-xl {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
+            />
+            <span class="min-w-0 truncate" dir="auto">{rule.label}</span>
+          </button>
+        {/if}
       {/each}
     </div>
     <p class="text-center text-xs text-fg-muted">{t('choices.starter.hint')}</p>

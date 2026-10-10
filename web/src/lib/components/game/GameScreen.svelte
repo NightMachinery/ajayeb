@@ -40,10 +40,15 @@
   // player's strip shows their presence, a toast says when they leave or
   // come back, and the turn bar says when the player to move is away. While
   // the connection is down the board stays inspectable, the connection pill
-  // says so and the move buttons read "Waiting for connection"; the Session
-  // sends nothing until it is back. A spectator gets the same board, read
-  // only. Online rooms have no undo, and moves take the confirm step the
-  // settings ask for.
+  // says so and the move buttons (the pending choices' included) read
+  // "Waiting for connection"; the Session sends nothing until it is back. A
+  // spectator gets the same board, read only. Online rooms have no undo, and
+  // every move takes the confirm step the settings ask for.
+  //
+  // A wonder's extra turn reads "Play again" in the turn bar for the whole
+  // turn (playAgainFrom over the events seen), and a choice the server
+  // skipped (nothing to destroy, an empty discard pile) is explained in the
+  // move toast.
   import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
@@ -593,11 +598,13 @@
         </p>
       {/if}
       <!-- ChoiceHost stays mounted through the play: besides a pending choice it
-         shows the "who starts" bar of a new age. It waits while the pass-device
-         screen is up, because its panels are modal dialogs that would cover
-         that screen and make it inert. -->
+         shows the "who starts" bar of a new age. Its bars sit here in the flow,
+         just above the turn bar, so they never cover the takeable cards or this
+         player's own strip. It waits while the pass-device screen is up,
+         because its panels are modal dialogs that would cover that screen and
+         make it inert. -->
       {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
-        <ChoiceHost {view} canAct={inputOpen} onact={act} {names} />
+        <ChoiceHost {view} canAct={inputOpen} onact={act} {names} {confirm} {connected} />
       {/if}
       {#if ui.pickFor}
         <div

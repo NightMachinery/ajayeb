@@ -14,10 +14,14 @@
     /** Card slug to its revive key, from the view's choices. */
     keys: ReadonlyMap<string, string>;
     canAct: boolean;
+    /** Ask for a second tap before sending (the act-button rule). */
+    confirm?: boolean;
+    /** The connection is up. */
+    connected?: boolean;
     onact: (key: string) => void;
   }
 
-  let { cards, keys, canAct, onact }: Props = $props();
+  let { cards, keys, canAct, confirm = false, connected = true, onact }: Props = $props();
 
   let picked = $state<string | null>(null);
   const only = $derived(keys.size === 1 ? ([...keys.values()][0] ?? null) : null);
@@ -38,6 +42,8 @@
       : t('choices.selectCard')}
     actKey={selected}
     disabled={!canAct}
+    {confirm}
+    {connected}
     {onact}
   />
 </div>

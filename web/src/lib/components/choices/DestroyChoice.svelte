@@ -17,10 +17,22 @@
     /** The opponent whose card goes (user text). */
     opponentName: string;
     canAct: boolean;
+    /** Ask for a second tap before sending (the act-button rule). */
+    confirm?: boolean;
+    /** The connection is up. */
+    connected?: boolean;
     onact: (key: string) => void;
   }
 
-  let { keys, color, opponentName, canAct, onact }: Props = $props();
+  let {
+    keys,
+    color,
+    opponentName,
+    canAct,
+    confirm = false,
+    connected = true,
+    onact
+  }: Props = $props();
 
   let picked = $state<string | null>(null);
   const cards = $derived([...keys.keys()]);
@@ -51,6 +63,8 @@
     actKey={selected}
     danger
     disabled={!canAct}
+    {confirm}
+    {connected}
     {onact}
   />
 </div>

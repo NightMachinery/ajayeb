@@ -151,7 +151,8 @@ export class GameDriver {
   /**
    * Moves take the confirm step (the settings' "Confirm moves", on in online
    * rooms by default): a move button's first tap arms it and a second one
-   * sends. The pending choice panels and Undo never take it.
+   * sends. The pending choice panels' commit buttons take it too (one rule
+   * for every act button); Undo never does.
    */
   confirm: boolean;
 
@@ -285,7 +286,7 @@ export class GameDriver {
       .locator(`${host} [data-pick=${q(choice.key)}]`)
       .filter({ visible: true });
     if ((await pick.count()) > 0) await pick.first().click();
-    await this.visible(`${host} [data-act=${q(choice.key)}]`).click();
+    await this.commit(this.visible(`${host} [data-act=${q(choice.key)}]`));
   }
 
   /** Taps a structure card and waits for its sheet. */

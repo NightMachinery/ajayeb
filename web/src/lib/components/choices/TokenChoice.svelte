@@ -15,10 +15,14 @@
     /** The Great Library's private offer rather than the board. */
     library?: boolean;
     canAct: boolean;
+    /** Ask for a second tap before sending (the act-button rule). */
+    confirm?: boolean;
+    /** The connection is up. */
+    connected?: boolean;
     onact: (key: string) => void;
   }
 
-  let { keys, library = false, canAct, onact }: Props = $props();
+  let { keys, library = false, canAct, confirm = false, connected = true, onact }: Props = $props();
 
   let picked = $state<string | null>(null);
   const tokens = $derived([...keys.keys()]);
@@ -73,6 +77,8 @@
       : t('choices.selectToken')}
     actKey={selected}
     disabled={!canAct}
+    {confirm}
+    {connected}
     {onact}
   />
 </div>

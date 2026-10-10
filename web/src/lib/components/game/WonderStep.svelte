@@ -91,13 +91,12 @@
         {#if option.choice}
           <ActionButton
             key={option.key}
-            label={connected
-              ? t('game.action.buildWonder', {
-                  wonder: wonderName(option.wonder),
-                  count: option.cost?.total ?? 0
-                })
-              : t('online.waitingConnection')}
+            label={t('game.action.buildWonder', {
+              wonder: wonderName(option.wonder),
+              count: option.cost?.total ?? 0
+            })}
             {confirm}
+            {connected}
             disabled={!canAct}
             {onact}
           />

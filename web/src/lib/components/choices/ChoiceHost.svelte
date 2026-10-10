@@ -15,10 +15,18 @@
   //
   // It decides nothing: the options are the view's choices, every action
   // button carries the choice's own key in data-act, and whether input is
-  // open is the canAct prop.
+  // open is the canAct prop. Every commit button follows the card sheet's
+  // act-button rule (game/act-button.ts): the confirm step when the room
+  // asks for it, and "Waiting for connection" while the connection is down.
+  //
+  // Its bars sit in the flow, just above the turn bar (GameScreen mounts it
+  // there), never floating over the board: they push the structure up a
+  // little rather than cover the takeable cards or this player's own strip.
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import { t } from '$lib/i18n';
+  import { settings } from '$lib/ui/settings.svelte';
   import type { Choice, GameEvent, PendingKind, View } from '$lib/wire';
+  import { needsConfirm } from '../game/card-actions';
   import Sheet from '../shell/Sheet.svelte';
   import AgeInterstitial from '../screens/AgeInterstitial.svelte';
   import DestroyChoice from './DestroyChoice.svelte';
@@ -38,14 +46,31 @@
     names?: SeatNames;
     /** The events of the action that produced view; read from the frame on screen when not given. */
     events?: readonly GameEvent[];
+    /** Ask for a second tap before sending; from the room's mode and the
+     *  settings when not given. */
+    confirm?: boolean;
+    /** The connection is up; from the page's session when not given. */
+    connected?: boolean;
   }
 
-  let { view, canAct, onact, names: namesProp, events: eventsProp }: Props = $props();
+  let {
+    view,
+    canAct,
+    onact,
+    names: namesProp,
+    events: eventsProp,
+    confirm: confirmProp,
+    connected: connectedProp
+  }: Props = $props();
 
   const ctx = tryGameContext();
   const names = $derived(namesProp ?? seatNames(ctx?.presenter.frame?.room));
   const mode = $derived(ctx?.presenter.frame?.room.mode);
   const events = $derived(eventsProp ?? ctx?.presenter.frame?.events ?? []);
+  const confirm = $derived(
+    confirmProp ?? (mode ? needsConfirm(mode, settings.value.confirmMoves) : false)
+  );
+  const connected = $derived(connectedProp ?? (ctx ? ctx.session.conn === 'open' : true));
   const you = $derived(
     view.viewer !== undefined && isYou(view.viewer, view.viewer, mode)
       ? asSeat(view.viewer)
@@ -217,6 +242,8 @@
               military={view.military}
               choices={options}
               {canAct}
+              {confirm}
+              {connected}
               onact={act}
             />
           </AgeInterstitial>
@@ -245,15 +272,26 @@
                 color={pending.color}
                 opponentName={names[otherSeat(decider)]}
                 {canAct}
+                {confirm}
+                {connected}
                 onact={act}
               />
             {:else if pending.kind === 'buildFromDiscard'}
-              <DiscardPickChoice cards={pending.cards} keys={cardKeys} {canAct} onact={act} />
+              <DiscardPickChoice
+                cards={pending.cards}
+                keys={cardKeys}
+                {canAct}
+                {confirm}
+                {connected}
+                onact={act}
+              />
             {:else}
               <TokenChoice
                 keys={tokenKeys}
                 library={pending.kind === 'pickLibraryToken'}
                 {canAct}
+                {confirm}
+                {connected}
                 onact={act}
               />
             {/if}

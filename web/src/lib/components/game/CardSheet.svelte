@@ -94,10 +94,6 @@
   const pickChoice = $derived(
     pickFor && slug ? wonderChoicesByCard(view, pickFor).get(slug) : undefined
   );
-  /** A move button's label, or the wait for the connection while it is down. */
-  function moveLabel(label: string): string {
-    return connected ? label : t('online.waitingConnection');
-  }
 </script>
 
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
@@ -183,13 +179,12 @@
               {/if}
               <ActionButton
                 key={pickChoice.key}
-                label={moveLabel(
-                  t('game.action.buildWonder', {
-                    wonder: wonderName(pickFor),
-                    count: pickChoice.cost?.total ?? 0
-                  })
-                )}
+                label={t('game.action.buildWonder', {
+                  wonder: wonderName(pickFor),
+                  count: pickChoice.cost?.total ?? 0
+                })}
                 {confirm}
+                {connected}
                 disabled={!canAct}
                 {onact}
               />
@@ -235,10 +230,9 @@
                 {#if actions.build}
                   <ActionButton
                     key={actions.build.key}
-                    label={moveLabel(
-                      t('game.action.build', { count: actions.build.cost?.total ?? 0 })
-                    )}
+                    label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
                     {confirm}
+                    {connected}
                     disabled={!canAct}
                     {onact}
                   />
@@ -254,11 +248,10 @@
                   {#if actions.discard}
                     <ActionButton
                       key={actions.discard.key}
-                      label={moveLabel(
-                        t('game.action.discard', { count: actions.discard.gain ?? 0 })
-                      )}
+                      label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}
                       variant="secondary"
                       {confirm}
+                      {connected}
                       disabled={!canAct}
                       {onact}
                     />

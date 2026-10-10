@@ -62,6 +62,10 @@
     view: View;
     /** The events of the action that produced view (frames carry them; views do not). */
     events?: GameEvent[];
+    /** The confirm step of an online room. */
+    confirm?: boolean;
+    /** The connection is down: the commit button waits for it. */
+    offline?: boolean;
   }
 
   /** The other seat choosing who starts, as the frame after a bot's or opponent's choice carries it. */
@@ -115,6 +119,21 @@
       view: viewFixture('destroy-card-seat1')
     },
     {
+      id: 'destroy-confirm',
+      kind: 'choice',
+      label: 'Destroy a card, online: tap twice to confirm (destroy-card-seat0)',
+      view: viewFixture('destroy-card-seat0'),
+      confirm: true
+    },
+    {
+      id: 'destroy-offline',
+      kind: 'choice',
+      label: 'Destroy a card, online, the connection down (destroy-card-seat0)',
+      view: viewFixture('destroy-card-seat0'),
+      confirm: true,
+      offline: true
+    },
+    {
       id: 'discard',
       kind: 'choice',
       label: 'Build from the discard pile (build-from-discard-seat0)',
@@ -149,6 +168,21 @@
       kind: 'choice',
       label: 'Age end and starter choice (choose-starter-seat0)',
       view: viewFixture('choose-starter-seat0')
+    },
+    {
+      id: 'starter-confirm',
+      kind: 'choice',
+      label: 'Starter choice, online: tap twice to confirm (choose-starter-seat0)',
+      view: viewFixture('choose-starter-seat0'),
+      confirm: true
+    },
+    {
+      id: 'starter-offline',
+      kind: 'choice',
+      label: 'Starter choice, online, the connection down (choose-starter-seat0)',
+      view: viewFixture('choose-starter-seat0'),
+      confirm: true,
+      offline: true
     },
     {
       id: 'starter-waiting',
@@ -318,13 +352,19 @@
         {#if scene.kind === 'draft'}
           <Draft view={scene.view} canAct={scene.view.choices.length > 0} {onact} {names} />
         {:else if scene.kind === 'choice'}
-          <ChoiceHost
-            view={scene.view}
-            canAct={scene.view.choices.length > 0}
-            {onact}
-            {names}
-            events={scene.events}
-          />
+          <!-- The bars sit in the flow just above the turn bar in a game, so
+               the scene puts them at its foot. -->
+          <div class="flex h-full flex-col justify-end">
+            <ChoiceHost
+              view={scene.view}
+              canAct={scene.view.choices.length > 0 && !scene.offline}
+              {onact}
+              {names}
+              events={scene.events}
+              confirm={scene.confirm ?? false}
+              connected={!scene.offline}
+            />
+          </div>
         {:else}
           <GameOver
             view={scene.view}
