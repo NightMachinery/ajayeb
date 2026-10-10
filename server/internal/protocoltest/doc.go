@@ -27,7 +27,11 @@
 //     the bots' separate equivalent), not a
 //     byte-for-byte mirror of view.go's own whitelist logic, but precise
 //     enough to catch a real leak: every id it tracks is unique within one
-//     game.
+//     game. Its leakTracker judges each state frame by the hidden set of
+//     the room version the frame carries, not of the moment the test
+//     reads it: a frame can arrive after the room has moved on, and what
+//     is hidden can grow again (the Great Library's unkept tokens go back
+//     into the box).
 //   - drive_test.go plays full games end to end (online with two distinct
 //     users plus a spectator, hot-seat with one user holding both seats,
 //     and ai with a bot seat), picking a uniformly random legal choice

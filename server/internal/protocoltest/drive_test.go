@@ -91,13 +91,13 @@ func playOnline(t *testing.T, srv *server, rng *rand.Rand) gameResult {
 	checkAll := func() {
 		snap := srv.snapshot(code)
 		var viewerSpec *engine.Seat // spectator: always nil
-		lt.check(spec, "spectator", trueHidden(&snap.State, viewerSpec))
+		lt.check(spec, "spectator", snap.Version, trueHidden(&snap.State, viewerSpec))
 		for seat, c := range bySeat {
 			var viewer *engine.Seat
 			if !snap.State.Over() {
 				viewer = seatRef(seat)
 			}
-			lt.check(c, "seat"+strconv.Itoa(seat), trueHidden(&snap.State, viewer))
+			lt.check(c, "seat"+strconv.Itoa(seat), snap.Version, trueHidden(&snap.State, viewer))
 		}
 	}
 	checkAll()
@@ -138,7 +138,7 @@ func playHotseat(t *testing.T, srv *server, rng *rand.Rand) gameResult {
 		if !snap.State.Over() {
 			viewer = seatRef(*c.latest.View.ToMove)
 		}
-		lt.check(c, "hotseat", trueHidden(&snap.State, viewer))
+		lt.check(c, "hotseat", snap.Version, trueHidden(&snap.State, viewer))
 	}
 	check()
 
@@ -175,7 +175,7 @@ func playAI(t *testing.T, srv *server, rng *rand.Rand) gameResult {
 		if !snap.State.Over() {
 			viewer = seatRef(mySeat)
 		}
-		lt.check(c, "ai-human", trueHidden(&snap.State, viewer))
+		lt.check(c, "ai-human", snap.Version, trueHidden(&snap.State, viewer))
 	}
 	check()
 

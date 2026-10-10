@@ -69,9 +69,9 @@ func TestGreatLibraryOfferStaysPrivate(t *testing.T) {
 	lt := newLeakTracker(t, snap.State.Seed)
 	checkAll := func() {
 		s := srv.snapshot(code)
-		lt.check(a, "seat0", trueHidden(&s.State, seatRef(0)))
-		lt.check(b, "seat1", trueHidden(&s.State, seatRef(1)))
-		lt.check(spec, "spectator", trueHidden(&s.State, nil))
+		lt.check(a, "seat0", s.Version, trueHidden(&s.State, seatRef(0)))
+		lt.check(b, "seat1", s.Version, trueHidden(&s.State, seatRef(1)))
+		lt.check(spec, "spectator", s.Version, trueHidden(&s.State, nil))
 	}
 	checkAll()
 
