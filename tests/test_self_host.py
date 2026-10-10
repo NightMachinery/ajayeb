@@ -430,6 +430,53 @@ class CrossCompileTests(unittest.TestCase):
         self.assertIn("./cmd/ajayeb", cmd)
         self.assertTrue(any("main.version=v9.9.9" in part for part in cmd))
 
+    def test_go_build_cross_command_is_exact(self):
+        with mock.patch.object(self_host, "find_go", return_value="/fake/go"):
+            cmd = self_host.go_build_cross_command("v9.9.9", "linux", "amd64")
+        self.assertEqual(
+            cmd,
+            [
+                "/fake/go",
+                "build",
+                "-tags",
+                "embedweb",
+                "-trimpath",
+                "-ldflags",
+                "-s -w -X main.version=v9.9.9",
+                "-o",
+                str(self_host.DIST_DIR / "ajayeb-linux-amd64"),
+                "./cmd/ajayeb",
+            ],
+        )
+
+    def test_cross_build_runs_the_go_step_in_server_dir_with_the_cross_env(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp) / "dist"
+            steps: list = []
+
+            def fake_step(cmd, *, cwd=self_host.ROOT, env=None, kind="build"):
+                steps.append((cmd, cwd, env))
+                if env is not None:
+                    self_host.dist_binary_path("linux", "amd64").write_text("bin")
+
+            with mock.patch.object(self_host, "DIST_DIR", dist), mock.patch.multiple(
+                self_host, run_build_step=mock.DEFAULT, sync_webdist=mock.DEFAULT, find_go=mock.DEFAULT
+            ) as mocks:
+                mocks["run_build_step"].side_effect = fake_step
+                mocks["find_go"].return_value = "/fake/go"
+                out = self_host.cross_build("v1", "linux", "amd64")
+                self.assertEqual(out, dist / "ajayeb-linux-amd64")
+                self.assertEqual(len(steps), 3)
+                self.assertIn("pnpm", steps[0][0][-1])
+                self.assertIn("pnpm -C web build", steps[1][0][-1])
+                go_cmd, go_cwd, go_env = steps[2]
+                self.assertEqual(go_cmd[0], "/fake/go")
+                self.assertEqual(go_cwd, self_host.SERVER_DIR)
+                self.assertEqual(go_env, {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "amd64"})
+                mocks["sync_webdist"].assert_called_once_with()
+
     def test_go_build_cross_env_disables_cgo_and_sets_target(self):
         self.assertEqual(
             self_host.go_build_cross_env("linux", "arm64"), {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "arm64"}
@@ -534,6 +581,30 @@ class DeployChoiceTests(unittest.TestCase):
         with mock.patch("self_host.subprocess.run") as run:
             run.return_value = subprocess.CompletedProcess([], returncode=0)
             self.assertEqual(self_host.determine_deploy_command("user@example.host", "ajayeb"), "redeploy")
+
+
+    def test_determine_deploy_command_raises_when_ssh_fails(self):
+        with mock.patch("self_host.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], returncode=255, stderr="connection refused")
+            with self.assertRaisesRegex(RuntimeError, "connection refused"):
+                self_host.determine_deploy_command("user@example.host", "ajayeb")
+
+
+class ShipTargetValidationTests(unittest.TestCase):
+    def test_accepts_plain_target_and_dir(self):
+        self_host.validate_ship_target("user@example.host", "apps/ajayeb")
+
+    def test_refuses_option_like_or_unsafe_values(self):
+        for target, remote_dir in [
+            ("-oProxyCommand=x", "ajayeb"),
+            ("user@example.host", "-rf"),
+            ("user@example.host", "a dir"),
+            ("user@example.host", "x;rm"),
+            ("user@example.host", ""),
+            ("user @example.host", "ajayeb"),
+        ]:
+            with self.assertRaises(RuntimeError, msg=(target, remote_dir)):
+                self_host.validate_ship_target(target, remote_dir)
 
 
 class PrebuiltBinaryTests(unittest.TestCase):

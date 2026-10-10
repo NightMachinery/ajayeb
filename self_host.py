@@ -735,9 +735,18 @@ def remote_config_exists_command(target: str, remote_dir: str) -> list[str]:
 
 
 def determine_deploy_command(target: str, remote_dir: str) -> str:
-    """'redeploy' when the remote already has a config, else 'setup'."""
+    """'redeploy' when the remote already has a config, else 'setup'.
+
+    `test -e` exits 1 when the file is missing; any other failure (ssh exits
+    255 when it cannot connect) is an error, not a reason to run setup.
+    """
     result = subprocess.run(remote_config_exists_command(target, remote_dir), capture_output=True, text=True)
-    return "redeploy" if result.returncode == 0 else "setup"
+    if result.returncode == 0:
+        return "redeploy"
+    if result.returncode == 1:
+        return "setup"
+    detail = result.stderr.strip() or f"exit {result.returncode}"
+    raise RuntimeError(f"could not check for a remote config on {target}: {detail}")
 
 
 def remote_deploy_command(target: str, remote_dir: str, deploy_command: str, url: str | None) -> list[str]:
@@ -789,6 +798,22 @@ def remember_ship_target(target: str, remote_dir: str) -> None:
     save_config(config)
 
 
+def validate_ship_target(target: str, remote_dir: str) -> None:
+    """Refuse a TARGET or DIR that ssh or rsync could misread.
+
+    A leading '-' would be parsed as an ssh or rsync option. DIR must also be
+    shell-safe as written: rsync 3.2.4 and later protect remote arguments by
+    default, so a shell-quoted DIR would reach the remote with its quotes as
+    part of the name, while older rsync passes it through a shell.
+    """
+    if not target or target.startswith("-") or any(c.isspace() for c in target):
+        raise RuntimeError(f"invalid ship TARGET {target!r}: use an SSH destination such as user@example.host")
+    if remote_dir.startswith("-") or not all(c.isascii() and (c.isalnum() or c in "._-/") for c in remote_dir or "\0"):
+        raise RuntimeError(
+            f"invalid --remote-dir {remote_dir!r}: use letters, digits and . _ - / only, relative to the remote home"
+        )
+
+
 def resolve_ship_target(target: str | None, remote_dir: str | None) -> ShipTarget:
     existing = load_config()
     remembered = existing.ship if existing else None
@@ -798,6 +823,7 @@ def resolve_ship_target(target: str | None, remote_dir: str | None) -> ShipTarge
         target = remembered.target
     if remote_dir is None:
         remote_dir = remembered.remote_dir if remembered else DEFAULT_REMOTE_DIR
+    validate_ship_target(target, remote_dir)
     return ShipTarget(target, remote_dir)
 
 

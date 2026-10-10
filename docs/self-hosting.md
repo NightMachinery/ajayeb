@@ -18,8 +18,9 @@ recorded yet.
   build, the webdist sync and the Go build, and installs `PATH` instead; see
   "Deploying from another machine" below.
 - `redeploy [url] [--prebuilt PATH]`: rebuilds and restarts for a new
-  version. Archives the current `data/rooms` directory first, then does the
-  same steps as `setup` without the dependency dedupe pass. `--prebuilt`
+  version. Does the same steps as `setup` without the dependency dedupe
+  pass, and archives the current `data/rooms` directory after stopping the
+  server and before installing the new binary. `--prebuilt`
   works the same way as for `setup`.
 - `start [url]`: starts the already-built server. Builds it first only if
   `.self-host/bin/ajayeb` does not exist yet.
@@ -182,7 +183,9 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
 `ship` remembers the last `TARGET` and `DIR` it used in the local, gitignored
 `.self-host/config.json`, so a later `ship` can omit them and reuse what was
 remembered. Every argument that reaches a remote shell (the directory, the
-url) is shell-quoted.
+url) is shell-quoted. `ship` refuses a `TARGET` or `DIR` that starts with
+`-`, and a `DIR` with characters outside letters, digits and `. _ - /`,
+because rsync would otherwise pass it to the remote differently from ssh.
 
 `--prebuilt PATH` can also be used directly, without `ship`, by anyone who
 builds the binary some other way: `setup`/`redeploy --prebuilt PATH` check
