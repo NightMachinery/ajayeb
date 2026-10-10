@@ -153,6 +153,23 @@ export class WsTransport implements Transport {
     this.#setStatus({ state: 'closed', attempt: this.#status.attempt });
   }
 
+  reconnect(): void {
+    if (this.#closed) return;
+    this.#clearTimers();
+    const socket = this.#socket;
+    this.#socket = null;
+    if (socket) {
+      this.#detach(socket);
+      try {
+        socket.close(NORMAL_CLOSURE);
+      } catch {
+        // Closing a socket that never opened can throw in some browsers.
+      }
+    }
+    this.#setStatus({ state: 'reconnecting', attempt: 0 });
+    this.#connect();
+  }
+
   #setStatus(status: TransportStatus): void {
     const s = this.#status;
     if (s.state === status.state && s.attempt === status.attempt && s.fatal === status.fatal)

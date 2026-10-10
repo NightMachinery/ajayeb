@@ -17,6 +17,21 @@
 // (`reject rate` with its seq: not handled, so its seq is not used up) is
 // sent again unchanged after a short pause, a few times, before the
 // Session gives up and shows the notice.
+//
+// In a bot room an undo can cross the bot's answer on the wire: it names
+// the version on screen as its base, and the bot's move reaches the room
+// first, so the room refuses it as stale. Only the bot moves there while
+// the player's undo is pending, so the Session sends the undo once more
+// with the fresh version (same seq, which a refusal does not use up), and
+// the player's press is not lost.
+//
+// The display name travels in hello only. setName() changes it for the
+// rest of the page's life; when the socket has already said hello under
+// another name it asks the transport for a fresh connection.
+//
+// A rematch request remembers that this player asked (rematchAsked), so
+// the page follows the rematch code to its room. A code that arrives
+// without asking (the other player asked) waits for the player to choose.
 
 import { catalogMatches } from '$lib/catalog';
 import type {
@@ -35,7 +50,7 @@ import type {
   YouInfo
 } from '$lib/wire';
 import { ProtocolVersion } from '$lib/wire/types.gen';
-import type { Identity } from './identity';
+import { cleanName, type Identity } from './identity';
 import { errorMessage, rejectMessage, type NoticeKey } from './messages';
 import type { SavedRooms } from './rooms.svelte';
 import {
@@ -134,6 +149,8 @@ export class Session {
   roomError = $state<string | null>(null);
   /** The code of the rematch room, once the server has made one. */
   rematchCode = $state<string | null>(null);
+  /** This player asked for the rematch (or chose to follow it). */
+  rematchAsked = $state(false);
 
   room: RoomInfo | null = $derived(this.frame?.room ?? null);
   you: YouInfo | null = $derived(this.frame?.you ?? null);
@@ -179,10 +196,17 @@ export class Session {
   #frames = new Listeners<State>();
   #offs: Unsubscribe[] = [];
   #closed = false;
+  /** The name the current socket said hello with; null before hello. */
+  #helloName: string | null = null;
+  /** A bot-room undo refused as stale, waiting for the fresh state. */
+  #staleUndo: PendingRequest | null = null;
+  /** The pending undo was sent again once already. */
+  #undoResent = false;
 
   constructor(opts: SessionOptions) {
     this.#transport = opts.transport;
-    this.#identity = opts.identity;
+    // A copy: setName changes this page's name, never the caller's object.
+    this.#identity = { ...opts.identity };
     this.#rooms = opts.rooms ?? null;
     this.#slowMs = opts.slowMs ?? 300;
     // The server refills its frame bucket at 10 frames a second.
@@ -203,6 +227,23 @@ export class Session {
   /** The seq of the last request sent. */
   get seq(): number {
     return this.#seq;
+  }
+
+  /** The display name this page says hello with. */
+  get name(): string {
+    return this.#identity.name;
+  }
+
+  /**
+   * Changes the display name the server gives a seat this user takes. The
+   * name goes only in hello, so a socket that already said hello under
+   * another name is replaced by a fresh one (the room is joined again).
+   */
+  setName(name: string): void {
+    const clean = cleanName(name);
+    if (clean === this.#identity.name) return;
+    this.#identity.name = clean;
+    if (this.#helloName !== null && this.#helloName !== clean) this.#transport.reconnect?.();
   }
 
   /** Calls fn with every accepted state frame (and at once with the current one). */
@@ -281,9 +322,19 @@ export class Session {
     if (this.code && this.#welcomed) this.#send({ t: 'resync', code: this.code });
   }
 
-  /** Asks for a rematch once the game is over; the code arrives in rematchCode. */
+  /**
+   * Asks for a rematch once the game is over; the code arrives in
+   * rematchCode. Asking again answers the same code, so a player who saw
+   * the other's code asks too. A spectator cannot ask: it follows a code
+   * the players already made.
+   */
   rematch(): void {
-    if (this.code && this.#welcomed) this.#send({ t: 'rematch', code: this.code });
+    if (!this.code) return;
+    const spectator = this.frame !== null && this.frame.you.seats.length === 0;
+    if (spectator && !this.rematchCode) return;
+    this.rematchAsked = true;
+    // Once welcomed again after a drop, #resume asks.
+    if (!spectator && this.#welcomed) this.#send({ t: 'rematch', code: this.code });
   }
 
   /**
@@ -323,19 +374,26 @@ export class Session {
 
   #request(frame: Act | Undo): void {
     this.#seq = frame.seq;
-    const pending: PendingRequest = { frame, sentAt: this.#now() };
-    this.pending = pending;
+    this.#undoResent = false;
+    this.#staleUndo = null;
+    this.#track({ frame, sentAt: this.#now() });
     this.slow = false;
     this.notice = null;
-    this.#rateTries = 0;
-    clearTimeout(this.#rateTimer);
-    clearTimeout(this.#slowTimer);
-    this.#slowTimer = setTimeout(() => {
-      if (this.pending === pending) this.slow = true;
-    }, this.#slowMs);
     // When the link is down this sends nothing; the request goes out again
     // after the reconnect (#resume).
     this.#send(frame);
+  }
+
+  // Makes `pending` the request in flight, with its slow timer.
+  #track(pending: PendingRequest): void {
+    this.pending = pending;
+    this.#rateTries = 0;
+    clearTimeout(this.#rateTimer);
+    clearTimeout(this.#slowTimer);
+    const left = Math.max(0, this.#slowMs - (this.#now() - pending.sentAt));
+    this.#slowTimer = setTimeout(() => {
+      if (this.pending === pending) this.slow = true;
+    }, left);
   }
 
   #settle(): void {
@@ -345,6 +403,7 @@ export class Session {
     this.#rateTimer = undefined;
     this.pending = null;
     this.slow = false;
+    this.#staleUndo = null;
   }
 
   #leaveRoom(): void {
@@ -352,6 +411,7 @@ export class Session {
     this.frame = null;
     this.view = null;
     this.rematchCode = null;
+    this.rematchAsked = false;
     this.roomError = null;
     this.notice = null;
     this.#settle();
@@ -365,6 +425,7 @@ export class Session {
       case 'open':
         // Say hello on every new socket; 'open' for the player comes with welcome.
         this.#welcomed = false;
+        this.#helloName = this.#identity.name;
         this.#send({
           t: 'hello',
           v: ProtocolVersion,
@@ -376,10 +437,12 @@ export class Session {
       case 'reconnecting':
       case 'offline':
         this.#welcomed = false;
+        this.#helloName = null;
         this.conn = status.state;
         break;
       case 'closed':
         this.#welcomed = false;
+        this.#helloName = null;
         this.conn = 'offline';
         if (status.fatal) this.#fail(status.fatal);
         break;
@@ -427,6 +490,11 @@ export class Session {
         if (this.pending && msg.seq === this.pending.frame.seq) {
           if (msg.code === 'rate' && this.#rateTries < this.#rateRetries) {
             this.#retryAfterRate(this.pending);
+            return;
+          }
+          if (msg.code === 'stale' && this.#mayResendUndo(this.pending)) {
+            // The fresh state follows at once; #onState sends the undo again.
+            this.#staleUndo = this.pending;
             return;
           }
           this.#settle();
@@ -491,7 +559,36 @@ export class Session {
     ) {
       this.#settle();
     }
+    const stale = this.#staleUndo;
+    if (stale && this.pending === stale) {
+      this.#staleUndo = null;
+      this.#resendUndo(stale, frame);
+    }
     this.#frames.emit(frame);
+  }
+
+  // Whether a refused undo may go out once more: an undo of a bot room,
+  // not sent again yet. Only the bot moves while the player's undo is
+  // pending, so a stale base there means the bot's answer came first.
+  #mayResendUndo(pending: PendingRequest): boolean {
+    return pending.frame.t === 'undo' && this.frame?.room.mode === 'ai' && !this.#undoResent;
+  }
+
+  // The fresh state after a stale undo: when the room moved on (the bot's
+  // answer to the move being undone) and still takes an undo, the same
+  // request goes out with the fresh version as its base; otherwise the
+  // refusal shows as any other would.
+  #resendUndo(stale: PendingRequest, frame: State): void {
+    const undo = stale.frame;
+    if (undo.t === 'undo' && frame.version > undo.base && frame.canUndo) {
+      this.#undoResent = true;
+      const again: Undo = { ...undo, base: frame.version };
+      this.#track({ frame: again, sentAt: stale.sentAt });
+      this.#send(again);
+      return;
+    }
+    this.#settle();
+    this.notice = { kind: 'reject', code: 'stale', message: rejectMessage('stale') };
   }
 
   // After welcome: carry on with what the session was doing.
@@ -506,6 +603,12 @@ export class Session {
       // The server answers in order: the fresh state of the join, then the
       // ack or the refusal of the re-sent request.
       if (this.pending) this.#send(this.pending.frame);
+      // A rematch asked while the link was down (or whose answer was lost):
+      // asking again answers the same code.
+      const spectator = this.frame !== null && this.frame.you.seats.length === 0;
+      if (this.rematchAsked && !this.rematchCode && !spectator) {
+        this.#send({ t: 'rematch', code: intent.code });
+      }
     }
   }
 }

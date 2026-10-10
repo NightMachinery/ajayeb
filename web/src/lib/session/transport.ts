@@ -39,6 +39,12 @@ export interface Transport {
   onState(fn: (status: TransportStatus) => void): Unsubscribe;
   /** Closes the link for good. */
   close(): void;
+  /**
+   * Drops the current connection and opens a new one at once, so the
+   * Session says hello again (with a new display name). Optional: a
+   * transport without it keeps its connection.
+   */
+  reconnect?(): void;
 }
 
 /**

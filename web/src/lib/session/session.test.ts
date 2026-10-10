@@ -59,6 +59,36 @@ function joined(opts: { rooms?: SavedRooms } = {}) {
   return s;
 }
 
+/** The recorded play frame as a room of another mode, seen from `seats`. */
+function modeFrame(
+  mode: 'ai' | 'online',
+  opts: { code?: string; version?: number; seats?: number[]; canUndo?: boolean } = {}
+): State {
+  const f = playFrame(opts.code ?? 'H8TQ4R', opts.version ?? 10);
+  const seats = opts.seats ?? [0];
+  f.room = {
+    ...f.room,
+    mode,
+    seats: f.room.seats.map((s) => ({
+      ...s,
+      you: seats.includes(s.seat),
+      ...(mode === 'ai' && s.seat === 1 ? { kind: 'bot' as const, bot: 'easy' as const } : {})
+    }))
+  };
+  f.you = { seats, canAct: seats.includes(f.view.toMove ?? -1) };
+  f.canUndo = opts.canUndo ?? mode === 'ai';
+  return f;
+}
+
+/** A session joined to a room of another mode at version 10. */
+function joinedAs(mode: 'ai' | 'online', seats: number[] = [0]) {
+  const s = setup();
+  connect(s.transport);
+  s.session.join('H8TQ4R');
+  s.transport.receive(modeFrame(mode, { seats }));
+  return s;
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -482,5 +512,157 @@ describe('Session: rooms', () => {
     expect(transport.closed).toBe(true);
     transport.receive(playFrame('H8TQ4R', 11));
     expect(session.version).toBe(10);
+  });
+});
+
+describe('Session: an undo that crosses the bot answer', () => {
+  it('sends a bot-room undo refused as stale once more with the fresh version', () => {
+    const { session, transport } = joinedAs('ai');
+    expect(session.undo()).toBe(true);
+    expect(transport.last()).toEqual({ t: 'undo', code: 'H8TQ4R', seq: 1, base: 10 });
+    // The bot's answer reached the room first.
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: 'x' });
+    expect(session.pending).not.toBeNull();
+    expect(session.notice).toBeNull();
+    transport.receive(modeFrame('ai', { version: 11 }));
+    expect(transport.last()).toEqual({ t: 'undo', code: 'H8TQ4R', seq: 1, base: 11 });
+    expect(session.pending?.frame).toEqual({ t: 'undo', code: 'H8TQ4R', seq: 1, base: 11 });
+    expect(session.notice).toBeNull();
+    transport.receive({ ...modeFrame('ai', { version: 12 }), ack: { clientId: 'tab-1', seq: 1 } });
+    expect(session.pending).toBeNull();
+    expect(session.seq).toBe(1);
+  });
+
+  it('sends it again only once, then shows the refusal', () => {
+    const { session, transport } = joinedAs('ai');
+    session.undo();
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: 'x' });
+    transport.receive(modeFrame('ai', { version: 11 }));
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: 'x' });
+    expect(session.pending).toBeNull();
+    expect(session.notice?.message).toBe('session.reject.stale');
+    transport.receive(modeFrame('ai', { version: 12 }));
+    expect(transport.sentOf('undo')).toHaveLength(2);
+  });
+
+  it('shows the refusal when the fresh state takes no undo', () => {
+    const { session, transport } = joinedAs('ai');
+    session.undo();
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: 'x' });
+    transport.receive(modeFrame('ai', { version: 11, canUndo: false }));
+    expect(transport.sentOf('undo')).toHaveLength(1);
+    expect(session.pending).toBeNull();
+    expect(session.notice?.code).toBe('stale');
+  });
+
+  it('never sends again outside a bot room', () => {
+    const { session, transport } = joined();
+    session.undo();
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: 'x' });
+    expect(session.pending).toBeNull();
+    expect(session.notice?.message).toBe('session.reject.stale');
+    transport.receive(playFrame('H8TQ4R', 11));
+    expect(transport.sentOf('undo')).toHaveLength(1);
+  });
+
+  it('a stale act is never sent again', () => {
+    const { session, transport } = joinedAs('ai');
+    const key = session.view!.choices[0]!.key;
+    session.act(key);
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: 'x' });
+    transport.receive(modeFrame('ai', { version: 11 }));
+    expect(transport.sentOf('act')).toHaveLength(1);
+    expect(session.pending).toBeNull();
+  });
+});
+
+describe('Session: the display name', () => {
+  it('says hello with a name set before the socket opened, without a new connection', () => {
+    const { session, transport } = setup();
+    session.setName('  Roxana ');
+    expect(session.name).toBe('Roxana');
+    transport.setState('open');
+    expect(transport.sentOf('hello')[0]?.name).toBe('Roxana');
+    expect(transport.reconnects).toBe(0);
+  });
+
+  it('asks for a fresh connection when hello already went out under another name', () => {
+    const { session, transport } = joined();
+    session.setName('Sara');
+    expect(transport.reconnects).toBe(0);
+    session.setName('Roxana');
+    expect(transport.reconnects).toBe(1);
+    expect(session.conn).toBe('reconnecting');
+    transport.sent.length = 0;
+    connect(transport);
+    expect(transport.sent).toEqual([
+      { t: 'hello', v: ProtocolVersion, token: identity.token, name: 'Roxana', clientId: 'tab-1' },
+      { t: 'join', code: 'H8TQ4R' }
+    ]);
+  });
+});
+
+describe('Session: online rooms', () => {
+  it('joins by code, case-insensitively, and plays from its seat', () => {
+    const { session, transport } = setup();
+    connect(transport);
+    session.join('h8tq4r');
+    expect(transport.last()).toEqual({ t: 'join', code: 'H8TQ4R' });
+    transport.receive(modeFrame('online', { seats: [0] }));
+    expect(session.room?.mode).toBe('online');
+    expect(session.you?.seats).toEqual([0]);
+  });
+
+  it('a spectator never acts, never undoes and never asks for a rematch', () => {
+    const { session, transport } = joinedAs('online', []);
+    expect(session.canAct).toBe(false);
+    expect(session.canUndo).toBe(false);
+    expect(session.act(session.view!.choices[0]?.key ?? 'x')).toBe(false);
+    session.rematch();
+    expect(transport.sentOf('rematch')).toEqual([]);
+    expect(session.rematchAsked).toBe(false);
+  });
+
+  it('a spectator follows a rematch the players made, without asking the server', () => {
+    const { session, transport } = joinedAs('online', []);
+    transport.receive({ t: 'created', code: 'NEXT22' });
+    expect(session.rematchCode).toBe('NEXT22');
+    expect(session.rematchAsked).toBe(false);
+    session.rematch();
+    expect(session.rematchAsked).toBe(true);
+    expect(transport.sentOf('rematch')).toEqual([]);
+  });
+
+  it('a rematch code the other player asked for waits until this player asks too', () => {
+    const { session, transport } = joinedAs('online');
+    transport.receive({ t: 'created', code: 'NEXT22' });
+    expect(session.rematchCode).toBe('NEXT22');
+    expect(session.rematchAsked).toBe(false);
+    session.rematch();
+    expect(session.rematchAsked).toBe(true);
+    expect(transport.last()).toEqual({ t: 'rematch', code: 'H8TQ4R' });
+  });
+
+  it('asks again after a reconnect when the rematch answer was lost', () => {
+    const { session, transport } = joinedAs('online');
+    transport.setState('reconnecting', { attempt: 1 });
+    session.rematch();
+    expect(session.rematchAsked).toBe(true);
+    expect(transport.sentOf('rematch')).toEqual([]);
+    connect(transport);
+    expect(transport.sent.slice(-2)).toEqual([
+      { t: 'join', code: 'H8TQ4R' },
+      { t: 'rematch', code: 'H8TQ4R' }
+    ]);
+  });
+
+  it('joining the rematch room forgets the old rematch', () => {
+    const { session, transport } = joinedAs('online');
+    session.rematch();
+    transport.receive({ t: 'created', code: 'NEXT22' });
+    session.join('NEXT22');
+    expect(session.rematchCode).toBeNull();
+    expect(session.rematchAsked).toBe(false);
+    expect(transport.last()).toEqual({ t: 'join', code: 'NEXT22' });
   });
 });

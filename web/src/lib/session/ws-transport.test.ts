@@ -289,6 +289,29 @@ describe('WsTransport', () => {
     expect(network.listeners()).toBe(0);
   });
 
+  it('reconnect() drops the socket and opens a new one at once', () => {
+    const { transport, sockets, states, current } = setup();
+    current().open();
+    const first = current();
+    first.message(WELCOME);
+    transport.reconnect();
+    expect(first.closedWith).toBe(1000);
+    // The old socket's own close event no longer reaches the transport.
+    expect(first.onclose).toBeNull();
+    expect(sockets).toHaveLength(2);
+    expect(states.at(-1)?.state).toBe('reconnecting');
+    current().open();
+    expect(states.at(-1)?.state).toBe('open');
+  });
+
+  it('reconnect() after close() does nothing', () => {
+    const { transport, sockets, current } = setup();
+    current().open();
+    transport.close();
+    transport.reconnect();
+    expect(sockets).toHaveLength(1);
+  });
+
   it('gives up on a socket that does not open in time', () => {
     const { sockets, states, current } = setup();
     const first = current();

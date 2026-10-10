@@ -45,6 +45,15 @@ export class ScriptedTransport implements Transport {
     this.setState('closed');
   }
 
+  /** How many times the client asked for a fresh connection. */
+  reconnects = 0;
+
+  /** The client asked for a fresh connection: the link drops; the test opens it again. */
+  reconnect(): void {
+    this.reconnects++;
+    this.setState('reconnecting');
+  }
+
   /** Moves the link to a state. */
   setState(state: LinkState, extra: Partial<TransportStatus> = {}): void {
     this.#status = { state, attempt: 0, ...extra };
