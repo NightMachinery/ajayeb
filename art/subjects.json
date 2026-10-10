@@ -1,0 +1,438 @@
+{
+  "card/lumber-yard": {
+    "subject": "woodcutters felling and stacking cedar logs beside a stream",
+    "accent": "brown"
+  },
+  "card/stone-pit": {
+    "subject": "quarrymen levering pale limestone blocks from an open pit",
+    "accent": "brown"
+  },
+  "card/clay-pool": {
+    "subject": "workers wading a shallow clay pool, scooping wet clay into baskets",
+    "accent": "brown"
+  },
+  "card/logging-camp": {
+    "subject": "a timber camp with felled cypress trunks roped for hauling down a hillside",
+    "accent": "brown"
+  },
+  "card/quarry": {
+    "subject": "masons chiselling stone slabs from a terraced cliff face",
+    "accent": "brown"
+  },
+  "card/clay-pit": {
+    "subject": "a deep clay pit with workers hauling laden baskets up a ramp",
+    "accent": "brown"
+  },
+  "card/glassworks": {
+    "subject": "a glassblower shaping a molten gather over a small brick furnace",
+    "accent": "grey"
+  },
+  "card/press": {
+    "subject": "papyrus reed being pressed and layered into sheets on a riverside mat",
+    "accent": "grey"
+  },
+  "card/stable": {
+    "subject": "grooms leading saddled horses from a timber stable yard",
+    "accent": "red"
+  },
+  "card/garrison": {
+    "subject": "spearmen standing watch at a small mudbrick garrison gate",
+    "accent": "red"
+  },
+  "card/palisade": {
+    "subject": "workers raising sharpened timber stakes into a palisade wall",
+    "accent": "red"
+  },
+  "card/guard-tower": {
+    "subject": "a lone sentinel atop a square watchtower scanning the horizon",
+    "accent": "red"
+  },
+  "card/scriptorium": {
+    "subject": "a scribe inking a scroll at a slanted desk lined with pigment pots",
+    "accent": "green"
+  },
+  "card/workshop": {
+    "subject": "an artisan carving wooden gears and tools at a cluttered bench",
+    "accent": "green"
+  },
+  "card/pharmacist": {
+    "subject": "an apothecary grinding herbs with mortar and pestle among jars",
+    "accent": "green"
+  },
+  "card/apothecary": {
+    "subject": "a healer measuring tinctures into glass vials by lamplight",
+    "accent": "green"
+  },
+  "card/tavern": {
+    "subject": "travellers sharing wine and bread at a lantern-lit tavern table",
+    "accent": "yellow"
+  },
+  "card/stone-reserve": {
+    "subject": "a merchant weighing stone blocks beside a laden ox-cart",
+    "accent": "yellow"
+  },
+  "card/clay-reserve": {
+    "subject": "a merchant stacking clay bricks beside scales and coin pouches",
+    "accent": "yellow"
+  },
+  "card/wood-reserve": {
+    "subject": "a merchant measuring bundled timber beside a loaded cart",
+    "accent": "yellow"
+  },
+  "card/theater": {
+    "subject": "masked performers on a small open-air stage before a seated crowd",
+    "accent": "blue"
+  },
+  "card/altar": {
+    "subject": "a quiet garden altar wreathed with incense smoke and offerings",
+    "accent": "blue"
+  },
+  "card/baths": {
+    "subject": "bathers relaxing beneath a tiled arcade around a steaming pool",
+    "accent": "blue"
+  },
+  "card/sawmill": {
+    "subject": "two sawyers working a long saw through a thick cedar beam",
+    "accent": "brown"
+  },
+  "card/shelf-quarry": {
+    "subject": "terraced quarry shelves with stonecutters hauling larger blocks",
+    "accent": "brown"
+  },
+  "card/brickyard": {
+    "subject": "rows of sun-drying clay bricks tended by a busy brickyard crew",
+    "accent": "brown"
+  },
+  "card/glass-blower": {
+    "subject": "a master glassblower turning a glowing bubble on an iron pipe",
+    "accent": "grey"
+  },
+  "card/drying-room": {
+    "subject": "papyrus sheets hung to dry in slatted sunlight inside a workshop",
+    "accent": "grey"
+  },
+  "card/horse-breeders": {
+    "subject": "a breeder leading mares and foals across a fenced paddock",
+    "accent": "red"
+  },
+  "card/barracks": {
+    "subject": "soldiers drilling with spears in a walled barracks courtyard",
+    "accent": "red"
+  },
+  "card/walls": {
+    "subject": "masons fitting massive stone blocks into a rising city wall",
+    "accent": "red"
+  },
+  "card/archery-range": {
+    "subject": "archers practising at straw targets along a sandy range",
+    "accent": "red"
+  },
+  "card/parade-ground": {
+    "subject": "ranks of soldiers marching in formation on an open parade ground",
+    "accent": "red"
+  },
+  "card/school": {
+    "subject": "children seated on mats reciting before a teacher and his scroll",
+    "accent": "green"
+  },
+  "card/laboratory": {
+    "subject": "an alchemist pouring coloured liquid between glass vessels",
+    "accent": "green"
+  },
+  "card/dispensary": {
+    "subject": "a physician dispensing remedies from a shelf of labelled jars",
+    "accent": "green"
+  },
+  "card/library": {
+    "subject": "scholars browsing tall shelves of scrolls in a quiet reading hall",
+    "accent": "green"
+  },
+  "card/brewery": {
+    "subject": "brewers ladling foaming ale from great copper vats",
+    "accent": "yellow"
+  },
+  "card/forum": {
+    "subject": "merchants bartering goods beneath awnings in a bustling forum",
+    "accent": "yellow"
+  },
+  "card/caravansery": {
+    "subject": "camels and traders resting in the courtyard of a caravansery",
+    "accent": "yellow"
+  },
+  "card/customs-house": {
+    "subject": "an official weighing goods beside stacked crates at a customs post",
+    "accent": "yellow"
+  },
+  "card/temple": {
+    "subject": "worshippers gathered beneath the columns of a small domed temple",
+    "accent": "blue"
+  },
+  "card/statue": {
+    "subject": "sculptors unveiling a tall stone statue in a quiet courtyard",
+    "accent": "blue"
+  },
+  "card/courthouse": {
+    "subject": "elders deliberating beneath the arches of a columned courthouse",
+    "accent": "blue"
+  },
+  "card/aqueduct": {
+    "subject": "a stone aqueduct striding across a valley carrying flowing water",
+    "accent": "blue"
+  },
+  "card/rostrum": {
+    "subject": "an orator addressing a gathered crowd from a raised stone rostrum",
+    "accent": "blue"
+  },
+  "card/circus": {
+    "subject": "charioteers racing around a long oval circus track",
+    "accent": "red"
+  },
+  "card/arsenal": {
+    "subject": "armourers forging spear-points and shields in a busy arsenal",
+    "accent": "red"
+  },
+  "card/siege-workshop": {
+    "subject": "carpenters assembling a great wooden siege engine",
+    "accent": "red"
+  },
+  "card/fortifications": {
+    "subject": "masons capping a thick fortress wall with crenellated battlements",
+    "accent": "red"
+  },
+  "card/pretorium": {
+    "subject": "officers conferring over a map table inside a commander's tent",
+    "accent": "red"
+  },
+  "card/academy": {
+    "subject": "philosophers debating beneath the columns of a domed academy",
+    "accent": "green"
+  },
+  "card/university": {
+    "subject": "students and masters gathered around a globe in a lecture hall",
+    "accent": "green"
+  },
+  "card/study": {
+    "subject": "a scholar surrounded by instruments and scrolls in a quiet study",
+    "accent": "green"
+  },
+  "card/observatory": {
+    "subject": "astronomers charting the night sky from a domed observatory",
+    "accent": "green"
+  },
+  "card/arena": {
+    "subject": "spectators cheering from tiered seats around a sunlit arena",
+    "accent": "yellow"
+  },
+  "card/chamber-of-commerce": {
+    "subject": "merchants and clerks conferring over ledgers in a grand commerce hall",
+    "accent": "yellow"
+  },
+  "card/port": {
+    "subject": "dockworkers loading amphorae onto ships at a busy harbour port",
+    "accent": "yellow"
+  },
+  "card/lighthouse": {
+    "subject": "a tall lighthouse beaming over a rocky harbour at dusk",
+    "accent": "yellow"
+  },
+  "card/armory": {
+    "subject": "quartermasters stacking polished shields and helmets in an armory",
+    "accent": "yellow"
+  },
+  "card/palace": {
+    "subject": "courtiers gathered beneath the gilded arches of a royal palace hall",
+    "accent": "blue"
+  },
+  "card/gardens": {
+    "subject": "cypress-lined terraces and fountains in a tranquil palace garden",
+    "accent": "blue"
+  },
+  "card/pantheon": {
+    "subject": "a domed pantheon ringed with columns beneath a painted sky",
+    "accent": "blue"
+  },
+  "card/town-hall": {
+    "subject": "elders assembled beneath the high dome of a city town hall",
+    "accent": "blue"
+  },
+  "card/senate": {
+    "subject": "robed senators seated in a semicircular senate chamber",
+    "accent": "blue"
+  },
+  "card/obelisk": {
+    "subject": "a tall carved obelisk standing alone in a sunlit plaza",
+    "accent": "blue"
+  },
+  "card/merchants-guild": {
+    "subject": "guild merchants counting coin and goods around a long table",
+    "accent": "purple"
+  },
+  "card/shipowners-guild": {
+    "subject": "shipwrights and owners inspecting a vessel at a busy dry dock",
+    "accent": "purple"
+  },
+  "card/builders-guild": {
+    "subject": "master builders reviewing a monument's plans amid scaffolding",
+    "accent": "purple"
+  },
+  "card/magistrates-guild": {
+    "subject": "robed magistrates conferring beneath the arches of a civic hall",
+    "accent": "purple"
+  },
+  "card/scientists-guild": {
+    "subject": "scholars comparing instruments and charts in a domed study hall",
+    "accent": "purple"
+  },
+  "card/moneylenders-guild": {
+    "subject": "moneylenders weighing coin and ledgers at a covered market stall",
+    "accent": "purple"
+  },
+  "card/tacticians-guild": {
+    "subject": "officers planning strategy over a relief map in a war tent",
+    "accent": "purple"
+  },
+  "wonder/pyramids": {
+    "subject": "three stepped pyramids rising from a golden desert at dawn",
+    "accent": "gold"
+  },
+  "wonder/colossus": {
+    "subject": "a towering bronze-sheened colossus straddling a harbour entrance",
+    "accent": "gold"
+  },
+  "wonder/great-lighthouse": {
+    "subject": "a tiered lighthouse tower blazing over a rocky island coast",
+    "accent": "gold"
+  },
+  "wonder/temple-of-artemis": {
+    "subject": "a many-columned temple crowning a forested hillside",
+    "accent": "gold"
+  },
+  "wonder/mausoleum": {
+    "subject": "a tiered marble mausoleum topped with a stepped pyramidal roof",
+    "accent": "gold"
+  },
+  "wonder/great-library": {
+    "subject": "a domed library building with scroll-filled arcades",
+    "accent": "gold"
+  },
+  "wonder/piraeus": {
+    "subject": "a harbour town of docks and warehouses beneath a hill",
+    "accent": "gold"
+  },
+  "wonder/hanging-gardens": {
+    "subject": "terraced gardens cascading with greenery down a palace wall",
+    "accent": "gold"
+  },
+  "wonder/statue-of-zeus": {
+    "subject": "a colossal seated statue inside a columned temple hall",
+    "accent": "gold"
+  },
+  "wonder/sphinx": {
+    "subject": "a reclining guardian sphinx before distant pyramids",
+    "accent": "gold"
+  },
+  "wonder/appian-way": {
+    "subject": "a long paved road lined with cypress trees receding to the horizon",
+    "accent": "gold"
+  },
+  "wonder/circus-maximus": {
+    "subject": "a vast oval racing stadium ringed with tiered seating",
+    "accent": "gold"
+  },
+  "token/agriculture": {
+    "subject": "a sheaf of wheat tied with a cord",
+    "accent": "malachite"
+  },
+  "token/architecture": {
+    "subject": "a mason's set-square and compass crossed",
+    "accent": "malachite"
+  },
+  "token/economy": {
+    "subject": "a stack of coins beside a weighing scale",
+    "accent": "saffron"
+  },
+  "token/law": {
+    "subject": "a pair of balanced scales",
+    "accent": "lapis"
+  },
+  "token/masonry": {
+    "subject": "a chisel and mallet crossed over a stone block",
+    "accent": "malachite"
+  },
+  "token/mathematics": {
+    "subject": "a compass tracing a circle over a grid",
+    "accent": "lapis"
+  },
+  "token/philosophy": {
+    "subject": "an open scroll beneath a laurel sprig",
+    "accent": "lapis"
+  },
+  "token/strategy": {
+    "subject": "a crossed spear and shield",
+    "accent": "cinnabar"
+  },
+  "token/theology": {
+    "subject": "a lit oil lamp wreathed with olive leaves",
+    "accent": "lapis"
+  },
+  "token/urbanism": {
+    "subject": "a walled city skyline silhouette with domes and towers",
+    "accent": "saffron"
+  },
+  "back/age1": {
+    "subject": "interlaced vine and rosette ornament, ochre and ivory",
+    "accent": "ochre"
+  },
+  "back/age2": {
+    "subject": "geometric girih strapwork ornament, lapis and turquoise",
+    "accent": "lapis"
+  },
+  "back/age3": {
+    "subject": "radiating star medallion ornament, vermilion and gold",
+    "accent": "vermilion"
+  },
+  "back/guild": {
+    "subject": "checkered diamond lattice ornament, deep violet and gold",
+    "accent": "violet"
+  },
+  "texture/paper": {
+    "subject": "fine ivory paper grain with faint fibrous texture",
+    "accent": "ivory"
+  },
+  "texture/night": {
+    "subject": "deep lapis night texture with faint starlit speckle",
+    "accent": "lapis"
+  },
+  "hero/hero": {
+    "subject": "a garden terrace overlooking a miniature city of domes, wonders and cypress trees under a golden sky",
+    "accent": "gold"
+  },
+  "avatar/apprentice": {
+    "subject": "a young apprentice scribe at a writing desk, eager and attentive",
+    "accent": "turquoise"
+  },
+  "avatar/scholar": {
+    "subject": "a seated scholar with an open book and an astrolabe",
+    "accent": "lapis"
+  },
+  "avatar/master": {
+    "subject": "an elder master strategist studying a map table with calm focus",
+    "accent": "vermilion"
+  },
+  "victory/military": {
+    "subject": "triumphant soldiers raising shields before a city gate at sunset",
+    "accent": "cinnabar"
+  },
+  "victory/science": {
+    "subject": "scholars celebrating beneath a night sky strewn with instruments and stars",
+    "accent": "malachite"
+  },
+  "victory/civilian": {
+    "subject": "a thriving city skyline of domes, gardens and wonders at golden hour",
+    "accent": "gold"
+  },
+  "icon/app": {
+    "subject": "a single stylized cypress tree flanked by a small dome, inside a circular medallion",
+    "accent": "gold"
+  }
+}
