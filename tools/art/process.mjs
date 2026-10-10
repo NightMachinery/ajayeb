@@ -234,11 +234,13 @@ async function main() {
 
     const { buf, w, h } = await cropToRawRgb(args.src, size.w, size.h);
     const ownPaperRgb = cornerPaperColor(buf, w, h);
+    // The rim is detected on the unmapped pixels, against the crop's own
+    // paper colour: after mapPaperTone the paper sits at PAPER_HEX, so a
+    // deep generated paper would no longer match ownPaperRgb and the rim
+    // scan would stop at the first pixel, leaving the ivory ring in place.
+    const radius = spec.mask === 'circle' ? detectTokenRadius(buf, w, h, ownPaperRgb) : 0;
     mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
-    if (spec.mask === 'circle') {
-      const radius = detectTokenRadius(buf, w, h, ownPaperRgb);
-      applyCircleMask(buf, w, h, radius, targetPaperRgb);
-    }
+    if (spec.mask === 'circle') applyCircleMask(buf, w, h, radius, targetPaperRgb);
     await rawRgbToPng(buf, w, h, croppedPng);
 
     const outPath = path.join(shippedDir, fileName);
