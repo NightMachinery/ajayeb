@@ -36,7 +36,7 @@ make dev           # explains how to start the dev servers (python3 self_host.py
 
 Every target that compiles, tests, builds, installs or starts a browser runs through `tools/heavy.py`, a guard that waits while the machine is short of memory. If it gives up, it exits with code 75 and prints the reason. [docs/dev/ram-policy.md](docs/dev/ram-policy.md) explains the guard and its modes.
 
-To self-host on a machine with Caddy and tmux, use `./self_host.py setup <url>` (documentation in `docs/self-hosting.md`, coming with milestone M8).
+To self-host on a machine with Caddy and tmux, use `./self_host.py setup <url>`; to build on a dev machine and deploy a prebuilt binary to a small production host, use `./self_host.py ship <target> <url>` (documentation in `docs/self-hosting.md`).
 
 ## Repository layout
 
