@@ -167,6 +167,16 @@ func colorNames(m catalog.ColorMask) []string {
 // presentationJSON renders the client presentation catalog, indented, with a
 // final newline.
 func presentationJSON() ([]byte, error) {
+	b, err := json.MarshalIndent(buildCatalog(), "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(b, '\n'), nil
+}
+
+// buildCatalog collects the presentation catalog from the engine catalog, in
+// id order. The json format and catalog.gen.ts both render it.
+func buildCatalog() jsonCatalog {
 	cat := jsonCatalog{Schema: jsonSchema, Cards: []jsonCard{}, Wonders: []jsonWonder{}, Tokens: []jsonToken{}}
 	for d := range catalog.Cards() {
 		c := jsonCard{
@@ -196,11 +206,7 @@ func presentationJSON() ([]byte, error) {
 	for d := range catalog.Tokens() {
 		cat.Tokens = append(cat.Tokens, jsonToken{ID: int(d.ID), Slug: d.Slug, Name: d.Name, Effects: toJSONEffects(d.Effects)})
 	}
-	b, err := json.MarshalIndent(cat, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-	return append(b, '\n'), nil
+	return cat
 }
 
 // The prose catalog: one paragraph per item, one sentence per effect, in our

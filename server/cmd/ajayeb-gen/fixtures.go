@@ -48,14 +48,14 @@ const (
 // scenario's views and writes the combined TypeScript fixture file to out
 // (its directory is created if needed).
 func generateFixtures(out, messagesDir, protocolDir string) error {
-	messages, err := readJSONFiles(messagesDir)
+	messageNames, messages, err := readJSONFiles(messagesDir)
 	if err != nil {
 		return fmt.Errorf("reading recorded messages: %w", err)
 	}
 	if len(messages) == 0 {
 		return fmt.Errorf("no recorded messages found under %s", messagesDir)
 	}
-	views, err := readProtocolViews(protocolDir)
+	viewNames, views, err := readProtocolViews(protocolDir)
 	if err != nil {
 		return fmt.Errorf("reading protocol fixtures: %w", err)
 	}
@@ -92,7 +92,12 @@ func generateFixtures(out, messagesDir, protocolDir string) error {
 		}
 		b.WriteString(indentBlock(v, "  "))
 	}
-	b.WriteString("\n] satisfies View[];\n")
+	b.WriteString("\n] satisfies View[];\n\n")
+
+	b.WriteString("/** fixtureNames[i] names fixtures[i]: its recorded file's name without .json. */\n")
+	writeNameList(&b, "fixtureNames", messageNames)
+	b.WriteString("\n/** protocolFixtureNames[i] names protocolFixtures[i]: the scenario file and the viewer, as in age-1-start.seat0. */\n")
+	writeNameList(&b, "protocolFixtureNames", viewNames)
 
 	if dir := filepath.Dir(out); dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -102,13 +107,22 @@ func generateFixtures(out, messagesDir, protocolDir string) error {
 	return os.WriteFile(out, []byte(b.String()), 0o644)
 }
 
+// writeNameList writes a readonly tuple of fixture names, one per line.
+func writeNameList(b *strings.Builder, name string, names []string) {
+	fmt.Fprintf(b, "export const %s = [\n", name)
+	for _, n := range names {
+		fmt.Fprintf(b, "  %q,\n", n)
+	}
+	b.WriteString("] as const;\n")
+}
+
 // readJSONFiles reads every *.json file in dir, sorted by name for a
-// reproducible, reviewable diff, and returns each one's content with
-// trailing whitespace trimmed.
-func readJSONFiles(dir string) ([]string, error) {
+// reproducible, reviewable diff, and returns each one's name without the
+// extension and its content with trailing whitespace trimmed.
+func readJSONFiles(dir string) (fileNames, contents []string, err error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var names []string
 	for _, e := range entries {
@@ -117,19 +131,20 @@ func readJSONFiles(dir string) ([]string, error) {
 		}
 	}
 	sort.Strings(names)
-	out := make([]string, 0, len(names))
+	contents = make([]string, 0, len(names))
 	for _, name := range names {
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		var probe any
 		if err := json.Unmarshal(data, &probe); err != nil {
-			return nil, fmt.Errorf("%s: %w", name, err)
+			return nil, nil, fmt.Errorf("%s: %w", name, err)
 		}
-		out = append(out, strings.TrimRight(string(data), "\n\r \t"))
+		fileNames = append(fileNames, strings.TrimSuffix(name, ".json"))
+		contents = append(contents, strings.TrimRight(string(data), "\n\r \t"))
 	}
-	return out, nil
+	return fileNames, contents, nil
 }
 
 // protocolFixtureFile is the shape internal/engine's view tests record
@@ -146,11 +161,12 @@ type protocolFixtureFile struct {
 
 // readProtocolViews reads every viewer's View out of every scenario file in
 // dir, in file and then viewer order, each re-indented to two spaces
-// regardless of how the source file was printed.
-func readProtocolViews(dir string) ([]string, error) {
+// regardless of how the source file was printed. Each view is named
+// "<file without .json>.<viewer>".
+func readProtocolViews(dir string) (viewNames, views []string, err error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var names []string
 	for _, e := range entries {
@@ -160,28 +176,28 @@ func readProtocolViews(dir string) ([]string, error) {
 	}
 	sort.Strings(names)
 
-	var out []string
 	for _, name := range names {
 		data, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		var f protocolFixtureFile
 		if err := json.Unmarshal(data, &f); err != nil {
-			return nil, fmt.Errorf("%s: %w", name, err)
+			return nil, nil, fmt.Errorf("%s: %w", name, err)
 		}
 		if len(f.Viewers) == 0 {
-			return nil, fmt.Errorf("%s: no viewers", name)
+			return nil, nil, fmt.Errorf("%s: no viewers", name)
 		}
 		for _, viewer := range f.Viewers {
 			pretty, err := reindent(viewer.View)
 			if err != nil {
-				return nil, fmt.Errorf("%s (%s): %w", name, viewer.Viewer, err)
+				return nil, nil, fmt.Errorf("%s (%s): %w", name, viewer.Viewer, err)
 			}
-			out = append(out, pretty)
+			viewNames = append(viewNames, strings.TrimSuffix(name, ".json")+"."+viewer.Viewer)
+			views = append(views, pretty)
 		}
 	}
-	return out, nil
+	return viewNames, views, nil
 }
 
 // reindent re-marshals raw JSON with a consistent two-space indent,

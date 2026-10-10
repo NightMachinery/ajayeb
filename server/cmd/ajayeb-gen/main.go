@@ -4,13 +4,14 @@
 //
 //	ajayeb-gen
 //	ajayeb-gen fixtures [-out PATH] [-messages DIR] [-protocol DIR]
-//	ajayeb-gen catalog [-format csv|json|prose] [-out DIR] [-table cards|wonders|tokens]
+//	ajayeb-gen catalog [-format csv|json|prose|ts] [-out DIR] [-table cards|wonders|tokens]
 //
 // Without a subcommand it regenerates the TypeScript under web/src/lib/wire
 // that make gen is responsible for, after tygo has already written the
-// types themselves: today that is just the fixtures subcommand, run with
-// its defaults. A later generator that also belongs in that default sweep
-// gets its own subcommand and a call here alongside it.
+// types themselves: the fixtures subcommand with its defaults
+// (fixtures.gen.ts), and the presentation catalog as a TypeScript module
+// (catalog.gen.ts, the same as catalog -format ts). A later generator that
+// also belongs in that default sweep gets a call here alongside them.
 //
 // fixtures turns real recorded server output into a TypeScript fixture file
 // that make check-web type-checks against the generated wire types:
@@ -20,7 +21,7 @@
 // protocolFixtures`. See fixtures.go for the format in full.
 //
 // The catalog subcommand dumps the card, wonder and token catalog of the
-// engine in one of three formats:
+// engine in one of four formats:
 //
 //   - csv (the default): the three verification tables, cards, wonders and
 //     tokens, in the schema shared with the independent verification tables.
@@ -30,9 +31,13 @@
 //     colour, age, back, cost, declarative effects and chains).
 //   - prose: every item with each effect written out in plain English, for a
 //     semantic review of the data against the rules.
+//   - ts: the json data as a typed TypeScript module keyed by slug, with the
+//     engine's catalog hash (see catalogts.go). make gen writes it to
+//     web/src/lib/wire/catalog.gen.ts.
 //
 // With -out DIR the output goes to files in DIR, which is created if needed:
-// cards.csv, wonders.csv and tokens.csv; catalog.json; or catalog.txt.
+// cards.csv, wonders.csv and tokens.csv; catalog.json; catalog.txt; or
+// catalog.gen.ts.
 // Without -out it goes to stdout; for csv that is the three tables one after
 // the other, each starting with its header row. -table picks one csv table.
 package main
@@ -53,7 +58,7 @@ func main() {
 }
 
 const usage = `Usage:
-  ajayeb-gen                     regenerate the TypeScript under web/src/lib/wire (today: fixtures, with its defaults)
+  ajayeb-gen                     regenerate the TypeScript under web/src/lib/wire (fixtures.gen.ts and catalog.gen.ts)
   ajayeb-gen fixtures [flags]    write the wire and protocol fixtures (ajayeb-gen fixtures -help for the flags)
   ajayeb-gen catalog [flags]     dump the catalog (ajayeb-gen catalog -help for the flags)
 `
@@ -67,11 +72,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		// make gen's no-subcommand call: every generator that belongs in
 		// that default sweep runs here, with its own defaults.
-		if err := generateFixtures(defaultFixturesOut, defaultMessagesDir, defaultProtocolDir); err != nil {
+		if err := runDefault(stdout, defaultPaths); err != nil {
 			fmt.Fprintf(stderr, "ajayeb-gen: %v\n", err)
 			return 1
 		}
-		fmt.Fprintf(stdout, "wrote %s\n", defaultFixturesOut)
 		return 0
 	}
 	var err error
@@ -100,15 +104,41 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
+// genPaths are the inputs and outputs of the default run.
+type genPaths struct {
+	fixturesOut, catalogOut, messagesDir, protocolDir string
+}
+
+// defaultPaths are relative to server/, where make gen runs this command.
+var defaultPaths = genPaths{
+	fixturesOut: defaultFixturesOut,
+	catalogOut:  defaultCatalogTSOut,
+	messagesDir: defaultMessagesDir,
+	protocolDir: defaultProtocolDir,
+}
+
+// runDefault runs every generator of the default sweep.
+func runDefault(stdout io.Writer, p genPaths) error {
+	if err := generateFixtures(p.fixturesOut, p.messagesDir, p.protocolDir); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "wrote %s\n", p.fixturesOut)
+	if err := writeCatalogTS(p.catalogOut); err != nil {
+		return err
+	}
+	fmt.Fprintf(stdout, "wrote %s\n", p.catalogOut)
+	return nil
+}
+
 // catalogOptions is the parsed command line of the catalog subcommand.
 type catalogOptions struct {
-	format string // csv, json or prose
+	format string // csv, json, prose or ts
 	out    string // output directory, or "" for stdout
 	table  string // csv only: one table, or "" for all three
 }
 
 var (
-	formats = []string{"csv", "json", "prose"}
+	formats = []string{"csv", "json", "prose", "ts"}
 	tables  = []string{"cards", "wonders", "tokens"}
 )
 
@@ -120,7 +150,7 @@ func parseCatalogFlags(args []string, stderr io.Writer) (catalogOptions, error) 
 	fs.StringVar(&o.out, "out", "", "write files into this directory (created if needed) instead of stdout")
 	fs.StringVar(&o.table, "table", "", "csv only: write just this table ("+strings.Join(tables, ", ")+")")
 	fs.Usage = func() {
-		fmt.Fprint(stderr, "Usage: ajayeb-gen catalog [-format csv|json|prose] [-out DIR] [-table cards|wonders|tokens]\n\n")
+		fmt.Fprint(stderr, "Usage: ajayeb-gen catalog [-format csv|json|prose|ts] [-out DIR] [-table cards|wonders|tokens]\n\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -197,6 +227,12 @@ func catalogOutputs(o catalogOptions) ([]output, error) {
 		return []output{{"catalog.json", data}}, nil
 	case "prose":
 		return []output{{"catalog.txt", proseCatalog()}}, nil
+	case "ts":
+		data, err := catalogTS()
+		if err != nil {
+			return nil, err
+		}
+		return []output{{"catalog.gen.ts", data}}, nil
 	}
 	return nil, fmt.Errorf("unknown format %q", o.format)
 }
