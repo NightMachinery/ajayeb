@@ -32,7 +32,7 @@
   // (or the wonder it drafts) carries data-bot-pick meanwhile. The military
   // track puts the bottom (or left) seat's capital at its left end, so a
   // player at the Moon sees it mirrored. The top bar's game menu leads Home;
-  // a bot or hot-seat room stays on Home's Continue list.
+  // a bot or hot-seat room stays on Home's Continue list until its game ends.
   import { onDestroy } from 'svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderName } from '$lib/components/card/effect-text';

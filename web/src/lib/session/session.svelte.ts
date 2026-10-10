@@ -473,7 +473,12 @@ export class Session {
     this.frame = frame;
     this.view = frame.view;
     this.roomError = null;
-    if (this.#remembered !== frame.code) {
+    // Home's Continue list offers live games only: a finished room is
+    // dropped from it, whether it ended while on screen or before the join.
+    if (frame.room.status === 'finished') {
+      this.#remembered = frame.code;
+      this.#rooms?.forget(frame.code);
+    } else if (this.#remembered !== frame.code) {
       this.#remembered = frame.code;
       this.#rooms?.remember(frame.code, frame.room.mode);
     }

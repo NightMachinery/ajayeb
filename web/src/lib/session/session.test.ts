@@ -179,6 +179,22 @@ describe('Session: state frames', () => {
     transport.receive(playFrame('H8TQ4R', 11));
     expect(rooms.list.map((r) => [r.code, r.mode])).toEqual([['H8TQ4R', 'hotseat']]);
   });
+
+  it('forgets the room once its game is finished, and never remembers a finished one', () => {
+    const rooms = new SavedRooms(memoryStorage());
+    const { transport } = joined({ rooms });
+    const over = playFrame('H8TQ4R', 11);
+    over.room = { ...over.room, status: 'finished' };
+    transport.receive(over);
+    expect(rooms.list).toEqual([]);
+
+    const later = setup({ rooms });
+    connect(later.transport);
+    later.session.join('H8TQ4R');
+    later.transport.receive(over);
+    expect(later.session.view).not.toBeNull();
+    expect(rooms.list).toEqual([]);
+  });
 });
 
 describe('Session: acts, seq and base', () => {
