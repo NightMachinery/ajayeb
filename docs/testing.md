@@ -179,7 +179,8 @@ identity token. Every value is a copy, so a driver cannot change the page.
 A driver opens a room (for a hot-seat game, `/dev/new?mode=hotseat` in a
 build with the dev routes), then repeats: wait for `ready()`, read
 `choices()`, click the `[data-act="<key>"]` button of one of them, until
-`view().phase` is `gameOver`.
+`view().phase` is `gameOver`. `e2e/fixtures/driver.ts` is that driver, with the
+clicks a player makes for each kind of move (see "End-to-end specs" below).
 
 ### Dev pages for the client
 
@@ -200,3 +201,126 @@ With the dev routes on (they are on in the test-mode build from `make build-web-
 A token written into `localStorage` for a tool (`ajayeb:token`) must have
 the real shape, 22 base64url characters; the client replaces any other
 value with a fresh token.
+
+## End-to-end specs (Playwright)
+
+`e2e/` holds the Playwright specs. They run against the real server binary
+and the test-mode web build, which the Playwright config starts itself
+(`server/bin/ajayeb --dev --dev-endpoints --bot-delay 0 --seed-base 1000`
+on port 38954, with a fresh data directory under `.cache/e2e/`), in the
+installed Chrome locally and in Playwright's Chromium on CI. There are two
+projects: `desktop` (Desktop Chrome, a mouse) runs every spec, and `mobile`
+(Pixel 7, touch) runs the specs tagged `@mobile`.
+
+Run them through the guard, which holds the machine's one browser lock:
+
+- `make e2e` builds the server and the test bundle, then runs every spec;
+- `make e2e GREP=hot-seat` or `make e2e GREP=layout` narrows the run with
+  Playwright's `--grep`, and `PW_ARGS='--project desktop'` picks one
+  project;
+- `E2E_BUILD=0` skips the two builds when they are already current;
+- `make e2e-smoke` runs only the `@smoke` spec.
+
+Reports, traces and failure screenshots land in `.cache/e2e/` (ignored by
+git). The config stops the server and the browser at the end of a run.
+
+### The shared helpers (`e2e/fixtures/`)
+
+- `driver.ts`, the game driver, which later milestones reuse for the vs-AI
+  and online playthroughs. `GameDriver` waits for `window.__ajayeb.ready()`,
+  reads a `Snapshot` (version, ply, phase, age, the seat to move, the
+  pending choice, `choices()`, the result, and whether the pass-device
+  screen is up), asks a `Policy` for a move, performs it by clicking what a
+  player clicks, and waits for the room's version to pass the old one and
+  the page to be ready again. It never sends a frame and never decides what
+  is legal: every key it clicks is the `data-act` of one of the view's
+  choices. The flows it knows:
+  - the draft: the tile's Take button where tiles show it, else the tile
+    (`data-pick`) and then Take in its sheet;
+  - a pending choice: the option's tile (`data-pick`) when the panel has
+    tiles, then the panel's `data-act` button;
+  - build and discard: the structure card (`data-card`), then the card
+    sheet's button;
+  - a wonder, card first: the card, "Build a wonder"
+    (`data-control="wonder-step"`), then the wonder's button;
+  - a wonder, wonder first: the wonder in the mover's panel
+    (`.seat-panel[data-seat] button[data-wonder]`), "Build this wonder"
+    (`data-control="wonder-build"`), the marked card (`data-marked`), then
+    the confirmation in the card sheet;
+  - the pass-device screen: "I'm ready".
+
+  It closes a toast with its dismiss button before tapping the board, as a
+  player would, and counts every flow, every pending kind and every pass
+  screen in `driver.stats`.
+- `hotseatPolicy` in `driver.ts`: deterministic, and chosen to walk every
+  flow rather than to play well. The draft takes the first wonder on offer;
+  a pending choice takes its first option; in play a wonder is built
+  whenever one is legal until both wonder flows have been used (card first,
+  then wonder first) and after that on every fourth ply; every fifth ply
+  discards; otherwise the first legal construct, else the first discard.
+- `ws-game.ts`, a minimal protocol client in Node (hello, join, act, with
+  `seq` and `base`, paced under the frame rate limit). `recordGame` plays a
+  seeded hot-seat game over the real socket with a fixed policy (odd plies
+  discard, so the game reaches Age III) and returns its keys with the
+  positions a layout check wants: the draft, a full Age I, Age II and Age
+  III structure, and the end. `createDevRoom` then opens the same game at
+  any of them through `POST /api/dev/rooms` with the seed and a prefix of
+  the keys.
+- `layout-probes.ts`, the objective probes: horizontal overflow (the
+  document's `scrollWidth`, and the visible part of every element, clipped
+  by its scrolling ancestors, past either edge), page scroll, the size of
+  the takeable structure cards and of the enabled primary controls (move
+  buttons, panel and draft tiles, the top bar, the wonder flow, the result
+  screen, the pass-device screen and every button of an open sheet).
+- `hygiene.ts`: console errors, uncaught exceptions, failed requests and
+  HTTP errors, collected for a spec to expect empty.
+
+### `hotseat.full.spec.ts` (`@mobile @full`)
+
+A whole hot-seat game through the real UI, on both projects. From Home it
+opens the pass-and-play sheet, names the players, sets the pass-device
+screen on for the mobile project (with the "face active player"
+orientation) and off for the desktop one (fixed orientation), and starts.
+The driver then plays to the end with the hot-seat policy and the spec
+checks:
+
+- every flow was walked: six draft picks, builds, discards, at least one
+  wonder card first and one wonder first, and pass-device screens exactly
+  in the mobile project;
+- the result screen names the server's victory and winner, and its score
+  table shows the server's score sheet, category by category, under both
+  names;
+- Home leads back to the home page;
+- no console error, page error or failed request on the way.
+
+The server's `--seed-base 1000` makes the game the same on every run of
+the same set of specs. A measured run: 72 actions (6 draft picks, 6 pending
+choices covering all five kinds, 33 builds, 20 discards, 4 wonders card
+first and 3 wonder first) in about 30 s on the desktop project and 42 s on
+the mobile one, where 59 pass-device screens come on top. The spec prints
+its counts on one `hot-seat game:` line and attaches them as
+`game-summary.json`.
+
+### `layout.spec.ts` (`@mobile`)
+
+The game screen at the UX plan's viewports: 360x740, 390x844, 430x932,
+844x390, 740x360, 768x1024, 1024x768, 1280x800 and 1920x1080. The desktop
+project checks all nine; the mobile project checks the six phone and
+tablet ones (up to 844 wide) with touch, and skips the rest. A seeded game
+is recorded once per worker (`recordGame`), and each viewport opens it at
+five positions: the wonder draft, a fresh Age I, Age II and Age III
+structure, and the result screen, with the pass-device screen off. At each
+position, and again with the card sheet of the first takeable card open
+in each age:
+
+- no horizontal scroll and nothing visible past either edge;
+- no page scroll;
+- every takeable card at least 44 by 44 px (the plan asks for this at
+  360x740 in all three ages; the spec checks it everywhere);
+- every enabled primary control at least 44 px tall;
+- no console error, page error or failed request.
+
+The spec logs one line per position with the layout class, the smallest
+takeable card and control, and the document's scroll size. At 360x740 the
+smallest takeable cards measured 54x83 px in Ages I and II and 46x71 px in
+Age III.
