@@ -9,7 +9,7 @@
 // art/style.md for the prompts this reads into.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
@@ -84,6 +84,30 @@ export function idSlug(id) {
 
 export function makeId(kind, slug) {
   return `${kind}/${slug}`;
+}
+
+/**
+ * Approved originals are committed as lossless WebP (M9.B4; the owner
+ * chose it over PNG to keep the public repository about 30% smaller),
+ * pixel-identical to the generated PNG, which process.mjs verifies. A
+ * `.png` original from before that change is still recognised.
+ */
+export const ORIGINAL_EXT = 'webp';
+const ORIGINAL_EXTS = ['webp', 'png'];
+
+/** Where process.mjs writes an id's original: art/originals/<kind>/<slug>.webp,
+ * or the same layout under `root` (a scratch --out directory). */
+export function originalPath(id, root = originalsDir) {
+  return path.join(root, idKind(id), `${idSlug(id)}.${ORIGINAL_EXT}`);
+}
+
+/** The committed original for an id, .webp first, else a legacy .png, else null. */
+export function findOriginal(id) {
+  for (const ext of ORIGINAL_EXTS) {
+    const candidate = path.join(originalsDir, idKind(id), `${idSlug(id)}.${ext}`);
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
 }
 
 /** The raw attempt file for an id: art-work/raw/<kind>/<slug>/<n>.png. */
@@ -377,6 +401,17 @@ export async function cropToRawRgb(src, w, h) {
     throw new Error(`cropToRawRgb: expected ${w * h * 3} bytes for ${w}x${h}, got ${buf.length} (${src})`);
   }
   return { buf, w, h };
+}
+
+/**
+ * Every stored pixel value of an image file as raw 16-bit RGBA, including
+ * the colour under fully transparent pixels (which `magick compare`
+ * ignores) and an opaque alpha for an image without one. Two files with
+ * equal bytes here hold exactly the same pixels; process.mjs uses it to
+ * prove a lossless WebP original matches its source.
+ */
+export async function rawRgba16(file) {
+  return runCapture('magick', [file, '-depth', '16', 'rgba:-']);
 }
 
 /** Encodes raw RGB bytes (as `cropToRawRgb` returns) back to a PNG file. */

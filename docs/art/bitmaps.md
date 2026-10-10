@@ -11,7 +11,8 @@ see `art/vector/`.
 Everything here follows [AGENTS.md](../../AGENTS.md)'s "Assets" rules:
 Codex runs strictly one image at a time, under the machine-wide `codex`
 lane (`python3 tools/heavy.py run --kind codex`); approved originals are
-committed as generated PNGs under `art/originals/`; rejected attempts never
+committed under `art/originals/` as lossless WebP, pixel-identical to the
+generated PNG (see step 7); rejected attempts never
 enter the repository; shipped bitmaps are AVIF only, under
 `web/static/art/`, derived by `tools/art/process.mjs` and never hand-edited;
 and the app references only approved art, through the generated
@@ -26,7 +27,8 @@ art/
   subjects.json         human-written: one subject + accent per asset id
   manifest.json         generated: catalog + subjects.json, with status per asset
   refs/                 the owner's style anchors, one JPEG per kind, and a README
-  originals/<kind>/<id>.png   approved originals (committed, as generated)
+  originals/<kind>/<id>.webp  approved originals (committed, lossless WebP,
+                              pixel-identical to the generated PNG)
   LICENSE                CC BY 4.0 notice
 
 tools/art/
@@ -251,12 +253,30 @@ ever disagree.
 
    `avifenc` then encodes the result, stepping quality down (55 → 45 →
    35) until the asset table's byte budget holds or the lowest quality is
-   reached (reported either way). It copies the source to
-   `art/originals/<kind>/<slug>.png` and records the shipped byte counts in
-   the manifest. **The asset's manifest status must already be
+   reached (reported either way), and records the shipped byte counts in
+   the manifest.
+
+   Before any of that, it writes the committed original,
+   `art/originals/<kind>/<slug>.webp`, as **lossless WebP** (`cwebp
+   -lossless -exact -z 9`, falling back to ImageMagick's
+   `webp:lossless=true`), and proves it is pixel-identical to the source:
+   `magick compare -metric AE` (all channels, alpha included) must count 0
+   differing pixels, and the two files' raw 16-bit RGBA values must match
+   byte for byte, which also catches a changed colour under a transparent
+   pixel or a source deeper than 8 bits. Any difference is a loud failure
+   before anything ships. The owner chose lossless WebP over PNG
+   (`M9.B4`) to keep the public repository smaller: on the pilot it is
+   about 70% of the PNG's size (`card/scriptorium` attempt 2: 2.25 MB
+   against 3.19 MB, 0 differing pixels), and `-z 9` costs about 20 seconds
+   per image. `--src` may itself be a `.webp` original; the AVIFs made from
+   it are byte-identical to those made from the PNG.
+
+   **The asset's manifest status must already be
    `"approved"`** (set by `apply-review.mjs`); use `--out DIR` to
-   process into a scratch directory instead, which skips that check and
-   leaves the manifest and `art/originals/`/`web/static/art/` untouched.
+   process into a scratch directory instead, which skips that check,
+   writes the original to `DIR/originals/<kind>/<slug>.webp` and the AVIFs
+   under `DIR`, and leaves the manifest and `art/originals/`/
+   `web/static/art/` untouched.
    This is how a pipeline change or a pilot run is proved without shipping
    or approving anything.
 

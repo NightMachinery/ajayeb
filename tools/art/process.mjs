@@ -27,6 +27,14 @@
 //      stepping quality down (55 -> 45 -> 35) until the size's byte budget
 //      holds, or keeping the lowest quality with a warning.
 //
+// Before any of that, the source is written as the committed original,
+// art/originals/<kind>/<slug>.webp: LOSSLESS WebP (`cwebp -lossless -exact
+// -z 9`, or ImageMagick's webp:lossless when cwebp is missing), then
+// checked with `magick compare -metric AE` against the source, alpha
+// included. Any differing pixel is a hard failure and nothing is shipped
+// (M9.B4: the owner chose lossless WebP over PNG to keep the public
+// repository about 30% smaller). --src may itself be a .webp original.
+//
 // The source: with no --src, the approved attempt's raw file,
 // art-work/raw/<kind>/<slug>/<approvedAttempt>.png (apply-review.mjs
 // records approvedAttempt, which may be earlier than the latest attempt;
@@ -53,13 +61,14 @@
 //   --manifest PATH  read (and, without --out, update) this manifest
 //                    instead of art/manifest.json
 //
-// With --out, nothing is copied to art/originals/ or web/static/art/: this
-// is how M9.B0's pilot proves the pipeline without shipping or approving
-// anything. Without --out, the source is copied to
-// art/originals/<kind>/<slug>.png and the AVIFs go to web/static/art/.
+// With --out, nothing is written to art/originals/ or web/static/art/: the
+// WebP original goes to DIR/originals/<kind>/<slug>.webp and the AVIFs to
+// DIR/<outDir>/. This is how a pipeline change is proved without shipping
+// or approving anything. Without --out, the original is written to
+// art/originals/<kind>/<slug>.webp and the AVIFs go to web/static/art/.
 
 import { spawn } from 'node:child_process';
-import { mkdir, copyFile, stat } from 'node:fs/promises';
+import { mkdir, copyFile, rename, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -74,13 +83,14 @@ import {
   shippedFileName,
   idKind,
   idSlug,
-  originalsDir,
+  originalPath,
   shippedRoot,
   loadManifest,
   saveManifest,
   cropToRawRgb,
   rawRgbToPng,
   cornerPaperColor,
+  rawRgba16,
   hexToRgb,
   PAPER_HEX,
   die,
@@ -256,6 +266,93 @@ function applyCircleMask(buf, w, h, radius, paperRgb) {
   }
 }
 
+function runCapture(cmd, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (d) => (stdout += d));
+    child.stderr.on('data', (d) => (stderr += d));
+    child.on('error', reject);
+    child.on('close', (code) => resolve({ code, stdout, stderr }));
+  });
+}
+
+/** True when `cmd` runs (used to fall back from cwebp to ImageMagick). */
+async function hasCommand(cmd) {
+  try {
+    const r = await runCapture(cmd, ['-version']);
+    return r.code === 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Writes `src` as a lossless WebP at `dest` and proves it: `magick compare
+ * -metric AE` must count 0 differing pixels between the two, over every
+ * channel, alpha included, and their raw 16-bit RGBA values must be equal
+ * byte for byte (which also covers the colour under transparent pixels
+ * and a source deeper than 8 bits). Encodes to a temporary file first and only
+ * then moves it into place, so a failed check (or a --src that is `dest`
+ * itself) never leaves a bad or half-written original behind. Returns the
+ * encoder used and both byte sizes.
+ */
+async function writeLosslessWebp(src, dest, tmpDir) {
+  const tmp = path.join(tmpDir, `_original-${process.pid}-${Date.now()}.webp`);
+  let encoder;
+  if (await hasCommand('cwebp')) {
+    // -exact keeps the RGB values under fully transparent pixels, which
+    // lossless mode would otherwise rewrite; -z 9 is the smallest file.
+    encoder = 'cwebp -lossless -exact -z 9';
+    await run('cwebp', ['-quiet', '-lossless', '-exact', '-z', '9', src, '-o', tmp]);
+  } else {
+    encoder = 'magick webp:lossless=true';
+    await run('magick', [
+      src,
+      '-define',
+      'webp:lossless=true',
+      '-define',
+      'webp:exact=true',
+      '-define',
+      'webp:method=6',
+      tmp,
+    ]);
+  }
+  // compare exits 0 when identical, 1 when not, 2 on an error, and prints
+  // the differing-pixel count on stderr ("0 (0)" for identical images).
+  const cmp = await runCapture('magick', ['compare', '-metric', 'AE', '-channel', 'RGBA', src, tmp, 'null:']);
+  const differing = Number.parseFloat(cmp.stderr.trim().split(/\s+/)[0]);
+  // compare weighs colour by alpha, so it cannot see a change in the RGB
+  // stored under a fully transparent pixel; the raw 16-bit RGBA bytes can.
+  const sameRaw = differing === 0 && (await rawRgba16(src)).equals(await rawRgba16(tmp));
+  if (cmp.code !== 0 || differing !== 0 || !sameRaw) {
+    await rm(tmp, { force: true });
+    const why =
+      differing !== 0 || cmp.code !== 0
+        ? `magick compare -metric AE: "${cmp.stderr.trim()}", exit ${cmp.code}`
+        : 'magick compare saw 0 differing pixels, but the raw 16-bit RGBA values differ';
+    throw new Error(
+      `the lossless WebP of ${displayPath(src)} is NOT pixel-identical to it (${why}); no original written, nothing shipped`,
+    );
+  }
+  const srcBytes = (await stat(src)).size;
+  const webpBytes = (await stat(tmp)).size;
+  await mkdir(path.dirname(dest), { recursive: true });
+  try {
+    await rename(tmp, dest);
+  } catch (err) {
+    if (err.code !== 'EXDEV') throw err;
+    await copyFile(tmp, dest);
+    await rm(tmp, { force: true });
+  }
+  return { encoder, differing, srcBytes, webpBytes };
+}
+
+function mb(bytes) {
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
 async function encodeAvif(pngPath, outPath, budgetBytes, qualities) {
   await mkdir(path.dirname(outPath), { recursive: true });
   let lastSize = Infinity;
@@ -287,6 +384,17 @@ async function main() {
   const scratchRoot = args.out || path.join(os.tmpdir(), `ajayeb-art-process-${slug}-${Date.now()}`);
   await mkdir(scratchRoot, { recursive: true });
 
+  // The original first: if it is not pixel-identical, fail before any
+  // shipped file is written.
+  const originalDest = args.out ? originalPath(args.id, path.join(args.out, 'originals')) : originalPath(args.id);
+  const orig = await writeLosslessWebp(args.src, originalDest, scratchRoot);
+  const pct = ((orig.webpBytes / orig.srcBytes) * 100).toFixed(0);
+  process.stdout.write(
+    `process.mjs: original ${displayPath(originalDest)}: ${mb(orig.webpBytes)} lossless WebP (${orig.encoder}) ` +
+      `vs ${mb(orig.srcBytes)} source ${path.extname(args.src).slice(1).toUpperCase()} (${pct}%); ` +
+      `magick compare -metric AE: ${orig.differing} differing pixels, raw RGBA identical\n`,
+  );
+
   const shippedDir = args.out ? path.join(args.out, spec.outDir) : path.join(shippedRoot, spec.outDir);
   const bytes = {};
   const targetPaperRgb = hexToRgb(PAPER_HEX);
@@ -314,13 +422,6 @@ async function main() {
     const budgetKb = (size.budgetBytes / 1024).toFixed(0);
     const flag = result.overBudget ? ' OVER BUDGET' : '';
     process.stdout.write(`process.mjs: ${fileName} ${size.w}x${size.h} q${result.quality} -> ${kb} KB (budget ${budgetKb} KB)${flag}\n`);
-  }
-
-  if (!args.out) {
-    const originalDest = path.join(originalsDir, kind, `${slug}.png`);
-    await mkdir(path.dirname(originalDest), { recursive: true });
-    await copyFile(args.src, originalDest);
-    process.stdout.write(`process.mjs: copied original to ${path.relative(process.cwd(), originalDest)}\n`);
   }
 
   if (args.out) {

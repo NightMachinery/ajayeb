@@ -10,7 +10,11 @@
 //
 // For each approved id it also prints which attempt was approved (the
 // manifest's approvedAttempt, which may be earlier than the latest
-// attempt; M9.B4), so the log says exactly which image the app now shows.
+// attempt; M9.B4) and its committed original, art/originals/<kind>/
+// <slug>.webp (lossless WebP since M9.B4; a legacy .png is recognised
+// too), so the log says exactly which image the app now shows. An
+// approved id with no original is warned about: process.mjs has not
+// shipped it yet.
 //
 // Usage:
 //   node tools/art/index.mjs
@@ -32,6 +36,7 @@ import {
   loadManifest,
   availableGenPath,
   approvedAttemptOf,
+  findOriginal,
   setManifestPath,
   manifestLabel,
   displayPath,
@@ -130,7 +135,9 @@ async function main() {
     const approved = approvedAttemptOf(asset);
     const earlier = approved < asset.attempt ? ` (earlier than the latest, ${asset.attempt})` : '';
     const recorded = asset.approvedAttempt ? '' : ', no approvedAttempt recorded, so the latest';
-    process.stdout.write(`index.mjs: ${id}: approved attempt ${approved}${earlier}${recorded}\n`);
+    const original = findOriginal(id);
+    const origText = original ? `original ${displayPath(original)}` : 'WARNING: no original under art/originals/ yet (run process.mjs)';
+    process.stdout.write(`index.mjs: ${id}: approved attempt ${approved}${earlier}${recorded}; ${origText}\n`);
   }
   const ts = renderTs(entries);
   await mkdir(path.dirname(args.out), { recursive: true });

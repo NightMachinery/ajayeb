@@ -187,7 +187,7 @@ writing it.
 
 ```
 node tools/art/process.mjs --id token/agriculture        # the approved attempt
-node tools/art/process.mjs --id token/agriculture --src art/originals/token/agriculture.png
+node tools/art/process.mjs --id token/agriculture --src art/originals/token/agriculture.webp
 node tools/art/process.mjs --id card/lumber-yard \
   --src ~/tmp/agents/ajayeb/art-work/raw/card/lumber-yard/1.png --out /scratch/dir
 ```
@@ -208,13 +208,23 @@ non-paper pixel) and masks to that instead of always touching the square's
 edges, with a 1.5px antialiased edge, so a medallion painted with its own
 margin doesn't leave a visible ivory "halo" ring; then hands the result to
 `avifenc`, quality stepped down from 55 until the byte budget holds or 35
-is reached. Without `--out`, the id **must already be `"approved"`** in the manifest
-(set by `apply-review.mjs`); the source is copied to
-`art/originals/<kind>/<slug>.png`, the AVIFs go to
-`web/static/art/<kind>/`, and the shipped byte counts are recorded in the
-manifest. With `--out DIR`, that approval check is skipped and everything
-is written under `DIR` instead: nothing is shipped, nothing is copied to
-`art/originals/`, and the manifest is left untouched. This is how a
+is reached.
+
+First of all it writes the source as the committed original,
+`art/originals/<kind>/<slug>.webp`, in lossless WebP (`cwebp -lossless
+-exact -z 9`, or ImageMagick's `webp:lossless=true` without `cwebp`), and
+checks it: `magick compare -metric AE` over all channels must count 0
+differing pixels and the raw 16-bit RGBA bytes must be equal, or the run
+fails before shipping anything. It prints the WebP's size next to the
+source's. `--src` may be a `.webp` original.
+
+Without `--out`, the id **must already be `"approved"`** in the manifest
+(set by `apply-review.mjs`); the AVIFs go to `web/static/art/<kind>/`, and
+the shipped byte counts are recorded in the manifest. With `--out DIR`,
+that approval check is skipped and everything is written under `DIR`
+instead (the original as `DIR/originals/<kind>/<slug>.webp`): nothing is
+shipped, nothing is written to `art/originals/`, and the manifest is left
+untouched. This is how a
 pipeline change (or `M9.B0`'s pilot) is proved end to end without
 approving or shipping anything for real.
 
@@ -228,7 +238,9 @@ node tools/art/index.mjs --manifest /scratch/manifest.json --out /scratch/availa
 Regenerates `web/src/lib/art/available.gen.ts` from every `"approved"`
 asset in `art/manifest.json`: an id, its kind, and its shipped variants'
 paths, pixel sizes and byte counts. It prints each approved id's approved
-attempt (and notes when it is earlier than the latest). `--manifest` and
+attempt (and notes when it is earlier than the latest) and its committed
+original (`.webp`, or a legacy `.png`), and warns about an approved id with
+no original yet. `--manifest` and
 `--out` point it at scratch files for a proof. Run it after any `apply-review.mjs` or
 `process.mjs` call that changes which assets are approved, so the app's
 index never claims a file that was not actually shipped.

@@ -28,8 +28,10 @@ license and what this art is never allowed to copy.
   `token-anchor.jpg`), with a README naming each source attempt and what it
   anchors. They are review references: `generate.mjs` sends one to Codex
   only when run with `--ref`, and the batch never does.
-- `originals/<kind>/<id>.png`: approved bitmap originals, committed as
-  generated (no hand-editing). `web/static/art/**.avif` is derived from
+- `originals/<kind>/<id>.webp`: approved bitmap originals, committed as
+  lossless WebP that `tools/art/process.mjs` proves pixel-identical to the
+  generated PNG (no hand-editing; about 70% of the PNG's size, which is
+  why the owner chose it over committing the PNG). `web/static/art/**.avif` is derived from
   these by `tools/art/process.mjs`; a shipped file is never hand-edited,
   only regenerated from its original.
 - `LICENSE`: the CC BY 4.0 notice covering this directory, its shipped
