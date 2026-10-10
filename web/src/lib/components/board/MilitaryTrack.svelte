@@ -7,13 +7,16 @@
   // variant from the UX design: a slimmer bar with smaller tokens, same
   // data and the same aria-label.
   //
-  // The board is spatially fixed regardless of reading direction (seat 0's
-  // capital is always the start, seat 1's always the end -- see AGENTS.md
-  // "the board region is dir=ltr because it is spatial, not text"), so the
-  // pawn and the looting tokens are positioned with a physical `left` in
-  // the style block below, not a logical inset.
+  // The board is spatial, not text (AGENTS.md: the board region is
+  // dir="ltr"), so the pawn and the looting tokens are positioned with a
+  // physical `left` in the style block below, not a logical inset. Which
+  // capital sits at the left end is `leftSeat`: the seat drawn at the
+  // bottom or on the left of the board (UX design, decision 6). For a
+  // player at the Moon the track is mirrored (lib/ui/track.ts), and the
+  // pawn, the zones and the looting tokens follow.
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { trackEnds, trackMirrored, trackPercent, type Seat } from '$lib/ui/track';
   import { militaryLeader, militaryMargin, nextLooting } from '$lib/view/threats';
   import type { MilitaryView } from '$lib/wire';
   import LootingToken from './LootingToken.svelte';
@@ -23,26 +26,31 @@
     /** This connection's own seat, for "you"/"the opponent" wording. Left
      *  out for a spectator or a gallery demo, which fall back to naming the
      *  crests instead. */
-    viewerSeat?: 0 | 1;
+    viewerSeat?: Seat;
+    /** The seat whose capital is drawn at the left end (default the Sun). */
+    leftSeat?: Seat;
     /** The landscape top-bar variant: slimmer, smaller tokens. */
     compact?: boolean;
     class?: string;
   }
 
-  let { military, viewerSeat, compact = false, class: className = '' }: Props = $props();
+  let {
+    military,
+    viewerSeat,
+    leftSeat = 0,
+    compact = false,
+    class: className = ''
+  }: Props = $props();
 
   // The printed board's zone values by space, 0 (centre) to 8; space 9 is a
   // capital, shown as the crest instead of a number.
   const ZONE_POINTS = [0, 2, 2, 5, 5, 5, 10, 10, 10] as const;
 
-  function crestKey(seat: 0 | 1) {
+  function crestKey(seat: Seat) {
     return seat === 0 ? ('board.crest.sun' as const) : ('board.crest.moon' as const);
   }
 
-  function pawnPercent(position: number): number {
-    return ((position + 9) / 18) * 100;
-  }
-
+  const ends = $derived(trackEnds(leftSeat));
   const leader = $derived(militaryLeader(military));
   const margin = $derived(militaryMargin(military));
   const next = $derived(nextLooting(military));
@@ -60,7 +68,7 @@
   const nextText = $derived.by(() => {
     if (!next) return t('board.military.noLootLeft');
     const magnitude = Math.abs(next.at);
-    const nextSeat = next.seat as 0 | 1;
+    const nextSeat = next.seat as Seat;
     if (viewerSeat !== undefined) {
       return t(
         nextSeat === viewerSeat ? 'board.military.nextLootYou' : 'board.military.nextLootOpponent',
@@ -77,33 +85,43 @@
   const ariaLabel = $derived(`${leadText} ${nextText}`);
 </script>
 
+{#snippet capital(seat: Seat)}
+  <div
+    class="grid shrink-0 place-items-center rounded-full border-2 {compact
+      ? 'size-5'
+      : 'size-7'} {leader === seat
+      ? seat === 0
+        ? 'border-sun bg-sun/20 text-sun-ink'
+        : 'border-moon bg-moon/20 text-moon-ink'
+      : 'border-rule text-fg-muted'}"
+    data-capital={seat}
+    title={t(viewerSeat === seat ? 'board.military.capitalYou' : 'board.military.capitalCrest', {
+      crest: t(crestKey(seat))
+    })}
+  >
+    <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} />
+  </div>
+{/snippet}
+
 <div
   dir="ltr"
   role="group"
   aria-label={ariaLabel}
+  data-left-seat={leftSeat}
+  data-mirrored={trackMirrored(leftSeat) ? '' : undefined}
   class="military-track flex items-center gap-1.5 {compact
     ? 'min-h-6 text-xs'
     : 'min-h-12 text-sm'} {className}"
 >
-  <div
-    class="grid shrink-0 place-items-center rounded-full border-2 {compact
-      ? 'size-5'
-      : 'size-7'} {leader === 0
-      ? 'border-sun bg-sun/20 text-sun-ink'
-      : 'border-rule text-fg-muted'}"
-    title={t(viewerSeat === 0 ? 'board.military.capitalYou' : 'board.military.capitalCrest', {
-      crest: t('board.crest.sun')
-    })}
-  >
-    <Icon name="crest-sun" />
-  </div>
+  {@render capital(ends[0])}
 
   <div class="track-bar relative {compact ? 'h-2' : 'h-3'} flex-1 rounded-full bg-panel-sunken">
     <div class="track-center absolute inset-y-0" aria-hidden="true"></div>
     {#each military.looting as loot (loot.at)}
       <div
         class="token-spot absolute top-1/2 flex flex-col items-center gap-0.5"
-        style:--pos="{pawnPercent(loot.at)}%"
+        style:--pos="{trackPercent(loot.at, leftSeat)}%"
+        data-loot-at={loot.at}
       >
         <LootingToken
           value={loot.value}
@@ -125,25 +143,15 @@
       class="pawn absolute top-1/2 grid place-items-center rounded-full border-2 border-focus bg-panel {compact
         ? 'size-4'
         : 'size-6'}"
-      style:--pos="{pawnPercent(military.position)}%"
+      style:--pos="{trackPercent(military.position, leftSeat)}%"
+      data-pawn={military.position}
       aria-hidden="true"
     >
       <Icon name="military-pawn" class={compact ? 'text-[10px]' : 'text-xs'} />
     </div>
   </div>
 
-  <div
-    class="grid shrink-0 place-items-center rounded-full border-2 {compact
-      ? 'size-5'
-      : 'size-7'} {leader === 1
-      ? 'border-moon bg-moon/20 text-moon-ink'
-      : 'border-rule text-fg-muted'}"
-    title={t(viewerSeat === 1 ? 'board.military.capitalYou' : 'board.military.capitalCrest', {
-      crest: t('board.crest.moon')
-    })}
-  >
-    <Icon name="crest-moon" />
-  </div>
+  {@render capital(ends[1])}
 </div>
 
 <style>
