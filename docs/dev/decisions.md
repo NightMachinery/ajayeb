@@ -67,11 +67,11 @@ All entries below were accepted on 2026-10-01 unless they say otherwise.
 
 ## D07. Shipped art is AVIF; approved originals are committed
 
-**Decision.** Bitmap art ships as AVIF only, under `web/static/art/`. The approved originals are committed as generated (PNG) under `art/originals/`, and the shipped files are derived from them by script. Rejected attempts stay outside the repository.
+**Decision.** Bitmap art ships as AVIF only, under `web/static/art/`. The approved originals are committed under `art/originals/` as lossless WebP, pixel-identical to the generated PNG (checked by script when written), and the shipped files are derived from them by script. Rejected attempts stay outside the repository.
 
-**Rationale.** The owner asked for both. For painted art, AVIF gives smaller files than WebP or JPEG at the same visual quality, and every modern browser supports it. Keeping the originals means any size or quality can be regenerated later without generating the art again, and nothing approved can be lost. Keeping rejects out bounds the repository's size.
+**Rationale.** The owner asked for both. For painted art, AVIF gives smaller files than WebP or JPEG at the same visual quality, and every modern browser supports it. Keeping the originals means any size or quality can be regenerated later without generating the art again, and nothing approved can be lost. Keeping rejects out bounds the repository's size. Codex returns PNGs of about 3.7 MB, so 109 PNG originals would add about 380 MB to a public repository whose history keeps every version; lossless WebP keeps the same pixels about 30% smaller (default chosen on 2026-10-10 while the owner's answer was pending).
 
-**Rejected.** WebP as the shipped format (larger files; an earlier draft of the UX plan used it). Shipping PNG or JPEG (far too large). A WebP fallback next to every AVIF (double the files for browsers we do not target). Keeping the originals outside the repository (not reproducible, easy to lose).
+**Rejected.** WebP as the shipped format (larger files; an earlier draft of the UX plan used it). Shipping PNG or JPEG (far too large). A WebP fallback next to every AVIF (double the files for browsers we do not target). Keeping the originals outside the repository (not reproducible, easy to lose). PNG originals (about 30% larger for the same pixels). Git LFS (GitHub's free storage and bandwidth would run out with public clones).
 
 ## D08. Centred pawn at the end of an age: the last active player chooses
 
