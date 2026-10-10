@@ -164,7 +164,11 @@ async function runCodex(prompt, gen, scratchDir, refImage) {
     '-o',
     outFile,
   ];
-  if (refImage) args.push('-i', refImage);
+  // `--image=<path>` (one token), never `-i <path>` (two tokens): codex
+  // exec's `-i, --image <FILE>...` is variadic, so a space-separated value
+  // greedily swallows the next positional too, eating the prompt itself
+  // (reproduced directly against codex exec, not just this script).
+  if (refImage) args.push(`--image=${refImage}`);
   args.push(instruction);
 
   return new Promise((resolve, reject) => {
@@ -208,7 +212,7 @@ async function generateOne(asset, amendOverride, dryRun) {
     'image_generation',
     '-o',
     path.join(scratchDir, 'last.txt'),
-    ...(refImage ? ['-i', refImage] : []),
+    ...(refImage ? [`--image=${refImage}`] : []),
     JSON.stringify(codexInstruction(prompt, asset.gen)),
   ].join(' ');
 
