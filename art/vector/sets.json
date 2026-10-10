@@ -79,7 +79,7 @@
       "rules": {"viewBox": "any", "budget": 4096, "gradients": 1, "tokens": true},
       "overrides": {
         "logo-wordmark": {"budget": 8192, "snap": false},
-        "favicon": {"budget": 2048, "rawColors": true, "viewBox": "0 0 32 32", "liveArea": false},
+        "favicon": {"budget": 2048, "rawColors": true, "viewBox": "0 0 32 32", "liveArea": false, "snap": false},
         "capital-sun": {"viewBox": "0 0 24 24", "budget": 1228, "gradients": 0, "tokens": false},
         "capital-moon": {"viewBox": "0 0 24 24", "budget": 1228, "gradients": 0, "tokens": false}
       },
@@ -90,6 +90,9 @@
         {"id": "ornament-border", "file": "web/src/lib/ornaments/svg/ornament-border.svg", "ink": "var(--gild)"},
         {"id": "ornament-girih", "file": "web/src/lib/ornaments/svg/ornament-girih.svg", "ink": "var(--rule)"},
         {"id": "track-cell", "file": "web/src/lib/ornaments/svg/track-cell.svg", "ink": "var(--rule-strong)"},
+        {"id": "track-cell-2", "file": "web/src/lib/ornaments/svg/track-cell-2.svg", "ink": "var(--rule-strong)"},
+        {"id": "track-cell-5", "file": "web/src/lib/ornaments/svg/track-cell-5.svg", "ink": "var(--rule-strong)"},
+        {"id": "track-cell-10", "file": "web/src/lib/ornaments/svg/track-cell-10.svg", "ink": "var(--rule-strong)"},
         {"id": "capital-sun", "ink": "var(--sun)"},
         {"id": "capital-moon", "ink": "var(--moon)"},
         {"id": "logo-wordmark", "file": "web/src/lib/brand/logo-wordmark.svg", "ink": "var(--fg)"},
