@@ -122,3 +122,79 @@ exactly as the file's own comment already said it would. That is the
 fixture check doing its job: a real recorded `state` frame's `events` field
 stopped type-checking the moment something tried to use it as more than an
 opaque blob.
+
+## The web client
+
+The client is thin, so its tests check plumbing rather than rules: that it
+says the right frames to the server, and shows what the server sent. They
+are Vitest unit tests next to the code (`make test-web`), in Node, with no
+browser and no server:
+
+- `src/lib/catalog/index.test.ts`: the presentation catalog
+  (`web/src/lib/wire/catalog.gen.ts`, written by `ajayeb-gen`) holds the
+  whole base game, links chains both ways, carries the same `catalogHash`
+  as every recorded view, and knows every slug the recorded views mention.
+- `src/lib/session/ws-transport.test.ts`: the WebSocket transport against
+  a fake socket and fake timers. Reconnect delays double from 500 ms up to
+  a 15 s cap with jitter (each delay lies between half its ceiling and the
+  ceiling), the state reads `offline` after several failures in a row, a
+  1008 close with reason `protocol` or `bad-hello` stops the retries for
+  good while every other close retries, and `close()` never reconnects.
+- `src/lib/session/session.test.ts`: the Session against a scripted
+  transport (`scripted-transport.ts`). It says `hello` on every new
+  socket; acts carry the next `seq`, the current version as `base` and, in
+  a hot-seat room, the seat to move; only a key from the view's `choices`
+  is sent; a state frame that acks the `seq` (with this tab's client id)
+  or a reject that names it settles the request; a pending request turns
+  `slow` after 300 ms; after a reconnect the Session joins again and
+  re-sends the pending request unchanged; a `reject rate` for the pending
+  request re-sends it after a pause, three times at most; reject and error codes map to
+  message keys; `canAct` comes from the frame alone.
+- `src/lib/session/identity.test.ts`, `rooms.test.ts`,
+  `presenter.test.ts` and `fixture-transport.test.ts`: the token (22
+  base64url characters, made once, a malformed stored value replaced), the
+  per-load client id, display-name cleaning, the saved rooms list, the
+  Presenter's queue, minimum thinking dwell and fast-forward, and the
+  fixture transport and the dev room endpoint client.
+
+### The client test hook
+
+Every build of the client defines `window.__ajayeb`, a read-only window
+onto the game the page shows, for end-to-end drivers:
+
+- `view()`: the view on screen, or `null` before the first state;
+- `choices()`: that view's legal choices; each `key` is also the
+  `data-act` of a button on the page;
+- `room()`: the room on screen with its `code`, `version`, `canUndo` and
+  `thinking` seat;
+- `you()`: the seats this connection may act for, and `canAct`;
+- `conn()`: `connecting`, `open`, `reconnecting` or `offline`;
+- `ready()`: true when the page shows the latest state and takes input
+  (welcomed, nothing queued in the Presenter, no request pending).
+
+It is safe in production because it exposes only what this client already
+holds: the redacted view the server sent this viewer. It never exposes the
+identity token. Every value is a copy, so a driver cannot change the page.
+
+A driver opens a room (for a hot-seat game, `/dev/new?mode=hotseat` in a
+build with the dev routes), then repeats: wait for `ready()`, read
+`choices()`, click the `[data-act="<key>"]` button of one of them, until
+`view().phase` is `gameOver`.
+
+### Dev pages for the client
+
+With the dev routes on (`PUBLIC_DEV_ROUTES=1` in the build):
+
+- `/dev/new?mode=hotseat|ai|online&level=easy|normal|hard&seat=0|1|random`
+  creates a room over the WebSocket and opens it at `/play/<code>`. With
+  `seed=` or `scenario=` it uses `POST /api/dev/rooms` instead, which needs
+  a server started with `--dev --dev-endpoints`.
+- `/dev/fixture` lists the recorded game states, and
+  `/dev/fixture/<name>` shows one (such as `state-play` or
+  `pick-library-token.seat1`) through the fixture transport with no
+  server. It sets `data-ready` on `<html>` once the state is on screen and
+  the fonts have loaded, for screenshots.
+
+A token written into `localStorage` for a tool (`ajayeb:token`) must have
+the real shape, 22 base64url characters; the client replaces any other
+value with a fresh token.

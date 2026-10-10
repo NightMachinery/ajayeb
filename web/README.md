@@ -24,9 +24,26 @@ Ports: Vite dev listens on 38952 and `vite preview` on 38953. Both forward `/ws`
 - `src/lib/i18n/` holds the message tables and `t()`.
 - `src/lib/ui/` holds UI state classes, such as the theme (`theme.svelte.ts`) and the safe-area override (`safe-area.ts`).
 - `src/lib/dev/flags.ts` decides whether the `/dev` routes exist.
-- `src/routes/` holds the pages. `/` is Home; `/dev/*` holds the developer pages.
+- `src/routes/` holds the pages. `/` is Home, `/play/<code>` is a room, and `/dev/*` holds the developer pages.
 - `static/` is served as is: the fonts with their licenses, and the favicon.
 - `font-sources/` keeps the original TTF fonts and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `static/fonts/`.
+
+## Session: talking to the server
+
+`src/lib/session/` is the client's whole connection layer. It decides nothing about the game: what may be played is the view's `choices`, what it costs is their cost breakdowns, and whether this client may act comes from the state frame. [docs/protocol.md](../docs/protocol.md) is the contract it implements.
+
+- `transport.ts` defines the Transport (send, onMessage, onState, close). `ws-transport.ts` is the WebSocket to `/ws` on the page's origin, with reconnects (exponential backoff with jitter, capped at 15 s; no retry after a 1008 `protocol` or `bad-hello` close). `fixture-transport.ts` answers from recorded frames, for dev pages and tests, and `scripted-transport.ts` is driven by hand in unit tests.
+- `identity.ts`: the identity token in `localStorage` (`ajayeb:token`, 22 base64url characters, never logged), a random client id per page load, and the display name (`ajayeb:name`).
+- `session.svelte.ts`: the Session. It says `hello` on every socket, creates and joins rooms, and sends acts and undos with the tab's `seq` counter and the current version as `base`. It keeps the latest state frame and view in `$state.raw` (replaced whole), the connection state (`connecting`, `open`, `reconnecting`, `offline`), the pending request with a `slow` flag after 300 ms, the last refusal as a message key, and `canAct`. After a reconnect it joins again and re-sends the pending request unchanged. A request the server dropped under its frame rate limit (`reject rate` naming its seq) is re-sent unchanged after a short pause, up to three times, before the refusal shows. `catalogStale` is set when a view's `catalogHash` differs from the client's catalog.
+- `presenter.svelte.ts`: the Presenter, which holds the frame on screen and moves it forward one queued frame at a time (capture hook, swap, tick, play hook). It has no animations yet; `minThinkingMs` and `fastForwardAfter` are there for the bot dwell and for catching up after a reconnect. Input is open when `presenter.idle && session.canAct`.
+- `rooms.svelte.ts`: the rooms this browser has played (`ajayeb:rooms`: code, mode and last seen).
+- `context.ts` shares a page's Session and Presenter with its components (`setGameContext`, `getSession`, `getPresenter`); `app.ts` holds the app's one live connection, opened the first time a page needs it.
+- `test-hook.ts` defines `window.__ajayeb` for end-to-end drivers (see [docs/testing.md](../docs/testing.md)).
+- `DebugBoard.svelte` is a temporary, plain view of a room with every choice as a `data-act` button, until the real game screen exists.
+
+`src/lib/catalog/` has typed lookups (`cardBySlug`, `wonderBySlug`, `tokenBySlug`) over `src/lib/wire/catalog.gen.ts`, the presentation catalog that `make gen` writes from the engine's data.
+
+The pages: `/play/<code>` joins a room and shows it; `/dev/new?mode=hotseat|ai|online` creates a room and opens it (with `seed=` or `scenario=`, through the server's dev endpoint); `/dev/fixture/<name>` shows a recorded game state with no server.
 
 ## Styling
 
