@@ -60,7 +60,7 @@
 <HotseatSheet bind:open={hotseatOpen} onStart={startHotseat} />
 
 <Sheet bind:open={onlineOpen} titleId="online-soon-title">
-  <div class="flex flex-col gap-4 px-5 pt-1 pb-5">
+  <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
     <h2 id="online-soon-title" class="font-display text-xl text-fg">{t('home.online.title')}</h2>
     <p class="text-sm text-fg-muted">{t('home.online.comingSoon')}</p>
     <Button onclick={() => (onlineOpen = false)}>{t('shell.close')}</Button>
@@ -68,7 +68,7 @@
 </Sheet>
 
 <Sheet bind:open={settingsOpen} titleId="home-settings-title">
-  <div class="flex flex-col gap-4 px-5 pt-1 pb-5">
+  <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
     <h2 id="home-settings-title" class="font-display text-xl text-fg">
       {t('home.settings.title')}
     </h2>

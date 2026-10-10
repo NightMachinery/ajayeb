@@ -44,7 +44,9 @@ describe('parseSettings', () => {
       animationSpeed: 'relaxed',
       confirmMoves: 'always',
       colorPatterns: false,
-      cardText: 'large'
+      cardText: 'large',
+      hotseatPassDevice: false,
+      hotseatOrientation: 'fixed'
     };
     expect(parseSettings(JSON.stringify(stored))).toEqual(stored);
   });
@@ -54,7 +56,9 @@ describe('parseSettings', () => {
       animationSpeed: 'warp', // not a known speed
       confirmMoves: 'always',
       colorPatterns: 'yes', // not a boolean
-      cardText: 'large'
+      cardText: 'large',
+      hotseatPassDevice: 'on', // not a boolean
+      hotseatOrientation: 'sideways' // not an orientation
     });
     expect(parseSettings(raw)).toEqual({
       ...DEFAULT_SETTINGS,
@@ -88,6 +92,18 @@ describe('SettingsStore', () => {
     store.set('colorPatterns', false);
     expect(store.value).toEqual({ ...DEFAULT_SETTINGS, cardText: 'large', colorPatterns: false });
     expect(JSON.parse(storage.data.get(SETTINGS_KEY)!)).toEqual(store.value);
+  });
+
+  it('updates several fields with one write, keeping the others', () => {
+    const storage = memory();
+    const store = new SettingsStore(storage);
+    store.update({ hotseatPassDevice: true, hotseatOrientation: 'face' });
+    expect(store.value).toEqual({
+      ...DEFAULT_SETTINGS,
+      hotseatPassDevice: true,
+      hotseatOrientation: 'face'
+    });
+    expect(new SettingsStore(storage).value.hotseatOrientation).toBe('face');
   });
 
   it('resets to the defaults', () => {

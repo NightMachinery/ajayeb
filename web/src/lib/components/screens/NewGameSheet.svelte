@@ -34,8 +34,8 @@
 
   const seatOptions = $derived([
     { value: 'random', label: t('home.ai.seatRandom') },
-    { value: '0', label: t('home.ai.seatMe') },
-    { value: '1', label: t('home.ai.seatRival') }
+    { value: '0', label: t('home.ai.seatSun') },
+    { value: '1', label: t('home.ai.seatMoon') }
   ]);
 
   async function start(): Promise<void> {
@@ -55,7 +55,7 @@
 
 <Sheet bind:open {titleId}>
   <form
-    class="flex flex-col gap-5 px-5 pt-1 pb-5"
+    class="flex flex-col gap-5 px-5 pt-1 pb-5 split:pt-5"
     onsubmit={(event) => {
       event.preventDefault();
       void start();
@@ -88,12 +88,18 @@
       {/each}
     </fieldset>
 
-    <Segmented
-      name="ai-seat"
-      legend={t('home.ai.seatLegend')}
-      options={seatOptions}
-      bind:value={seatValue}
-    />
+    <div class="flex flex-col gap-1.5">
+      <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
+        {t('home.ai.seatLegend')}
+      </span>
+      <Segmented
+        name="ai-seat"
+        legend={t('home.ai.seatLegend')}
+        options={seatOptions}
+        bind:value={seatValue}
+      />
+      <p class="text-xs text-fg-muted">{t('home.ai.firstRandomNote')}</p>
+    </div>
 
     {#if failure}
       <p class="text-sm text-cinnabar" role="alert">{failure}</p>

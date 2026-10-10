@@ -17,6 +17,11 @@ export type ConfirmMoves = (typeof CONFIRM_MOVES_OPTIONS)[number];
 export const CARD_TEXT_SIZES = ['normal', 'large'] as const;
 export type CardTextSize = (typeof CARD_TEXT_SIZES)[number];
 
+export const ORIENTATIONS = ['face', 'fixed'] as const;
+/** Hot-seat board orientation (UX design §6): 'face' turns the board to the
+ *  active player, 'fixed' keeps Sun at the bottom. */
+export type Orientation = (typeof ORIENTATIONS)[number];
+
 export interface Settings {
   /** Base FX duration multiplier; see ui/motion.svelte.ts for the effective
    *  speed, which also factors in the OS's prefers-reduced-motion. */
@@ -26,13 +31,21 @@ export interface Settings {
   /** A pattern added to each card colour's band, for colour-blind play. */
   colorPatterns: boolean;
   cardText: CardTextSize;
+  /** The hot-seat sheet's last choices, which the game screen (M5.S04)
+   *  reads: whether to show the pass-device interstitial, and how to orient
+   *  the board. null until the first hot-seat game; the sheet then offers
+   *  the device default (on and 'face' for a coarse pointer or a phone). */
+  hotseatPassDevice: boolean | null;
+  hotseatOrientation: Orientation | null;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
   animationSpeed: 'normal',
   confirmMoves: 'onlineOnly',
   colorPatterns: true,
-  cardText: 'normal'
+  cardText: 'normal',
+  hotseatPassDevice: null,
+  hotseatOrientation: null
 };
 
 export const SETTINGS_KEY = 'ajayeb:settings';
@@ -46,6 +59,10 @@ function isAnimationSpeed(value: unknown): value is AnimationSpeed {
 
 function isConfirmMoves(value: unknown): value is ConfirmMoves {
   return (CONFIRM_MOVES_OPTIONS as readonly unknown[]).includes(value);
+}
+
+function isOrientation(value: unknown): value is Orientation {
+  return (ORIENTATIONS as readonly unknown[]).includes(value);
 }
 
 function isCardTextSize(value: unknown): value is CardTextSize {
@@ -73,7 +90,14 @@ export function parseSettings(raw: string | null): Settings {
       : DEFAULT_SETTINGS.confirmMoves,
     colorPatterns:
       typeof r['colorPatterns'] === 'boolean' ? r['colorPatterns'] : DEFAULT_SETTINGS.colorPatterns,
-    cardText: isCardTextSize(r['cardText']) ? r['cardText'] : DEFAULT_SETTINGS.cardText
+    cardText: isCardTextSize(r['cardText']) ? r['cardText'] : DEFAULT_SETTINGS.cardText,
+    hotseatPassDevice:
+      typeof r['hotseatPassDevice'] === 'boolean'
+        ? r['hotseatPassDevice']
+        : DEFAULT_SETTINGS.hotseatPassDevice,
+    hotseatOrientation: isOrientation(r['hotseatOrientation'])
+      ? r['hotseatOrientation']
+      : DEFAULT_SETTINGS.hotseatOrientation
   };
 }
 
@@ -105,6 +129,11 @@ export class SettingsStore {
   /** Updates one field and persists the whole object. */
   set<K extends keyof Settings>(key: K, value: Settings[K]): void {
     this.#save({ ...this.value, [key]: value });
+  }
+
+  /** Updates several fields at once, with one write. */
+  update(patch: Partial<Settings>): void {
+    this.#save({ ...this.value, ...patch });
   }
 
   /** Restores every field to its default. */

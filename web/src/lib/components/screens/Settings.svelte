@@ -52,7 +52,8 @@
 </script>
 
 <div class="flex flex-col gap-6">
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-1.5">
+    <span class="text-sm font-medium text-fg-muted" aria-hidden="true">{t('theme.label')}</span>
     <Segmented
       name="settings-theme"
       legend={t('theme.label')}
@@ -61,7 +62,10 @@
     />
   </div>
 
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-1.5">
+    <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
+      {t('home.settings.animationSpeedLegend')}
+    </span>
     <Segmented
       name="settings-speed"
       legend={t('home.settings.animationSpeedLegend')}
@@ -76,14 +80,19 @@
     {/if}
   </div>
 
-  <Segmented
-    name="settings-confirm"
-    legend={t('home.settings.confirmMovesLegend')}
-    options={confirmOptions}
-    bind:value={
-      () => settings.value.confirmMoves, (v) => settings.set('confirmMoves', v as ConfirmMoves)
-    }
-  />
+  <div class="flex flex-col gap-1.5">
+    <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
+      {t('home.settings.confirmMovesLegend')}
+    </span>
+    <Segmented
+      name="settings-confirm"
+      legend={t('home.settings.confirmMovesLegend')}
+      options={confirmOptions}
+      bind:value={
+        () => settings.value.confirmMoves, (v) => settings.set('confirmMoves', v as ConfirmMoves)
+      }
+    />
+  </div>
 
   <label class="flex min-h-11 items-center justify-between gap-3">
     <span class="flex flex-col">
@@ -92,16 +101,21 @@
     </span>
     <input
       type="checkbox"
-      class="size-5 accent-accent"
+      class="size-5 shrink-0 accent-accent"
       checked={settings.value.colorPatterns}
       onchange={(e) => settings.set('colorPatterns', e.currentTarget.checked)}
     />
   </label>
 
-  <Segmented
-    name="settings-card-text"
-    legend={t('home.settings.cardTextLegend')}
-    options={cardTextOptions}
-    bind:value={() => settings.value.cardText, (v) => settings.set('cardText', v as CardTextSize)}
-  />
+  <div class="flex flex-col gap-1.5">
+    <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
+      {t('home.settings.cardTextLegend')}
+    </span>
+    <Segmented
+      name="settings-card-text"
+      legend={t('home.settings.cardTextLegend')}
+      options={cardTextOptions}
+      bind:value={() => settings.value.cardText, (v) => settings.set('cardText', v as CardTextSize)}
+    />
+  </div>
 </div>

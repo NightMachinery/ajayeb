@@ -33,14 +33,18 @@
   }: Props = $props();
 
   const crest = $derived(nextSeat === 0 ? 'crest-sun' : 'crest-moon');
+  // The field is the crest colour itself, which is the same in both themes,
+  // so the text uses fixed inks chosen for contrast on it (the -ink tokens
+  // are for crest-coloured text on a panel, and vanish on the crest field):
+  // dark ink on the light Sun turquoise, white on the deeper Moon red.
 </script>
 
 <div
   class="flex h-full flex-col items-center justify-center gap-6 px-6 py-10 text-center"
   class:bg-sun={nextSeat === 0}
-  class:text-sun-ink={nextSeat === 0}
+  class:text-ink={nextSeat === 0}
   class:bg-moon={nextSeat === 1}
-  class:text-moon-ink={nextSeat === 1}
+  class:text-white={nextSeat === 1}
 >
   <Icon name={crest} class="text-6xl" />
   <h1 class="font-display text-3xl" dir="auto">{t('home.pass.title', { name: nextName })}</h1>
