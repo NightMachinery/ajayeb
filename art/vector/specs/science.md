@@ -31,7 +31,7 @@ Set name in `sets.json`: `science`. 14 files: seven symbols, each with an `-sm` 
 
 - Meaning: the sundial symbol (timekeeping).
 - Metaphor: a sundial: a half disc dial with a triangular gnomon casting a shadow line.
-- Silhouette: a flat half disc lying on its straight edge, with a raised triangular gnomon. The hour lines in the detail tone, at most three.
+- Silhouette: a flat dial plate seen in perspective (an elliptical face on a slab edge), with a raised triangular gnomon standing on it. The shadow or hour lines in the detail tone, at most three. (Corrected in M9.V2: a half disc on its straight edge with a fin on top reads as a spiked helmet; see log/science.md.)
 - Must differ from: crest-sun (no rays around a disc), science-set-square (it is curved, the set square is straight), chain-sun.
 - Sizes and contexts: as science-globe.
 
