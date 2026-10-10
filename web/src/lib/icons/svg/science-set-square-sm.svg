@@ -1,1 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 10 8 2h2v8z" fill="var(--i1, currentColor)"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M1 1.5V11h9.5zM3 6v3h3z" fill="var(--i1, currentColor)" fill-rule="evenodd"/><path d="M3 6v3h3z" fill="var(--i2, transparent)"/></svg>
