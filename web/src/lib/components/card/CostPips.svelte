@@ -55,7 +55,8 @@
     g.kind === 'coins' ? 1.25 : (small ? 1 : dense ? 1.05 : 1.2) + (g.n > 1 ? 0.7 : 0);
 
   const shown = $derived.by(() => {
-    const budget = room - (chainIn ? 1.3 + GAP : 0);
+    // ChainChip is 1.4 em on mini cards (at least 14 px) and 1.3 em elsewhere.
+    const budget = room - (chainIn ? (small ? 1.4 : 1.3) + GAP : 0);
     const total = groups.reduce((sum, g) => sum + width(g) + GAP, -GAP);
     if (groups.length <= max && total <= budget) return groups;
     // Keep room for the "+n" marker.

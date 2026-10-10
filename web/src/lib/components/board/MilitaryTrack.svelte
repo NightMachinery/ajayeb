@@ -99,7 +99,8 @@
       crest: t(crestKey(seat))
     })}
   >
-    <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} />
+    <!-- The capital draws the crest at about 11 px, where the sun's -sm file reads. -->
+    <Icon name={seat === 0 ? 'crest-sun-sm' : 'crest-moon'} />
   </div>
 {/snippet}
 
