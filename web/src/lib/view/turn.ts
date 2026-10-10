@@ -5,9 +5,68 @@
 // decides what is legal, it only reads what the view and the connection
 // layer already know.
 
-import type { Mode, PendingKind, View } from '$lib/wire';
+import type { GameEvent, Mode, PendingKind, View } from '$lib/wire';
 
 export type Seat = 0 | 1;
+
+/** A seat taking an extra turn, and the wonder that granted it when known. */
+export interface PlayAgain {
+  seat: Seat;
+  wonder?: string;
+}
+
+/**
+ * Who is taking an extra turn right now, read from the events this client
+ * has seen, oldest first. The view cannot say it: its extraTurn flag means
+ * "plays again once this turn is over", and the engine clears it the moment
+ * the extra turn starts. The events can: a wonder's extraTurn event grants
+ * the extra turn, and the extra turn lasts until that seat's next play
+ * action (build, discard or wonder), an age's end or the game's end.
+ *
+ * So, from the newest event backwards: an extraTurn event is the answer
+ * (with the wonder event of the same seat just before it); a play action,
+ * an extra turn lost, a new age, a starter choice or the end of the game
+ * first means nobody plays again. Everything else (payments, coins, the
+ * pawn, reveals, tokens, a destroy or a rebuild resolving the wonder's own
+ * choice) happens inside a turn and is skipped.
+ *
+ * Display only: it re-reads the server's own events. A client that joined
+ * (or reloaded) during the extra turn never saw the grant and gets
+ * undefined.
+ */
+export function playAgainFrom(log: readonly GameEvent[]): PlayAgain | undefined {
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i];
+    if (!e) continue;
+    switch (e.kind) {
+      case 'extraTurn': {
+        if (e.seat !== 0 && e.seat !== 1) return undefined;
+        const seat: Seat = e.seat;
+        for (let j = i - 1; j >= 0; j--) {
+          const w = log[j];
+          if (!w) continue;
+          if (w.kind === 'wonder') {
+            return w.seat === seat && w.wonder ? { seat, wonder: w.wonder } : { seat };
+          }
+          if (w.kind === 'build' || w.kind === 'discard' || w.kind === 'ageStart') break;
+        }
+        return { seat };
+      }
+      case 'build':
+      case 'discard':
+      case 'wonder':
+      case 'extraTurnLost':
+      case 'ageStart':
+      case 'starterChosen':
+      case 'draft':
+      case 'gameOver':
+        return undefined;
+      default:
+        continue;
+    }
+  }
+  return undefined;
+}
 
 /** What the session layer knows beyond the view itself. A later slice wires
  *  this from Session/Presenter; it is a plain, narrow interface here so this
@@ -31,6 +90,9 @@ export interface TurnContext {
   /** Whether each seat's player is connected (the room's seats, online
    *  rooms only): false for a player who dropped. */
   connected?: readonly [boolean | undefined, boolean | undefined];
+  /** The seat taking an extra turn now, if any (playAgainFrom over the
+   *  events this client has seen). */
+  playAgain?: PlayAgain;
 }
 
 export type TurnState =
@@ -43,7 +105,7 @@ export type TurnState =
   | { kind: 'aiThinking'; seat: Seat }
   | { kind: 'waitingOpponent'; seat: Seat; away?: true }
   | { kind: 'pendingChoice'; seat: Seat; pendingKind: PendingKind }
-  | { kind: 'playAgain'; seat: Seat }
+  | { kind: 'playAgain'; seat: Seat; wonder?: string; hotseat: boolean }
   | { kind: 'hotseatTurn'; seat: Seat }
   | { kind: 'yourTurn'; seat: Seat };
 
@@ -82,7 +144,15 @@ export function turnState(ctx: TurnContext): TurnState {
   if (view.pending && view.pending.seat === toMove) {
     return { kind: 'pendingChoice', seat: toMove, pendingKind: view.pending.kind };
   }
-  if (view.extraTurn) return { kind: 'playAgain', seat: toMove };
+  // The whole extra turn reads "Play again" (UX design, TurnBar states). A
+  // hot-seat device names the player, since both sit at it.
+  if (ctx.playAgain?.seat === toMove && view.phase === 'play') {
+    const hotseat = ctx.mode === 'hotseat';
+    const wonder = ctx.playAgain.wonder;
+    return wonder !== undefined
+      ? { kind: 'playAgain', seat: toMove, wonder, hotseat }
+      : { kind: 'playAgain', seat: toMove, hotseat };
+  }
   if (ctx.mode === 'hotseat') return { kind: 'hotseatTurn', seat: toMove };
   return { kind: 'yourTurn', seat: toMove };
 }

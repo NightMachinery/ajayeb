@@ -6,8 +6,8 @@ import {
   protocolFixtures
 } from '$lib/wire/fixtures.gen';
 import type { State } from '$lib/wire';
-import type { View } from '$lib/wire';
-import { turnState, type TurnContext } from './turn';
+import type { GameEvent, View } from '$lib/wire';
+import { playAgainFrom, turnState, type TurnContext } from './turn';
 
 function state(name: (typeof fixtureNames)[number]): State {
   const frame = fixtures[fixtureNames.indexOf(name)];
@@ -189,13 +189,53 @@ describe('turnState: non-hot-seat turns, from real protocol fixtures', () => {
     });
   });
 
-  it('playAgain when the view says the active seat plays again', () => {
-    // No recorded fixture happens to pause with extraTurn set (a real game
-    // keeps playing through it), so this one field is overridden on a real
-    // view rather than drawn from a fixture as-is.
-    const v: View = { ...view('age-1-start-seat0'), extraTurn: true };
-    const ctx: TurnContext = { view: v, mode: 'ai', mySeats: [0], ...baseConn };
-    expect(turnState(ctx)).toEqual({ kind: 'playAgain', seat: 0 });
+  it('playAgain for the seat taking an extra turn, with the wonder that granted it', () => {
+    const v = view('age-1-start-seat0');
+    const ctx: TurnContext = {
+      view: v,
+      mode: 'ai',
+      mySeats: [0],
+      ...baseConn,
+      playAgain: { seat: 0, wonder: 'appian-way' }
+    };
+    expect(turnState(ctx)).toEqual({
+      kind: 'playAgain',
+      seat: 0,
+      wonder: 'appian-way',
+      hotseat: false
+    });
+    expect(turnState({ ...ctx, mode: 'hotseat', mySeats: [0, 1] })).toEqual({
+      kind: 'playAgain',
+      seat: 0,
+      wonder: 'appian-way',
+      hotseat: true
+    });
+  });
+
+  it('an extra turn of the other seat, or the view flag alone, is no playAgain', () => {
+    const v = view('age-1-start-seat0');
+    const base: TurnContext = { view: v, mode: 'hotseat', mySeats: [0, 1], ...baseConn };
+    expect(turnState({ ...base, playAgain: { seat: 1 } })).toEqual({
+      kind: 'hotseatTurn',
+      seat: 0
+    });
+    // view.extraTurn means "plays again once this turn is over"; on its own
+    // it never says the current turn is the extra one.
+    expect(turnState({ ...base, view: { ...v, extraTurn: true } })).toEqual({
+      kind: 'hotseatTurn',
+      seat: 0
+    });
+  });
+
+  it('a pending choice wins over the extra turn', () => {
+    const ctx: TurnContext = {
+      view: view('destroy-card-seat0'),
+      mode: 'ai',
+      mySeats: [0],
+      ...baseConn,
+      playAgain: { seat: 0 }
+    };
+    expect(turnState(ctx)).toEqual({ kind: 'pendingChoice', seat: 0, pendingKind: 'destroyCard' });
   });
 });
 
@@ -308,5 +348,67 @@ describe('turnState: the bot thinking', () => {
       ...baseConn
     };
     expect(turnState(ctx)).toEqual({ kind: 'spectating' });
+  });
+});
+
+describe('playAgainFrom: the extra turn, from the events seen', () => {
+  // The events of the Appian Way bought by trade, as the server recorded
+  // them (server/internal/engine/testdata/protocol/appian-economy.json).
+  const appian: GameEvent[] = [
+    { kind: 'wonder', private: false, seat: 0, card: 'rostrum', wonder: 'appian-way' },
+    { kind: 'pay', private: false, seat: 0, amount: 10, toOpponent: 10 },
+    { kind: 'coins', private: false, seat: 0, wonder: 'appian-way', amount: 3, balance: 8 },
+    { kind: 'extraTurn', private: false, seat: 0 },
+    { kind: 'coins', private: false, seat: 1, wonder: 'appian-way', amount: -3, balance: 7 },
+    { kind: 'reveal', private: false, card: 'shelf-quarry', slot: 15 }
+  ];
+  const earlier: GameEvent[] = [
+    { kind: 'ageStart', private: false, age: 1 },
+    { kind: 'build', private: false, seat: 1, card: 'baths' }
+  ];
+
+  it('nothing before any extra turn', () => {
+    expect(playAgainFrom([])).toBeUndefined();
+    expect(playAgainFrom(earlier)).toBeUndefined();
+  });
+
+  it('the wonder that grants it starts the extra turn, named', () => {
+    expect(playAgainFrom([...earlier, ...appian])).toEqual({ seat: 0, wonder: 'appian-way' });
+  });
+
+  it("the seat's next play action ends it", () => {
+    for (const kind of ['build', 'discard', 'wonder'] as const) {
+      const next: GameEvent = { kind, private: false, seat: 0, card: 'stable' };
+      expect(playAgainFrom([...appian, next]), kind).toBeUndefined();
+    }
+  });
+
+  it('a choice the wonder opened (a destroy, a token) keeps it', () => {
+    const zeus: GameEvent[] = [
+      { kind: 'wonder', private: false, seat: 1, card: 'rostrum', wonder: 'statue-of-zeus' },
+      { kind: 'extraTurn', private: false, seat: 1 }
+    ];
+    const destroy: GameEvent = { kind: 'destroy', private: false, seat: 1, card: 'quarry' };
+    expect(playAgainFrom([...zeus, destroy])).toEqual({ seat: 1, wonder: 'statue-of-zeus' });
+  });
+
+  it('an extra turn lost with the age, a new age or the end of the game ends it', () => {
+    const lost: GameEvent = { kind: 'extraTurnLost', private: false, seat: 0 };
+    const age: GameEvent = { kind: 'ageStart', private: false, age: 2 };
+    expect(playAgainFrom([...appian, lost, age])).toBeUndefined();
+    expect(playAgainFrom([...appian, age])).toBeUndefined();
+    expect(playAgainFrom([...appian, { kind: 'gameOver', private: false }])).toBeUndefined();
+  });
+
+  it('a second extra turn in a row is its own, with its own wonder', () => {
+    const sphinx: GameEvent[] = [
+      { kind: 'wonder', private: false, seat: 0, card: 'stable', wonder: 'sphinx' },
+      { kind: 'extraTurn', private: false, seat: 0 }
+    ];
+    expect(playAgainFrom([...appian, ...sphinx])).toEqual({ seat: 0, wonder: 'sphinx' });
+  });
+
+  it('an extra turn whose wonder event was not seen is still an extra turn', () => {
+    expect(playAgainFrom([{ kind: 'extraTurn', private: false, seat: 1 }])).toEqual({ seat: 1 });
   });
 });

@@ -57,7 +57,7 @@
   import { settings } from '$lib/ui/settings.svelte';
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
-  import { turnState } from '$lib/view/turn';
+  import { playAgainFrom, turnState } from '$lib/view/turn';
   import type { SlotView, State, WonderView } from '$lib/wire';
   import MilitaryTrack from '../board/MilitaryTrack.svelte';
   import CardStructure from '../board/CardStructure.svelte';
@@ -207,7 +207,8 @@
       connected: [
         presence[0] === undefined ? undefined : presence[0] === 'connected',
         presence[1] === undefined ? undefined : presence[1] === 'connected'
-      ]
+      ],
+      playAgain: playAgainFrom(ui.log)
     })
   );
   const thinkingSeat = $derived(turn.kind === 'aiThinking' ? turn.seat : undefined);

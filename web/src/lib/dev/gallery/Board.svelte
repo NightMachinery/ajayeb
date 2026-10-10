@@ -263,12 +263,25 @@
     {
       label: 'play again (extra turn)',
       ctx: {
-        view: { ...earlyView, extraTurn: true },
+        view: earlyView,
         mode: 'ai',
         mySeats: [0],
         conn: 'open',
         pending: false,
-        slow: false
+        slow: false,
+        playAgain: { seat: 0, wonder: 'sphinx' }
+      }
+    },
+    {
+      label: 'play again, hot-seat (extra turn)',
+      ctx: {
+        view: earlyView,
+        mode: 'hotseat',
+        mySeats: [0, 1],
+        conn: 'open',
+        pending: false,
+        slow: false,
+        playAgain: { seat: 0, wonder: 'appian-way' }
       }
     },
     {

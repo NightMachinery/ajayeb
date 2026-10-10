@@ -98,7 +98,11 @@ export const board = {
   // TurnBar (lib/view/turn.ts supplies the state; this file supplies the
   // wording). 'turn.player' (common.ts) covers the plain "{name}'s turn".
   'board.turn.yourTurn': 'Your turn',
+  // The whole extra turn a wonder grants; a hot-seat device names the player.
   'board.turn.playAgain': 'Play again',
+  'board.turn.playAgainWonder': 'Play again ({wonder})',
+  'board.turn.playAgainName': '{name} plays again',
+  'board.turn.playAgainNameWonder': '{name} plays again ({wonder})',
   'board.turn.aiThinking': '{name} is thinking…',
   'board.turn.waitingFor': 'Waiting for {name}…',
   'board.turn.waitingAway': '{name} is away. Waiting for them to come back…',

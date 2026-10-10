@@ -7,6 +7,8 @@
   import { t } from '$lib/i18n';
   import type { TurnState } from '$lib/view/turn';
   import Loader2 from '@lucide/svelte/icons/loader-2';
+  import RotateCw from '@lucide/svelte/icons/rotate-cw';
+  import { wonderName } from '$lib/components/card/effect-text';
   import ThinkingDots from './ThinkingDots.svelte';
 
   interface Props {
@@ -62,8 +64,16 @@
           : t('board.turn.waitingFor', { name: nameOf(state.seat) });
       case 'pendingChoice':
         return pendingText(state);
-      case 'playAgain':
-        return t('board.turn.playAgain');
+      case 'playAgain': {
+        const wonder = state.wonder ? wonderName(state.wonder) : undefined;
+        if (state.hotseat) {
+          const name = nameOf(state.seat);
+          return wonder
+            ? t('board.turn.playAgainNameWonder', { name, wonder })
+            : t('board.turn.playAgainName', { name });
+        }
+        return wonder ? t('board.turn.playAgainWonder', { wonder }) : t('board.turn.playAgain');
+      }
       case 'hotseatTurn':
         return t('turn.player', { name: nameOf(state.seat) });
       case 'yourTurn':
@@ -89,6 +99,11 @@
   <span class="flex min-w-0 items-center gap-2 text-sm font-semibold text-fg" data-must-fit>
     {#if spinning}
       <Loader2 class="size-4 shrink-0 animate-spin text-fg-muted" aria-hidden="true" />
+    {:else if state.kind === 'playAgain'}
+      <RotateCw
+        class="size-4 shrink-0 {state.seat === 1 ? 'text-moon-ink' : 'text-sun-ink'}"
+        aria-hidden="true"
+      />
     {:else if thinking}
       <ThinkingDots
         class="shrink-0 {state.kind === 'aiThinking' && state.seat === 1
