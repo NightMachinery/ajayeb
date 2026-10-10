@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { effectiveSpeed, Motion, scaleMs } from './motion.svelte';
+import { botDwellMs, botPickMs, effectiveSpeed, Motion, scaleMs } from './motion.svelte';
 import { SettingsStore } from './settings.svelte';
 
 describe('effectiveSpeed', () => {
@@ -84,5 +84,21 @@ describe('Motion', () => {
     store.set('animationSpeed', 'normal');
     motion.apply(root);
     expect(root.dataset['motion']).toBeUndefined();
+  });
+});
+
+describe('bot pacing', () => {
+  it('scales the thinking dwell and the pick highlight with the speed', () => {
+    expect(botDwellMs('normal')).toBe(700);
+    expect(botDwellMs('fast')).toBe(420);
+    expect(botDwellMs('relaxed')).toBe(1120);
+    expect(botPickMs('normal')).toBe(300);
+    expect(botPickMs('fast')).toBe(180);
+    expect(botPickMs('relaxed')).toBe(480);
+  });
+
+  it('keeps a short floor with animation off, so the bot can still be followed', () => {
+    expect(botDwellMs('off')).toBe(300);
+    expect(botPickMs('off')).toBe(300);
   });
 });

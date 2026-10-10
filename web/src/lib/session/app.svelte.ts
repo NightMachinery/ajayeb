@@ -2,6 +2,7 @@
 // asks for it (Home never does), and stays open across page changes, so
 // creating a room on one page and playing it on the next reuses the socket.
 
+import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
 import { loadIdentity } from './identity';
 import { Presenter } from './presenter.svelte';
 import { SavedRooms } from './rooms.svelte';
@@ -43,7 +44,13 @@ export function liveGame(): { session: Session; presenter: Presenter } {
         identity: loadIdentity(),
         rooms: savedRooms()
       });
-      return { session, presenter: new Presenter(session) };
+      // A bot's move waits out its thinking dwell, then its pick is
+      // highlighted, both scaled by the animation speed (read at each move).
+      const presenter = new Presenter(session, {
+        minThinkingMs: () => botDwellMs(motion.effective),
+        preRollMs: () => botPickMs(motion.effective)
+      });
+      return { session, presenter };
     });
     installTestHook(live);
   }

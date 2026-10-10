@@ -38,6 +38,25 @@ export function scaleMs(base: number, speed: AnimationSpeed): number {
   return speed === 'off' ? 0 : Math.round(base * SPEED_SCALE[speed]);
 }
 
+/** How long a bot's thinking frame stays up at least, before its move
+ *  (UX design section 5, "AI thinking"), at normal speed. */
+export const BOT_DWELL_MS = 700;
+/** How long the bot's pick is highlighted before its move shows. */
+export const BOT_PICK_MS = 300;
+/** With animation off the bot still waits this long, so a player can
+ *  follow it; the pick highlight is a static outline, not a movement. */
+export const BOT_FLOOR_MS = 300;
+
+/** The bot's minimum thinking dwell for a speed. */
+export function botDwellMs(speed: AnimationSpeed): number {
+  return speed === 'off' ? BOT_FLOOR_MS : scaleMs(BOT_DWELL_MS, speed);
+}
+
+/** How long the bot's pick shows before its move, for a speed. */
+export function botPickMs(speed: AnimationSpeed): number {
+  return speed === 'off' ? BOT_FLOOR_MS : scaleMs(BOT_PICK_MS, speed);
+}
+
 export interface MotionOptions {
   /** Defaults to the app's one SettingsStore; a test passes its own, so it
    *  can change a preference without touching the shared singleton. */

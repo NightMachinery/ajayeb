@@ -1,16 +1,24 @@
-import { describe, expect, it } from 'vitest';
-import type { State } from '$lib/wire';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { GameEvent, State } from '$lib/wire';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
-import { Presenter, type FrameSource } from './presenter.svelte';
+import { isBotAnswer, isBotTake, Presenter, type FrameSource } from './presenter.svelte';
 import type { Unsubscribe } from './transport';
 
 function frame(version: number, thinking?: 0 | 1): State {
   const i = (fixtureNames as readonly string[]).indexOf('state-play');
   const f = structuredClone(fixtures[i]) as State;
   delete f.ack;
+  f.events = [];
   f.version = version;
   if (thinking !== undefined) f.thinking = thinking;
   else delete f.thinking;
+  return f;
+}
+
+/** A bot's answer: a frame whose events say seat 1 did something. */
+function botMove(version: number, kind: GameEvent['kind'], thinking?: 0 | 1): State {
+  const f = frame(version, thinking);
+  f.events = [{ kind, private: false, seat: 1, card: 'lumber-yard' }];
   return f;
 }
 
@@ -117,7 +125,7 @@ describe('Presenter', () => {
     p.enqueue(frame(1, 1)); // the bot starts thinking
     await settle();
     c.advance(200);
-    p.enqueue(frame(2)); // its move
+    p.enqueue(botMove(2, 'build')); // its move
     await settle();
     expect(c.sleeps).toEqual([500]);
     expect(p.frame?.version).toBe(2);
@@ -126,7 +134,7 @@ describe('Presenter', () => {
     p.enqueue(frame(3, 1));
     await settle();
     c.advance(900);
-    p.enqueue(frame(4));
+    p.enqueue(botMove(4, 'build'));
     await settle();
     expect(c.sleeps).toEqual([500]);
   });
@@ -171,5 +179,200 @@ describe('Presenter', () => {
     await settle();
     expect(p.frame).toBeNull();
     expect(source.fns).toHaveLength(0);
+  });
+});
+
+describe('Presenter: pacing a bot move (fake timers)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** A presenter on the real clock and setTimeout, which the fake timers drive. */
+  function paced(opts: { dwell?: number | (() => number); preRoll?: number } = {}) {
+    vi.useFakeTimers();
+    return new Presenter(null, {
+      afterSwap: async () => {},
+      minThinkingMs: opts.dwell ?? 700,
+      preRollMs: opts.preRoll ?? 300
+    });
+  }
+
+  it('dwells, then previews the pick, then shows the move, with input locked throughout', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1)); // the human's move was acked; the bot thinks
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.frame?.version).toBe(1);
+    expect(p.idle).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(400); // the server's bot delay
+    const move = botMove(2, 'build');
+    p.enqueue(move);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.idle).toBe(false);
+    expect(p.frame?.version).toBe(1);
+    expect(p.preview).toBeNull();
+
+    // The thinking frame has been up 400 ms of its 700: 300 more to wait.
+    await vi.advanceTimersByTimeAsync(299);
+    expect(p.preview).toBeNull();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(p.preview).toBe(move); // the pick is highlighted on the old frame
+    expect(p.frame?.version).toBe(1);
+    expect(p.idle).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(299);
+    expect(p.frame?.version).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(p.frame?.version).toBe(2);
+    expect(p.preview).toBeNull();
+    expect(p.idle).toBe(true);
+  });
+
+  it('previews at once when the bot answered after the dwell', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(900);
+    p.enqueue(botMove(2, 'discard'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.preview?.version).toBe(2);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(p.frame?.version).toBe(2);
+  });
+
+  it('dwells but does not preview an answer that takes nothing from the board', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(2, 'starterChosen'));
+    await vi.advanceTimersByTimeAsync(699);
+    expect(p.frame?.version).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(p.frame?.version).toBe(2);
+    expect(p.preview).toBeNull();
+  });
+
+  it('paces each move of a bot that plays twice', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(2, 'build', 1)); // its move, and it plays again
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(p.frame?.version).toBe(2);
+    p.enqueue(botMove(3, 'build'));
+    await vi.advanceTimersByTimeAsync(999);
+    expect(p.frame?.version).toBe(2); // a fresh dwell for the second move
+    await vi.advanceTimersByTimeAsync(1);
+    expect(p.frame?.version).toBe(3);
+  });
+
+  it('does not pace an undo, which carries no events', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(frame(2)); // the undo's answer: the human's turn again
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.frame?.version).toBe(2);
+    expect(p.idle).toBe(true);
+  });
+
+  it('does not pace a move that is not answering a thinking frame', async () => {
+    const p = paced();
+    p.enqueue(frame(1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(2, 'build'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.frame?.version).toBe(2);
+  });
+
+  it('reads the dwell when it is needed, so a speed change applies to the next move', async () => {
+    let dwell = 700;
+    const p = paced({ dwell: () => dwell, preRoll: 0 });
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    dwell = 300; // animation off: the short floor
+    p.enqueue(botMove(2, 'build'));
+    await vi.advanceTimersByTimeAsync(299);
+    expect(p.frame?.version).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(p.frame?.version).toBe(2);
+  });
+
+  it('hurry() cuts the dwell and the preview short', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(2, 'build'));
+    await vi.advanceTimersByTimeAsync(100);
+    expect(p.frame?.version).toBe(1);
+    p.hurry();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.frame?.version).toBe(2);
+    expect(p.preview).toBeNull();
+    expect(p.idle).toBe(true);
+
+    // The next bot move is paced again.
+    p.enqueue(frame(3, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(4, 'build'));
+    await vi.advanceTimersByTimeAsync(700);
+    expect(p.preview?.version).toBe(4);
+    p.hurry();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.frame?.version).toBe(4);
+    expect(p.preview).toBeNull();
+  });
+
+  it('skips the preview when frames queue up behind the answer', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(2, 'build'));
+    p.enqueue(frame(3)); // arrives during the dwell
+    await vi.advanceTimersByTimeAsync(699);
+    expect(p.frame?.version).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(p.preview).toBeNull();
+    expect(p.frame?.version).toBe(3);
+  });
+
+  it('clear() forgets the room, even in the middle of a dwell', async () => {
+    const p = paced();
+    p.enqueue(frame(1, 1));
+    await vi.advanceTimersByTimeAsync(0);
+    p.enqueue(botMove(2, 'build'));
+    await vi.advanceTimersByTimeAsync(100);
+    p.clear();
+    expect(p.frame).toBeNull();
+    expect(p.idle).toBe(true);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(p.frame).toBeNull();
+
+    // The next room's frames show as usual.
+    p.enqueue(frame(7));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(p.frame?.version).toBe(7);
+  });
+});
+
+describe('isBotAnswer and isBotTake', () => {
+  it('needs a thinking frame on screen and events in the next one', () => {
+    expect(isBotAnswer(null, botMove(2, 'build'))).toBe(false);
+    expect(isBotAnswer(frame(1), botMove(2, 'build'))).toBe(false);
+    expect(isBotAnswer(frame(1, 1), frame(2))).toBe(false);
+    expect(isBotAnswer(frame(1, 1), botMove(2, 'token'))).toBe(true);
+  });
+
+  it('is a take only for a card or draft pick by the thinking seat', () => {
+    for (const kind of ['build', 'discard', 'wonder', 'draft'] as const) {
+      expect(isBotTake(frame(1, 1), botMove(2, kind))).toBe(true);
+    }
+    expect(isBotTake(frame(1, 1), botMove(2, 'token'))).toBe(false);
+    expect(isBotTake(frame(1, 0), botMove(2, 'build'))).toBe(false);
+  });
+
+  it('is never an answer across rooms', () => {
+    const other = botMove(2, 'build');
+    other.code = 'OTHER1';
+    expect(isBotAnswer(frame(1, 1), other)).toBe(false);
   });
 });
