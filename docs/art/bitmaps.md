@@ -113,10 +113,14 @@ ever disagree.
      reply `DONE`, under a 6 minute timeout;
    - finds the newest PNG that appeared since the snapshot (the script
      does this itself, never trusting the agent to report the path),
-     **verifies it actually came back the requested pixel size** (and
-     rejects the attempt outright if it didn't: the M9.B3 pilot saw a
-     square request come back 1254x1254 instead of 1024x1024, repeatably),
-     and copies it to `art-work/raw/<kind>/<slug>/<attempt>.png`;
+     **verifies it came back the requested shape** (the same aspect ratio,
+     within 1%, and at least the requested size; a different shape is
+     rejected outright: in the pilot a reference-image run returned a
+     1254x1254 square for a 1536x1024 card, while every plain square
+     request returns 1254x1254, which is accepted), and copies it to
+     `art-work/raw/<kind>/<slug>/<attempt>.png`, numbered one past the
+     larger of the manifest's counter and the highest attempt already on
+     disk, so nothing generated earlier is ever overwritten;
    - records the attempt in the manifest (`status: "generated"`).
 
    `--kind KIND --limit N` (default 1) picks the next `N` assets of one
@@ -263,15 +267,16 @@ variants for card, wonder and token: `lumber-yard`, `scriptorium`,
 images to `art/style.md` and `art/subjects.json` (the gold rule, the card
 and wonder composition rules, the token template rewrite, tighter text and
 emblem negatives, a jewel accent per wonder, a distinct accent per token,
-and rewritten Colossus and Theater subjects — the Pyramids subject is an
+and rewritten Colossus and Theater subjects; the Pyramids subject is an
 open owner decision and was left as is) and to `tools/art/process.mjs`
 (the paper-tone mapping and the token rim mask) and `generate.mjs`
-(reference images off by default, output size verified), and added
+(reference images off by default, output shape verified), and added
 `gate.mjs`. Proved on the existing pilot images plus 2 new generations
-(`card/theater`, `wonder/colossus`); a third (`token/law`) was attempted 3
-times and rejected every time by the new size check, a real, reproducible
-Codex `image_gen` behaviour for square requests (1254x1254 instead of
-1024x1024), not a bug in the check.
+(`card/theater`, `wonder/colossus`); a third (`token/law`) was rejected 3
+times by a first, exact-size version of the check, because `image_gen`
+returns every square request as 1254x1254 (all 9 pilot tokens are that
+size). The review relaxed the check to the aspect ratio plus a minimum
+size, which still rejects the pilot's square-for-landscape failure.
 
 ## Throughput
 

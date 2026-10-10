@@ -10,7 +10,8 @@
 //      --enable image_generation, -o for the last message) asking it to
 //      call image_gen exactly once.
 //   4. Finds the newest PNG that appeared since the snapshot, verifies it
-//      actually came back the size asked for, and copies it to
+//      came back the shape asked for (same aspect ratio, at least the
+//      requested size), and copies it to
 //      <AJAYEB_RUN_DIR>/art-work/raw/<kind>/<slug>/<attempt>.png.
 //   5. Records the attempt in art/manifest.json (status "generated",
 //      attempt incremented), never overwriting an "approved" asset.
@@ -269,22 +270,31 @@ async function generateOne(asset, amendOverride, dryRun, useRef) {
     return { ok: false, tookMs, cmd: cmdForLog };
   }
 
-  // The pilot saw a reference-image run come back 1254x1254 against a
-  // requested 1024x1024 (M9.B3): verify every generation's actual pixel
-  // size before it ever reaches raw/ and the manifest, and reject a wrong
-  // size outright rather than shipping an asset process.mjs would then
-  // crop unpredictably.
+  // Verify every generation's actual pixel size before it reaches raw/
+  // and the manifest. What matters is the aspect ratio and enough pixels
+  // for the shipped crop: Codex image_gen returns every square request
+  // (all 9 pilot tokens included) as 1254x1254, which is fine, while a
+  // reference-image run in the pilot returned a 1254x1254 square for a
+  // 1536x1024 landscape request, which process.mjs would crop wrongly.
+  // So reject a different aspect ratio (more than 1% off) or a smaller
+  // image, and accept a same-shape image that is larger.
   const [wantW, wantH] = asset.gen.split('x').map(Number);
   const got = await imageSize(newPng);
-  if (got.w !== wantW || got.h !== wantH) {
+  const aspectOff = Math.abs(got.w / got.h - wantW / wantH) / (wantW / wantH);
+  if (aspectOff > 0.01 || got.w < wantW || got.h < wantH) {
     process.stderr.write(
-      `generate.mjs: codex image_gen returned ${got.w}x${got.h}, expected ${wantW}x${wantH} (${newPng}); rejecting this attempt\n`,
+      `generate.mjs: codex image_gen returned ${got.w}x${got.h}, expected ${wantW}x${wantH} or a larger image of the same shape (${newPng}); rejecting this attempt\n`,
     );
     return { ok: false, tookMs, cmd: cmdForLog };
   }
 
-  const attempt = asset.attempt + 1;
+  // The next attempt number is one past the larger of the manifest's
+  // counter and the highest attempt file already on disk, so an asset
+  // generated outside this script (the M9.B1 pilot) is never overwritten.
   const destDir = path.join(rawDir, kind, slug);
+  const onDisk = await readdir(destDir).catch(() => []);
+  const maxOnDisk = Math.max(0, ...onDisk.map((f) => /^(\d+)\.png$/.exec(f)).filter(Boolean).map((m) => Number(m[1])));
+  const attempt = Math.max(asset.attempt, maxOnDisk) + 1;
   await mkdir(destDir, { recursive: true });
   const dest = path.join(destDir, `${attempt}.png`);
   await copyFile(newPng, dest);

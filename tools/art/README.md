@@ -89,10 +89,14 @@ manifest.
 `~/.codex` (where `generated_images/` is watched for the new PNG). The
 newest new PNG's pixel size is checked against the kind's requested `gen`
 size (`magick identify`), and the attempt is rejected, with the manifest
-left untouched, if it doesn't match: Codex's `image_gen` has been seen to
-return a square request as 1254x1254 instead of 1024x1024, repeatably. A
+left untouched, if its aspect ratio is more than 1% off or it is smaller
+than requested. A larger image of the same shape is accepted: Codex's
+`image_gen` returns every square request as 1254x1254, while a
+reference-image run once returned that square for a 1536x1024 card. A
 successful attempt is copied to
-`${AJAYEB_RUN_DIR}/art-work/raw/<kind>/<slug>/<attempt>.png` and the
+`${AJAYEB_RUN_DIR}/art-work/raw/<kind>/<slug>/<attempt>.png`, numbered one
+past the larger of the manifest's counter and the highest attempt file
+already there, and the
 manifest's `status` becomes `generated`.
 
 ### `sheet.mjs`
@@ -109,7 +113,7 @@ attempts, written to `${AJAYEB_RUN_DIR}/art-work/sheets/<name>.jpg`, never
 into the repository. By default each id contributes its latest attempt
 (`--attempt N`, or `latest` to be explicit), but any `--ids` entry can
 carry its own `#<attempt>` (a number, `latest` or `all`), so one call can
-put several attempts of several ids on the same sheet — e.g. three
+put several attempts of several ids on the same sheet, for example three
 rejected variants of one card next to the one that was approved. Each cell
 is labelled `<n>. <id> #<attempt>`. `--tile` and `--cell` override the
 montage grid and cell size (`4x` and `384x288` by default).
@@ -129,7 +133,7 @@ replacement for looking at the images: crops each attempt to its kind's
 main shipped size (the same crop `process.mjs` ships with), finds the
 crop's own paper colour (the corner-median), and fails it if less than
 `--threshold` (default 50%) of the outer `--band` fraction (default 4% of
-`min(w,h)`) is within `--dist` (default 45) of that colour — a painting
+`min(w,h)`) is within `--dist` (default 45) of that colour, because a painting
 with no margin anywhere reads badly once the card or wonder frame feathers
 into it. `--ids` accepts the same `#<attempt>` syntax as `sheet.mjs`.
 `--json` prints one JSON object per line instead of a table; `--strict`
