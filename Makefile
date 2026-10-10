@@ -45,7 +45,8 @@ E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 .PHONY: help install install-offline dev gen gen-check gen-check-if-ready \
         fmt-check vet test-go test-race lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
-        e2e e2e-smoke e2e-prod shots test-py verify-quick verify verify-full clean
+        e2e e2e-smoke e2e-prod shots vec-lint vec-shot vec-blind vec-family \
+        test-py verify-quick verify verify-full clean
 
 ##@ Getting started
 
@@ -64,6 +65,8 @@ help: ## List the targets and the variables they read (the default target)
 	  'TEST_TIMEOUT=20m' 'go test -timeout for test-go and test-race' \
 	  'FUZZTIME=5m' 'how long fuzz runs' \
 	  'BENCH_ARGS=...' 'extra flags for ajayeb-sim bench' \
+  'SET=chain' 'the icon set (art/vector/sets.json) for vec-shot and vec-blind' \
+  'ITER=2' 'vec-shot writes into <set>/iter-N/ to keep iterations apart' \
 	  'GEN_ARGS=...' 'extra flags for ajayeb-gen' \
 	  'VERSION=...' 'version stamped into the release build (default: git describe)'
 	@printf '\nA step that fails with "Error 75" was refused by tools/heavy.py; run python3 tools/heavy.py status.\n'
@@ -193,6 +196,23 @@ ifneq ($(wildcard e2e/ux),)
 else
 	@echo "shots: e2e/ux/ does not exist yet (the screenshot matrix arrives with M10), skipping"
 endif
+
+##@ Vector art (tools/art/vector; outputs go to the run dir, never the repo)
+
+vec-lint: ## Lint every icon SVG against art/vector/STYLE.md, names.ts and the sprite budget
+	$(HEAVY) run --kind light -- node tools/art/vector/lint.mjs
+
+vec-shot: ## Specimen shots of SET (light, dark, greyscale, colour-vision) and the pixel peep; ITER=n keeps iterations apart
+	@test -n "$(SET)" || { echo "vec-shot: set SET=<name> (art/vector/sets.json)"; exit 2; }
+	$(HEAVY) run --kind browser -- node tools/art/vector/shoot.mjs --set '$(SET)' $(if $(ITER),--iter '$(ITER)')
+	node tools/art/vector/peep.mjs --set '$(SET)' $(if $(ITER),--iter '$(ITER)')
+
+vec-blind: ## Shuffled, unlabelled blind-test sheets of SET; the key stays in the run dir
+	@test -n "$(SET)" || { echo "vec-blind: set SET=<name> (art/vector/sets.json)"; exit 2; }
+	$(HEAVY) run --kind browser -- node tools/art/vector/blind.mjs make --set '$(SET)'
+
+vec-family: ## Every drawn icon of every set at 16 and 24 px, on paper and night, for cross-set review
+	$(HEAVY) run --kind browser -- node tools/art/vector/family.mjs
 
 ##@ Verification
 

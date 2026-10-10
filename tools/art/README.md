@@ -175,10 +175,10 @@ Every script prints its usage with `--help`.
 
 ### Make targets
 
-The `Makefile` belongs to the coordinator. Until it has vector targets, use the plain commands above. Proposed targets:
+These wrap the commands above in the guard:
 
-- `make vec-lint` runs `node tools/art/vector/lint.mjs` (guard kind `light`).
+- `make vec-lint` runs `lint.mjs` over the whole sprite directory (guard kind `light`).
 - `make vec-shot SET=<set> [ITER=<n>]` runs `shoot.mjs` under `--kind browser`, then `peep.mjs`.
-- `make vec-blind SET=<set>` runs `blind.mjs make` under `--kind browser`.
+- `make vec-blind SET=<set>` runs `blind.mjs make` under `--kind browser`. Scoring stays a plain `node tools/art/vector/blind.mjs score ...` call.
 - `make vec-family` runs `family.mjs` under `--kind browser`.
 
