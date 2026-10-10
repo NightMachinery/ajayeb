@@ -56,6 +56,21 @@ The pages: `/play/<code>` joins a room and shows it; `/dev/new?mode=hotseat|ai|o
 
 Every user-visible string goes through `t(key, params)` from `$lib/i18n`. The English tables in `src/lib/i18n/en/` define the keys, and the compiler checks each call: an unknown key, a missing placeholder value, or a count that is not a number is a type error. Plural messages are objects of forms (`one`, `other`, exact `=0` and so on), chosen with `Intl.PluralRules`; numbers are formatted with `Intl.NumberFormat`. `i18n.locale` and `i18n.dir` are reactive, and the root layout copies them to `<html lang dir>`.
 
+## Icons
+
+`src/lib/icons/svg/*.svg` are the hand-authored icon sources: one standalone `<svg viewBox="0 0 24 24">` (or `0 0 12 12` for a `-sm` variant) per file, two-tone through `fill="var(--i1, currentColor)"` for the primary shape and `var(--i2, rgba(128,128,128,0.65))` for the secondary accent. The `--i2` fallback is an opaque neutral grey, not `currentColor` or `transparent`: nothing in the app sets `--i1`/`--i2` yet, and a transparent or same-colour fallback made the secondary detail invisible wherever it sits over an `--i1`-filled region of the same resolved colour (opacity cannot separate two coincident fills of one colour). `names.ts` lists every icon name; `sprite.ts` builds them into one inline sprite (`import.meta.glob('./svg/*.svg', { query: '?raw' })`) and throws at build time if a name has no source file or a source file is missing from the list. `IconSprite.svelte` inlines the sprite once, in the root layout; `Icon.svelte` renders one icon (`<Icon name="resource-wood" />`), sized in `em`, decorative (`aria-hidden`) unless given a `label`.
+
+This is the placeholder set for M5: simple, clean, geometric shapes, never copied or traced from official iconography. The M9 milestone replaces it through its own Opus render-critique loop (see `art/vector/` once that milestone starts); `/dev/gallery` renders every icon at a glance for a visual check in both themes.
+
+## UI lints
+
+`scripts/lint-ui.mjs` (plain Node, no new dependencies; run by `pnpm -C web lint`, so `make lint-web` runs it too) checks two project rules that ESLint and Prettier do not:
+
+- **Logical CSS only.** No physical Tailwind utility (`ml-`, `mr-`, `pl-`, `pr-`, `left-`, `right-`, `text-left`, `text-right`, `rounded-l`, `rounded-r`, `border-l`, `border-r`, `scroll-ml-`/`mr-`/`pl-`/`pr-`) and no physical CSS property (`margin-left`, `margin-right`, `padding-left`, `padding-right`, `border-left`, `border-right`, bare `left:`/`right:`) in `.svelte` or `.css` files under `src/`. Mark a deliberate exception with `physical-ok` on the same line (the board region and safe-area insets are the known exceptions).
+- **No hard-coded English.** Every template text node and every `aria-label`, `title`, `alt` and `placeholder` string literal in a `.svelte` file must go through `t()`. `<code>` and `<kbd>` content is exempt (it is literal, not translatable), and a line can opt out with `i18n-ok` when the text is genuinely not shipped UI copy, such as a `/dev` fixture label.
+
+Both rules are pure functions (`findPhysicalCssViolations`, `findHardcodedTextViolations`) exported from `lint-ui.mjs` and unit-tested from `src/lib/lint-ui.test.ts` (kept under `src/` so Vitest's `include` picks it up).
+
 ## Fonts
 
 Fraunces (600, headings) and Inter (400, 600 and 700, the interface) are self-hosted under the SIL Open Font License 1.1. The license texts ship next to the fonts in `static/fonts/`. The WOFF2 files are Latin subsets made by `font-sources/subset.sh` from the original TTFs in `font-sources/`. Upstream: Fraunces 1.000 from github.com/undercasetype/Fraunces and Inter 4.001 from github.com/rsms/inter.
