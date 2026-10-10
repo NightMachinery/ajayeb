@@ -11,6 +11,7 @@
   import Cards from '$lib/dev/gallery/Cards.svelte';
   import Choices from '$lib/dev/gallery/Choices.svelte';
   import Game from '$lib/dev/gallery/Game.svelte';
+  import Ornaments from '$lib/dev/gallery/Ornaments.svelte';
   import Screens from '$lib/dev/gallery/Screens.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import ConfirmButton from '$lib/components/shell/ConfirmButton.svelte';
@@ -68,6 +69,11 @@
         </div>
       {/each}
     </div>
+  </section>
+
+  <section class="flex flex-col gap-2" data-testid="gallery-ornaments-section">
+    <h2 class="font-display text-xl text-fg">{t('dev.gallery.ornaments')}</h2>
+    <Ornaments />
   </section>
 
   <section class="flex flex-col gap-4">

@@ -51,5 +51,12 @@ export const common = {
   'dev.gallery.shell': 'Shell primitives',
   'dev.gallery.cards': 'Cards',
   'dev.gallery.board': 'Board',
-  'dev.gallery.screens': 'Screens'
+  'dev.gallery.screens': 'Screens',
+  'dev.gallery.ornaments': 'Ornaments, track and logo',
+  'dev.gallery.ornaments.track': 'Military track cells at phone width',
+  'dev.gallery.ornaments.capitals': 'Capitals at 16, 20, 24 and 48 px',
+  'dev.gallery.ornaments.card': 'Card corner rosette and band cartouche',
+  'dev.gallery.ornaments.sheet': 'Divider and panel border',
+  'dev.gallery.ornaments.table': 'Girih tile: seam test and table texture',
+  'dev.gallery.ornaments.logo': 'Wordmark at 200 px and the favicon'
 } as const satisfies Messages;
