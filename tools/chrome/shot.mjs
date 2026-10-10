@@ -21,6 +21,12 @@
 //   --settle MS      the fixed settle without --wait-ready (default 800)
 //   --probe          print a JSON report on stdout (see README.md)
 //   --out PATH       write a PNG of the viewport; --full captures the whole page
+//   --selector CSS   with --out: scroll the first element matching CSS into view,
+//                    wait for layout, and capture only its bounding box (plus
+//                    --pad); fails when nothing matches or the match has no size.
+//                    An element taller than the viewport grows the emulated
+//                    viewport's height (not its width) until it fits.
+//   --pad PX         the margin kept around the --selector box (default 8)
 //   --force          launch Chrome without the heavy.py browser lock
 //
 // Identity works as in the app: the token, name and theme go into
@@ -39,6 +45,8 @@ import { isMain, launch, printHeader, reportAndExit } from './launch.mjs';
 
 const PRESETS = { mobile: '390x844@2', desktop: '1280x800@1' };
 const THEMES = ['light', 'dark', 'system'];
+/** The tallest viewport --selector grows to, in CSS px. */
+const MAX_GROWN_HEIGHT = 12_000;
 
 export function parseViewport(spec) {
   const m = /^(\d+)x(\d+)(?:@(\d+(?:\.\d+)?))?$/.exec(PRESETS[spec] ?? spec);
@@ -57,6 +65,33 @@ async function navigate(page, url, timeoutMs = 15_000) {
   const r = await page.send('Page.navigate', { url });
   if (r.errorText) throw new Error(`navigate ${url}: ${r.errorText}`);
   if (r.loaderId) await loaded;
+}
+
+/**
+ * Runs in the page: scrolls the first match of `selector` into view, waits
+ * two frames for layout, and returns its box in viewport CSS px, or an error
+ * string. Keep it self-contained.
+ */
+async function locate(selector, pad) {
+  let el;
+  try {
+    el = document.querySelector(selector);
+  } catch (e) {
+    return { error: `--selector: not a valid CSS selector: ${selector} (${e.message})` };
+  }
+  if (!el) return { error: `--selector: nothing on the page matches ${selector}` };
+  // scroll-margin keeps the pad visible above the element, in the window
+  // and in any scrolling ancestor alike.
+  const margin = el.style.scrollMarginTop;
+  el.style.scrollMarginTop = `${pad}px`;
+  el.scrollIntoView({ block: 'start', inline: 'nearest' });
+  el.style.scrollMarginTop = margin;
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const r = el.getBoundingClientRect();
+  if (r.width < 1 || r.height < 1)
+    return { error: `--selector: ${selector} matched an element with no size (hidden?)` };
+  const count = document.querySelectorAll(selector).length;
+  return { x: r.left, y: r.top, width: r.width, height: r.height, count };
 }
 
 /** Runs in the page: the probe report. Keep it self-contained. */
@@ -195,6 +230,8 @@ async function main() {
       probe: { type: 'boolean', default: false },
       out: { type: 'string' },
       full: { type: 'boolean', default: false },
+      selector: { type: 'string' },
+      pad: { type: 'string', default: '8' },
       force: { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h', default: false }
     }
@@ -204,6 +241,12 @@ async function main() {
     return;
   }
   if (!o.probe && !o.out) throw new Error('nothing to do: pass --out PATH, --probe, or both');
+  if (o.selector !== undefined && !o.out) throw new Error('--selector needs --out PATH');
+  if (o.selector !== undefined && o.full) throw new Error('--selector and --full do not mix');
+  if (o.selector !== undefined && !o.selector.trim()) throw new Error('--selector: empty');
+  const pad = Number(o.pad);
+  if (!Number.isFinite(pad) || pad < 0)
+    throw new Error(`--pad: expected a number >= 0, got ${o.pad}`);
   if (o.theme && !THEMES.includes(o.theme)) throw new Error(`--theme: one of ${THEMES.join(', ')}`);
   if (o.scheme && !['light', 'dark'].includes(o.scheme)) throw new Error('--scheme: light or dark');
   if (!['reduce', 'no-preference'].includes(o.motion))
@@ -309,7 +352,44 @@ async function main() {
 
     if (o.out) {
       const params = { format: 'png', fromSurface: true };
-      if (o.full) {
+      let what = o.full ? ', full page' : '';
+      if (o.selector !== undefined) {
+        let box = await evaluate(page, locate, o.selector, pad);
+        if (box.error) throw new Error(box.error);
+        // Content below the viewport is not painted when the page scrolls
+        // inside a container rather than the window (the app shell does),
+        // so captureBeyondViewport cannot reach it. Instead, a box that
+        // does not fit grows the emulated viewport's height (never its
+        // width) until it does, and the capture stays inside the viewport.
+        let height = vp.height;
+        for (let i = 0; i < 4 && box.y + box.height + pad > height + 0.5; i++) {
+          if (height >= MAX_GROWN_HEIGHT) break;
+          height = Math.min(MAX_GROWN_HEIGHT, Math.ceil(box.y + box.height + pad) + 1);
+          await page.send('Emulation.setDeviceMetricsOverride', {
+            width: vp.width,
+            height,
+            deviceScaleFactor: vp.dpr,
+            mobile: vp.mobile
+          });
+          box = await evaluate(page, locate, o.selector, pad);
+          if (box.error) throw new Error(box.error);
+        }
+        if (box.y + box.height + pad > height + 0.5)
+          console.error(`shot: ${o.selector} is taller than ${MAX_GROWN_HEIGHT} px; cut off`);
+        // The clip is in document CSS px: the viewport box plus the scroll
+        // offset, padded, and kept inside the document and the viewport.
+        const m = await page.send('Page.getLayoutMetrics');
+        const { pageX, pageY } = m.cssVisualViewport;
+        const x0 = Math.max(pageX, Math.floor(box.x + pageX - pad));
+        const y0 = Math.max(pageY, Math.floor(box.y + pageY - pad));
+        const x1 = Math.min(pageX + vp.width, Math.ceil(box.x + pageX + box.width + pad));
+        const y1 = Math.min(pageY + height, Math.ceil(box.y + pageY + box.height + pad));
+        params.clip = { x: x0, y: y0, width: x1 - x0, height: y1 - y0, scale: 1 };
+        what =
+          `, ${o.selector} at ${x0},${y0} ${x1 - x0}x${y1 - y0}` +
+          (height > vp.height ? `, viewport grown to ${vp.width}x${height} to fit it` : '') +
+          (box.count > 1 ? `, first of ${box.count} matches` : '');
+      } else if (o.full) {
         const { cssContentSize: s } = await page.send('Page.getLayoutMetrics');
         params.captureBeyondViewport = true;
         params.clip = {
@@ -323,9 +403,7 @@ async function main() {
       const { data } = await page.send('Page.captureScreenshot', params);
       fs.mkdirSync(path.dirname(path.resolve(o.out)), { recursive: true });
       fs.writeFileSync(o.out, Buffer.from(data, 'base64'));
-      console.error(
-        `saved ${o.out} (${vp.width}x${vp.height}@${vp.dpr}${o.full ? ', full page' : ''})`
-      );
+      console.error(`saved ${o.out} (${vp.width}x${vp.height}@${vp.dpr}${what})`);
     }
   } finally {
     await page?.close();
