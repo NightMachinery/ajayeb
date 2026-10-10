@@ -2,7 +2,7 @@
 
 ## Status
 
-- chain-horseshoe: done (iteration 1)
+- chain-horseshoe: done (iteration 1); M9.VG (iteration vg-1) made the nail holes plain knockouts
 - chain-sword: done (iteration 2)
 - chain-tower: done (iteration 1)
 - chain-book: done (iteration 1)
@@ -166,3 +166,16 @@ Shots in the run directory under shots/M9/V3/sections/: the /dev/gallery section
 
 - The desktop mini tier draws chain glyphs at about 9.5 px DPR 1. If the real blind reading at that size falls short, the options are a `-sm` set for the five densest symbols (mask, book, barrel, lyre, amphora) or a larger chip glyph in ChainChip; both are outside this set's files.
 - chain-amphora is the weakest symbol at 12 px. If the fresh reader misses it, the next idea is larger looped handles that stand clear of the body.
+
+## M9.VG: chain-horseshoe (2026-10-10)
+
+The M9b family review (art-work/vector/review/family-r1.md) found the horseshoe's six 2-unit nail holes, each filled with the detail tone, to be the scattered small `--i2` specks STYLE.md section 5 warns against: gold dust at 16 px.
+
+### Iteration vg-1 (2026-10-10): final
+
+Renders: art-work/vector/chain/iter-vg-1/: light@1x.png, light@2x.png, dark@1x.png, dark@2x.png, grey-light@1x.png, deuteranopia-light@1x.png, protanopia-light@1x.png, tritanopia-light@1x.png, peep-light@1x.png, peep-light@2x.png, peep-grey-light@1x.png, and crops/hs-lg.png, crops/horseshoe-dark2x.png.
+Lint: clean (17 files).
+
+- Changed: the detail-tone layer is gone; the six holes stay as knockouts of the main tone, which is what the spec already asks for ("nail holes as knockouts"). The file shrinks to one path.
+- Seen: at 16 px and up the holes are small, crisp dots of the chip colour instead of gold specks; at 12 px they fill in and the glyph is a plain thick U, which the spec allows ("none at 12 px"). In and out chips, the seven bands, greyscale and the three emulations all read as before.
+- Self blind check (author-read, not blind), art-work/vector/blind/chain-2026-10-10T17-52-59-898Z/: 12 px DPR 2 17/17, 16 px DPR 1 17/17. A fresh reader must take the real reading.
