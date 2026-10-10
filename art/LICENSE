@@ -9,6 +9,10 @@ This license covers the original art in this repository:
 - `art/originals/` (approved bitmap originals, as generated)
 - `web/static/art/` (the shipped AVIF derivatives of those originals)
 - `web/src/lib/icons/svg/` (the hand-drawn SVG icon set)
+- `web/src/lib/ornaments/svg/` (the hand-drawn ornaments and military-track cells)
+- `web/src/lib/brand/` and `web/static/favicon.svg` (the logo wordmark and the
+  favicon; their letter shapes are outlines made with the OFL fonts Noto
+  Nastaliq Urdu and Fraunces, see `docs/legal.md`)
 
 It does not cover the rest of the repository. Code is MIT-licensed; see
 [`LICENSE`](../LICENSE) at the repository root. [`docs/legal.md`](../docs/legal.md)

@@ -5,7 +5,7 @@ Ajayeb is a fan project. It implements the rules of a published board game with 
 ## Licenses
 
 - **Code is MIT.** The license text is in [LICENSE](../LICENSE). It covers everything in the repository that is not listed below.
-- **Original art is CC BY 4.0** (Creative Commons Attribution 4.0 International). This covers the approved originals under `art/` (including `art/originals/` and the style references in `art/refs/`), their AVIF derivatives under `web/static/art/`, and the hand-drawn SVG icons under `web/src/lib/icons/svg/`. The license file will live in `art/` and arrives with the first art commit. The owner may change this license before any art is published.
+- **Original art is CC BY 4.0** (Creative Commons Attribution 4.0 International). This covers the approved originals under `art/` (including `art/originals/` and the style references in `art/refs/`), their AVIF derivatives under `web/static/art/`, the hand-drawn SVG icons under `web/src/lib/icons/svg/`, the ornaments and track cells under `web/src/lib/ornaments/svg/`, and the logo wordmark and favicon (`web/src/lib/brand/`, `web/static/favicon.svg`). The notice is [art/LICENSE](../art/LICENSE).
 - **Fonts are OFL** (SIL Open Font License) and self-hosted, never loaded from a font CDN. Each font ships with its license file. We do not use the typeface of the official logo.
   - The interface uses Fraunces 1.000 (headings) and Inter 4.001 (text), both under OFL 1.1. Neither declares a Reserved Font Name, so the subsets keep their original names.
   - The license texts ship next to the fonts as `web/static/fonts/OFL-Fraunces.txt` and `web/static/fonts/OFL-Inter.txt`.
