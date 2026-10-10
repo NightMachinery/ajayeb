@@ -132,8 +132,11 @@
   </ul>
 {/snippet}
 
+<!-- relative: the scroller must be the containing block of its absolutely
+     positioned descendants (the sr-only labels), or they hang below the
+     viewport and make the whole page scroll. -->
 <div
-  class="draft mx-auto flex h-full w-full max-w-5xl flex-col gap-3 overflow-y-auto px-4 pt-3 pb-4 split:gap-4"
+  class="draft relative mx-auto flex h-full w-full max-w-5xl flex-col gap-3 overflow-y-auto px-4 pt-3 pb-4 split:gap-4"
   data-draft
   data-round={round}
 >
