@@ -98,7 +98,7 @@ WebSocket -> Transport -> Session (authoritative) -> Presenter (paced) -> compon
 
 **The game screen** (`web/src/lib/components/game/GameScreen.svelte`) is the one component every room page mounts. It keeps one markup and switches CSS grid areas by viewport class: a phone in portrait stacks the top bar, the opponent's strip, the track and tokens, the structure, the player's own strip and the turn bar; a phone in landscape puts the strips in side columns and the compact track in the top bar; a tablet stacks as on a phone with city bands; a desktop has city panels in 300 px columns (380 px from 1600 px wide). The board region is `dir="ltr"`, and "you" sit at the bottom or on the left. Its local UI state (open sheet, selected slot, the wonder chosen for a wonder-first build, the hot-seat device holder, the session's event log) lives in `GameUi` (`web/src/lib/ui/ui.svelte.ts`). Every move it sends is a key from `choices`: the card sheet shows a card's build, discard and wonder choices with the server's cost breakdowns, and a disabled choice shows the server's reason.
 
- `window.__ajayeb` (the last message, the version, the current choices, the controlled seats, the mode). It contains only what the client already received, which is safe because the client never holds hidden information.
+In development and test builds the client exposes `window.__ajayeb` (the last message, the version, the current choices, the controlled seats, the mode). It contains only what the client already received, which is safe because the client never holds hidden information.
 
 ## Data flow of one move
 

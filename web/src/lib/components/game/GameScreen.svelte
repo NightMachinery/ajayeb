@@ -353,21 +353,15 @@
         onselect={selectSlot}
       />
       {#if view.phase === 'gameOver'}
-        <div
-          class="pointer-events-none absolute inset-0 z-20 flex items-start justify-center overflow-y-auto p-2"
-          dir={i18n.dir}
-        >
-          <div
-            class="pointer-events-auto w-full max-w-lg rounded-panel border border-rule bg-panel/95 shadow-panel"
-          >
-            <GameOver
-              {view}
-              onrematch={frame?.room.status === 'finished' && mySeats.length > 0
-                ? () => session.rematch()
-                : undefined}
-              {onhome}
-            />
-          </div>
+        <!-- GameOver is its own centred dialog with a peek bar, so it needs no frame here. -->
+        <div class="contents" dir={i18n.dir}>
+          <GameOver
+            {view}
+            onrematch={frame?.room.status === 'finished' && mySeats.length > 0
+              ? () => session.rematch()
+              : undefined}
+            {onhome}
+          />
         </div>
       {/if}
     </div>
@@ -399,7 +393,11 @@
         {t('session.catalogStale')}
       </p>
     {/if}
-    {#if view?.pending}
+    <!-- ChoiceHost stays mounted through the play: besides a pending choice it
+         shows the "who starts" bar of a new age. It waits while the pass-device
+         screen is up, because its panels are modal dialogs that would cover
+         that screen and make it inert. -->
+    {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
       <ChoiceHost {view} canAct={inputOpen} onact={act} />
     {/if}
     {#if ui.pickFor}
