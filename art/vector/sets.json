@@ -1,0 +1,100 @@
+{
+  "$comment": "The vector sets: which icon files each set owns, and how the specimen shows them in context. See art/vector/STYLE.md, section 'sets.json'.",
+  "sets": {
+    "resources-economy-military": {
+      "title": "Resources, economy and military",
+      "icons": [
+        {"id": "resource-wood", "sm": "resource-wood-sm", "ink": "var(--res-wood)", "tile": {"bg": "var(--res-wood)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-clay", "sm": "resource-clay-sm", "ink": "var(--res-clay)", "tile": {"bg": "var(--res-clay)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-stone", "sm": "resource-stone-sm", "ink": "var(--res-stone)", "tile": {"bg": "var(--res-stone)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-glass", "sm": "resource-glass-sm", "ink": "var(--res-glass)", "tile": {"bg": "var(--res-glass)", "ink": "var(--card-ink)"}, "band": "grey"},
+        {"id": "resource-papyrus", "sm": "resource-papyrus-sm", "ink": "var(--res-papyrus)", "tile": {"bg": "var(--res-papyrus)", "ink": "var(--card-ink)"}, "band": "grey"},
+        {"id": "coin", "ink": "var(--gold)", "i2": "var(--gold-deep)", "badge": "own", "band": "yellow"},
+        {"id": "coin-loss", "ink": "var(--cinnabar)", "band": "red"},
+        {"id": "trade", "ink": "var(--fg)", "badge": "trade", "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "price-tag", "ink": "var(--gold-deep)", "band": "yellow"},
+        {"id": "choice", "ink": "var(--fg)", "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "shield", "ink": "var(--card-red)", "i2": "var(--paper-bright)", "band": "red"},
+        {"id": "military-pawn", "ink": "var(--fg)", "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "looting-2", "ink": "var(--fg)", "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "looting-5", "ink": "var(--fg)", "band": "red", "cardInk": "var(--card-ink)"}
+      ]
+    },
+    "science": {
+      "title": "Science symbols",
+      "icons": [
+        {"id": "science-globe", "sm": "science-globe-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-scales", "sm": "science-scales-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-sundial", "sm": "science-sundial-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-mortar", "sm": "science-mortar-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-set-square", "sm": "science-set-square-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-quill", "sm": "science-quill-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-wheel", "sm": "science-wheel-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"}
+      ]
+    },
+    "chain": {
+      "title": "Chain symbols",
+      "icons": [
+        {"id": "chain-horseshoe", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-sword", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-tower", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-book", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-gear", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-amphora", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "chain-mask", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-moon", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-drop", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-target", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-helmet", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-lyre", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-lamp", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-barrel", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "chain-sun", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-column", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-temple-facade", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"}
+      ]
+    },
+    "ui-category": {
+      "title": "Category glyphs, badge glyphs, crests, laurel, wonder and token frame",
+      "icons": [
+        {"id": "category-brown", "ink": "var(--card-brown)", "i2": "color-mix(in oklch, var(--card-brown) 45%, var(--card-paper))", "band": "brown"},
+        {"id": "category-grey", "ink": "var(--card-grey)", "i2": "color-mix(in oklch, var(--card-grey) 45%, var(--card-paper))", "band": "grey"},
+        {"id": "category-blue", "ink": "var(--card-blue)", "i2": "color-mix(in oklch, var(--card-blue) 45%, var(--card-paper))", "band": "blue"},
+        {"id": "category-green", "ink": "var(--card-green)", "i2": "color-mix(in oklch, var(--card-green) 45%, var(--card-paper))", "band": "green"},
+        {"id": "category-yellow", "ink": "var(--card-yellow)", "i2": "color-mix(in oklch, var(--card-yellow) 45%, var(--card-paper))", "band": "yellow"},
+        {"id": "category-red", "ink": "var(--card-red)", "i2": "color-mix(in oklch, var(--card-red) 45%, var(--card-paper))", "band": "red"},
+        {"id": "category-purple", "ink": "var(--card-purple)", "i2": "color-mix(in oklch, var(--card-purple) 45%, var(--card-paper))", "band": "purple"},
+        {"id": "badge-check", "ink": "var(--malachite)", "i2": "oklch(0.47 0.1 160)", "badge": "free", "band": "green"},
+        {"id": "badge-chain", "ink": "var(--fg)", "i2": "var(--gold-deep)", "badge": "chain", "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "badge-lock", "ink": "oklch(0.47 0.12 25)", "i2": "oklch(0.93 0.015 40)", "badge": "short", "band": "red"},
+        {"id": "crest-sun", "ink": "var(--sun)", "band": "blue"},
+        {"id": "crest-moon", "ink": "var(--moon)", "band": "blue"},
+        {"id": "vp-laurel", "ink": "var(--gild)", "band": "blue"},
+        {"id": "wonder", "ink": "var(--fg)", "band": "purple", "cardInk": "var(--card-ink)"},
+        {"id": "token-frame", "ink": "var(--gild)", "band": "green"}
+      ]
+    },
+    "ornaments-track-logo": {
+      "title": "Ornaments, track parts and the logo",
+      "rules": {"viewBox": "any", "budget": 4096, "gradients": 1, "tokens": true},
+      "overrides": {
+        "logo-wordmark": {"budget": 8192, "snap": false},
+        "favicon": {"budget": 2048, "rawColors": true, "viewBox": "0 0 32 32", "liveArea": false},
+        "capital-sun": {"viewBox": "0 0 24 24", "budget": 1228, "gradients": 0, "tokens": false},
+        "capital-moon": {"viewBox": "0 0 24 24", "budget": 1228, "gradients": 0, "tokens": false}
+      },
+      "icons": [
+        {"id": "ornament-rosette", "file": "web/src/lib/ornaments/svg/ornament-rosette.svg", "ink": "var(--gild)"},
+        {"id": "ornament-cartouche", "file": "web/src/lib/ornaments/svg/ornament-cartouche.svg", "ink": "var(--gild)"},
+        {"id": "ornament-divider", "file": "web/src/lib/ornaments/svg/ornament-divider.svg", "ink": "var(--gild)"},
+        {"id": "ornament-border", "file": "web/src/lib/ornaments/svg/ornament-border.svg", "ink": "var(--gild)"},
+        {"id": "ornament-girih", "file": "web/src/lib/ornaments/svg/ornament-girih.svg", "ink": "var(--rule)"},
+        {"id": "track-cell", "file": "web/src/lib/ornaments/svg/track-cell.svg", "ink": "var(--rule-strong)"},
+        {"id": "capital-sun", "ink": "var(--sun)"},
+        {"id": "capital-moon", "ink": "var(--moon)"},
+        {"id": "logo-wordmark", "file": "web/src/lib/brand/logo-wordmark.svg", "ink": "var(--fg)"},
+        {"id": "favicon", "file": "web/static/favicon.svg"}
+      ]
+    }
+  }
+}
