@@ -211,3 +211,37 @@ Run it with:
 ```
 python3 -m unittest discover -s tests
 ```
+
+## Production smoke
+
+After `setup`, `redeploy` or `ship` brings up or updates the real site, run
+the Playwright production smoke from the repository root:
+
+```
+make e2e-prod
+```
+
+This is the M8 acceptance check ("the Playwright `@smoke` run (create,
+join, five moves) passes against production"), played through the real UI
+of the deployed site itself: `GET /health`, Home in both themes, a full
+online game between two isolated browser contexts (at least five moves,
+through the confirm step), and a short game against the bot. It builds
+nothing and starts nothing local; it only drives a browser against
+`PROD_URL` (default `https://ajayeb.pinky.lilf.ir`, the site `self_host.py`
+targets by default too):
+
+```
+make e2e-prod PROD_URL=https://staging.example
+```
+
+It never touches `/api/dev` or a `/dev` route (production never serves
+them; see "Development endpoints" in [protocol.md](protocol.md)), and the
+few rooms it creates (at most two per run) are left for the server's own
+reaper, the same as any other player's abandoned room. See
+[testing.md](testing.md), "Production smoke", for what each test checks and
+how `e2e/playwright.config.ts` keeps every other spec off a real site even
+when `E2E_BASE_URL` is set by hand instead of through this target.
+
+A failure here after a `redeploy` is the signal to roll back: stop the
+server, restore `.self-host/bin/ajayeb.prev` to `.self-host/bin/ajayeb`, and
+`start` it again.

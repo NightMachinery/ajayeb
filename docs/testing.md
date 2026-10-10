@@ -651,3 +651,137 @@ spectator 6). A whole `make e2e` (both projects, every spec) took about 6.5
 minutes after the builds, 73 tests passed and 3 skipped (the layout
 viewports wider than 844 px on the mobile project).
 
+## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
+
+`e2e/specs/prod.smoke.spec.ts` is the only spec that is ever allowed to run
+against a real deployment instead of the local test server. `make e2e-prod`
+runs it against `PROD_URL` (default `https://ajayeb.pinky.lilf.ir`), builds
+nothing and starts nothing local:
+
+    make e2e-prod                               # PROD_URL defaults to the production site
+    make e2e-prod PROD_URL=https://staging.example
+
+It is the M8 acceptance check: "the Playwright `@smoke` run (create, join,
+five moves) passes against production."
+
+### How `playwright.config.ts` keeps everything else off a real site
+
+Setting `E2E_BASE_URL` (which `make e2e-prod` does, to `PROD_URL`) switches
+the whole config to production-smoke mode: `E2E_BASE_URL` becomes `baseURL`
+in place of the local server's origin, no `webServer` is started (the site
+named is already running, and the config must never start a local one in
+its place), the timeouts grow to give a real network round trip room (10
+minutes per test, 30 s per `expect`, a 40 s action timeout), and, the part
+that actually keeps a local-only spec off a real site, **every project's
+`grep` is forced to `@prod`**. `prod.smoke.spec.ts` is the only spec tagged
+`@prod`, so it is the only one that can ever be selected this way, whatever
+else is passed on the command line: `GREP=` or a bare `--grep` is ANDed in
+on top, never used in place of the forced one, so it can narrow the five
+tests further but never add a spec that is not `@prod`. Without
+`E2E_BASE_URL`, none of this changes; `make e2e` and `make e2e-smoke` run
+exactly as before.
+
+The forcing has to be written once at the top level and then **repeated on
+every project that sets its own `grep`**, not just once at the top. Playwright
+resolves a project's effective `grep` as "this project's own, if it set one,
+else the top-level config's" (not as an AND of the two), so a project with
+its own `grep` (here, `mobile`'s `/@mobile/`) would otherwise keep matching
+every `@mobile` spec regardless of the top-level setting, and defeat the
+forcing silently rather than with an error. (That is different from
+`--grep` on the command line, which Playwright does AND on top of a
+project's `grep`; that is how `make e2e-smoke`'s `--grep '@smoke'` already
+narrows both projects at once, and why it was not enough on its own here: a
+bare `playwright test` run with `E2E_BASE_URL` set, the way a human might
+run it directly, passes no `--grep` at all.) So `playwright.config.ts` gives
+the `mobile` project a conditional `grep` too: in production-smoke mode it
+requires both `@prod` and `@mobile` (a single regex with two lookaheads,
+since Playwright treats an *array* of patterns as OR, not AND). Since
+`prod.smoke.spec.ts` carries only `@prod`, the `mobile` project matches none
+of it by default, so a plain `make e2e-prod` runs the desktop project only;
+tagging a test `@mobile` as well, once it is confirmed to also pass that
+way, is what would let it run there too.
+
+This was found the hard way while building this slice: the first attempt
+forced only the top-level `grep`, which the `mobile` project's own
+`/@mobile/` silently overrode, and a bare `make e2e-prod` ran all 40 local
+specs (`@mobile`-tagged ones included) against the real site before it was
+caught and killed a few tests in. Two extra, harmless `vs AI` games
+(`ai.full.spec.ts`, which never calls a dev route) actually finished against
+production before the interrupt, and a third spec got as far as navigating
+to `/dev/new`, which the production build does not route, before the kill
+landed. No dev-endpoint call ever reached the server (the production build
+serves no `/dev/new` route to navigate to, so Playwright's `page.goto`
+itself was the only thing that happened), and no corruption resulted, but it
+is exactly the failure this section's forcing exists to prevent, and the fix
+above (repeating the grep on every project, not just at the top) is what
+actually closes it. `pnpm -C e2e exec playwright test --list` with
+`E2E_BASE_URL` set is how this was verified afterwards, and is the fast,
+network-free way to re-check it after any further change here: it must
+print exactly the tests below, and nothing else, regardless of what other
+flags are added.
+
+### The four tests
+
+1. `GET /health` answers `ok` with a non-empty `version` (logged).
+2. Home renders in both themes (`light`, `dark`) with no console error, page
+   error, failed request or HTTP error response, and no horizontal scroll.
+3. Two isolated browser contexts play a short online game: context A creates
+   it through the UI (Home, Play online, a name, a crest, Create), reads the
+   invite the way a player would (Copy link, then the clipboard: see "The
+   clipboard permission" below), and context B opens that link, answers the
+   name prompt and takes the open seat. They then play at least five moves
+   (the wonder-draft picks count) through the confirm step online rooms use,
+   each only on its own turn (the other side's `canAct` and `choices()` are
+   checked false first), and both pages are checked to agree on the room's
+   `version` after every move. Both then leave through the game menu
+   (Home), which just sends `leave`, not a delete; the room itself is left
+   for the server's reaper.
+4. A short game against the bot: Home, Play vs AI, Apprentice, Start, two
+   moves with the bot answering, then leave through the game menu the same
+   way.
+
+Nothing here calls `/api/dev` or a `/dev` route: those answer 404 and are
+turned off entirely on a production server (`-dev-endpoints` is refused
+without `-dev`, and neither flag is part of a production run; see
+[self-hosting.md](self-hosting.md)). Everything is driven the same way the
+local full-playthrough specs are, through `GameDriver`
+(`e2e/fixtures/driver.ts`) and the online helpers
+(`e2e/fixtures/online.ts`), waiting on `window.__ajayeb.ready()` and room
+versions, never a fixed sleep.
+
+A full run creates at most two rooms on the real site (one online, one vs
+AI); the Home tests create none. Run twice in a row (the acceptance check),
+that is four rooms total, all left for the reaper.
+
+### The clipboard permission
+
+`newDeviceContext(browser, testInfo, { clipboard: true })`
+(`e2e/fixtures/online.ts`) grants the `clipboard-read`/`clipboard-write`
+permissions so `readInvite` can read back what Copy link put on the
+clipboard, the way `online.full.spec.ts` already does locally. Granting a
+permission is scoped to an origin, and that scope has to be the context's
+real one (`testInfo.project.use.baseURL`, the same value `playwright.config.ts`
+sets to `E2E_BASE_URL` in this mode) rather than the fixture file's own
+`ORIGIN` constant (always the local test server's address): against a real
+site the two differ, and the mismatch fails the clipboard read with
+`NotAllowedError: ... Read permission denied` the first time it is used,
+without the context ever using the permission it was actually granted. For
+every local run `use.baseURL` already equals that same `ORIGIN`, so fixing
+this changed nothing there.
+
+### Measured
+
+Run twice in a row against `https://ajayeb.pinky.lilf.ir` (`make e2e-prod`,
+no local build), both green, `/health` reporting version `c5b9bfa` both
+times:
+
+- run 1: 5 passed in 29.7 s. The online game (room `36VWUY`) took its five
+  moves from the wonder draft (A 3 picks, B 2); the vs-AI game (room
+  `Z76NY6`) played its two moves with the Apprentice answering.
+- run 2: 5 passed in 26.8 s. Online game `SWSPXU` (A 2 draft picks, B 3); vs
+  AI game `V69WH9`.
+
+Four rooms in all, every one left for the server's reaper. No stray Chrome
+process afterwards (`ps -axo pid=,command= | grep -F -e ajayeb-chrome -e
+playwright_chromiumdev_profile`).
+
