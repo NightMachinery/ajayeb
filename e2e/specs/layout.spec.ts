@@ -116,10 +116,13 @@ for (const viewport of VIEWPORTS) {
       const recording = await game(baseURL);
       const problems = watchHygiene(page);
       // The layout under test is the board itself, without the pass-device
-      // screen between turns.
+      // screen between turns. The rooms come from this test's own HTTP
+      // request, so the browser has not seen them: a stored name keeps the
+      // room page from asking for one first.
       await page.addInitScript(() => {
         try {
           localStorage.setItem('ajayeb:settings', JSON.stringify({ hotseatPassDevice: false }));
+          localStorage.setItem('ajayeb:name', 'Layout');
         } catch {
           // Storage may be blocked; the default only matters on touch screens.
         }
