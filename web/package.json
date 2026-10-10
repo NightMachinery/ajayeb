@@ -14,7 +14,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@lucide/svelte": "^1.49.0"
+    "@lucide/svelte": "^1.49.0",
+    "uqr": "^0.1.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
