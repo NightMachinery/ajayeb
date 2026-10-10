@@ -1,6 +1,6 @@
 # Spec: ornaments, track parts and the logo
 
-Set name in `sets.json`: `ornaments-track-logo`. Ten files, none drawn yet (the favicon exists as an M5 placeholder). Read [../STYLE.md](../STYLE.md) first. These pieces carry the manuscript look of the whole app, but they must never fight the game information: an ornament is quieter than any icon next to it.
+Set name in `sets.json`: `ornaments-track-logo`. Thirteen files (the track cell became four files in M9.V5; see track-cell below), all drawn in M9.V5. Read [../STYLE.md](../STYLE.md) first. These pieces carry the manuscript look of the whole app, but they must never fight the game information: an ornament is quieter than any icon next to it.
 
 ## Where these files live
 
@@ -11,7 +11,13 @@ Ornaments are larger and more detailed than icons, and most are used as backgrou
 - `web/src/lib/brand/logo-wordmark.svg` for the wordmark (a new directory).
 - `web/static/favicon.svg` for the favicon (replacing the M5 placeholder in place).
 
-Creating the two directories, adding `capital-sun` and `capital-moon` to `names.ts`, and wiring each piece into its component are coordinator changes; the drawing agent asks for them in its result.
+Wiring each piece into its component is later work (M10 and M11). M9.V5 created the two directories and added `capital-sun` and `capital-moon` to `names.ts`.
+
+Paint: every file uses the two-tone convention, `var(--i1, currentColor)` for the main tone and `var(--i2, transparent)` for the detail, and the caller picks the colours (the `ink` of each entry in `sets.json`). The only token named directly is the wordmark's gild accent (its Latin line, `var(--gild, currentColor)`). So the same file works inline, as a CSS mask, or as an image with its colours substituted. How each piece is meant to be used:
+
+- Inline SVG (raw import), two-tone: the rosette, the track cells, the capitals (sprite) and the wordmark.
+- Three slices of one file (fixed parts at their natural aspect, the rest stretched with `preserveAspectRatio="none"`): the cartouche (fixed ends `0..20` and `76..96`, stretched middle) and the divider (stretched arms `0..80` and `112..192`, fixed medallion `80..112`).
+- CSS masks over a background colour, so the theme colour never has to be baked into a URL: the border (`mask-border` and `-webkit-mask-box-image`, slice 16, `round`) over `var(--gild)`, and the girih (`mask` repeating at the tile size) over `var(--rule)` at 6 to 10% opacity. The cartouche, the border and the girih carry `width` and `height` attributes so their slices resolve as CSS images.
 
 Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradient allowed, and token paints such as `var(--gold)` allowed. The capitals follow the icon rules. The wordmark may have unsnapped outlines and 8 KB. The favicon may use raw colours (it is served without the stylesheet), on a 32 grid, in 2 KB.
 
@@ -59,7 +65,8 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 
 - Meaning: one space of the military track.
 - Metaphor: a small tile of the board, with a lobed top edge.
-- Shape: a viewBox of about 2:3 (narrow and tall), a frame that tells the zones apart by an inner mark: plain in the centre zone, one notch in the 2-point zone, two in the 5-point zone, three in the 10-point zone. The values themselves are text drawn by the component.
+- Shape: a viewBox of `0 0 32 48` (2:3), a niche with a pointed arch: a 2-unit frame in `--i1` around a field in `--i2`, and an inner mark that tells the zones apart: plain in the centre zone, one lozenge in the 2-point zone, two in the 5-point zone, three in the 10-point zone, in a row near the bottom (the top of the niche stays free for the pawn). The values themselves are text drawn by the component.
+- Files (correction, M9.V5): one file per zone, because one SVG cannot switch its marks without CSS: `track-cell` (centre), `track-cell-2`, `track-cell-5` and `track-cell-10`, all in `web/src/lib/ornaments/svg/` and listed in `sets.json`.
 - Sizes: at 360 px wide the track has 19 cells in about 340 px, so a cell is 16 to 18 px wide.
 - Acceptance: at 360 px the cells are countable and the zone boundaries visible.
 - Contexts: MilitaryTrack.
@@ -67,7 +74,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 ## capital-sun and capital-moon
 
 - Meaning: the two capitals at the ends of the military track; the pawn reaching one wins the game for the other player.
-- Metaphor: a city gate with a pointed arch and two towers, crowned by the player's crest figure (a sun disc, a crescent).
+- Metaphor: a city gate with a pointed arch and two towers, crowned by the player's crest figure (a sun disc, a crescent). As drawn in M9.V5: two squat crenellated towers and a lower wall with a pointed-arch gate (the gate in `--i2`), and the crest figure above the wall between the towers. The sun is a plain disc: rays at this size fall under the 2-unit minimum feature, and a disc against a crescent is the distinction the crests use too.
 - Shape: sprite icons on the 24 grid, following every icon rule. The gate is shared; the crest figure on top differs, so each reads as "this player's city".
 - Must differ from: wonder (the wonder has no crest figure, and the capital has no minarets), crest-sun and crest-moon (the capital is a building), chain-tower.
 - Sizes: 16 to 24 px at the track ends.
@@ -88,6 +95,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Meaning: the browser tab and home-screen icon.
 - Metaphor: the first letter ع of the wordmark, in gold on a lapis tile, or the whole Nastaliq word squeezed into a roundel if it still reads at 32 px.
 - Shape: `viewBox="0 0 32 32"`, a rounded lapis square (radius 6 to 7) with the gold letterform. Raw colours are allowed here: use the hex equivalents of `--lapis` and `--gold` from `web/src/lib/styles/tokens.css`, and say so in the log.
+- Correction (M9.V5): the letter is the isolated ع of Noto Nastaliq Urdu Bold, thickened by half a unit all round (baked into the outline, since a stroke under 2.67 units fails the feature rule), so it holds at 16 px. Its outline is a smooth glyph, not grid geometry, so the favicon is unsnapped (`"snap": false` in `sets.json`), like the wordmark.
 - Sizes: 16 and 32 px in tabs, and the source of the 180, 192 and 512 px PNG app icons (made later by the bitmap pipeline).
 - Acceptance: recognisable at 32 px and identifiable at 16 px, on light and dark browser chrome.
 - Contexts: `web/src/app.html` links it as `favicon.svg`.
