@@ -226,15 +226,17 @@ git). The config stops the server and the browser at the end of a run.
 
 ### The shared helpers (`e2e/fixtures/`)
 
-- `driver.ts`, the game driver, which later milestones reuse for the vs-AI
-  and online playthroughs. `GameDriver` waits for `window.__ajayeb.ready()`,
-  reads a `Snapshot` (version, ply, phase, age, the seat to move, the
-  pending choice, `choices()`, the result, and whether the pass-device
-  screen is up), asks a `Policy` for a move, performs it by clicking what a
-  player clicks, and waits for the room's version to pass the old one and
-  the page to be ready again. It never sends a frame and never decides what
-  is legal: every key it clicks is the `data-act` of one of the view's
-  choices. The flows it knows:
+- `driver.ts`, the game driver of the hot-seat and vs-AI playthroughs
+  (the online one will reuse it). `GameDriver` waits for this client's
+  turn (`waitTurn`: `window.__ajayeb.ready()`, and `you().canAct` for a
+  seat of its own to move, or the game over), reads a `Snapshot` (version,
+  ply, phase, age, the seat to move, the pending choice, `choices()`, the
+  result, whether the pass-device screen is up, this connection's seats,
+  the thinking seat and `canUndo`), asks a `Policy` for a move, performs it
+  by clicking what a player clicks, and waits for the room's version to
+  pass the old one and the page to be ready again. It never sends a frame
+  and never decides what is legal: every key it clicks is the `data-act`
+  of one of the view's choices. The flows it knows:
   - the draft: the tile's Take button where tiles show it, else the tile
     (`data-pick`) and then Take in its sheet;
   - a pending choice: the option's tile (`data-pick`) when the panel has
@@ -250,8 +252,21 @@ git). The config stops the server and the browser at the end of a run.
   - the pass-device screen: "I'm ready".
 
   It closes a toast with its dismiss button before tapping the board, as a
-  player would, and counts every flow, every pending kind and every pass
-  screen in `driver.stats`.
+  player would, and counts every flow, every pending kind, every pass
+  screen and every undo in `driver.stats`.
+
+  Against the bot, `waitTurn` is what waits out the bot's turn: after the
+  player's move the page shows the bot's thinking frame, the Presenter
+  holds the bot's answer for its dwell and previews its pick, and only
+  then is the page ready with a move of the player's to make. Nothing in
+  the driver sleeps a fixed time. The other entry points are `nextTurn`
+  (the next move to make, past any pass-device screen), `play` (one
+  policy move), `playToEnd`, `undo` (the top bar's undo, after closing any
+  toast that covers it) and `watchThinking` with `thinkingSeen`, which
+  count from the page's first load how often the bot's thinking indicator
+  appeared: the turn bar's thinking state (`data-turn="aiThinking"`) and
+  a seat panel's thinking dots (`.seat-panel[data-thinking]`), each on
+  the change from absent to shown.
 - `hotseatPolicy` in `driver.ts`: deterministic, and chosen to walk every
   flow rather than to play well. The draft takes the first wonder on offer;
   a pending choice takes its first option; in play a wonder is built
@@ -294,20 +309,77 @@ checks:
 - no console error, page error or failed request on the way.
 
 The server's `--seed-base 1000` deals the rooms created over the socket
-from seeds 1000, 1001 and so on, in order, so the games are the same on
-every run of the same set of specs; in a full `make e2e` the desktop game
-gets seed 1000 and the mobile game seed 1001. Measured on the laptop:
+from seeds 1000, 1001 and so on, in the order they are created, so the
+games are the same on every run of the same set of specs (a narrower
+`GREP` creates fewer rooms first and so deals other games). Measured in a
+full `make e2e` on the laptop, the same on two runs in a row:
 
-- desktop: 72 actions (6 draft picks, 6 pending choices covering all five
-  kinds, 33 builds, 20 discards, 4 wonders card first and 3 wonder first),
-  about 30 s;
-- mobile: 71 actions (6 draft picks, 5 pending choices, 34 builds, 19
-  discards, 3 wonders card first and 4 wonder first) and 58 pass-device
-  screens, about 42 s.
+- desktop: 69 actions (6 draft picks, 3 pending choices, 34 builds, 21
+  discards, 2 wonders card first and 3 wonder first), about 60 s;
+- mobile: 67 actions (6 draft picks, 4 pending choices, 32 builds, 20
+  discards, 2 wonders card first and 3 wonder first) and 58 pass-device
+  screens, about 60 s.
 
 The spec prints its counts on one `hot-seat game:` line and attaches them
-as `game-summary.json`. A whole `make e2e` (both projects, the smoke spec
-included, after the builds) takes about two and a half minutes.
+as `game-summary.json`. A whole `make e2e` (both projects, every spec,
+after the builds) takes about six and a half minutes.
+
+### `ai.full.spec.ts` (`@mobile @full`)
+
+Games against the bot through the real UI, on both projects. The bot's
+turns are waited out with the driver's `waitTurn`, never with sleeps. The
+config's `--bot-delay 0` makes the server answer at once, so the pacing a
+player sees is the client's own: the thinking frame stays up for the
+Presenter's dwell (300 ms under reduced motion, which the config sets),
+then the bot's pick is previewed for as long again.
+
+The first test plays a whole game against the Apprentice (`easy`). From
+Home it opens Play vs AI, picks Apprentice and a crest (the Sun on the
+desktop project, the Moon on the mobile one) and starts, then plays to the
+end with the hot-seat policy for the player's seat. It checks:
+
+- the room is an `ai` room with an `easy` bot in the other seat, and this
+  connection holds only the chosen seat;
+- the military track puts the player's capital at its left end, mirrored
+  (`data-mirrored`) at the Moon;
+- one undo in the middle of Age I or II, from the top bar, after the bot
+  has answered: the bot's reply goes with the player's move, so the ply,
+  the structure and the choices are those from before the move, nobody is
+  thinking, and the turn bar says it is the player's turn;
+- the bot's thinking indicator appeared, both in the turn bar and in the
+  bot's strip or panel (counted with `watchThinking`);
+- the result screen shows the server's victory and winner ("You win",
+  "Apprentice wins" or a shared victory), and its score table shows the
+  server's score sheet category by category;
+- Home no longer offers to continue the finished room: a finished room
+  leaves Home's Continue list (and `ajayeb:rooms`) as soon as a state
+  frame says its game is over;
+- no console error, page error or failed request on the way.
+
+The second test starts a game against the Scholar (`normal`), plays three
+moves, leaves with the game menu (`data-control="menu"`, then Home), and
+comes back through its "Continue: vs AI" entry on Home. The board must be
+restored exactly: the same room version, ply, phase, seat to move,
+choices and `canUndo`. It then plays one more move to show the game goes
+on.
+
+The Apprentice is deterministic (its random numbers come from the room
+seed), so the first test replays the same game on every full run.
+Measured in a full `make e2e`, the same on two runs in a row:
+
+- desktop (Sun): 71 plies, 34 actions by the player (35 sent, one undone)
+  and 37 by the bot; 3 draft picks, 1 pending choice, 20 builds, 8
+  discards, 1 wonder card first and 2 wonder first; the undo at ply 15;
+  the thinking indicator shown about 30 times; a civilian win for the
+  player, 63 to 45; about 60 s;
+- mobile (Moon): 72 plies, 36 actions by the player (37 sent, one undone)
+  and 36 by the bot; 3 draft picks, 3 pending choices, 19 builds, 8
+  discards, 2 wonders card first and 2 wonder first; the undo at ply 14;
+  a civilian win for the bot, 49 to 46; about 55 s.
+
+The Scholar test takes about 9 s on each project. The first test prints
+its counts on one `vs-AI game:` line and attaches them as
+`game-summary.json`.
 
 ### `layout.spec.ts` (`@mobile`)
 
