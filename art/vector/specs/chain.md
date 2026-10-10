@@ -6,6 +6,7 @@ Set name in `sets.json`: `chain`. 17 files, one per chain symbol. Read [../STYLE
 
 - A chain symbol printed on a card's effect band ("out") makes one later card free for the player who owns it; the later card shows the same symbol in its cost row ("in"). The player must match the two across ages, so each symbol needs one memorable silhouette.
 - The list below comes from the server catalog (`Chain` in `server/internal/engine/catalog/types.go`, the TypeScript `Chain` type in `web/src/lib/wire/view.gen.ts`). It matches `names.ts` exactly: 17 symbols, `chain-<value>`. No id is missing and none is extra.
+- The detail tone is optional. A symbol whose idea has no natural secondary layer (the moon, the sun, the sword, the target, the amphora, the lamp, the temple front) is drawn in the main tone only, rather than with a gold speck that turns to noise at 12 px.
 - Every glyph sits in a chip (`ChainChip.svelte`) of 1.3 em with the glyph at 0.95 em: a gold chip for "in", a paper chip with a gold-deep border for "out". The glyph is card ink with `--i2` gold-deep, in both themes (cards stay paper). So the main tone carries everything; the detail tone is a gold accent.
 - There are no `-sm` variants yet. Add one (and its `names.ts` line and `sets.json` field) only for a symbol that fails at 12 px after its iterations.
 - Groups of related symbols must still differ: five come from red cards (horseshoe, sword, tower, target, helmet), six from blue cards (mask, moon, drop, sun, column, temple-facade), four from green cards (book, gear, lyre, lamp) and two from yellow cards (amphora, barrel). Inside each group, vary the silhouette family (round, tall, wide, pointed).
@@ -95,14 +96,14 @@ For each: the card that shows it, then the card it makes free; then the metaphor
 
 - Cards: School (II, green) to University (III, green).
 - Metaphor: a lyre or a small harp.
-- Silhouette: a U-shaped frame open at the top, two curved arms, three strings in the detail tone.
+- Silhouette: a sound box at the bottom, two curved arms that curl outward at the top, a crossbar, and two strings in the detail tone. (Corrected in M9.V3: three strings at the 2-unit minimum with 1.5-unit gaps need a 12-unit opening, which made the lyre a wide grille at 12 px; two strings keep it light. See the log.)
 - Must differ from: chain-horseshoe (opening up, strings), science-scales.
 
 ## chain-lamp
 
 - Cards: Laboratory (II, green) to Observatory (III, green).
 - Metaphor: an oil lamp with a flame.
-- Silhouette: a low lamp body with a spout to one side and a flame rising from it, the flame in the detail tone.
+- Silhouette: a low lamp body with a spout to one side and a flame rising from it. The flame is in the main tone, a pointed lens rather than a round-bottomed drop. (Corrected in M9.V3: with the flame in the detail tone the lamp lost its flame whenever `--i2` is unset, against STYLE.md section 3; the lens keeps it apart from chain-drop. See the log.)
 - Must differ from: science-mortar, chain-drop, chain-amphora.
 
 ## chain-barrel
