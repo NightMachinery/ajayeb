@@ -75,6 +75,10 @@ export const ICON_NAMES = [
   'crest-sun',
   'crest-moon',
 
+  // The two capitals at the ends of the military track.
+  'capital-sun',
+  'capital-moon',
+
   // Card-category glyphs (7), one per Color in the catalog.
   'category-brown',
   'category-grey',
