@@ -9,6 +9,7 @@
 // art/style.md for the prompts this reads into.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -261,4 +262,116 @@ export async function saveManifest(manifest) {
 export function die(message, code = 1) {
   process.stderr.write(`${path.basename(process.argv[1])}: ${message}\n`);
   process.exit(code);
+}
+
+// --- Raw-pixel helpers -----------------------------------------------------
+//
+// Shared by process.mjs (the token rim mask, the paper-tone mapping) and
+// gate.mjs (the edge-band full-bleed check). All of them need the same
+// "shipping crop" as plain RGB bytes to do per-pixel math in JS rather than
+// chaining several ImageMagick composite calls; ImageMagick itself is only
+// used to resize/crop/extent and to convert raw bytes back to a PNG.
+
+// The paper colour the app's own card/token frames use (--paper /
+// --card-paper in web/src/lib/styles/tokens.css, ivory
+// oklch(0.96 0.025 85) ~= #f4ecdc). process.mjs maps every processed
+// image's own paper tone onto this exact colour, so a painting's ivory
+// ground never shows a visible tone step against the surrounding frame.
+export const PAPER_HEX = '#f4ecdc';
+
+export function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+function runCapture(cmd, args, input) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: ['pipe', 'pipe', 'pipe'] });
+    const chunks = [];
+    let stderr = '';
+    child.stdout.on('data', (d) => chunks.push(d));
+    child.stderr.on('data', (d) => (stderr += d));
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code !== 0) reject(new Error(`${cmd} ${args.join(' ')}\n${stderr}`));
+      else resolve(Buffer.concat(chunks));
+    });
+    if (input) child.stdin.end(input);
+    else child.stdin.end();
+  });
+}
+
+/**
+ * Crops `src` to an exact `w`x`h`, the same "fill" crop process.mjs ships
+ * with (`-resize WxH^ -gravity center -extent WxH`), with no mask and no
+ * other post-processing, and returns the raw RGB bytes (`w*h*3`, no alpha,
+ * row-major, 8-bit) plus `{ w, h }`. This is "the shipping crop" every
+ * objective pixel check in this pipeline runs on.
+ */
+export async function cropToRawRgb(src, w, h) {
+  const args = [src, '-resize', `${w}x${h}^`, '-gravity', 'center', '-extent', `${w}x${h}`, '-strip', 'rgb:-'];
+  const buf = await runCapture('magick', args);
+  if (buf.length !== w * h * 3) {
+    throw new Error(`cropToRawRgb: expected ${w * h * 3} bytes for ${w}x${h}, got ${buf.length} (${src})`);
+  }
+  return { buf, w, h };
+}
+
+/** Encodes raw RGB bytes (as `cropToRawRgb` returns) back to a PNG file. */
+export async function rawRgbToPng(buf, w, h, outPath) {
+  await mkdir(path.dirname(outPath), { recursive: true });
+  const pngBuf = await runCapture('magick', ['-size', `${w}x${h}`, '-depth', '8', 'rgb:-', 'png:-'], buf);
+  await writeFile(outPath, pngBuf);
+}
+
+/**
+ * The image's own paper colour: the per-channel median of small patches at
+ * each of the four corners. A median (not a mean) so a stray dark ink line
+ * clipping a corner cannot pull the estimate off the actual paper tone.
+ */
+export function cornerPaperColor(buf, w, h, patch = 8) {
+  const px = Math.min(patch, Math.floor(w / 2), Math.floor(h / 2));
+  const corners = [
+    [0, 0],
+    [w - px, 0],
+    [0, h - px],
+    [w - px, h - px],
+  ];
+  const rs = [];
+  const gs = [];
+  const bs = [];
+  for (const [cx, cy] of corners) {
+    for (let y = cy; y < cy + px; y++) {
+      for (let x = cx; x < cx + px; x++) {
+        const idx = (y * w + x) * 3;
+        rs.push(buf[idx]);
+        gs.push(buf[idx + 1]);
+        bs.push(buf[idx + 2]);
+      }
+    }
+  }
+  const median = (arr) => {
+    const sorted = [...arr].sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length / 2)];
+  };
+  return [median(rs), median(gs), median(bs)];
+}
+
+/** The pixel size of an image file, via `magick identify`, as "WxH". Used
+ * to verify a Codex `image_gen` attempt actually came back the size it was
+ * asked for (M9.B3: the pilot saw a reference-image run come back
+ * 1254x1254 against a requested 1024x1024). */
+export async function imageSize(file) {
+  const buf = await runCapture('magick', ['identify', '-format', '%wx%h', file]);
+  const s = buf.toString('utf8').trim();
+  const m = /^(\d+)x(\d+)$/.exec(s);
+  if (!m) throw new Error(`imageSize: could not parse "magick identify" output "${s}" for ${file}`);
+  return { w: Number(m[1]), h: Number(m[2]) };
+}
+
+export function colorDistance(a, b) {
+  const dr = a[0] - b[0];
+  const dg = a[1] - b[1];
+  const db = a[2] - b[2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
 }

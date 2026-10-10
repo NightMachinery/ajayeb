@@ -1,17 +1,31 @@
 #!/usr/bin/env node
 // tools/art/process.mjs
 //
-// Turns one approved (or, with --scratch, not-yet-approved) original into
-// the shipped AVIF sizes from the asset table in art/style.md /
+// Turns one approved (or, with --out, not-yet-approved) original into the
+// shipped AVIF sizes from the asset table in art/style.md /
 // docs/art/bitmaps.md, and records their byte counts in art/manifest.json.
 //
-//   magick raw.png -resize WxH^ -gravity center -extent WxH -strip \
-//     <crop/mask steps> ppm:- | avifenc --stdin -q 55 ... out.avif
-//
-// Quality steps down (55 -> 45 -> 35) until each file's budget holds, or
-// the lowest quality is kept with a warning. Progress tokens additionally
-// get a circular mask onto the paper colour before resizing, so a round
-// medallion sits on square card art with no visible corners.
+// For each shipped size:
+//   1. Crop the original to that exact WxH (`-resize WxH^ -gravity center
+//      -extent WxH`, the same "fill" crop every objective check in this
+//      pipeline uses) and read it back as raw RGB bytes.
+//   2. Detect the image's own paper colour (the corner-median of the crop)
+//      and map it onto PAPER_HEX, the app's --card-paper token, with a
+//      smooth per-pixel falloff so only paper-like pixels move and the
+//      painting's other colours are left alone (M9.B3's "paper tone" fix:
+//      a generated gouache ground runs warmer than the CSS token, which
+//      used to show as a visible seam against the surrounding card frame).
+//   3. For a progress token (`mask: 'circle'`), detect the painted
+//      medallion's own rim radius (scanning inward from each edge for the
+//      first pixel that isn't paper-coloured) instead of always masking to
+//      a circle that touches the square's edges, and feather a soft
+//      anti-aliased edge there. A medallion painted with a margin inside
+//      the square (M9.B3's pilot tokens) used to leave a visible ivory
+//      "halo" ring once masked to the full square; detecting the real rim
+//      removes it without needing a second generation.
+//   4. Write the result back to a PNG and encode it with `avifenc`,
+//      stepping quality down (55 -> 45 -> 35) until the size's byte budget
+//      holds, or keeping the lowest quality with a warning.
 //
 // Usage:
 //   node tools/art/process.mjs --id token/agriculture \
@@ -41,13 +55,13 @@ import {
   shippedRoot,
   loadManifest,
   saveManifest,
+  cropToRawRgb,
+  rawRgbToPng,
+  cornerPaperColor,
+  hexToRgb,
+  PAPER_HEX,
   die,
 } from './lib.mjs';
-
-// Paper colour the token mask composites onto (tokens/CatalogSymbol medallion
-// ground), matching --paper in web/src/lib/styles/tokens.css (ivory,
-// oklch(0.96 0.025 85) ~= #f4ecdc).
-const PAPER_HEX = '#f4ecdc';
 
 function parseArgs(argv) {
   const args = { qualities: [55, 45, 35] };
@@ -75,39 +89,96 @@ function run(cmd, args, opts = {}) {
   });
 }
 
-/** Builds the ImageMagick arguments that take the raw original to a
- * WxH-exact, center-cropped PNG, with a circular mask onto the paper colour
- * for tokens. Returns an argv array for `magick <src> ...args... <dest>`. */
-function magickArgs(src, dest, w, h, mask) {
-  const args = [src, '-resize', `${w}x${h}^`, '-gravity', 'center', '-extent', `${w}x${h}`, '-strip'];
-  if (mask === 'circle') {
-    // A white-on-black circle becomes the alpha channel (CopyOpacity), then
-    // the result is flattened onto the paper colour, so the shipped file
-    // has no transparency (AVIF alpha costs bytes the budget does not have).
-    args.push(
-      '(',
-      '-size',
-      `${w}x${h}`,
-      'xc:black',
-      '-fill',
-      'white',
-      '-draw',
-      `circle ${w / 2},${h / 2} ${w / 2},0`,
-      ')',
-      '-alpha',
-      'off',
-      '-compose',
-      'CopyOpacity',
-      '-composite',
-      '-background',
-      PAPER_HEX,
-      '-compose',
-      'Over',
-      '-flatten',
-    );
+/**
+ * Maps the crop's own paper colour onto `targetRgb`, in place, with a
+ * per-pixel falloff: a pixel exactly at the paper colour gets the full
+ * shift, a pixel `fadeDist` or further from it (ink, gouache, anything
+ * painted) gets none, and pixels in between blend smoothly. This is what
+ * keeps "the painting's other colours" from shifting (M9.B3's acceptance:
+ * the mapping touches only the ivory ground).
+ */
+function mapPaperTone(buf, w, h, paperRgb, targetRgb, fadeDist = 60) {
+  const delta = [targetRgb[0] - paperRgb[0], targetRgb[1] - paperRgb[1], targetRgb[2] - paperRgb[2]];
+  for (let i = 0; i < buf.length; i += 3) {
+    const r = buf[i];
+    const g = buf[i + 1];
+    const b = buf[i + 2];
+    const dr = r - paperRgb[0];
+    const dg = g - paperRgb[1];
+    const db = b - paperRgb[2];
+    const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+    const weight = Math.max(0, 1 - dist / fadeDist);
+    if (weight <= 0) continue;
+    buf[i] = Math.min(255, Math.max(0, Math.round(r + delta[0] * weight)));
+    buf[i + 1] = Math.min(255, Math.max(0, Math.round(g + delta[1] * weight)));
+    buf[i + 2] = Math.min(255, Math.max(0, Math.round(b + delta[2] * weight)));
   }
-  args.push(dest);
-  return args;
+}
+
+/**
+ * Finds the progress token's own painted rim, so the mask can shrink-wrap
+ * to it instead of always touching the square's edges. Walks inward from
+ * each of the 4 edges along the horizontal/vertical centre lines, looking
+ * for the first pixel that is not paper-coloured; the smallest of the 4
+ * estimates is the safe radius (whichever direction the margin is
+ * narrowest), so no ivory ring from any direction survives the mask.
+ * Falls back to the full `min(w,h)/2` (the old behaviour: mask to the
+ * square's edge) when an axis never leaves the paper colour, e.g. a
+ * medallion painted edge to edge, which the amended token template asks
+ * for by default.
+ */
+function detectTokenRadius(buf, w, h, paperRgb, distThresh = 30) {
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
+  const maxR = Math.min(w, h) / 2;
+  const axes = [
+    { dx: 1, dy: 0 },
+    { dx: -1, dy: 0 },
+    { dx: 0, dy: 1 },
+    { dx: 0, dy: -1 },
+  ];
+  const estimates = [];
+  for (const { dx, dy } of axes) {
+    let r = maxR;
+    for (let step = Math.floor(maxR) - 1; step >= 0; step--) {
+      const x = Math.round(cx + dx * step);
+      const y = Math.round(cy + dy * step);
+      if (x < 0 || x >= w || y < 0 || y >= h) continue;
+      const idx = (y * w + x) * 3;
+      const dist = Math.sqrt(
+        (buf[idx] - paperRgb[0]) ** 2 + (buf[idx + 1] - paperRgb[1]) ** 2 + (buf[idx + 2] - paperRgb[2]) ** 2,
+      );
+      if (dist > distThresh) {
+        r = step;
+        break;
+      }
+    }
+    estimates.push(r);
+  }
+  // A floor keeps a noisy detection from crushing the medallion to nothing;
+  // half the old default radius is already a very tight margin.
+  return Math.max(maxR * 0.5, Math.min(...estimates));
+}
+
+/** Flattens every pixel outside `radius` of the crop's centre onto
+ * `paperRgb` (no alpha channel, matching the rest of the pipeline), with a
+ * 1.5px antialiased edge so the masked circle is not jagged at small sizes
+ * (tokens ship as small as 96px). */
+function applyCircleMask(buf, w, h, radius, paperRgb) {
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
+  const feather = 1.5;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      const t = Math.min(1, Math.max(0, (dist - (radius - feather)) / (feather * 2)));
+      if (t <= 0) continue;
+      const idx = (y * w + x) * 3;
+      buf[idx] = Math.round(buf[idx] * (1 - t) + paperRgb[0] * t);
+      buf[idx + 1] = Math.round(buf[idx + 1] * (1 - t) + paperRgb[1] * t);
+      buf[idx + 2] = Math.round(buf[idx + 2] * (1 - t) + paperRgb[2] * t);
+    }
+  }
 }
 
 async function encodeAvif(pngPath, outPath, budgetBytes, qualities) {
@@ -155,11 +226,20 @@ async function main() {
 
   const shippedDir = args.out ? path.join(args.out, spec.outDir) : path.join(shippedRoot, spec.outDir);
   const bytes = {};
+  const targetPaperRgb = hexToRgb(PAPER_HEX);
 
   for (const size of spec.sizes) {
     const fileName = shippedFileName(kind, slug, size);
     const croppedPng = path.join(scratchRoot, `_crop-${fileName}.png`);
-    await run('magick', magickArgs(args.src, croppedPng, size.w, size.h, spec.mask));
+
+    const { buf, w, h } = await cropToRawRgb(args.src, size.w, size.h);
+    const ownPaperRgb = cornerPaperColor(buf, w, h);
+    mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
+    if (spec.mask === 'circle') {
+      const radius = detectTokenRadius(buf, w, h, ownPaperRgb);
+      applyCircleMask(buf, w, h, radius, targetPaperRgb);
+    }
+    await rawRgbToPng(buf, w, h, croppedPng);
 
     const outPath = path.join(shippedDir, fileName);
     const result = await encodeAvif(croppedPng, outPath, size.budgetBytes, args.qualities ?? [55, 45, 35]);
