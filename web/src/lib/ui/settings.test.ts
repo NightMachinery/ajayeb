@@ -1,0 +1,106 @@
+import { describe, expect, it } from 'vitest';
+import {
+  DEFAULT_SETTINGS,
+  parseSettings,
+  SETTINGS_KEY,
+  SettingsStore,
+  type Settings,
+  type StorageLike
+} from './settings.svelte';
+
+function memory(initial: Record<string, string> = {}): StorageLike & { data: Map<string, string> } {
+  const data = new Map(Object.entries(initial));
+  return {
+    data,
+    getItem: (k) => data.get(k) ?? null,
+    setItem: (k, v) => void data.set(k, v)
+  };
+}
+
+const blocked: StorageLike = {
+  getItem: () => {
+    throw new Error('SecurityError');
+  },
+  setItem: () => {
+    throw new Error('SecurityError');
+  }
+};
+
+describe('parseSettings', () => {
+  it('returns the defaults for nothing stored', () => {
+    expect(parseSettings(null)).toEqual(DEFAULT_SETTINGS);
+    expect(parseSettings('')).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('returns the defaults for unparsable or non-object JSON', () => {
+    expect(parseSettings('not json')).toEqual(DEFAULT_SETTINGS);
+    expect(parseSettings('42')).toEqual(DEFAULT_SETTINGS);
+    expect(parseSettings('"a string"')).toEqual(DEFAULT_SETTINGS);
+    expect(parseSettings('null')).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('keeps every valid field', () => {
+    const stored: Settings = {
+      animationSpeed: 'relaxed',
+      confirmMoves: 'always',
+      colorPatterns: false,
+      cardText: 'large'
+    };
+    expect(parseSettings(JSON.stringify(stored))).toEqual(stored);
+  });
+
+  it('drops a field with the wrong shape back to its default, keeping the rest', () => {
+    const raw = JSON.stringify({
+      animationSpeed: 'warp', // not a known speed
+      confirmMoves: 'always',
+      colorPatterns: 'yes', // not a boolean
+      cardText: 'large'
+    });
+    expect(parseSettings(raw)).toEqual({
+      ...DEFAULT_SETTINGS,
+      confirmMoves: 'always',
+      cardText: 'large'
+    });
+  });
+
+  it('ignores unknown extra fields', () => {
+    const raw = JSON.stringify({ ...DEFAULT_SETTINGS, future: 'field' });
+    expect(parseSettings(raw)).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('SettingsStore', () => {
+  it('starts at the defaults when nothing is stored', () => {
+    const store = new SettingsStore(memory());
+    expect(store.value).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('reads back a previously stored value', () => {
+    const storage = memory();
+    new SettingsStore(storage).set('animationSpeed', 'fast');
+    expect(new SettingsStore(storage).value.animationSpeed).toBe('fast');
+  });
+
+  it('persists one field at a time, keeping the others', () => {
+    const storage = memory();
+    const store = new SettingsStore(storage);
+    store.set('cardText', 'large');
+    store.set('colorPatterns', false);
+    expect(store.value).toEqual({ ...DEFAULT_SETTINGS, cardText: 'large', colorPatterns: false });
+    expect(JSON.parse(storage.data.get(SETTINGS_KEY)!)).toEqual(store.value);
+  });
+
+  it('resets to the defaults', () => {
+    const store = new SettingsStore(memory());
+    store.set('confirmMoves', 'never');
+    store.reset();
+    expect(store.value).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('survives blocked or missing storage', () => {
+    const store = new SettingsStore(blocked);
+    store.set('animationSpeed', 'off');
+    expect(store.value.animationSpeed).toBe('off');
+    expect(new SettingsStore(null).value).toEqual(DEFAULT_SETTINGS);
+  });
+});

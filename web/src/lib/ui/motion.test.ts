@@ -1,0 +1,88 @@
+import { describe, expect, it } from 'vitest';
+import { effectiveSpeed, Motion, scaleMs } from './motion.svelte';
+import { SettingsStore } from './settings.svelte';
+
+describe('effectiveSpeed', () => {
+  it('passes the preference through when the OS does not ask for reduced motion', () => {
+    expect(effectiveSpeed('normal', false)).toBe('normal');
+    expect(effectiveSpeed('fast', false)).toBe('fast');
+    expect(effectiveSpeed('relaxed', false)).toBe('relaxed');
+    expect(effectiveSpeed('off', false)).toBe('off');
+  });
+
+  it('forces off when the OS asks for reduced motion, whatever the preference', () => {
+    expect(effectiveSpeed('normal', true)).toBe('off');
+    expect(effectiveSpeed('fast', true)).toBe('off');
+    expect(effectiveSpeed('relaxed', true)).toBe('off');
+    expect(effectiveSpeed('off', true)).toBe('off');
+  });
+});
+
+describe('scaleMs', () => {
+  it('scales a base duration per speed', () => {
+    expect(scaleMs(100, 'normal')).toBe(100);
+    expect(scaleMs(100, 'fast')).toBe(60);
+    expect(scaleMs(100, 'relaxed')).toBe(160);
+  });
+
+  it('is always exactly 0 when off, for any base', () => {
+    expect(scaleMs(100, 'off')).toBe(0);
+    expect(scaleMs(0, 'off')).toBe(0);
+    expect(scaleMs(99999, 'off')).toBe(0);
+  });
+
+  it('rounds to the nearest millisecond', () => {
+    expect(scaleMs(1, 'fast')).toBe(1); // 0.6 rounds to 1
+    expect(scaleMs(5, 'fast')).toBe(3); // 3.0
+  });
+});
+
+describe('Motion', () => {
+  // The vitest config runs tests under Node (vite.config.ts: environment:
+  // 'node'), so svelte/motion's prefersReducedMotion resolves to the
+  // "server" MediaQuery stub (svelte/reactivity's non-browser export), which
+  // always reports false. That lets every case below exercise the real
+  // preference -> effective wiring without mocking matchMedia; the OS-forced
+  // branch itself is covered directly through effectiveSpeed() above.
+
+  function motionFor(): { store: SettingsStore; motion: Motion } {
+    const store = new SettingsStore(null);
+    return { store, motion: new Motion({ settings: store }) };
+  }
+
+  it('reflects the injected store, not the shared singleton', () => {
+    const { store, motion } = motionFor();
+    expect(motion.preference).toBe('normal');
+    store.set('animationSpeed', 'relaxed');
+    expect(motion.preference).toBe('relaxed');
+    expect(motion.effective).toBe('relaxed');
+  });
+
+  it('is not forced off in this environment (reduced is always false)', () => {
+    const { motion } = motionFor();
+    expect(motion.reduced).toBe(false);
+    expect(motion.forcedOff).toBe(false);
+  });
+
+  it('ms() tracks the live effective speed', () => {
+    const { store, motion } = motionFor();
+    expect(motion.ms(100)).toBe(100);
+    store.set('animationSpeed', 'fast');
+    expect(motion.ms(100)).toBe(60);
+    store.set('animationSpeed', 'off');
+    expect(motion.ms(100)).toBe(0);
+  });
+
+  it('apply() mirrors the effective speed onto data-motion', () => {
+    const { store, motion } = motionFor();
+    const root = { dataset: {} as Record<string, string> } as unknown as HTMLElement;
+    motion.apply(root);
+    expect(root.dataset['motion']).toBeUndefined();
+    store.set('animationSpeed', 'off');
+    motion.apply(root);
+    expect(root.dataset['motion']).toBe('reduce');
+    store.set('animationSpeed', 'normal');
+    motion.apply(root);
+    expect(root.dataset['motion']).toBeUndefined();
+  });
+});
