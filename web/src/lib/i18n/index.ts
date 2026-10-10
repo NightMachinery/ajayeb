@@ -12,6 +12,7 @@
 // no code changes.
 
 import { common } from './en/common';
+import { session } from './en/session';
 import { i18n, type Locale } from './locale.svelte';
 import type { Message, PluralForms } from './types';
 
@@ -19,7 +20,7 @@ export { i18n, dirFor, isLocale, LOCALES, type Dir, type Locale } from './locale
 export type { Message, Messages, PluralForms } from './types';
 
 /** The English message set. New areas are spread in here. */
-export const en = { ...common } as const;
+export const en = { ...common, ...session } as const;
 
 export type MessageKey = keyof typeof en;
 
