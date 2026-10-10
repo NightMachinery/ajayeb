@@ -77,7 +77,7 @@ Acceptance:
 
 ## M3: AI
 
-Status: done on 2026-10-10. Presets are frozen in `server/internal/ai/levels.go` and described in [docs/ai.md](../ai.md). The authoritative measurement is the CI tournament at the levels' fixed budgets (run 38020386167): Greedy beat Random in 100% of 100 paired games, Medium beat Greedy in 68.0% of 100 (95% interval 58.3% to 76.3%), and Hard beat Medium in 96.0% of 200 (interval 92.3% to 98.0%). The first full run had Hard at only 53.5%, because more iterations bought little once the search converged: the leaf value was the limit. Follow-up slice S13 made Hard's rollouts play to the end of the game, and since each iteration now costs about twice as much, its fixed budget went from 500,000 to 200,000 iterations (the low end of the measured range) for the same 2 seconds. The step from Medium to Hard is now large; whether to smooth it is an open question for the owner.
+Status: done on 2026-10-10. Presets are frozen in `server/internal/ai/levels.go` and described in [docs/ai.md](../ai.md). The authoritative measurement is the CI tournament at the levels' fixed budgets (run 38020386167): Greedy beat Random in 100% of 100 paired games, Medium beat Greedy in 68.0% of 100 (95% interval 58.3% to 76.3%), and Hard beat Medium in 96.0% of 200 (interval 92.3% to 98.0%). The first full run had Hard at only 53.5%, because more iterations bought little once the search converged: the leaf value was the limit. Follow-up slice S13 made Hard's rollouts play to the end of the game, and since each iteration now costs about twice as much, its fixed budget went from 500,000 to 200,000 iterations (the low end of the measured range) for the same 2 seconds. The step from Medium to Hard is now large. A fourth level between them is planned, but only after the game is finished (the owner's call).
 
 Scope:
 
@@ -111,6 +111,8 @@ Acceptance:
 - `make gen-check` is green.
 
 ## M5: Web core and hot-seat
+
+Status: done on 2026-10-10. The client is built from the session layer up: a WebSocket transport with reconnects, the Session and Presenter, the card catalog generated from the engine, placeholder icons in one inline sprite, the card structure sized by `fitStructure`, the board chrome, the game screen with one markup for every viewport class, the card sheet with build, discard and both wonder flows, the draft, every pending-choice panel, the end-of-age summary, the game-over screen, the home screen with the hot-seat and vs-AI setup, settings and the pass-device screen. Two lints keep the client honest: no physical CSS and no hard-coded English. `hotseat.full` plays a whole game from the home screen by tapping the real UI, on the desktop and the mobile project (72 and 71 moves, every pending kind and both wonder flows covered), and `layout.spec` checks nine viewports at the draft, all three ages and game over. The smallest takeable card at 360 by 740 is 46 by 71 pixels, in Age III. The e2e suite passed twice in a row, with no console errors or failed requests. Placeholder art and icons stand in until M9.
 
 Scope:
 
