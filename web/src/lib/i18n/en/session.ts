@@ -62,7 +62,6 @@ export const session = {
   'debug.noChoices': 'Nothing to choose now.',
   'debug.cost': { '=0': 'free', one: 'pays {count} coin', other: 'pays {count} coins' },
   'debug.gain': { one: 'gains {count} coin', other: 'gains {count} coins' },
-  'debug.unaffordable': 'short by {count}',
   'debug.undo': 'Undo',
   'debug.resync': 'Refresh',
   'debug.result': 'Result',
