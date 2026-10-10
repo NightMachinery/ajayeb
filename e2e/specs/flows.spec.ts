@@ -28,6 +28,16 @@ async function panelPicks(page: Page): Promise<string[]> {
     .evaluateAll((els) => els.map((el) => el.getAttribute('data-pick') ?? ''));
 }
 
+/**
+ * A skipped choice is explained on screen right after the move: in the move
+ * toast, or (on a touch device) in the pass-device screen's summary.
+ */
+async function expectSkipShown(page: Page, line: string): Promise<void> {
+  await expect(
+    page.locator('[data-toast], [data-pass-device]').filter({ hasText: line }).first()
+  ).toBeVisible();
+}
+
 /** After a move, the turn is the other seat's (past any pass-device screen). */
 async function expectTurnPassedTo(driver: GameDriver, seat: 0 | 1): Promise<void> {
   const snap = await driver.nextTurn();
@@ -215,8 +225,10 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     const after = await currentView(page);
     expect(after.pending).toBeUndefined();
     expect(after.players[0].wonders.find((w) => w.wonder === 'mausoleum')?.built).toBe(true);
+    const skip = 'Nothing to build for Mausoleum: the discard pile is empty.';
+    await expectSkipShown(page, skip);
     await expectTurnPassedTo(driver, 1);
-    expect(await logLines(driver)).toContain('Sun has no option for that choice.');
+    expect(await logLines(driver)).toContain(skip);
     expect(problems).toEqual([]);
   });
 
@@ -276,8 +288,10 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     const after = await currentView(page);
     expect(after.pending).toBeUndefined();
     expect(after.players[0].wonders.find((w) => w.wonder === 'statue-of-zeus')?.built).toBe(true);
+    const skip = 'Nothing to destroy for Statue of Zeus: Moon has no card of that colour.';
+    await expectSkipShown(page, skip);
     await expectTurnPassedTo(driver, 1);
-    expect(await logLines(driver)).toContain('Sun has no option for that choice.');
+    expect(await logLines(driver)).toContain(skip);
     expect(problems).toEqual([]);
   });
 
@@ -365,7 +379,12 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     // loss of 3 (the scenario's Expect).
     expect(view.players[1].coins).toBe(7);
     await expect(page.locator(host)).toHaveCount(0);
+    // The turn bar says so for the whole extra turn, naming the wonder.
+    const bar = driver.visible('[data-turn]');
+    await expect(bar).toHaveAttribute('data-turn', 'playAgain');
+    await expect(bar).toContainText('Sun plays again (Appian Way)');
     expect(await logLines(driver)).toContain('Sun plays again.');
+    await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'playAgain');
 
     // The extra turn is an ordinary move; after it the turn passes.
     const discard = snap.choices.find((c) => c.kind === 'discard');
@@ -374,6 +393,7 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     const after = await currentView(page);
     expect(after.extraTurn).toBe(false);
     await expectTurnPassedTo(driver, 1);
+    await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'hotseatTurn');
     expect(problems).toEqual([]);
   });
 });

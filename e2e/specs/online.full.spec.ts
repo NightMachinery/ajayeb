@@ -20,7 +20,9 @@
 // revealed what was hidden. The game's seed and action log come from the
 // server's room file. A second test opens an online room at the Great
 // Library's draw, so the one secret only one seat may see is checked in the
-// browser on every run, whatever the first game's deal.
+// browser on every run, whatever the first game's deal. Its pick also checks
+// that a pending choice's commit button waits for a dropped connection and
+// takes the confirm step, like every other move button online.
 //
 // The server deals the first test's room from --seed-base (the order of the
 // rooms the specs create decides which seed), so a run of the same specs
@@ -407,7 +409,26 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
         pageA.locator('[data-token-choice="library"] [data-token]').filter({ visible: true })
       ).toHaveCount(3);
 
+      // The pending panel follows the card sheet's act-button rule. While
+      // A's connection is down its commit button is disabled and waits for
+      // the connection; once A is back, the pick takes the confirm step
+      // (the driver checks the first tap only arms it).
+      const commit = pageA
+        .locator('[data-token-choice="library"] [data-commit] button')
+        .filter({ visible: true });
+      await pageA.locator('[data-token-choice="library"] [data-pick="token:law"]').click();
+      await expect(commit).toHaveAttribute('data-act', 'token:law');
+      await expect(commit).toBeEnabled();
+      await ctxA.setOffline(true);
+      await expect(turnBar(pageA)).toHaveAttribute('data-turn', /^(reconnecting|offline)$/);
+      await expect(commit).toBeDisabled();
+      await expect(commit).toHaveText('Waiting for connection');
+      await ctxA.setOffline(false);
+      await expect(commit).toBeEnabled({ timeout: 30_000 });
+      await a.waitReady(30_000);
+      const confirmsBefore = a.stats.confirms;
       const pick = await playKey(a, 'token:law');
+      expect(a.stats.confirms).toBe(confirmsBefore + 1);
       await b.waitAdvance(pick.before.version);
       await new GameDriver(pageS).waitAdvance(pick.before.version);
       // The game goes on: one move each.
@@ -428,7 +449,10 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
         `great-library online: frames ${JSON.stringify(report.coverage.frames)}, ` +
           `library ${JSON.stringify(report.coverage.library)}`
       );
-      for (const p of problems) expect(p).toEqual([]);
+      // Nothing went wrong on any page, beyond A's failed reconnects while offline.
+      const [problemsA = [], ...rest] = problems;
+      expect(problemsA.filter((p) => !OFFLINE_NOISE.test(p))).toEqual([]);
+      for (const p of rest) expect(p).toEqual([]);
     } finally {
       for (const ctx of contexts) await ctx.close();
     }

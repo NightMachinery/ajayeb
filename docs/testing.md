@@ -261,12 +261,14 @@ whole test.
   is on by default) every move button takes the confirm step: the first
   tap must arm it (`data-armed`), and a second tap after the button's
   350 ms double-tap guard sends the move. That guard is the one fixed wait
-  in the driver. The pending choice panels never take the step.
+  in the driver. The pending choice panels' commit buttons take the step
+  too, since every move button follows the same rule.
 
   It closes toasts with their dismiss buttons before tapping the board, as
   a player would, and the bar that says who starts a new age (its close
-  button): on a phone both float over the player's own strip, wonders
-  included, and toasts stack, so it looks again after each one it closes.
+  button): on a phone toasts float over the player's own strip, wonders
+  included, the who-starts bar takes height from it, and toasts stack, so
+  it looks again after each one it closes.
   It counts every flow, every pending kind, every pass screen, every undo
   and every confirmed move in `driver.stats`.
 
@@ -498,16 +500,18 @@ it lands in the server's next view:
   `online.full.spec.ts` (below) and over the protocol by
   `internal/protocoltest`;
 - reviving from the discard pile (`mausoleum`), and the Mausoleum with an
-  empty pile (`mausoleum-empty`), whose choice is skipped with a log line;
+  empty pile (`mausoleum-empty`), whose choice is skipped: the move toast
+  (or, on mobile, the pass-device summary) and the log say why;
 - destroying a card (`zeus-destroy` for a brown card, `circus-maximus` for
   a grey one), and the Statue of Zeus with nothing to destroy
-  (`zeus-no-target`), skipped with a log line;
+  (`zeus-no-target`), skipped with the same explanation;
 - the next age's starter (`age-transition-chooser`): the trailing seat
   chooses, not the one who took the last card, and the panel says why;
 - the extra turn: lost on an age's last card (`extra-turn-lost`, with the
   log line and the starter choice that follows), and an ordinary one from
-  the Appian Way (`appian-economy`): the same seat moves again, the log
-  says so, and after that move the turn passes.
+  the Appian Way (`appian-economy`): the same seat moves again, the turn
+  bar reads "Sun plays again (Appian Way)" (`data-turn="playAgain"`), the
+  log says so, and after that move the turn passes.
 
 Each test takes 3 to 8 s (the draft is the longest). On mobile the
 pass-device screen is on, and the driver passes it wherever it appears.
@@ -622,7 +626,10 @@ A second test opens an online room at the `great-library` scenario through
 Seat 0 builds the Great Library wonder first and keeps Law; meanwhile seat
 1's and the spectator's views show `pickLibraryToken` with no tokens and
 three hidden ones, their panels say what is being chosen without a token,
-and no offered token shows on their pages. One more move each follows, and
+and no offered token shows on their pages. Before seat 0 keeps Law, its
+connection drops for a moment: the panel's commit button is disabled and
+reads "Waiting for connection", and once the connection is back the pick
+takes the confirm step like any online move. One more move each follows, and
 the leak check over the three streams finds nothing, with the offer
 covered. So this secret is checked in the browser on every run, whatever
 the first game's deal.
