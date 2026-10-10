@@ -1,1 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><polygon points="12,4 19,8 18,16 12,20 6,17 5,9" fill="var(--i1, currentColor)"/> <polygon points="12,4 19,8 12,11" fill="var(--i2, rgba(128,128,128,0.65))"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.5 20.5L3 14.5L5.5 9.5L9.5 7.5L11 4.5L15.5 3.5L19 6L19.5 10L21.5 13.5L21 20.5Z" fill="var(--i1, currentColor)"/><path d="M11 4.5L15.5 3.5L19 6L14.5 9L9.5 7.5Z" fill="var(--i2, transparent)"/></svg>
