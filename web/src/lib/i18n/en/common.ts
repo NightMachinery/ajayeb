@@ -51,5 +51,15 @@ export const common = {
   'coins.count': { one: '{count} coin', other: '{count} coins' },
 
   'dev.title': 'Developer pages',
-  'dev.intro': 'These pages exist only in development builds. Nothing is listed here yet.'
+  'dev.intro': 'These pages exist only in development builds. Nothing is listed here yet.',
+
+  'dev.gallery.title': 'Gallery',
+  'dev.gallery.intro':
+    'Every hand-authored icon and shell primitive (components/shell/*), for a visual check in both themes and at phone and desktop widths. Component slices add their own section below as they land.',
+  'dev.gallery.viewport': 'Viewport {width}×{height}',
+  'dev.gallery.icons': 'Icons ({count})',
+  'dev.gallery.shell': 'Shell primitives',
+  'dev.gallery.cards': 'Cards',
+  'dev.gallery.board': 'Board',
+  'dev.gallery.screens': 'Screens'
 } as const satisfies Messages;

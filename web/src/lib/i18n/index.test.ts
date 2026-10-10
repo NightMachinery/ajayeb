@@ -19,6 +19,13 @@ describe('t', () => {
     expect(t('turn.player', { name: 'Roshan' })).toBe("Roshan's turn");
   });
 
+  it('merges every area table (see ./en/*.ts) into one message set', () => {
+    expect(t('shell.close')).toBe('Close');
+    expect(t('shell.confirmArmed', { label: 'Build for 4 coins' })).toBe(
+      'Confirm: Build for 4 coins'
+    );
+  });
+
   it('chooses the plural form from count', () => {
     expect(t('coins.count', { count: 1 })).toBe('1 coin');
     expect(t('coins.count', { count: 0 })).toBe('0 coins');
