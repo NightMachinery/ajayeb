@@ -66,10 +66,6 @@ export const online = {
   'online.toast.rematch': '{name} wants a rematch.',
 
   // Spectators.
-  'online.spectators': {
-    one: '{count} watching',
-    other: '{count} watching'
-  },
   'online.spectatorsLabel': {
     one: '{count} spectator is watching this game',
     other: '{count} spectators are watching this game'

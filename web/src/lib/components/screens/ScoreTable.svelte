@@ -90,9 +90,13 @@
           class="w-[5.5rem] max-w-[5.5rem] px-1 pb-1.5 text-end text-xs font-semibold
             {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
         >
-          <span class="flex items-center justify-end gap-1">
+          <!-- A long name (a bot's persona, "Apprentice") wraps under its
+               crest rather than being cut off. -->
+          <span class="flex flex-wrap items-center justify-end gap-x-1">
             <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} class="shrink-0 text-[15px]" />
-            <span class="truncate" dir="auto">{names[seat]}</span>
+            <span class="min-w-0 text-end leading-tight [overflow-wrap:anywhere]" dir="auto"
+              >{names[seat]}</span
+            >
           </span>
           {#if you === seat}
             <span class="block text-[12px] font-normal text-fg-muted">{t('choices.age.you')}</span>

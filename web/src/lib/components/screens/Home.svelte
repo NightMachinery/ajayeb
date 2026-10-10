@@ -35,6 +35,8 @@
 
   let { rooms, onContinue, onPlayAi, onPassAndPlay, onPlayOnline, onJoinCode, onSettings }: Props =
     $props();
+  // Unique per instance: the gallery shows Home more than once on a page.
+  const uid = $props.id();
 
   /** Home shows at most this many; the full list lives in localStorage. */
   const MAX_CONTINUE = 3;
@@ -147,8 +149,8 @@
 
       <div class="mt-8 short:mt-4 split:mt-0 split:w-full split:max-w-md split:justify-self-end">
         {#if continueRooms.length > 0}
-          <section class="mb-3" aria-labelledby="home-continue">
-            <h2 id="home-continue" class="sr-only">{t('home.continueLabel')}</h2>
+          <section class="mb-3" aria-labelledby="{uid}-continue">
+            <h2 id="{uid}-continue" class="sr-only">{t('home.continueLabel')}</h2>
             <ul class="flex flex-col gap-2">
               {#each continueRooms as room (room.code)}
                 <li>
@@ -167,8 +169,8 @@
           </section>
         {/if}
 
-        <nav aria-labelledby="home-modes">
-          <h2 id="home-modes" class="sr-only">{t('home.modes')}</h2>
+        <nav aria-labelledby="{uid}-modes">
+          <h2 id="{uid}-modes" class="sr-only">{t('home.modes')}</h2>
           <ul class="flex flex-col gap-3 short:gap-2">
             {#each modes as mode (mode.id)}
               <li>
