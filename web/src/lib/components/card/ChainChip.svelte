@@ -28,8 +28,11 @@
   );
 </script>
 
+<!-- The chip is 1.3 em with the glyph at 0.95 em, but never under 14 px
+     with a 12 px glyph: on a mini card (a 10 px font) 0.95 em is 9.5 px,
+     too small for the mask, lyre, amphora and barrel to read. -->
 <span
-  class="inline-grid size-[1.3em] shrink-0 place-items-center rounded-[0.35em] border
+  class="inline-grid size-[max(1.3em,14px)] shrink-0 place-items-center rounded-[0.35em] border
     {direction === 'in'
     ? 'border-(color:--gold-deep) bg-gold text-card-ink'
     : 'border-(color:--gold-deep) bg-paper text-card-ink'} {className}"
@@ -37,5 +40,5 @@
   {title}
   aria-hidden="true"
 >
-  <Icon name={`chain-${chain}`} class="text-[0.95em]" />
+  <Icon name={`chain-${chain}`} class="text-[length:max(0.95em,12px)]" />
 </span>

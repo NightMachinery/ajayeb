@@ -194,6 +194,16 @@
   .name {
     font-size: max(12px, 0.88em);
   }
+  /* The mini tier's 10 px font would draw the chain chip at 13 px with a
+     9.5 px glyph; ChainChip keeps the glyph at 12 px in a 14 px chip, so
+     the cost row takes 1% of the band's height to hold it. The two still
+     end at the 40% line (the covered-card rule). */
+  .card-face[data-tier='mini'] .cost {
+    height: 17%;
+  }
+  .card-face[data-tier='mini'] .band {
+    height: 23%;
+  }
   /* The full tier (sheets, 150 px and up) is roomier. */
   .card-face.full {
     font-size: clamp(14px, calc(var(--cw, 180px) * 0.1), 20px);
