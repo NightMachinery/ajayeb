@@ -268,8 +268,9 @@ variants for card, wonder and token: `lumber-yard`, `scriptorium`,
 images to `art/style.md` and `art/subjects.json` (the gold rule, the card
 and wonder composition rules, the token template rewrite, tighter text and
 emblem negatives, a jewel accent per wonder, a distinct accent per token,
-and rewritten Colossus and Theater subjects; the Pyramids subject is an
-open owner decision and was left as is) and to `tools/art/process.mjs`
+and rewritten Colossus and Theater subjects; the Pyramids subject was
+left for the owner, and `M9.B4` set it to the smooth-sided pyramids of
+Giza, never stepped) and to `tools/art/process.mjs`
 (the paper-tone mapping and the token rim mask) and `generate.mjs`
 (reference images off by default, output shape verified), and added
 `gate.mjs`. Proved on the existing pilot images plus 2 new generations
