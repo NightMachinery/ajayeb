@@ -135,11 +135,17 @@ describe('createDevRoom', () => {
         { status: 201 }
       );
     }) as typeof fetch;
+    const remembered: [string, string][] = [];
     const room = await createDevRoom(
       { mode: 'hotseat', seed: '1', scenario: 'mausoleum' },
-      fetcher
+      fetcher,
+      {
+        remember: (code, mode) => void remembered.push([code, mode])
+      }
     );
     expect(room).toEqual({ code: 'K7QX2M', path: '/play/K7QX2M' });
+    // The room page then opens it without asking for a name.
+    expect(remembered).toEqual([['K7QX2M', 'hotseat']]);
     expect(calls[0]?.[0]).toBe('/api/dev/rooms');
     expect(calls[0]?.[1].method).toBe('POST');
     expect(new Headers(calls[0]?.[1].headers).get('Content-Type')).toBe('application/json');

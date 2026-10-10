@@ -474,13 +474,19 @@ export class Session {
         break;
       case 'created':
         if (this.#intent?.kind === 'create') {
-          const { resolve } = this.#intent;
+          const { resolve, frame } = this.#intent;
           this.code = msg.code;
           this.#intent = { kind: 'join', code: msg.code };
+          // Remembered before the page moves to the room, so the room page
+          // knows this browser made it and asks for no name first.
+          this.#rooms?.remember(msg.code, frame.mode);
           resolve(msg.code);
         } else {
-          // A rematch room: the client joins it by its code.
+          // A rematch room: the client joins it by its code. It is this
+          // browser's room too, of the same mode as the one on screen.
           this.rematchCode = msg.code;
+          const mode = this.frame?.room.mode;
+          if (mode) this.#rooms?.remember(msg.code, mode);
         }
         break;
       case 'state':

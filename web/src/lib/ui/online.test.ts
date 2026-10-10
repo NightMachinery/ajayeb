@@ -5,6 +5,7 @@ import {
   CODE_ALPHABET,
   inviteUrl,
   isRoomCode,
+  needsName,
   normalizeCodeInput,
   presenceChanges,
   qrPath,
@@ -172,5 +173,22 @@ describe('suggestName', () => {
   it('is empty for an empty list', () => {
     expect(suggestName('', 0.3)).toBe('');
     expect(suggestName(' , ', 0.3)).toBe('');
+  });
+});
+
+describe('needsName', () => {
+  const rooms = [{ code: 'K7QX2M' }, { code: 'H8TQ4R' }];
+
+  it('asks a first-time visitor for a name before an unknown room', () => {
+    expect(needsName(false, 'B4TQ7N', rooms)).toBe(true);
+    expect(needsName(false, 'B4TQ7N', [])).toBe(true);
+  });
+
+  it('never asks for a room this browser made or played', () => {
+    expect(needsName(false, 'K7QX2M', rooms)).toBe(false);
+  });
+
+  it('never asks a player who has a name', () => {
+    expect(needsName(true, 'B4TQ7N', [])).toBe(false);
   });
 });

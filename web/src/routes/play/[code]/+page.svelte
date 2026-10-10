@@ -1,20 +1,32 @@
 <script lang="ts">
   // /play/<code>: every mode's room. A first-time visitor (no stored name)
   // who opens an invite link is asked for a name first, since the other
-  // player sees it; a room this browser has played before needs none. Then
-  // Room joins the room over the app's live connection and shows it.
+  // player sees it. A room this browser created or played before needs none:
+  // the Session (and the dev room helper) remember a room the moment it is
+  // made, before the page moves here. Then Room joins the room over the
+  // app's live connection and shows it.
+  import { untrack } from 'svelte';
   import { page } from '$app/state';
   import NamePrompt from '$lib/components/screens/NamePrompt.svelte';
   import { t } from '$lib/i18n';
   import { liveGame, savedRooms } from '$lib/session/app.svelte';
   import { loadName, saveName } from '$lib/session/identity';
   import { normalizeCode } from '$lib/session/session.svelte';
-  import { suggestName } from '$lib/ui/online';
+  import { needsName, suggestName } from '$lib/ui/online';
   import Room from './Room.svelte';
 
   const code = $derived(normalizeCode(page.params.code ?? ''));
-  const known = $derived(savedRooms().list.some((r) => r.code === code));
   let named = $state(loadName() !== '');
+  // The saved list is read when the code (or the name) changes, never
+  // tracked: a room is dropped from it when its game ends, and that must
+  // not swap the finished game for the prompt.
+  const ask = $derived(
+    needsName(
+      named,
+      code,
+      untrack(() => savedRooms().list)
+    )
+  );
   const suggestion = suggestName(t('online.name.suggestions'));
 
   function submit(name: string): void {
@@ -25,8 +37,8 @@
   }
 </script>
 
-{#if named || known}
-  <Room />
-{:else}
+{#if ask}
   <NamePrompt {suggestion} {code} onsubmit={submit} />
+{:else}
+  <Room />
 {/if}

@@ -3,6 +3,8 @@
 // --dev-endpoints answers it, and only to a client on the same machine.
 
 import type { BotLevel, Mode } from '$lib/wire';
+import { savedRooms } from './app.svelte';
+import type { SavedRooms } from './rooms.svelte';
 
 export interface DevRoomRequest {
   mode: Mode;
@@ -30,9 +32,14 @@ export class DevRoomError extends Error {
   }
 }
 
+/**
+ * Creates the room and remembers it as this browser's, so the room page
+ * opens it without asking for a name first (it does for a stranger's room).
+ */
 export async function createDevRoom(
   req: DevRoomRequest,
-  fetcher: typeof fetch = fetch
+  fetcher: typeof fetch = fetch,
+  rooms: Pick<SavedRooms, 'remember'> = savedRooms()
 ): Promise<DevRoomCreated> {
   const res = await fetcher('/api/dev/rooms', {
     method: 'POST',
@@ -48,5 +55,6 @@ export async function createDevRoom(
     );
   }
   const path = typeof data['path'] === 'string' ? data['path'] : `/play/${data['code']}`;
+  rooms.remember(data['code'], req.mode);
   return { code: data['code'], path };
 }

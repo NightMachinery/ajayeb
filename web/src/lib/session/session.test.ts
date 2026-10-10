@@ -454,6 +454,19 @@ describe('Session: rooms', () => {
     await expect(created).resolves.toBe('K7QX2M');
   });
 
+  it('remembers a room it creates before the create resolves, so the room page asks no name', async () => {
+    for (const mode of ['ai', 'hotseat', 'online'] as const) {
+      const rooms = new SavedRooms(memoryStorage());
+      const { session, transport } = setup({ rooms });
+      connect(transport);
+      const created = session.create(mode === 'ai' ? { mode, bot: 'easy' } : { mode });
+      transport.receive({ t: 'created', code: 'K7QX2M' });
+      // Home navigates the moment the promise resolves, before any state.
+      await created;
+      expect(rooms.list.map((r) => [r.code, r.mode])).toEqual([['K7QX2M', mode]]);
+    }
+  });
+
   it('rejects a create the server refuses', async () => {
     const { session, transport } = setup();
     connect(transport);
@@ -477,13 +490,15 @@ describe('Session: rooms', () => {
     expect(rooms.list).toEqual([]);
   });
 
-  it('takes a created frame outside a create as the rematch room', () => {
-    const { session, transport } = joined();
+  it('takes a created frame outside a create as the rematch room, and remembers it', () => {
+    const rooms = new SavedRooms(memoryStorage());
+    const { session, transport } = joined({ rooms });
     session.rematch();
     expect(transport.last()).toEqual({ t: 'rematch', code: 'H8TQ4R' });
     transport.receive({ t: 'created', code: 'NEXT22' });
     expect(session.rematchCode).toBe('NEXT22');
     expect(session.code).toBe('H8TQ4R');
+    expect(rooms.list.map((r) => [r.code, r.mode])).toContainEqual(['NEXT22', 'hotseat']);
   });
 
   it('leaves the room it is in, and only tells the server about another', () => {

@@ -48,6 +48,22 @@ export function suggestName(list: string, random: number = Math.random()): strin
   return names[Math.min(names.length - 1, Math.floor(random * names.length))] ?? '';
 }
 
+/**
+ * Whether the room page asks for a name before it joins `code`. Only a
+ * first-time visitor (no stored name) opening a room this browser has
+ * never seen is asked: a join takes a seat under the name at once, so the
+ * question must come first. A room this browser created or played (Home's
+ * vs-computer and pass-and-play games, a dev room, a rematch) is in
+ * `rooms` from the moment it is made, and opens straight away.
+ */
+export function needsName(
+  hasName: boolean,
+  code: string,
+  rooms: readonly { readonly code: string }[]
+): boolean {
+  return !hasName && !rooms.some((r) => r.code === code);
+}
+
 /** The invite link of a room: the page's origin and the room's path. */
 export function inviteUrl(origin: string, path: string): string {
   return new URL(path, origin).href;
