@@ -148,17 +148,15 @@
   // Where the toasts sit in play. Above the turn bar by default (on a phone
   // that covers only this player's own strip). On a desktop the turn bar is
   // under the structure, whose bottom row holds the cards a player can take,
-  // so they sit at the foot of this player's own column instead. In phone
-  // landscape the turn bar's column is too narrow, so they sit at the foot
-  // of the structure.
+  // and in phone landscape the structure fills the middle down to the foot
+  // of the screen, so in both they sit at the foot of this player's own
+  // column instead, clear of the takeable cards, the track and the opponent.
   const toastSpot = $derived(
     !view || view.phase === 'wonderDraft'
       ? ('turn' as const)
-      : layout === 'desktop'
+      : layout === 'desktop' || layout === 'phone-landscape'
         ? ('home' as const)
-        : layout === 'phone-landscape'
-          ? ('structure' as const)
-          : ('turn' as const)
+        : ('turn' as const)
   );
   const variant = $derived(
     layout === 'desktop'
@@ -518,11 +516,6 @@
       {/if}
 
       <div class="area-structure relative min-h-0 min-w-0" {@attach markBotPick(pickSlot)}>
-        {#if toastSpot === 'structure'}
-          <!-- Sideways the turn bar's column is too narrow: the toasts sit at
-             the foot of the structure instead. -->
-          <ToastList {toasts} placement="inside" />
-        {/if}
         <CardStructure
           slots={view.structure}
           age={view.age}
@@ -551,8 +544,9 @@
       <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir}>
         {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
         {#if toastSpot === 'home'}
-          <!-- Desktop: the foot of this player's own column, clear of the
-             structure's takeable bottom row, the track and the opponent. -->
+          <!-- Desktop and phone landscape: the foot of this player's own
+             column, clear of the structure's takeable bottom row, the track
+             and the opponent. -->
           <ToastList {toasts} placement="inside" />
         {/if}
       </div>
