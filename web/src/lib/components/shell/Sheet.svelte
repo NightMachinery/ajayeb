@@ -23,6 +23,9 @@
     /** Id of the heading the caller renders inside children, for aria-labelledby. */
     titleId?: string;
     showHandle?: boolean;
+    /** A centred panel at every size, not only on wide screens (dialogs
+     *  such as the age interstitial and the game-over screen). */
+    centered?: boolean;
     class?: string;
     children: Snippet;
   }
@@ -31,6 +34,7 @@
     open = $bindable(false),
     titleId,
     showHandle = true,
+    centered = false,
     class: className = '',
     children
   }: Props = $props();
@@ -65,9 +69,10 @@
   onclick={handleClick}
   aria-labelledby={titleId}
   class="sheet {className}"
+  class:centered
 >
   <div class="sheet-panel">
-    {#if showHandle}
+    {#if showHandle && !centered}
       <div class="sheet-handle split:hidden" aria-hidden="true"></div>
     {/if}
     {@render children()}
@@ -125,6 +130,9 @@
     overflow-y: auto;
     background: var(--panel);
     padding-bottom: max(1rem, var(--safe-b));
+    /* A scrolling panel can take focus when the dialog opens; its ring
+       would frame the whole sheet. Its buttons keep their own rings. */
+    outline: none;
   }
   .sheet-handle {
     margin-inline: auto;
@@ -165,5 +173,31 @@
       max-height: min(85dvh, 640px);
       padding-bottom: 1rem;
     }
+  }
+
+  /* The same centred panel at every size, when asked for. */
+  .sheet.centered {
+    inset: 0;
+    margin: auto;
+    width: min(480px, calc(100% - 2rem));
+    max-height: min(calc(100dvh - 2rem), 640px);
+    border-radius: var(--shape-panel);
+    padding-bottom: 0;
+    scale: 1;
+    translate: 0 0;
+  }
+  .sheet.centered:not([open]) {
+    translate: 0 0;
+    scale: 0.96;
+  }
+  @starting-style {
+    .sheet.centered[open] {
+      translate: 0 0;
+      scale: 0.96;
+    }
+  }
+  .sheet.centered .sheet-panel {
+    max-height: min(calc(100dvh - 2rem), 640px);
+    padding-bottom: 1rem;
   }
 </style>

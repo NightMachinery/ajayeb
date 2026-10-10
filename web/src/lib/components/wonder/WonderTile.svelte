@@ -31,6 +31,8 @@
     dim?: boolean;
     /** Draft: the name of the player who took it (user text). */
     takenBy?: string;
+    /** Draft: a shorter 2:1 art band, for a phone's draft grid. */
+    compactArt?: boolean;
     class?: string;
   }
 
@@ -41,6 +43,7 @@
     afford,
     dim = false,
     takenBy,
+    compactArt = false,
     class: className = ''
   }: Props = $props();
 
@@ -67,7 +70,7 @@
       data-size="draft"
       aria-hidden="true"
     >
-      {@render art('aspect-[3/2] w-full [container-type:size]')}
+      {@render art(`${compactArt ? 'aspect-[2/1]' : 'aspect-[3/2]'} w-full [container-type:size]`)}
       <span class="flex flex-col gap-[0.35em] px-[0.6em] pt-[0.45em] pb-[0.6em] text-[13px]">
         <span class="font-display text-[15px] leading-tight">{wonderName(slug)}</span>
         <span class="flex min-h-[1.4em] items-center justify-between gap-2">
