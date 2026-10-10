@@ -4,7 +4,11 @@
 // pure rule functions it exports. Living here (not under web/scripts/) is
 // what gets it picked up by vitest's include glob (vite.config.ts).
 import { describe, expect, it } from 'vitest';
-import { findHardcodedTextViolations, findPhysicalCssViolations } from '../../scripts/lint-ui.mjs';
+import {
+  findHardcodedText,
+  findHardcodedTextViolations,
+  findPhysicalCssViolations
+} from '../../scripts/lint-ui.mjs';
 
 describe('findPhysicalCssViolations', () => {
   it.each([
@@ -29,7 +33,10 @@ describe('findPhysicalCssViolations', () => {
     ['  border-right: 1px solid red;', 'border-right'],
     ['  left: 0;', 'left:'],
     ['  right: 4px;', 'right:'],
-    ['<div class="-ml-2">', 'negative ml-']
+    ['<div class="-ml-2">', 'negative ml-'],
+    ['<span class="origin-left">', 'origin-left'],
+    ['<span class="origin-top-right">', 'origin-top-right'],
+    ['<img class="float-left" />', 'float-left']
   ])('flags %s (%s)', (line) => {
     expect(findPhysicalCssViolations(line).length).toBeGreaterThan(0);
   });
@@ -70,5 +77,44 @@ describe('findHardcodedTextViolations', () => {
     ['<p>Your turn</p> <!-- i18n-ok: fixture label -->', 'opted out with i18n-ok']
   ])('does not flag %s (%s)', (line) => {
     expect(findHardcodedTextViolations(line)).toEqual([]);
+  });
+});
+
+describe('findHardcodedText (whole template)', () => {
+  it('flags text on a line of its own, with its line number', () => {
+    const src = '<p class="text-sm">\n  Your turn to build\n</p>';
+    expect(findHardcodedText(src)).toMatchObject([{ line: 2, match: 'Your turn to build' }]);
+  });
+
+  it('flags text next to an expression', () => {
+    expect(findHardcodedText('<p>{count} coins</p>')).toHaveLength(1);
+    expect(findHardcodedText('<p>Score: {score}</p>')).toHaveLength(1);
+  });
+
+  it('flags a multi-line literal attribute only on its own line', () => {
+    const src = '<button\n  type="button"\n  aria-label="Close it"\n>';
+    expect(findHardcodedText(src)).toMatchObject([{ line: 3 }]);
+  });
+
+  it('ignores script and style blocks, comments, entities and expressions', () => {
+    const src = [
+      '<script lang="ts">',
+      "  const label = 'Some text';",
+      '  const f = (a: number) => a > 1 && a < 3;',
+      '</script>',
+      '<!-- A comment with words -->',
+      "<p>{t('turn.player', { name: 'Ana' })}&nbsp;{n}</p>",
+      '{#if open}<span>{label}</span>{/if}',
+      "<button onclick={() => (x = x > 1 ? 0 : 1)}>{t('shell.close')}</button>",
+      '<style>',
+      '  .a > .b { color: red; }',
+      '</style>'
+    ].join('\n');
+    expect(findHardcodedText(src)).toEqual([]);
+  });
+
+  it('allows multi-line code and kbd content, and i18n-ok per line', () => {
+    const src = '<code>\n  pnpm install\n</code>\n<p>\n  Fixture label <!-- i18n-ok -->\n</p>';
+    expect(findHardcodedText(src)).toEqual([]);
   });
 });
