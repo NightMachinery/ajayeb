@@ -1,5 +1,5 @@
-// The shared game driver for full playthroughs (hot-seat and versus the bot
-// now; online later). It plays through the visible UI only: it reads the
+// The shared game driver for full playthroughs (hot-seat, versus the bot and
+// online). It plays through the visible UI only: it reads the
 // legal moves from window.__ajayeb (docs/testing.md, "The client test
 // hook"), picks one with a policy, performs it by clicking the controls a
 // player would click (a structure slot, a sheet button, a panel button, the
@@ -11,7 +11,8 @@
 // Against the bot it waits out the bot's turns the way a player does: until
 // the page is ready again with a move of this client's to make (the bot's
 // thinking frame, the Presenter's dwell and the bot's move have all been
-// shown by then), or the game is over. It never sleeps a fixed time.
+// shown by then), or the game is over. It never sleeps a fixed time, except
+// for the confirm step's double-tap guard (see commit).
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import type { Choice, PendingKind, Phase, RoomInfo, View, YouInfo } from '../../web/src/lib/wire';
@@ -74,7 +75,16 @@ export interface DriverStats {
   passScreens: number;
   /** Undos sent from the top bar. */
   undos: number;
+  /** Moves sent with the confirm step (arm, then a second tap). */
+  confirms: number;
 }
+
+/**
+ * How long a move button ignores a second tap after the first one armed it
+ * (ConfirmButton's double-tap guard is 350 ms), plus a margin. The armed
+ * state lasts 3 s, so the second tap lands well inside it.
+ */
+const CONFIRM_GUARD_MS = 450;
 
 export type Policy = (snap: Snapshot, stats: DriverStats) => Move;
 
@@ -135,11 +145,33 @@ export class GameDriver {
     },
     pendingKinds: {},
     passScreens: 0,
-    undos: 0
+    undos: 0,
+    confirms: 0
   };
+  /**
+   * Moves take the confirm step (the settings' "Confirm moves", on in online
+   * rooms by default): a move button's first tap arms it and a second one
+   * sends. The pending choice panels and Undo never take it.
+   */
+  confirm: boolean;
 
-  constructor(page: Page) {
+  constructor(page: Page, opts: { confirm?: boolean } = {}) {
     this.page = page;
+    this.confirm = opts.confirm ?? false;
+  }
+
+  /**
+   * Taps a move button. With the confirm step, the first tap must arm it
+   * (data-armed, the label asks to tap again), and a second tap after the
+   * double-tap guard sends the move.
+   */
+  async commit(button: Locator): Promise<void> {
+    await button.click();
+    if (!this.confirm) return;
+    await expect(button).toHaveAttribute('data-armed', '');
+    await this.page.waitForTimeout(CONFIRM_GUARD_MS);
+    await button.click();
+    this.stats.confirms += 1;
   }
 
   /** Waits until the page shows the latest state and takes input. */
@@ -211,14 +243,20 @@ export class GameDriver {
 
   /**
    * Closes any toast on screen with its dismiss button (never its Undo),
-   * as a player would before tapping what it covers.
+   * and the bar that says who starts a new age (its close button, never
+   * Summary), as a player would before tapping what they cover. On a phone
+   * both float over the player's own strip, wonders included.
    */
   async dismissToasts(): Promise<void> {
-    const closes = this.page.locator('[data-toast] > button:last-child').filter({ visible: true });
-    for (let n = await closes.count(); n > 0; n--) {
+    const closes = this.page
+      .locator('[data-toast] > button:last-child, [data-peek-bar] button[aria-label]')
+      .filter({ visible: true });
+    // Toasts stack, and closing one can uncover another (an online game's
+    // presence toast under an age's summary), so look again after each.
+    for (let tries = 0; tries < 10 && (await closes.count()) > 0; tries++) {
       await closes
         .first()
-        .click()
+        .click({ timeout: 2_000 })
         .catch(() => {});
     }
   }
@@ -236,7 +274,7 @@ export class GameDriver {
     if ((await take.count()) === 0) {
       await this.visible(`[data-draft] [data-pick=${q(choice.key)}]`).click();
     }
-    await this.visible(`[data-act=${q(choice.key)}]`).click();
+    await this.commit(this.visible(`[data-act=${q(choice.key)}]`));
   }
 
   /** A pending choice's panel: select the option when the panel has tiles, then commit. */
@@ -261,7 +299,7 @@ export class GameDriver {
   async cardAction(choice: Choice): Promise<void> {
     if (!choice.card) throw new Error(`${choice.key} names no card`);
     await this.openCard(choice.card);
-    await this.visible(`dialog[open] [data-act=${q(choice.key)}]`).click();
+    await this.commit(this.visible(`dialog[open] [data-act=${q(choice.key)}]`));
   }
 
   /** Card first: the card sheet, "Build a wonder", then the wonder's button. */
@@ -270,7 +308,7 @@ export class GameDriver {
     await this.openCard(choice.card);
     await this.visible('dialog[open] [data-control="wonder-step"]').click();
     await expect(this.page.locator('dialog[open] [data-wonder-step]')).toBeVisible();
-    await this.visible(`dialog[open] [data-act=${q(choice.key)}]`).click();
+    await this.commit(this.visible(`dialog[open] [data-act=${q(choice.key)}]`));
   }
 
   /**
@@ -292,7 +330,7 @@ export class GameDriver {
     await expect(
       this.page.locator(`dialog[open] [data-wonder-pick=${q(choice.wonder)}]`)
     ).toBeVisible();
-    await this.visible(`dialog[open] [data-act=${q(choice.key)}]`).click();
+    await this.commit(this.visible(`dialog[open] [data-act=${q(choice.key)}]`));
   }
 
   /** Performs one move by its flow. */
