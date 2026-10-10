@@ -167,6 +167,8 @@ Acceptance:
 - `/health` answers on the public URL.
 - `ajayeb-drive` completes an online game against production, and the Playwright `@smoke` run (create, join, five moves) passes against it.
 
+Status: done on 2026-10-10. The production host is small and shared (one vCPU, little free memory and disk, and an older Go than the server needs), so instead of building there, `./self_host.py ship TARGET URL` builds the web bundle and a static Linux binary on the developer's machine, uploads the binary and `self_host.py`, and runs `setup` or `redeploy --prebuilt` on the host. A new binary is checked before the running server is stopped, the previous one is kept for a rollback, and the Caddyfile edit is validated before Caddy reloads (with a backup). The self-host tests (154) are green. On the public URL, `/health` answers with the deployed version, plain HTTP redirects to HTTPS and the development endpoints answer 404; the server's resident memory is about 8 MB. `ajayeb-drive` completed an online, a hot-seat and a Hard bot game against production (the Hard bot takes about 2 seconds a move on the single vCPU). The `@prod` Playwright specs (`make e2e-prod`) passed twice against it: two browsers create and join an online game through the UI and play five moves with the confirm step, and a third test plays against the Apprentice. When `E2E_BASE_URL` points at a real site, the config runs only `@prod` specs and starts no local server.
+
 ## M9: Art
 
 Scope:
