@@ -13,6 +13,7 @@
 
 import { board } from './en/board';
 import { card } from './en/card';
+import { choices } from './en/choices';
 import { common } from './en/common';
 import { game } from './en/game';
 import { home } from './en/home';
@@ -27,7 +28,16 @@ export type { Message, Messages, PluralForms } from './types';
 /** The English message set. New areas are spread in here, one file per area
  *  under ./en/ (see ./en/shell.ts for the convention). Each area owns its own
  *  file; a component slice adds keys only to the file(s) it owns. */
-export const en = { ...common, ...session, ...shell, ...card, ...board, ...home, ...game } as const;
+export const en = {
+  ...common,
+  ...session,
+  ...shell,
+  ...card,
+  ...board,
+  ...home,
+  ...game,
+  ...choices
+} as const;
 
 export type MessageKey = keyof typeof en;
 
