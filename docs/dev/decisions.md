@@ -168,3 +168,11 @@ All entries below were accepted on 2026-10-01 unless they say otherwise.
 **Rationale.** Playwright 1.63 starts the `webServer` before it runs `globalSetup`, so a check there would come after the server had already failed with an unclear message, or after it had opened the data directory. Building outside the browser lock keeps compiling from holding the only browser slot, and a raw `playwright test` gets a clear "build first" message instead of a slow surprise build.
 
 **Rejected.** A `globalSetup` that builds when stale (it runs too late, and it would compile inside the browser lock). Reusing an already running server (`reuseExistingServer` is off, so each run starts from an empty data directory).
+
+## D20. Category glyphs never reuse an effect icon's subject
+
+**Decision.** The seven card-category glyphs are a mountain (brown), an anvil (grey), a dome (blue), an eight-pointed star (green), a tied purse (yellow), two crossed spears (red) and a crown (purple). The UX design's amphora, coin and shield are not used for grey, yellow and red.
+
+**Rationale.** A category glyph sits on the same cards as the effect icons. An amphora would read as the amphora chain symbol, a coin as a coin effect and a shield as a military shield, so a player could mistake the card's colour for one of its effects. The anvil is a workshop, which is what grey cards stand for, and it shares no outline with the glass flask or the amphora. See [art/vector/specs/ui-category.md](../../art/vector/specs/ui-category.md).
+
+**Rejected.** The amphora, coin and shield from the UX design (each collides with an icon of the same family). A neckless jar for grey (still close to the amphora and the barrel at 15 px).
