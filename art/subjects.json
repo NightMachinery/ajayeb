@@ -80,7 +80,7 @@
     "accent": "yellow"
   },
   "card/theater": {
-    "subject": "masked performers on a small open-air stage before a seated crowd",
+    "subject": "two masked performers mid-gesture on a small open-air stage, pale character masks, no horned or demonic masks, no crowd",
     "accent": "blue"
   },
   "card/altar": {
@@ -293,59 +293,59 @@
   },
   "wonder/pyramids": {
     "subject": "three stepped pyramids rising from a golden desert at dawn",
-    "accent": "gold"
+    "accent": "saffron"
   },
   "wonder/colossus": {
-    "subject": "a towering bronze-sheened colossus straddling a harbour entrance",
-    "accent": "gold"
+    "subject": "a towering bronze statue of a young sun god with a plain circlet, one arm raised with an open palm, straddling a harbour entrance, no torch, no spiked crown",
+    "accent": "lapis"
   },
   "wonder/great-lighthouse": {
     "subject": "a tiered lighthouse tower blazing over a rocky island coast",
-    "accent": "gold"
+    "accent": "turquoise"
   },
   "wonder/temple-of-artemis": {
     "subject": "a many-columned temple crowning a forested hillside",
-    "accent": "gold"
+    "accent": "malachite"
   },
   "wonder/mausoleum": {
     "subject": "a tiered marble mausoleum topped with a stepped pyramidal roof",
-    "accent": "gold"
+    "accent": "violet"
   },
   "wonder/great-library": {
     "subject": "a domed library building with scroll-filled arcades",
-    "accent": "gold"
+    "accent": "ochre"
   },
   "wonder/piraeus": {
     "subject": "a harbour town of docks and warehouses beneath a hill",
-    "accent": "gold"
+    "accent": "lapis"
   },
   "wonder/hanging-gardens": {
     "subject": "terraced gardens cascading with greenery down a palace wall",
-    "accent": "gold"
+    "accent": "malachite"
   },
   "wonder/statue-of-zeus": {
     "subject": "a colossal seated statue inside a columned temple hall",
-    "accent": "gold"
+    "accent": "saffron"
   },
   "wonder/sphinx": {
     "subject": "a reclining guardian sphinx before distant pyramids",
-    "accent": "gold"
+    "accent": "ochre"
   },
   "wonder/appian-way": {
     "subject": "a long paved road lined with cypress trees receding to the horizon",
-    "accent": "gold"
+    "accent": "vermilion"
   },
   "wonder/circus-maximus": {
     "subject": "a vast oval racing stadium ringed with tiered seating",
-    "accent": "gold"
+    "accent": "vermilion"
   },
   "token/agriculture": {
     "subject": "a sheaf of wheat tied with a cord",
-    "accent": "malachite"
+    "accent": "ochre"
   },
   "token/architecture": {
     "subject": "a mason's set-square and compass crossed",
-    "accent": "malachite"
+    "accent": "slate"
   },
   "token/economy": {
     "subject": "a stack of coins beside a weighing scale",
@@ -353,11 +353,11 @@
   },
   "token/law": {
     "subject": "a pair of balanced scales",
-    "accent": "lapis"
+    "accent": "violet"
   },
   "token/masonry": {
     "subject": "a chisel and mallet crossed over a stone block",
-    "accent": "malachite"
+    "accent": "amber"
   },
   "token/mathematics": {
     "subject": "a compass tracing a circle over a grid",
@@ -365,19 +365,19 @@
   },
   "token/philosophy": {
     "subject": "an open scroll beneath a laurel sprig",
-    "accent": "lapis"
+    "accent": "rose"
   },
   "token/strategy": {
     "subject": "a crossed spear and shield",
-    "accent": "cinnabar"
+    "accent": "vermilion"
   },
   "token/theology": {
     "subject": "a lit oil lamp wreathed with olive leaves",
-    "accent": "lapis"
+    "accent": "turquoise"
   },
   "token/urbanism": {
     "subject": "a walled city skyline silhouette with domes and towers",
-    "accent": "saffron"
+    "accent": "malachite"
   },
   "back/age1": {
     "subject": "interlaced vine and rosette ornament, ochre and ivory",
