@@ -9,7 +9,12 @@ Ajayeb is a fan project. It implements the rules of a published board game with 
 - **Fonts are OFL** (SIL Open Font License) and self-hosted, never loaded from a font CDN. Each font ships with its license file. We do not use the typeface of the official logo.
   - The interface uses Fraunces 1.000 (headings) and Inter 4.001 (text), both under OFL 1.1. Neither declares a Reserved Font Name, so the subsets keep their original names.
   - The license texts ship next to the fonts as `web/static/fonts/OFL-Fraunces.txt` and `web/static/fonts/OFL-Inter.txt`.
-  - The original TTFs are kept in `web/font-sources/`, and `web/font-sources/subset.sh` rebuilds the shipped WOFF2 subsets from them. For Persian lettering in the logo we use an OFL Nastaliq font; fonts whose license is unclear are not used.
+  - The original TTFs are kept in `web/font-sources/`, and `web/font-sources/subset.sh` rebuilds the shipped WOFF2 subsets from them. Fonts whose license is unclear are not used.
+- **The logo is artwork made from font outlines; no logo font ships.** The wordmark (`web/src/lib/brand/logo-wordmark.svg`) and the favicon (`web/static/favicon.svg`) are SVG paths, not text, so the browser never loads a font for them.
+  - The Persian word عجایب is outlined from **Noto Nastaliq Urdu 4.000** (Regular for the wordmark, Bold for the letter ع of the favicon), from the upstream release `NotoNastaliqUrdu-v4.000` of the Noto project (github.com/notofonts/nastaliq). Its name table declares the SIL Open Font License 1.1, copyright 2022 The Noto Project Authors, with no Reserved Font Name.
+  - The Latin line "Ajayeb" is outlined from Fraunces 600, the same OFL 1.1 source as the interface font (`web/font-sources/fraunces-600.ttf`).
+  - OFL 1.1 governs the font software, not artwork made with it, so the outlines need no license file or credit of their own; we record their source here anyway. The outlines were set with `hb-view` and resolved into plain paths; the iteration log `art/vector/log/ornaments-track-logo.md` has the steps.
+  - Never used for the logo: IranNastaliq (installed on some systems, proprietary license), and the typeface or lettering of the official game's logo.
 - **Third-party code and data** keep their own licenses. Any open-source data or code we draw on is checked for its license first, credited, and recorded in `docs/rules/sources.md`. Open-source implementations of the game are read to understand behaviour, not copied, unless their license allows it and the copy is credited.
 
 ## Trademark notice
