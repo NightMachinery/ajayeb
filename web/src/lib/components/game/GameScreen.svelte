@@ -51,6 +51,7 @@
   // move toast.
   import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
+  import ArtPrefetch from '$lib/art/ArtPrefetch.svelte';
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderName } from '$lib/components/card/effect-text';
   import { i18n, t } from '$lib/i18n';
@@ -712,6 +713,8 @@
 {/if}
 
 <LiveRegion message={lastLines.join(' ')} />
+<!-- The next age's approved card art, fetched while this one is played. -->
+<ArtPrefetch age={view?.age ?? null} />
 
 <style>
   .game-screen {
