@@ -21,6 +21,11 @@ What the baseline shows, for the agent who draws this set:
 - coin and coin-loss are discs of the same size; coin-loss relies on red colour and a slash. In greyscale the slash still separates them, which is good.
 - military-pawn is legible; shield is legible on every band.
 
+In the app (`/dev/gallery` at 360x740 and 1280x800, light and dark; shots in the run directory under shots/M9/V0/):
+
+- On the military track the looting glyphs are drawn at 10 to 12 px inside small discs; the dot clusters that tell looting-2 from looting-5 are invisible there, so today only the printed value under the disc separates them.
+- In the mini cards, the papyrus tile reads as a dash, and the stone and glass tiles are small grey and blue blobs; the wood and clay tiles hold up.
+
 ## Blind check (2026-10-10): tool proof only
 
 Reader: the author of the tools, who had seen the labelled specimen first, so this was **not** a blind reading.
