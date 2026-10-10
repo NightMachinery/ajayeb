@@ -6,6 +6,11 @@
 // "protocol" (the server runs another protocol version: reload the page) or
 // "bad-hello" (this client is wrong), which another try cannot fix. The
 // Session says hello again on every 'open'.
+//
+// The backoff count goes back to zero only once the server has welcomed a
+// socket, not when a socket merely opens: a server that accepts the upgrade
+// and then closes at once (a proxy in front of a dead backend, a server
+// shedding load) would otherwise be retried every 250 to 500 ms forever.
 
 import type { ClientMessage, ServerMessage } from '$lib/wire';
 import { backoffDelay, DEFAULT_BACKOFF, type BackoffOptions } from './backoff';
@@ -89,6 +94,8 @@ export class WsTransport implements Transport {
   #connectTimer: ReturnType<typeof setTimeout> | undefined;
   #closed = false;
   #status: TransportStatus = { state: 'connecting', attempt: 0 };
+  /** Tries in a row since a socket was last welcomed: the backoff count. */
+  #failures = 0;
 
   #messages = new Listeners<ServerMessage>();
   #states = new Listeners<TransportStatus>();
@@ -193,7 +200,10 @@ export class WsTransport implements Transport {
       } catch {
         return; // not JSON: nothing a client can do with it
       }
-      if (msg && typeof msg === 'object' && typeof msg.t === 'string') this.#messages.emit(msg);
+      if (!msg || typeof msg !== 'object' || typeof msg.t !== 'string') return;
+      // A welcome proves the server is really there: the backoff starts over.
+      if (msg.t === 'welcome' && this.#socket === socket) this.#failures = 0;
+      this.#messages.emit(msg);
     };
     socket.onerror = () => {
       // A close event always follows; the retry is scheduled there.
@@ -235,7 +245,8 @@ export class WsTransport implements Transport {
   }
 
   #scheduleRetry(): void {
-    const attempt = this.#status.state === 'open' ? 0 : this.#status.attempt;
+    const attempt = this.#failures;
+    this.#failures = attempt + 1;
     const offline = attempt >= this.#offlineAfter || this.#network?.onLine === false;
     this.#setStatus({ state: offline ? 'offline' : 'reconnecting', attempt: attempt + 1 });
     clearTimeout(this.#retryTimer);

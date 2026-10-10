@@ -46,6 +46,8 @@ class FakeSocket implements SocketLike {
   }
 }
 
+const WELCOME = '{"t":"welcome","v":1,"server":{"version":"test","rules":1}}';
+
 class FakeNetwork implements NetworkLike {
   onLine = true;
   #fns = new Map<string, Set<() => void>>();
@@ -165,12 +167,63 @@ describe('WsTransport', () => {
       vi.advanceTimersByTime(1);
       expect(sockets.length, `try ${i + 1} did not fire`).toBe(before + 1);
     }
-    // A successful open resets the count.
+    // A socket the server welcomes resets the count.
     current().open();
     expect(states.at(-1)).toEqual({ state: 'open', attempt: 0 });
+    current().message(WELCOME);
     current().drop(1012, 'service restart');
     vi.advanceTimersByTime(500);
     expect(sockets).toHaveLength(ceilings.length + 2);
+  });
+
+  it('keeps backing off from a server that accepts and then closes at once', () => {
+    // random() = 1 makes every delay its ceiling. Each socket opens and is
+    // closed straight away, before any welcome: without the fix the count
+    // reset on every open, and the client hammered the server every 500 ms.
+    const { sockets, states, current } = setup({ offlineAfter: 100 });
+    const ceilings = [500, 1000, 2000, 4000, 8000, 15_000, 15_000];
+    for (const [i, ceiling] of ceilings.entries()) {
+      current().open();
+      current().drop(1006);
+      expect(states.at(-1)).toEqual({ state: 'reconnecting', attempt: i + 1 });
+      const before = sockets.length;
+      vi.advanceTimersByTime(ceiling - 1);
+      expect(sockets.length, `try ${i + 1} fired early`).toBe(before);
+      vi.advanceTimersByTime(1);
+      expect(sockets.length, `try ${i + 1} did not fire`).toBe(before + 1);
+    }
+    // Other frames before the close do not count as a welcome.
+    current().open();
+    current().message('{"t":"error","code":"busy","msg":""}');
+    current().drop(1006);
+    vi.advanceTimersByTime(14_999);
+    expect(sockets).toHaveLength(ceilings.length + 1);
+    vi.advanceTimersByTime(1);
+    expect(sockets).toHaveLength(ceilings.length + 2);
+    // A welcomed socket starts the backoff over.
+    current().open();
+    current().message(WELCOME);
+    current().drop(1006);
+    vi.advanceTimersByTime(500);
+    expect(sockets).toHaveLength(ceilings.length + 3);
+  });
+
+  it('ignores a welcome that arrives on an abandoned socket', () => {
+    const { sockets, current } = setup({ offlineAfter: 100 });
+    current().open();
+    current().drop(1006); // try 1: 500 ms
+    vi.advanceTimersByTime(500);
+    current().open();
+    const old = current();
+    current().drop(1006); // try 2: 1000 ms
+    // The old socket is detached; a stray late frame on it changes nothing.
+    old.message(WELCOME);
+    vi.advanceTimersByTime(1000);
+    current().drop(1006); // try 3: 2000 ms, not 500
+    vi.advanceTimersByTime(1999);
+    expect(sockets).toHaveLength(3);
+    vi.advanceTimersByTime(1);
+    expect(sockets).toHaveLength(4);
   });
 
   it('waits at least half the ceiling with the smallest jitter', () => {
