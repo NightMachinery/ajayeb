@@ -293,13 +293,21 @@ checks:
 - Home leads back to the home page;
 - no console error, page error or failed request on the way.
 
-The server's `--seed-base 1000` makes the game the same on every run of
-the same set of specs. A measured run: 72 actions (6 draft picks, 6 pending
-choices covering all five kinds, 33 builds, 20 discards, 4 wonders card
-first and 3 wonder first) in about 30 s on the desktop project and 42 s on
-the mobile one, where 59 pass-device screens come on top. The spec prints
-its counts on one `hot-seat game:` line and attaches them as
-`game-summary.json`.
+The server's `--seed-base 1000` deals the rooms created over the socket
+from seeds 1000, 1001 and so on, in order, so the games are the same on
+every run of the same set of specs; in a full `make e2e` the desktop game
+gets seed 1000 and the mobile game seed 1001. Measured on the laptop:
+
+- desktop: 72 actions (6 draft picks, 6 pending choices covering all five
+  kinds, 33 builds, 20 discards, 4 wonders card first and 3 wonder first),
+  about 30 s;
+- mobile: 71 actions (6 draft picks, 5 pending choices, 34 builds, 19
+  discards, 3 wonders card first and 4 wonder first) and 58 pass-device
+  screens, about 42 s.
+
+The spec prints its counts on one `hot-seat game:` line and attaches them
+as `game-summary.json`. A whole `make e2e` (both projects, the smoke spec
+included, after the builds) takes about two and a half minutes.
 
 ### `layout.spec.ts` (`@mobile`)
 
