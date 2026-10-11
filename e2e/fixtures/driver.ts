@@ -323,15 +323,23 @@ export class GameDriver {
   }
 
   /**
-   * Wonder first: the wonder in the mover's panel, "Build this wonder", a
-   * marked card in the structure, then the confirmation in the card sheet.
+   * Wonder first: the wonder in the mover's panel (on a phone, through the
+   * strip's wonder button and the wonder list sheet it opens), "Build this
+   * wonder", a marked card in the structure, then the confirmation in the
+   * card sheet.
    */
   async wonderFirst(choice: Choice, seat: number): Promise<void> {
     if (!choice.card || !choice.wonder) throw new Error(`${choice.key} is not a wonder move`);
     await this.dismissToasts();
-    await this.visible(
-      `.seat-panel[data-seat="${seat}"] button[data-wonder=${q(choice.wonder)}]`
-    ).click();
+    const panel = `.seat-panel[data-seat="${seat}"]`;
+    const listButton = this.visible(`${panel} [data-control="wonders"]`);
+    if ((await listButton.count()) > 0) {
+      await listButton.click();
+      await expect(this.page.locator(`dialog[open] [data-wonder-list="${seat}"]`)).toBeVisible();
+      await this.visible(`dialog[open] button[data-wonder=${q(choice.wonder)}]`).click();
+    } else {
+      await this.visible(`${panel} button[data-wonder=${q(choice.wonder)}]`).click();
+    }
     await expect(
       this.page.locator(`dialog[open] [data-wonder-sheet=${q(choice.wonder)}]`)
     ).toBeVisible();

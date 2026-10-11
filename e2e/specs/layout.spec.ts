@@ -11,6 +11,8 @@
 // - no page scroll: scrollHeight <= innerHeight;
 // - every takeable card at least 44 x 44 px (the plan requires it at
 //   360 x 740 in all three ages; it is checked at every viewport);
+// - on a phone (portrait or landscape), neither player strip scrolls
+//   inside: both fit their box whole;
 // - every enabled primary control at least 44 px tall, on the screen and in
 //   the card sheet of the first takeable card;
 // - no console errors, page errors or failed requests.
@@ -27,6 +29,7 @@ import { createDevRoom, recordGame, type GameMarks, type RecordedGame } from '..
 const VIEWPORTS = [
   { width: 360, height: 740 },
   { width: 390, height: 844 },
+  { width: 412, height: 915 },
   { width: 430, height: 932 },
   { width: 844, height: 390 },
   { width: 740, height: 360 },
@@ -37,7 +40,7 @@ const VIEWPORTS = [
 ] as const;
 
 /** The viewports the mobile project checks: phones and the tablet. */
-const TOUCH_WIDTHS = new Set([360, 390, 430, 844, 740, 768]);
+const TOUCH_WIDTHS = new Set([360, 390, 412, 430, 844, 740, 768]);
 
 const POSITIONS = [
   'draft',
@@ -86,6 +89,7 @@ function measure(report: LayoutReport): string {
     `layout ${report.layout ?? '-'}`,
     `cards ${report.takeable.length} (min ${min(report.takeable, (b) => b.w)}x${min(report.takeable, (b) => b.h)})`,
     `controls ${report.controls.length} (min h ${min(report.controls, (b) => b.h)})`,
+    `strips overflowing ${report.stripOverflow.length}`,
     `scroll ${report.scrollWidth}x${report.scrollHeight}`
   ].join(', ');
 }
@@ -103,6 +107,9 @@ function check(report: LayoutReport, where: string): void {
   expect.soft(smallCards, `${where}: takeable cards under ${MIN_TAP} px`).toEqual([]);
   const smallControls = report.controls.filter((b) => b.h < MIN_TAP);
   expect.soft(smallControls, `${where}: primary controls under ${MIN_TAP} px tall`).toEqual([]);
+  if (report.layout?.startsWith('phone')) {
+    expect.soft(report.stripOverflow, `${where}: a player strip scrolls inside`).toEqual([]);
+  }
 }
 
 for (const viewport of VIEWPORTS) {

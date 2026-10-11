@@ -26,6 +26,9 @@ export interface LayoutReport {
   controls: Box[];
   /** The game screen's layout class, if one is on screen. */
   layout: string | null;
+  /** Seat panels (the player strips on a phone) whose content is taller
+   *  than their box, so they would scroll inside; `h` is the hidden part. */
+  stripOverflow: Box[];
 }
 
 /**
@@ -128,6 +131,14 @@ export async function probeLayout(page: Page): Promise<LayoutReport> {
       )
       .map((el) => box(el, el.getBoundingClientRect()));
 
+    const stripOverflow = [...document.querySelectorAll('.game-screen .seat-panel')]
+      .filter(shown)
+      .filter((el) => el.scrollHeight > el.clientHeight + 1)
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        return { ...box(el, r), h: el.scrollHeight - el.clientHeight };
+      });
+
     const root = document.documentElement;
     return {
       innerWidth,
@@ -137,7 +148,8 @@ export async function probeLayout(page: Page): Promise<LayoutReport> {
       overflowing,
       takeable,
       controls,
-      layout: document.querySelector<HTMLElement>('.game-screen')?.dataset['layout'] ?? null
+      layout: document.querySelector<HTMLElement>('.game-screen')?.dataset['layout'] ?? null,
+      stripOverflow
     };
   }, PRIMARY_CONTROLS);
 }
