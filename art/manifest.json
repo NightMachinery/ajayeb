@@ -1104,7 +1104,10 @@
       "status": "approved",
       "attempt": 5,
       "promptAmend": "Make the medallion ground a deep, earthy ochre brown (burnt ochre, clearly darker than the wheat, like dry tilled earth), never yellow or gold. Paint the sheaf in pale straw-cream with crisp dark ink outlines on every ear and stalk so it stands out strongly against the ground; tie it with a vermilion cord with two tassels, as now. Keep the sheaf large, upright and symmetric, filling the central 60 percent. A few very small, low-contrast cream flowers on the ground are fine; no clouds, no landscape.",
-      "bytes": {},
+      "bytes": {
+        "agriculture.avif": 6316,
+        "agriculture@thumb.avif": 1429
+      },
       "reasons": [
         "One large, symmetric sheaf of pale straw-cream wheat with crisp ink outlines, tied with a vermilion cord and two tassels, on a flat earthy ochre-brown ground: the round-1 problems (mustard-gold ground, gold-on-gold with no contrast) are fixed.",
         "Reads clearly as a wheat sheaf at 96 px and 40 px on both paper and the night colour; the ground is clearly darker than the wheat and distinct from token/masonry's amber and token/economy's marigold.",
@@ -1124,7 +1127,10 @@
       "status": "approved",
       "attempt": 2,
       "promptAmend": "Do not combine a compass and a set-square in the square-and-compass arrangement (compass open over a V-shaped square), and do not draw any compass at all, since token/mathematics already uses one. Instead show one bold, symmetric architect's emblem: a classical column capital with a short column shaft standing upright in the centre, with a plumb bob hanging on a cord beside it, or a domed pavilion elevation drawn as a simple front view, on a flat mid-tone cool blue-grey slate ground (clearly greyer and lighter than lapis). No ruler ticks, no measuring marks, no lettering. Consider asking the owner to rewrite this subject in art/subjects.json if the next attempt still drifts toward the square-and-compass.",
-      "bytes": {},
+      "bytes": {
+        "architecture.avif": 4183,
+        "architecture@thumb.avif": 1230
+      },
       "reasons": [
         "A centred classical column (lapis and malachite acanthus capital with a gold rosette, fluted ivory shaft, stepped base) with a gold plumb bob on a cord hanging beside it, on a flat cool blue-grey slate ground that is clearly greyer and lighter than token/mathematics' lapis.",
         "The square-and-compass emblem of round 1 is gone, and there is no compass or graduated ruler, so it no longer resembles a fraternal emblem or duplicates token/mathematics.",
@@ -1145,7 +1151,10 @@
       "status": "approved",
       "attempt": 2,
       "promptAmend": "Make the coins the dominant emblem: one tall, centred, symmetric pile of large gold coins with heavy dark ink edges and a few coins standing on edge at the front, filling the central 60 percent. Put a small hand-held steelyard or a tiny pair of pan scales only as a minor accent behind or above the pile, no more than a quarter of the emblem's height, so the token never reads as a balance scale at a glance. Use a deeper, warmer saffron-orange ground (closer to marigold than lemon) so the gold coins separate clearly from it. No lettering, symbols or numerals on the coins; plain faces with a simple rosette only.",
-      "bytes": {},
+      "bytes": {
+        "economy.avif": 6185,
+        "economy@thumb.avif": 1538
+      },
       "reasons": [
         "Coins now dominate: one tall, centred, symmetric pile of gold coins with dark ink edges and coins on edge at the front fills the central area; the small pan scale is a minor upper-right accent, so the token no longer reads as a balance scale and is not confusable with token/law.",
         "The deeper marigold-saffron ground separates the gold coins at 96 px and 40 px on both paper and night, and is distinct from token/masonry's browner amber.",
@@ -1165,7 +1174,10 @@
       "status": "approved",
       "attempt": 4,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "law.avif": 6169,
+        "law@thumb.avif": 1658
+      },
       "approvedAttempt": 4,
       "reasons": [
         "One bold, symmetric balance scale fills the centre on a flat violet ground, with a thin crisp gold rim and a clean, even ivory margin; no landscape, clouds or cypresses inside the medallion (pilot attempts 1-3 all had them, and the wrong lapis accent).",
@@ -1182,14 +1194,14 @@
       "crop": "1:1",
       "subject": "a chisel and mallet crossed over a stone block",
       "accent": "amber",
-      "status": "generated",
+      "status": "needs-human",
       "attempt": 3,
-      "promptAmend": "Keep the flat warm amber ground, the crisp gold rim and the clean ivory margin. Show the stone block straight on as a wide rectangle seen from the front (no 3D box perspective), in flat warm sandy limestone with crisp ink outlines and a narrow tooled border band of small, short ink stipple strokes along its edges, with no long diagonal marks or highlight lines on its face. Place it in the lower third. Cross the chisel and the mallet in a bold, symmetric X directly in front of the block's upper half, so the crossing point overlaps the block and the heads rise above it, the chisel blade at upper left and the mallet head at upper right, both the same size. Paint the tools as decorated objects in flat gouache: a plain flat steel-grey blade with an ink outline, gold ferrules with a tiny floral band, the mallet head in flat amber-brown with a thin painted vine band; no wood-grain lines, no metal gradients. A few very small, low-contrast cream flowers on the ground are fine.",
+      "promptAmend": "Keep the composition of attempt 3 exactly: the chisel and the mallet crossed in a bold symmetric X in front of the block's upper half, the decorated lapis and malachite handles with gold ferrules and floral bands, the vine band on the mallet head, the flat gouache with crisp ink outlines and no wood grain or highlight lines, the crisp gold rim and the clean ivory margin. Change two things. First, the ground: a flat, deep honey-brown amber like dark honey or polished resin, clearly darker and browner than marigold or saffron (roughly #B06A1A), so it can never be mistaken for a yellow-orange coin token. Second, the block: make it a chunky ashlar block, seen from the front, about one and a half times as wide as it is tall (not a thin wide slab), in a cool grey-buff limestone colour that stands out against the amber. Give it a classic drafted margin: a narrow smooth band along all four edges, set off from the face by one thin ink line, and inside that band a rough, quarry-picked face shown by small irregular ink flecks and a slightly darker grey tone. No row of evenly spaced dots, no stitching, no long diagonal marks, and nothing that looks like paper, cloth or a cushion. Leave out the flower sprigs or keep at most two tiny low-contrast ones at the bottom.",
       "bytes": {},
       "reasons": [
-        "The three chisel marks on the block are long parallel diagonal slashes that read as claw scratches or the stock 'glass shine' highlight, so the block reads as a glass or ice cube rather than dressed stone, at 256 px and at 96 px.",
-        "The rendering drifts from the anchor's illuminated style toward modern flat clip-art: realistic wood-grain lines on both handles and the mallet head, a graded steel chisel blade, a mottled stone texture, and no ornament at all. Beside the approved law, philosophy and theology tokens it looks like it belongs to a different set.",
-        "The tools only rest their handle ends on the block's top edge; they do not cross over it, so the subject 'crossed over a stone block' reads as two tools leaning on a box."
+        "The ground has gone back to bright marigold-saffron (about rgb(222,147,23)), not the honey-brown amber the subject asks for. It is almost the same colour as the approved token/economy (about rgb(238,141,4)), so the two read as twins in the 40 px row. Attempt 2's ground (about rgb(185,109,14)) was the right hue and this one lost it.",
+        "The block no longer reads as stone. It is a wide, thin, pale beige slab with a mechanical row of evenly spaced dots around the edge, which looks like a stitched cushion, a cork board or a sheet of perforated parchment. At 40 px beside token/philosophy it reads as a second paper scroll, not stonework.",
+        "What works and should be kept: the bold symmetric X of the chisel and mallet crossing in front of the block, the decorated lapis and malachite handles with gold ferrules and floral bands, the vine band on the mallet head, the flat gouache with no wood-grain or highlight lines, the crisp gold rim, the clean ivory margin and the absence of any text."
       ]
     },
     "token/mathematics": {
@@ -1200,15 +1212,21 @@
       "crop": "1:1",
       "subject": "a compass tracing a circle over a grid",
       "accent": "lapis",
-      "status": "generated",
+      "status": "approved",
       "attempt": 3,
       "promptAmend": "Keep the flat deep lapis ground, the broad decorated gold legs with small vermilion and turquoise flowers, and the lapis-and-vermilion hinge rosette. Stand the dividers upright and symmetric about the vertical axis, legs opened evenly as an inverted V about 50 degrees apart, both legs the same length. Centre the whole instrument in the medallion: the finial and hinge rosette start about one fifth of the way down from the rim, leaving a clear band of lapis between the finial and the rim, and the two points reach about four fifths of the way down. Under the points draw one thin gold circle, centred on the medallion's vertical axis, whose diameter is the span between the two points, so both points rest on the circle's left and right edges as if measuring it; inside it a faint inscribed hexagon only. Every construction line stays inside that circle; nothing reaches the rim.",
-      "bytes": {},
+      "bytes": {
+        "mathematics.avif": 4370,
+        "mathematics@thumb.avif": 1174
+      },
       "reasons": [
-        "The emblem sits in the upper half: the hinge rosette and finial crowd the top of the medallion, with the finial's tip almost touching the gold rim, while the lower half is an empty lapis field with only faint lines, so it is not one emblem filling the central 60 percent and the token looks top-heavy at every size.",
-        "The vertical construction line runs past the circle all the way to the gold rim at the bottom, a stray line that breaks the clean ground.",
-        "The two legs are of visibly different length and angle (one straight down, one splayed), so the instrument looks lopsided rather than a bold symmetric emblem. The round-1 fixes (bolder decorated legs, no graph grid, point on the centre) are good and should be kept."
-      ]
+        "The round-2 problems are fixed. The dividers stand upright and symmetric, with legs of equal length opened in an even inverted V. The finial sits clear of the rim with a band of lapis above it. The two points rest on the left and right edges of a thin gold circle, as if measuring it, and the faint inscribed hexagon and the circle stay well inside the medallion, with no stray construction line reaching the rim.",
+        "At 96 px it reads as dividers measuring a circle. At 40 px, on paper and on the night colour, the gold V with its hinge rosette still reads as a compass. The circle and hexagon fade at that size, which is acceptable because the instrument carries the subject. It is the lightest token in the set at 40 px, but it is legible.",
+        "Flat deep lapis ground (about rgb(2,43,128)), clearly distinct from token/architecture's grey slate. Crisp gold rim, clean ivory margin. The broad gold legs carry turquoise vines and vermilion flowers, and the hinge has a vermilion and turquoise rosette: gold is used as the instrument and as accents, not as a ground.",
+        "No text, numerals, graduation ticks or pseudo-writing anywhere; the old graph-paper grid is gone. Ink outlines and flat gouache match the anchor and the approved tokens. A plain ground with no vine ornament is consistent with the approved token/philosophy.",
+        "Subject note: the manifest subject still says 'over a grid', and the round-1 critic deliberately replaced the grid with a circle and an inscribed hexagon. art/subjects.json could say 'a pair of dividers measuring a circle' to match."
+      ],
+      "approvedAttempt": 3
     },
     "token/philosophy": {
       "id": "token/philosophy",
@@ -1221,7 +1239,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "philosophy.avif": 5921,
+        "philosophy@thumb.avif": 1473
+      },
       "approvedAttempt": 1,
       "reasons": [
         "One clear, symmetric emblem: a blank open scroll beneath a laurel wreath on a flat rose ground, with a crisp gold rim and a clean, even ivory margin; nothing inside the medallion but the emblem.",
@@ -1241,7 +1262,10 @@
       "status": "approved",
       "attempt": 2,
       "promptAmend": "Cross two spears in a bold symmetric X, with thick dark shafts and large leaf-shaped steel heads showing clearly at the upper left and upper right, and their butts at the lower left and lower right. Place a smaller round shield (about 40 percent of the medallion's width) over the crossing point, slightly below centre, with a lapis face and a gold boss and plain floral ornament, no animal or emblem on it. The spearheads and shafts must stay visible outside the shield so the X reads at a small size. Keep the flat vermilion ground.",
-      "bytes": {},
+      "bytes": {
+        "strategy.avif": 5527,
+        "strategy@thumb.avif": 1576
+      },
       "reasons": [
         "Two spears crossed in a bold X with large leaf-shaped steel heads at upper left and upper right and gold butts at lower left and lower right, with a round lapis shield with a gold boss and floral ornament over the crossing: the subject 'crossed spear and shield' now reads at once.",
         "At 40 px on paper and night the spearheads and shafts stay visible outside the shield, so the token reads as spears and shield, not the 'blue disc in a red disc' target of round 1. The shield is centred rather than slightly below centre, which does not hurt legibility.",
@@ -1261,7 +1285,10 @@
       "status": "approved",
       "attempt": 4,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "theology.avif": 8208,
+        "theology@thumb.avif": 2395
+      },
       "approvedAttempt": 4,
       "reasons": [
         "A lit oil lamp in a wreath of olive branches on a flat turquoise ground, with a crisp gold rim and an even ivory margin; no stars, clouds or scroll motifs (pilot attempts 1-3 had them, on the wrong lapis ground).",
@@ -1281,7 +1308,10 @@
       "status": "approved",
       "attempt": 2,
       "promptAmend": "Show a compact walled town as one symmetric emblem in the central 60 percent: a crenellated ivory-and-ochre city wall with a single arched gate in the centre, two squat round bastion towers with flat crenellated tops at the ends, and behind the wall at most four secular buildings: two flat-roofed tower houses and two low palace pavilions with small shallow domes. No tall slender towers, no balconies or kiosks on top of towers, no tiled portal under a large central dome, no onion domes. Keep the silhouette simple and bold so it reads at a small size, on the flat malachite ground.",
-      "bytes": {},
+      "bytes": {
+        "urbanism.avif": 4433,
+        "urbanism@thumb.avif": 1357
+      },
       "reasons": [
         "A compact, symmetric walled town: crenellated ivory wall with one central arched gate, two squat round bastion towers with flat crenellated tops, and behind the wall two flat-roofed tower houses and two low pavilions with small lapis domes. No minarets, no onion domes, no tiled portal: the round-1 mosque reading is gone.",
         "Reads as a fortified town at 40 px on paper and night; the bastions now stop with a clear band of malachite before the rim instead of running into it.",
