@@ -759,7 +759,7 @@
 
   /* The pre-roll: the card (or draft wonder) the bot is about to take, ringed
      in its crest colour while its thinking frame is still up. A static ring,
-     so it reads the same with reduced motion. */
+     so it reads the same with Animation off. */
   .game-screen :global([data-bot-pick]) {
     outline: 3px solid var(--bot-ink, var(--accent));
     outline-offset: 3px;

@@ -232,21 +232,10 @@
   }
 }
 
-/* Reduced motion: the state change stays, the movement goes. Settings can
-   force the same with data-motion="reduce" on <html>. */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --anim-scale: 0;
-  }
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* Animation off (Settings > Animation speed, D21): the state change stays,
+   the movement goes. The OS's own prefers-reduced-motion is deliberately
+   not read; +layout.svelte's effect sets this attribute from the game's own
+   setting (ui/motion.svelte.ts), the only switch for this. */
 :root[data-motion='reduce'] {
   --anim-scale: 0;
 }

@@ -24,7 +24,8 @@ export type Orientation = (typeof ORIENTATIONS)[number];
 
 export interface Settings {
   /** Base FX duration multiplier; see ui/motion.svelte.ts for the effective
-   *  speed, which also factors in the OS's prefers-reduced-motion. */
+   *  speed, which (D21) is simply this preference: the OS's own
+   *  prefers-reduced-motion is deliberately never read. */
   animationSpeed: AnimationSpeed;
   /** Whether a move needs a second tap to confirm (ui/ConfirmButton). */
   confirmMoves: ConfirmMoves;

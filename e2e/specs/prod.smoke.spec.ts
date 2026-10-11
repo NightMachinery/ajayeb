@@ -29,7 +29,8 @@
 // does not expose a delete). A full run of this file creates at most two:
 // one online room and one vs-AI room.
 
-import { expect, test, type BrowserContext, type Page } from '@playwright/test';
+import { expect, type BrowserContext, type Page } from '@playwright/test';
+import { test } from '../fixtures/base';
 import { GameDriver, type Snapshot } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 import {

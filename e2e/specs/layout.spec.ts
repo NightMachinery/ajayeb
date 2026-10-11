@@ -18,7 +18,8 @@
 // The desktop project checks all nine viewports with a mouse; the mobile
 // project checks the phone and tablet ones with touch.
 
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { probeLayout, quiet, settle, type LayoutReport } from '../fixtures/layout-probes';
 import { createDevRoom, recordGame, type GameMarks, type RecordedGame } from '../fixtures/ws-game';
@@ -118,10 +119,16 @@ for (const viewport of VIEWPORTS) {
       // The layout under test is the board itself, without the pass-device
       // screen between turns. The rooms come from this test's own HTTP
       // request, so the browser has not seen them: a stored name keeps the
-      // room page from asking for one first.
+      // room page from asking for one first. This replaces the whole
+      // ajayeb:settings object (a page-level init script runs after the
+      // base fixture's context-level one, fixtures/base.ts), so it repeats
+      // animationSpeed: 'off' itself rather than relying on that order.
       await page.addInitScript(() => {
         try {
-          localStorage.setItem('ajayeb:settings', JSON.stringify({ hotseatPassDevice: false }));
+          localStorage.setItem(
+            'ajayeb:settings',
+            JSON.stringify({ hotseatPassDevice: false, animationSpeed: 'off' })
+          );
           localStorage.setItem('ajayeb:name', 'Layout');
         } catch {
           // Storage may be blocked; the default only matters on touch screens.

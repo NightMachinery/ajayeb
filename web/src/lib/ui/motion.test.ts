@@ -3,18 +3,11 @@ import { botDwellMs, botPickMs, effectiveSpeed, Motion, scaleMs } from './motion
 import { SettingsStore } from './settings.svelte';
 
 describe('effectiveSpeed', () => {
-  it('passes the preference through when the OS does not ask for reduced motion', () => {
-    expect(effectiveSpeed('normal', false)).toBe('normal');
-    expect(effectiveSpeed('fast', false)).toBe('fast');
-    expect(effectiveSpeed('relaxed', false)).toBe('relaxed');
-    expect(effectiveSpeed('off', false)).toBe('off');
-  });
-
-  it('forces off when the OS asks for reduced motion, whatever the preference', () => {
-    expect(effectiveSpeed('normal', true)).toBe('off');
-    expect(effectiveSpeed('fast', true)).toBe('off');
-    expect(effectiveSpeed('relaxed', true)).toBe('off');
-    expect(effectiveSpeed('off', true)).toBe('off');
+  it('passes the preference straight through (D21: the OS preference is not read)', () => {
+    expect(effectiveSpeed('normal')).toBe('normal');
+    expect(effectiveSpeed('fast')).toBe('fast');
+    expect(effectiveSpeed('relaxed')).toBe('relaxed');
+    expect(effectiveSpeed('off')).toBe('off');
   });
 });
 
@@ -38,13 +31,6 @@ describe('scaleMs', () => {
 });
 
 describe('Motion', () => {
-  // The vitest config runs tests under Node (vite.config.ts: environment:
-  // 'node'), so svelte/motion's prefersReducedMotion resolves to the
-  // "server" MediaQuery stub (svelte/reactivity's non-browser export), which
-  // always reports false. That lets every case below exercise the real
-  // preference -> effective wiring without mocking matchMedia; the OS-forced
-  // branch itself is covered directly through effectiveSpeed() above.
-
   function motionFor(): { store: SettingsStore; motion: Motion } {
     const store = new SettingsStore(null);
     return { store, motion: new Motion({ settings: store }) };
@@ -56,12 +42,6 @@ describe('Motion', () => {
     store.set('animationSpeed', 'relaxed');
     expect(motion.preference).toBe('relaxed');
     expect(motion.effective).toBe('relaxed');
-  });
-
-  it('is not forced off in this environment (reduced is always false)', () => {
-    const { motion } = motionFor();
-    expect(motion.reduced).toBe(false);
-    expect(motion.forcedOff).toBe(false);
   });
 
   it('ms() tracks the live effective speed', () => {

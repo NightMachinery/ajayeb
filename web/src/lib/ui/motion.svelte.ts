@@ -1,17 +1,16 @@
-// The effective animation speed, for FX code (a later slice) to scale its
-// durations by: the Settings sheet's animationSpeed preference, forced to
-// 'off' whenever the OS itself asks for reduced motion (svelte/motion's
-// prefersReducedMotion). The OS always wins, because a motion-sensitive
-// viewer never chose the app's default; app.css's own
-// `@media (prefers-reduced-motion: reduce)` block already collapses CSS
-// transitions and animations the same way, so WAAPI/JS-driven FX (ms())
-// needs the same override made explicit here.
+// The effective animation speed, for FX code to scale its durations by: the
+// Settings sheet's own animationSpeed preference, and nothing else. Per the
+// owner's decision (docs/dev/decisions.md, D21), the OS's own
+// prefers-reduced-motion preference is deliberately never read: a
+// motion-sensitive player controls this from the game's own Settings sheet,
+// not from the system. app.css's `:root[data-motion='reduce']` block
+// collapses CSS transitions and animations to ~0 whenever the setting is
+// 'off'; WAAPI/JS-driven FX (ms()) reads effective/ms() for the same result.
 //
 // settings.svelte.ts owns the stored preference; this module only computes
 // what to do with it. effectiveSpeed() and scaleMs() are plain functions so
-// they can be tested without mocking the browser's matchMedia.
+// they can be tested without a Motion instance.
 
-import { prefersReducedMotion } from 'svelte/motion';
 import { settings, SettingsStore, type AnimationSpeed } from './settings.svelte';
 
 export { ANIMATION_SPEEDS, type AnimationSpeed } from './settings.svelte';
@@ -26,10 +25,12 @@ const SPEED_SCALE: Readonly<Record<AnimationSpeed, number>> = {
   off: 0
 };
 
-/** The OS's reduced-motion preference overrides the app setting: it can only
- *  force 'off', never un-force an app choice of 'off'. */
-export function effectiveSpeed(preference: AnimationSpeed, reduced: boolean): AnimationSpeed {
-  return reduced ? 'off' : preference;
+/** The effective speed is simply the stored preference: there is no other
+ *  input to override it (D21). Kept as its own function, parallel to
+ *  scaleMs(), so Motion's $derived field below stays a one-line call and so
+ *  a test can check the mapping without constructing a Motion. */
+export function effectiveSpeed(preference: AnimationSpeed): AnimationSpeed {
+  return preference;
 }
 
 /** A base duration in ms, scaled for a speed. Always exactly 0 for 'off',
@@ -74,16 +75,10 @@ export class Motion {
     if (opts.settings) this.#settings = opts.settings;
   }
 
-  /** True when the OS asks for reduced motion (svelte/motion's MediaQuery;
-   *  a Node/SSR stub always reports false, so tests see the plain setting). */
-  reduced: boolean = $derived(prefersReducedMotion.current);
-  /** The app's own Settings choice, before the OS override. */
+  /** The app's own Settings choice. */
   preference: AnimationSpeed = $derived(this.#settings.value.animationSpeed);
-  /** What FX code should actually use. */
-  effective: AnimationSpeed = $derived(effectiveSpeed(this.preference, this.reduced));
-  /** Whether the Settings screen should show its "forced off" note: the OS
-   *  is overriding a preference that is not already 'off' itself. */
-  forcedOff: boolean = $derived(this.reduced && this.preference !== 'off');
+  /** What FX code should actually use: today, exactly the preference. */
+  effective: AnimationSpeed = $derived(effectiveSpeed(this.preference));
 
   /** Scales a base duration (ms) by the effective speed. */
   ms(base: number): number {
@@ -91,9 +86,9 @@ export class Motion {
   }
 
   /** Mirrors the effective speed onto <html data-motion>, which app.css
-   *  already reads to force every CSS transition/animation to ~0 (the same
-   *  attribute Settings' "forced off" state and the OS media query both
-   *  drive). DOM-only; call it from an effect, as theme.apply() is called. */
+   *  reads to collapse every CSS transition and animation to ~0 whenever the
+   *  game's Animation setting is 'off'. DOM-only; call it from an effect, as
+   *  theme.apply() is called. */
   apply(root: HTMLElement = document.documentElement): void {
     if (this.effective === 'off') root.dataset['motion'] = 'reduce';
     else delete root.dataset['motion'];

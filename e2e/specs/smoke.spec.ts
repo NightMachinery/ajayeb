@@ -3,7 +3,8 @@
 // it (and `verify` does, through that target).
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 
 // WCAG 2.2 AA, the level the UX plan targets.

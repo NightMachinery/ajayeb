@@ -15,8 +15,8 @@
     theme.apply();
   });
 
-  // data-motion on <html> follows the animation speed setting (and the
-  // system's reduced-motion preference, which forces it off).
+  // data-motion on <html> follows the game's own Animation setting (D21:
+  // the OS's reduced-motion preference is deliberately not read).
   $effect(() => {
     motion.apply();
   });

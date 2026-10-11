@@ -66,8 +66,6 @@ export const home = {
   'home.settings.speedFast': 'Fast',
   'home.settings.speedRelaxed': 'Relaxed',
   'home.settings.speedOff': 'Off',
-  'home.settings.speedForcedNote':
-    'Animations are off because your system asks for reduced motion.',
   'home.settings.confirmMovesLegend': 'Confirm moves',
   'home.settings.confirmOnlineOnly': 'Online only',
   'home.settings.confirmAlways': 'Always',

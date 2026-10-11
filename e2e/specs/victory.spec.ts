@@ -5,7 +5,8 @@
 // victory and the winner the scenario's Expect describes and show the
 // server's own score sheet (window.__ajayeb), not numbers computed here.
 
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
   currentView,

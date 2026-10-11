@@ -376,7 +376,7 @@ Games against the bot through the real UI, on both projects. The bot's
 turns are waited out with the driver's `waitTurn`, never with sleeps. The
 config's `--bot-delay 0` makes the server answer at once, so the pacing a
 player sees is the client's own: the thinking frame stays up for the
-Presenter's dwell (300 ms under reduced motion, which the config sets),
+Presenter's dwell (300 ms with Animation off, which the e2e setup forces),
 then the bot's pick is previewed for as long again.
 
 The first test plays a whole game against the Apprentice (`easy`). From

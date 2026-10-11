@@ -84,7 +84,6 @@ export default defineConfig({
     baseURL: ORIGIN,
     channel: CI ? undefined : 'chrome',
     headless: true,
-    reducedMotion: 'reduce',
     // A click that cannot land (a covered control) fails here, with its
     // call log, instead of waiting out the whole test.
     actionTimeout: PROD_BASE_URL ? 40_000 : 20_000,

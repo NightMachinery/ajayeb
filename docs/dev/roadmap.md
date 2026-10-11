@@ -208,7 +208,7 @@ Scope:
 
 Acceptance:
 
-- With reduced motion on, no animation runs longer than 10 ms and every state change stays visible.
+- With Animation off in Settings, no animation runs longer than 10 ms and every state change stays visible.
 - Animations are purely visual: the final DOM is the same with animation on and off for scripted sequences, input is re-enabled within 450 ms of an update at normal speed, and no task longer than 50 ms runs during an animation on a throttled CPU.
 - A fresh agent that sees only the UI completes the tutorial, and every coach-mark target is visible at every tested viewport.
 - The right-to-left fixture has no horizontal scroll, the app chrome is mirrored, and the board stays left-to-right.

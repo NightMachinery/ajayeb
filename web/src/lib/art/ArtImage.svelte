@@ -5,8 +5,8 @@
   // only when approved art exists; otherwise, and also if the file fails to
   // load, it renders the `fallback` snippet (the caller's procedural
   // placeholder), so there is never a broken image. The image is lazy and
-  // decoded off the main thread, fades in once loaded (instantly under
-  // reduced motion), and is decorative: the frame around it carries the name.
+  // decoded off the main thread, fades in once loaded (instantly with
+  // Animation off), and is decorative: the frame around it carries the name.
   //
   // `feather` blends the art into the paper behind it with a CSS mask, so
   // the art needs no alpha channel and never shows a hard rectangle:
@@ -79,7 +79,7 @@
 <style>
   .art-image {
     opacity: 0;
-    /* --dur-base is 0 under reduced motion, so the art just appears. */
+    /* --dur-base is 0 with Animation off, so the art just appears. */
     transition: opacity var(--dur-base) ease-out;
   }
   .art-image.loaded {

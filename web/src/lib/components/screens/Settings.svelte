@@ -2,13 +2,12 @@
   // The Settings controls (UX design §2's Settings table), shared by the
   // sheet (opened from Home) and the /settings route: both just place this
   // component in their own shell. It reads the app's global UI state
-  // directly (theme, settings, motion), the same way Home already reads
+  // directly (theme, settings), the same way Home already reads
   // theme.svelte.ts, rather than taking it all as props: there is exactly
   // one of each, for the life of the app, and every caller wants the same
   // live one.
   import { t, type MessageKey } from '$lib/i18n';
   import Segmented from '$lib/components/shell/Segmented.svelte';
-  import { motion } from '$lib/ui/motion.svelte';
   import {
     ANIMATION_SPEEDS,
     CARD_TEXT_SIZES,
@@ -75,9 +74,6 @@
         (v) => settings.set('animationSpeed', v as AnimationSpeed)
       }
     />
-    {#if motion.forcedOff}
-      <p class="text-sm text-fg-muted">{t('home.settings.speedForcedNote')}</p>
-    {/if}
   </div>
 
   <div class="flex flex-col gap-1.5">

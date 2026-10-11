@@ -16,6 +16,7 @@ import {
   type Page,
   type TestInfo
 } from '@playwright/test';
+import { installMotionOff } from './base';
 import { hotseatPolicy, type Policy } from './driver';
 import { dataDir } from './global-setup';
 import type { CapturedFrame, ViewerStream } from './leak-check';
@@ -24,10 +25,12 @@ import type { CapturedFrame, ViewerStream } from './leak-check';
 export const ORIGIN = 'http://127.0.0.1:38954';
 
 /**
- * A new context with the project's device (viewport, touch, user agent)
- * and the config's reduced motion, as the test's own `context` fixture
- * would have; `browser.newContext` does not apply the project's options by
- * itself.
+ * A new context with the project's device (viewport, touch, user agent), as
+ * the test's own `context` fixture would have (`browser.newContext` does not
+ * apply the project's options by itself), and the game's own Animation
+ * setting forced off (installMotionOff; this context bypasses fixtures/
+ * base.ts's `context` fixture override, which only covers the default
+ * context a test gets without calling this function).
  */
 export async function newDeviceContext(
   browser: Browser,
@@ -41,9 +44,9 @@ export async function newDeviceContext(
     userAgent: use.userAgent,
     deviceScaleFactor: use.deviceScaleFactor,
     isMobile: use.isMobile,
-    hasTouch: use.hasTouch,
-    reducedMotion: 'reduce'
+    hasTouch: use.hasTouch
   });
+  await installMotionOff(context);
   if (opts.clipboard) {
     // The permission must be scoped to the origin the context actually
     // navigates to (use.baseURL, the same one passed to newContext above),

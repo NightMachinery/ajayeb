@@ -8,7 +8,8 @@
 // default; the desktop project turns it off and plays with the fixed
 // orientation, so both ways of sharing a device are walked.
 
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures/base';
 import { GameDriver } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 

@@ -6,7 +6,8 @@
 // choice is made with the clicks a player makes, and that it lands: the
 // server's next view (window.__ajayeb) shows the scenario's Expect.
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test } from '../fixtures/base';
 import type { GameDriver } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 import { currentView, logLines, openHotseatRoom, playKey } from '../fixtures/scenario';

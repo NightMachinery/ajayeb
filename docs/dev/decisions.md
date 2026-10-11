@@ -176,3 +176,15 @@ All entries below were accepted on 2026-10-01 unless they say otherwise.
 **Rationale.** A category glyph sits on the same cards as the effect icons. An amphora would read as the amphora chain symbol, a coin as a coin effect and a shield as a military shield, so a player could mistake the card's colour for one of its effects. The anvil is a workshop, which is what grey cards stand for, and it shares no outline with the glass flask or the amphora. See [art/vector/specs/ui-category.md](../../art/vector/specs/ui-category.md).
 
 **Rejected.** The amphora, coin and shield from the UX design (each collides with an icon of the same family). A neckless jar for grey (still close to the amphora and the barrel at 15 px).
+
+## D21. Animation follows the game's own setting, not the OS
+
+**Decision (2026-10-11).** The owner decided that animation is controlled only by the game's own settings, persisted locally, never by the operating system's reduced-motion preference. Settings > Animation speed (normal, fast, relaxed, off) lives under the `ajayeb:settings` key in `localStorage`, defaults to normal, and is the only switch: the client no longer reads `prefers-reduced-motion` anywhere, in CSS or in script. With Animation off, every animation is still instant and every state change still stays visible, exactly as before; only what triggers that behaviour changed.
+
+**Rationale.** A player's choice inside the game is explicit and easy to find, while the OS preference is often set once, for every app on the device, for a reason that may not apply to a board game the player actually wants to watch move. Making Settings the single source of truth also keeps the app's behaviour predictable from one browser profile to the next, instead of depending on a system setting the player may not remember changing.
+
+**Tradeoff.** A motion-sensitive player who has turned on the OS's reduced-motion preference will still see full animation on their first visit, until they turn Animation off in the game's own Settings. This makes it important that Settings stays reachable from the game's menu on every screen, not just from Home.
+
+**Rejected.** Keeping the `prefers-reduced-motion` override on top of the setting, as before (the OS could force Off but never un-force it): the owner wants the in-game setting to be the only switch, not a second, invisible one layered under it.
+
+e2e no longer sets Playwright's `reducedMotion` context option, which stopped doing anything useful once the client stopped reading it. Instead, a shared context init script (`e2e/fixtures/base.ts`) merges `animationSpeed: 'off'` into the `ajayeb:settings` JSON before the app's first load, so the suite keeps its fast, deterministic pacing through the real game setting.

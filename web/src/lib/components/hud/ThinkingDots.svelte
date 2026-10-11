@@ -1,9 +1,9 @@
 <script lang="ts">
-  // A calm "thinking" indicator: three dots that fade in turn, slowly. Under
-  // reduced motion (the OS setting, or animation Off in Settings) app.css
-  // stops the animation and the dots stay as they are drawn at rest: all
-  // three, half lit, so the state still shows without movement. Decorative
-  // by default; the caller says what is thinking in text.
+  // A calm "thinking" indicator: three dots that fade in turn, slowly. With
+  // Animation off in Settings, app.css stops the animation and the dots stay
+  // as they are drawn at rest: all three, half lit, so the state still shows
+  // without movement. Decorative by default; the caller says what is
+  // thinking in text.
   interface Props {
     /** The dot size: 'sm' for the turn bar and strips, 'md' for panels. */
     size?: 'sm' | 'md';

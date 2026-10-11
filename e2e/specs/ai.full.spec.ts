@@ -17,7 +17,8 @@
 // each room from --seed-base, and the Apprentice is deterministic, so a run
 // of the same specs replays the same games.
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test } from '../fixtures/base';
 import { GameDriver, type Snapshot } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 
