@@ -64,7 +64,7 @@
     "accent": "green"
   },
   "card/tavern": {
-    "subject": "travellers sharing wine and bread at a lantern-lit tavern table",
+    "subject": "two travellers, one in a saffron robe and one in a turquoise robe, seated on cushions at a low wooden table laid with round loaves, a bunch of grapes and a plain lapis ewer, raising small bowls of wine to each other under a plain striped saffron-and-ivory cloth awning held up by two straight wooden poles, with one lit brass lantern hanging from the awning's front edge; one small cypress on each side and a low rounded hill behind. No walls, no pergola, no vines, no tendrils, no curls or flourishes: every open area of paper around and above the scene is completely blank",
     "accent": "yellow"
   },
   "card/stone-reserve": {
@@ -312,7 +312,7 @@
     "accent": "violet"
   },
   "wonder/great-library": {
-    "subject": "a domed library building with scroll-filled arcades",
+    "subject": "a Hellenistic library (pitched and flat roofs only, no domes of any kind, no towers; gold only as tiny accents on the scroll ends and the gable tip): a long open colonnade, a stoa of slender pale stone columns under a low pitched tiled roof with a plain triangular gable, its back wall lined floor to ceiling with square pigeonholes each holding the round ends of rolled blank scrolls; in front one scholar in an ochre robe sits at a plain wooden table unrolling a blank scroll and a second scholar carries an armful of scrolls; before the colonnade a small garden court with a square pool, low flowering shrubs and two small cypresses",
     "accent": "ochre"
   },
   "wonder/piraeus": {
@@ -324,7 +324,7 @@
     "accent": "malachite"
   },
   "wonder/statue-of-zeus": {
-    "subject": "a colossal seated statue inside a columned temple hall",
+    "subject": "the colossal seated statue of an old bearded king of the gods (no finials, no crowns, no lilies, no fleur-de-lis, no heraldic or emblem shapes, no wings, no winged figure in his hand, no kneeling worshippers): an ancient carved and painted temple statue, unmistakably a statue and unmistakably male, with a broad bare chest and shoulders, a full curly grey beard and curly hair bound by a plain band, a calm still face, skin painted the flat pale ivory of carved stone, a deep lapis robe with a thin gold hem draped over his lap and one shoulder, one hand resting on his knee and the other holding a plain upright staff; he sits on a massive plain stone throne on a low plain plinth and is enormous, his head almost touching the roof beam, while a small plain doorway and one tiny robed attendant at his feet, no taller than the throne's footstool, show his scale; all of it inside a tall temple hall of plain saffron-ochre columns under a flat roof with a plain moulded cornice and nothing standing on top, with wide ivory paper above and around",
     "accent": "saffron"
   },
   "wonder/sphinx": {
@@ -356,8 +356,8 @@
     "accent": "violet"
   },
   "token/masonry": {
-    "subject": "a chisel and mallet crossed over a stone block",
-    "accent": "amber"
+    "subject": "masonry (hard, angular cut stone, never soft or rounded like cloth): a frontal, mirror-symmetric round stone arch of seven large wedge-shaped voussoirs standing on two short square piers, the central keystone clearly larger and outlined in thin gold, each cool grey limestone stone outlined in crisp ink with a few scattered pick marks and bold ink joints so every stone reads at 40 px; low and small inside the opening, a mason's mallet and a narrow chisel lying crossed on the ground line with small gold ferrules",
+    "accent": "deep garnet (a dark wine-red, roughly #6E1F2B, clearly darker and bluer than vermilion and nothing like saffron or ochre)"
   },
   "token/mathematics": {
     "subject": "a compass tracing a circle over a grid",
@@ -404,7 +404,7 @@
     "accent": "lapis"
   },
   "hero/hero": {
-    "subject": "a garden terrace overlooking a miniature city of domed garden pavilions and two or three of the ancient wonders, with cypress trees and a fountain, under a plain ivory sky",
+    "subject": "a calm distant panorama across a lake of patterned lapis ripples, all of it inside a horizontal band through the middle of the picture: in the centre a low island city of small turquoise-domed garden pavilions with plain arches; at the left the Hanging Gardens, green terraces stepping up a palace wall; at the right the white marble Mausoleum on a low hill, a colonnade on a stepped podium under a stepped pyramidal roof with one small plain gold finial and plain stone urns at the corners, its frieze bands plain unpatterned lapis; at the lower left on a small near shore two tiny travellers rest on a carpet beside a small octagonal fountain. The top fifth and the bottom fifth of the picture are plain ivory paper, and nothing comes near any edge. No statues or animals on any building, no animals or birds anywhere, no other figures",
     "accent": "turquoise"
   },
   "avatar/apprentice": {

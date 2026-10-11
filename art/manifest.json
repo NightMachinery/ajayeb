@@ -59,13 +59,13 @@
       "bytes": {
         "scholar.avif": 4843
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Round 1's only fault is fixed: the astrolabe face has plain concentric rings, short tick lines and a pierced eight-pointed openwork star, with no numerals, letters or glyph-like marks (checked at 2.5x zoom); the open book's pages are blank.",
         "Correct subject: a bearded scholar, shoulders up, studying a brass astrolabe beside an open book; reads clearly at 192 px and still reads at 64 px.",
         "Lapis is clearly the dominant accent (turban and robe), with turquoise and vermilion in support and gold kept to the astrolabe, the turban jewel and trims.",
         "One figure on plain ivory paper with no scenery; the robe fades into the paper at the lower corners. Line, gouache and framing match the approved apprentice and master avatars, so the three read as one set."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "back/age1": {
       "id": "back/age1",
@@ -81,13 +81,13 @@
       "bytes": {
         "age1.avif": 14168
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Fixes every round-1 reason: a central ochre and saffron rosette with vermilion and malachite details, interlaced ochre vine scrolls with malachite leaves and small vermilion and ivory rosettes; the only blue is four tiny buds, so it reads warm brown-gold and clearly apart from the lapis Age II back at thumbnail size.",
         "Margin: in the 320x495 shipping crop the ornament body spans x 18 to 302 and y 44 to 440 (about 6 percent paper on each side, 9 to 11 percent top and bottom), so the frame can feather into plain paper; the side finials no longer reach the edge.",
         "Gold kept to thin vine lines and small finial dots, no flat gold fills; fine ink outlines, opaque gouache, no text or pseudo-writing, no figures or emblems; generic tazhib vine ornament, unlike the official backs.",
         "Minor, acceptable: a few faint brownish paper stains near the central rosette, which read as handmade paper and vanish at shipped size."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "back/age2": {
       "id": "back/age2",
@@ -103,13 +103,13 @@
       "bytes": {
         "age2.avif": 11422
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Same design as round 1, now smaller and centred as asked: a lapis girih strapwork medallion with interlaced turquoise bands outlined in gold, a central turquoise rosette and small ivory and gold flowers.",
         "Margin: in the 320x495 shipping crop the medallion spans x 20 to 300 and y 82 to 398 (about 6 percent paper at each side, 16 to 20 percent top and bottom), with every finial and vine spray inside the crop.",
         "Subject, lapis accent and turquoise secondary are right and distinct from the warm Age I, vermilion Age III and violet guild backs; no text, figures or emblems; gold only as rims and small flowers.",
         "Noted, not blocking: it fills less of the card height than the approved Age III and guild backs (about 64 percent against about 90), which leaves more paper above and below, and the strapwork's over-under weave is not perfectly consistent at full size; neither shows at the shipped size."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "back/age3": {
       "id": "back/age3",
@@ -215,6 +215,7 @@
         "apothecary.avif": 14582,
         "apothecary@thumb.avif": 4198
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 99.9%, dE00 3.4); rocks and shrubs thin into ivory paper on every side, and the 4:3 crop cuts only paper.",
         "Subject reads at 120 px: one standing beardless healer in a turquoise and malachite robe pouring a red tincture into a glass vial beside a tall shelf of coloured vials, lit by a small oil lamp.",
@@ -222,8 +223,7 @@
         "No text: the shelf back panels carry small gold sprigs and corner flourishes, the cap and the bottle band are vine ornament (checked at 2-3x). No books or scrolls, no building, no animals.",
         "Round 1's two faults are fixed: no pavilion cartouche, and it is now clearly distinct from card/pharmacist (standing figure at a shelf versus a seated man at a mortar).",
         "Fine ink line, opaque colour and one large figure in the middle third, as in the card anchor."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/aqueduct": {
       "id": "card/aqueduct",
@@ -288,11 +288,11 @@
         "arena.avif": 16557,
         "arena@thumb.avif": 5219
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS (band 100%); exactly two large spectators in saffron and lapis cheering on the lowest tier, the rest of the stone seats empty, the sand floor with a plain star-tile wall: the subject reads at 120 px.",
         "Saffron accent leads; no text; the one background building is a squat domed garden kiosk, not a minaret; no animals; margin feathers and the painted area (408x306 of 480x360) is within the approved set's range."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/armory": {
       "id": "card/armory",
@@ -351,14 +351,14 @@
         "barracks.avif": 13377,
         "barracks@thumb.avif": 4809
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 3.0); the sandy courtyard thins into ivory paper on every side.",
         "Round 1's fault is fixed: no domed kiosk, no tile band or panel; the wall and gatehouse are plain sand-coloured mudbrick with a plain studded wooden gate (checked at 2x). No text anywhere; the coat patterns are scattered gold sprigs.",
         "Subject reads at 120 px: two large spearmen in vermilion sparring with crossed spears before the gate, two smaller guards at the sides and a spear rack. The two sparring figures dominate; not a crowd.",
         "Vermilion accent dominates; gold only on the sun disc and small trim. No animals, no emblem; background only cypresses and pastel rocks.",
         "Line and opaque colour consistent with the card anchor, if a little sparer."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/baths": {
       "id": "card/baths",
@@ -447,11 +447,11 @@
         "builders-guild.avif": 17966,
         "builders-guild@thumb.avif": 5705
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; the master builder in violet and a kneeling builder in lapis study a plain ground plan (square, circle, wall lines) with no towers or marks; the scaffolded violet-domed pavilion behind reads at thumbnail size.",
         "Two tiny workers on the scaffold stay background detail, not a crowd; the tool box holds plain blocks, no writing; guild violet leads; clean feathered margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/caravansery": {
       "id": "card/caravansery",
@@ -492,11 +492,11 @@
         "chamber-of-commerce.avif": 16054,
         "chamber-of-commerce@thumb.avif": 5126
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; two merchants in saffron and vermilion conferring over a completely blank ledger (checked at 2x), one chest and one bale only; a light open arcade that thins into the paper.",
         "Saffron accent leads; arcade spandrels and carpet are floral; background is a domed garden pavilion; no edges cut; matches the anchor's density."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/circus": {
       "id": "card/circus",
@@ -513,13 +513,13 @@
         "circus.avif": 10864,
         "circus@thumb.avif": 3632
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Gate PASS (band 100%). The round-2 fix landed: the whole oval now sits inside the 4:3 crop (painted area 387x195 of 480x360, starting at 46,70), with wide ivory paper on every side and nothing in the feather zone except the outer barrier.",
         "Both charioteers (vermilion in front, lapis behind) and their two-horse teams sit near the middle of the track and still read as a red and a blue chariot racing on an oval at the 120 px thumbnail; vermilion leads, as the red accent asks.",
         "Plain cream barrier with gold post finials, grassy island with a small domed kiosk (its lapis panel is a floral lattice, no marks), no spectators, no filler animals, no writing anywhere.",
         "Note for the owner: the figures are smaller than on most cards and the scene is the shortest in the set (195 px tall in the 480 crop), a deliberate trade for keeping the whole track in frame."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "card/clay-pit": {
       "id": "card/clay-pit",
@@ -536,14 +536,14 @@
         "clay-pit.avif": 11127,
         "clay-pit@thumb.avif": 3780
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 99.2%, dE00 2.5); the pit walls fade softly into the paper at the sides and bottom.",
         "Subject reads at 120 px: a deep ochre clay pit, one worker in lapis below lifting a laden basket, one in vermilion above hauling it up by rope. Two figures. The rope replaces the subject's ramp, as the round-1 amendment asked.",
         "Brown and ochre accent dominates; lapis and vermilion robes for contrast; gold not used as a fill.",
         "No text: the pit walls are plain earth with crack lines (checked at 2x), and there is no building, frieze or band anywhere. No animals.",
         "Round 1's cartouche-script pavilion is gone. Matches the anchor's line and colour; the large plain earth mass is lighter in detail than the anchor but stays clean."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/clay-pool": {
       "id": "card/clay-pool",
@@ -632,6 +632,7 @@
         "customs-house.avif": 15020,
         "customs-house@thumb.avif": 5109
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 1.9).",
         "Round 1's fault is fixed: no sheet, ledger or paper on the table, which holds only bronze weights and a coin pouch (checked at 2.5x).",
@@ -639,8 +640,7 @@
         "Saffron accent dominates; lapis secondary; gold kept to the finial, sprigs and the kiosk finial.",
         "No text: the background kiosk band is a row of separate flower rosettes in three blue panels (checked at 5x), the dome is a gold lattice, the balance post carries a single floral sprig. The kiosk is a garden pavilion; no animals.",
         "Two figures, clean feathering margin, anchor-consistent."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/dispensary": {
       "id": "card/dispensary",
@@ -657,6 +657,7 @@
         "dispensary.avif": 16993,
         "dispensary@thumb.avif": 5382
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 1.1).",
         "Round 1's faults are fixed: a young beardless physician standing in a turquoise robe and rose cap, clearly distinct from the approved age I pharmacist (seated bearded elder in white turban); a plain open wooden shelf with no canopy, cornice or frieze; no building in the background.",
@@ -664,8 +665,7 @@
         "Subject reads at 120 px: the physician takes a jar from the shelf and hands a small green vial to a patient in rose.",
         "Green accent carried by the malachite jars, turquoise robe and garden; gold only on stoppers and sprigs. No animals.",
         "Two figures, clean feathering margin. Minor: the jars are a little glossy, but they stay outlined flat colour fields."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/drying-room": {
       "id": "card/drying-room",
@@ -796,6 +796,7 @@
         "glass-blower.avif": 16168,
         "glass-blower@thumb.avif": 5045
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.9).",
         "Round 1's faults are fixed: one standing glassblower seen side-on, no assistant, no beehive furnace in the centre (only a small square brick furnace mouth at the left), no pavilion or building, so no frieze to carry pseudo-writing. Clearly distinct from the approved age I glassworks.",
@@ -803,8 +804,7 @@
         "Slate-grey accent dominates (robe, turban, slab), with a vermilion sash and turquoise and lapis vessels; gold only on vessel rims and the finial.",
         "No text: the vessels carry plain gold rims and loose curls (checked at 3x). No animals.",
         "Style note: the slab, robe and rocks are more mottled and textured than the anchor's flat gouache, but every shape keeps its ink outline and the look stays within the set."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/glassworks": {
       "id": "card/glassworks",
@@ -845,14 +845,14 @@
         "guard-tower.avif": 13094,
         "guard-tower@thumb.avif": 4167
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 4.3); the rocky hill thins into ivory paper on all sides.",
         "Subject reads at 120 px: one sentinel in a vermilion coat shading his eyes atop a square pale-stone crenellated tower, holding a spear with a plain red pennant.",
         "Vermilion is the focal accent (coat and pennant at the top of the composition) against slate-pale stone and a lapis tile band; gold only on the belt, the band rules and the sun disc.",
         "No text: the tower band is a repeating daisy-and-diamond tile pattern, the stone walls are plain blocks (checked at 2x), and the pennant is plain cloth with no emblem. No background building, so no cartouche. No animals.",
         "Round 1's parapet script is gone. Anchor-consistent line and opaque colour; cypresses are scattered on the hills rather than set in a row."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/horse-breeders": {
       "id": "card/horse-breeders",
@@ -917,14 +917,14 @@
         "library.avif": 15470,
         "library@thumb.avif": 5287
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 0.8).",
         "Round 1's faults are fixed: no open page anywhere; every scroll is rolled shut and shown end-on as a plain cream circle with a rod end (checked at 3x and 8x); the shelf is plain wood with no frieze or cartouche; no pavilion.",
         "Subject reads at 120 px: a young scholar in saffron on a stool drawing a scroll from a tall pigeonhole shelf, an older scholar in malachite holding a closed scroll below. Two figures; the colour split keeps it apart from the green school and laboratory cards.",
         "Green accent carried by the elder's robe, cypresses and foliage; gold only on sprigs and the turban plume. No animals.",
         "Minor, not blocking: the shelf is drawn as an oblique cabinet with wood grain, more solid than the anchor's furniture, and the drawn scroll's end overlaps the shelf upright with a small smudge (about 30 px at full size, invisible at card size)."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/lighthouse": {
       "id": "card/lighthouse",
@@ -941,12 +941,12 @@
         "lighthouse.avif": 12787,
         "lighthouse@thumb.avif": 4130
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; an ancient three-tier stone tower (square, octagonal, round) with an open bronze brazier and a short-ray flame, and a keeper in saffron climbing the stair with firewood: no glass lantern, railing or beam, so the anachronism is gone.",
         "Water is flat patterned ripples with no horizon or sunset; the band near the top shows star rosettes only, no writing; the painted height (338 of 360) is within the approved range (up to 340) and only the flame's thin tip nears the top.",
         "Saffron accent carried by the keeper and the flame; one small domed kiosk; clean feathered margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/logging-camp": {
       "id": "card/logging-camp",
@@ -963,14 +963,14 @@
         "logging-camp.avif": 13686,
         "logging-camp@thumb.avif": 4560
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 99.9%, dE00 3.2); the hillside rocks fade into the paper at the lower left and the slope's ends.",
         "Subject reads at 120 px: two woodcutters brake two roped, felled trunks down a slope that falls from upper left to lower right, with a fresh stump at the top. The direction now matches the subject.",
         "Both faces are clear at 2x: no foliage across any face or beard, which was round 1's defect.",
         "Brown accent dominates (trunks, slope, the lead man's coat), with lapis and vermilion clothing; no gold fill.",
         "No text, no building, no animals. Fine continuous line and opaque colour like the anchor."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/lumber-yard": {
       "id": "card/lumber-yard",
@@ -1074,11 +1074,11 @@
         "obelisk.avif": 10990,
         "obelisk@thumb.avif": 3773
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; a tall lapis obelisk decorated only with gold floral arabesque and girih stars, checked at 1.6x along the full shaft and the plinth: no human, animal or glyph-like figures.",
         "Two onlookers either side, the held sheet blank; lapis accent leads; background kiosks are garden pavilions; reads instantly at 120 px; margin feathers and the height is within the approved range."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/observatory": {
       "id": "card/observatory",
@@ -1095,13 +1095,13 @@
         "observatory.avif": 14424,
         "observatory@thumb.avif": 5024
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Gate PASS (band 100%). The round-2 fault is fixed: the finial now stops 59 px below the top of the 480 crop (painted area 408x260), with clear ivory paper on all four sides.",
         "The standing astronomer in malachite holds up a brass astrolabe with plain spokes, the seated astronomer in lapis holds a blank book, the mural quadrant is plain wood with no tick marks, and the celestial globe shows stars only. No telescope or other anachronism.",
         "The green dome and starry lapis vault read clearly at 120 px, the green accent leads, the style matches the card anchor, and there is no text, pseudo-writing or filler animal.",
         "Distinct from the approved science cards (library, school, scriptorium, laboratory) at thumbnail size."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "card/palace": {
       "id": "card/palace",
@@ -1163,11 +1163,11 @@
         "pantheon.avif": 18523,
         "pantheon@thumb.avif": 5796
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; a white colonnaded rotunda with a lapis dome, centered and whole; the drum band is now an interlaced zigzag girih lattice with gold dots, and the ceiling medallion is a soft arabesque rosette (checked at 4x): no scrolling band, no letterforms.",
         "One figure in lapis walking up the steps looking at the dome, so the gardens-card couple pose is gone; lapis accent leads; background domed kiosks only; reads at 120 px; clean margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/parade-ground": {
       "id": "card/parade-ground",
@@ -1184,14 +1184,14 @@
         "parade-ground.avif": 11342,
         "parade-ground@thumb.avif": 4180
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.3); the sandy ground and rocks thin into ivory paper on every side.",
         "Round 2's faults are fixed (checked at 2x): three soldiers in single file, spaced so no bodies or legs overlap; each holds exactly one spear in one hand; each figure's trousers are one colour on both legs (lapis for the soldiers, malachite for the officer); soft ochre pointed boots with no heel, so nothing reads as a modern shoe.",
         "Subject reads at 120 px: a file of vermilion spearmen marching left to right with a plain pennant, an officer facing them with a raised plain baton. Four figures in total, not a crowd, and no horses or riders.",
         "Vermilion accent dominates; gold only on the sashes and the officer's small plume. No text: the sashes carry plain gold dots. Plain pennant with no emblem; background only pastel rocks, shrubs and three cypresses.",
         "Minor, not blocking: the three soldiers are near-identical repeats and the coats are flat vermilion without the gold sprig pattern of the approved cards, so the image is sparer and plainer than the anchor. The approved barracks card sets the precedent for this sparer drill-yard look, and line, palette and margin stay within the set."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "card/pharmacist": {
       "id": "card/pharmacist",
@@ -1232,11 +1232,11 @@
         "port.avif": 14187,
         "port@thumb.avif": 4765
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; two dockworkers passing an amphora from the stone quay to a single-masted ship with a saffron sail; the background pavilion has no tower, spire or flagstaff; the quay and ship stop well inside the frame.",
         "The blue band on the hull is gold rosettes joined by small scrolls; at the shipped 480 px it reads as a row of flowers, not writing. Saffron accent leads; the only pennant is on the mast; margin feathers."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/press": {
       "id": "card/press",
@@ -1277,11 +1277,11 @@
         "pretorium.avif": 18526,
         "pretorium@thumb.avif": 6098
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; two officers, one pointing and one seated, over a terrain map of hills, trees and a river with no marks or labels (checked at 2x), inside an open vermilion tent.",
         "The horse is gone, replaced by a spear stand and a round shield with rosettes and a plain boss, no emblem; vermilion accent leads; reads at 120 px; clean margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/quarry": {
       "id": "card/quarry",
@@ -1322,6 +1322,7 @@
         "rostrum.avif": 15638,
         "rostrum@thumb.avif": 4936
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 100%, dE00 3.7).",
         "Round 1's fault is fixed: one orator in a lapis robe standing on a plain stone rostrum with a short stair, and only two listeners seated on the ground, one at each side. No crowd.",
@@ -1329,8 +1330,7 @@
         "Blue accent dominates (robe, river); gold only on the sun disc, sash and sprigs.",
         "No text: the rostrum faces are plain dressed stone, the robe pattern is gold floral (checked at 2x). No pavilion, no animals; ornamental clouds and a river as in the anchor.",
         "Clean feathering margin; anchor-consistent line and colour."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/sawmill": {
       "id": "card/sawmill",
@@ -1395,11 +1395,11 @@
         "scientists-guild.avif": 15272,
         "scientists-guild@thumb.avif": 5655
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; two scholars in violet and green under a violet-domed pavilion with closed books, a brass armillary sphere and a celestial globe. The held astrolabe has a plain rim with star pointers only, and the globe shows gold stars and blobs only (checked at 5x): no charts, scales or glyphs.",
         "Guild violet leads; the background is one domed kiosk; reads at 120 px; clean feathered margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/scriptorium": {
       "id": "card/scriptorium",
@@ -1440,11 +1440,11 @@
         "senate.avif": 17059,
         "senate@thumb.avif": 5158
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; exactly two large senators, one standing in lapis speaking with an open hand and one seated listening, in front of an empty curved tiled bench; both papers are blank; the bench panels are floral.",
         "Lapis accent leads. The fountain pool holds lotus flowers and a few tiny gold fish specks, invisible as animals at the shipped size; one domed garden kiosk behind; clean margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/shelf-quarry": {
       "id": "card/shelf-quarry",
@@ -1485,11 +1485,11 @@
         "shipowners-guild.avif": 11846,
         "shipowners-guild@thumb.avif": 4057
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; two figures only, a shipwright in plain work dress with his hand on a small curved hull on trestles and a shipowner in violet; flat colour with ink lines and no hatching, no shed or timber yard, no horizon mountains or distant ships.",
         "Guild violet leads (robe and kiosk dome); a narrow band of patterned water with one domed kiosk behind; reads at 120 px; wide clean margin. Sparser than the anchor, but not off-style."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/siege-workshop": {
       "id": "card/siege-workshop",
@@ -1623,12 +1623,12 @@
         "study.avif": 18260,
         "study@thumb.avif": 5540
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Gate PASS (band 99.9%). The watch-like gold disc is gone; a small closed wooden pen box with a plain lid takes its place, so no anachronism is left.",
         "The bearded scholar in malachite writes on blank pages at a low desk and the student in lapis holds a blank sheet. The armillary sphere, the celestial globe (gold stars, no land), the blank scrolls, the closed books and the plain wooden chest all check clean at full size: no letters, numerals or tick marks.",
         "Two large figures that read at 120 px, the green accent leads, the background domed garden pavilion is secular, and the paper margin feathers. The instruments set it apart from the approved school card."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "card/tacticians-guild": {
       "id": "card/tacticians-guild",
@@ -1657,16 +1657,20 @@
       "out": "cards/tavern",
       "gen": "1536x1024",
       "crop": "4:3",
-      "subject": "travellers sharing wine and bread at a lantern-lit tavern table",
+      "subject": "two travellers, one in a saffron robe and one in a turquoise robe, seated on cushions at a low wooden table laid with round loaves, a bunch of grapes and a plain lapis ewer, raising small bowls of wine to each other under a plain striped saffron-and-ivory cloth awning held up by two straight wooden poles, with one lit brass lantern hanging from the awning's front edge; one small cypress on each side and a low rounded hill behind. No walls, no pergola, no vines, no tendrils, no curls or flourishes: every open area of paper around and above the scene is completely blank",
       "accent": "yellow",
-      "status": "needs-human",
-      "attempt": 3,
-      "promptAmend": "Keep this composition exactly: two travellers, one in a saffron robe and one in a turquoise robe, on cushions at a low wooden table on a lapis carpet, with bread, grapes and a lapis ewer, toasting with small bowls of wine under a wooden grape pergola hung with one lit gold lantern, a rose shrub at the right and a small domed garden pavilion with plain arches at the far left. Every vine tendril must stay attached to its stem and end in a simple round curl; the open ivory sky and paper between the pergola, the pavilion and the hills must be completely empty, with no floating gold flourishes, curls, sprigs, insects, birds or ghost sketches. Keep the cypresses to one or two small trees on each side.",
-      "bytes": {},
+      "status": "approved",
+      "attempt": 4,
+      "promptAmend": "No walls, no vines and no tendrils. Every empty area of paper, sky and cloth is completely blank and evenly coloured: no squiggles, curls, flourishes, scribbles, sketch lines, birds, insects, monograms, signatures or any letter-like marks anywhere.",
+      "bytes": {
+        "tavern.avif": 9871,
+        "tavern@thumb.avif": 3538
+      },
+      "approvedAttempt": 4,
       "reasons": [
-        "Pseudo-writing on the open paper: a detached gold squiggle at about x 470-500, y 280-310 (source), just left of the left pergola post and below the vine tendril, is not attached to any vine. Zoomed it reads as a calligraphic letter or monogram, and it is still visible as a small gold glyph at the shipped 480 px card. The rules forbid letters, pseudo-writing or a signature anywhere, and this is the third round with a stray mark.",
-        "A second, fainter stray mark: a pale tan ghost scribble floating against the sky above the distant lilac hill, at about x 795-815, y 430-450 (source), between the lantern and the right figure's turban.",
-        "Everything else passes: band 100%, dE00 3.2; two travellers in saffron and turquoise toasting with wine bowls over bread and grapes under a grape pergola with one lit lantern; saffron accent; the background kiosk is a small domed garden pavilion with plain arches; no animals; reads clearly at 120 px; clean, feathered ivory margin in the anchor's style."
+        "Every cause of the three earlier rejections is gone: no walls, no pergola, no vines or tendrils. I checked the open paper in four full-resolution quadrant crops, a 1.5x crop of the area between the figures and under the awning, and a contrast-stretched greyscale of the whole image: no squiggles, monograms, ghost sketches or stray marks anywhere.",
+        "The subject reads at once at 480, 240 and 120 px: two travellers in saffron and turquoise toasting with bowls of wine at a low table with bread, grapes and a lapis ewer, under a striped saffron awning on two poles with one lit lantern. Two large figures, no crowd, no skyline, no animals.",
+        "Saffron accent; flat gouache with fine ink outlines, jewel tones and gold only on the pole finials and the lantern; the ground and pastel rocks thin into an even ivory paper on every side (gate band 100%). It is sparer than most approved cards but in line with circus and parade-ground, and the two small cypresses are accents, not a filler row."
       ]
     },
     "card/temple": {
@@ -1684,6 +1688,7 @@
         "temple.avif": 15667,
         "temple@thumb.avif": 5249
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Passes the gate (band 99.9%, dE00 1.5).",
         "Round 1's fault is fixed: no idol, statue, face, halo or image anywhere; the niche is plain lapis tile holding only a lit oil lamp on a low stone plinth. The two visitors stand upright in quiet conversation, one holding a bowl of flowers; no kneeling, bowing or joined palms, no lotus.",
@@ -1691,8 +1696,7 @@
         "Blue accent dominates (dome, tile bands, robe, pool); gold only on the finial, capitals, lamp and sprigs.",
         "No text: the dome drum, spandrels and plinth bands are floral and girih tile (checked at 3x). No minaret, no animals.",
         "Minor, not blocking: the pool's ripple pattern carries a faint, soft colour echo of the columns and the woman's robe; it is far weaker than the photographic reflections rejected in the wonder rounds and the ripple lines dominate at card size."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/theater": {
       "id": "card/theater",
@@ -1733,13 +1737,13 @@
         "town-hall.avif": 16757,
         "town-hall@thumb.avif": 5142
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Gate PASS (band 99.9%). The composition is now clearly different from the approved courthouse card: two standing elders (grey-bearded in saffron with a blank scroll, dark-bearded in rose raising an open hand) on wide stone steps under one very large lapis dome, with no seated figures, cushions or table.",
         "The dome's tilework and the frieze bands are floral arabesques only, with no inscription or pseudo-writing; the scroll is blank; there are no towers or minarets, only cypresses and flowering trees at the sides.",
         "The blue accent leads and the scene reads at 120 px. The finial sits 6 px below the top of the 480 crop (painted area 335x333), the same as the approved temple card (5 px, 334 tall), so the dome's top fades into the soft feather as temple's does, but nothing is cut off.",
         "It is closer to the approved temple card (two standing figures under a blue dome), but the robe colours, the steps and the much larger dome tell them apart at thumbnail size."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "card/university": {
       "id": "card/university",
@@ -1756,11 +1760,11 @@
         "university.avif": 16295,
         "university@thumb.avif": 5335
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate PASS; a master in malachite and a student in lapis beside a large celestial globe with gold stars and a meridian ring (no land shapes), the student holding a blank book, and a small armillary sphere at their feet: two figures, and the anachronism is gone.",
         "Green accent leads; one domed garden kiosk and a small pool; reads at 120 px; clean feathered margin."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "card/walls": {
       "id": "card/walls",
@@ -1777,6 +1781,7 @@
         "walls.avif": 16228,
         "walls@thumb.avif": 5211
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Passes the gate (band 99.7%, dE00 2.6).",
         "Round 2's fault is fixed: the lifting frame is now an A-shaped pair of timber shear-legs lashed at the apex with a wooden pulley; the rope runs straight down to a sling that cradles the block, and its free end runs to the hauling mason. No single post with a crossbeam, no loop, nothing reads as a gallows at 120 px.",
@@ -1784,8 +1789,7 @@
         "Subject reads at 120 px: a mason in vermilion on a timber scaffold guiding the hanging block, a mason in lapis hauling the rope, spare blocks with a mallet and two chisels in front. Two figures, no crowd.",
         "Vermilion accent leads; robes carry gold sprigs as in the approved cards; no gold leaf in the sky. No text: every block is plain mottled stone (checked at 2x). No building, no animals; background only pastel rocks, a flowering shrub and two cypresses.",
         "Minor, not blocking: the right shear-leg ends in the hauling mason's upper hand instead of reaching the ground, so he appears to steady the leg while he pulls the rope. It is physically loose but reads naturally at card size and is not a garbled figure."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "card/wood-reserve": {
       "id": "card/wood-reserve",
@@ -1841,16 +1845,23 @@
       "out": "ui/hero",
       "gen": "1536x1024",
       "crop": "16:9",
-      "subject": "a garden terrace overlooking a miniature city of domed garden pavilions and two or three of the ancient wonders, with cypress trees and a fountain, under a plain ivory sky",
+      "subject": "a calm distant panorama across a lake of patterned lapis ripples, all of it inside a horizontal band through the middle of the picture: in the centre a low island city of small turquoise-domed garden pavilions with plain arches; at the left the Hanging Gardens, green terraces stepping up a palace wall; at the right the white marble Mausoleum on a low hill, a colonnade on a stepped podium under a stepped pyramidal roof with one small plain gold finial and plain stone urns at the corners, its frieze bands plain unpatterned lapis; at the lower left on a small near shore two tiny travellers rest on a carpet beside a small octagonal fountain. The top fifth and the bottom fifth of the picture are plain ivory paper, and nothing comes near any edge. No statues or animals on any building, no animals or birds anywhere, no other figures",
       "accent": "turquoise",
-      "status": "needs-human",
-      "attempt": 3,
-      "promptAmend": "Keep attempt 3's Mausoleum exactly (white marble, colonnade, stepped pyramidal roof, small gold finial, ball-topped corner pillars and urns, lapis frieze of small gold flowers) and its Hanging Gardens, lake and turquoise-domed island pavilions. Pull the foreground back to attempt 2's scale: the terrace is a shallow strip, the couple on the carpet sits small at the left, and the octagonal tiled fountain is small and whole with plain paper below it. The whole scene sits in a wide horizontal band across the middle of the image: leave the top eighth and the bottom eighth of the picture as plain ivory paper, and a wide plain paper margin at left and right, so nothing (fountain, terrace floor, carpet, balustrade, shrubs, finials) comes near any edge; the terrace floor and shrubs thin out and fade into the paper before the bottom. No animals, no statues, no letter-like marks.",
-      "bytes": {},
+      "status": "approved",
+      "attempt": 6,
+      "promptAmend": "Keep attempt 4's composition: a middle horizontal band holding the lake of patterned lapis water, the island of turquoise-domed garden pavilions in the centre, the Hanging Gardens with its cascade at left, the Mausoleum on its rocky hill at right, and the two small travellers on a carpet by the small octagonal fountain at lower left, with the top fifth and the bottom fifth as plain ivory paper. Change three things. Paint the Mausoleum entirely in plain white marble with no coloured bands at all: the cornice, the frieze and the podium are flat white with only fine ink lines for the steps, the column edges and the roof tiers, and no pattern, rosettes or ornament anywhere on it. Pull both wonders inward so the Hanging Gardens start and the Mausoleum's hill ends at least one tenth of the image width from the side edges, and let their outer sides thin into rocks, shrubs and then plain paper. Behind the island, show only soft lilac mountains on the far shore, with no town or skyline.",
+      "bytes": {
+        "hero.avif": 90120,
+        "hero@800.avif": 26212
+      },
+      "approvedAttempt": 5,
       "reasons": [
-        "The shipped 16:9 crop cuts the painting at the bottom edge: at 1600x900 and 800x450 the octagonal fountain's tiled base, the marble terrace floor and the flowering shrubs at both lower corners run straight off the bottom, and the carpet, cushions and balustrade reach the left edge. Attempt 3 zoomed the foreground in (a much larger couple and fountain) compared with attempt 2, whose foreground sat inside a paper margin; the band check fell from 87.3% to 72.6%. The hero ships near full resolution on the landing page, so a hard cut there shows.",
-        "Round 2's Mausoleum fault is fixed and should be kept: a white marble tomb on a stepped podium with a colonnade, a stepped pyramidal roof with a small gold finial, plain ball-topped pillars and urns at the corners, no lions or other statues, and lapis frieze bands of gold floral rosettes with no letter-like marks (checked at 3x to 8x zoom).",
-        "Also worth keeping: no animals anywhere, only two figures (the couple on the carpet), turquoise domes over patterned lapis water, the Hanging Gardens whole at left, a plain ivory sky with a small gold sun disc."
+        "Approving attempt 5 (made 17:49, never reviewed before this round) in preference to the current attempt 6. Gate PASS, band 99.6%, dE00 2.3.",
+        "The 16:9 crop no longer cuts anything: at 1600x900 and 800x450 the whole scene sits in a middle band with ivory sky above and plain paper below, and the Hanging Gardens' rocks (left), the lake's end and the Mausoleum's hill (right) all thin into paper; there is no straight vertical cut at either side.",
+        "No pseudo-writing: the Mausoleum's two lapis bands are plain flat lapis with fine pale flecks, checked at 4x, with no letter-like marks; no statues, lions or animals anywhere; the travellers' carpet and the octagonal fountain are clean. The far shore shows only pastel mountains, no town or skyline.",
+        "Reads well at 800x450: the terraced Hanging Gardens with cascades at left, the island of turquoise-domed garden pavilions in the centre over patterned lapis water, the white Mausoleum on its hill at right, and two small travellers by the fountain. Turquoise domes carry the accent; gold only on finials and the sun disc; ornamental clouds in a plain ivory sky.",
+        "Why not attempt 6: the island and the gardens cast mirror reflections in the lake (vertical streaks of cypresses and pavilions), against style.md's 'patterned ripple, not a realistic reflection'; the Hanging Gardens' rocks still reach about 10 to 15 px from the left edge, the cause r1 named; and its mountains are a soft airbrushed wash rather than pastel-edged hills.",
+        "Minor and accepted: the Mausoleum is drawn with both faces showing, a slight three-quarter view, and faint ripple-broken reflections sit under the island; neither shows at the shipped sizes."
       ]
     },
     "icon/app": {
@@ -1870,14 +1881,14 @@
         "app@180.avif": 3609,
         "app@32.avif": 671
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Fixes every round-1 reason: no friezes, bands or marks anywhere (the kiosk drum, entablature and arches are plain ivory at full size); no flowers, rocks or grass; the medallion fills about 94 percent of the square on plain ivory paper with a thin gold-leaf rim.",
         "Subject right: one tall stylized cypress beside a small domed kiosk with a turquoise dome, gold finial and pointed ogee arches on slender columns, on one low malachite mound, on a lapis ground (the lapis accent). No minaret, mosque, emblem or text.",
         "Reads at every shipped size: at 512, 192 and 180 px both shapes are crisp; at 32 px the bright malachite cypress stays a clear vertical spike against the lapis (it is lighter in greyscale) and the dome shows as a turquoise and ivory block. It also holds on the night colour.",
         "Style is consistent with the token anchor (flat accent ground, gold rim, gouache texture, gold outlines), simplified as an icon should be.",
         "Noted, not blocking: the composition is off-centre with an empty lapis area at the upper right, and the kiosk's columns lean a little towards a classical rotunda; a future revision could centre the cypress and enlarge the kiosk, but neither breaks a criterion."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "texture/night": {
       "id": "texture/night",
@@ -1893,13 +1904,13 @@
       "bytes": {
         "night.avif": 31386
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Gate: the band check passes at 100 percent; the only failure is the absolute paper check against ivory #f4ecdc, which cannot apply to a texture whose subject is deep lapis paper. Rerun with that check off (gate.mjs --paper-max 0) it passes. No prompt can satisfy the ivory check for this asset, so it is judged on its merits, as round 1 did.",
         "Tone fixed: the 512 px tile averages rgb(19,28,57), about oklch(0.22 0.06 265), which matches the dark theme's --table token oklch(0.22 0.06 262) and sits just above --night oklch(0.18 0.03 265), so dark-theme inks keep their contrast. Round 1 was a bright cobalt rgb(16,61,147).",
         "Even and seamless: all four quadrants and all four edge strips average within 1 level of each other (left 19,28,58 against right 18,27,56); a 2x2 tiling shows no seam at normal contrast, only a hairline under an extreme contrast stretch.",
         "Only faint, sparse, slightly lighter fibres (standard deviation about 2.6 levels), no specks, mottling, vignette, figures, ornament or text."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "texture/paper": {
       "id": "texture/paper",
@@ -1915,13 +1926,13 @@
       "bytes": {
         "paper.avif": 5102
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Fixes round 1: a blank sheet of warm ivory handmade paper with only a faint fine fibre grain; no figures, animals, scenery, ornament, border, vignette or text.",
         "Tone: the 512 px tile averages rgb(241,229,208), within the gate's paper check (dE00 2.9 from #f4ecdc), and process.mjs maps it onto the exact token.",
         "Tileable: quadrants are identical on average and the four edge strips agree within 1 to 2 levels (top 242,230,208 against bottom 240,227,206); a 2x2 tiling shows no seam at normal contrast.",
         "Grain is low in contrast (standard deviation about 2.6 levels), so it will not compete with the cards and text drawn on it; a handful of tiny dark fibre specks are invisible at shipped size."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "token/agriculture": {
       "id": "token/agriculture",
@@ -2022,16 +2033,23 @@
       "out": "tokens/masonry",
       "gen": "1024x1024",
       "crop": "1:1",
-      "subject": "a chisel and mallet crossed over a stone block",
-      "accent": "amber",
-      "status": "needs-human",
-      "attempt": 3,
-      "promptAmend": "Keep the composition of attempt 3 exactly: the chisel and the mallet crossed in a bold symmetric X in front of the block's upper half, the decorated lapis and malachite handles with gold ferrules and floral bands, the vine band on the mallet head, the flat gouache with crisp ink outlines and no wood grain or highlight lines, the crisp gold rim and the clean ivory margin. Change two things. First, the ground: a flat, deep honey-brown amber like dark honey or polished resin, clearly darker and browner than marigold or saffron (roughly #B06A1A), so it can never be mistaken for a yellow-orange coin token. Second, the block: make it a chunky ashlar block, seen from the front, about one and a half times as wide as it is tall (not a thin wide slab), in a cool grey-buff limestone colour that stands out against the amber. Give it a classic drafted margin: a narrow smooth band along all four edges, set off from the face by one thin ink line, and inside that band a rough, quarry-picked face shown by small irregular ink flecks and a slightly darker grey tone. No row of evenly spaced dots, no stitching, no long diagonal marks, and nothing that looks like paper, cloth or a cushion. Leave out the flower sprigs or keep at most two tiny low-contrast ones at the bottom.",
-      "bytes": {},
+      "subject": "masonry (hard, angular cut stone, never soft or rounded like cloth): a frontal, mirror-symmetric round stone arch of seven large wedge-shaped voussoirs standing on two short square piers, the central keystone clearly larger and outlined in thin gold, each cool grey limestone stone outlined in crisp ink with a few scattered pick marks and bold ink joints so every stone reads at 40 px; low and small inside the opening, a mason's mallet and a narrow chisel lying crossed on the ground line with small gold ferrules",
+      "accent": "deep garnet (a dark wine-red, roughly #6E1F2B, clearly darker and bluer than vermilion and nothing like saffron or ochre)",
+      "status": "approved",
+      "attempt": 7,
+      "promptAmend": "Instead of a block, the emblem is a stone arch. Keep the flat deep garnet wine-red ground, the thin crisp gold rim and the narrow flat ivory margin. Centred and mirror-symmetric about the vertical axis, filling the central 60 percent: a round arch built of seven large wedge-shaped cut stones (voussoirs) standing on two short square stone piers, drawn flat and frontal. The central keystone at the top is clearly larger than the others and stands slightly proud of the arch's outer curve, with a thin gold outline; the other stones are flat cool grey limestone with crisp dark ink outlines, each with a narrow smooth band along its edges and a few small irregular ink pick marks scattered on its face (never in rows or lines). The joints between stones are bold ink lines so each stone reads separately at 40 px. Inside the arch opening, low and small (no taller than a quarter of the arch), a mason's mallet with a flat brown head and a narrow mason's chisel with a short steel bit, lying crossed on the ground line, with lapis and malachite handles and small gold ferrules. Flat gouache only: no shading gradients, no wood grain, no stone texture, no shadows, no walls or towers beside the arch, no flowers, no text or letter-like marks.",
+      "bytes": {
+        "masonry.avif": 4408,
+        "masonry@thumb.avif": 1348
+      },
+      "approvedAttempt": 7,
       "reasons": [
-        "The ground has gone back to bright marigold-saffron (about rgb(222,147,23)), not the honey-brown amber the subject asks for. It is almost the same colour as the approved token/economy (about rgb(238,141,4)), so the two read as twins in the 40 px row. Attempt 2's ground (about rgb(185,109,14)) was the right hue and this one lost it.",
-        "The block no longer reads as stone. It is a wide, thin, pale beige slab with a mechanical row of evenly spaced dots around the edge, which looks like a stitched cushion, a cork board or a sheet of perforated parchment. At 40 px beside token/philosophy it reads as a second paper scroll, not stonework.",
-        "What works and should be kept: the bold symmetric X of the chisel and mallet crossing in front of the block, the decorated lapis and malachite handles with gold ferrules and floral bands, the vine band on the mallet head, the flat gouache with no wood-grain or highlight lines, the crisp gold rim, the clean ivory margin and the absence of any text."
+        "Gate PASS (band 88.0%, dE00 0.6). The square is 1254x1254 with a narrow, even, flat ivory margin and a thin crisp gold rim, so process.mjs's rim detection has a clean edge to find.",
+        "The subject is right and reads at 40 px on both paper and the night colour: a frontal, mirror-symmetric round arch of seven voussoirs on two square piers, the keystone larger and outlined in gold. At 96 and 256 px each stone reads separately thanks to the bold ink joints. It is a hard, sharp-edged cut-stone silhouette with nothing of the cushion, glass cube or written tablet of attempts 1 to 6.",
+        "The ground is distinct from every approved token (checked in a 40 px and 96 px strip beside all nine on paper and on the night colour). The deep garnet is clearly darker and cooler than strategy's vermilion and agriculture's ochre-brown. The arch silhouette, unlike attempt 6's crossed-objects layout, no longer twins strategy's spears and shield.",
+        "No text, letters, numerals or ruled marks: the pick marks are a few scattered irregular specks per stone, not rows. There are no flowers, clouds, landscape or border band, and gold appears only on the rim, the keystone outline and the tool ferrules. Rendering density and line weight sit with the approved architecture and law tokens.",
+        "Minor and accepted: the voussoirs carry a light bevel and a faint mottled stone texture, and the mallet head shows some wood grain. Both are below notice at 256 px and invisible at 96 and 40 px. The mallet and chisel are small inside the opening and vanish at 40 px, but the arch alone carries the meaning at that size.",
+        "Bookkeeping, not an image fault: the worktree's art/subjects.json and manifest subject still describe the old three-quarter block with leaning tools. Rewrite it to the arch so the record matches the shipped art (the accent is already garnet)."
       ]
     },
     "token/mathematics": {
@@ -2164,14 +2182,14 @@
       "bytes": {
         "civilian.avif": 56361
       },
+      "approvedAttempt": 3,
       "reasons": [
         "Every round 2 fault is fixed: only the two large figures remain (the musician seated on a carpet playing a long-necked lute and the lapis-robed dancer tossing rose petals from a basket), nobody in the pavilion, no drummers or bearers, and they read first at 960x540 and still at 480x270.",
         "The pavilion dome ends in a plain gold ball and a pointed bud finial, with no crescent or hook (checked at 4x zoom); its tile bands and the pool's tile border are geometric and floral only, with no letter-like marks; the lute neck carries only fret lines.",
         "Lapis is the dominant accent (the dancer's robe, the tile bands and the pool), with malachite, vermilion and turquoise in support and gold kept to trims, the finial and the basket rim.",
         "No animals or birds; one turquoise-domed garden pavilion, a fountain, cypresses, flowering trees and lilac rocks, all lighter than the figures; no minarets.",
         "Fine ink line, flat jewel-tone gouache and a wide ivory margin that feathers on every side (gate PASS 99.9%), matching the card anchor and the approved victory/science attempt 2."
-      ],
-      "approvedAttempt": 3
+      ]
     },
     "victory/military": {
       "id": "victory/military",
@@ -2187,14 +2205,14 @@
       "bytes": {
         "military.avif": 52894
       },
+      "approvedAttempt": 4,
       "reasons": [
         "Every round 3 fault is fixed: only the two lead soldiers (vermilion coat raising a plain round brass shield, lapis coat holding a tall spear with a plain vermilion pennant) plus exactly two tiny figures on the battlements; the domed pavilion and side wings are gone, replaced by cypresses, flowering shrubs and lilac rocks.",
         "No text: the gate's arch is pure geometric lapis strapwork around a closed wooden door, the shield is plain with three bosses, the pennant is solid vermilion with no marks (all checked at 3x zoom). The tower tops carry machicolation corbels drawn as simple ink brackets, which read as stonework, not glyphs, at the shipped size.",
         "Coats are clean, flat gouache with small gold sprigs, no stains; no birds or animals; the gate towers are short crenellated fortification towers with small domed kiosks, not minarets, and nothing reads as an emblem or national symbol.",
         "Vermilion leads the palette (coat, pennant, trousers, flowers) with lapis in support and gold kept to the shield, finials and trims; the two soldiers read first at 960x540 and at 480x270.",
         "Line, palette and density match the anchors and the approved victory scenes; the scene fades into a plain ivory margin on all four sides (gate PASS 83.0%)."
-      ],
-      "approvedAttempt": 4
+      ]
     },
     "victory/science": {
       "id": "victory/science",
@@ -2210,13 +2228,13 @@
       "bytes": {
         "science.avif": 48378
       },
+      "approvedAttempt": 2,
       "reasons": [
         "Every round 1 fault is fixed: no animals or birds, two large scholars in malachite robes (one raising his arm in celebration, one unrolling the star chart) fill the middle third, and the scene sits inside a wide ivory margin with nothing touching any edge (gate PASS 100%).",
         "Malachite is clearly the dominant accent (both robes and the tiled stand), with lapis in the chart and gold kept to the thin-ringed armillary sphere and the finial.",
         "No text: the star chart has only gold dots, stars, concentric circles and radial lines, and the pavilion and stand carry floral rosettes, arabesque and an eight-pointed geometric star, with no letter forms (checked at 2.5x to 6x zoom). The pavilion finial is a plain gold ball and bud.",
         "Reads at once at 480x270 (two scholars, a sphere, a star chart) and matches the anchors' fine ink line, flat jewel-tone gouache and calm ivory background; one domed pavilion and a pool, no minarets."
-      ],
-      "approvedAttempt": 2
+      ]
     },
     "wonder/appian-way": {
       "id": "wonder/appian-way",
@@ -2299,23 +2317,23 @@
       "out": "wonders/great-library",
       "gen": "1536x1024",
       "crop": "3:2",
-      "subject": "a domed library building with scroll-filled arcades",
+      "subject": "a Hellenistic library (pitched and flat roofs only, no domes of any kind, no towers; gold only as tiny accents on the scroll ends and the gable tip): a long open colonnade, a stoa of slender pale stone columns under a low pitched tiled roof with a plain triangular gable, its back wall lined floor to ceiling with square pigeonholes each holding the round ends of rolled blank scrolls; in front one scholar in an ochre robe sits at a plain wooden table unrolling a blank scroll and a second scholar carries an armful of scrolls; before the colonnade a small garden court with a square pool, low flowering shrubs and two small cypresses",
       "accent": "ochre",
       "status": "approved",
-      "attempt": 2,
-      "promptAmend": "Keep the composition: the domed ochre and lapis library building centred and whole, its open arcades lined with shelves of rolled blank scrolls (show mostly scrolls in pigeonhole racks rather than bound book spines), two or three readers with blank scrolls, a central stair and a small pool with a fountain. In the foreground use only flowering shrubs, low rocks and a few cypresses; no peacock, no deer, no birds or animals of any kind. Keep the side pavilions small and secular.",
+      "attempt": 5,
+      "promptAmend": "Keep attempt 4's composition exactly: the symmetric Hellenistic stoa of pale Ionic columns under a low terracotta tiled roof with one plain triangular gable centred over the middle and a small plain gold apex, its back wall lined with wooden pigeonholes of rolled scrolls, one scholar in an ochre robe seated at a wooden table unrolling a scroll and one in a lapis robe carrying an armful of scrolls, the steps, the square garden pool with a single plain jet, the cypresses and flowering shrubs placed symmetrically, one small open kiosk with a red tiled roof at each side, rounded pastel hills behind, no domes, and the pale ivory paper ground thinning out on every side. Change two things. First, the open scroll on the scholar's table is completely blank: one flat, even cream colour with no lines, rows, dashes, dots, ruling, texture or marks of any kind, with only its ink outline and the gold rod ends. Second, the pool is a flat rectangle tilted up toward the viewer with parallel sides, its water flat lapis with a few fine patterned ripple lines in the miniature manner, no concentric rings and no spray.",
       "bytes": {
-        "great-library.avif": 60343,
-        "great-library@thumb.avif": 16156
+        "great-library.avif": 52126,
+        "great-library@thumb.avif": 20218
       },
-      "approvedAttempt": 2,
+      "approvedAttempt": 5,
       "reasons": [
-        "Subject reads at once at 480x320: a domed library centred and whole, its open arcades lined with pigeonhole racks of rolled scrolls, readers at work, a central stair and a fountain pool.",
-        "Ochre is the dominant accent (the dome, facade and paving) with lapis tile panels and domes; the main dome is an ochre tiled dome with arabesque, and gold is limited to finials and the sun disc.",
-        "Every scroll is blank, including the open ones held by the three readers; no text, pseudo-writing or inscribed frieze on the tile panels.",
-        "No peacock, deer, birds or any animals; the side kiosks are small secular garden pavilions with seated readers; no minarets.",
-        "Three readers in the hall and one in each side kiosk: no crowd.",
-        "Passes the gate (band 94.0%); flowering shrubs and rocks thin into the ivory paper on every side."
+        "Gate PASS (band 94.4%, dE00 6.1). It replaces the approved attempt 2: the dome problem is gone. It shows a symmetric Hellenistic stoa of pale Ionic columns under a low terracotta tiled roof with one plain centred gable, two small open kiosks with pitched tiled roofs, and no domes, towers, villas or mosque-like forms anywhere.",
+        "Every cause of the attempt 3 and 4 rejections is fixed. The open scroll on the table is blank, one even cream colour with no rows or dashes, checked at 3x and contrast-stretched. The gable apex and the kiosk tops carry small plain gold knobs, not fleur-de-lis. The pool is a flat rectangle of lapis with patterned ripple lines, with no concentric rings and no jet. Nothing but pastel hills, cypresses and flowering trees stands behind the stoa.",
+        "The subject reads at once at the 480x320 thumbnail: the scroll-pigeonhole wall, one scholar in ochre unrolling a scroll at a table and one in lapis carrying scrolls, the steps and the pool. There are two figures, no crowd and no animals. Gold appears only as small accents (finials, scroll rod ends, ripple lines), and the ochre accent carries through the robe and the garden ground.",
+        "No text or marks anywhere: the tympanum, steps, podium, pool rim and sky are clean in a full-image contrast stretch. The figures are flat gouache inside ink contours, matching the anchors.",
+        "Edges: the painting thins to paper at the top (about 56 px) and the bottom (about 51 px). Foliage tips reach about 11 to 12 px from the left and right edges. That matches the approved set (colossus 13, hanging-gardens 14, temple-of-artemis 16, attempt 2 itself 21 to 26), and the band check is 94.4%.",
+        "At least as good as attempt 2: less lavish in tilework, but it reads more clearly as a library at thumbnail size and it obeys the gold, dome and mosque rules that attempt 2 breaks. Minor and accepted: the garden ground is an ochre sand fill rather than bare paper, as in the pyramids and sphinx wonders, and it feathers out at the bottom. Reprocess with process.mjs --id wonder/great-library so the shipped AVIFs and art/originals/wonder/great-library.webp come from attempt 5. Rewrite the manifest subject in master (still 'a domed library building') to the Hellenistic subject when M10A1 lands."
       ]
     },
     "wonder/great-lighthouse": {
@@ -2470,18 +2488,22 @@
       "out": "wonders/statue-of-zeus",
       "gen": "1536x1024",
       "crop": "3:2",
-      "subject": "a colossal seated statue inside a columned temple hall",
+      "subject": "the colossal seated statue of an old bearded king of the gods (no finials, no crowns, no lilies, no fleur-de-lis, no heraldic or emblem shapes, no wings, no winged figure in his hand, no kneeling worshippers): an ancient carved and painted temple statue, unmistakably a statue and unmistakably male, with a broad bare chest and shoulders, a full curly grey beard and curly hair bound by a plain band, a calm still face, skin painted the flat pale ivory of carved stone, a deep lapis robe with a thin gold hem draped over his lap and one shoulder, one hand resting on his knee and the other holding a plain upright staff; he sits on a massive plain stone throne on a low plain plinth and is enormous, his head almost touching the roof beam, while a small plain doorway and one tiny robed attendant at his feet, no taller than the throne's footstool, show his scale; all of it inside a tall temple hall of plain saffron-ochre columns under a flat roof with a plain moulded cornice and nothing standing on top, with wide ivory paper above and around",
       "accent": "saffron",
-      "status": "needs-human",
-      "attempt": 3,
-      "promptAmend": "Keep attempt 3's composition exactly: the open hall of six slender lapis columns with plain leaf-scroll capitals and a flat blue-and-gold patterned roof beam, whole inside the frame with wide ivory paper above. Keep the plain rosette pedestal, the three small visitors standing and talking in front, the small domed kiosks on pastel hills at both sides, and the cypresses. Change three things. (1) The roof line: end the roof beam with a plain moulded cornice and at most three small plain gold balls on short stems; no fleur-de-lis, no lily, spearhead, crescent, cross or any other emblem shape. (2) The statue: make it plainly a carved statue of a mature man. Give him a short rounded beard and short wavy hair, a plain thin circlet with no jewels, and a calm simple miniature face (almond eyes, a short ink line for nose and mouth). Paint his skin the same flat pale ivory as the stone throne and pedestal, so the figure, throne and plinth read as one sculpted object, and paint his robe in flat saffron with dark ink fold lines and no tonal shading. Seat him on a tall plain plinth whose top is above the visitors' heads, and scale him so his head nearly reaches the ceiling beam. (3) The pool: a flat rectangle tilted up toward the viewer with parallel sides, not narrowing toward the hall, still flat lapis with fine ripple lines and no reflection.",
-      "bytes": {},
+      "status": "approved",
+      "attempt": 6,
+      "promptAmend": "Keep this composition and every element listed: the colossal seated bearded male statue in pale ivory with a lapis robe and thin gold hem, the plain staff, the plain stone throne and plinth, the tiny plain doorway and one tiny attendant at the plinth's foot, the saffron-ochre columns, the plain moulded cornice with nothing on top, and the light landscape wings with one small domed kiosk on each side. Change the drawing manner and the scale. Paint the statue in flat Persian-miniature gouache like the figures of a Safavid manuscript: flat pale ivory skin with only a few fine ink contour lines for the chest and arms and no muscle shading or anatomical modelling; the beard and hair as rows of stylised ink curls; the robe as a flat lapis field with a few dark ink fold lines and no tonal shading. Draw the hall as a flat frontal elevation: one straight row of evenly spaced columns of equal height standing side by side, a flat lintel band and a flat back wall, with no receding side colonnades, no converging ceiling beams and no depth. Make the whole hall smaller so its cornice ends at least one eighth of the picture height below the top edge, with plain ivory paper above it and the hall filling about the middle half of the width. The attendant stands sideways carrying a small ewer, not facing or bowing to the statue.",
+      "bytes": {
+        "statue-of-zeus.avif": 42950,
+        "statue-of-zeus@thumb.avif": 12277
+      },
+      "approvedAttempt": 5,
       "reasons": [
-        "The three roof finials are gold fleurs-de-lis, a European heraldic emblem, and they are visible even at the 480x320 thumbnail. art/style.md forbids political, national and heraldic emblems on buildings, and the emblem is also foreign to the idiom.",
-        "The colossal figure no longer reads as a statue. It is painted as a living young woman: flesh-toned skin, a long braid, a fine-featured, lightly modelled face and a jewelled circlet. At thumbnail size it looks like a giant person enthroned in a pavilion, not a colossal seated statue. Round 2 asked for a calm bearded man.",
-        "The pool is drawn as a trapezoid narrowing toward the hall, a slight converging perspective, where the flat tilted-up rectangle used in the approved mausoleum is what the idiom wants.",
-        "Round 2's fixes held and should be kept. The open hall of six lapis columns with plain leaf capitals is whole, with wide paper above. The rosette pedestal and the plain staff and olive branch are right. Three visitors stand and talk, with nobody kneeling. The pool is flat lapis with ripples and no reflection. The side pavilions are small domed kiosks. Margins are wide (band 99.7%), and saffron dominates.",
-        "Last review round (r3) of the M9d batch: left for the owner, the placeholder stays."
+        "Approving attempt 5 (made 17:47, never reviewed before this round) in preference to the current attempt 6. apply-review allows an approval of an earlier attempt; gate PASS, band 92.9%, dE00 8.1.",
+        "Every cause of the earlier rejections is gone: an unmistakable colossal SEATED bearded statue on a plain ivory throne and plinth, its skin the same flat pale ivory as the stone, so it reads as a carved statue and not a living person; a lapis robe with a thin gold hem; a plain straight cornice with nothing on the roof line (no finials, lilies or emblems); a flat frontal hall of six equal saffron columns on one plane, no receding colonnade or ceiling; wide ivory paper above. The scale cue works at 480x320: the head nearly reaches the beam and dwarfs the tiny plinth doorway and the single small attendant.",
+        "The figure is drawn with ink contours and flat fields; only a few contour lines mark the chest and arm (no six-pack, shaded biceps or tonal drapery as in attempt 4). Acceptable for a carved statue, and it holds at thumbnail size.",
+        "No text, letters or marks anywhere (checked the plinth, throne, hall wall and all four quadrants at full size and contrast-stretched). The attendant walks past carrying a small ewer, turned away from the statue: no kneeling, offering or rite. No animals, no religious emblems other than the statue itself, small domed kiosks and cypresses on pastel hills at both sides thin into ivory paper; gold only on the headband, staff, hem and kiosk finials.",
+        "Why not attempt 6: its ground is a flat saffron-sand fill (about rgb(228,187,120)) running across the whole bottom edge and both lower corners, so the bottom does not feather (band 50.7%, the minimum that passes), and the torso and face carry more anatomical shading than attempt 5."
       ]
     },
     "wonder/temple-of-artemis": {
