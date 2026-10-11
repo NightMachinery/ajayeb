@@ -424,8 +424,11 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
         ? `${name} would build it for free.`
         : `${name} would pay ${coins} for it.`;
     };
-    await driver.openCard(slot.card);
+    // A covered card is aria-disabled (nothing can be done with it), yet a
+    // tap still opens its sheet, so Playwright's enabled check is skipped.
+    await driver.visible(`.card-structure [data-card="${slot.card}"]`).click({ force: true });
     const sheet = page.locator('dialog[open]');
+    await expect(sheet.locator(`[data-card-sheet="${slot.card}"]`)).toBeVisible();
     // Hot-seat: both lines name their player, the one to move first.
     await expect(sheet.locator('[data-covered-cost="own"]')).toHaveText(
       line(names[seat], slot.costs[seat])
