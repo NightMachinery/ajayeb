@@ -111,7 +111,7 @@ it, so all of them count as one client address.
    - anything else (not a `hello`, malformed JSON, a token of the wrong
      shape): an `error` frame with code `bad-hello`, then 1008 `bad-hello`.
 3. **Requests.** After `welcome`, the client sends `create`, `join`, `act`,
-   `undo`, `resync`, `leave` and `rematch`. The server handles one
+   `undo`, `hints`, `resync`, `leave` and `rematch`. The server handles one
    connection's requests one at a time, in the order they arrive, and every
    outcome comes back as frames (`created`, `state`, `reject`, `error`). A
    refused request leaves the connection open, whatever the frame says. A
@@ -234,6 +234,15 @@ Creates a room and joins the sender to it.
   the entry of the creator's seat, an `ai` room the first entry, and a
   hot-seat room both. An absent or empty entry falls back to the `hello`
   name (or a default for a hot-seat room's second seat).
+- `hints` is optional: the game's hint settings (see `hints` below), an
+  object with all twelve families as booleans. Absent means the defaults
+  of the mode: every family on, except `advisor`, which is on only in an
+  `ai` room. A `hints` object that lacks a family, or holds `null` for one,
+  is refused as `bad-request`.
+
+The creator becomes the game's **admin**, the one user who may change its
+hint settings. The admin and the settings are stored with the room, so they
+survive a reload and a server restart, and a rematch keeps both.
 
 The answer is `created` with the room's code, then the room's first
 `state`. Over the room creation limit the answer is `reject rate` with seq
@@ -367,6 +376,33 @@ busy`, and `reject rate` with seq 0: the request that creates the rematch
 room counts against the requester's room creation limits, like a `create`.
 A request answered with a rematch code that already exists counts nothing.
 
+### hints
+
+Replaces the game's hint settings. Only the game's admin may send it.
+
+```json
+{"t": "hints", "code": "K7QX2M", "seq": 19, "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": false, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false}}
+```
+
+- `seq` is the client's request counter, shared with `act` and `undo` (see
+  idempotency below). There is no `base`: the settings are not part of the
+  game, so a change never goes stale and does not change the room version.
+- `hints` is the whole new settings object, every family present. The
+  families are `prices`, `economy`, `science`, `military`, `threats`,
+  `tempo`, `wonders`, `tokens`, `scoring`, `counting`, `recap` and
+  `advisor`. They are the same for both players: they say what the game's
+  hints may show, and each client draws its hints from them. A player may
+  hide more on their own screen; that choice stays on the device and never
+  reaches the server.
+
+The room checks, in order: the connection has joined (else `bad-request`)
+and is not a spectator (else `not-admin`); the `seq` is new (a repeated one
+only gets the current `state` with an `ack`); the sender is the admin (else
+`not-admin`); the game is not over (else `game-over`). Then it stores the
+settings, adds an entry to the room log (see `roomLog` under `state`), and
+sends every connection a `state`, the sender's with an `ack`. The admin may
+change the settings in the lobby too, before the second player arrives.
+
 ## Server frames
 
 ### welcome
@@ -413,15 +449,17 @@ full game view described under "The view and its events" below.
       {"seat": 0, "name": "Sara", "kind": "human", "connected": true, "you": true},
       {"seat": 1, "name": "Omid", "kind": "human", "connected": true, "you": true}
     ],
-    "spectators": 0
+    "spectators": 0,
+    "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": true, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false}
   },
-  "you": {"seats": [0, 1], "canAct": true},
+  "you": {"seats": [0, 1], "canAct": true, "admin": true},
   "canUndo": true,
   "ack": {"clientId": "4f1c9a2e7b5d", "seq": 10},
   "events": [
     {"kind": "build", "private": false, "seat": 1, "card": "clay-pool"},
     {"kind": "reveal", "private": false, "card": "stone-reserve", "slot": 10}
   ],
+  "roomLog": [],
   "view": {
     "schema": 1,
     "ply": 10,
@@ -441,11 +479,14 @@ full game view described under "The view and its events" below.
   `finished`; one entry per seat with its display name, its `kind` (`human`,
   `bot`, or `open` for a seat nobody has taken yet), the bot's level as `bot`
   for a bot seat, whether someone is `connected` there (a bot always is),
-  and whether this connection holds it (`you`); and the number of
-  `spectators`.
+  and whether this connection holds it (`you`); the number of
+  `spectators`; and the game's hint settings, `hints` (see the `hints`
+  frame).
 - `you.seats` are the seats this connection may act for (both in a hot-seat
   room, one for a player, none for a spectator), and `you.canAct` says
-  whether one of them has a legal action now.
+  whether one of them has a legal action now. `you.admin` says whether this
+  connection's user is the game's admin, who may send `hints`; it is never
+  true for a spectator.
 - `canUndo` says whether an `undo` with this frame's version as its base
   would be accepted now.
 - `thinking`, present only while a bot is searching, is the bot's seat.
@@ -466,6 +507,20 @@ full game view described under "The view and its events" below.
   replaces its log with it, and must not animate or toast it. It holds at
   most 512 entries (`wire.MaxHistory`, the newest kept); a game takes at most
   `engine.MaxGameActions` (189) actions, so a real game never reaches the cap.
+- `roomLog` is every room-level entry of the game log so far, oldest first:
+  things that happened to the room rather than in the game, which today
+  means a change of the hint settings. Every frame carries the whole list,
+  the same for every viewer, and the room keeps the newest 64
+  (`wire.MaxRoomLog`). An entry is
+  `{"kind": "hints", "at": 4, "seat": 0, "on": ["advisor"], "off": ["prices"]}`:
+  `at` is the ply the change was made at, so the client shows it before the
+  history entry of that ply; `seat` is the admin's seat, absent in a
+  hot-seat room, where the admin holds both; `on` and `off` list the
+  families switched, in family order. Changes made by the same seat at the
+  same ply fold into one entry, and an entry whose changes cancel out is
+  dropped. After an undo, entries past the new ply move back to it. The
+  room log is stored with the room, but it is not part of the game log
+  (`ajayeb-log/1`), which records only the game.
 - `view` is the game as this viewer may see it, including its `choices`.
 
 ### reject
@@ -513,8 +568,12 @@ A reject refuses one request, and the client can usually recover.
 - `bad-request`: the frame is malformed; a second `hello`; a request for a
   room this connection has not joined; an `undo` in an online room or from a
   spectator; a `rematch` before the game is over.
+- `not-admin`: a `hints` frame from a player who is not the game's admin, or
+  from a spectator.
+- `game-over`: a `hints` frame after the game has ended; the settings of a
+  finished game no longer change.
 
-A refused `act` or `undo` does not use up its `seq`, so the client may send
+A refused `act`, `undo` or `hints` does not use up its `seq`, so the client may send
 it again with the same `seq`.
 
 ## Error codes
@@ -550,10 +609,10 @@ changed under them.
 
 ### Idempotency
 
-Each `act` and `undo` carries a `seq`. The rules:
+Each `act`, `undo` and `hints` carries a `seq`. The rules:
 
-- `seq` is a counter per client id: start at 1 and add one for every `act`
-  and `undo` the tab sends, in any room.
+- `seq` is a counter per client id: start at 1 and add one for every `act`,
+  `undo` and `hints` the tab sends, in any room.
 - The room remembers, for each user and client id, the last `seq` it
   applied. A request whose `seq` is not newer than that is not applied
   again: the sender only receives the current `state` with an `ack` for that
