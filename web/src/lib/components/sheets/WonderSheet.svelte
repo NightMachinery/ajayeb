@@ -5,7 +5,8 @@
   // tapped goes under it. The button sends nothing; the move itself is the
   // card's wonder:<wonder>:<card> choice, confirmed in the card sheet. When
   // the wonder cannot be built now the sheet says why, from the server's
-  // reason.
+  // reason. Reached from a seat's wonder list, it has a Back button to it.
+  import ArrowLeft from '@lucide/svelte/icons/arrow-left';
   import { wonderBySlug } from '$lib/catalog';
   import { cardName, effectsText, wonderName } from '$lib/components/card/effect-text';
   import { t } from '$lib/i18n';
@@ -33,9 +34,12 @@
     canAct: boolean;
     onbuild: (slug: string) => void;
     onclose: () => void;
+    /** When given, a Back button returns to the wonder list it came from. */
+    onback?: () => void;
   }
 
-  let { open, slug, state, buildable, reason, coins, canAct, onbuild, onclose }: Props = $props();
+  let { open, slug, state, buildable, reason, coins, canAct, onbuild, onclose, onback }: Props =
+    $props();
 
   const titleId = 'wonder-sheet-title';
   const wonder = $derived(slug ? wonderBySlug(slug) : undefined);
@@ -44,6 +48,17 @@
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
   {#if slug && wonder}
     <div class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4" data-wonder-sheet={slug}>
+      {#if onback}
+        <button
+          type="button"
+          class="-ms-2 flex min-h-11 items-center gap-1 self-start rounded-control px-2 text-sm font-semibold text-fg-muted hover:text-fg"
+          data-control="wonder-list-back"
+          onclick={onback}
+        >
+          <ArrowLeft class="size-4 rtl:-scale-x-100" aria-hidden="true" />
+          {t('board.wonders.back')}
+        </button>
+      {/if}
       <h2 id={titleId} class="font-display text-xl text-fg">{wonderName(slug)}</h2>
       <div class="mx-auto w-full max-w-[280px]">
         <WonderTile

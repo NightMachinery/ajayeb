@@ -12,8 +12,13 @@
   // indicator of a bot seat that is thinking. `presence` shows an online
   // player's presence: on the strip by the name, and on
   // a line above the desktop column. Wonder taps (the wonder-first flow)
-  // are reported through onwonder when the caller passes it.
-  import type { Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  // are reported through onwonder when the caller passes it (the desktop
+  // column's rows); the strip's single wonder button reports onwonders,
+  // which opens the seat's wonder sheet. `buildable` holds the wonders the
+  // view's choices can build now, marked on that button and on the rows.
+  // `bot` shows the bot's avatar by its name, and `ended` turns off the
+  // danger warnings once the game is over.
+  import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import { cardBySlug } from '$lib/catalog';
   import { t } from '$lib/i18n';
   import type { Presence } from '$lib/ui/online';
@@ -35,6 +40,14 @@
     /** The player's presence in an online room. */
     presence?: Presence;
     onwonder?: (wonder: WonderView) => void;
+    /** The strip's wonder button: opens this seat's wonder sheet. */
+    onwonders?: () => void;
+    /** Wonders a choice of the view can build now. */
+    buildable?: ReadonlySet<string>;
+    /** The bot's level when a bot plays this seat. */
+    bot?: BotLevel;
+    /** The game has ended: no danger warnings. */
+    ended?: boolean;
     onopen?: () => void;
     class?: string;
   }
@@ -50,6 +63,10 @@
     thinking = false,
     presence,
     onwonder,
+    onwonders,
+    buildable,
+    bot,
+    ended = false,
     onopen,
     class: className = ''
   }: Props = $props();
@@ -97,7 +114,19 @@
         <PresenceDot {presence} {name} labelled />
       </div>
     {/if}
-    <CityPanel {name} {seat} {player} {military} {score} {onwonder} {thinking} class="bg-panel" />
+    <CityPanel
+      {name}
+      {seat}
+      {player}
+      {military}
+      {score}
+      {onwonder}
+      {buildable}
+      {bot}
+      {ended}
+      {thinking}
+      class="bg-panel"
+    />
   {:else}
     <PlayerStrip
       {name}
@@ -105,7 +134,10 @@
       {player}
       {military}
       {score}
-      {onwonder}
+      {onwonders}
+      wonderBuildable={(buildable?.size ?? 0) > 0}
+      {bot}
+      {ended}
       {thinking}
       {presence}
       {onopen}

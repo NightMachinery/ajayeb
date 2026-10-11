@@ -6,6 +6,12 @@
   //   city   a row in a city panel: a small art thumb, the name, the effect
   //          glyphs and the state: built (with the card tucked under it), out
   //          of the game, or open with its affordability badge
+  //   row    a line of a wonder list (the wonder sheet, the desktop city
+  //          panel), drawn on the panel rather than on card paper: the art
+  //          thumb, the name, a one-line effect summary in words, the
+  //          printed cost and ONE status: "Built with Palisade", "Out of
+  //          the game", "Not built", or, when the caller says a choice of
+  //          the view can build it now, "Can build now" in the accent
   //
   // The art is the wonder's approved bitmap (3:2, feathered into the paper)
   // when the generated art index has one, and a procedural sky with the
@@ -28,11 +34,11 @@
   import AffordBadge from '../card/AffordBadge.svelte';
   import CostPips from '../card/CostPips.svelte';
   import EffectGlyphs from '../card/EffectGlyphs.svelte';
-  import { cardName, wonderName } from '../card/effect-text';
+  import { cardName, effectsText, wonderName } from '../card/effect-text';
 
   interface Props {
     slug: string;
-    size?: 'draft' | 'city';
+    size?: 'draft' | 'city' | 'row';
     /** The owner's WonderView, for the built, removed and tucked state. */
     state?: WonderView;
     afford?: Afford;
@@ -42,6 +48,8 @@
     takenBy?: string;
     /** Draft: a shorter 2:1 art band, for a phone's draft grid. */
     compactArt?: boolean;
+    /** Row: a wonder choice of the view can build it now. */
+    buildable?: boolean;
     class?: string;
   }
 
@@ -53,6 +61,7 @@
     dim = false,
     takenBy,
     compactArt = false,
+    buildable = false,
     class: className = ''
   }: Props = $props();
 
@@ -109,6 +118,59 @@
             >{t('wonder.takenBy', { name: takenBy })}</span
           >
         {/if}
+      </span>
+    </span>
+  {:else if size === 'row'}
+    <span
+      class="wonder-tile relative flex w-full items-center gap-2.5 text-start text-fg {className}"
+      class:removed
+      data-wonder-row={slug}
+      data-size="row"
+      data-built={built}
+      data-buildable={buildable ? '' : undefined}
+      aria-hidden="true"
+    >
+      {@render art(
+        `aspect-[3/2] w-16 shrink-0 rounded-[6px] border [container-type:size] ${built ? 'border-(color:--gold-deep)' : 'border-rule'}`,
+        true
+      )}
+      <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span class="line-clamp-2 font-display text-[15px] leading-tight wrap-normal"
+          >{wonderName(slug)}</span
+        >
+        <span class="line-clamp-2 text-xs leading-snug text-fg-muted"
+          >{effectsText(wonder.effects)}</span
+        >
+        <span class="flex min-h-5 items-center gap-1.5 text-xs">
+          {#if built}
+            <Icon
+              name="badge-check"
+              class="shrink-0 text-[14px] text-(--gold-deep) [--i2:var(--paper)]"
+            />
+            <span class="font-semibold" data-wonder-status="built"
+              >{state?.tucked
+                ? t('wonder.builtWith', { card: cardName(state.tucked) })
+                : t('wonder.built')}</span
+            >
+          {:else if removed}
+            <span class="text-fg-muted" data-wonder-status="removed">{t('wonder.removed')}</span>
+          {:else}
+            <span class="text-[13px]"><CostPips cost={wonder.cost} small /></span>
+            {#if buildable}
+              <!-- Still unbuilt, and buildable this turn: the one status,
+                   in the accent. -->
+              <span
+                class="rounded-full bg-accent px-1.5 py-px text-[11px] font-semibold whitespace-nowrap text-on-accent"
+                data-wonder-status="buildable"
+                data-can-build
+              >
+                {t('wonder.canBuild')}
+              </span>
+            {:else}
+              <span class="text-fg-muted" data-wonder-status="open">{t('wonder.notBuilt')}</span>
+            {/if}
+          {/if}
+        </span>
       </span>
     </span>
   {:else}

@@ -1,10 +1,12 @@
 <script lang="ts">
   // The tablet/desktop column for one seat (UX design sec. 3): name, crest,
   // coins and score, city cards as band stacks grouped by colour, wonders
-  // as a readable list, science and owned tokens, and a calm thinking
-  // indicator while this seat's bot thinks. The same data as PlayerStrip,
-  // laid out as a column instead of a wrapping row. A bot seat shows its
-  // persona's avatar between the crest and the name.
+  // as a list of rows (art, name, effect, cost and one status, and "Can
+  // build now" from the view's choices), science and owned tokens, and a
+  // calm thinking indicator while this seat's bot thinks. The same data as
+  // PlayerStrip, laid out as a column instead of two rows. A bot seat shows
+  // its persona's avatar between the crest and the name. No danger warning
+  // once the game has ended.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t } from '$lib/i18n';
   import { cardBySlug } from '$lib/catalog';
@@ -13,10 +15,11 @@
   import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
+  import WonderList from '../wonder/WonderList.svelte';
   import CityBand from './CityBand.svelte';
   import ResourceChips from './ResourceChips.svelte';
   import ScienceTracker from './ScienceTracker.svelte';
-  import WonderRow from './WonderRow.svelte';
+  import Tally from './Tally.svelte';
 
   interface Props {
     name: string;
@@ -26,6 +29,10 @@
     score?: ScoreView;
     /** When given, the wonders still to build are buttons (the wonder-first flow). */
     onwonder?: (wonder: WonderView) => void;
+    /** Wonders a choice of the view can build now (view/wonders). */
+    buildable?: ReadonlySet<string>;
+    /** The game has ended: no danger warnings. */
+    ended?: boolean;
     /** The bot's level when a bot plays this seat: its avatar shows by the name. */
     bot?: BotLevel;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
@@ -40,6 +47,8 @@
     military,
     score,
     onwonder,
+    buildable,
+    ended = false,
     bot,
     thinking = false,
     class: className = ''
@@ -74,8 +83,8 @@
 
   const crestName = $derived(seat === 0 ? ('crest-sun' as const) : ('crest-moon' as const));
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
-  const militaryThreat = $derived(militaryDanger(military, seat));
-  const scienceThreat = $derived(scienceDanger(player.science));
+  const militaryThreat = $derived(militaryDanger(military, seat, ended));
+  const scienceThreat = $derived(scienceDanger(player.science, ended));
   const danger = $derived(militaryThreat || scienceThreat);
 </script>
 
@@ -98,19 +107,14 @@
         </span>
       {/if}
     </div>
-    <div class="flex items-center gap-2 text-sm font-semibold tabular-nums">
-      <span class="flex items-center gap-0.5" title={t('coins.count', { count: player.coins })}>
-        <Icon name="coin" class="text-coin-ink" />
-        <span data-must-fit>{player.coins}</span>
-      </span>
+    <div class="flex shrink-0 items-center gap-1.5">
+      <Tally kind="coins" value={player.coins} label={t('coins.count', { count: player.coins })} />
       {#if score}
-        <span
-          class="flex items-center gap-0.5 text-fg-muted"
-          title={t('board.player.scorePreview', { total: score.total })}
-        >
-          <Icon name="vp-laurel" />
-          <span data-must-fit>{score.total}</span>
-        </span>
+        <Tally
+          kind="points"
+          value={score.total}
+          label={t('board.player.scorePreview', { total: score.total })}
+        />
       {/if}
     </div>
   </div>
@@ -135,7 +139,7 @@
   {/if}
 
   <ResourceChips production={player.production} tradePrices={player.tradePrices} />
-  <ScienceTracker science={player.science} />
+  <ScienceTracker science={player.science} {ended} />
 
   <div class="flex flex-col gap-1">
     <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
@@ -152,7 +156,7 @@
     <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
       {t('board.citySheet.wonders')}
     </h3>
-    <WonderRow wonders={player.wonders} variant="list" onselect={onwonder} />
+    <WonderList wonders={player.wonders} {buildable} onselect={onwonder} />
   </div>
 
   {#if player.tokens.length > 0}

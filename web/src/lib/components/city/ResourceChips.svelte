@@ -2,9 +2,13 @@
   // The five resource chips of a player strip or city panel: how many of
   // each this seat produces for free (production.fixed) and what it pays
   // per unit to buy one now (tradePrices), both straight from the view's
-  // PlayerView -- no arithmetic of our own. A small choice glyph marks a
-  // resource at least one flexible producer can also make.
+  // PlayerView -- no arithmetic of our own. The count comes first, by the
+  // resource's glyph; the price follows as a small gold coin with the
+  // amount on it, the way cards print coin costs, so the two numbers never
+  // read alike. A small choice glyph marks a resource at least one flexible
+  // producer can also make.
   import { t } from '$lib/i18n';
+  import Coin from '$lib/components/card/Coin.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import type { ProductionView, Resource, ResourceCounts } from '$lib/wire';
@@ -79,15 +83,15 @@
     {@const price = tradePrices[resource]}
     {@const resourceName = t(labelKey(resource))}
     <li
-      class="relative flex items-center gap-0.5 rounded-control border border-rule bg-panel px-1.5 py-0.5 {compact
-        ? 'text-[11px]'
-        : 'text-xs'}"
+      class="relative flex items-center rounded-control border border-rule bg-panel {compact
+        ? 'h-5 gap-0.5 px-1 text-[11px]'
+        : 'gap-1 px-1.5 py-0.5 text-xs'}"
       title={t('board.resource.chip', { resource: resourceName, count, price })}
+      data-resource={resource}
     >
       <Icon name={RESOURCE_ICON[resource]} class={RESOURCE_TEXT_CLASS[resource]} />
-      <span class="font-semibold tabular-nums" data-must-fit>{count}</span>
-      <span class="text-fg-muted" aria-hidden="true">·</span>
-      <span class="text-fg-muted tabular-nums" data-must-fit>{price}</span>
+      <span class="font-semibold tabular-nums" data-must-fit aria-hidden="true">{count}</span>
+      <Coin n={price} class={compact ? 'text-[10px]' : 'text-[11px]'} />
       {#if hasChoice(resource)}
         <span
           class="absolute -end-1 -top-1 grid size-3 place-items-center rounded-full bg-gild text-[8px] text-on-accent"

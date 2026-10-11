@@ -1,26 +1,36 @@
 <script lang="ts">
-  // The phone layout's player strip (UX design sec. 3): name, crest, coins,
-  // the running score preview, the five resource chips, science, wonders
-  // and owned tokens, in one compact row that wraps onto two lines at 360px
-  // wide. Glows when this seat is in military or scientific danger
-  // (lib/view/threats.ts), and shows a calm thinking indicator while this
-  // seat's bot is thinking. In an online room the other player's strip
-  // shows their presence (connected, or away once they drop). A leaf
-  // component: every number comes from the view through plain props,
-  // nothing computed here but the danger check. A bot seat shows its
-  // persona's avatar between the crest and the name.
+  // The phone layout's player strip (UX design sec. 3), in two short rows
+  // so that both strips fit a 360 px phone without scrolling:
+  //
+  //   1. the crest, the bot's avatar and the name (a button that opens the
+  //      city sheet), presence and thinking, a military danger mark, the
+  //      owned progress tokens, coins, victory points, and the wonder
+  //      button ("1/4", glowing when a wonder can be built now)
+  //   2. the five resource chips (production, then the price as a coin)
+  //      and the science count
+  //
+  // The two strips have the same layout. Everything else (the science
+  // slots, the city by colour, each wonder) is in the city sheet and the
+  // wonder sheet. In phone landscape, where the strip is a narrow column,
+  // the rows wrap.
+  //
+  // Glows when this seat is in military or scientific danger
+  // (lib/view/threats.ts), never once the game has ended. A leaf
+  // component: every number comes from the view through plain props.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
+  import { wonderTally } from '$lib/view/wonders';
   import type { Presence } from '$lib/ui/online';
-  import type { BotLevel, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import type { BotLevel, MilitaryView, PlayerView, ScoreView } from '$lib/wire';
   import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
+  import WonderButton from '../wonder/WonderButton.svelte';
   import ResourceChips from './ResourceChips.svelte';
   import ScienceTracker from './ScienceTracker.svelte';
-  import WonderRow from './WonderRow.svelte';
+  import Tally from './Tally.svelte';
 
   interface Props {
     /** The seat's display name (RoomInfo, not the view): data, like a
@@ -30,8 +40,12 @@
     player: PlayerView;
     military: MilitaryView;
     score?: ScoreView;
-    /** When given, the wonders still to build are buttons (the wonder-first flow). */
-    onwonder?: (wonder: WonderView) => void;
+    /** When given, the wonder button opens this seat's wonder sheet. */
+    onwonders?: () => void;
+    /** A wonder of this seat can be built now (from the view's choices). */
+    wonderBuildable?: boolean;
+    /** The game has ended: no danger warnings. */
+    ended?: boolean;
     /** The bot's level when a bot plays this seat: its avatar shows by the name. */
     bot?: BotLevel;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
@@ -51,7 +65,9 @@
     player,
     military,
     score,
-    onwonder,
+    onwonders,
+    wonderBuildable = false,
+    ended = false,
     bot,
     thinking = false,
     presence,
@@ -62,89 +78,99 @@
 
   const crestName = $derived(seat === 0 ? ('crest-sun' as const) : ('crest-moon' as const));
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
-  const militaryThreat = $derived(militaryDanger(military, seat));
-  const scienceThreat = $derived(scienceDanger(player.science));
+  const militaryThreat = $derived(militaryDanger(military, seat, ended));
+  const scienceThreat = $derived(scienceDanger(player.science, ended));
   const danger = $derived(militaryThreat || scienceThreat);
+  const tally = $derived(wonderTally(player));
 </script>
 
+{#snippet identity()}
+  <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
+  {#if bot}<BotAvatar level={bot} class="size-6 shrink-0 short:size-5" />{/if}
+  <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
+{/snippet}
+
 <div
-  class="player-strip flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-panel border px-2.5 py-1.5
+  class="player-strip flex flex-col gap-1 rounded-panel border px-2 py-1.5
     {danger ? 'border-cinnabar ring-2 ring-cinnabar/25' : 'border-rule'} {className}"
+  data-danger={danger ? '' : undefined}
 >
-  {#if onopen}
-    <button
-      type="button"
-      class="-ms-1 flex min-h-8 min-w-0 items-center gap-1.5 rounded-control px-1 hover:bg-panel-sunken"
-      aria-label={openLabel}
-      data-control="open-city"
-      onclick={onopen}
-    >
-      <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
-      {#if bot}<BotAvatar level={bot} class="size-6 short:size-5" />{/if}
-      <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
-    </button>
-  {:else}
-    <div class="flex min-w-0 items-center gap-1.5">
-      <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
-      {#if bot}<BotAvatar level={bot} class="size-6 short:size-5" />{/if}
-      <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
-    </div>
-  {/if}
-
-  {#if presence}
-    <PresenceDot {presence} {name} class="-ms-1.5" />
-  {/if}
-
-  {#if thinking}
-    <span
-      class="-ms-1.5 flex items-center gap-1 text-xs font-semibold text-fg-muted"
-      data-thinking={seat}
-    >
-      <ThinkingDots class={crestTextClass} />
-      {t('board.player.thinking')}
-    </span>
-  {/if}
-
-  <div class="flex items-center gap-2 text-sm font-semibold tabular-nums">
-    <span class="flex items-center gap-0.5" title={t('coins.count', { count: player.coins })}>
-      <Icon name="coin" class="text-coin-ink" />
-      <span data-must-fit>{player.coins}</span>
-    </span>
-    {#if score}
-      <span
-        class="flex items-center gap-0.5 text-fg-muted"
-        title={t('board.player.scorePreview', { total: score.total })}
+  <div class="strip-row flex min-w-0 items-center gap-x-1.5 gap-y-1 short:flex-wrap">
+    {#if onopen}
+      <button
+        type="button"
+        class="-ms-1 flex min-h-9 min-w-0 shrink items-center gap-1.5 rounded-control px-1 hover:bg-panel-sunken"
+        aria-label={openLabel}
+        data-control="open-city"
+        onclick={onopen}
       >
-        <Icon name="vp-laurel" />
-        <span data-must-fit>{score.total}</span>
+        {@render identity()}
+      </button>
+    {:else}
+      <div class="flex min-h-9 min-w-0 shrink items-center gap-1.5">
+        {@render identity()}
+      </div>
+    {/if}
+
+    {#if presence}
+      <PresenceDot {presence} {name} class="-ms-1" />
+    {/if}
+
+    {#if thinking}
+      <span class="-ms-0.5 flex shrink-0 items-center" data-thinking={seat}>
+        <ThinkingDots class={crestTextClass} />
+        <span class="sr-only">{t('board.player.thinking')}</span>
       </span>
     {/if}
+
+    {#if militaryThreat}
+      <span
+        class="grid size-6 shrink-0 place-items-center rounded-full bg-cinnabar/15 text-cinnabar"
+        role="img"
+        aria-label={t('board.player.militaryDanger')}
+        data-military-danger
+      >
+        <Icon name="shield" class="text-sm" />
+      </span>
+    {/if}
+
+    <span class="flex-1 short:hidden" aria-hidden="true"></span>
+
+    {#if player.tokens.length > 0}
+      <ul class="flex shrink-0 items-center ps-1.5" aria-label={t('board.citySheet.tokens')}>
+        {#each player.tokens as slug (slug)}
+          <li class="-ms-1.5"><ProgressToken {slug} size="xs" owned /></li>
+        {/each}
+      </ul>
+    {/if}
+
+    <Tally kind="coins" value={player.coins} label={t('coins.count', { count: player.coins })} />
+    {#if score}
+      <Tally
+        kind="points"
+        value={score.total}
+        label={t('board.player.scorePreview', { total: score.total })}
+      />
+    {/if}
+
+    <WonderButton
+      built={tally.built}
+      total={tally.total}
+      buildable={wonderBuildable}
+      {name}
+      onclick={onwonders}
+    />
   </div>
 
-  {#if militaryThreat}
-    <span
-      class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar"
-    >
-      {t('board.player.militaryDanger')}
-    </span>
-  {/if}
-  {#if scienceThreat}
-    <span
-      class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar"
-    >
-      {t('board.player.scienceDanger')}
-    </span>
-  {/if}
-
-  <ResourceChips production={player.production} tradePrices={player.tradePrices} compact />
-  <ScienceTracker science={player.science} compact />
-  <WonderRow wonders={player.wonders} variant="chips" onselect={onwonder} />
-
-  {#if player.tokens.length > 0}
-    <ul class="flex gap-1" aria-label={t('board.citySheet.tokens')}>
-      {#each player.tokens as slug (slug)}
-        <li><ProgressToken {slug} size="sm" owned /></li>
-      {/each}
-    </ul>
-  {/if}
+  <div
+    class="strip-row flex min-w-0 items-center justify-between gap-x-1.5 gap-y-1 short:flex-wrap"
+  >
+    <ResourceChips
+      production={player.production}
+      tradePrices={player.tradePrices}
+      compact
+      class="flex-nowrap! short:flex-wrap!"
+    />
+    <ScienceTracker science={player.science} pill {ended} />
+  </div>
 </div>
