@@ -16,6 +16,7 @@ import { card } from './en/card';
 import { choices } from './en/choices';
 import { common } from './en/common';
 import { game } from './en/game';
+import { hints } from './en/hints';
 import { home } from './en/home';
 import { online } from './en/online';
 import { session } from './en/session';
@@ -38,7 +39,8 @@ export const en = {
   ...home,
   ...game,
   ...choices,
-  ...online
+  ...online,
+  ...hints
 } as const;
 
 export type MessageKey = keyof typeof en;
