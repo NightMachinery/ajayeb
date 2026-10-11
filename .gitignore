@@ -60,3 +60,9 @@ CLAUDE.local.md
 
 # Logs
 *.log
+
+# Some global git excludes files ignore "Icon" (the macOS folder-icon file),
+# which also matches our icon/ art directories on a case-insensitive disk.
+# Re-include them.
+!/art/originals/icon/
+!/web/static/art/icon/
