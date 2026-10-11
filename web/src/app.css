@@ -175,10 +175,17 @@
   body {
     min-height: 100dvh;
     margin: 0;
-    /* An explicit background on body too, plus a soft glow at the top, like
-       light falling on the page. Bitmap textures replace this later. */
-    background:
-      radial-gradient(130% 70% at 50% -10%, var(--table-glow), transparent 70%), var(--table);
+    /* An explicit background on body too: a soft glow at the top, like
+       light falling on the page, over the theme's paper or night texture
+       (tokens.css --table-texture), tiled at its own 512 px. */
+    background-color: var(--table-texture-base);
+    background-image:
+      radial-gradient(130% 70% at 50% -10%, var(--table-glow), transparent 70%),
+      var(--table-texture);
+    background-size:
+      auto,
+      512px 512px;
+    background-blend-mode: normal, var(--table-texture-blend);
     color: var(--fg);
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
