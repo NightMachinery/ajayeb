@@ -37,8 +37,8 @@
 
 <button
   type="button"
-  class="wonder-button relative flex h-9 shrink-0 items-center gap-1 rounded-control border px-2 text-[13px]
-    font-semibold tabular-nums transition-colors after:absolute after:-inset-1 after:content-['']
+  class="wonder-button relative flex h-9 shrink-0 items-center gap-1 rounded-control border px-2 text-[13px] font-semibold
+    tabular-nums transition-colors after:absolute after:-inset-1 after:content-[''] short:px-1.5
     {buildable
     ? 'border-accent bg-accent-soft text-accent-soft-fg ring-2 ring-accent/45'
     : 'border-rule-strong bg-panel text-fg hover:border-accent'} {className}"

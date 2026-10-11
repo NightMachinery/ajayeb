@@ -12,8 +12,9 @@
   // The two strips have the same layout. Everything else (the science
   // slots, the city by colour, each wonder) is in the city sheet and the
   // wonder sheet. In phone landscape, where the strip is a narrow column,
-  // the rows wrap, and the first always breaks after the name, so both
-  // strips put their tallies and wonder button on the same line.
+  // the rows wrap: the first always breaks after the name and puts the
+  // owned tokens last, so both strips have their tallies and wonder button
+  // on one line of their own.
   //
   // Glows when this seat is in military or scientific danger
   // (lib/view/threats.ts), never once the game has ended. A leaf
@@ -96,7 +97,7 @@
     {danger ? 'border-cinnabar ring-2 ring-cinnabar/25' : 'border-rule'} {className}"
   data-danger={danger ? '' : undefined}
 >
-  <div class="strip-row flex min-w-0 items-center gap-x-1.5 gap-y-1 short:flex-wrap">
+  <div class="strip-row flex min-w-0 items-center gap-x-1.5 gap-y-1 short:flex-wrap short:gap-x-1">
     {#if onopen}
       <button
         type="button"
@@ -138,7 +139,10 @@
     <span class="flex-1 short:h-0 short:basis-full" aria-hidden="true"></span>
 
     {#if player.tokens.length > 0}
-      <ul class="flex shrink-0 items-center ps-1.5" aria-label={t('board.citySheet.tokens')}>
+      <ul
+        class="flex shrink-0 items-center ps-1.5 short:order-last"
+        aria-label={t('board.citySheet.tokens')}
+      >
         {#each player.tokens as slug (slug)}
           <li class="-ms-1.5"><ProgressToken {slug} size="xs" owned /></li>
         {/each}
