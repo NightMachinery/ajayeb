@@ -58,5 +58,18 @@ export const common = {
   'dev.gallery.ornaments.card': 'Card corner rosette and band cartouche',
   'dev.gallery.ornaments.sheet': 'Divider and panel border',
   'dev.gallery.ornaments.table': 'Girih tile: seam test and table texture',
-  'dev.gallery.ornaments.logo': 'Wordmark at 200 px and the favicon'
+  'dev.gallery.ornaments.logo': 'Wordmark at 200 px and the favicon',
+  'dev.gallery.sound': 'Sound board',
+  'dev.gallery.sound.intro':
+    'One button per sound cue, played at the volume chosen here (the Sound setting does not need to be on).',
+  'dev.gallery.sound.volume': 'Volume',
+  'dev.gallery.sound.cue.slide': 'Card slide',
+  'dev.gallery.sound.cue.coin': 'Coin clink',
+  'dev.gallery.sound.cue.flip': 'Flip',
+  'dev.gallery.sound.cue.drum': 'War drum',
+  'dev.gallery.sound.cue.chime': 'Science chime',
+  'dev.gallery.sound.cue.fanfare': 'Fanfare',
+  'dev.gallery.sound.cue.tick': 'Draft tick',
+  'dev.gallery.sound.all': 'Play a busy move',
+  'dev.gallery.sound.allHint': 'A build that pays, moves the pawn and loots, as one frame plays it.'
 } as const satisfies Messages;

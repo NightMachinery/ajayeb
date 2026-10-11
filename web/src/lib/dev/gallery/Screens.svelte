@@ -1,7 +1,7 @@
 <script lang="ts">
   // M5.S05's screens, for a visual check in both themes: Home (with and
   // without a saved game to continue), the two new-game sheets, Settings,
-  // and the hot-seat pass-device interstitial. No live connection: the
+  // the hot-seat pass-device interstitial, and the sound board. No live connection: the
   // sheets' Start buttons are wired to a no-op here, same as the rest of
   // this gallery page's demo controls (see dev/gallery/+page.svelte).
   import { t } from '$lib/i18n';
@@ -11,6 +11,7 @@
   import PassDevice from '$lib/components/screens/PassDevice.svelte';
   import Settings from '$lib/components/screens/Settings.svelte';
   import Online from './Online.svelte';
+  import SoundBoard from './SoundBoard.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
 
   const sampleRooms: readonly SavedRoom[] = [
@@ -83,6 +84,11 @@
     <div class="rounded-panel border border-rule bg-panel p-5">
       <Settings />
     </div>
+  </section>
+
+  <section class="flex flex-col gap-2" data-testid="gallery-sound-section">
+    <h3 class="text-sm font-semibold text-fg-muted">{t('dev.gallery.sound')}</h3>
+    <SoundBoard />
   </section>
 
   <section class="flex flex-col gap-2">
