@@ -694,6 +694,14 @@ Beside the socket, the server answers plain HTTP:
 - `GET /health` answers `{"ok": true, "version": "dev"}`, with the build
   version.
 - `/ws` is the WebSocket endpoint above.
+- `GET /api/rooms/{code}/log` downloads the game log of a finished game
+  (see "The game log"). The log holds the seed, which determines every
+  hidden card, so it answers only once the game has ended, and never for
+  a game whose `hideAtEnd` option keeps the cards hidden after the end.
+  It is limited per client address (a bucket of 10 requests that refills
+  one request every 2 minutes; a miss counts too) and answers 404 for an
+  unknown room, 409 while the game runs, 403 when `hideAtEnd` applies,
+  405 for another method and 429 over the limit.
 - Any other path under `/api/` answers 404
   `{"ok": false, "code": "not-found", "msg": "no such API endpoint"}`.
 - Every other path serves the web client: its built files, and
