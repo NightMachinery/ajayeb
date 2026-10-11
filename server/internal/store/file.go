@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
 
 // Schema is the version of the room file format below. A change to File's
@@ -134,6 +135,35 @@ type File struct {
 	// rematch, once one exists, so that every later rematch request (also
 	// after the room was evicted and reloaded) leads to that same room.
 	Rematch string `json:"rematch,omitempty"`
+
+	// Admin is the user id of the game's admin, who may change Hints: the
+	// user who created the room. Empty in a file written before the field
+	// existed, and in a room made with open seats (a development room)
+	// until its first player claims a seat; package room then decides.
+	Admin string `json:"admin,omitempty"`
+	// Hints are the game's hint settings (docs/dev/decisions.md D23). They
+	// are not part of the game (the replay and Hash ignore them). nil in a
+	// file written before the field existed: package room then uses the
+	// defaults of the mode.
+	Hints *view.HintSettings `json:"hints,omitempty"`
+	// RoomLog is the room-level part of the game log, oldest first: each
+	// change of the hint settings. Package room bounds it.
+	RoomLog []LogEntry `json:"roomLog,omitempty"`
+}
+
+// LogEntry is one room-level event of the game log, as the room file keeps
+// it (package room turns it into wire.RoomLogEntry).
+type LogEntry struct {
+	// Kind is what happened; "hints" is a change of the hint settings.
+	Kind string `json:"kind"`
+	// At is the game's ply when it happened.
+	At int `json:"at"`
+	// Seat is the seat of the player who made the change, or -1 when one
+	// person holds both seats (a hot-seat room).
+	Seat int `json:"seat"`
+	// On and Off are the hint families switched on and off.
+	On  []string `json:"on"`
+	Off []string `json:"off"`
 }
 
 // New returns a fresh lobby/playing File: schema and rules at their current

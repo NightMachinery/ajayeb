@@ -17,6 +17,7 @@ type_mappings:
   json.RawMessage: "unknown"
   view.View: "view.View"
   view.GameEvent: "view.GameEvent"
+  view.HintSettings: "view.HintSettings"
 
 packages:
   - path: github.com/NightMachinery/ajayeb/server/internal/view

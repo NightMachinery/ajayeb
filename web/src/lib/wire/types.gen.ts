@@ -81,6 +81,12 @@ export interface Create {
    * empty entry means "use a default").
    */
   names: string[];
+  /**
+   * Hints are the game's hint settings (every family present); absent
+   * means the defaults of the mode. The creator becomes the game's admin,
+   * who may change them later (the hints frame).
+   */
+  hints?: view.HintSettings;
 }
 /**
  * Join asks to join an existing room as a player or spectator.
@@ -148,6 +154,90 @@ export interface Leave {
 export interface Rematch {
   t: 'rematch';
   code: string;
+}
+
+//////////
+// source: hints.go
+
+/**
+ * HintFamily names one hint family: one switch of view.HintSettings, under
+ * that field's json name.
+ */
+export const HintFamilyPrices = "prices";
+export const HintFamilyEconomy = "economy";
+export const HintFamilyScience = "science";
+export const HintFamilyMilitary = "military";
+export const HintFamilyThreats = "threats";
+export const HintFamilyTempo = "tempo";
+export const HintFamilyWonders = "wonders";
+export const HintFamilyTokens = "tokens";
+export const HintFamilyScoring = "scoring";
+export const HintFamilyCounting = "counting";
+export const HintFamilyRecap = "recap";
+export const HintFamilyAdvisor = "advisor";
+/**
+ * The hint families, in the order the settings list them.
+ */
+export type HintFamily = typeof HintFamilyPrices | typeof HintFamilyEconomy | typeof HintFamilyScience | typeof HintFamilyMilitary | typeof HintFamilyThreats | typeof HintFamilyTempo | typeof HintFamilyWonders | typeof HintFamilyTokens | typeof HintFamilyScoring | typeof HintFamilyCounting | typeof HintFamilyRecap | typeof HintFamilyAdvisor;
+/**
+ * Hints replaces the room's hint settings. Only the game's admin may send
+ * it, while the game has not ended; every connection then receives a state
+ * frame with the new settings and a room log entry naming the families
+ * that changed.
+ */
+export interface Hints {
+  t: 'hints';
+  code: string;
+  /**
+   * Seq is the client's request counter, shared with act and undo: an
+   * applied hints frame uses up its seq, and a repeated one is only
+   * acknowledged.
+   */
+  seq: number /* int */;
+  /**
+   * Hints are the complete new settings: every family must be present.
+   */
+  hints: view.HintSettings;
+}
+/**
+ * MaxRoomLog bounds State.RoomLog: the newest entries are kept.
+ */
+export const MaxRoomLog = 64;
+/**
+ * RoomLogKind says what a room log entry records.
+ */
+export type RoomLogKind = string;
+/**
+ * The room log kinds.
+ */
+/**
+ * RoomLogHints: the admin changed the hint settings.
+ */
+export const RoomLogHints: RoomLogKind = "hints";
+/**
+ * RoomLogEntry is one room-level event of the game log: something that
+ * happened to the room rather than in the game, the same for every viewer.
+ * The client shows it among the game's own events, before the action at
+ * ply At.
+ */
+export interface RoomLogEntry {
+  kind: 'hints';
+  /**
+   * At is the game's ply when it happened: the entry comes after every
+   * history entry of a smaller ply.
+   */
+  at: number /* int */;
+  /**
+   * Seat is the seat of the player who made the change; absent in a
+   * hot-seat room, where one person holds both seats.
+   */
+  seat?: 0 | 1;
+  /**
+   * On and Off are the families switched on and off (kind hints), in
+   * family order.
+   */
+  on: HintFamily[];
+  off: HintFamily[];
 }
 
 //////////
@@ -221,6 +311,11 @@ export interface RoomInfo {
   status: RoomStatus;
   seats: SeatInfo[];
   spectators: number /* int */;
+  /**
+   * Hints are the game's hint settings, the same for every connection
+   * (players and spectators alike); the room sets them.
+   */
+  hints: view.HintSettings;
 }
 /**
  * YouInfo is what this connection may do.
@@ -232,6 +327,11 @@ export interface YouInfo {
    */
   seats: number /* int */[];
   canAct: boolean; // a legal action exists for one of Seats right now
+  /**
+   * Admin says this connection's user is the game's admin, who may change
+   * the hint settings (the hints frame): the player who created the game.
+   */
+  admin: boolean;
 }
 /**
  * Ack acknowledges the act or undo this state frame is a direct response
@@ -296,6 +396,13 @@ export interface State {
    * frame carries both, happened after History's last entry.
    */
   history?: HistoryEntry[];
+  /**
+   * RoomLog is every room-level entry of the game log so far (at most
+   * MaxRoomLog, the newest), oldest first: things that happened to the
+   * room rather than in the game, such as a change of the hint settings.
+   * Every frame carries the whole list, the same for every viewer.
+   */
+  roomLog: RoomLogEntry[];
   view: view.View;
 }
 /**
@@ -308,10 +415,12 @@ export const RejectCodeIllegal = "illegal"; // the key is not in the current leg
 export const RejectCodeNotYourTurn = "not-your-turn"; // this connection does not hold the seat to move
 export const RejectCodeRate = "rate"; // the client is sending faster than the rate limit allows
 export const RejectCodeBadRequest = "bad-request"; // the frame itself was malformed in some other way
+export const RejectCodeNotAdmin = "not-admin"; // only the game's admin may do that (change the hint settings)
+export const RejectCodeGameOver = "game-over"; // the game has ended, so its settings no longer change
 /**
  * The reject codes.
  */
-export type RejectCode = typeof RejectCodeStale | typeof RejectCodeIllegal | typeof RejectCodeNotYourTurn | typeof RejectCodeRate | typeof RejectCodeBadRequest;
+export type RejectCode = typeof RejectCodeStale | typeof RejectCodeIllegal | typeof RejectCodeNotYourTurn | typeof RejectCodeRate | typeof RejectCodeBadRequest | typeof RejectCodeNotAdmin | typeof RejectCodeGameOver;
 /**
  * Reject answers one request (identified by its Seq) that could not be
  * applied. code is a stable, machine-readable reason; msg is a developer

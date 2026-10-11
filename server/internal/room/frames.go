@@ -20,6 +20,7 @@ type frameCache struct {
 	events  [3][]view.GameEvent // likewise
 	built   [3]bool
 	history [3]*[]wire.HistoryEntry // likewise, built only when a frame needs it
+	roomLog []wire.RoomLogEntry     // the same for every viewer; nil until built
 }
 
 // viewerIndex is a viewer's index in a frameCache.
@@ -112,6 +113,10 @@ func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]b
 	st := wire.NewState(r.code, r.version, r.roomInfo(mem, presence), r.you(mem), ack, events, v)
 	st.CanUndo = r.canUndo(mem)
 	st.Thinking = r.thinking()
+	if fc.roomLog == nil {
+		fc.roomLog = wireRoomLog(r.file.RoomLog)
+	}
+	st.RoomLog = fc.roomLog
 	if withHistory {
 		st.History = fc.historyFor(r.hist, viewer)
 	}
@@ -173,7 +178,9 @@ func (r *Room) roomInfo(mem member, presence [2]bool) wire.RoomInfo {
 			spectators++
 		}
 	}
-	return wire.NewRoomInfo(wire.Mode(r.file.Mode), wireStatus(r.status()), seats, spectators)
+	info := wire.NewRoomInfo(wire.Mode(r.file.Mode), wireStatus(r.status()), seats, spectators)
+	info.Hints = *r.file.Hints
+	return info
 }
 
 // you is what the member may do.
@@ -186,7 +193,9 @@ func (r *Room) you(mem member) wire.YouInfo {
 		seats = []int{int(mem.seat)}
 	}
 	canAct := r.status() == store.StatusPlaying && mem.holds(r.state.ToMove)
-	return wire.NewYouInfo(seats, canAct)
+	you := wire.NewYouInfo(seats, canAct)
+	you.Admin = mem.role != roleSpectator && mem.user != "" && mem.user == r.file.Admin
+	return you
 }
 
 // wireStatus maps a stored status to the client's. An archived room is

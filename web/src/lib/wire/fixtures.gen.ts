@@ -22,6 +22,12 @@ export const fixtures = [
   },
   {
     "t": "reject",
+    "seq": 5,
+    "code": "not-admin",
+    "msg": "only the game's admin may change its hints"
+  },
+  {
+    "t": "reject",
     "seq": 17,
     "code": "stale",
     "msg": "base 41 is behind the current version 43"
@@ -50,13 +56,28 @@ export const fixtures = [
           "you": false
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": true
+      }
     },
     "you": {
       "seats": [
         0
       ],
-      "canAct": false
+      "canAct": false,
+      "admin": true
     },
     "canUndo": true,
     "thinking": 1,
@@ -73,6 +94,7 @@ export const fixtures = [
         "auto": false
       }
     ],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -305,17 +327,33 @@ export const fixtures = [
           "you": true
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": false
+      }
     },
     "you": {
       "seats": [
         0,
         1
       ],
-      "canAct": true
+      "canAct": true,
+      "admin": true
     },
     "canUndo": false,
     "events": [],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -521,13 +559,28 @@ export const fixtures = [
           "you": false
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": false
+      }
     },
     "you": {
       "seats": [
         0
       ],
-      "canAct": false
+      "canAct": false,
+      "admin": true
     },
     "canUndo": false,
     "events": [
@@ -543,6 +596,7 @@ export const fixtures = [
         "winner": 0
       }
     ],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -1943,13 +1997,28 @@ export const fixtures = [
           "you": false
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": true
+      }
     },
     "you": {
       "seats": [
         0
       ],
-      "canAct": false
+      "canAct": false,
+      "admin": true
     },
     "canUndo": false,
     "events": [
@@ -1980,6 +2049,7 @@ export const fixtures = [
         "winner": 0
       }
     ],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -3592,6 +3662,448 @@ export const fixtures = [
   },
   {
     "t": "state",
+    "code": "N4HT8Q",
+    "version": 4,
+    "room": {
+      "mode": "online",
+      "status": "playing",
+      "seats": [
+        {
+          "seat": 0,
+          "name": "Sara",
+          "kind": "human",
+          "connected": true,
+          "you": false
+        },
+        {
+          "seat": 1,
+          "name": "Bob",
+          "kind": "human",
+          "connected": true,
+          "you": true
+        }
+      ],
+      "spectators": 0,
+      "hints": {
+        "prices": false,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": false,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": true
+      }
+    },
+    "you": {
+      "seats": [
+        1
+      ],
+      "canAct": false,
+      "admin": false
+    },
+    "canUndo": false,
+    "events": [],
+    "roomLog": [
+      {
+        "kind": "hints",
+        "at": 4,
+        "seat": 0,
+        "on": [
+          "advisor"
+        ],
+        "off": [
+          "prices",
+          "threats"
+        ]
+      }
+    ],
+    "view": {
+      "schema": 1,
+      "catalogHash": "64943c7be6864ff4",
+      "ply": 4,
+      "viewer": 1,
+      "phase": "wonderDraft",
+      "age": 0,
+      "toMove": 0,
+      "active": 0,
+      "firstPlayer": 0,
+      "extraTurn": false,
+      "draft": {
+        "round": 2,
+        "offer": [
+          {
+            "wonder": "hanging-gardens",
+            "takenBy": 1
+          },
+          {
+            "wonder": "appian-way"
+          },
+          {
+            "wonder": "great-library"
+          },
+          {
+            "wonder": "statue-of-zeus"
+          }
+        ]
+      },
+      "structure": [],
+      "players": [
+        {
+          "seat": 0,
+          "coins": 7,
+          "city": [],
+          "tokens": [],
+          "wonders": [
+            {
+              "wonder": "pyramids",
+              "built": false,
+              "removed": false,
+              "cost": {
+                "affordable": false,
+                "shortfall": 1,
+                "chainFree": false,
+                "printedCoins": 0,
+                "own": {
+                  "wood": 0,
+                  "clay": 0,
+                  "stone": 0,
+                  "glass": 0,
+                  "papyrus": 0
+                },
+                "producers": [],
+                "trade": [
+                  {
+                    "resource": "stone",
+                    "units": 3,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 6
+                  },
+                  {
+                    "resource": "papyrus",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  }
+                ],
+                "tradeTotal": 8,
+                "total": 8,
+                "toOpponent": 0,
+                "urbanismBonus": 0
+              }
+            },
+            {
+              "wonder": "mausoleum",
+              "built": false,
+              "removed": false,
+              "cost": {
+                "affordable": false,
+                "shortfall": 3,
+                "chainFree": false,
+                "printedCoins": 0,
+                "own": {
+                  "wood": 0,
+                  "clay": 0,
+                  "stone": 0,
+                  "glass": 0,
+                  "papyrus": 0
+                },
+                "producers": [],
+                "trade": [
+                  {
+                    "resource": "clay",
+                    "units": 2,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 4
+                  },
+                  {
+                    "resource": "glass",
+                    "units": 2,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 4
+                  },
+                  {
+                    "resource": "papyrus",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  }
+                ],
+                "tradeTotal": 10,
+                "total": 10,
+                "toOpponent": 0,
+                "urbanismBonus": 0
+              }
+            }
+          ],
+          "production": {
+            "fixed": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "tradeFix": []
+          },
+          "tradePrices": {
+            "wood": 2,
+            "clay": 2,
+            "stone": 2,
+            "glass": 2,
+            "papyrus": 2
+          },
+          "science": {
+            "symbols": [],
+            "distinct": 0
+          },
+          "chains": [],
+          "discardValue": 2
+        },
+        {
+          "seat": 1,
+          "coins": 7,
+          "city": [],
+          "tokens": [],
+          "wonders": [
+            {
+              "wonder": "sphinx",
+              "built": false,
+              "removed": false,
+              "cost": {
+                "affordable": false,
+                "shortfall": 1,
+                "chainFree": false,
+                "printedCoins": 0,
+                "own": {
+                  "wood": 0,
+                  "clay": 0,
+                  "stone": 0,
+                  "glass": 0,
+                  "papyrus": 0
+                },
+                "producers": [],
+                "trade": [
+                  {
+                    "resource": "clay",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  },
+                  {
+                    "resource": "stone",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  },
+                  {
+                    "resource": "glass",
+                    "units": 2,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 4
+                  }
+                ],
+                "tradeTotal": 8,
+                "total": 8,
+                "toOpponent": 0,
+                "urbanismBonus": 0
+              }
+            },
+            {
+              "wonder": "colossus",
+              "built": false,
+              "removed": false,
+              "cost": {
+                "affordable": false,
+                "shortfall": 1,
+                "chainFree": false,
+                "printedCoins": 0,
+                "own": {
+                  "wood": 0,
+                  "clay": 0,
+                  "stone": 0,
+                  "glass": 0,
+                  "papyrus": 0
+                },
+                "producers": [],
+                "trade": [
+                  {
+                    "resource": "clay",
+                    "units": 3,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 6
+                  },
+                  {
+                    "resource": "glass",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  }
+                ],
+                "tradeTotal": 8,
+                "total": 8,
+                "toOpponent": 0,
+                "urbanismBonus": 0
+              }
+            },
+            {
+              "wonder": "hanging-gardens",
+              "built": false,
+              "removed": false,
+              "cost": {
+                "affordable": false,
+                "shortfall": 1,
+                "chainFree": false,
+                "printedCoins": 0,
+                "own": {
+                  "wood": 0,
+                  "clay": 0,
+                  "stone": 0,
+                  "glass": 0,
+                  "papyrus": 0
+                },
+                "producers": [],
+                "trade": [
+                  {
+                    "resource": "wood",
+                    "units": 2,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 4
+                  },
+                  {
+                    "resource": "glass",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  },
+                  {
+                    "resource": "papyrus",
+                    "units": 1,
+                    "unitPrice": 2,
+                    "fixed": false,
+                    "coins": 2
+                  }
+                ],
+                "tradeTotal": 8,
+                "total": 8,
+                "toOpponent": 0,
+                "urbanismBonus": 0
+              }
+            }
+          ],
+          "production": {
+            "fixed": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "tradeFix": []
+          },
+          "tradePrices": {
+            "wood": 2,
+            "clay": 2,
+            "stone": 2,
+            "glass": 2,
+            "papyrus": 2
+          },
+          "science": {
+            "symbols": [],
+            "distinct": 0
+          },
+          "chains": [],
+          "discardValue": 2
+        }
+      ],
+      "military": {
+        "position": 0,
+        "looting": [
+          {
+            "at": -6,
+            "seat": 0,
+            "value": 5,
+            "present": true
+          },
+          {
+            "at": -3,
+            "seat": 0,
+            "value": 2,
+            "present": true
+          },
+          {
+            "at": 3,
+            "seat": 1,
+            "value": 2,
+            "present": true
+          },
+          {
+            "at": 6,
+            "seat": 1,
+            "value": 5,
+            "present": true
+          }
+        ]
+      },
+      "boardTokens": [
+        "economy",
+        "masonry",
+        "philosophy",
+        "theology",
+        "urbanism"
+      ],
+      "boxTokenCount": 5,
+      "removedCount": 0,
+      "discard": [],
+      "wondersBuilt": 0,
+      "choices": [],
+      "disabled": [],
+      "scorePreview": [
+        {
+          "blue": 0,
+          "green": 0,
+          "yellow": 0,
+          "purple": 0,
+          "wonders": 0,
+          "tokens": 0,
+          "coins": 2,
+          "military": 0,
+          "total": 2
+        },
+        {
+          "blue": 0,
+          "green": 0,
+          "yellow": 0,
+          "purple": 0,
+          "wonders": 0,
+          "tokens": 0,
+          "coins": 2,
+          "military": 0,
+          "total": 2
+        }
+      ]
+    }
+  },
+  {
+    "t": "state",
     "code": "J9HQ3T",
     "version": 8,
     "room": {
@@ -3613,13 +4125,28 @@ export const fixtures = [
           "you": false
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": false
+      }
     },
     "you": {
       "seats": [
         0
       ],
-      "canAct": true
+      "canAct": true,
+      "admin": true
     },
     "canUndo": false,
     "events": [],
@@ -3772,6 +4299,7 @@ export const fixtures = [
         ]
       }
     ],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -6045,13 +6573,28 @@ export const fixtures = [
           "you": false
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": false
+      }
     },
     "you": {
       "seats": [
         0
       ],
-      "canAct": true
+      "canAct": true,
+      "admin": true
     },
     "canUndo": false,
     "events": [
@@ -6068,6 +6611,7 @@ export const fixtures = [
         "symbol": "quill"
       }
     ],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -7473,14 +8017,29 @@ export const fixtures = [
           "you": true
         }
       ],
-      "spectators": 0
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": false
+      }
     },
     "you": {
       "seats": [
         0,
         1
       ],
-      "canAct": true
+      "canAct": true,
+      "admin": true
     },
     "canUndo": true,
     "ack": {
@@ -7501,6 +8060,7 @@ export const fixtures = [
         "slot": 10
       }
     ],
+    "roomLog": [],
     "view": {
       "schema": 1,
       "catalogHash": "64943c7be6864ff4",
@@ -102242,11 +102802,13 @@ export const protocolFixtures = [
 export const fixtureNames = [
   "created",
   "error-room-not-found",
+  "reject-not-admin",
   "reject-stale",
   "state-ai-thinking",
   "state-draft",
   "state-forfeit",
   "state-game-over",
+  "state-hints-changed",
   "state-join-history",
   "state-pending-token",
   "state-play",

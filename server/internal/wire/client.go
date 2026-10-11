@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/NightMachinery/ajayeb/server/internal/ident"
+	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
 
 // This file defines the client-to-server frames (doc.go's "client frames")
@@ -29,6 +30,7 @@ func (Undo) isClientMessage()    {}
 func (Resync) isClientMessage()  {}
 func (Leave) isClientMessage()   {}
 func (Rematch) isClientMessage() {}
+func (Hints) isClientMessage()   {}
 
 // Hello is the first frame a client must send. The server ignores every
 // other frame until it arrives, within the time internal/ws allows.
@@ -159,6 +161,10 @@ type Create struct {
 	// Names[0] (the creator's own name); Names is never nil (an absent or
 	// empty entry means "use a default").
 	Names []string `json:"names"`
+	// Hints are the game's hint settings (every family present); absent
+	// means the defaults of the mode. The creator becomes the game's admin,
+	// who may change them later (the hints frame).
+	Hints *view.HintSettings `json:"hints,omitempty"`
 }
 
 // NewCreate returns a Create frame with "t" filled in. names is copied as
@@ -360,6 +366,11 @@ func DecodeClient(raw []byte) (ClientMessage, error) {
 		if err := m.validate(); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
 		}
+		if m.Hints != nil {
+			if err := checkHintsField("create: hints", raw); err != nil {
+				return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
+			}
+		}
 		return m, nil
 	case "join":
 		var m Join
@@ -415,6 +426,18 @@ func DecodeClient(raw []byte) (ClientMessage, error) {
 			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
 		}
 		return m, nil
+	case "hints":
+		var m Hints
+		if err := strictUnmarshal(raw, &m); err != nil {
+			return nil, frameErr(t, err)
+		}
+		if err := m.validate(); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
+		}
+		if err := checkHintsField("hints: hints", raw); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
+		}
+		return m, nil
 	default:
 		return nil, fmt.Errorf("%w: unknown frame type %q", ErrBadFrame, t)
 	}
@@ -433,4 +456,21 @@ var clientMessageTypes = []ClientMessage{
 	NewResync("K7QX2M"),
 	NewLeave("K7QX2M"),
 	NewRematch("K7QX2M"),
+	NewHints("K7QX2M", 1, view.HintSettings{}),
+}
+
+// checkHintsField checks the "hints" object of a frame that has one (see
+// checkHintsComplete). The frame has already decoded strictly, so it is
+// valid JSON with a "hints" object.
+func checkHintsField(field string, raw []byte) error {
+	var head struct {
+		Hints json.RawMessage `json:"hints"`
+	}
+	if err := json.Unmarshal(raw, &head); err != nil {
+		return fmt.Errorf("%s: %v", field, err)
+	}
+	if len(head.Hints) == 0 {
+		return fmt.Errorf("%s is missing", field)
+	}
+	return checkHintsComplete(field, head.Hints)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/view"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -29,6 +30,7 @@ const (
 type member struct {
 	role role
 	seat engine.Seat // for rolePlayer
+	user string      // the connection's user id
 }
 
 // Room is one game room: an actor goroutine that owns everything below the
@@ -82,7 +84,11 @@ type (
 		c    *Client
 		undo wire.Undo
 	}
-	msgResync  struct{ c *Client }
+	msgResync struct{ c *Client }
+	msgHints  struct {
+		c     *Client
+		hints wire.Hints
+	}
 	msgRematch struct {
 		c     *Client
 		reply chan rematchResult
@@ -108,6 +114,7 @@ type rematchResult struct {
 // Manager.start). The version continues from the file's, which is never
 // below the length of the log.
 func newRoom(m *Manager, f *store.File, s engine.State, hist []histEntry) *Room {
+	fillHintFields(f)
 	ctx, cancel := context.WithCancel(m.ctx)
 	r := &Room{
 		code:    f.Code,
@@ -176,6 +183,8 @@ func (r *Room) handle(msg any) bool {
 		r.undo(msg.c, msg.undo)
 	case msgResync:
 		r.resync(msg.c)
+	case msgHints:
+		r.setHints(msg.c, msg.hints)
 	case msgRematch:
 		code, err := r.doRematch(msg.c)
 		msg.reply <- rematchResult{code: code, err: err}
@@ -242,6 +251,7 @@ func (r *Room) attach(c *Client) error {
 	if err != nil {
 		return err
 	}
+	mem.user = c.UserID
 	r.clients[c] = mem
 	r.stopIdle()
 	r.publishIdle()
@@ -353,7 +363,12 @@ func (r *Room) openSeats() []engine.Seat {
 }
 
 // claim gives seat to c's user, keeping a name the room was created with.
+// The first user to claim a seat of a room that has no admin yet (a room
+// made with open seats) becomes its admin.
 func (r *Room) claim(seat engine.Seat, c *Client, name string) {
+	if r.file.Admin == "" {
+		r.file.Admin = c.UserID
+	}
 	s := &r.file.Seats[seat]
 	if s.Name != "" {
 		name = s.Name
@@ -589,6 +604,7 @@ func (r *Room) undo(c *Client, m wire.Undo) {
 	r.state = s
 	r.file.Actions = keys
 	r.hist = r.hist[:cut]
+	r.clampRoomLog()
 	r.version++
 	r.record(c, ack)
 	r.persist()
@@ -640,6 +656,10 @@ func (r *Room) doRematch(c *Client) (string, error) {
 		}
 		f := store.New("", r.file.Mode, r.file.Options, r.m.cfg.Seed(), r.m.cfg.Clock.Now())
 		f.Seats = r.file.Seats
+		// The rematch keeps the game's admin and its hint settings.
+		f.Admin = r.file.Admin
+		hints := *r.file.Hints
+		f.Hints = &hints
 		code, err := r.m.createRoom(f)
 		if err != nil {
 			return "", err
@@ -783,6 +803,9 @@ type Snapshot struct {
 	DroppedBotResults int  // stale bot results the room has dropped
 	Rematch           string
 	Dirty             bool // the last write failed
+	Admin             string
+	Hints             view.HintSettings
+	RoomLog           []store.LogEntry
 }
 
 func (r *Room) snapshot() Snapshot {
@@ -808,5 +831,8 @@ func (r *Room) snapshot() Snapshot {
 		DroppedBotResults: r.dropped,
 		Rematch:           r.rematch,
 		Dirty:             r.dirty,
+		Admin:             r.file.Admin,
+		Hints:             *r.file.Hints,
+		RoomLog:           append([]store.LogEntry{}, r.file.RoomLog...),
 	}
 }

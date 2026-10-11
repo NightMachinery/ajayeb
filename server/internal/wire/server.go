@@ -84,6 +84,9 @@ type RoomInfo struct {
 	Status     RoomStatus `json:"status"`
 	Seats      []SeatInfo `json:"seats"`
 	Spectators int        `json:"spectators"`
+	// Hints are the game's hint settings, the same for every connection
+	// (players and spectators alike); the room sets them.
+	Hints view.HintSettings `json:"hints"`
 }
 
 // NewRoomInfo returns a RoomInfo with seats normalized to a non-nil,
@@ -101,6 +104,9 @@ type YouInfo struct {
 	// room, one in an online or ai room, none for a spectator.
 	Seats  []int `json:"seats"`
 	CanAct bool  `json:"canAct"` // a legal action exists for one of Seats right now
+	// Admin says this connection's user is the game's admin, who may change
+	// the hint settings (the hints frame): the player who created the game.
+	Admin bool `json:"admin"`
 }
 
 // NewYouInfo returns a YouInfo with seats normalized to a non-nil, possibly
@@ -162,17 +168,22 @@ type State struct {
 	// that follow an undo carry it; a live frame does not. Events, when a
 	// frame carries both, happened after History's last entry.
 	History *[]HistoryEntry `json:"history,omitempty"`
-	View    view.View       `json:"view"`
+	// RoomLog is every room-level entry of the game log so far (at most
+	// MaxRoomLog, the newest), oldest first: things that happened to the
+	// room rather than in the game, such as a change of the hint settings.
+	// Every frame carries the whole list, the same for every viewer.
+	RoomLog []RoomLogEntry `json:"roomLog"`
+	View    view.View      `json:"view"`
 }
 
 // NewState returns a State frame with "t" filled in. events is normalized to
-// a non-nil, possibly empty slice. CanUndo and Thinking start out false and
-// absent; the room sets them.
+// a non-nil, possibly empty slice, and RoomLog starts empty. CanUndo and
+// Thinking start out false and absent; the room sets them.
 func NewState(code string, version int, room RoomInfo, you YouInfo, ack *Ack, events []view.GameEvent, v view.View) State {
 	if events == nil {
 		events = []view.GameEvent{}
 	}
-	return State{T: "state", Code: code, Version: version, Room: room, You: you, Ack: ack, Events: events, View: v}
+	return State{T: "state", Code: code, Version: version, Room: room, You: you, Ack: ack, Events: events, RoomLog: []RoomLogEntry{}, View: v}
 }
 
 // RejectCode says why an act, undo or similar request was refused without
@@ -187,6 +198,8 @@ const (
 	RejectCodeNotYourTurn RejectCode = "not-your-turn" // this connection does not hold the seat to move
 	RejectCodeRate        RejectCode = "rate"          // the client is sending faster than the rate limit allows
 	RejectCodeBadRequest  RejectCode = "bad-request"   // the frame itself was malformed in some other way
+	RejectCodeNotAdmin    RejectCode = "not-admin"     // only the game's admin may do that (change the hint settings)
+	RejectCodeGameOver    RejectCode = "game-over"     // the game has ended, so its settings no longer change
 )
 
 // Reject answers one request (identified by its Seq) that could not be

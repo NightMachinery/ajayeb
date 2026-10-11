@@ -22,13 +22,28 @@
         "you": false
       }
     ],
-    "spectators": 0
+    "spectators": 0,
+    "hints": {
+      "prices": true,
+      "economy": true,
+      "science": true,
+      "military": true,
+      "threats": true,
+      "tempo": true,
+      "wonders": true,
+      "tokens": true,
+      "scoring": true,
+      "counting": true,
+      "recap": true,
+      "advisor": true
+    }
   },
   "you": {
     "seats": [
       0
     ],
-    "canAct": false
+    "canAct": false,
+    "admin": true
   },
   "canUndo": true,
   "thinking": 1,
@@ -45,6 +60,7 @@
       "auto": false
     }
   ],
+  "roomLog": [],
   "view": {
     "schema": 1,
     "catalogHash": "64943c7be6864ff4",

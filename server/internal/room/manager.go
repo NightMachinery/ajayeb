@@ -11,6 +11,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/view"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -123,6 +124,13 @@ func (m *Manager) newFile(c *Client, req wire.Create) (*store.File, error) {
 	}
 
 	f := store.New("", store.Mode(req.Mode), engine.Options{}, m.cfg.Seed(), m.cfg.Clock.Now())
+	// The creator is the game's admin, whatever seat they took, and the
+	// game starts from the hint settings they sent (or the defaults).
+	f.Admin = c.UserID
+	if req.Hints != nil {
+		h := *req.Hints
+		f.Hints = &h
+	}
 	switch req.Mode {
 	case wire.ModeOnline:
 		f.Seats[seat] = human(name(seat, c.Name))
@@ -157,6 +165,9 @@ type Spec struct {
 	Scenario string
 	// Actions are applied first, each checked against the legal set.
 	Actions []string
+	// Hints are the game's hint settings; nil means the defaults of the
+	// mode. The room's admin is the first user to claim a seat.
+	Hints *view.HintSettings
 }
 
 // CreateFromSpec makes a room from spec and returns its code. Nobody is
@@ -167,6 +178,10 @@ func (m *Manager) CreateFromSpec(spec Spec) (string, error) {
 	f.Seats = spec.Seats
 	f.Scenario = spec.Scenario
 	f.Actions = append(f.Actions, spec.Actions...)
+	if spec.Hints != nil {
+		h := *spec.Hints
+		f.Hints = &h
+	}
 	return m.createRoom(f)
 }
 

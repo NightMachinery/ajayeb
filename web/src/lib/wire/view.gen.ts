@@ -259,6 +259,42 @@ export interface GameEvent {
 }
 
 //////////
+// source: hints.go
+
+/**
+ * HintSettings are a game's hint switches (docs/dev/decisions.md D23): one
+ * bool per hint family, true when the family is on. They belong to the
+ * room, not to the engine's options, so they never change the rules or a
+ * replay: package room keeps them with the room file and sends the same
+ * settings to every connection in RoomInfo.hints, and the game's admin
+ * may change them at any time while the game runs (the wire's "hints"
+ * frame). The families are those of the hints design; the defaults (every
+ * family on, except advisor outside games against the bot) are
+ * room.DefaultHints.
+ * A struct, not a map, so the client gets a fixed shape and the order of
+ * the families never depends on map iteration. A new family is a new
+ * field: a room file written before it existed reads it as false, so the
+ * field's arrival must also teach package room's loader its default.
+ */
+export interface HintSettings {
+  prices: boolean;
+  economy: boolean;
+  science: boolean;
+  military: boolean;
+  threats: boolean;
+  tempo: boolean;
+  wonders: boolean;
+  tokens: boolean;
+  scoring: boolean;
+  counting: boolean;
+  recap: boolean;
+  /**
+   * Advisor is the post-move review, shown only to the player who moved.
+   */
+  advisor: boolean;
+}
+
+//////////
 // source: schema.go
 
 /**

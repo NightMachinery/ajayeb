@@ -21,13 +21,28 @@
         "you": false
       }
     ],
-    "spectators": 0
+    "spectators": 0,
+    "hints": {
+      "prices": true,
+      "economy": true,
+      "science": true,
+      "military": true,
+      "threats": true,
+      "tempo": true,
+      "wonders": true,
+      "tokens": true,
+      "scoring": true,
+      "counting": true,
+      "recap": true,
+      "advisor": false
+    }
   },
   "you": {
     "seats": [
       0
     ],
-    "canAct": true
+    "canAct": true,
+    "admin": true
   },
   "canUndo": false,
   "events": [
@@ -44,6 +59,7 @@
       "symbol": "quill"
     }
   ],
+  "roomLog": [],
   "view": {
     "schema": 1,
     "catalogHash": "64943c7be6864ff4",

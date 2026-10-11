@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	"github.com/NightMachinery/ajayeb/server/internal/room"
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -40,6 +42,37 @@ var recordCases = []recordCase{
 	}},
 	{"reject-stale", func(t *testing.T) wire.ServerMessage {
 		return wire.NewReject(17, wire.RejectCodeStale, "base 41 is behind the current version 43")
+	}},
+	{"reject-not-admin", func(t *testing.T) wire.ServerMessage {
+		return wire.NewReject(5, wire.RejectCodeNotAdmin, "only the game's admin may change its hints")
+	}},
+	{"state-hints-changed", func(t *testing.T) wire.ServerMessage {
+		// An online game whose admin (Sara) turned the prices and threats
+		// off and the advisor on after the fourth move: the frame the other
+		// player (Bob, seat 1) receives.
+		s := engine.NewGame(7, engine.Options{FirstPlayer: engine.FirstPlayerSeat0})
+		for range 4 {
+			engine.ApplyTrusted(&s, engine.LegalActions(&s, nil)[0])
+		}
+		st := stateFrame(t, "N4HT8Q", &s, nil, wire.ModeOnline, wire.RoomStatusPlaying, nil)
+		v := engine.ViewFor(&s, engine.SeatViewer(1))
+		st.View = v
+		st.You = wire.NewYouInfo([]int{1}, s.ToMove == 1)
+		for i := range st.Room.Seats {
+			st.Room.Seats[i].You = i == 1
+		}
+		wire.SetHint(&st.Room.Hints, wire.HintFamilyPrices, false)
+		wire.SetHint(&st.Room.Hints, wire.HintFamilyThreats, false)
+		wire.SetHint(&st.Room.Hints, wire.HintFamilyAdvisor, true)
+		seat := 0
+		st.RoomLog = []wire.RoomLogEntry{{
+			Kind: wire.RoomLogHints,
+			At:   int(s.Ply),
+			Seat: &seat,
+			On:   []wire.HintFamily{wire.HintFamilyAdvisor},
+			Off:  []wire.HintFamily{wire.HintFamilyPrices, wire.HintFamilyThreats},
+		}}
+		return st
 	}},
 	{"state-draft", func(t *testing.T) wire.ServerMessage {
 		s := engine.NewGame(1, engine.Options{})
@@ -149,8 +182,9 @@ var recordCases = []recordCase{
 // stateFrame builds a wire.State the way the room package does: the seats
 // of the mode (Sara on seat 0; in a hot-seat room she holds seat 1 too and
 // sees the view of the seat to move, in an ai room seat 1 is a bot, online
-// it is Bob), and the view and filtered events of Sara's viewer. Cases set
-// CanUndo and Thinking themselves.
+// it is Bob), and the view and filtered events of Sara's viewer. Sara
+// created the room, so she is its admin, and its hint settings are the
+// mode's defaults. Cases set CanUndo and Thinking themselves.
 func stateFrame(t *testing.T, code string, s *engine.State, ev []engine.Event, mode wire.Mode, status wire.RoomStatus, ack *wire.Ack) wire.State {
 	t.Helper()
 	viewer := engine.Seat(0)
@@ -173,8 +207,11 @@ func stateFrame(t *testing.T, code string, s *engine.State, ev []engine.Event, m
 	for _, seat := range mine {
 		canAct = canAct || (!s.Over() && int(s.ToMove) == seat)
 	}
-	room := wire.NewRoomInfo(mode, status, seats, 0)
-	return wire.NewState(code, int(s.Ply), room, wire.NewYouInfo(mine, canAct), ack, events, v)
+	info := wire.NewRoomInfo(mode, status, seats, 0)
+	info.Hints = room.DefaultHints(store.Mode(mode))
+	you := wire.NewYouInfo(mine, canAct)
+	you.Admin = true // Sara created the room
+	return wire.NewState(code, int(s.Ply), info, you, ack, events, v)
 }
 
 // TestRecordMessages drives recordCases and checks each against its golden

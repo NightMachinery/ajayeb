@@ -272,6 +272,8 @@ func (c *conn) handle(data []byte) bool {
 		rooms.Leave(c.client, m.Code)
 	case wire.Rematch:
 		_, err = rooms.Rematch(c.ctx, c.client, m.Code)
+	case wire.Hints:
+		err = rooms.Hints(c.ctx, c.client, m)
 	}
 	switch {
 	case err == nil:

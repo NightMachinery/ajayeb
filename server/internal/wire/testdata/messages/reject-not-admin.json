@@ -1,0 +1,6 @@
+{
+  "t": "reject",
+  "seq": 5,
+  "code": "not-admin",
+  "msg": "only the game's admin may change its hints"
+}

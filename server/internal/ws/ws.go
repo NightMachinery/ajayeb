@@ -86,6 +86,7 @@ type Rooms interface {
 	Undo(ctx context.Context, c *room.Client, undo wire.Undo) error
 	Resync(ctx context.Context, c *room.Client, code string) error
 	Rematch(ctx context.Context, c *room.Client, code string) (string, error)
+	Hints(ctx context.Context, c *room.Client, h wire.Hints) error
 }
 
 // Identity derives a user id from a client token; ident.Secret satisfies
