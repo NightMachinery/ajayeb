@@ -12,7 +12,8 @@
   // The two strips have the same layout. Everything else (the science
   // slots, the city by colour, each wonder) is in the city sheet and the
   // wonder sheet. In phone landscape, where the strip is a narrow column,
-  // the rows wrap.
+  // the rows wrap, and the first always breaks after the name, so both
+  // strips put their tallies and wonder button on the same line.
   //
   // Glows when this seat is in military or scientific danger
   // (lib/view/threats.ts), never once the game has ended. A leaf
@@ -134,7 +135,7 @@
       </span>
     {/if}
 
-    <span class="flex-1 short:hidden" aria-hidden="true"></span>
+    <span class="flex-1 short:h-0 short:basis-full" aria-hidden="true"></span>
 
     {#if player.tokens.length > 0}
       <ul class="flex shrink-0 items-center ps-1.5" aria-label={t('board.citySheet.tokens')}>
