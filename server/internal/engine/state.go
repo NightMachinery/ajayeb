@@ -190,10 +190,11 @@ const (
 	VictoryMilitary                    // the pawn reached a capital
 	VictoryScience                     // a player gathered six different science symbols
 	VictoryCivilian                    // points after Age III
+	VictoryForfeit                     // the other seat resigned (ActResign; not in the rulebook, see docs/rules/decisions.md)
 	numVictoryKinds
 )
 
-var victoryNames = [numVictoryKinds]string{"none", "military", "science", "civilian"}
+var victoryNames = [numVictoryKinds]string{"none", "military", "science", "civilian", "forfeit"}
 
 // String returns the wire name.
 func (k VictoryKind) String() string { return enumString(victoryNames[:], uint8(k), "victory") }

@@ -33,6 +33,8 @@ package view
 //   - extraTurn, extraTurnLost: seat
 //   - starterChosen: seat (who chose), starter
 //   - gameOver: victory, winner (absent for a shared victory)
+//   - resign: seat (who forfeited; a gameOver with the other seat as the
+//     winner follows)
 type GameEvent struct {
 	Kind        EventKind      `json:"kind"`
 	Private     bool           `json:"private"` // only this viewer sees this event as it is

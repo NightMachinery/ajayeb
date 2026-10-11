@@ -40,6 +40,10 @@ func ApplyTrusted(s *State, a Action) { apply(s, a, nil) }
 // apply performs a legal action.
 func apply(s *State, a Action, ev *[]Event) {
 	s.Ply++
+	if a.Type == ActResign {
+		applyResign(s, a.Starter, ev)
+		return
+	}
 	switch s.Phase {
 	case PhaseWonderDraft:
 		applyDraft(s, draftIndex(s, a.Wonder), ev)
@@ -197,6 +201,26 @@ func starterChooser(s *State) (Seat, bool) {
 		return s.Active, false
 	}
 	return s.Active, true
+}
+
+// applyResign ends the game at once: seat forfeits and the other seat wins
+// (VictoryForfeit), whatever the phase and whoever is to move. A choice
+// still open is dropped: the Great Library's offer goes back to the bottom
+// of the box, unannounced, as the tokens not kept always do, and the colour
+// to destroy is cleared. Everything else stays as it was, so the end of
+// game reveal shows the position the forfeit left. EvResign comes first,
+// then EvGameOver.
+func applyResign(s *State, seat Seat, ev *[]Event) {
+	offer := s.Library
+	s.Library = [LibraryDraw]catalog.TokenID{}
+	for _, t := range offer {
+		if t != 0 {
+			returnToBox(s, t)
+		}
+	}
+	s.Destroy = catalog.NoColor
+	emit(ev, Event{Kind: EvResign, Seat: seat})
+	winNow(s, VictoryForfeit, seat.Opp(), ev)
 }
 
 // endGame scores a game that reached the end of Age III.

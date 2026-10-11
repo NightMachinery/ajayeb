@@ -56,10 +56,18 @@ func TestViewEnumsMatchEngine(t *testing.T) {
 			pending = append(pending, p)
 		}
 	}
+	// resign is an action no view ever offers (a forfeit, never a choice),
+	// so it has no ChoiceKind.
+	var choiceVerbs []string
+	for _, v := range vwEnum(func(i uint8) string { return engine.ActionType(i).Verb() }, 1) {
+		if v != "resign" {
+			choiceVerbs = append(choiceVerbs, v)
+		}
+	}
 	want := map[string][]string{
 		"Phase":         phases,
 		"PendingKind":   pending,
-		"ChoiceKind":    vwEnum(func(i uint8) string { return engine.ActionType(i).Verb() }, 1),
+		"ChoiceKind":    choiceVerbs,
 		"Reason":        vwEnum(func(i uint8) string { return engine.Reason(i).String() }, 1),
 		"SlotState":     {"faceUp", "faceDown", "empty"},
 		"Back":          vwEnum(func(i uint8) string { return catalog.Back(i).String() }, 1),
@@ -1327,6 +1335,16 @@ var protoCases = []struct {
 		protoNamedCase("law-supremacy", engine.Options{}, -1)},
 	{"game-over-military-hidden", "the pawn reaches the capital in a game that keeps its secrets after the end",
 		protoNamedCase("military-supremacy", engine.Options{HideAtEnd: true}, -1)},
+	{"game-over-forfeit", "the seat waiting on the Great Library's choice resigns: the other seat wins by forfeit and the offer goes back to the box", protoForfeit},
+}
+
+// protoForfeit opens the Great Library's choice and has the seat that is
+// not deciding resign.
+func protoForfeit(t *testing.T, seed uint64) (engine.State, []engine.Event) {
+	t.Helper()
+	s, _ := protoNamed(t, seed, "great-library", engine.Options{}, 1)
+	ev := enginetest.Do(t, &s, engine.ResignAction(s.ToMove.Opp()).Key())
+	return s, ev
 }
 
 // protoFixtures builds every fixture.

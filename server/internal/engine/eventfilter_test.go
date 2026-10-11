@@ -74,6 +74,8 @@ func TestFilterEventsWhitelist(t *testing.T) {
 		{full(engine.EvStarterChosen, 0, 9), p + `"starterChosen","private":false,"seat":1,"starter":0}`},
 		{full(engine.EvGameOver, int16(engine.VictoryScience), 1), p + `"gameOver","private":false,"victory":"science","winner":1}`},
 		{full(engine.EvGameOver, int16(engine.VictoryCivilian), int16(engine.SharedVictory)), p + `"gameOver","private":false,"victory":"civilian"}`},
+		{full(engine.EvGameOver, int16(engine.VictoryForfeit), 0), p + `"gameOver","private":false,"victory":"forfeit","winner":0}`},
+		{full(engine.EvResign, 9, 9), p + `"resign","private":false,"seat":1}`},
 	}
 	covered := map[string]bool{engine.EvLibraryDraw.String(): true} // TestFilterEventsLibraryDraw
 	for _, c := range cases {

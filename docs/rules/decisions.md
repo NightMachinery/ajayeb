@@ -107,3 +107,9 @@ A ruling changes only with a deliberate decision. Changing one changes how games
 - **Ruling.** The discard pile is shown openly to both players at all times.
 - **Why.** In the physical game the pile is face down but either player may look through it whenever they like, so showing it changes nothing but convenience.
 - **Alternative.** Hide it behind a "look at the discard pile" control.
+
+### Forfeit
+
+- **Ruling.** A player may forfeit at any time before the game is over, in any phase and whether or not it is their turn (in a hot-seat game, the player to move forfeits). The game ends at once and the other player wins, as a forfeit victory. A choice still open is dropped: the tokens the Great Library drew go back to the box unseen. The score sheet records the points of the moment, for the record only, and the end-of-game reveal shows the hidden cards as for any other end. A forfeit cannot be undone.
+- **Why.** The rulebook has no forfeit, but a player who wants to stop needs a clean way out that names the winner, and online players expect resignation to end the game on the spot. In the engine it is the action `resign:<seat>`, recorded in the game log like any other, so replays reproduce it. No game recorded before it contains one, so the rules version did not change.
+- **Alternative.** Score the game on points as if it ended there, or let the other player choose between taking the win and playing on alone against nobody.

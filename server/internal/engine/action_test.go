@@ -69,6 +69,8 @@ var sampleKeys = []struct {
 	{TokenAction(catalog.TokenLaw), "token:law"},
 	{StarterAction(0), "starter:0"},
 	{StarterAction(1), "starter:1"},
+	{ResignAction(0), "resign:0"},
+	{ResignAction(1), "resign:1"},
 }
 
 func TestActionKeys(t *testing.T) {

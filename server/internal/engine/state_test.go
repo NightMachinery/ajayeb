@@ -228,12 +228,13 @@ func TestTextEnums(t *testing.T) {
 		"buildFromDiscard", "pickBoardToken", "pickLibraryToken", "gameOver"})
 	checkTextEnum[FirstPlayerRule](t, uint8(numFirstPlayerRules), []string{"random", "seat0", "seat1"})
 	checkTextEnum[CenterPawnRule](t, uint8(numCenterPawnRules), []string{"lastActiveChooses", "lastActiveStarts"})
-	checkTextEnum[VictoryKind](t, uint8(numVictoryKinds), []string{"none", "military", "science", "civilian"})
+	checkTextEnum[VictoryKind](t, uint8(numVictoryKinds), []string{"none", "military", "science", "civilian", "forfeit"})
 	checkTextEnum[Reason](t, uint8(numReasons), []string{"none", "gameOver", "wrongPhase", "malformed", "notInDraft",
 		"notAccessible", "wonderUnavailable", "unaffordable", "notTarget", "notInDiscard", "tokenUnavailable"})
 	checkTextEnum[EventKind](t, uint8(numEventKinds), []string{"none", "draft", "draftRound", "ageStart", "build",
 		"discard", "wonder", "pay", "reveal", "coins", "pawn", "loot", "pair", "token", "libraryDraw", "destroy",
-		"rebuild", "wonderRemoved", "effectSkipped", "extraTurn", "extraTurnLost", "starterChosen", "gameOver"})
+		"rebuild", "wonderRemoved", "effectSkipped", "extraTurn", "extraTurnLost", "starterChosen", "gameOver",
+		"resign"})
 }
 
 func TestOptionsJSON(t *testing.T) {

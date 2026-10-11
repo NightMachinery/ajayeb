@@ -34,7 +34,9 @@ import (
 //   - phase data: the age and the phase agree, the seats are 0 or 1, only
 //     the starter choice has ToMove differ from Active, Destroy and Library
 //     are set exactly in their phases and have an option, the result is set
-//     exactly when the game is over.
+//     exactly when the game is over. A forfeit (VictoryForfeit) may end the
+//     game during the wonder draft, so such a game may be over in age 0
+//     with fewer than eight picks.
 func CheckInvariants(s *State) error {
 	c := invChecker{s: s}
 	c.cards()
@@ -48,6 +50,12 @@ func CheckInvariants(s *State) error {
 		return nil
 	}
 	return errors.New("engine: invariants broken: " + strings.Join(c.errs, "; "))
+}
+
+// forfeited reports a game a seat resigned: it may end at any point,
+// during the wonder draft too (age 0, fewer than eight picks).
+func forfeited(s *State) bool {
+	return s.Phase == PhaseGameOver && s.Result.Kind == VictoryForfeit
 }
 
 type invChecker struct {
@@ -360,7 +368,7 @@ func (c *invChecker) wonders() {
 		} else if s.ToMove != draftPicker(s.FirstSeat, n) {
 			c.fail("draft pick %d is seat %d's, but seat %d is to move", n, draftPicker(s.FirstSeat, n), s.ToMove)
 		}
-	} else if n != NumDraftWonders {
+	} else if n != NumDraftWonders && !forfeited(s) {
 		c.fail("phase %s after only %d draft picks", s.Phase, n)
 	}
 
@@ -430,7 +438,7 @@ func (c *invChecker) phase() {
 	if s.ToMove > 1 || s.Active > 1 || s.FirstSeat > 1 {
 		c.fail("a seat is out of range: toMove %d, active %d, first %d", s.ToMove, s.Active, s.FirstSeat)
 	}
-	if (s.Phase == PhaseWonderDraft) != (s.Age == 0) {
+	if (s.Phase == PhaseWonderDraft) != (s.Age == 0) && !(s.Age == 0 && forfeited(s)) {
 		c.fail("phase %s in age %d", s.Phase, s.Age)
 	}
 	if s.Phase != PhaseChooseStarter && s.Phase != PhaseGameOver && s.ToMove != s.Active {

@@ -133,6 +133,9 @@ func checkGame(t *testing.T, seed uint64, opts engine.Options, pols [2]enginetes
 	var ev []engine.Event
 	reachedIII := false
 	for !s.Over() {
+		if int(s.Ply) >= engine.MaxGameActions {
+			t.Fatalf("seed %d: %d actions reach engine.MaxGameActions", seed, s.Ply)
+		}
 		if int(s.Ply) >= maxPlies {
 			t.Fatalf("seed %d: the game is not over after %d actions (phase %s, age %d)", seed, maxPlies, s.Phase, s.Age)
 		}
@@ -245,7 +248,9 @@ func checkIllegal(t *testing.T, seed uint64, s *engine.State, legal []engine.Act
 	}
 	before, hash := *s, engine.Hash(s)
 	try := func(a engine.Action) {
-		if isListed(a) {
+		// resign is never listed but always legal before the end (see
+		// legal.go); TestResign* cover it.
+		if isListed(a) || a.Type == engine.ActResign {
 			return
 		}
 		if err := engine.IsLegal(s, a); err == nil {

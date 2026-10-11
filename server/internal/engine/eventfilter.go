@@ -120,7 +120,7 @@ func eventView(e *Event) view.GameEvent {
 		if k, ok := pendingKind(Phase(a)); ok {
 			ge.Skipped = &k
 		}
-	case EvExtraTurn, EvExtraTurnLost:
+	case EvExtraTurn, EvExtraTurnLost, EvResign:
 		seat()
 	case EvStarterChosen:
 		seat()

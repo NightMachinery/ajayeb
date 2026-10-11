@@ -53,6 +53,7 @@ const (
 	EvExtraTurnLost // Seat's extra turn was lost because the age ended
 	EvStarterChosen // Seat chose seat A to start the age
 	EvGameOver      // the game ended: A = the VictoryKind, B = the winner seat or SharedVictory (-1)
+	EvResign        // Seat resigned (ActResign); EvGameOver follows with the other seat as the winner
 	numEventKinds
 )
 
@@ -62,6 +63,7 @@ var eventNames = [numEventKinds]string{
 	"build", "discard", "wonder", "pay", "reveal",
 	"coins", "pawn", "loot", "pair", "token", "libraryDraw", "destroy", "rebuild",
 	"wonderRemoved", "effectSkipped", "extraTurn", "extraTurnLost", "starterChosen", "gameOver",
+	"resign",
 }
 
 // String returns the wire name, for example "libraryDraw".

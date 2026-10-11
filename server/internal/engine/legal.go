@@ -3,9 +3,16 @@ package engine
 import "github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
 
 // This file decides which actions are legal. LegalActions lists them and
-// IsLegal checks one; the two always agree (the property tests check that
-// IsLegal accepts exactly the listed actions). The server accepts a key only
-// if it is in the list for the seat to move.
+// IsLegal checks one; the two always agree, with one deliberate exception:
+// resign (the property tests check that IsLegal accepts exactly the listed
+// actions, plus resign). The server accepts a key only if it is in the list
+// for the seat to move, or, for a forfeit, a resign of the sender's own
+// seat.
+//
+// resign:<seat> is legal for either seat in every phase until the game is
+// over, whoever is to move, and is never listed: it is a player leaving the
+// game, not a move of it, so a bot (which picks from LegalActions) never
+// resigns.
 //
 // The legal actions of each phase:
 //
@@ -31,6 +38,17 @@ import "github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
 // accessible cards with 6 actions each). A buffer of this capacity never
 // grows.
 const MaxLegalActions = 64
+
+// MaxGameActions bounds the actions of one game, a forfeit included, so
+// that a server may keep (and send) a game's whole history in a fixed
+// budget. The draft takes 6 decisions (the last wonder of each round is
+// given). Each of the 60 cards of the three ages is taken by one action,
+// which opens at most two more choices in a row: the Mausoleum's revive,
+// then a science pair's token for the revived card (Law cannot pair, and the
+// Great Library and the Statue of Zeus open one choice each). Ages II and
+// III may each open a starter choice, and a resign ends the game. The
+// property sweep checks that real games stay far below it.
+const MaxGameActions = 2*(WondersPerPlayer-1) + 3*NumAges*SlotsPerAge + (NumAges - 1) + 1
 
 // LegalActions appends the legal actions of the player to move to buf and
 // returns the extended slice. It never allocates when buf has room for
@@ -127,6 +145,9 @@ func legality(s *State, a Action) Reason {
 	}
 	if a.Validate() != nil {
 		return ReasonMalformed
+	}
+	if a.Type == ActResign {
+		return ReasonNone // either seat, any phase, until the game is over
 	}
 	seat := s.ToMove
 	if s.Phase == PhasePlay {

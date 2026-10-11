@@ -161,6 +161,7 @@ const (
 	VictoryKindMilitary VictoryKind = "military" // the pawn reached a capital
 	VictoryKindScience  VictoryKind = "science"  // six different science symbols
 	VictoryKindCivilian VictoryKind = "civilian" // points after Age III
+	VictoryKindForfeit  VictoryKind = "forfeit"  // the other player resigned
 )
 
 // EventKind is what a game event reports. GameEvent lists the fields each
@@ -191,4 +192,5 @@ const (
 	EventKindExtraTurnLost EventKind = "extraTurnLost"
 	EventKindStarterChosen EventKind = "starterChosen"
 	EventKindGameOver      EventKind = "gameOver"
+	EventKindResign        EventKind = "resign"
 )

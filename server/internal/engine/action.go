@@ -21,12 +21,19 @@ import (
 //	revive:<card>             build a discarded card (Mausoleum)    revive:garrison
 //	token:<token>             take a progress token (board or Great Library)   token:law
 //	starter:<seat>            choose who starts the next age (0 or 1)          starter:1
+//	resign:<seat>             seat forfeits the game (0 or 1)                  resign:0
 //
 // Each action has exactly one key and each key exactly one action:
 // ParseKey(a.Key()) == a for every valid action, and ParseKey accepts a string
 // only if it is the key of its result. Slugs match exactly (no case folding,
 // no whitespace, no "the-" prefix). Payment is never part of an action; the
 // engine always applies the cheapest payment.
+//
+// resign is not a move of the game: LegalActions never lists it (so a bot,
+// which only ever picks from that list, never resigns), yet IsLegal and
+// Apply accept it for either seat at any time before the game is over. The
+// server applies it when a seated player forfeits; it ends the game at once
+// with the other seat's victory (VictoryForfeit). See legal.go.
 
 // ActionType is the kind of an action.
 type ActionType uint8
@@ -42,11 +49,12 @@ const (
 	ActBuildFromDiscard               // Card (a discarded card)
 	ActChooseProgressToken            // Token (from the board or from the Great Library offer; the phase decides)
 	ActChooseStarter                  // Starter
+	ActResign                         // Starter holds the seat that resigns
 	numActionTypes
 )
 
 // The verb of each action type: the first part of its key.
-var actionVerbs = [numActionTypes]string{"", "draft", "construct", "discard", "wonder", "destroy", "revive", "token", "starter"}
+var actionVerbs = [numActionTypes]string{"", "draft", "construct", "discard", "wonder", "destroy", "revive", "token", "starter", "resign"}
 
 // Which Action fields each type uses.
 const (
@@ -65,6 +73,7 @@ var actionFields = [numActionTypes]uint8{
 	ActBuildFromDiscard:    needCard,
 	ActChooseProgressToken: needToken,
 	ActChooseStarter:       needStarter,
+	ActResign:              needStarter,
 }
 
 // Verb returns the first part of the type's keys, for example "construct",
@@ -95,7 +104,7 @@ type Action struct {
 	Card    catalog.CardID   // construct, discard, wonder (the tucked card), destroy, revive
 	Wonder  catalog.WonderID // draft, wonder
 	Token   catalog.TokenID  // token
-	Starter Seat             // starter
+	Starter Seat             // starter; for resign, the seat that resigns
 }
 
 // DraftAction takes wonder w in the draft.
@@ -123,6 +132,10 @@ func TokenAction(t catalog.TokenID) Action { return Action{Type: ActChooseProgre
 
 // StarterAction makes seat s start the next age.
 func StarterAction(s Seat) Action { return Action{Type: ActChooseStarter, Starter: s} }
+
+// ResignAction makes seat s forfeit the game. It is never in LegalActions;
+// see the top of this file.
+func ResignAction(s Seat) Action { return Action{Type: ActResign, Starter: s} }
 
 // Validate checks the action's shape, independently of any game state: a
 // known type, every field the type uses set to a registered id (or, for
@@ -187,11 +200,11 @@ func (a Action) key() (string, error) {
 		return verb + ":" + catalog.Wonder(a.Wonder).Slug + ":" + catalog.Card(a.Card).Slug, nil
 	case ActChooseProgressToken:
 		return verb + ":" + catalog.Token(a.Token).Slug, nil
-	case ActChooseStarter:
+	case ActChooseStarter, ActResign:
 		if a.Starter == 0 {
-			return "starter:0", nil
+			return verb + ":0", nil
 		}
-		return "starter:1", nil
+		return verb + ":1", nil
 	default: // the card actions
 		return verb + ":" + catalog.Card(a.Card).Slug, nil
 	}
@@ -287,14 +300,19 @@ func ParseKey(key string) (Action, error) {
 			return Action{}, badKey(key, "unknown token")
 		}
 		return TokenAction(t), nil
-	case "starter":
+	case "starter", "resign":
+		var seat Seat
 		switch rest {
 		case "0":
-			return StarterAction(0), nil
 		case "1":
-			return StarterAction(1), nil
+			seat = 1
+		default:
+			return Action{}, badKey(key, "the seat is 0 or 1")
 		}
-		return Action{}, badKey(key, "the seat is 0 or 1")
+		if verb == "resign" {
+			return ResignAction(seat), nil
+		}
+		return StarterAction(seat), nil
 	}
 	return Action{}, badKey(key, "unknown verb")
 }
