@@ -165,7 +165,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "aqueduct.avif": 15078,
+        "aqueduct@thumb.avif": 5120
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 3.0); rocks and water thin into ivory paper on every side.",
@@ -186,7 +189,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "archery-range.avif": 17112,
+        "archery-range@thumb.avif": 5666
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 1.1).",
@@ -243,14 +249,21 @@
       "crop": "4:3",
       "subject": "soldiers drilling with spears in a walled barracks courtyard",
       "accent": "red",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Keep the composition: two spearmen in vermilion coats sparring with spears in a sandy courtyard before a crenellated wall with a plain wooden gate, at most two smaller guards at the sides. Leave out the domed kiosk above the gate and any tiled building at the side: the wall and gatehouse are plain sand-coloured mudbrick with no tile bands, cartouches, panels or friezes, and the spear rack stands on its own against the wall. Background above the wall only cypresses and pastel rocks.",
-      "bytes": {},
+      "bytes": {
+        "barracks.avif": 13377,
+        "barracks@thumb.avif": 4809
+      },
       "reasons": [
-        "Pseudo-writing: the blue band under the dome of the kiosk above the gate holds, in its right-hand panel, a run of gold letter-like strokes that reads as a word of script at 4x (the centre panel is floral). Same failure as age I apothecary, clay-pit and guard-tower.",
-        "Otherwise good: two large spearmen sparring before a crenellated gate, two smaller guards at the sides (four figures, the two sparring dominate, not a crowd), vermilion accent, clean margin, gate passes (band 100%, dE00 2.0)."
-      ]
+        "Passes the gate (band 100%, dE00 3.0); the sandy courtyard thins into ivory paper on every side.",
+        "Round 1's fault is fixed: no domed kiosk, no tile band or panel; the wall and gatehouse are plain sand-coloured mudbrick with a plain studded wooden gate (checked at 2x). No text anywhere; the coat patterns are scattered gold sprigs.",
+        "Subject reads at 120 px: two large spearmen in vermilion sparring with crossed spears before the gate, two smaller guards at the sides and a spear rack. The two sparring figures dominate; not a crowd.",
+        "Vermilion accent dominates; gold only on the sun disc and small trim. No animals, no emblem; background only cypresses and pastel rocks.",
+        "Line and opaque colour consistent with the card anchor, if a little sparer."
+      ],
+      "approvedAttempt": 2
     },
     "card/baths": {
       "id": "card/baths",
@@ -287,7 +300,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "brewery.avif": 15235,
+        "brewery@thumb.avif": 5500
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 4.0).",
@@ -308,7 +324,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "brickyard.avif": 14508,
+        "brickyard@thumb.avif": 4651
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.3).",
@@ -342,7 +361,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "caravansery.avif": 17376,
+        "caravansery@thumb.avif": 5677
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.5).",
@@ -461,7 +483,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "courthouse.avif": 15289,
+        "courthouse@thumb.avif": 5016
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.9).",
@@ -479,14 +504,22 @@
       "crop": "4:3",
       "subject": "an official weighing goods beside stacked crates at a customs post",
       "accent": "yellow",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Keep the composition: an official in a saffron robe weighing a sack on a large balance beside stacked roped crates, with one trader waiting. Leave all paper off the table: no sheet, ledger, book or scroll anywhere; the table holds only bronze weights and a small pouch of coins. Keep the background kiosk bands plain colour or simple repeating flowers.",
-      "bytes": {},
+      "bytes": {
+        "customs-house.avif": 15020,
+        "customs-house@thumb.avif": 5109
+      },
       "reasons": [
-        "Ruled page: the sheet lying on the weighing table carries faint parallel horizontal lines in one direction (checked at 3x and 8x), which reads as a ruled page; the criteria name a ruled page explicitly.",
-        "Otherwise good: an official in saffron weighing a sack on a balance beside roped crates, a trader waiting, saffron accent, clean margin, gate passes (band 100%, dE00 1.9)."
-      ]
+        "Passes the gate (band 100%, dE00 1.9).",
+        "Round 1's fault is fixed: no sheet, ledger or paper on the table, which holds only bronze weights and a coin pouch (checked at 2.5x).",
+        "Subject reads at 120 px: an official in a saffron robe weighing a sack on a large balance beside stacked roped crates and sacks, a trader in green waiting.",
+        "Saffron accent dominates; lapis secondary; gold kept to the finial, sprigs and the kiosk finial.",
+        "No text: the background kiosk band is a row of separate flower rosettes in three blue panels (checked at 5x), the dome is a gold lattice, the balance post carries a single floral sprig. The kiosk is a garden pavilion; no animals.",
+        "Two figures, clean feathering margin, anchor-consistent."
+      ],
+      "approvedAttempt": 2
     },
     "card/dispensary": {
       "id": "card/dispensary",
@@ -496,15 +529,22 @@
       "crop": "4:3",
       "subject": "a physician dispensing remedies from a shelf of labelled jars",
       "accent": "green",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Show a young beardless physician standing (not seated), in a turquoise robe with a small rose cap, not a white turban, reaching up to a plain open wooden shelf of glazed jars to hand a small stoppered vial to a patient in a rose robe who stands beside him. Each jar may carry a small cream label left completely blank. The shelf is plain wood: no canopy, no dome, no cornice band, no frieze, no cartouche. Background only pastel rocks, a flowering shrub and one or two cypresses, with no pavilion or building.",
-      "bytes": {},
+      "bytes": {
+        "dispensary.avif": 16993,
+        "dispensary@thumb.avif": 5382
+      },
       "reasons": [
-        "Pseudo-writing: the blue cornice band of the jar cabinet carries a continuous run of gold letter-like strokes that reads as a line of script at 3x and 6x, and the turquoise canopy above it has scattered gold strokes shaped like letters. Same failure as age I apothecary.",
-        "Set consistency: a seated bearded elder in a malachite robe and white turban with a shelf of jars repeats the approved age I card/pharmacist almost exactly; the two green cards must be told apart at a glance.",
-        "Otherwise fine: the jar labels are blank, the gate passes (band 100%, dE00 2.5), the margin is clean."
-      ]
+        "Passes the gate (band 100%, dE00 1.1).",
+        "Round 1's faults are fixed: a young beardless physician standing in a turquoise robe and rose cap, clearly distinct from the approved age I pharmacist (seated bearded elder in white turban); a plain open wooden shelf with no canopy, cornice or frieze; no building in the background.",
+        "No text: every jar label is a plain cream rectangle (checked at 3x).",
+        "Subject reads at 120 px: the physician takes a jar from the shelf and hands a small green vial to a patient in rose.",
+        "Green accent carried by the malachite jars, turquoise robe and garden; gold only on stoppers and sprigs. No animals.",
+        "Two figures, clean feathering margin. Minor: the jars are a little glossy, but they stay outlined flat colour fields."
+      ],
+      "approvedAttempt": 2
     },
     "card/drying-room": {
       "id": "card/drying-room",
@@ -517,7 +557,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "drying-room.avif": 16935,
+        "drying-room@thumb.avif": 5427
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.0).",
@@ -551,7 +594,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "forum.avif": 16822,
+        "forum@thumb.avif": 5436
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.3).",
@@ -606,15 +652,22 @@
       "crop": "4:3",
       "subject": "a master glassblower turning a glowing bubble on an iron pipe",
       "accent": "grey",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Show one master glassblower standing (not seated), seen side-on, holding the long iron pipe level in both hands and turning a large glowing orange-gold bubble on its end above a flat stone slab (a marver). Beside him a plain wooden rack holds a few finished vessels in turquoise, lapis and clear glass. No assistant, no dome-shaped furnace in the centre (at most a small square brick furnace mouth glowing at one side). Dress him in a slate-grey robe with a vermilion sash. Background only pastel rocks and a flowering shrub, with no pavilion or building.",
-      "bytes": {},
+      "bytes": {
+        "glass-blower.avif": 16168,
+        "glass-blower@thumb.avif": 5045
+      },
       "reasons": [
-        "Pseudo-writing: the frieze band under the background pavilion's dome reads as a run of letters at full size and at 4x, as the generator flagged. The pavilion's central arch also frames a pale figure-like shape, which reads as a shrine niche.",
-        "Set consistency: a seated glassblower in a slate robe blowing an orange gather at a beehive furnace, with an assistant, repeats the approved age I card/glassworks composition almost exactly.",
-        "Otherwise fine: grey accent, two figures, gate passes (band 100%, dE00 2.0)."
-      ]
+        "Passes the gate (band 100%, dE00 2.9).",
+        "Round 1's faults are fixed: one standing glassblower seen side-on, no assistant, no beehive furnace in the centre (only a small square brick furnace mouth at the left), no pavilion or building, so no frieze to carry pseudo-writing. Clearly distinct from the approved age I glassworks.",
+        "Subject reads at 120 px: the glowing orange bubble on the end of the long pipe over the stone marver is the brightest shape in the image; a rack of finished vessels at the right.",
+        "Slate-grey accent dominates (robe, turban, slab), with a vermilion sash and turquoise and lapis vessels; gold only on vessel rims and the finial.",
+        "No text: the vessels carry plain gold rims and loose curls (checked at 3x). No animals.",
+        "Style note: the slab, robe and rocks are more mottled and textured than the anchor's flat gouache, but every shape keeps its ink outline and the look stays within the set."
+      ],
+      "approvedAttempt": 2
     },
     "card/glassworks": {
       "id": "card/glassworks",
@@ -675,7 +728,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "horse-breeders.avif": 15873,
+        "horse-breeders@thumb.avif": 5288
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.7).",
@@ -696,7 +752,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "laboratory.avif": 17026,
+        "laboratory@thumb.avif": 5657
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 3.4).",
@@ -714,15 +773,21 @@
       "crop": "4:3",
       "subject": "scholars browsing tall shelves of scrolls in a quiet reading hall",
       "accent": "green",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Show two scholars at tall wooden pigeonhole shelves filled with rolled scrolls seen end-on as plain cream circles: one young scholar in a saffron robe on a low step reaching up to draw a scroll from a high shelf, and one older scholar in a malachite robe below holding a scroll that is rolled shut. Every scroll and book stays closed: no open page, no unrolled sheet, nothing with marks anywhere. Shelf ends are plain wood with no frieze or cartouche. Background only a flowering tree and pastel rocks, with no pavilion.",
-      "bytes": {},
+      "bytes": {
+        "library.avif": 15470,
+        "library@thumb.avif": 5287
+      },
       "reasons": [
-        "Pseudo-writing: the page held by the seated reader carries rows of script-like marks, plainly visible at full size; pages must be blank.",
-        "Set consistency: a standing bearded man in a malachite robe and white turban reading a scroll is close to card/school and card/laboratory in this chunk and the age I scriptorium; the green cards are drifting toward one figure.",
-        "Otherwise fine: tall shelves of scrolls, green accent, gate passes (band 100%, dE00 2.2)."
-      ]
+        "Passes the gate (band 100%, dE00 0.8).",
+        "Round 1's faults are fixed: no open page anywhere; every scroll is rolled shut and shown end-on as a plain cream circle with a rod end (checked at 3x and 8x); the shelf is plain wood with no frieze or cartouche; no pavilion.",
+        "Subject reads at 120 px: a young scholar in saffron on a stool drawing a scroll from a tall pigeonhole shelf, an older scholar in malachite holding a closed scroll below. Two figures; the colour split keeps it apart from the green school and laboratory cards.",
+        "Green accent carried by the elder's robe, cypresses and foliage; gold only on sprigs and the turban plume. No animals.",
+        "Minor, not blocking: the shelf is drawn as an oblique cabinet with wood grain, more solid than the anchor's furniture, and the drawn scroll's end overlaps the shelf upright with a small smudge (about 30 px at full size, invisible at card size)."
+      ],
+      "approvedAttempt": 2
     },
     "card/lighthouse": {
       "id": "card/lighthouse",
@@ -908,15 +973,21 @@
       "crop": "4:3",
       "subject": "ranks of soldiers marching in formation on an open parade ground",
       "accent": "red",
-      "status": "generated",
-      "attempt": 2,
-      "promptAmend": "Show four foot soldiers in vermilion coats in two neat ranks of two, marching in step from left to right, spears upright on their shoulders, drawn large so the four fill the central third, with one drill officer on foot beside them raising a short baton. No horses, no riders, no plumed or jewelled headdress, no column of many soldiers. A plain vermilion pennant on one spear is fine, with no emblem. Flat sandy ground; background only pastel rocks and two cypresses, with no pavilion.",
-      "bytes": {},
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Show three foot soldiers in vermilion coats marching in step from left to right in single file, spaced apart so that no two bodies or legs overlap, plus one drill officer on foot at the right facing them and raising a short plain baton. Each soldier carries exactly one spear, held upright against his right shoulder with one hand, the other arm swinging at his side. Each figure's trousers are one colour on both legs (lapis for the soldiers, malachite for the officer), tucked into soft knee-high ochre leather boots with pointed toes and no heel. One plain vermilion pennant on the leading soldier's spear, with no emblem. Flat sandy ground; background only pastel rocks and two cypresses, with no pavilion, horses or riders.",
+      "bytes": {
+        "parade-ground.avif": 11342,
+        "parade-ground@thumb.avif": 4180
+      },
       "reasons": [
-        "A crowd: a column of about ten foot soldiers plus two riders, so no one or two large figures carry the image; the template asks for one or two large figures and no crowds.",
-        "The lead rider's jewelled turban aigrette and plume read as a ruler in procession rather than a drill on a parade ground.",
-        "Otherwise fine: vermilion accent, plain pennant with no emblem, gate passes (band 100%, dE00 2.6)."
-      ]
+        "Passes the gate (band 100%, dE00 2.3); the sandy ground and rocks thin into ivory paper on every side.",
+        "Round 2's faults are fixed (checked at 2x): three soldiers in single file, spaced so no bodies or legs overlap; each holds exactly one spear in one hand; each figure's trousers are one colour on both legs (lapis for the soldiers, malachite for the officer); soft ochre pointed boots with no heel, so nothing reads as a modern shoe.",
+        "Subject reads at 120 px: a file of vermilion spearmen marching left to right with a plain pennant, an officer facing them with a raised plain baton. Four figures in total, not a crowd, and no horses or riders.",
+        "Vermilion accent dominates; gold only on the sashes and the officer's small plume. No text: the sashes carry plain gold dots. Plain pennant with no emblem; background only pastel rocks, shrubs and three cypresses.",
+        "Minor, not blocking: the three soldiers are near-identical repeats and the coats are flat vermilion without the gold sprig pattern of the approved cards, so the image is sparer and plainer than the anchor. The approved barracks card sets the precedent for this sparer drill-yard look, and line, palette and margin stay within the set."
+      ],
+      "approvedAttempt": 3
     },
     "card/pharmacist": {
       "id": "card/pharmacist",
@@ -1024,14 +1095,22 @@
       "crop": "4:3",
       "subject": "an orator addressing a gathered crowd from a raised stone rostrum",
       "accent": "blue",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Show one orator in a lapis robe standing on a raised plain stone rostrum with a short flight of steps, one hand raised mid-speech, drawn large in the centre. Below him only two listeners, seated on the ground facing him, one at each side, smaller than the orator. He holds nothing in his hands. The rostrum faces are plain dressed stone with no carved panel, frieze or cartouche. Background: pastel rocks, a river and one or two cypresses, with no pavilion.",
-      "bytes": {},
+      "bytes": {
+        "rostrum.avif": 15638,
+        "rostrum@thumb.avif": 4936
+      },
       "reasons": [
-        "A crowd: the orator is surrounded by seven listeners, five of them large in the foreground, so the scene no longer has one or two large figures; the template asks for no crowds.",
-        "Otherwise fine: the orator on a stone rostrum reads at 120 px, blue accent, the held scroll is blank (checked at 5x), gate passes (band 100%, dE00 0.5)."
-      ]
+        "Passes the gate (band 100%, dE00 3.7).",
+        "Round 1's fault is fixed: one orator in a lapis robe standing on a plain stone rostrum with a short stair, and only two listeners seated on the ground, one at each side. No crowd.",
+        "Subject reads at 120 px: the orator, drawn large in the centre, mid-speech with an open raised hand; he holds nothing.",
+        "Blue accent dominates (robe, river); gold only on the sun disc, sash and sprigs.",
+        "No text: the rostrum faces are plain dressed stone, the robe pattern is gold floral (checked at 2x). No pavilion, no animals; ornamental clouds and a river as in the anchor.",
+        "Clean feathering margin; anchor-consistent line and colour."
+      ],
+      "approvedAttempt": 2
     },
     "card/sawmill": {
       "id": "card/sawmill",
@@ -1044,7 +1123,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "sawmill.avif": 12793,
+        "sawmill@thumb.avif": 4262
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 3.7).",
@@ -1065,7 +1147,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "school.avif": 15195,
+        "school@thumb.avif": 4936
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 3.6).",
@@ -1136,7 +1221,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "shelf-quarry.avif": 14652,
+        "shelf-quarry@thumb.avif": 5352
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 1.7).",
@@ -1207,7 +1295,10 @@
       "status": "approved",
       "attempt": 1,
       "promptAmend": "",
-      "bytes": {},
+      "bytes": {
+        "statue.avif": 14462,
+        "statue@thumb.avif": 5317
+      },
       "approvedAttempt": 1,
       "reasons": [
         "Passes the gate (band 100%, dE00 2.7).",
@@ -1317,15 +1408,22 @@
       "crop": "4:3",
       "subject": "worshippers gathered beneath the columns of a small domed temple",
       "accent": "blue",
-      "status": "generated",
+      "status": "approved",
       "attempt": 2,
       "promptAmend": "Show the small domed temple as architecture: a lapis-tiled dome on slender white columns, with an empty interior niche of plain lapis tile holding only a single lit oil lamp on a low stone plinth. No statue, idol, figure, face, halo or image inside or anywhere on the building. Two visitors stand on the steps in quiet conversation, both upright, hands at their sides or holding a small bowl of flowers; no kneeling, no bowing, no joined palms. No lotus flowers; the pool, if any, has plain ripples. Background only pastel rocks and cypresses.",
-      "bytes": {},
+      "bytes": {
+        "temple.avif": 15667,
+        "temple@thumb.avif": 5249
+      },
       "reasons": [
-        "Religious figure as the subject: the centre of the temple is a golden, haloed, crowned seated idol with a raised hand, venerated by one standing and one kneeling figure with palms joined in prayer, beside a lotus pool. That is a depicted deity and a rite of worship, which art/style.md forbids; it also reads as a specific living faith's iconography.",
-        "Otherwise fine: blue accent, gate passes (band 100%, dE00 4.5).",
-        "Owner note: the subject text \"worshippers gathered\" pulls the generator toward worship; consider rewording art/subjects.json to \"visitors gathered quietly beneath the columns of a small domed temple\"."
-      ]
+        "Passes the gate (band 99.9%, dE00 1.5).",
+        "Round 1's fault is fixed: no idol, statue, face, halo or image anywhere; the niche is plain lapis tile holding only a lit oil lamp on a low stone plinth. The two visitors stand upright in quiet conversation, one holding a bowl of flowers; no kneeling, bowing or joined palms, no lotus.",
+        "Subject reads at 120 px: a small lapis-domed temple on slender white columns with two visitors on its steps.",
+        "Blue accent dominates (dome, tile bands, robe, pool); gold only on the finial, capitals, lamp and sprigs.",
+        "No text: the dome drum, spandrels and plinth bands are floral and girih tile (checked at 3x). No minaret, no animals.",
+        "Minor, not blocking: the pool's ripple pattern carries a faint, soft colour echo of the columns and the woman's robe; it is far weaker than the photographic reflections rejected in the wonder rounds and the ripple lines dominate at card size."
+      ],
+      "approvedAttempt": 2
     },
     "card/theater": {
       "id": "card/theater",
@@ -1385,14 +1483,22 @@
       "crop": "4:3",
       "subject": "masons fitting massive stone blocks into a rising city wall",
       "accent": "red",
-      "status": "generated",
-      "attempt": 2,
-      "promptAmend": "Keep the composition: one mason in vermilion on a timber scaffold guiding a large stone block lowered by rope from a wooden lifting frame, a second mason in lapis below receiving it, onto a rising wall of plain dressed stone blocks, with a mallet and chisels on a block in front. Leave out the background pavilion and every building: behind the wall only pastel rocks, a flowering shrub and two cypresses. The wall blocks are plain with no carving, marks or panels.",
-      "bytes": {},
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Keep the two masons (one in vermilion on a low timber scaffold, one in lapis on the ground), the plain dressed stone blocks, and the mallet and chisels on a block in front. Replace the lifting frame with a pair of tall timber shear-legs: two poles leaning together in a narrow A shape, lashed at the top, tilted over the wall, with a wooden pulley at the apex. The rope runs from the pulley straight down to a rope sling cradling the block under its base, and its free end runs down to the mason in lapis, who hauls on it with both hands. No single upright post with a crossbeam, no rope ending in a loop, nothing hanging free. Show the wall as a long, straight city wall of even horizontal courses of dressed stone running across the centre of the image, finished with crenellations at the left end and still unfinished and lower at the right end where the block is being set. Behind the wall only pastel rocks, a flowering shrub and two cypresses, with no building.",
+      "bytes": {
+        "walls.avif": 16228,
+        "walls@thumb.avif": 5211
+      },
       "reasons": [
-        "Pseudo-writing: the frieze across the top of the background pavilion on the left reads as a row of capital letters at 4x (a carved inscription band).",
-        "Otherwise good: two masons fitting a large block with a lifting frame onto a rising stone wall, vermilion accent, clean margin, gate passes (band 100%, dE00 3.2)."
-      ]
+        "Passes the gate (band 99.7%, dE00 2.6).",
+        "Round 2's fault is fixed: the lifting frame is now an A-shaped pair of timber shear-legs lashed at the apex with a wooden pulley; the rope runs straight down to a sling that cradles the block, and its free end runs to the hauling mason. No single post with a crossbeam, no loop, nothing reads as a gallows at 120 px.",
+        "The wall now reads as a long straight city wall of even dressed-stone courses, crenellated at the left and lower and unfinished at the right where the block is being set.",
+        "Subject reads at 120 px: a mason in vermilion on a timber scaffold guiding the hanging block, a mason in lapis hauling the rope, spare blocks with a mallet and two chisels in front. Two figures, no crowd.",
+        "Vermilion accent leads; robes carry gold sprigs as in the approved cards; no gold leaf in the sky. No text: every block is plain mottled stone (checked at 2x). No building, no animals; background only pastel rocks, a flowering shrub and two cypresses.",
+        "Minor, not blocking: the right shear-leg ends in the hauling mason's upper hand instead of reaching the ground, so he appears to steady the leg while he pulls the rope. It is physically loose but reads naturally at card size and is not a garbled figure."
+      ],
+      "approvedAttempt": 3
     },
     "card/wood-reserve": {
       "id": "card/wood-reserve",
