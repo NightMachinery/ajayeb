@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { State } from '$lib/wire';
+import type { GameEvent, HistoryEntry, State } from '$lib/wire';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
 import { ProtocolVersion } from '$lib/wire/types.gen';
 import type { Identity } from './identity';
@@ -679,5 +679,163 @@ describe('Session: online rooms', () => {
     expect(session.rematchCode).toBeNull();
     expect(session.rematchAsked).toBe(false);
     expect(transport.last()).toEqual({ t: 'join', code: 'NEXT22' });
+  });
+});
+
+/** A frame of the room at `version` and `ply`, with these events and history. */
+function plyFrame(
+  version: number,
+  ply: number,
+  opts: { events?: GameEvent[]; history?: HistoryEntry[]; toMove?: 0 | 1 } = {}
+): State {
+  const f = playFrame('H8TQ4R', version);
+  f.view = { ...f.view, ply, toMove: opts.toMove ?? (ply % 2 === 0 ? 0 : 1) };
+  f.events = opts.events ?? [];
+  if (opts.history) f.history = opts.history;
+  else delete f.history;
+  return f;
+}
+
+function built(seat: 0 | 1, card: string): GameEvent {
+  return { kind: 'build', private: false, seat, card };
+}
+
+describe('Session: the history', () => {
+  function joinedWithHistory(n = 2) {
+    const s = setup();
+    connect(s.transport);
+    s.session.join('H8TQ4R');
+    const history: HistoryEntry[] = Array.from({ length: n }, (_, i) => ({
+      ply: i,
+      seat: (i % 2) as 0 | 1,
+      events: [built((i % 2) as 0 | 1, `card-${i}`)]
+    }));
+    s.transport.receive(plyFrame(n, n, { history }));
+    return s;
+  }
+
+  it('takes the history of a join frame whole, and its log is every event in order', () => {
+    const { session } = joinedWithHistory(3);
+    expect(session.history.map((e) => e.ply)).toEqual([0, 1, 2]);
+    expect(session.log.map((e) => e.card)).toEqual(['card-0', 'card-1', 'card-2']);
+  });
+
+  it('adds one entry per live frame, by the seat that was to move', () => {
+    const { session, transport } = joinedWithHistory(2);
+    transport.receive(plyFrame(3, 3, { events: [built(0, 'next')] }));
+    expect(session.history.at(-1)).toEqual({ ply: 2, seat: 0, events: [built(0, 'next')] });
+    // A presence frame (no events, same ply) adds nothing.
+    transport.receive(plyFrame(4, 3));
+    expect(session.history).toHaveLength(3);
+    expect(transport.sentOf('resync')).toEqual([]);
+  });
+
+  it('names the forfeiting seat, even when it was not to move', () => {
+    const { session, transport } = joinedWithHistory(2);
+    transport.receive(
+      plyFrame(3, 3, {
+        events: [
+          { kind: 'resign', private: false, seat: 1 },
+          { kind: 'gameOver', private: false, victory: 'forfeit', winner: 0 }
+        ]
+      })
+    );
+    expect(session.history.at(-1)?.seat).toBe(1);
+  });
+
+  it('replaces the history after an undo, dropping the undone moves', () => {
+    const { session, transport } = joinedWithHistory(4);
+    transport.receive(plyFrame(5, 2, { history: session.history.slice(0, 2) }));
+    expect(session.log.map((e) => e.card)).toEqual(['card-0', 'card-1']);
+    transport.receive(plyFrame(6, 3, { events: [built(0, 'again')] }));
+    expect(session.history.map((e) => e.ply)).toEqual([0, 1, 2]);
+  });
+
+  it('repairs a gap with one resync: merged frames, or a move without its events', () => {
+    const { session, transport } = joinedWithHistory(2);
+    transport.receive(plyFrame(4, 4, { events: [built(0, 'a'), built(1, 'b')] }));
+    expect(session.log.map((e) => e.card).slice(-2)).toEqual(['a', 'b']);
+    expect(transport.sentOf('resync')).toEqual([{ t: 'resync', code: 'H8TQ4R' }]);
+    // The same version again asks no more.
+    transport.receive(plyFrame(4, 4));
+    expect(transport.sentOf('resync')).toHaveLength(1);
+    transport.receive(plyFrame(5, 6));
+    expect(transport.sentOf('resync')).toHaveLength(2);
+  });
+
+  it('starts a history from live frames when the server sent none', () => {
+    const { session } = joined();
+    expect(session.history).toHaveLength(1);
+    expect(session.log).toEqual(playFrame().events);
+  });
+
+  it('forgets the history when the room is left', () => {
+    const { session } = joinedWithHistory(3);
+    session.leave();
+    expect(session.history).toEqual([]);
+    expect(session.log).toEqual([]);
+  });
+});
+
+describe('Session: the forfeit', () => {
+  it('forfeits the seat to move in hot-seat, naming it', () => {
+    const { session, transport } = joined();
+    expect(session.resignSeat).toBe(0);
+    expect(session.resign()).toBe(true);
+    expect(transport.last()).toEqual({
+      t: 'act',
+      code: 'H8TQ4R',
+      seq: 1,
+      base: 10,
+      key: 'resign:0',
+      seat: 0
+    });
+    // One request at a time.
+    expect(session.resignSeat).toBeNull();
+    expect(session.resign()).toBe(false);
+  });
+
+  it("forfeits the player's own seat online, whoever is to move", () => {
+    const { session, transport } = joinedAs('online', [1]);
+    expect(session.canAct).toBe(false);
+    expect(session.resign()).toBe(true);
+    expect(transport.last()).toEqual({
+      t: 'act',
+      code: 'H8TQ4R',
+      seq: 1,
+      base: 10,
+      key: 'resign:1'
+    });
+  });
+
+  it('is not offered to a spectator, in the lobby, or after the end', () => {
+    expect(joinedAs('online', []).session.resignSeat).toBeNull();
+    const lobby = joinedAs('online');
+    const f = modeFrame('online', { version: 11 });
+    lobby.transport.receive({ ...f, room: { ...f.room, status: 'lobby' } });
+    expect(lobby.session.resignSeat).toBeNull();
+    const over = joinedAs('ai');
+    const g = modeFrame('ai', { version: 11 });
+    over.transport.receive({ ...g, room: { ...g.room, status: 'finished' } });
+    expect(over.session.resign()).toBe(false);
+  });
+
+  it('sends a forfeit refused as stale once more with the fresh version', () => {
+    const { session, transport } = joinedAs('ai');
+    session.resign();
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: '' });
+    expect(session.notice).toBeNull();
+    transport.receive(modeFrame('ai', { version: 11 }));
+    expect(transport.last()).toEqual({
+      t: 'act',
+      code: 'H8TQ4R',
+      seq: 1,
+      base: 11,
+      key: 'resign:0'
+    });
+    // A second stale refusal shows.
+    transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: '' });
+    expect(session.notice?.code).toBe('stale');
+    expect(session.pending).toBeNull();
   });
 });

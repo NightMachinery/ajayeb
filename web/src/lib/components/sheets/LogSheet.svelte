@@ -1,12 +1,16 @@
 <script lang="ts">
   // The structured game log (UX design sec. 5 "Log"): every event so far,
-  // grouped by age, each line translated by lib/view/log-format.ts. The
-  // caller owns accumulating `events` across updates (the view itself only
-  // ever carries the latest action's events, not history); this component
-  // just renders whatever list it is given.
+  // grouped by age, each line translated by lib/view/log-format.ts. On a
+  // room page the log comes from the Session's history, which the server
+  // re-sends whole on a join, a resync and an undo, so a reload still shows
+  // the whole game in every mode. It stops at the frame the Presenter shows,
+  // so a bot's answer that is still being paced is not in the log before it
+  // is on the board. Without a game context (the gallery), or before the
+  // Session has any history, it shows the `events` it is given.
   import { t } from '$lib/i18n';
   import type { GameEvent } from '$lib/wire';
   import { groupLogByAge } from '$lib/view/log-format';
+  import { tryGameContext } from '../choices/room';
   import Sheet from '../shell/Sheet.svelte';
 
   interface Props {
@@ -18,7 +22,16 @@
 
   let { open = $bindable(false), events, names, titleId = 'log-sheet-title' }: Props = $props();
 
-  const groups = $derived(groupLogByAge(events, names));
+  const ctx = tryGameContext();
+
+  const logEvents: readonly GameEvent[] = $derived.by(() => {
+    const history = ctx?.session.history ?? [];
+    if (history.length === 0) return events;
+    const shown = ctx?.presenter.view?.ply;
+    return history.filter((e) => shown === undefined || e.ply < shown).flatMap((e) => e.events);
+  });
+
+  const groups = $derived(groupLogByAge(logEvents, names));
 </script>
 
 <Sheet bind:open {titleId}>

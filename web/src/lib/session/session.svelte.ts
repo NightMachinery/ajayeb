@@ -32,6 +32,20 @@
 // A rematch request remembers that this player asked (rematchAsked), so
 // the page follows the rematch code to its room. A code that arrives
 // without asking (the other player asked) waits for the player to choose.
+//
+// The game's history (docs/protocol.md, the state frame): the first frame
+// of a join, a resync's answer and the frame after an undo carry every
+// applied action so far, and replace `history` whole. Every other frame's
+// events extend it by one entry, so `log` is the whole game even after a
+// reload. A frame whose ply skips ahead of the history (frames merged in
+// the outbox, or lost) is appended as one entry and repaired by a resync.
+// The history is data for the log and the move summary only: nothing here
+// animates it, and a frame that brings one has no live events to animate.
+//
+// The forfeit: resign() sends an act whose key is resign:<seat>, a key the
+// view's choices never hold. It forfeits the seat this connection plays
+// (the seat to move in a hot-seat room). Refused as stale because the other
+// side moved first, it goes out once more with the fresh version.
 
 import { catalogMatches } from '$lib/catalog';
 import type {
@@ -39,6 +53,8 @@ import type {
   BotLevel,
   ClientMessage,
   Create,
+  GameEvent,
+  HistoryEntry,
   Mode,
   RoomInfo,
   SeatChoice,
@@ -151,6 +167,10 @@ export class Session {
   rematchCode = $state<string | null>(null);
   /** This player asked for the rematch (or chose to follow it). */
   rematchAsked = $state(false);
+  /** The applied actions of the game so far, oldest first. */
+  history = $state.raw<readonly HistoryEntry[]>([]);
+  /** Every event of the game so far, in order: the history's, flattened. */
+  log: readonly GameEvent[] = $derived(this.history.flatMap((e) => e.events));
 
   room: RoomInfo | null = $derived(this.frame?.room ?? null);
   you: YouInfo | null = $derived(this.frame?.you ?? null);
@@ -179,6 +199,20 @@ export class Session {
     !!this.frame?.canUndo && this.conn === 'open' && !this.pending && !this.fatal
   );
 
+  /**
+   * The seat this client would forfeit now: its own seat in an online or ai
+   * room, the seat to move in a hot-seat room; null when it cannot (a
+   * spectator, the lobby, a finished game, a request in flight, no link).
+   */
+  resignSeat: 0 | 1 | null = $derived.by(() => {
+    const f = this.frame;
+    if (!f || this.conn !== 'open' || this.pending || this.fatal) return null;
+    if (f.room.status !== 'playing' || f.view.result) return null;
+    const seat = f.room.mode === 'hotseat' ? f.view.toMove : f.you.seats[0];
+    if (f.room.mode !== 'hotseat' && f.you.seats.length !== 1) return null;
+    return seat === 0 || seat === 1 ? seat : null;
+  });
+
   #transport: Transport;
   #identity: Identity;
   #rooms: SavedRooms | null;
@@ -200,8 +234,12 @@ export class Session {
   #helloName: string | null = null;
   /** A bot-room undo refused as stale, waiting for the fresh state. */
   #staleUndo: PendingRequest | null = null;
-  /** The pending undo was sent again once already. */
+  /** The pending undo or forfeit was sent again once already. */
   #undoResent = false;
+  /** The ply up to which `history` is complete; null before the first frame. */
+  #covered: number | null = null;
+  /** The version a resync was last asked at, to repair a gap only once. */
+  #gapAsked: number | null = null;
 
   constructor(opts: SessionOptions) {
     this.#transport = opts.transport;
@@ -299,6 +337,27 @@ export class Session {
     // the previous player's turn cannot act for the next one.
     const toMove = f.view.toMove;
     if (f.room.mode === 'hotseat' && (toMove === 0 || toMove === 1)) frame.seat = toMove;
+    this.#request(frame);
+    return true;
+  }
+
+  /**
+   * Forfeits the game for resignSeat: the other seat wins at once. The key
+   * is not among the choices; the server checks the seat. Returns whether
+   * it was sent.
+   */
+  resign(): boolean {
+    const f = this.frame;
+    const seat = this.resignSeat;
+    if (seat === null || !f || !this.code) return false;
+    const frame: Act = {
+      t: 'act',
+      code: this.code,
+      seq: this.#seq + 1,
+      base: f.version,
+      key: `resign:${seat}`
+    };
+    if (f.room.mode === 'hotseat') frame.seat = seat;
     this.#request(frame);
     return true;
   }
@@ -414,6 +473,9 @@ export class Session {
     this.rematchAsked = false;
     this.roomError = null;
     this.notice = null;
+    this.history = [];
+    this.#covered = null;
+    this.#gapAsked = null;
     this.#settle();
   }
 
@@ -544,6 +606,7 @@ export class Session {
   #onState(frame: State): void {
     // The outbox may still deliver a state of a room this client has left.
     if (frame.code !== this.code) return;
+    this.#takeHistory(frame, this.frame);
     this.frame = frame;
     this.view = frame.view;
     this.roomError = null;
@@ -573,11 +636,60 @@ export class Session {
     this.#frames.emit(frame);
   }
 
-  // Whether a refused undo may go out once more: an undo of a bot room,
-  // not sent again yet. Only the bot moves while the player's undo is
-  // pending, so a stale base there means the bot's answer came first.
+  // Keeps the history in step with a new frame (see the file comment).
+  #takeHistory(frame: State, prev: State | null): void {
+    const ply = frame.view.ply;
+    let history = this.history;
+    let covered = this.#covered;
+    if (frame.history) {
+      history = frame.history;
+      const last = history[history.length - 1];
+      // An empty history is a game with no action yet.
+      covered = last ? last.ply + 1 : 0;
+      prev = null;
+    }
+    let gap = false;
+    if (frame.events.length > 0) {
+      const start = covered ?? Math.max(0, ply - 1);
+      if (ply > start) {
+        // The resign event names the seat that forfeited; otherwise the
+        // seat to move before this frame took the action.
+        const resign = frame.events.find((e) => e.kind === 'resign');
+        const before = prev && prev.view.ply === start ? prev.view.toMove : undefined;
+        const seat = resign?.seat ?? before ?? frame.events.find((e) => e.seat !== undefined)?.seat;
+        const entry: HistoryEntry = {
+          ply: start,
+          seat: seat === 1 ? 1 : 0,
+          events: frame.events
+        };
+        history = [...history, entry];
+        gap = ply - start > 1;
+        covered = ply;
+      }
+      // Otherwise the events are of actions the history already holds (a
+      // frame sent again): nothing to add.
+    } else if (covered !== null && ply !== covered) {
+      gap = true;
+      covered = ply;
+    } else if (covered === null) {
+      covered = ply;
+    }
+    if (history !== this.history) this.history = history;
+    this.#covered = covered;
+    if (gap && this.#gapAsked !== frame.version) {
+      this.#gapAsked = frame.version;
+      this.resync();
+    }
+  }
+
+  // Whether a refused request may go out once more with the fresh version:
+  // an undo of a bot room (only the bot moves while the player's undo is
+  // pending, so a stale base there means the bot's answer came first), or
+  // a forfeit (the other side moved first), not sent again yet.
   #mayResendUndo(pending: PendingRequest): boolean {
-    return pending.frame.t === 'undo' && this.frame?.room.mode === 'ai' && !this.#undoResent;
+    if (this.#undoResent) return false;
+    if (pending.frame.t === 'act') return pending.frame.key.startsWith('resign:');
+    return pending.frame.t === 'undo' && this.frame?.room.mode === 'ai';
   }
 
   // The fresh state after a stale undo: when the room moved on (the bot's
@@ -586,6 +698,14 @@ export class Session {
   // refusal shows as any other would.
   #resendUndo(stale: PendingRequest, frame: State): void {
     const undo = stale.frame;
+    const resign = undo.t === 'act' && frame.room.status === 'playing' && !frame.view.result;
+    if (resign && frame.version > undo.base) {
+      this.#undoResent = true;
+      const again: Act = { ...undo, base: frame.version };
+      this.#track({ frame: again, sentAt: stale.sentAt });
+      this.#send(again);
+      return;
+    }
     if (undo.t === 'undo' && frame.version > undo.base && frame.canUndo) {
       this.#undoResent = true;
       const again: Undo = { ...undo, base: frame.version };
