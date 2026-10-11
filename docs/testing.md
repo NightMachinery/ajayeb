@@ -473,8 +473,12 @@ Each test checks the result screen with `expectResultScreen` against the
 server's result, then a few facts of the scenario's Expect from the final
 view (the pawn in the capital and no destroy choice, Law in the winner's
 tokens, the equal totals of a tie), that the turn bar says the game is
-over and no move is offered, and that the page logged no error. Each test
-takes 2 to 4 s.
+over and no move is offered, and that the page logged no error. The
+`military-supremacy` test also checks the replay download: the game menu
+has no "Download replay" item while the game runs, has one once it is
+over, and the file it saves is named `ajayeb-<code>.json` and holds the
+room's `ajayeb-log/1` log (format, seed, scenario, one entry per action
+played, final hash). Each test takes 2 to 4 s.
 
 ### `flows.spec.ts` (`@mobile`)
 
