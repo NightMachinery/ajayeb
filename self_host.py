@@ -271,17 +271,42 @@ def backup_caddyfile() -> Path | None:
     return backup_path
 
 
-def update_caddyfile(site: Site, mode: Mode, ports: Ports) -> None:
-    block = render_caddy_block(site, mode, ports)
-    existing = CADDYFILE.read_text() if CADDYFILE.exists() else ""
-    start = existing.find(MANAGED_START)
-    end = existing.find(MANAGED_END)
+def find_managed_block(text: str) -> tuple[int, int] | None:
+    """Return (start, end) of the managed block in text, end just past MANAGED_END.
+
+    None means text has no managed block yet. Raises if exactly one marker is
+    present, which means the file was hand-edited into a broken state.
+    """
+    start = text.find(MANAGED_START)
+    end = text.find(MANAGED_END)
     if (start == -1) != (end == -1):
         raise RuntimeError(f"{CADDYFILE} contains only one Ajayeb managed marker")
     if start == -1:
+        return None
+    return start, end + len(MANAGED_END)
+
+
+def caddyfile_block_matches(site: Site, mode: Mode, ports: Ports) -> bool:
+    """True when ~/Caddyfile already has exactly the managed block we would
+    write for site/mode/ports, so writing it again would be a no-op."""
+    if not CADDYFILE.exists():
+        return False
+    existing = CADDYFILE.read_text()
+    bounds = find_managed_block(existing)
+    if bounds is None:
+        return False
+    start, end = bounds
+    return existing[start:end] == render_caddy_block(site, mode, ports).rstrip("\n")
+
+
+def update_caddyfile(site: Site, mode: Mode, ports: Ports) -> None:
+    block = render_caddy_block(site, mode, ports)
+    existing = CADDYFILE.read_text() if CADDYFILE.exists() else ""
+    bounds = find_managed_block(existing)
+    if bounds is None:
         text = existing.rstrip() + ("\n\n" if existing.strip() else "") + block
     else:
-        end += len(MANAGED_END)
+        start, end = bounds
         text = existing[:start].rstrip() + "\n\n" + block + existing[end:].lstrip("\n")
     CADDYFILE.write_text(text)
 
@@ -444,14 +469,21 @@ def check_prebuilt_binary(path: Path) -> None:
         raise RuntimeError(f"--prebuilt {path} --version did not print a version: {detail}")
 
 
-def swap_in_binary(source: Path) -> None:
+def swap_in_binary(source: Path, *, move: bool = False) -> None:
     """Back up the current binary to .prev, then atomically replace it with source.
 
-    source is copied into BIN_NEW_PATH (unless it already is BIN_NEW_PATH,
+    source is installed into BIN_NEW_PATH (unless it already is BIN_NEW_PATH,
     the normal case right after build_server_release) and then renamed into
-    BIN_PATH, so a half-written copy never becomes the live binary and the
-    caller's own file (which may be an arbitrary --prebuilt path we must not
-    delete or move) is left untouched.
+    BIN_PATH, so a half-written copy never becomes the live binary.
+
+    By default source is copied, leaving the caller's own file (which may be
+    an arbitrary --prebuilt path) untouched. With move=True, source is
+    consumed instead: moved into place with a rename when possible, which is
+    what setup/redeploy --prebuilt uses for an uploaded binary that exists
+    only to be installed, so it does not sit around as a second ~8.5 MB copy
+    once this returns. A rename cannot cross filesystems, so that case falls
+    back to copying source and then removing it, which still leaves no
+    residual copy.
     """
     BIN_DIR.mkdir(parents=True, exist_ok=True)
     if BIN_PATH.exists():
@@ -460,7 +492,14 @@ def swap_in_binary(source: Path) -> None:
     if source.resolve() != BIN_NEW_PATH.resolve():
         if BIN_NEW_PATH.exists():
             BIN_NEW_PATH.unlink()
-        shutil.copy2(source, BIN_NEW_PATH)
+        if move:
+            try:
+                os.replace(source, BIN_NEW_PATH)
+            except OSError:
+                shutil.copy2(source, BIN_NEW_PATH)
+                source.unlink()
+        else:
+            shutil.copy2(source, BIN_NEW_PATH)
     BIN_NEW_PATH.chmod(0o755)
     BIN_NEW_PATH.replace(BIN_PATH)
 
@@ -472,16 +511,34 @@ def validate_caddyfile() -> subprocess.CompletedProcess[str]:
 
 
 def reload_caddy() -> None:
-    run(["caddy", "fmt", "--overwrite", str(CADDYFILE)])
+    """Ask the running Caddy to reload ~/Caddyfile.
+
+    This never runs `caddy fmt --overwrite`: ~/Caddyfile is shared with other
+    sites, and reformatting the whole file on every deploy is not ours to
+    do. render_caddy_block already renders our block in Caddy's own
+    tab-indented format, so there is nothing of ours for a reload to
+    complain about.
+    """
     run(["caddy", "reload", "--config", str(CADDYFILE)])
 
 
 def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports) -> None:
     """Back up ~/Caddyfile, write the managed block, validate, then reload.
 
-    Restores the backup and raises if `caddy validate` fails, since
-    ~/Caddyfile is shared with other sites and must never be left broken.
+    If ~/Caddyfile already has exactly the managed block we would write,
+    this does nothing at all: no backup, no write, no validate, no reload.
+    That is what makes `start` safe to call at boot, before Caddy is
+    necessarily listening yet to take a reload.
+
+    ~/Caddyfile is shared with other sites, so a `caddy validate` failure
+    restores the backup and raises: the file must never be left broken. A
+    `caddy reload` failure does not raise; it only warns and continues,
+    because Caddy reads ~/Caddyfile itself the next time it starts, so a
+    reload that fails now (for example because Caddy is not up yet) does not
+    need to block the rest of `start`/`setup`/`redeploy`.
     """
+    if caddyfile_block_matches(site, mode, ports):
+        return
     backup = backup_caddyfile()
     update_caddyfile(site, mode, ports)
     validated = validate_caddyfile()
@@ -491,7 +548,13 @@ def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports) -> None:
         elif CADDYFILE.exists():
             CADDYFILE.unlink()
         raise RuntimeError(f"caddy validate failed, restored previous Caddyfile:\n{validated.stderr}")
-    reload_caddy()
+    try:
+        reload_caddy()
+    except subprocess.CalledProcessError as exc:
+        print(
+            f"warning: caddy reload failed ({exc}); Caddy will read {CADDYFILE} on its own next start",
+            file=sys.stderr,
+        )
 
 
 def announce_serving(config: Config) -> None:
@@ -827,7 +890,23 @@ def resolve_ship_target(target: str | None, remote_dir: str | None) -> ShipTarge
     return ShipTarget(target, remote_dir)
 
 
+def looks_like_url(value: str) -> bool:
+    return value.startswith("http://") or value.startswith("https://")
+
+
 def command_ship(target: str | None, url: str | None, remote_dir: str | None) -> None:
+    if target is not None and looks_like_url(target):
+        # `ship URL` with a remembered target: argparse puts URL in the
+        # TARGET slot since it's positional and comes first. Without this,
+        # TARGET would be used as the SSH destination and fail (ssh exit
+        # 255) instead of reusing the remembered target.
+        if url is not None:
+            raise RuntimeError(
+                f"ship got a url-looking TARGET ({target!r}) and a URL ({url!r}); "
+                "pass only the url when a target is already remembered"
+            )
+        target, url = None, target
+
     resolved = resolve_ship_target(target, remote_dir)
     target, remote_dir = resolved.target, resolved.remote_dir
 
@@ -877,7 +956,7 @@ def command_setup(url: str | None, prebuilt: str | None = None) -> None:
     # so a failing build or a bad --prebuilt path never takes a running
     # server down. The swap below is the first thing that touches it.
     command_stop()
-    swap_in_binary(new_binary)
+    swap_in_binary(new_binary, move=prebuilt_path is not None)
     apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):
@@ -908,7 +987,7 @@ def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
     archived = archive_rooms()
     if archived is not None:
         print(f"archived rooms: {archived}")
-    swap_in_binary(new_binary)
+    swap_in_binary(new_binary, move=prebuilt_path is not None)
     apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):

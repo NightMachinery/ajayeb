@@ -267,6 +267,98 @@ class SelfHostTests(unittest.TestCase):
                 self_host.validate_caddyfile = orig_validate
                 self_host.reload_caddy = orig_reload
 
+    def test_apply_caddyfile_safely_skips_an_already_matching_caddyfile(self):
+        """A `start` at boot, re-run with nothing to change, must leave
+        ~/Caddyfile alone entirely: no backup, no write, no validate, no
+        reload."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            caddyfile = Path(tmp) / "Caddyfile"
+            config_dir = Path(tmp) / ".self-host"
+
+            orig_caddyfile = self_host.CADDYFILE
+            orig_config_dir = self_host.CONFIG_DIR
+            self_host.CADDYFILE = caddyfile
+            self_host.CONFIG_DIR = config_dir
+
+            site = self_host.parse_site_url("https://game.example.test")
+            ports = self_host.Ports(server=39081, web_dev=39082)
+            self_host.update_caddyfile(site, self_host.Mode.PROD, ports)
+            original_text = caddyfile.read_text()
+            original_mtime_ns = caddyfile.stat().st_mtime_ns
+
+            calls: list[str] = []
+            orig_backup = self_host.backup_caddyfile
+            orig_validate = self_host.validate_caddyfile
+            orig_reload = self_host.reload_caddy
+            self_host.backup_caddyfile = lambda: calls.append("backup")
+            self_host.validate_caddyfile = lambda: calls.append("validate")
+            self_host.reload_caddy = lambda: calls.append("reload")
+            try:
+                self_host.apply_caddyfile_safely(site, self_host.Mode.PROD, ports)
+                self.assertEqual(calls, [])
+                self.assertEqual(caddyfile.read_text(), original_text)
+                self.assertEqual(caddyfile.stat().st_mtime_ns, original_mtime_ns)
+                self.assertFalse(config_dir.exists(), "no backup file (or directory) should be created")
+            finally:
+                self_host.CADDYFILE = orig_caddyfile
+                self_host.CONFIG_DIR = orig_config_dir
+                self_host.backup_caddyfile = orig_backup
+                self_host.validate_caddyfile = orig_validate
+                self_host.reload_caddy = orig_reload
+
+    def test_apply_caddyfile_safely_continues_when_reload_fails(self):
+        """`caddy reload` failing (for example, Caddy is not up yet at boot)
+        must not abort start/setup/redeploy: it only warns."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            caddyfile = Path(tmp) / "Caddyfile"
+            config_dir = Path(tmp) / ".self-host"
+
+            orig_caddyfile = self_host.CADDYFILE
+            orig_config_dir = self_host.CONFIG_DIR
+            self_host.CADDYFILE = caddyfile
+            self_host.CONFIG_DIR = config_dir
+
+            def fake_validate():
+                return type("R", (), {"returncode": 0, "stderr": ""})()
+
+            def fake_reload():
+                raise subprocess.CalledProcessError(1, ["caddy", "reload"])
+
+            orig_validate = self_host.validate_caddyfile
+            orig_reload = self_host.reload_caddy
+            self_host.validate_caddyfile = fake_validate
+            self_host.reload_caddy = fake_reload
+            try:
+                site = self_host.parse_site_url("https://game.example.test")
+                ports = self_host.Ports(server=39091, web_dev=39092)
+                stderr = io.StringIO()
+                with redirect_stderr(stderr):
+                    self_host.apply_caddyfile_safely(site, self_host.Mode.PROD, ports)  # must not raise
+                self.assertIn("reverse_proxy localhost:39091", caddyfile.read_text())
+                self.assertIn("warning", stderr.getvalue().lower())
+                self.assertIn("reload", stderr.getvalue().lower())
+            finally:
+                self_host.CADDYFILE = orig_caddyfile
+                self_host.CONFIG_DIR = orig_config_dir
+                self_host.validate_caddyfile = orig_validate
+                self_host.reload_caddy = orig_reload
+
+    def test_reload_caddy_only_runs_caddy_reload(self):
+        """No `caddy fmt`: it would reformat the whole shared ~/Caddyfile."""
+        with mock.patch("self_host.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], returncode=0)
+            self_host.reload_caddy()
+            run.assert_called_once_with(
+                ["caddy", "reload", "--config", str(self_host.CADDYFILE)],
+                cwd=self_host.ROOT,
+                check=True,
+                text=True,
+            )
+
     def test_archive_rooms_keeps_only_last_ten(self):
         import tempfile
 
@@ -701,6 +793,52 @@ class SwapInBinaryTests(unittest.TestCase):
             finally:
                 self._restore(originals)
 
+    def test_swap_in_binary_move_consumes_the_source_file(self):
+        """setup/redeploy --prebuilt installs an uploaded binary with
+        move=True, so it does not leave a second ~8.5 MB copy on disk."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, originals = self._with_bin_dir(tmp)
+            try:
+                self_host.BIN_PATH.write_text("old-binary")
+                new_source = Path(tmp) / "new-binary"
+                new_source.write_text("new-binary")
+                self_host.swap_in_binary(new_source, move=True)
+                self.assertEqual(self_host.BIN_PATH.read_text(), "new-binary")
+                self.assertEqual(self_host.BIN_PREV_PATH.read_text(), "old-binary")
+                self.assertTrue(os.access(self_host.BIN_PATH, os.X_OK))
+                self.assertFalse(new_source.exists(), "the uploaded source must be consumed, not copied")
+            finally:
+                self._restore(originals)
+
+    def test_swap_in_binary_move_falls_back_to_copy_across_filesystems(self):
+        """A rename can't cross filesystems; move=True still ends up with no
+        residual copy by copying and then removing the source."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bin_dir, originals = self._with_bin_dir(tmp)
+            try:
+                new_source = Path(tmp) / "new-binary"
+                new_source.write_text("new-binary")
+                real_replace = self_host.os.replace
+
+                def fake_replace(src, dst):
+                    if str(src) == str(new_source):
+                        raise OSError("Invalid cross-device link")
+                    return real_replace(src, dst)
+
+                self_host.os.replace = fake_replace
+                try:
+                    self_host.swap_in_binary(new_source, move=True)
+                finally:
+                    self_host.os.replace = real_replace
+                self.assertEqual(self_host.BIN_PATH.read_text(), "new-binary")
+                self.assertFalse(new_source.exists(), "the fallback must still remove the source")
+            finally:
+                self._restore(originals)
+
 
 class SetupRedeployOrderingTests(unittest.TestCase):
     """setup/redeploy: --prebuilt skips every build step, and stop only runs
@@ -741,7 +879,9 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             mocks["build_web"].assert_not_called()
             mocks["sync_webdist"].assert_not_called()
             mocks["build_server_release"].assert_not_called()
-            mocks["swap_in_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"))
+            # --prebuilt installs by moving the uploaded binary into place
+            # rather than leaving a second copy of it behind.
+            mocks["swap_in_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"), move=True)
 
     def test_command_setup_builds_and_checks_before_stopping_the_server(self):
         calls: list = []
@@ -766,7 +906,7 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             mocks["poll_health"].return_value = True
             mocks["build_server_release"].side_effect = lambda: calls.append("build") or Path("/tmp/new")
             mocks["command_stop"].side_effect = lambda: calls.append("stop")
-            mocks["swap_in_binary"].side_effect = lambda source: calls.append("swap")
+            mocks["swap_in_binary"].side_effect = lambda source, move=False: calls.append("swap")
             self_host.command_setup("https://game.example.test")
             self.assertEqual(calls, ["build", "stop", "swap"])
 
@@ -821,7 +961,9 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             mocks["build_web"].assert_not_called()
             mocks["sync_webdist"].assert_not_called()
             mocks["build_server_release"].assert_not_called()
-            mocks["swap_in_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"))
+            # --prebuilt installs by moving the uploaded binary into place
+            # rather than leaving a second copy of it behind.
+            mocks["swap_in_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"), move=True)
 
     def test_command_redeploy_archives_and_builds_before_stopping_the_server(self):
         calls: list = []
@@ -848,7 +990,7 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             mocks["archive_rooms"].side_effect = lambda: calls.append("archive") or None
             mocks["build_server_release"].side_effect = lambda: calls.append("build") or Path("/tmp/new")
             mocks["command_stop"].side_effect = lambda: calls.append("stop")
-            mocks["swap_in_binary"].side_effect = lambda source: calls.append("swap")
+            mocks["swap_in_binary"].side_effect = lambda source, move=False: calls.append("swap")
             self_host.command_redeploy("https://game.example.test")
             # The archive still runs with the server already stopped (so it
             # never captures a file mid-write), and still before the swap.
@@ -1011,6 +1153,48 @@ class CommandShipTests(unittest.TestCase):
 
             self_host.command_ship(None, None, None)
             mocks["poll_remote_version"].assert_not_called()
+
+    def test_command_ship_treats_url_like_first_argument_as_the_url(self):
+        """`ship URL` with a remembered target: argparse puts URL in the
+        TARGET slot, so without this fix it would be used as the SSH
+        destination (and fail safely with ssh exit 255) instead of reusing
+        the remembered target."""
+        with self._patched() as mocks:
+            mocks["resolve_ship_target"].return_value = self_host.ShipTarget("user@example.host", "ajayeb")
+            mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+            mocks["git_version"].return_value = "v1.0.0"
+            mocks["cross_build"].return_value = Path("/tmp/ajayeb-linux-amd64")
+            mocks["determine_deploy_command"].return_value = "redeploy"
+            mocks["poll_remote_version"].return_value = "v1.0.0"
+
+            self_host.command_ship("https://game.example.test", None, None)
+
+            mocks["resolve_ship_target"].assert_called_once_with(None, None)
+            mocks["deploy_remote"].assert_called_once_with(
+                "user@example.host", "ajayeb", "redeploy", "https://game.example.test"
+            )
+            mocks["poll_remote_version"].assert_called_once_with("https://game.example.test")
+
+    def test_command_ship_raises_when_url_like_target_and_explicit_url_both_given(self):
+        with self.assertRaises(RuntimeError):
+            self_host.command_ship("https://a.test", "https://b.test", None)
+
+    def test_command_ship_errors_clearly_when_url_like_target_and_nothing_remembered(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            config_dir = Path(tmp) / ".self-host"
+            config_file = config_dir / "config.json"
+            orig_config_dir = self_host.CONFIG_DIR
+            orig_config_file = self_host.CONFIG_FILE
+            self_host.CONFIG_DIR = config_dir
+            self_host.CONFIG_FILE = config_file
+            try:
+                with self.assertRaisesRegex(RuntimeError, "no TARGET"):
+                    self_host.command_ship("https://game.example.test", None, None)
+            finally:
+                self_host.CONFIG_DIR = orig_config_dir
+                self_host.CONFIG_FILE = orig_config_file
 
 
 if __name__ == "__main__":

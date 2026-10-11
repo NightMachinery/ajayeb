@@ -23,7 +23,10 @@ recorded yet.
   server and before installing the new binary. `--prebuilt`
   works the same way as for `setup`.
 - `start [url]`: starts the already-built server. Builds it first only if
-  `.self-host/bin/ajayeb` does not exist yet.
+  `.self-host/bin/ajayeb` does not exist yet. Safe to run at boot: an
+  already-correct `~/Caddyfile` is left untouched, and the server still
+  starts even if `caddy reload` fails because Caddy is not listening yet.
+  See "Starting at boot" below.
 - `stop`: stops every tmux session this script manages. Leaves the Caddyfile
   and the built binary alone.
 - `dev-start [url]`: starts a development setup instead of production. Runs
@@ -34,7 +37,9 @@ recorded yet.
   free, and the result of a server health check.
 - `ship TARGET [url] [--remote-dir DIR]`: run on the dev machine, not on the
   production host. Cross-compiles for the target and installs the result
-  there over SSH; see "Deploying from another machine" below.
+  there over SSH; see "Deploying from another machine" below. Once a `TARGET`
+  has been remembered, `ship URL` (a bare `http://` or `https://` argument in
+  `TARGET`'s position) is read as the url and reuses the remembered target.
 
 ## Processes
 
@@ -125,19 +130,53 @@ Ajayeb's own local services.
 ## Caddy safety
 
 Because `~/Caddyfile` is shared with other sites on the same machine, every
-edit goes through a safe path:
+edit goes through a safe path, and nothing happens at all when there is
+nothing to change:
 
-1. Copy `~/Caddyfile` to `.self-host/Caddyfile.bak.<timestamp>` before
-   writing anything.
-2. Write the managed block in place (or append it, if this is the first
-   time).
-3. Run `caddy validate --config ~/Caddyfile`. If validation fails, restore
+1. If `~/Caddyfile` already contains exactly the managed block this command
+   would write, stop here: no backup, no write, no validate, no reload. This
+   is what makes `start` safe to run at boot, before Caddy is necessarily up
+   yet to take a reload; see "Starting at boot" below.
+2. Otherwise, copy `~/Caddyfile` to `.self-host/Caddyfile.bak.<timestamp>`
+   before writing anything.
+3. Write the managed block in place (or append it, if this is the first
+   time), already in Caddy's own tab-indented format.
+4. Run `caddy validate --config ~/Caddyfile`. If validation fails, restore
    the backup immediately and stop with an error, without reloading.
-4. Only if validation passes, run `caddy fmt --overwrite` and `caddy reload`.
+5. Only if validation passes, run `caddy reload --config ~/Caddyfile`. If the
+   reload itself fails, for example because Caddy is not listening yet, print
+   a warning and continue instead of aborting: Caddy reads `~/Caddyfile`
+   itself the next time it starts, so a failed reload here does not stop
+   `start`/`setup`/`redeploy` from starting the game server.
+
+`self_host.py` never runs `caddy fmt`: `~/Caddyfile` is shared with other
+sites, and reformatting the whole file on every deploy is not ours to do. The
+managed block is already written in Caddy's own tab-indented format, so a
+reload never has anything of ours to normalize.
 
 After starting the server, the script polls `http://127.0.0.1:<port>/health`
 for up to 10 seconds and prints a warning if it never answers, rather than
 failing silently.
+
+## Starting at boot
+
+Run `python3 self_host.py start` from the deploy directory in the host's own
+boot script, after it brings up Caddy (for example in tmux, with `caddy run
+--config ~/Caddyfile`). A `@reboot` crontab line works just as well:
+
+```
+@reboot cd ~/ajayeb && python3 self_host.py start
+```
+
+`start` is idempotent and safe to run unattended this way:
+
+- An already-correct `~/Caddyfile` is left completely untouched (see "Caddy
+  safety" above), so a reboot never rewrites or reformats the shared file.
+- The server still starts even when Caddy is not up yet to take a reload:
+  a failed `caddy reload` only prints a warning, since Caddy reads
+  `~/Caddyfile` itself the next time it starts.
+- `start` only builds when `.self-host/bin/ajayeb` does not exist yet, so a
+  normal reboot restarts the existing binary without rebuilding anything.
 
 ## Redeploy backups
 
@@ -175,22 +214,32 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
    `DIR/.self-host/bin/ajayeb.upload` with `rsync`.
 4. Runs `setup --prebuilt .self-host/bin/ajayeb.upload [url]` over SSH on
    the remote side, or `redeploy` instead of `setup` when the remote
-   already has a `.self-host/config.json`.
+   already has a `.self-host/config.json`. `--prebuilt` installs by moving
+   the uploaded binary into `.self-host/bin/ajayeb` rather than copying it,
+   so the upload does not also linger on disk as a second ~8.5 MB copy once
+   it is installed (falling back to copying and then removing it only when
+   the two paths are on different filesystems).
 5. Polls `<url>/health` from the dev machine for up to 30 seconds and
    prints the version it reports, with a warning if it differs from the one
    just built, or if it never answers.
 
 `ship` remembers the last `TARGET` and `DIR` it used in the local, gitignored
 `.self-host/config.json`, so a later `ship` can omit them and reuse what was
-remembered. Every argument that reaches a remote shell (the directory, the
-url) is shell-quoted. `ship` refuses a `TARGET` or `DIR` that starts with
-`-`, and a `DIR` with characters outside letters, digits and `. _ - /`,
-because rsync would otherwise pass it to the remote differently from ssh.
+remembered. A later `ship url` (just the url, with no target) reuses the
+remembered target too; it is treated as the url rather than the target
+whenever the first argument starts with `http://` or `https://`, and it is
+an error if no target has been remembered yet. Every argument that reaches a
+remote shell (the directory, the url) is shell-quoted. `ship` refuses a
+`TARGET` or `DIR` that starts with `-`, and a `DIR` with characters outside
+letters, digits and `. _ - /`, because rsync would otherwise pass it to the
+remote differently from ssh.
 
 `--prebuilt PATH` can also be used directly, without `ship`, by anyone who
 builds the binary some other way: `setup`/`redeploy --prebuilt PATH` check
 that `PATH` is a regular, executable file and that `PATH --version` prints a
-version, before anything is stopped.
+version, before anything is stopped. `PATH` is then consumed: it is moved
+into place (or copied and removed, across filesystems), so pass a path you
+do not need to keep afterward.
 
 ## Testing
 
@@ -198,15 +247,20 @@ version, before anything is stopped.
 both modes, port allocation and reselection, the config file round trip
 (including the remembered ship target), the node and pnpm commands, the Go
 build command, the Caddy validate-then-reload and restore-on-failure paths,
-the health poll, the rooms backup pruning, the `uname` to `GOOS`/`GOARCH`
-mapping and its refusal of unsupported platforms, the cross-compile command
-and environment, the quoting of every remote command, the `setup` versus
-`redeploy` choice, `--prebuilt` skipping every build step and being checked
-before anything stops, the `.prev` backup, and the remote health poll and
-version comparison. It uses temporary files and fakes for Caddy, tmux, ssh,
-rsync, go, pnpm and network calls throughout, so running it never touches
-the real `~/Caddyfile`, starts a real tmux session, or reaches the network.
-Run it with:
+skipping an already-matching Caddyfile entirely (no backup, no write, no
+validate, no reload) and continuing with only a warning when `caddy reload`
+fails, that `reload_caddy` never runs `caddy fmt`, the health poll, the
+rooms backup pruning, the `uname` to `GOOS`/`GOARCH` mapping and its refusal
+of unsupported platforms, the cross-compile command and environment, the
+quoting of every remote command, the `setup` versus `redeploy` choice,
+`--prebuilt` skipping every build step and being checked before anything
+stops, the `.prev` backup, installing a `--prebuilt` binary by moving it
+(falling back to copy-then-remove across filesystems), `ship` reading a
+url-looking first argument as the url instead of the target, and the remote
+health poll and version comparison. It uses temporary files and fakes for
+Caddy, tmux, ssh, rsync, go, pnpm and network calls throughout, so running it
+never touches the real `~/Caddyfile`, starts a real tmux session, or reaches
+the network. Run it with:
 
 ```
 python3 -m unittest discover -s tests
