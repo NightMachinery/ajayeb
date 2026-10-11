@@ -156,7 +156,7 @@
       </h3>
       <ul class="flex flex-wrap gap-1" aria-label={t('board.citySheet.tokens')}>
         {#each player.tokens as slug (slug)}
-          <li><ProgressToken {slug} size="sm" taken /></li>
+          <li><ProgressToken {slug} size="sm" owned /></li>
         {/each}
       </ul>
     </div>

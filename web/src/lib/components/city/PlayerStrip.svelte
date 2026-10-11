@@ -136,7 +136,7 @@
   {#if player.tokens.length > 0}
     <ul class="flex gap-1" aria-label={t('board.citySheet.tokens')}>
       {#each player.tokens as slug (slug)}
-        <li><ProgressToken {slug} size="sm" taken /></li>
+        <li><ProgressToken {slug} size="sm" owned /></li>
       {/each}
     </ul>
   {/if}

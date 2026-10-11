@@ -183,6 +183,31 @@ describe('wonder, token and avatar frames', () => {
     expect(other).toContain('wonder-art');
   });
 
+  it('anchors the Mausoleum’s crop near the top, in the draft tile and the city row', () => {
+    for (const size of ['draft', 'city'] as const) {
+      const [img] = imgs(render(WonderTile, { props: { slug: 'mausoleum', size } }).body);
+      expect(img, size).toContain('object-position: 50% 12%');
+    }
+    const [draft] = imgs(render(WonderTile, { props: { slug: 'mausoleum', size: 'draft' } }).body);
+    expect(draft).toContain('feather-sky');
+    const [pyramids] = imgs(
+      render(WonderTile, { props: { slug: 'pyramids', size: 'draft' } }).body
+    );
+    expect(pyramids).toContain('object-position: 50% 50%');
+    expect(pyramids).toContain('feather-soft');
+  });
+
+  it('shows a token in a city in full colour, and one gone from the board greyed', () => {
+    const owned = render(ProgressToken, { props: { slug: 'law', size: 'sm', owned: true } }).body;
+    expect(owned).toContain('data-owned');
+    expect(owned).not.toContain('grayscale');
+    expect(owned).toContain('Law (owned)');
+    const taken = render(ProgressToken, { props: { slug: 'law', taken: true } }).body;
+    expect(taken).toContain('data-taken');
+    expect(taken).toContain('grayscale');
+    expect(taken).toContain('Law (taken)');
+  });
+
   it('shows token art in the medallion, else the frame and initial', () => {
     const law = render(ProgressToken, { props: { slug: 'law' } }).body;
     expect(imgs(law)).toHaveLength(1);

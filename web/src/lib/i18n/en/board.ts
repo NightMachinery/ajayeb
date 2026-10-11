@@ -45,6 +45,7 @@ export const board = {
   'token.urbanism': 'Urbanism',
   'board.token.take': 'Take the {name} token',
   'board.token.owned': '{name} (owned)',
+  'board.token.taken': '{name} (taken)',
   'board.tokens.boardLabel': 'Progress tokens on the board',
   'board.tokens.empty': 'No progress tokens remain on the board.',
 

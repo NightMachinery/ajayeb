@@ -17,8 +17,12 @@
      *  renders a slug this build does not recognise, falling back to it
      *  verbatim rather than throwing. */
     slug: string;
-    /** Already taken (by either player): shown ghosted, never a button. */
+    /** Gone from the board (taken by either player), shown where the board
+     *  token used to be: ghosted, never a button. */
     taken?: boolean;
+    /** In a player's city: full colour, and the label says it is owned.
+     *  Never ghosted, since the token is very much in play. */
+    owned?: boolean;
     /** Highlighted as the current pick in an open choice. */
     selected?: boolean;
     /** The action key to send if tapped, e.g. "token:agriculture". Only
@@ -36,6 +40,7 @@
   let {
     slug,
     taken = false,
+    owned = false,
     selected = false,
     actionKey,
     selectable = true,
@@ -71,6 +76,13 @@
   }
 
   const label = $derived(name(slug));
+  const staticLabel = $derived(
+    owned
+      ? t('board.token.owned', { name: label })
+      : taken
+        ? t('board.token.taken', { name: label })
+        : label
+  );
   const initial = $derived(label.charAt(0).toUpperCase());
   const sizeClass = $derived(size === 'sm' ? 'size-[26px] text-[11px]' : 'size-9 text-sm');
 </script>
@@ -110,12 +122,14 @@
   </button>
 {:else}
   <div
-    class="token-tile grid place-items-center rounded-full {taken
+    class="token-tile grid place-items-center rounded-full {taken && !owned
       ? 'opacity-40 grayscale'
       : ''} {className}"
-    title={taken ? t('board.token.owned', { name: label }) : label}
+    title={staticLabel}
     role="img"
-    aria-label={taken ? t('board.token.owned', { name: label }) : label}
+    aria-label={staticLabel}
+    data-owned={owned ? '' : undefined}
+    data-taken={taken && !owned ? '' : undefined}
   >
     {@render medallion()}
   </div>

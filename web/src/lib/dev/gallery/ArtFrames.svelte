@@ -99,6 +99,8 @@
         <ProgressToken {slug} />
         <ProgressToken {slug} size="sm" />
         <ProgressToken {slug} class="scale-125" />
+        <ProgressToken {slug} size="sm" owned />
+        <ProgressToken {slug} size="sm" taken />
       </div>
     {/each}
   </div>
