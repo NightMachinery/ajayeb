@@ -232,8 +232,9 @@ func (lt *leakTracker) scan(c *tclient, tc *trackedConn, final bool) {
 // seed.
 func (lt *leakTracker) judge(who string, chunk []byte, hidden map[string]bool) {
 	lt.t.Helper()
+	named := withoutHintNames(chunk)
 	for slug := range hidden {
-		if pat := []byte(`"` + slug + `"`); bytes.Contains(chunk, pat) {
+		if pat := []byte(`"` + slug + `"`); bytes.Contains(named, pat) {
 			lt.t.Errorf("leak: %s received a hidden id %s: %s", who, pat, chunk)
 		}
 	}
@@ -241,6 +242,31 @@ func (lt *leakTracker) judge(who string, chunk []byte, hidden map[string]bool) {
 		lt.seedFound = true
 		lt.t.Errorf("leak: %s received the room's seed: %s", who, chunk)
 	}
+}
+
+// withoutHintNames returns a state frame without its hint settings
+// (room.hints) and its room log, whose fixed vocabulary of hint family
+// names includes "economy", also the id of a progress token. Every other
+// frame comes back as it is. The wire decoder and the hygiene tests pin
+// that vocabulary, so nothing hidden can travel there.
+func withoutHintNames(chunk []byte) []byte {
+	var frame map[string]json.RawMessage
+	if err := json.Unmarshal(chunk, &frame); err != nil || string(frame["t"]) != `"state"` {
+		return chunk
+	}
+	delete(frame, "roomLog")
+	var room map[string]json.RawMessage
+	if err := json.Unmarshal(frame["room"], &room); err == nil {
+		delete(room, "hints")
+		if b, err := json.Marshal(room); err == nil {
+			frame["room"] = b
+		}
+	}
+	out, err := json.Marshal(frame)
+	if err != nil {
+		return chunk
+	}
+	return out
 }
 
 // stateVersion returns the room version of a state frame, and false for any

@@ -167,6 +167,24 @@ export function mentions(value: unknown): Set<string> {
   return out;
 }
 
+/**
+ * A state frame without its hint settings (room.hints) and its room log,
+ * whose fixed vocabulary of hint family names includes "economy", also the
+ * id of a progress token. The server's decoder and wire tests pin that
+ * vocabulary, so nothing hidden travels there. Other frames are returned as
+ * they are.
+ */
+export function withoutHintNames<T>(msg: T): T {
+  if (!msg || typeof msg !== 'object' || (msg as { t?: unknown }).t !== 'state') return msg;
+  const { roomLog: _log, ...rest } = msg as Record<string, unknown>;
+  const room = rest['room'];
+  if (room && typeof room === 'object') {
+    const { hints: _hints, ...roomRest } = room as Record<string, unknown>;
+    rest['room'] = roomRest;
+  }
+  return rest as T;
+}
+
 /** The slugs a view shows in public places: what this viewer may name from now on. */
 export function publicSlugs(view: View): Set<string> {
   const out = new Set<string>();
@@ -351,9 +369,10 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
         stateFrames[stream.name] = (stateFrames[stream.name] ?? 0) + 1;
         last = view;
       }
-      const named = mentions(msg);
+      const scrubbed = withoutHintNames(msg);
+      const named = mentions(scrubbed);
       const history = msg?.t === 'state' && Array.isArray(msg.history) ? msg.history : null;
-      const inRest = history ? mentions({ ...msg, history: undefined }) : named;
+      const inRest = history ? mentions({ ...scrubbed, history: undefined }) : named;
       if (history) {
         historyFrames[stream.name] = (historyFrames[stream.name] ?? 0) + 1;
         historyEntries[stream.name] = (historyEntries[stream.name] ?? 0) + history.length;
