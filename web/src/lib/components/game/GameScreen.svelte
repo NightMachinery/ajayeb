@@ -494,6 +494,7 @@
         onOpenSettings={() => ui.openSettings()}
         onHome={onhome}
         homeHint={view?.phase !== 'gameOver'}
+        replayCode={view?.phase === 'gameOver' && view.revealed ? frame?.code : undefined}
         class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
       >
         {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}

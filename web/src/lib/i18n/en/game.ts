@@ -122,6 +122,7 @@ export const game = {
   'game.menu.homeHint': 'You can continue this game from Home.',
   'game.menu.settings': 'Settings',
   'game.menu.log': 'Log',
+  'game.menu.replay': 'Download replay',
 
   // Toasts after a move in a local room.
   'game.toast.undo': 'Undo',

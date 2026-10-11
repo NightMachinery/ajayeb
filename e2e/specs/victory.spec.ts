@@ -5,7 +5,8 @@
 // victory and the winner the scenario's Expect describes and show the
 // server's own score sheet (window.__ajayeb), not numbers computed here.
 
-import { expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
@@ -15,7 +16,7 @@ import {
   playKey,
   type ExpectedResult
 } from '../fixtures/scenario';
-import type { Flow } from '../fixtures/driver';
+import type { Flow, GameDriver } from '../fixtures/driver';
 
 interface Case {
   scenario: string;
@@ -23,6 +24,46 @@ interface Case {
   /** The trigger, with the flow to play each key by when not the default. */
   trigger: readonly (string | [string, Flow])[];
   expected: ExpectedResult;
+}
+
+/** Opens the game menu and reports whether it offers the replay download. */
+async function menuOffersReplay(driver: GameDriver): Promise<boolean> {
+  await driver.visible('[data-control="menu"]').click();
+  const menu = driver.visible('[data-game-menu]');
+  await expect(menu.locator('[data-control="menu-home"]')).toBeVisible();
+  return (await menu.locator('[data-control="menu-replay"]').count()) > 0;
+}
+
+/**
+ * The finished game's replay download (docs/protocol.md, "Downloading a
+ * game's log"): the game menu offers it only after the end, and the saved
+ * file is the room's ajayeb-log/1 log, named after the room code.
+ */
+async function expectReplayDownload(page: Page, driver: GameDriver, plies: number): Promise<void> {
+  await page.locator('[data-view-board]').filter({ visible: true }).first().click();
+  expect(await menuOffersReplay(driver), 'the menu offers the replay once the game is over').toBe(
+    true
+  );
+  const code = await page.evaluate(() => window.__ajayeb?.room()?.code ?? '');
+  expect(code).not.toBe('');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    driver.visible('[data-game-menu] [data-control="menu-replay"]').click()
+  ]);
+  expect(download.suggestedFilename()).toBe(`ajayeb-${code}.json`);
+  const path = await download.path();
+  const log = JSON.parse(await readFile(path, 'utf8')) as {
+    format: string;
+    seed: string;
+    scenario: unknown;
+    actions: { ply: number; seat: number; action: string }[];
+    finalHash: string;
+  };
+  expect(log.format).toBe('ajayeb-log/1');
+  expect(log.seed).toMatch(/^\d+$/);
+  expect(log.scenario, "a scenario room's log carries its scenario").toBeTruthy();
+  expect(log.actions).toHaveLength(plies);
+  expect(log.finalHash).toMatch(/^[0-9a-f]{16}$/);
 }
 
 const CASES: readonly Case[] = [
@@ -75,6 +116,13 @@ test.describe('victory', { tag: ['@mobile'] }, () => {
     test(`${c.title} (${c.scenario})`, async ({ page }) => {
       const problems = watchHygiene(page);
       const driver = await openHotseatRoom(page, c.scenario);
+      // One case checks the replay download, which the menu hides until the end.
+      const checkReplay = c.scenario === 'military-supremacy';
+      if (checkReplay) {
+        expect(await menuOffersReplay(driver), 'no replay while the game runs').toBe(false);
+        await page.keyboard.press('Escape');
+        await expect(page.locator('[data-game-menu]')).toBeHidden();
+      }
 
       for (const step of c.trigger) {
         const [key, flow] = typeof step === 'string' ? [step, undefined] : step;
@@ -115,6 +163,7 @@ test.describe('victory', { tag: ['@mobile'] }, () => {
       // The turn bar says the game is over, and no move is offered.
       await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'gameOver');
       expect(view.choices).toEqual([]);
+      if (checkReplay) await expectReplayDownload(page, driver, c.trigger.length);
       expect(problems, 'console errors, page errors or failed requests').toEqual([]);
     });
   }

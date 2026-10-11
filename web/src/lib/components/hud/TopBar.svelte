@@ -5,8 +5,9 @@
   // caller passes the age, the count and whether undo is available right
   // now (view.canUndo) and gets a click back for each button.
   //
-  // The game menu (every mode) holds Home, Settings and the log. It is a
-  // native popover: light dismiss, Escape and the top layer come with it.
+  // The game menu (every mode) holds Home, Settings and the log, and once
+  // the game has ended the replay download. It is a native popover: light
+  // dismiss, Escape and the top layer come with it.
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import House from '@lucide/svelte/icons/house';
@@ -14,6 +15,7 @@
   import Undo2 from '@lucide/svelte/icons/undo-2';
   import Settings from '@lucide/svelte/icons/settings';
   import ScrollText from '@lucide/svelte/icons/scroll-text';
+  import Download from '@lucide/svelte/icons/download';
 
   interface Props {
     /** 1 to 3, or 0 during the wonder draft. */
@@ -27,6 +29,10 @@
     onHome?: () => void;
     /** Under Home, say the game can be continued from there (not once it is over). */
     homeHint?: boolean;
+    /** The room code, given once the game has ended and the server will
+     *  hand out its log: the menu then offers "Download replay", which saves
+     *  GET /api/rooms/{code}/log (docs/protocol.md) as ajayeb-<code>.json. */
+    replayCode?: string;
     /** Extra content between the age and the buttons (the compact military
      *  track and tokens of the phone landscape layout). */
     children?: Snippet;
@@ -42,6 +48,7 @@
     onOpenSettings,
     onHome,
     homeHint = true,
+    replayCode,
     children,
     class: className = ''
   }: Props = $props();
@@ -57,6 +64,16 @@
       // Already closed.
     }
     action?.();
+  }
+
+  /** Saves the room's game log through a temporary download link. */
+  function downloadReplay(code: string): void {
+    const link = document.createElement('a');
+    link.href = `/api/rooms/${encodeURIComponent(code)}/log`;
+    link.download = `ajayeb-${code}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
   }
 
   const iconButton =
@@ -177,6 +194,18 @@
       >
         <ScrollText class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
         {t('game.menu.log')}
+      </button>
+    {/if}
+    {#if replayCode}
+      {@const code = replayCode}
+      <button
+        type="button"
+        class={menuItem}
+        data-control="menu-replay"
+        onclick={() => choose(() => downloadReplay(code))}
+      >
+        <Download class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+        {t('game.menu.replay')}
       </button>
     {/if}
   </div>
