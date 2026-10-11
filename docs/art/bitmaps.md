@@ -19,6 +19,17 @@ and the app references only approved art, through the generated
 `web/src/lib/art/available.gen.ts`, drawing a procedural placeholder for
 everything else.
 
+**One exception to "AVIF only": the app icon PNGs.** iOS reads its home
+screen icon from `<link rel="apple-touch-icon">` and the web app manifest
+lists its icons, and both need PNG. So `web/static/icons/` holds
+`apple-touch-icon.png` (180 px), `icon-192.png` and `icon-512.png`, made
+from the approved `icon/app` original by
+`node tools/art/process.mjs --app-icons` (see step 7) and linked from
+`web/src/app.html` and `web/static/manifest.webmanifest`. Everything else
+the app shows stays AVIF. The same goes for the two textures, which the
+app names in CSS (`--table-texture` in `web/src/lib/styles/tokens.css`)
+instead of through the index; a unit test checks they are approved art.
+
 ## Files
 
 ```
@@ -279,6 +290,26 @@ ever disagree.
    `web/static/art/` untouched.
    This is how a pipeline change or a pilot run is proved without shipping
    or approving anything.
+
+   **`--app-icons`** is a separate mode for the app icon PNGs: it reads
+   the committed original `art/originals/icon/app.webp` (the manifest must
+   have `icon/app` approved), crops and paper-maps it exactly as the AVIF
+   sizes are, and writes `web/static/icons/apple-touch-icon.png` (180 px),
+   `icon-192.png` and `icon-512.png`, or the same names under `--out DIR`.
+   The gouache grain makes a truecolour PNG large (408 KB at 512 px), so
+   each is quantised to a 256-colour palette with Floyd-Steinberg
+   dithering (91 KB at 512 px, 11 KB at 180 px, no visible change at icon
+   sizes). It touches neither the manifest nor `web/static/art/`.
+
+   **Known issue: the night texture ships pale.** The paper-tone mapping
+   moves every image's own ground (its corner colour) onto `PAPER_HEX`,
+   and the ground of `texture/night` is the deep lapis paper itself, so
+   the shipped `ui/night.avif` came out as ivory with blue fibres (the
+   original in `art/originals/` is lapis). The app works around it by
+   multiplying the tile over a slightly lifted lapis (`tokens.css`), which
+   keeps only its grain. Skipping the mapping for that asset and
+   reprocessing it would ship the lapis tile; the dark theme's
+   `--table-texture-blend` then becomes `normal` over `--table`.
 
 8. **`node tools/art/index.mjs`** regenerates
    `web/src/lib/art/available.gen.ts` from every `"approved"` asset in the

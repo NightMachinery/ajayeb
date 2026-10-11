@@ -62,6 +62,15 @@
 //                    instead of art/manifest.json
 //   --help           print this usage and exit
 //
+// The app icon PNGs (the one exception to "shipped bitmaps are AVIF only",
+// because iOS's apple-touch-icon and the web app manifest need PNG):
+//   node tools/art/process.mjs --app-icons [--out DIR]
+// reads the committed original art/originals/icon/app.webp (icon/app must
+// be approved), crops and paper-maps it exactly as the AVIF sizes are, and
+// writes web/static/icons/apple-touch-icon.png (180 px), icon-192.png and
+// icon-512.png (or the same names under DIR). It touches neither the
+// manifest nor web/static/art/.
+//
 // With --out, nothing is written to art/originals/ or web/static/art/: the
 // WebP original goes to DIR/originals/<kind>/<slug>.webp and the AVIFs to
 // DIR/<outDir>/. This is how a pipeline change is proved without shipping
@@ -74,6 +83,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 import {
+  repoRoot,
   KIND_SPEC,
   rawDir,
   rawAttemptPath,
@@ -107,7 +117,12 @@ function parseArgs(argv) {
     else if (a === '--src') args.src = argv[++i];
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--manifest') setManifestPath(argv[++i]);
+    else if (a === '--app-icons') args.appIcons = true;
     else die(`unknown argument "${a}" (see --help)`, 2);
+  }
+  if (args.appIcons) {
+    if (args.id || args.src) die('--app-icons takes no --id or --src (it reads the icon/app original)', 2);
+    return args;
   }
   if (!args.id) die('usage: process.mjs --id <id> [--src <original>] [--out DIR] [--manifest PATH] (see --help)', 2);
   return args;
@@ -368,8 +383,63 @@ async function encodeAvif(pngPath, outPath, budgetBytes, qualities) {
   return { bytes: lastSize, quality: qualities[qualities.length - 1], overBudget: true };
 }
 
+/** The PNG app icons: file name and square size, under web/static/icons/. */
+const APP_ICON_PNGS = [
+  { file: 'apple-touch-icon.png', size: 180 },
+  { file: 'icon-192.png', size: 192 },
+  { file: 'icon-512.png', size: 512 },
+];
+const APP_ICON_ID = 'icon/app';
+
+/**
+ * --app-icons: the PNG icons iOS and the web app manifest need, from the
+ * approved app icon's committed original, with the same fill crop and
+ * paper-tone mapping as its AVIF sizes. The gouache grain makes a
+ * truecolour PNG huge (408 KB at 512 px), so each is quantised to a 256
+ * colour palette with Floyd-Steinberg dithering (93 KB at 512 px, 12 KB at
+ * 180 px, no visible change at icon sizes) and written with no metadata.
+ */
+async function appIcons(args) {
+  const manifest = await loadManifest();
+  if (!approvedAttemptOf(manifest.assets[APP_ICON_ID])) {
+    die(`${APP_ICON_ID} is not "approved" in ${manifestLabel()}; there is no app icon to derive PNGs from`);
+  }
+  const src = originalPath(APP_ICON_ID);
+  await stat(src).catch(() => die(`no committed original at ${displayPath(src)}`));
+  const outDir = args.out ? path.resolve(args.out) : path.join(repoRoot, 'web', 'static', 'icons');
+  const scratch = path.join(os.tmpdir(), `ajayeb-art-app-icons-${process.pid}-${Date.now()}`);
+  await mkdir(scratch, { recursive: true });
+  await mkdir(outDir, { recursive: true });
+  const targetPaperRgb = hexToRgb(PAPER_HEX);
+  try {
+    for (const { file, size } of APP_ICON_PNGS) {
+      const { buf, w, h } = await cropToRawRgb(src, size, size);
+      mapPaperTone(buf, w, h, cornerPaperColor(buf, w, h), targetPaperRgb);
+      const raw = path.join(scratch, file);
+      await rawRgbToPng(buf, w, h, raw);
+      const outPath = path.join(outDir, file);
+      await run('magick', [
+        raw,
+        '-dither',
+        'FloydSteinberg',
+        '-colors',
+        '256',
+        '-strip',
+        '-define',
+        'png:compression-level=9',
+        `PNG8:${outPath}`,
+      ]);
+      const { size: bytes } = await stat(outPath);
+      process.stdout.write(`process.mjs: ${displayPath(outPath)} ${size}x${size} PNG -> ${(bytes / 1024).toFixed(1)} KB\n`);
+    }
+  } finally {
+    await rm(scratch, { recursive: true, force: true });
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (args.appIcons) return appIcons(args);
   const kind = idKind(args.id);
   const slug = idSlug(args.id);
   const spec = KIND_SPEC[kind];
