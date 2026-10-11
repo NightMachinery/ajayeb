@@ -2,6 +2,9 @@
 // JSON API under /api/, the WebSocket endpoint at /ws, and the single-page app
 // (SPA) that serves the web client for every other path.
 //
+// With Logs, it serves the replay download of a finished game at
+// GET /api/rooms/{code}/log (gamelog.go).
+//
 // This package routes requests and serves files. Game logic lives in the
 // engine and room packages, and connection handling in package ws, whose
 // handler New mounts at /ws. With DevEndpoints (which requires Dev), it also
@@ -15,6 +18,8 @@ import (
 	"errors"
 	"io/fs"
 	"net/http"
+	"net/netip"
+	"time"
 )
 
 // Config holds the settings the HTTP layer needs. The zero value is a valid
@@ -41,6 +46,18 @@ type Config struct {
 	// Seed returns the seed of a development room whose request names
 	// none. Default: crypto/rand.
 	Seed func() uint64
+
+	// Logs serves the replay download, GET /api/rooms/{code}/log (a
+	// *store.Store). Nil leaves the path answering 404 like any unknown API
+	// path.
+	Logs GameLogs
+
+	// TrustedProxies are the reverse proxies whose X-Forwarded-For the
+	// per-address limit of the log download believes, as for /ws.
+	TrustedProxies []netip.Prefix
+
+	// Clock drives the log download's rate limit. Default: time.Now.
+	Clock func() time.Time
 }
 
 // ErrDevEndpointsWithoutDev is returned by New when DevEndpoints is set but
@@ -70,6 +87,9 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 		d := newDevAPI(cfg.DevRooms, cfg.Seed)
 		mux.Handle("/api/dev/rooms", localOnly(http.HandlerFunc(d.createRoom)))
 		mux.Handle("/api/dev/scenarios", localOnly(http.HandlerFunc(d.scenarios)))
+	}
+	if cfg.Logs != nil {
+		mux.HandleFunc("/api/rooms/{code}/log", newLogAPI(cfg.Logs, cfg.TrustedProxies, cfg.Clock).serve)
 	}
 	if cfg.WebSocket != nil {
 		mux.Handle("/ws", cfg.WebSocket)

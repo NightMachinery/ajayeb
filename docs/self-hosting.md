@@ -109,7 +109,9 @@ GOMEMLIMIT=96MiB .self-host/bin/ajayeb --addr 127.0.0.1:<port> \
 
 `GOMEMLIMIT` keeps the process well inside its usual 10 to 20 MB RSS.
 `--trust-proxy 127.0.0.1` tells the server to believe `X-Forwarded-For` only
-from Caddy on the same host. `--origin` restricts which WebSocket origins the
+from Caddy on the same host; the per-address limits of the socket and of the
+replay download (`GET /api/rooms/{code}/log`) count the real client this way
+instead of counting every player as Caddy. `--origin` restricts which WebSocket origins the
 server accepts.
 
 Caddy's managed block, between `# BEGIN ajayeb self_host.py` and `# END
@@ -189,6 +191,10 @@ boot script, after it brings up Caddy (for example in tmux, with `caddy run
 right before installing the new binary, so the archive never captures a
 file mid-write; it keeps only the 10 most recent archives. If there is no
 `rooms` directory yet (a fresh install), it skips the archive step.
+
+The replay download reads the same room files, so a finished game's log can
+be downloaded until the reaper deletes the room, 7 days after its last
+update.
 
 ## Deploying from another machine
 

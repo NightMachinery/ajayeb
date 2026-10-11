@@ -334,12 +334,14 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		return err
 	}
 	handler, err := httpapi.New(httpapi.Config{
-		Version:      version,
-		Dev:          opts.dev,
-		DevEndpoints: opts.devEndpoints,
-		WebSocket:    sockets,
-		DevRooms:     rooms,
-		Seed:         seed,
+		Version:        version,
+		Dev:            opts.dev,
+		DevEndpoints:   opts.devEndpoints,
+		WebSocket:      sockets,
+		DevRooms:       rooms,
+		Seed:           seed,
+		Logs:           st,
+		TrustedProxies: opts.trustProxy,
 	}, static)
 	if err != nil {
 		return err

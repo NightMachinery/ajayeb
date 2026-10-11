@@ -855,6 +855,40 @@ A store that persists a room, a tool that replays or verifies a game, and a
 script that generates fixtures from a scripted game all read and write this
 same shape, so none of them needs to agree with the others out of band.
 
+### Downloading a game's log
+
+`GET /api/rooms/{code}/log` answers the log of a room's game once that game
+has ended, for the game menu's "Download replay" item. The answer is 200
+with the log above as its body, `Content-Type: application/json` and
+`Content-Disposition: attachment; filename="ajayeb-K7QX2M.json"`. The code
+is matched without regard to case. The log of a room that started from a
+named scenario carries that scenario as an object, so it replays anywhere.
+
+The seed determines every card, wonder and token the game kept hidden, so
+the log is served only when the end of the game has already shown all of
+them to anyone watching the room: whoever knows the code may watch it, and
+the code is all the request needs. The refusals:
+
+- 404 `not-found`: no room has that code (or the code is malformed);
+- 409 `game-running`: the game has not ended (a lobby or a running game);
+- 403 `log-hidden`: the game's `hideAtEnd` option is on, so its secrets stay
+  hidden after the end too, and a log would reveal them;
+- 410 `archived`: the room file could not be trusted (see the store's
+  archiving rule in `docs/architecture.md`);
+- 405 `method-not-allowed`: not a GET or HEAD;
+- 429 `rate`, with `Retry-After`: the client address (as for the socket's
+  limits) has used up its downloads. Each address has a bucket of 10
+  requests that refills one request every 2 minutes, and every request
+  counts, a miss included, so the endpoint is no faster a way to guess room
+  codes than a `join`. The limiter remembers at most 4096 addresses and,
+  like the room creation limit, refuses a newcomer while all of them are
+  still refilling.
+
+To replay a downloaded log and check its final hash, run
+`go -C server run ./cmd/ajayeb-sim replay ajayeb-K7QX2M.json` (or a built
+`ajayeb-sim replay FILE`). It replays every action through the engine's own
+legality checks and reports a mismatch with the log's `finalHash`.
+
 ## The scenario format
 
 A Scenario describes a starting position that is not the plain start of the
