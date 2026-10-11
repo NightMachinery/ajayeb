@@ -48,7 +48,7 @@ Acceptance:
 
 ## M2: Engine
 
-Status: done on 2026-10-02. Every slice below landed after an independent review. Measured at the end: engine coverage 94.7% and catalog 97.5%; a sweep of 2000 random and 2000 simple-policy games green with invariants after every action and all three victory types reached; and ten minutes of fuzzing (about 1.9 million playouts) found no crasher. One deviation from the plan: the rules-audit loop ran a single round, in which four finders wrote 94 black-box tests from the rules and none failed, and it stopped there to save model quota instead of waiting for two empty rounds. A deeper audit with stronger finders is queued for M11.
+Status: done on 2026-10-02. Every slice below landed after an independent review. Measured at the end: engine coverage 94.7% and catalog 97.5%; a sweep of 2000 random and 2000 simple-policy games green with invariants after every action and all three victory types reached; and ten minutes of fuzzing (about 1.9 million playouts) found no crasher. One deviation from the plan: the rules-audit loop ran a single round, in which four finders wrote 94 black-box tests from the rules and none failed, and it stopped there to save model quota instead of waiting for two empty rounds. A deeper audit with stronger finders is queued for M10, beside the UI build.
 
 Scope, as slices (each one green and committed on its own):
 
@@ -197,6 +197,7 @@ Scope, built as ordinary slices:
 - Tooltips on every board element and icon-only button, down to each symbol, chip, pip and glyph on a card, through our own helper, following the AGENTS.md rule, with vector concept diagrams where a picture explains more than a sentence; a lint keeps the native `title` attribute out.
 - A rules reference built from the real components and the tooltip diagrams: a side drawer on desktop that leaves the board visible and live, a tall bottom sheet on phones, and the same content at `/rules` from Home. Tooltips link to the matching section.
 - Animations driven by server events (card flights, flips, coins, the pawn, looting, tokens, the age deal, the draft, victory), sound, haptics and the speed setting, all controlled by the game's own Animation setting ([D21](decisions.md)).
+- An opponent move summary: a Settings option, Show opponent move in detail (on by default), opens a popup that summarises the opponent's last move, consolidated when they took several turns in a row, and any tap closes it; a button by the log shows it at any time. The same summary tells a player who reconnects what happened while they were away.
 - A guided first game against the easiest bot, and first-time tips that reuse the tooltip layer.
 - A Persian locale stub with a right-to-left smoke fixture, and app-shell caching.
 
