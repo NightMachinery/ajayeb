@@ -12,11 +12,14 @@
     ANIMATION_SPEEDS,
     CARD_TEXT_SIZES,
     CONFIRM_MOVES_OPTIONS,
+    SOUND_VOLUMES,
     settings,
     type AnimationSpeed,
     type CardTextSize,
-    type ConfirmMoves
+    type ConfirmMoves,
+    type SoundVolume
   } from '$lib/ui/settings.svelte';
+  import { hapticsSupported, installFx, play, unlockAudio } from '$lib/fx';
   import { theme, THEME_PREFS, type ThemePref } from '$lib/ui/theme.svelte';
 
   // as const satisfies (not a type annotation) so each entry keeps its own
@@ -38,12 +41,42 @@
     large: 'home.settings.cardTextLarge'
   } as const satisfies Record<CardTextSize, MessageKey>;
 
+  const VOLUME_LABEL = {
+    quiet: 'home.settings.volumeQuiet',
+    medium: 'home.settings.volumeMedium',
+    loud: 'home.settings.volumeLoud'
+  } as const satisfies Record<SoundVolume, MessageKey>;
+
+  // Only where the browser can vibrate (not iOS, not most desktops); read
+  // once, it never changes during a page's life.
+  const canVibrate = hapticsSupported();
+
+  // Turning sound on is itself the user gesture that may start audio, so
+  // the switch unlocks it and plays a sample at once. The listener that
+  // unlocks audio on later gestures (after a reload) is installed too.
+  function setSound(on: boolean): void {
+    settings.set('sound', on);
+    if (!on) return;
+    installFx();
+    unlockAudio();
+    play('chime', { volume: settings.value.soundVolume });
+  }
+
+  function setVolume(v: SoundVolume): void {
+    settings.set('soundVolume', v);
+    unlockAudio();
+    play('coin', { volume: v });
+  }
+
   const themeOptions = $derived(THEME_PREFS.map((p) => ({ value: p, label: t(`theme.${p}`) })));
   const speedOptions = $derived(
     ANIMATION_SPEEDS.map((s) => ({ value: s, label: t(SPEED_LABEL[s]) }))
   );
   const confirmOptions = $derived(
     CONFIRM_MOVES_OPTIONS.map((c) => ({ value: c, label: t(CONFIRM_LABEL[c]) }))
+  );
+  const volumeOptions = $derived(
+    SOUND_VOLUMES.map((v) => ({ value: v, label: t(VOLUME_LABEL[v]) }))
   );
   const cardTextOptions = $derived(
     CARD_TEXT_SIZES.map((c) => ({ value: c, label: t(CARD_TEXT_LABEL[c]) }))
@@ -114,4 +147,48 @@
       bind:value={() => settings.value.cardText, (v) => settings.set('cardText', v as CardTextSize)}
     />
   </div>
+
+  <label class="flex min-h-11 items-center justify-between gap-3">
+    <span class="flex flex-col">
+      <span class="text-sm font-medium text-fg">{t('home.settings.sound')}</span>
+      <span class="text-xs text-fg-muted">{t('home.settings.soundHint')}</span>
+    </span>
+    <input
+      type="checkbox"
+      class="size-5 shrink-0 accent-accent"
+      data-setting="sound"
+      checked={settings.value.sound}
+      onchange={(e) => setSound(e.currentTarget.checked)}
+    />
+  </label>
+
+  {#if settings.value.sound}
+    <div class="flex flex-col gap-1.5" data-setting="sound-volume">
+      <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
+        {t('home.settings.volumeLegend')}
+      </span>
+      <Segmented
+        name="settings-volume"
+        legend={t('home.settings.volumeLegend')}
+        options={volumeOptions}
+        bind:value={() => settings.value.soundVolume, (v) => setVolume(v as SoundVolume)}
+      />
+    </div>
+  {/if}
+
+  {#if canVibrate}
+    <label class="flex min-h-11 items-center justify-between gap-3">
+      <span class="flex flex-col">
+        <span class="text-sm font-medium text-fg">{t('home.settings.haptics')}</span>
+        <span class="text-xs text-fg-muted">{t('home.settings.hapticsHint')}</span>
+      </span>
+      <input
+        type="checkbox"
+        class="size-5 shrink-0 accent-accent"
+        data-setting="haptics"
+        checked={settings.value.haptics}
+        onchange={(e) => settings.set('haptics', e.currentTarget.checked)}
+      />
+    </label>
+  {/if}
 </div>

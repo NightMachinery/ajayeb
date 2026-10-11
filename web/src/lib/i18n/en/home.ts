@@ -75,6 +75,14 @@ export const home = {
   'home.settings.cardTextLegend': 'Card text',
   'home.settings.cardTextNormal': 'Normal',
   'home.settings.cardTextLarge': 'Large',
+  'home.settings.sound': 'Sound',
+  'home.settings.soundHint': 'Short sounds for cards, coins, the pawn and science.',
+  'home.settings.volumeLegend': 'Volume',
+  'home.settings.volumeQuiet': 'Quiet',
+  'home.settings.volumeMedium': 'Medium',
+  'home.settings.volumeLoud': 'Loud',
+  'home.settings.haptics': 'Vibration',
+  'home.settings.hapticsHint': 'A light buzz when a card is taken, more for military.',
 
   // PassDevice (the hot-seat interstitial; M5.S04 wires it into the game).
   'home.pass.title': 'Pass to {name}',
