@@ -1101,10 +1101,17 @@
       "crop": "1:1",
       "subject": "a sheaf of wheat tied with a cord",
       "accent": "ochre",
-      "status": "generated",
-      "attempt": 3,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 5,
+      "promptAmend": "Make the medallion ground a deep, earthy ochre brown (burnt ochre, clearly darker than the wheat, like dry tilled earth), never yellow or gold. Paint the sheaf in pale straw-cream with crisp dark ink outlines on every ear and stalk so it stands out strongly against the ground; tie it with a vermilion cord with two tassels, as now. Keep the sheaf large, upright and symmetric, filling the central 60 percent. A few very small, low-contrast cream flowers on the ground are fine; no clouds, no landscape.",
+      "bytes": {},
+      "reasons": [
+        "One large, symmetric sheaf of pale straw-cream wheat with crisp ink outlines, tied with a vermilion cord and two tassels, on a flat earthy ochre-brown ground: the round-1 problems (mustard-gold ground, gold-on-gold with no contrast) are fixed.",
+        "Reads clearly as a wheat sheaf at 96 px and 40 px on both paper and the night colour; the ground is clearly darker than the wheat and distinct from token/masonry's amber and token/economy's marigold.",
+        "Thin crisp gold rim, flat clean ivory margin, no clouds, landscape or border band inside the medallion; the two small cream flowers are low in contrast, as in the anchor's ground ornament.",
+        "No text or pseudo-writing; line, flat gouache and gold-as-highlight match the token anchor and the approved law, philosophy and theology tokens."
+      ],
+      "approvedAttempt": 5
     },
     "token/architecture": {
       "id": "token/architecture",
@@ -1114,10 +1121,18 @@
       "crop": "1:1",
       "subject": "a mason's set-square and compass crossed",
       "accent": "slate",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Do not combine a compass and a set-square in the square-and-compass arrangement (compass open over a V-shaped square), and do not draw any compass at all, since token/mathematics already uses one. Instead show one bold, symmetric architect's emblem: a classical column capital with a short column shaft standing upright in the centre, with a plumb bob hanging on a cord beside it, or a domed pavilion elevation drawn as a simple front view, on a flat mid-tone cool blue-grey slate ground (clearly greyer and lighter than lapis). No ruler ticks, no measuring marks, no lettering. Consider asking the owner to rewrite this subject in art/subjects.json if the next attempt still drifts toward the square-and-compass.",
+      "bytes": {},
+      "reasons": [
+        "A centred classical column (lapis and malachite acanthus capital with a gold rosette, fluted ivory shaft, stepped base) with a gold plumb bob on a cord hanging beside it, on a flat cool blue-grey slate ground that is clearly greyer and lighter than token/mathematics' lapis.",
+        "The square-and-compass emblem of round 1 is gone, and there is no compass or graduated ruler, so it no longer resembles a fraternal emblem or duplicates token/mathematics.",
+        "Reads as a column at 40 px on paper and night; the column itself is on the vertical axis, and the plumb bob is a light accent that balances it rather than a second emblem.",
+        "Clean ivory margin, crisp gold rim, no text or markings; style consistent with the approved tokens.",
+        "Subject note: the image follows the round-1 critic's sanctioned replacement (column and plumb bob), not the manifest's literal subject 'a mason's set-square and compass crossed', which cannot be drawn without evoking the square-and-compass. art/subjects.json should be updated to match (see setNotes)."
+      ],
+      "approvedAttempt": 2
     },
     "token/economy": {
       "id": "token/economy",
@@ -1127,10 +1142,17 @@
       "crop": "1:1",
       "subject": "a stack of coins beside a weighing scale",
       "accent": "saffron",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Make the coins the dominant emblem: one tall, centred, symmetric pile of large gold coins with heavy dark ink edges and a few coins standing on edge at the front, filling the central 60 percent. Put a small hand-held steelyard or a tiny pair of pan scales only as a minor accent behind or above the pile, no more than a quarter of the emblem's height, so the token never reads as a balance scale at a glance. Use a deeper, warmer saffron-orange ground (closer to marigold than lemon) so the gold coins separate clearly from it. No lettering, symbols or numerals on the coins; plain faces with a simple rosette only.",
+      "bytes": {},
+      "reasons": [
+        "Coins now dominate: one tall, centred, symmetric pile of gold coins with dark ink edges and coins on edge at the front fills the central area; the small pan scale is a minor upper-right accent, so the token no longer reads as a balance scale and is not confusable with token/law.",
+        "The deeper marigold-saffron ground separates the gold coins at 96 px and 40 px on both paper and night, and is distinct from token/masonry's browner amber.",
+        "Coin faces carry plain rosettes only: no lettering, numerals or symbols. Gold is used for coins, which art/style.md allows.",
+        "Clean ivory margin, crisp gold rim, nothing else inside the medallion."
+      ],
+      "approvedAttempt": 2
     },
     "token/law": {
       "id": "token/law",
@@ -1140,10 +1162,17 @@
       "crop": "1:1",
       "subject": "a pair of balanced scales",
       "accent": "violet",
-      "status": "generated",
-      "attempt": 3,
+      "status": "approved",
+      "attempt": 4,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {},
+      "approvedAttempt": 4,
+      "reasons": [
+        "One bold, symmetric balance scale fills the centre on a flat violet ground, with a thin crisp gold rim and a clean, even ivory margin; no landscape, clouds or cypresses inside the medallion (pilot attempts 1-3 all had them, and the wrong lapis accent).",
+        "Reads clearly as scales at 40 px on both paper and the night colour.",
+        "No text or pseudo-writing; the enamel bowls carry only floral ornament. The two tiny bird-head finials on the beam ends are decorative hardware, not a heraldic emblem.",
+        "Line, flat gouache fields, jewel accents and gold-as-highlight match the token anchor's style."
+      ]
     },
     "token/masonry": {
       "id": "token/masonry",
@@ -1153,10 +1182,15 @@
       "crop": "1:1",
       "subject": "a chisel and mallet crossed over a stone block",
       "accent": "amber",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "generated",
+      "attempt": 3,
+      "promptAmend": "Keep the flat warm amber ground, the crisp gold rim and the clean ivory margin. Show the stone block straight on as a wide rectangle seen from the front (no 3D box perspective), in flat warm sandy limestone with crisp ink outlines and a narrow tooled border band of small, short ink stipple strokes along its edges, with no long diagonal marks or highlight lines on its face. Place it in the lower third. Cross the chisel and the mallet in a bold, symmetric X directly in front of the block's upper half, so the crossing point overlaps the block and the heads rise above it, the chisel blade at upper left and the mallet head at upper right, both the same size. Paint the tools as decorated objects in flat gouache: a plain flat steel-grey blade with an ink outline, gold ferrules with a tiny floral band, the mallet head in flat amber-brown with a thin painted vine band; no wood-grain lines, no metal gradients. A few very small, low-contrast cream flowers on the ground are fine.",
+      "bytes": {},
+      "reasons": [
+        "The three chisel marks on the block are long parallel diagonal slashes that read as claw scratches or the stock 'glass shine' highlight, so the block reads as a glass or ice cube rather than dressed stone, at 256 px and at 96 px.",
+        "The rendering drifts from the anchor's illuminated style toward modern flat clip-art: realistic wood-grain lines on both handles and the mallet head, a graded steel chisel blade, a mottled stone texture, and no ornament at all. Beside the approved law, philosophy and theology tokens it looks like it belongs to a different set.",
+        "The tools only rest their handle ends on the block's top edge; they do not cross over it, so the subject 'crossed over a stone block' reads as two tools leaning on a box."
+      ]
     },
     "token/mathematics": {
       "id": "token/mathematics",
@@ -1166,10 +1200,15 @@
       "crop": "1:1",
       "subject": "a compass tracing a circle over a grid",
       "accent": "lapis",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "generated",
+      "attempt": 3,
+      "promptAmend": "Keep the flat deep lapis ground, the broad decorated gold legs with small vermilion and turquoise flowers, and the lapis-and-vermilion hinge rosette. Stand the dividers upright and symmetric about the vertical axis, legs opened evenly as an inverted V about 50 degrees apart, both legs the same length. Centre the whole instrument in the medallion: the finial and hinge rosette start about one fifth of the way down from the rim, leaving a clear band of lapis between the finial and the rim, and the two points reach about four fifths of the way down. Under the points draw one thin gold circle, centred on the medallion's vertical axis, whose diameter is the span between the two points, so both points rest on the circle's left and right edges as if measuring it; inside it a faint inscribed hexagon only. Every construction line stays inside that circle; nothing reaches the rim.",
+      "bytes": {},
+      "reasons": [
+        "The emblem sits in the upper half: the hinge rosette and finial crowd the top of the medallion, with the finial's tip almost touching the gold rim, while the lower half is an empty lapis field with only faint lines, so it is not one emblem filling the central 60 percent and the token looks top-heavy at every size.",
+        "The vertical construction line runs past the circle all the way to the gold rim at the bottom, a stray line that breaks the clean ground.",
+        "The two legs are of visibly different length and angle (one straight down, one splayed), so the instrument looks lopsided rather than a bold symmetric emblem. The round-1 fixes (bolder decorated legs, no graph grid, point on the centre) are good and should be kept."
+      ]
     },
     "token/philosophy": {
       "id": "token/philosophy",
@@ -1179,10 +1218,17 @@
       "crop": "1:1",
       "subject": "an open scroll beneath a laurel sprig",
       "accent": "rose",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {},
+      "approvedAttempt": 1,
+      "reasons": [
+        "One clear, symmetric emblem: a blank open scroll beneath a laurel wreath on a flat rose ground, with a crisp gold rim and a clean, even ivory margin; nothing inside the medallion but the emblem.",
+        "Reads at 40 px as wreath over scroll on both paper and the night colour, and the rose accent is right.",
+        "The scroll is fully blank (no text, ruling or pseudo-writing). Its rollers carry plain knob finials with floral bands, not a religious object's crowns or emblems.",
+        "Style matches the anchor's ink outlines, flat gouache and gold-as-highlight; plainer than the anchor's vine-filled ground, which the token template allows."
+      ]
     },
     "token/strategy": {
       "id": "token/strategy",
@@ -1192,10 +1238,17 @@
       "crop": "1:1",
       "subject": "a crossed spear and shield",
       "accent": "vermilion",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Cross two spears in a bold symmetric X, with thick dark shafts and large leaf-shaped steel heads showing clearly at the upper left and upper right, and their butts at the lower left and lower right. Place a smaller round shield (about 40 percent of the medallion's width) over the crossing point, slightly below centre, with a lapis face and a gold boss and plain floral ornament, no animal or emblem on it. The spearheads and shafts must stay visible outside the shield so the X reads at a small size. Keep the flat vermilion ground.",
+      "bytes": {},
+      "reasons": [
+        "Two spears crossed in a bold X with large leaf-shaped steel heads at upper left and upper right and gold butts at lower left and lower right, with a round lapis shield with a gold boss and floral ornament over the crossing: the subject 'crossed spear and shield' now reads at once.",
+        "At 40 px on paper and night the spearheads and shafts stay visible outside the shield, so the token reads as spears and shield, not the 'blue disc in a red disc' target of round 1. The shield is centred rather than slightly below centre, which does not hurt legibility.",
+        "Flat vermilion ground, crisp gold rim, clean ivory margin; no animal, emblem or text on the shield, and nothing tying it to any real nation's arms.",
+        "Line, flat gouache and gold-as-highlight match the anchor and the approved tokens."
+      ],
+      "approvedAttempt": 2
     },
     "token/theology": {
       "id": "token/theology",
@@ -1205,10 +1258,17 @@
       "crop": "1:1",
       "subject": "a lit oil lamp wreathed with olive leaves",
       "accent": "turquoise",
-      "status": "generated",
-      "attempt": 3,
+      "status": "approved",
+      "attempt": 4,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {},
+      "approvedAttempt": 4,
+      "reasons": [
+        "A lit oil lamp in a wreath of olive branches on a flat turquoise ground, with a crisp gold rim and an even ivory margin; no stars, clouds or scroll motifs (pilot attempts 1-3 had them, on the wrong lapis ground).",
+        "Reads as a lamp and flame inside a wreath at 40 px on paper and on the night colour.",
+        "No religious figures, crescent-and-star or other faith emblem, and no text; the lamp's ornament is floral.",
+        "Matches the anchor's line, flat gouache and gold-as-highlight, and sits consistently beside token/law and token/philosophy."
+      ]
     },
     "token/urbanism": {
       "id": "token/urbanism",
@@ -1218,10 +1278,17 @@
       "crop": "1:1",
       "subject": "a walled city skyline silhouette with domes and towers",
       "accent": "malachite",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Show a compact walled town as one symmetric emblem in the central 60 percent: a crenellated ivory-and-ochre city wall with a single arched gate in the centre, two squat round bastion towers with flat crenellated tops at the ends, and behind the wall at most four secular buildings: two flat-roofed tower houses and two low palace pavilions with small shallow domes. No tall slender towers, no balconies or kiosks on top of towers, no tiled portal under a large central dome, no onion domes. Keep the silhouette simple and bold so it reads at a small size, on the flat malachite ground.",
+      "bytes": {},
+      "reasons": [
+        "A compact, symmetric walled town: crenellated ivory wall with one central arched gate, two squat round bastion towers with flat crenellated tops, and behind the wall two flat-roofed tower houses and two low pavilions with small lapis domes. No minarets, no onion domes, no tiled portal: the round-1 mosque reading is gone.",
+        "Reads as a fortified town at 40 px on paper and night; the bastions now stop with a clear band of malachite before the rim instead of running into it.",
+        "Flat malachite ground, crisp gold rim, clean ivory margin, no text or pseudo-writing; flat ink-outlined gouache with gold accents matches the anchor and the approved tokens.",
+        "The silhouette is wide and fairly low, leaving open ground above and below, but it is the expected shape for a walled-town emblem and stays legible."
+      ],
+      "approvedAttempt": 2
     },
     "victory/civilian": {
       "id": "victory/civilian",
@@ -1270,10 +1337,22 @@
       "crop": "3:2",
       "subject": "a long paved road lined with cypress trees receding to the horizon",
       "accent": "vermilion",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Paint the road the way a miniature paints a path: a broad ribbon of large fitted ochre and slate paving stones that starts in the lower middle (ending on ivory paper well above the bottom edge, with a band of paper below it) and winds in one or two gentle S-curves up through stacked rounded pastel hills to a plain arched stone gateway in the upper middle third; stack the hills and the road's bends up the picture plane, with no converging lines and no single vanishing point. Low stone kerbs and plain square milestones along both sides, one cypress at each bend rather than a continuous row. Make vermilion the dominant accent: the gateway's arch and banner-free gate leaves in vermilion and the two travellers (one on foot leading a laden mule cart, one rider) in vermilion and saffron robes, larger than now. Leave ivory paper on all four sides, including below the road; the gold sun disc small and to one side.",
+      "bytes": {
+        "appian-way.avif": 56457,
+        "appian-way@thumb.avif": 15914
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: a broad paved road of fitted ochre and slate stones with kerbs and plain ball-topped milestones winds in S-curves up through stacked pastel hills to an arched city gate in a crenellated wall. The road is the monument, centred and whole in the middle third.",
+        "Round 2's faults are fixed. Space stacks up the picture plane with no single vanishing point. The road ends on ivory paper well above the bottom edge and feathers there. Cypresses stand one at each bend, not in a continuous row.",
+        "Vermilion is now the accent: the gate doors, both travellers' robes, the saddle cloth and the kiosk roofs. Gold appears only on the sun disc and the gate's two finials.",
+        "No text or pseudo-writing: the tile frame of the gate is floral arabesque, which I checked at full size. The gate reads as a city gate set in walls, not a mosque portal. There are no minarets, and the side buildings are small domed garden pavilions.",
+        "Two travellers only, one leading a laden mule and one riding. These are working animals the road scene needs, not filler. No other animals.",
+        "Passes the gate (band 99.0%). Hills and water thin into the paper on every side with no hard rectangle. The line and the opaque colour match the wonder anchor."
+      ],
+      "approvedAttempt": 3
     },
     "wonder/circus-maximus": {
       "id": "wonder/circus-maximus",
@@ -1283,10 +1362,22 @@
       "crop": "3:2",
       "subject": "a vast oval racing stadium ringed with tiered seating",
       "accent": "vermilion",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Keep this composition: the long oval racing track seen from above at an angle, centred and whole, with tiered arcaded seating in vermilion and lapis, a narrow planted central barrier with a few cypresses, and four or five horse riders racing on the sand. Give the domes of the viewing box and corner kiosks turquoise or lapis tile with only a small gold finial. Pennants are plain vermilion cloth on poles topped by a small plain ball, no crescent or other shape. In the foreground keep only hills, flowering trees and a few people walking or riding toward the gate; no river, no swans, ducks, fox or other animals besides the racing and ridden horses.",
+      "bytes": {
+        "circus-maximus.avif": 61588,
+        "circus-maximus@thumb.avif": 17170
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: the long oval racing track centred and whole, tiered arcaded vermilion stands, a planted central barrier with cypresses, and four riders racing on the sand.",
+        "Vermilion is the dominant accent (stands, pennants, robes), with lapis and turquoise domes; gold is limited to small finials, fixing round 1's solid gold domes.",
+        "Pennants are plain vermilion cloth on plain ball finials, no crescent or other shape; no swans, ducks, fox or other animals besides ridden and racing horses.",
+        "The spectators fill the stands as the subject requires, and the foreground group stays small against the stadium, like the anchor's caravan and onlookers and the approved Piraeus dock workers.",
+        "Background buildings are hilltop palaces and garden pavilions; the stadium gate is a tiled portal, not a mosque. No text or pseudo-writing on banners or walls.",
+        "Passes the gate (band 94.2%); the hills thin into ivory paper on every side with no hard rectangle."
+      ],
+      "approvedAttempt": 2
     },
     "wonder/colossus": {
       "id": "wonder/colossus",
@@ -1296,10 +1387,22 @@
       "crop": "3:2",
       "subject": "a towering bronze statue of a young sun god with a plain circlet, one arm raised with an open palm, straddling a harbour entrance, no torch, no spiked crown",
       "accent": "lapis",
-      "status": "generated",
-      "attempt": 4,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 7,
+      "promptAmend": "Keep attempt 6's composition: the colossus astride the harbour mouth, one foot on each of two plain crenellated stone towers, ships passing between, lapis water, domed garden pavilions and pastel rocky shores at the sides, a small gold sun disc apart in the sky. Change only the statue's painting: one flat bronze-olive colour field with a slightly darker flat tone for the drapery, fold lines drawn as a few dark ink strokes, no tonal shading on skin, cloth or muscles, and a simple miniature face like the small harbour figures (almond eye, short ink line for nose and mouth, no modelled cheek). Make him a little smaller so the raised open palm ends with a band of plain ivory paper above it at least as tall as his head (about 12 percent of the image height).",
+      "bytes": {
+        "colossus.avif": 60975,
+        "colossus@thumb.avif": 16068
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: a towering bronze youth with a plain circlet and one arm raised, open palm, stands astride the harbour mouth with a foot on each of two crenellated stone towers, and ships pass between. No torch, no spiked crown, no halo. The gold sun disc sits apart in the sky.",
+        "Round 6's main fault is fixed. The statue is now one flat bronze-olive field with dark ink fold lines and no tonal modelling of skin or cloth, so it sits in the scene's idiom instead of looking pasted in. The face is a classical profile drawn in ink line rather than the miniature almond-eye face that was asked for. That is acceptable for a Greek statue, and it no longer reads as academic modelling.",
+        "Lapis dominates through the sea, which is patterned with fine ripple lines and shows no reflection. Pastel rocks, cypresses and domed garden pavilions are at both sides, with no minarets. Pennants and sails are plain, and there is no text on the towers, ships or circlet (the circlet carries a dotted pattern only, checked at 6x zoom).",
+        "The small onlookers on the quays and the crowded ship stay tiny against the colossus. That matches the anchor's onlookers and the approved Piraeus. No animals.",
+        "Passes the gate (band 83.0%). The sea feathers into paper above the bottom edge, and the rocks thin out at both sides.",
+        "Minor notes for the owner, neither blocking. The raised palm ends about 68 px (6.6%) below the top edge, still a little short of the head-height band asked for in round 2, but whole and well clear at both shipped sizes. Behind a quay figure at lower left (about x 250, y 740) there is a tiny pale yellow star-like smudge, about 25 px at 960 wide, that reads as a banner at shipped size."
+      ],
+      "approvedAttempt": 7
     },
     "wonder/great-library": {
       "id": "wonder/great-library",
@@ -1309,10 +1412,22 @@
       "crop": "3:2",
       "subject": "a domed library building with scroll-filled arcades",
       "accent": "ochre",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Keep the composition: the domed ochre and lapis library building centred and whole, its open arcades lined with shelves of rolled blank scrolls (show mostly scrolls in pigeonhole racks rather than bound book spines), two or three readers with blank scrolls, a central stair and a small pool with a fountain. In the foreground use only flowering shrubs, low rocks and a few cypresses; no peacock, no deer, no birds or animals of any kind. Keep the side pavilions small and secular.",
+      "bytes": {
+        "great-library.avif": 60343,
+        "great-library@thumb.avif": 16156
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: a domed library centred and whole, its open arcades lined with pigeonhole racks of rolled scrolls, readers at work, a central stair and a fountain pool.",
+        "Ochre is the dominant accent (the dome, facade and paving) with lapis tile panels and domes; the main dome is an ochre tiled dome with arabesque, and gold is limited to finials and the sun disc.",
+        "Every scroll is blank, including the open ones held by the three readers; no text, pseudo-writing or inscribed frieze on the tile panels.",
+        "No peacock, deer, birds or any animals; the side kiosks are small secular garden pavilions with seated readers; no minarets.",
+        "Three readers in the hall and one in each side kiosk: no crowd.",
+        "Passes the gate (band 94.0%); flowering shrubs and rocks thin into the ivory paper on every side."
+      ],
+      "approvedAttempt": 2
     },
     "wonder/great-lighthouse": {
       "id": "wonder/great-lighthouse",
@@ -1322,10 +1437,21 @@
       "crop": "3:2",
       "subject": "a tiered lighthouse tower blazing over a rocky island coast",
       "accent": "turquoise",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {
+        "great-lighthouse.avif": 71639,
+        "great-lighthouse@thumb.avif": 19141
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Subject reads at once at 480x320: a tall tiered tower with a lit lantern and gold rays on a rocky island fortress, boats around it.",
+        "Turquoise accent is dominant (sea and tower tiles), jewel palette and ink line match the wonder anchor; sky is ivory paper with a small gold sun disc and blue ornamental clouds.",
+        "No text or pseudo-writing; banners on the boats are plain pennants; no filler animals (the one horse is led by its handler on the stair).",
+        "The lantern, light rays and fortified base make it read as a lighthouse rather than a minaret; background buildings are domed garden pavilions.",
+        "Passes the gate; the sea fades into the paper on both sides within about 40 px and the top and bottom are clean paper."
+      ]
     },
     "wonder/hanging-gardens": {
       "id": "wonder/hanging-gardens",
@@ -1335,10 +1461,21 @@
       "crop": "3:2",
       "subject": "terraced gardens cascading with greenery down a palace wall",
       "accent": "malachite",
-      "status": "generated",
-      "attempt": 3,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 5,
+      "promptAmend": "Keep attempt 4's composition exactly: a palace pavilion with a turquoise dome at the top, stepped stone terraces overflowing with trees, vines and flowers descending toward the viewer, a central stepped waterfall falling into a rectangular lotus pool at the bottom. Put plain stone urns of flowers at the two front corners of the pool where the peacocks were. No peacocks, no deer, no birds or animals anywhere. Two or three small gardeners or strollers at most on the terraces.",
+      "bytes": {
+        "hanging-gardens.avif": 58335,
+        "hanging-gardens@thumb.avif": 15179
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: stepped stone terraces overflowing with trees, vines and flowers cascading from a turquoise-domed palace pavilion, a central stepped waterfall into a lotus pool.",
+        "Malachite is the dominant accent, with turquoise dome and lapis tile panels; gold limited to finials.",
+        "Round 1's peacocks are replaced by plain stone urns of flowers; no birds or animals anywhere. Three small gardeners, no crowd.",
+        "No text or pseudo-writing on the tile panels; side buildings are small garden pavilions, no minarets.",
+        "Passes the gate (band 98.3%); the foliage and hills thin into ivory paper at both sides and the bottom. Minor: the main dome's finial tip reaches within a few pixels of the top edge, so the frame's feather may soften its point; the dome itself is whole."
+      ],
+      "approvedAttempt": 5
     },
     "wonder/mausoleum": {
       "id": "wonder/mausoleum",
@@ -1348,10 +1485,22 @@
       "crop": "3:2",
       "subject": "a tiered marble mausoleum topped with a stepped pyramidal roof",
       "accent": "violet",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Keep attempt 2's composition exactly: the white tomb on its two-stage podium with central stair, the violet and lapis tile panels, the stepped pyramidal roof with a small gold finial, plain urns and ball-topped pillars, violet iris beds, lilac rocks, the strollers and rider small at the sides. Change two things. Paint the pool as a flat rectangle tilted up toward the viewer, as a miniature does, filled with flat lapis water patterned with fine curling ripple lines and no reflection of anything in it. Paint the marble as plain flat white and cream fields with ink outlines, no veining. Draw the pool and stair edges parallel rather than converging. End the pool's near edge on ivory paper with a clear margin below it.",
+      "bytes": {
+        "mausoleum.avif": 61500,
+        "mausoleum@thumb.avif": 17584
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: a white marble tomb on a two-stage stepped podium with a central stair, violet and lapis tile panels, and a stepped pyramidal roof ending in a small gold finial. Centred and whole, with ivory paper above.",
+        "Round 2's faults are fixed. The pool is a flat lapis rectangle with fine ripple lines and no reflection. The marble is flat white and cream with ink outlines and no veining. The stair and pool edges are parallel instead of converging.",
+        "Violet is clearly the dominant accent: iris beds, lilac hills and the tile panels. Gold is limited to the finial and the sun disc.",
+        "No text or pseudo-writing: the portal band and the side panels are floral arabesque, which I checked at 2x and 3x zoom. There are no carved animals or figures anywhere on the building, only plain urns and ball-topped pillars. The building is a tomb, which the subject names; it has no dome or minaret, so it does not read as a mosque, and the two side kiosks are secular garden pavilions.",
+        "Seven small strollers and one rider at the sides, no crowd. The ridden horse is not filler, and there are no other animals.",
+        "Passes the gate (band 80.9%). Hills and flowering trees thin into paper at both sides and the ground fades below the pool. The composition is more frontal and architectural than the anchor, but the line, the opaque colour and the motifs match."
+      ],
+      "approvedAttempt": 3
     },
     "wonder/piraeus": {
       "id": "wonder/piraeus",
@@ -1361,10 +1510,22 @@
       "crop": "3:2",
       "subject": "a harbour town of docks and warehouses beneath a hill",
       "accent": "lapis",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {
+        "piraeus.avif": 58454,
+        "piraeus@thumb.avif": 16606
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Subject reads at the 480x320 thumbnail: a walled harbour town with blue-roofed open warehouses stacked with bales, a stone quay, moored ships and boats, all beneath a hill.",
+        "Lapis accent dominates through the sea, roofs and domes; line, opaque colour and pastel rocks match the wonder anchor.",
+        "The hilltop complex reads as a palace with garden pavilions and a water stair (people seated in the iwan), not a mosque; no minarets.",
+        "No text on bales, sails or walls; the pack horses carry loads for their handlers and are not filler; sails and pennants are plain.",
+        "Many small dock workers, but they form the harbour activity the subject names and stay small against the architecture, like the anchor's caravan and onlookers.",
+        "Passes the gate; the water and rocks thin into the paper at the edges with no hard rectangle."
+      ]
     },
     "wonder/pyramids": {
       "id": "wonder/pyramids",
@@ -1374,10 +1535,22 @@
       "crop": "3:2",
       "subject": "the three smooth-sided pyramids of Giza (true pyramids with flat, straight triangular faces and a pale limestone casing; never stepped, never terraced, not a ziggurat and not a Mesoamerican temple) near the Nile, with date palms by the water",
       "accent": "saffron",
-      "status": "generated",
-      "attempt": 3,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 5,
+      "promptAmend": "Keep attempt 4's composition exactly: the three smooth, flat-faced pale limestone pyramids of Giza centred in the middle third, the largest in the middle, saffron desert with a small camel caravan, the lapis Nile across the foreground with two felucca boats, date palms with orange date clusters on both sides, a small domed garden pavilion on the left hill. On the lower-left rocks keep only the seated man in blue among flowering shrubs; no deer, no gazelle, no birds or other animals except the caravan camels with their drivers.",
+      "bytes": {
+        "pyramids.avif": 49373,
+        "pyramids@thumb.avif": 19243
+      },
+      "reasons": [
+        "Subject reads at once at 480x320: the three smooth, flat-faced pale limestone pyramids of Giza centred and whole in the middle third, never stepped, with the Nile, feluccas and date palms with orange dates.",
+        "Saffron is the dominant accent (the desert), with lapis Nile water patterned in fine ripples and pastel rocks, matching the wonder anchor's palette; ivory sky with a small gold sun disc and blue ornamental clouds.",
+        "Round 1's deer is gone; the only animals are the caravan camels led by their drivers, which the anchor and subject support.",
+        "One seated man on the rocks and a small caravan and two boat crews: no crowd. The hilltop kiosk is a secular domed garden pavilion.",
+        "No text, glyphs or inscriptions on the pyramids, sails or ground.",
+        "Passes the gate (band 78.8%); the rocks and palms thin into paper at the sides and bottom with no hard rectangle."
+      ],
+      "approvedAttempt": 5
     },
     "wonder/sphinx": {
       "id": "wonder/sphinx",
@@ -1387,10 +1560,20 @@
       "crop": "3:2",
       "subject": "a reclining guardian sphinx before distant pyramids",
       "accent": "ochre",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {
+        "sphinx.avif": 67571,
+        "sphinx@thumb.avif": 19180
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Subject reads at once at the thumbnail: a large reclining sphinx with a striped headdress and outstretched paws, smooth pyramids and the Nile behind it.",
+        "Ochre accent dominates (the sandstone body and desert), with lapis water and headdress stripes; ivory sky with a gold sun disc and ornamental clouds, as in the wonder anchor.",
+        "No text, glyphs or carved inscriptions on the body, chest or ground; the camel is led by its handler, not a filler animal; background buildings are domed garden pavilions.",
+        "One large monument with a handful of small onlookers, not a crowd; clean, feathering paper margin on all sides."
+      ]
     },
     "wonder/statue-of-zeus": {
       "id": "wonder/statue-of-zeus",
@@ -1400,10 +1583,17 @@
       "crop": "3:2",
       "subject": "a colossal seated statue inside a columned temple hall",
       "accent": "saffron",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "needs-human",
+      "attempt": 3,
+      "promptAmend": "Keep attempt 3's composition exactly: the open hall of six slender lapis columns with plain leaf-scroll capitals and a flat blue-and-gold patterned roof beam, whole inside the frame with wide ivory paper above. Keep the plain rosette pedestal, the three small visitors standing and talking in front, the small domed kiosks on pastel hills at both sides, and the cypresses. Change three things. (1) The roof line: end the roof beam with a plain moulded cornice and at most three small plain gold balls on short stems; no fleur-de-lis, no lily, spearhead, crescent, cross or any other emblem shape. (2) The statue: make it plainly a carved statue of a mature man. Give him a short rounded beard and short wavy hair, a plain thin circlet with no jewels, and a calm simple miniature face (almond eyes, a short ink line for nose and mouth). Paint his skin the same flat pale ivory as the stone throne and pedestal, so the figure, throne and plinth read as one sculpted object, and paint his robe in flat saffron with dark ink fold lines and no tonal shading. Seat him on a tall plain plinth whose top is above the visitors' heads, and scale him so his head nearly reaches the ceiling beam. (3) The pool: a flat rectangle tilted up toward the viewer with parallel sides, not narrowing toward the hall, still flat lapis with fine ripple lines and no reflection.",
+      "bytes": {},
+      "reasons": [
+        "The three roof finials are gold fleurs-de-lis, a European heraldic emblem, and they are visible even at the 480x320 thumbnail. art/style.md forbids political, national and heraldic emblems on buildings, and the emblem is also foreign to the idiom.",
+        "The colossal figure no longer reads as a statue. It is painted as a living young woman: flesh-toned skin, a long braid, a fine-featured, lightly modelled face and a jewelled circlet. At thumbnail size it looks like a giant person enthroned in a pavilion, not a colossal seated statue. Round 2 asked for a calm bearded man.",
+        "The pool is drawn as a trapezoid narrowing toward the hall, a slight converging perspective, where the flat tilted-up rectangle used in the approved mausoleum is what the idiom wants.",
+        "Round 2's fixes held and should be kept. The open hall of six lapis columns with plain leaf capitals is whole, with wide paper above. The rosette pedestal and the plain staff and olive branch are right. Three visitors stand and talk, with nobody kneeling. The pool is flat lapis with ripples and no reflection. The side pavilions are small domed kiosks. Margins are wide (band 99.7%), and saffron dominates.",
+        "Last review round (r3) of the M9d batch: left for the owner, the placeholder stays."
+      ]
     },
     "wonder/temple-of-artemis": {
       "id": "wonder/temple-of-artemis",
@@ -1413,10 +1603,21 @@
       "crop": "3:2",
       "subject": "a many-columned temple crowning a forested hillside",
       "accent": "malachite",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {
+        "temple-of-artemis.avif": 57283,
+        "temple-of-artemis@thumb.avif": 15157
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Subject reads at the thumbnail: a broad many-columned hall with a turquoise hipped roof crowning a hill thick with trees, a stair and a stream below.",
+        "Malachite accent dominates (forest, turquoise-green roof), with ochre and rose rocks; line and opaque colour match the anchors; ivory sky with a gold sun disc and clouds.",
+        "The entablature frieze is ornamental tilework, not pseudo-writing; the gathering in the hall is a quiet court scene, no deity or rite.",
+        "The trees are what the subject names (a forested hillside), not filler; no animals besides two ridden horses; side kiosks are secular garden pavilions.",
+        "Monument centred and whole; the hillside thins into the paper on every side, passing the gate with clean edges."
+      ]
     }
   }
 }
