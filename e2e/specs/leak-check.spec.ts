@@ -5,7 +5,10 @@
 // Library's offer, is part of it. The checker must pass the frames as the
 // server sent them, and must catch a leak planted in a copy of one of them:
 // a face-down card's identity, a removed card, the library offer in the
-// other player's view, the seed, and a later age's card.
+// other player's view, the seed, and a later age's card. Every connection
+// resyncs every few actions, so the streams hold history frames too: the
+// checker passes the drawer's own history naming the tokens it drew, and
+// catches a removed card or a box token planted in another viewer's.
 
 import { expect, test } from '@playwright/test';
 import type { State } from '../../web/src/lib/wire';
@@ -71,7 +74,8 @@ test.describe('the frame leak checker', () => {
     game = await recordOnlineGame(ORIGIN, {
       seed: '7',
       scenario: 'great-library',
-      policy: (view) => view.choices.find((c) => trigger.includes(c.key)) ?? recordPolicy(view)
+      policy: (view) => view.choices.find((c) => trigger.includes(c.key)) ?? recordPolicy(view),
+      resyncEvery: 4
     });
     expect(game.keys.slice(0, 2)).toEqual(trigger);
   });
@@ -91,6 +95,12 @@ test.describe('the frame leak checker', () => {
     ]);
     expect(c.library[0]?.deciderFrames).toBeGreaterThan(0);
     expect(c.library[0]?.otherFrames).toBeGreaterThanOrEqual(2);
+    // Every viewer got history frames; the drawer's named its two unkept tokens.
+    for (const viewer of ['seat0', 'seat1', 'spectator']) {
+      expect(c.historyFrames[viewer]).toBeGreaterThan(2);
+      expect(c.historyEntries[viewer]).toBeGreaterThan(game.keys.length);
+    }
+    expect(c.drawnInHistory).toBe(2);
     console.log(
       `leak checker: ${game.keys.length} actions; ${JSON.stringify(c.frames)} frames; ` +
         `${c.faceDownChecks} face-down checks`
@@ -142,6 +152,42 @@ test.describe('the frame leak checker', () => {
     expect(rulesAt(leaks, 'spectator', target.index, removed)).toEqual(
       expect.arrayContaining(['revealed-secret', 'unexplained'])
     );
+  });
+
+  test("catches a removed card and a box token planted in another viewer's history", () => {
+    const withHistory = states(game, 'seat1').filter(
+      ({ msg }) => (msg.history?.length ?? 0) > 2 && msg.view.phase !== 'gameOver'
+    );
+    const target = withHistory[0];
+    if (!target) throw new Error('seat 1 got no history frame before the end');
+    const end = states(game, 'spectator').at(-1)?.msg.view.revealed;
+    const removed = end?.removed.flatMap((a) => a.cards)[0];
+    if (!removed) throw new Error('the game removed no card');
+    const planted = plant(game.streams, 'seat1', target.index, (msg) => {
+      const entry = msg.history![1]!;
+      entry.events.push({ kind: 'discard', private: false, seat: entry.seat, card: removed });
+      entry.events.push({
+        kind: 'libraryDraw',
+        private: true,
+        seat: 0,
+        place: 1,
+        token: 'philosophy'
+      });
+    });
+    const report = checkLeaks(planted);
+    expect(rulesAt(report, 'seat1', target.index, removed)).toEqual(
+      expect.arrayContaining(['revealed-secret', 'unexplained'])
+    );
+    expect(rulesAt(report, 'seat1', target.index, 'philosophy')).toContain('box-token');
+    // The same token in the drawer's own history passes, but not outside it.
+    const own = states(game, 'seat0').find(
+      ({ msg }) => (msg.history?.length ?? 0) > 2 && msg.view.phase !== 'gameOver'
+    );
+    if (!own) throw new Error('seat 0 got no history frame before the end');
+    const outside = plant(game.streams, 'seat0', own.index, (msg) => {
+      msg.events.push({ kind: 'token', private: false, seat: 0, token: 'philosophy' });
+    });
+    expect(rulesAt(checkLeaks(outside), 'seat0', own.index, 'philosophy')).toContain('box-token');
   });
 
   test("catches the Great Library offer planted in the other player's view", () => {

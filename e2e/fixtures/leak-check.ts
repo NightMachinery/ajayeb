@@ -20,9 +20,20 @@
 // - The Great Library's offer (the drawer's own `pending.tokens`) may reach
 //   no other viewer: their views show only `pending.hiddenTokens`, and the
 //   tokens put back in the box are named by nobody, the drawer included,
-//   once the choice is made.
+//   once the choice is made (outside the drawer's own history, see below).
 // - The game's seed (read from the server's room file by the caller) is never
 //   part of any frame, even at the end.
+//
+// The state frame's `history` (the first frame of a join, a resync's answer,
+// the frame after an undo) re-sends every past event, filtered per viewer.
+// It goes through every check above like the rest of the frame, with two
+// allowances. The drawer of the Great Library keeps seeing, in its own
+// history's libraryDraw events, the tokens it drew, including the two that
+// went back to the box: it saw them, so they are no leak for that viewer
+// only (a libraryDraw naming a token reaches no other viewer). And a slug
+// that only the history names is explained when any viewer's frame of that
+// version or earlier showed it in a public place, so a viewer that joins
+// late (or reloads) may read about a wonder removed before it arrived.
 //
 // On top of those it runs one check that needs no ground truth: every slug a
 // frame names must be public to that viewer by then, that is, shown in a
@@ -37,7 +48,7 @@
 // see one in the other.
 
 import { cardSlugs, tokenSlugs, wonderSlugs } from '../../web/src/lib/wire/catalog.gen';
-import type { GameEvent, RevealView, View } from '../../web/src/lib/wire';
+import type { GameEvent, HistoryEntry, RevealView, View } from '../../web/src/lib/wire';
 
 /** One frame as a viewer received it. */
 export interface CapturedFrame {
@@ -93,6 +104,11 @@ export interface LeakReport {
   coverage: {
     frames: Record<string, number>;
     stateFrames: Record<string, number>;
+    /** State frames that carried a history, and the entries they held, by viewer. */
+    historyFrames: Record<string, number>;
+    historyEntries: Record<string, number>;
+    /** Box tokens a drawer's own history named (allowed for it alone). */
+    drawnInHistory: number;
     /** A game-over frame with a revealed section was seen. */
     reveal: boolean;
     /** Ids the final reveal lists as never shown during the game, by kind. */
@@ -187,8 +203,15 @@ export function publicSlugs(view: View): Set<string> {
 interface Parsed {
   index: number;
   frame: CapturedFrame;
-  msg: { t?: string; view?: View; events?: GameEvent[] } | null;
+  msg: { t?: string; view?: View; events?: GameEvent[]; history?: HistoryEntry[] } | null;
   view: View | null;
+}
+
+/** The public slugs of a view that every viewer shares: no library offer. */
+function sharedPublicSlugs(view: View): Set<string> {
+  const out = publicSlugs(view);
+  if (view.pending?.kind === 'pickLibraryToken') view.pending.tokens.forEach((t) => out.delete(t));
+  return out;
 }
 
 function parseStream(stream: ViewerStream, problems: string[]): Parsed[] {
@@ -227,6 +250,18 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
     if (!set) ageCards.set(age, (set = new Set()));
     return set;
   };
+
+  // The first version at which each slug was public to every viewer.
+  const publicSince = new Map<string, number>();
+  for (const stream of parsed) {
+    for (const { view, frame } of stream.frames) {
+      if (!view || frame.version === null) continue;
+      for (const s of sharedPublicSlugs(view)) {
+        const at = publicSince.get(s);
+        if (at === undefined || frame.version < at) publicSince.set(s, frame.version);
+      }
+    }
+  }
 
   for (const stream of parsed) {
     for (const { view, msg } of stream.frames) {
@@ -280,6 +315,9 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
   const leaks: Leak[] = [];
   const frames: Record<string, number> = {};
   const stateFrames: Record<string, number> = {};
+  const historyFrames: Record<string, number> = {};
+  const historyEntries: Record<string, number> = {};
+  let drawnInHistory = 0;
   let faceDownChecks = 0;
   const unknownSlots = new Set<string>();
   const library: LibraryCoverage[] = [...offers.values()].map((o) => ({
@@ -299,7 +337,13 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
   for (const stream of parsed) {
     frames[stream.name] = stream.frames.length;
     stateFrames[stream.name] = 0;
+    historyFrames[stream.name] = 0;
+    historyEntries[stream.name] = 0;
     const seen = new Set<string>();
+    // Library tokens this viewer drew itself, as its own events named them.
+    const drawn = new Set<string>();
+    // Of those, the box tokens its history named.
+    const drawnHistory = new Set<string>();
     let last: View | null = null;
 
     for (const { index, frame, msg, view } of stream.frames) {
@@ -308,6 +352,29 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
         last = view;
       }
       const named = mentions(msg);
+      const history = msg?.t === 'state' && Array.isArray(msg.history) ? msg.history : null;
+      const inRest = history ? mentions({ ...msg, history: undefined }) : named;
+      if (history) {
+        historyFrames[stream.name] = (historyFrames[stream.name] ?? 0) + 1;
+        historyEntries[stream.name] = (historyEntries[stream.name] ?? 0) + history.length;
+      }
+      // A libraryDraw that names its token, received by the drawer itself:
+      // the seat is a known library decider, the token was in its offer.
+      const live = msg?.events ?? [];
+      const past = (history ?? []).flatMap((e) => e.events);
+      for (const [ev, inHistory] of [
+        ...live.map((e) => [e, false] as const),
+        ...past.map((e) => [e, true] as const)
+      ]) {
+        if (ev.kind !== 'libraryDraw' || ev.token === undefined || view?.viewer !== ev.seat)
+          continue;
+        if (library.some((l) => l.decider === ev.seat && l.offer.includes(ev.token!))) {
+          drawn.add(ev.token);
+          if (inHistory && boxTokens.has(ev.token)) drawnHistory.add(ev.token);
+        }
+      }
+      // Only the history may go on naming a drawn token after the choice.
+      const ownDraw = (s: string) => drawn.has(s) && !inRest.has(s);
       const report = (id: string, rule: LeakRule) =>
         leaks.push({
           viewer: stream.name,
@@ -368,7 +435,7 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
       for (const s of slugs) {
         if (!over) {
           if (revealedSecrets.has(s)) report(s, 'revealed-secret');
-          if (boxTokens.has(s) && !drawerNow.has(s)) report(s, 'box-token');
+          if (boxTokens.has(s) && !drawerNow.has(s) && !ownDraw(s)) report(s, 'box-token');
           if (faceDown.has(s)) report(s, 'face-down');
           for (const [a, cards] of ageCards) {
             if (a > age && cards.has(s)) report(s, 'later-age');
@@ -382,9 +449,14 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
             }
           }
         }
-        if (!seen.has(s)) report(s, 'unexplained');
+        const fromHistory =
+          !inRest.has(s) &&
+          frame.version !== null &&
+          (publicSince.get(s) ?? Infinity) <= frame.version;
+        if (!seen.has(s) && !ownDraw(s) && !fromHistory) report(s, 'unexplained');
       }
     }
+    drawnInHistory += drawnHistory.size;
   }
 
   const count = (xs: { cards: string[] }[]) => xs.reduce((n, a) => n + a.cards.length, 0);
@@ -394,6 +466,9 @@ export function checkLeaks(streams: ViewerStream[], opts: LeakCheckOptions = {})
     coverage: {
       frames,
       stateFrames,
+      historyFrames,
+      historyEntries,
+      drawnInHistory,
       reveal: reveal !== null,
       secrets: {
         removed: reveal ? count(reveal.removed) : 0,

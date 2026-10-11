@@ -281,10 +281,19 @@ export interface RecordedOnlineGame {
  * explicit seed, so the server's --seed-base counter is not used up), and
  * the players join in seat order. Each move is the policy's pick from the
  * mover's own latest state; the others wait until they have seen it.
+ * With resyncEvery n, every connection also asks for a resync after every
+ * n actions and once at the end, so the streams hold history frames (the
+ * whole game so far, docs/protocol.md) for the leak check.
  */
 export async function recordOnlineGame(
   origin: string,
-  opts: { seed: string; scenario?: string; policy?: (view: View) => Choice; maxActions?: number }
+  opts: {
+    seed: string;
+    scenario?: string;
+    policy?: (view: View) => Choice;
+    maxActions?: number;
+    resyncEvery?: number;
+  }
 ): Promise<RecordedOnlineGame> {
   const policy = opts.policy ?? recordPolicy;
   const room = await createDevRoom(origin, {
@@ -312,6 +321,17 @@ export async function recordOnlineGame(
     for (let guard = 0; guard <= (opts.maxActions ?? 400); guard++) {
       for (const conn of conns) await conn.reach(version);
       const view = c0.latest!.view;
+      const every = opts.resyncEvery ?? 0;
+      if (
+        every > 0 &&
+        keys.length > 0 &&
+        (keys.length % every === 0 || view.phase === 'gameOver')
+      ) {
+        for (const conn of conns) {
+          await conn.send({ t: 'resync', code: room.code });
+          await conn.next((f) => f.t === 'state' && (f as State).history !== undefined);
+        }
+      }
       if (view.phase === 'gameOver') {
         // Every viewer has its game-over frame before the streams are returned.
         return {

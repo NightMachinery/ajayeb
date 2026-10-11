@@ -6,7 +6,7 @@
 // A driver waits for ready(), reads choices(), and clicks the button whose
 // data-act is the chosen key.
 
-import type { Choice, RoomInfo, View, YouInfo } from '$lib/wire';
+import type { Choice, HistoryEntry, RoomInfo, View, YouInfo } from '$lib/wire';
 import type { Presenter } from './presenter.svelte';
 import type { ConnState, Session } from './session.svelte';
 
@@ -28,6 +28,8 @@ export interface AjayebTestHook {
   you(): YouInfo | null;
   /** The connection state. */
   conn(): ConnState;
+  /** The game's history as the Session holds it: one entry per action. */
+  history(): HistoryEntry[];
   /**
    * True when the page shows the latest state and takes input: welcomed,
    * a state on screen, nothing queued in the Presenter, no request pending.
@@ -69,6 +71,7 @@ const hook: AjayebTestHook = {
   },
   you: () => copy(active?.presenter.frame?.you ?? null),
   conn: () => active?.session.conn ?? 'connecting',
+  history: () => copy([...(active?.session.history ?? [])]),
   ready: () => {
     if (!active) return false;
     const { session, presenter } = active;

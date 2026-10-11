@@ -10,7 +10,8 @@
 //
 // - a third context joins through the same link as a spectator, partway
 //   through, and watches the moves arrive with no choices of its own;
-// - B reloads its page and comes back to the same seat and position;
+// - B reloads its page and comes back to the same seat and position, with
+//   the whole game in its log (the join frame's history);
 // - A goes offline for a few seconds during B's turn: its page says it is
 //   reconnecting and offers no move, B moves meanwhile, and once A is back
 //   it catches up and the game goes on.
@@ -43,7 +44,7 @@ import {
   readRoomFile,
   type Crest
 } from '../fixtures/online';
-import { playKey } from '../fixtures/scenario';
+import { logLines, playKey } from '../fixtures/scenario';
 
 /** How long A stays offline, at least. */
 const OFFLINE_MS = 4_000;
@@ -167,6 +168,9 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
         // B reloads on its own turn and comes back to the same seat and position.
         if (!milestones.reload && now.phase === 'play' && now.ply >= 18 && mover === driverB) {
           const before = await driverB.nextTurn();
+          const linesBefore = await logLines(driverB);
+          const historyBefore = await pageB.evaluate(() => window.__ajayeb?.history() ?? []);
+          expect(historyBefore.map((e) => e.ply)).toEqual([...Array(before.ply).keys()]);
           await pageB.reload();
           await expect(pageB.locator('[data-name-prompt]')).toHaveCount(0);
           await driverB.waitTurn();
@@ -177,6 +181,13 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           expect(after.toMove).toBe(seatB);
           expect(after.choices.map((c) => c.key)).toEqual(before.choices.map((c) => c.key));
           expect(logB.sockets).toBe(2);
+          // The log after the reload is the whole game, as before it.
+          expect(await pageB.evaluate(() => window.__ajayeb?.history() ?? [])).toEqual(
+            historyBefore
+          );
+          const linesAfter = await logLines(driverB);
+          expect(linesAfter).toEqual(linesBefore);
+          expect(linesAfter.length).toBeGreaterThanOrEqual(before.ply);
           milestones.reload = { ply: before.ply, version: before.version };
         }
 

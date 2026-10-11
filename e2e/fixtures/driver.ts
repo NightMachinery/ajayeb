@@ -15,7 +15,15 @@
 // for the confirm step's double-tap guard (see commit).
 
 import { expect, type Locator, type Page } from '@playwright/test';
-import type { Choice, PendingKind, Phase, RoomInfo, View, YouInfo } from '../../web/src/lib/wire';
+import type {
+  Choice,
+  HistoryEntry,
+  PendingKind,
+  Phase,
+  RoomInfo,
+  View,
+  YouInfo
+} from '../../web/src/lib/wire';
 
 /** window.__ajayeb as the page defines it (web/src/lib/session/test-hook.ts). */
 export interface AjayebHook {
@@ -26,6 +34,8 @@ export interface AjayebHook {
     | null;
   you(): YouInfo | null;
   conn(): string;
+  /** The game's history as the Session holds it: one entry per action. */
+  history(): HistoryEntry[];
   ready(): boolean;
 }
 
