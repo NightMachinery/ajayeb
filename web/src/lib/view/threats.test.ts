@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { protocolFixtureNames, protocolFixtures } from '$lib/wire/fixtures.gen';
 import type { View } from '$lib/wire';
 import {
+  gameEnded,
   militaryDanger,
   militaryEndangered,
   militaryLeader,
@@ -52,6 +53,35 @@ describe('militaryDanger', () => {
   });
 });
 
+describe('militaryDanger after the end', () => {
+  it('is false once the pawn has reached a capital (game-over-military-hidden, position 9)', () => {
+    const view = fixture('game-over-military-hidden-seat0');
+    expect(view.military.position).toBe(9);
+    // The condition is met: no warning, even without the end flag.
+    expect(militaryDanger(view.military, 1)).toBe(false);
+    expect(militaryDanger(view.military, 1, gameEnded(view.phase))).toBe(false);
+  });
+
+  it('is false at the threshold once the game has ended by the end of Age III', () => {
+    // The looting fixture's pawn (position 6) in a game that has ended by
+    // civilian scoring: the warning is over with the game.
+    const { military } = fixture('looting-seat0');
+    const over = fixture('game-over-civilian-seat0');
+    expect(over.result?.victory).toBe('civilian');
+    expect(militaryDanger(military, 1, gameEnded(over.phase))).toBe(false);
+    expect(militaryDanger(military, 1, gameEnded('play'))).toBe(true);
+  });
+});
+
+describe('gameEnded', () => {
+  it('is true only in the gameOver phase', () => {
+    expect(gameEnded('gameOver')).toBe(true);
+    expect(gameEnded('play')).toBe(false);
+    expect(gameEnded('wonderDraft')).toBe(false);
+    expect(gameEnded(undefined)).toBe(false);
+  });
+});
+
 describe('nextLooting', () => {
   it('is null when the pawn is centred (no direction to look ahead in)', () => {
     const { military } = fixture('age-1-start-seat0');
@@ -94,10 +124,17 @@ describe('scienceDanger', () => {
     expect(scienceDanger(science)).toBe(false);
   });
 
-  it('is true once a scientific victory has been reached (game-over-science, 6 distinct)', () => {
-    const { science } = fixture('game-over-science-seat0').players[0];
+  it('is false once the scientific victory has happened (game-over-science, 6 distinct)', () => {
+    const view = fixture('game-over-science-seat0');
+    const { science } = view.players[0];
     expect(science.distinct).toBe(6);
-    expect(scienceDanger(science)).toBe(true);
+    // The condition is met: no warning, whether or not the caller passes the end.
+    expect(scienceDanger(science)).toBe(false);
+    expect(scienceDanger(science, gameEnded(view.phase))).toBe(false);
+  });
+
+  it('is false at 5 distinct once the game has ended some other way', () => {
+    expect(scienceDanger({ symbols: [], distinct: 5 }, true)).toBe(false);
   });
 
   it('is true exactly at the danger threshold (5 distinct, the "one pair away" case)', () => {

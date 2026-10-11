@@ -4,8 +4,14 @@
 // aria-label and the compact top-bar variant. No rules: everything here
 // reads fields the view already computed (military.position, each looting
 // token, science.distinct) and never recomputes what the engine owns.
+//
+// A warning speaks of what may still happen. Once the game is over (by any
+// victory, the end of Age III included) or the condition has been met (the
+// pawn in a capital, six distinct symbols) there is nothing left to warn
+// about, so the danger checks answer false; the result screen says what
+// happened instead.
 
-import type { LootingView, MilitaryView, ScienceView } from '$lib/wire';
+import type { LootingView, MilitaryView, Phase, ScienceView } from '$lib/wire';
 
 export type Seat = 0 | 1;
 
@@ -16,6 +22,18 @@ export const MILITARY_DANGER_MARGIN = 6;
 /** A player with this many distinct science symbols or more is one pair
  *  away from a scientific victory (which needs 6). */
 export const SCIENCE_DANGER_DISTINCT = 5;
+
+/** The distinct science symbols of a scientific victory (the printed rule,
+ *  docs/rules/military-science.md): from here on it has happened. */
+export const SCIENCE_VICTORY_DISTINCT = 6;
+
+/** The pawn's distance from the centre at a capital: a military victory. */
+export const MILITARY_VICTORY_MARGIN = 9;
+
+/** Whether the game in this phase is over, so no warning applies any more. */
+export function gameEnded(phase: Phase | undefined): boolean {
+  return phase === 'gameOver';
+}
 
 /** The seat whose capital the conflict pawn currently sits closer to
  *  (`military.position` is positive toward seat 1's capital), or null when
@@ -39,10 +57,15 @@ export function militaryMargin(military: MilitaryView): number {
 
 /** Whether this seat's capital is close enough to the pawn to glow as a
  *  threat: it is the endangered seat, and the margin has reached the
- *  danger threshold. */
-export function militaryDanger(military: MilitaryView, seat: Seat): boolean {
+ *  danger threshold but not the capital itself. Never once the game has
+ *  ended (`ended`). */
+export function militaryDanger(military: MilitaryView, seat: Seat, ended = false): boolean {
+  if (ended) return false;
+  const margin = militaryMargin(military);
   return (
-    militaryEndangered(military) === seat && militaryMargin(military) >= MILITARY_DANGER_MARGIN
+    militaryEndangered(military) === seat &&
+    margin >= MILITARY_DANGER_MARGIN &&
+    margin < MILITARY_VICTORY_MARGIN
   );
 }
 
@@ -64,8 +87,10 @@ export function nextLooting(military: MilitaryView): LootingView | null {
   return nearest;
 }
 
-/** A player with 5 or more distinct science symbols is one pair from
- *  winning outright, and the UX design glows their strip as a warning. */
-export function scienceDanger(science: ScienceView): boolean {
-  return science.distinct >= SCIENCE_DANGER_DISTINCT;
+/** A player with 5 distinct science symbols is one symbol from winning
+ *  outright, and the UX design glows their strip as a warning. Not with 6
+ *  (the victory has happened) and never once the game has ended. */
+export function scienceDanger(science: ScienceView, ended = false): boolean {
+  if (ended) return false;
+  return science.distinct >= SCIENCE_DANGER_DISTINCT && science.distinct < SCIENCE_VICTORY_DISTINCT;
 }
