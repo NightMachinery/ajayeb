@@ -215,7 +215,17 @@ onto the game the page shows, for end-to-end drivers:
 - `you()`: the seats this connection may act for, and `canAct`;
 - `conn()`: `connecting`, `open`, `reconnecting` or `offline`;
 - `ready()`: true when the page shows the latest state and takes input
-  (welcomed, nothing queued in the Presenter, no request pending).
+  (welcomed, nothing queued in the Presenter, no request pending);
+- `history()`: the game's history as the session holds it, one entry per
+  applied action (the `history` field of the state frame, kept across live
+  frames), so a spec can check the log after a reload.
+
+A second hook, `window.__ajayebFx` (`web/src/lib/fx/index.ts`), records
+the sound cues and vibrations that would play, because CI has no audio
+device: `cues()` (each with its delay and the frame version that made
+it), `haptics()` and `clear()`. A cue is recorded only while Sound is on
+and a vibration only while Haptics is on, which is what "would play"
+means.
 
 It is safe in production because it exposes only what this client already
 holds: the redacted view the server sent this viewer. It never exposes the
