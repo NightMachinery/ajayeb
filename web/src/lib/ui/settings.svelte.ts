@@ -17,6 +17,10 @@ export type ConfirmMoves = (typeof CONFIRM_MOVES_OPTIONS)[number];
 export const CARD_TEXT_SIZES = ['normal', 'large'] as const;
 export type CardTextSize = (typeof CARD_TEXT_SIZES)[number];
 
+export const SOUND_VOLUMES = ['quiet', 'medium', 'loud'] as const;
+/** The Sound volume step (fx/sfx.ts maps each step to a gain). */
+export type SoundVolume = (typeof SOUND_VOLUMES)[number];
+
 export const ORIENTATIONS = ['face', 'fixed'] as const;
 /** Hot-seat board orientation (UX design §6): 'face' turns the board to the
  *  active player, 'fixed' keeps Sun at the bottom. */
@@ -38,6 +42,13 @@ export interface Settings {
    *  the device default (on and 'face' for a coarse pointer or a phone). */
   hotseatPassDevice: boolean | null;
   hotseatOrientation: Orientation | null;
+  /** Synthesized sound cues (fx/), off by default. Its own switch: it does
+   *  not follow animationSpeed. */
+  sound: boolean;
+  soundVolume: SoundVolume;
+  /** Short vibrations through navigator.vibrate where the device has it;
+   *  the Settings screen hides the switch elsewhere. */
+  haptics: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -46,7 +57,10 @@ export const DEFAULT_SETTINGS: Settings = {
   colorPatterns: true,
   cardText: 'normal',
   hotseatPassDevice: null,
-  hotseatOrientation: null
+  hotseatOrientation: null,
+  sound: false,
+  soundVolume: 'medium',
+  haptics: true
 };
 
 export const SETTINGS_KEY = 'ajayeb:settings';
@@ -64,6 +78,10 @@ function isConfirmMoves(value: unknown): value is ConfirmMoves {
 
 function isOrientation(value: unknown): value is Orientation {
   return (ORIENTATIONS as readonly unknown[]).includes(value);
+}
+
+function isSoundVolume(value: unknown): value is SoundVolume {
+  return (SOUND_VOLUMES as readonly unknown[]).includes(value);
 }
 
 function isCardTextSize(value: unknown): value is CardTextSize {
@@ -98,7 +116,10 @@ export function parseSettings(raw: string | null): Settings {
         : DEFAULT_SETTINGS.hotseatPassDevice,
     hotseatOrientation: isOrientation(r['hotseatOrientation'])
       ? r['hotseatOrientation']
-      : DEFAULT_SETTINGS.hotseatOrientation
+      : DEFAULT_SETTINGS.hotseatOrientation,
+    sound: typeof r['sound'] === 'boolean' ? r['sound'] : DEFAULT_SETTINGS.sound,
+    soundVolume: isSoundVolume(r['soundVolume']) ? r['soundVolume'] : DEFAULT_SETTINGS.soundVolume,
+    haptics: typeof r['haptics'] === 'boolean' ? r['haptics'] : DEFAULT_SETTINGS.haptics
   };
 }
 

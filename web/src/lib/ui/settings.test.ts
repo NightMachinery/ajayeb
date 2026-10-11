@@ -46,7 +46,10 @@ describe('parseSettings', () => {
       colorPatterns: false,
       cardText: 'large',
       hotseatPassDevice: false,
-      hotseatOrientation: 'fixed'
+      hotseatOrientation: 'fixed',
+      sound: true,
+      soundVolume: 'loud',
+      haptics: false
     };
     expect(parseSettings(JSON.stringify(stored))).toEqual(stored);
   });
@@ -58,7 +61,10 @@ describe('parseSettings', () => {
       colorPatterns: 'yes', // not a boolean
       cardText: 'large',
       hotseatPassDevice: 'on', // not a boolean
-      hotseatOrientation: 'sideways' // not an orientation
+      hotseatOrientation: 'sideways', // not an orientation
+      sound: 1, // not a boolean
+      soundVolume: 11, // not a volume step
+      haptics: 'off' // not a boolean
     });
     expect(parseSettings(raw)).toEqual({
       ...DEFAULT_SETTINGS,
@@ -70,6 +76,33 @@ describe('parseSettings', () => {
   it('ignores unknown extra fields', () => {
     const raw = JSON.stringify({ ...DEFAULT_SETTINGS, future: 'field' });
     expect(parseSettings(raw)).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('sound and haptics settings', () => {
+  it('default to sound off at the medium step, and haptics on', () => {
+    expect(DEFAULT_SETTINGS.sound).toBe(false);
+    expect(DEFAULT_SETTINGS.soundVolume).toBe('medium');
+    expect(DEFAULT_SETTINGS.haptics).toBe(true);
+  });
+
+  it('fill in for a value stored before they existed', () => {
+    const older = JSON.stringify({ animationSpeed: 'fast', colorPatterns: false });
+    expect(parseSettings(older)).toEqual({
+      ...DEFAULT_SETTINGS,
+      animationSpeed: 'fast',
+      colorPatterns: false
+    });
+  });
+
+  it('are independent of the animation speed', () => {
+    const store = new SettingsStore(memory());
+    store.set('animationSpeed', 'off');
+    store.set('sound', true);
+    expect(store.value.sound).toBe(true);
+    store.set('animationSpeed', 'normal');
+    store.set('sound', false);
+    expect(store.value.animationSpeed).toBe('normal');
   });
 });
 
