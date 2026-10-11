@@ -89,15 +89,18 @@ func playOnline(t *testing.T, srv *server, rng *rand.Rand) gameResult {
 	seed := srv.snapshot(code).State.Seed
 	lt := newLeakTracker(t, seed)
 	checkAll := func() {
+		// Every connection also asks for the history, so the leak check
+		// sees every history the game produces (see history_test.go).
+		resyncAll(conns...)
 		snap := srv.snapshot(code)
 		var viewerSpec *engine.Seat // spectator: always nil
-		lt.check(spec, "spectator", snap.Version, trueHidden(&snap.State, viewerSpec))
+		lt.check(spec, "spectator", snap.Version, hiddenFor(t, snap, viewerSpec))
 		for seat, c := range bySeat {
 			var viewer *engine.Seat
 			if !snap.State.Over() {
 				viewer = seatRef(seat)
 			}
-			lt.check(c, "seat"+strconv.Itoa(seat), snap.Version, trueHidden(&snap.State, viewer))
+			lt.check(c, "seat"+strconv.Itoa(seat), snap.Version, hiddenFor(t, snap, viewer))
 		}
 	}
 	checkAll()
@@ -133,12 +136,13 @@ func playHotseat(t *testing.T, srv *server, rng *rand.Rand) gameResult {
 	seed := srv.snapshot(code).State.Seed
 	lt := newLeakTracker(t, seed)
 	check := func() {
+		c.resync()
 		snap := srv.snapshot(code)
 		var viewer *engine.Seat
 		if !snap.State.Over() {
 			viewer = seatRef(*c.latest.View.ToMove)
 		}
-		lt.check(c, "hotseat", snap.Version, trueHidden(&snap.State, viewer))
+		lt.check(c, "hotseat", snap.Version, hiddenFor(t, snap, viewer))
 	}
 	check()
 
@@ -170,12 +174,13 @@ func playAI(t *testing.T, srv *server, rng *rand.Rand) gameResult {
 	seed := srv.snapshot(code).State.Seed
 	lt := newLeakTracker(t, seed)
 	check := func() {
+		c.resync()
 		snap := srv.snapshot(code)
 		var viewer *engine.Seat
 		if !snap.State.Over() {
 			viewer = seatRef(mySeat)
 		}
-		lt.check(c, "ai-human", snap.Version, trueHidden(&snap.State, viewer))
+		lt.check(c, "ai-human", snap.Version, hiddenFor(t, snap, viewer))
 	}
 	check()
 

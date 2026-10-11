@@ -245,3 +245,68 @@ func TestOutboxBoundsStateFramesOfOtherRooms(t *testing.T) {
 		t.Fatalf("Take returned %d frames, want %d", n, MaxPendingStates)
 	}
 }
+
+// outboxHistory is a history of n entries with one build event each.
+func outboxHistory(n int) *[]wire.HistoryEntry {
+	h := make([]wire.HistoryEntry, 0, n)
+	for i := range n {
+		h = append(h, wire.HistoryEntry{Ply: i, Events: []view.GameEvent{{Kind: view.EventKindBuild}}})
+	}
+	return &h
+}
+
+// TestOutboxMergeKeepsHistory: a pending frame's history (a join's, a
+// resync's, an undo's) is never lost to a newer live frame, which inherits
+// it with its own events after it; a newer frame with its own history
+// drops the older events, which its history already holds.
+func TestOutboxMergeKeepsHistory(t *testing.T) {
+	build, pay := view.EventKindBuild, view.EventKindPay
+	t.Run("a live frame inherits the history", func(t *testing.T) {
+		o := NewOutbox()
+		joined := outboxState("AAAAAA", 5, nil)
+		joined.History = outboxHistory(5)
+		o.Push(joined)
+		o.Push(outboxState("AAAAAA", 6, nil, pay))
+		got := o.Take()
+		st := got[0].(wire.State)
+		if len(got) != 1 || st.History == nil || len(*st.History) != 5 || !equalKinds(outboxKinds(st), []view.EventKind{pay}) {
+			t.Fatalf("merged: history %v, events %v", st.History, outboxKinds(st))
+		}
+	})
+	t.Run("a history frame drops older events", func(t *testing.T) {
+		o := NewOutbox()
+		o.Push(outboxState("AAAAAA", 5, nil, build))
+		resynced := outboxState("AAAAAA", 5, nil)
+		resynced.History = outboxHistory(5)
+		o.Push(resynced)
+		st := o.Take()[0].(wire.State)
+		if st.History == nil || len(*st.History) != 5 || len(st.Events) != 0 {
+			t.Fatalf("merged: history %v, events %v", st.History, outboxKinds(st))
+		}
+	})
+	t.Run("the newer history wins", func(t *testing.T) {
+		o := NewOutbox()
+		first := outboxStateAt("AAAAAA", 5, 5, nil)
+		first.History = outboxHistory(5)
+		o.Push(first)
+		undone := outboxStateAt("AAAAAA", 6, 4, nil)
+		undone.History = outboxHistory(4)
+		o.Push(undone)
+		st := o.Take()[0].(wire.State)
+		if st.History == nil || len(*st.History) != 4 {
+			t.Fatalf("merged: history %v", st.History)
+		}
+	})
+}
+
+func equalKinds(a, b []view.EventKind) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}

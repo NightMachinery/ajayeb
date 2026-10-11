@@ -114,6 +114,36 @@ var recordCases = []recordCase{
 		}
 		return stateFrame(t, "G5VCK2", &s, ev, wire.ModeAI, wire.RoomStatusFinished, nil)
 	}},
+	{"state-join-history", func(t *testing.T) wire.ServerMessage {
+		// The first frame of a join: no events, and the whole history,
+		// each entry filtered for the viewer (seat 0 of an online room).
+		s := engine.NewGame(5, engine.Options{FirstPlayer: engine.FirstPlayerSeat0})
+		history := []wire.HistoryEntry{}
+		for range 8 {
+			legal := engine.LegalActions(&s, nil)
+			ply, seat := int(s.Ply), int(s.ToMove)
+			var ev []engine.Event
+			if err := engine.Apply(&s, legal[0], &ev); err != nil {
+				t.Fatalf("Apply: %v", err)
+			}
+			history = append(history, wire.HistoryEntry{Ply: ply, Seat: seat, Events: engine.FilterEvents(ev, engine.SeatViewer(0))})
+		}
+		st := stateFrame(t, "J9HQ3T", &s, nil, wire.ModeOnline, wire.RoomStatusPlaying, nil)
+		st.History = &history
+		return st
+	}},
+	{"state-forfeit", func(t *testing.T) wire.ServerMessage {
+		// Seat 1 resigned while seat 0 was to move: the forfeit's frame.
+		s := engine.NewGame(6, engine.Options{FirstPlayer: engine.FirstPlayerSeat0})
+		for range 7 {
+			engine.ApplyTrusted(&s, engine.LegalActions(&s, nil)[0])
+		}
+		var ev []engine.Event
+		if err := engine.Apply(&s, engine.ResignAction(1), &ev); err != nil {
+			t.Fatalf("resign: %v", err)
+		}
+		return stateFrame(t, "F2RF8K", &s, ev, wire.ModeOnline, wire.RoomStatusFinished, nil)
+	}},
 }
 
 // stateFrame builds a wire.State the way the room package does: the seats

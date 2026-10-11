@@ -35,10 +35,14 @@ const (
 // frame inherits, when it has no ack of its own, the older one's ack, and,
 // when its position follows from the older one's, the older one's events
 // (in front of its own, so the client can still animate everything that
-// happened; see continues). Every other frame is kept, in order. Both kinds
-// are bounded: MaxPendingFrames other frames and the state frames of
-// MaxPendingStates rooms; past either, the frame is dropped and the outbox
-// reports Overflowed.
+// happened; see continues). The history some frames carry (a join's, a
+// resync's, an undo's) is never lost either: a newer frame without one
+// inherits the older one's, so its own events follow that history's last
+// entry; a newer frame with its own history needs none of the older one's
+// events, since its history already holds them. Every other frame is kept,
+// in order. Both kinds are bounded: MaxPendingFrames other frames and the
+// state frames of MaxPendingStates rooms; past either, the frame is dropped
+// and the outbox reports Overflowed.
 //
 // An Outbox is safe for one pusher and one taker at a time, from different
 // goroutines.
@@ -87,7 +91,13 @@ func (o *Outbox) pushState(st wire.State) {
 		if !ok || old.Code != st.Code {
 			continue
 		}
-		if len(old.Events) > 0 && continues(old, st) {
+		switch {
+		case st.History != nil:
+			// st's history already holds old's events.
+		case old.History != nil && continues(old, st):
+			st.History = old.History
+			fallthrough
+		case len(old.Events) > 0 && continues(old, st):
 			merged := make([]view.GameEvent, 0, len(old.Events)+len(st.Events))
 			merged = append(merged, old.Events...)
 			merged = append(merged, st.Events...)
