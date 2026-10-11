@@ -6,7 +6,8 @@
   // "Forfeit"); Keep playing closes it. A leaf component with plain props:
   // the caller decides whether a forfeit is possible now (Session.resignSeat)
   // and gives the two names. In a hot-seat game the player to move is named,
-  // since both players share the device.
+  // since both players share the device. The dialog opens with the focus on
+  // Keep playing, never on the destructive answer.
   import Flag from '@lucide/svelte/icons/flag';
   import { t } from '$lib/i18n';
   import Button from '../shell/Button.svelte';
@@ -47,7 +48,8 @@
       >
         {t('game.forfeit.confirm')}
       </Button>
-      <Button variant="secondary" full data-control="forfeit-cancel" onclick={onclose}>
+      <!-- The dialog opens on the safe answer, so a stray Enter keeps the game going. -->
+      <Button variant="secondary" full autofocus data-control="forfeit-cancel" onclick={onclose}>
         {t('game.forfeit.cancel')}
       </Button>
     </div>

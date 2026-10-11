@@ -194,6 +194,8 @@ test.describe('victory', { tag: ['@mobile'] }, () => {
     await expect(confirm).toBeVisible();
     await expect(confirm.locator('h2')).toHaveText(`Forfeit the game for ${CREST_NAMES[loser]}?`);
     await expect(confirm).toContainText(`${CREST_NAMES[winner]} wins at once.`);
+    // It opens on the safe answer, never on Forfeit.
+    await expect(confirm.locator('[data-control="forfeit-cancel"]')).toBeFocused();
     await confirm.locator('[data-control="forfeit-cancel"]').click();
     await expect(confirm).toHaveCount(0);
     const still = await currentView(page);
