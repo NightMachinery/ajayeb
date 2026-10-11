@@ -7,6 +7,16 @@
   // connection. The text logotype stands in for the Nastaliq wordmark until
   // M9's vector pipeline draws it; the theme switcher and the publisher
   // footer link carry over unchanged from the M1 placeholder this replaces.
+  //
+  // The hero painting (hero/hero) sits above the logotype in a 16:9 frame
+  // whose size never depends on the art, so the page does not move when it
+  // is approved: until then the frame shows the eight-pointed star. The
+  // frame is capped in height so the mode buttons stay above the fold on a
+  // 360 x 740 phone, and on a short landscape screen (where split applies
+  // too, so short wins with !) it is no taller than the star it replaces,
+  // so the tagline stays on screen.
+  import ArtImage from '$lib/art/ArtImage.svelte';
+  import { artId } from '$lib/art/lookup';
   import Bot from '@lucide/svelte/icons/bot';
   import Globe from '@lucide/svelte/icons/globe';
   import KeyRound from '@lucide/svelte/icons/key-round';
@@ -129,14 +139,44 @@
     <div
       class="flex flex-col short:pt-3 split:my-auto split:grid split:grid-cols-2 split:items-center split:gap-10"
     >
-      <header class="mt-6 flex flex-col items-center text-center short:mt-2 split:mt-0">
-        <svg class="size-22 text-gild short:size-16" viewBox="0 0 100 100" aria-hidden="true">
-          <path d={STAR_OUTER} fill="var(--accent-soft)" stroke="currentColor" stroke-width="2.5" />
-          <circle cx="50" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="1.5" />
-          <path d={STAR_INNER} fill="currentColor" />
-        </svg>
+      <header class="mt-3 flex flex-col items-center text-center short:mt-0 split:mt-0">
+        <div
+          class="hero relative grid aspect-video h-auto max-h-44 w-full max-w-xs place-items-center short:max-h-16! short:max-w-28! split:max-h-64 split:max-w-md"
+          data-hero
+        >
+          <ArtImage
+            id={artId('hero', 'hero')}
+            sizes="(min-width: 64rem) 28rem, 20rem"
+            feather="soft"
+            class="absolute inset-0 h-full w-full"
+          >
+            {#snippet fallback()}
+              <svg
+                class="aspect-square h-1/2 w-auto text-gild short:h-full"
+                viewBox="0 0 100 100"
+                aria-hidden="true"
+              >
+                <path
+                  d={STAR_OUTER}
+                  fill="var(--accent-soft)"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path d={STAR_INNER} fill="currentColor" />
+              </svg>
+            {/snippet}
+          </ArtImage>
+        </div>
         <p
-          class="mt-4 text-2xl leading-none text-gild short:mt-2"
+          class="mt-3 text-2xl leading-none text-gild short:mt-1"
           lang="fa"
           dir="rtl"
           aria-hidden="true"
