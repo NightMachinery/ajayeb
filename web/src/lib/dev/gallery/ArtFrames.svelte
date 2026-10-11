@@ -50,7 +50,7 @@
 </script>
 
 <section id="cards-art" class="flex flex-col gap-3" data-art-frames>
-  <h3 class="font-display text-lg text-fg">Art frames <!-- i18n-ok: dev label --></h3>
+  <h3 class="font-display text-lg text-fg">{t('dev.cards.art')}</h3>
 
   <div class="flex flex-wrap items-end gap-3 rounded-panel border border-rule bg-panel p-3">
     {#each cards as slug (slug)}

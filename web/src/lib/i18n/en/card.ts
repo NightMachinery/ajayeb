@@ -286,6 +286,7 @@ export const card = {
   'dev.cards.tier': 'Tier {tier}',
   'dev.cards.badges': 'Affordability badges',
   'dev.cards.badgesDim': 'Not your turn (dimmed)',
+  'dev.cards.art': 'Art frames',
   'dev.cards.backs': 'Card backs',
   'dev.cards.wonders': 'Wonders',
   'dev.cards.structures': 'Age structures',
