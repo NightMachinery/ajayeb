@@ -181,6 +181,10 @@ describe('victory scenes', () => {
     expect(victoryArtId('civilian', three)).toBe('victory/civilian');
   });
 
+  it('shows the civilian scene for a forfeit', () => {
+    expect(victoryArtId('forfeit', three)).toBe('victory/civilian');
+  });
+
   it('shows the civilian scene for a draw until a draw scene is approved', () => {
     expect(victoryArtId('shared', three)).toBe('victory/civilian');
     expect(victoryArtId('shared', { ...three, ...scene('victory/draw') })).toBe('victory/draw');
@@ -193,7 +197,7 @@ describe('victory scenes', () => {
   });
 
   it('finds every scene the result screen can ask for in the generated index', () => {
-    for (const kind of ['civilian', 'military', 'science', 'shared'] as const) {
+    for (const kind of ['civilian', 'military', 'science', 'shared', 'forfeit'] as const) {
       expect(hasApprovedArt(victoryArtId(kind)), kind).toBe(true);
     }
   });

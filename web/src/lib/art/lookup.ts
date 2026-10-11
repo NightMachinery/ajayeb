@@ -74,12 +74,14 @@ export type VictoryKind = OutcomeKind;
 
 /** The victory scenes to try for each way a game ends, in order. A draw
  *  shows its own scene once one is approved, and the civilian one until
- *  then (both players reached the end of Age III). */
+ *  then (both players reached the end of Age III). A forfeit has no scene
+ *  of its own and shows the civilian one, the most neutral of the three. */
 const VICTORY_SCENES: Record<VictoryKind, readonly [string, ...string[]]> = {
   civilian: ['victory/civilian'],
   military: ['victory/military'],
   science: ['victory/science'],
-  shared: ['victory/draw', 'victory/civilian']
+  shared: ['victory/draw', 'victory/civilian'],
+  forfeit: ['victory/civilian']
 };
 
 /** The art id of the scene for how a game ended: the first candidate with
