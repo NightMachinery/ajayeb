@@ -33,6 +33,7 @@
 // stays false through a dwell and a pre-roll, so input stays locked.
 
 import { tick } from 'svelte';
+import { playFrameFx } from '$lib/fx';
 import type { State, View } from '$lib/wire';
 import type { Unsubscribe } from './transport';
 
@@ -235,6 +236,7 @@ export class Presenter {
           this.#thinkingSince = this.#now();
         }
         await this.#afterSwap();
+        playFrameFx(next, prev);
         if (this.hooks.play) {
           try {
             await this.hooks.play(next, prev, captured);
