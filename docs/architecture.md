@@ -45,7 +45,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog` and the view types.
 - **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below).
-- **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo, and writes the room file after every accepted action.
+- **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
 - **`internal/store`**: one JSON file per room, written atomically (temporary file, sync, rename), plus a reaper for old rooms with an injectable clock.
 - **`internal/ident`**: the server secret and the HMAC-derived user ids.
 - **`internal/wire`**: the client and server message types.
@@ -71,8 +71,9 @@ The engine produces each key from its own action value and parses keys strictly.
 **The view is built by whitelist.** `ViewFor(state, viewer)` copies into a fresh DTO only the fields that viewer may see, so a field nobody remembered to redact cannot leak. Besides the board, cities and military track, the view carries what the thin client needs to explain the game without knowing the rules:
 
 - `choices`: the legal keys for the decider, each with its kind, its cost breakdown, and disabled options with a reason, so the UI can say why a move is not available;
-- both players' cost breakdowns for every accessible card, discard values, wonder costs and trade prices;
-- the score preview, the pending choice, `events` (structured, for animations and the live region), the log, `canUndo`, who is thinking, and presence.
+- both players' cost breakdowns for every face-up card (accessible or covered, as if it were accessible), discard values, wonder costs and trade prices;
+- the score preview, the pending choice, `events` (structured, for animations and the live region), `canUndo`, who is thinking, and presence;
+- on a join, a resync or an undo only, `history`: every applied action's ply, seat and events, filtered for the viewer, so a reloaded client can show the whole game's log. The client never animates it.
 
 ## Wire types and generation
 

@@ -169,7 +169,11 @@ a new one replaces the one still waiting, moves to the end of the queue,
 inherits the old one's `ack` when it has none of its own, and puts the old
 one's events in front of its own unless an undo came in between (the events
 of an undone move describe a position that no longer exists, so the client
-simply jumps to the new one). A slow client therefore skips intermediate
+simply jumps to the new one). A `history` changes the merge: a new frame
+with a history drops the old one's events (its history already holds them),
+and a new live frame that replaces one with a history inherits that history
+and appends its own events after the old one's, so the client still gets the
+whole game. A slow client therefore skips intermediate
 snapshots, but never loses an `ack` and still receives the events that lead
 to the newest snapshot (up to 256 of them). Other
 frames (`created`, `reject`, `error`) queue in order, at most 32 of them, and
@@ -278,6 +282,22 @@ Submits one game action.
   the act is refused with `not-your-turn`. A hot-seat client sends it, so a
   tap left over on the previous player's screen cannot act for the next
   one.
+
+**Forfeit.** The key `resign:0` or `resign:1` forfeits that seat's game. It
+is never among `choices` (so no bot ever sends it) and travels in an
+ordinary `act`. The room accepts it only from a player for their own seat,
+whoever is to move: in an online room either player, in an `ai` room the
+human, and in a hot-seat room the seat to move (with `seat`, if present,
+equal to it). A spectator, a player naming the other seat, or a hot-seat
+forfeit of the waiting seat gets `not-your-turn`; a forfeit in the lobby
+gets `not-your-turn` too, and one after the end `illegal`. `base` is checked
+as for any act, so a forfeit sent while a bot answered is refused `stale`
+and may be sent again. An accepted forfeit cancels a bot search, ends the
+game with the result `{"victory": "forfeit", "winner": <other seat>}`, emits
+a `resign` event (its `seat` is the seat that forfeited) before `gameOver`,
+reveals the hidden cards like any other end, and cannot be undone. An open
+Great Library offer goes back to the box unseen. The ruling is in
+[docs/rules/decisions.md](rules/decisions.md).
 
 The room checks, in order: the connection has joined and is not a spectator;
 the `seq` is new (a repeated one only gets the current `state` with an
@@ -433,6 +453,19 @@ full game view described under "The view and its events" below.
   or `undo`, names that request's client id and `seq`.
 - `events` are the events of what changed since the client's previous
   `state`, already filtered for this viewer; often empty.
+- `history`, present only in the first frame a connection gets after a
+  `create` or `join` (a repeated join included), in every answer to a
+  `resync`, and in every connection's frame after an undo, is the whole game
+  so far: one entry per applied action, oldest first, each with the `ply`
+  the action was taken at, the `seat` that took it (the seat to move, or the
+  seat that forfeited) and its `events`, filtered for this viewer exactly
+  like live events. A room loaded from disk rebuilds it by replay. Live
+  frames (moves, presence, a `stale` or repeated-`seq` answer) do not carry
+  it. In a frame with a history, `events` are empty, or, after an outbox
+  merge, the events that follow the history's last entry. The client
+  replaces its log with it, and must not animate or toast it. It holds at
+  most 512 entries (`wire.MaxHistory`, the newest kept); a game takes at most
+  `engine.MaxGameActions` (189) actions, so a real game never reaches the cap.
 - `view` is the game as this viewer may see it, including its `choices`.
 
 ### reject
@@ -622,6 +655,9 @@ clock instead of waiting.
 - **Outbox:** at most 32 pending frames other than `state` and the pending
   `state` frames of at most 4 rooms (1008 `client too slow` beyond); a
   merged `state` keeps at most the 256 newest events.
+- **History:** a `state` frame's `history` holds at most 512 entries
+  (`wire.MaxHistory`), more than the 189 actions a game can take
+  (`engine.MaxGameActions`, checked by a test).
 - **Rooms:** at most 1024 rooms in memory. When a create or a load finds
   them all there, the room with no connection that has been idle longest
   leaves memory to make room (it is on disk, and comes back on its next
@@ -776,7 +812,24 @@ reports the token drawn, but it is always treated as private regardless of
 its own private flag, so every viewer but the drawer instead receives a
 public summary (the drawer's seat and the token's place in the offer,
 never the token itself). More generally, a private event reaches only the
-seat it names; every other viewer simply does not receive it.
+seat it names; every other viewer simply does not receive it. Because the
+state frame's `history` re-sends every event through the same filter, the
+drawer's own history keeps naming the three tokens it drew, including the
+two that went back to the box. That is not a leak: the drawer saw them. The
+no-leak checks (`server/internal/protocoltest`, `hiddenFor`, and the e2e
+frame checker in `e2e/fixtures/leak-check.ts`) allow a viewer exactly the
+tokens it drew itself, and still treat every other box token as hidden.
+
+**Costs on face-up cards.** Every face-up card in the structure, accessible
+or still covered, carries both seats' cost breakdowns (`costs`), computed
+as if it were accessible now, so the card sheet can say what a covered card
+would cost. A face-down card carries none, since its identity is hidden.
+This made a mid-age `view` about 2.6 to 3.5 KB (15 to 20 percent) larger:
+measured on seeds 1 to 3 at a mid-age position of Age I and of Age II, the view went
+from 15.6 to 19.3 KB before to 18.2 to 21.9 KB after (seed 1, Age II: 18150
+bytes before, 21255 after). A join or resync frame of a finished 71-action
+game, history included, is about 19.7 KB, against 7.9 KB for the same frame
+without its history.
 
 The protocol fixtures in `server/internal/engine/testdata/protocol/` are
 golden JSON files, one per named position, each recording what all three
@@ -844,7 +897,10 @@ Field by field:
   `ply` the game was at and the `seat` that was to move when the action was
   applied (a reader checks both before applying it, which catches a log that
   was edited or reordered by hand), and `action` is the action's canonical
-  key, such as `construct:baths` or `wonder:pyramids:baths`.
+  key, such as `construct:baths` or `wonder:pyramids:baths`. A forfeit is
+  stored like any action, as `resign:0` or `resign:1`; its entry's `seat`
+  is still the seat that was to move, which need not be the seat that
+  forfeited.
 - `finalHash` is optional: 16 lowercase hex digits of the FNV-1a hash the
   engine computes over the final state's fixed-size binary encoding. When
   present, a replay that reaches a different hash is reported as a mismatch

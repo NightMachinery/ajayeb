@@ -35,7 +35,15 @@
 //   - drive_test.go plays full games end to end (online with two distinct
 //     users plus a spectator, hot-seat with one user holding both seats,
 //     and ai with a bot seat), picking a uniformly random legal choice
-//     each turn, and checks for leaks after every turn.
+//     each turn, and checks for leaks after every turn. Before each check
+//     every connection resyncs, so the history each frame of that kind
+//     carries goes through the same leak check as the live frames.
+//   - history_test.go holds the history's side of the leak model:
+//     hiddenFor is the hidden set less the Great Library tokens the viewer
+//     drew itself (its own history names them), and a planted-leak test
+//     proves the tracker scans history entries.
+//   - forfeit_test.go forfeits over the wire in every room mode, with a
+//     spectator and the other seat refused.
 //   - fullgame_test.go, reconnect_test.go, restart_test.go,
 //     idempotency_test.go and undo_test.go hold the tests themselves.
 //   - library_test.go starts an online room at the Great Library's draw,
