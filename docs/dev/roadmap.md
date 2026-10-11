@@ -184,32 +184,46 @@ Acceptance:
 - Per-asset byte budgets are met, the shipped art totals 5 MB or less, and there are no missing images.
 - Mini cards stay legible with art in place: the M5 layout checks and the UX rubric still pass.
 
-## M10: UX polish
+Status: done on 2026-10-11, with four bitmaps left on their placeholders. The vector set was drawn by Opus agents in the render, screenshot and critique loop described in `art/vector/STYLE.md`: resources, economy and military, science, chain symbols, category glyphs, ornaments, the military track, the wordmark and the favicon, 75 files that `make vec-lint` checks in `verify-quick` and in CI. In truly blind readings by fresh agents that saw only the sheets and a list of names, resources scored 14 of 14 at 12 px (DPR 2) and 16 px (DPR 1), science 7 of 7 at three sizes, chain symbols 17 of 17 and category glyphs 15 of 15; a critic pass and a polish round followed, and a fresh blind round after the polish still scored 100%. Every set's specimen was checked in greyscale and under deuteranopia, protanopia and tritanopia emulation; a colour-vision pass over whole board fixtures moves to the M11 review loop. The bitmaps came from a 27-image pilot whose critique was folded into `art/style.md` and the subjects, then a batch of 109 assets in which an independent critic judged every image, for up to three rounds of regeneration. 105 were approved and shipped. Four are marked `needs-human` in `art/manifest.json` and keep their procedural placeholders: the Statue of Zeus, the Masonry token, the Tavern and the home hero. The shipped AVIF art totals 2.64 MB in 200 files (budget 5 MB), the per-age prefetch is 106 to 138 KB (budget 200 KB), every per-asset budget is met, and the approved originals are committed as lossless WebP, pixel-identical to the generated images. The full e2e suite, including `layout.spec`, passed on CI with the art in place (78 passed). An in-app check found no broken images, console errors or failed requests. Left for M10: the avatars, victory scenes, textures, app icon and home hero have no consumer in the app yet (about 229 KB shipped unused); owned progress tokens render greyed; some names break mid-word on medium cards; the phone card sheet squeezes the art for long names; two wonder crops; and a follow-up art round for the four placeholders and the Great Library (its large gold dome breaks the style's gold rule).
 
-Scope:
+The owner merged the review passes of the old M10 (UX polish) and M11 (game feel, tutorial and hardening) on 2026-10-11 ([D22](decisions.md)): the features are built first, then one review loop runs over the finished game. M10 and M11 below follow that split.
 
-- The UX review loop: a screenshot matrix over fixtures and live rooms in light and dark themes, objective probes, lens critics, refuters, fixers and a before-and-after judge.
+## M10: Game feel, tutorial and polish (build)
 
-Acceptance:
+Scope, built as ordinary slices:
 
-- The loop runs until two rounds in a row find no major issue, with no open P0 or P1 finding.
-- axe reports zero serious or critical violations in both themes.
-- The initial JavaScript is below 200 KB gzipped, the board renders 2500 DOM nodes or fewer, and the home page's largest contentful paint is 2.5 s or less on a throttled mobile profile.
-
-## M11: Game feel, tutorial and hardening
-
-Scope:
-
-- Animations driven by server events (card flights, flips, coins, the pawn, looting, tokens, the age deal, the draft, victory), sound, haptics and a speed setting.
-- A guided first game against the easiest bot, first-time tips, and a rules reference built from the real components.
+- The follow-up art round (the four placeholders and the Great Library), the unused art wired in (bot avatars in the setup sheet and the bot's strip, victory scenes on the game-over screen, the paper and night textures, the app icon and web manifest, the hero on Home) and the in-app art fixes found at the end of M9.
+- The queued UX fixes from M5 to M9 (tap targets, raw colours, overlaps and truncations, the ornament, track and wordmark integration).
+- Tooltips on every board element and icon-only button, down to each symbol, chip, pip and glyph on a card, through our own helper, following the AGENTS.md rule, with vector concept diagrams where a picture explains more than a sentence; a lint keeps the native `title` attribute out.
+- A rules reference built from the real components and the tooltip diagrams: a side drawer on desktop that leaves the board visible and live, a tall bottom sheet on phones, and the same content at `/rules` from Home. Tooltips link to the matching section.
+- Animations driven by server events (card flights, flips, coins, the pawn, looting, tokens, the age deal, the draft, victory), sound, haptics and the speed setting, all controlled by the game's own Animation setting ([D21](decisions.md)).
+- A guided first game against the easiest bot, and first-time tips that reuse the tooltip layer.
 - A Persian locale stub with a right-to-left smoke fixture, and app-shell caching.
-- Hardening: nightly fuzzing at scale, a further security pass, replay download, and complete docs.
+
+Beside the UI build, outside the review loop because they do not touch the screens:
+
 - A deeper rules audit, carried over from M2: lens-specific finders with the strongest model write black-box tests until two rounds in a row find no new divergence.
+- Hardening: nightly fuzzing at scale, a further security pass, replay download, and complete docs.
 
 Acceptance:
 
 - With Animation off in Settings, no animation runs longer than 10 ms and every state change stays visible.
 - Animations are purely visual: the final DOM is the same with animation on and off for scripted sequences, input is re-enabled within 450 ms of an update at normal speed, and no task longer than 50 ms runs during an animation on a throttled CPU.
 - A fresh agent that sees only the UI completes the tutorial, and every coach-mark target is visible at every tested viewport.
+- Every board element, every symbol on a card and every icon-only button has a tooltip (or a visible label it would only repeat), no native `title` attribute remains, and the rules reference opens from the game menu at every tested viewport without leaving the game.
 - The right-to-left fixture has no horizontal scroll, the app chrome is mirrored, and the board stays left-to-right.
-- Nightly CI fuzzing and sweeps are green.
+- Every asset in the manifest is approved, or its placeholder is a recorded owner decision.
+- Nightly CI fuzzing and sweeps are green, and the rules audit's last two rounds find no new divergence.
+
+## M11: The review loop
+
+Scope:
+
+- One review loop over the finished game, run round after round. Each round has plain-script probes (horizontal scroll, tap-target sizes, axe, console errors, budgets), a "player" reviewer that plays real games in the browser at phone and desktop size, including the tutorial and the animations, and a "screens" reviewer that reads the screenshot set over fixtures and live rooms in light and dark themes (layout, looks, accessibility, colour vision). Fixers prove each fix with before and after shots, and the e2e suite catches regressions. There are no refuters or separate judge ([D22](decisions.md)).
+
+Acceptance:
+
+- The loop stops when a round finds only small issues that do not affect real play, with no open P0 or P1 finding.
+- axe reports zero serious or critical violations in both themes.
+- A colour-vision review of board fixtures passes.
+- The initial JavaScript is below 200 KB gzipped, the board renders 2500 DOM nodes or fewer, and the home page's largest contentful paint is 2.5 s or less on a throttled mobile profile.
