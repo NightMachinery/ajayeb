@@ -59,7 +59,11 @@ only one of them is up.
 
 Ports are scanned upward from 38951 (the Go server) and 38952 (the Vite dev
 server) if the preferred port is busy, and the chosen ports are written to
-`.self-host/config.json` so a later command reuses them. `go tool air`'s
+`.self-host/config.json` so a later command reuses them. `setup`, `redeploy`
+and `start` choose the ports only after stopping the running server (waiting
+up to 5 seconds for its socket to close), so a redeploy keeps the server's
+port and leaves the Caddyfile alone instead of moving to the next free port.
+`go tool air`'s
 entrypoint is fixed by `server/.air.toml` to the server's default address, so
 in dev mode the Go server itself always binds 38951; only the Vite dev
 server's port is reselected when busy.

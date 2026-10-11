@@ -854,7 +854,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
     def test_command_setup_with_prebuilt_skips_every_build_step(self):
         with mock.patch.multiple(
             self_host,
-            resolve_runtime_config=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
             ensure_tools=mock.DEFAULT,
             check_prebuilt_binary=mock.DEFAULT,
             find_go=mock.DEFAULT,
@@ -870,7 +871,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             poll_health=mock.DEFAULT,
             announce_serving=mock.DEFAULT,
         ) as mocks:
-            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["resolve_config"].return_value = self._config()
+            mocks["ports_after_stop"].side_effect = lambda config: config
             mocks["poll_health"].return_value = True
             self_host.command_setup("https://game.example.test", "/tmp/prebuilt-ajayeb")
             mocks["check_prebuilt_binary"].assert_called_once_with(Path("/tmp/prebuilt-ajayeb"))
@@ -887,7 +889,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
         calls: list = []
         with mock.patch.multiple(
             self_host,
-            resolve_runtime_config=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
             ensure_tools=mock.DEFAULT,
             find_go=mock.DEFAULT,
             install_web=mock.DEFAULT,
@@ -902,13 +905,16 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             poll_health=mock.DEFAULT,
             announce_serving=mock.DEFAULT,
         ) as mocks:
-            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["resolve_config"].return_value = self._config()
+            mocks["ports_after_stop"].side_effect = lambda config: config
             mocks["poll_health"].return_value = True
             mocks["build_server_release"].side_effect = lambda: calls.append("build") or Path("/tmp/new")
             mocks["command_stop"].side_effect = lambda: calls.append("stop")
+            mocks["ports_after_stop"].side_effect = lambda config: calls.append("ports") or config
+            mocks["save_config"].side_effect = lambda config: calls.append("save")
             mocks["swap_in_binary"].side_effect = lambda source, move=False: calls.append("swap")
             self_host.command_setup("https://game.example.test")
-            self.assertEqual(calls, ["build", "stop", "swap"])
+            self.assertEqual(calls, ["build", "stop", "ports", "save", "swap"])
 
     def test_command_setup_refuses_a_bad_prebuilt_before_anything_stops(self):
         import tempfile
@@ -919,14 +925,16 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             bad.chmod(0o644)
             with mock.patch.multiple(
                 self_host,
-                resolve_runtime_config=mock.DEFAULT,
+                resolve_config=mock.DEFAULT,
+                ports_after_stop=mock.DEFAULT,
                 ensure_tools=mock.DEFAULT,
                 command_stop=mock.DEFAULT,
                 swap_in_binary=mock.DEFAULT,
                 apply_caddyfile_safely=mock.DEFAULT,
                 start_server_prod=mock.DEFAULT,
             ) as mocks:
-                mocks["resolve_runtime_config"].return_value = self._config()
+                mocks["resolve_config"].return_value = self._config()
+                mocks["ports_after_stop"].side_effect = lambda config: config
                 with self.assertRaises(RuntimeError):
                     self_host.command_setup("https://game.example.test", str(bad))
                 mocks["command_stop"].assert_not_called()
@@ -935,7 +943,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
     def test_command_redeploy_with_prebuilt_skips_every_build_step(self):
         with mock.patch.multiple(
             self_host,
-            resolve_runtime_config=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
             ensure_tools=mock.DEFAULT,
             check_prebuilt_binary=mock.DEFAULT,
             find_go=mock.DEFAULT,
@@ -952,7 +961,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             poll_health=mock.DEFAULT,
             announce_serving=mock.DEFAULT,
         ) as mocks:
-            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["resolve_config"].return_value = self._config()
+            mocks["ports_after_stop"].side_effect = lambda config: config
             mocks["archive_rooms"].return_value = None
             mocks["poll_health"].return_value = True
             self_host.command_redeploy("https://game.example.test", "/tmp/prebuilt-ajayeb")
@@ -969,7 +979,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
         calls: list = []
         with mock.patch.multiple(
             self_host,
-            resolve_runtime_config=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
             ensure_tools=mock.DEFAULT,
             find_go=mock.DEFAULT,
             archive_rooms=mock.DEFAULT,
@@ -985,16 +996,71 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             poll_health=mock.DEFAULT,
             announce_serving=mock.DEFAULT,
         ) as mocks:
-            mocks["resolve_runtime_config"].return_value = self._config()
+            mocks["resolve_config"].return_value = self._config()
+            mocks["ports_after_stop"].side_effect = lambda config: config
             mocks["poll_health"].return_value = True
             mocks["archive_rooms"].side_effect = lambda: calls.append("archive") or None
             mocks["build_server_release"].side_effect = lambda: calls.append("build") or Path("/tmp/new")
             mocks["command_stop"].side_effect = lambda: calls.append("stop")
+            mocks["ports_after_stop"].side_effect = lambda config: calls.append("ports") or config
+            mocks["save_config"].side_effect = lambda config: calls.append("save")
             mocks["swap_in_binary"].side_effect = lambda source, move=False: calls.append("swap")
             self_host.command_redeploy("https://game.example.test")
             # The archive still runs with the server already stopped (so it
             # never captures a file mid-write), and still before the swap.
-            self.assertEqual(calls, ["build", "stop", "archive", "swap"])
+            self.assertEqual(calls, ["build", "stop", "ports", "save", "archive", "swap"])
+
+
+class PortsAfterStopTests(unittest.TestCase):
+    """Ports are chosen after our own server stops, so a redeploy keeps its
+    port instead of moving to the next one and rewriting the Caddyfile."""
+
+    def _config(self, server=38951):
+        return self_host.Config(
+            site=self_host.parse_site_url("https://game.example.test"),
+            mode=self_host.Mode.PROD,
+            ports=self_host.Ports(server=server, web_dev=38952),
+        )
+
+    def test_wait_for_port_free_returns_once_the_old_socket_closes(self):
+        answers = iter([False, False, True])
+        with mock.patch.object(self_host.time, "sleep") as sleep:
+            self.assertTrue(self_host.wait_for_port_free(38951, is_free=lambda port: next(answers)))
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_wait_for_port_free_gives_up_after_the_timeout(self):
+        with mock.patch.object(self_host.time, "sleep"):
+            self.assertFalse(self_host.wait_for_port_free(38951, timeout=0.0, is_free=lambda port: False))
+
+    def test_ports_after_stop_waits_for_the_configured_port_then_allocates(self):
+        calls: list = []
+        with mock.patch.multiple(self_host, wait_for_port_free=mock.DEFAULT, allocate_ports=mock.DEFAULT) as mocks:
+            mocks["wait_for_port_free"].side_effect = lambda port: calls.append(("wait", port)) or True
+            mocks["allocate_ports"].side_effect = lambda ports: calls.append(("allocate", ports.server)) or ports
+            config = self_host.ports_after_stop(self._config(server=38953))
+        self.assertEqual(calls, [("wait", 38953), ("allocate", 38953)])
+        self.assertEqual(config.ports.server, 38953)
+
+    def test_command_start_stops_before_choosing_ports(self):
+        calls: list = []
+        with mock.patch.multiple(
+            self_host,
+            command_stop=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        ) as mocks, mock.patch.object(self_host, "BIN_PATH", Path(__file__)):
+            mocks["resolve_config"].return_value = self._config()
+            mocks["command_stop"].side_effect = lambda: calls.append("stop")
+            mocks["ports_after_stop"].side_effect = lambda config: calls.append("ports") or config
+            mocks["poll_health"].return_value = True
+            self_host.command_start("https://game.example.test")
+        self.assertEqual(calls, ["stop", "ports"])
 
 
 class ShipTargetMemoryTests(unittest.TestCase):

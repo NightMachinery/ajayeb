@@ -59,6 +59,7 @@ REMOTE_UPLOAD_BIN = ".self-host/bin/ajayeb.upload"
 SHIP_BUILD_WAIT = 1800.0
 SHIP_HEALTH_POLL_TIMEOUT = 30.0
 SHIP_HEALTH_POLL_INTERVAL = 1.0
+PORT_RELEASE_TIMEOUT = 5.0
 UNAME_TO_GOOS_GOARCH: dict[tuple[str, str], tuple[str, str]] = {
     ("Linux", "x86_64"): ("linux", "amd64"),
     ("Linux", "aarch64"): ("linux", "arm64"),
@@ -636,6 +637,32 @@ def resolve_runtime_config(url: str | None, mode: Mode) -> Config:
     return Config(config.site, config.mode, allocate_ports(config.ports))
 
 
+def wait_for_port_free(
+    port: int,
+    *,
+    timeout: float = PORT_RELEASE_TIMEOUT,
+    is_free: Callable[[int], bool] = port_free,
+) -> bool:
+    deadline = time.monotonic() + timeout
+    while not is_free(port):
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.1)
+    return True
+
+
+def ports_after_stop(config: Config) -> Config:
+    """Choose the ports once our own server has stopped.
+
+    Before the stop, the running server's own port looks busy, so choosing
+    then moved every redeploy to the next free port and rewrote the shared
+    Caddyfile each time. tmux kill-session returns before the server has
+    closed its socket, so the old port gets a moment to free up first.
+    """
+    wait_for_port_free(config.ports.server)
+    return Config(config.site, config.mode, allocate_ports(config.ports))
+
+
 def archive_rooms() -> Path | None:
     """Archive .self-host/data/rooms to .self-host/backups/rooms-<ts>.tar.gz.
 
@@ -938,7 +965,7 @@ def command_ship(target: str | None, url: str | None, remote_dir: str | None) ->
 
 
 def command_setup(url: str | None, prebuilt: str | None = None) -> None:
-    config = resolve_runtime_config(url, Mode.PROD)
+    config = resolve_config(url, Mode.PROD)
     ensure_tools(["caddy", "tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
@@ -951,11 +978,12 @@ def command_setup(url: str | None, prebuilt: str | None = None) -> None:
         build_web()
         sync_webdist()
         new_binary = build_server_release()
-    save_config(config)
     # Everything above only builds and checks; nothing has been stopped yet,
     # so a failing build or a bad --prebuilt path never takes a running
     # server down. The swap below is the first thing that touches it.
     command_stop()
+    config = ports_after_stop(config)
+    save_config(config)
     swap_in_binary(new_binary, move=prebuilt_path is not None)
     apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
     start_server_prod(config.ports, config.site)
@@ -965,7 +993,7 @@ def command_setup(url: str | None, prebuilt: str | None = None) -> None:
 
 
 def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
-    config = resolve_runtime_config(url, Mode.PROD)
+    config = resolve_config(url, Mode.PROD)
     ensure_tools(["caddy", "tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
@@ -978,12 +1006,13 @@ def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
         build_web()
         sync_webdist()
         new_binary = build_server_release()
-    save_config(config)
     # See command_setup: stop moves to just before the swap, after every
     # build and check, so a failing one never takes the running server down.
     # The rooms archive still runs with the server already stopped (so it
     # never captures a file mid-write), and still before the swap.
     command_stop()
+    config = ports_after_stop(config)
+    save_config(config)
     archived = archive_rooms()
     if archived is not None:
         print(f"archived rooms: {archived}")
@@ -997,7 +1026,7 @@ def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
 
 def command_start(url: str | None) -> None:
     command_stop()
-    config = resolve_runtime_config(url, Mode.PROD)
+    config = ports_after_stop(resolve_config(url, Mode.PROD))
     ensure_tools(["caddy", "tmux"])
     if not BIN_PATH.exists():
         ensure_tools(["zsh", "rsync"])
