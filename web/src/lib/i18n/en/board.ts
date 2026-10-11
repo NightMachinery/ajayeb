@@ -166,5 +166,6 @@ export const board = {
     'Nothing to draw for {source}: no progress token is left in the box.',
   'board.log.extraTurn': '{name} plays again.',
   'board.log.extraTurnLost': "{name}'s extra turn is lost at the end of the age.",
-  'board.log.starterChosen': '{name} chooses {starter} to start the next age.'
+  'board.log.starterChosen': '{name} chooses {starter} to start the next age.',
+  'board.log.resign': '{name} forfeits the game.'
 } as const satisfies Messages;

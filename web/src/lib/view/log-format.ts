@@ -213,6 +213,12 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
         seat: event.seat as 0 | 1 | undefined,
         text: t('board.log.starterChosen', { name, starter: seatName(names, event.starter) })
       };
+    case 'resign':
+      return {
+        kind: event.kind,
+        seat: event.seat as 0 | 1 | undefined,
+        text: t('board.log.resign', { name })
+      };
     default:
       return null;
   }

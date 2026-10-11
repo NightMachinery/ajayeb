@@ -134,6 +134,12 @@ describe('formatLogEvent: kinds with no recorded fixture', () => {
     expect(line?.text).toBe('Omid chooses Sara to start the next age.');
   });
 
+  it('resign names the player who forfeited', () => {
+    const line = formatLogEvent(event({ kind: 'resign', seat: 1 }), names);
+    expect(line?.seat).toBe(1);
+    expect(line?.text).toBe('Omid forfeits the game.');
+  });
+
   it('draftRound only logs the second round', () => {
     expect(formatLogEvent(event({ kind: 'draftRound', round: 1 }), names)).toBeNull();
     expect(formatLogEvent(event({ kind: 'draftRound', round: 2 }), names)?.text).toBe(

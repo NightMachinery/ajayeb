@@ -100,6 +100,17 @@ describe('outcomeOf', () => {
   });
 });
 
+describe('outcomeOf: a forfeit', () => {
+  it('reads the recorded forfeit, the same for every viewer', () => {
+    for (const viewer of ['seat0', 'seat1', 'spectator'] as const) {
+      const outcome = outcomeOf(resultOf(fixture(`game-over-forfeit-${viewer}`)));
+      expect(outcome.kind).toBe('forfeit');
+      expect(outcome.winner === 0 || outcome.winner === 1).toBe(true);
+      expect(outcome.tieBreak).toBe(false);
+    }
+  });
+});
+
 describe('finalScores', () => {
   it('prefers the result over the preview once the game is over', () => {
     const view = fixture('game-over-science-seat0');

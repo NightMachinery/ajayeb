@@ -84,6 +84,11 @@
         return winner === null
           ? ''
           : t(`choices.over.reason.${outcome.kind}`, { name: names[winner] });
+      case 'forfeit':
+        // The loser is named: the seat that is not the winner.
+        return winner === null
+          ? ''
+          : t('choices.over.reason.forfeit', { name: names[winner === 0 ? 1 : 0] });
     }
   });
 

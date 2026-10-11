@@ -31,8 +31,11 @@ export interface ScoreRow {
   ahead: Seat | null;
 }
 
-/** The headline kinds: the three victories, plus a shared civilian one. */
-export type OutcomeKind = 'civilian' | 'military' | 'science' | 'shared';
+/**
+ * The headline kinds: the three victories, a shared civilian one, and a
+ * forfeit (the winner is the player who did not forfeit).
+ */
+export type OutcomeKind = 'civilian' | 'military' | 'science' | 'shared' | 'forfeit';
 
 export interface Outcome {
   kind: OutcomeKind;
