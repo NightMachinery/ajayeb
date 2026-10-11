@@ -34,6 +34,8 @@ GO_PKGS ?= ./...
 GO_RUN ?=
 TEST_TIMEOUT ?= 20m
 FUZZTIME ?= 5m
+FUZZ ?= FuzzPlayout
+FUZZ_PKG ?= ./internal/engine
 BENCH_ARGS ?=
 GEN_ARGS ?=
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo dev)
@@ -64,6 +66,8 @@ help: ## List the targets and the variables they read (the default target)
 	  'GO_RUN=regexp' 'go test -run filter for test-go' \
 	  'TEST_TIMEOUT=20m' 'go test -timeout for test-go and test-race' \
 	  'FUZZTIME=5m' 'how long fuzz runs' \
+	  'FUZZ=FuzzPlayout' 'the fuzz target for fuzz, e.g. FuzzDecodeClient' \
+	  'FUZZ_PKG=./internal/engine' 'its package, e.g. ./internal/wire' \
 	  'BENCH_ARGS=...' 'extra flags for ajayeb-sim bench' \
   'SET=chain' 'the icon set (art/vector/sets.json) for vec-shot and vec-blind' \
   'ITER=2' 'vec-shot writes into <set>/iter-N/ to keep iterations apart' \
@@ -147,8 +151,8 @@ lint-go: ## golangci-lint run in server/
 build-server: ## The Go server without the embedded web build, at server/bin/ajayeb
 	$(HEAVY) run --kind build -- go -C server build -o bin/ajayeb ./cmd/ajayeb
 
-fuzz: ## Fuzz FuzzPlayout in internal/engine for FUZZTIME (default 5m), under nice 10
-	$(HEAVY) run --kind fuzz -- go -C server test -run '^$$' -fuzz FuzzPlayout -fuzztime $(FUZZTIME) -parallel 2 ./internal/engine
+fuzz: ## Fuzz FUZZ (default FuzzPlayout) in FUZZ_PKG (default ./internal/engine) for FUZZTIME (default 5m), under nice 10
+	$(HEAVY) run --kind fuzz -- go -C server test -run '^$$' -fuzz '^$(FUZZ)$$' -fuzztime $(FUZZTIME) -parallel 2 $(FUZZ_PKG)
 
 bench: ## The AI tournament bench (ajayeb-sim bench), under nice 10
 	$(HEAVY) run --kind bench -- go -C server run ./cmd/ajayeb-sim bench $(BENCH_ARGS)

@@ -40,7 +40,7 @@ python3 tools/heavy.py run --kind fuzz -- go -C server test -run '^$' \
   -fuzz '^FuzzDecodeClient$' -fuzztime 30s -parallel 2 ./internal/wire
 ```
 
-(`make fuzz FUZZTIME=5m` runs `FuzzPlayout`.) The nightly CI run
+(`make fuzz FUZZTIME=5m` runs `FuzzPlayout`; `make fuzz FUZZ=FuzzDecodeClient FUZZ_PKG=./internal/wire` runs another target.) The nightly CI run
 (`.github/workflows/ci.yml`, jobs `fuzz-targets` and `fuzz`) finds every
 `func Fuzz...` in the module's test files by itself and fuzzes each one on
 its own runner for 20 minutes, in parallel, so a new target needs no
