@@ -12,7 +12,8 @@
 // generated one by default), so tests and the dev gallery can pass their
 // own.
 
-import type { Back, BotLevel } from '$lib/wire';
+import type { OutcomeKind } from '$lib/view/score';
+import type { Back, BotLevel, SeatInfo } from '$lib/wire';
 import { art, type ArtEntry, type ArtVariant } from './available.gen';
 
 export type ArtIndex = { readonly [id: string]: ArtEntry };
@@ -55,6 +56,37 @@ const AVATAR_OF: Record<BotLevel, string> = {
 /** The art id of a bot level's avatar. */
 export function avatarArtId(level: BotLevel): string {
   return artId('avatar', AVATAR_OF[level]);
+}
+
+/** The bot level of a seat, when a bot plays it: the avatar that seat's
+ *  name shows beside it. Undefined for a human or open seat, or no room. */
+export function seatBotLevel(
+  room: { readonly seats: readonly Pick<SeatInfo, 'seat' | 'kind' | 'bot'>[] } | null | undefined,
+  seat: number
+): BotLevel | undefined {
+  const info = room?.seats.find((s) => s.seat === seat);
+  return info?.kind === 'bot' ? info.bot : undefined;
+}
+
+/** How a game ended, as the result screen names it ('shared' is a draw on
+ *  points and on blue cards). */
+export type VictoryKind = OutcomeKind;
+
+/** The victory scenes to try for each way a game ends, in order. A draw
+ *  shows its own scene once one is approved, and the civilian one until
+ *  then (both players reached the end of Age III). */
+const VICTORY_SCENES: Record<VictoryKind, readonly [string, ...string[]]> = {
+  civilian: ['victory/civilian'],
+  military: ['victory/military'],
+  science: ['victory/science'],
+  shared: ['victory/draw', 'victory/civilian']
+};
+
+/** The art id of the scene for how a game ended: the first candidate with
+ *  approved art, else the first candidate (whose placeholder then shows). */
+export function victoryArtId(kind: VictoryKind, index: ArtIndex = art): string {
+  const candidates = VICTORY_SCENES[kind];
+  return candidates.find((id) => hasApprovedArt(id, index)) ?? candidates[0];
 }
 
 function usable(v: ArtVariant | undefined): v is ArtVariant {

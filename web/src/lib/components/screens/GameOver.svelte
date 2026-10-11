@@ -7,9 +7,18 @@
   //
   // Everything shown is the server's result: the winner it named and the
   // score sheet it computed (lib/view/score.ts only re-shapes them).
+  //
+  // Above the headline, a scene of how the game ended (victoryArtId: the
+  // military, science or civilian painting; a draw shows its own scene once
+  // one is approved, and the civilian one until then), framed in paper like
+  // the wonder tiles so it feathers the same way in both themes, with the
+  // winner's crest on its lower edge. It replaces the crest row and sits
+  // beside the headline, so the score table and the buttons keep their room.
   import House from '@lucide/svelte/icons/house';
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
   import Eye from '@lucide/svelte/icons/eye';
+  import ArtImage from '$lib/art/ArtImage.svelte';
+  import { victoryArtId } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { finalScores, outcomeOf, scoreRows, type Outcome } from '$lib/view/score';
@@ -79,8 +88,18 @@
   });
 
   const crest = $derived(winner === 1 ? 'crest-moon' : 'crest-sun');
+  const scene = $derived(outcome ? victoryArtId(outcome.kind) : null);
   const titleId = 'game-over-title';
 </script>
+
+{#snippet crests()}
+  {#if winner === null}
+    <Icon name="crest-sun" class="text-sun-ink" />
+    <Icon name="crest-moon" class="text-moon-ink" />
+  {:else}
+    <Icon name={crest} class={winner === 0 ? 'text-sun-ink' : 'text-moon-ink'} />
+  {/if}
+{/snippet}
 
 <div
   data-game-over
@@ -95,22 +114,53 @@
     class="game-over"
   >
     <div class="flex flex-col gap-3 px-5 pt-4 pb-1">
-      <header class="flex flex-col items-center gap-1 text-center">
-        <span class="flex items-center gap-1 text-3xl" aria-hidden="true">
-          {#if winner === null}
-            <Icon name="crest-sun" class="text-sun-ink" />
-            <Icon name="crest-moon" class="text-moon-ink" />
-          {:else}
-            <Icon name={crest} class={winner === 0 ? 'text-sun-ink' : 'text-moon-ink'} />
-          {/if}
-        </span>
-        <p class="text-xs font-semibold tracking-wider text-fg-muted uppercase">{kindText}</p>
-        <h2 id={titleId} class="font-display text-2xl leading-tight text-fg" dir="auto">
-          {headline}
-        </h2>
-        {#if reason}
-          <p class="text-sm text-fg-muted" dir="auto">{reason}</p>
+      <header
+        class={[
+          'flex',
+          scene
+            ? 'flex-row items-center gap-4 text-start'
+            : 'flex-col items-center gap-1 text-center'
+        ]}
+      >
+        {#if scene}
+          <!-- The scene takes the crest row's place, beside the headline,
+               so the dialog grows by no more than a wrapped line: the score
+               table and the buttons keep their room in the sheet's height
+               (640 px at most) on a phone as on a desktop. The crests sit on
+               its lower edge, like a seal. -->
+          <div class="relative mb-3.5 shrink-0">
+            <div
+              class="victory-scene relative aspect-video w-28 overflow-hidden rounded-[10px] border-[1.5px] border-(color:--gold-deep) bg-card-paper sm:w-40"
+              data-victory-scene={scene}
+            >
+              <ArtImage id={scene} feather="soft" class="absolute inset-0 h-full w-full">
+                {#snippet fallback()}
+                  <span class="victory-placeholder absolute inset-0"></span>
+                {/snippet}
+              </ArtImage>
+            </div>
+            <span class="absolute inset-x-0 -bottom-3.5 flex justify-center" aria-hidden="true">
+              <span
+                class="flex items-center gap-0.5 rounded-full border border-(color:--gold-deep) bg-panel px-1 py-0.5 text-2xl leading-none"
+              >
+                {@render crests()}
+              </span>
+            </span>
+          </div>
+        {:else}
+          <span class="flex items-center gap-1 text-3xl" aria-hidden="true">
+            {@render crests()}
+          </span>
         {/if}
+        <div class="flex min-w-0 flex-col gap-1">
+          <p class="text-xs font-semibold tracking-wider text-fg-muted uppercase">{kindText}</p>
+          <h2 id={titleId} class="font-display text-2xl leading-tight text-fg" dir="auto">
+            {headline}
+          </h2>
+          {#if reason}
+            <p class="text-sm text-fg-muted" dir="auto">{reason}</p>
+          {/if}
+        </div>
       </header>
 
       <ScoreTable {rows} {names} {winner} you={youSeat} />
@@ -166,3 +216,14 @@
     />
   {/if}
 </div>
+
+<style>
+  /* The placeholder: the paper with a faint gold dot grid, like the wonder
+     placeholder's sky, until the scene is approved. */
+  .victory-placeholder {
+    background:
+      radial-gradient(circle, var(--gold) 0 1px, transparent 1.5px) 0 0 / 12px 12px,
+      linear-gradient(to bottom, oklch(0.9 0.04 230 / 0.6), transparent 80%);
+    opacity: 0.6;
+  }
+</style>

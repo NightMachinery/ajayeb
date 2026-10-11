@@ -2,6 +2,7 @@
   // The "vs AI" new-game sheet (UX design §2). Start sends a real `create`
   // frame through the Session the caller supplies via onStart, so this
   // component needs no live connection to render (gallery-safe).
+  import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t, type MessageKey } from '$lib/i18n';
   import Button from '$lib/components/shell/Button.svelte';
   import Segmented from '$lib/components/shell/Segmented.svelte';
@@ -78,9 +79,10 @@
             value={option.level}
             checked={level === option.level}
             onchange={() => (level = option.level)}
-            class="size-4 accent-accent"
+            class="size-4 shrink-0 accent-accent"
           />
-          <span class="flex flex-col">
+          <BotAvatar level={option.level} class="size-10 short:size-9" />
+          <span class="flex min-w-0 flex-col">
             <span class="text-base font-semibold text-fg">{t(option.name)}</span>
             <span class="text-sm text-fg-muted">{t(option.hint)}</span>
           </span>

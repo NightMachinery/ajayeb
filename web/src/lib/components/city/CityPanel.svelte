@@ -3,12 +3,14 @@
   // coins and score, city cards as band stacks grouped by colour, wonders
   // as a readable list, science and owned tokens, and a calm thinking
   // indicator while this seat's bot thinks. The same data as PlayerStrip,
-  // laid out as a column instead of a wrapping row.
+  // laid out as a column instead of a wrapping row. A bot seat shows its
+  // persona's avatar between the crest and the name.
+  import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t } from '$lib/i18n';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
-  import type { Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import CityBand from './CityBand.svelte';
@@ -24,6 +26,8 @@
     score?: ScoreView;
     /** When given, the wonders still to build are buttons (the wonder-first flow). */
     onwonder?: (wonder: WonderView) => void;
+    /** The bot's level when a bot plays this seat: its avatar shows by the name. */
+    bot?: BotLevel;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
     thinking?: boolean;
     class?: string;
@@ -36,6 +40,7 @@
     military,
     score,
     onwonder,
+    bot,
     thinking = false,
     class: className = ''
   }: Props = $props();
@@ -81,6 +86,7 @@
   <div class="flex items-center justify-between gap-2">
     <div class="flex min-w-0 items-center gap-1.5">
       <Icon name={crestName} class="shrink-0 text-xl {crestTextClass}" />
+      {#if bot}<BotAvatar level={bot} class="size-7" />{/if}
       <span class="min-w-0 truncate font-display text-base text-fg" dir="auto">{name}</span>
       {#if thinking}
         <span

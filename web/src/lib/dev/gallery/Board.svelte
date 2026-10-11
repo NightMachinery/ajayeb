@@ -26,6 +26,7 @@
   import WonderRow from '$lib/components/city/WonderRow.svelte';
   import CityBand from '$lib/components/city/CityBand.svelte';
   import PlayerStrip from '$lib/components/city/PlayerStrip.svelte';
+  import { personaName } from '$lib/components/game/names';
   import CityPanel from '$lib/components/city/CityPanel.svelte';
   import TopBar from '$lib/components/hud/TopBar.svelte';
   import TurnBar from '$lib/components/hud/TurnBar.svelte';
@@ -497,7 +498,9 @@
     </div>
   </section>
 
-  <section class="flex flex-col gap-3">
+  <!-- Seat 1 is the bot (the Scholar) in the strips and the panels, so its
+       avatar shows by its name, as in a vs-AI game. -->
+  <section class="flex flex-col gap-3" data-gallery="strips">
     {@render sceneLabel('Player strip (phone)')}
     {#each scenes as scene (scene.key)}
       <div class="flex flex-col gap-1.5">
@@ -510,8 +513,9 @@
           score={scene.view.scorePreview[0]}
         />
         <PlayerStrip
-          name={names[1]}
+          name={personaName('normal')}
           seat={1}
+          bot="normal"
           player={scene.view.players[1]}
           military={scene.view.military}
           score={scene.view.scorePreview[1]}
@@ -520,7 +524,7 @@
     {/each}
   </section>
 
-  <section class="flex flex-col gap-3">
+  <section class="flex flex-col gap-3" data-gallery="panels">
     {@render sceneLabel('City panel (tablet/desktop)')}
     {#each scenes as scene (scene.key)}
       <div class="flex flex-col gap-1.5">
@@ -534,8 +538,9 @@
             score={scene.view.scorePreview[0]}
           />
           <CityPanel
-            name={names[1]}
+            name={personaName('normal')}
             seat={1}
+            bot="normal"
             player={scene.view.players[1]}
             military={scene.view.military}
             score={scene.view.scorePreview[1]}

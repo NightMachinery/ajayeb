@@ -7,12 +7,14 @@
   // seat's bot is thinking. In an online room the other player's strip
   // shows their presence (connected, or away once they drop). A leaf
   // component: every number comes from the view through plain props,
-  // nothing computed here but the danger check.
+  // nothing computed here but the danger check. A bot seat shows its
+  // persona's avatar between the crest and the name.
+  import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
   import type { Presence } from '$lib/ui/online';
-  import type { MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import type { BotLevel, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
@@ -30,6 +32,8 @@
     score?: ScoreView;
     /** When given, the wonders still to build are buttons (the wonder-first flow). */
     onwonder?: (wonder: WonderView) => void;
+    /** The bot's level when a bot plays this seat: its avatar shows by the name. */
+    bot?: BotLevel;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
     thinking?: boolean;
     /** The player's presence in an online room; nothing shows without it. */
@@ -48,6 +52,7 @@
     military,
     score,
     onwonder,
+    bot,
     thinking = false,
     presence,
     onopen,
@@ -75,11 +80,13 @@
       onclick={onopen}
     >
       <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
+      {#if bot}<BotAvatar level={bot} class="size-6 short:size-5" />{/if}
       <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
     </button>
   {:else}
     <div class="flex min-w-0 items-center gap-1.5">
       <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
+      {#if bot}<BotAvatar level={bot} class="size-6 short:size-5" />{/if}
       <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
     </div>
   {/if}

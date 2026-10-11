@@ -9,6 +9,8 @@ import {
   backArtId,
   hasApprovedArt,
   pickArt,
+  seatBotLevel,
+  victoryArtId,
   type ArtIndex
 } from './lookup';
 
@@ -135,6 +137,64 @@ describe('the generated index', () => {
   it('is what the lookups read by default', () => {
     for (const id of ['card/lumber-yard', 'wonder/pyramids', 'token/law', 'back/age1']) {
       expect(hasApprovedArt(id)).toBe(Object.hasOwn(art, id));
+    }
+  });
+});
+
+describe('bot avatars by seat', () => {
+  const room = {
+    seats: [
+      { seat: 0, kind: 'human' as const },
+      { seat: 1, kind: 'bot' as const, bot: 'hard' as const }
+    ]
+  };
+
+  it('gives the level of the seat a bot plays', () => {
+    expect(seatBotLevel(room, 1)).toBe('hard');
+    expect(avatarArtId(seatBotLevel(room, 1)!)).toBe('avatar/master');
+  });
+
+  it('gives nothing for a human or open seat, or no room', () => {
+    expect(seatBotLevel(room, 0)).toBeUndefined();
+    expect(seatBotLevel({ seats: [{ seat: 1, kind: 'open' }] }, 1)).toBeUndefined();
+    expect(seatBotLevel(null, 1)).toBeUndefined();
+    expect(seatBotLevel(undefined, 0)).toBeUndefined();
+  });
+});
+
+describe('victory scenes', () => {
+  const scene = (id: string) => ({
+    [id]: {
+      kind: 'victory',
+      variants: { default: { path: `/art/${id}.avif`, width: 960, height: 540, bytes: 1 } }
+    }
+  });
+  const three: ArtIndex = {
+    ...scene('victory/civilian'),
+    ...scene('victory/military'),
+    ...scene('victory/science')
+  };
+
+  it('matches each supremacy and the civilian victory to its own scene', () => {
+    expect(victoryArtId('military', three)).toBe('victory/military');
+    expect(victoryArtId('science', three)).toBe('victory/science');
+    expect(victoryArtId('civilian', three)).toBe('victory/civilian');
+  });
+
+  it('shows the civilian scene for a draw until a draw scene is approved', () => {
+    expect(victoryArtId('shared', three)).toBe('victory/civilian');
+    expect(victoryArtId('shared', { ...three, ...scene('victory/draw') })).toBe('victory/draw');
+  });
+
+  it('names the first candidate when nothing is approved (its placeholder shows)', () => {
+    expect(victoryArtId('science', {})).toBe('victory/science');
+    expect(victoryArtId('shared', {})).toBe('victory/draw');
+    expect(pickArt(victoryArtId('military', {}), 'default', {})).toBeUndefined();
+  });
+
+  it('finds every scene the result screen can ask for in the generated index', () => {
+    for (const kind of ['civilian', 'military', 'science', 'shared'] as const) {
+      expect(hasApprovedArt(victoryArtId(kind)), kind).toBe(true);
     }
   });
 });
