@@ -10,6 +10,11 @@
   // Steps: the card itself, then (Build a wonder) the wonders it could go
   // under. In wonder-first mode the sheet instead asks to confirm placing
   // this card under the chosen wonder.
+  //
+  // A covered face-up card cannot be taken yet, but the cards and both
+  // cities are public, so the server sends both seats' costs for it as if
+  // it were uncovered now (SlotView.costs): the sheet says what each player
+  // would pay, with the server's totals only.
   import { cardBySlug } from '$lib/catalog';
   import {
     backName,
@@ -38,6 +43,9 @@
     seat: number | undefined;
     /** The other seat's display name, for its price. */
     opponentName: string;
+    /** The sheet's own seat by name rather than "you" (a hot-seat device,
+     *  where both players sit, or a spectator). */
+    ownName?: string;
     /** The view offers this client moves now (its turn, in a mode it plays). */
     myTurn: boolean;
     /** Input is open: presenter idle and the session may act. */
@@ -63,6 +71,7 @@
     slot,
     seat,
     opponentName,
+    ownName,
     myTurn,
     canAct,
     confirm,
@@ -90,6 +99,12 @@
   );
   const opponentCost = $derived(
     seat === 0 || seat === 1 ? slot?.costs?.[seat === 0 ? 1 : 0] : undefined
+  );
+  // A covered card's prices for both seats, as if it were uncovered now.
+  const coveredCosts = $derived(
+    slot && slug && !takeable && (seat === 0 || seat === 1) && slot.costs
+      ? { own: slot.costs[seat], other: slot.costs[seat === 0 ? 1 : 0] }
+      : undefined
   );
   const pickChoice = $derived(
     pickFor && slug ? wonderChoicesByCard(view, pickFor).get(slug) : undefined
@@ -165,6 +180,41 @@
           <p class="text-sm text-fg-muted" data-covered={slot.coveredBy.length}>
             {t('game.card.covered', { count: slot.coveredBy.length })}
           </p>
+          {#if coveredCosts}
+            <section class="flex flex-col gap-1" aria-labelledby="card-sheet-covered-cost">
+              <h3
+                id="card-sheet-covered-cost"
+                class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
+              >
+                {t('game.card.coveredCostTitle')}
+              </h3>
+              <p class="text-sm text-fg" dir="auto" data-covered-cost="own">
+                {#if ownName !== undefined}
+                  {coveredCosts.own.affordable
+                    ? t('game.card.opponentPays', { name: ownName, count: coveredCosts.own.total })
+                    : t('game.card.opponentShort', {
+                        name: ownName,
+                        count: coveredCosts.own.total
+                      })}
+                {:else}
+                  {coveredCosts.own.affordable
+                    ? t('game.card.youPay', { count: coveredCosts.own.total })
+                    : t('game.card.youShort', { count: coveredCosts.own.total })}
+                {/if}
+              </p>
+              <p class="text-sm text-fg" dir="auto" data-covered-cost="other">
+                {coveredCosts.other.affordable
+                  ? t('game.card.opponentPays', {
+                      name: opponentName,
+                      count: coveredCosts.other.total
+                    })
+                  : t('game.card.opponentShort', {
+                      name: opponentName,
+                      count: coveredCosts.other.total
+                    })}
+              </p>
+            </section>
+          {/if}
         {/if}
 
         {#if takeable && slug && actions}

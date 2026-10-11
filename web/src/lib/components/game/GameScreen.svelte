@@ -696,6 +696,7 @@
     slot={selectedSlot}
     seat={badge}
     opponentName={names[badge === 1 ? 0 : 1]}
+    ownName={mode === 'hotseat' || spectator ? names[badge === 1 ? 1 : 0] : undefined}
     {myTurn}
     canAct={inputOpen}
     {confirm}

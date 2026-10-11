@@ -30,6 +30,19 @@ export const game = {
     one: '{name} could not afford it ({count} coin).',
     other: '{name} could not afford it ({count} coins).'
   },
+  // A covered card: what each player would pay once it is uncovered, from
+  // the server's costs for both seats (the opponent's line reuses the two
+  // messages above).
+  'game.card.coveredCostTitle': 'If it were uncovered now',
+  'game.card.youPay': {
+    '=0': 'You would build it for free.',
+    one: 'You would pay {count} coin for it.',
+    other: 'You would pay {count} coins for it.'
+  },
+  'game.card.youShort': {
+    one: 'You could not afford it ({count} coin).',
+    other: 'You could not afford it ({count} coins).'
+  },
 
   // Action buttons. Each carries data-act with the server's key.
   'game.action.build': {
