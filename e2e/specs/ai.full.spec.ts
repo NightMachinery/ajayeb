@@ -31,6 +31,11 @@ async function startAiGame(page: Page, level: string, crest: Crest): Promise<str
   await page.getByRole('button', { name: /Play vs AI/ }).click();
   const sheet = page.locator('dialog[open]');
   await expect(sheet.getByRole('heading', { name: 'Choose your rival' })).toBeVisible();
+  // Each level's choice shows its persona's avatar.
+  await expect(sheet.locator('[data-avatar]')).toHaveCount(3);
+  for (const level of ['easy', 'normal', 'hard']) {
+    await expect(sheet.locator(`[data-avatar="${level}"]`)).toBeVisible();
+  }
   await sheet.getByText(level, { exact: true }).click();
   await expect(sheet.getByRole('radio', { name: new RegExp(level) })).toBeChecked();
   await sheet.getByText(crest, { exact: true }).click();

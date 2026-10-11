@@ -134,6 +134,14 @@ test.describe('victory', { tag: ['@mobile'] }, () => {
       const end = await driver.nextTurn();
       expect(end.phase).toBe('gameOver');
       const result = await expectResultScreen(page, c.expected);
+      // The scene of how it ended; a draw shows the civilian scene until a
+      // draw scene of its own is approved.
+      await expect(page.locator('[data-victory-scene]')).toHaveAttribute(
+        'data-victory-scene',
+        c.expected.victory === 'shared'
+          ? /^victory\/(draw|civilian)$/
+          : `victory/${c.expected.victory}`
+      );
       const view = await currentView(page);
 
       switch (c.scenario) {

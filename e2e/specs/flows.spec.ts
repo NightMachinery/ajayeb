@@ -142,6 +142,13 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     expect(after.players[0].tokens).toContain(token);
     expect(after.boardTokens).not.toContain(token);
     expect(after.boardTokens).toHaveLength(board.length - 1);
+    // The token now shows in the player's own city in full colour; only a
+    // token gone from the board is greyed.
+    const owned = page
+      .locator(`[data-seat="0"] [role="img"][data-owned]`)
+      .filter({ visible: true });
+    await expect(owned).toHaveCount(1);
+    await expect(page.locator('[data-seat] [data-taken]')).toHaveCount(0);
     await expectTurnPassedTo(driver, 1);
     expect(problems).toEqual([]);
   });
