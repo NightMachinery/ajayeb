@@ -278,6 +278,10 @@ export const card = {
   'wonder.builtWith': 'Built with {card}',
   'wonder.removed': 'Out of the game',
   'wonder.open': 'Not built yet',
+  // The one status of a wonder list row (WonderTile size "row").
+  'wonder.notBuilt': 'Not built',
+  // A wonder the view's choices let its owner build this turn.
+  'wonder.canBuild': 'Can build now',
   'wonder.takenBy': 'Taken by {name}',
 
   // The /dev/gallery cards section.

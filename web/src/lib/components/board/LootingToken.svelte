@@ -1,10 +1,10 @@
 <script lang="ts">
-  // One looting token on the military track: a coin-loss marker at a fixed
-  // space (3 or 6 from the centre, on either side) that pays out once the
-  // pawn reaches it and is then gone. A leaf component, plain props, so
+  // One looting token on the military track, drawn as what it does: a gold
+  // coin chip reading "−2" or "−5", the coins its side loses as soon as the
+  // pawn enters its space (3 or 6 from the centre). Once taken it leaves a
+  // faint dashed ring where it stood. A leaf component, plain props, so
   // MilitaryTrack just maps view.military.looting over it.
-  import { t } from '$lib/i18n';
-  import Icon from '$lib/icons/Icon.svelte';
+  import { formatNumber, t } from '$lib/i18n';
 
   interface Props {
     /** Coins lost when this token triggers (printed on the token itself). */
@@ -25,18 +25,17 @@
   );
 </script>
 
-<div
-  class="loot-token grid shrink-0 place-items-center rounded-full border {size === 'sm'
-    ? 'size-4'
-    : 'size-6'} {present
-    ? 'border-rule-strong bg-panel text-fg'
-    : 'border-rule/50 bg-panel-sunken text-fg-muted opacity-50'} {className}"
+<span
+  class="loot-token inline-grid shrink-0 place-items-center rounded-full leading-none font-bold tabular-nums
+    {size === 'sm' ? 'h-3.5 min-w-3.5 px-px text-[10px]' : 'h-4 min-w-4 px-0.5 text-[10px]'}
+    {present
+    ? 'border border-(color:--gold-deep) bg-gold text-card-ink'
+    : 'border border-dashed border-fg-muted/60 bg-transparent'} {className}"
   role="img"
   title={label}
   aria-label={label}
+  data-present={present ? '' : undefined}
+  data-min-font="10"
 >
-  <Icon
-    name={value <= 2 ? 'looting-2' : 'looting-5'}
-    class={size === 'sm' ? 'text-[10px]' : 'text-xs'}
-  />
-</div>
+  {#if present}−{formatNumber(value)}{/if}
+</span>

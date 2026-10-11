@@ -33,7 +33,9 @@
      *  knows this from the view's choices/disabled lists; this component
      *  never decides legality itself). */
     selectable?: boolean;
-    size?: 'sm' | 'md';
+    /** xs (20 px) is for a phone strip's owned tokens, sm (26 px) for
+     *  compact rows, md (36 px) for the board. */
+    size?: 'xs' | 'sm' | 'md';
     class?: string;
   }
 
@@ -84,7 +86,13 @@
         : label
   );
   const initial = $derived(label.charAt(0).toUpperCase());
-  const sizeClass = $derived(size === 'sm' ? 'size-[26px] text-[11px]' : 'size-9 text-sm');
+  const sizeClass = $derived(
+    size === 'xs'
+      ? 'size-5 text-[10px]'
+      : size === 'sm'
+        ? 'size-[26px] text-[11px]'
+        : 'size-9 text-sm'
+  );
 </script>
 
 {#snippet medallion()}
@@ -93,7 +101,9 @@
       id={artId('token', slug)}
       size="thumb"
       feather="none"
-      class="absolute inset-0 size-full rounded-full border-2 border-(color:--gold-deep) bg-card-paper"
+      class="absolute inset-0 size-full rounded-full {size === 'xs'
+        ? 'border-[1.5px]'
+        : 'border-2'} border-(color:--gold-deep) bg-card-paper"
     >
       {#snippet fallback()}
         <Icon name="token-frame" class="absolute inset-0 size-full text-gild" />
@@ -110,9 +120,9 @@
     disabled={!selectable}
     aria-label={t('board.token.take', { name: label })}
     title={label}
-    data-tap-ok={size === 'sm' ? '' : undefined}
+    data-tap-ok={size === 'md' ? undefined : ''}
     class="token-tile grid place-items-center rounded-full transition-transform duration-(--dur-fast)
-      {size === 'sm' ? '' : 'min-h-11 min-w-11'}
+      {size === 'md' ? 'min-h-11 min-w-11' : ''}
       {selected ? 'ring-2 ring-focus ring-offset-2 ring-offset-table' : ''}
       {selectable
       ? 'cursor-pointer hover:-translate-y-0.5'

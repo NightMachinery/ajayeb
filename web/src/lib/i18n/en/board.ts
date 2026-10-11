@@ -31,6 +31,9 @@ export const board = {
   'board.military.capitalYou': 'Your capital',
   'board.military.capitalOpponent': "The opponent's capital",
   'board.military.capitalCrest': "{crest}'s capital",
+  // The desktop track's legend line (MilitaryTrack with `legend`).
+  'board.military.legendLoot': 'Coins lost as soon as the pawn enters the space',
+  'board.military.legendPoints': 'Points for the player ahead at the end',
 
   // Progress tokens (ProgressToken.svelte, ProgressTokenRow.svelte).
   'token.agriculture': 'Agriculture',
@@ -48,6 +51,8 @@ export const board = {
   'board.token.taken': '{name} (taken)',
   'board.tokens.boardLabel': 'Progress tokens on the board',
   'board.tokens.empty': 'No progress tokens remain on the board.',
+  // The visible caption that leads the board's token row.
+  'board.tokens.caption': 'Progress tokens',
 
   // Science symbols (ScienceTracker.svelte) and the 7 card colours
   // (CityBand.svelte and elsewhere).
@@ -81,11 +86,13 @@ export const board = {
   'board.resource.chip': '{resource}: produce {count}, buy at {price} coins each',
   'board.resource.choiceHint': 'Also available from a choice producer',
 
-  // Wonders (WonderRow.svelte).
-  'board.wonder.built': 'Built',
-  'board.wonder.unbuilt': 'Not yet built',
-  'board.wonder.removed': 'Left the game unbuilt',
-  'board.wonder.tuckedUnder': 'Built using {card}',
+  // A seat's wonders: the phone strip's wonder button (WonderButton.svelte)
+  // and the wonder list sheet (WonderListSheet.svelte).
+  'board.wonders.button': "{name}'s wonders: {built} of {total} built",
+  'board.wonders.buildableNow': 'A wonder can be built now',
+  'board.wonders.title': "{name}'s wonders",
+  'board.wonders.tally': '{built}/{total} built',
+  'board.wonders.back': 'All wonders',
 
   // PlayerStrip.svelte / CityPanel.svelte.
   'board.player.militaryDanger': 'Military danger: the pawn is close to this capital',
