@@ -498,7 +498,6 @@
     <ProgressTokenRow
       tokens={view.boardTokens}
       {compact}
-      caption
       class="flex-nowrap justify-center {compact ? 'shrink-0' : ''}"
     />
   {/if}

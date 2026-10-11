@@ -51,8 +51,6 @@ export const board = {
   'board.token.taken': '{name} (taken)',
   'board.tokens.boardLabel': 'Progress tokens on the board',
   'board.tokens.empty': 'No progress tokens remain on the board.',
-  // The visible caption that leads the board's token row.
-  'board.tokens.caption': 'Progress tokens',
 
   // Science symbols (ScienceTracker.svelte) and the 7 card colours
   // (CityBand.svelte and elsewhere).
