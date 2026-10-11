@@ -156,10 +156,11 @@ export type Chain = typeof ChainHorseshoe | typeof ChainSword | typeof ChainTowe
 export const VictoryKindMilitary = "military"; // the pawn reached a capital
 export const VictoryKindScience = "science"; // six different science symbols
 export const VictoryKindCivilian = "civilian"; // points after Age III
+export const VictoryKindForfeit = "forfeit"; // the other player resigned
 /**
  * The victory kinds.
  */
-export type VictoryKind = typeof VictoryKindMilitary | typeof VictoryKindScience | typeof VictoryKindCivilian;
+export type VictoryKind = typeof VictoryKindMilitary | typeof VictoryKindScience | typeof VictoryKindCivilian | typeof VictoryKindForfeit;
 /**
  * EventKind is what a game event reports. GameEvent lists the fields each
  * kind uses.
@@ -186,10 +187,11 @@ export const EventKindExtraTurn = "extraTurn";
 export const EventKindExtraTurnLost = "extraTurnLost";
 export const EventKindStarterChosen = "starterChosen";
 export const EventKindGameOver = "gameOver";
+export const EventKindResign = "resign";
 /**
  * The event kinds.
  */
-export type EventKind = typeof EventKindDraft | typeof EventKindDraftRound | typeof EventKindAgeStart | typeof EventKindBuild | typeof EventKindDiscard | typeof EventKindWonder | typeof EventKindPay | typeof EventKindReveal | typeof EventKindCoins | typeof EventKindPawn | typeof EventKindLoot | typeof EventKindPair | typeof EventKindToken | typeof EventKindLibraryDraw | typeof EventKindDestroy | typeof EventKindRebuild | typeof EventKindWonderRemoved | typeof EventKindEffectSkipped | typeof EventKindExtraTurn | typeof EventKindExtraTurnLost | typeof EventKindStarterChosen | typeof EventKindGameOver;
+export type EventKind = typeof EventKindDraft | typeof EventKindDraftRound | typeof EventKindAgeStart | typeof EventKindBuild | typeof EventKindDiscard | typeof EventKindWonder | typeof EventKindPay | typeof EventKindReveal | typeof EventKindCoins | typeof EventKindPawn | typeof EventKindLoot | typeof EventKindPair | typeof EventKindToken | typeof EventKindLibraryDraw | typeof EventKindDestroy | typeof EventKindRebuild | typeof EventKindWonderRemoved | typeof EventKindEffectSkipped | typeof EventKindExtraTurn | typeof EventKindExtraTurnLost | typeof EventKindStarterChosen | typeof EventKindGameOver | typeof EventKindResign;
 
 //////////
 // source: event.go
@@ -227,6 +229,8 @@ export type EventKind = typeof EventKindDraft | typeof EventKindDraftRound | typ
  *   - extraTurn, extraTurnLost: seat
  *   - starterChosen: seat (who chose), starter
  *   - gameOver: victory, winner (absent for a shared victory)
+ *   - resign: seat (who forfeited; a gameOver with the other seat as the
+ *     winner follows)
  */
 export interface GameEvent {
   kind: EventKind;
@@ -328,7 +332,7 @@ export interface SlotView {
   card?: string; // only when face up
   accessible: boolean; // holds a card and no card covers it
   coveredBy: number /* int */[]; // the slots still covering this one
-  costs?: Pair<CostView>; // both seats' cost of building the card, by seat; only for an accessible face-up card
+  costs?: Pair<CostView>; // both seats' cost of building the card now, by seat, as if it were accessible; for every face-up card, covered or not
 }
 /**
  * ResourceCounts holds a number per resource.

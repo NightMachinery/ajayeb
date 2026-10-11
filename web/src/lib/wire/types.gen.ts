@@ -242,6 +242,23 @@ export interface Ack {
   seq: number /* int */;
 }
 /**
+ * MaxHistory bounds State.History: the newest entries are kept. A game has
+ * at most engine.MaxGameActions actions, well below it, so in practice the
+ * history is always the whole game (a room test checks the bound).
+ */
+export const MaxHistory = 512;
+/**
+ * HistoryEntry is one applied action of the game, as one viewer may see it:
+ * the ply it was applied at, the seat that took it (for a resign, the seat
+ * that resigned) and its events, filtered for the viewer exactly as the
+ * events of a live state frame are.
+ */
+export interface HistoryEntry {
+  ply: number /* int */;
+  seat: 0 | 1;
+  events: view.GameEvent[];
+}
+/**
  * State is a full snapshot: the room, what this connection may do, an
  * optional ack, the events the triggering action produced (redacted for this
  * viewer) and the full game view. Every state frame is a complete snapshot,
@@ -271,6 +288,14 @@ export interface State {
    */
   ack?: Ack;
   events: view.GameEvent[];
+  /**
+   * History is every applied action of the game so far, oldest first (at
+   * most MaxHistory, the newest), each filtered for this viewer. Only the
+   * first state frame of a join, the answer to a resync and the frames
+   * that follow an undo carry it; a live frame does not. Events, when a
+   * frame carries both, happened after History's last entry.
+   */
+  history?: HistoryEntry[];
   view: view.View;
 }
 /**
