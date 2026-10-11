@@ -2,9 +2,10 @@
 #
 # The heavy suites run here rather than on the laptop: the race detector,
 # golangci-lint, the web checks and build, and Playwright with the bundled
-# Chromium. Nightly jobs run the long playout sweep, fuzzing, and the full AI
-# tournaments (sharded over ten runners, then tallied against the targets in
-# docs/ai.md). Read results with `gh run list` and `gh run view --log-failed`.
+# Chromium. Nightly jobs run the long playout sweep, every fuzz target (one
+# runner each), and the full AI tournaments (sharded over ten runners, then
+# tallied against the targets in docs/ai.md). Read results with
+# `gh run list` and `gh run view --log-failed`.
 #
 # On the laptop the same steps go through the Makefile and tools/heavy.py; CI
 # runs the commands directly because a runner has memory to spare.
@@ -152,7 +153,7 @@ jobs:
         run: python3 -m unittest discover -s tests -v
 
   nightly:
-    name: nightly (10000-game sweep, 10 minute fuzz)
+    name: nightly (10000-game sweep)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 150
@@ -168,25 +169,102 @@ jobs:
       - name: Playout sweep (AJAYEB_SWEEP=10000)
         env:
           AJAYEB_SWEEP: '10000'
+        run: go test -shuffle=on -timeout 120m ./...
+
+  fuzz-targets:
+    # Lists every fuzz target of the module (each "func FuzzX(" in a test
+    # file) as the matrix of the fuzz job, so a new target is fuzzed nightly
+    # without editing this file.
+    name: nightly fuzz targets
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: list
         run: |
-          if grep -rqs --include='*_test.go' AJAYEB_SWEEP .; then
-            go test -shuffle=on -timeout 120m ./...
-          else
-            echo "No test reads AJAYEB_SWEEP yet (the sweep arrives with the engine, M2); skipping."
+          set -o pipefail
+          matrix=$(grep -rEo --include='*_test.go' '^func Fuzz[A-Za-z0-9_]+' server \
+            | sed -E 's#^server/(.*)/[^/]+_test\.go:func (Fuzz[A-Za-z0-9_]+)$#\1 \2#' \
+            | sort -u \
+            | jq -Rnc '{include: [inputs | split(" ") | {pkg: ("./" + .[0]), target: .[1]}]}')
+          echo "$matrix" | jq .
+          if [ "$(echo "$matrix" | jq '.include | length')" -eq 0 ]; then
+            echo "::error::found no fuzz target"
+            exit 1
           fi
-      - name: Fuzz FuzzPlayout for 10 minutes
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  fuzz:
+    # Every fuzz target gets its own runner and the same FUZZ_TIME, in
+    # parallel. The corpus the fuzzer grows lives in the Go cache, never in
+    # the repository: it is carried from night to night in the Actions cache
+    # (dropped once it passes 256 MB), so the committed testdata/fuzz
+    # directories hold only seeds and fixed crashers. A crasher is uploaded
+    # as the artifact fuzz-crasher-<target>; docs/testing.md says how to
+    # replay it.
+    name: nightly fuzz (${{ matrix.target }})
+    needs: fuzz-targets
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.fuzz-targets.outputs.matrix) }}
+    env:
+      FUZZ_TIME: 20m
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          # The shared Go cache is left alone, so the fuzz corpus below never
+          # bloats it.
+          cache: false
+      - name: Locate the fuzz corpus
+        id: corpus
+        run: echo "dir=$(go env GOCACHE)/fuzz" >> "$GITHUB_OUTPUT"
+      - name: Restore the corpus of earlier nights
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ steps.corpus.outputs.dir }}
+          key: fuzz-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: fuzz-${{ matrix.target }}-
+      - name: Fuzz ${{ matrix.target }} in ${{ matrix.pkg }} for ${{ env.FUZZ_TIME }}
+        run: go test -run '^$' -fuzz '^${{ matrix.target }}$' -fuzztime "$FUZZ_TIME" '${{ matrix.pkg }}'
+      - name: Bound the corpus
+        id: bound
+        if: ${{ !cancelled() }}
         run: |
-          if grep -rqs --include='*_test.go' 'func FuzzPlayout(' internal/engine; then
-            go test -run '^$' -fuzz '^FuzzPlayout$' -fuzztime 10m ./internal/engine
-          else
-            echo "FuzzPlayout does not exist yet (it arrives with the engine, M2); skipping."
-          fi
-      - name: Keep fuzz crashers
+          dir='${{ steps.corpus.outputs.dir }}'
+          mb=$(du -sm "$dir" 2>/dev/null | cut -f1)
+          echo "corpus: ${mb:-0} MB"
+          if [ -n "$mb" ] && [ "$mb" -le 256 ]; then echo "keep=true" >> "$GITHUB_OUTPUT"; fi
+      - name: Save the corpus
+        if: ${{ !cancelled() && steps.bound.outputs.keep == 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ steps.corpus.outputs.dir }}
+          key: fuzz-${{ matrix.target }}-${{ github.run_id }}
+      - name: Collect the crasher
+        if: failure()
+        working-directory: .
+        run: |
+          mkdir -p fuzz-crasher
+          git ls-files --others --exclude-standard -- '*/testdata/fuzz/*' \
+            | while IFS= read -r f; do cp --parents -- "$f" fuzz-crasher/; done
+          find fuzz-crasher -type f -print
+      - name: Keep the crasher
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: fuzz-crashers
-          path: server/internal/engine/testdata/fuzz/
+          name: fuzz-crasher-${{ matrix.target }}
+          path: fuzz-crasher/
           if-no-files-found: ignore
           retention-days: 30
 

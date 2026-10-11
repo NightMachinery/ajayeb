@@ -13,6 +13,48 @@ strength and the playout sweep. These run as part of `make test-go`, in
 process, with no server, no socket and no browser; they are the cheapest
 layer and catch almost everything.
 
+## Fuzzing
+
+The module has five fuzz targets:
+
+- `FuzzPlayout` (`server/internal/engine/fuzz_test.go`): plays a seed's game
+  by fuzzed choices among the legal actions and checks the invariants after
+  every action;
+- `FuzzApplyGarbage` (same file): applies an arbitrary action at a state a
+  few random steps in, which must either be legal and apply cleanly or be
+  refused with the state untouched;
+- `FuzzActionKey` (same file) and `FuzzParseKey`
+  (`server/internal/engine/action_test.go`): action keys parse only when
+  they round-trip exactly;
+- `FuzzDecodeClient` (`server/internal/wire/decode_fuzz_test.go`): any bytes
+  as a client frame, which must be refused with `ErrBadFrame` or decode to
+  the frame type its `"t"` names, pass the same checks again once
+  re-encoded, and round-trip unchanged.
+
+Their seeds, and the crashers that were fixed, run as ordinary tests in
+every `make test-go`. To fuzz one locally, under the guard's `fuzz` kind
+(`nice 10`):
+
+```sh
+python3 tools/heavy.py run --kind fuzz -- go -C server test -run '^$' \
+  -fuzz '^FuzzDecodeClient$' -fuzztime 30s -parallel 2 ./internal/wire
+```
+
+(`make fuzz FUZZTIME=5m` runs `FuzzPlayout`.) The nightly CI run
+(`.github/workflows/ci.yml`, jobs `fuzz-targets` and `fuzz`) finds every
+`func Fuzz...` in the module's test files by itself and fuzzes each one on
+its own runner for 20 minutes, in parallel, so a new target needs no
+workflow change. The corpus a fuzzer grows stays in the Go cache, carried
+from night to night in the Actions cache (and dropped once it passes
+256 MB); it is never committed, so the `testdata/fuzz/` directories hold
+only hand-picked seeds and fixed crashers. A crasher is uploaded as the
+artifact `fuzz-crasher-<target>`, with its repository path. To reproduce
+one, copy the file into that path (for example
+`server/internal/engine/testdata/fuzz/FuzzPlayout/<hash>`) and run
+`make test-go GO_PKGS=./internal/engine GO_RUN=FuzzPlayout`; commit it with
+the fix, so it stays a regression test. The push-triggered CI runs only the
+seeds, as part of the ordinary tests.
+
 ## The view and protocol fixtures
 
 `server/internal/engine/testdata/protocol/` holds one golden JSON file per
