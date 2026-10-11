@@ -40,11 +40,12 @@ export function affordOf(cost: CostView): Afford {
 
 /**
  * The badge of a structure slot for a seat, or undefined when the slot has
- * no cost to show (face down, covered or empty: the server only sends costs
- * for accessible face-up cards).
+ * no badge to show (face down, covered or empty). The server sends costs
+ * for every face-up card, covered ones included (for the card sheet), but
+ * only an accessible card carries a badge on the structure.
  */
 export function slotAfford(slot: SlotView, seat: number | undefined): Afford | undefined {
-  if (seat === undefined || !slot.costs) return undefined;
+  if (seat === undefined || !slot.costs || !slot.accessible) return undefined;
   const cost = slot.costs[seat];
   return cost ? affordOf(cost) : undefined;
 }
