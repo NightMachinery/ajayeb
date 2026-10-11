@@ -80,3 +80,4 @@ The target ceiling for all of our processes together is about 1.5 GB in continuo
 - The coordinator's own process grows with every in-process agent, so the number of live workflow agents is capped: four in continuous mode, six in nightshift. Workflow scripts enforce this with a small concurrency limiter.
 - The game server runs in production with `GOMEMLIMIT=96MiB`.
 - The heaviest suites (race tests, long sweeps, fuzzing, the full Playwright run) also run in GitHub Actions, which takes them off the laptop entirely.
+- Renovate (`renovate.json`) opens dependency update PRs once a week, grouped into one PR for all minor, patch, pin and digest updates plus a separate PR per major update, at most three open and two opened per hour. TypeScript is held below 7 (`allowedVersions: "<7"`) because svelte-check 4 does not support it yet. Every Renovate PR runs the same CI as any other PR and is merged by the coordinator once it is green.

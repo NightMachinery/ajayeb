@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": true,
+  "schedule": ["before 6am on monday"],
+  "prConcurrentLimit": 3,
+  "prHourlyLimit": 2,
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "groupName": "all non-major dependencies"
+    },
+    {
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    }
+  ]
+}
