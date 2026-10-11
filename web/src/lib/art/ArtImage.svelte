@@ -12,6 +12,9 @@
   // the art needs no alpha channel and never shows a hard rectangle:
   //   soft   a wide fade along the four edges, wider at the top and the
   //          bottom (cards, wonder panoramas)
+  //   sky    as soft, but with a narrow fade at the top, for art whose
+  //          subject rises into the plain sky (a statue's raised arm, a
+  //          tomb's finial) and would lose its top to the wide fade
   //   edge   a narrower even fade along the four edges (small thumbnails)
   //   none   no mask (art that is already shaped, such as tokens and backs)
   import type { Snippet } from 'svelte';
@@ -25,7 +28,7 @@
     /** When set, every shipped size goes in a srcset with this `sizes`, so
      *  the browser picks by the rendered width and the pixel ratio. */
     sizes?: string;
-    feather?: 'soft' | 'edge' | 'none';
+    feather?: 'soft' | 'sky' | 'edge' | 'none';
     /** Where the cover crop is anchored (CSS object-position). */
     position?: string;
     /** An index other than the generated one (the dev gallery). */
@@ -95,6 +98,16 @@
     -webkit-mask-composite: source-in;
     mask-image:
       linear-gradient(to bottom, transparent, #000 22%, #000 76%, transparent),
+      linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); /* physical-ok: symmetric fade */
+    mask-composite: intersect;
+  }
+  .feather-sky {
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent, #000 6%, #000 76%, transparent),
+      linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); /* physical-ok: symmetric fade */
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent, #000 6%, #000 76%, transparent),
       linear-gradient(to right, transparent, #000 15%, #000 85%, transparent); /* physical-ok: symmetric fade */
     mask-composite: intersect;
   }

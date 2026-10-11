@@ -9,7 +9,9 @@
   //
   // The art is the wonder's approved bitmap (3:2, feathered into the paper)
   // when the generated art index has one, and a procedural sky with the
-  // wonder glyph otherwise or if the file fails to load.
+  // wonder glyph otherwise or if the file fails to load. A wonder whose
+  // subject reaches the top of its painting (artCrop) anchors its crop
+  // there and keeps a narrow top fade, so the subject is never cut off.
   //
   // A plain leaf component: printed data from the catalog, the state from
   // the server's WonderView, the badge from view/afford.ts. It renders no
@@ -17,6 +19,7 @@
   // the name) when the tile is actionable.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId } from '$lib/art/lookup';
+  import { wonderArtCrop } from '$lib/art/crops';
   import { wonderBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
@@ -54,6 +57,7 @@
   }: Props = $props();
 
   const wonder = $derived(wonderBySlug(slug));
+  const crop = $derived(wonderArtCrop(slug));
   const built = $derived(state?.built ?? false);
   const removed = $derived(state?.removed ?? false);
 </script>
@@ -64,7 +68,8 @@
       id={artId('wonder', slug)}
       size={small ? 'thumb' : 'default'}
       sizes={small ? undefined : '(min-width: 40rem) 280px, 50vw'}
-      feather={small ? 'edge' : 'soft'}
+      feather={small ? 'edge' : crop.feather}
+      position={crop.position}
       class="absolute inset-0 h-full w-full"
     >
       {#snippet fallback()}
@@ -119,7 +124,10 @@
       {@render art('aspect-[3/2] w-14 shrink-0 rounded-[5px] [container-type:size]', true)}
       <span class="flex min-w-0 flex-1 flex-col justify-center gap-[0.3em]">
         <span class="flex items-center gap-1">
-          <span class="min-w-0 flex-1 truncate font-display text-[13px] leading-tight"
+          <!-- Two lines, broken between words, rather than an ellipsis: a
+               narrow city row (a 360 px phone) still names the wonder. -->
+          <span
+            class="line-clamp-2 min-w-0 flex-1 font-display text-[13px] leading-tight wrap-normal"
             >{wonderName(slug)}</span
           >
           {#if built}

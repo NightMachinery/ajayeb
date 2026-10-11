@@ -46,6 +46,13 @@ vi.mock('./available.gen', () => {
         kind: 'back',
         variants: { default: variant('/art/backs/age2.avif', 320, 495) }
       },
+      'wonder/mausoleum': {
+        kind: 'wonder',
+        variants: {
+          default: variant('/art/wonders/mausoleum.avif', 960, 640),
+          thumb: variant('/art/wonders/mausoleum@thumb.avif', 480, 320)
+        }
+      },
       'avatar/scholar': {
         kind: 'avatar',
         variants: { default: variant('/art/avatars/scholar.avif', 192, 192) }

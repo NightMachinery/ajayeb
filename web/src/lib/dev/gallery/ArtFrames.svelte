@@ -72,8 +72,10 @@
     {/each}
   </div>
 
+  <!-- One wonder per row on a phone: two columns would squeeze the city
+       row's name to a few letters beside its art and cost. -->
   <div
-    class="grid grid-cols-2 items-start gap-3 rounded-panel border border-rule bg-panel p-3 sm:grid-cols-3"
+    class="grid grid-cols-1 items-start gap-3 rounded-panel border border-rule bg-panel p-3 sm:grid-cols-2 lg:grid-cols-3"
   >
     {#each wonders as slug (slug)}
       <div
