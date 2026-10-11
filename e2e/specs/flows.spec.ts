@@ -404,4 +404,41 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'hotseatTurn');
     expect(problems).toEqual([]);
   });
+
+  test("a covered card's sheet shows what each player would pay (military-supremacy)", async ({
+    page
+  }) => {
+    const problems = watchHygiene(page);
+    const driver = await openHotseatRoom(page, 'military-supremacy');
+    const view = await currentView(page);
+    const seat = view.toMove as 0 | 1;
+    const names = ['Sun', 'Moon'] as const;
+    // A face-up card that something still covers: the server sends both
+    // seats' costs for it, as if it were accessible.
+    const slot = view.structure.find((s) => s.card && !s.accessible && s.costs);
+    if (!slot?.card || !slot.costs) throw new Error('no covered face-up card in the scenario');
+    const line = (name: string, cost: { affordable: boolean; total: number }): string => {
+      const coins = `${cost.total} ${cost.total === 1 ? 'coin' : 'coins'}`;
+      if (!cost.affordable) return `${name} could not afford it (${coins}).`;
+      return cost.total === 0
+        ? `${name} would build it for free.`
+        : `${name} would pay ${coins} for it.`;
+    };
+    await driver.openCard(slot.card);
+    const sheet = page.locator('dialog[open]');
+    // Hot-seat: both lines name their player, the one to move first.
+    await expect(sheet.locator('[data-covered-cost="own"]')).toHaveText(
+      line(names[seat], slot.costs[seat])
+    );
+    await expect(sheet.locator('[data-covered-cost="other"]')).toHaveText(
+      line(names[seat === 0 ? 1 : 0], slot.costs[seat === 0 ? 1 : 0])
+    );
+    await page.keyboard.press('Escape');
+    // A takeable card's sheet has its actions instead.
+    const open = view.structure.find((s) => s.card && s.accessible);
+    if (!open?.card) throw new Error('no accessible card');
+    await driver.openCard(open.card);
+    await expect(page.locator('dialog[open] [data-covered-cost]')).toHaveCount(0);
+    expect(problems).toEqual([]);
+  });
 });

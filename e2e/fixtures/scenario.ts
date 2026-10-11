@@ -107,7 +107,7 @@ export async function logLines(driver: GameDriver): Promise<string[]> {
 
 /** What the result screen should say, from the scenario's Expect. */
 export interface ExpectedResult {
-  victory: 'civilian' | 'military' | 'science' | 'shared';
+  victory: 'civilian' | 'military' | 'science' | 'forfeit' | 'shared';
   /** The winning seat, or null for a shared victory. */
   winner: 0 | 1 | null;
   /** The totals tie and blue points broke it. */
@@ -164,6 +164,7 @@ export async function expectResultScreen(
     civilian: 'Civilian victory',
     military: 'Military supremacy',
     science: 'Scientific supremacy',
+    forfeit: 'Victory by forfeit',
     shared: 'Shared victory'
   }[expected.victory];
   await expect(dialog.locator('header')).toContainText(kindText);

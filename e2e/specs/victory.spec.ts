@@ -10,6 +10,7 @@ import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
+  CREST_NAMES,
   currentView,
   expectResultScreen,
   openHotseatRoom,
@@ -175,4 +176,46 @@ test.describe('victory', { tag: ['@mobile'] }, () => {
       expect(problems, 'console errors, page errors or failed requests').toEqual([]);
     });
   }
+
+  test('a forfeit from the game menu, behind a confirm step (military-supremacy)', async ({
+    page
+  }) => {
+    const problems = watchHygiene(page);
+    const driver = await openHotseatRoom(page, 'military-supremacy');
+    const before = await currentView(page);
+    const loser = before.toMove as 0 | 1;
+    const winner = loser === 0 ? 1 : 0;
+    const confirm = page.locator('dialog[open] [data-forfeit-confirm]');
+
+    // The menu item opens the confirm step, which names the player to move
+    // (hot-seat) and the winner; Keep playing sends nothing.
+    await driver.visible('[data-control="menu"]').click();
+    await driver.visible('[data-game-menu] [data-control="menu-forfeit"]').click();
+    await expect(confirm).toBeVisible();
+    await expect(confirm.locator('h2')).toHaveText(`Forfeit the game for ${CREST_NAMES[loser]}?`);
+    await expect(confirm).toContainText(`${CREST_NAMES[winner]} wins at once.`);
+    await confirm.locator('[data-control="forfeit-cancel"]').click();
+    await expect(confirm).toHaveCount(0);
+    const still = await currentView(page);
+    expect(still.phase).toBe('play');
+    expect(still.choices).toEqual(before.choices);
+
+    // Forfeit: the other seat wins at once, and the result says who gave up.
+    await driver.visible('[data-control="menu"]').click();
+    await driver.visible('[data-game-menu] [data-control="menu-forfeit"]').click();
+    await confirm.locator('[data-control="forfeit-confirm"]').click();
+    const end = await driver.nextTurn();
+    expect(end.phase).toBe('gameOver');
+    await expectResultScreen(page, { victory: 'forfeit', winner });
+    await expect(
+      page.locator('dialog[open]').filter({ has: page.locator('[data-score-table]') })
+    ).toContainText(`${CREST_NAMES[loser]} forfeited.`);
+
+    // The game is over: the menu offers no forfeit any more.
+    await page.locator('[data-view-board]').filter({ visible: true }).first().click();
+    await driver.visible('[data-control="menu"]').click();
+    await expect(driver.visible('[data-game-menu] [data-control="menu-home"]')).toBeVisible();
+    await expect(page.locator('[data-game-menu] [data-control="menu-forfeit"]')).toHaveCount(0);
+    expect(problems).toEqual([]);
+  });
 });
