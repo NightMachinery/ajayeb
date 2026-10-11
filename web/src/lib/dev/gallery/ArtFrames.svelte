@@ -3,11 +3,11 @@
   // to the placeholder it replaces. For each kind it shows the ids that have
   // approved art in the generated index (or the ids named by ?art=, a comma
   // list such as ?art=card/theater,wonder/pyramids) and one id without art:
-  // cards at the medium and full tiers (and the mini tier, which never shows
-  // art), wonders as a draft tile and a city row, tokens at both sizes, the
-  // four backs and the three bot avatars. This is where a reviewer checks
-  // that art reads in its frame, feathers into the paper and holds up in
-  // both themes.
+  // cards at the mini, medium and full tiers, wonders as a draft tile and a
+  // city row, tokens at both sizes (and owned in a city, and taken from
+  // the board), the four backs and the three bot avatars. This is where a
+  // reviewer checks that art reads in its frame, feathers into the paper
+  // and holds up in both themes.
   import { page } from '$app/state';
   import { artId, hasApprovedArt, type ArtKind } from '$lib/art/lookup';
   import BotAvatar from '$lib/art/BotAvatar.svelte';

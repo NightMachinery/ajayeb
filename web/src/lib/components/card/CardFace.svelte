@@ -4,11 +4,17 @@
   //
   //   band    a 24 px colour strip with the effect glyphs (city stacks)
   //   mini    under 72 px wide (the phone pyramid): cost row, effect band,
-  //           the placeholder pattern (never bitmap art)
+  //           and a small strip of the card's art thumbnail below the 40%
+  //           line (the placeholder pattern until art is approved)
   //   medium  72 to 139 px: as mini, plus the name, and the card's art
   //           thumbnail (CardArt; the placeholder until art is approved)
-  //   full    140 px and wider (sheets): larger art, the category label and
-  //           the chain-out line
+  //   full    140 px and wider (sheets): larger art (never squeezed below
+  //           30% of the card) and the category label. The chain-out
+  //           symbol is the chip in the effect band; the sheet beside the
+  //           card spells out what it chains to.
+  //
+  // Names break between words only, never inside one: a name whose longest
+  // word would not fit the card's width shrinks a step instead (nameFit).
   //
   // Everything a decision needs (cost, chain-in, effects, chain-out) sits in
   // the top 40% of the card, so a card half covered by the row below still
@@ -27,12 +33,11 @@
   import type { Afford } from '$lib/view/afford';
   import AffordBadge from './AffordBadge.svelte';
   import CardArt from './CardArt.svelte';
-  import CardPlaceholderArt from './CardPlaceholderArt.svelte';
   import ChainChip from './ChainChip.svelte';
   import CostPips from './CostPips.svelte';
   import EffectGlyphs from './EffectGlyphs.svelte';
-  import { bandBackground, bandColor, categoryIcon } from './card-style';
-  import { cardName, chainName } from './effect-text';
+  import { bandBackground, bandColor, categoryIcon, longestWord } from './card-style';
+  import { cardName } from './effect-text';
 
   interface Props {
     slug: string;
@@ -49,6 +54,10 @@
 
   const card = $derived(cardBySlug(slug));
   const withArt = $derived(hasApprovedArt(artId('card', slug)));
+  const name = $derived(card ? cardName(card.slug) : '');
+  // The category glyph sits by the name on the full tier, and on the medium
+  // tier once bitmap art replaces the placeholder (see the name row below).
+  const nameGlyph = $derived(tier === 'full' || withArt);
   const small = $derived(tier === 'mini');
   // The cost row's room in em, so CostPips can collapse what would not fit.
   // Mirrors the font sizes and paddings in the style block below.
@@ -114,13 +123,15 @@
       </span>
 
       <!-- Below the 40% line: art (with the badge on its lower edge), name. -->
-      <span class="relative min-h-0 flex-1">
+      <span class="art relative min-h-0 flex-1">
         {#if tier === 'mini'}
-          <!-- Mini cards never show bitmap art: the phone pyramid covers
-               most of them, and the pattern keeps the colour readable. -->
-          <CardPlaceholderArt
+          <!-- Mini cards show a small strip of the art thumbnail, below the
+               40% line so it never competes with the cost and the effect;
+               the placeholder pattern (no glyph, too small) until then. -->
+          <CardArt
+            slug={card.slug}
             color={card.color}
-            glyph={false}
+            tier="mini"
             class="absolute inset-0 h-full w-full"
           />
         {:else}
@@ -141,8 +152,9 @@
       {#if tier !== 'mini'}
         <span class="name flex items-start gap-[0.25em] px-[5%] pt-[0.2em] pb-[0.3em]">
           <span
-            class="line-clamp-2 min-w-0 flex-1 font-display leading-[1.1] wrap-anywhere hyphens-auto"
-            >{cardName(card.slug)}</span
+            class="name-text line-clamp-2 min-w-0 flex-1 font-display leading-[1.1] wrap-normal hyphens-manual"
+            style:--name-chars={longestWord(name)}
+            style:--glyph-room={nameGlyph ? 1.3 : 0}>{name}</span
           >
           <!-- The placeholder art carries the category glyph; the full tier
                repeats it by the name, where there is room, and so does the
@@ -150,7 +162,7 @@
                placeholder, so the category never rests on colour alone. On
                the paper it takes the card colour's paper ink, since the band
                colour itself (yellow, grey) is too pale there. -->
-          {#if tier === 'full' || withArt}
+          {#if nameGlyph}
             <Icon
               name={categoryIcon(card.color)}
               class="mt-[0.1em] text-[1.05em] text-(--glyph-ink) [--i2:color-mix(in_oklch,var(--glyph-ink)_45%,var(--card-paper))]"
@@ -159,17 +171,9 @@
         </span>
         {#if tier === 'full'}
           <span
-            class="flex flex-col gap-[0.15em] px-[5%] pb-[0.5em] text-[length:max(12px,0.75em)] leading-tight text-(--ink-soft)"
+            class="px-[5%] pb-[0.5em] text-[length:max(12px,0.75em)] leading-tight text-(--ink-soft)"
           >
-            <span>{t(`card.category.${card.color}`)}</span>
-            {#if card.chainOut && card.chainTo}
-              <span
-                >{t('card.chainOut', {
-                  symbol: chainName(card.chainOut),
-                  card: cardName(card.chainTo)
-                })}</span
-              >
-            {/if}
+            {t(`card.category.${card.color}`)}
           </span>
         {/if}
       {/if}
@@ -194,6 +198,20 @@
   .name {
     font-size: max(12px, 0.88em);
   }
+  /* nameFit: the name keeps the row's size unless its longest word
+     (--name-chars letters, at about 0.6 em each in Fraunces) would not fit
+     the row (the card's width less its padding and border, and less the
+     category glyph when it shows); then it shrinks to fit, down to 9 px.
+     Lines break only between words. */
+  .name-text {
+    font-size: max(
+      9px,
+      min(
+        1em,
+        calc((var(--cw, 72px) * 0.9 - 3px - var(--glyph-room) * 1em) / (var(--name-chars) * 0.6))
+      )
+    );
+  }
   /* The mini tier's 10 px font would draw the chain chip at 13 px with a
      9.5 px glyph; ChainChip keeps the glyph at 12 px in a 14 px chip, so
      the cost row takes 1% of the band's height to hold it. The two still
@@ -216,5 +234,9 @@
   }
   .full .name {
     font-size: max(16px, 1.05em);
+  }
+  /* The art keeps a usable height under a two-line name. */
+  .full .art {
+    min-height: 30%;
   }
 </style>

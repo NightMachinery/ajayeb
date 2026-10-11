@@ -1,6 +1,6 @@
 // The art frames, rendered on the server with a stand-in art index: approved
 // ids draw a lazy <img>, every other id draws its procedural placeholder,
-// and a mini card never draws art at all.
+// and every card tier but the colour band draws its art.
 import { createRawSnippet } from 'svelte';
 import { render } from 'svelte/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -104,7 +104,7 @@ describe('ArtImage', () => {
 });
 
 describe('card frames', () => {
-  it('shows the art at the medium and full tiers, and never on a mini card', () => {
+  it('shows the art at the mini, medium and full tiers, and never on a band', () => {
     const medium = render(CardFace, {
       props: { slug: 'lumber-yard', tier: 'medium', width: 101 }
     }).body;
@@ -118,12 +118,36 @@ describe('card frames', () => {
     expect(imgs(full)[0]).toContain('src="/art/cards/lumber-yard.avif"');
     expect(imgs(full)[0]).toContain('sizes="180px"');
 
-    expect(
-      imgs(render(CardFace, { props: { slug: 'lumber-yard', tier: 'mini', width: 54 } }).body)
-    ).toEqual([]);
+    // The phone pyramid: the thumbnail below the 40% line, with the
+    // narrower edge fade.
+    const mini = imgs(
+      render(CardFace, { props: { slug: 'lumber-yard', tier: 'mini', width: 54 } }).body
+    );
+    expect(mini).toHaveLength(1);
+    expect(mini[0]).toContain('src="/art/cards/lumber-yard@thumb.avif"');
+    expect(mini[0]).toContain('feather-edge');
+    expect(mini[0]).not.toContain('srcset');
     expect(imgs(render(CardFace, { props: { slug: 'lumber-yard', tier: 'band' } }).body)).toEqual(
       []
     );
+  });
+
+  it('spells out no chain-out line on the full card (the chain chip carries it)', () => {
+    // Archery Range chains to Siege Workshop; the sheet beside the card says so.
+    const full = render(CardFace, {
+      props: { slug: 'archery-range', tier: 'full', width: 140 }
+    }).body;
+    expect(full).not.toContain('Siege Workshop');
+    expect(full).toContain('Military building');
+  });
+
+  it('breaks names between words, and shrinks one whose longest word is long', () => {
+    const medium = render(CardFace, {
+      props: { slug: 'scriptorium', tier: 'medium', width: 101 }
+    }).body;
+    expect(medium).not.toContain('wrap-anywhere');
+    expect(medium).toContain('wrap-normal');
+    expect(medium).toContain('--name-chars: 11');
   });
 
   it('keeps the placeholder for a card with no approved art', () => {

@@ -82,3 +82,11 @@ export function backAge(back: Back): 1 | 2 | 3 {
   if (back === 'age2') return 2;
   return 3;
 }
+
+/** The length in characters of a name's longest word, which CardFace uses to
+ *  shrink a name that would otherwise have to break inside a word. At least 1. */
+export function longestWord(name: string): number {
+  let longest = 1;
+  for (const word of name.split(/\s+/)) longest = Math.max(longest, [...word].length);
+  return longest;
+}
