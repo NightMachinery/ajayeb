@@ -52,6 +52,7 @@
   import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
   import ArtPrefetch from '$lib/art/ArtPrefetch.svelte';
+  import { seatBotLevel } from '$lib/art/lookup';
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderName } from '$lib/components/card/effect-text';
   import { i18n, t } from '$lib/i18n';
@@ -63,7 +64,9 @@
   import { settings } from '$lib/ui/settings.svelte';
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
+  import { gameEnded } from '$lib/view/threats';
   import { playAgainFrom, turnState } from '$lib/view/turn';
+  import { buildableWonders } from '$lib/view/wonders';
   import type { SlotView, State, WonderView } from '$lib/wire';
   import MilitaryTrack from '../board/MilitaryTrack.svelte';
   import CardStructure from '../board/CardStructure.svelte';
@@ -79,6 +82,7 @@
   import Settings from '../screens/Settings.svelte';
   import CitySheet from '../sheets/CitySheet.svelte';
   import LogSheet from '../sheets/LogSheet.svelte';
+  import WonderListSheet from '../sheets/WonderListSheet.svelte';
   import WonderSheet from '../sheets/WonderSheet.svelte';
   import LiveRegion from '../shell/LiveRegion.svelte';
   import Sheet from '../shell/Sheet.svelte';
@@ -120,6 +124,13 @@
   let lastFrame: State | null = null;
   // The notice the player dismissed; a newer one shows again.
   let dismissedNotice = $state<Notice | null>(null);
+  // The seat whose wonder list is open (the phone strip's wonder button),
+  // and the seat whose list the open wonder sheet was reached from, for its
+  // Back button. Kept here rather than in GameUi: only this screen opens it.
+  let wonderListSeat = $state<Seat | null>(null);
+  let wonderFromList = $state<Seat | null>(null);
+  // The list's seat while it closes, so its content stays put.
+  let wonderListShown = $state<Seat>(0);
 
   // Settings, with the device defaults of the hot-seat sheet.
   const passDevice = $derived(settings.value.hotseatPassDevice ?? coarsePointer.current);
@@ -180,6 +191,13 @@
   );
   const away = $derived((home === 0 ? 1 : 0) as Seat);
   const badge = $derived(view ? badgeSeat(view) : undefined);
+  const ended = $derived(gameEnded(view?.phase));
+  // The wonders each seat can build now, from the view's choices only.
+  const buildable = $derived(
+    view
+      ? ([buildableWonders(view, 0), buildableWonders(view, 1)] as const)
+      : ([new Set<string>(), new Set<string>()] as const)
+  );
   const lit = $derived(
     mode === 'hotseat' && orientation === 'fixed' && view?.toMove !== undefined
       ? view.toMove
@@ -257,6 +275,8 @@
       lastFrame = null;
       ui.reset();
       toasts.clear();
+      wonderListSeat = null;
+      wonderFromList = null;
     }
     announcePresence(lastFrame, f);
     lastFrame = f;
@@ -376,6 +396,7 @@
 
   function act(key: string): void {
     if (!inputOpen) return;
+    wonderListSeat = null;
     if (session.act(key)) {
       lastRequest = { seq: session.seq, kind: 'act' };
       ui.sent();
@@ -398,7 +419,27 @@
   }
 
   function selectWonder(w: WonderView): void {
+    wonderFromList = null;
     ui.openWonder(w.wonder);
+  }
+
+  /** From a seat's wonder list to one wonder's own sheet (Back returns). */
+  function selectListedWonder(seat: Seat, w: WonderView): void {
+    wonderListSeat = null;
+    wonderFromList = seat;
+    ui.openWonder(w.wonder);
+  }
+
+  function openWonderList(seat: Seat): void {
+    wonderListShown = seat;
+    wonderListSeat = seat;
+  }
+
+  function backToWonderList(): void {
+    const seat = wonderFromList;
+    ui.close('wonder');
+    wonderFromList = null;
+    if (seat !== null) openWonderList(seat);
   }
 
   /**
@@ -433,9 +474,15 @@
       viewerSeat={trackSeat}
       leftSeat={home}
       {compact}
+      legend={layout === 'desktop'}
       class={compact ? 'min-w-24 flex-1' : 'w-full'}
     />
-    <ProgressTokenRow tokens={view.boardTokens} {compact} class="justify-center" />
+    <ProgressTokenRow
+      tokens={view.boardTokens}
+      {compact}
+      caption
+      class="flex-nowrap justify-center {compact ? 'shrink-0' : ''}"
+    />
   {/if}
 {/snippet}
 
@@ -448,6 +495,10 @@
       player={view.players[seat]}
       military={view.military}
       score={view.scorePreview[seat]}
+      bot={seatBotLevel(frame?.room, seat)}
+      {ended}
+      buildable={buildable[seat]}
+      onwonders={() => openWonderList(seat)}
       lit={lit === seat}
       thinking={thinkingSeat === seat}
       presence={mySeats.includes(seat) ? undefined : presence[seat]}
@@ -529,7 +580,7 @@
       </div>
 
       {#if layout !== 'phone-landscape'}
-        <div class="area-board flex min-w-0 flex-col items-center gap-1.5 px-1" dir={i18n.dir}>
+        <div class="area-board flex min-w-0 flex-col items-center gap-2 px-1" dir={i18n.dir}>
           {@render trackAndTokens(false)}
         </div>
       {/if}
@@ -610,7 +661,7 @@
       {/if}
       {#if ui.pickFor}
         <div
-          class="flex min-h-13 items-center justify-between gap-2 border-t border-rule bg-accent-soft px-3 py-1.5 text-accent-soft-fg"
+          class="flex min-h-10 items-center justify-between gap-2 border-t border-rule bg-accent-soft ps-3 pe-1 pb-(--safe-b) text-accent-soft-fg"
           role="status"
           data-wonder-pick-bar={ui.pickFor}
         >
@@ -631,7 +682,7 @@
           state={turn}
           {names}
           onRetry={() => session.retry()}
-          class="pb-[max(0.375rem,var(--safe-b))]"
+          class="pb-[max(0.25rem,var(--safe-b))]"
         />
       {/if}
     </div>
@@ -658,8 +709,21 @@
     onclose={() => ui.close('card')}
   />
 
+  <WonderListSheet
+    open={wonderListSeat !== null}
+    name={names[wonderListShown]}
+    seat={wonderListShown}
+    wonders={view.players[wonderListShown].wonders}
+    buildable={buildable[wonderListShown]}
+    onselect={mySeats.includes(wonderListShown)
+      ? (w) => selectListedWonder(wonderListShown, w)
+      : undefined}
+    onclose={() => (wonderListSeat = null)}
+  />
+
   <WonderSheet
     open={ui.isOpen('wonder') && !!wonderOwner}
+    onback={wonderFromList !== null ? backToWonderList : undefined}
     slug={ui.wonder}
     state={wonderOwner?.state}
     buildable={wonderInfo.buildable}

@@ -4,7 +4,13 @@
   // player should do next. Connection wording reuses session.conn.* (the
   // session layer already owns those three messages); everything else is
   // this file's own board.turn.* keys.
+  //
+  // It is one slim line (40 px plus the safe area) so the board keeps its
+  // height on a phone. A seat's own turn shows that seat's crest; the Retry
+  // button, when it shows, keeps a 44 px tap height and the bar grows to
+  // hold it.
   import { t } from '$lib/i18n';
+  import Icon from '$lib/icons/Icon.svelte';
   import type { TurnState } from '$lib/view/turn';
   import Loader2 from '@lucide/svelte/icons/loader-2';
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
@@ -85,12 +91,18 @@
     state.kind === 'sent' || state.kind === 'reconnecting' || state.kind === 'connecting'
   );
   const thinking = $derived(state.kind === 'aiThinking');
+  // The seat whose own turn it is, for its crest.
+  const crestSeat = $derived(
+    state.kind === 'yourTurn' || state.kind === 'hotseatTurn' || state.kind === 'pendingChoice'
+      ? state.seat
+      : undefined
+  );
   const offerRetry = $derived(state.kind === 'sent' && state.slow && !!onRetry);
 </script>
 
 <div
-  class="turn-bar flex min-h-13 items-center justify-between gap-2 border-t border-rule bg-panel px-3
-    py-1.5 {className}"
+  class="turn-bar flex min-h-10 items-center justify-between gap-2 border-t border-rule bg-panel px-3
+    py-1 {className}"
   role="status"
   aria-live="polite"
   data-turn={state.kind}
@@ -103,6 +115,11 @@
       <RotateCw
         class="size-4 shrink-0 {state.seat === 1 ? 'text-moon-ink' : 'text-sun-ink'}"
         aria-hidden="true"
+      />
+    {:else if crestSeat !== undefined}
+      <Icon
+        name={crestSeat === 1 ? 'crest-moon' : 'crest-sun'}
+        class="shrink-0 text-base {crestSeat === 1 ? 'text-moon-ink' : 'text-sun-ink'}"
       />
     {:else if thinking}
       <ThinkingDots
