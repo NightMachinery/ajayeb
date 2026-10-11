@@ -5,11 +5,13 @@
   // re-sends whole on a join, a resync and an undo, so a reload still shows
   // the whole game in every mode. It stops at the frame the Presenter shows,
   // so a bot's answer that is still being paced is not in the log before it
-  // is on the board. Without a game context (the gallery), or before the
-  // Session has any history, it shows the `events` it is given.
+  // is on the board. The changes of the game's hint settings (the room log)
+  // are lines among the events. Without a game context (the gallery), or
+  // before the Session has any history, it shows the `events` it is given.
   import { t } from '$lib/i18n';
   import type { GameEvent } from '$lib/wire';
   import { groupLogByAge } from '$lib/view/log-format';
+  import { groupGameLog, type GameLogGroup } from '$lib/hints/log';
   import { tryGameContext } from '../choices/room';
   import Sheet from '../shell/Sheet.svelte';
 
@@ -24,14 +26,14 @@
 
   const ctx = tryGameContext();
 
-  const logEvents: readonly GameEvent[] = $derived.by(() => {
+  // The room log (changes of the hint settings) goes among the events, at
+  // the ply each change happened (lib/hints/log.ts).
+  const groups: GameLogGroup[] = $derived.by(() => {
     const history = ctx?.session.history ?? [];
-    if (history.length === 0) return events;
-    const shown = ctx?.presenter.view?.ply;
-    return history.filter((e) => shown === undefined || e.ply < shown).flatMap((e) => e.events);
+    const roomLog = ctx?.session.roomLog ?? [];
+    if (history.length === 0 && roomLog.length === 0) return groupLogByAge(events, names);
+    return groupGameLog(history, roomLog, names, ctx?.presenter.view?.ply);
   });
-
-  const groups = $derived(groupLogByAge(logEvents, names));
 </script>
 
 <Sheet bind:open {titleId}>
