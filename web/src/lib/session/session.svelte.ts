@@ -42,6 +42,13 @@
 // The history is data for the log and the move summary only: nothing here
 // animates it, and a frame that brings one has no live events to animate.
 //
+// The hint settings (docs/dev/decisions.md D23): the room's settings, the
+// admin flag and the room log come with every frame. setHints() sends the
+// game's admin's new settings as a request like an act (same seq counter,
+// one pending at a time, re-sent after a reconnect). A create without
+// settings takes them from the defaultHints option (the device's local
+// default), so every way of creating a room starts from it.
+//
 // The forfeit: resign() sends an act whose key is resign:<seat>, a key the
 // view's choices never hold. It forfeits the seat this connection plays
 // (the seat to move in a hot-seat room). Refused as stale because the other
@@ -54,9 +61,12 @@ import type {
   ClientMessage,
   Create,
   GameEvent,
+  HintSettings,
+  Hints as HintsFrame,
   HistoryEntry,
   Mode,
   RoomInfo,
+  RoomLogEntry,
   SeatChoice,
   ServerInfo,
   ServerMessage,
@@ -88,10 +98,12 @@ export interface CreateOptions {
   seat?: SeatChoice;
   /** Display names by seat; an empty entry means the hello name or a default. */
   names?: string[];
+  /** The game's hint settings; absent means the defaultHints option's, else the server's defaults. */
+  hints?: HintSettings;
 }
 
 export interface PendingRequest {
-  readonly frame: Act | Undo;
+  readonly frame: Act | Undo | HintsFrame;
   /** When it was first sent, in ms (the Session's clock). */
   readonly sentAt: number;
 }
@@ -115,6 +127,8 @@ export interface SessionOptions {
   /** How many times such a request is re-sent before the notice shows. */
   rateRetries?: number;
   now?: () => number;
+  /** The hint settings a create without any starts from (the local default). */
+  defaultHints?: (mode: Mode) => HintSettings | null;
 }
 
 type Intent =
@@ -171,6 +185,19 @@ export class Session {
   history = $state.raw<readonly HistoryEntry[]>([]);
   /** Every event of the game so far, in order: the history's, flattened. */
   log: readonly GameEvent[] = $derived(this.history.flatMap((e) => e.events));
+  /** The room log (changes of the hint settings), oldest first. */
+  roomLog: readonly RoomLogEntry[] = $derived(this.frame?.roomLog ?? []);
+  /** The game's hint settings, the same for both players. */
+  hints: HintSettings | null = $derived(this.frame?.room.hints ?? null);
+  /** This user is the game's admin, who may change its hint settings. */
+  admin: boolean = $derived(!!this.frame?.you.admin);
+
+  /** Whether setHints would be sent now: the admin, while the game runs. */
+  canSetHints: boolean = $derived.by(() => {
+    const f = this.frame;
+    if (!f || this.conn !== 'open' || this.pending || this.fatal) return false;
+    return f.you.admin && f.room.status !== 'finished' && !f.view.result;
+  });
 
   room: RoomInfo | null = $derived(this.frame?.room ?? null);
   you: YouInfo | null = $derived(this.frame?.you ?? null);
@@ -218,6 +245,7 @@ export class Session {
   #rooms: SavedRooms | null;
   #slowMs: number;
   #now: () => number;
+  #defaultHints: ((mode: Mode) => HintSettings | null) | null;
   #seq = 0;
   #welcomed = false;
   #intent: Intent | null = null;
@@ -251,6 +279,7 @@ export class Session {
     this.#rateRetryMs = opts.rateRetryMs ?? 250;
     this.#rateRetries = opts.rateRetries ?? 3;
     this.#now = opts.now ?? (() => Date.now());
+    this.#defaultHints = opts.defaultHints ?? null;
     this.#offs.push(
       this.#transport.onMessage((msg) => this.#onMessage(msg)),
       this.#transport.onState((status) => this.#onStatus(status))
@@ -300,6 +329,8 @@ export class Session {
       names: opts.names ?? []
     };
     if (opts.bot !== undefined) frame.bot = opts.bot;
+    const hints = opts.hints ?? this.#defaultHints?.(opts.mode) ?? null;
+    if (hints) frame.hints = { ...hints };
     if (this.#intent?.kind === 'create') {
       this.#intent.reject(new SessionError('superseded', 'session.error.unknown'));
     }
@@ -359,6 +390,17 @@ export class Session {
     };
     if (f.room.mode === 'hotseat') frame.seat = seat;
     this.#request(frame);
+    return true;
+  }
+
+  /**
+   * Replaces the game's hint settings (the admin only, while the game
+   * runs; canSetHints says when). Every connection then receives them, with
+   * a room log entry. Returns whether it was sent.
+   */
+  setHints(hints: HintSettings): boolean {
+    if (!this.canSetHints || !this.code) return false;
+    this.#request({ t: 'hints', code: this.code, seq: this.#seq + 1, hints: { ...hints } });
     return true;
   }
 
@@ -431,7 +473,7 @@ export class Session {
     return this.#transport.send(msg);
   }
 
-  #request(frame: Act | Undo): void {
+  #request(frame: Act | Undo | HintsFrame): void {
     this.#seq = frame.seq;
     this.#undoResent = false;
     this.#staleUndo = null;
@@ -698,6 +740,10 @@ export class Session {
   // refusal shows as any other would.
   #resendUndo(stale: PendingRequest, frame: State): void {
     const undo = stale.frame;
+    if (undo.t === 'hints') {
+      this.#settle();
+      return;
+    }
     const resign = undo.t === 'act' && frame.room.status === 'playing' && !frame.view.result;
     if (resign && frame.version > undo.base) {
       this.#undoResent = true;

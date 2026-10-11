@@ -30,7 +30,7 @@ describe('stateFrameFromView', () => {
 
   it('wraps a spectator view with no seats and no choices', () => {
     const f = stateFrameFromView(viewNamed('age-1-start-spectator'));
-    expect(f.you).toEqual({ seats: [], canAct: false });
+    expect(f.you).toEqual({ seats: [], canAct: false, admin: false });
     expect(f.room.spectators).toBe(1);
   });
 
@@ -55,7 +55,7 @@ describe('the fixture registry', () => {
     const lobby = fixtureFrames('online-lobby-seat0')![0]!;
     expect(lobby.room.status).toBe('lobby');
     expect(lobby.room.seats[1]?.kind).toBe('open');
-    expect(lobby.you).toEqual({ seats: [0], canAct: false });
+    expect(lobby.you).toEqual({ seats: [0], canAct: false, admin: true });
 
     const away = fixtureFrames('online-away-seat0')![0]!;
     expect(away.room.seats.map((s) => s.connected)).toEqual([true, false]);

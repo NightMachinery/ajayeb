@@ -35,7 +35,7 @@ const ONLINE: Readonly<Record<string, () => State | undefined>> = {
     if (!f) return undefined;
     f.room.status = 'lobby';
     f.room.seats[1] = { seat: 1, name: '', kind: 'open', connected: false, you: false };
-    f.you = { seats: [0], canAct: false };
+    f.you = { seats: [0], canAct: false, admin: true };
     return f;
   },
   // Seat 1 is to move and has dropped; one spectator watches.

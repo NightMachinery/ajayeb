@@ -9,7 +9,9 @@ const REJECTS = {
   illegal: 'session.reject.illegal',
   'not-your-turn': 'session.reject.notYourTurn',
   rate: 'session.reject.rate',
-  'bad-request': 'session.reject.badRequest'
+  'bad-request': 'session.reject.badRequest',
+  'not-admin': 'session.reject.notAdmin',
+  'game-over': 'session.reject.gameOver'
 } as const satisfies Readonly<Record<string, MessageKey>>;
 
 const ERRORS = {

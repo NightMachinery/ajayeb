@@ -16,6 +16,7 @@
 
 import type { ClientMessage, ServerMessage, State, View } from '$lib/wire';
 import { ProtocolVersion } from '$lib/wire/types.gen';
+import { defaultHints } from '$lib/hints/families';
 import { Listeners, type Transport, type TransportStatus, type Unsubscribe } from './transport';
 
 export interface FixtureTransportOptions {
@@ -165,11 +166,14 @@ export function stateFrameFromView(view: View, opts: ViewFrameOptions = {}): Sta
         connected: true,
         you: seats.includes(seat)
       })),
-      spectators: view.viewer === undefined ? 1 : 0
+      spectators: view.viewer === undefined ? 1 : 0,
+      hints: defaultHints('online')
     },
-    you: { seats, canAct: view.choices.length > 0 },
+    // Seat 0 created the room, so it is the game's admin.
+    you: { seats, canAct: view.choices.length > 0, admin: seats.includes(0) },
     canUndo: false,
     events: [],
+    roomLog: [],
     view
   };
 }

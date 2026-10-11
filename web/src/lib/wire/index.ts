@@ -30,6 +30,7 @@ import type {
   Resync,
   Leave,
   Rematch,
+  Hints,
   Welcome,
   Created,
   State,
@@ -38,7 +39,7 @@ import type {
 } from './types.gen';
 
 /** A frame the client may send the server, identified by its "t". */
-export type ClientMessage = Hello | Create | Join | Act | Undo | Resync | Leave | Rematch;
+export type ClientMessage = Hello | Create | Join | Act | Undo | Resync | Leave | Rematch | Hints;
 
 /** A frame the server may send the client, identified by its "t". */
 export type ServerMessage = Welcome | Created | State | Reject | ErrorFrame;

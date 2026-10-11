@@ -19,6 +19,8 @@ export const session = {
   'session.reject.notYourTurn': 'It is not your turn.',
   'session.reject.rate': 'Too many requests at once. Wait a moment and try again.',
   'session.reject.badRequest': 'The server could not use that request.',
+  'session.reject.notAdmin': 'Only the player who created the game can change its hints.',
+  'session.reject.gameOver': 'The game is over, so its hints no longer change.',
 
   'session.error.roomNotFound': 'No game has that code.',
   'session.error.roomFull': 'This game takes no more connections.',

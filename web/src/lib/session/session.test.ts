@@ -75,7 +75,7 @@ function modeFrame(
       ...(mode === 'ai' && s.seat === 1 ? { kind: 'bot' as const, bot: 'easy' as const } : {})
     }))
   };
-  f.you = { seats, canAct: seats.includes(f.view.toMove ?? -1) };
+  f.you = { seats, canAct: seats.includes(f.view.toMove ?? -1), admin: seats.includes(0) };
   f.canUndo = opts.canUndo ?? mode === 'ai';
   return f;
 }
@@ -184,7 +184,7 @@ describe('Session: state frames', () => {
     expect(session.canAct).toBe(false);
 
     const g = playFrame('H8TQ4R', 12);
-    g.you = { seats: [1], canAct: true }; // toMove is 0
+    g.you = { seats: [1], canAct: true, admin: false }; // toMove is 0
     transport.receive(g);
     expect(session.canAct).toBe(false);
 
@@ -247,7 +247,7 @@ describe('Session: acts, seq and base', () => {
     const { session, transport } = joined();
     const f = playFrame('H8TQ4R', 11);
     f.room = { ...f.room, mode: 'online' };
-    f.you = { seats: [0], canAct: true };
+    f.you = { seats: [0], canAct: true, admin: true };
     transport.receive(f);
     session.act('construct:stone-reserve');
     expect(transport.last()).not.toHaveProperty('seat');
@@ -837,5 +837,128 @@ describe('Session: the forfeit', () => {
     transport.receive({ t: 'reject', seq: 1, code: 'stale', msg: '' });
     expect(session.notice?.code).toBe('stale');
     expect(session.pending).toBeNull();
+  });
+});
+
+describe('Session: hint settings', () => {
+  const hints = recorded('state-play').room.hints;
+
+  /** The recorded play frame of an online room, with this user as its admin or not. */
+  function onlineFrame(admin: boolean, version = 10): State {
+    const f = modeFrame('online', { version });
+    f.you = { ...f.you, admin };
+    return f;
+  }
+
+  it('reads the settings, the admin flag and the room log from the frame', () => {
+    const { session, transport } = setup();
+    connect(transport);
+    session.join('H8TQ4R');
+    expect(session.hints).toBeNull();
+    expect(session.roomLog).toEqual([]);
+    const f = recorded('state-hints-changed');
+    delete f.ack;
+    transport.receive({ ...f, code: 'H8TQ4R' });
+    expect(session.hints).toEqual(f.room.hints);
+    // The recorded frame is seat 1's; seat 0 created the room.
+    expect(session.admin).toBe(false);
+    expect(session.canSetHints).toBe(false);
+    expect(session.roomLog).toEqual([
+      { kind: 'hints', at: 4, seat: 0, on: ['advisor'], off: ['prices', 'threats'] }
+    ]);
+  });
+
+  it('sends the admin’s settings with the next seq, and settles on the state that acks it', () => {
+    const { session, transport } = setup();
+    connect(transport);
+    session.join('H8TQ4R');
+    transport.receive(onlineFrame(true));
+    expect(session.canSetHints).toBe(true);
+    const next = { ...hints, prices: false };
+    expect(session.setHints(next)).toBe(true);
+    expect(transport.last()).toEqual({ t: 'hints', code: 'H8TQ4R', seq: 1, hints: next });
+    expect(session.pending?.frame.t).toBe('hints');
+    expect(session.canSetHints).toBe(false);
+    expect(session.canAct).toBe(false);
+    expect(session.setHints(hints)).toBe(false);
+
+    const after = onlineFrame(true);
+    after.room = { ...after.room, hints: next };
+    transport.receive({ ...after, ack: { clientId: 'tab-1', seq: 1 } });
+    expect(session.pending).toBeNull();
+    expect(session.hints).toEqual(next);
+    // The seq counter is shared with acts.
+    session.act('construct:stone-reserve');
+    expect(transport.last()).toMatchObject({ t: 'act', seq: 2 });
+  });
+
+  it('sends nothing for a player who is not the admin, or after the end', () => {
+    const { session, transport } = setup();
+    connect(transport);
+    session.join('H8TQ4R');
+    transport.receive(onlineFrame(false));
+    expect(session.admin).toBe(false);
+    expect(session.canSetHints).toBe(false);
+    expect(session.setHints(hints)).toBe(false);
+    expect(transport.sentOf('hints')).toEqual([]);
+
+    const over = recorded('state-game-over');
+    delete over.ack;
+    transport.receive({ ...over, code: 'H8TQ4R', version: 99, you: { ...over.you, admin: true } });
+    expect(session.admin).toBe(true);
+    expect(session.canSetHints).toBe(false);
+  });
+
+  it('shows the refusal of a change the server refused', () => {
+    const { session, transport } = setup();
+    connect(transport);
+    session.join('H8TQ4R');
+    transport.receive(onlineFrame(true));
+    session.setHints({ ...hints, recap: false });
+    transport.receive({ t: 'reject', seq: 1, code: 'not-admin', msg: '' });
+    expect(session.pending).toBeNull();
+    expect(session.notice?.message).toBe('session.reject.notAdmin');
+    transport.receive({ t: 'reject', seq: 0, code: 'game-over', msg: '' });
+    expect(session.notice?.message).toBe('session.reject.gameOver');
+  });
+
+  it('re-sends a pending change unchanged after a reconnect', () => {
+    const { session, transport } = setup();
+    connect(transport);
+    session.join('H8TQ4R');
+    transport.receive(onlineFrame(true));
+    session.setHints({ ...hints, tempo: false });
+    transport.setState('reconnecting', { attempt: 1 });
+    connect(transport);
+    expect(transport.sentOf('hints')).toHaveLength(2);
+    expect(transport.sentOf('hints')[1]).toEqual(transport.sentOf('hints')[0]);
+  });
+
+  it('creates a game with the settings given, else the device default, else none', () => {
+    const a = setup();
+    connect(a.transport);
+    void a.session.create({ mode: 'online', hints: { ...hints, science: false } });
+    expect(a.transport.last()).toMatchObject({ t: 'create', hints: { ...hints, science: false } });
+
+    const transport = new ScriptedTransport();
+    const asked: string[] = [];
+    const session = new Session({
+      transport,
+      identity,
+      rooms: null,
+      defaultHints: (mode) => {
+        asked.push(mode);
+        return { ...hints, counting: false };
+      }
+    });
+    connect(transport);
+    void session.create({ mode: 'hotseat', names: ['A', 'B'] });
+    expect(asked).toEqual(['hotseat']);
+    expect(transport.last()).toMatchObject({ t: 'create', hints: { ...hints, counting: false } });
+
+    const c = setup();
+    connect(c.transport);
+    void c.session.create({ mode: 'ai', bot: 'easy', seat: 'random' });
+    expect(c.transport.last()).not.toHaveProperty('hints');
   });
 });

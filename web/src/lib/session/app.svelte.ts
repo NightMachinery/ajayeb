@@ -2,6 +2,7 @@
 // asks for it (Home never does), and stays open across page changes, so
 // creating a room on one page and playing it on the next reuses the socket.
 
+import { hintDefaults } from '$lib/hints/local.svelte';
 import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
 import { loadIdentity } from './identity';
 import { Presenter } from './presenter.svelte';
@@ -42,7 +43,9 @@ export function liveGame(): { session: Session; presenter: Presenter } {
       const session = new Session({
         transport: new WsTransport(),
         identity: loadIdentity(),
-        rooms: savedRooms()
+        rooms: savedRooms(),
+        // A new game starts from the hint settings saved on this device.
+        defaultHints: (mode) => hintDefaults.for(mode)
       });
       // A bot's move waits out its thinking dwell, then its pick is
       // highlighted, both scaled by the animation speed (read at each move).
