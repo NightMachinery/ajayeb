@@ -30,6 +30,7 @@
   import { theme, THEME_PREFS } from '$lib/ui/theme.svelte';
 
   const PUBLISHER_URL = 'https://www.rprod.com/en/games/7-wonders-duel';
+  const SOURCE_URL = 'https://github.com/NightMachinery/ajayeb';
 
   interface Props {
     /** The saved rooms this browser has played, newest first. */
@@ -252,7 +253,8 @@
 
     <footer class="mt-auto pt-10 text-center text-xs leading-relaxed text-fg-muted">
       <p>{t('app.legal')}</p>
-      <p class="mt-1">
+      <p class="mt-1">{t('app.foss')}</p>
+      <p class="mt-1 flex flex-wrap items-center justify-center gap-x-5">
         <a
           class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"
           href={PUBLISHER_URL}
@@ -260,6 +262,15 @@
           target="_blank"
         >
           {t('app.getGame')}
+        </a>
+        <a
+          class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"
+          href={SOURCE_URL}
+          rel="external noopener noreferrer"
+          target="_blank"
+          data-control="home-source"
+        >
+          {t('app.source')}
         </a>
       </p>
     </footer>

@@ -19,11 +19,11 @@ Ajayeb is a fan project. It implements the rules of a published board game with 
 
 ## Trademark notice
 
-The README footer and the in-app About page carry this disclaimer:
+The README footer and the footer of the app's Home screen carry this disclaimer:
 
 > Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark.
 
-Both places link to the publisher's page so people can buy the real game: <https://www.rprod.com/en/games/7-wonders-duel>.
+Both places link to the publisher's page so people can buy the real game: <https://www.rprod.com/en/games/7-wonders-duel>. The Home footer also says that Ajayeb itself is free and open-source software under the MIT License and links to its source code: <https://github.com/NightMachinery/ajayeb>.
 
 Rules we follow around the name:
 

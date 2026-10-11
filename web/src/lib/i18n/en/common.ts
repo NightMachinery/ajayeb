@@ -21,6 +21,8 @@ export const common = {
   'app.legal':
     'Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark.',
   'app.getGame': 'Get the original game from its publisher',
+  'app.foss': 'Ajayeb itself is free and open-source software, released under the MIT License.',
+  'app.source': 'Source code on GitHub',
   'app.home': 'Back to the start',
 
   'error.notFound': 'This page does not exist.',
