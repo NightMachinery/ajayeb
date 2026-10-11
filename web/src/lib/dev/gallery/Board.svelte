@@ -23,7 +23,10 @@
   import ProgressTokenRow from '$lib/components/token/ProgressTokenRow.svelte';
   import ResourceChips from '$lib/components/city/ResourceChips.svelte';
   import ScienceTracker from '$lib/components/city/ScienceTracker.svelte';
-  import WonderRow from '$lib/components/city/WonderRow.svelte';
+  import WonderList from '$lib/components/wonder/WonderList.svelte';
+  import WonderButton from '$lib/components/wonder/WonderButton.svelte';
+  import { gameEnded } from '$lib/view/threats';
+  import { buildableWonders, wonderTally } from '$lib/view/wonders';
   import CityBand from '$lib/components/city/CityBand.svelte';
   import PlayerStrip from '$lib/components/city/PlayerStrip.svelte';
   import { personaName } from '$lib/components/game/names';
@@ -157,6 +160,8 @@
 
   const wondersWithTucked = viewFixture('appian-economy-seat0').players[0].wonders;
   const wondersWithRemoved = viewFixture('seventh-wonder-seat0').players[1].wonders;
+  // The appian-economy position: seat 0 is to move and may build three wonders.
+  const wondersBuildable = buildableWonders(viewFixture('appian-economy-seat0'), 0);
 
   // --- TurnBar: every TurnState kind, from a real view wherever the state
   // only depends on the view, and a synthesized TurnContext (same shape as
@@ -389,7 +394,8 @@
   const medallionCaption = 'Standalone medallion states';
   const resourceCaption = 'Resource chips (mid-game seat, one choice producer)';
   const scienceCaption = 'Science tracker: none, one symbol, a pair, and the danger ring';
-  const wonderCaption = 'Wonder row: chips and list, built+tucked and removed';
+  const wonderCaption =
+    'Wonder button (none built, one built and buildable now) and wonder lists: built with a card, buildable now, and one out of the game';
   const bandCaption = 'City bands by colour, and the ten-tick cap at higher counts';
 </script>
 
@@ -403,7 +409,7 @@
     {#each scenes.slice(0, 4) as scene (scene.key)}
       <div class="flex flex-col gap-1 rounded-panel border border-rule bg-panel p-3">
         <p class="text-xs text-fg-muted">{scene.label}</p>
-        <MilitaryTrack military={scene.view.military} viewerSeat={0} />
+        <MilitaryTrack military={scene.view.military} viewerSeat={0} legend />
       </div>
     {/each}
     <div class="flex flex-col gap-1 rounded-panel border border-rule bg-panel p-3">
@@ -468,14 +474,35 @@
         }}
       />
       <ScienceTracker science={scienceDangerView.players[0].science} />
+      <div class="flex flex-wrap gap-2">
+        <ScienceTracker science={{ distinct: 0, symbols: [] }} pill />
+        <ScienceTracker
+          science={{
+            distinct: 2,
+            symbols: [
+              { symbol: 'quill', count: 2 },
+              { symbol: 'wheel', count: 1 }
+            ]
+          }}
+          pill
+        />
+        <ScienceTracker science={scienceDangerView.players[0].science} pill />
+      </div>
     </div>
     <div class="flex flex-col gap-2 rounded-panel border border-rule bg-panel p-3">
       <p class="text-xs text-fg-muted">
         {wonderCaption}
       </p>
-      <WonderRow wonders={wondersWithTucked} variant="chips" />
-      <WonderRow wonders={wondersWithTucked} variant="list" />
-      <WonderRow wonders={wondersWithRemoved} variant="list" />
+      <div class="flex flex-wrap gap-2">
+        <WonderButton built={0} total={4} name={names[0]} />
+        <WonderButton
+          {...wonderTally({ wonders: wondersWithTucked })}
+          buildable={wondersBuildable.size > 0}
+          name={names[0]}
+        />
+      </div>
+      <WonderList wonders={wondersWithTucked} buildable={wondersBuildable} onselect={() => {}} />
+      <WonderList wonders={wondersWithRemoved} />
     </div>
     <div class="flex flex-col gap-2 rounded-panel border border-rule bg-panel p-3">
       <p class="text-xs text-fg-muted">
@@ -511,6 +538,9 @@
           player={scene.view.players[0]}
           military={scene.view.military}
           score={scene.view.scorePreview[0]}
+          ended={gameEnded(scene.view.phase)}
+          wonderBuildable={buildableWonders(scene.view, 0).size > 0}
+          onwonders={() => {}}
         />
         <PlayerStrip
           name={personaName('normal')}
@@ -519,6 +549,9 @@
           player={scene.view.players[1]}
           military={scene.view.military}
           score={scene.view.scorePreview[1]}
+          ended={gameEnded(scene.view.phase)}
+          wonderBuildable={buildableWonders(scene.view, 1).size > 0}
+          onwonders={() => {}}
         />
       </div>
     {/each}
@@ -536,6 +569,8 @@
             player={scene.view.players[0]}
             military={scene.view.military}
             score={scene.view.scorePreview[0]}
+            ended={gameEnded(scene.view.phase)}
+            buildable={buildableWonders(scene.view, 0)}
           />
           <CityPanel
             name={personaName('normal')}
@@ -544,6 +579,8 @@
             player={scene.view.players[1]}
             military={scene.view.military}
             score={scene.view.scorePreview[1]}
+            ended={gameEnded(scene.view.phase)}
+            buildable={buildableWonders(scene.view, 1)}
           />
         </div>
       </div>
