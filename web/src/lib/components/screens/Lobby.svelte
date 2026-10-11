@@ -10,13 +10,19 @@
   // connection, and handles Copy, Share and Home (the clipboard, the share
   // sheet and the toasts belong to the game screen). The QR encoder (uqr)
   // is imported here, lazily, so it loads with the lobby and nowhere else.
+  //
+  // Under the players, a read-only summary of the game's hint settings
+  // (docs/dev/decisions.md D23), so they are known before the game starts:
+  // the `hints` prop, or else the room's own from the page's game context.
   import ArrowLeft from '@lucide/svelte/icons/arrow-left';
   import Copy from '@lucide/svelte/icons/copy';
   import Share2 from '@lucide/svelte/icons/share-2';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { qrPath, type Presence } from '$lib/ui/online';
-  import type { SeatInfo } from '$lib/wire';
+  import type { HintSettings, SeatInfo } from '$lib/wire';
+  import { tryGameContext } from '../choices/room';
+  import HintsSummary from '../hints/HintsSummary.svelte';
   import ConnectionPill from '../hud/ConnectionPill.svelte';
   import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
@@ -34,6 +40,8 @@
     oncopy: () => void;
     onshare?: () => void;
     onhome: () => void;
+    /** The game's hint settings; by default the room's (the game context). */
+    hints?: HintSettings | null;
   }
 
   let {
@@ -44,8 +52,12 @@
     canShare = false,
     oncopy,
     onshare,
-    onhome
+    onhome,
+    hints
   }: Props = $props();
+
+  const ctx = tryGameContext();
+  const shownHints = $derived(hints ?? ctx?.session.hints ?? null);
 
   interface Qr {
     size: number;
@@ -217,6 +229,10 @@
         {/each}
       </ul>
     </section>
+
+    {#if shownHints}
+      <HintsSummary hints={shownHints} title={t('hints.lobby.title')} />
+    {/if}
 
     <p class="mt-auto text-center text-xs text-fg-muted">{t('online.lobby.homeHint')}</p>
   </div>

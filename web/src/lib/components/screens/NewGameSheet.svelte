@@ -7,6 +7,8 @@
   import Button from '$lib/components/shell/Button.svelte';
   import Segmented from '$lib/components/shell/Segmented.svelte';
   import Sheet from '$lib/components/shell/Sheet.svelte';
+  import HintsSection from '$lib/components/hints/HintsSection.svelte';
+  import { hintDefaults } from '$lib/hints/local.svelte';
   import { SessionError } from '$lib/session/session.svelte';
   import type { BotLevel, SeatChoice } from '$lib/wire';
 
@@ -30,6 +32,8 @@
 
   let level = $state<BotLevel>('normal');
   let seatValue = $state<'random' | '0' | '1'>('random');
+  // The game's hint settings, from this device's last saved ones.
+  let hints = $state(hintDefaults.for('ai'));
   let starting = $state(false);
   let failure = $state<string | null>(null);
 
@@ -42,6 +46,9 @@
   async function start(): Promise<void> {
     if (starting) return;
     const seat: SeatChoice = seatValue === 'random' ? 'random' : seatValue === '0' ? 0 : 1;
+    // The game starts from these hints (the Session's create reads the
+    // local default), and the next new game on this device will too.
+    hintDefaults.save('ai', hints);
     starting = true;
     failure = null;
     try {
@@ -102,6 +109,8 @@
       />
       <p class="text-xs text-fg-muted">{t('home.ai.firstRandomNote')}</p>
     </div>
+
+    <HintsSection bind:value={hints} />
 
     {#if failure}
       <p class="text-sm text-cinnabar" role="alert">{failure}</p>

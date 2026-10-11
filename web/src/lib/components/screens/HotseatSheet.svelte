@@ -20,6 +20,8 @@
   import Button from '$lib/components/shell/Button.svelte';
   import Segmented from '$lib/components/shell/Segmented.svelte';
   import Sheet from '$lib/components/shell/Sheet.svelte';
+  import HintsSection from '$lib/components/hints/HintsSection.svelte';
+  import { hintDefaults } from '$lib/hints/local.svelte';
   import { cleanName } from '$lib/session/identity';
   import { SessionError } from '$lib/session/session.svelte';
   import { settings, type Orientation } from '$lib/ui/settings.svelte';
@@ -42,6 +44,8 @@
   let orientation = $state<Orientation>(
     settings.value.hotseatOrientation ?? (narrowScreen.current ? 'face' : 'fixed')
   );
+  // The game's hint settings, from this device's last saved ones.
+  let hints = $state(hintDefaults.for('hotseat'));
   let starting = $state(false);
   let failure = $state<string | null>(null);
 
@@ -59,6 +63,9 @@
       cleanName(name2) || t('home.hotseat.player2Default')
     ];
     settings.update({ hotseatPassDevice: passDevice, hotseatOrientation: orientation });
+    // The game starts from these hints (the Session's create reads the
+    // local default), and the next new game on this device will too.
+    hintDefaults.save('hotseat', hints);
     starting = true;
     failure = null;
     try {
@@ -128,6 +135,8 @@
         bind:value={orientation}
       />
     </div>
+
+    <HintsSection bind:value={hints} />
 
     {#if failure}
       <p class="text-sm text-cinnabar" role="alert">{failure}</p>

@@ -12,6 +12,7 @@
   // layer come with it.
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
+  import HintsMenuItem from '../hints/HintsMenuItem.svelte';
   import House from '@lucide/svelte/icons/house';
   import Menu from '@lucide/svelte/icons/menu';
   import Undo2 from '@lucide/svelte/icons/undo-2';
@@ -192,6 +193,7 @@
         {t('game.menu.settings')}
       </button>
     {/if}
+    <HintsMenuItem class={menuItem} onclose={() => choose(undefined)} />
     {#if onOpenLog}
       <button
         type="button"
