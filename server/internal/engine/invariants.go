@@ -438,7 +438,8 @@ func (c *invChecker) phase() {
 	if s.ToMove > 1 || s.Active > 1 || s.FirstSeat > 1 {
 		c.fail("a seat is out of range: toMove %d, active %d, first %d", s.ToMove, s.Active, s.FirstSeat)
 	}
-	if (s.Phase == PhaseWonderDraft) != (s.Age == 0) && !(s.Age == 0 && forfeited(s)) {
+	draftForfeit := s.Age == 0 && forfeited(s) // a forfeit during the draft ends the game in age 0
+	if (s.Phase == PhaseWonderDraft) != (s.Age == 0) && !draftForfeit {
 		c.fail("phase %s in age %d", s.Phase, s.Age)
 	}
 	if s.Phase != PhaseChooseStarter && s.Phase != PhaseGameOver && s.ToMove != s.Active {
