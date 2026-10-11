@@ -136,6 +136,15 @@ export const game = {
   'game.menu.settings': 'Settings',
   'game.menu.log': 'Log',
   'game.menu.replay': 'Download replay',
+  'game.menu.forfeit': 'Forfeit the game',
+
+  // The forfeit's confirm step (ForfeitConfirm.svelte).
+  'game.forfeit.title': 'Forfeit the game?',
+  'game.forfeit.titleName': 'Forfeit the game for {name}?',
+  'game.forfeit.consequence': '{name} wins at once.',
+  'game.forfeit.final': 'A forfeit ends the game for good: it cannot be undone.',
+  'game.forfeit.confirm': 'Forfeit',
+  'game.forfeit.cancel': 'Keep playing',
 
   // Toasts after a move in a local room.
   'game.toast.undo': 'Undo',

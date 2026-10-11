@@ -5,9 +5,11 @@
   // caller passes the age, the count and whether undo is available right
   // now (view.canUndo) and gets a click back for each button.
   //
-  // The game menu (every mode) holds Home, Settings and the log, and once
-  // the game has ended the replay download. It is a native popover: light
-  // dismiss, Escape and the top layer come with it.
+  // The game menu (every mode) holds Home, Settings and the log, Forfeit
+  // while the caller says a forfeit is possible (it opens a confirm step;
+  // nothing is sent from here), and once the game has ended the replay
+  // download. It is a native popover: light dismiss, Escape and the top
+  // layer come with it.
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import House from '@lucide/svelte/icons/house';
@@ -16,6 +18,7 @@
   import Settings from '@lucide/svelte/icons/settings';
   import ScrollText from '@lucide/svelte/icons/scroll-text';
   import Download from '@lucide/svelte/icons/download';
+  import Flag from '@lucide/svelte/icons/flag';
 
   interface Props {
     /** 1 to 3, or 0 during the wonder draft. */
@@ -33,6 +36,9 @@
      *  hand out its log: the menu then offers "Download replay", which saves
      *  GET /api/rooms/{code}/log (docs/protocol.md) as ajayeb-<code>.json. */
     replayCode?: string;
+    /** When given, the menu offers Forfeit, which reports this (the caller
+     *  shows the confirm step). */
+    onForfeit?: () => void;
     /** Extra content between the age and the buttons (the compact military
      *  track and tokens of the phone landscape layout). */
     children?: Snippet;
@@ -49,6 +55,7 @@
     onHome,
     homeHint = true,
     replayCode,
+    onForfeit,
     children,
     class: className = ''
   }: Props = $props();
@@ -194,6 +201,17 @@
       >
         <ScrollText class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
         {t('game.menu.log')}
+      </button>
+    {/if}
+    {#if onForfeit}
+      <button
+        type="button"
+        class="{menuItem} mt-1 border-t border-rule pt-1 text-cinnabar"
+        data-control="menu-forfeit"
+        onclick={() => choose(onForfeit)}
+      >
+        <Flag class="size-5 shrink-0" aria-hidden="true" />
+        {t('game.menu.forfeit')}
       </button>
     {/if}
     {#if replayCode}

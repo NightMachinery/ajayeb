@@ -90,6 +90,7 @@
   import { Toasts } from '../shell/toast-queue.svelte';
   import ProgressTokenRow from '../token/ProgressTokenRow.svelte';
   import CardSheet from './CardSheet.svelte';
+  import ForfeitConfirm from './ForfeitConfirm.svelte';
   import {
     botPick,
     eventLines,
@@ -131,6 +132,8 @@
   let wonderFromList = $state<Seat | null>(null);
   // The list's seat while it closes, so its content stays put.
   let wonderListShown = $state<Seat>(0);
+  // The forfeit's confirm step (from the game menu).
+  let forfeitOpen = $state(false);
 
   // Settings, with the device defaults of the hot-seat sheet.
   const passDevice = $derived(settings.value.hotseatPassDevice ?? coarsePointer.current);
@@ -161,6 +164,11 @@
   // Undo stays available while a bot's answer is held on screen: undo()
   // shows it at once and then takes it back with the player's move.
   const canUndo = $derived(mode !== 'online' && session.canUndo);
+  // The seat a forfeit would give up now (the Session says when it can be
+  // sent: a seated player while the game runs, the player to move in a
+  // hot-seat game), and the seat that would win.
+  const resignSeat = $derived(session.resignSeat);
+  const resignWinner = $derived<Seat>(resignSeat === 1 ? 0 : 1);
 
   const layout = $derived(breakpoints.viewport);
   // Where the toasts sit in play. Above the turn bar by default (on a phone
@@ -403,6 +411,16 @@
     }
   }
 
+  /** Sends the forfeit the confirm step agreed to. */
+  function forfeit(): void {
+    forfeitOpen = false;
+    wonderListSeat = null;
+    if (session.resign()) {
+      lastRequest = { seq: session.seq, kind: 'act' };
+      ui.sent();
+    }
+  }
+
   function undo(): void {
     // A bot's answer held for its dwell is shown at once, so the undo takes
     // back what the player can see.
@@ -546,6 +564,7 @@
         onHome={onhome}
         homeHint={view?.phase !== 'gameOver'}
         replayCode={view?.phase === 'gameOver' && view.revealed ? frame?.code : undefined}
+        onForfeit={resignSeat !== null ? () => (forfeitOpen = true) : undefined}
         class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
       >
         {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}
@@ -777,6 +796,14 @@
     />
   </div>
 {/if}
+
+<ForfeitConfirm
+  open={forfeitOpen && resignSeat !== null}
+  name={mode === 'hotseat' && resignSeat !== null ? names[resignSeat] : undefined}
+  winner={names[resignWinner]}
+  onconfirm={forfeit}
+  onclose={() => (forfeitOpen = false)}
+/>
 
 <LiveRegion message={lastLines.join(' ')} />
 <!-- The next age's approved card art, fetched while this one is played. -->
