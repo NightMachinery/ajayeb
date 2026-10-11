@@ -368,14 +368,10 @@ func vwCheckStructure(t *testing.T, s *engine.State, vw *view.View) {
 			t.Errorf("%s: a face-up slot of %s shows %+v", where, sl.Card, sv)
 			continue
 		}
-		if !sv.Accessible {
-			if sv.Costs != nil {
-				t.Errorf("%s: costs on a covered card", where)
-			}
-			continue
-		}
+		// Every face-up card carries both seats' costs, covered or not: the
+		// cost of building it as if it were accessible now.
 		if sv.Costs == nil {
-			t.Errorf("%s: no costs on the accessible %s", where, sl.Card)
+			t.Errorf("%s: no costs on the face-up %s (accessible %v)", where, sl.Card, sv.Accessible)
 			continue
 		}
 		for seat := range sv.Costs {

@@ -47,8 +47,9 @@
 // table is in every view: face-up cards, both cities and purses, the cards
 // tucked under wonders, the military track and its looting tokens, the board
 // tokens, the discard pile, the wonders of the current draft round, the cost
-// of every accessible card for both seats, each seat's wonder costs, trade
-// prices, production, science and discard value, and the score preview.
+// of every face-up card for both seats (covered ones too, as if they were
+// accessible), each seat's wonder costs, trade prices, production, science
+// and discard value, and the score preview.
 //
 // Hidden from every viewer until the game is over: the cards in face-down
 // slots (only their backs show), the cards set aside from each age's deck

@@ -127,8 +127,8 @@ func viewDraft(s *State) *view.DraftView {
 }
 
 // viewStructure returns the 20 slots of the current age, or none during the
-// draft. A face-down card shows only its back; an accessible face-up card
-// carries both seats' costs.
+// draft. A face-down card shows only its back; every face-up card,
+// accessible or still covered, carries both seats' costs.
 func viewStructure(s *State) []view.SlotView {
 	out := []view.SlotView{}
 	if s.Age < 1 || s.Age > NumAges {
@@ -153,7 +153,11 @@ func viewStructure(s *State) []view.SlotView {
 			if sl.FaceUp {
 				sv.State = view.SlotStateFaceUp
 				sv.Card = dtoCardPtr(sl.Card)
-				if sv.Accessible && sv.Card != nil {
+				// Every face-up card, covered or not, carries both seats'
+				// costs as if it were accessible now: face-up cards and
+				// both cities are public, and the card sheet says what each
+				// player would pay before the card is free.
+				if sv.Card != nil {
 					sv.Costs = &[2]view.CostView{viewBuildingCost(s, 0, sl.Card), viewBuildingCost(s, 1, sl.Card)}
 				}
 			}

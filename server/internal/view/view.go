@@ -60,7 +60,7 @@ type SlotView struct {
 	Card       *string      `json:"card,omitempty"`                          // only when face up
 	Accessible bool         `json:"accessible"`                              // holds a card and no card covers it
 	CoveredBy  []int        `json:"coveredBy"`                               // the slots still covering this one
-	Costs      *[2]CostView `json:"costs,omitempty" tstype:"Pair<CostView>"` // both seats' cost of building the card, by seat; only for an accessible face-up card
+	Costs      *[2]CostView `json:"costs,omitempty" tstype:"Pair<CostView>"` // both seats' cost of building the card now, by seat, as if it were accessible; for every face-up card, covered or not
 }
 
 // ResourceCounts holds a number per resource.

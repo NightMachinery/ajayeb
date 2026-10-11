@@ -27,6 +27,62 @@
       "coveredBy": [
        2,
        3
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 4,
+        "total": 4,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 4,
+        "total": 4,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -40,6 +96,76 @@
       "coveredBy": [
        3,
        4
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 3,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 6
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 3,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 6
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -88,6 +214,76 @@
       "accessible": false,
       "coveredBy": [
        9
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -100,6 +296,76 @@
       "accessible": false,
       "coveredBy": [
        9
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -112,6 +378,76 @@
       "accessible": false,
       "coveredBy": [
        10
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -124,6 +460,90 @@
       "accessible": false,
       "coveredBy": [
        10
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -160,6 +580,90 @@
       "accessible": false,
       "coveredBy": [
        15
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -173,6 +677,90 @@
       "coveredBy": [
        15,
        16
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -186,6 +774,104 @@
       "coveredBy": [
        16,
        17
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -198,6 +884,90 @@
       "accessible": false,
       "coveredBy": [
        17
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1026,6 +1796,62 @@
       "coveredBy": [
        2,
        3
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 4,
+        "total": 4,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 4,
+        "total": 4,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1039,6 +1865,76 @@
       "coveredBy": [
        3,
        4
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 3,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 6
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 3,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 6
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1087,6 +1983,76 @@
       "accessible": false,
       "coveredBy": [
        9
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1099,6 +2065,76 @@
       "accessible": false,
       "coveredBy": [
        9
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1111,6 +2147,76 @@
       "accessible": false,
       "coveredBy": [
        10
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1123,6 +2229,90 @@
       "accessible": false,
       "coveredBy": [
        10
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1159,6 +2349,90 @@
       "accessible": false,
       "coveredBy": [
        15
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1172,6 +2446,90 @@
       "coveredBy": [
        15,
        16
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1185,6 +2543,104 @@
       "coveredBy": [
        16,
        17
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -1197,6 +2653,90 @@
       "accessible": false,
       "coveredBy": [
        17
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2533,6 +4073,62 @@
       "coveredBy": [
        2,
        3
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 4,
+        "total": 4,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 4,
+        "total": 4,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2546,6 +4142,76 @@
       "coveredBy": [
        3,
        4
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 3,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 6
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 3,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 6
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2594,6 +4260,76 @@
       "accessible": false,
       "coveredBy": [
        9
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2606,6 +4342,76 @@
       "accessible": false,
       "coveredBy": [
        9
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2618,6 +4424,76 @@
       "accessible": false,
       "coveredBy": [
        10
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 6,
+        "total": 6,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2630,6 +4506,90 @@
       "accessible": false,
       "coveredBy": [
        10
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2666,6 +4626,90 @@
       "accessible": false,
       "coveredBy": [
        15
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "stone",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2679,6 +4723,90 @@
       "coveredBy": [
        15,
        16
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2692,6 +4820,104 @@
       "coveredBy": [
        16,
        17
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "glass",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
@@ -2704,6 +4930,90 @@
       "accessible": false,
       "coveredBy": [
        17
+      ],
+      "costs": [
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       },
+       {
+        "affordable": true,
+        "shortfall": 0,
+        "chainFree": false,
+        "printedCoins": 0,
+        "own": {
+         "wood": 0,
+         "clay": 0,
+         "stone": 0,
+         "glass": 0,
+         "papyrus": 0
+        },
+        "producers": [],
+        "trade": [
+         {
+          "resource": "wood",
+          "units": 2,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 4
+         },
+         {
+          "resource": "clay",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         },
+         {
+          "resource": "papyrus",
+          "units": 1,
+          "unitPrice": 2,
+          "fixed": false,
+          "coins": 2
+         }
+        ],
+        "tradeTotal": 8,
+        "total": 8,
+        "toOpponent": 0,
+        "urbanismBonus": 0
+       }
       ]
      },
      {
