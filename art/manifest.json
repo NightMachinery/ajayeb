@@ -9,10 +9,19 @@
       "crop": "1:1",
       "subject": "a young apprentice scribe at a writing desk, eager and attentive",
       "accent": "turquoise",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {
+        "apprentice.avif": 4895
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "correct subject: a young, attentive apprentice scribe at a lacquered writing desk, pen on a blank page; reads clearly at 192 px and still reads at 64 px",
+        "turquoise accent dominant (turban and robe) with vermilion and lapis supporting, gold kept to trims and the brush pot",
+        "no text: the page is blank apart from one faint ruled margin rectangle that carries no lines of writing and vanishes at shipped size; desk boxes carry floral gold ornament only",
+        "plain ivory background, one figure, edges fade to paper; fine ink line and opaque gouache match the card anchor"
+      ]
     },
     "avatar/master": {
       "id": "avatar/master",
@@ -22,10 +31,19 @@
       "crop": "1:1",
       "subject": "an elder master strategist studying a map table with calm focus",
       "accent": "vermilion",
-      "status": "todo",
-      "attempt": 0,
+      "status": "approved",
+      "attempt": 1,
       "promptAmend": "",
-      "bytes": {}
+      "bytes": {
+        "master.avif": 4334
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "correct subject: an elder strategist, hand to beard in calm thought, pointing a stylus at a map; reads clearly at 192 px and 64 px",
+        "vermilion accent dominant (robe) with lapis lining and turban jewel; gold limited to small objects and trims",
+        "no text anywhere: the map shows only hills, a river, cypresses and two small walled towns with domes (wall towers, not minarets); book covers carry a floral ornament, not letters",
+        "plain ivory background, one figure, soft fade into paper on every side; matches the anchors' line and palette"
+      ]
     },
     "avatar/scholar": {
       "id": "avatar/scholar",
@@ -35,10 +53,19 @@
       "crop": "1:1",
       "subject": "a seated scholar with an open book and an astrolabe",
       "accent": "lapis",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Keep the same composition: a bearded scholar in a lapis robe and turban, shoulders up, holding a brass astrolabe beside his face with an open blank book in front of him. Draw the astrolabe face plain: smooth concentric brass rings with only short evenly spaced tick lines and a pierced openwork star in the centre, no numerals, letters, symbols or glyph-like marks on any ring, on the rule or on the back.",
+      "bytes": {
+        "scholar.avif": 4843
+      },
+      "reasons": [
+        "Round 1's only fault is fixed: the astrolabe face has plain concentric rings, short tick lines and a pierced eight-pointed openwork star, with no numerals, letters or glyph-like marks (checked at 2.5x zoom); the open book's pages are blank.",
+        "Correct subject: a bearded scholar, shoulders up, studying a brass astrolabe beside an open book; reads clearly at 192 px and still reads at 64 px.",
+        "Lapis is clearly the dominant accent (turban and robe), with turquoise and vermilion in support and gold kept to the astrolabe, the turban jewel and trims.",
+        "One figure on plain ivory paper with no scenery; the robe fades into the paper at the lower corners. Line, gouache and framing match the approved apprentice and master avatars, so the three read as one set."
+      ],
+      "approvedAttempt": 2
     },
     "back/age1": {
       "id": "back/age1",
@@ -1816,10 +1843,15 @@
       "crop": "16:9",
       "subject": "a garden terrace overlooking a miniature city of domed garden pavilions and two or three of the ancient wonders, with cypress trees and a fountain, under a plain ivory sky",
       "accent": "turquoise",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "needs-human",
+      "attempt": 3,
+      "promptAmend": "Keep attempt 3's Mausoleum exactly (white marble, colonnade, stepped pyramidal roof, small gold finial, ball-topped corner pillars and urns, lapis frieze of small gold flowers) and its Hanging Gardens, lake and turquoise-domed island pavilions. Pull the foreground back to attempt 2's scale: the terrace is a shallow strip, the couple on the carpet sits small at the left, and the octagonal tiled fountain is small and whole with plain paper below it. The whole scene sits in a wide horizontal band across the middle of the image: leave the top eighth and the bottom eighth of the picture as plain ivory paper, and a wide plain paper margin at left and right, so nothing (fountain, terrace floor, carpet, balustrade, shrubs, finials) comes near any edge; the terrace floor and shrubs thin out and fade into the paper before the bottom. No animals, no statues, no letter-like marks.",
+      "bytes": {},
+      "reasons": [
+        "The shipped 16:9 crop cuts the painting at the bottom edge: at 1600x900 and 800x450 the octagonal fountain's tiled base, the marble terrace floor and the flowering shrubs at both lower corners run straight off the bottom, and the carpet, cushions and balustrade reach the left edge. Attempt 3 zoomed the foreground in (a much larger couple and fountain) compared with attempt 2, whose foreground sat inside a paper margin; the band check fell from 87.3% to 72.6%. The hero ships near full resolution on the landing page, so a hard cut there shows.",
+        "Round 2's Mausoleum fault is fixed and should be kept: a white marble tomb on a stepped podium with a colonnade, a stepped pyramidal roof with a small gold finial, plain ball-topped pillars and urns at the corners, no lions or other statues, and lapis frieze bands of gold floral rosettes with no letter-like marks (checked at 3x to 8x zoom).",
+        "Also worth keeping: no animals anywhere, only two figures (the couple on the carpet), turquoise domes over patterned lapis water, the Hanging Gardens whole at left, a plain ivory sky with a small gold sun disc."
+      ]
     },
     "icon/app": {
       "id": "icon/app",
@@ -2126,10 +2158,20 @@
       "crop": "16:9",
       "subject": "a joyful procession of citizens with flowers and musicians in a palace garden of domed pavilions, fountains and flowering trees, under a plain ivory sky",
       "accent": "lapis",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Keep attempt 2's two central figures exactly: the musician in a malachite and vermilion robe seated on a carpet playing a long-necked lute, and the dancer in a lapis robe with a cream veil tossing rose petals from a basket. Remove every other person: no drummers, no flower bearers, no children, nobody inside the pavilion. Behind them, small and light: one turquoise-domed garden pavilion with an empty arcade, its dome topped by a plain gold ball and a small pointed bud finial (no crescent, no hook), a fountain in a tiled pool, cypresses and flowering trees. Tile bands are simple geometric or floral pattern only. No animals. Keep everything inside the central area with a wide margin of plain ivory paper on all four sides.",
+      "bytes": {
+        "civilian.avif": 56361
+      },
+      "reasons": [
+        "Every round 2 fault is fixed: only the two large figures remain (the musician seated on a carpet playing a long-necked lute and the lapis-robed dancer tossing rose petals from a basket), nobody in the pavilion, no drummers or bearers, and they read first at 960x540 and still at 480x270.",
+        "The pavilion dome ends in a plain gold ball and a pointed bud finial, with no crescent or hook (checked at 4x zoom); its tile bands and the pool's tile border are geometric and floral only, with no letter-like marks; the lute neck carries only fret lines.",
+        "Lapis is the dominant accent (the dancer's robe, the tile bands and the pool), with malachite, vermilion and turquoise in support and gold kept to trims, the finial and the basket rim.",
+        "No animals or birds; one turquoise-domed garden pavilion, a fountain, cypresses, flowering trees and lilac rocks, all lighter than the figures; no minarets.",
+        "Fine ink line, flat jewel-tone gouache and a wide ivory margin that feathers on every side (gate PASS 99.9%), matching the card anchor and the approved victory/science attempt 2."
+      ],
+      "approvedAttempt": 3
     },
     "victory/military": {
       "id": "victory/military",
@@ -2139,10 +2181,20 @@
       "crop": "16:9",
       "subject": "triumphant soldiers raising plain round shields before a city gate, pennants without emblems, under a plain ivory sky",
       "accent": "cinnabar",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 4,
+      "promptAmend": "Keep attempt 3's two lead soldiers exactly: one in a vermilion coat raising a plain round brass shield overhead, one in a lapis coat holding a tall spear with a plain vermilion pennant, both clean, flat, unstained gouache with small gold flower sprigs. Behind them the same sand-stone city gate with its geometric lapis strapwork arch and closed wooden door, with at most two tiny figures on the battlements. Remove all other soldiers, all other shields and pennants, the domed pavilion and its side wings at the right; put cypresses, flowering shrubs and lilac rocks there instead. No birds or animals, no cartouches, no lettering or script-like marks anywhere. Keep the wide margin of plain ivory paper on all four sides.",
+      "bytes": {
+        "military.avif": 52894
+      },
+      "reasons": [
+        "Every round 3 fault is fixed: only the two lead soldiers (vermilion coat raising a plain round brass shield, lapis coat holding a tall spear with a plain vermilion pennant) plus exactly two tiny figures on the battlements; the domed pavilion and side wings are gone, replaced by cypresses, flowering shrubs and lilac rocks.",
+        "No text: the gate's arch is pure geometric lapis strapwork around a closed wooden door, the shield is plain with three bosses, the pennant is solid vermilion with no marks (all checked at 3x zoom). The tower tops carry machicolation corbels drawn as simple ink brackets, which read as stonework, not glyphs, at the shipped size.",
+        "Coats are clean, flat gouache with small gold sprigs, no stains; no birds or animals; the gate towers are short crenellated fortification towers with small domed kiosks, not minarets, and nothing reads as an emblem or national symbol.",
+        "Vermilion leads the palette (coat, pennant, trousers, flowers) with lapis in support and gold kept to the shield, finials and trims; the two soldiers read first at 960x540 and at 480x270.",
+        "Line, palette and density match the anchors and the approved victory scenes; the scene fades into a plain ivory margin on all four sides (gate PASS 83.0%)."
+      ],
+      "approvedAttempt": 4
     },
     "victory/science": {
       "id": "victory/science",
@@ -2152,10 +2204,19 @@
       "crop": "16:9",
       "subject": "scholars celebrating around a large armillary sphere and unrolled star charts in a garden pavilion, plain ivory background",
       "accent": "malachite",
-      "status": "todo",
-      "attempt": 0,
-      "promptAmend": "",
-      "bytes": {}
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Two large scholars in malachite-green robes in the centre, filling the middle third, one raising an arm in celebration and one unrolling a lapis star chart drawn only as gold dots and fine lines (no text, numerals or symbols); between them a medium-sized armillary sphere of thin brass rings on a malachite-tiled stand. Behind them, small and light: one domed garden pavilion, a few cypresses and a pool. No other people, no birds, no peacocks, no deer or other animals, no books stacked around. Keep everything inside the central area with a wide margin of plain ivory paper on all four sides; nothing touches any edge, including the top.",
+      "bytes": {
+        "science.avif": 48378
+      },
+      "reasons": [
+        "Every round 1 fault is fixed: no animals or birds, two large scholars in malachite robes (one raising his arm in celebration, one unrolling the star chart) fill the middle third, and the scene sits inside a wide ivory margin with nothing touching any edge (gate PASS 100%).",
+        "Malachite is clearly the dominant accent (both robes and the tiled stand), with lapis in the chart and gold kept to the thin-ringed armillary sphere and the finial.",
+        "No text: the star chart has only gold dots, stars, concentric circles and radial lines, and the pavilion and stand carry floral rosettes, arabesque and an eight-pointed geometric star, with no letter forms (checked at 2.5x to 6x zoom). The pavilion finial is a plain gold ball and bud.",
+        "Reads at once at 480x270 (two scholars, a sphere, a star chart) and matches the anchors' fine ink line, flat jewel-tone gouache and calm ivory background; one domed pavilion and a pool, no minarets."
+      ],
+      "approvedAttempt": 2
     },
     "wonder/appian-way": {
       "id": "wonder/appian-way",
