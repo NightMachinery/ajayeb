@@ -16,6 +16,7 @@
   // with a spurious parse error ("element was left open"), even though the
   // real Svelte compiler parses the file fine.
   import type { Snippet } from 'svelte';
+  import { attachSheetDrag, SPLIT_QUERY } from './sheet-drag';
 
   interface Props {
     /** Bindable: set true to open, false (or Esc, or a backdrop tap) to close. */
@@ -40,6 +41,7 @@
   }: Props = $props();
 
   let dialogEl: HTMLDialogElement | undefined = $state();
+  let panelEl: HTMLDivElement | undefined = $state();
 
   // DOM-only effect (see +layout.svelte): showModal()/close() never write
   // $state themselves, so this cannot loop with the `open` reads below.
@@ -48,6 +50,19 @@
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     else if (!open && dialog.open) dialog.close();
+  });
+
+  // Swipe down to dismiss (sheet-drag.ts), only while this is a bottom
+  // sheet: never for a centred panel. DOM listeners only, no $state writes.
+  $effect(() => {
+    const dialog = dialogEl;
+    const panel = panelEl;
+    if (!dialog || !panel) return;
+    return attachSheetDrag(
+      dialog,
+      panel,
+      () => !centered && !globalThis.matchMedia?.(SPLIT_QUERY).matches
+    );
   });
 
   // The dialog's own 'close' fires on Esc too, so this is the single place
@@ -71,9 +86,9 @@
   class="sheet {className}"
   class:centered
 >
-  <div class="sheet-panel">
+  <div class="sheet-panel" bind:this={panelEl}>
     {#if showHandle && !centered}
-      <div class="sheet-handle split:hidden" aria-hidden="true"></div>
+      <div class="sheet-handle split:hidden" data-sheet-handle aria-hidden="true"></div>
     {/if}
     {@render children()}
   </div>
@@ -130,11 +145,15 @@
     overflow-y: auto;
     background: var(--panel);
     padding-bottom: max(1rem, var(--safe-b));
+    /* A pull past the top must not chain to the page, where the browser
+       would overscroll it or pull to refresh. */
+    overscroll-behavior: contain;
     /* A scrolling panel can take focus when the dialog opens; its ring
        would frame the whole sheet. Its buttons keep their own rings. */
     outline: none;
   }
   .sheet-handle {
+    position: relative;
     margin-inline: auto;
     margin-block: 0.5rem 0.25rem;
     height: 0.375rem;
@@ -142,6 +161,13 @@
     flex-shrink: 0;
     border-radius: 999px;
     background: var(--rule-strong);
+    touch-action: none;
+  }
+  /* The handle is a small bar; give the finger a larger grip around it. */
+  .sheet-handle::before {
+    content: '';
+    position: absolute;
+    inset: -0.75rem -2.5rem;
   }
 
   /* Wide screens, and a short landscape screen: a centred panel instead of a

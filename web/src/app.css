@@ -164,6 +164,10 @@
 
   html {
     height: 100%;
+    /* No pull to refresh and no rubber band on the page itself: a game
+       is not reloaded by a stray downward swipe (the root element is the
+       one whose value reaches the viewport). */
+    overscroll-behavior: none;
     background: var(--table);
     color: var(--fg);
     font-family: var(--type-ui);
