@@ -75,6 +75,17 @@ The pages: `/play/<code>` joins a room and shows the game screen (`Room.svelte`)
 
 The `/dev/gallery` page has a Game screen section that shows recorded states (draft, Age I, Age II, Age III, a pending choice, game over, and the online lobby, opponent-away and watching states) in frames of a phone and a desktop size. Its Online section shows the lobby (a fixed fake code and QR, also reconnecting), the name prompt, the online and join sheets, the room error, and the connection states of the pill, the presence dot and the turn bar.
 
+## Sound and haptics
+
+`src/lib/fx/` plays short cues when a frame's events arrive. There are no audio files: `sfx.ts` synthesizes seven cues with WebAudio (card slide, coin clink, flip, war drum, science chime, fanfare, draft tick). `cues.ts` is the pure, unit-tested mapper from a frame's events to cues and a vibration pattern. The Presenter calls `playFrameFx` once per shown frame.
+
+- Only live events play. The first snapshot of a room, another room's frame, and a frame whose version does not move forward (an undo, a resync) are silent.
+- Each cue kind plays at most once per frame, 90 ms apart, in the order of its first event. `play(cue, { delayMs })` takes a delay, so animations can retime cues later.
+- Settings: Sound (off by default) with a Quiet, Medium or Loud step, and Vibration (on by default, shown only where `navigator.vibrate` exists). Sound does not follow the Animation setting. The AudioContext starts only inside a user gesture: the Sound switch itself, or any later pointer or key press.
+- Haptics: 8 ms when a card or wonder is taken, a short pattern when the pawn moves, a longer one for looting.
+- Test hook: `window.__ajayebFx.cues()` and `.haptics()` list what would have played (a cue only while Sound is on, a vibration only while Vibration is on), and `.clear()` empties both. `e2e/specs/sound.spec.ts` reads it.
+- `/dev/gallery` has a sound board under Screens, with a button per cue.
+
 ## Styling
 
 - Tailwind's default colour palette is switched off. Use the semantic utilities, such as `bg-table`, `bg-panel`, `text-fg`, `text-fg-muted`, `border-rule`, `bg-accent` and `text-on-accent`, so every colour follows the theme. The palette and game colours are there too (`bg-card-red`, `text-sun-ink`, `bg-res-wood` and so on). The resource colours come in two kinds: `bg-res-wood` and the like are the resource tile fills, and `text-res-wood-ink`, `text-res-clay-ink`, `text-res-stone-ink`, `text-res-glass-ink` and `text-res-papyrus-ink` are the theme-aware inks for a resource glyph drawn straight on a page surface (paper, panel, parchment, or the night panels in dark mode). The inks keep 3:1 or more against those surfaces; the fills do not (papyrus and glass vanish on paper, wood on the night panels). A glyph on a resource tile or a card uses the card ink.
