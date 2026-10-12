@@ -371,3 +371,55 @@ export async function recordOnlineGame(
     for (const conn of conns) conn.close();
   }
 }
+
+/** What the server answered a hot-seat game created over the socket with undo off. */
+export interface UndoOffProbe {
+  /** room.allowUndo of the first state frame and of the frame after one move. */
+  allowUndo: [boolean, boolean];
+  /** canUndo of the frame after that move. */
+  canUndo: boolean;
+  /** The reject code the undo got (or 'applied' if the server took it). */
+  undoAnswer: string;
+}
+
+/**
+ * Creates a hot-seat game with `allowUndo: false` over the protocol, makes
+ * one move (the first choice) and sends an undo anyway, as a client that
+ * ignored canUndo would, and reports what the server answered.
+ */
+export async function probeUndoOff(origin: string): Promise<UndoOffProbe> {
+  const conn = new Connection(origin.replace(/^http/, 'ws') + '/ws');
+  const clientId = randomUUID();
+  try {
+    await conn.open();
+    await conn.send({ t: 'hello', v: 1, token: newToken(), name: 'NoUndo', clientId });
+    await conn.next((f) => f.t === 'welcome');
+    await conn.send({ t: 'create', mode: 'hotseat', seat: 0, names: [], allowUndo: false });
+    const created = await conn.next((f) => f.t === 'created');
+    const first = (await conn.next((f) => f.t === 'state')) as State;
+    const choice = first.view.choices[0];
+    if (!choice) throw new Error('no choice in a new game');
+    await conn.send({
+      t: 'act',
+      code: created.code,
+      seq: 1,
+      base: first.version,
+      key: choice.key,
+      seat: first.view.toMove
+    });
+    const moved = (await conn.next(
+      (f) => f.t === 'state' && f.ack?.seq === 1 && f.ack.clientId === clientId
+    )) as State;
+    await conn.send({ t: 'undo', code: created.code, seq: 2, base: moved.version });
+    const answer = await conn.next(
+      (f) => (f.t === 'reject' && f.seq === 2) || (f.t === 'state' && f.ack?.seq === 2)
+    );
+    return {
+      allowUndo: [first.room.allowUndo, moved.room.allowUndo],
+      canUndo: moved.canUndo,
+      undoAnswer: answer.t === 'reject' ? String(answer.code) : 'applied'
+    };
+  } finally {
+    conn.close();
+  }
+}

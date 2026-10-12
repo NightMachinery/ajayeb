@@ -253,7 +253,7 @@ export class GameDriver {
   }
 
   /**
-   * Closes any toast on screen with its dismiss button (never its Undo),
+   * Closes any toast on screen with its dismiss button,
    * and the bar that says who starts a new age (its close button, never
    * Summary), as a player would before tapping what they cover. On a phone
    * both float over the player's own strip, wonders included.

@@ -30,13 +30,20 @@ async function panelPicks(page: Page): Promise<string[]> {
 }
 
 /**
- * A skipped choice is explained on screen right after the move: in the move
- * toast, or (on a touch device) in the pass-device screen's summary.
+ * A skipped choice is explained on screen right after the move: in a toast,
+ * or (on a touch device) in the pass-device screen's summary. The toast is
+ * the only one a player's own move gets (M10.U1): it says why, without
+ * echoing the move itself, and offers no Undo (that is in the game menu).
  */
 async function expectSkipShown(page: Page, line: string): Promise<void> {
   await expect(
     page.locator('[data-toast], [data-pass-device]').filter({ hasText: line }).first()
   ).toBeVisible();
+  const toast = page.locator('[data-toast]').filter({ hasText: line });
+  if ((await toast.count()) > 0) {
+    await expect(toast.getByRole('button', { name: 'Undo' })).toHaveCount(0);
+    await expect(toast).not.toContainText(' built ');
+  }
 }
 
 /** After a move, the turn is the other seat's (past any pass-device screen). */
