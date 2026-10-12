@@ -15,7 +15,7 @@ layer and catch almost everything.
 
 ## Fuzzing
 
-The module has five fuzz targets:
+The module has six fuzz targets:
 
 - `FuzzPlayout` (`server/internal/engine/fuzz_test.go`): plays a seed's game
   by fuzzed choices among the legal actions and checks the invariants after
@@ -29,7 +29,12 @@ The module has five fuzz targets:
 - `FuzzDecodeClient` (`server/internal/wire/decode_fuzz_test.go`): any bytes
   as a client frame, which must be refused with `ErrBadFrame` or decode to
   the frame type its `"t"` names, pass the same checks again once
-  re-encoded, and round-trip unchanged.
+  re-encoded, and round-trip unchanged;
+- `FuzzHintsLeak` (`server/internal/engine/hints_leak_test.go`): plays a
+  seed's game by fuzzed choices and runs the hints leak guard on the states
+  it passes: each viewer's view with every hint family on must be the same
+  on determinizations of that viewer's observation (see architecture.md,
+  "Hints").
 
 Their seeds, and the crashers that were fixed, run as ordinary tests in
 every `make test-go`. To fuzz one locally, under the guard's `fuzz` kind
