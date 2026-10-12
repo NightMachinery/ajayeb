@@ -26,6 +26,7 @@ export const RULE_SECTION_IDS = [
   'guilds',
   'age-end',
   'scoring',
+  'hints',
   'glossary'
 ] as const;
 
@@ -46,7 +47,7 @@ export interface Line {
 /** The card colours, for the colour list of the goal section. */
 export type CardColour = 'brown' | 'grey' | 'blue' | 'green' | 'yellow' | 'red' | 'purple';
 
-export type Diagram = 'military' | 'trade' | 'science';
+export type Diagram = 'military' | 'trade' | 'science' | 'hintGlyphs';
 
 export type Block =
   | { kind: 'p'; line: Line }
@@ -329,6 +330,13 @@ export const RULE_SECTIONS: readonly RuleSection[] = [
       p('rules.scoring.tie'),
       p('rules.scoring.preview')
     ]
+  },
+  {
+    // The board's hint marks (components/hints/HintGlyphLegend.svelte);
+    // its words live with the other hint messages (i18n/en/hints.ts).
+    id: 'hints',
+    title: 'rules.hints.title',
+    blocks: [p('rules.hints.intro'), diagram('hintGlyphs')]
   },
   {
     id: 'glossary',

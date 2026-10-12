@@ -29,6 +29,7 @@ const SECTION_IDS = [
   'guilds',
   'age-end',
   'scoring',
+  'hints',
   'glossary'
 ];
 

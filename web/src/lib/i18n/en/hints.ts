@@ -454,5 +454,27 @@ export const hints = {
   'hints.badge.flowTip': {
     one: '{count} coin of this trade goes to {name} (Economy).',
     other: '{count} of these coins go to {name} (Economy).'
-  }
+  },
+
+  // The rules reference's "Hint glyphs" section (rules/sections.ts,
+  // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules
+  // sections can name it; it lives here with the other hint words.
+  'rules.hints.title': 'Hint glyphs',
+  'rules.hints.intro':
+    'Hint marks state facts about a card as the board stands now, never advice. Each card shows at most one mark at its top corner.',
+  'rules.hints.win': 'Crown: building this card wins the game.',
+  'rules.hints.pair':
+    'Token frame with a science symbol: building this card completes a science pair, so its builder picks a progress token.',
+  'rules.hints.loot':
+    'Coin loss: this card’s shields push the pawn onto a looting token, and the other player loses coins.',
+  'rules.hints.own': 'Filled in gold: the fact is for you.',
+  'rules.hints.opp':
+    'Outlined in the other player’s colour: the fact is for them, so taking or discarding the card denies it.',
+  'rules.hints.seat':
+    'On a shared device the filled mark takes the colour of the player to move, and a spectator sees each player’s own colour.',
+  'rules.hints.more':
+    'A small dot beside the mark: the card has more than one hint. Its tooltip lists them all.',
+  'rules.hints.review':
+    'The advisor, when the game turns it on, reviews your own move after you play: the summary of the other player’s next move says whether a clearly better move was there, and why. Only you see it.',
+  'rules.hints.sampleCard': 'a card'
 } as const satisfies Messages;

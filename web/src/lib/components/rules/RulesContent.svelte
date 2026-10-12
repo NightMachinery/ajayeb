@@ -8,6 +8,7 @@
   // deep-link target of /rules#<id>; the in-game panel leaves the ids off, so
   // a page that shows both never has two elements with one id.
   import { t } from '$lib/i18n';
+  import HintGlyphLegend from '../hints/HintGlyphLegend.svelte';
   import MilitaryDiagram from './MilitaryDiagram.svelte';
   import ScienceDiagram from './ScienceDiagram.svelte';
   import TradeDiagram from './TradeDiagram.svelte';
@@ -120,6 +121,8 @@
           <MilitaryDiagram />
         {:else if block.diagram === 'trade'}
           <TradeDiagram />
+        {:else if block.diagram === 'hintGlyphs'}
+          <HintGlyphLegend />
         {:else}
           <ScienceDiagram />
         {/if}
