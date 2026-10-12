@@ -336,6 +336,8 @@ export const hints = {
   'hints.science.lawNamed': 'Law would be {name}’s sixth symbol: a pair they complete now wins.',
 
   'hints.capital.win': 'Reaching this space wins the game at once.',
+  'hints.capital.titleYou': 'Your capital.',
+  'hints.capital.titleNamed': '{name}’s capital.',
   'hints.capital.yours': 'your capital',
   'hints.capital.named': '{name}’s capital',
   'hints.capital.needYou': {
@@ -383,8 +385,8 @@ export const hints = {
   'hints.wonder.library':
     'Draws {count} of the {total} tokens in the box: {list}. Only its owner sees them.',
   'hints.wonder.lastSlot': 'Only one more wonder can be built.',
-  'hints.wonder.removes': 'Building this one sends {wonder} back to the box.',
-  'hints.wonder.removesOwn': 'Building this one sends the same player’s {wonder} back to the box.',
+  'hints.wonder.removes': 'Building this one sends {name}’s {wonder} back to the box.',
+  'hints.wonder.removesYour': 'Building this one sends your {wonder} back to the box.',
   'hints.wonder.affordYou': 'You can afford it now.',
   'hints.wonder.affordNamed': '{name} can afford it now.',
   'hints.wonder.readyYou': 'You could build this on your turn, at today’s prices.',

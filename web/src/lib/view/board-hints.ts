@@ -277,6 +277,8 @@ export function lootText(
 export interface WonderHint {
   /** What building it would do now, as outcome terms (the owner's point of view). */
   readonly terms: readonly OutcomeTerm[];
+  /** The Great Library: the tokens it could draw, named. */
+  readonly note?: string;
   /** The race for the last wonder: the hourglass, solid when the owner can afford it. */
   readonly hourglass?: { readonly solid: boolean; readonly tip: string };
   /** Affordable at today's prices, though no choice builds it now. */
@@ -338,15 +340,17 @@ export function wonderHint(
         names
       })
     );
-    const box = view.hints?.boxTokens ?? [];
-    if (w.effect.opens === 'pickLibraryToken' && f.has('tokens') && box.length > 0) {
-      const text = t('hints.wonder.library', {
-        count: w.effect.pool,
-        total: box.length,
-        list: joinList(box.map(tokenName), 'conjunction')
-      });
-      terms.push({ id: 'library', text, short: text });
-    }
+  }
+  // great-library-odds: the tokens it could draw, named (owner Q1 B), for
+  // the wonder sheet and the row's spoken label.
+  let note: string | undefined;
+  const box = view.hints?.boxTokens ?? [];
+  if (w.effect?.opens === 'pickLibraryToken' && f.has('tokens') && box.length > 0) {
+    note = t('hints.wonder.library', {
+      count: w.effect.pool,
+      total: box.length,
+      list: joinList(box.map(tokenName), 'conjunction')
+    });
   }
   const owner = isYou(seat, names) ? undefined : names.names[seat];
   const affordable = w.cost?.affordable ?? false;
@@ -355,11 +359,14 @@ export function wonderHint(
     const parts = [t('hints.wonder.lastSlot')];
     if (w.effect?.removes) {
       const removed = w.effect.removes;
-      const removedOwner = wonderOwner(view, removed);
+      const removedOwner = wonderOwner(view, removed) ?? other(seat);
       parts.push(
-        removedOwner === seat
-          ? t('hints.wonder.removesOwn', { wonder: wonderName(removed) })
-          : t('hints.wonder.removes', { wonder: wonderName(removed) })
+        isYou(removedOwner, names)
+          ? t('hints.wonder.removesYour', { wonder: wonderName(removed) })
+          : t('hints.wonder.removes', {
+              wonder: wonderName(removed),
+              name: names.names[removedOwner]
+            })
       );
     }
     if (affordable) {
@@ -376,9 +383,10 @@ export function wonderHint(
       tip: owner ? t('hints.wonder.readyNamed', { name: owner }) : t('hints.wonder.readyYou')
     };
   }
-  if (terms.length === 0 && !hourglass && !ready) return undefined;
+  if (terms.length === 0 && !hourglass && !ready && !note) return undefined;
   return {
     terms,
+    ...(note ? { note } : {}),
     ...(hourglass && screen.boardMarks ? { hourglass } : {}),
     ...(ready ? { ready } : {})
   };
