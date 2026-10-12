@@ -6685,6 +6685,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "draft": {
         "round": 1,
         "offer": [
@@ -6700,6 +6701,12 @@ export const fixtures = [
           {
             "wonder": "colossus"
           }
+        ],
+        "order": [
+          0,
+          1,
+          1,
+          0
         ]
       },
       "structure": [],
@@ -6733,7 +6740,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -6764,7 +6772,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
