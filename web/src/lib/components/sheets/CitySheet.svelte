@@ -5,7 +5,7 @@
   // column never disagree about what a city shows.
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
-  import type { MilitaryView, Pair, PlayerView, ScoreView } from '$lib/wire';
+  import type { BotLevel, MilitaryView, Pair, PlayerView, ScoreView } from '$lib/wire';
   import Sheet from '../shell/Sheet.svelte';
   import CityPanel from '../city/CityPanel.svelte';
 
@@ -15,6 +15,8 @@
     players: Pair<PlayerView>;
     military: MilitaryView;
     scores?: Pair<ScoreView>;
+    /** Each seat's bot level, when a bot plays it (its avatar shows). */
+    bots?: readonly [BotLevel | undefined, BotLevel | undefined];
     /** Which seat's tab is open; bindable so the caller can open the sheet
      *  straight to one player's city (tapping that player's own strip). */
     activeSeat?: 0 | 1;
@@ -27,6 +29,7 @@
     players,
     military,
     scores,
+    bots,
     activeSeat = $bindable(0),
     titleId = 'city-sheet-title'
   }: Props = $props();
@@ -61,6 +64,7 @@
       player={players[activeSeat]}
       {military}
       score={scores?.[activeSeat]}
+      bot={bots?.[activeSeat]}
       class="border-0 p-0"
     />
   </div>

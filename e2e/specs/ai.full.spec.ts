@@ -117,6 +117,16 @@ test.describe('vs AI', { tag: ['@mobile', '@full'] }, () => {
         if (mySeat === 1) await expect(track).toHaveAttribute('data-mirrored', '');
         else await expect(track).not.toHaveAttribute('data-mirrored');
         trackChecked = true;
+        // The bot's strip (phone) or column (desktop) shows its persona's
+        // avatar by its name, and the player's own shows none.
+        await expect(
+          page
+            .locator(`.seat-panel[data-seat="${botSeat}"] [data-avatar="easy"]`)
+            .filter({ visible: true })
+        ).toHaveCount(1);
+        await expect(page.locator(`.seat-panel[data-seat="${mySeat}"] [data-avatar]`)).toHaveCount(
+          0
+        );
       }
 
       if (undo || !undoCandidate(snap)) {

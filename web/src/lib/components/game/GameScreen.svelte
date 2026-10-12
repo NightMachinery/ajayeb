@@ -862,6 +862,7 @@
     players={view.players}
     military={view.military}
     scores={view.scorePreview}
+    bots={[seatBotLevel(frame?.room, 0), seatBotLevel(frame?.room, 1)]}
     bind:activeSeat={ui.citySeat}
   />
 
