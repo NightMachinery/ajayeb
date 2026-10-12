@@ -145,7 +145,7 @@
       />
     </div>
 
-    <label class="flex min-h-11 items-center justify-between gap-3" data-allow-undo>
+    <label class="flex min-h-11 cursor-pointer items-center justify-between gap-3" data-allow-undo>
       <span class="flex flex-col">
         <span class="text-sm font-medium text-fg">{t('home.undo.toggle')}</span>
         <span class="text-xs text-fg-muted">{t('home.undo.note')}</span>
