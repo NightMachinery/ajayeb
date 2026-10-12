@@ -23,7 +23,7 @@ import tarfile
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from pathlib import Path
 from typing import Callable
@@ -165,12 +165,16 @@ class Config:
     mode: Mode
     ports: Ports = Ports()
     ship: ShipTarget | None = None
+    # Serve the site on both http:// and https:// instead of redirecting the
+    # other scheme to the site's own (render_caddy_block).
+    both_schemes: bool = False
 
     def to_json(self) -> str:
         payload: dict[str, object] = {
             "url": self.site.origin,
             "mode": self.mode.value,
             "ports": self.ports.to_json(),
+            "both_schemes": self.both_schemes,
         }
         if self.ship is not None:
             payload["ship"] = self.ship.to_json()
@@ -184,6 +188,7 @@ class Config:
             mode=Mode(raw.get("mode", Mode.PROD.value)),
             ports=Ports.from_json(raw.get("ports")),
             ship=ShipTarget.from_json(raw.get("ship")),
+            both_schemes=raw.get("both_schemes") is True,
         )
 
 
@@ -223,21 +228,27 @@ def web_dev_host() -> str:
     return "localhost" if platform.system() == "Darwin" else "0.0.0.0"
 
 
-def render_caddy_block(site: Site, mode: Mode, ports: Ports = Ports()) -> str:
+def render_caddy_block(site: Site, mode: Mode, ports: Ports = Ports(), both_schemes: bool = False) -> str:
     """Render the managed Caddyfile block.
 
     In prod Go serves the embedded SPA itself, so Caddy is a single
     reverse_proxy plus an HTTP-to-HTTPS redirect: no try_files. In dev, the
     backend matcher (/api, /api/*, /ws, /health) must be handled before the
     catch-all that reverse-proxies to the Vite dev server.
+
+    With both_schemes the site block answers on both origins and there is no
+    redirect, for a network that blocks or stalls one of the two ports. The
+    server needs no second --origin for it: its WebSocket check accepts the
+    request's own host whatever the scheme.
     """
+    addresses = f"{site.origin}, {site.opposite_origin}" if both_schemes else site.origin
     if mode == Mode.PROD:
-        site_block = f"""{site.origin} {{
+        site_block = f"""{addresses} {{
 	encode zstd gzip
 	reverse_proxy localhost:{ports.server}
 }}"""
     else:
-        site_block = f"""{site.origin} {{
+        site_block = f"""{addresses} {{
 	@backend path /api /api/* /ws /health
 	handle @backend {{
 		reverse_proxy localhost:{ports.server}
@@ -247,6 +258,11 @@ def render_caddy_block(site: Site, mode: Mode, ports: Ports = Ports()) -> str:
 	}}
 }}"""
 
+    if both_schemes:
+        return f"""{MANAGED_START}
+{site_block}
+{MANAGED_END}
+"""
     return f"""{MANAGED_START}
 {site.opposite_origin} {{
 	redir {site.origin}{{uri}} permanent
@@ -287,7 +303,7 @@ def find_managed_block(text: str) -> tuple[int, int] | None:
     return start, end + len(MANAGED_END)
 
 
-def caddyfile_block_matches(site: Site, mode: Mode, ports: Ports) -> bool:
+def caddyfile_block_matches(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> bool:
     """True when ~/Caddyfile already has exactly the managed block we would
     write for site/mode/ports, so writing it again would be a no-op."""
     if not CADDYFILE.exists():
@@ -297,11 +313,11 @@ def caddyfile_block_matches(site: Site, mode: Mode, ports: Ports) -> bool:
     if bounds is None:
         return False
     start, end = bounds
-    return existing[start:end] == render_caddy_block(site, mode, ports).rstrip("\n")
+    return existing[start:end] == render_caddy_block(site, mode, ports, both_schemes).rstrip("\n")
 
 
-def update_caddyfile(site: Site, mode: Mode, ports: Ports) -> None:
-    block = render_caddy_block(site, mode, ports)
+def update_caddyfile(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> None:
+    block = render_caddy_block(site, mode, ports, both_schemes)
     existing = CADDYFILE.read_text() if CADDYFILE.exists() else ""
     bounds = find_managed_block(existing)
     if bounds is None:
@@ -523,7 +539,7 @@ def reload_caddy() -> None:
     run(["caddy", "reload", "--config", str(CADDYFILE)])
 
 
-def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports) -> None:
+def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> None:
     """Back up ~/Caddyfile, write the managed block, validate, then reload.
 
     If ~/Caddyfile already has exactly the managed block we would write,
@@ -538,10 +554,10 @@ def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports) -> None:
     reload that fails now (for example because Caddy is not up yet) does not
     need to block the rest of `start`/`setup`/`redeploy`.
     """
-    if caddyfile_block_matches(site, mode, ports):
+    if caddyfile_block_matches(site, mode, ports, both_schemes):
         return
     backup = backup_caddyfile()
-    update_caddyfile(site, mode, ports)
+    update_caddyfile(site, mode, ports, both_schemes)
     validated = validate_caddyfile()
     if validated.returncode != 0:
         if backup is not None:
@@ -622,19 +638,26 @@ def start_web_dev(ports: Ports) -> None:
     tmuxnew(DEV_WEB_SESSION, shell_with_node(command), cwd=ROOT, env_args=tmux_env_args(os.environ | env))
 
 
-def resolve_config(url: str | None, fallback_mode: Mode = Mode.PROD) -> Config:
-    if url:
-        existing = load_config()
-        return Config(parse_site_url(url), fallback_mode, existing.ports if existing else Ports())
+def resolve_config(url: str | None, fallback_mode: Mode = Mode.PROD, both_schemes: bool | None = None) -> Config:
+    """The config to run with: the stored one, overridden by url, and by
+    both_schemes unless it is None (None keeps the stored choice, so a
+    plain redeploy or the boot-time start never drops it)."""
     existing = load_config()
-    if existing:
-        return Config(existing.site, fallback_mode, existing.ports)
-    return Config(parse_site_url(None), fallback_mode)
+    site = parse_site_url(url) if url else existing.site if existing else parse_site_url(None)
+    if both_schemes is None:
+        both_schemes = existing.both_schemes if existing else False
+    return Config(
+        site,
+        fallback_mode,
+        existing.ports if existing else Ports(),
+        existing.ship if existing else None,
+        both_schemes,
+    )
 
 
-def resolve_runtime_config(url: str | None, mode: Mode) -> Config:
-    config = resolve_config(url, mode)
-    return Config(config.site, config.mode, allocate_ports(config.ports))
+def resolve_runtime_config(url: str | None, mode: Mode, both_schemes: bool | None = None) -> Config:
+    config = resolve_config(url, mode, both_schemes)
+    return replace(config, ports=allocate_ports(config.ports))
 
 
 def wait_for_port_free(
@@ -660,7 +683,7 @@ def ports_after_stop(config: Config) -> Config:
     closed its socket, so the old port gets a moment to free up first.
     """
     wait_for_port_free(config.ports.server)
-    return Config(config.site, config.mode, allocate_ports(config.ports))
+    return replace(config, ports=allocate_ports(config.ports))
 
 
 def archive_rooms() -> Path | None:
@@ -839,7 +862,9 @@ def determine_deploy_command(target: str, remote_dir: str) -> str:
     raise RuntimeError(f"could not check for a remote config on {target}: {detail}")
 
 
-def remote_deploy_command(target: str, remote_dir: str, deploy_command: str, url: str | None) -> list[str]:
+def remote_deploy_command(
+    target: str, remote_dir: str, deploy_command: str, url: str | None, both_schemes: bool | None = None
+) -> list[str]:
     parts = [
         "cd",
         shlex.quote(remote_dir),
@@ -850,13 +875,17 @@ def remote_deploy_command(target: str, remote_dir: str, deploy_command: str, url
         "--prebuilt",
         shlex.quote(REMOTE_UPLOAD_BIN),
     ]
+    if both_schemes is not None:
+        parts.append("--both-schemes" if both_schemes else "--no-both-schemes")
     if url:
         parts.append(shlex.quote(url))
     return ssh_command(target, " ".join(parts))
 
 
-def deploy_remote(target: str, remote_dir: str, deploy_command: str, url: str | None) -> None:
-    run(remote_deploy_command(target, remote_dir, deploy_command, url))
+def deploy_remote(
+    target: str, remote_dir: str, deploy_command: str, url: str | None, both_schemes: bool | None = None
+) -> None:
+    run(remote_deploy_command(target, remote_dir, deploy_command, url, both_schemes))
 
 
 def poll_remote_version(
@@ -884,7 +913,7 @@ def remember_ship_target(target: str, remote_dir: str) -> None:
     if existing is None:
         config = Config(site=parse_site_url(None), mode=Mode.PROD, ship=ship)
     else:
-        config = Config(existing.site, existing.mode, existing.ports, ship)
+        config = replace(existing, ship=ship)
     save_config(config)
 
 
@@ -921,7 +950,9 @@ def looks_like_url(value: str) -> bool:
     return value.startswith("http://") or value.startswith("https://")
 
 
-def command_ship(target: str | None, url: str | None, remote_dir: str | None) -> None:
+def command_ship(
+    target: str | None, url: str | None, remote_dir: str | None, both_schemes: bool | None = None
+) -> None:
     if target is not None and looks_like_url(target):
         # `ship URL` with a remembered target: argparse puts URL in the
         # TARGET slot since it's positional and comes first. Without this,
@@ -948,7 +979,7 @@ def command_ship(target: str | None, url: str | None, remote_dir: str | None) ->
 
     deploy_command = determine_deploy_command(target, remote_dir)
     print(f"remote command: {deploy_command}")
-    deploy_remote(target, remote_dir, deploy_command, url)
+    deploy_remote(target, remote_dir, deploy_command, url, both_schemes)
 
     remember_ship_target(target, remote_dir)
 
@@ -964,8 +995,8 @@ def command_ship(target: str | None, url: str | None, remote_dir: str | None) ->
         print(f"remote is running version {remote_version}")
 
 
-def command_setup(url: str | None, prebuilt: str | None = None) -> None:
-    config = resolve_config(url, Mode.PROD)
+def command_setup(url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None) -> None:
+    config = resolve_config(url, Mode.PROD, both_schemes)
     ensure_tools(["caddy", "tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
@@ -985,15 +1016,15 @@ def command_setup(url: str | None, prebuilt: str | None = None) -> None:
     config = ports_after_stop(config)
     save_config(config)
     swap_in_binary(new_binary, move=prebuilt_path is not None)
-    apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
+    apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):
         print("warning: /health did not respond within the poll window", file=sys.stderr)
     announce_serving(config)
 
 
-def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
-    config = resolve_config(url, Mode.PROD)
+def command_redeploy(url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None) -> None:
+    config = resolve_config(url, Mode.PROD, both_schemes)
     ensure_tools(["caddy", "tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
@@ -1017,16 +1048,16 @@ def command_redeploy(url: str | None, prebuilt: str | None = None) -> None:
     if archived is not None:
         print(f"archived rooms: {archived}")
     swap_in_binary(new_binary, move=prebuilt_path is not None)
-    apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
+    apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):
         print("warning: /health did not respond within the poll window", file=sys.stderr)
     announce_serving(config)
 
 
-def command_start(url: str | None) -> None:
+def command_start(url: str | None, both_schemes: bool | None = None) -> None:
     command_stop()
-    config = ports_after_stop(resolve_config(url, Mode.PROD))
+    config = ports_after_stop(resolve_config(url, Mode.PROD, both_schemes))
     ensure_tools(["caddy", "tmux"])
     if not BIN_PATH.exists():
         ensure_tools(["zsh", "rsync"])
@@ -1036,21 +1067,21 @@ def command_start(url: str | None) -> None:
         sync_webdist()
         swap_in_binary(build_server_release())
     save_config(config)
-    apply_caddyfile_safely(config.site, Mode.PROD, config.ports)
+    apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
     start_server_prod(config.ports, config.site)
     if not poll_health(config.ports.server):
         print("warning: /health did not respond within the poll window", file=sys.stderr)
     announce_serving(config)
 
 
-def command_dev_start(url: str | None) -> None:
+def command_dev_start(url: str | None, both_schemes: bool | None = None) -> None:
     command_stop()
-    config = resolve_runtime_config(url, Mode.DEV)
+    config = resolve_runtime_config(url, Mode.DEV, both_schemes)
     ensure_tools(["caddy", "tmux", "zsh"])
     find_go()
     install_web()
     save_config(config)
-    apply_caddyfile_safely(config.site, Mode.DEV, config.ports)
+    apply_caddyfile_safely(config.site, Mode.DEV, config.ports, config.both_schemes)
     start_server_dev(config.ports)
     start_web_dev(config.ports)
     announce_serving(config)
@@ -1084,6 +1115,7 @@ def command_status() -> None:
     if config:
         print(f"url: {config.site.origin}")
         print(f"mode: {config.mode.value}")
+        print(f"both schemes: {'yes, http:// and https:// both serve the site' if config.both_schemes else 'no'}")
         print(f"server port: {config.ports.server}")
         print(f"web dev port: {config.ports.web_dev}")
     for session in (PROD_SESSION, DEV_SERVER_SESSION, DEV_WEB_SESSION):
@@ -1122,6 +1154,27 @@ def build_parser() -> argparse.ArgumentParser:
     def add_url(p: argparse.ArgumentParser) -> None:
         p.add_argument("url", nargs="?", help=f"Site origin, default {DEFAULT_URL}")
 
+    def add_both_schemes(p: argparse.ArgumentParser) -> None:
+        # A pair of store_const flags rather than BooleanOptionalAction, which
+        # needs Python 3.9: this script runs on whatever python3 a host has.
+        group = p.add_mutually_exclusive_group()
+        group.add_argument(
+            "--both-schemes",
+            dest="both_schemes",
+            action="store_const",
+            const=True,
+            default=None,
+            help="serve the site on both http:// and https:// instead of redirecting one to the other "
+            "(remembered; without either flag the stored choice is kept, off for a new install)",
+        )
+        group.add_argument(
+            "--no-both-schemes",
+            dest="both_schemes",
+            action="store_const",
+            const=False,
+            help="redirect the other scheme to the site's own again (remembered)",
+        )
+
     def add_prebuilt(p: argparse.ArgumentParser) -> None:
         p.add_argument(
             "--prebuilt",
@@ -1132,18 +1185,22 @@ def build_parser() -> argparse.ArgumentParser:
     setup_p = sub.add_parser("setup", help="first-time install")
     add_url(setup_p)
     add_prebuilt(setup_p)
+    add_both_schemes(setup_p)
 
     redeploy_p = sub.add_parser("redeploy", help="rebuild and restart for a new version")
     add_url(redeploy_p)
     add_prebuilt(redeploy_p)
+    add_both_schemes(redeploy_p)
 
     start_p = sub.add_parser("start", help="start the already-built server")
     add_url(start_p)
+    add_both_schemes(start_p)
 
     sub.add_parser("stop", help="stop every tmux session this script manages")
 
     dev_p = sub.add_parser("dev-start", help="start a development setup instead of production")
     add_url(dev_p)
+    add_both_schemes(dev_p)
 
     status_p = sub.add_parser("status", help="print the recorded configuration and health")
     add_url(status_p)
@@ -1156,6 +1213,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=f"Remote directory, relative to the remote home (default {DEFAULT_REMOTE_DIR})",
     )
+    add_both_schemes(ship_p)
 
     return parser
 
@@ -1166,19 +1224,19 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "setup":
-            command_setup(args.url, args.prebuilt)
+            command_setup(args.url, args.prebuilt, args.both_schemes)
         elif args.command == "redeploy":
-            command_redeploy(args.url, args.prebuilt)
+            command_redeploy(args.url, args.prebuilt, args.both_schemes)
         elif args.command == "start":
-            command_start(args.url)
+            command_start(args.url, args.both_schemes)
         elif args.command == "dev-start":
-            command_dev_start(args.url)
+            command_dev_start(args.url, args.both_schemes)
         elif args.command == "stop":
             command_stop()
         elif args.command == "status":
             command_status()
         elif args.command == "ship":
-            command_ship(args.target, args.url, args.remote_dir)
+            command_ship(args.target, args.url, args.remote_dir, args.both_schemes)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

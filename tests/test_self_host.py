@@ -4,6 +4,7 @@ import shlex
 import subprocess
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
+from dataclasses import replace
 from pathlib import Path
 from unittest import mock
 
@@ -53,6 +54,44 @@ class SelfHostTests(unittest.TestCase):
         self.assertIn("redir http://game.example.test:8080{uri} permanent", block)
         self.assertIn("reverse_proxy localhost:38941", block)
         self.assertIn("reverse_proxy localhost:38942", block)
+
+    def test_prod_caddy_block_with_both_schemes_serves_both_and_redirects_neither(self):
+        site = self_host.parse_site_url("https://game.example.test")
+        block = self_host.render_caddy_block(
+            site, self_host.Mode.PROD, self_host.Ports(server=38933, web_dev=38934), both_schemes=True
+        )
+        self.assertIn("https://game.example.test, http://game.example.test {", block)
+        self.assertNotIn("redir", block)
+        self.assertEqual(block.count("reverse_proxy localhost:38933"), 1)
+        self.assertTrue(block.startswith(self_host.MANAGED_START))
+        self.assertTrue(block.rstrip("\n").endswith(self_host.MANAGED_END))
+
+    def test_dev_caddy_block_with_both_schemes_keeps_backend_routing(self):
+        site = self_host.parse_site_url("https://game.example.test")
+        block = self_host.render_caddy_block(
+            site, self_host.Mode.DEV, self_host.Ports(server=38933, web_dev=38934), both_schemes=True
+        )
+        self.assertIn("https://game.example.test, http://game.example.test {", block)
+        self.assertIn("@backend path /api /api/* /ws /health", block)
+        self.assertNotIn("redir", block)
+
+    def test_caddyfile_block_matches_tells_the_two_renderings_apart(self):
+        import tempfile
+
+        site = self_host.parse_site_url("https://game.example.test")
+        ports = self_host.Ports(server=38933, web_dev=38934)
+        with tempfile.TemporaryDirectory() as tmp:
+            original = self_host.CADDYFILE
+            self_host.CADDYFILE = Path(tmp) / "Caddyfile"
+            try:
+                self_host.update_caddyfile(site, self_host.Mode.PROD, ports)
+                self.assertTrue(self_host.caddyfile_block_matches(site, self_host.Mode.PROD, ports))
+                self.assertFalse(self_host.caddyfile_block_matches(site, self_host.Mode.PROD, ports, True))
+                self_host.update_caddyfile(site, self_host.Mode.PROD, ports, True)
+                self.assertTrue(self_host.caddyfile_block_matches(site, self_host.Mode.PROD, ports, True))
+                self.assertEqual(self_host.CADDYFILE.read_text().count(self_host.MANAGED_START), 1)
+            finally:
+                self_host.CADDYFILE = original
 
     def test_update_caddyfile_inserts_and_replaces_managed_block(self, *, tmp_path=None):
         import tempfile
@@ -129,6 +168,16 @@ class SelfHostTests(unittest.TestCase):
         self.assertEqual(restored.mode, self_host.Mode.DEV)
         self.assertEqual(restored.ports.server, 38951)
         self.assertEqual(restored.ports.web_dev, 38952)
+
+    def test_config_roundtrip_keeps_both_schemes(self):
+        cfg = self_host.Config(
+            site=self_host.parse_site_url("https://game.example.test"), mode=self_host.Mode.PROD, both_schemes=True
+        )
+        self.assertTrue(self_host.Config.from_json(cfg.to_json()).both_schemes)
+
+    def test_legacy_config_serves_one_scheme(self):
+        restored = self_host.Config.from_json('{"url": "https://game.example.test", "mode": "prod"}')
+        self.assertFalse(restored.both_schemes)
 
     def test_legacy_config_uses_default_ports(self):
         restored = self_host.Config.from_json('{"url": "http://lan.example.test", "mode": "dev"}')
@@ -474,6 +523,13 @@ class SelfHostTests(unittest.TestCase):
         args = self_host.build_parser().parse_args(["start"])
         self.assertFalse(hasattr(args, "prebuilt"))
 
+    def test_parser_both_schemes_is_three_way(self):
+        parser = self_host.build_parser()
+        for command in ("setup", "redeploy", "start", "dev-start", "ship"):
+            self.assertIsNone(parser.parse_args([command]).both_schemes, command)
+            self.assertTrue(parser.parse_args([command, "--both-schemes"]).both_schemes, command)
+            self.assertFalse(parser.parse_args([command, "--no-both-schemes"]).both_schemes, command)
+
     def test_parser_ship_target_url_and_remote_dir_are_optional(self):
         args = self_host.build_parser().parse_args(["ship"])
         self.assertIsNone(args.target)
@@ -661,6 +717,16 @@ class RemoteCommandQuotingTests(unittest.TestCase):
         remote = cmd[2]
         self.assertTrue(remote.endswith(self_host.REMOTE_UPLOAD_BIN))
         self.assertIn(" redeploy ", remote)
+
+
+    def test_remote_deploy_command_forwards_both_schemes_only_when_given(self):
+        on = self_host.remote_deploy_command("user@example.host", "ajayeb", "redeploy", "https://x.test", True)[2]
+        off = self_host.remote_deploy_command("user@example.host", "ajayeb", "redeploy", "https://x.test", False)[2]
+        kept = self_host.remote_deploy_command("user@example.host", "ajayeb", "redeploy", "https://x.test")[2]
+        self.assertIn(" --both-schemes ", on)
+        self.assertIn(" --no-both-schemes ", off)
+        self.assertNotIn("both-schemes", kept)
+        self.assertTrue(on.endswith(shlex.quote("https://x.test")))
 
 
 class DeployChoiceTests(unittest.TestCase):
@@ -1063,6 +1129,78 @@ class PortsAfterStopTests(unittest.TestCase):
         self.assertEqual(calls, ["stop", "ports"])
 
 
+    def test_every_command_hands_the_stored_both_schemes_to_the_caddyfile(self):
+        # A command that dropped it would render the redirect block at boot,
+        # rewrite the shared Caddyfile and reload Caddy on every start.
+        config = replace(self._config(), both_schemes=True)
+        common = dict(
+            command_stop=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        )
+        prod = dict(
+            common,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
+            check_prebuilt_binary=mock.DEFAULT,
+            swap_in_binary=mock.DEFAULT,
+            archive_rooms=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+        )
+        runs = [
+            ("setup", prod, lambda: self_host.command_setup(None, "/tmp/bin", True)),
+            ("redeploy", prod, lambda: self_host.command_redeploy(None, "/tmp/bin", True)),
+            ("start", prod, lambda: self_host.command_start(None, True)),
+        ]
+        for name, patches, call in runs:
+            with self.subTest(name), mock.patch.multiple(self_host, **patches) as mocks, mock.patch.object(
+                self_host, "BIN_PATH", Path(__file__)
+            ):
+                mocks["resolve_config"].return_value = config
+                mocks["ports_after_stop"].side_effect = lambda c: c
+                mocks["archive_rooms"].return_value = None
+                mocks["poll_health"].return_value = True
+                call()
+                self.assertTrue(mocks["resolve_config"].call_args.args[2])
+                mocks["apply_caddyfile_safely"].assert_called_once_with(
+                    config.site, self_host.Mode.PROD, config.ports, True
+                )
+        dev = dict(
+            common,
+            resolve_runtime_config=mock.DEFAULT,
+            find_go=mock.DEFAULT,
+            install_web=mock.DEFAULT,
+            start_server_dev=mock.DEFAULT,
+            start_web_dev=mock.DEFAULT,
+        )
+        with mock.patch.multiple(self_host, **dev) as mocks:
+            mocks["resolve_runtime_config"].return_value = replace(config, mode=self_host.Mode.DEV)
+            self_host.command_dev_start(None, True)
+            mocks["resolve_runtime_config"].assert_called_once_with(None, self_host.Mode.DEV, True)
+            mocks["apply_caddyfile_safely"].assert_called_once_with(config.site, self_host.Mode.DEV, config.ports, True)
+
+    def test_main_routes_both_schemes_to_each_command(self):
+        cases = [
+            (["setup"], "command_setup", lambda m: m.call_args.args[2]),
+            (["redeploy"], "command_redeploy", lambda m: m.call_args.args[2]),
+            (["start"], "command_start", lambda m: m.call_args.args[1]),
+            (["dev-start"], "command_dev_start", lambda m: m.call_args.args[1]),
+            (["ship"], "command_ship", lambda m: m.call_args.args[3]),
+        ]
+        for argv, target, picked in cases:
+            for extra, want in (([], None), (["--both-schemes"], True), (["--no-both-schemes"], False)):
+                with self.subTest(argv=argv, extra=extra), mock.patch.object(self_host, target) as command:
+                    self.assertEqual(self_host.main(argv + extra), 0)
+                    self.assertIs(picked(command), want)
+
+    def test_both_schemes_flags_exclude_each_other(self):
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            self_host.build_parser().parse_args(["redeploy", "--both-schemes", "--no-both-schemes"])
+
+
 class ShipTargetMemoryTests(unittest.TestCase):
     def _with_config_file(self, tmp):
         config_dir = Path(tmp) / ".self-host"
@@ -1108,6 +1246,30 @@ class ShipTargetMemoryTests(unittest.TestCase):
             try:
                 with self.assertRaises(RuntimeError):
                     self_host.resolve_ship_target(None, None)
+            finally:
+                self._restore(originals)
+
+    def test_resolve_config_keeps_both_schemes_and_ship_unless_overridden(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            originals = self._with_config_file(tmp)
+            try:
+                self.assertFalse(self_host.resolve_config(None).both_schemes)
+                self_host.save_config(
+                    self_host.Config(
+                        site=self_host.parse_site_url("https://game.example.test"),
+                        mode=self_host.Mode.PROD,
+                        ship=self_host.ShipTarget("user@example.host", "ajayeb"),
+                        both_schemes=True,
+                    )
+                )
+                kept = self_host.resolve_config(None)
+                self.assertTrue(kept.both_schemes)
+                self.assertEqual(kept.ship, self_host.ShipTarget("user@example.host", "ajayeb"))
+                self.assertTrue(self_host.resolve_config("https://other.example.test").both_schemes)
+                self.assertFalse(self_host.resolve_config(None, both_schemes=False).both_schemes)
+                self.assertTrue(self_host.resolve_config(None, both_schemes=True).both_schemes)
             finally:
                 self._restore(originals)
 
@@ -1192,7 +1354,7 @@ class CommandShipTests(unittest.TestCase):
             self.assertIn("v1.0.0", stderr.getvalue())
             mocks["remember_ship_target"].assert_called_once_with("user@example.host", "ajayeb")
             mocks["deploy_remote"].assert_called_once_with(
-                "user@example.host", "ajayeb", "setup", "https://game.example.test"
+                "user@example.host", "ajayeb", "setup", "https://game.example.test", None
             )
 
     def test_command_ship_reports_matching_version(self):
@@ -1237,7 +1399,7 @@ class CommandShipTests(unittest.TestCase):
 
             mocks["resolve_ship_target"].assert_called_once_with(None, None)
             mocks["deploy_remote"].assert_called_once_with(
-                "user@example.host", "ajayeb", "redeploy", "https://game.example.test"
+                "user@example.host", "ajayeb", "redeploy", "https://game.example.test", None
             )
             mocks["poll_remote_version"].assert_called_once_with("https://game.example.test")
 

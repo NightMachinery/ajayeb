@@ -41,6 +41,11 @@ recorded yet.
   has been remembered, `ship URL` (a bare `http://` or `https://` argument in
   `TARGET`'s position) is read as the url and reuses the remembered target.
 
+`setup`, `redeploy`, `start`, `dev-start` and `ship` also take
+`--both-schemes` or `--no-both-schemes`; see "Serving both schemes" below.
+Without either flag they keep the recorded choice, which is off for a new
+install. `ship` passes the flag on to the remote `setup` or `redeploy`.
+
 ## Processes
 
 Three tmux sessions, never more than two running at once:
@@ -70,8 +75,9 @@ server's port is reselected when busy.
 
 ## Configuration file
 
-`.self-host/config.json` records the site URL, the mode (`prod` or `dev`)
-and the chosen ports. It is not committed; `.self-host/` is gitignored
+`.self-host/config.json` records the site URL, the mode (`prod` or `dev`),
+the chosen ports, whether both schemes serve the site (`both_schemes`), and
+on the dev machine the remembered ship target. It is not committed; `.self-host/` is gitignored
 entirely, since it holds local build output, the production data directory
 and Caddyfile backups.
 
@@ -119,6 +125,42 @@ ajayeb self_host.py` in `~/Caddyfile`, is a redirect from the opposite scheme
 plus a single `reverse_proxy` to the server port with `encode zstd gzip`.
 There is no `try_files` or static file serving in Caddy: the Go binary
 embeds and serves the SPA itself.
+
+### Serving both schemes
+
+With `--both-schemes` the managed block has no redirect: one site block
+answers on both `https://<host>` and `http://<host>` and proxies both to the
+server. Use it when a network between the players and the host blocks or
+stalls one of the two ports, or to test a deploy over port 80. The server
+needs nothing more: its WebSocket origin check accepts the request's own
+host whatever the scheme, and the client picks `ws:` or `wss:` from the page.
+
+What it costs:
+
+- Over plain HTTP everything crosses the network unencrypted. The identity
+  token a device sends in `hello` is that player's whole identity on that
+  scheme, not a key to one room: whoever reads it can act as that player in
+  every room the identity has joined or will join, until the device's storage
+  is cleared. A device link's claim, sent in `join`, gives that one seat until
+  the link is reset. Someone who can change traffic on the path can also
+  rewrite the page itself.
+- A browser keeps `http://` and `https://` storage apart, so a device that
+  has played over one scheme is a new player over the other: its hot-seat
+  and bot games do not open there, and an online room sees a different
+  player. Invite and device links carry the scheme of the page that made
+  them, so an invite made over `http://` sends guests to `http://`; to move a
+  seat to the other scheme, change `http` or `https` in its device link
+  before opening it.
+- Features that need a secure context are missing over HTTP. The Share
+  button does not appear, and copying a link to the clipboard can fail: the
+  device link sheet then selects the link for copying by hand, and the
+  lobby's Copy invite shows a warning.
+- The redirect block answers with a permanent redirect (301), which browsers
+  cache. A browser that was redirected before the switch keeps going to
+  `https://` on its own until its cache is cleared; a private window does
+  not have that cache.
+
+`--no-both-schemes` puts the redirect back.
 
 ## Development run
 
