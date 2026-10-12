@@ -111,9 +111,10 @@ it, so all of them count as one client address.
    - anything else (not a `hello`, malformed JSON, a token of the wrong
      shape): an `error` frame with code `bad-hello`, then 1008 `bad-hello`.
 3. **Requests.** After `welcome`, the client sends `create`, `join`, `act`,
-   `undo`, `hints`, `resync`, `leave` and `rematch`. The server handles one
-   connection's requests one at a time, in the order they arrive, and every
-   outcome comes back as frames (`created`, `state`, `reject`, `error`). A
+   `undo`, `hints`, `link`, `relink`, `resync`, `leave` and `rematch`. The
+   server handles one connection's requests one at a time, in the order they
+   arrive, and every outcome comes back as frames (`created`, `state`,
+   `linked`, `reject`, `error`). A
    refused request leaves the connection open, whatever the frame says. A
    connection is in at most one room at a time: joining another room first
    leaves the current one. A second `hello` is answered with `reject
@@ -262,7 +263,26 @@ open seat (the room goes from `lobby` to `playing`), and once both seats are
 taken later users watch as spectators, with a public view and no choices.
 Hot-seat and `ai` rooms admit only their creator. A room that is not in
 memory is loaded from disk first. Joining a room the connection is already
-in just sends a fresh `state`.
+in just sends a fresh `state`. In an online room, a user who comes back to
+their seat under another display name (the `name` of their `hello`) renames
+the seat, and only that seat's name number is recomputed (see `nameNo`
+under `state`).
+
+A join may carry a seat's **claim**, from that seat's device link (see
+[Device links](#device-links)):
+
+```json
+{"t": "join", "code": "K7QX2M", "claim": "q3Vb8Kx0Zr7TnW2mYc5JhA"}
+```
+
+With a valid claim the connection acts in this room as the user of the seat
+the claim was made for, not as its own user: it gets that seat back, both
+seats of a hot-seat room, the human seat of an `ai` room, and the admin's
+rights when that user is the admin. Its own identity is not changed and is
+not used in this room, and a claim never renames the seat. A claim that is
+malformed, made for another room, or revoked by a `relink` is refused with
+`error bad-claim`, and counts against the address's joins of unknown rooms
+like a code that names no room. A join without `claim` behaves as before.
 
 The answer is a `state`, and every other connection of the room receives a
 `state` with the new presence. The refusals are `error room-not-found`,
@@ -375,6 +395,9 @@ joined, or the game is not over), `error forbidden` (a spectator), `error
 busy`, and `reject rate` with seq 0: the request that creates the rematch
 room counts against the requester's room creation limits, like a `create`.
 A request answered with a rematch code that already exists counts nothing.
+A connection that joined the old room with a claim receives, in its
+`created` frame, the claim of its seat in the rematch room, since its own
+identity holds no seat there.
 
 ### hints
 
@@ -403,6 +426,40 @@ settings, adds an entry to the room log (see `roomLog` under `state`), and
 sends every connection a `state`, the sender's with an `ack`. The admin may
 change the settings in the lobby too, before the second player arrives.
 
+### link
+
+Asks for one seat's device link (see [Device links](#device-links)).
+
+```json
+{"t": "link", "code": "K7QX2M", "seat": 1}
+```
+
+The room checks, in order: the connection has joined (else `reject
+bad-request`) and is not a spectator (else `reject not-admin`); device
+links are on for this server (else `reject bad-request`); a human holds the
+seat (else `reject bad-request`: the seat is open or a bot's); the
+connection acts as that seat's user or as the game's admin (else `reject
+not-admin`). All these rejects carry seq 0. The answer is a `linked` frame,
+to this connection alone. Nothing else changes: no other connection hears of
+it, and the room version stays.
+
+### relink
+
+Resets one seat's device link, under the same checks as `link`.
+
+```json
+{"t": "relink", "code": "K7QX2M", "seat": 1}
+```
+
+The room raises the seat's **epoch** (in a hot-seat room, the epoch of both
+seats, which belong to one user), so every claim made for it before stops
+working, and adds an entry to the room log. The sender receives the new
+claim in a `linked` frame; every connection receives a `state` with the
+log entry. A connection that joined with a revoked claim receives `error
+bad-claim` and is detached from the room, like one that left: its next
+request is refused as not joined. The sender keeps its place even when it
+joined with the claim it revoked. The room version does not change.
+
 ## Server frames
 
 ### welcome
@@ -428,6 +485,21 @@ the rematch room of a finished game (the client sends `join` with it).
 {"t": "created", "code": "K7QX2M"}
 ```
 
+`claim`, present only in the rematch frame of a connection that joined the
+old room with a claim, is the claim of that connection's seat in the
+rematch room; the client joins the rematch room with it.
+
+### linked
+
+Answers `link` and `relink`: one seat's current claim. It goes only to the
+connection that asked, and never appears in a `state`.
+
+```json
+{"t": "linked", "code": "K7QX2M", "seat": 1, "claim": "q3Vb8Kx0Zr7TnW2mYc5JhA"}
+```
+
+The client builds the device link from it: `/play/<code>#claim=<claim>`.
+
 ### state
 
 A complete snapshot of one room, built for the connection that receives it.
@@ -446,8 +518,8 @@ full game view described under "The view and its events" below.
     "mode": "hotseat",
     "status": "playing",
     "seats": [
-      {"seat": 0, "name": "Sara", "kind": "human", "connected": true, "you": true},
-      {"seat": 1, "name": "Omid", "kind": "human", "connected": true, "you": true}
+      {"seat": 0, "name": "Sara", "nameNo": 0, "kind": "human", "connected": true, "you": true},
+      {"seat": 1, "name": "Omid", "nameNo": 0, "kind": "human", "connected": true, "you": true}
     ],
     "spectators": 0,
     "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": true, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false}
@@ -476,12 +548,21 @@ full game view described under "The view and its events" below.
   `act` or `undo` chosen in this state sends it as `base`.
 - `room` describes the room rather than the game: `mode`; `status`, which is
   `lobby` (an online room waiting for its second player), `playing` or
-  `finished`; one entry per seat with its display name, its `kind` (`human`,
-  `bot`, or `open` for a seat nobody has taken yet), the bot's level as `bot`
-  for a bot seat, whether someone is `connected` there (a bot always is),
-  and whether this connection holds it (`you`); the number of
-  `spectators`; and the game's hint settings, `hints` (see the `hints`
-  frame).
+  `finished`; one entry per seat with its display name, its name number
+  (`nameNo`, below), its `kind` (`human`, `bot`, or `open` for a seat
+  nobody has taken yet), the bot's level as `bot` for a bot seat, whether
+  someone is `connected` there (a bot always is), and whether this
+  connection holds it (`you`); the number of `spectators`; and the game's
+  hint settings, `hints` (see the `hints` frame).
+- `nameNo` tells equal display names apart. It is 0 for a name that needs
+  no number. When a human takes a seat, or renames it, under a name equal
+  to the other human seat's (compared without case and outer spaces), the
+  other seat came first and keeps its number, and this seat takes the next
+  one: 2 after an unnumbered name. Only the seat that took or changed its
+  name is renumbered, so a number stays when the other player leaves or
+  renames. A hot-seat room created with two equal names numbers seat 1.
+  The client shows the name as "Sara 2" (through its message tables), and
+  shows the name alone for 0.
 - `you.seats` are the seats this connection may act for (both in a hot-seat
   room, one for a player, none for a spectator), and `you.canAct` says
   whether one of them has a legal action now. `you.admin` says whether this
@@ -508,8 +589,8 @@ full game view described under "The view and its events" below.
   most 512 entries (`wire.MaxHistory`, the newest kept); a game takes at most
   `engine.MaxGameActions` (189) actions, so a real game never reaches the cap.
 - `roomLog` is every room-level entry of the game log so far, oldest first:
-  things that happened to the room rather than in the game, which today
-  means a change of the hint settings. Every frame carries the whole list,
+  things that happened to the room rather than in the game: a change of the
+  hint settings (`kind` `hints`) or a reset device link (`kind` `link`). Every frame carries the whole list,
   the same for every viewer, and the room keeps the newest 64
   (`wire.MaxRoomLog`). An entry is
   `{"kind": "hints", "at": 4, "seat": 0, "on": ["advisor"], "off": ["prices"]}`:
@@ -520,7 +601,11 @@ full game view described under "The view and its events" below.
   same ply fold into one entry, and an entry whose changes cancel out is
   dropped. After an undo, entries past the new ply move back to it. The
   room log is stored with the room, but it is not part of the game log
-  (`ajayeb-log/1`), which records only the game.
+  (`ajayeb-log/1`), which records only the game. A reset device link is
+  `{"kind": "link", "at": 4, "seat": 0, "on": [], "off": [], "target": 1}`:
+  `seat` is the seat of whoever reset it (absent in a hot-seat room),
+  `target` the seat whose link was reset, and `on` and `off` are empty.
+  Link entries never fold together.
 - `view` is the game as this viewer may see it, including its `choices`.
 
 ### reject
@@ -567,9 +652,11 @@ A reject refuses one request, and the client can usually recover.
   named no room (seq 0); or an `undo` went over the undo limit (its `seq`).
 - `bad-request`: the frame is malformed; a second `hello`; a request for a
   room this connection has not joined; an `undo` in an online room or from a
-  spectator; a `rematch` before the game is over.
+  spectator; a `rematch` before the game is over; a `link` or `relink` for a
+  seat that is open or a bot's, or on a server whose device links are off.
 - `not-admin`: a `hints` frame from a player who is not the game's admin, or
-  from a spectator.
+  from a spectator; a `link` or `relink` from a spectator, or from a player
+  who is neither that seat's user nor the game's admin.
 - `game-over`: a `hints` frame after the game has ended; the settings of a
   finished game no longer change.
 
@@ -593,6 +680,11 @@ it again with the same `seq`.
 - `busy`: the server holds as many rooms in memory as it can, and every one
   of them has a connection (a `create`, a `rematch`, or a `join` that must
   load a room). Try again later.
+- `bad-claim`: a `join` carried a claim that is not one of this room's
+  (malformed, made for another room, or revoked by a `relink`); or, sent on
+  its own, the device link this connection joined with was just reset, and
+  the connection has left the room. A join without the claim, or with a
+  fresh link, may follow.
 
 ## Versions, idempotency and reconnecting
 
@@ -654,6 +746,36 @@ After the socket drops, the client:
 A `rematch` asked again after a reconnect answers the same code as before,
 so a client that missed the `created` frame just asks again. After a 1012
 close the server is restarting; the rooms are on disk, so no game is lost.
+A client that joined with a claim sends the same claim again on every
+reconnect.
+
+## Device links
+
+A **device link** moves one player to another device without moving their
+identity token. It is the room's invite link with the seat's **claim** in
+the fragment: `/play/<code>#claim=<claim>`. The claim is the first 22
+characters (132 bits) of the unpadded base64url form of
+HMAC-SHA256(server secret, `claim:<code>:<user id>:<epoch>`), where the user
+id is the seat's user and the epoch a per-seat counter stored with the room
+(0 at first). Package `ident` derives and checks it (`ident/doc.go`); the
+check is constant-time.
+
+- **Room-scoped.** The code is in the MAC, so a claim works in its own room
+  only, and a rematch room gets fresh claims.
+- **Not the token.** The claim reveals neither the token nor the user id,
+  and the server derives it again on demand instead of storing it.
+- **Kept in the address.** The fragment never reaches the server in an
+  HTTP request or a log, and it stays in the address bar, so a reload keeps
+  the seat. The client also remembers the claim with the room in
+  `ajayeb:rooms`, and opening a device link never asks for a display name.
+- **Revocable.** `relink` raises the epoch, which revokes every claim made
+  before it and detaches the connections using one.
+
+**Security.** A device link is a password for that seat in that room:
+whoever holds it plays as that player there (as the admin too, for the
+admin's seat), until the seat's link is reset. It gives nothing outside the
+room. Share it like a password, and reset it when it may have leaked. Only
+the seat's own user and the game's admin may see or reset a seat's link.
 
 ## Limits
 
@@ -691,8 +813,10 @@ clock instead of waiting.
 - **Joins of unknown rooms:** 30 per hour per client address (an IPv4
   address or an IPv6 /64), as a token bucket of 30. A `join` that finds no
   room (no such code, a malformed one, an archived room) uses one up; past
-  the limit every `join` from the address gets `reject rate` (seq 0). An
-  address the limiter does not remember is never refused.
+  the limit every `join` from the address gets `reject rate` (seq 0). A
+  `join` refused with `bad-claim` uses one up too, so claims cannot be
+  guessed faster than codes. An address the limiter does not remember is
+  never refused.
   This stops one address from guessing codes at the frame rate, but it
   does not make codes unguessable. Someone who holds many /64s (a free
   tunnel-broker IPv6 /48 holds 65,536 of them) gets 30 misses an hour from
