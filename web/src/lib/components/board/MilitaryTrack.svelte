@@ -24,6 +24,18 @@
   // considered: an outlined pawn where it would put the pawn, and a dashed
   // ring on each looting token it would take. Both are the server's
   // outcome (Choice.outcome.pawn); the track only draws them.
+  //
+  // A capital is an instant win: under each end of the bar a small crown
+  // says so ("Reaching this space wins the game at once"), apart from the
+  // zone tablets, whose tooltips say that only the player ahead scores
+  // them, at the end. Board hints (M10.HS4, the military family, from the
+  // page's game context unless `hints` is given): each capital's tooltip
+  // says how many shields the opponent still needs and whether it can
+  // still gather them (capital-distance, capital-safe), with the number on
+  // the capital at 5 or fewer; the pawn's tooltip says the same for the
+  // capital it leans toward; and each looting token says what it would take
+  // now (looting-token-tooltip).
+  import { hintHide } from '$lib/hints/local.svelte';
   import { i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { trackEnds, trackMirrored, type Seat } from '$lib/ui/track';
@@ -39,6 +51,9 @@
   import type { MilitaryView, PawnMoveView } from '$lib/wire';
   import LootingToken from './LootingToken.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { lootText, trackHints, type TrackHints } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { tryGameContext } from '../choices/room';
 
   interface Props {
     military: MilitaryView;
@@ -54,6 +69,8 @@
     legend?: boolean;
     /** The considered move's pawn and looting (a selection ghost). */
     ghost?: PawnMoveView;
+    /** The board hints (view/board-hints.ts trackHints); else from the game context. */
+    hints?: TrackHints;
     class?: string;
   }
 
@@ -64,8 +81,46 @@
     compact = false,
     legend = false,
     ghost,
+    hints,
     class: className = ''
   }: Props = $props();
+
+  const ctx = tryGameContext();
+  const th = $derived.by((): TrackHints | undefined => {
+    if (hints) return hints;
+    const view = ctx?.session.view;
+    const screen = sessionHintScreen(ctx?.session, hintHide.value);
+    return view && screen ? trackHints(view, screen.families, screen.names) : undefined;
+  });
+
+  /** A seat's name for the zone tooltips: the hint names, else "you" or the crest. */
+  function seatLabel(seat: Seat): { you: boolean; name: string } {
+    if (th) return { you: th.names.you === seat, name: th.names.names[seat] };
+    return { you: viewerSeat === seat, name: t(crestKey(seat)) };
+  }
+
+  /** The tooltip of a zone's points: they go to the player ahead, at the end. */
+  function zoneTip(side: -1 | 1, points: number): string {
+    // The pawn on seat 1's side (+) means seat 0 is ahead.
+    const who = seatLabel(side > 0 ? 0 : 1);
+    return who.you
+      ? t('hints.zone.you', { count: points })
+      : t('hints.zone.named', { count: points, name: who.name });
+  }
+
+  function capitalTip(seat: Seat): string {
+    const who = seatLabel(seat);
+    const base = who.you
+      ? t('hints.capital.titleYou')
+      : t('hints.capital.titleNamed', { name: who.name });
+    return [base, t('hints.capital.win'), th?.capitals[seat]?.text ?? ''].filter(Boolean).join(' ');
+  }
+
+  const pawnTip = $derived.by(() => {
+    const endangered = leader === null ? null : leader === 0 ? 1 : 0;
+    const line = endangered === null ? '' : (th?.capitals[endangered]?.text ?? '');
+    return [leadText, line].filter(Boolean).join(' ');
+  });
 
   // The zone shades, nearest the centre lightest. Spelled out for Tailwind.
   const ZONE_SHADE = ['bg-fg/6', 'bg-fg/12', 'bg-fg/20'] as const;
@@ -123,15 +178,39 @@
       : 'bg-moon/25 text-moon-ink'}"
     style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
     data-capital={seat}
-    {@attach tooltip({
-      text: t(viewerSeat === seat ? 'board.military.capitalYou' : 'board.military.capitalCrest', {
-        crest: t(crestKey(seat))
-      })
-    })}
+    data-capital-safe={th?.capitals[seat]?.safe ? '' : undefined}
   >
-    <!-- About 11 px, where the sun's -sm file reads. -->
-    <Icon name={seat === 0 ? 'crest-sun-sm' : 'crest-moon'} class="text-[11px]" />
+    {#if th?.capitals[seat]?.numeral}
+      <span
+        class="capital-numeral rounded-[3px] bg-cinnabar px-0.5 text-[10px] leading-none font-bold text-(--paper-bright) tabular-nums"
+        data-min-font="10"
+        data-to-capital={th.capitals[seat]?.toCapital}>{th.capitals[seat]?.toCapital}</span
+      >
+    {:else}
+      <!-- About 11 px, where the sun's -sm file reads. -->
+      <Icon name={seat === 0 ? 'crest-sun-sm' : 'crest-moon'} class="text-[11px]" />
+    {/if}
   </div>
+{/snippet}
+
+{#snippet crown(seat: Seat)}
+  <span
+    class="capital-crown absolute top-0 grid h-4 w-4 place-items-center rounded-[4px] border border-(color:--gold-deep) bg-gold text-card-ink"
+    style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
+    data-capital-crown={seat}
+    {@attach tooltip({ text: capitalTip(seat) })}
+  >
+    <svg class="size-3" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
+        fill="currentColor"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linejoin="round"
+      />
+      <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
+    </svg>
+  </span>
 {/snippet}
 
 {#snippet tablet(points: number, cls: string)}
@@ -170,6 +249,15 @@
       {@render capital(ends[0])}
       {@render capital(ends[1])}
     </div>
+    {#each ends as seat (seat)}
+      <!-- The capital's tooltip target, above the clipped shading layer. -->
+      <div
+        class="capital capital-hit absolute inset-y-0"
+        style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
+        data-capital-tip={seat}
+        {@attach tooltip({ text: capitalTip(seat) })}
+      ></div>
+    {/each}
     {#each boundaries as at (at)}
       <div
         class="boundary absolute -inset-y-0.5 w-px bg-fg/40"
@@ -188,6 +276,7 @@
           magnitude={Math.abs(loot.at)}
           present={loot.present}
           size={compact ? 'sm' : 'md'}
+          tip={th ? lootText(loot, th.wouldLose.get(loot.at), th.names) : undefined}
         />
       </div>
     {/each}
@@ -222,6 +311,7 @@
       style:--pos="{cellCenter(military.position, leftSeat)}%"
       data-pawn={military.position}
       aria-hidden="true"
+      {@attach tooltip({ text: pawnTip })}
     >
       <Icon name="military-pawn" class={compact ? 'text-[10px]' : 'text-xs'} />
     </div>
@@ -236,11 +326,14 @@
           <span
             class="zone-value absolute top-0 flex h-4"
             style:--pos="{zoneMiddle(zone, side, leftSeat)}%"
+            {@attach tooltip({ text: zoneTip(side, zone.points) })}
           >
             {@render tablet(zone.points, '')}
           </span>
         {/each}
       {/each}
+      {@render crown(ends[0])}
+      {@render crown(ends[1])}
     </div>
   {/if}
 
@@ -257,6 +350,24 @@
         <span class="flex" aria-hidden="true">{@render tablet(5, '')}</span>
         {t('board.military.legendPoints')}
       </span>
+      <span class="flex items-center gap-1.5" data-legend-capital>
+        <span class="relative flex h-4 w-4" aria-hidden="true">
+          <svg
+            class="size-4 rounded-[4px] border border-(color:--gold-deep) bg-gold p-px text-card-ink"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
+              fill="currentColor"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linejoin="round"
+            />
+            <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
+          </svg>
+        </span>
+        {t('hints.capital.win')}
+      </span>
     </p>
   {/if}
 </div>
@@ -272,7 +383,8 @@
   }
   .zone-value,
   .boundary,
-  .capital {
+  .capital,
+  .capital-crown {
     left: var(--pos); /* physical-ok: see the note above */
     translate: -50% 0;
   }

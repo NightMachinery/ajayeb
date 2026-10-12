@@ -17,10 +17,12 @@
     /** Still on the track (true) or already claimed (false, shown ghosted). */
     present: boolean;
     size?: 'sm' | 'md';
+    /** A fuller tooltip (the track's looting hint, M10.HS4); else the label. */
+    tip?: string;
     class?: string;
   }
 
-  let { value, magnitude, present, size = 'md', class: className = '' }: Props = $props();
+  let { value, magnitude, present, size = 'md', tip, class: className = '' }: Props = $props();
 
   const label = $derived(
     t(present ? 'board.military.lootCell' : 'board.military.lootTaken', { value, magnitude })
@@ -34,8 +36,8 @@
     ? 'border border-(color:--gold-deep) bg-gold text-card-ink'
     : 'border border-dashed border-fg-muted/60 bg-transparent'} {className}"
   role="img"
-  {@attach tooltip({ text: label })}
-  aria-label={label}
+  {@attach tooltip({ text: tip ?? label })}
+  aria-label={tip ? `${label}. ${tip}` : label}
   data-present={present ? '' : undefined}
   data-min-font="10"
 >
