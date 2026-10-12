@@ -215,9 +215,14 @@ export function outcomeTerms(o: OutcomeView | undefined, ctx: OutcomeContext): O
     const w = winTerm(o);
     if (w) out.push(w);
   }
+  // A supremacy ends the game whatever the points, so their change would
+  // only distract.
+  const supremacy = o.wins !== undefined && o.wins.kind !== 'civilian';
   if (f.has('scoring')) {
     const e = endTerm(o, ctx);
     if (e) out.push(endSaysWin ? { ...e, icon: 'crown', tone: 'win' } : e);
+  }
+  if (f.has('scoring') && !supremacy) {
     if (o.score[me] !== 0) {
       out.push({
         id: 'vp',
@@ -427,7 +432,12 @@ export function afterPickLines(
         text: t('hints.after.reveal', { count: freed.faceDown, name: oppName })
       });
       if (actions.some((a) => a.outcome?.tempo?.extraTurn === 'gain')) {
-        out.push({ id: 'revealWonder', text: t('hints.after.revealWonder') });
+        out.push({
+          id: 'revealWonder',
+          text: isYou(me, ctx.names)
+            ? t('hints.after.revealWonderYou')
+            : t('hints.after.revealWonderNamed', { name: ctx.names.names[me] })
+        });
       }
     }
     for (const s of freed.faceUp) {

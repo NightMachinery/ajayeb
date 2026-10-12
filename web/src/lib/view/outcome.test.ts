@@ -95,9 +95,9 @@ describe('outcomeTerms', () => {
     expect(outcomeTerms(outcome(), ctx())).toEqual([]);
   });
 
-  it('puts a win first, with its crown', () => {
+  it('puts a win first, with its crown, and leaves out the points', () => {
     const terms = outcomeTerms(
-      outcome({ wins: { kind: 'military', steps: 1 }, coins: [4, 7] }),
+      outcome({ wins: { kind: 'military', steps: 1 }, coins: [4, 7], score: [-3, 0] }),
       ctx()
     );
     expect(terms[0]).toMatchObject({ id: 'win', icon: 'crown', tone: 'win' });

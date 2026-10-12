@@ -255,7 +255,9 @@ export const hints = {
     one: 'The card turned over is {name}’s to take first.',
     other: 'The cards turned over are {name}’s to take first.'
   },
-  'hints.after.revealWonder': 'With the extra turn, you see the turned card first.',
+  'hints.after.revealWonderYou': 'Built into a wonder that plays again, it lets you take it first.',
+  'hints.after.revealWonderNamed':
+    'Built into a wonder that plays again, it lets {name} take it first.',
   'hints.after.giftWin': '{card} would then win the game for {name}.',
   'hints.after.giftPair': '{card} would then give {name} a science pair.',
   'hints.after.giftChain': '{card} would then be free for {name} by chain.',

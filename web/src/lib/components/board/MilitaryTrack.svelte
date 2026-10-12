@@ -287,4 +287,8 @@
   .capital {
     width: calc(100% / 19);
   }
+  /* The ghost pawn stays readable over a capital or a token. */
+  .pawn-ghost {
+    background: color-mix(in oklch, var(--panel) 85%, transparent);
+  }
 </style>
