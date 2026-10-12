@@ -81,6 +81,10 @@
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
   import { lastPly, latestSummary, summaryTrigger, summaryViewer } from '$lib/view/move-summary';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { ageTip } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { seatGhost, selectionGhost } from '$lib/view/outcome';
   import { gameEnded } from '$lib/view/threats';
   import { playAgainFrom, turnState } from '$lib/view/turn';
   import { buildableWonders } from '$lib/view/wonders';
@@ -111,6 +115,7 @@
   import MoveSummary from './MoveSummary.svelte';
   import {
     botPick,
+    cardActions,
     eventLines,
     homeSeat,
     needsConfirm,
@@ -285,6 +290,24 @@
   const shownLog = $derived(
     shownHistory.length > 0 ? shownHistory.flatMap((e) => e.events) : ui.log
   );
+
+  // The board hints of this screen (M10.HS4): the selection ghosts of the
+  // selected card's build (the pawn on the board's track, coins and score
+  // on both seats' panels), and the age chip's tooltip.
+  const boardHints = $derived(sessionHintScreen(session, hintHide.value));
+  const ghost = $derived.by(() => {
+    if (!view || !boardHints?.boardMarks || !selectedSlot?.card) return undefined;
+    const build = cardActions(view, selectedSlot.card).build;
+    return selectionGhost(
+      build?.outcome,
+      [view.scorePreview[0].total, view.scorePreview[1].total],
+      boardHints.families
+    );
+  });
+  const ageChipTip = $derived(
+    view && boardHints ? ageTip(view, cardsLeft, boardHints.families, boardHints.names) : undefined
+  );
+
   const turn = $derived(
     turnState({
       view,
@@ -298,7 +321,14 @@
         presence[0] === undefined ? undefined : presence[0] === 'connected',
         presence[1] === undefined ? undefined : presence[1] === 'connected'
       ],
-      playAgain: playAgainFrom(shownLog)
+      // When the events on hand hold no grant (a fixture room seen from a
+      // late join), the view's playingAgain flag still says the turn is an
+      // extra one.
+      playAgain:
+        playAgainFrom(shownLog) ??
+        (view?.playingAgain && (view.toMove === 0 || view.toMove === 1)
+          ? { seat: view.toMove }
+          : undefined)
     })
   );
   const thinkingSeat = $derived(turn.kind === 'aiThinking' ? turn.seat : undefined);
@@ -595,6 +625,7 @@
       leftSeat={home}
       {compact}
       legend={layout === 'desktop'}
+      ghost={ghost?.pawn}
       class={compact ? 'min-w-24 flex-1' : 'w-full'}
     />
     <ProgressTokenRow
@@ -623,6 +654,7 @@
       presence={mySeats.includes(seat) ? undefined : presence[seat]}
       onwonder={mySeats.includes(seat) ? selectWonder : undefined}
       onopen={() => ui.openCity(seat)}
+      ghost={seatGhost(ghost, seat)}
       class={cls}
     />
   {/if}
@@ -658,6 +690,7 @@
       <TopBar
         age={view?.age ?? 0}
         {cardsLeft}
+        ageTip={ageChipTip}
         {canUndo}
         onUndo={undoAllowed ? undo : undefined}
         {undoReason}

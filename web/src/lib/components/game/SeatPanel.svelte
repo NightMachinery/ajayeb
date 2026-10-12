@@ -49,6 +49,8 @@
     /** The game has ended: no danger warnings. */
     ended?: boolean;
     onopen?: () => void;
+    /** The selected move's coins and score after it (a selection ghost). */
+    ghost?: { readonly coins?: number; readonly score?: number };
     class?: string;
   }
 
@@ -68,6 +70,7 @@
     bot,
     ended = false,
     onopen,
+    ghost,
     class: className = ''
   }: Props = $props();
 
@@ -125,6 +128,7 @@
       {bot}
       {ended}
       {thinking}
+      {ghost}
       class="bg-panel"
     />
   {:else}
@@ -141,6 +145,7 @@
       {thinking}
       {presence}
       {onopen}
+      {ghost}
       openLabel={t('game.openCity', { name })}
       class="bg-panel"
     />
