@@ -24,7 +24,7 @@ Ports: Vite dev listens on 38952 and `vite preview` on 38953. Both forward `/ws`
 - `src/lib/i18n/` holds the message tables and `t()`.
 - `src/lib/ui/` holds UI state classes, such as the theme (`theme.svelte.ts`) and the safe-area override (`safe-area.ts`), and small display mappers such as the military track's side (`track.ts`) and the online helpers (`online.ts`: the room-code input normaliser and alphabet, the invite link, seat presence and its changes, the QR path).
 - `src/lib/dev/flags.ts` decides whether the `/dev` routes exist.
-- `src/routes/` holds the pages. `/` is Home, `/play/<code>` is a room, and `/dev/*` holds the developer pages.
+- `src/routes/` holds the pages. `/` is Home, `/play/<code>` is a room, `/rules` is the rules reference, and `/dev/*` holds the developer pages.
 - `static/` is served as is: the fonts with their licenses, the favicon, and the approved bitmap art under `static/art/` (see Bitmap art).
 - `font-sources/` keeps the original TTF fonts and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `static/fonts/`.
 
@@ -103,6 +103,20 @@ Pass `undefined` instead of the content for no tooltip (a conditional one). The 
 - **Accessibility.** The bubble has `role="tooltip"` and the id `ajayeb-tooltip`; a focusable anchor gets `aria-describedby` pointing at it while it shows. Micro-elements inside a focusable card (its chips and glyphs) are not focusable themselves: the card's own accessible name describes them, so there is no tab stop per symbol.
 - **The dismiss layer.** `components/shell/DismissLayer.svelte` is a floating panel (a manual popover, centred by default; pass position classes to move it) with the same rule: any tap closes it and is swallowed, and Escape closes it. With `keepInside`, taps inside the panel reach their targets (a coach mark's Next button) and only taps outside close it. It is made for the opponent move summary and the tutorial's coach marks. `installDismiss` and `swallowClick` in `ui/dismiss.ts` are the behaviour on its own, for any other overlay.
 - **Gallery and tests.** `/dev/gallery/tooltips` shows every variant: plain text, parameters, a diagram, the stacked chain chips, a chip inside an actionable card, a button, the bubble and stack standalone, and the dismiss layer. `?show=<id>` opens the tooltip of the element marked `data-tip-demo="<id>"` for screenshots, and `?edges` adds stacked chain chips at the viewport's corners. `e2e/specs/tooltips.spec.ts` covers hover, focus, Escape and innermost resolution on the desktop project, and tap, long-press and the swallowed tap on the mobile project. Test hooks: `data-tooltip` on every registered anchor, `data-tooltip-layer`, `data-tooltip-bubble` (with `data-side`), `data-tooltip-stack`, `data-card-preview` on a stacked card, `data-chain` and `data-chain-direction` on chain chips, and `data-dismiss-layer`.
+
+## The rules reference
+
+The rules of the base game, in our own words, live in two places that work together:
+
+- `src/lib/i18n/en/rules.ts` holds the text, one key per paragraph, list item or definition. It is written from `docs/rules/` (never from the rulebook; see `docs/legal.md`). Card, wonder and token names are never written there: a `{placeholder}` names them, filled from the existing name keys.
+- `src/lib/components/rules/sections.ts` arranges those keys into sections, each with a stable id: `goal`, `setup`, `turn`, `costs`, `military`, `science`, `wonders`, `tokens`, `guilds`, `age-end`, `scoring` and `glossary`. Tooltips and hints link to these ids, so add new ids rather than renaming one. `sections.test.ts` checks that the ids are unique, that every key exists and that every placeholder is filled.
+
+They show in two ways:
+
+- **The page `/rules`**, linked from the Home footer (`data-control="home-rules"`). It has a table of contents, and each section is a deep link such as `/rules#military`.
+- **The in-game overlay**, opened by the game menu's Rules item (`data-control="menu-rules"`) without leaving the game. With room for two columns (`split`) it is a side panel over the opponent's column, so the board stays visible and usable; on a phone it is a bottom sheet (`shell/Sheet.svelte`, swipe down to close). Both have the contents as a row of chips and Close (`data-control="rules-close"`); Escape closes them too.
+
+Any component can open the overlay at a section with `openRules('military')` from `components/rules/rules-overlay.svelte.ts` (no section opens it at the top, or where the reader left it). The first call loads the overlay in its own chunk and mounts it once at the end of `<body>`, so no screen has to place it, and it closes itself when the page changes. The diagrams (`MilitaryDiagram`, `TradeDiagram`, `ScienceDiagram`) are built from the board's own components and the icon sprite, with every label as translatable text. Test hooks: `data-rules-page` on the page, `data-rules-overlay` (`drawer` or `sheet`) on the overlay, `data-rules-panel` on its body, `data-rules-section` on each section, `data-rules-toc-item` on each contents entry and `data-rules-diagram` on each diagram. `/dev/gallery` has a rules section under Screens with the diagrams, the panel at two widths, and buttons that call `openRules()`.
 
 ## Sound and haptics
 

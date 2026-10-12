@@ -37,7 +37,7 @@ Rules we follow around the name:
 - Official card, wonder or box art, or the logo.
 - The official iconography. We draw our own resource and science symbols, shields, coins and every other glyph.
 - The card-frame trade dress and the layout graphics of the physical game.
-- Rulebook text. `docs/rules/` states the rules in our own words, and no rulebook PDF is ever committed.
+- Rulebook text. `docs/rules/` states the rules in our own words, and no rulebook PDF is ever committed. The rules reference in the app (the `/rules` page and the in-game Rules panel, `web/src/lib/i18n/en/rules.ts`) is written in our own words from `docs/rules/`, never from the rulebook, and copies neither its layout nor its diagrams: its small diagrams are built from our own components and icons.
 - Images from BoardGameGeek, from the publisher, or from any other site.
 
 ## Game data
