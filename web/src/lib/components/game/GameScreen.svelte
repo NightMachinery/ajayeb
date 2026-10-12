@@ -296,7 +296,10 @@
   // on both seats' panels), and the age chip's tooltip.
   const boardHints = $derived(sessionHintScreen(session, hintHide.value));
   const ghost = $derived.by(() => {
-    if (!view || !boardHints?.boardMarks || !selectedSlot?.card) return undefined;
+    // Not in the wonder step, whose moves are wonders, not this build.
+    if (!view || !boardHints?.boardMarks || !selectedSlot?.card || ui.step !== 'card') {
+      return undefined;
+    }
     const build = cardActions(view, selectedSlot.card).build;
     return selectionGhost(
       build?.outcome,
