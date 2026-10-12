@@ -6665,7 +6665,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": false
-      }
+      },
+      "allowUndo": false
     },
     "you": {
       "seats": [
