@@ -186,7 +186,14 @@ test.describe('tooltips on a fine pointer', () => {
         expect(box.y + box.height).toBeLessThanOrEqual(vp.height);
       }
     }
-    await expect(page.locator('[data-tooltip-layer] .tooltip-group[data-placed]')).toHaveCount(1);
+    const group = page.locator('[data-tooltip-layer] .tooltip-group[data-placed]');
+    await expect(group).toHaveCount(1);
+    // Axe reads the colours as drawn, so it runs only once the fade-in has
+    // ended: mid-fade the text is part transparent, and its contrast fails.
+    await group.evaluate((el) =>
+      Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished))
+    );
+    await expect.poll(() => group.evaluate((el) => getComputedStyle(el).opacity)).toBe('1');
     const results = await new AxeBuilder({ page })
       .withTags(AXE_TAGS)
       .include('[data-tooltip-layer]')
