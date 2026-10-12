@@ -42,7 +42,7 @@ In production, Caddy terminates TLS and reverse-proxies everything to the one Go
 The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). Dependencies point inward: the engine knows nothing about rooms, sockets, files or clocks; the room knows nothing about sockets; only `ws` and `httpapi` touch the network.
 
 - **`internal/engine/catalog`**: the typed card, wonder and token data and the small effect language used to describe them. Numeric ids follow a public reference numbering (cards 1 to 73, wonders 1 to 12, tokens 1 to 10) and travel on the wire as kebab-case slugs.
-- **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog` and the view types.
+- **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`, and `ViewWithHints` with the hints of `hints.go`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog` and the view types.
 - **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below).
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
@@ -68,7 +68,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 
 The engine produces each key from its own action value and parses keys strictly. The server accepts a key only if it appears in the legal list for the current state, and then applies the engine's own action for that key. Payment is never part of an action: the engine always applies the cheapest payment and reports its breakdown.
 
-**The view is built by whitelist.** `ViewFor(state, viewer)` copies into a fresh DTO only the fields that viewer may see, so a field nobody remembered to redact cannot leak. Besides the board, cities and military track, the view carries what the thin client needs to explain the game without knowing the rules:
+**The view is built by whitelist.** `ViewFor(state, viewer)` (or `ViewWithHints(state, viewer, hints)`, the same view with the game's hints, see [Hints](#hints)) copies into a fresh DTO only the fields that viewer may see, so a field nobody remembered to redact cannot leak. Besides the board, cities and military track, the view carries what the thin client needs to explain the game without knowing the rules:
 
 - `choices`: the legal keys for the decider, each with its kind, its cost breakdown, and disabled options with a reason, so the UI can say why a move is not available;
 - both players' cost breakdowns for every face-up card (accessible or covered, as if it were accessible), discard values, wonder costs and trade prices;
@@ -123,7 +123,7 @@ An online game, seat 0 builds the Baths:
 
 5. The room applies the engine's own action for that key. `Apply` updates the state and returns the events of the move (coins paid, card built, cards revealed, and so on).
 6. The room appends the key to its action log, bumps the version and writes the room file atomically.
-7. For each connection, the room builds `ViewFor(state, viewer)` and filters the events for that viewer, then hands the snapshot to that connection's outbox. If an older snapshot is still waiting there, the new one replaces it.
+7. The room computes the game's shared hints once, with the room's hint settings (`ComputeHints`). For each connection it builds `ViewWithHints(state, viewer, hints)` (at most three distinct views: seat 0, seat 1 and spectators) and filters the events for that viewer, then hands the snapshot to that connection's outbox. If an older snapshot is still waiting there, the new one replaces it.
 8. The Session receives the `state` message, replaces its view, and clears the pending action, because the `ack` names its `seq` and the version has moved past its `base`.
 9. The Presenter animates the events (the card flies to the city, coins move, newly uncovered cards flip) and then shows the new view. The TurnBar now says it is the opponent's turn.
 
@@ -135,7 +135,7 @@ An online game, seat 0 builds the Baths:
 
 - **All chance happens at setup.** `NewGame(seed, options)` shuffles everything once: the wonder order for the draft, the three age decks and the cards removed from each, the guilds that enter Age III, the progress tokens on the board and the order of those left in the box, and the first player. After setup, `Apply` uses no randomness.
 - **So a game is its seed plus its action keys.** The room file stores exactly that (plus seats and options), and the server restores a room by replaying it. Replay is fast because a game has roughly a hundred actions.
-- **The state is a fixed-size value struct** of arrays, bitsets and small integers, with no pointers, maps or slices. Copying it is a clone, and hashing its bytes (FNV-1a) gives a stable fingerprint. A loaded room is checked against its stored hash; a room that fails to replay, or whose rules version is incompatible, is archived instead of silently changing.
+- **The state is a fixed-size value struct** of arrays, bitsets and small integers, with no pointers, maps or slices. Copying it is a clone, and hashing its bytes (FNV-1a) gives a stable fingerprint. The hash covers every byte except the two derived counters at the end of the state (the shields each seat has placed, and whether the current turn is an extra turn): they follow from the action keys anyway, and leaving them out kept every hash recorded before they existed valid, in saved rooms, game logs and golden replays. A loaded room is checked against its stored hash; a room that fails to replay, or whose rules version is incompatible, is archived instead of silently changing.
 - **Rules code avoids every source of nondeterminism:** no map iteration in logic, no floats, no clocks, no I/O, no shared mutable state. An import-guard test and the linter enforce this.
 - **Undo** (bot and hot-seat rooms only, and never once the game is over) truncates the action log back to before the human's last decision and replays from the seed. Because hidden cards were fixed at setup, an undo cannot reroll them.
 - **Golden replays** pin known games (seed, keys, winner, victory type, scores, final hash), and property sweeps replay thousands of seeded bot games, checking invariants after every action.
@@ -165,6 +165,28 @@ Everything else is public, as it is at the table: face-up cards, both cities, co
 - a redaction sweep over thousands of seeded games asserts that no hidden card id, and never the seed, appears anywhere in either seat's serialized view, and that the library offer appears only in the decider's view;
 - protocol tests capture every byte the server sends and check it against the room's true hidden ids at that moment;
 - the online end-to-end test captures the WebSocket frames in the browser and compares them with a development-only endpoint that lists the room's hidden ids.
+
+## Hints
+
+The hints (decision D23; the design is the hints design of M10) are facts the server works out from public information and sends in the view, so the thin client never derives a rule to explain the game. They live in `internal/engine/hints.go`.
+
+**Data flow.** For each broadcast the room's frame cache calls `ComputeHints(state, settings)` once, with the room's hint settings, and passes the result to `ViewWithHints` for each of the at most three views it builds. `ComputeHints` computes the shared hints, which are the same for every viewer; a later slice adds the decider's hints about its own choices inside `ViewWithHints`. `ViewFor(state, viewer)` is `ViewWithHints(state, viewer, nil)`, so the simulator, the tests and replays never see hints, and a finished game's view carries none. `view.hints` is still empty in M10.HS1: the later hints slices fill it, each part only while its family is on.
+
+**Core fields.** Three facts that every view carries, whatever the settings, came with the hints: `players[i].shields` (the shields each seat has placed, Strategy's included, which the cities cannot tell because Strategy counts only for red cards built after it), `playingAgain` (the current turn is an extra turn, so the client no longer infers it from the event history) and `draft.order` (the seats of the round's four picks).
+
+**Copy-only simulations.** The hints are built from a few helpers that simulate on a copy of the state and never touch the structure: `previewBuild` and `previewWonder` (what building a card or a wonder would do for a seat now, stopping before any choice it opens; the Great Library preview never draws), `priceShift` and `savesInView` (how a card would move trade prices and the payments in view), `tokenPreview`, `extraTurnOutcome` (from the rules alone, since an applied copy has already used up the extra turn), `publicPlace` (where a card is as far as both players can know: face up, a city, tucked, the discard pile, unseen this age, unseen in a later age, or certainly set aside in an age that is over), and `WinsNow`, which the Greedy bot shares (see [ai.md](ai.md)).
+
+**Public information only.** A hint for a viewer must come out the same on every state that viewer cannot tell apart from the real one. So every simulation runs on a copy whose Great Library offer is cleared, a follow-up after a simulated action may only use the cards that were face up before it (the face-up mask), and `WinsNow` stops as soon as an action has revealed a card, dealt an age or drawn the Great Library. The decider's hints will run under a fixed budget of 20,000 Applies per view, a count rather than a clock, so a hint is a pure function of the state and the settings; what the budget cuts is left out, never guessed.
+
+**The leak guard.** `hints_leak_test.go` builds, for random states and every named scenario, each viewer's view with every hint family on, and checks that it is identical on the real state and on several determinizations of that viewer's observation (the decider keeps its Great Library offer). This one equality catches any hint, present or future, that reads a face-down card, the deals, the removed cards, the box guilds, the box order or a hidden offer. A second test traces every simulation and checks that no shared hint simulates for the waiting seat during a Great Library offer and that every follow-up stays inside the face-up mask. The fuzz target `FuzzHintsLeak` runs the same checks on fuzzer-chosen games in the nightly fuzz job.
+
+**Cost** (Apple M2, `go test -bench` in `internal/engine`, M10.HS1):
+
+- `BenchmarkComputeHints/frame`: the hints and the three views of one broadcast, about 42 to 47 microseconds, almost all of it the views themselves, since the hints are still empty.
+- `BenchmarkComputeHints/projected`: the shared work the later slices will add, measured with the helpers (a `previewBuild`, a `priceShift` and a `savesInView` for each face-up card and seat, a `previewWonder` for each open wonder, a `tokenPreview` for each board token and seat, and `publicPlace` for all 73 cards) on a mid-Age II state: about 20 microseconds and 17 allocations.
+- `BenchmarkDeciderHints`: `WinsNow` and `extraTurnOutcome` for every legal action of the busiest play state of a seeded game (18 actions, 34 Applies): about 7 microseconds, with no allocation.
+
+**Frame size.** The core fields and the empty `hints` object add 56 bytes to a mid-age view: measured on seeds 1 to 3, with both seats played by the simple policy, at the first play state of Age I and of Age II with at most ten cards left, the decider's view went from 15402 to 17989 bytes before to 15458 to 18045 bytes after (seed 1, Age II: 16826 before, 16882 after).
 
 ## Rooms, identity and reconnect
 
