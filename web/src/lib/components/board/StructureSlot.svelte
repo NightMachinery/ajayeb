@@ -12,13 +12,26 @@
   //
   // The button only reports the tap (onselect); what a tap opens, and which
   // actions exist, is the parent's business and the view's choices.
+  //
+  // Hints (M10.HS2): a face-up card may carry one hint pip on its top-end
+  // corner (view/hints.ts picks it from the server's slot.hints), at half
+  // strength on a covered card. In wonder-first mode the gold ring alone
+  // marks a tuckable card and the corner goes to the opponent's pip, the
+  // deny target, when there is one. The pip follows the game's hint
+  // families and this screen's local hide; on a room page it reads them
+  // from the game context, and the gallery passes `hints` instead.
   import Icon from '$lib/icons/Icon.svelte';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import type { SlotPlace } from '$lib/view/geometry';
   import type { SlotView } from '$lib/wire';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { denyPip, pipLabel, sessionHintScreen, slotPip, type HintScreen } from '$lib/view/hints';
+  import { cardName } from '../card/effect-text';
   import CardBack from '../card/CardBack.svelte';
   import CardFace from '../card/CardFace.svelte';
+  import HintPip from '../card/HintPip.svelte';
+  import { tryGameContext } from '../choices/room';
 
   interface Props {
     slot: SlotView;
@@ -38,6 +51,8 @@
     pending?: boolean;
     /** Wonder-first mode: this card can go under the chosen wonder. */
     marked?: boolean;
+    /** The hint display of this screen; on a room page it comes from the game context. */
+    hints?: HintScreen;
     onselect?: (slot: SlotView) => void;
   }
 
@@ -53,10 +68,25 @@
     selected = false,
     pending = false,
     marked = false,
+    hints,
     onselect
   }: Props = $props();
 
   const takeable = $derived(slot.accessible && slot.state === 'faceUp');
+
+  const ctx = tryGameContext();
+  const screen = $derived(hints ?? sessionHintScreen(ctx?.session, hintHide.value));
+  const pip = $derived(
+    screen ? slotPip(slot, screen.perspective, screen.families, screen.names) : undefined
+  );
+  // Wonder-first mode: only the opponent's pip claims the corner.
+  const shownPip = $derived(screen?.boardMarks ? (marked ? denyPip(pip) : pip) : undefined);
+  const name = $derived(slot.state === 'faceUp' && slot.card ? cardName(slot.card) : '');
+  // The badge's Urbanism bonus and Economy flow (the prices family).
+  const badgeCost = $derived.by(() => {
+    if (!afford || !screen?.families.has('prices') || !slot.costs) return undefined;
+    return slot.costs[screen.perspective.seat];
+  });
 </script>
 
 {#if slot.state === 'empty'}
@@ -87,17 +117,28 @@
     data-card={slot.state === 'faceUp' ? slot.card : undefined}
     data-accessible={slot.accessible ? '' : undefined}
     data-marked={marked ? '' : undefined}
-    aria-label={label}
+    aria-label={pip ? `${label}. ${pipLabel(pip)}` : label}
     aria-disabled={takeable ? undefined : 'true'}
     aria-pressed={selected ? 'true' : undefined}
     onclick={() => onselect?.(slot)}
   >
     {#if slot.state === 'faceUp' && slot.card}
-      <CardFace slug={slot.card} {tier} {width} {afford} {dim} />
+      <CardFace
+        slug={slot.card}
+        {tier}
+        {width}
+        {afford}
+        {dim}
+        bonus={badgeCost?.chainFree ? badgeCost.urbanismBonus : 0}
+        flow={badgeCost?.affordable ? badgeCost.toOpponent : 0}
+        flowTo={screen ? screen.names.names[screen.perspective.seat === 0 ? 1 : 0] : ''}
+      />
     {:else}
       <CardBack back={slot.back ?? 'age1'} class="h-full w-full" />
     {/if}
-    {#if marked}
+    {#if shownPip}
+      <HintPip pip={shownPip} card={name} size={tier === 'mini' ? 'sm' : 'md'} faint={!takeable} />
+    {:else if marked}
       <span
         class="wonder-mark pointer-events-none absolute -end-1.5 -top-1.5 grid size-6 place-items-center rounded-full border-2 border-(color:--gold-deep) bg-gold text-card-ink shadow-sm"
         aria-hidden="true"

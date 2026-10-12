@@ -47,10 +47,26 @@
     afford?: Afford;
     /** Not your turn: dim the badge (shown for planning). */
     dim?: boolean;
+    /** The badge's Urbanism bonus on a chain build (AffordBadge bonus). */
+    bonus?: number;
+    /** The badge's coins that go to the opponent through Economy (AffordBadge flow). */
+    flow?: number;
+    /** Who receives `flow` (user text). */
+    flowTo?: string;
     class?: string;
   }
 
-  let { slug, tier, width, afford, dim = false, class: className = '' }: Props = $props();
+  let {
+    slug,
+    tier,
+    width,
+    afford,
+    dim = false,
+    bonus = 0,
+    flow = 0,
+    flowTo = '',
+    class: className = ''
+  }: Props = $props();
 
   const card = $derived(cardBySlug(slug));
   const withArt = $derived(hasApprovedArt(artId('card', slug)));
@@ -145,7 +161,7 @@
         {/if}
         {#if afford}
           <span class="pointer-events-none absolute inset-x-0 bottom-[0.3em] flex justify-center">
-            <AffordBadge {afford} {dim} compact={tier === 'mini'} />
+            <AffordBadge {afford} {dim} compact={tier === 'mini'} {bonus} {flow} {flowTo} />
           </span>
         {/if}
       </span>
