@@ -19,6 +19,7 @@ import { game } from './en/game';
 import { hints } from './en/hints';
 import { home } from './en/home';
 import { online } from './en/online';
+import { rules } from './en/rules';
 import { session } from './en/session';
 import { shell } from './en/shell';
 import { i18n, type Locale } from './locale.svelte';
@@ -40,7 +41,8 @@ export const en = {
   ...game,
   ...choices,
   ...online,
-  ...hints
+  ...hints,
+  ...rules
 } as const;
 
 export type MessageKey = keyof typeof en;
