@@ -1,7 +1,10 @@
 <script lang="ts">
   // The "vs AI" new-game sheet (UX design §2). Start sends a real `create`
   // frame through the Session the caller supplies via onStart, so this
-  // component needs no live connection to render (gallery-safe).
+  // component needs no live connection to render (gallery-safe). The game's
+  // hints and its "Allow undo" switch start from this device's last choice
+  // and are saved there on Start, where the Session's create reads them;
+  // the server then fixes undo for the game's life.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t, type MessageKey } from '$lib/i18n';
   import Button from '$lib/components/shell/Button.svelte';
@@ -10,6 +13,7 @@
   import HintsSection from '$lib/components/hints/HintsSection.svelte';
   import { hintDefaults } from '$lib/hints/local.svelte';
   import { SessionError } from '$lib/session/session.svelte';
+  import { undoDefault } from '$lib/session/undo-default.svelte';
   import type { BotLevel, SeatChoice } from '$lib/wire';
 
   interface Props {
@@ -34,6 +38,8 @@
   let seatValue = $state<'random' | '0' | '1'>('random');
   // The game's hint settings, from this device's last saved ones.
   let hints = $state(hintDefaults.for('ai'));
+  // Whether the game allows undo, from this device's last choice (on at first).
+  let allowUndo = $state(undoDefault.for('ai'));
   let starting = $state(false);
   let failure = $state<string | null>(null);
 
@@ -49,6 +55,7 @@
     // The game starts from these hints (the Session's create reads the
     // local default), and the next new game on this device will too.
     hintDefaults.save('ai', hints);
+    undoDefault.save('ai', allowUndo);
     starting = true;
     failure = null;
     try {
@@ -109,6 +116,20 @@
       />
       <p class="text-xs text-fg-muted">{t('home.ai.firstRandomNote')}</p>
     </div>
+
+    <label class="flex min-h-11 items-center justify-between gap-3" data-allow-undo>
+      <span class="flex flex-col">
+        <span class="text-sm font-medium text-fg">{t('home.undo.toggle')}</span>
+        <span class="text-xs text-fg-muted">{t('home.undo.note')}</span>
+      </span>
+      <input
+        type="checkbox"
+        role="switch"
+        class="size-5 shrink-0 accent-accent"
+        data-control="allow-undo"
+        bind:checked={allowUndo}
+      />
+    </label>
 
     <HintsSection bind:value={hints} />
 

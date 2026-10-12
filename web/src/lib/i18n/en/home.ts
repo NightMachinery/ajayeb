@@ -42,6 +42,9 @@ export const home = {
   'home.ai.seatSun': 'Sun',
   'home.ai.seatMoon': 'Moon',
   'home.ai.firstRandomNote': 'Who plays first is drawn at random.',
+  // The "Allow undo" switch of the bot and hot-seat sheets (both).
+  'home.undo.toggle': 'Allow undo',
+  'home.undo.note': 'Fixed for the whole game: it cannot be changed once the game starts.',
   'home.ai.start': 'Start game',
 
   // HotseatSheet (pass and play).
