@@ -116,6 +116,14 @@ test.describe('undo', { tag: ['@mobile'] }, () => {
     await expect(hints.locator('[data-undo-setting="on"]')).toContainText(
       'Undo is allowed in this game.'
     );
+    // U and Ctrl+Z under the open sheet do not take back the move beneath it.
+    const underSheet = await driver.snapshot();
+    expect(underSheet.canUndo).toBe(true);
+    await page.keyboard.press('u');
+    await page.keyboard.press('Control+z');
+    await page.waitForTimeout(500);
+    expect((await driver.snapshot()).version).toBe(underSheet.version);
+    await expect(hints).toBeVisible();
     await page.keyboard.press('Escape');
     expect(problems).toEqual([]);
   });

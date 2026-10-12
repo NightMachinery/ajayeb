@@ -119,6 +119,7 @@
     wonderStatus
   } from './card-actions';
   import { botSeat, seatNames } from './names';
+  import { boardUndoKey, modalOpen } from './undo-keys';
   import SeatPanel from './SeatPanel.svelte';
 
   interface Props {
@@ -568,12 +569,10 @@
 
   function onKey(event: KeyboardEvent): void {
     if (event.key === 'Escape' && ui.pickFor && ui.sheet === null) ui.cancelWonderPick();
-    // U or Ctrl+Z (Cmd+Z on a Mac): undo, in a game that has it.
-    if (event.defaultPrevented || event.repeat || event.altKey || typing(event.target)) return;
-    const key = event.key.toLowerCase();
-    const plainU = key === 'u' && !event.ctrlKey && !event.metaKey && !event.shiftKey;
-    const ctrlZ = key === 'z' && (event.ctrlKey || event.metaKey) && !event.shiftKey;
-    if ((plainU || ctrlZ) && undoAllowed) {
+    // U or Ctrl+Z (Cmd+Z on a Mac): undo, in a game that has it, unless a
+    // text field or an open sheet or dialog has the keyboard.
+    const where = { typing: typing(event.target), modalOpen: modalOpen(document) };
+    if (boardUndoKey(event, where) && undoAllowed) {
       event.preventDefault();
       if (canUndo) undo();
     }
