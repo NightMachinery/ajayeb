@@ -229,6 +229,12 @@ export const card = {
   'card.chainOut': 'Chain symbol {symbol}: makes {card} free',
   'card.chainIn': 'Free with the {symbol} chain symbol of {card}',
   'card.chainInShort': 'Free with {symbol}',
+  // Chain chip tooltips; the stack caption heads the linked card's preview.
+  'card.tip.chainOut': 'Chain symbol {symbol}: building this makes {card} free.',
+  'card.tip.chainOutBare': 'Chain symbol {symbol}.',
+  'card.tip.chainOutStack': 'Free through this chain',
+  'card.tip.chainIn': 'Free if your city has {card}, which shows the {symbol} chain symbol.',
+  'card.tip.chainInStack': 'Gives the chain symbol',
 
   // Costs.
   'card.cost.free': 'No cost',

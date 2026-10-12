@@ -3,29 +3,21 @@
   // whose city shows the symbol; a gold chip. "out" (on the effect band):
   // this card shows the symbol and makes a later card free; an outlined
   // chip. The two differ by fill as well as position, so they read in
-  // greyscale. Decorative unless given a label.
+  // greyscale. Decorative for assistive tech (the card's own description
+  // names the chain); its tooltip names the linked card and stacks a
+  // preview of it (ui/chain-links.ts).
   import Icon from '$lib/icons/Icon.svelte';
-  import { t } from '$lib/i18n';
   import type { Chain } from '$lib/wire';
-  import { chainName } from './effect-text';
+  import { chainTooltip } from '$lib/ui/chain-links';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     chain: Chain;
     direction: 'in' | 'out';
-    /** Give the chip a title (hover text) naming the symbol. */
-    titled?: boolean;
     class?: string;
   }
 
-  let { chain, direction, titled = false, class: className = '' }: Props = $props();
-
-  const title = $derived(
-    titled
-      ? direction === 'in'
-        ? t('card.chainInShort', { symbol: chainName(chain) })
-        : chainName(chain)
-      : undefined
-  );
+  let { chain, direction, class: className = '' }: Props = $props();
 </script>
 
 <!-- The chip is 1.3 em with the glyph at 0.95 em, but never under 14 px
@@ -37,8 +29,10 @@
     ? 'border-(color:--gold-deep) bg-gold text-card-ink'
     : 'border-(color:--gold-deep) bg-paper text-card-ink'} {className}"
   style:--i2="var(--gold-deep)"
-  {title}
   aria-hidden="true"
+  data-chain={chain}
+  data-chain-direction={direction}
+  {@attach tooltip(chainTooltip(chain, direction))}
 >
   <Icon name={`chain-${chain}`} class="text-[length:max(0.95em,12px)]" />
 </span>
