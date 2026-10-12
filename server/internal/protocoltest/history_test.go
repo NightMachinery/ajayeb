@@ -14,11 +14,14 @@ import (
 
 // The history (docs/protocol.md, the state frame) re-sends every applied
 // action's events, filtered for the viewer exactly like live events. The
-// leak model therefore has one more thing a viewer may see: the Great
-// Library tokens that viewer drew itself. Its own libraryDraw events name
-// them, and the two it did not keep go back into the box, hidden from
-// everyone else again but not secret from the drawer, who saw them.
-// hiddenFor is trueHidden minus those tokens; the drive tests resync every
+// leak model therefore has one more place a viewer may see a token: the
+// Great Library tokens that viewer drew itself. Its own libraryDraw events
+// name them, and the two it did not keep go back into the box, hidden from
+// everyone else again but not secret from the drawer, who saw them. That
+// is the only place they may appear once the pickLibraryToken step is
+// over: hiddenFor keeps them hidden and lists them as drawn, and the leak
+// tracker allows a drawn token only in the token field of the viewer's own
+// libraryDraw events (redact_test.go). The drive tests resync every
 // connection after every turn, so every history a game produces goes
 // through the same leak check as the live frames.
 
@@ -59,14 +62,15 @@ func seenPrivately(t *testing.T, snap room.Snapshot, viewer *engine.Seat) map[st
 }
 
 // hiddenFor is what viewer must not see in snap's position: trueHidden,
-// less the tokens it drew itself (seenPrivately).
-func hiddenFor(t *testing.T, snap room.Snapshot, viewer *engine.Seat) map[string]bool {
+// with the tokens it drew itself (seenPrivately) allowed only in its own
+// libraryDraw events.
+func hiddenFor(t *testing.T, snap room.Snapshot, viewer *engine.Seat) secrets {
 	t.Helper()
-	hidden := trueHidden(&snap.State, viewer)
-	for slug := range seenPrivately(t, snap, viewer) {
-		delete(hidden, slug)
+	sec := secrets{hidden: trueHidden(&snap.State, viewer), seat: -1, drawn: seenPrivately(t, snap, viewer)}
+	if viewer != nil {
+		sec.seat = int(*viewer)
 	}
-	return hidden
+	return sec
 }
 
 // resync asks for a fresh state and returns it: a frame with the history,
@@ -125,7 +129,7 @@ func TestLeakTrackerCatchesLeaksInHistory(t *testing.T) {
 			lt := newLeakTrackerFor(rec, seed)
 			c := &tclient{raw: &rawCapture{}}
 			c.raw.add(frame(tc.card))
-			lt.check(c, "seat1", 3, hidden)
+			lt.check(c, "seat1", 3, only(hidden))
 			lt.finish()
 			found := len(rec.errs) == 1 && strings.Contains(rec.errs[0], `seat1 received a hidden id "baths"`)
 			if tc.leak != found || (!tc.leak && len(rec.errs) != 0) {
@@ -135,19 +139,92 @@ func TestLeakTrackerCatchesLeaksInHistory(t *testing.T) {
 	}
 }
 
+// TestLeakTrackerAllowsDrawnTokensOnlyInOwnDraws: after the pick, a token
+// the drawer put back is allowed in the drawer's own libraryDraw events,
+// live and in the history, and reported anywhere else: in the view, in
+// another event, in a libraryDraw event of the other seat, and in an own
+// libraryDraw event when the viewer never drew it.
+func TestLeakTrackerAllowsDrawnTokensOnlyInOwnDraws(t *testing.T) {
+	const seed = 9_970_000_000_000
+	drawer := secrets{
+		hidden: map[string]bool{"philosophy": true, "strategy": true, "masonry": true},
+		seat:   0,
+		drawn:  map[string]bool{"law": true, "philosophy": true, "strategy": true},
+	}
+	draw := func(seat, place int, token string) view.GameEvent {
+		e := view.GameEvent{Kind: view.EventKindLibraryDraw, Seat: seatInt(seat), Place: seatInt(place), Private: true}
+		if token != "" {
+			e.Token = &token
+		}
+		return e
+	}
+	frame := func(live []view.GameEvent, history []view.GameEvent, pending []string) []byte {
+		v := view.View{Ply: 5}
+		if pending != nil {
+			v.Pending = &view.PendingView{Kind: view.PendingKindPickLibraryToken, Tokens: pending}
+		}
+		st := wire.NewState("LIBRRY", 6, wire.NewRoomInfo(wire.ModeOnline, wire.RoomStatusPlaying, nil, 0),
+			wire.NewYouInfo(nil, false), nil, live, v)
+		if history != nil {
+			h := []wire.HistoryEntry{{Ply: 4, Seat: 0, Events: history}}
+			st.History = &h
+		}
+		b, err := json.Marshal(st)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+	ownDraws := []view.GameEvent{draw(0, 0, "law"), draw(0, 1, "philosophy"), draw(0, 2, "strategy")}
+	for _, tc := range []struct {
+		name  string
+		chunk []byte
+		want  string // a part of the one report expected, or "" for none
+	}{
+		{"own draws in the history", frame([]view.GameEvent{}, ownDraws, nil), ""},
+		{"own draws live", frame(ownDraws, nil, nil), ""},
+		{"a put-back token in the view", frame([]view.GameEvent{}, ownDraws, []string{"philosophy"}), `"philosophy"`},
+		{"a put-back token in another event", frame([]view.GameEvent{{Kind: view.EventKindToken, Seat: seatInt(0), Token: ptr("strategy")}}, nil, nil), `"strategy"`},
+		{"the other seat's draw", frame([]view.GameEvent{}, []view.GameEvent{draw(1, 0, "philosophy")}, nil), `"philosophy"`},
+		{"an own draw of a token never drawn", frame([]view.GameEvent{}, []view.GameEvent{draw(0, 0, "masonry")}, nil), `"masonry"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := &leakRecorder{}
+			lt := newLeakTrackerFor(rec, seed)
+			c := &tclient{raw: &rawCapture{}}
+			c.raw.add(tc.chunk)
+			lt.check(c, "seat0", 6, drawer)
+			lt.finish()
+			if tc.want == "" && len(rec.errs) != 0 || tc.want != "" && (len(rec.errs) != 1 || !strings.Contains(rec.errs[0], `seat0 received a hidden id `+tc.want)) {
+				t.Fatalf("reports %q, want one naming %s", rec.errs, tc.want)
+			}
+		})
+	}
+}
+
+func ptr(s string) *string { return &s }
+
 // TestLibraryHistoryModel: after the Great Library's choice, the drawer's
 // history names the three tokens it drew, two of them back in the box;
-// the other seat's and the spectator's name none of them. hiddenFor allows
-// exactly the drawer's own.
+// the other seat's and the spectator's name none of them. hiddenFor keeps
+// the two hidden from everyone and lists them as drawn for the drawer
+// alone, so only the drawer's own libraryDraw events may name them.
 func TestLibraryHistoryModel(t *testing.T) {
 	srv, code, a, b, spec := libraryRoom(t)
-	seq := a.act("token:law", nil)
-	a.untilAck(seq)
 	conns := []*tclient{a, b, spec}
-	syncTo(conns, maxVersion(conns))
-
+	// The offer's own frames are judged at the pickLibraryToken step,
+	// where the rules show the drawer its three tokens.
 	snap := srv.snapshot(code)
 	lt := newLeakTracker(t, snap.State.Seed)
+	lt.check(a, "seat0", snap.Version, hiddenFor(t, snap, seatRef(0)))
+	lt.check(b, "seat1", snap.Version, hiddenFor(t, snap, seatRef(1)))
+	lt.check(spec, "spectator", snap.Version, hiddenFor(t, snap, nil))
+
+	seq := a.act("token:law", nil)
+	a.untilAck(seq)
+	syncTo(conns, maxVersion(conns))
+
+	snap = srv.snapshot(code)
 	histA, histB, histS := a.resync(), b.resync(), spec.resync()
 	lt.check(a, "seat0", snap.Version, hiddenFor(t, snap, seatRef(0)))
 	lt.check(b, "seat1", snap.Version, hiddenFor(t, snap, seatRef(1)))
@@ -169,7 +246,8 @@ func TestLibraryHistoryModel(t *testing.T) {
 		if strings.Contains(names(histB), `"`+slug+`"`) || strings.Contains(names(histS), `"`+slug+`"`) {
 			t.Fatalf("a history other than the drawer's names the unkept token %s", slug)
 		}
-		if !trueHidden(&snap.State, seatRef(0))[slug] || hiddenFor(t, snap, seatRef(0))[slug] || !hiddenFor(t, snap, seatRef(1))[slug] {
+		drawer, other := hiddenFor(t, snap, seatRef(0)), hiddenFor(t, snap, seatRef(1))
+		if !drawer.hidden[slug] || !drawer.drawn[slug] || !other.hidden[slug] || other.drawn[slug] {
 			t.Fatalf("the model of %s is wrong", slug)
 		}
 	}

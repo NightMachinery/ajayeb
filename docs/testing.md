@@ -94,7 +94,11 @@ It covers, per game mode (online with a spectator, hot-seat, versus a bot):
   `internal/engine/view.go` from that file's documented redaction rules,
   not copied from its logic. A dedicated test starts an online room at the
   Great Library's draw, the one secret only one seat may see, so that case
-  is checked in every run rather than only when a random game builds it;
+  is checked in every run rather than only when a random game builds it.
+  The drawer may see its drawn tokens anywhere in the frames of the
+  `pickLibraryToken` step, but after it only in its own `libraryDraw`
+  events (live and in its history); the two tokens it put back are a
+  leak anywhere else in its frames;
 - reconnecting mid-game (the socket drops, `hello` and `join` again, and
   resending the last `act` with the same `seq` does not apply it twice);
 - restarting the server on the same data directory mid-game and finishing

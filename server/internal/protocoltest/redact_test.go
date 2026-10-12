@@ -141,6 +141,15 @@ func trueHidden(s *engine.State, viewer *engine.Seat) map[string]bool {
 //
 // Frames other than state frames carry no version and no view; they are
 // judged by the hidden set of the check that scans them.
+//
+// One exception narrows a hidden set, and only inside one kind of event:
+// the tokens a viewer drew from the Great Library itself (secrets.drawn).
+// The rules show them to the drawer at the pickLibraryToken step, which
+// trueHidden already allows at that version, and the drawer's own
+// libraryDraw events record them, live and in every later history. So a
+// drawn token is allowed in the token field of a libraryDraw event of the
+// viewer's own seat, and still reported anywhere else in any later frame,
+// once the two it did not keep are back in the box.
 type leakTracker struct {
 	t         reporter
 	seed      []byte // the seed's decimal digits, as they would appear unquoted in JSON
@@ -157,11 +166,21 @@ type reporter interface {
 
 // trackedConn is what a leakTracker knows about one connection.
 type trackedConn struct {
-	who     string                  // the label of its failures
-	scanned int                     // chunks of c.raw already judged
-	hidden  map[int]map[string]bool // by room version: the slugs hidden from its viewer then
-	latest  int                     // the newest version in hidden
+	who     string          // the label of its failures
+	scanned int             // chunks of c.raw already judged
+	hidden  map[int]secrets // by room version: what its viewer must not see then
+	latest  int             // the newest version in hidden
 }
+
+// secrets is what one viewer must not see at one room version.
+type secrets struct {
+	hidden map[string]bool // the slugs that must not appear in a frame
+	seat   int             // the viewer's seat, or -1 for a spectator (and once the game is over)
+	drawn  map[string]bool // the Great Library tokens this seat drew, allowed in its own libraryDraw events
+}
+
+// only returns secrets that hide hidden everywhere, with no drawn tokens.
+func only(hidden map[string]bool) secrets { return secrets{hidden: hidden, seat: -1} }
 
 // newLeakTracker returns a tracker for one room whose seed is seed. When the
 // test ends it judges whatever arrived after the last check (see finish).
@@ -179,18 +198,18 @@ func newLeakTrackerFor(r reporter, seed uint64) *leakTracker {
 	return &leakTracker{t: r, seed: []byte(strconv.FormatUint(seed, 10)), conns: map[*tclient]*trackedConn{}}
 }
 
-// check records hidden as what c's viewer must not see at the room's
+// check records sec as what c's viewer must not see at the room's
 // version, then judges c's frames received since the last check (see
 // leakTracker), labeling failures with who.
-func (lt *leakTracker) check(c *tclient, who string, version int, hidden map[string]bool) {
+func (lt *leakTracker) check(c *tclient, who string, version int, sec secrets) {
 	lt.t.Helper()
 	tc := lt.conns[c]
 	if tc == nil {
-		tc = &trackedConn{hidden: map[int]map[string]bool{}}
+		tc = &trackedConn{hidden: map[int]secrets{}}
 		lt.conns[c] = tc
 	}
 	tc.who = who
-	tc.hidden[version] = hidden
+	tc.hidden[version] = sec
 	tc.latest = max(tc.latest, version)
 	lt.scan(c, tc, false)
 }
@@ -210,30 +229,31 @@ func (lt *leakTracker) scan(c *tclient, tc *trackedConn, final bool) {
 	lt.t.Helper()
 	chunks, _ := c.raw.since(tc.scanned)
 	for _, chunk := range chunks {
-		hidden := tc.hidden[tc.latest]
+		sec := tc.hidden[tc.latest]
 		if v, ok := stateVersion(chunk); ok {
 			if h, recorded := tc.hidden[v]; recorded {
-				hidden = h
+				sec = h
 			} else if v > tc.latest {
 				if !final {
 					return
 				}
 				lt.t.Errorf("leak check: %s received a state frame at version %d, newer than its last check (version %d), so nothing judged it: %s", tc.who, v, tc.latest, chunk)
-				hidden = nil
+				sec = secrets{}
 			}
 		}
 		tc.scanned++
-		lt.judge(tc.who, chunk, hidden)
+		lt.judge(tc.who, chunk, sec)
 	}
 }
 
-// judge reports each slug of hidden that chunk contains (as a quoted JSON
-// string, so "law" cannot spuriously match inside a longer word), and the
-// seed.
-func (lt *leakTracker) judge(who string, chunk []byte, hidden map[string]bool) {
+// judge reports each slug of sec.hidden that chunk contains (as a quoted
+// JSON string, so "law" cannot spuriously match inside a longer word), and
+// the seed. The tokens of sec.drawn are allowed only in the viewer's own
+// libraryDraw events (see leakTracker).
+func (lt *leakTracker) judge(who string, chunk []byte, sec secrets) {
 	lt.t.Helper()
-	named := withoutHintNames(chunk)
-	for slug := range hidden {
+	named := withoutOwnDraws(withoutHintNames(chunk), sec)
+	for slug := range sec.hidden {
 		if pat := []byte(`"` + slug + `"`); bytes.Contains(named, pat) {
 			lt.t.Errorf("leak: %s received a hidden id %s: %s", who, pat, chunk)
 		}
@@ -328,6 +348,62 @@ func withoutCandidateHints(raw json.RawMessage) (json.RawMessage, bool) {
 	return b, err == nil
 }
 
+// withoutOwnDraws returns a state frame without the token of each
+// libraryDraw event, live or in its history, that the viewer's own seat drew
+// and that sec.drawn lists. Every other frame, and every other event, comes
+// back as it is, so a drawn token anywhere else is still judged.
+func withoutOwnDraws(chunk []byte, sec secrets) []byte {
+	if sec.seat < 0 || len(sec.drawn) == 0 {
+		return chunk
+	}
+	var frame map[string]json.RawMessage
+	if err := json.Unmarshal(chunk, &frame); err != nil || string(frame["t"]) != `"state"` {
+		return chunk
+	}
+	strip := func(raw json.RawMessage) json.RawMessage {
+		var events []map[string]json.RawMessage
+		if json.Unmarshal(raw, &events) != nil {
+			return raw
+		}
+		for _, e := range events {
+			var kind, token string
+			var seat *int
+			if json.Unmarshal(e["kind"], &kind) != nil || kind != "libraryDraw" ||
+				json.Unmarshal(e["seat"], &seat) != nil || seat == nil || *seat != sec.seat ||
+				json.Unmarshal(e["token"], &token) != nil || !sec.drawn[token] {
+				continue
+			}
+			delete(e, "token")
+		}
+		b, err := json.Marshal(events)
+		if err != nil {
+			return raw
+		}
+		return b
+	}
+	if raw, ok := frame["events"]; ok {
+		frame["events"] = strip(raw)
+	}
+	if raw, ok := frame["history"]; ok {
+		var history []map[string]json.RawMessage
+		if json.Unmarshal(raw, &history) == nil {
+			for _, entry := range history {
+				if ev, ok := entry["events"]; ok {
+					entry["events"] = strip(ev)
+				}
+			}
+			if b, err := json.Marshal(history); err == nil {
+				frame["history"] = b
+			}
+		}
+	}
+	out, err := json.Marshal(frame)
+	if err != nil {
+		return chunk
+	}
+	return out
+}
+
 // stateVersion returns the room version of a state frame, and false for any
 // other frame.
 func stateVersion(chunk []byte) (int, bool) {
@@ -384,39 +460,39 @@ func TestLeakTrackerJudgesEachFrameByItsVersion(t *testing.T) {
 	}{
 		{"the decider's offer read after the take", func(lt *leakTracker, c *tclient) {
 			c.raw.add(frame(1, "law", "philosophy", "strategy")) // the join
-			lt.check(c, "seat0", 1, deciderV1)
+			lt.check(c, "seat0", 1, only(deciderV1))
 			c.raw.add(frame(1, "law", "philosophy", "strategy")) // the presence broadcast, read late
 			c.raw.add(frame(2, "law"))                           // the ack of token:law
-			lt.check(c, "seat0", 2, deciderV2)
+			lt.check(c, "seat0", 2, only(deciderV2))
 		}, nil},
 		{"a token put back, at the frame's own version", func(lt *leakTracker, c *tclient) {
-			lt.check(c, "seat0", 1, deciderV1)
+			lt.check(c, "seat0", 1, only(deciderV1))
 			c.raw.add(frame(2, "law", "philosophy"))
-			lt.check(c, "seat0", 2, deciderV2)
+			lt.check(c, "seat0", 2, only(deciderV2))
 		}, []string{`seat0 received a hidden id "philosophy"`}},
 		{"the offer read late by the other seat", func(lt *leakTracker, c *tclient) {
-			lt.check(c, "seat1", 1, otherV1)
+			lt.check(c, "seat1", 1, only(otherV1))
 			c.raw.add(frame(1, "law", "philosophy", "strategy"))
 			c.raw.add(frame(2, "law"))
-			lt.check(c, "seat1", 2, otherV2)
+			lt.check(c, "seat1", 2, only(otherV2))
 		}, []string{`seat1 received a hidden id "law"`, `seat1 received a hidden id "philosophy"`, `seat1 received a hidden id "strategy"`}},
 		{"a frame newer than the snapshot waits for its version", func(lt *leakTracker, c *tclient) {
 			c.raw.add(frame(2, "law")) // law is public from v2 on, hidden at v1
-			lt.check(c, "seat1", 1, otherV1)
-			lt.check(c, "seat1", 2, otherV2)
+			lt.check(c, "seat1", 1, only(otherV1))
+			lt.check(c, "seat1", 2, only(otherV2))
 		}, nil},
 		{"a frame that waited is still judged", func(lt *leakTracker, c *tclient) {
 			c.raw.add(frame(2, "philosophy"))
-			lt.check(c, "seat1", 1, otherV1)
-			lt.check(c, "seat1", 2, otherV2)
+			lt.check(c, "seat1", 1, only(otherV1))
+			lt.check(c, "seat1", 2, only(otherV2))
 		}, []string{`seat1 received a hidden id "philosophy"`}},
 		{"a frame no check reached", func(lt *leakTracker, c *tclient) {
-			lt.check(c, "seat1", 1, otherV1)
+			lt.check(c, "seat1", 1, only(otherV1))
 			c.raw.add(frame(2, "law"))
 		}, []string{"so nothing judged it"}},
 		{"the seed", func(lt *leakTracker, c *tclient) {
 			c.raw.add([]byte(`{"t":"welcome","note":` + strconv.Itoa(seed) + `}`))
-			lt.check(c, "seat0", 1, deciderV1)
+			lt.check(c, "seat0", 1, only(deciderV1))
 		}, []string{"seat0 received the room's seed"}},
 	}
 	for _, tc := range cases {

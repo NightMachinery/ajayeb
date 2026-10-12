@@ -39,9 +39,12 @@
 //     every connection resyncs, so the history each frame of that kind
 //     carries goes through the same leak check as the live frames.
 //   - history_test.go holds the history's side of the leak model:
-//     hiddenFor is the hidden set less the Great Library tokens the viewer
-//     drew itself (its own history names them), and a planted-leak test
-//     proves the tracker scans history entries.
+//     hiddenFor is the hidden set plus the Great Library tokens the viewer
+//     drew itself, which the tracker allows only in that viewer's own
+//     libraryDraw events (live and in its history) once the
+//     pickLibraryToken step is over, and planted-leak tests prove the
+//     tracker scans history entries and reports a drawn token anywhere
+//     else.
 //   - forfeit_test.go forfeits over the wire in every room mode, with a
 //     spectator and the other seat refused.
 //   - fullgame_test.go, reconnect_test.go, restart_test.go,
