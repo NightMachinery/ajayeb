@@ -33,10 +33,10 @@
   <div dir="ltr" class="track grid w-full max-w-sm gap-y-1 self-center" aria-hidden="true">
     <!-- Row 1: the looting tokens above spaces 3 and 6. -->
     <div class="row-start-1 grid place-items-center" style:grid-column={col(3)}>
-      <LootingToken value={2} magnitude={3} present size="sm" />
+      <LootingToken value={2} magnitude={3} present />
     </div>
     <div class="row-start-1 grid place-items-center" style:grid-column={col(6)}>
-      <LootingToken value={5} magnitude={6} present size="sm" />
+      <LootingToken value={5} magnitude={6} present />
     </div>
 
     <!-- Row 2: the spaces, shaded by zone, the pawn and the capital. -->

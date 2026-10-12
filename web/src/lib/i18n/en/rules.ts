@@ -271,7 +271,7 @@ export const rules = {
   'rules.diagram.points': { one: '{count} point', other: '{count} points' },
   'rules.diagram.win': 'Win',
   'rules.diagram.military':
-    'One side of the track, from the centre to a capital; the other side is the same. The looting tokens sit on spaces 3 and 6.',
+    'One side of the track, from the centre to a capital; the other side is the same. The looting tokens on spaces 3 and 6 take 2 and 5 coins from the player on this side.',
   'rules.diagram.trade.opponent': 'Your opponent produces 3 clay.',
   'rules.diagram.trade.price': 'Each clay you buy costs 2 + 3 = 5 coins.',
   'rules.diagram.trade.label':

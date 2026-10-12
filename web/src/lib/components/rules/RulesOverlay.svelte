@@ -122,6 +122,9 @@
     bottom: 0;
     right: 0; /* physical-ok: the opponent's column, see the note above */
     margin: 0;
+    /* A popover is fit-content high by default; this one spans from the
+       top bar to the bottom edge, so its own content scrolls inside it. */
+    height: auto;
     /* A desktop's side column (GameScreen.svelte), plus the safe area. */
     width: calc(300px + var(--safe-r, 0px));
     max-width: 100vw;
