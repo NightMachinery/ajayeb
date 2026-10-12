@@ -151,7 +151,8 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           spectator = { page, driver, log, problems };
           expect(await hook(page, () => window.__ajayeb?.you())).toEqual({
             seats: [],
-            canAct: false
+            canAct: false,
+            admin: false
           });
           expect(await hook(page, () => window.__ajayeb?.room()?.version)).toBe(now.version);
           await expect(turnBar(page)).toHaveAttribute('data-turn', 'spectating');
