@@ -17,14 +17,15 @@
   import OnlineSheet from '$lib/components/screens/OnlineSheet.svelte';
   import RoomError from '$lib/components/screens/RoomError.svelte';
   import type { SeatInfo } from '$lib/wire';
+  import Identity from './Identity.svelte';
 
   const CODE = 'K7QX2M';
   const URL = `https://ajayeb.example/play/${CODE}`;
   const NAMES = ['Darius', 'Roshan'] as const;
 
   const lobbySeats: SeatInfo[] = [
-    { seat: 0, name: NAMES[0], kind: 'human', connected: true, you: true },
-    { seat: 1, name: '', kind: 'open', connected: false, you: false }
+    { seat: 0, name: NAMES[0], kind: 'human', connected: true, you: true, nameNo: 0 },
+    { seat: 1, name: '', kind: 'open', connected: false, you: false, nameNo: 0 }
   ];
 
   let onlineOpen = $state(false);
@@ -128,5 +129,10 @@
       <TurnBar state={{ kind: 'waitingOpponent', seat: 1, away: true }} names={NAMES} />
       <TurnBar state={{ kind: 'spectating' }} names={NAMES} />
     </div>
+  </section>
+
+  <section class="flex flex-col gap-2">
+    <h3 class="text-sm font-semibold text-fg-muted">Who is who (M10.ID1) <!-- i18n-ok --></h3>
+    <Identity />
   </section>
 </div>
