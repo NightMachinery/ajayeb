@@ -177,7 +177,8 @@ export const game = {
   'game.gallery.summaryOpen': 'Show: {scene}',
   'game.gallery.summary.bot': 'A bot reply with a science pair and a token',
   'game.gallery.summary.extra': 'An extra turn with trade, the pawn and looting',
-  'game.gallery.summary.special': 'A wonder that destroys, an age change and the end',
+  'game.gallery.summary.special':
+    'A wonder that destroys, a wonder leaving the game and an age change',
 
   // The opponent move summary (MoveSummary.svelte): what the other side
   // did since the viewer last moved, one line per move. The player is named
