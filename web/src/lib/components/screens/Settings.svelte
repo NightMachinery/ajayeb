@@ -150,6 +150,20 @@
 
   <label class="flex min-h-11 items-center justify-between gap-3">
     <span class="flex flex-col">
+      <span class="text-sm font-medium text-fg">{t('home.settings.showOpponentMove')}</span>
+      <span class="text-xs text-fg-muted">{t('home.settings.showOpponentMoveHint')}</span>
+    </span>
+    <input
+      type="checkbox"
+      class="size-5 shrink-0 accent-accent"
+      data-setting="show-opponent-move"
+      checked={settings.value.showOpponentMove}
+      onchange={(e) => settings.set('showOpponentMove', e.currentTarget.checked)}
+    />
+  </label>
+
+  <label class="flex min-h-11 items-center justify-between gap-3">
+    <span class="flex flex-col">
       <span class="text-sm font-medium text-fg">{t('home.settings.sound')}</span>
       <span class="text-xs text-fg-muted">{t('home.settings.soundHint')}</span>
     </span>

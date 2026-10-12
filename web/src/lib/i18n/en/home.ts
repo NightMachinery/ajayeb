@@ -84,6 +84,9 @@ export const home = {
   'home.settings.volumeQuiet': 'Quiet',
   'home.settings.volumeMedium': 'Medium',
   'home.settings.volumeLoud': 'Loud',
+  'home.settings.showOpponentMove': 'Show opponent move in detail',
+  'home.settings.showOpponentMoveHint':
+    'After their move, a popup lists what they did. Any tap closes it.',
   'home.settings.haptics': 'Vibration',
   'home.settings.hapticsHint': 'A light buzz when a card is taken, more for military.',
 

@@ -49,6 +49,10 @@ export interface Settings {
   /** Short vibrations through navigator.vibrate where the device has it;
    *  the Settings screen hides the switch elsewhere. */
   haptics: boolean;
+  /** The opponent move summary (components/game/MoveSummary.svelte): a
+   *  popup of what the other side just did opens by itself after their
+   *  move. Off, it opens only from the top bar's button. */
+  showOpponentMove: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -60,7 +64,8 @@ export const DEFAULT_SETTINGS: Settings = {
   hotseatOrientation: null,
   sound: false,
   soundVolume: 'medium',
-  haptics: true
+  haptics: true,
+  showOpponentMove: true
 };
 
 export const SETTINGS_KEY = 'ajayeb:settings';
@@ -119,7 +124,11 @@ export function parseSettings(raw: string | null): Settings {
       : DEFAULT_SETTINGS.hotseatOrientation,
     sound: typeof r['sound'] === 'boolean' ? r['sound'] : DEFAULT_SETTINGS.sound,
     soundVolume: isSoundVolume(r['soundVolume']) ? r['soundVolume'] : DEFAULT_SETTINGS.soundVolume,
-    haptics: typeof r['haptics'] === 'boolean' ? r['haptics'] : DEFAULT_SETTINGS.haptics
+    haptics: typeof r['haptics'] === 'boolean' ? r['haptics'] : DEFAULT_SETTINGS.haptics,
+    showOpponentMove:
+      typeof r['showOpponentMove'] === 'boolean'
+        ? r['showOpponentMove']
+        : DEFAULT_SETTINGS.showOpponentMove
   };
 }
 

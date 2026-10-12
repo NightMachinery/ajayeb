@@ -49,7 +49,8 @@ describe('parseSettings', () => {
       hotseatOrientation: 'fixed',
       sound: true,
       soundVolume: 'loud',
-      haptics: false
+      haptics: false,
+      showOpponentMove: false
     };
     expect(parseSettings(JSON.stringify(stored))).toEqual(stored);
   });
@@ -64,7 +65,8 @@ describe('parseSettings', () => {
       hotseatOrientation: 'sideways', // not an orientation
       sound: 1, // not a boolean
       soundVolume: 11, // not a volume step
-      haptics: 'off' // not a boolean
+      haptics: 'off', // not a boolean
+      showOpponentMove: 'yes' // not a boolean
     });
     expect(parseSettings(raw)).toEqual({
       ...DEFAULT_SETTINGS,
@@ -76,6 +78,20 @@ describe('parseSettings', () => {
   it('ignores unknown extra fields', () => {
     const raw = JSON.stringify({ ...DEFAULT_SETTINGS, future: 'field' });
     expect(parseSettings(raw)).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('the opponent move summary setting', () => {
+  it('is on by default, also for a value stored before it existed', () => {
+    expect(DEFAULT_SETTINGS.showOpponentMove).toBe(true);
+    expect(parseSettings(JSON.stringify({ sound: true })).showOpponentMove).toBe(true);
+  });
+
+  it('keeps a stored choice to turn it off', () => {
+    const store = new SettingsStore(memory());
+    store.set('showOpponentMove', false);
+    expect(store.value.showOpponentMove).toBe(false);
+    expect(parseSettings(JSON.stringify(store.value)).showOpponentMove).toBe(false);
   });
 });
 
