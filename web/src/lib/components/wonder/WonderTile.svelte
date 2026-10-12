@@ -24,7 +24,7 @@
   // button of its own; the parent wraps it in one (with describeWonder for
   // the name) when the tile is actionable.
   import ArtImage from '$lib/art/ArtImage.svelte';
-  import { artId } from '$lib/art/lookup';
+  import { artId, WONDER_ART_SIZES } from '$lib/art/lookup';
   import { wonderArtCrop } from '$lib/art/crops';
   import { wonderBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
@@ -76,7 +76,7 @@
     <ArtImage
       id={artId('wonder', slug)}
       size={small ? 'thumb' : 'default'}
-      sizes={small ? undefined : '(min-width: 40rem) 280px, 50vw'}
+      sizes={small ? undefined : WONDER_ART_SIZES}
       feather={small ? 'edge' : crop.feather}
       position={crop.position}
       class="absolute inset-0 h-full w-full"

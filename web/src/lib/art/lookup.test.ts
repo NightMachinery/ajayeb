@@ -5,6 +5,10 @@ import {
   artBytes,
   artEntry,
   artId,
+  artSource,
+  cardArtSizes,
+  tokenArtSizes,
+  WONDER_ART_SIZES,
   avatarArtId,
   backArtId,
   hasApprovedArt,
@@ -200,5 +204,31 @@ describe('victory scenes', () => {
     for (const kind of ['civilian', 'military', 'science', 'shared', 'forfeit'] as const) {
       expect(hasApprovedArt(victoryArtId(kind)), kind).toBe(true);
     }
+  });
+});
+
+describe('artSource', () => {
+  it('gives a fixed src without sizes, and the srcset with them', () => {
+    expect(artSource('card/lumber-yard', 'thumb', undefined, index)).toEqual({
+      src: '/art/cards/lumber-yard@thumb.avif'
+    });
+    expect(artSource('card/lumber-yard', 'default', cardArtSizes(140), index)).toEqual({
+      src: '/art/cards/lumber-yard.avif',
+      srcset: '/art/cards/lumber-yard@thumb.avif 240w, /art/cards/lumber-yard.avif 480w',
+      sizes: '140px'
+    });
+    expect(artSource('card/stone-pit', 'default', '140px', index)).toBeUndefined();
+  });
+
+  it('names the sizes of each frame', () => {
+    expect(cardArtSizes(139.6)).toBe('140px');
+    expect(tokenArtSizes('md')).toBe('36px');
+    expect(tokenArtSizes('sm')).toBe('26px');
+    expect(tokenArtSizes('xs')).toBe('20px');
+    // Half the viewport for the two-a-row draft, 280 px in the split layout
+    // (app.css: a 64rem width, or a short landscape screen).
+    expect(WONDER_ART_SIZES).toBe(
+      '(min-width: 64rem) 280px, (orientation: landscape) and (max-height: 32rem) 280px, 50vw'
+    );
   });
 });

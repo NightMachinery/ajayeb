@@ -135,6 +135,59 @@ export function pickArt(
   };
 }
 
+// --- The sizes strings ------------------------------------------------------
+//
+// A frame that passes `sizes` lets the browser pick a variant from the
+// srcset by the width it draws the art at and the screen's pixel ratio, so
+// a dense phone screen gets a wider file than a desktop. The display
+// components and the prefetch (prefetch.ts) take the strings from here, so
+// an image preloaded at idle is the very file the frame then shows.
+
+/** The width in CSS px of the full-tier card the card sheet draws
+ *  (CardSheet's `width`; a test holds the two together). */
+export const FULL_CARD_WIDTH = 140;
+
+/** The `sizes` of a full-tier card's art: as wide as the card. */
+export function cardArtSizes(width: number): string {
+  return `${Math.round(width)}px`;
+}
+
+/** The `sizes` of a large wonder tile's art (the wonder draft, the wonder
+ *  sheet): about half the viewport below 64rem, where the draft shows two
+ *  tiles a row (486 px on a 1020 px tablet); at most 280 px in the split
+ *  layout of a desktop or a short landscape screen (app.css `split`). */
+export const WONDER_ART_SIZES =
+  '(min-width: 64rem) 280px, (orientation: landscape) and (max-height: 32rem) 280px, 50vw';
+
+/** The medallion sizes of ProgressToken. */
+export type TokenSize = 'xs' | 'sm' | 'md';
+
+/** The `sizes` of a progress token's art: its medallion's width. */
+export function tokenArtSizes(size: TokenSize): string {
+  return size === 'xs' ? '20px' : size === 'sm' ? '26px' : '36px';
+}
+
+/** What an <img> needs to show an id at a size: `src`, plus the srcset of
+ *  every variant and the `sizes` when the frame passes one (without
+ *  `sizes` the frame always shows `src`). ArtImage renders exactly this, and
+ *  the prefetch preloads exactly this, so the browser makes the same pick. */
+export interface ArtSource {
+  readonly src: string;
+  readonly srcset?: string;
+  readonly sizes?: string;
+}
+
+export function artSource(
+  id: string,
+  size: ArtSize = 'default',
+  sizes?: string,
+  index: ArtIndex = art
+): ArtSource | undefined {
+  const pick = pickArt(id, size, index);
+  if (!pick) return undefined;
+  return sizes ? { src: pick.src, srcset: pick.srcset, sizes } : { src: pick.src };
+}
+
 /** The shipped byte count of one variant, or undefined when the index has
  *  none (an entry written before its bytes were recorded). */
 export function artBytes(

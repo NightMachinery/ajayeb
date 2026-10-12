@@ -18,7 +18,7 @@
   //   edge   a narrower even fade along the four edges (small thumbnails)
   //   none   no mask (art that is already shaped, such as tokens and backs)
   import type { Snippet } from 'svelte';
-  import { pickArt, type ArtIndex, type ArtSize } from './lookup';
+  import { artSource, pickArt, type ArtIndex, type ArtSize } from './lookup';
 
   interface Props {
     /** The art id, "<kind>/<slug>". */
@@ -26,7 +26,9 @@
     /** The preferred shipped size ('default', 'thumb', ...). */
     size?: ArtSize;
     /** When set, every shipped size goes in a srcset with this `sizes`, so
-     *  the browser picks by the rendered width and the pixel ratio. */
+     *  the browser picks by the rendered width and the pixel ratio. Take it
+     *  from lookup.ts (cardArtSizes, WONDER_ART_SIZES, tokenArtSizes), which
+     *  the prefetch uses too. */
     sizes?: string;
     feather?: 'soft' | 'sky' | 'edge' | 'none';
     /** Where the cover crop is anchored (CSS object-position). */
@@ -50,6 +52,7 @@
   }: Props = $props();
 
   const pick = $derived(pickArt(id, size, index));
+  const source = $derived(artSource(id, size, sizes, index));
   // Keyed by the source, so a frame that switches to another id tries again.
   let failedSrc = $state<string | null>(null);
   let loadedSrc = $state<string | null>(null);
@@ -59,8 +62,8 @@
 {#if pick && !failed}
   <img
     src={pick.src}
-    srcset={sizes ? pick.srcset : undefined}
-    {sizes}
+    srcset={source?.srcset}
+    sizes={source?.sizes}
     width={pick.width}
     height={pick.height}
     alt=""

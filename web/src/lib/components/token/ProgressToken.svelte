@@ -8,7 +8,7 @@
   // component, plain props: the caller decides whether it is selectable
   // (the pending pick choice) and whether it should act as a real button.
   import ArtImage from '$lib/art/ArtImage.svelte';
-  import { artId } from '$lib/art/lookup';
+  import { artId, tokenArtSizes } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -101,6 +101,7 @@
     <ArtImage
       id={artId('token', slug)}
       size="thumb"
+      sizes={tokenArtSizes(size)}
       feather="none"
       class="absolute inset-0 size-full rounded-full {size === 'xs'
         ? 'border-[1.5px]'
