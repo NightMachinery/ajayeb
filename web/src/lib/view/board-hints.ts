@@ -295,15 +295,26 @@ export function wonderOwner(view: Pick<View, 'players'>, slug: string): Seat | u
 /**
  * A wonder effect as an outcome, so the outcome line words it: the coins
  * after (now plus the change), the points, the pawn, a win, the extra turn
- * and the choice it opens.
+ * and the choice it opens. When its owner (`owner`) cannot afford it now,
+ * the server's preview paid nothing (`paid` false), so the owner's coins
+ * and points would not be what building it leaves: those two are left out
+ * (a zero change, which the outcome line drops). The other seat's change
+ * does not depend on the payment and stays.
  */
 export function effectOutcome(
   e: WonderEffectView,
-  coinsNow: readonly [number, number]
+  coinsNow: readonly [number, number],
+  owner: Seat
 ): OutcomeView {
+  const coins: [number, number] = [coinsNow[0] + e.coins[0], coinsNow[1] + e.coins[1]];
+  const score: [number, number] = [e.score[0], e.score[1]];
+  if (!e.paid) {
+    coins[owner] = coinsNow[owner];
+    score[owner] = 0;
+  }
   return {
-    coins: [coinsNow[0] + e.coins[0], coinsNow[1] + e.coins[1]],
-    score: [e.score[0], e.score[1]],
+    coins,
+    score,
     ...(e.pawn ? { pawn: e.pawn } : {}),
     ...(e.wins ? { wins: e.wins } : {}),
     ...(e.opens ? { opens: e.opens } : {}),
@@ -332,7 +343,7 @@ export function wonderHint(
   const terms: OutcomeTerm[] = [];
   if (w.effect) {
     terms.push(
-      ...outcomeTerms(effectOutcome(w.effect, coins), {
+      ...outcomeTerms(effectOutcome(w.effect, coins, seat), {
         mover: seat,
         coins,
         age: view.age,

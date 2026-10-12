@@ -217,11 +217,28 @@ describe('wonder hints', () => {
   };
 
   it('turns a wonder effect into an outcome', () => {
-    expect(effectOutcome(effect, [10, 5])).toEqual({
+    expect(effectOutcome(effect, [10, 5], 0)).toEqual({
       coins: [6, 2],
       score: [3, 0],
       tempo: { extraTurn: 'gain', source: 'wonder', lastCard: false }
     });
+  });
+
+  it("leaves out the owner's coins and points when it cannot afford the wonder now", () => {
+    // The preview paid nothing, so "coins after" would overstate them; the
+    // other seat's loss does not depend on the payment.
+    const unpaid = {
+      ...effect,
+      paid: false,
+      coins: [3, -3] as [number, number],
+      score: [4, -1] as [number, number]
+    };
+    expect(effectOutcome(unpaid, [9, 4], 0)).toEqual({
+      coins: [9, 1],
+      score: [0, -1],
+      tempo: { extraTurn: 'gain', source: 'wonder', lastCard: false }
+    });
+    expect(effectOutcome(unpaid, [9, 4], 1).coins).toEqual([12, 4]);
   });
 
   it('draws the hourglass once one wonder is left, solid when its owner can afford it', () => {
