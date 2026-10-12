@@ -89,7 +89,7 @@ func (r *Room) link(c *Client, seat int, reset bool) {
 		return
 	}
 	if reset {
-		r.file.Seats[seat].Epoch++
+		r.raiseEpoch(s.UserID)
 		r.logLink(mem, seat)
 		r.persist()
 		r.log.Info("device link reset", "seat", seat)
@@ -105,6 +105,24 @@ func (r *Room) link(c *Client, seat int, reset bool) {
 	if reset {
 		r.revokeClaims()
 		r.broadcast(nil, nil, nil, noHistory)
+	}
+}
+
+// raiseEpoch revokes every claim made for user in this room: it raises the
+// epoch of every seat user holds (both seats of a hot-seat room, whose
+// claims would otherwise live on through the other seat) to one past the
+// highest of them, so no claim of an earlier epoch verifies for any.
+func (r *Room) raiseEpoch(user string) {
+	top := 0
+	for _, s := range r.file.Seats {
+		if s.Kind == store.SeatKindHuman && s.UserID == user {
+			top = max(top, s.Epoch)
+		}
+	}
+	for i := range r.file.Seats {
+		if s := &r.file.Seats[i]; s.Kind == store.SeatKindHuman && s.UserID == user {
+			s.Epoch = top + 1
+		}
 	}
 }
 

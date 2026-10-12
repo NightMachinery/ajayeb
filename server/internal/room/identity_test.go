@@ -380,6 +380,31 @@ func TestRelinkRevokes(t *testing.T) {
 	}
 }
 
+// TestRelinkHotseatRevokesBothSeats checks that resetting the link of a
+// hot-seat room, whose two seats belong to one user, revokes the old claim
+// for both seats: an old claim must not live on through the other seat.
+func TestRelinkHotseatRevokesBothSeats(t *testing.T) {
+	h := newHarness(t)
+	a := h.client("user-a", "tab-a", "Ann")
+	code, _ := a.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), []string{"Ann", "Omid"}))
+	old := a.link(0, false).Claim
+	if a.link(1, false).Claim != old {
+		t.Fatalf("the two seats of a hot-seat room have different links")
+	}
+	fresh := a.link(0, true).Claim
+	h.snapshot(code)
+	if fresh == old || a.link(1, false).Claim != fresh {
+		t.Fatalf("after the reset: old %s, fresh %s", old, fresh)
+	}
+	c := h.client("user-c", "tab-c", "Phone")
+	if _, err := c.joinClaimErr(code, old); !errors.Is(err, room.ErrBadClaim) {
+		t.Fatalf("the old hot-seat link after the reset: %v", err)
+	}
+	if st := c.joinClaim(code, fresh); len(st.You.Seats) != 2 {
+		t.Fatalf("the new hot-seat link: %+v", st.You)
+	}
+}
+
 // TestRelinkBySelfOnClaimKeepsDevice checks that a device that joined with
 // a claim and resets that same link keeps its place.
 func TestRelinkBySelfOnClaimKeepsDevice(t *testing.T) {
