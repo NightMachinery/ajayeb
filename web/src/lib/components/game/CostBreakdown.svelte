@@ -3,8 +3,10 @@
   // (CostView): a chain that makes the build free, each unit the seat makes
   // itself, each unit a flexible producer covers, units a token waives, each
   // resource bought with its unit price, the printed coin cost, and the
-  // total. The only sum shown here is "coins left": the seat's coins minus
-  // the server's total, for reading, never for deciding anything.
+  // total. When the seat cannot pay, a line says how many coins it has and
+  // how many it lacks (the server's shortfall). The coins it would have
+  // after paying are the outcome line's (Choice.outcome.coins, M10.HS3), so
+  // this does no arithmetic at all.
   import { cardName, resourceName, wonderName } from '$lib/components/card/effect-text';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
@@ -15,7 +17,7 @@
 
   interface Props {
     cost: CostView;
-    /** The paying seat's coins now, for the "left after" line. */
+    /** The paying seat's coins now, for the "short" line. */
     coins?: number;
     class?: string;
   }
@@ -138,16 +140,9 @@
       >{t('coins.count', { count: cost.total })}</span
     >
   </div>
-  {#if coins !== undefined}
-    <p class="text-fg-muted {cost.affordable ? '' : 'font-semibold text-cinnabar'}">
-      {#if cost.affordable}
-        {t('game.cost.left', {
-          have: formatNumber(coins),
-          after: formatNumber(coins - cost.total)
-        })}
-      {:else}
-        {t('game.cost.short', { have: formatNumber(coins), count: cost.shortfall })}
-      {/if}
+  {#if coins !== undefined && !cost.affordable}
+    <p class="font-semibold text-cinnabar">
+      {t('game.cost.short', { have: formatNumber(coins), count: cost.shortfall })}
     </p>
   {/if}
 </div>

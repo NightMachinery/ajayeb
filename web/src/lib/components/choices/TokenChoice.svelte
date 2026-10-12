@@ -3,7 +3,16 @@
   // the three the Great Library drew (which only the chooser sees). Each
   // token is a row with its medallion, name and effect; select one, then
   // "Take <token>" sends its key from the view.
+  //
+  // Hints (M10.HS3): under each token, its outcome line (the server's
+  // Choice.outcome for that key: points, coins, a win), from the page's
+  // game context.
+  import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { outcomeContext, outcomeTerms, type OutcomeTerm } from '$lib/view/outcome';
+  import OutcomeLine from '../game/OutcomeLine.svelte';
+  import { tryGameContext } from './room';
   import Icon from '$lib/icons/Icon.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import CommitButton from './CommitButton.svelte';
@@ -28,6 +37,18 @@
   const tokens = $derived([...keys.keys()]);
   const only = $derived(keys.size === 1 ? ([...keys.values()][0] ?? null) : null);
   const selected = $derived(picked !== null && [...keys.values()].includes(picked) ? picked : only);
+  const ctx = tryGameContext();
+  const screen = $derived(sessionHintScreen(ctx?.session, hintHide.value));
+  const termsByKey = $derived.by((): Readonly<Record<string, OutcomeTerm[]>> => {
+    const view = ctx?.session.view;
+    if (!view || !screen) return {};
+    const octx = outcomeContext(view, screen.families, screen.names);
+    return Object.fromEntries(
+      view.choices
+        .filter((c) => c.kind === 'token' && c.outcome)
+        .map((c) => [c.key, outcomeTerms(c.outcome, octx)])
+    );
+  });
   const selectedToken = $derived(
     selected === null ? null : (tokens.find((slug) => keys.get(slug) === selected) ?? null)
   );
@@ -68,6 +89,7 @@
             <Icon name="badge-check" class="shrink-0 text-xl text-accent [--i2:var(--panel)]" />
           {/if}
         </button>
+        <OutcomeLine terms={termsByKey[key] ?? []} actKey={key} class="mt-1 ps-3" />
       </li>
     {/each}
   </ul>

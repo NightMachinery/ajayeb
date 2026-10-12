@@ -23,6 +23,16 @@
   // build a discard would cover. All of it re-shapes the server's
   // slot.hints and costs (view/hints.ts); the game context supplies the
   // families shown, and the gallery passes `hints`.
+  //
+  // The decider's hints (M10.HS3): under each move button, its outcome
+  // line (Choice.outcome: coins and points after, the pawn, a win, the turn
+  // order); a build the seat cannot pay for that would win says how short
+  // it is; a compact track shows where a pawn move would land; and the
+  // "After this pick" panel says what taking the card uncovers and each
+  // move's threats one turn ahead (view/outcome.ts). When the move hands
+  // the opponent a win or misses one, the confirm step says so; with
+  // Confirm moves off there is no confirm step, and the outcome line and
+  // the panel carry it alone (owner Q3, A).
   import { cardBySlug } from '$lib/catalog';
   import {
     backName,
@@ -41,7 +51,15 @@
     shortByDiscard,
     type HintScreen
   } from '$lib/view/hints';
-  import type { SlotView, View } from '$lib/wire';
+  import {
+    afterPickLines,
+    blunderLine,
+    outcomeContext,
+    outcomeTerms,
+    type PickAction
+  } from '$lib/view/outcome';
+  import type { Choice, SlotView, View } from '$lib/wire';
+  import MilitaryTrack from '../board/MilitaryTrack.svelte';
   import { tryGameContext } from '../choices/room';
   import Button from '../shell/Button.svelte';
   import Sheet from '../shell/Sheet.svelte';
@@ -49,8 +67,10 @@
   import CardFace from '../card/CardFace.svelte';
   import ActionButton from './ActionButton.svelte';
   import { cardActions, wonderChoicesByCard } from './card-actions';
+  import AfterPickPanel from './AfterPickPanel.svelte';
   import CostBreakdown from './CostBreakdown.svelte';
   import HintLines from './HintLines.svelte';
+  import OutcomeLine from './OutcomeLine.svelte';
   import { reasonText } from './reasons';
   import WonderStep from './WonderStep.svelte';
 
@@ -150,6 +170,49 @@
       ? denyNotes(slot.hints, sheetSeat, screen.families, screen.names)
       : ({} as ReturnType<typeof denyNotes>)
   );
+  // The decider's hints: only on the turn of this sheet's seat, and only
+  // when the server sent outcomes (it sends them to the seat to move alone).
+  const octx = $derived(
+    screen && myTurn && !spectator ? outcomeContext(view, screen.families, screen.names) : undefined
+  );
+  function termsOf(choice: Choice | undefined) {
+    return octx && choice ? outcomeTerms(choice.outcome, octx) : [];
+  }
+  function blunderOf(choice: Choice | undefined) {
+    return octx && confirm && choice ? blunderLine(choice, view.choices, octx) : undefined;
+  }
+  const pickActions = $derived.by((): PickAction[] => {
+    if (!actions) return [];
+    const out: PickAction[] = [];
+    if (actions.build)
+      out.push({ label: t('hints.after.moveBuild'), outcome: actions.build.outcome });
+    if (actions.discard) {
+      out.push({ label: t('hints.after.moveDiscard'), outcome: actions.discard.outcome });
+    }
+    for (const w of actions.wonders) {
+      if (w.choice) out.push({ label: wonderName(w.wonder), outcome: w.choice.outcome });
+    }
+    return out;
+  });
+  const afterLines = $derived(
+    octx && slot && takeable && !pickFor
+      ? afterPickLines(slot, view.structure, pickActions, octx)
+      : []
+  );
+  // A build that moves the pawn: the track with its ghost.
+  const pawnGhost = $derived(
+    octx?.families.has('military') ? actions?.build?.outcome?.pawn : undefined
+  );
+  // A build the seat cannot pay for that would win (DisabledChoice.wins).
+  const shortWin = $derived.by(() => {
+    const d = actions?.buildBlocked;
+    if (!octx || !octx.families.has('threats') || !d?.wins || !d.cost) return undefined;
+    return t('hints.outcome.shortWin', {
+      count: d.cost.shortfall,
+      kind: t(`hints.victory.${d.wins.kind}`)
+    });
+  });
+
   const shortNote = $derived(
     screen && actions?.buildBlocked?.cost
       ? shortByDiscard(
@@ -278,17 +341,24 @@
               {#if pickChoice.cost}
                 <CostBreakdown cost={pickChoice.cost} {coins} />
               {/if}
-              <ActionButton
-                key={pickChoice.key}
-                label={t('game.action.buildWonder', {
-                  wonder: wonderName(pickFor),
-                  count: pickChoice.cost?.total ?? 0
-                })}
-                {confirm}
-                {connected}
-                disabled={!canAct}
-                {onact}
-              />
+              <div class="flex flex-col gap-1" data-act-group>
+                <ActionButton
+                  key={pickChoice.key}
+                  label={t('game.action.buildWonder', {
+                    wonder: wonderName(pickFor),
+                    count: pickChoice.cost?.total ?? 0
+                  })}
+                  {confirm}
+                  {connected}
+                  disabled={!canAct}
+                  {onact}
+                />
+                <OutcomeLine
+                  terms={termsOf(pickChoice)}
+                  actKey={pickChoice.key}
+                  blunder={blunderOf(pickChoice)}
+                />
+              </div>
             </section>
           {:else}
             {#if pickFor}
@@ -329,14 +399,31 @@
             {:else}
               <div class="flex flex-col gap-2">
                 {#if actions.build}
-                  <ActionButton
-                    key={actions.build.key}
-                    label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
-                    {confirm}
-                    {connected}
-                    disabled={!canAct}
-                    {onact}
-                  />
+                  <div class="flex flex-col gap-1" data-act-group>
+                    <ActionButton
+                      key={actions.build.key}
+                      label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
+                      {confirm}
+                      {connected}
+                      disabled={!canAct}
+                      {onact}
+                    />
+                    <OutcomeLine
+                      terms={termsOf(actions.build)}
+                      actKey={actions.build.key}
+                      blunder={blunderOf(actions.build)}
+                    />
+                    {#if pawnGhost}
+                      <MilitaryTrack
+                        military={view.military}
+                        ghost={pawnGhost}
+                        leftSeat={screen?.names.you ?? sheetSeat}
+                        viewerSeat={screen?.names.you ?? undefined}
+                        compact
+                        class="mt-0.5"
+                      />
+                    {/if}
+                  </div>
                   {#if deny.build}
                     <p class="text-xs text-fg-muted" dir="auto" data-hint-note="deny-build">
                       {deny.build}
@@ -352,18 +439,30 @@
                       <span data-hint-note="short-by-discard">{shortNote}</span>
                     {/if}
                   </p>
+                  {#if shortWin}
+                    <p class="text-sm font-semibold text-fg" dir="auto" data-hint-note="short-win">
+                      {shortWin}
+                    </p>
+                  {/if}
                 {/if}
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 items-start gap-2">
                   {#if actions.discard}
-                    <ActionButton
-                      key={actions.discard.key}
-                      label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}
-                      variant="secondary"
-                      {confirm}
-                      {connected}
-                      disabled={!canAct}
-                      {onact}
-                    />
+                    <div class="flex flex-col gap-1" data-act-group>
+                      <ActionButton
+                        key={actions.discard.key}
+                        label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}
+                        variant="secondary"
+                        {confirm}
+                        {connected}
+                        disabled={!canAct}
+                        {onact}
+                      />
+                      <OutcomeLine
+                        terms={termsOf(actions.discard)}
+                        actKey={actions.discard.key}
+                        blunder={blunderOf(actions.discard)}
+                      />
+                    </div>
                   {/if}
                   {#if actions.wonders.length > 0}
                     <Button
@@ -396,6 +495,7 @@
                 {/if}
               </div>
             {/if}
+            <AfterPickPanel lines={afterLines} />
             <HintLines sections={hintSections} />
           {/if}
         {/if}

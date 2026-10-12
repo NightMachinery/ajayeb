@@ -4,13 +4,22 @@
   // not the chooser it shows a waiting note instead. Display only: the
   // reason line reads the pawn's position from the view, the options are
   // the view's choices.
+  //
+  // Hints (M10.HS3), from the page's game context: under the buttons, the
+  // wins the starting seat would have at once (starter-threat, the server's
+  // Choice.outcome.threatens), and the cards the age opens with
+  // (starter-preview, the view's structure).
+  import { cardName, joinList } from '$lib/components/card/effect-text';
+  import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { openingCards, starterThreatLines } from '$lib/view/outcome';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryEndangered } from '$lib/view/threats';
   import type { Choice, MilitaryView } from '$lib/wire';
   import { actButtonState } from '../game/act-button';
   import ConfirmButton from '../shell/ConfirmButton.svelte';
-  import { asSeat, type Seat, type SeatNames } from './room';
+  import { asSeat, tryGameContext, type Seat, type SeatNames } from './room';
 
   interface Props {
     /** The age about to start. */
@@ -45,6 +54,20 @@
   }: Props = $props();
 
   const chooserIsYou = $derived(you === chooser);
+
+  const ctx = tryGameContext();
+  const screen = $derived(sessionHintScreen(ctx?.session, hintHide.value));
+  const threatLines = $derived(
+    screen ? starterThreatLines(choices, screen.families, screen.names) : []
+  );
+  const opening = $derived.by(() => {
+    const structure = ctx?.session.view?.structure;
+    if (!screen?.families.has('tempo') || !structure) return undefined;
+    const cards = openingCards(structure);
+    return cards.length > 0
+      ? t('hints.starter.opening', { list: joinList(cards.map(cardName), 'conjunction') })
+      : undefined;
+  });
 
   const why = $derived.by(() => {
     const name = names[chooser];
@@ -124,6 +147,19 @@
       {/each}
     </div>
     <p class="text-center text-xs text-fg-muted">{t('choices.starter.hint')}</p>
+    {#if threatLines.length > 0}
+      <ul class="flex flex-col gap-1" data-starter-threats>
+        {#each threatLines as line (line.seat)}
+          <li
+            class="threat-line border-s-[3px] ps-2 text-sm font-semibold text-fg"
+            dir="auto"
+            data-starter-threat={line.seat}
+          >
+            {line.text}
+          </li>
+        {/each}
+      </ul>
+    {/if}
   {:else}
     <p
       class="rounded-control bg-panel-sunken px-3 py-2 text-center text-sm text-fg-muted"
@@ -133,4 +169,13 @@
       {t('choices.waiting.chooseStarter', { name: names[chooser], age })}
     </p>
   {/if}
+  {#if opening}
+    <p class="text-center text-xs text-fg-muted" dir="auto" data-starter-preview>{opening}</p>
+  {/if}
 </div>
+
+<style>
+  .threat-line {
+    border-color: var(--gold-deep);
+  }
+</style>
