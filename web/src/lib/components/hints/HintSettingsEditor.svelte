@@ -30,7 +30,16 @@
   function toggle(input: HTMLInputElement, family: HintFamily, on: boolean): void {
     const want = input.checked;
     input.checked = on;
+    if (busy) return;
     onchange?.(withFamily(hints, family, want));
+  }
+
+  // While a change is on its way the switches wait, but they are only
+  // aria-disabled, never disabled: a disabled switch drops the keyboard
+  // focus to the page, and the Escape that follows a quick toggle would no
+  // longer close the sheet. A click on a waiting switch does nothing.
+  function hold(event: MouseEvent): void {
+    if (busy) event.preventDefault();
   }
 </script>
 
@@ -58,7 +67,10 @@
             </span>
           </div>
         {:else}
-          <label class="flex min-h-12 cursor-pointer items-center justify-between gap-3 px-3 py-2">
+          <label
+            class="flex min-h-12 items-center justify-between gap-3 px-3 py-2
+              {busy ? 'cursor-wait' : 'cursor-pointer'}"
+          >
             <span class="flex min-w-0 flex-col">
               <span class="text-sm font-semibold text-fg">{t(row.name)}</span>
               <span class="text-xs text-fg-muted">{t(row.hint)}</span>
@@ -66,9 +78,10 @@
             <input
               type="checkbox"
               role="switch"
-              class="size-5 shrink-0 accent-accent disabled:opacity-50"
+              class="size-5 shrink-0 accent-accent aria-disabled:opacity-50"
               checked={row.on}
-              disabled={busy}
+              aria-disabled={busy ? 'true' : undefined}
+              onclick={hold}
               onchange={(e) => toggle(e.currentTarget, row.family, row.on)}
             />
           </label>

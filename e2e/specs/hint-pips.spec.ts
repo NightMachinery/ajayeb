@@ -177,13 +177,13 @@ test.describe('hint pips', { tag: ['@mobile'] }, () => {
     const science = hints.locator('[data-hint-family="science"]');
     await science.getByRole('switch').click();
     await expect(science).not.toHaveAttribute('data-on');
-    // The switch keeps focus and is disabled until the server answers; an
-    // Escape that lands on it then is lost, so press again until the sheet
-    // closes (hints.spec.ts closeSheet has the same race).
+    // The switch keeps focus while it waits for the server (aria-disabled,
+    // never disabled), so Escape closes the sheet at once; it is pressed
+    // again only should a press be lost (hints.spec.ts closeSheet).
     await expect(async () => {
-      await page.keyboard.press('Escape');
-      await expect(hints).toHaveCount(0, { timeout: 1_000 });
-    }).toPass({ timeout: 10_000 });
+      if ((await hints.count()) > 0) await page.keyboard.press('Escape');
+      await expect(hints).toHaveCount(0, { timeout: 1_500 });
+    }).toPass({ timeout: 8_000 });
     await page.waitForFunction(() => window.__ajayeb?.room()?.hints.science === false);
     await expect(page.locator('.card-structure [data-hint="pair"]')).toHaveCount(0);
 

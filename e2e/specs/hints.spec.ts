@@ -35,9 +35,18 @@ async function openGameHints(driver: GameDriver): Promise<Locator> {
   return sheet;
 }
 
+/** Closes a sheet with Escape. The sheet is a modal <dialog>: Escape closes
+ *  it wherever the focus is inside it, including on a hint switch that is
+ *  waiting for the server (aria-disabled, so it keeps the focus). Should a
+ *  press still be lost (the dialog not yet the top layer's active one), it
+ *  is pressed again, at most a few times; a second press after the sheet
+ *  has closed is never sent. */
 async function closeSheet(page: Page, sheet: Locator): Promise<void> {
-  await page.keyboard.press('Escape');
-  await expect(sheet).toHaveCount(0);
+  await expect(sheet).toBeVisible();
+  await expect(async () => {
+    if ((await sheet.count()) > 0) await page.keyboard.press('Escape');
+    await expect(sheet).toHaveCount(0, { timeout: 1_500 });
+  }).toPass({ timeout: 8_000 });
 }
 
 /** The summary line of the game menu's Hints item, read with the menu open. */
@@ -158,8 +167,12 @@ test.describe('hint settings', { tag: ['@mobile'] }, () => {
       const hintsA = await openGameHints(driverA);
       const threats = hintsA.locator('[data-hint-family="threats"]');
       await expect(threats).toHaveAttribute('data-on', '');
-      await threats.getByRole('switch').click();
+      const threatsSwitch = threats.getByRole('switch');
+      await threatsSwitch.click();
       await expect(threats).not.toHaveAttribute('data-on');
+      // While the change is on its way the switch waits, but keeps the
+      // focus, so the Escape right after the click still closes the sheet.
+      await expect(threatsSwitch).toBeFocused();
       await closeSheet(pageA, hintsA);
 
       for (const page of [pageA, pageB]) {
