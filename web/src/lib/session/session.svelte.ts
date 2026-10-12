@@ -112,6 +112,12 @@ export interface CreateOptions {
   names?: string[];
   /** The game's hint settings; absent means the defaultHints option's, else the server's defaults. */
   hints?: HintSettings;
+  /**
+   * Whether the game allows undo (a hot-seat or ai room; fixed for the
+   * game's life). Absent means the defaultAllowUndo option's, else the
+   * server's default, on. Never sent for an online room, which has no undo.
+   */
+  allowUndo?: boolean;
 }
 
 export interface PendingRequest {
@@ -141,6 +147,8 @@ export interface SessionOptions {
   now?: () => number;
   /** The hint settings a create without any starts from (the local default). */
   defaultHints?: (mode: Mode) => HintSettings | null;
+  /** The allowUndo a hot-seat or ai create without one sends (the local default). */
+  defaultAllowUndo?: (mode: Exclude<Mode, 'online'>) => boolean | null;
 }
 
 type Intent =
@@ -218,6 +226,8 @@ export class Session {
   hints: HintSettings | null = $derived(this.frame?.room.hints ?? null);
   /** This user is the game's admin, who may change its hint settings. */
   admin: boolean = $derived(!!this.frame?.you.admin);
+  /** The game allows undo at all (fixed when it was created; never online). */
+  allowUndo: boolean = $derived(!!this.frame?.room.allowUndo);
 
   /** Whether setHints would be sent now: the admin, while the game runs. */
   canSetHints: boolean = $derived.by(() => {
@@ -273,6 +283,7 @@ export class Session {
   #slowMs: number;
   #now: () => number;
   #defaultHints: ((mode: Mode) => HintSettings | null) | null;
+  #defaultAllowUndo: ((mode: Exclude<Mode, 'online'>) => boolean | null) | null;
   #seq = 0;
   #welcomed = false;
   #intent: Intent | null = null;
@@ -308,6 +319,7 @@ export class Session {
     this.#rateRetries = opts.rateRetries ?? 3;
     this.#now = opts.now ?? (() => Date.now());
     this.#defaultHints = opts.defaultHints ?? null;
+    this.#defaultAllowUndo = opts.defaultAllowUndo ?? null;
     this.#offs.push(
       this.#transport.onMessage((msg) => this.#onMessage(msg)),
       this.#transport.onState((status) => this.#onStatus(status))
@@ -359,6 +371,10 @@ export class Session {
     if (opts.bot !== undefined) frame.bot = opts.bot;
     const hints = opts.hints ?? this.#defaultHints?.(opts.mode) ?? null;
     if (hints) frame.hints = { ...hints };
+    if (opts.mode !== 'online') {
+      const allow = opts.allowUndo ?? this.#defaultAllowUndo?.(opts.mode) ?? null;
+      if (allow !== null) frame.allowUndo = allow;
+    }
     if (this.#intent?.kind === 'create') {
       this.#intent.reject(new SessionError('superseded', 'session.error.unknown'));
     }

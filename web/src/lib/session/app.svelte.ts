@@ -9,6 +9,7 @@ import { Presenter } from './presenter.svelte';
 import { SavedRooms } from './rooms.svelte';
 import { Session } from './session.svelte';
 import { installTestHook } from './test-hook';
+import { undoDefault } from './undo-default.svelte';
 import { WsTransport } from './ws-transport';
 
 let rooms: SavedRooms | undefined;
@@ -45,7 +46,9 @@ export function liveGame(): { session: Session; presenter: Presenter } {
         identity: loadIdentity(),
         rooms: savedRooms(),
         // A new game starts from the hint settings saved on this device.
-        defaultHints: (mode) => hintDefaults.for(mode)
+        defaultHints: (mode) => hintDefaults.for(mode),
+        // ...and from the "Allow undo" choice saved next to them.
+        defaultAllowUndo: (mode) => undoDefault.for(mode)
       });
       // A bot's move waits out its thinking dwell, then its pick is
       // highlighted, both scaled by the animation speed (read at each move).

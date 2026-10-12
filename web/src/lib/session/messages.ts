@@ -11,7 +11,8 @@ const REJECTS = {
   rate: 'session.reject.rate',
   'bad-request': 'session.reject.badRequest',
   'not-admin': 'session.reject.notAdmin',
-  'game-over': 'session.reject.gameOver'
+  'game-over': 'session.reject.gameOver',
+  'undo-off': 'session.reject.undoOff'
 } as const satisfies Readonly<Record<string, MessageKey>>;
 
 const ERRORS = {

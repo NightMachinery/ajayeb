@@ -1064,3 +1064,52 @@ describe('Session: device links', () => {
     expect(rooms.claimFor('R7MQ3X')).toBe(NEW);
   });
 });
+
+describe('Session: allowUndo', () => {
+  /** A create a later one supersedes rejects; these tests only read what was sent. */
+  function quiet(p: Promise<string>): void {
+    p.catch(() => {});
+  }
+
+  it('creates a hot-seat or ai game with the choice given, else the device default, else none', () => {
+    const a = setup();
+    connect(a.transport);
+    quiet(a.session.create({ mode: 'hotseat', allowUndo: false }));
+    expect(a.transport.last()).toMatchObject({ t: 'create', mode: 'hotseat', allowUndo: false });
+
+    const transport = new ScriptedTransport();
+    const asked: string[] = [];
+    const session = new Session({
+      transport,
+      identity,
+      rooms: null,
+      defaultAllowUndo: (mode) => {
+        asked.push(mode);
+        return mode === 'ai' ? false : null;
+      }
+    });
+    connect(transport);
+    quiet(session.create({ mode: 'ai', bot: 'easy' }));
+    expect(transport.last()).toMatchObject({ t: 'create', allowUndo: false });
+    quiet(session.create({ mode: 'hotseat' }));
+    expect(transport.last()).not.toHaveProperty('allowUndo');
+    // An online game has no undo: the field is never sent, not even when asked.
+    quiet(session.create({ mode: 'online', allowUndo: true }));
+    expect(transport.last()).not.toHaveProperty('allowUndo');
+    expect(asked).toEqual(['ai', 'hotseat']);
+  });
+
+  it("reads the room's allowUndo, and shows undo-off as its own refusal", () => {
+    const { session, transport } = joined();
+    expect(session.allowUndo).toBe(true);
+    const off = playFrame('H8TQ4R', 11);
+    off.room = { ...off.room, allowUndo: false };
+    off.canUndo = false;
+    transport.receive(off);
+    expect(session.allowUndo).toBe(false);
+    expect(session.canUndo).toBe(false);
+    expect(session.undo()).toBe(false);
+    transport.receive({ t: 'reject', seq: 0, code: 'undo-off', msg: '' });
+    expect(session.notice).toMatchObject({ code: 'undo-off', message: 'session.reject.undoOff' });
+  });
+});
