@@ -4,7 +4,24 @@
   // wonder:<wonder>:<card> key) or the reason it cannot be built. Plain
   // props: the options come from card-actions.ts, which only sorts the
   // view's own choices.
+  //
+  // Hints (M10.HS3 and HS4): under each wonder's build button, its outcome
+  // line (the server's Choice.outcome for that key) with the confirm
+  // step's warning, as in the card sheet; and on each wonder, the hourglass
+  // of the race for the last wonder. The outcome context comes from the
+  // page's game context unless `octx` is given.
   import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { wonderHint, wonderOwner } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import {
+    blunderLine,
+    outcomeContext,
+    outcomeTerms,
+    type OutcomeContext
+  } from '$lib/view/outcome';
+  import { tryGameContext } from '../choices/room';
+  import OutcomeLine from './OutcomeLine.svelte';
   import { cardName, wonderName } from '$lib/components/card/effect-text';
   import { t } from '$lib/i18n';
   import { affordOf } from '$lib/view/afford';
@@ -29,6 +46,8 @@
     titleId: string;
     onact: (key: string) => void;
     onback: () => void;
+    /** The outcome line's context; else from the game context. */
+    octx?: OutcomeContext;
   }
 
   let {
@@ -41,8 +60,37 @@
     connected = true,
     titleId,
     onact,
-    onback
+    onback,
+    octx: octxProp
   }: Props = $props();
+
+  const ctx = tryGameContext();
+  const screen = $derived(sessionHintScreen(ctx?.session, hintHide.value));
+  const octx = $derived.by((): OutcomeContext | undefined => {
+    if (octxProp) return octxProp;
+    const view = ctx?.session.view;
+    return view && screen ? outcomeContext(view, screen.families, screen.names) : undefined;
+  });
+  function termsOf(option: WonderOption) {
+    return octx && option.choice ? outcomeTerms(option.choice.outcome, octx) : [];
+  }
+  function blunderOf(option: WonderOption) {
+    const view = ctx?.session.view;
+    return octx && confirm && option.choice && view
+      ? blunderLine(option.choice, view.choices, octx)
+      : undefined;
+  }
+  function hintOf(slug: string) {
+    const view = ctx?.session.view;
+    if (!view || !screen) return undefined;
+    const seat = wonderOwner(view, slug);
+    const w =
+      seat === undefined ? undefined : view.players[seat].wonders.find((x) => x.wonder === slug);
+    if (seat === undefined || !w) return undefined;
+    const h = wonderHint(view, w, seat, screen, true);
+    // The outcome line under the button says what it would do.
+    return h?.hourglass ? { terms: [], hourglass: h.hourglass } : undefined;
+  }
 
   // Legal wonders first, in the order the server listed them.
   const sorted = $derived([
@@ -82,6 +130,7 @@
           slug={option.wonder}
           size="city"
           afford={option.cost ? affordOf(option.cost) : undefined}
+          hint={hintOf(option.wonder)}
         />
         {#if option.cost}
           <details class="text-sm">
@@ -90,17 +139,20 @@
           </details>
         {/if}
         {#if option.choice}
-          <ActionButton
-            key={option.key}
-            label={t('game.action.buildWonder', {
-              wonder: wonderName(option.wonder),
-              count: option.cost?.total ?? 0
-            })}
-            {confirm}
-            {connected}
-            disabled={!canAct}
-            {onact}
-          />
+          <div class="flex flex-col gap-1" data-act-group>
+            <ActionButton
+              key={option.key}
+              label={t('game.action.buildWonder', {
+                wonder: wonderName(option.wonder),
+                count: option.cost?.total ?? 0
+              })}
+              {confirm}
+              {connected}
+              disabled={!canAct}
+              {onact}
+            />
+            <OutcomeLine terms={termsOf(option)} actKey={option.key} blunder={blunderOf(option)} />
+          </div>
         {:else if option.reason}
           <p class="text-sm text-fg-muted">{reasonText(option.reason, option.cost)}</p>
         {/if}

@@ -23,6 +23,14 @@
   // the server's WonderView, the badge from view/afford.ts. It renders no
   // button of its own; the parent wraps it in one (with describeWonder for
   // the name) when the tile is actionable.
+  //
+  // Hints (M10.HS4, `hint`, view/board-hints.ts wonderHint): on the row
+  // and city sizes, the hourglass once only one more wonder can be built
+  // (solid when its owner can afford it now), and the ready mark on a
+  // wonder its owner could build at today's prices though no choice of the
+  // view builds it now (solid for this screen's own seat, outlined in the
+  // opponent's crest colour). The row also shows what building it would do
+  // now, as an outcome line.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId, WONDER_ART_SIZES } from '$lib/art/lookup';
   import { wonderArtCrop } from '$lib/art/crops';
@@ -30,7 +38,11 @@
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
   import type { Afford } from '$lib/view/afford';
+  import type { WonderHint } from '$lib/view/board-hints';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { WonderView } from '$lib/wire';
+  import OutcomeLine from '../game/OutcomeLine.svelte';
+  import Hourglass from './Hourglass.svelte';
   import AffordBadge from '../card/AffordBadge.svelte';
   import CostPips from '../card/CostPips.svelte';
   import EffectGlyphs from '../card/EffectGlyphs.svelte';
@@ -50,6 +62,8 @@
     compactArt?: boolean;
     /** Row: a wonder choice of the view can build it now. */
     buildable?: boolean;
+    /** The board hints about it (row and city sizes). */
+    hint?: WonderHint;
     class?: string;
   }
 
@@ -62,6 +76,7 @@
     takenBy,
     compactArt = false,
     buildable = false,
+    hint,
     class: className = ''
   }: Props = $props();
 
@@ -91,6 +106,33 @@
       {/snippet}
     </ArtImage>
   </span>
+{/snippet}
+
+{#snippet marks()}
+  {#if hint?.hourglass}
+    <span
+      class="hint-mark grid size-5 shrink-0 place-items-center rounded-full border text-fg
+        {hint.hourglass.solid
+        ? 'border-cinnabar bg-cinnabar/15 text-cinnabar'
+        : 'border-rule-strong'}"
+      data-hint="hourglass"
+      data-hourglass={hint.hourglass.solid ? 'solid' : 'hollow'}
+      {@attach tooltip({ text: hint.hourglass.tip })}
+    >
+      <Hourglass solid={hint.hourglass.solid} class="size-3" />
+    </span>
+  {/if}
+  {#if hint?.ready}
+    <span
+      class="hint-mark ready-mark grid size-5 shrink-0 place-items-center rounded-full"
+      data-hint="ready"
+      data-style={hint.ready.style}
+      data-tone={hint.ready.tone}
+      {@attach tooltip({ text: hint.ready.tip })}
+    >
+      <Icon name="badge-check" class="text-[13px]" />
+    </span>
+  {/if}
 {/snippet}
 
 {#if wonder}
@@ -141,7 +183,11 @@
         <span class="line-clamp-2 text-xs leading-snug text-fg-muted"
           >{effectsText(wonder.effects)}</span
         >
+        {#if hint && hint.terms.length > 0}
+          <OutcomeLine terms={hint.terms} />
+        {/if}
         <span class="flex min-h-5 items-center gap-1.5 text-xs">
+          {@render marks()}
           {#if built}
             <Icon
               name="badge-check"
@@ -198,6 +244,7 @@
               class="shrink-0 text-[14px] text-(--gold-deep) [--i2:var(--paper)]"
             />
           {/if}
+          {@render marks()}
         </span>
         <EffectGlyphs effects={wonder.effects} small class="justify-start! gap-x-[0.4em]" />
       </span>
@@ -222,6 +269,26 @@
     background:
       radial-gradient(circle, var(--gold) 0 1px, transparent 1.5px) 0 0 / 10px 10px,
       linear-gradient(to bottom, oklch(0.88 0.05 230), oklch(0.93 0.04 85) 70%);
+  }
+  /* The ready mark: the hint pip's look (card/HintPip.svelte). Solid for
+     this screen's own seat, outlined in the opponent's crest colour, a
+     crest tint for a spectator. */
+  .ready-mark {
+    --mark: var(--gold-deep);
+    border: 1.5px solid var(--mark);
+    color: var(--mark);
+  }
+  .ready-mark[data-tone='sun'] {
+    --mark: var(--sun-ink);
+  }
+  .ready-mark[data-tone='moon'] {
+    --mark: var(--moon-ink);
+  }
+  .ready-mark[data-style='solid'] {
+    background: color-mix(in oklch, var(--mark) 18%, transparent);
+  }
+  .ready-mark[data-style='outline'] {
+    border-style: dashed;
   }
   .removed {
     opacity: 0.55;

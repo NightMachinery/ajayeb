@@ -11,8 +11,20 @@
   // margin (the ::after layer). The margin is 6 px, since an absolute
   // ::after starts inside the 1 px border: 34 + 2 x 6 = 46 px, of which the
   // science pill just below takes back a pixel or two.
+  //
+  // Board hints (M10.HS4, `hint` or from the page's game context with
+  // `seat`): an hourglass once only one more wonder can be built and this
+  // seat still has one to build, and a ring when the seat could afford a
+  // wonder at today's prices though no choice of the view builds it now
+  // (the opponent's half of the ready mark). Both have a tooltip.
+  import { hintHide } from '$lib/hints/local.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { wonderButtonHint, type WonderButtonHint } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { tryGameContext } from '../choices/room';
+  import Hourglass from './Hourglass.svelte';
 
   interface Props {
     built: number;
@@ -22,15 +34,38 @@
     /** Whose wonders, for the spoken label (a display name). */
     name: string;
     onclick?: () => void;
+    /** Whose wonders, for the hints from the game context. */
+    seat?: 0 | 1;
+    /** The board hints; else from the game context. */
+    hint?: WonderButtonHint;
     class?: string;
   }
 
-  let { built, total, buildable = false, name, onclick, class: className = '' }: Props = $props();
+  let {
+    built,
+    total,
+    buildable = false,
+    name,
+    onclick,
+    seat,
+    hint,
+    class: className = ''
+  }: Props = $props();
+
+  const ctx = tryGameContext();
+  const bh = $derived.by((): WonderButtonHint | undefined => {
+    if (hint) return hint;
+    const view = ctx?.session.view;
+    const screen = sessionHintScreen(ctx?.session, hintHide.value);
+    if (!view || !screen || seat === undefined) return undefined;
+    return wonderButtonHint(view, seat, screen);
+  });
 
   const label = $derived(
     [
       t('board.wonders.button', { name, built, total }),
-      buildable ? t('board.wonders.buildableNow') : ''
+      buildable ? t('board.wonders.buildableNow') : '',
+      bh?.tip ?? ''
     ]
       .filter(Boolean)
       .join('. ')
@@ -47,10 +82,23 @@
   aria-label={label}
   data-control="wonders"
   data-buildable={buildable ? '' : undefined}
+  data-hourglass={bh?.hourglass ? '' : undefined}
+  data-ready={bh && bh.ready > 0 && !buildable ? bh.ready : undefined}
+  {@attach tooltip(bh?.tip ? { text: bh.tip } : undefined)}
   {onclick}
 >
   <Icon name="wonder" class="text-base" />
   <span data-must-fit>{formatNumber(built)}/{formatNumber(total)}</span>
+  {#if bh?.hourglass}
+    <Hourglass class="size-3.5 text-cinnabar" />
+  {/if}
+  {#if bh && bh.ready > 0 && !buildable}
+    <span
+      class="absolute -end-1 -top-1 size-2.5 rounded-full border-2 border-fg-muted bg-panel"
+      aria-hidden="true"
+      data-ready-dot
+    ></span>
+  {/if}
   {#if buildable}
     <span
       class="absolute -end-1 -top-1 size-2.5 rounded-full border border-panel bg-accent"

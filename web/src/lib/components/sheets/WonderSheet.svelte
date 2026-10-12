@@ -6,7 +6,16 @@
   // card's wonder:<wonder>:<card> choice, confirmed in the card sheet. When
   // the wonder cannot be built now the sheet says why, from the server's
   // reason. Reached from a seat's wonder list, it has a Back button to it.
+  //
+  // Board hints (M10.HS4, from the page's game context): what building it
+  // would do now (an outcome line with its hourglass and ready mark), how
+  // many wonder slots are left once the race for the last one is near, and
+  // how many cards are left at the end of an age.
   import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { wonderHint, wonderOwner, wonderSheetLines } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
   import { wonderBySlug } from '$lib/catalog';
   import { cardName, effectsText, wonderName } from '$lib/components/card/effect-text';
   import { t } from '$lib/i18n';
@@ -16,6 +25,9 @@
   import { reasonText } from '../game/reasons';
   import Button from '../shell/Button.svelte';
   import Sheet from '../shell/Sheet.svelte';
+  import OutcomeLine from '../game/OutcomeLine.svelte';
+  import { tryGameContext } from '../choices/room';
+  import Hourglass from '../wonder/Hourglass.svelte';
   import WonderTile from '../wonder/WonderTile.svelte';
 
   interface Props {
@@ -43,6 +55,19 @@
 
   const titleId = 'wonder-sheet-title';
   const wonder = $derived(slug ? wonderBySlug(slug) : undefined);
+
+  const ctx = tryGameContext();
+  const screen = $derived(sessionHintScreen(ctx?.session, hintHide.value));
+  const hint = $derived.by(() => {
+    const view = ctx?.session.view;
+    if (!view || !screen || !slug || !state) return undefined;
+    const seat = wonderOwner(view, slug);
+    return seat === undefined ? undefined : wonderHint(view, state, seat, screen, buildable);
+  });
+  const sheetLines = $derived.by(() => {
+    const view = ctx?.session.view;
+    return view && screen ? wonderSheetLines(view, screen.families) : [];
+  });
 </script>
 
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
@@ -68,6 +93,35 @@
         />
       </div>
       <p class="text-sm text-fg">{effectsText(wonder.effects)}</p>
+      {#if hint}
+        <div class="flex items-start gap-2" data-wonder-value>
+          {#if hint.hourglass}
+            <span
+              class="grid size-6 shrink-0 place-items-center rounded-full border text-fg
+                {hint.hourglass.solid ? 'border-cinnabar text-cinnabar' : 'border-rule-strong'}"
+              data-hint="hourglass"
+              {@attach tooltip({ text: hint.hourglass.tip })}
+            >
+              <Hourglass solid={hint.hourglass.solid} class="size-3.5" />
+            </span>
+          {/if}
+          <div class="flex min-w-0 flex-col gap-1">
+            <OutcomeLine terms={hint.terms} />
+            {#if hint.note}
+              <p class="text-xs text-fg-muted" data-wonder-library>{hint.note}</p>
+            {/if}
+            {#if hint.hourglass}
+              <p class="text-xs text-fg-muted">{hint.hourglass.tip}</p>
+            {/if}
+            {#if hint.ready}
+              <p class="text-xs text-fg-muted" data-hint="ready">{hint.ready.tip}</p>
+            {/if}
+          </div>
+        </div>
+      {/if}
+      {#each sheetLines as line (line)}
+        <p class="text-xs text-fg-muted" data-wonder-sheet-line>{line}</p>
+      {/each}
 
       {#if state?.built}
         <p class="text-sm text-fg-muted">
