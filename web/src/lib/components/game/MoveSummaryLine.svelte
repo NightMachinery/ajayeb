@@ -124,7 +124,7 @@
 {#snippet coins(n: number, loss: boolean)}
   <Icon name="coin" class="text-sm text-gold [--i2:var(--gold-deep)]" />
   <span class="font-semibold tabular-nums" aria-hidden="true"
-    >{loss ? '−' : ''}{formatNumber(n)}</span
+    >{formatNumber(loss ? -n : n, { signDisplay: 'negative' })}</span
   >
 {/snippet}
 

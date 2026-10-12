@@ -1,9 +1,10 @@
 <script lang="ts">
   // One looting token on the military track, drawn as what it does: a gold
-  // coin chip reading "−2" or "−5", the coins its side loses as soon as the
-  // pawn enters its space (3 or 6 from the centre). Once taken it leaves a
-  // faint dashed ring where it stood. A leaf component, plain props, so
-  // MilitaryTrack just maps view.military.looting over it.
+  // coin chip reading -2 or -5 (the sign from Intl), the coins its side
+  // loses as soon as the pawn enters its space (3 or 6 from the centre).
+  // Once taken it leaves a faint dashed ring where it stood. A leaf
+  // component, plain props, so MilitaryTrack just maps view.military.looting
+  // over it.
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
@@ -38,5 +39,5 @@
   data-present={present ? '' : undefined}
   data-min-font="10"
 >
-  {#if present}−{formatNumber(value)}{/if}
+  {#if present}{formatNumber(-value, { signDisplay: 'negative' })}{/if}
 </span>
