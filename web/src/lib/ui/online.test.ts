@@ -27,6 +27,7 @@ function onlineFrame(seats: Partial<SeatInfo>[], code = 'K7QX2M'): State {
       kind: 'human' as const,
       connected: true,
       you: seat === 0,
+      nameNo: 0,
       ...seats[seat]
     }))
   };

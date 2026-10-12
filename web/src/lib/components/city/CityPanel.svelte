@@ -6,14 +6,21 @@
   // calm thinking indicator while this seat's bot thinks. The same data as
   // PlayerStrip, laid out as a column instead of two rows. A bot seat shows
   // its persona's avatar between the crest and the name. No danger warning
-  // once the game has ended.
+  // once the game has ended. The player's own seat has a ring on its crest
+  // and a "you" mark (`self`, else the room's SeatInfo.you from the page's
+  // game context, never on a hot-seat device), and the device link button
+  // (SeatLink) follows the name where the room allows it.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t } from '$lib/i18n';
   import { cardBySlug } from '$lib/catalog';
-  import Icon from '$lib/icons/Icon.svelte';
+  import { isSelfSeat } from '$lib/view/display-name';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
   import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
+  import { tryGameContext } from '../choices/room';
+  import SeatLink from '../identity/SeatLink.svelte';
+  import SelfCrest from '../identity/SelfCrest.svelte';
+  import SelfMark from '../identity/SelfMark.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import WonderList from '../wonder/WonderList.svelte';
   import CityBand from './CityBand.svelte';
@@ -37,6 +44,8 @@
     bot?: BotLevel;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
     thinking?: boolean;
+    /** This is the player's own seat; by default the room's SeatInfo.you. */
+    self?: boolean;
     class?: string;
   }
 
@@ -51,8 +60,18 @@
     ended = false,
     bot,
     thinking = false,
+    self,
     class: className = ''
   }: Props = $props();
+
+  const ctx = tryGameContext();
+  const isSelf = $derived(
+    self ??
+      isSelfSeat(
+        ctx?.session.frame?.room.seats.find((s) => s.seat === seat),
+        ctx?.session.frame?.room.mode
+      )
+  );
 
   const COLORS = [
     'brown',
@@ -81,7 +100,6 @@
     return counts;
   });
 
-  const crestName = $derived(seat === 0 ? ('crest-sun' as const) : ('crest-moon' as const));
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
   const militaryThreat = $derived(militaryDanger(military, seat, ended));
   const scienceThreat = $derived(scienceDanger(player.science, ended));
@@ -94,9 +112,11 @@
 >
   <div class="flex items-center justify-between gap-2">
     <div class="flex min-w-0 items-center gap-1.5">
-      <Icon name={crestName} class="shrink-0 text-xl {crestTextClass}" />
+      <SelfCrest {seat} self={isSelf} class="text-xl" />
       {#if bot}<BotAvatar level={bot} class="size-7" />{/if}
       <span class="min-w-0 truncate font-display text-base text-fg" dir="auto">{name}</span>
+      {#if isSelf}<SelfMark />{/if}
+      <SeatLink {seat} {name} class="-ms-1" />
       {#if thinking}
         <span
           class="flex shrink-0 items-center gap-1 text-xs font-semibold text-fg-muted"

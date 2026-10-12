@@ -2,7 +2,8 @@
 // prompt, the lobby with its invite, presence, spectators, the online
 // rematch and the room errors (components/screens/OnlineSheet, JoinSheet,
 // NamePrompt, Lobby, RoomError; components/hud/PresenceDot,
-// SpectatorCount). See ../index.ts for the conventions.
+// SpectatorCount; components/identity), and the names of the players.
+// See ../index.ts for the conventions.
 
 import type { Messages } from '../types';
 
@@ -48,7 +49,6 @@ export const online = {
   'online.lobby.qr': 'QR code of the invite link',
   'online.lobby.scan': 'Or scan this with the other phone.',
   'online.lobby.players': 'Players',
-  'online.lobby.you': '{name} (you)',
   'online.lobby.waiting': 'Waiting for your friend…',
   'online.lobby.home': 'Home',
   'online.lobby.homeHint': 'The game stays open: continue it from Home.',
@@ -84,5 +84,39 @@ export const online = {
   'online.error.notFoundHint':
     'Check the code or the link. A game also closes some time after it ends.',
   'online.error.retryHint': 'Try again in a moment, or start a game of your own.',
-  'online.error.home': 'Home'
+  'online.error.home': 'Home',
+
+  // Who is who (components/identity, lib/view/display-name): a name that
+  // equals one already in the game gets a number after it, and the
+  // player's own name a small mark.
+  'online.identity.numbered': '{name} {number}',
+  'online.identity.you': 'you',
+  'online.identity.youLabel': 'This is you',
+
+  // Device links (components/identity/DeviceLink): a link that plays one
+  // seat of this game on another device.
+  'online.link.button': 'Device link for {name}',
+  'online.link.buttonOwn': 'Play on another device',
+  'online.link.title': 'Play on another device',
+  'online.link.titleOther': 'Device link for {name}',
+  'online.link.intro':
+    'Open this link on your other device to play your seat there. Anyone who has it can play as you in this game, so keep it to yourself.',
+  'online.link.introOther':
+    'Send this link to {name}: it plays their seat on another device. Anyone who has it can play that seat in this game.',
+  'online.link.field': 'Device link',
+  'online.link.loading': 'Getting the link…',
+  'online.link.failed': 'Could not get the link. Try again.',
+  'online.link.retry': 'Try again',
+  'online.link.copy': 'Copy link',
+  'online.link.copied': 'Link copied.',
+  'online.link.copyFailed': 'Could not copy the link. Select it and copy it by hand.',
+  'online.link.reset': 'Reset link',
+  'online.link.resetHint': 'A reset stops every earlier link to this seat at once.',
+  'online.link.resetDone': 'Link reset. Earlier links no longer work.',
+  'online.link.close': 'Close',
+
+  // The game log: a reset of a device link.
+  'online.log.linkResetOwn': '{name} reset their device link.',
+  'online.log.linkResetOther': '{name} reset the device link of {target}.',
+  'online.log.linkReset': 'The device link of {target} was reset.'
 } as const satisfies Messages;

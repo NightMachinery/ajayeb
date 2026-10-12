@@ -12,8 +12,8 @@ describe('seat names', () => {
     expect(personaName('normal')).toBe('Scholar');
     expect(personaName('hard')).toBe('Master');
     const r = room([
-      { seat: 0, name: 'Sara', kind: 'human', connected: true, you: true },
-      { seat: 1, name: '', kind: 'bot', bot: 'normal', connected: true, you: false }
+      { seat: 0, name: 'Sara', kind: 'human', connected: true, you: true, nameNo: 0 },
+      { seat: 1, name: '', kind: 'bot', bot: 'normal', connected: true, you: false, nameNo: 0 }
     ]);
     expect(seatNames(r)).toEqual(['Sara', 'Scholar']);
     expect(botSeat(r)).toBe(1);
@@ -21,8 +21,8 @@ describe('seat names', () => {
 
   it('works with the bot at the Sun', () => {
     const r = room([
-      { seat: 0, name: '', kind: 'bot', bot: 'hard', connected: true, you: false },
-      { seat: 1, name: '', kind: 'human', connected: true, you: true }
+      { seat: 0, name: '', kind: 'bot', bot: 'hard', connected: true, you: false, nameNo: 0 },
+      { seat: 1, name: '', kind: 'human', connected: true, you: true, nameNo: 0 }
     ]);
     expect(seatNames(r)).toEqual(['Master', 'Moon']);
     expect(botSeat(r)).toBe(0);
@@ -31,8 +31,8 @@ describe('seat names', () => {
   it('falls back to the crest names, and has no bot seat without a bot', () => {
     expect(seatNames(null)).toEqual(['Sun', 'Moon']);
     const r = room([
-      { seat: 0, name: '  ', kind: 'human', connected: true, you: true },
-      { seat: 1, name: 'Omid', kind: 'human', connected: true, you: true }
+      { seat: 0, name: '  ', kind: 'human', connected: true, you: true, nameNo: 0 },
+      { seat: 1, name: 'Omid', kind: 'human', connected: true, you: true, nameNo: 0 }
     ]);
     expect(seatNames(r)).toEqual(['Sun', 'Omid']);
     expect(botSeat(r)).toBeUndefined();

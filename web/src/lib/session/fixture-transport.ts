@@ -164,7 +164,8 @@ export function stateFrameFromView(view: View, opts: ViewFrameOptions = {}): Sta
         name: names[seat] ?? '',
         kind: 'human' as const,
         connected: true,
-        you: seats.includes(seat)
+        you: seats.includes(seat),
+        nameNo: 0
       })),
       spectators: view.viewer === undefined ? 1 : 0,
       hints: defaultHints('online')

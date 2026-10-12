@@ -11,11 +11,14 @@ import {
   type LogLine,
   type SeatNames
 } from '$lib/view/log-format';
+import { formatLinkReset } from '$lib/view/link-log';
 import type { HistoryEntry, RoomLogEntry } from '$lib/wire';
 import { familyList } from './text';
 
 /** One room log entry as a line of text. */
 export function formatRoomLogEntry(entry: RoomLogEntry, names: SeatNames): string {
+  // A device link reset (lib/view/link-log.ts) is in the same room log.
+  if (entry.kind === 'link') return formatLinkReset(entry, names);
   const parts: string[] = [];
   if (entry.on.length > 0) {
     parts.push(t('hints.log.on', { families: familyList(entry.on) }));

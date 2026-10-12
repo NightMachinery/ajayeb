@@ -34,7 +34,14 @@ const ONLINE: Readonly<Record<string, () => State | undefined>> = {
     const f = viewFrame('draft-round-1-seat0');
     if (!f) return undefined;
     f.room.status = 'lobby';
-    f.room.seats[1] = { seat: 1, name: '', kind: 'open', connected: false, you: false };
+    f.room.seats[1] = {
+      seat: 1,
+      name: '',
+      kind: 'open',
+      connected: false,
+      you: false,
+      nameNo: 0
+    };
     f.you = { seats: [0], canAct: false, admin: true };
     return f;
   },

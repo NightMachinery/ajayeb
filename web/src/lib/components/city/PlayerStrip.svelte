@@ -19,15 +19,25 @@
   // Glows when this seat is in military or scientific danger
   // (lib/view/threats.ts), never once the game has ended. A leaf
   // component: every number comes from the view through plain props.
+  //
+  // The player's own seat has a ring on its crest and a "you" mark (the
+  // `self` prop, else the room's SeatInfo.you from the page's game context,
+  // never on a hot-seat device), and the device link button (SeatLink) sits
+  // after the name where the room allows it.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { isSelfSeat } from '$lib/view/display-name';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
   import { wonderTally } from '$lib/view/wonders';
   import type { Presence } from '$lib/ui/online';
   import type { BotLevel, MilitaryView, PlayerView, ScoreView } from '$lib/wire';
   import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
+  import { tryGameContext } from '../choices/room';
+  import SeatLink from '../identity/SeatLink.svelte';
+  import SelfCrest from '../identity/SelfCrest.svelte';
+  import SelfMark from '../identity/SelfMark.svelte';
   import ProgressToken from '../token/ProgressToken.svelte';
   import WonderButton from '../wonder/WonderButton.svelte';
   import ResourceChips from './ResourceChips.svelte';
@@ -58,6 +68,8 @@
     onopen?: () => void;
     /** The label of that button. */
     openLabel?: string;
+    /** This is the player's own seat; by default the room's SeatInfo.you. */
+    self?: boolean;
     class?: string;
   }
 
@@ -75,10 +87,19 @@
     presence,
     onopen,
     openLabel,
+    self,
     class: className = ''
   }: Props = $props();
 
-  const crestName = $derived(seat === 0 ? ('crest-sun' as const) : ('crest-moon' as const));
+  const ctx = tryGameContext();
+  const isSelf = $derived(
+    self ??
+      isSelfSeat(
+        ctx?.session.frame?.room.seats.find((s) => s.seat === seat),
+        ctx?.session.frame?.room.mode
+      )
+  );
+
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
   const militaryThreat = $derived(militaryDanger(military, seat, ended));
   const scienceThreat = $derived(scienceDanger(player.science, ended));
@@ -87,9 +108,10 @@
 </script>
 
 {#snippet identity()}
-  <Icon name={crestName} class="shrink-0 text-lg {crestTextClass}" />
+  <SelfCrest {seat} self={isSelf} class="text-lg" />
   {#if bot}<BotAvatar level={bot} class="size-6 shrink-0 short:size-5" />{/if}
   <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
+  {#if isSelf}<SelfMark />{/if}
 {/snippet}
 
 <div
@@ -113,6 +135,8 @@
         {@render identity()}
       </div>
     {/if}
+
+    <SeatLink {seat} {name} class="-ms-1" />
 
     {#if presence}
       <PresenceDot {presence} {name} class="-ms-1" />

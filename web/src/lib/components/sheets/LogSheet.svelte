@@ -8,11 +8,14 @@
   // is on the board. The changes of the game's hint settings (the room log)
   // are lines among the events. Without a game context (the gallery), or
   // before the Session has any history, it shows the `events` it is given.
+  // The player's own lines (their seat's, outside hot-seat rooms) carry a
+  // "you" mark and an accent edge: `selfSeat`, else the room's.
   import { t } from '$lib/i18n';
   import type { GameEvent } from '$lib/wire';
   import { groupLogByAge } from '$lib/view/log-format';
   import { groupGameLog, type GameLogGroup } from '$lib/hints/log';
   import { tryGameContext } from '../choices/room';
+  import SelfMark from '../identity/SelfMark.svelte';
   import Sheet from '../shell/Sheet.svelte';
 
   interface Props {
@@ -20,11 +23,26 @@
     events: readonly GameEvent[];
     names: readonly [string, string];
     titleId?: string;
+    /** The player's own seat, whose lines are marked; by default the room's. */
+    selfSeat?: 0 | 1 | null;
   }
 
-  let { open = $bindable(false), events, names, titleId = 'log-sheet-title' }: Props = $props();
+  let {
+    open = $bindable(false),
+    events,
+    names,
+    titleId = 'log-sheet-title',
+    selfSeat
+  }: Props = $props();
 
   const ctx = tryGameContext();
+  const mine = $derived.by(() => {
+    if (selfSeat !== undefined) return selfSeat;
+    const f = ctx?.session.frame;
+    if (!f || f.room.mode === 'hotseat' || f.you.seats.length !== 1) return null;
+    const seat = f.you.seats[0];
+    return seat === 0 || seat === 1 ? seat : null;
+  });
 
   // The room log (changes of the hint settings) goes among the events, at
   // the ply each change happened (lib/hints/log.ts).
@@ -51,8 +69,13 @@
           </h3>
           <ol class="flex flex-col gap-1">
             {#each group.lines as line, i (i)}
-              <li class="rounded-control border border-rule bg-panel px-2.5 py-1.5 text-sm text-fg">
-                {line.text}
+              {@const self = mine !== null && line.seat === mine}
+              <li
+                class="rounded-control border border-rule bg-panel px-2.5 py-1.5 text-sm text-fg
+                  {self ? 'border-s-4 border-s-accent' : ''}"
+                data-self-line={self ? '' : undefined}
+              >
+                {#if self}<SelfMark class="me-1 align-[0.1em]" />{/if}{line.text}
               </li>
             {/each}
           </ol>

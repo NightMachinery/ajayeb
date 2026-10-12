@@ -18,11 +18,14 @@
   import Copy from '@lucide/svelte/icons/copy';
   import Share2 from '@lucide/svelte/icons/share-2';
   import { t } from '$lib/i18n';
-  import Icon from '$lib/icons/Icon.svelte';
   import { qrPath, type Presence } from '$lib/ui/online';
+  import { seatDisplayName } from '$lib/view/display-name';
   import type { HintSettings, SeatInfo } from '$lib/wire';
   import { tryGameContext } from '../choices/room';
   import HintsSummary from '../hints/HintsSummary.svelte';
+  import SeatLink from '../identity/SeatLink.svelte';
+  import SelfCrest from '../identity/SelfCrest.svelte';
+  import SelfMark from '../identity/SelfMark.svelte';
   import ConnectionPill from '../hud/ConnectionPill.svelte';
   import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
@@ -83,8 +86,10 @@
   const playersId = `${uid}-players`;
 
   function seatName(seat: 0 | 1): string {
-    const name = seats.find((s) => s.seat === seat)?.name.trim();
-    return name || t(seat === 0 ? 'board.crest.sun' : 'board.crest.moon');
+    return seatDisplayName(
+      seats.find((s) => s.seat === seat),
+      t(seat === 0 ? 'board.crest.sun' : 'board.crest.moon')
+    );
   }
 
   function presenceOf(info: SeatInfo | undefined): Presence | undefined {
@@ -208,19 +213,20 @@
             data-lobby-seat={seat}
             data-open={info?.kind === 'open' ? '' : undefined}
           >
-            <Icon
-              name={seat === 0 ? 'crest-sun' : 'crest-moon'}
-              class="shrink-0 text-xl {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
-            />
+            <SelfCrest {seat} self={!!info?.you} class="text-xl" />
             {#if info?.kind === 'open'}
               <span class="flex min-w-0 flex-1 items-center gap-2 text-sm text-fg-muted">
                 <ThinkingDots class={seat === 0 ? 'text-sun-ink' : 'text-moon-ink'} />
                 {t('online.lobby.waiting')}
               </span>
             {:else}
-              <span class="min-w-0 flex-1 truncate text-sm font-semibold text-fg" dir="auto">
-                {info?.you ? t('online.lobby.you', { name: seatName(seat) }) : seatName(seat)}
+              <span class="flex min-w-0 flex-1 items-center gap-1.5">
+                <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">
+                  {seatName(seat)}
+                </span>
+                {#if info?.you}<SelfMark />{/if}
               </span>
+              <SeatLink {seat} name={seatName(seat)} />
               {#if presence}
                 <PresenceDot {presence} name={seatName(seat)} labelled />
               {/if}

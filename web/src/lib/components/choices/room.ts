@@ -6,6 +6,7 @@
 
 import { t } from '$lib/i18n';
 import { getGameContext, type GameContext } from '$lib/session/context';
+import { seatDisplayName } from '$lib/view/display-name';
 import type { Mode, RoomInfo } from '$lib/wire';
 
 export type Seat = 0 | 1;
@@ -30,10 +31,12 @@ export function crestName(seat: Seat): string {
 
 /** The players' display names by seat, with the crest name for a blank one. */
 export function seatNames(room: RoomInfo | null | undefined): SeatNames {
-  const nameOf = (seat: Seat): string => {
-    const name = room?.seats.find((s) => s.seat === seat)?.name?.trim();
-    return name ? name : crestName(seat);
-  };
+  // An equal name already in the game makes this one "Name 2".
+  const nameOf = (seat: Seat): string =>
+    seatDisplayName(
+      room?.seats.find((s) => s.seat === seat),
+      crestName(seat)
+    );
   return [nameOf(0), nameOf(1)];
 }
 

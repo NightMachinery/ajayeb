@@ -5,6 +5,7 @@
 // and Master (hard).
 
 import { t } from '$lib/i18n';
+import { seatDisplayName } from '$lib/view/display-name';
 import type { BotLevel, RoomInfo } from '$lib/wire';
 
 /** A progress token's translated name, or the slug for an unknown one. */
@@ -52,8 +53,8 @@ export function seatNames(room: Pick<RoomInfo, 'seats'> | null | undefined): [st
   const name = (seat: 0 | 1) => {
     const info = room?.seats.find((s) => s.seat === seat);
     if (info?.kind === 'bot' && info.bot !== undefined) return personaName(info.bot);
-    const given = info?.name?.trim();
-    return given || t(seat === 0 ? 'board.crest.sun' : 'board.crest.moon');
+    // An equal name already in the game makes this one "Name 2".
+    return seatDisplayName(info, t(seat === 0 ? 'board.crest.sun' : 'board.crest.moon'));
   };
   return [name(0), name(1)];
 }
