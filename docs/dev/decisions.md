@@ -206,3 +206,20 @@ e2e no longer sets Playwright's `reducedMotion` context option, which stopped do
 **Rejected.** Hints as a per-device setting in Settings, as the UX design first had it (players in one online game could play with different information). Hints as an engine option fixed at creation (it would tie a display concern to replays and forbid changing it mid-game).
 
 **Amended (2026-10-11), the owner's answers on three hint questions.** Hints may name the five progress tokens left in the box, since a careful player can work them out by elimination; only their order stays secret. There are no move suggestions. The advisor family is a post-move review: after a player has moved, the summary of the opponent's next move tells that player, and only that player, whether they could have made a better move and why, so players learn from it. It is offered in every mode, on by default in games against the bot and off by default in hot-seat and online games, where the admin may turn it on. The warning before a move that hands over a win or misses one respects the Confirm moves setting: with confirmations off it appears only in the card sheet and the after-pick panel, never as an extra confirm.
+
+## D24. Art is delivered whole, by content-hashed URL, with no total size cap
+
+**Decision (2026-10-12).** The owner asked why the client did not prefetch more and dropped the 5 MB cap on the total shipped art ("considering not all cards are loaded at once, there is no need for the 5mb hard cap on all cards"). Slice AD1 made this the policy:
+
+- Every art URL carries `?v=` and the first 10 hex digits of the file's SHA-256, written by `tools/art/index.mjs` into the generated index. The server caches an `/art/` request whose `v` matches the file's own hash for a year (`public, max-age=31536000, immutable`); a request without `v`, or with a stale one, gets a day plus `stale-while-revalidate` and a strong ETag.
+- After the first board paint the client prefetches the whole game's art at idle, one file at a time at low priority, in the order it will be needed (the current age at the card sheet's size, then thumbnails, the next ages, guilds, wonders, tokens, backs, victory scenes), using the same `srcset` and `sizes` strings as the frames so the cache hits. It pauses while the page is hidden and keeps the old small plan under Save-Data or a 2g connection.
+- Budgets are per image only. There is no total cap; `index.mjs` prints the shipped total and the prefetch bytes per device class instead (at the time of AD1: 220 files, 4.23 MB shipped; a full prefetch is about 2.6 MB on a phone at DPR 3 and 0.8 MB on a desktop at DPR 1).
+- A higher-resolution variant exists only where a measured display needs it. Wonders gained a 1440x960 size; cards did not, because their largest display (the phone card sheet, 142 CSS px at DPR 3) needs 426 px and the 480 px file covers it.
+
+**Rationale.** A URL that changes whenever the file changes cannot be served stale by any cache between the server and the browser, so a year-long cache is safe and repeat visits cost nothing. The total cap measured the wrong thing: no screen loads every file at once, and the per-image budgets already bound what one view costs. Prefetching at idle turns a slow first look at each card into an instant one, at the price of data the player was going to download anyway in a full game.
+
+**Tradeoff.** A player who opens one game and leaves downloads more than before (up to the full plan). Save-Data and slow connections opt out.
+
+**Rejected.** Keeping the 5 MB total (it forbade sharper wonders for no user-visible gain). Hashed filenames instead of `?v=` (the query form needs no renaming and leaves no old files behind; every cache on our path keys on the query string). Prefetching everything at once (it would compete with the board's own first requests).
+
+This supersedes the "budget 5 MB" line in the M9 section of `docs/dev/roadmap.md`, which is corrected at the end of M10.
