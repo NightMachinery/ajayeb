@@ -151,3 +151,47 @@ describe('placeTooltip: a bubble with a stack', () => {
     expect(p.stack!.y + stack.height).toBe(p.bubble.y + bubble.height);
   });
 });
+
+describe('placeTooltip: a stack on a phone in landscape', () => {
+  // A short screen: 740x360, less the notch's safe area on both sides.
+  const LANDSCAPE: Rect = { x: 47, y: 0, width: 740 - 94, height: 360 };
+  const bubble = { width: 272, height: 60 };
+  const one = { width: 158, height: 260 };
+  const three = { width: 452, height: 260 };
+
+  function apart(p: Placement, input: PlaceInput): void {
+    inside(p, input);
+    expect(p.stack).toBeDefined();
+    expect(overlaps({ ...p.bubble, ...input.bubble }, { ...p.stack!, ...input.stack! })).toBe(
+      false
+    );
+  }
+
+  it('puts the stack beside the bubble when stacking them would not fit', () => {
+    for (const ay of [20, 140, 280]) {
+      const anchor = { x: 340, y: ay, width: 48, height: 72 };
+      // Even where the layer would not ask for beside (a narrow landscape).
+      for (const allowBeside of [true, false]) {
+        const input = { anchor, bubble, stack: one, bounds: LANDSCAPE, allowBeside };
+        const p = placeTooltip(input);
+        expect(p.stack?.mode).toBe('beside');
+        apart(p, input);
+      }
+    }
+  });
+
+  it('moves the bubble and a wide stack as one, so they never overlap', () => {
+    for (const [ax, ay] of [
+      [60, 20],
+      [340, 140],
+      [600, 280],
+      [340, 300]
+    ] as const) {
+      const anchor = { x: ax, y: ay, width: 48, height: 40 };
+      const input = { anchor, bubble, stack: three, bounds: LANDSCAPE, allowBeside: true };
+      const p = placeTooltip(input);
+      expect(p.stack?.mode).toBe('below');
+      apart(p, input);
+    }
+  });
+});

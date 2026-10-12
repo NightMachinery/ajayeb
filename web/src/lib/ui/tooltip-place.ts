@@ -92,9 +92,18 @@ export function placeTooltip(input: PlaceInput): Placement {
   const room = maxX - minX;
   const anchorCx = anchor.x + anchor.width / 2;
 
-  // Beside only when the bubble and the stack fit side by side.
+  const roomAbove = anchor.y - gap - minY;
+  const roomBelow = maxY - (anchor.y + anchor.height + gap);
+
+  // Beside only when the bubble and the stack fit side by side: on a wide
+  // screen, or wherever stacking them vertically would not fit on either
+  // side of the anchor (a phone in landscape, which is short), since two
+  // boxes that are each pushed inside a short screen would overlap.
+  const fitsBeside = !!stack && bubble.width + stackGap + stack.width <= room;
+  const fitsBelow =
+    !!stack && bubble.height + stackGap + stack.height <= Math.max(roomAbove, roomBelow);
   const mode: StackMode | undefined = stack
-    ? input.allowBeside && bubble.width + stackGap + stack.width <= room
+    ? fitsBeside && (input.allowBeside || !fitsBelow)
       ? 'beside'
       : 'below'
     : undefined;
@@ -104,9 +113,6 @@ export function placeTooltip(input: PlaceInput): Placement {
     stack && mode === 'below'
       ? bubble.height + stackGap + stack.height
       : Math.max(bubble.height, stack?.height ?? 0);
-
-  const roomAbove = anchor.y - gap - minY;
-  const roomBelow = maxY - (anchor.y + anchor.height + gap);
   const side: Side =
     roomAbove >= groupHeight
       ? 'top'
@@ -136,8 +142,21 @@ export function placeTooltip(input: PlaceInput): Placement {
     const x = clamp(anchorCx - bubble.width / 2, minX, maxX - bubble.width);
     const bubbleCx = x + bubble.width / 2;
     const sx = clamp(bubbleCx - stack.width / 2, minX, maxX - stack.width);
+    // The two boxes move as one: when the group does not fit on the
+    // anchor's side, the bubble gives way to the stack rather than the
+    // stack sliding over the bubble. Only a group taller than the whole
+    // screen still overlaps (each box is then kept inside on its own).
+    const by = clamp(
+      clamp(
+        bubbleY,
+        side === 'top' ? minY + stack.height + stackGap : minY,
+        side === 'top' ? maxY - bubble.height : maxY - groupHeight
+      ),
+      minY,
+      maxY - bubble.height
+    );
     const sy = clamp(
-      side === 'top' ? bubbleY - stackGap - stack.height : bubbleY + bubble.height + stackGap,
+      side === 'top' ? by - stackGap - stack.height : by + bubble.height + stackGap,
       minY,
       maxY - stack.height
     );
@@ -145,10 +164,10 @@ export function placeTooltip(input: PlaceInput): Placement {
     const lo = Math.max(x, sx) + 6;
     const hi = Math.min(x + bubble.width, sx + stack.width) - 6;
     const cx = clamp(bubbleCx, lo, hi);
-    const [y1, y2] = side === 'top' ? [bubbleY, sy + stack.height] : [bubbleY + bubble.height, sy];
+    const [y1, y2] = side === 'top' ? [by, sy + stack.height] : [by + bubble.height, sy];
     return {
       side,
-      bubble: { x, y: bubbleY },
+      bubble: { x, y: by },
       arrowX: arrowAt(anchorCx - x, bubble.width, arrowInset),
       stack: { x: sx, y: sy, mode },
       connector: { x1: cx, y1, x2: cx, y2 }
