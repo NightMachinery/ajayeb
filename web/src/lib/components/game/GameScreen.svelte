@@ -117,6 +117,7 @@
   import ForfeitConfirm from './ForfeitConfirm.svelte';
   import MoveSummary from './MoveSummary.svelte';
   import MoveReview from './MoveReview.svelte';
+  import FirstTips from '../hints/FirstTips.svelte';
   import {
     botPick,
     cardActions,
@@ -986,6 +987,19 @@
     {#if summaryReview}<MoveReview lines={summaryReview} />{/if}
   {/snippet}
 </MoveSummary>
+
+<FirstTips
+  {view}
+  seat={summarySeat}
+  families={boardHints?.families ?? shownFamilies}
+  boardMarks={!!boardHints?.boardMarks}
+  {names}
+  canShow={(turn.kind === 'yourTurn' || turn.kind === 'hotseatTurn') &&
+    !summaryOpen &&
+    !showPass &&
+    !selectedSlot &&
+    presenter.idle}
+/>
 
 <LiveRegion message={lastLines.join(' ')} />
 <!-- The next age's approved card art, fetched while this one is played. -->

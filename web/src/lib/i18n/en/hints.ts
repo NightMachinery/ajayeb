@@ -494,6 +494,27 @@ export const hints = {
   'hints.recap.price': 'Your {resource}: was {from}, now {to} coins.',
   'hints.recap.priceBuilt': 'Your {resource}: was {from}, now {to} coins. {name} built {card}.',
 
+  // First-time tips (lib/ui/tips.svelte.ts, components/hints/FirstTip.svelte):
+  // each explains a hint mark once, the first time it appears on this device.
+  'hints.tip.label': 'Tip',
+  'hints.tip.pair':
+    'Each science symbol is on two cards. Own both and you pick a progress token. This mark shows a card that completes your pair.',
+  'hints.tip.denyPair':
+    'This card would complete {name}’s science pair, and they would pick a progress token. Taking it keeps it from them.',
+  'hints.tip.win': 'A crown marks a card that wins the game if you build it now.',
+  'hints.tip.winOpp': 'An outlined crown marks a card that would win the game for {name}.',
+  'hints.tip.loot':
+    'This card’s shields would push the pawn onto a looting token, and the other player would lose coins.',
+  'hints.tip.gotIt': 'Got it',
+  'hints.tip.more': 'More in Rules',
+
+  // The Settings screen's hint section (screens/Settings.svelte).
+  'hints.settings.title': 'Hints',
+  'hints.settings.tips': 'First-time tips',
+  'hints.settings.tipsHint': 'Explain each hint mark the first time it appears on this device.',
+  'hints.settings.tipsReset': 'Show the tips again',
+  'hints.settings.tipsResetDone': 'The tips will show again.',
+
   // The rules reference's "Hint glyphs" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules
   // sections can name it; it lives here with the other hint words.

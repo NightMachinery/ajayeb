@@ -22,6 +22,9 @@
   import { installFx, play, unlockAudio } from '$lib/fx';
   import { vibrationShown } from './vibration';
   import { theme, THEME_PREFS, type ThemePref } from '$lib/ui/theme.svelte';
+  import { tips } from '$lib/ui/tips.svelte';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import HintLocalHide from '$lib/components/hints/HintLocalHide.svelte';
 
   // as const satisfies (not a type annotation) so each entry keeps its own
   // literal key type; t() needs that to know no params are required for it
@@ -62,6 +65,15 @@
     installFx();
     unlockAudio();
     play('chime', { volume: settings.value.soundVolume });
+  }
+
+  // "Show the tips again" says it worked until the next change.
+  let tipsReset = $state(false);
+  const uid = $props.id();
+  const hintsTitleId = `${uid}-hints`;
+  function resetTips(): void {
+    tips.resetSeen();
+    tipsReset = true;
   }
 
   function setVolume(v: SoundVolume): void {
@@ -207,4 +219,47 @@
       />
     </label>
   {/if}
+
+  <section class="flex flex-col gap-3" aria-labelledby={hintsTitleId} data-settings-hints>
+    <h3 id={hintsTitleId} class="text-sm font-medium text-fg-muted">
+      {t('hints.settings.title')}
+    </h3>
+    <label class="flex min-h-11 items-center justify-between gap-3">
+      <span class="flex flex-col">
+        <span class="text-sm font-medium text-fg">{t('hints.settings.tips')}</span>
+        <span class="text-xs text-fg-muted">{t('hints.settings.tipsHint')}</span>
+      </span>
+      <input
+        type="checkbox"
+        role="switch"
+        class="size-5 shrink-0 accent-accent"
+        data-setting="tips"
+        checked={!tips.value.off}
+        onchange={(e) => {
+          tips.setOff(!e.currentTarget.checked);
+          tipsReset = false;
+        }}
+      />
+    </label>
+    {#if !tips.value.off}
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          class="min-h-9 rounded-control border border-rule bg-panel px-3 text-sm text-fg hover:bg-panel-sunken"
+          data-setting="tips-reset"
+          onclick={resetTips}
+        >
+          {t('hints.settings.tipsReset')}
+        </button>
+        <span class="text-xs text-fg-muted" role="status">
+          {tipsReset ? t('hints.settings.tipsResetDone') : ''}
+        </span>
+      </div>
+    {/if}
+    <HintLocalHide
+      hide={hintHide.value}
+      onfamily={(family, hidden) => hintHide.setFamily(family, hidden)}
+      onboardmarks={(hidden) => hintHide.setBoardMarks(hidden)}
+    />
+  </section>
 </div>
