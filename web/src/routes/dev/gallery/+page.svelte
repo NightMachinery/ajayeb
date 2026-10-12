@@ -44,6 +44,15 @@
           height: String(innerHeight.current ?? 0)
         })}
       </p>
+      <p class="mt-1">
+        <a
+          class="inline-flex min-h-11 items-center text-sm font-semibold text-fg underline decoration-gild underline-offset-2"
+          href={resolve('/dev/gallery/tooltips')}
+          data-testid="gallery-tooltips-link"
+        >
+          {t('dev.tooltips.link')}
+        </a>
+      </p>
     </div>
     <Segmented
       name="gallery-theme"

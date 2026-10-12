@@ -34,6 +34,7 @@ export const shell = {
   'dev.tooltips.intro':
     'Hover a symbol (after a short delay) or focus it with the keyboard; on touch, tap a symbol, or long-press an actionable one. Any tap closes an open tooltip without acting.',
   'dev.tooltips.back': 'Back to the gallery',
+  'dev.tooltips.link': 'Tooltip gallery',
   'dev.tooltips.text': 'Text',
   'dev.tooltips.params': 'With parameters',
   'dev.tooltips.diagram': 'With a diagram',

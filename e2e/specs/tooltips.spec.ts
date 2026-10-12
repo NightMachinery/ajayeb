@@ -53,6 +53,13 @@ async function tap(page: Page, locator: Locator): Promise<void> {
   await page.touchscreen.tap(x, y);
 }
 
+test('the main gallery links the tooltip gallery', async ({ page }) => {
+  await page.goto('/dev/gallery');
+  await page.getByTestId('gallery-tooltips-link').click();
+  await page.waitForURL((url) => url.pathname === URL);
+  await expect(page.getByRole('heading', { level: 1, name: 'Tooltips' })).toBeVisible();
+});
+
 test.describe('tooltips on a fine pointer', () => {
   test.beforeEach(({}, info) => {
     test.skip(info.project.name !== 'desktop', 'hover and keyboard focus need a mouse');
