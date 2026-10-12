@@ -8,14 +8,18 @@ import (
 )
 
 // This file builds the state frames: one full snapshot per connection, with
-// the view and events of that connection's viewer (engine.ViewFor and
+// the view and events of that connection's viewer (engine.ViewWithHints and
 // engine.FilterEvents, the only place hidden information is decided), and,
 // for the frames that carry it, the game's history filtered the same way.
+// The view carries the game's hints, computed once per broadcast with the
+// room's hint settings (engine.ComputeHints) and shared by every viewer's
+// view.
 
 // frameCache builds each viewer's view, events and history once per
 // broadcast. They are never changed after they are built, so connections
 // may share them.
 type frameCache struct {
+	hints   *engine.Hints       // the shared hints, computed with the first view; nil until then
 	views   [3]*view.View       // by viewer + 1: spectator, seat 0, seat 1
 	events  [3][]view.GameEvent // likewise
 	built   [3]bool
@@ -31,10 +35,17 @@ func viewerIndex(v engine.Viewer) int {
 	return 0
 }
 
-func (fc *frameCache) get(s *engine.State, v engine.Viewer, ev []engine.Event) (view.View, []view.GameEvent) {
+// get returns viewer v's view of s, with the hints of settings, and v's
+// share of the events ev. The shared hints are computed once, with the
+// first view the cache builds, and every view of the broadcast reuses them.
+func (fc *frameCache) get(s *engine.State, settings view.HintSettings, v engine.Viewer, ev []engine.Event) (view.View, []view.GameEvent) {
 	i := viewerIndex(v)
 	if !fc.built[i] {
-		vw := engine.ViewFor(s, v)
+		if fc.hints == nil {
+			h := engine.ComputeHints(s, settings)
+			fc.hints = &h
+		}
+		vw := engine.ViewWithHints(s, v, fc.hints)
 		fc.views[i] = &vw
 		fc.events[i] = engine.FilterEvents(ev, v)
 		fc.built[i] = true
@@ -105,7 +116,7 @@ func (r *Room) sendState(c *Client, mem member, ack *wire.Ack, withHistory bool)
 // frame builds one connection's state frame.
 func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]bool, fc *frameCache, withHistory bool) wire.State {
 	viewer := r.viewer(mem)
-	v, events := fc.get(&r.state, viewer, ev)
+	v, events := fc.get(&r.state, *r.file.Hints, viewer, ev)
 	if withHistory {
 		// The history already holds the last action's events.
 		events = nil
