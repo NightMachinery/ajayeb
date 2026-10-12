@@ -170,8 +170,11 @@ test.describe('hint pips', { tag: ['@mobile'] }, () => {
     const science = hints.locator('[data-hint-family="science"]');
     await science.getByRole('switch').click();
     await expect(science).not.toHaveAttribute('data-on');
-    await page.keyboard.press('Escape');
-    await expect(hints).toHaveCount(0);
+    // Escape first closes a tooltip the tap may have opened, then the sheet.
+    await expect(async () => {
+      await page.keyboard.press('Escape');
+      await expect(hints).toHaveCount(0, { timeout: 1_000 });
+    }).toPass({ timeout: 10_000 });
     await page.waitForFunction(() => window.__ajayeb?.room()?.hints.science === false);
     await expect(page.locator('.card-structure [data-hint="pair"]')).toHaveCount(0);
 
