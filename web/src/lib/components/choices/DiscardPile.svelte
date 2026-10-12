@@ -4,7 +4,15 @@
   // the ages, so "latest age first" is as close to "newest first" as the
   // view allows. Used read-only by the discard sheet, and selectable by the
   // Mausoleum's build-from-discard choice.
+  //
+  // Hints (M10.HS4, mausoleum-pool-hint): a card that a Mausoleum could
+  // rebuild to some effect carries its pip, as on the board (view/hints.ts
+  // discardPips over the server's View.hints.discard), from the page's game
+  // context unless `pips` is given.
   import { cardBySlug } from '$lib/catalog';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { discardPips, sessionHintScreen, type CardPip } from '$lib/view/hints';
+  import { tryGameContext } from './room';
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import type { Color } from '$lib/wire';
@@ -17,10 +25,18 @@
     selected?: string | null;
     onselect?: (key: string) => void;
     disabled?: boolean;
+    /** Hint pips by card slug; else from the game context. */
+    pips?: ReadonlyMap<string, CardPip>;
   }
 
-  let { cards, keys, selected = null, onselect, disabled = false }: Props = $props();
+  let { cards, keys, selected = null, onselect, disabled = false, pips }: Props = $props();
 
+  const ctx = tryGameContext();
+  const cardPips = $derived.by((): ReadonlyMap<string, CardPip> | undefined => {
+    if (pips) return pips;
+    const view = ctx?.session.view;
+    return view ? discardPips(view, sessionHintScreen(ctx?.session, hintHide.value)) : undefined;
+  });
   const COLOR_ORDER: readonly Color[] = [
     'brown',
     'grey',
@@ -100,6 +116,7 @@
       {selected}
       {onselect}
       {disabled}
+      pips={cardPips}
       label={t('choices.discard.sheetTitle')}
     />
   </div>

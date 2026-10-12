@@ -4,10 +4,15 @@
   // marks it (the caller's commit button sends the move), so a tile carries
   // data-pick with its choice key, never data-act. A plain leaf: the caller
   // passes the cards and, for a choice, each card's key from the view.
+  // `pips` puts a hint pip on a card's top-end corner (the Mausoleum's
+  // pool, M10.HS4: view/hints.ts discardPips), as on the board.
   import X from '@lucide/svelte/icons/x';
   import Icon from '$lib/icons/Icon.svelte';
+  import { cardName } from '$lib/components/card/effect-text';
   import { describeCard } from '$lib/view/describe';
+  import { pipLabel, type CardPip } from '$lib/view/hints';
   import CardFace from '../card/CardFace.svelte';
+  import HintPip from '../card/HintPip.svelte';
 
   interface Props {
     cards: readonly string[];
@@ -20,6 +25,8 @@
     danger?: boolean;
     disabled?: boolean;
     label: string;
+    /** Hint pips by card slug. */
+    pips?: ReadonlyMap<string, CardPip>;
     class?: string;
   }
 
@@ -31,8 +38,14 @@
     danger = false,
     disabled = false,
     label,
+    pips,
     class: className = ''
   }: Props = $props();
+
+  function nameOf(slug: string): string {
+    const pip = pips?.get(slug);
+    return pip ? `${describeCard(slug)}. ${pipLabel(pip)}` : describeCard(slug);
+  }
 
   const CARD_W = 96;
   const CARD_H = 148;
@@ -56,11 +69,14 @@
           style:height="{CARD_H}px"
           data-pick={key}
           aria-pressed={isSelected}
-          aria-label={describeCard(slug)}
+          aria-label={nameOf(slug)}
           {disabled}
           onclick={() => onselect(key)}
         >
           <CardFace {slug} tier="medium" width={CARD_W} />
+          {#if pips?.get(slug) && !isSelected}
+            <HintPip pip={pips.get(slug)!} card={cardName(slug)} />
+          {/if}
           {#if isSelected}
             <span
               class="absolute -end-1.5 -top-1.5 grid size-6 place-items-center rounded-full shadow-panel
@@ -81,9 +97,12 @@
           style:width="{CARD_W}px"
           style:height="{CARD_H}px"
           role="img"
-          aria-label={describeCard(slug)}
+          aria-label={nameOf(slug)}
         >
           <CardFace {slug} tier="medium" width={CARD_W} />
+          {#if pips?.get(slug)}
+            <HintPip pip={pips.get(slug)!} card={cardName(slug)} />
+          {/if}
         </div>
       {/if}
     </li>
