@@ -46,7 +46,8 @@
   // every move takes the confirm step the settings ask for.
   //
   // A wonder's extra turn reads "Play again" in the turn bar for the whole
-  // turn (playAgainFrom over the events seen). A player's own move gets no
+  // turn (playAgainFrom over the game's history up to the frame on screen,
+  // so it survives a reload). A player's own move gets no
   // toast (they just made it); the one exception is a choice the server
   // skipped (nothing to destroy, an empty discard pile), which the player
   // could not foresee, so a toast explains it.
@@ -270,6 +271,20 @@
     view && ui.selected !== null ? view.structure[ui.selected] : undefined
   );
 
+  // The history up to the frame on screen: a bot's answer still being
+  // paced by the Presenter is not in it yet.
+  const shownHistory = $derived.by(() => {
+    const history = session.history;
+    const ply = view?.ply;
+    const last = history[history.length - 1];
+    if (ply === undefined || !last || last.ply < ply) return history;
+    return history.filter((e) => e.ply < ply);
+  });
+  // Its events: the whole game even after a reload. Without a history (a
+  // fixture room), the events this screen has seen.
+  const shownLog = $derived(
+    shownHistory.length > 0 ? shownHistory.flatMap((e) => e.events) : ui.log
+  );
   const turn = $derived(
     turnState({
       view,
@@ -283,7 +298,7 @@
         presence[0] === undefined ? undefined : presence[0] === 'connected',
         presence[1] === undefined ? undefined : presence[1] === 'connected'
       ],
-      playAgain: playAgainFrom(ui.log)
+      playAgain: playAgainFrom(shownLog)
     })
   );
   const thinkingSeat = $derived(turn.kind === 'aiThinking' ? turn.seat : undefined);
@@ -302,15 +317,6 @@
   );
   const lastLines = $derived(frame ? eventLines(frame.events, names) : []);
 
-  // The history up to the frame on screen: a bot's answer still being
-  // paced by the Presenter is not in it yet.
-  const shownHistory = $derived.by(() => {
-    const history = session.history;
-    const ply = view?.ply;
-    const last = history[history.length - 1];
-    if (ply === undefined || !last || last.ply < ply) return history;
-    return history.filter((e) => e.ply < ply);
-  });
   const summarySeat = $derived(view ? summaryViewer(mode, mySeats, view.toMove) : null);
   const moveSummary = $derived(
     summarySeat === null ? null : latestSummary(shownHistory, summarySeat)

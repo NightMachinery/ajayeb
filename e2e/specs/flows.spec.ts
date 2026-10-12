@@ -400,6 +400,11 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     await expect(bar).toContainText('Sun plays again (Appian Way)');
     expect(await logLines(driver)).toContain('Sun plays again.');
     await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'playAgain');
+    // And after a reload, which rebuilds it from the game's history.
+    await page.reload();
+    await driver.waitReady();
+    await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'playAgain');
+    await expect(driver.visible('[data-turn]')).toContainText('Sun plays again (Appian Way)');
 
     // The extra turn is an ordinary move; after it the turn passes.
     const discard = snap.choices.find((c) => c.kind === 'discard');
