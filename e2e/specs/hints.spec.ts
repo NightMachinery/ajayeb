@@ -72,6 +72,9 @@ test.describe('hint settings', { tag: ['@mobile'] }, () => {
     await expect(prices).toHaveAttribute('data-on', '');
     await prices.getByRole('switch').click();
     await expect(prices).not.toHaveAttribute('data-on');
+    // A switch leaves the section open.
+    await expect(section).toHaveAttribute('open', '');
+    await expect(prices.getByRole('switch')).toBeVisible();
     await expect(section.locator('[data-control="hints-section"]')).toContainText(
       'All hints on except Prices and Advisor'
     );

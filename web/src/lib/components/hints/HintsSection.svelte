@@ -12,16 +12,19 @@
 
   interface Props {
     value: HintSettings;
-    /** Opened at first (the gallery). */
+    /** Whether the section is open; it starts closed. */
     open?: boolean;
   }
 
-  let { value = $bindable(), open = false }: Props = $props();
+  // `open` is bound, not just set: a one-way `{open}` is written again
+  // whenever the summary line changes, which would close the section on
+  // every switch.
+  let { value = $bindable(), open = $bindable(false) }: Props = $props();
 </script>
 
 <details
   class="hints-section group rounded-control border border-rule bg-panel-sunken/40"
-  {open}
+  bind:open
   data-hints-section
 >
   <summary
