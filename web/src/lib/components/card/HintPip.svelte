@@ -4,8 +4,9 @@
   // cost row and the effect band, so a half-covered mini card still shows
   // it. Shape carries the meaning, fill the side:
   //
-  //   win   a crown
-  //   pair  the progress-token frame with the card's science symbol inside
+  //   win   a crown (the hint-crown icon)
+  //   pair  the progress-token rosette with an equals sign (hint-pair): the
+  //         card matches a science symbol, and its tooltip line names it
   //   loot  the coin-loss glyph
   //
   //   solid    the viewer's own fact (gold; the mover's crest on a hot-seat
@@ -21,7 +22,6 @@
   // A plain leaf: it takes the pip model (view/hints.ts cardPip) and
   // positions itself absolutely; the parent must be positioned.
   import Icon from '$lib/icons/Icon.svelte';
-  import type { IconName } from '$lib/icons/names';
   import { t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { CardPip, PipEntry } from '$lib/view/hints';
@@ -45,35 +45,13 @@
     faint = false,
     class: className = 'absolute -end-1.5 -top-1.5'
   }: Props = $props();
-
-  function symbolIcon(e: PipEntry): IconName | undefined {
-    return e.symbol ? (`science-${e.symbol}-sm` as IconName) : undefined;
-  }
 </script>
-
-{#snippet crown(cls: string)}
-  <svg class={cls} viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
-      fill="currentColor"
-      stroke="currentColor"
-      stroke-width="1.5"
-      stroke-linejoin="round"
-    />
-    <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
-  </svg>
-{/snippet}
 
 {#snippet glyph(e: PipEntry, cls: string)}
   {#if e.code === 'win'}
-    {@render crown(cls)}
+    <Icon name="hint-crown" class={cls} />
   {:else if e.code === 'pair'}
-    <span class="relative inline-grid place-items-center {cls}">
-      <Icon name="token-frame" class="col-start-1 row-start-1 size-full" />
-      {#if symbolIcon(e)}
-        <Icon name={symbolIcon(e)!} class="col-start-1 row-start-1 size-[56%]" />
-      {/if}
-    </span>
+    <Icon name="hint-pair" class={cls} />
   {:else}
     <Icon name="coin-loss" class={cls} />
   {/if}

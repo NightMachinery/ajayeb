@@ -3,11 +3,11 @@
   // (or the seat's name), then the opponent's lines, outlined in their
   // crest colour, each line a fact the server computed (view/hints.ts
   // cardSections, discardLines, destroyLines). A line that is a board pip's
-  // fact carries the pip's glyph. Muted, small, and absent when there is
+  // fact carries the pip's glyph (the hint-crown and hint-pair icons, M10.F2;
+  // the line's text names the science symbol). Muted, small, and absent when there is
   // nothing to say. A plain leaf: it takes the sections as props.
   import Icon from '$lib/icons/Icon.svelte';
-  import type { IconName } from '$lib/icons/names';
-  import type { HintLine, HintSection } from '$lib/view/hints';
+  import type { HintSection } from '$lib/view/hints';
 
   interface Props {
     sections: readonly HintSection[];
@@ -15,10 +15,6 @@
   }
 
   let { sections, class: className = '' }: Props = $props();
-
-  function symbolIcon(line: HintLine): IconName | undefined {
-    return line.symbol ? (`science-${line.symbol}-sm` as IconName) : undefined;
-  }
 </script>
 
 {#if sections.length > 0}
@@ -43,23 +39,9 @@
                   aria-hidden="true"
                 >
                   {#if line.code === 'win'}
-                    <svg class="size-[1.1em]" viewBox="0 0 24 24">
-                      <path
-                        d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
-                        fill="currentColor"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linejoin="round"
-                      />
-                      <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
-                    </svg>
+                    <Icon name="hint-crown" class="size-[1.1em]" />
                   {:else if line.code === 'pair'}
-                    <span class="relative inline-grid size-[1.1em] place-items-center">
-                      <Icon name="token-frame" class="col-start-1 row-start-1 size-full" />
-                      {#if symbolIcon(line)}
-                        <Icon name={symbolIcon(line)!} class="col-start-1 row-start-1 size-[52%]" />
-                      {/if}
-                    </span>
+                    <Icon name="hint-pair" class="size-[1.1em]" />
                   {:else}
                     <Icon name="coin-loss" class="size-[1.1em]" />
                   {/if}

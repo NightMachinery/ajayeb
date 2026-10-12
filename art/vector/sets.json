@@ -74,6 +74,13 @@
         {"id": "token-frame", "ink": "var(--gild)", "band": "green"}
       ]
     },
+    "hints": {
+      "title": "Hint pip glyphs",
+      "icons": [
+        {"id": "hint-crown", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "red"},
+        {"id": "hint-pair", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "green"}
+      ]
+    },
     "ornaments-track-logo": {
       "title": "Ornaments, track parts and the logo",
       "rules": {"viewBox": "any", "budget": 4096, "gradients": 1, "tokens": true},

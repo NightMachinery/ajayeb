@@ -76,6 +76,10 @@ export const ICON_NAMES = [
   'crest-sun-sm',
   'crest-moon',
 
+  // Hint pips (M10.F2): a win, and a science pair that earns a progress token.
+  'hint-crown',
+  'hint-pair',
+
   // The two capitals at the ends of the military track.
   'capital-sun',
   'capital-moon',
