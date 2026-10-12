@@ -12,14 +12,25 @@
   // beneath; Escape closes it too. It sits where it hides the least: given
   // an `anchor` (the structure on a phone, the player's own column on wide
   // screens), it is placed over the top of that box, below the strips;
-  // without one (the gallery) it is centred. The `review` slot at its end
-  // is for the move review line a later hints slice adds.
+  // without one (the gallery) it is centred.
+  //
+  // After the moves come the viewer's own trade prices that those moves
+  // changed (`prices`, the recap family: lib/view/recap.ts), and last the
+  // `review` slot, where the game screen puts the move review of the
+  // viewer's own move before these (MoveReview, the advisor family).
   //
   // A leaf: it shows the summary it is given and decides nothing.
   import type { Snippet } from 'svelte';
   import type { Attachment } from 'svelte/attachments';
   import { t } from '$lib/i18n';
   import type { MoveSummary } from '$lib/view/move-summary';
+  import type { PriceTick } from '$lib/view/recap';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
+  import Icon from '$lib/icons/Icon.svelte';
+  import type { IconName } from '$lib/icons/names';
+  import { cardName, resourceName } from '../card/effect-text';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import DismissLayer from '../shell/DismissLayer.svelte';
   import MoveSummaryLine from './MoveSummaryLine.svelte';
 
@@ -32,11 +43,30 @@
     anchor?: HTMLElement | null;
     /** A tap or Escape closed it. */
     onclose: () => void;
-    /** The move review line (a later hints slice); nothing for now. */
+    /** The viewer's trade prices these moves changed (the recap family). */
+    prices?: readonly PriceTick[];
+    /** The move review of the viewer's own move before these (MoveReview). */
     review?: Snippet;
   }
 
-  let { open, summary, names, anchor = null, onclose, review }: Props = $props();
+  let { open, summary, names, prices = [], anchor = null, onclose, review }: Props = $props();
+
+  function priceText(p: PriceTick): string {
+    const resource = resourceName(p.resource);
+    return p.cause
+      ? t('hints.recap.priceBuilt', {
+          resource,
+          from: p.from,
+          to: p.to,
+          name: names[p.cause.seat],
+          card: cardName(p.cause.card)
+        })
+      : t('hints.recap.price', { resource, from: p.from, to: p.to });
+  }
+
+  function resourceIcon(p: PriceTick): IconName {
+    return `resource-${p.resource}-sm` as IconName;
+  }
 
   const title = $derived(summary ? t('game.summary.title', { name: names[summary.seat] }) : '');
 
@@ -102,6 +132,33 @@
           <MoveSummaryLine {line} seat={summary.seat} {names} />
         {/each}
       </ol>
+      {#if prices.length > 0}
+        <section class="flex flex-col gap-1" data-summary-prices>
+          <h3
+            class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
+            {@attach tooltip({ text: t('hints.recap.tip') })}
+          >
+            {t('hints.recap.title')}
+          </h3>
+          <ul class="flex flex-col gap-1">
+            {#each prices as p (p.resource)}
+              <li
+                class="flex items-start gap-1.5 text-sm leading-snug text-fg"
+                data-price-tick={p.resource}
+                data-price-dir={p.to > p.from ? 'up' : 'down'}
+              >
+                <Icon name={resourceIcon(p)} class="mt-0.5 shrink-0" />
+                {#if p.to > p.from}
+                  <ChevronUp class="mt-0.5 size-4 shrink-0 text-fg" aria-hidden="true" />
+                {:else}
+                  <ChevronDown class="mt-0.5 size-4 shrink-0 text-fg" aria-hidden="true" />
+                {/if}
+                <span dir="auto">{priceText(p)}</span>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
       <div class="empty:hidden" data-summary-review>{@render review?.()}</div>
       <p class="text-xs text-fg-muted">{t('game.summary.close')}</p>
     </div>

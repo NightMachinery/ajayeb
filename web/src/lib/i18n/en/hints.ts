@@ -456,6 +456,44 @@ export const hints = {
     other: '{count} of these coins go to {name} (Economy).'
   },
 
+
+  // The move review (lib/view/review.ts, components/game/MoveReview.svelte,
+  // M10.HS5): inside the summary of the opponent's next move, what the
+  // player did and whether a clearly better move was there. {move} is one
+  // of the hints.review.move.* phrases.
+  'hints.review.title': 'Your move',
+  'hints.review.tip': 'The advisor looks at your own move after you play. Only you see it.',
+  'hints.review.played.build': 'You built {card}.',
+  'hints.review.played.discard': 'You discarded {card}.',
+  'hints.review.played.wonder': 'You built the wonder {wonder}.',
+  'hints.review.played.other': 'Your last move.',
+  'hints.review.move.build': 'Building {card}',
+  'hints.review.move.discard': 'Discarding {card}',
+  'hints.review.move.wonder': 'Building {wonder}',
+  'hints.review.move.other': 'Another move',
+  'hints.review.none': 'No clearly better move was found.',
+  'hints.review.wins': '{move} would have won the game.',
+  'hints.review.stopsMilitary': '{move} would have kept {name} from taking your capital.',
+  'hints.review.stopsWinWith': '{move} would have kept {name} from winning with {card}.',
+  'hints.review.stopsWin': '{move} would have kept {name} from winning next turn.',
+  'hints.review.pair': '{move} would have completed your {symbol} pair.',
+  'hints.review.deniesPair': '{move} would have kept {name} from a {symbol} pair.',
+  'hints.review.loot': {
+    one: '{move} would have looted {count} coin from {name}.',
+    other: '{move} would have looted {count} coins from {name}.'
+  },
+  'hints.review.points': {
+    one: '{move} looked about {count} point better.',
+    other: '{move} looked about {count} points better.'
+  },
+
+  // What changed since the player's last move (lib/view/recap.ts): the
+  // trade prices the other side's moves changed, shown in the move summary.
+  'hints.recap.title': 'Your prices',
+  'hints.recap.tip': 'Trade prices that changed since your last move.',
+  'hints.recap.price': 'Your {resource}: was {from}, now {to} coins.',
+  'hints.recap.priceBuilt': 'Your {resource}: was {from}, now {to} coins. {name} built {card}.',
+
   // The rules reference's "Hint glyphs" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules
   // sections can name it; it lives here with the other hint words.

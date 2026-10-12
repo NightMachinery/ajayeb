@@ -82,6 +82,9 @@
   import { badgeSeat } from '$lib/view/afford';
   import { lastPly, latestSummary, summaryTrigger, summaryViewer } from '$lib/view/move-summary';
   import { hintHide } from '$lib/hints/local.svelte';
+  import { visibleFamilies } from '$lib/hints/families';
+  import { EMPTY_RECAP, isCurrentRun, nextRecap, priceTicks } from '$lib/view/recap';
+  import { reviewForSummary, reviewLines } from '$lib/view/review';
   import { ageTip } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
   import { seatGhost, selectionGhost } from '$lib/view/outcome';
@@ -113,6 +116,7 @@
   import CardSheet from './CardSheet.svelte';
   import ForfeitConfirm from './ForfeitConfirm.svelte';
   import MoveSummary from './MoveSummary.svelte';
+  import MoveReview from './MoveReview.svelte';
   import {
     botPick,
     cardActions,
@@ -162,6 +166,9 @@
   // the top bar's button opened it.
   let summaryAuto = $state<number | null>(null);
   let summaryManual = $state(false);
+  // What changed since each seat's last move (lib/view/recap.ts), from the
+  // frames in order: the summary's price lines.
+  let recap = $state.raw(EMPTY_RECAP);
   // The boxes the summary is placed over.
   let structureEl = $state<HTMLElement | undefined>();
   let homeEl = $state<HTMLElement | undefined>();
@@ -372,6 +379,23 @@
       : structureEl
   );
 
+  // The summary's move review (the advisor) and the viewer's trade prices
+  // the other side changed (the recap), each while its family shows here.
+  const shownFamilies = $derived(visibleFamilies(session.hints, hintHide.value));
+  const summaryReview = $derived.by(() => {
+    if (summarySeat === null || !shownFamilies.has('advisor')) return null;
+    const review = reviewForSummary(view?.review, moveSummary, shownHistory);
+    return review ? reviewLines(review, { names, seat: summarySeat }) : null;
+  });
+  const summaryPrices = $derived(
+    view &&
+      summarySeat !== null &&
+      shownFamilies.has('recap') &&
+      isCurrentRun(moveSummary, shownHistory)
+      ? priceTicks(recap, view, summarySeat)
+      : []
+  );
+
   function closeSummary(): void {
     summaryAuto = null;
     summaryManual = false;
@@ -406,6 +430,7 @@
     announcePresence(lastFrame, f);
     const prevFrame = lastFrame;
     lastFrame = f;
+    recap = nextRecap(recap, f);
     // The move summary opens for a live frame that hands the turn back after
     // the other side moved; any other frame with events, and every frame
     // that replays history, closes it.
@@ -953,9 +978,14 @@
   open={summaryOpen}
   summary={moveSummary}
   {names}
+  prices={summaryPrices}
   anchor={summaryAnchor}
   onclose={closeSummary}
-/>
+>
+  {#snippet review()}
+    {#if summaryReview}<MoveReview lines={summaryReview} />{/if}
+  {/snippet}
+</MoveSummary>
 
 <LiveRegion message={lastLines.join(' ')} />
 <!-- The next age's approved card art, fetched while this one is played. -->
