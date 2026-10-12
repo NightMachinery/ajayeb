@@ -65,10 +65,13 @@
       style:height="{Math.round(frame.height * frame.scale)}px"
       dir="ltr"
     >
+      <!-- The frame's accessible name is its aria-label: the app has no
+           native title attributes (lint-ui.test.ts). -->
+      <!-- svelte-ignore a11y_missing_attribute -->
       <iframe
         class="scaled border-0"
         src={resolve('/dev/fixture/[name]', { name: scene.fixture })}
-        {title}
+        aria-label={title}
         loading="lazy"
         width={frame.width}
         height={frame.height}

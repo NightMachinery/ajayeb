@@ -11,6 +11,7 @@
   import type { IconName } from '$lib/icons/names';
   import { scienceDanger } from '$lib/view/threats';
   import type { ScienceSymbol, ScienceView } from '$lib/wire';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     science: ScienceView;
@@ -114,7 +115,7 @@
             : count === 1
               ? 'border-rule-strong text-fg'
               : 'border-rule/40 text-fg-muted/40'}"
-          title={t(labelKey(symbol))}
+          {@attach tooltip({ text: t(labelKey(symbol)) })}
         >
           <!-- The glyph is 12 px (compact) or 14 px: both at or under the
              14 px where the small-grid (-sm) variant reads better than the
@@ -127,7 +128,7 @@
       class="rounded-control px-1.5 py-0.5 {compact ? 'text-[11px]' : 'text-xs'} font-semibold
       tabular-nums {danger ? 'bg-cinnabar/15 text-cinnabar' : 'text-fg-muted'}"
       data-must-fit
-      title={danger ? t('board.science.danger') : undefined}
+      {@attach tooltip(danger ? { text: t('board.science.danger') } : undefined)}
     >
       {science.distinct}/6
     </span>

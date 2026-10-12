@@ -17,6 +17,7 @@
   import { describeCard, describeWonder } from '$lib/view/describe';
   import type { Back, View, WonderView } from '$lib/wire';
   import ArtFrames from './ArtFrames.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   const BACKS: Back[] = ['age1', 'age2', 'age3', 'guild'];
 
@@ -97,7 +98,7 @@
           <div class="flex flex-wrap items-end gap-3">
             {#each data.badges as b (b.afford.state)}
               <div class="flex flex-col items-center gap-1" data-badge-state={b.afford.state}>
-                <div class="h-[83px] w-[54px]" title={describeCard(b.card)}>
+                <div class="h-[83px] w-[54px]" {@attach tooltip({ text: describeCard(b.card) })}>
                   <CardFace slug={b.card} tier="mini" width={54} afford={b.afford} {dim} />
                 </div>
                 <div class="h-[156px] w-[101px]">
@@ -116,7 +117,7 @@
       <h3 class="font-display text-lg text-fg">{t('dev.cards.backs')}</h3>
       <div class="flex flex-wrap items-end gap-3 rounded-panel border border-rule bg-panel p-3">
         {#each BACKS as back (back)}
-          <div class="h-[83px] w-[54px]" title={t(`card.back.${back}`)}>
+          <div class="h-[83px] w-[54px]" {@attach tooltip({ text: t(`card.back.${back}`) })}>
             <CardBack {back} class="h-full w-full" />
           </div>
         {/each}
@@ -135,7 +136,7 @@
         class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 rounded-panel border border-rule bg-panel p-3"
       >
         {#each cardSlugs as slug (slug)}
-          <div title={describeCard(slug)}><CardFace {slug} tier="band" /></div>
+          <div {@attach tooltip({ text: describeCard(slug) })}><CardFace {slug} tier="band" /></div>
         {/each}
       </div>
     </section>
@@ -148,7 +149,11 @@
           style:grid-template-columns="repeat(auto-fill, {size.w}px)"
         >
           {#each cardSlugs as slug (slug)}
-            <div style:width="{size.w}px" style:height="{size.h}px" title={describeCard(slug)}>
+            <div
+              style:width="{size.w}px"
+              style:height="{size.h}px"
+              {@attach tooltip({ text: describeCard(slug) })}
+            >
               <CardFace {slug} tier={size.tier} width={size.w} />
             </div>
           {/each}
@@ -164,7 +169,7 @@
       >
         {#each wonderSlugs as slug (slug)}
           {@const rec = data.wonders[slug]}
-          <div title={describeWonder(slug, rec?.state)}>
+          <div {@attach tooltip({ text: describeWonder(slug, rec?.state) })}>
             <WonderTile {slug} size="draft" afford={rec?.afford} />
           </div>
         {/each}

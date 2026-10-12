@@ -3,6 +3,7 @@
   // the top bar, for the players. Nothing shows while nobody watches.
   import Eye from '@lucide/svelte/icons/eye';
   import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     count: number;
@@ -15,7 +16,7 @@
 {#if count > 0}
   <span
     class="inline-flex min-h-7 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-semibold text-fg-muted {className}"
-    title={t('online.spectatorsLabel', { count })}
+    {@attach tooltip({ text: t('online.spectatorsLabel', { count }) })}
     data-spectators={count}
   >
     <Eye class="size-3.5" aria-hidden="true" />

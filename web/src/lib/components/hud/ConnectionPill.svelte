@@ -9,6 +9,7 @@
   import { t } from '$lib/i18n';
   import WifiOff from '@lucide/svelte/icons/wifi-off';
   import Loader2 from '@lucide/svelte/icons/loader-2';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     conn: 'connecting' | 'open' | 'reconnecting' | 'offline';
@@ -35,7 +36,7 @@
 {#if conn !== 'open'}
   <span
     role="status"
-    title={t(textKey(conn))}
+    {@attach tooltip({ text: t(textKey(conn)) })}
     class="connection-pill inline-flex min-h-7 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-semibold
       {conn === 'offline'
       ? 'bg-cinnabar/15 text-cinnabar'

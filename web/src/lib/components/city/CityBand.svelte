@@ -9,6 +9,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import type { Color } from '$lib/wire';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     color: Color;
@@ -76,7 +77,7 @@
 {#if count > 0}
   <div
     class="city-band flex items-center gap-1 rounded-control border border-rule bg-panel py-1 ps-1.5 pe-2 {className}"
-    title={t('board.city.colorCount', { count, color: t(colorKey(color)) })}
+    {@attach tooltip({ text: t('board.city.colorCount', { count, color: t(colorKey(color)) }) })}
   >
     <Icon name={CATEGORY_ICON[color]} class="shrink-0 {TEXT_CLASS[color]}" />
     <span class="flex gap-0.5" aria-hidden="true">
@@ -84,6 +85,9 @@
         <span class="h-3 w-1.5 shrink-0 rounded-xs {BAND_CLASS[color]}"></span>
       {/each}
     </span>
-    <span class="text-xs font-semibold text-fg-muted tabular-nums" data-must-fit>{count}</span>
+    <span class="text-xs font-semibold text-fg-muted tabular-nums" data-must-fit aria-hidden="true"
+      >{count}</span
+    >
+    <span class="sr-only">{t('board.city.colorCount', { count, color: t(colorKey(color)) })}</span>
   </div>
 {/if}

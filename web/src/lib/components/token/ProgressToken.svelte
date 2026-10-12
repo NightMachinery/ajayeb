@@ -11,6 +11,7 @@
   import { artId } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     /** A TokenSlug, e.g. "agriculture". Untrusted-width string so this also
@@ -119,7 +120,7 @@
     data-act={actionKey}
     disabled={!selectable}
     aria-label={t('board.token.take', { name: label })}
-    title={label}
+    {@attach tooltip({ text: label })}
     data-tap-ok={size === 'md' ? undefined : ''}
     class="token-tile grid place-items-center rounded-full transition-transform duration-(--dur-fast)
       {size === 'md' ? 'min-h-11 min-w-11' : ''}
@@ -135,7 +136,7 @@
     class="token-tile grid place-items-center rounded-full {taken && !owned
       ? 'opacity-40 grayscale'
       : ''} {className}"
-    title={staticLabel}
+    {@attach tooltip({ text: staticLabel })}
     role="img"
     aria-label={staticLabel}
     data-owned={owned ? '' : undefined}

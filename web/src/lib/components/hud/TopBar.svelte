@@ -20,6 +20,7 @@
   import ScrollText from '@lucide/svelte/icons/scroll-text';
   import Download from '@lucide/svelte/icons/download';
   import Flag from '@lucide/svelte/icons/flag';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     /** 1 to 3, or 0 during the wonder draft. */
@@ -100,7 +101,7 @@
         popovertarget="game-menu-{menuId}"
         data-control="menu"
         aria-label={t('game.menu.open')}
-        title={t('game.menu.open')}
+        {@attach tooltip({ text: t('game.menu.open') })}
         class="-ms-1 {iconButton}"
       >
         <Menu class="size-5" />
@@ -128,7 +129,7 @@
         disabled={!canUndo}
         data-control="undo"
         aria-label={t('board.topbar.undo')}
-        title={t('board.topbar.undo')}
+        {@attach tooltip({ text: t('board.topbar.undo') })}
         class="{iconButton} disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
       >
         <Undo2 class="size-5" />
@@ -140,7 +141,7 @@
         onclick={onOpenLog}
         data-control="log"
         aria-label={t('board.topbar.log')}
-        title={t('board.topbar.log')}
+        {@attach tooltip({ text: t('board.topbar.log') })}
         class={iconButton}
       >
         <ScrollText class="size-5" />
@@ -152,7 +153,7 @@
         onclick={onOpenSettings}
         data-control="settings"
         aria-label={t('board.topbar.settings')}
-        title={t('board.topbar.settings')}
+        {@attach tooltip({ text: t('board.topbar.settings') })}
         class={iconButton}
       >
         <Settings class="size-5" />

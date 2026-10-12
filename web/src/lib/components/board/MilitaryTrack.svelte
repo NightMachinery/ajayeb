@@ -33,6 +33,7 @@
   } from '$lib/view/track-cells';
   import type { MilitaryView } from '$lib/wire';
   import LootingToken from './LootingToken.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     military: MilitaryView;
@@ -114,8 +115,10 @@
       : 'bg-moon/25 text-moon-ink'}"
     style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
     data-capital={seat}
-    title={t(viewerSeat === seat ? 'board.military.capitalYou' : 'board.military.capitalCrest', {
-      crest: t(crestKey(seat))
+    {@attach tooltip({
+      text: t(viewerSeat === seat ? 'board.military.capitalYou' : 'board.military.capitalCrest', {
+        crest: t(crestKey(seat))
+      })
     })}
   >
     <!-- About 11 px, where the sun's -sm file reads. -->

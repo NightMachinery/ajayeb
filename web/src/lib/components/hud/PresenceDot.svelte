@@ -6,6 +6,7 @@
   // passes the presence from the room's seats.
   import { t } from '$lib/i18n';
   import type { Presence } from '$lib/ui/online';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     presence: Presence;
@@ -29,7 +30,7 @@
     ? 'rounded-full bg-saffron/20 px-1.5 py-0.5 text-fg'
     : 'text-fg-muted'} {className}"
   data-presence={presence}
-  title={label}
+  {@attach tooltip({ text: label })}
 >
   <svg class="size-2.5 shrink-0" viewBox="0 0 10 10" aria-hidden="true">
     {#if away}

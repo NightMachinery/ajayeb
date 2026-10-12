@@ -5,6 +5,7 @@
   // faint dashed ring where it stood. A leaf component, plain props, so
   // MilitaryTrack just maps view.military.looting over it.
   import { formatNumber, t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     /** Coins lost when this token triggers (printed on the token itself). */
@@ -32,7 +33,7 @@
     ? 'border border-(color:--gold-deep) bg-gold text-card-ink'
     : 'border border-dashed border-fg-muted/60 bg-transparent'} {className}"
   role="img"
-  title={label}
+  {@attach tooltip({ text: label })}
   aria-label={label}
   data-present={present ? '' : undefined}
   data-min-font="10"

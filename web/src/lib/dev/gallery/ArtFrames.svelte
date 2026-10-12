@@ -19,6 +19,7 @@
   import { t } from '$lib/i18n';
   import { describeCard } from '$lib/view/describe';
   import type { Back, BotLevel } from '$lib/wire';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   const BACKS: Back[] = ['age1', 'age2', 'age3', 'guild'];
   const LEVELS: BotLevel[] = ['easy', 'normal', 'hard'];
@@ -59,7 +60,7 @@
         data-art-sample="card/{slug}"
         data-has-art={hasApprovedArt(artId('card', slug))}
       >
-        <div class="h-[83px] w-[54px]" title={describeCard(slug)}>
+        <div class="h-[83px] w-[54px]" {@attach tooltip({ text: describeCard(slug) })}>
           <CardFace {slug} tier="mini" width={54} />
         </div>
         <div class="h-[156px] w-[101px]">
@@ -107,7 +108,7 @@
 
   <div class="flex flex-wrap items-end gap-3 rounded-panel border border-rule bg-panel p-3">
     {#each BACKS as back (back)}
-      <div class="h-[156px] w-[101px]" title={t(`card.back.${back}`)}>
+      <div class="h-[156px] w-[101px]" {@attach tooltip({ text: t(`card.back.${back}`) })}>
         <CardBack {back} class="h-full w-full" />
       </div>
     {/each}

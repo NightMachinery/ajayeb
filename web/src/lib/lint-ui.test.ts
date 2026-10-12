@@ -3,6 +3,9 @@
 // is wired into `pnpm -C web lint` (package.json); these tests cover the
 // pure rule functions it exports. Living here (not under web/scripts/) is
 // what gets it picked up by vitest's include glob (vite.config.ts).
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   findHardcodedText,
@@ -116,5 +119,133 @@ describe('findHardcodedText (whole template)', () => {
   it('allows multi-line code and kbd content, and i18n-ok per line', () => {
     const src = '<code>\n  pnpm install\n</code>\n<p>\n  Fixture label <!-- i18n-ok -->\n</p>';
     expect(findHardcodedText(src)).toEqual([]);
+  });
+});
+
+// --- Rule 3: no native title attribute --------------------------------------
+//
+// Tooltips go through our own helper (ui/tooltip.svelte.ts, AGENTS.md
+// "Tooltips"), never the native title attribute: it shows only on a mouse
+// hover after a long delay, never on touch, and cannot be styled. This rule
+// lives here rather than in scripts/lint-ui.mjs, so `make test-web` enforces
+// it over every .svelte file under src/. SVG <title> elements stay allowed:
+// they are elements, not attributes.
+
+/** Native title attributes in one Svelte file: `title="..."`, `title={...}`
+ *  and the `{title}` shorthand, at the top level of an element's opening
+ *  tag. Script and style blocks and comments are skipped, and so is
+ *  anything inside an attribute's own braces (a tooltip's `{ title: ... }`
+ *  object, for instance). Returns the 1-based line of each. */
+function findTitleAttributes(src: string): { line: number; match: string }[] {
+  const found: { line: number; match: string }[] = [];
+  const blank = (m: string): string => m.replace(/[^\n]/g, ' ');
+  const text = src
+    .replace(/<script[\s\S]*?<\/script>/g, blank)
+    .replace(/<style[\s\S]*?<\/style>/g, blank)
+    .replace(/<!--[\s\S]*?-->/g, blank);
+  const lineAt = (at: number): number => text.slice(0, at).split('\n').length;
+
+  // The index just past a quoted string or a balanced {...} starting at `at`.
+  const skipValue = (at: number): number => {
+    const c = text.charAt(at);
+    if (c === '"' || c === "'") {
+      const close = text.indexOf(c, at + 1);
+      return close < 0 ? text.length : close + 1;
+    }
+    let depth = 0;
+    for (let k = at; k < text.length; k++) {
+      const d = text.charAt(k);
+      if (d === '"' || d === "'" || d === '`') {
+        const close = text.indexOf(d, k + 1);
+        k = close < 0 ? text.length : close;
+      } else if (d === '{') depth++;
+      else if (d === '}' && --depth === 0) return k + 1;
+    }
+    return text.length;
+  };
+
+  const tag = /<[a-zA-Z][\w:.-]*/g;
+  for (let m = tag.exec(text); m; m = tag.exec(text)) {
+    let k = m.index + m[0].length;
+    while (k < text.length) {
+      const c = text.charAt(k);
+      if (/[\s/]/.test(c)) {
+        k++;
+      } else if (c === '>') {
+        break;
+      } else if (c === '{') {
+        // An attachment, a spread or the {name} shorthand.
+        const end = skipValue(k);
+        const inner = text.slice(k, end);
+        if (/^\{\s*title\s*\}$/.test(inner)) found.push({ line: lineAt(k), match: inner });
+        k = end;
+      } else {
+        const name = /^[^\s=>/]+/.exec(text.slice(k))?.[0] ?? c;
+        if (name.toLowerCase() === 'title') found.push({ line: lineAt(k), match: name });
+        k += name.length;
+        while (/\s/.test(text.charAt(k))) k++;
+        if (text.charAt(k) === '=') {
+          k++;
+          while (/\s/.test(text.charAt(k))) k++;
+          const v = text.charAt(k);
+          if (v === '"' || v === "'" || v === '{') k = skipValue(k);
+          else while (k < text.length && !/[\s>]/.test(text.charAt(k))) k++;
+        }
+      }
+    }
+    tag.lastIndex = k + 1;
+  }
+  return found;
+}
+
+describe('findTitleAttributes', () => {
+  it.each([
+    ['<span title="Wood">', 'a literal'],
+    ["<span title={t('board.resource.chip')}>", 'an expression'],
+    ['<iframe {title} src="/x"></iframe>', 'the shorthand'],
+    ['<button\n  type="button"\n  title={label}\n>', 'on a line of its own'],
+    ['<div class="a" title="x" />', 'self-closing']
+  ])('flags %s (%s)', (src) => {
+    expect(findTitleAttributes(src)).toHaveLength(1);
+  });
+
+  it('reports the line', () => {
+    expect(findTitleAttributes('<p>\n</p>\n<span\n  title={x}\n>')).toEqual([
+      { line: 4, match: 'title' }
+    ]);
+  });
+
+  it.each([
+    ['<svg><title>Wood</title></svg>', 'an SVG title element'],
+    ["<span {@attach tooltip({ text: t('x'), title: 'y' })}>", 'inside an attachment'],
+    ['<p>{title}</p>', 'the expression as text'],
+    ['<script>\n  const o = { title: 1 };\n  x.title = "a";\n</script>', 'script code'],
+    ['<!-- a title="x" comment -->', 'a comment'],
+    ['<h2 id={titleId} data-title="a">', 'other names containing title'],
+    ['<Sheet titleId="x" aria-label={t(\'a\')}>', 'a component prop named titleId']
+  ])('does not flag %s (%s)', (src) => {
+    expect(findTitleAttributes(src)).toEqual([]);
+  });
+});
+
+describe('no native title attribute in the app', () => {
+  it('finds none under src/', () => {
+    const root = fileURLToPath(new URL('..', import.meta.url));
+    const files: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (entry.name.endsWith('.svelte')) files.push(path);
+      }
+    };
+    walk(root);
+    expect(files.length).toBeGreaterThan(50);
+    const offenders = files.flatMap((file) =>
+      findTitleAttributes(readFileSync(file, 'utf8')).map(
+        ({ line, match }) => `${relative(root, file)}:${line}: ${match}`
+      )
+    );
+    expect(offenders).toEqual([]);
   });
 });

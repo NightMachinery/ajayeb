@@ -12,6 +12,7 @@
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import type { ProductionView, Resource, ResourceCounts } from '$lib/wire';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     production: ProductionView;
@@ -86,7 +87,9 @@
       class="relative flex items-center rounded-control border border-rule bg-panel {compact
         ? 'h-5 gap-0.5 px-1 text-[11px]'
         : 'gap-1 px-1.5 py-0.5 text-xs'}"
-      title={t('board.resource.chip', { resource: resourceName, count, price })}
+      {@attach tooltip({
+        text: t('board.resource.chip', { resource: resourceName, count, price })
+      })}
       data-resource={resource}
     >
       <Icon name={RESOURCE_ICON[resource]} class={RESOURCE_TEXT_CLASS[resource]} />
@@ -95,7 +98,7 @@
       {#if hasChoice(resource)}
         <span
           class="absolute -end-1 -top-1 grid size-3 place-items-center rounded-full bg-gild text-[8px] text-on-accent"
-          title={t('board.resource.choiceHint')}
+          {@attach tooltip({ text: t('board.resource.choiceHint') })}
           aria-hidden="true"
         >
           <Icon name="choice" />

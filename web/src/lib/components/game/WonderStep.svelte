@@ -13,6 +13,7 @@
   import type { WonderOption } from './card-actions';
   import CostBreakdown from './CostBreakdown.svelte';
   import { reasonText } from './reasons';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     card: string;
@@ -56,7 +57,7 @@
       type="button"
       class="grid size-11 shrink-0 place-items-center rounded-control text-fg hover:bg-panel-sunken"
       aria-label={t('game.wonders.back')}
-      title={t('game.wonders.back')}
+      {@attach tooltip({ text: t('game.wonders.back') })}
       data-control="wonder-back"
       onclick={onback}
     >
