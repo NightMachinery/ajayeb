@@ -266,17 +266,31 @@ export const hints = {
   'hints.after.gives': '{name} could then win with {list}.',
   'hints.after.blocks': 'Takes away {name}’s win with {list}.',
   'hints.after.threatensYou': 'Next turn you could win with {list}, unless {name} stops it.',
-  'hints.after.threatensNamed':
-    'Next turn {mover} could win with {list}, unless {name} stops it.',
+  'hints.after.threatensNamed': 'Next turn {mover} could win with {list}, unless {name} stops it.',
   'hints.after.risk': {
     one: 'A {num} in {den} chance the card turned over lets {name} win.',
     other: 'A {num} in {den} chance a card turned over lets {name} win.'
   },
   'hints.after.byMove': '{move}: {line}',
+  'hints.after.moveBuild': 'Build',
+  'hints.after.moveDiscard': 'Discard',
 
   'hints.starter.threatYou': 'If you start, you can win at once with {list}.',
   'hints.starter.threatNamed': 'If {name} starts, they can win at once with {list}.',
   'hints.starter.opening': 'The age opens with {list}.',
+  'hints.ghost.pawn': 'Where this move puts the pawn.',
+  'hints.ghost.loot': {
+    one: 'This move takes this looting token: {count} coin lost.',
+    other: 'This move takes this looting token: {count} coins lost.'
+  },
+  'hints.ghost.coins': {
+    one: '{count} coin after this move',
+    other: '{count} coins after this move'
+  },
+  'hints.ghost.score': {
+    one: '{count} point after this move',
+    other: '{count} points after this move'
+  },
 
   // The badge modifiers (card/AffordBadge.svelte).
   'hints.badge.bonus': '+{count}',

@@ -19,6 +19,11 @@
   // the left of the board (UX design, decision 6). For a player at the
   // Moon the track is mirrored (view/track-cells.ts, lib/ui/track.ts), and
   // the pawn, the zones and the looting tokens follow.
+  //
+  // `ghost` (the hints design, pawn-preview, M10.HS3) is the move being
+  // considered: an outlined pawn where it would put the pawn, and a dashed
+  // ring on each looting token it would take. Both are the server's
+  // outcome (Choice.outcome.pawn); the track only draws them.
   import { i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { trackEnds, trackMirrored, type Seat } from '$lib/ui/track';
@@ -31,7 +36,7 @@
     zoneMiddle,
     zoneSpan
   } from '$lib/view/track-cells';
-  import type { MilitaryView } from '$lib/wire';
+  import type { MilitaryView, PawnMoveView } from '$lib/wire';
   import LootingToken from './LootingToken.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
@@ -47,6 +52,8 @@
     compact?: boolean;
     /** A line under the track explaining looting and the zone points. */
     legend?: boolean;
+    /** The considered move's pawn and looting (a selection ghost). */
+    ghost?: PawnMoveView;
     class?: string;
   }
 
@@ -56,6 +63,7 @@
     leftSeat = 0,
     compact = false,
     legend = false,
+    ghost,
     class: className = ''
   }: Props = $props();
 
@@ -183,6 +191,30 @@
         />
       </div>
     {/each}
+    {#if ghost}
+      {#each ghost.loot as taken (taken.at)}
+        <div
+          class="token-spot loot-ghost absolute top-1/2 z-10 rounded-full border-2 border-dashed border-focus {compact
+            ? 'size-5'
+            : 'size-7'}"
+          style:--pos="{cellCenter(taken.at, leftSeat)}%"
+          data-ghost-loot={taken.at}
+          {@attach tooltip({ text: t('hints.ghost.loot', { count: taken.lost }) })}
+        ></div>
+      {/each}
+      {#if ghost.to !== military.position}
+        <div
+          class="pawn pawn-ghost absolute top-1/2 z-20 grid place-items-center rounded-full border-2 border-dashed border-focus {compact
+            ? 'size-4'
+            : 'size-6'}"
+          style:--pos="{cellCenter(ghost.to, leftSeat)}%"
+          data-ghost-pawn={ghost.to}
+          {@attach tooltip({ text: t('hints.ghost.pawn') })}
+        >
+          <Icon name="military-pawn" class="{compact ? 'text-[10px]' : 'text-xs'} opacity-60" />
+        </div>
+      {/if}
+    {/if}
     <div
       class="pawn absolute top-1/2 z-10 grid place-items-center rounded-full border-2 border-focus bg-panel shadow-sm {compact
         ? 'size-4'

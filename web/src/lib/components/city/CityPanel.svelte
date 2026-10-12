@@ -11,7 +11,8 @@
   // game context, never on a hot-seat device), and the device link button
   // (SeatLink) follows the name where the room allows it.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
-  import { t } from '$lib/i18n';
+  import { formatNumber, t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import { cardBySlug } from '$lib/catalog';
   import { isSelfSeat } from '$lib/view/display-name';
   import { militaryDanger, scienceDanger } from '$lib/view/threats';
@@ -46,6 +47,10 @@
     thinking?: boolean;
     /** This is the player's own seat; by default the room's SeatInfo.you. */
     self?: boolean;
+    /** The selected move's coins and score total after it (a selection
+     *  ghost, the hints design hud-ghosts): shown beside the tallies when
+     *  they differ. */
+    ghost?: { readonly coins?: number; readonly score?: number };
     class?: string;
   }
 
@@ -61,6 +66,7 @@
     bot,
     thinking = false,
     self,
+    ghost,
     class: className = ''
   }: Props = $props();
 
@@ -106,6 +112,26 @@
   const danger = $derived(militaryThreat || scienceThreat);
 </script>
 
+{#snippet ghostTally(kind: 'coins' | 'points', value: number)}
+  <span
+    class="ghost-tally inline-flex h-5 shrink-0 items-center rounded-full border border-dashed border-focus px-1.5 text-[13px] leading-none font-bold text-fg tabular-nums"
+    data-ghost-tally={kind}
+    {@attach tooltip({
+      text:
+        kind === 'coins'
+          ? t('hints.ghost.coins', { count: value })
+          : t('hints.ghost.score', { count: value })
+    })}
+  >
+    <span class="sr-only">
+      {kind === 'coins'
+        ? t('hints.ghost.coins', { count: value })
+        : t('hints.ghost.score', { count: value })}
+    </span>
+    <span aria-hidden="true">{formatNumber(value)}</span>
+  </span>
+{/snippet}
+
 <div
   class="city-panel flex w-full flex-col gap-2.5 rounded-panel border p-3
     {danger ? 'border-cinnabar ring-2 ring-cinnabar/25' : 'border-rule'} {className}"
@@ -129,12 +155,18 @@
     </div>
     <div class="flex shrink-0 items-center gap-1.5">
       <Tally kind="coins" value={player.coins} label={t('coins.count', { count: player.coins })} />
+      {#if ghost?.coins !== undefined && ghost.coins !== player.coins}
+        {@render ghostTally('coins', ghost.coins)}
+      {/if}
       {#if score}
         <Tally
           kind="points"
           value={score.total}
           label={t('board.player.scorePreview', { total: score.total })}
         />
+        {#if ghost?.score !== undefined && ghost.score !== score.total}
+          {@render ghostTally('points', ghost.score)}
+        {/if}
       {/if}
     </div>
   </div>
