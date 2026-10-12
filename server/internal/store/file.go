@@ -71,6 +71,16 @@ type Seat struct {
 	// Bot is the level of a bot seat. Empty for SeatKindHuman and
 	// SeatKindOpen.
 	Bot BotLevel `json:"bot,omitempty"`
+	// NameNo is the number that tells this seat's name apart from an equal
+	// name already in the room (package room assigns it): 0 for none, else
+	// 2, 3 and so on. Stored so that it never changes when people leave and
+	// come back. 0 in a file written before the field existed.
+	NameNo int `json:"nameNo,omitempty"`
+	// Epoch is the seat's link epoch, part of every claim derived for it
+	// (package ident): a link reset raises it, which revokes the claims made
+	// before. 0 until the first reset, and in a file written before the
+	// field existed.
+	Epoch int `json:"epoch,omitempty"`
 }
 
 // File is one room, exactly as <data>/rooms/<code>.json holds it: enough to
@@ -154,16 +164,20 @@ type File struct {
 // LogEntry is one room-level event of the game log, as the room file keeps
 // it (package room turns it into wire.RoomLogEntry).
 type LogEntry struct {
-	// Kind is what happened; "hints" is a change of the hint settings.
+	// Kind is what happened: "hints" is a change of the hint settings,
+	// "link" the reset of a seat's device link.
 	Kind string `json:"kind"`
 	// At is the game's ply when it happened.
 	At int `json:"at"`
 	// Seat is the seat of the player who made the change, or -1 when one
 	// person holds both seats (a hot-seat room).
 	Seat int `json:"seat"`
-	// On and Off are the hint families switched on and off.
+	// On and Off are the hint families switched on and off (kind hints).
 	On  []string `json:"on"`
 	Off []string `json:"off"`
+	// Target is the seat whose link was reset (kind link). A pointer, so a
+	// hints entry, and a file written before the field existed, has none.
+	Target *int `json:"target,omitempty"`
 }
 
 // New returns a fresh lobby/playing File: schema and rules at their current
