@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/state';
+  import TooltipLayer from '$lib/components/shell/TooltipLayer.svelte';
   import IconSprite from '$lib/icons/IconSprite.svelte';
   import { i18n, t } from '$lib/i18n';
   import { motion } from '$lib/ui/motion.svelte';
@@ -41,3 +42,7 @@
 <div class="app-shell">
   {@render children()}
 </div>
+
+<!-- The one tooltip layer (ui/tooltip.svelte.ts): every anchor given a
+     tooltip with the tooltip attachment shows it here. -->
+<TooltipLayer />
