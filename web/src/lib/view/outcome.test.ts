@@ -195,7 +195,10 @@ describe('outcomeTerms', () => {
 });
 
 describe('blunderLine', () => {
-  const win = { key: 'construct:arsenal', outcome: outcome({ wins: { kind: 'military', steps: 1 } }) };
+  const win = {
+    key: 'construct:arsenal',
+    outcome: outcome({ wins: { kind: 'military', steps: 1 } })
+  };
   const plain = { key: 'construct:baths', outcome: outcome() };
   const gift = {
     key: 'discard:baths',
@@ -207,7 +210,9 @@ describe('blunderLine', () => {
   });
 
   it('warns about a missed win', () => {
-    expect(blunderLine(plain, [plain, win], ctx())).toBe('You could win this turn instead: Arsenal.');
+    expect(blunderLine(plain, [plain, win], ctx())).toBe(
+      'You could win this turn instead: Arsenal.'
+    );
     expect(blunderLine(plain, [plain, win], ctx({ names: HOT }))).toBe(
       'Sun could win this turn instead: Arsenal.'
     );
@@ -216,7 +221,9 @@ describe('blunderLine', () => {
   it('is quiet for the win itself, without threats, or without wins', () => {
     expect(blunderLine(win, [plain, win], ctx())).toBeUndefined();
     expect(blunderLine(plain, [plain], ctx())).toBeUndefined();
-    expect(blunderLine(plain, [plain, win], ctx({ families: new Set(['scoring']) }))).toBeUndefined();
+    expect(
+      blunderLine(plain, [plain, win], ctx({ families: new Set(['scoring']) }))
+    ).toBeUndefined();
   });
 });
 
