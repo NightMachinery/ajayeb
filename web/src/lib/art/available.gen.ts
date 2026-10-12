@@ -1399,10 +1399,10 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'texture',
     variants: {
       default: {
-        path: '/art/ui/night.avif?v=84e4e3e22d',
+        path: '/art/ui/night.avif?v=2ac8355aa6',
         width: 512,
         height: 512,
-        bytes: 31386
+        bytes: 13334
       }
     }
   },

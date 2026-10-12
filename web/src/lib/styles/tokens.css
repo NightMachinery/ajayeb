@@ -171,14 +171,13 @@
 :root[data-theme='dark'] {
   --table: oklch(0.22 0.06 262);
   --table-glow: oklch(0.33 0.08 262 / 0.75);
-  /* The night tile ships as a pale fibre grain (the pipeline maps every
-     image's own paper onto the card paper, the lapis ground included), so
-     it multiplies a slightly lifted lapis: the average comes back to
-     --table, and the fibres read as faint darker streaks. If the tile is
-     ever reprocessed as lapis, draw it with blend normal over --table. */
+  /* The night tile ships as the lapis paper itself (process.mjs keeps its
+     own ground, M10.F2): it averages rgb(18,27,56), --table's own tone, so
+     it is drawn as is over --table, and its fibres read as faint lighter
+     streaks. */
   --table-texture: url('/art/ui/night.avif');
-  --table-texture-blend: multiply;
-  --table-texture-base: oklch(0.24 0.074 262);
+  --table-texture-blend: normal;
+  --table-texture-base: var(--table);
   --panel: oklch(0.27 0.065 262);
   --panel-sunken: oklch(0.19 0.05 262);
   --fg: oklch(0.94 0.02 85);

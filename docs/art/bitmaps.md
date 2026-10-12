@@ -398,15 +398,16 @@ backs and card thumbnails, within 200 KB.
    dithering (91 KB at 512 px, 11 KB at 180 px, no visible change at icon
    sizes). It touches neither the manifest nor `web/static/art/`.
 
-   **Known issue: the night texture ships pale.** The paper-tone mapping
-   moves every image's own ground (its corner colour) onto `PAPER_HEX`,
-   and the ground of `texture/night` is the deep lapis paper itself, so
-   the shipped `ui/night.avif` came out as ivory with blue fibres (the
-   original in `art/originals/` is lapis). The app works around it by
-   multiplying the tile over a slightly lifted lapis (`tokens.css`), which
-   keeps only its grain. Skipping the mapping for that asset and
-   reprocessing it would ship the lapis tile; the dark theme's
-   `--table-texture-blend` then becomes `normal` over `--table`.
+   **Own ground: the night texture.** The paper-tone mapping moves every
+   image's own ground (its corner colour) onto `PAPER_HEX`. The ground of
+   `texture/night` is the deep lapis paper itself, so until M10.F2 the
+   shipped `ui/night.avif` came out as ivory with blue fibres, and the
+   dark theme multiplied it over a lifted lapis to keep only its grain.
+   `process.mjs` now lists that id in `OWN_GROUND`: it skips the mapping
+   and encodes from q75 down (at q55 the faint fibres, a few levels from
+   the ground, were mostly smoothed away), so the tile ships as lapis,
+   about 13 KB, and `tokens.css` draws it with `--table-texture-blend:
+   normal` over `--table`.
 
 8. **`node tools/art/index.mjs`** regenerates
    `web/src/lib/art/available.gen.ts` from every `"approved"` asset in the

@@ -15,6 +15,9 @@
 //      painting's other colours are left alone (M9.B3's "paper tone" fix:
 //      a generated gouache ground runs warmer than the CSS token, which
 //      used to show as a visible seam against the surrounding card frame).
+//      The ids in OWN_GROUND skip this step: their ground is meant to stay
+//      its own colour (texture/night is lapis, not paper), and they name
+//      their own AVIF qualities for step 4.
 //   3. For a progress token (`mask: 'circle'`), detect the painted
 //      medallion's own rim radius (scanning inward from each edge for the
 //      first pixel that isn't paper-coloured) instead of always masking to
@@ -464,13 +467,27 @@ async function appIcons(args) {
 }
 
 /**
- * Writes one shipped size of an original: the fill crop to the size's
- * exact pixels, the paper-tone mapping, the token rim mask, then AVIF at
- * the first quality of `qualities` that meets the size's byte budget (see
- * the steps at the top). Returns encodeAvif's { bytes, quality, overBudget }.
+ * The ids whose ground is not paper, so the paper-tone mapping (step 2 at
+ * the top) leaves them as painted, each with the AVIF qualities to step
+ * through instead of the default. The night table tile is a deep lapis by
+ * design: mapped, its lapis corners counted as "paper" and the whole tile
+ * turned into a pale ivory grain that the dark theme had to multiply back
+ * down. Unmapped, its faint fibres sit so close to the ground that q55
+ * smooths most of them away (3.5 KB, half the original's grain), while q75
+ * keeps them for 13 KB (M10.F2).
  */
-async function shipSize(src, kind, size, outPath, scratchRoot, qualities = [55, 45, 35]) {
-  const spec = KIND_SPEC[kind];
+const OWN_GROUND = new Map([['texture/night', [75, 65, 55]]]);
+
+/**
+ * Writes one shipped size of the original of `id`: the fill crop to the
+ * size's exact pixels, the paper-tone mapping (unless `id` is in
+ * OWN_GROUND), the token rim mask, then AVIF at the first quality of
+ * `qualities` (or the id's own, from OWN_GROUND) that meets the size's byte
+ * budget (see the steps at the top).
+ * Returns encodeAvif's { bytes, quality, overBudget }.
+ */
+async function shipSize(src, id, size, outPath, scratchRoot, qualities = [55, 45, 35]) {
+  const spec = KIND_SPEC[idKind(id)];
   const croppedPng = path.join(scratchRoot, `_crop-${path.basename(outPath)}.png`);
   const { buf, w, h } = await cropToRawRgb(src, size.w, size.h);
   const ownPaperRgb = cornerPaperColor(buf, w, h);
@@ -480,11 +497,12 @@ async function shipSize(src, kind, size, outPath, scratchRoot, qualities = [55, 
   // scan would stop at the first pixel, leaving the ivory ring in place.
   const radius = spec.mask === 'circle' ? detectTokenRadius(buf, w, h, ownPaperRgb) : 0;
   const targetPaperRgb = hexToRgb(PAPER_HEX);
-  mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
+  const ownGround = OWN_GROUND.get(id);
+  if (!ownGround) mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
   if (spec.mask === 'circle') applyCircleMask(buf, w, h, radius, targetPaperRgb);
   await rawRgbToPng(buf, w, h, croppedPng);
   try {
-    return await encodeAvif(croppedPng, outPath, size.budgetBytes, qualities);
+    return await encodeAvif(croppedPng, outPath, size.budgetBytes, ownGround ?? qualities);
   } finally {
     await rm(croppedPng, { force: true });
   }
@@ -537,7 +555,7 @@ async function batch(args) {
         continue;
       }
       for (const { size, outPath } of todo) {
-        const result = await shipSize(src, kind, size, outPath, scratchRoot, args.qualities);
+        const result = await shipSize(src, id, size, outPath, scratchRoot, args.qualities);
         written++;
         writtenBytes += result.bytes;
         if (result.overBudget) over++;
@@ -594,7 +612,7 @@ async function main() {
 
   for (const size of spec.sizes) {
     const fileName = shippedFileName(kind, slug, size);
-    const result = await shipSize(args.src, kind, size, path.join(shippedDir, fileName), scratchRoot, args.qualities);
+    const result = await shipSize(args.src, args.id, size, path.join(shippedDir, fileName), scratchRoot, args.qualities);
     bytes[fileName] = result.bytes;
     process.stdout.write(`process.mjs: ${fileName} ${sizeReport(size, result)}\n`);
   }
