@@ -23,9 +23,9 @@
 
 {#if sections.length > 0}
   <div class="flex flex-col gap-2 {className}" data-hint-sections>
-    {#each sections as section (section.seat)}
+    {#each sections as section (`${section.seat}:${section.title}`)}
       <section
-        class="hint-section rounded-control border-s-[3px] ps-2.5"
+        class="hint-section border-s-[3px] ps-2.5"
         data-hint-section={section.side}
         data-hint-seat={section.seat}
         data-style={section.style}
@@ -43,7 +43,7 @@
                   aria-hidden="true"
                 >
                   {#if line.code === 'win'}
-                    <svg class="size-full" viewBox="0 0 24 24">
+                    <svg class="size-[1.1em]" viewBox="0 0 24 24">
                       <path
                         d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
                         fill="currentColor"
@@ -54,14 +54,14 @@
                       <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
                     </svg>
                   {:else if line.code === 'pair'}
-                    <span class="relative inline-grid size-full place-items-center">
+                    <span class="relative inline-grid size-[1.1em] place-items-center">
                       <Icon name="token-frame" class="col-start-1 row-start-1 size-full" />
                       {#if symbolIcon(line)}
                         <Icon name={symbolIcon(line)!} class="col-start-1 row-start-1 size-[52%]" />
                       {/if}
                     </span>
                   {:else}
-                    <Icon name="coin-loss" class="size-full" />
+                    <Icon name="coin-loss" class="size-[1.1em]" />
                   {/if}
                 </span>
               {/if}

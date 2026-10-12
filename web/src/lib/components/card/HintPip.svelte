@@ -71,7 +71,7 @@
     <span class="relative inline-grid place-items-center {cls}">
       <Icon name="token-frame" class="col-start-1 row-start-1 size-full" />
       {#if symbolIcon(e)}
-        <Icon name={symbolIcon(e)!} class="col-start-1 row-start-1 size-[52%]" />
+        <Icon name={symbolIcon(e)!} class="col-start-1 row-start-1 size-[56%]" />
       {/if}
     </span>
   {:else}
@@ -106,7 +106,7 @@
   aria-hidden="true"
   {@attach tooltip({ text: t('hints.pip.title', { card }), diagram: lines })}
 >
-  {@render glyph(pip.top, size === 'sm' ? 'size-[11px]' : 'size-[14px]')}
+  {@render glyph(pip.top, size === 'sm' ? 'size-3' : 'size-4')}
   {#if pip.more}
     <span class="more absolute -start-1 -bottom-0.5 size-[5px] rounded-full" aria-hidden="true"
     ></span>
@@ -151,6 +151,11 @@
     border-width: 2px;
     border-color: var(--pip-crest);
     color: color-mix(in oklch, var(--pip-crest) 55%, var(--card-ink));
+  }
+  /* The Moon's crest fill (a hot-seat device) is dark enough for a paper
+     glyph; ink stays on gold and on the lighter Sun crest. */
+  .hint-pip[data-style='solid'][data-tone='moon'] {
+    color: var(--card-paper);
   }
   /* A spectator: each seat's crest, lightly tinted, never solid or outlined. */
   [data-style='tint'] {
