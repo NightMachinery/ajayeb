@@ -50,11 +50,13 @@ func (t *lootToken) reached(pos int8) bool {
 // token taken (Seat = the player who lost coins, A = the coins lost, B = the
 // token's value). If the pawn reaches the opponent's capital, the move stops
 // there and the game ends with seat's military victory (outcomeOver).
-// Moving zero spaces does and reports nothing.
+// Moving zero spaces does and reports nothing. Every shield counts in
+// State.Shields, even those beyond a capital.
 func movePawn(s *State, seat Seat, shields uint8, ev *[]Event) outcome {
 	if shields == 0 {
 		return outcomeFinish
 	}
+	s.Shields[seat] = int8(min(int(s.Shields[seat])+int(shields), 127))
 	dir := 1
 	if seat == 1 {
 		dir = -1

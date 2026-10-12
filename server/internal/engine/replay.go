@@ -128,16 +128,30 @@ func ReplaySteps(l *Log, step func(i int, s *State, ev []Event) error) (State, e
 var ErrHashMismatch = errors.New("engine: replay hash mismatch")
 
 // Hash fingerprints a state: FNV-1a (64-bit) over its fixed-size binary
-// encoding (encoding/binary, little-endian). Equal states have equal hashes,
-// and any change to any field, hidden ones included, changes the hash in
-// practice.
+// encoding (encoding/binary, little-endian), up to the derived counters at
+// the end of State (Shields, PlayingAgain). Equal states have equal hashes,
+// and any change to any other field, hidden ones included, changes the hash
+// in practice. The counters are left out because they follow from the
+// action keys anyway, and so that the hashes recorded before they existed
+// (saved rooms, game logs, golden replays) still match.
 func Hash(s *State) uint64 {
-	h := fnv.New64a()
-	if err := binary.Write(h, binary.LittleEndian, s); err != nil {
+	buf := make([]byte, 0, stateEncodedSize)
+	buf, err := binary.Append(buf, binary.LittleEndian, s)
+	if err != nil {
 		panic("engine: State is not fixed-size: " + err.Error())
 	}
+	h := fnv.New64a()
+	_, _ = h.Write(buf[:stateHashedSize])
 	return h.Sum64()
 }
+
+// stateEncodedSize is the length of a state's binary encoding, and
+// stateHashedSize the part of it Hash digests: everything before the
+// derived counters, which are the last fields of State.
+var (
+	stateEncodedSize = binary.Size(State{})
+	stateHashedSize  = stateEncodedSize - binary.Size(State{}.Shields) - binary.Size(State{}.PlayingAgain)
+)
 
 // HashString returns Hash as 16 lower-case hex digits.
 func HashString(s *State) string {

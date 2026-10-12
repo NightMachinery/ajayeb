@@ -286,6 +286,15 @@ type State struct {
 	Looting      uint8 // Loot* bits of the looting tokens still on the track
 	WondersBuilt uint8 // wonders built by both players together, at most 7
 	Result       Result
+
+	// The derived counters below record what the course of the game
+	// implies but the rest of the state no longer shows. Both are public
+	// and follow from the action keys alone, so a replay always rebuilds
+	// them. They stay the last fields of State: Hash (replay.go) digests
+	// every byte before them and none of them, so adding them changed the
+	// hash of no recorded game (a test in hints_test.go pins this).
+	Shields      [2]int8 // by seat, the shields the seat has placed: every shield of its buildings and wonders, Strategy's included, counted by movePawn
+	PlayingAgain bool    // the current turn was granted by an extra turn; set by finishTurn
 }
 
 // Clone returns an independent copy. The state holds no references, so this

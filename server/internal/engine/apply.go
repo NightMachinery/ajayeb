@@ -142,7 +142,7 @@ func continueTurn(s *State, o outcome, ev *[]Event) {
 //     after Age III the game is scored, otherwise the next age is laid out
 //     and its starter decided (startNextAge);
 //  4. otherwise the active player plays again after an extra turn, or the
-//     opponent's turn begins.
+//     opponent's turn begins; PlayingAgain records which.
 func finishTurn(s *State, ev *[]Event) {
 	if s.Over() {
 		return
@@ -152,6 +152,7 @@ func finishTurn(s *State, ev *[]Event) {
 		return
 	}
 	if Occupied(s) == 0 {
+		s.PlayingAgain = false
 		if s.ExtraTurn {
 			s.ExtraTurn = false
 			emit(ev, Event{Kind: EvExtraTurnLost, Seat: s.Active})
@@ -164,6 +165,7 @@ func finishTurn(s *State, ev *[]Event) {
 		return
 	}
 	s.Phase = PhasePlay
+	s.PlayingAgain = s.ExtraTurn
 	if s.ExtraTurn {
 		s.ExtraTurn = false
 	} else {
