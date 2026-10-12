@@ -105,3 +105,49 @@ describe('parseSavedRooms', () => {
     expect(parseSavedRooms(null)).toEqual([]);
   });
 });
+
+describe('SavedRooms with device links', () => {
+  const CLAIM = 'q3Vb8Kx0Zr7TnW2mYc5JhA';
+  const OTHER = 'Hw4pZ9cN1sKe6uTb0LgQvY';
+
+  it('keeps a room’s claim, and reads it back', () => {
+    const storage = memory();
+    const rooms = new SavedRooms(storage);
+    rooms.remember('AAAAAA', 'online', 1000, CLAIM);
+    expect(rooms.claimFor('AAAAAA')).toBe(CLAIM);
+    expect(rooms.claimFor('BBBBBB')).toBeNull();
+    expect(new SavedRooms(storage).list).toEqual([
+      { code: 'AAAAAA', mode: 'online', lastSeen: 1000, claim: CLAIM }
+    ]);
+  });
+
+  it('keeps the claim when the room is seen again without one, and replaces or drops it on request', () => {
+    const rooms = new SavedRooms(memory());
+    rooms.remember('AAAAAA', 'online', 1000, CLAIM);
+    rooms.remember('AAAAAA', 'online', 2000);
+    expect(rooms.claimFor('AAAAAA')).toBe(CLAIM);
+    rooms.remember('AAAAAA', 'online', 3000, OTHER);
+    expect(rooms.claimFor('AAAAAA')).toBe(OTHER);
+    rooms.remember('AAAAAA', 'online', 4000, null);
+    expect(rooms.list).toEqual([{ code: 'AAAAAA', mode: 'online', lastSeen: 4000 }]);
+  });
+
+  it('drops a claim that stopped working but keeps the room', () => {
+    const rooms = new SavedRooms(memory());
+    rooms.remember('AAAAAA', 'hotseat', 1000, CLAIM);
+    rooms.dropClaim('AAAAAA');
+    expect(rooms.list).toEqual([{ code: 'AAAAAA', mode: 'hotseat', lastSeen: 1000 }]);
+    rooms.dropClaim('BBBBBB');
+    expect(rooms.list).toHaveLength(1);
+  });
+
+  it('ignores a malformed claim in storage, dropping that entry', () => {
+    const raw = JSON.stringify([
+      { code: 'AAAAAA', mode: 'online', lastSeen: 2, claim: 'nope' },
+      { code: 'BBBBBB', mode: 'online', lastSeen: 1, claim: CLAIM }
+    ]);
+    expect(parseSavedRooms(raw)).toEqual([
+      { code: 'BBBBBB', mode: 'online', lastSeen: 1, claim: CLAIM }
+    ]);
+  });
+});

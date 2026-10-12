@@ -49,6 +49,16 @@
 // settings takes them from the defaultHints option (the device's local
 // default), so every way of creating a room starts from it.
 //
+// Device links (docs/protocol.md, "Device links"; ./claim.ts): join() takes
+// an optional claim, sent with every join of that room (also after a
+// reconnect), with which this connection plays the seat the link was made
+// for. requestLink() and resetLink() ask for a seat's link (the server
+// answers this connection alone with a linked frame). A device on a claim
+// that resets its own link moves to the new claim; one whose claim stops
+// working (error bad-claim) shows the room error and forgets the claim. A
+// rematch announced to a device on a claim carries its claim in the new
+// room (rematchClaim).
+//
 // The forfeit: resign() sends an act whose key is resign:<seat>, a key the
 // view's choices never hold. It forfeits the seat this connection plays
 // (the seat to move in a hot-seat room). Refused as stale because the other
@@ -64,6 +74,8 @@ import type {
   HintSettings,
   Hints as HintsFrame,
   HistoryEntry,
+  Join,
+  Linked,
   Mode,
   RoomInfo,
   RoomLogEntry,
@@ -132,7 +144,7 @@ export interface SessionOptions {
 }
 
 type Intent =
-  | { kind: 'join'; code: string }
+  | { kind: 'join'; code: string; claim: string | null }
   | {
       kind: 'create';
       frame: Create;
@@ -149,6 +161,17 @@ export class SessionError extends Error {
     super(code);
     this.name = 'SessionError';
   }
+}
+
+/** How long a link request waits for its answer, in ms. */
+const LINK_TIMEOUT_MS = 8000;
+
+interface LinkWaiter {
+  seat: 0 | 1;
+  reset: boolean;
+  resolve: (claim: string) => void;
+  reject: (err: SessionError) => void;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 /** A room code as the server writes it: upper case, no spaces. */
@@ -177,8 +200,12 @@ export class Session {
   notice = $state.raw<Notice | null>(null);
   /** The error that stopped the last join (room-not-found and so on). */
   roomError = $state<string | null>(null);
+  /** The device link's claim this session plays the room with, if any. */
+  claim = $state<string | null>(null);
   /** The code of the rematch room, once the server has made one. */
   rematchCode = $state<string | null>(null);
+  /** This device's claim in the rematch room, when it plays on a claim. */
+  rematchClaim = $state<string | null>(null);
   /** This player asked for the rematch (or chose to follow it). */
   rematchAsked = $state(false);
   /** The applied actions of the game so far, oldest first. */
@@ -256,6 +283,7 @@ export class Session {
   #rateTries = 0;
   #rateTimer: ReturnType<typeof setTimeout> | undefined;
   #frames = new Listeners<State>();
+  #links: LinkWaiter[] = [];
   #offs: Unsubscribe[] = [];
   #closed = false;
   /** The name the current socket said hello with; null before hello. */
@@ -341,17 +369,53 @@ export class Session {
     });
   }
 
-  /** Joins a room by code (a fresh state follows). */
-  join(code: string): void {
+  /**
+   * Joins a room by code (a fresh state follows). With a device link's
+   * claim, this connection plays the seat the link was made for.
+   */
+  join(code: string, claim: string | null = null): void {
     const c = normalizeCode(code);
     if (this.#intent?.kind === 'create') {
       this.#intent.reject(new SessionError('superseded', 'session.error.unknown'));
     }
-    if (c !== this.code) this.#leaveRoom();
+    if (c !== this.code || claim !== this.claim) this.#leaveRoom();
     this.code = c;
+    this.claim = claim;
     this.roomError = null;
-    this.#intent = { kind: 'join', code: c };
-    if (this.#welcomed) this.#send({ t: 'join', code: c });
+    this.#intent = { kind: 'join', code: c, claim };
+    if (this.#welcomed) this.#send(this.#joinFrame(c, claim));
+  }
+
+  /**
+   * Asks for the device link of a seat (the seat's own player or the
+   * game's admin may) and resolves with its claim. With reset, the seat's
+   * old links stop working first. Rejects when the server refuses, the
+   * link is down or no answer comes.
+   */
+  requestLink(seat: 0 | 1, reset = false): Promise<string> {
+    const code = this.code;
+    if (!code || !this.#welcomed || !this.frame) {
+      return Promise.reject(new SessionError('offline', 'session.error.unknown'));
+    }
+    return new Promise<string>((resolve, reject) => {
+      const waiter: LinkWaiter = {
+        seat,
+        reset,
+        resolve,
+        reject,
+        timer: setTimeout(() => {
+          this.#links = this.#links.filter((w) => w !== waiter);
+          reject(new SessionError('timeout', 'session.error.unknown'));
+        }, LINK_TIMEOUT_MS)
+      };
+      this.#links = [...this.#links, waiter];
+      this.#send(reset ? { t: 'relink', code, seat } : { t: 'link', code, seat });
+    });
+  }
+
+  /** Resets a seat's device link: the old one stops working. Resolves with the new claim. */
+  resetLink(seat: 0 | 1): Promise<string> {
+    return this.requestLink(seat, true);
   }
 
   /**
@@ -462,6 +526,7 @@ export class Session {
     this.#closed = true;
     clearTimeout(this.#slowTimer);
     clearTimeout(this.#rateTimer);
+    this.#failLinks('closed');
     for (const off of this.#offs) off();
     this.#frames.clear();
     this.#transport.close();
@@ -507,11 +572,28 @@ export class Session {
     this.#staleUndo = null;
   }
 
+  #joinFrame(code: string, claim: string | null): Join {
+    return claim ? { t: 'join', code, claim } : { t: 'join', code };
+  }
+
+  // Ends every link request still waiting, with a refusal of code.
+  #failLinks(code: string, message: NoticeKey = 'session.error.unknown'): void {
+    const waiting = this.#links;
+    this.#links = [];
+    for (const w of waiting) {
+      clearTimeout(w.timer);
+      w.reject(new SessionError(code, message));
+    }
+  }
+
   #leaveRoom(): void {
+    this.#failLinks('left');
     this.code = null;
+    this.claim = null;
     this.frame = null;
     this.view = null;
     this.rematchCode = null;
+    this.rematchClaim = null;
     this.rematchAsked = false;
     this.roomError = null;
     this.notice = null;
@@ -543,6 +625,7 @@ export class Session {
         this.#welcomed = false;
         this.#helloName = null;
         this.conn = status.state;
+        this.#failLinks(status.state);
         break;
       case 'closed':
         this.#welcomed = false;
@@ -580,21 +663,26 @@ export class Session {
         if (this.#intent?.kind === 'create') {
           const { resolve, frame } = this.#intent;
           this.code = msg.code;
-          this.#intent = { kind: 'join', code: msg.code };
+          this.#intent = { kind: 'join', code: msg.code, claim: null };
           // Remembered before the page moves to the room, so the room page
           // knows this browser made it and asks for no name first.
           this.#rooms?.remember(msg.code, frame.mode);
           resolve(msg.code);
         } else {
           // A rematch room: the client joins it by its code. It is this
-          // browser's room too, of the same mode as the one on screen.
+          // browser's room too, of the same mode as the one on screen. A
+          // device on a claim plays it with the claim the server sent.
           this.rematchCode = msg.code;
+          this.rematchClaim = msg.claim ?? null;
           const mode = this.frame?.room.mode;
-          if (mode) this.#rooms?.remember(msg.code, mode);
+          if (mode) this.#rooms?.remember(msg.code, mode, Date.now(), msg.claim);
         }
         break;
       case 'state':
         this.#onState(msg);
+        break;
+      case 'linked':
+        this.#onLinked(msg);
         break;
       case 'reject':
         if (this.pending && msg.seq === this.pending.frame.seq) {
@@ -608,6 +696,10 @@ export class Session {
             return;
           }
           this.#settle();
+        }
+        if (msg.seq === 0 && this.#links.length > 0 && msg.code !== 'rate') {
+          // A link request refused (not the seat's player nor the admin).
+          this.#failLinks(msg.code, rejectMessage(msg.code));
         }
         if (msg.seq === 0 && this.#intent?.kind === 'create') {
           this.#intent.reject(new SessionError(msg.code, rejectMessage(msg.code)));
@@ -623,6 +715,15 @@ export class Session {
           return;
         }
         this.notice = { kind: 'error', code: msg.code, message: errorMessage(msg.code) };
+        if (msg.code === 'bad-claim' && this.#intent?.kind === 'join') {
+          // The device link does not work (any more): the room is closed
+          // to this device until it is opened without the claim, or with a
+          // fresh link. Home's list forgets the claim, not the room.
+          this.roomError = msg.code;
+          this.#rooms?.dropClaim(this.#intent.code);
+          this.#failLinks(msg.code, errorMessage(msg.code));
+          break;
+        }
         if (this.#intent?.kind === 'create') {
           this.#intent.reject(new SessionError(msg.code, errorMessage(msg.code)));
           this.#intent = null;
@@ -659,7 +760,7 @@ export class Session {
       this.#rooms?.forget(frame.code);
     } else if (this.#remembered !== frame.code) {
       this.#remembered = frame.code;
-      this.#rooms?.remember(frame.code, frame.room.mode);
+      this.#rooms?.remember(frame.code, frame.room.mode, Date.now(), this.claim ?? undefined);
     }
     const ack = frame.ack;
     if (
@@ -676,6 +777,27 @@ export class Session {
       this.#resendUndo(stale, frame);
     }
     this.#frames.emit(frame);
+  }
+
+  // The answer to a link request: the waiting requests for that seat
+  // resolve. A device on a claim that has just reset its own seat's link
+  // plays on under the new claim (the server moved it there).
+  #onLinked(msg: Linked): void {
+    if (msg.code !== this.code) return;
+    const done = this.#links.filter((w) => w.seat === msg.seat);
+    this.#links = this.#links.filter((w) => w.seat !== msg.seat);
+    const reset = done.some((w) => w.reset);
+    const mine = this.frame?.you.seats.includes(msg.seat) ?? false;
+    if (reset && mine && this.claim && this.claim !== msg.claim) {
+      this.claim = msg.claim;
+      if (this.#intent?.kind === 'join') this.#intent = { ...this.#intent, claim: msg.claim };
+      const mode = this.frame?.room.mode;
+      if (mode) this.#rooms?.remember(msg.code, mode, Date.now(), msg.claim);
+    }
+    for (const w of done) {
+      clearTimeout(w.timer);
+      w.resolve(msg.claim);
+    }
   }
 
   // Keeps the history in step with a new frame (see the file comment).
@@ -771,7 +893,7 @@ export class Session {
       return;
     }
     if (intent?.kind === 'join') {
-      this.#send({ t: 'join', code: intent.code });
+      this.#send(this.#joinFrame(intent.code, intent.claim));
       // The server answers in order: the fresh state of the join, then the
       // ack or the refusal of the re-sent request.
       if (this.pending) this.#send(this.pending.frame);

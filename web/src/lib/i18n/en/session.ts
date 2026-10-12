@@ -28,6 +28,8 @@ export const session = {
   'session.error.badHello': 'The server could not identify this browser. Reload the page.',
   'session.error.protocol': 'A newer version of the game is out. Reload the page to continue.',
   'session.error.busy': 'The server is full right now. Try again in a few minutes.',
+  'session.error.badClaim':
+    'This device link no longer works. Ask the player for a new one, or open the game without it.',
   'session.error.unknown': 'Something went wrong.',
 
   'debug.title': 'Room {code}',

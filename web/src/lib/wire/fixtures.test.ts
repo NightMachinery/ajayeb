@@ -43,7 +43,7 @@ describe('fixtures', () => {
 
   it('covers every recorded frame type', () => {
     const types = new Set(fixtures.map((f: ServerMessage) => f.t));
-    expect(types).toEqual(new Set(['welcome', 'created', 'state', 'reject', 'error']));
+    expect(types).toEqual(new Set(['welcome', 'created', 'state', 'linked', 'reject', 'error']));
   });
 });
 

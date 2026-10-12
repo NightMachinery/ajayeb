@@ -1,8 +1,11 @@
 // The rooms this browser has played in, newest first, kept in localStorage
 // under ajayeb:rooms so Home can offer to continue them. Only the code, the
 // mode and when the room was last seen are kept: nothing about the game.
+// A room opened through a device link also keeps its claim (./claim.ts), so
+// that reopening it from Home plays the same seat again.
 
 import type { Mode } from '$lib/wire';
+import { isValidClaim } from './claim';
 import type { StorageLike } from './identity';
 
 export const ROOMS_KEY = 'ajayeb:rooms';
@@ -15,6 +18,8 @@ export interface SavedRoom {
   mode: Mode;
   /** When this browser last saw the room, in ms since the epoch. */
   lastSeen: number;
+  /** The device link's claim this browser plays the room with, if any. */
+  claim?: string;
 }
 
 const MODES: readonly string[] = ['online', 'hotseat', 'ai'];
@@ -28,8 +33,13 @@ function isSavedRoom(value: unknown): value is SavedRoom {
     typeof r['mode'] === 'string' &&
     MODES.includes(r['mode']) &&
     typeof r['lastSeen'] === 'number' &&
-    Number.isFinite(r['lastSeen'])
+    Number.isFinite(r['lastSeen']) &&
+    (r['claim'] === undefined || isValidClaim(r['claim']))
   );
+}
+
+function entry(code: string, mode: Mode, lastSeen: number, claim?: string): SavedRoom {
+  return claim === undefined ? { code, mode, lastSeen } : { code, mode, lastSeen, claim };
 }
 
 /** Parses the stored list, dropping anything malformed. */
@@ -45,7 +55,7 @@ export function parseSavedRooms(raw: string | null): SavedRoom[] {
   const out: SavedRoom[] = [];
   for (const item of data) {
     if (!isSavedRoom(item) || out.some((r) => r.code === item.code)) continue;
-    out.push({ code: item.code, mode: item.mode, lastSeen: item.lastSeen });
+    out.push(entry(item.code, item.mode, item.lastSeen, item.claim));
   }
   return sortRooms(out).slice(0, MAX_SAVED_ROOMS);
 }
@@ -80,12 +90,29 @@ export class SavedRooms {
     this.list = parseSavedRooms(readRaw(storage));
   }
 
-  /** Remembers a room as seen now (or at `at`), moving it to the front. */
-  remember(code: string, mode: Mode, at: number = Date.now()): void {
-    const entry: SavedRoom = { code, mode, lastSeen: at };
-    if (!isSavedRoom(entry)) return;
+  /**
+   * Remembers a room as seen now (or at `at`), moving it to the front. A
+   * claim replaces the room's saved one; null drops it; undefined (the
+   * default) keeps whatever claim the room had.
+   */
+  remember(code: string, mode: Mode, at: number = Date.now(), claim?: string | null): void {
+    const kept = claim === undefined ? this.claimFor(code) : claim;
+    const item = entry(code, mode, at, kept ?? undefined);
+    if (!isSavedRoom(item)) return;
     const rest = this.list.filter((r) => r.code !== code);
-    this.#save(sortRooms([entry, ...rest]).slice(0, MAX_SAVED_ROOMS));
+    this.#save(sortRooms([item, ...rest]).slice(0, MAX_SAVED_ROOMS));
+  }
+
+  /** The claim this browser plays a room with, or null. */
+  claimFor(code: string): string | null {
+    return this.list.find((r) => r.code === code)?.claim ?? null;
+  }
+
+  /** Drops a room's claim (it stopped working), keeping the room. */
+  dropClaim(code: string): void {
+    const room = this.list.find((r) => r.code === code);
+    if (!room?.claim) return;
+    this.#save(this.list.map((r) => (r.code === code ? entry(r.code, r.mode, r.lastSeen) : r)));
   }
 
   /** Forgets a room, for example one the server no longer knows. */

@@ -43,17 +43,7 @@ import type {
 
 /** A frame the client may send the server, identified by its "t". */
 export type ClientMessage =
-  | Hello
-  | Create
-  | Join
-  | Act
-  | Undo
-  | Resync
-  | Leave
-  | Rematch
-  | Hints
-  | Link
-  | Relink;
+  Hello | Create | Join | Act | Undo | Resync | Leave | Rematch | Hints | Link | Relink;
 
 /** A frame the server may send the client, identified by its "t". */
 export type ServerMessage = Welcome | Created | State | Linked | Reject | ErrorFrame;

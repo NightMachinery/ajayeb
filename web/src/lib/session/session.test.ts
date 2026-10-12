@@ -962,3 +962,105 @@ describe('Session: hint settings', () => {
     expect(c.transport.last()).not.toHaveProperty('hints');
   });
 });
+
+describe('Session: device links', () => {
+  const CLAIM = 'q3Vb8Kx0Zr7TnW2mYc5JhA';
+  const NEW = 'Hw4pZ9cN1sKe6uTb0LgQvY';
+
+  function savedRooms(): SavedRooms {
+    return new SavedRooms(memoryStorage());
+  }
+
+  it('joins with a claim, again after a reconnect, and saves the room with it', () => {
+    const rooms = savedRooms();
+    const { transport, session } = setup({ rooms });
+    connect(transport);
+    session.join('H8TQ4R', CLAIM);
+    expect(transport.sentOf('join')).toEqual([{ t: 'join', code: 'H8TQ4R', claim: CLAIM }]);
+    expect(session.claim).toBe(CLAIM);
+    transport.receive(modeFrame('online', { seats: [0] }));
+    expect(rooms.claimFor('H8TQ4R')).toBe(CLAIM);
+    transport.setState('reconnecting');
+    connect(transport);
+    expect(transport.sentOf('join').at(-1)).toEqual({ t: 'join', code: 'H8TQ4R', claim: CLAIM });
+  });
+
+  it('joins without a claim as before', () => {
+    const { transport, session } = setup();
+    connect(transport);
+    session.join('H8TQ4R');
+    expect(transport.sentOf('join')).toEqual([{ t: 'join', code: 'H8TQ4R' }]);
+    expect(session.claim).toBeNull();
+  });
+
+  it('asks for a seat’s link and resolves with the claim', async () => {
+    const { transport, session } = joinedAs('online', [0]);
+    const got = session.requestLink(1);
+    expect(transport.last()).toEqual({ t: 'link', code: 'H8TQ4R', seat: 1 });
+    transport.receive({ t: 'linked', code: 'H8TQ4R', seat: 1, claim: CLAIM });
+    await expect(got).resolves.toBe(CLAIM);
+  });
+
+  it('rejects a refused link request, and one that gets no answer', async () => {
+    const { transport, session } = joinedAs('online', [1]);
+    const refused = session.requestLink(0);
+    transport.receive({ t: 'reject', seq: 0, code: 'not-admin', msg: '' });
+    await expect(refused).rejects.toBeInstanceOf(SessionError);
+    const silent = session.requestLink(0);
+    vi.advanceTimersByTime(10_000);
+    await expect(silent).rejects.toBeInstanceOf(SessionError);
+  });
+
+  it('a reset sends relink; a device on a claim that resets its own seat moves to the new claim', async () => {
+    const rooms = savedRooms();
+    const { transport, session } = setup({ rooms });
+    connect(transport);
+    session.join('H8TQ4R', CLAIM);
+    transport.receive(modeFrame('online', { seats: [0] }));
+    const got = session.resetLink(0);
+    expect(transport.last()).toEqual({ t: 'relink', code: 'H8TQ4R', seat: 0 });
+    transport.receive({ t: 'linked', code: 'H8TQ4R', seat: 0, claim: NEW });
+    await expect(got).resolves.toBe(NEW);
+    expect(session.claim).toBe(NEW);
+    expect(rooms.claimFor('H8TQ4R')).toBe(NEW);
+    transport.setState('reconnecting');
+    connect(transport);
+    expect(transport.sentOf('join').at(-1)).toEqual({ t: 'join', code: 'H8TQ4R', claim: NEW });
+  });
+
+  it('a reset of another seat leaves this device’s claim alone', async () => {
+    const { transport, session } = setup();
+    connect(transport);
+    session.join('H8TQ4R', CLAIM);
+    transport.receive(modeFrame('online', { seats: [0] }));
+    const got = session.resetLink(1);
+    transport.receive({ t: 'linked', code: 'H8TQ4R', seat: 1, claim: NEW });
+    await got;
+    expect(session.claim).toBe(CLAIM);
+  });
+
+  it('a bad claim shows the room error and drops the saved claim, even mid-game', () => {
+    const rooms = savedRooms();
+    const { transport, session } = setup({ rooms });
+    connect(transport);
+    session.join('H8TQ4R', CLAIM);
+    transport.receive(modeFrame('online', { seats: [0] }));
+    expect(rooms.claimFor('H8TQ4R')).toBe(CLAIM);
+    transport.receive({ t: 'error', code: 'bad-claim', msg: '' });
+    expect(session.roomError).toBe('bad-claim');
+    expect(rooms.claimFor('H8TQ4R')).toBeNull();
+    expect(rooms.list.map((r) => r.code)).toEqual(['H8TQ4R']);
+  });
+
+  it('a rematch announced with a claim keeps it for the new room', () => {
+    const rooms = savedRooms();
+    const { transport, session } = setup({ rooms });
+    connect(transport);
+    session.join('H8TQ4R', CLAIM);
+    transport.receive(modeFrame('online', { seats: [0] }));
+    transport.receive({ t: 'created', code: 'R7MQ3X', claim: NEW });
+    expect(session.rematchCode).toBe('R7MQ3X');
+    expect(session.rematchClaim).toBe(NEW);
+    expect(rooms.claimFor('R7MQ3X')).toBe(NEW);
+  });
+});
