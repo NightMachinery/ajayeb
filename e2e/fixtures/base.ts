@@ -1,7 +1,7 @@
 // The shared `test` every spec imports instead of '@playwright/test'
 // directly. Its only job is to make the default `context` (and so `page`)
-// fixture start with the game's own Animation setting forced off, and the
-// opponent move summary popup off.
+// fixture start with the game's own Animation setting forced off, the
+// opponent move summary popup off and the first-time tips off.
 //
 // This replaces playwright.config.ts's old `use.reducedMotion: 'reduce'`.
 // The client no longer reads the OS's prefers-reduced-motion at all (D21,
@@ -22,6 +22,8 @@ const SETTINGS_KEY = 'ajayeb:settings';
  *  spec that changes a setting itself and reloads keeps its own choice,
  *  while a fresh tab still starts with Animation off. */
 const GUARD_KEY = 'ajayeb:e2e-motion-off-applied';
+/** The first-time tips' device state (web/src/lib/ui/tips.svelte.ts). */
+const TIPS_KEY = 'ajayeb:tips';
 
 /**
  * Runs in the page, before any app script, on every navigation. Merges
@@ -31,8 +33,12 @@ const GUARD_KEY = 'ajayeb:e2e-motion-off-applied';
  * read), then sets the guard so a later reload of this same tab leaves the
  * settings alone.
  */
-function installMotionOffScript(opts: { settingsKey: string; guardKey: string }): void {
-  const { settingsKey, guardKey } = opts;
+function installMotionOffScript(opts: {
+  settingsKey: string;
+  guardKey: string;
+  tipsKey: string;
+}): void {
+  const { settingsKey, guardKey, tipsKey } = opts;
   try {
     if (window.sessionStorage.getItem(guardKey)) return;
     window.sessionStorage.setItem(guardKey, '1');
@@ -49,6 +55,9 @@ function installMotionOffScript(opts: { settingsKey: string; guardKey: string })
     // of the other side. Specs about it (move-summary.spec.ts) turn it on.
     current['showOpponentMove'] = false;
     window.localStorage.setItem(settingsKey, JSON.stringify(current));
+    // A first-time tip (M10.HS5) is a callout that swallows the next tap
+    // elsewhere, like the summary. Specs about tips turn them back on.
+    window.localStorage.setItem(tipsKey, JSON.stringify({ off: true, seen: [] }));
   } catch {
     // Storage may be unavailable; nothing to force, and nothing to crash on.
   }
@@ -61,7 +70,8 @@ function installMotionOffScript(opts: { settingsKey: string; guardKey: string })
 export async function installMotionOff(context: BrowserContext): Promise<void> {
   await context.addInitScript(installMotionOffScript, {
     settingsKey: SETTINGS_KEY,
-    guardKey: GUARD_KEY
+    guardKey: GUARD_KEY,
+    tipsKey: TIPS_KEY
   });
 }
 
