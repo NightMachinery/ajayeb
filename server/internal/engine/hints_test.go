@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"encoding/json"
 	"go/ast"
@@ -309,6 +311,10 @@ func TestHintEnumsMatchView(t *testing.T) {
 		"ScienceEffectKind": scienceEffectNames[:],
 		"HintCode":          hintCodeNames[:],
 		"LastProducer":      lastProducerNames[:],
+		// The engine names these with the view's own constants
+		// (hints_board.go), so the list here is the vocabulary itself.
+		"SymbolState": {"paired", "live", "owned", "open", "dead"},
+		"TieBreak":    {"total", "blue", "shared"},
 	}
 	if len(got) != len(want) {
 		t.Errorf("view/hints.go has vocabularies %v; this test checks %d", reflect.ValueOf(got).MapKeys(), len(want))
@@ -833,9 +839,10 @@ func hnCount(m uint32) int {
 
 // TestHintsFrameSize logs the size of mid-age views with and without the
 // hints, for docs/architecture.md, and bounds the growth: the shared hints
-// (the per-card hints of M10.HS2, both seats, every face-up card) may add
-// at most a third to the view, and the decider's outcomes of M10.HS3
-// (Choice.outcome, DisabledChoice.wins) at most a sixth more.
+// (the per-card hints of M10.HS2, both seats, every face-up card, and the
+// board-level hints of M10.HS4) may add at most 60% to the view, and the
+// decider's outcomes of M10.HS3 (Choice.outcome, DisabledChoice.wins) at
+// most a sixth more. The gzip sizes are logged for comparison.
 func TestHintsFrameSize(t *testing.T) {
 	for seed := uint64(1); seed <= 3; seed++ {
 		for _, age := range []uint8{1, 2} {
@@ -855,7 +862,25 @@ func TestHintsFrameSize(t *testing.T) {
 			shared, _ := json.Marshal(vw)
 			t.Logf("seed %d, age %d, ply %d: decider view %d bytes, %d with the shared hints (+%d), %d with the outcomes (+%d more, %d choices)",
 				seed, age, s.Ply, len(plain), len(shared), len(shared)-len(plain), len(with), len(with)-len(shared), len(vw.Choices))
-			if 3*len(shared) > 4*len(plain) {
+			// The board-level hints of M10.HS4 on their own: HintsView without
+			// the Mausoleum pool, PlayerView.hints and WonderView.effect.
+			board := *vw.Hints
+			board.Discard = nil
+			nb, _ := json.Marshal(board)
+			np, nw := 0, 0
+			for i := range vw.Players {
+				b, _ := json.Marshal(vw.Players[i].Hints)
+				np += len(b)
+				for _, w := range vw.Players[i].Wonders {
+					if w.Effect != nil {
+						b, _ := json.Marshal(w.Effect)
+						nw += len(b)
+					}
+				}
+			}
+			t.Logf("  of which the board hints (HS4): %d bytes: HintsView %d, the players' hints %d, the wonder effects %d; gzip %d to %d",
+				len(nb)+np+nw, len(nb), np, nw, hnGzip(plain), hnGzip(with))
+			if 5*len(shared) > 8*len(plain) {
 				t.Errorf("the shared hints add %d bytes to a %d-byte view", len(shared)-len(plain), len(plain))
 			}
 			if 6*(len(with)-len(shared)) > len(plain) {
@@ -947,4 +972,13 @@ func BenchmarkDeciderHints(b *testing.B) {
 			b.ReportMetric(float64(applies), "applies")
 		})
 	}
+}
+
+// hnGzip returns the size of b compressed with gzip at the default level.
+func hnGzip(b []byte) int {
+	var buf bytes.Buffer
+	z := gzip.NewWriter(&buf)
+	_, _ = z.Write(b)
+	_ = z.Close()
+	return buf.Len()
 }

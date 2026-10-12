@@ -314,6 +314,151 @@ export interface HintsView {
    * moves), by seat, then in ascending card order.
    */
   discard: DiscardHintView[];
+  wondersLeft: number /* int */; // wonders: how many more wonders the game allows (7 minus those built); 1 starts the race for the last one
+  lastCardTo?: number /* int */; // tempo: the seat that takes the age's last card if nobody plays again; absent while a new age's starter is chosen and in the draft
+  nextStarter?: NextStarterView; // tempo: who decides the next age's starter, as the pawn stands (Ages I and II)
+  previewWinner?: PreviewWinnerView; // scoring: who would win on points if the game ended now
+  pairs: SciencePairView[]; // science: the six card symbols, each with its two cards and where they are
+  looting: LootHint[]; // military: the looting tokens still on the track, in track order, with what each would take now
+  tokens: TokenValueView[]; // tokens: each board token's value now, for each seat (by token, then seat)
+  boxTokens: string[]; // tokens: the tokens in the box (and in an open Great Library offer), named by elimination, while a seat's Great Library is open; their order stays secret
+  guildPreview: GuildPreviewView[]; // counting, Age III: what each guild not yet seen would be worth to each seat now
+  unseen: UnseenView[]; // counting: for each back face down in the structure, the cards that may lie under it
+}
+/**
+ * NextStarterView is who will choose the next age's starter, as the pawn
+ * stands now (ages-scoring.md "Who starts the next age").
+ */
+export interface NextStarterView {
+  chooser?: number /* int */; // the weaker seat (the pawn is on its side); absent with a centred pawn
+  byLastCard: boolean; // the pawn is centred: the player who takes the age's last card decides
+  lastActiveStarts: boolean; // the room option: with a centred pawn that player simply starts
+}
+/**
+ * PreviewWinnerView is who would win on points if the game ended now, and
+ * how the tie-break decides it.
+ */
+export interface PreviewWinnerView {
+  winner?: number /* int */; // absent for a shared victory
+  by: TieBreak;
+  margin: number /* int */; // the lead in points (in blue points when the totals are tied)
+}
+/**
+ * SciencePairView is one card symbol and the two green cards that carry it.
+ */
+export interface SciencePairView {
+  symbol: ScienceSymbol;
+  cards: PairCardView[]; // in ascending card order
+}
+/**
+ * PairCardView is one card of a science pair and its public place.
+ */
+export interface PairCardView {
+  card: string;
+  place: PublicPlace;
+  seat?: number /* int */; // city and tucked: whose
+  slot?: number /* int */; // faceUp: the structure slot
+  inPlay?: Odds; // unseen: the chance it is dealt (num in den)
+}
+/**
+ * LootHint is one looting token still on the track.
+ */
+export interface LootHint {
+  at: number /* int */; // its space: -6, -3, 3 or 6
+  wouldLose: number /* int */; // coins its victim would lose if the pawn entered it now (no more than it has)
+}
+/**
+ * TokenValueView is what taking one progress token would do for one seat
+ * now (the tokens family).
+ */
+export interface TokenValueView {
+  token: string;
+  seat: number /* int */;
+  coins: number /* int */; // coins gained at once
+  vp: number /* int */; // change of the seat's score preview
+  wins: boolean; // taking it wins the game (Law as the sixth symbol)
+  savings: number /* int */; // Masonry, Architecture: coins it saves on the cards in view and the seat's open wonders; Economy: the trade coins the other seat would pay on the cards it can take now
+  count: number /* int */; // Urbanism: chains whose target may still come; Theology: open wonders that would gain play again; Mathematics: tokens the seat would own
+}
+/**
+ * GuildPreviewView is what building one guild would bring each seat now:
+ * the coins on construction and the change of each seat's score preview.
+ */
+export interface GuildPreviewView {
+  guild: string;
+  coins: Pair<Amount>; // by builder
+  vp: Pair<Amount>; // by builder: that seat's change of points
+}
+/**
+ * UnseenView is one back face down in the structure and the cards that may
+ * lie under it: the cards of its kind in no public place.
+ */
+export interface UnseenView {
+  back: Back;
+  cards: string[]; // the pool, in ascending card order
+  faceDown: number /* int */; // face-down slots with this back
+  setAside: number /* int */; // cards of the pool that are not in the structure (set aside, or the guilds not in the game)
+}
+/**
+ * PlayerHintsView holds the board-level hints about one seat
+ * (PlayerView.hints): its science, its capital, its chains and guilds, and
+ * the wins it would have if it were its turn now. Each part is zero or
+ * empty while its family is off.
+ */
+export interface PlayerHintsView {
+  coinsToNextVp: number /* int */; // scoring: coins still missing for the next point from coins
+  symbols: SymbolHint[]; // science: the seven symbols, in symbol order
+  need: number /* int */; // science: different symbols still needed for a scientific supremacy
+  reachable: boolean; // science: enough missing symbols may still come to make up the need
+  lawWins: boolean; // science: Law on the board would be this seat's sixth symbol, and it has a pair that may still complete
+  chainTargets: ChainTargetView[]; // counting: the card each chain symbol of the city frees, and where it is
+  guildPoints: GuildPointsView[]; // scoring: the points each owned guild is worth now
+  toCapital: number /* int */; // military: shields the other seat still needs to take this seat's capital
+  capitalSafe: boolean; // military: the other seat can no longer gather that many shields
+  threats?: ThreatView[]; // threats: the wins this seat would have with one action if it were its turn now; absent in a phase that does not compute them (a pending choice), where the last list still holds
+}
+/**
+ * SymbolHint is where a seat stands on one science symbol.
+ */
+export interface SymbolHint {
+  symbol: ScienceSymbol;
+  state: SymbolState;
+  openCards: number /* int */; // cards of it that may still come to this seat (for the scales: 1 while Law may still come)
+}
+/**
+ * ChainTargetView is the card one chain symbol makes free, and where it is.
+ */
+export interface ChainTargetView {
+  chain: Chain;
+  target: string;
+  place: PublicPlace;
+  seat?: number /* int */; // city and tucked: whose
+  inPlay?: Odds; // unseen: the chance it is dealt
+  worth?: number /* int */; // while it may still come to the seat: what it would cost without the chain today
+}
+/**
+ * GuildPointsView is one owned guild's points now.
+ */
+export interface GuildPointsView {
+  card: string;
+  vp: number /* int */;
+  countsSeat: number /* int */; // the city it counts now (the one with more of what it counts)
+}
+/**
+ * WonderEffectView is what building one open wonder would do now, for its
+ * owner (WonderView.effect, the wonders family): the effects up to its
+ * special choice, which it only names.
+ */
+export interface WonderEffectView {
+  paid: boolean; // the owner can afford it now, and the preview paid
+  coins: Pair<Amount>; // change of both seats' coins (payment, rewards, looting, the Appian Way)
+  score: Pair<Amount>; // change of both seats' score preview totals
+  pawn?: PawnMoveView; // military: the pawn move and the looting
+  wins?: WinView; // threats: building it wins, at once or through its rebuild
+  extraTurn: ExtraTurnSource; // play again: by the wonder itself, by Theology, or none
+  removes?: string; // the wonder the seven-wonder rule would send back to the box
+  opens?: PendingKind; // the special choice it opens
+  pool: number /* int */; // that choice's size: destroy candidates, discarded cards, or tokens the Great Library would draw
 }
 /**
  * CardHints is what building one face-up card would do for one seat now,
@@ -537,6 +682,28 @@ export const HintCodeLoot = "loot"; // building it takes a looting token from th
  */
 export type HintCode = typeof HintCodeWin | typeof HintCodePair | typeof HintCodeLoot;
 /**
+ * SymbolState is where a seat stands on one of the seven science symbols.
+ */
+export const SymbolStatePaired = "paired"; // both cards of the symbol
+export const SymbolStateLive = "live"; // one card, and the other may still come to the seat
+export const SymbolStateOwned = "owned"; // one card (or the scales), and the other can never come
+export const SymbolStateOpen = "open"; // none yet, and one may still come
+export const SymbolStateDead = "dead"; // none, and none can come
+/**
+ * The symbol states.
+ */
+export type SymbolState = typeof SymbolStatePaired | typeof SymbolStateLive | typeof SymbolStateOwned | typeof SymbolStateOpen | typeof SymbolStateDead;
+/**
+ * TieBreak says how the score preview's leader is decided.
+ */
+export const TieBreakTotal = "total"; // the higher total
+export const TieBreakBlue = "blue"; // equal totals: the more blue points
+export const TieBreakShared = "shared"; // equal totals and blue points: a shared victory
+/**
+ * The tie-breaks.
+ */
+export type TieBreak = typeof TieBreakTotal | typeof TieBreakBlue | typeof TieBreakShared;
+/**
  * LastProducer says that no other producer of a brown or grey card's
  * resource is in view.
  */
@@ -708,6 +875,11 @@ export interface PlayerView {
   chains: Chain[]; // chain symbols this seat's city shows
   discardValue: number /* int */; // coins this seat receives for discarding a card now
   shields: number /* int */; // shields this seat has placed: every shield of its buildings and wonders, Strategy's included
+  /**
+   * Hints are the board-level hints about this seat (hints.go), while
+   * the game runs and the room asked for hints.
+   */
+  hints?: PlayerHintsView;
 }
 /**
  * WonderView is one of a seat's wonders, in draft order.
@@ -718,6 +890,11 @@ export interface WonderView {
   removed: boolean; // left the game unbuilt when the seventh wonder was built
   tucked?: string; // the card under a built wonder
   cost?: CostView; // the owner's cost, while the wonder can still be built
+  /**
+   * Effect is what building it would do now (hints.go), while it can
+   * still be built and the wonders hints are on.
+   */
+  effect?: WonderEffectView;
 }
 /**
  * ProductionView is what a seat produces every turn.
@@ -777,6 +954,12 @@ export interface PendingView {
   tokens: string[]; // pickBoardToken: the board tokens; pickLibraryToken: the offer, only in the decider's view
   hiddenTokens: number /* int */; // pickLibraryToken: the tokens on offer that this viewer may not see
   cardHints?: PendingCardHint[]; // destroyCard, while the economy hints are on: what losing each candidate would change (hints.go)
+  /**
+   * TokenValues is, during a Great Library offer and only in the view of
+   * the seat choosing from it, what each token on offer would do for it
+   * (hints.go), while the tokens hints are on.
+   */
+  tokenValues?: TokenValueView[];
 }
 /**
  * Choice is one legal action of the seat to move. Only the fields its kind

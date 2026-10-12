@@ -85,6 +85,12 @@ type Hints struct {
 	cards SlotMask
 	// pending is the destroy choice's per-candidate hints, or nil.
 	pending *[]view.PendingCardHint
+	// players is the board-level hints about each seat (hints_board.go),
+	// valid when hasPlayers is set; wonders is what building each open
+	// wonder would do, by seat and wonder slot, nil where none.
+	players    [2]view.PlayerHintsView
+	hasPlayers bool
+	wonders    [2][WondersPerPlayer]*view.WonderEffectView
 }
 
 // Settings returns the hint settings the hints were computed with.
@@ -98,11 +104,19 @@ func ComputeHints(s *State, f view.HintSettings) Hints {
 
 // computeHints is ComputeHints with a simulation context, which the leak
 // tests pass to watch every simulation the hints run.
-func computeHints(s *State, f view.HintSettings, _ *simCtx) Hints {
+func computeHints(s *State, f view.HintSettings, c *simCtx) Hints {
 	h := Hints{settings: f, board: view.HintsView{Discard: []view.DiscardHintView{}}}
 	if s.Over() {
 		return h
 	}
+	// The board-level hints (hints_board.go). The threats among them spend
+	// one hintApplyBudget of their own; a traced context (the leak tests)
+	// sees their simulations.
+	if c == nil {
+		c = &simCtx{budget: hintApplyBudget}
+	}
+	boardHints(s, f, &h, c)
+	h.hasPlayers = s.Phase != PhaseWonderDraft
 	// Each part under its family's switch; a field of a family that is off
 	// stays zero or empty.
 	if perCardFamilies(f) {
@@ -138,9 +152,28 @@ func addHints(s *State, v Viewer, h *Hints, out *view.View) {
 		p := *h.pending
 		out.Pending.CardHints = &p
 	}
+	if h.hasPlayers {
+		for seat := range out.Players {
+			ph := h.players[seat]
+			out.Players[seat].Hints = &ph
+			for k := range out.Players[seat].Wonders {
+				if k < WondersPerPlayer && h.wonders[seat][k] != nil && out.Players[seat].Wonders[k].Cost != nil {
+					out.Players[seat].Wonders[k].Effect = h.wonders[seat][k]
+				}
+			}
+		}
+	}
+	// The Great Library offer's values, only for the seat choosing from it,
+	// whose view alone lists the offer.
+	seat, seated := v.Seat()
+	decider := seated && seat == s.ToMove
+	if decider && h.settings.Tokens && s.Phase == PhasePickLibraryToken && out.Pending != nil {
+		vals := libraryTokenValues(s)
+		out.Pending.TokenValues = &vals
+	}
 	// The decider's hints (Choice.outcome and DisabledChoice.wins), under
 	// a fresh hintApplyBudget for this view (hints_decider.go).
-	if seat, ok := v.Seat(); ok && seat == s.ToMove && deciderFamilies(h.settings) {
+	if decider && deciderFamilies(h.settings) {
 		deciderHints(s, h.settings, out, &simCtx{budget: hintApplyBudget})
 	}
 }

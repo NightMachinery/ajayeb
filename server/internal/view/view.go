@@ -141,6 +141,9 @@ type PlayerView struct {
 	Chains       []Chain        `json:"chains"`       // chain symbols this seat's city shows
 	DiscardValue int            `json:"discardValue"` // coins this seat receives for discarding a card now
 	Shields      int            `json:"shields"`      // shields this seat has placed: every shield of its buildings and wonders, Strategy's included
+	// Hints are the board-level hints about this seat (hints.go), while
+	// the game runs and the room asked for hints.
+	Hints *PlayerHintsView `json:"hints,omitempty"`
 }
 
 // WonderView is one of a seat's wonders, in draft order.
@@ -150,6 +153,9 @@ type WonderView struct {
 	Removed bool      `json:"removed"`          // left the game unbuilt when the seventh wonder was built
 	Tucked  *string   `json:"tucked,omitempty"` // the card under a built wonder
 	Cost    *CostView `json:"cost,omitempty"`   // the owner's cost, while the wonder can still be built
+	// Effect is what building it would do now (hints.go), while it can
+	// still be built and the wonders hints are on.
+	Effect *WonderEffectView `json:"effect,omitempty"`
 }
 
 // ProductionView is what a seat produces every turn.
@@ -202,6 +208,11 @@ type PendingView struct {
 	Tokens       []string           `json:"tokens"`              // pickBoardToken: the board tokens; pickLibraryToken: the offer, only in the decider's view
 	HiddenTokens int                `json:"hiddenTokens"`        // pickLibraryToken: the tokens on offer that this viewer may not see
 	CardHints    *[]PendingCardHint `json:"cardHints,omitempty"` // destroyCard, while the economy hints are on: what losing each candidate would change (hints.go)
+
+	// TokenValues is, during a Great Library offer and only in the view of
+	// the seat choosing from it, what each token on offer would do for it
+	// (hints.go), while the tokens hints are on.
+	TokenValues *[]TokenValueView `json:"tokenValues,omitempty"`
 }
 
 // Choice is one legal action of the seat to move. Only the fields its kind
