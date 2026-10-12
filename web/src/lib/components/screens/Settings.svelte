@@ -19,7 +19,8 @@
     type ConfirmMoves,
     type SoundVolume
   } from '$lib/ui/settings.svelte';
-  import { hapticsSupported, installFx, play, unlockAudio } from '$lib/fx';
+  import { installFx, play, unlockAudio } from '$lib/fx';
+  import { vibrationShown } from './vibration';
   import { theme, THEME_PREFS, type ThemePref } from '$lib/ui/theme.svelte';
 
   // as const satisfies (not a type annotation) so each entry keeps its own
@@ -47,9 +48,10 @@
     loud: 'home.settings.volumeLoud'
   } as const satisfies Record<SoundVolume, MessageKey>;
 
-  // Only where the browser can vibrate (not iOS, not most desktops); read
-  // once, it never changes during a page's life.
-  const canVibrate = hapticsSupported();
+  // Only on a touch device that can vibrate (not iOS, not a desktop, even
+  // one whose browser has navigator.vibrate); read once, it never changes
+  // during a page's life.
+  const canVibrate = vibrationShown(typeof navigator === 'undefined' ? undefined : navigator);
 
   // Turning sound on is itself the user gesture that may start audio, so
   // the switch unlocks it and plays a sample at once. The listener that

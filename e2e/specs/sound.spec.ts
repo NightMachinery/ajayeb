@@ -70,18 +70,22 @@ async function openSilently(page: Page, scenario: string): Promise<GameDriver> {
 }
 
 test.describe('sound and haptics', { tag: ['@mobile'] }, () => {
-  test('Settings: sound off by default, haptics only where the device vibrates', async ({
+  test('Settings: sound off by default, haptics only on a touch device that vibrates', async ({
     page
-  }) => {
+  }, testInfo) => {
     const problems = watchHygiene(page);
     await page.goto('/settings');
     await expect(page.locator('input[data-setting="sound"]')).not.toBeChecked();
     const haptics = page.locator('input[data-setting="haptics"]');
-    if (await canVibrate(page)) {
+    const touch = await page.evaluate(() => navigator.maxTouchPoints > 0);
+    if ((await canVibrate(page)) && touch) {
       await expect(haptics).toBeChecked();
     } else {
       await expect(haptics).toHaveCount(0);
     }
+    // Desktop Chrome has navigator.vibrate, but no touch: no switch there.
+    if (testInfo.project.name === 'desktop') await expect(haptics).toHaveCount(0);
+    if (testInfo.project.name === 'mobile') await expect(haptics).toBeChecked();
     await page.locator('input[data-setting="sound"]').check();
     const volume = page.locator('[data-setting="sound-volume"]');
     await volume.getByText('Loud').click();

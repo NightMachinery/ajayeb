@@ -124,7 +124,7 @@ Any component can open the overlay at a section with `openRules('military')` fro
 
 - Only live events play. The first snapshot of a room, another room's frame, and a frame whose version does not move forward (an undo, a resync) are silent.
 - Each cue kind plays at most once per frame, 90 ms apart, in the order of its first event. `play(cue, { delayMs })` takes a delay, so animations can retime cues later.
-- Settings: Show opponent move in detail (on by default; see the game screen's move summary). Sound (off by default) with a Quiet, Medium or Loud step, and Vibration (on by default, shown only where `navigator.vibrate` exists). Sound does not follow the Animation setting. The AudioContext starts only inside a user gesture: the Sound switch itself, or any later pointer or key press.
+- Settings: Show opponent move in detail (on by default; see the game screen's move summary). Sound (off by default) with a Quiet, Medium or Loud step, and Vibration (on by default, shown only on a touch device where `navigator.vibrate` exists, so never on desktop Chrome: `screens/vibration.ts`). Sound does not follow the Animation setting. The AudioContext starts only inside a user gesture: the Sound switch itself, or any later pointer or key press.
 - Haptics: 8 ms when a card or wonder is taken, a short pattern when the pawn moves, a longer one for looting.
 - Test hook: `window.__ajayebFx.cues()` and `.haptics()` list what would have played (a cue only while Sound is on, a vibration only while Vibration is on), and `.clear()` empties both. `e2e/specs/sound.spec.ts` reads it.
 - `/dev/gallery` has a sound board under Screens, with a button per cue.
