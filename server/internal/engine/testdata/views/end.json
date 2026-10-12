@@ -14,6 +14,7 @@
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
      {
       "index": 0,
@@ -291,7 +292,8 @@
        "moon",
        "drop"
       ],
-      "discardValue": 5
+      "discardValue": 5,
+      "shields": 7
      },
      {
       "seat": 1,
@@ -446,7 +448,8 @@
        "mask",
        "helmet"
       ],
-      "discardValue": 3
+      "discardValue": 3,
+      "shields": 11
      }
     ],
     "military": {
@@ -644,6 +647,7 @@
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
      {
       "index": 0,
@@ -921,7 +925,8 @@
        "moon",
        "drop"
       ],
-      "discardValue": 5
+      "discardValue": 5,
+      "shields": 7
      },
      {
       "seat": 1,
@@ -1076,7 +1081,8 @@
        "mask",
        "helmet"
       ],
-      "discardValue": 3
+      "discardValue": 3,
+      "shields": 11
      }
     ],
     "military": {
@@ -1273,6 +1279,7 @@
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
      {
       "index": 0,
@@ -1550,7 +1557,8 @@
        "moon",
        "drop"
       ],
-      "discardValue": 5
+      "discardValue": 5,
+      "shields": 7
      },
      {
       "seat": 1,
@@ -1705,7 +1713,8 @@
        "mask",
        "helmet"
       ],
-      "discardValue": 3
+      "discardValue": 3,
+      "shields": 11
      }
     ],
     "military": {

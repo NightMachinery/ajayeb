@@ -42,9 +42,16 @@ func (v Viewer) Seat() (Seat, bool) {
 	return 0, false
 }
 
-// ViewFor builds the view of s for viewer v. In a hot-seat game the room
-// asks for the view of the seat to move.
-func ViewFor(s *State, v Viewer) view.View {
+// ViewFor builds the view of s for viewer v, without hints. In a hot-seat
+// game the room asks for the view of the seat to move. It is
+// ViewWithHints(s, v, nil): the simulator, the tests and replays use it,
+// and only the room, which knows the game's hint settings, adds hints.
+func ViewFor(s *State, v Viewer) view.View { return ViewWithHints(s, v, nil) }
+
+// ViewWithHints builds the view of s for viewer v, like ViewFor, and adds
+// the hints h (ComputeHints(s, settings), computed once per state and
+// shared by every viewer). A nil h, or a game that is over, adds none.
+func ViewWithHints(s *State, v Viewer, h *Hints) view.View {
 	seat, seated := v.Seat()
 	decider := seated && !s.Over() && seat == s.ToMove
 	out := view.View{
@@ -56,6 +63,7 @@ func ViewFor(s *State, v Viewer) view.View {
 		Active:        int(s.Active),
 		FirstPlayer:   int(s.FirstSeat),
 		ExtraTurn:     s.ExtraTurn,
+		PlayingAgain:  s.PlayingAgain && !s.Over(),
 		Structure:     viewStructure(s),
 		Military:      viewMilitary(s),
 		BoardTokens:   dtoTokenSet(s.BoardTokens),
@@ -94,6 +102,9 @@ func ViewFor(s *State, v Viewer) view.View {
 			out.Revealed = viewRevealed(s)
 		}
 	}
+	if h != nil && !s.Over() {
+		addHints(s, v, h, &out)
+	}
 	return out
 }
 
@@ -106,7 +117,10 @@ func viewDraft(s *State) *view.DraftView {
 		return nil
 	}
 	round := draftRound(n)
-	d := &view.DraftView{Round: round + 1, Offer: make([]view.DraftOfferView, 0, 4)}
+	d := &view.DraftView{Round: round + 1, Offer: make([]view.DraftOfferView, 0, 4), Order: make([]int, 0, 4)}
+	for i := 4 * round; i < 4*round+4; i++ {
+		d.Order = append(d.Order, int(draftPicker(s.FirstSeat, i)))
+	}
 	for i := 4 * round; i < 4*round+4; i++ {
 		w := s.DraftOrder[i]
 		slug, ok := dtoWonder(w)
@@ -232,6 +246,7 @@ func viewPlayer(s *State, seat Seat) view.PlayerView {
 		Science:      viewScience(p),
 		Chains:       []view.Chain{},
 		DiscardValue: int(DiscardValue(s, seat)),
+		Shields:      int(s.Shields[seat]),
 	}
 	for ch := catalog.Chain(1); ch < catalog.NumChains; ch++ {
 		if p.Chains&ch.Bit() != 0 {

@@ -15,6 +15,7 @@
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
      "round": 2,
      "offer": [
@@ -30,6 +31,12 @@
       {
        "wonder": "hanging-gardens"
       }
+     ],
+     "order": [
+      1,
+      0,
+      0,
+      1
      ]
     },
     "structure": [],
@@ -149,7 +156,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      },
      {
       "seat": 1,
@@ -273,7 +281,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      }
     ],
     "military": {
@@ -378,6 +387,7 @@
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
      "round": 2,
      "offer": [
@@ -393,6 +403,12 @@
       {
        "wonder": "hanging-gardens"
       }
+     ],
+     "order": [
+      1,
+      0,
+      0,
+      1
      ]
     },
     "structure": [],
@@ -512,7 +528,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      },
      {
       "seat": 1,
@@ -636,7 +653,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      }
     ],
     "military": {
@@ -761,6 +779,7 @@
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
      "round": 2,
      "offer": [
@@ -776,6 +795,12 @@
       {
        "wonder": "hanging-gardens"
       }
+     ],
+     "order": [
+      1,
+      0,
+      0,
+      1
      ]
     },
     "structure": [],
@@ -895,7 +920,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      },
      {
       "seat": 1,
@@ -1019,7 +1045,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      }
     ],
     "military": {

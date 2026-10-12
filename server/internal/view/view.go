@@ -17,6 +17,10 @@ type View struct {
 	Active      int    `json:"active"`           // whose turn it is; differs from toMove only while a new age's starter is chosen
 	FirstPlayer int    `json:"firstPlayer"`      // the seat that started the draft and Age I
 	ExtraTurn   bool   `json:"extraTurn"`        // the active seat plays again once this turn is over
+	// PlayingAgain says that the current turn was granted by an extra
+	// turn: the active seat is playing again. It is false while a new
+	// age's starter is chosen and once the game is over.
+	PlayingAgain bool `json:"playingAgain"`
 
 	Draft     *DraftView    `json:"draft,omitempty"`                   // only during the wonder draft
 	Structure []SlotView    `json:"structure"`                         // the current age's 20 slots in layout order; empty during the draft
@@ -36,12 +40,15 @@ type View struct {
 	ScorePreview [2]ScoreView `json:"scorePreview" tstype:"Pair<ScoreView>"` // both seats' points if the game ended now
 	Result       *ResultView  `json:"result,omitempty"`                      // once the game is over
 	Revealed     *RevealView  `json:"revealed,omitempty"`                    // the hidden cards, wonders and tokens, once the game is over (unless the game hides them)
+
+	Hints *HintsView `json:"hints,omitempty"` // the board-level hints (hints.go); absent once the game is over and when the view was built without hint settings
 }
 
 // DraftView is the wonder draft in progress.
 type DraftView struct {
 	Round int              `json:"round"` // 1 or 2
 	Offer []DraftOfferView `json:"offer"` // the round's four wonders, in the order they were dealt; the second round's stay hidden until the first is over
+	Order []int            `json:"order"` // the seats making the round's four picks, in pick order (the last pick is automatic)
 }
 
 // DraftOfferView is one wonder of the current draft round.
@@ -132,6 +139,7 @@ type PlayerView struct {
 	Science      ScienceView    `json:"science"`
 	Chains       []Chain        `json:"chains"`       // chain symbols this seat's city shows
 	DiscardValue int            `json:"discardValue"` // coins this seat receives for discarding a card now
+	Shields      int            `json:"shields"`      // shields this seat has placed: every shield of its buildings and wonders, Strategy's included
 }
 
 // WonderView is one of a seat's wonders, in draft order.

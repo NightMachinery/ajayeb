@@ -293,6 +293,63 @@ export interface HintSettings {
    */
   advisor: boolean;
 }
+/**
+ * HintsView holds a view's board-level hints: the facts the server
+ * computes from public information for every viewer alike (the shared
+ * hints of the hints design), once per broadcast with the room's hint
+ * settings. A view carries it while the game runs and the room asked for
+ * hints (engine.ViewWithHints); a gameOver view never does, and neither
+ * does a view built without settings (engine.ViewFor, used by the
+ * simulator, tests and replays).
+ * It is empty for now: the hints slices after M10.HS1 add its fields, each
+ * zero or empty while its family is off. A client reads the room's
+ * settings (RoomInfo.hints) to know which fields are meaningful.
+ */
+export interface HintsView {
+}
+/**
+ * PublicPlace is where a card is, as far as both players can know.
+ */
+export const PublicPlaceFaceUp = "faceUp"; // face up in a structure slot
+export const PublicPlaceCity = "city"; // in a player's city
+export const PublicPlaceTucked = "tucked"; // under a built wonder
+export const PublicPlaceDiscard = "discard"; // in the discard pile
+export const PublicPlaceUnseenThisAge = "unseenThisAge"; // face down or set aside in the current age, unknown which
+export const PublicPlaceUnseenLaterAge = "unseenLaterAge"; // in a later age's deck, dealt or set aside
+export const PublicPlaceRemovedKnown = "removedKnown"; // an age that is over, and the card was never seen
+/**
+ * The public places.
+ */
+export type PublicPlace = typeof PublicPlaceFaceUp | typeof PublicPlaceCity | typeof PublicPlaceTucked | typeof PublicPlaceDiscard | typeof PublicPlaceUnseenThisAge | typeof PublicPlaceUnseenLaterAge | typeof PublicPlaceRemovedKnown;
+/**
+ * ExtraTurnState is what an action does to the mover's turn.
+ */
+export const ExtraTurnStateNone = "none"; // the turn passes as usual
+export const ExtraTurnStateGain = "gain"; // the mover plays again
+export const ExtraTurnStateLost = "lost"; // an extra turn is granted on the age's last card, so it is lost
+/**
+ * The extra-turn states.
+ */
+export type ExtraTurnState = typeof ExtraTurnStateNone | typeof ExtraTurnStateGain | typeof ExtraTurnStateLost;
+/**
+ * ExtraTurnSource says why a wonder grants an extra turn.
+ */
+export const ExtraTurnSourceNone = "none"; // no extra turn
+export const ExtraTurnSourceWonder = "wonder"; // the wonder's own effect
+export const ExtraTurnSourceTheology = "theology"; // the builder owns Theology
+/**
+ * The extra-turn sources.
+ */
+export type ExtraTurnSource = typeof ExtraTurnSourceNone | typeof ExtraTurnSourceWonder | typeof ExtraTurnSourceTheology;
+/**
+ * ScienceEffectKind is what a green card does to its builder's symbols.
+ */
+export const ScienceEffectKindNew = "new"; // a symbol the seat did not have
+export const ScienceEffectKindPair = "pair"; // the second card of a symbol
+/**
+ * The science effect kinds.
+ */
+export type ScienceEffectKind = typeof ScienceEffectKindNew | typeof ScienceEffectKindPair;
 
 //////////
 // source: schema.go
@@ -326,6 +383,12 @@ export interface View {
   active: number /* int */; // whose turn it is; differs from toMove only while a new age's starter is chosen
   firstPlayer: number /* int */; // the seat that started the draft and Age I
   extraTurn: boolean; // the active seat plays again once this turn is over
+  /**
+   * PlayingAgain says that the current turn was granted by an extra
+   * turn: the active seat is playing again. It is false while a new
+   * age's starter is chosen and once the game is over.
+   */
+  playingAgain: boolean;
   draft?: DraftView; // only during the wonder draft
   structure: SlotView[]; // the current age's 20 slots in layout order; empty during the draft
   players: Pair<PlayerView>; // by seat
@@ -341,6 +404,7 @@ export interface View {
   scorePreview: Pair<ScoreView>; // both seats' points if the game ended now
   result?: ResultView; // once the game is over
   revealed?: RevealView; // the hidden cards, wonders and tokens, once the game is over (unless the game hides them)
+  hints?: HintsView; // the board-level hints (hints.go); absent once the game is over and when the view was built without hint settings
 }
 /**
  * DraftView is the wonder draft in progress.
@@ -348,6 +412,7 @@ export interface View {
 export interface DraftView {
   round: number /* int */; // 1 or 2
   offer: DraftOfferView[]; // the round's four wonders, in the order they were dealt; the second round's stay hidden until the first is over
+  order: number /* int */[]; // the seats making the round's four picks, in pick order (the last pick is automatic)
 }
 /**
  * DraftOfferView is one wonder of the current draft round.
@@ -445,6 +510,7 @@ export interface PlayerView {
   science: ScienceView;
   chains: Chain[]; // chain symbols this seat's city shows
   discardValue: number /* int */; // coins this seat receives for discarding a card now
+  shields: number /* int */; // shields this seat has placed: every shield of its buildings and wonders, Strategy's included
 }
 /**
  * WonderView is one of a seat's wonders, in draft order.

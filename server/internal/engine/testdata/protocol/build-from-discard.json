@@ -15,6 +15,7 @@
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
      {
       "index": 0,
@@ -1017,7 +1018,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      },
      {
       "seat": 1,
@@ -1240,7 +1242,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      }
     ],
     "military": {
@@ -1357,6 +1360,7 @@
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
      {
       "index": 0,
@@ -2359,7 +2363,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      },
      {
       "seat": 1,
@@ -2582,7 +2587,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      }
     ],
     "military": {
@@ -2692,6 +2698,7 @@
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
      {
       "index": 0,
@@ -3694,7 +3701,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      },
      {
       "seat": 1,
@@ -3917,7 +3925,8 @@
        "distinct": 0
       },
       "chains": [],
-      "discardValue": 2
+      "discardValue": 2,
+      "shields": 0
      }
     ],
     "military": {

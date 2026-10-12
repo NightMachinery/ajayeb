@@ -106,6 +106,7 @@ export const fixtures = [
       "active": 1,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "draft": {
         "round": 1,
         "offer": [
@@ -122,6 +123,12 @@ export const fixtures = [
           {
             "wonder": "pyramids"
           }
+        ],
+        "order": [
+          0,
+          1,
+          1,
+          0
         ]
       },
       "structure": [],
@@ -202,7 +209,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -233,7 +241,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
@@ -365,6 +374,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "draft": {
         "round": 1,
         "offer": [
@@ -380,6 +390,12 @@ export const fixtures = [
           {
             "wonder": "mausoleum"
           }
+        ],
+        "order": [
+          0,
+          1,
+          1,
+          0
         ]
       },
       "structure": [],
@@ -413,7 +429,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -444,7 +461,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
@@ -607,6 +625,7 @@ export const fixtures = [
       "active": 1,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "structure": [
         {
           "index": 0,
@@ -1531,7 +1550,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 3
+          "discardValue": 3,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -1740,7 +1760,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
@@ -2060,6 +2081,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "structure": [
         {
           "index": 0,
@@ -3236,7 +3258,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 2
         },
         {
           "seat": 1,
@@ -3452,7 +3475,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
@@ -3733,6 +3757,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "draft": {
         "round": 2,
         "offer": [
@@ -3749,6 +3774,12 @@ export const fixtures = [
           {
             "wonder": "statue-of-zeus"
           }
+        ],
+        "order": [
+          1,
+          0,
+          0,
+          1
         ]
       },
       "structure": [],
@@ -3868,7 +3899,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -4031,7 +4063,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
@@ -4311,6 +4344,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "structure": [
         {
           "index": 0,
@@ -5215,7 +5249,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -5442,7 +5477,8 @@ export const fixtures = [
           "chains": [
             "amphora"
           ],
-          "discardValue": 3
+          "discardValue": 3,
+          "shields": 0
         }
       ],
       "military": {
@@ -6623,6 +6659,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "structure": [
         {
           "index": 0,
@@ -7675,7 +7712,8 @@ export const fixtures = [
           "chains": [
             "book"
           ],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         },
         {
           "seat": 1,
@@ -7884,7 +7922,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 0
         }
       ],
       "military": {
@@ -8072,6 +8111,7 @@ export const fixtures = [
       "active": 0,
       "firstPlayer": 0,
       "extraTurn": false,
+      "playingAgain": false,
       "structure": [
         {
           "index": 0,
@@ -8962,7 +9002,8 @@ export const fixtures = [
           "chains": [
             "tower"
           ],
-          "discardValue": 2
+          "discardValue": 2,
+          "shields": 1
         },
         {
           "seat": 1,
@@ -9176,7 +9217,8 @@ export const fixtures = [
             "distinct": 0
           },
           "chains": [],
-          "discardValue": 3
+          "discardValue": 3,
+          "shields": 0
         }
       ],
       "military": {
@@ -10167,6 +10209,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -11129,7 +11172,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -11331,7 +11375,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -12598,6 +12643,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -13560,7 +13606,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -13762,7 +13809,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -13845,6 +13893,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -14807,7 +14856,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -15009,7 +15059,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -15093,6 +15144,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -16097,7 +16149,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -16306,7 +16359,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -17711,6 +17765,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -18715,7 +18770,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -18924,7 +18980,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -19004,6 +19061,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -20008,7 +20066,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -20217,7 +20276,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -20298,6 +20358,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": true,
     "structure": [
       {
         "index": 0,
@@ -21355,7 +21416,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -21580,7 +21642,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -21975,6 +22038,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": true,
     "structure": [
       {
         "index": 0,
@@ -23032,7 +23096,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -23257,7 +23322,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -23336,6 +23402,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": true,
     "structure": [
       {
         "index": 0,
@@ -24393,7 +24460,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -24618,7 +24686,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -24698,6 +24767,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -25700,7 +25770,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -25923,7 +25994,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -26021,6 +26093,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -27023,7 +27096,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -27246,7 +27320,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -27337,6 +27412,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -28339,7 +28415,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -28562,7 +28639,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -28654,6 +28732,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -29757,7 +29836,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -29980,7 +30060,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -30063,6 +30144,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -31166,7 +31248,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -31389,7 +31472,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -31946,6 +32030,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -33049,7 +33134,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -33272,7 +33358,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -33355,6 +33442,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -34446,7 +34534,8 @@ export const protocolFixtures = [
         "chains": [
           "drop"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -34669,7 +34758,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -34750,6 +34840,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -35841,7 +35932,8 @@ export const protocolFixtures = [
         "chains": [
           "drop"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -36064,7 +36156,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -36634,6 +36727,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -37725,7 +37819,8 @@ export const protocolFixtures = [
         "chains": [
           "drop"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -37948,7 +38043,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -38029,6 +38125,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -39196,7 +39293,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -39419,7 +39517,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -39518,6 +39617,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -40685,7 +40785,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -40908,7 +41009,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -40995,6 +41097,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -42162,7 +42265,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -42385,7 +42489,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -42473,6 +42578,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -43208,7 +43314,8 @@ export const protocolFixtures = [
         "chains": [
           "mask"
         ],
-        "discardValue": 4
+        "discardValue": 4,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -43401,7 +43508,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -44649,6 +44757,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -45384,7 +45493,8 @@ export const protocolFixtures = [
         "chains": [
           "mask"
         ],
-        "discardValue": 4
+        "discardValue": 4,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -45577,7 +45687,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -45655,6 +45766,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -46390,7 +46502,8 @@ export const protocolFixtures = [
         "chains": [
           "mask"
         ],
-        "discardValue": 4
+        "discardValue": 4,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -46583,7 +46696,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -46662,6 +46776,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -47726,7 +47841,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -47937,7 +48053,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -48034,6 +48151,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -49098,7 +49216,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -49309,7 +49428,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -49399,6 +49519,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -50463,7 +50584,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -50674,7 +50796,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -50765,6 +50888,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
       "round": 1,
       "offer": [
@@ -50781,6 +50905,12 @@ export const protocolFixtures = [
         {
           "wonder": "mausoleum"
         }
+      ],
+      "order": [
+        0,
+        1,
+        1,
+        0
       ]
     },
     "structure": [],
@@ -50861,7 +50991,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -50892,7 +51023,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -50973,6 +51105,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
       "round": 1,
       "offer": [
@@ -50989,6 +51122,12 @@ export const protocolFixtures = [
         {
           "wonder": "mausoleum"
         }
+      ],
+      "order": [
+        0,
+        1,
+        1,
+        0
       ]
     },
     "structure": [],
@@ -51069,7 +51208,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -51100,7 +51240,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -51196,6 +51337,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
       "round": 1,
       "offer": [
@@ -51212,6 +51354,12 @@ export const protocolFixtures = [
         {
           "wonder": "mausoleum"
         }
+      ],
+      "order": [
+        0,
+        1,
+        1,
+        0
       ]
     },
     "structure": [],
@@ -51292,7 +51440,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -51323,7 +51472,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -51404,6 +51554,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
       "round": 2,
       "offer": [
@@ -51419,6 +51570,12 @@ export const protocolFixtures = [
         {
           "wonder": "hanging-gardens"
         }
+      ],
+      "order": [
+        1,
+        0,
+        0,
+        1
       ]
     },
     "structure": [],
@@ -51538,7 +51695,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -51662,7 +51820,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -51743,6 +51902,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
       "round": 2,
       "offer": [
@@ -51758,6 +51918,12 @@ export const protocolFixtures = [
         {
           "wonder": "hanging-gardens"
         }
+      ],
+      "order": [
+        1,
+        0,
+        0,
+        1
       ]
     },
     "structure": [],
@@ -51877,7 +52043,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -52001,7 +52168,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -52102,6 +52270,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "draft": {
       "round": 2,
       "offer": [
@@ -52117,6 +52286,12 @@ export const protocolFixtures = [
         {
           "wonder": "hanging-gardens"
         }
+      ],
+      "order": [
+        1,
+        0,
+        0,
+        1
       ]
     },
     "structure": [],
@@ -52236,7 +52411,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -52360,7 +52536,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -52441,6 +52618,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -53572,7 +53750,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -53795,7 +53974,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -53876,6 +54056,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -55007,7 +55188,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -55230,7 +55412,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -55770,6 +55953,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -56901,7 +57085,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 1
       },
       {
         "seat": 1,
@@ -57124,7 +57309,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -57204,6 +57390,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -57588,7 +57775,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -57804,7 +57992,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -57964,6 +58153,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -58348,7 +58538,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -58564,7 +58755,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -58723,6 +58915,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -59107,7 +59300,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -59323,7 +59517,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -59483,6 +59678,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -60517,7 +60713,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -60740,7 +60937,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -60957,6 +61155,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -61991,7 +62190,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -62214,7 +62414,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -62430,6 +62631,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -63464,7 +63666,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -63687,7 +63890,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -63904,6 +64108,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -64955,7 +65160,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 2
       },
       {
         "seat": 1,
@@ -65164,7 +65370,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -65273,6 +65480,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -66324,7 +66532,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 2
       },
       {
         "seat": 1,
@@ -66533,7 +66742,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -66641,6 +66851,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -67692,7 +67903,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 2
       },
       {
         "seat": 1,
@@ -67901,7 +68113,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -68010,6 +68223,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -69400,7 +69614,8 @@ export const protocolFixtures = [
           "book",
           "gear"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -69609,7 +69824,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -69798,6 +70014,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -71188,7 +71405,8 @@ export const protocolFixtures = [
           "book",
           "gear"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -71397,7 +71615,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -71585,6 +71804,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -72975,7 +73195,8 @@ export const protocolFixtures = [
           "book",
           "gear"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -73184,7 +73405,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -73373,6 +73595,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -73764,7 +73987,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -73973,7 +74197,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -74132,6 +74357,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -74523,7 +74749,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -74732,7 +74959,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -74890,6 +75118,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -75281,7 +75510,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -75490,7 +75720,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -75650,6 +75881,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -76776,7 +77008,8 @@ export const protocolFixtures = [
           "distinct": 1
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -76999,7 +77232,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -77080,6 +77314,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -78206,7 +78441,8 @@ export const protocolFixtures = [
           "distinct": 1
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -78429,7 +78665,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -78992,6 +79229,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -80118,7 +80356,8 @@ export const protocolFixtures = [
           "distinct": 1
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -80341,7 +80580,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -80422,6 +80662,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -81843,7 +82084,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 4
       },
       {
         "seat": 1,
@@ -82066,7 +82308,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -82146,6 +82389,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -83567,7 +83811,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 4
       },
       {
         "seat": 1,
@@ -83790,7 +84035,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -84378,6 +84624,7 @@ export const protocolFixtures = [
     "active": 1,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -85799,7 +86046,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 4
       },
       {
         "seat": 1,
@@ -86022,7 +86270,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -86102,6 +86351,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -87168,7 +87418,8 @@ export const protocolFixtures = [
         "chains": [
           "book"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -87384,7 +87635,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -87504,6 +87756,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -88570,7 +88823,8 @@ export const protocolFixtures = [
         "chains": [
           "book"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -88786,7 +89040,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -88879,6 +89134,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -89945,7 +90201,8 @@ export const protocolFixtures = [
         "chains": [
           "book"
         ],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -90161,7 +90418,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -90255,6 +90513,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -91331,7 +91590,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -91554,7 +91814,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -91662,6 +91923,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -92738,7 +93000,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -92961,7 +93224,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -93048,6 +93312,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -94124,7 +94389,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -94347,7 +94613,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -94435,6 +94702,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": true,
     "structure": [
       {
         "index": 0,
@@ -95440,7 +95708,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -95495,7 +95764,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -95663,6 +95933,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": true,
     "structure": [
       {
         "index": 0,
@@ -96668,7 +96939,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -96723,7 +96995,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -96803,6 +97076,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 1,
     "extraTurn": false,
+    "playingAgain": true,
     "structure": [
       {
         "index": 0,
@@ -97808,7 +98082,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -97863,7 +98138,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -97944,6 +98220,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -99098,7 +99375,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -99328,7 +99606,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -99874,6 +100153,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -101028,7 +101308,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -101258,7 +101539,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
@@ -101340,6 +101622,7 @@ export const protocolFixtures = [
     "active": 0,
     "firstPlayer": 0,
     "extraTurn": false,
+    "playingAgain": false,
     "structure": [
       {
         "index": 0,
@@ -102494,7 +102777,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       },
       {
         "seat": 1,
@@ -102724,7 +103008,8 @@ export const protocolFixtures = [
           "distinct": 0
         },
         "chains": [],
-        "discardValue": 2
+        "discardValue": 2,
+        "shields": 0
       }
     ],
     "military": {
