@@ -171,6 +171,9 @@ type RoomLogKind string
 const (
 	// RoomLogHints: the admin changed the hint settings.
 	RoomLogHints RoomLogKind = "hints"
+	// RoomLogLink: a seat's device link was reset (Target), by that
+	// seat's player or the game's admin (Seat).
+	RoomLogLink RoomLogKind = "link"
 )
 
 // RoomLogEntry is one room-level event of the game log: something that
@@ -178,7 +181,7 @@ const (
 // The client shows it among the game's own events, before the action at
 // ply At.
 type RoomLogEntry struct {
-	Kind RoomLogKind `json:"kind" tstype:"'hints'"`
+	Kind RoomLogKind `json:"kind" tstype:"'hints' | 'link'"`
 	// At is the game's ply when it happened: the entry comes after every
 	// history entry of a smaller ply.
 	At int `json:"at"`
@@ -186,7 +189,10 @@ type RoomLogEntry struct {
 	// hot-seat room, where one person holds both seats.
 	Seat *int `json:"seat,omitempty" tstype:"0 | 1"`
 	// On and Off are the families switched on and off (kind hints), in
-	// family order.
+	// family order; empty for any other kind.
 	On  []HintFamily `json:"on"`
 	Off []HintFamily `json:"off"`
+	// Target is the seat whose device link was reset (kind link); absent
+	// for any other kind.
+	Target *int `json:"target,omitempty" tstype:"0 | 1"`
 }

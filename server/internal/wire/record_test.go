@@ -74,6 +74,44 @@ var recordCases = []recordCase{
 		}}
 		return st
 	}},
+	{"linked", func(t *testing.T) wire.ServerMessage {
+		return wire.NewLinked("N4HT8Q", 1, "q3Vb8Kx0Zr7TnW2mYc5JhA")
+	}},
+	{"created-claim", func(t *testing.T) wire.ServerMessage {
+		// The rematch room's code, as a connection that joined the old room
+		// with a device link receives it: with its seat's claim there.
+		f := wire.NewCreated("R7MQ3X")
+		claim := "Hw4pZ9cN1sKe6uTb0LgQvY"
+		f.Claim = &claim
+		return f
+	}},
+	{"error-bad-claim", func(t *testing.T) wire.ServerMessage {
+		return wire.NewError(wire.ErrorCodeBadClaim, "that device link does not work in this room (any more)")
+	}},
+	{"state-names-numbered", func(t *testing.T) wire.ServerMessage {
+		// An online game between two players who both call themselves
+		// Sara: the second to join is numbered. Sara 2 (seat 1, not the
+		// admin) reset her own device link before the first move.
+		s := engine.NewGame(8, engine.Options{FirstPlayer: engine.FirstPlayerSeat0})
+		st := stateFrame(t, "S2NM4Q", &s, nil, wire.ModeOnline, wire.RoomStatusPlaying, nil)
+		st.Room.Seats[1].Name = "Sara"
+		st.Room.Seats[1].NameNo = 2
+		st.View = engine.ViewFor(&s, engine.SeatViewer(1))
+		st.You = wire.NewYouInfo([]int{1}, s.ToMove == 1)
+		for i := range st.Room.Seats {
+			st.Room.Seats[i].You = i == 1
+		}
+		seat, target := 1, 1
+		st.RoomLog = []wire.RoomLogEntry{{
+			Kind:   wire.RoomLogLink,
+			At:     0,
+			Seat:   &seat,
+			On:     []wire.HintFamily{},
+			Off:    []wire.HintFamily{},
+			Target: &target,
+		}}
+		return st
+	}},
 	{"state-draft", func(t *testing.T) wire.ServerMessage {
 		s := engine.NewGame(1, engine.Options{})
 		return stateFrame(t, "DRAFT2", &s, nil, wire.ModeHotseat, wire.RoomStatusPlaying, nil)

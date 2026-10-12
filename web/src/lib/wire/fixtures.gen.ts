@@ -13,12 +13,28 @@ import type { View } from './view.gen';
 export const fixtures = [
   {
     "t": "created",
+    "code": "R7MQ3X",
+    "claim": "Hw4pZ9cN1sKe6uTb0LgQvY"
+  },
+  {
+    "t": "created",
     "code": "K7QX2M"
+  },
+  {
+    "t": "error",
+    "code": "bad-claim",
+    "msg": "that device link does not work in this room (any more)"
   },
   {
     "t": "error",
     "code": "room-not-found",
     "msg": "no room with that code"
+  },
+  {
+    "t": "linked",
+    "code": "N4HT8Q",
+    "seat": 1,
+    "claim": "q3Vb8Kx0Zr7TnW2mYc5JhA"
   },
   {
     "t": "reject",
@@ -45,7 +61,8 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
@@ -53,7 +70,8 @@ export const fixtures = [
           "kind": "bot",
           "bot": "normal",
           "connected": true,
-          "you": false
+          "you": false,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -326,14 +344,16 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
           "name": "Omid",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -567,14 +587,16 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
           "name": "Bob",
           "kind": "human",
           "connected": true,
-          "you": false
+          "you": false,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -2007,7 +2029,8 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
@@ -2015,7 +2038,8 @@ export const fixtures = [
           "kind": "bot",
           "bot": "normal",
           "connected": true,
-          "you": false
+          "you": false,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -3697,14 +3721,16 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": false
+          "you": false,
+          "nameNo": 0
         },
         {
           "seat": 1,
           "name": "Bob",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -4148,14 +4174,16 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
           "name": "Bob",
           "kind": "human",
           "connected": true,
-          "you": false
+          "you": false,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -6588,6 +6616,227 @@ export const fixtures = [
   },
   {
     "t": "state",
+    "code": "S2NM4Q",
+    "version": 0,
+    "room": {
+      "mode": "online",
+      "status": "playing",
+      "seats": [
+        {
+          "seat": 0,
+          "name": "Sara",
+          "kind": "human",
+          "connected": true,
+          "you": false,
+          "nameNo": 0
+        },
+        {
+          "seat": 1,
+          "name": "Sara",
+          "kind": "human",
+          "connected": true,
+          "you": true,
+          "nameNo": 2
+        }
+      ],
+      "spectators": 0,
+      "hints": {
+        "prices": true,
+        "economy": true,
+        "science": true,
+        "military": true,
+        "threats": true,
+        "tempo": true,
+        "wonders": true,
+        "tokens": true,
+        "scoring": true,
+        "counting": true,
+        "recap": true,
+        "advisor": false
+      }
+    },
+    "you": {
+      "seats": [
+        1
+      ],
+      "canAct": false,
+      "admin": false
+    },
+    "canUndo": false,
+    "events": [],
+    "roomLog": [
+      {
+        "kind": "link",
+        "at": 0,
+        "seat": 1,
+        "on": [],
+        "off": [],
+        "target": 1
+      }
+    ],
+    "view": {
+      "schema": 1,
+      "catalogHash": "64943c7be6864ff4",
+      "ply": 0,
+      "viewer": 1,
+      "phase": "wonderDraft",
+      "age": 0,
+      "toMove": 0,
+      "active": 0,
+      "firstPlayer": 0,
+      "extraTurn": false,
+      "draft": {
+        "round": 1,
+        "offer": [
+          {
+            "wonder": "temple-of-artemis"
+          },
+          {
+            "wonder": "mausoleum"
+          },
+          {
+            "wonder": "sphinx"
+          },
+          {
+            "wonder": "colossus"
+          }
+        ]
+      },
+      "structure": [],
+      "players": [
+        {
+          "seat": 0,
+          "coins": 7,
+          "city": [],
+          "tokens": [],
+          "wonders": [],
+          "production": {
+            "fixed": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "tradeFix": []
+          },
+          "tradePrices": {
+            "wood": 2,
+            "clay": 2,
+            "stone": 2,
+            "glass": 2,
+            "papyrus": 2
+          },
+          "science": {
+            "symbols": [],
+            "distinct": 0
+          },
+          "chains": [],
+          "discardValue": 2
+        },
+        {
+          "seat": 1,
+          "coins": 7,
+          "city": [],
+          "tokens": [],
+          "wonders": [],
+          "production": {
+            "fixed": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "tradeFix": []
+          },
+          "tradePrices": {
+            "wood": 2,
+            "clay": 2,
+            "stone": 2,
+            "glass": 2,
+            "papyrus": 2
+          },
+          "science": {
+            "symbols": [],
+            "distinct": 0
+          },
+          "chains": [],
+          "discardValue": 2
+        }
+      ],
+      "military": {
+        "position": 0,
+        "looting": [
+          {
+            "at": -6,
+            "seat": 0,
+            "value": 5,
+            "present": true
+          },
+          {
+            "at": -3,
+            "seat": 0,
+            "value": 2,
+            "present": true
+          },
+          {
+            "at": 3,
+            "seat": 1,
+            "value": 2,
+            "present": true
+          },
+          {
+            "at": 6,
+            "seat": 1,
+            "value": 5,
+            "present": true
+          }
+        ]
+      },
+      "boardTokens": [
+        "agriculture",
+        "architecture",
+        "mathematics",
+        "philosophy",
+        "theology"
+      ],
+      "boxTokenCount": 5,
+      "removedCount": 0,
+      "discard": [],
+      "wondersBuilt": 0,
+      "choices": [],
+      "disabled": [],
+      "scorePreview": [
+        {
+          "blue": 0,
+          "green": 0,
+          "yellow": 0,
+          "purple": 0,
+          "wonders": 0,
+          "tokens": 0,
+          "coins": 2,
+          "military": 0,
+          "total": 2
+        },
+        {
+          "blue": 0,
+          "green": 0,
+          "yellow": 0,
+          "purple": 0,
+          "wonders": 0,
+          "tokens": 0,
+          "coins": 2,
+          "military": 0,
+          "total": 2
+        }
+      ]
+    }
+  },
+  {
+    "t": "state",
     "code": "W3NB9P",
     "version": 1,
     "room": {
@@ -6599,14 +6848,16 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
           "name": "Bob",
           "kind": "human",
           "connected": true,
-          "you": false
+          "you": false,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -8046,14 +8297,16 @@ export const fixtures = [
           "name": "Sara",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         },
         {
           "seat": 1,
           "name": "Omid",
           "kind": "human",
           "connected": true,
-          "you": true
+          "you": true,
+          "nameNo": 0
         }
       ],
       "spectators": 0,
@@ -103085,8 +103338,11 @@ export const protocolFixtures = [
 
 /** fixtureNames[i] names fixtures[i]: its recorded file's name without .json. */
 export const fixtureNames = [
+  "created-claim",
   "created",
+  "error-bad-claim",
   "error-room-not-found",
+  "linked",
   "reject-not-admin",
   "reject-stale",
   "state-ai-thinking",
@@ -103095,6 +103351,7 @@ export const fixtureNames = [
   "state-game-over",
   "state-hints-changed",
   "state-join-history",
+  "state-names-numbered",
   "state-pending-token",
   "state-play",
   "welcome",

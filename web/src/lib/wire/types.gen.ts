@@ -94,6 +94,13 @@ export interface Create {
 export interface Join {
   t: 'join';
   code: string;
+  /**
+   * Claim, when present, is a device link's claim (package ident): with
+   * a valid one the connection acts in this room as the user of the seat
+   * it was made for, and as itself everywhere else. An invalid one is
+   * refused with error bad-claim and counts against the join limit.
+   */
+  claim?: string;
 }
 /**
  * Act submits one game action.
@@ -208,12 +215,14 @@ export const MaxRoomLog = 64;
  */
 export type RoomLogKind = string;
 /**
- * The room log kinds.
- */
-/**
  * RoomLogHints: the admin changed the hint settings.
  */
 export const RoomLogHints: RoomLogKind = "hints";
+/**
+ * RoomLogLink: a seat's device link was reset (Target), by that
+ * seat's player or the game's admin (Seat).
+ */
+export const RoomLogLink: RoomLogKind = "link";
 /**
  * RoomLogEntry is one room-level event of the game log: something that
  * happened to the room rather than in the game, the same for every viewer.
@@ -221,7 +230,7 @@ export const RoomLogHints: RoomLogKind = "hints";
  * ply At.
  */
 export interface RoomLogEntry {
-  kind: 'hints';
+  kind: 'hints' | 'link';
   /**
    * At is the game's ply when it happened: the entry comes after every
    * history entry of a smaller ply.
@@ -234,10 +243,53 @@ export interface RoomLogEntry {
   seat?: 0 | 1;
   /**
    * On and Off are the families switched on and off (kind hints), in
-   * family order.
+   * family order; empty for any other kind.
    */
   on: HintFamily[];
   off: HintFamily[];
+  /**
+   * Target is the seat whose device link was reset (kind link); absent
+   * for any other kind.
+   */
+  target?: 0 | 1;
+}
+
+//////////
+// source: identity.go
+
+/**
+ * Link asks for the device link of one seat: the server answers this
+ * connection alone with a Linked frame, or with reject not-admin when the
+ * connection is neither that seat's user nor the game's admin (a spectator
+ * never is), or reject bad-request when nobody holds the seat yet or a bot
+ * does.
+ */
+export interface Link {
+  t: 'link';
+  code: string;
+  seat: 0 | 1;
+}
+/**
+ * Relink resets the device link of one seat, under the same rules as
+ * Link: every link made for the seat before stops working, the asking
+ * connection receives the new one in a Linked frame, and every connection
+ * receives a state frame whose room log records the reset.
+ */
+export interface Relink {
+  t: 'relink';
+  code: string;
+  seat: 0 | 1;
+}
+/**
+ * Linked answers a link or relink frame: the current claim of one seat of
+ * the room. The client makes the link from it (/play/<code>#claim=<claim>).
+ * It goes only to the connection that asked.
+ */
+export interface Linked {
+  t: 'linked';
+  code: string;
+  seat: 0 | 1;
+  claim: string;
 }
 
 //////////
@@ -263,11 +315,15 @@ export interface ServerInfo {
   rules: number /* int */; // engine.RulesVersion this server plays
 }
 /**
- * Created answers a successful create: the new room's code.
+ * Created answers a successful create: the new room's code. It also tells
+ * every connection of a finished room the code of its rematch room; a
+ * connection that joined that room with a claim (a device link) then also
+ * receives the claim of its seat in the rematch room, so it can follow.
  */
 export interface Created {
   t: 'created';
   code: string;
+  claim?: string;
 }
 /**
  * RoomStatus is a room's lifecycle state, as a client sees it (there is no
@@ -301,6 +357,14 @@ export interface SeatInfo {
   bot?: BotLevel; // the bot's level; set only when Kind is SeatKindBot
   connected: boolean;
   you: boolean; // this connection holds this seat
+  /**
+   * NameNo tells the seat's name apart from an equal name (compared
+   * without case and outer spaces) that was in the room first: 0 for
+   * none, else 2, 3 and so on, which the client shows after the name. It
+   * never changes when people leave and come back; a rename recomputes
+   * only the renamed seat's.
+   */
+  nameNo: number /* int */;
 }
 /**
  * RoomInfo is the room-level information in a state frame: everything about
@@ -329,7 +393,8 @@ export interface YouInfo {
   canAct: boolean; // a legal action exists for one of Seats right now
   /**
    * Admin says this connection's user is the game's admin, who may change
-   * the hint settings (the hints frame): the player who created the game.
+   * the hint settings (the hints frame) and ask for and reset any seat's
+   * device link (link, relink): the player who created the game.
    */
   admin: boolean;
 }
@@ -415,7 +480,7 @@ export const RejectCodeIllegal = "illegal"; // the key is not in the current leg
 export const RejectCodeNotYourTurn = "not-your-turn"; // this connection does not hold the seat to move
 export const RejectCodeRate = "rate"; // the client is sending faster than the rate limit allows
 export const RejectCodeBadRequest = "bad-request"; // the frame itself was malformed in some other way
-export const RejectCodeNotAdmin = "not-admin"; // only the game's admin may do that (change the hint settings)
+export const RejectCodeNotAdmin = "not-admin"; // only the game's admin may do that (change the hint settings; another seat's device link)
 export const RejectCodeGameOver = "game-over"; // the game has ended, so its settings no longer change
 /**
  * The reject codes.
@@ -443,10 +508,11 @@ export const ErrorCodeForbidden = "forbidden"; // this user may not do that in t
 export const ErrorCodeBadHello = "bad-hello"; // the hello frame itself was invalid
 export const ErrorCodeProtocol = "protocol"; // unsupported protocol version
 export const ErrorCodeBusy = "busy"; // the server holds as many rooms as it can; try again later
+export const ErrorCodeBadClaim = "bad-claim"; // the join's claim is not a current device link of this room
 /**
  * The error codes.
  */
-export type ErrorCode = typeof ErrorCodeRoomNotFound | typeof ErrorCodeRoomFull | typeof ErrorCodeForbidden | typeof ErrorCodeBadHello | typeof ErrorCodeProtocol | typeof ErrorCodeBusy;
+export type ErrorCode = typeof ErrorCodeRoomNotFound | typeof ErrorCodeRoomFull | typeof ErrorCodeForbidden | typeof ErrorCodeBadHello | typeof ErrorCodeProtocol | typeof ErrorCodeBusy | typeof ErrorCodeBadClaim;
 /**
  * Error reports a connection-level problem.
  */

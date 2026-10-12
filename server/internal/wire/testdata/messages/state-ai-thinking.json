@@ -11,7 +11,8 @@
         "name": "Sara",
         "kind": "human",
         "connected": true,
-        "you": true
+        "you": true,
+        "nameNo": 0
       },
       {
         "seat": 1,
@@ -19,7 +20,8 @@
         "kind": "bot",
         "bot": "normal",
         "connected": true,
-        "you": false
+        "you": false,
+        "nameNo": 0
       }
     ],
     "spectators": 0,

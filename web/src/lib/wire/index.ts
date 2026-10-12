@@ -31,18 +31,32 @@ import type {
   Leave,
   Rematch,
   Hints,
+  Link,
+  Relink,
   Welcome,
   Created,
   State,
   Reject,
+  Linked,
   Error as ErrorFrame
 } from './types.gen';
 
 /** A frame the client may send the server, identified by its "t". */
-export type ClientMessage = Hello | Create | Join | Act | Undo | Resync | Leave | Rematch | Hints;
+export type ClientMessage =
+  | Hello
+  | Create
+  | Join
+  | Act
+  | Undo
+  | Resync
+  | Leave
+  | Rematch
+  | Hints
+  | Link
+  | Relink;
 
 /** A frame the server may send the client, identified by its "t". */
-export type ServerMessage = Welcome | Created | State | Reject | ErrorFrame;
+export type ServerMessage = Welcome | Created | State | Linked | Reject | ErrorFrame;
 
 /**
  * SeatChoice is Create's "seat" field: a specific seat, or "random" to let

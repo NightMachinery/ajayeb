@@ -30,6 +30,10 @@ func TestDecodeClientAccepts(t *testing.T) {
 		"resync":      `{"t":"resync","code":"K7QX2M"}`,
 		"leave":       `{"t":"leave","code":"K7QX2M"}`,
 		"rematch":     `{"t":"rematch","code":"K7QX2M"}`,
+		"join claim":  `{"t":"join","code":"K7QX2M","claim":"q3Vb8Kx0Zr7TnW2mYc5JhA"}`,
+		"join junk":   `{"t":"join","code":"K7QX2M","claim":"not a claim"}`,
+		"link":        `{"t":"link","code":"K7QX2M","seat":0}`,
+		"relink":      `{"t":"relink","code":"K7QX2M","seat":1}`,
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -277,5 +281,41 @@ func TestDecodeClientRejectsInvisibleFormatCharacters(t *testing.T) {
 		if _, err := DecodeClient([]byte(hello(name, "c1"))); err != nil {
 			t.Errorf("hello with name %s: %v, want it accepted", name, err)
 		}
+	}
+}
+
+// TestDecodeIdentityFrames checks the device link frames: a join's claim is
+// bounded (a wrong one of a sane length is the room's to refuse, as a bad
+// claim, not a malformed frame), and link and relink name a seat.
+func TestDecodeIdentityFrames(t *testing.T) {
+	bad := map[string]string{
+		"claim too long":   `{"t":"join","code":"K7QX2M","claim":"` + strings.Repeat("A", 65) + `"}`,
+		"claim control":    `{"t":"join","code":"K7QX2M","claim":"A\u0000B"}`,
+		"claim not string": `{"t":"join","code":"K7QX2M","claim":5}`,
+		"link seat 2":      `{"t":"link","code":"K7QX2M","seat":2}`,
+		"link no code":     `{"t":"link","code":"","seat":0}`,
+		"link extra":       `{"t":"link","code":"K7QX2M","seat":0,"claim":"x"}`,
+		"relink seat -1":   `{"t":"relink","code":"K7QX2M","seat":-1}`,
+	}
+	for name, raw := range bad {
+		t.Run(name, func(t *testing.T) {
+			if _, err := DecodeClient([]byte(raw)); !errors.Is(err, ErrBadFrame) {
+				t.Fatalf("DecodeClient(%s): err = %v, want ErrBadFrame", raw, err)
+			}
+		})
+	}
+	m, err := DecodeClient([]byte(`{"t":"join","code":"K7QX2M","claim":"q3Vb8Kx0Zr7TnW2mYc5JhA"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if j := m.(Join); j.Claim == nil || *j.Claim != "q3Vb8Kx0Zr7TnW2mYc5JhA" {
+		t.Fatalf("join claim %+v", j)
+	}
+	m, err = DecodeClient([]byte(`{"t":"join","code":"K7QX2M"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if j := m.(Join); j.Claim != nil {
+		t.Fatalf("a join without a claim decoded one: %q", *j.Claim)
 	}
 }

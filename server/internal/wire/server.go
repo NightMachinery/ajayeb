@@ -19,6 +19,7 @@ func (Created) isServerMessage() {}
 func (State) isServerMessage()   {}
 func (Reject) isServerMessage()  {}
 func (Error) isServerMessage()   {}
+func (Linked) isServerMessage()  {}
 
 // Welcome answers hello.
 type Welcome struct {
@@ -36,10 +37,14 @@ type ServerInfo struct {
 	Rules   int    `json:"rules"`   // engine.RulesVersion this server plays
 }
 
-// Created answers a successful create: the new room's code.
+// Created answers a successful create: the new room's code. It also tells
+// every connection of a finished room the code of its rematch room; a
+// connection that joined that room with a claim (a device link) then also
+// receives the claim of its seat in the rematch room, so it can follow.
 type Created struct {
-	T    string `json:"t" tstype:"'created'"`
-	Code string `json:"code"`
+	T     string  `json:"t" tstype:"'created'"`
+	Code  string  `json:"code"`
+	Claim *string `json:"claim,omitempty"`
 }
 
 // NewCreated returns a Created frame with "t" filled in.
@@ -75,6 +80,12 @@ type SeatInfo struct {
 	Bot       *BotLevel `json:"bot,omitempty"` // the bot's level; set only when Kind is SeatKindBot
 	Connected bool      `json:"connected"`
 	You       bool      `json:"you"` // this connection holds this seat
+	// NameNo tells the seat's name apart from an equal name (compared
+	// without case and outer spaces) that was in the room first: 0 for
+	// none, else 2, 3 and so on, which the client shows after the name. It
+	// never changes when people leave and come back; a rename recomputes
+	// only the renamed seat's.
+	NameNo int `json:"nameNo"`
 }
 
 // RoomInfo is the room-level information in a state frame: everything about
@@ -105,7 +116,8 @@ type YouInfo struct {
 	Seats  []int `json:"seats"`
 	CanAct bool  `json:"canAct"` // a legal action exists for one of Seats right now
 	// Admin says this connection's user is the game's admin, who may change
-	// the hint settings (the hints frame): the player who created the game.
+	// the hint settings (the hints frame) and ask for and reset any seat's
+	// device link (link, relink): the player who created the game.
 	Admin bool `json:"admin"`
 }
 
@@ -198,7 +210,7 @@ const (
 	RejectCodeNotYourTurn RejectCode = "not-your-turn" // this connection does not hold the seat to move
 	RejectCodeRate        RejectCode = "rate"          // the client is sending faster than the rate limit allows
 	RejectCodeBadRequest  RejectCode = "bad-request"   // the frame itself was malformed in some other way
-	RejectCodeNotAdmin    RejectCode = "not-admin"     // only the game's admin may do that (change the hint settings)
+	RejectCodeNotAdmin    RejectCode = "not-admin"     // only the game's admin may do that (change the hint settings; another seat's device link)
 	RejectCodeGameOver    RejectCode = "game-over"     // the game has ended, so its settings no longer change
 )
 
@@ -230,6 +242,7 @@ const (
 	ErrorCodeBadHello     ErrorCode = "bad-hello"      // the hello frame itself was invalid
 	ErrorCodeProtocol     ErrorCode = "protocol"       // unsupported protocol version
 	ErrorCodeBusy         ErrorCode = "busy"           // the server holds as many rooms as it can; try again later
+	ErrorCodeBadClaim     ErrorCode = "bad-claim"      // the join's claim is not a current device link of this room
 )
 
 // Error reports a connection-level problem.
@@ -250,4 +263,5 @@ var serverMessageTypes = []ServerMessage{
 	NewState("K7QX2M", 1, NewRoomInfo(ModeHotseat, RoomStatusPlaying, nil, 0), NewYouInfo(nil, false), nil, nil, view.View{}),
 	NewReject(1, RejectCodeStale, "base 3 is behind the current version 5"),
 	NewError(ErrorCodeRoomNotFound, "no room with that code"),
+	NewLinked("K7QX2M", 0, "AAAAAAAAAAAAAAAAAAAAAA"),
 }

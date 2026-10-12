@@ -31,6 +31,8 @@ func (Resync) isClientMessage()  {}
 func (Leave) isClientMessage()   {}
 func (Rematch) isClientMessage() {}
 func (Hints) isClientMessage()   {}
+func (Link) isClientMessage()    {}
+func (Relink) isClientMessage()  {}
 
 // Hello is the first frame a client must send. The server ignores every
 // other frame until it arrives, within the time internal/ws allows.
@@ -213,13 +215,30 @@ func (m Create) validate() error {
 type Join struct {
 	T    string `json:"t" tstype:"'join'"`
 	Code string `json:"code"`
+	// Claim, when present, is a device link's claim (package ident): with
+	// a valid one the connection acts in this room as the user of the seat
+	// it was made for, and as itself everywhere else. An invalid one is
+	// refused with error bad-claim and counts against the join limit.
+	Claim *string `json:"claim,omitempty"`
 }
 
 // NewJoin returns a Join frame with "t" filled in.
 func NewJoin(code string) Join { return Join{T: "join", Code: code} }
 
+// maxClaimLen bounds Join.Claim. A real claim is ident.ClaimLen
+// characters; anything else of a sane length is left to the room, which
+// refuses it as a bad claim (counted against the join limit) rather than as
+// a malformed frame.
+const maxClaimLen = 64
+
 func (m Join) validate() error {
-	return checkNonEmptyBounded("join: code", m.Code, maxCodeLen)
+	if err := checkNonEmptyBounded("join: code", m.Code, maxCodeLen); err != nil {
+		return err
+	}
+	if m.Claim != nil {
+		return checkBounded("join: claim", *m.Claim, maxClaimLen)
+	}
+	return nil
 }
 
 // Act submits one game action.
@@ -426,6 +445,24 @@ func DecodeClient(raw []byte) (ClientMessage, error) {
 			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
 		}
 		return m, nil
+	case "link":
+		var m Link
+		if err := strictUnmarshal(raw, &m); err != nil {
+			return nil, frameErr(t, err)
+		}
+		if err := m.validate(); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
+		}
+		return m, nil
+	case "relink":
+		var m Relink
+		if err := strictUnmarshal(raw, &m); err != nil {
+			return nil, frameErr(t, err)
+		}
+		if err := m.validate(); err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrBadFrame, err)
+		}
+		return m, nil
 	case "hints":
 		var m Hints
 		if err := strictUnmarshal(raw, &m); err != nil {
@@ -457,6 +494,8 @@ var clientMessageTypes = []ClientMessage{
 	NewLeave("K7QX2M"),
 	NewRematch("K7QX2M"),
 	NewHints("K7QX2M", 1, view.HintSettings{}),
+	NewLink("K7QX2M", 0),
+	NewRelink("K7QX2M", 1),
 }
 
 // checkHintsField checks the "hints" object of a frame that has one (see

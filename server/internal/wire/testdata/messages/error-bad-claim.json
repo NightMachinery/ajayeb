@@ -1,0 +1,5 @@
+{
+  "t": "error",
+  "code": "bad-claim",
+  "msg": "that device link does not work in this room (any more)"
+}

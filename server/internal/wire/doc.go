@@ -1,7 +1,7 @@
 // Package wire defines the JSON messages exchanged between the browser and
 // the server: client frames (hello, create, join, act, undo, resync, leave,
-// rematch), server frames (welcome, created, state, reject, error), and the
-// payloads of the small HTTP API.
+// rematch, hints, link, relink), server frames (welcome, created, state,
+// linked, reject, error), and the payloads of the small HTTP API.
 //
 // It is an input to tygo, which generates the TypeScript types the web client
 // uses (see tygo.yaml), so the client and the server share one definition.
@@ -20,7 +20,9 @@
 //   - The server sends ids, error codes and structured events, never display
 //     strings. This is what makes the client fully localisable.
 //   - Tokens travel only inside the hello frame and never appear in any
-//     server frame.
+//     server frame. A claim (a device link) travels in join and in the
+//     linked and created frames sent to the one connection that may have
+//     it, never in a state frame.
 //   - hello and welcome carry the protocol version "v"; an incompatible change
 //     bumps it.
 //   - testdata/messages holds real messages recorded from a scripted game
