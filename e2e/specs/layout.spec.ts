@@ -129,12 +129,17 @@ for (const viewport of VIEWPORTS) {
       // room page from asking for one first. This replaces the whole
       // ajayeb:settings object (a page-level init script runs after the
       // base fixture's context-level one, fixtures/base.ts), so it repeats
-      // animationSpeed: 'off' itself rather than relying on that order.
+      // animationSpeed: 'off' and showOpponentMove: false itself rather than
+      // relying on that order.
       await page.addInitScript(() => {
         try {
           localStorage.setItem(
             'ajayeb:settings',
-            JSON.stringify({ hotseatPassDevice: false, animationSpeed: 'off' })
+            JSON.stringify({
+              hotseatPassDevice: false,
+              animationSpeed: 'off',
+              showOpponentMove: false
+            })
           );
           localStorage.setItem('ajayeb:name', 'Layout');
         } catch {

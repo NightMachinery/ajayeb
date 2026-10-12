@@ -114,12 +114,17 @@ test.describe('hint pips', { tag: ['@mobile'] }, () => {
     // The room comes from this test's own HTTP request, so a stored name
     // keeps the room page from asking for one, and no pass-device screen
     // sits between the turns (as in layout.spec.ts, which also explains why
-    // animationSpeed is repeated here).
+    // animationSpeed and showOpponentMove are repeated here; the move
+    // summary popup would otherwise swallow the menu click after the discard).
     await page.addInitScript(() => {
       try {
         localStorage.setItem(
           'ajayeb:settings',
-          JSON.stringify({ hotseatPassDevice: false, animationSpeed: 'off' })
+          JSON.stringify({
+            hotseatPassDevice: false,
+            animationSpeed: 'off',
+            showOpponentMove: false
+          })
         );
         localStorage.setItem('ajayeb:name', 'Hints');
       } catch {
