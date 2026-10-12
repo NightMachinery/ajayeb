@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
 import type { GameEvent, HistoryEntry, State } from '$lib/wire';
-import { entriesSinceViewer, summarize, summarizeSince, summaryViewer } from './move-summary';
+import {
+  entriesSinceViewer,
+  entryLines,
+  lastPly,
+  latestSummary,
+  summarize,
+  summarizeSince,
+  summaryTrigger,
+  summaryViewer,
+  type TriggerFrame
+} from './move-summary';
 
 function ev(e: Partial<GameEvent> & Pick<GameEvent, 'kind'>): GameEvent {
   return { private: false, ...e };
@@ -155,5 +165,181 @@ describe('summarize', () => {
   it('reads a starter choice', () => {
     const s = summarize([entry(40, 0, [ev({ kind: 'starterChosen', seat: 0, starter: 1 })])], 0);
     expect(s.actions).toEqual([{ ply: 40, kind: 'starterChosen', seat: 0, starter: 1 }]);
+  });
+});
+
+describe('lines', () => {
+  it('gives each move of an extra turn its own line, with what it paid and brought', () => {
+    const h = [
+      entry(10, 0, [ev({ kind: 'build', seat: 0, card: 'x' })]),
+      entry(11, 1, [
+        ev({ kind: 'wonder', seat: 1, wonder: 'piraeus', card: 'baths' }),
+        ev({ kind: 'pay', seat: 1, amount: 5, toOpponent: 2 }),
+        ev({ kind: 'extraTurn', seat: 1 }),
+        ev({ kind: 'reveal', slot: 3, card: 'quarry' })
+      ]),
+      entry(12, 1, [
+        ev({ kind: 'build', seat: 1, card: 'barracks' }),
+        ev({ kind: 'pawn', seat: 1, from: 0, to: 1 }),
+        ev({ kind: 'pawn', seat: 1, from: 1, to: 3 }),
+        ev({ kind: 'loot', seat: 0, amount: 2, value: 2 })
+      ])
+    ];
+    const s = summarizeSince(h, 0)!;
+    expect(s.lines.map((l) => [l.kind, l.ply])).toEqual([
+      ['wonder', 11],
+      ['extraTurn', 11],
+      ['build', 12]
+    ]);
+    const [wonder, , build] = s.lines;
+    expect(wonder).toMatchObject({ wonder: 'piraeus', card: 'baths', paid: 5, toOpponent: 2 });
+    expect(wonder!.pawn).toBeNull();
+    expect(build).toMatchObject({
+      card: 'barracks',
+      paid: 0,
+      pawn: { from: 0, to: 3 },
+      loot: [{ seat: 0, amount: 2, value: 2 }]
+    });
+  });
+
+  it("puts a bot's reply and the choice it opened in one summary", () => {
+    const h = [
+      entry(30, 0, [ev({ kind: 'build', seat: 0, card: 'stable' })]),
+      entry(31, 1, [
+        ev({ kind: 'build', seat: 1, card: 'library' }),
+        ev({ kind: 'pay', seat: 1, amount: 1, toOpponent: 0 }),
+        ev({ kind: 'pair', seat: 1, symbol: 'quill' })
+      ]),
+      entry(32, 1, [
+        ev({ kind: 'token', seat: 1, token: 'law', fromLibrary: false }),
+        ev({ kind: 'coins', seat: 1, amount: 0, balance: 4, token: 'law' })
+      ])
+    ];
+    const s = summarizeSince(h, 0)!;
+    expect(s.plies).toEqual([31, 32]);
+    expect(lastPly(s)).toBe(32);
+    expect(s.lines.map((l) => l.kind)).toEqual(['build', 'token']);
+    expect(s.lines[0]).toMatchObject({ card: 'library', paid: 1, pairs: ['quill'] });
+    expect(s.lines[1]).toMatchObject({ token: 'law', fromLibrary: false });
+  });
+
+  it('gives an age change, a removed wonder, a skipped choice and the end their own lines', () => {
+    const lines = entryLines(
+      entry(50, 1, [
+        ev({ kind: 'wonder', seat: 1, wonder: 'statue-of-zeus', card: 'tavern' }),
+        ev({ kind: 'wonderRemoved', seat: 0, wonder: 'colossus' }),
+        ev({ kind: 'effectSkipped', seat: 1, wonder: 'statue-of-zeus', skipped: 'destroyCard' }),
+        ev({ kind: 'discard', seat: 1, card: 'quarry', amount: 3 }),
+        ev({ kind: 'coins', seat: 0, amount: -3, balance: 1, wonder: 'appian-way' }),
+        ev({ kind: 'ageStart', age: 2 }),
+        ev({ kind: 'gameOver', victory: 'civilian', winner: 1 })
+      ])
+    );
+    expect(lines.map((l) => l.kind)).toEqual([
+      'wonder',
+      'wonderRemoved',
+      'skipped',
+      'discard',
+      'ageStart',
+      'gameOver'
+    ]);
+    expect(lines[1]).toMatchObject({ seat: 0, wonder: 'colossus' });
+    expect(lines[2]).toMatchObject({ skipped: 'destroyCard', wonder: 'statue-of-zeus' });
+    expect(lines[3]).toMatchObject({ amount: 3, coins: [-3, 0] });
+    expect(lines[4]).toMatchObject({ age: 2 });
+    expect(lines[5]).toMatchObject({ victory: 'civilian', winner: 1 });
+  });
+});
+
+describe('latestSummary', () => {
+  const h = [
+    entry(0, 0, [ev({ kind: 'build', seat: 0, card: 'a' })]),
+    entry(1, 1, [ev({ kind: 'build', seat: 1, card: 'b' })]),
+    entry(2, 1, [ev({ kind: 'build', seat: 1, card: 'c' })]),
+    entry(3, 0, [ev({ kind: 'build', seat: 0, card: 'd' })])
+  ];
+  it("keeps the other side's last run after the viewer has moved since", () => {
+    expect(summarizeSince(h, 0)).toBeNull();
+    expect(latestSummary(h, 0)!.plies).toEqual([1, 2]);
+  });
+  it("is the moves since the viewer's own last one when the other side moved last", () => {
+    expect(latestSummary(h, 1)!.plies).toEqual([3]);
+  });
+  it('is null before the other side has moved', () => {
+    expect(latestSummary(h.slice(0, 1), 0)).toBeNull();
+    expect(latestSummary([], 1)).toBeNull();
+  });
+  it('follows the hot-seat viewer from one player to the next', () => {
+    // Seat 1 is to move after ply 0: it sees seat 0's move; after ply 2,
+    // seat 0 is to move and sees seat 1's two moves.
+    const v1 = summaryViewer('hotseat', [0, 1], 1)!;
+    expect(latestSummary(h.slice(0, 1), v1)!.plies).toEqual([0]);
+    const v0 = summaryViewer('hotseat', [0, 1], 0)!;
+    expect(latestSummary(h.slice(0, 3), v0)!.plies).toEqual([1, 2]);
+  });
+});
+
+describe('summaryTrigger', () => {
+  function frame(over: Partial<TriggerFrame> & { toMove?: number; phase?: string }): TriggerFrame {
+    const { toMove, phase, ...rest } = over;
+    return {
+      code: 'ROOM',
+      version: 5,
+      events: [ev({ kind: 'build', seat: 1, card: 'b' })],
+      room: { mode: 'ai' },
+      you: { seats: [0] },
+      view: {
+        toMove: 'toMove' in over ? toMove : 0,
+        phase: (phase ?? 'play') as TriggerFrame['view']['phase']
+      },
+      ...rest
+    };
+  }
+  const prev = frame({ version: 4, events: [], toMove: 1 });
+  const h = [
+    entry(0, 0, [ev({ kind: 'build', seat: 0, card: 'a' })]),
+    entry(1, 1, [ev({ kind: 'build', seat: 1, card: 'b' })])
+  ];
+
+  it("opens on a live frame that hands the turn back after the bot's move", () => {
+    expect(summaryTrigger(prev, frame({}), h)).toBe(1);
+  });
+  it('waits while the bot still has a choice or an extra turn to take', () => {
+    expect(summaryTrigger(prev, frame({ toMove: 1 }), h)).toBeNull();
+  });
+  it("never opens for the viewer's own move", () => {
+    expect(summaryTrigger(prev, frame({ toMove: 1 }), h.slice(0, 1))).toBeNull();
+  });
+  it('never opens on history: a join, a resync or an undo', () => {
+    expect(summaryTrigger(null, frame({}), h)).toBeNull();
+    expect(summaryTrigger(prev, frame({ history: h }), h)).toBeNull();
+    expect(summaryTrigger(frame({ code: 'OTHER', version: 4 }), frame({}), h)).toBeNull();
+    expect(summaryTrigger(frame({ version: 5 }), frame({}), h)).toBeNull();
+  });
+  it('never opens on a frame without events (a presence change, a thinking frame)', () => {
+    expect(summaryTrigger(prev, frame({ events: [] }), h)).toBeNull();
+  });
+  it('never opens during the wonder draft', () => {
+    expect(summaryTrigger(prev, frame({ phase: 'wonderDraft' }), h)).toBeNull();
+  });
+  it("opens at the end of the game for the other side's final move only", () => {
+    const over = frame({ toMove: undefined, phase: 'gameOver' });
+    expect(summaryTrigger(prev, over, h)).toBe(1);
+    expect(summaryTrigger(prev, over, h.slice(0, 1))).toBeNull();
+  });
+  it('opens in hot-seat for the player now to move, about the one who moved before', () => {
+    const hot = { room: { mode: 'hotseat' as const }, you: { seats: [0, 1] } };
+    expect(summaryTrigger(prev, frame({ ...hot, toMove: 0 }), h)).toBe(1);
+    // An extra turn: the same player is to move again.
+    expect(summaryTrigger(prev, frame({ ...hot, toMove: 1 }), h)).toBeNull();
+    // Nobody is to move at the end of a hot-seat game.
+    expect(
+      summaryTrigger(prev, frame({ ...hot, toMove: undefined, phase: 'gameOver' }), h)
+    ).toBeNull();
+  });
+  it('never opens for a spectator', () => {
+    expect(
+      summaryTrigger(prev, frame({ room: { mode: 'online' }, you: { seats: [] } }), h)
+    ).toBeNull();
   });
 });

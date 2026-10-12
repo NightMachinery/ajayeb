@@ -8,6 +8,13 @@
 // An extra turn makes them several. Online and against the bot, the viewer
 // is the seat this client plays. In hot-seat it is the player to move, so
 // the other side is the player who moved before them (summaryViewer).
+//
+// The opponent move summary popup (components/game/MoveSummary.svelte,
+// M10.S03b) shows `lines`: one line per move in the order it happened,
+// each with the coins, the pawn, the looting and the science pairs it
+// brought, and the age changes, extra turns and skipped choices between
+// them. latestSummary() is what its top bar button reopens: the other
+// side's last run of moves, even after the viewer has moved since.
 
 import type {
   GameEvent,
@@ -15,6 +22,7 @@ import type {
   Mode,
   PendingKind,
   ScienceSymbol,
+  State,
   VictoryKind
 } from '$lib/wire';
 
@@ -60,6 +68,57 @@ export interface SummaryAction {
   auto?: boolean;
 }
 
+/** The kinds of line the summary popup shows. */
+export type SummaryLineKind =
+  | SummaryActionKind
+  | 'ageStart'
+  | 'extraTurn'
+  | 'extraTurnLost'
+  | 'wonderRemoved'
+  | 'skipped'
+  | 'gameOver';
+
+/**
+ * One line of the summary: a move (a card taken, a wonder, a token, a
+ * choice) with what it brought, or something that happened between moves.
+ */
+export interface SummaryLine {
+  /** The ply of the history entry it belongs to. */
+  ply: number;
+  kind: SummaryLineKind;
+  /** The seat the event names (for wonderRemoved, the wonder's owner). */
+  seat: Seat | null;
+  card?: string;
+  wonder?: string;
+  token?: string;
+  /** starterChosen: the seat chosen to start the age. */
+  starter?: Seat;
+  /** ageStart: the age that began. */
+  age?: number;
+  /** draft: the round's last wonder, given without a choice. */
+  auto?: boolean;
+  /** token: taken from the Great Library's offer. */
+  fromLibrary?: boolean;
+  /** skipped: the choice that had no option. */
+  skipped?: PendingKind;
+  /** discard: the coins it brought. */
+  amount?: number;
+  /** gameOver: how, and who won (null for a shared victory). */
+  victory?: VictoryKind;
+  winner?: Seat | null;
+  /** Coins paid for the move, trade included, and the part the other seat got. */
+  paid: number;
+  toOpponent: number;
+  /** Other changes of each seat's coins (a card's or a wonder's coins). */
+  coins: [number, number];
+  /** The conflict pawn's first and last position in this move, if it moved. */
+  pawn: { from: number; to: number } | null;
+  /** Coins lost to looting, by the seat that lost them. */
+  loot: { seat: Seat; amount: number; value: number }[];
+  /** Science pairs made by this move. */
+  pairs: ScienceSymbol[];
+}
+
 export interface MoveSummary {
   /** The seat whose moves these are. */
   seat: Seat;
@@ -95,6 +154,8 @@ export interface MoveSummary {
   extraTurns: number;
   /** The game ended in these moves. */
   gameOver: { victory: VictoryKind; winner: Seat | null } | null;
+  /** The popup's lines, in the order things happened. */
+  lines: SummaryLine[];
 }
 
 function asSeat(n: number | undefined): Seat | null {
@@ -135,6 +196,63 @@ export function summarizeSince(history: readonly HistoryEntry[], viewer: Seat): 
   return summarize(entries, viewer === 0 ? 1 : 0);
 }
 
+/**
+ * The other side's last run of moves, as the viewer sees it: the moves
+ * since the viewer's last action, or, when the viewer has moved since, the
+ * run before that. Null before the other side has moved. The summary popup's
+ * button reopens this.
+ */
+export function latestSummary(history: readonly HistoryEntry[], viewer: Seat): MoveSummary | null {
+  let end = history.length;
+  while (end > 0 && history[end - 1]!.seat === viewer) end--;
+  return summarizeSince(history.slice(0, end), viewer);
+}
+
+/** The parts of a state frame summaryTrigger reads. */
+export interface TriggerFrame {
+  code: State['code'];
+  version: State['version'];
+  events: State['events'];
+  history?: State['history'];
+  room: Pick<State['room'], 'mode'>;
+  you: Pick<State['you'], 'seats'>;
+  view: Pick<State['view'], 'toMove' | 'phase'>;
+}
+
+/**
+ * Whether a frame opens the summary popup by itself, and for which entry:
+ * the ply of the other side's last entry, or null for no popup. Only a
+ * live frame does (the same room as the frame before it and a newer
+ * version, without a history, which only a join, a resync and the frame
+ * after an undo carry: those replay the game, nothing happened just now).
+ * It must bring events, the other side must have moved last, and the turn
+ * must be the viewer's again (so a bot's reply, both moves of an extra turn
+ * and the choices inside a turn make one popup), or the game must be over.
+ * Never during the wonder draft, whose screen shows every pick. `history`
+ * is the Session's history with this frame taken in.
+ */
+export function summaryTrigger(
+  prev: TriggerFrame | null,
+  next: TriggerFrame,
+  history: readonly HistoryEntry[]
+): number | null {
+  if (!prev || prev.code !== next.code || next.version <= prev.version) return null;
+  if (next.history || next.events.length === 0) return null;
+  if (next.view.phase === 'wonderDraft') return null;
+  const viewer = summaryViewer(next.room.mode, next.you.seats, next.view.toMove);
+  if (viewer === null) return null;
+  const over = next.view.phase === 'gameOver';
+  if (!over && next.view.toMove !== viewer) return null;
+  const last = history[history.length - 1];
+  if (!last || last.seat === viewer) return null;
+  return last.ply;
+}
+
+/** The ply of a summary's last entry. */
+export function lastPly(s: MoveSummary): number | undefined {
+  return s.plies[s.plies.length - 1];
+}
+
 /** Consolidates entries, all taken by seat, into one summary. */
 export function summarize(entries: readonly HistoryEntry[], seat: Seat): MoveSummary {
   const s: MoveSummary = {
@@ -154,13 +272,117 @@ export function summarize(entries: readonly HistoryEntry[], seat: Seat): MoveSum
     agesStarted: [],
     skipped: [],
     extraTurns: 0,
-    gameOver: null
+    gameOver: null,
+    lines: []
   };
   for (const entry of entries) {
     s.plies.push(entry.ply);
     for (const e of entry.events) take(s, entry.ply, e);
+    s.lines.push(...entryLines(entry));
   }
   return s;
+}
+
+function newLine(ply: number, kind: SummaryLineKind, seat: Seat | null): SummaryLine {
+  return {
+    ply,
+    kind,
+    seat,
+    paid: 0,
+    toOpponent: 0,
+    coins: [0, 0],
+    pawn: null,
+    loot: [],
+    pairs: []
+  };
+}
+
+/**
+ * One history entry's lines. A move's own events (what it paid, the coins
+ * it brought, the pawn, looting, a pair) go on the move's line; an age
+ * change, an extra turn, a removed wonder, a skipped choice and the end of
+ * the game get lines of their own. A reveal, the draft's second round and
+ * the Great Library's draw are left out: the board shows them, and the
+ * token taken says the rest.
+ */
+export function entryLines(entry: HistoryEntry): SummaryLine[] {
+  const lines: SummaryLine[] = [];
+  let head: SummaryLine | null = null;
+  for (const e of entry.events) {
+    const seat = asSeat(e.seat);
+    if (ACTION_KINDS.has(e.kind)) {
+      const line = newLine(entry.ply, e.kind as SummaryActionKind, seat);
+      if (e.card !== undefined) line.card = e.card;
+      if (e.wonder !== undefined) line.wonder = e.wonder;
+      if (e.token !== undefined) line.token = e.token;
+      const starter = asSeat(e.starter);
+      if (starter !== null) line.starter = starter;
+      if (e.auto) line.auto = true;
+      if (e.kind === 'token') line.fromLibrary = !!e.fromLibrary;
+      if (e.kind === 'discard') line.amount = e.amount ?? 0;
+      lines.push(line);
+      head = line;
+      continue;
+    }
+    switch (e.kind) {
+      case 'pay':
+        if (head) {
+          head.paid += e.amount ?? 0;
+          head.toOpponent += e.toOpponent ?? 0;
+        }
+        break;
+      case 'coins':
+        if (head && seat !== null) head.coins[seat] += e.amount ?? 0;
+        break;
+      case 'pawn':
+        if (head && e.from !== undefined && e.to !== undefined) {
+          head.pawn = head.pawn ? { from: head.pawn.from, to: e.to } : { from: e.from, to: e.to };
+        }
+        break;
+      case 'loot':
+        if (head && seat !== null) {
+          head.loot.push({ seat, amount: e.amount ?? 0, value: e.value ?? 0 });
+        }
+        break;
+      case 'pair':
+        if (head && e.symbol) head.pairs.push(e.symbol);
+        break;
+      case 'ageStart': {
+        const line = newLine(entry.ply, 'ageStart', null);
+        if (e.age !== undefined) line.age = e.age;
+        lines.push(line);
+        break;
+      }
+      case 'extraTurn':
+      case 'extraTurnLost':
+        lines.push(newLine(entry.ply, e.kind, seat));
+        break;
+      case 'wonderRemoved':
+        if (e.wonder)
+          lines.push({ ...newLine(entry.ply, 'wonderRemoved', seat), wonder: e.wonder });
+        break;
+      case 'effectSkipped': {
+        const line = newLine(entry.ply, 'skipped', seat);
+        if (e.skipped) line.skipped = e.skipped;
+        if (e.wonder !== undefined) line.wonder = e.wonder;
+        if (e.card !== undefined) line.card = e.card;
+        lines.push(line);
+        break;
+      }
+      case 'gameOver':
+        if (e.victory) {
+          lines.push({
+            ...newLine(entry.ply, 'gameOver', null),
+            victory: e.victory,
+            winner: asSeat(e.winner)
+          });
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  return lines;
 }
 
 function take(s: MoveSummary, ply: number, e: GameEvent): void {
