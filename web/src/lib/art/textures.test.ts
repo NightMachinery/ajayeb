@@ -17,12 +17,15 @@ function declared(selector: string, prop: string): string | undefined {
   return new RegExp(`${prop}:\\s*([^;]+);`).exec(block)?.[1]?.trim();
 }
 
+// CSS names each tile by the index's own path, ?v= content hash included,
+// so the server caches it as immutable and a reprocessed tile reaches every
+// reader at once (docs/art/bitmaps.md "Caching"); a stale hash fails here.
 const shipped = new Map<string, string>();
 for (const [id, entry] of Object.entries(art)) {
-  // CSS names the file without the index's ?v= content hash (the server
-  // then revalidates it, see docs/art/bitmaps.md "Caching").
-  for (const v of Object.values(entry.variants)) shipped.set(v.path.split('?')[0] ?? '', id);
+  for (const v of Object.values(entry.variants)) shipped.set(v.path, id);
 }
+/** The index's path of a texture's one shipped file. */
+const tile = (id: string) => Object.values(art[id]?.variants ?? {})[0]?.path;
 
 describe('table textures', () => {
   it('names only approved texture art', () => {
@@ -34,12 +37,12 @@ describe('table textures', () => {
   });
 
   it('gives the light theme the paper tile and the dark theme the night tile', () => {
-    expect(declared(':root', '--table-texture')).toBe("url('/art/ui/paper.avif')");
-    expect(shipped.get('/art/ui/paper.avif')).toBe('texture/paper');
+    expect(tile('texture/paper')).toMatch(/^\/art\/ui\/paper\.avif\?v=[0-9a-f]+$/);
+    expect(tile('texture/night')).toMatch(/^\/art\/ui\/night\.avif\?v=[0-9a-f]+$/);
+    expect(declared(':root', '--table-texture')).toBe(`url('${tile('texture/paper')}')`);
     expect(declared(":root[data-theme='dark']", '--table-texture')).toBe(
-      "url('/art/ui/night.avif')"
+      `url('${tile('texture/night')}')`
     );
-    expect(shipped.get('/art/ui/night.avif')).toBe('texture/night');
   });
 
   it('draws the texture once, on the page, at the tile size', () => {

@@ -147,9 +147,12 @@
      the page behind everything (body in app.css), never behind a panel or
      a card, which stay solid. Blended over --table-texture-base, so the
      tile only adds grain: the light tile is ivory paper within a few levels
-     of --paper and is drawn as is. textures.test.ts checks that every url
-     here is approved art. */
-  --table-texture: url('/art/ui/paper.avif');
+     of --paper and is drawn as is. Each url carries the art index's
+     content hash (?v=, available.gen.ts), so the server lets browsers keep
+     it for good and a reprocessed tile gets a new url at once;
+     textures.test.ts checks that every url here is approved art at its
+     current hash. */
+  --table-texture: url('/art/ui/paper.avif?v=ceb4f38a41');
   --table-texture-blend: normal;
   --table-texture-base: var(--table);
   --panel: var(--paper-bright);
@@ -175,7 +178,7 @@
      own ground, M10.F2): it averages rgb(18,27,56), --table's own tone, so
      it is drawn as is over --table, and its fibres read as faint lighter
      streaks. */
-  --table-texture: url('/art/ui/night.avif');
+  --table-texture: url('/art/ui/night.avif?v=2ac8355aa6');
   --table-texture-blend: normal;
   --table-texture-base: var(--table);
   --panel: oklch(0.27 0.065 262);

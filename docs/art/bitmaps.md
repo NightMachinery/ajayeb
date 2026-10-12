@@ -28,7 +28,10 @@ from the approved `icon/app` original by
 `web/src/app.html` and `web/static/manifest.webmanifest`. Everything else
 the app shows stays AVIF. The same goes for the two textures, which the
 app names in CSS (`--table-texture` in `web/src/lib/styles/tokens.css`)
-instead of through the index; a unit test checks they are approved art.
+instead of through the index, each by the index's own path with its
+`?v=` content hash; a unit test checks they are approved art at their
+current hash, so a reprocessed texture fails it until `tokens.css` names
+the new hash.
 
 ## Files
 
@@ -157,8 +160,8 @@ server (`server/internal/httpapi/spa.go`, policy in
 `server/internal/webdist/cache.go`) answers a request under `/art/` whose
 `v` is a prefix of the file's own hash with `Cache-Control: public,
 max-age=31536000, immutable` and no ETag: that URL can never serve other
-bytes. A request without `v`, or with a stale one (the textures named in
-CSS, an old page asking for replaced art), gets `public, max-age=86400,
+bytes. A request without `v`, or with a stale one (an app icon named in
+HTML or the web app manifest, an old page asking for replaced art), gets `public, max-age=86400,
 stale-while-revalidate=604800` plus a strong ETag. Replaced art therefore
 reaches a reader as soon as the app shell (served `no-cache`) carries the
 new index, whatever any cache in between does with `Cache-Control`.
