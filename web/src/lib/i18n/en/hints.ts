@@ -98,7 +98,6 @@ export const hints = {
     one: '{other} loses {count} coin if {name} builds this.',
     other: '{other} loses {count} coins if {name} builds this.'
   },
-  'hints.pip.aria': '{label}. {hints}',
 
   'hints.victory.military': 'military',
   'hints.victory.science': 'science',
@@ -141,7 +140,10 @@ export const hints = {
   'hints.line.savesNothing': 'Saves nothing in view right now.',
   'hints.line.lastCertain': 'No other {resource} producer can still come.',
   'hints.line.lastVisible': 'The last {resource} producer in view; unseen cards may hold another.',
-  'hints.line.worth': 'Worth now: {coins} coins, {vp} VP.',
+  'hints.line.worth': {
+    one: 'Worth now: {count} coin, {vp} VP.',
+    other: 'Worth now: {count} coins, {vp} VP.'
+  },
   'hints.line.worthCoins': {
     one: 'Worth {count} coin to build today.',
     other: 'Worth {count} coins to build today.'
@@ -174,7 +176,6 @@ export const hints = {
 
   'hints.discard.poolYou': 'Your Mausoleum could rebuild',
   'hints.discard.poolNamed': '{name}’s Mausoleum could rebuild',
-  'hints.discard.empty': 'Nothing in the pile would do anything special.',
   'hints.cardWith': '{card}: {hint}',
 
   // The decider's hints (lib/view/outcome.ts, M10.HS3): the outcome line
@@ -292,6 +293,155 @@ export const hints = {
     one: '{count} point after this move',
     other: '{count} points after this move'
   },
+
+  // Board-level hints (lib/view/board-hints.ts, M10.HS4): where a card is,
+  // the science tracker, the military track, the wonders, the progress
+  // tokens, the age chip and the age interstitial. {place} is one of the
+  // hints.place.* phrases; {symbol} a symbol's name; {age} a number.
+  'hints.place.faceUp': 'face up on the board',
+  'hints.place.tucked': 'tucked under a wonder, out of the game',
+  'hints.place.cityYou': 'in your city',
+  'hints.place.cityNamed': 'in {name}’s city',
+  'hints.place.discard': 'in the discard pile',
+  'hints.place.unseenThisAge': 'not seen yet this age',
+  'hints.place.unseenThisAgeOdds': 'not seen yet this age ({num} in {den} that it is dealt)',
+  'hints.place.laterAge': 'in the Age {age} deck',
+  'hints.place.laterAgeOdds': 'in the Age {age} deck ({num} in {den} that it is dealt)',
+  'hints.place.removed': 'set aside, out of the game',
+
+  'hints.science.symbol': '{symbol}.',
+  'hints.science.card': '{card}: {place}.',
+  'hints.science.paired': 'A pair.',
+  'hints.science.live': 'One card; the other may still come.',
+  'hints.science.owned': 'One card; the other can no longer come.',
+  'hints.science.open': {
+    one: 'None yet; {count} card may still come.',
+    other: 'None yet; {count} cards may still come.'
+  },
+  'hints.science.dead': 'None, and no card of it can come.',
+  'hints.science.scalesOwned': 'Owned, from the Law token.',
+  'hints.science.scalesOpen': 'Only from the Law token, which may still come.',
+  'hints.science.scalesDead': 'Only from the Law token, which can no longer come.',
+  'hints.science.needYou': {
+    one: 'You need {count} more different symbol; still possible: {list}.',
+    other: 'You need {count} more different symbols; still possible: {list}.'
+  },
+  'hints.science.needNamed': {
+    one: '{name} needs {count} more different symbol; still possible: {list}.',
+    other: '{name} needs {count} more different symbols; still possible: {list}.'
+  },
+  'hints.science.unreachableYou': 'You can no longer win by science.',
+  'hints.science.unreachableNamed': '{name} can no longer win by science.',
+  'hints.science.lawYou': 'Law would be your sixth symbol: a pair you complete now wins.',
+  'hints.science.lawNamed': 'Law would be {name}’s sixth symbol: a pair they complete now wins.',
+
+  'hints.capital.win': 'Reaching this space wins the game at once.',
+  'hints.capital.yours': 'your capital',
+  'hints.capital.named': '{name}’s capital',
+  'hints.capital.needYou': {
+    one: 'You need {count} more shield to take {capital}.',
+    other: 'You need {count} more shields to take {capital}.'
+  },
+  'hints.capital.needNamed': {
+    one: '{name} needs {count} more shield to take {capital}.',
+    other: '{name} needs {count} more shields to take {capital}.'
+  },
+  'hints.capital.safeYou': 'You can no longer gather that many shields.',
+  'hints.capital.safeNamed': '{name} can no longer gather that many shields.',
+  'hints.zone.you': {
+    one: 'With the pawn here at the end, you score {count} point. Only the player ahead scores.',
+    other: 'With the pawn here at the end, you score {count} points. Only the player ahead scores.'
+  },
+  'hints.zone.named': {
+    one: 'With the pawn here at the end, {name} scores {count} point. Only the player ahead scores.',
+    other:
+      'With the pawn here at the end, {name} scores {count} points. Only the player ahead scores.'
+  },
+
+  'hints.loot.taken': 'Already taken: it never triggers again.',
+  'hints.loot.triggerYou': {
+    one: 'When the pawn enters this space, you lose {count} coin.',
+    other: 'When the pawn enters this space, you lose {count} coins.'
+  },
+  'hints.loot.triggerNamed': {
+    one: 'When the pawn enters this space, {name} loses {count} coin.',
+    other: 'When the pawn enters this space, {name} loses {count} coins.'
+  },
+  'hints.loot.clampYou': {
+    one: 'You have only {count} coin now.',
+    other: 'You have only {count} coins now.'
+  },
+  'hints.loot.clampNamed': {
+    one: '{name} has only {count} coin now.',
+    other: '{name} has only {count} coins now.'
+  },
+
+  'hints.glow.militaryWin': '{name} could take this capital now with {list}.',
+  'hints.glow.militaryWinYou': 'You could take this capital now with {list}.',
+  'hints.glow.calm': 'Close, but it can no longer happen.',
+
+  'hints.wonder.library':
+    'Draws {count} of the {total} tokens in the box: {list}. Only its owner sees them.',
+  'hints.wonder.lastSlot': 'Only one more wonder can be built.',
+  'hints.wonder.removes': 'Building this one sends {wonder} back to the box.',
+  'hints.wonder.removesOwn': 'Building this one sends the same player’s {wonder} back to the box.',
+  'hints.wonder.affordYou': 'You can afford it now.',
+  'hints.wonder.affordNamed': '{name} can afford it now.',
+  'hints.wonder.readyYou': 'You could build this on your turn, at today’s prices.',
+  'hints.wonder.readyNamed': '{name} could build this on their turn, at today’s prices.',
+  'hints.wonder.readyCountYou': {
+    one: 'You could build {count} wonder at today’s prices.',
+    other: 'You could build {count} wonders at today’s prices.'
+  },
+  'hints.wonder.readyCountNamed': {
+    one: '{name} could build {count} wonder at today’s prices.',
+    other: '{name} could build {count} wonders at today’s prices.'
+  },
+  'hints.wonder.slotsLeft': {
+    one: '{count} wonder slot left, {unbuilt} wonders unbuilt.',
+    other: '{count} wonder slots left, {unbuilt} wonders unbuilt.'
+  },
+
+  'hints.token.forYou': 'For you: {value}.',
+  'hints.token.forNamed': 'For {name}: {value}.',
+  'hints.token.wins': 'wins the game',
+  'hints.token.coins': { one: '+{count} coin', other: '+{count} coins' },
+  'hints.token.vp': '{delta} VP',
+  'hints.token.saves': {
+    one: 'saves {count} coin on the cards and wonders in view',
+    other: 'saves {count} coins on the cards and wonders in view'
+  },
+  'hints.token.savesNothing': 'saves nothing in view now',
+  'hints.token.economy': {
+    one: '{name}’s trade on the cards they can take: {count} coin',
+    other: '{name}’s trade on the cards they can take: {count} coins'
+  },
+  'hints.token.chains': {
+    one: '{count} chain still open',
+    other: '{count} chains still open'
+  },
+  'hints.token.theology': {
+    one: '{count} unbuilt wonder gains play again',
+    other: '{count} unbuilt wonders gain play again'
+  },
+  'hints.token.strategy': 'later red cards get one more shield',
+  'hints.token.nothing': 'nothing now',
+
+  'hints.age.cardsLeft': {
+    one: '{count} card left this age.',
+    other: '{count} cards left this age.'
+  },
+  'hints.age.lastYou': 'If nobody plays again, you take the last card.',
+  'hints.age.lastNamed': 'If nobody plays again, {name} takes the last card.',
+  'hints.age.lastLost': 'An extra turn taken with the last card is lost.',
+  'hints.age.chooserYou': 'You are the weaker player and will choose who starts Age {age}.',
+  'hints.age.chooserNamed': '{name} is the weaker player and will choose who starts Age {age}.',
+  'hints.age.lastStarts': 'The player who takes the last card will start Age {age}.',
+  'hints.age.lastChooses': 'The player who takes the last card will choose who starts Age {age}.',
+  'hints.age.deadPairYou': '{card} was set aside: your {own} will never make a pair.',
+  'hints.age.deadPairNamed': '{card} was set aside: {name}’s {own} will never make a pair.',
+
+  'hints.draft.order': '{first} picks one, {second} picks two, and the last one goes to {first}.',
 
   // The badge modifiers (card/AffordBadge.svelte).
   'hints.badge.bonus': '+{count}',

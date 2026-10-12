@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { protocolFixtureNames, protocolFixtures } from '$lib/wire/fixtures.gen';
-import type { View } from '$lib/wire';
+import type { HintFamily, MilitaryView, PlayerHintsView, ScienceView, View } from '$lib/wire';
+import { HINT_FAMILIES } from '$lib/hints/families';
 import {
+  glowHints,
+  glowWarns,
+  militaryGlow,
+  scienceGlow,
+  strongerGlow,
+  type GlowHints,
   gameEnded,
   militaryDanger,
   militaryEndangered,
@@ -143,5 +150,115 @@ describe('scienceDanger', () => {
     // directly rather than drawn from a fixture.
     expect(scienceDanger({ symbols: [], distinct: 5 })).toBe(true);
     expect(scienceDanger({ symbols: [], distinct: 4 })).toBe(false);
+  });
+});
+
+// --- Glow levels from the board hints (M10.HS4) ------------------------------
+
+const EVERY: ReadonlySet<HintFamily> = new Set(HINT_FAMILIES);
+
+function ph(over: Partial<PlayerHintsView> = {}): PlayerHintsView {
+  return {
+    coinsToNextVp: 3,
+    symbols: [],
+    need: 6,
+    reachable: true,
+    lawWins: false,
+    chainTargets: [],
+    guildPoints: [],
+    toCapital: 9,
+    capitalSafe: false,
+    threats: [],
+    ...over
+  };
+}
+
+function track(position: number): MilitaryView {
+  return { position, looting: [] } as unknown as MilitaryView;
+}
+
+function sci(distinct: number): ScienceView {
+  return { distinct, symbols: [] } as unknown as ScienceView;
+}
+
+function gh(a: PlayerHintsView, b: PlayerHintsView, families = EVERY): GlowHints {
+  return { families, hints: [a, b] };
+}
+
+describe('militaryGlow', () => {
+  it('falls back to the margin rule without hints', () => {
+    expect(militaryGlow(track(-6), 0)).toBe('soft');
+    expect(militaryGlow(track(-5), 0)).toBe('none');
+    expect(militaryGlow(track(-6), 0, true)).toBe('none');
+  });
+
+  it('is soft when the opponent is close, calm when it can no longer get there', () => {
+    expect(militaryGlow(track(-6), 0, false, gh(ph({ toCapital: 3 }), ph()))).toBe('soft');
+    expect(
+      militaryGlow(track(-6), 0, false, gh(ph({ toCapital: 3, capitalSafe: true }), ph()))
+    ).toBe('calm');
+    expect(militaryGlow(track(-4), 0, false, gh(ph({ toCapital: 5 }), ph()))).toBe('none');
+  });
+
+  it('is strong when the opponent can take the capital with one action now', () => {
+    const opp = ph({ threats: [{ seat: 1, card: 'arsenal', kind: 'military' }] });
+    expect(militaryGlow(track(-7), 0, false, gh(ph({ toCapital: 2 }), opp))).toBe('strong');
+    // A science win of the opponent is not a military glow.
+    const sciOpp = ph({ threats: [{ seat: 1, card: 'library', kind: 'science' }] });
+    expect(militaryGlow(track(-7), 0, false, gh(ph({ toCapital: 2 }), sciOpp))).toBe('soft');
+  });
+
+  it('follows the families this screen shows', () => {
+    const opp = ph({ threats: [{ seat: 1, card: 'arsenal', kind: 'military' }] });
+    const noThreats = new Set<HintFamily>(['military']);
+    expect(militaryGlow(track(-7), 0, false, gh(ph({ toCapital: 2 }), opp, noThreats))).toBe(
+      'soft'
+    );
+    const none = new Set<HintFamily>();
+    // No military hints: the margin rule.
+    expect(
+      militaryGlow(track(-6), 0, false, gh(ph({ toCapital: 3, capitalSafe: true }), opp, none))
+    ).toBe('soft');
+  });
+});
+
+describe('scienceGlow', () => {
+  it('warns at 5 different symbols without hints', () => {
+    expect(scienceGlow(sci(5), 0)).toBe('soft');
+    expect(scienceGlow(sci(4), 0)).toBe('none');
+    expect(scienceGlow(sci(6), 0)).toBe('none');
+  });
+
+  it('is calm when the missing symbols can no longer come', () => {
+    expect(scienceGlow(sci(5), 0, false, gh(ph({ need: 1, reachable: false }), ph()))).toBe('calm');
+    expect(scienceGlow(sci(5), 0, false, gh(ph({ need: 1, reachable: true }), ph()))).toBe('soft');
+  });
+
+  it('is strong when the seat can win by science with one action now', () => {
+    const own = ph({ need: 1, threats: [{ seat: 0, card: 'library', kind: 'science' }] });
+    expect(scienceGlow(sci(5), 0, false, gh(own, ph()))).toBe('strong');
+    expect(scienceGlow(sci(5), 0, true, gh(own, ph()))).toBe('none');
+  });
+});
+
+describe('glow helpers', () => {
+  it('orders and classifies the levels', () => {
+    expect(strongerGlow('calm', 'soft')).toBe('soft');
+    expect(strongerGlow('strong', 'none')).toBe('strong');
+    expect(glowWarns('calm')).toBe(false);
+    expect(glowWarns('soft')).toBe(true);
+  });
+
+  it('has no inputs at game over or with the board marks hidden', () => {
+    const players = [{ hints: ph() }, { hints: ph() }] as never;
+    expect(
+      glowHints({ players, result: undefined }, { families: EVERY, boardMarks: true })
+    ).toBeDefined();
+    expect(
+      glowHints({ players, result: undefined }, { families: EVERY, boardMarks: false })
+    ).toBeUndefined();
+    expect(
+      glowHints({ players, result: {} as never }, { families: EVERY, boardMarks: true })
+    ).toBeUndefined();
   });
 });

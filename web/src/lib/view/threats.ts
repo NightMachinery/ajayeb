@@ -5,13 +5,33 @@
 // reads fields the view already computed (military.position, each looting
 // token, science.distinct) and never recomputes what the engine owns.
 //
+// With the board hints (M10.HS4) the glows read the server's facts about
+// each seat (PlayerView.hints): how many shields the opponent still needs
+// for a capital and whether it can still gather them, whether the missing
+// science symbols can still come, and the wins a seat would have if it
+// were its turn now. The glow then has four levels (Glow): none; calm, a
+// hairline that says "close, but it cannot happen"; soft, the warning;
+// and strong, the opponent can win with one action now. Without them (the
+// family off, or the local hide's board switch) the glows fall back to the
+// coarse rules above them, soft or none.
+//
 // A warning speaks of what may still happen. Once the game is over (by any
 // victory, the end of Age III included) or the condition has been met (the
 // pawn in a capital, six distinct symbols) there is nothing left to warn
 // about, so the danger checks answer false; the result screen says what
 // happened instead.
 
-import type { LootingView, MilitaryView, Phase, ScienceView } from '$lib/wire';
+import type {
+  HintFamily,
+  LootingView,
+  MilitaryView,
+  Phase,
+  PlayerHintsView,
+  ScienceView,
+  ThreatView,
+  VictoryKind,
+  View
+} from '$lib/wire';
 
 export type Seat = 0 | 1;
 
@@ -93,4 +113,101 @@ export function nextLooting(military: MilitaryView): LootingView | null {
 export function scienceDanger(science: ScienceView, ended = false): boolean {
   if (ended) return false;
   return science.distinct >= SCIENCE_DANGER_DISTINCT && science.distinct < SCIENCE_VICTORY_DISTINCT;
+}
+
+// --- Glow levels from the board hints (M10.HS4) ----------------------------
+
+/** How strongly a strip warns: not at all, a calm hairline (close, but it
+ *  can no longer happen), the warning, or the strong warning (a win with
+ *  one action exists now). */
+export type Glow = 'none' | 'calm' | 'soft' | 'strong';
+
+/** The opponent is this many shields or fewer from a capital: "close"
+ *  (the same as the pawn 6 or more spaces from the centre). */
+export const CAPITAL_CLOSE = 3;
+
+/** The capital shows the shields the opponent still needs at or under this. */
+export const CAPITAL_NUMERAL = 5;
+
+/** What the glows read from the board hints: the families this screen
+ *  shows, and each seat's PlayerView.hints. */
+export interface GlowHints {
+  readonly families: ReadonlySet<HintFamily>;
+  readonly hints: readonly [PlayerHintsView | undefined, PlayerHintsView | undefined];
+}
+
+/**
+ * The glow inputs of a screen: none without a hint screen, once the game is
+ * over (view.result), or with the local hide's board switch off (glow
+ * upgrades are board marks).
+ */
+export function glowHints(
+  view: Pick<View, 'players' | 'result'> | null | undefined,
+  screen: { readonly families: ReadonlySet<HintFamily>; readonly boardMarks: boolean } | undefined
+): GlowHints | undefined {
+  if (!view || view.result || !screen || !screen.boardMarks) return undefined;
+  return { families: screen.families, hints: [view.players[0].hints, view.players[1].hints] };
+}
+
+/** The wins of one kind in a seat's threat list. */
+export function winsOf(hints: PlayerHintsView | undefined, kind: VictoryKind): ThreatView[] {
+  return (hints?.threats ?? []).filter((th) => th.kind === kind);
+}
+
+function otherSeat(seat: Seat): Seat {
+  return seat === 0 ? 1 : 0;
+}
+
+/**
+ * The military glow of `seat`'s strip. Strong when the opponent could take
+ * the capital with one action now (threats); with the military hints, soft
+ * when the opponent is CAPITAL_CLOSE shields away or closer, calm when it
+ * can no longer gather them (capital-safe); without them, the margin rule
+ * of militaryDanger.
+ */
+export function militaryGlow(
+  military: MilitaryView,
+  seat: Seat,
+  ended = false,
+  gh?: GlowHints
+): Glow {
+  if (ended || militaryMargin(military) >= MILITARY_VICTORY_MARGIN) return 'none';
+  if (gh?.families.has('threats') && winsOf(gh.hints[otherSeat(seat)], 'military').length > 0) {
+    return 'strong';
+  }
+  const own = gh?.families.has('military') ? gh.hints[seat] : undefined;
+  if (own) {
+    if (own.toCapital > CAPITAL_CLOSE) return 'none';
+    return own.capitalSafe ? 'calm' : 'soft';
+  }
+  return militaryDanger(military, seat) ? 'soft' : 'none';
+}
+
+/**
+ * The science glow of `seat`'s strip (the seat that may win by science).
+ * Strong when it could win by science with one action now (threats); at 5
+ * different symbols, soft, or calm when the science hints say the missing
+ * symbols can no longer come (science-reach).
+ */
+export function scienceGlow(science: ScienceView, seat: Seat, ended = false, gh?: GlowHints): Glow {
+  if (ended || science.distinct >= SCIENCE_VICTORY_DISTINCT) return 'none';
+  if (gh?.families.has('threats') && winsOf(gh.hints[seat], 'science').length > 0) {
+    return 'strong';
+  }
+  if (science.distinct < SCIENCE_DANGER_DISTINCT) return 'none';
+  const own = gh?.families.has('science') ? gh.hints[seat] : undefined;
+  if (own && !own.reachable) return 'calm';
+  return 'soft';
+}
+
+const GLOW_RANK: Readonly<Record<Glow, number>> = { none: 0, calm: 1, soft: 2, strong: 3 };
+
+/** The stronger of two glows. */
+export function strongerGlow(a: Glow, b: Glow): Glow {
+  return GLOW_RANK[a] >= GLOW_RANK[b] ? a : b;
+}
+
+/** Whether a glow is a warning (soft or strong), not calm or none. */
+export function glowWarns(g: Glow): boolean {
+  return g === 'soft' || g === 'strong';
 }

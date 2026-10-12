@@ -548,3 +548,15 @@ export function selectionGhost(
       : {})
   };
 }
+
+/** One seat's part of a selection ghost: its coins and score after, for its panel. */
+export function seatGhost(
+  g: SelectionGhost | undefined,
+  seat: Seat
+): { readonly coins?: number; readonly score?: number } | undefined {
+  if (!g || (!g.coins && !g.score)) return undefined;
+  return {
+    ...(g.coins ? { coins: g.coins[seat] } : {}),
+    ...(g.score ? { score: g.score[seat] } : {})
+  };
+}

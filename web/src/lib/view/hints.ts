@@ -373,7 +373,7 @@ export function seatLines(
     }
   }
   if (families.has('scoring') && worthCard(slug) && (e.coins !== 0 || e.scoreDelta !== 0)) {
-    out.push({ id: 'worth', text: t('hints.line.worth', { coins: e.coins, vp: e.scoreDelta }) });
+    out.push({ id: 'worth', text: t('hints.line.worth', { count: e.coins, vp: e.scoreDelta }) });
   }
   return out;
 }
@@ -551,6 +551,33 @@ export function discardPip(
   const empty: CardHints = { ...d.hints, codes: [] };
   const pair: [CardHints, CardHints] = seat === 0 ? [d.hints, empty] : [empty, d.hints];
   return cardPip(pair, p, families, names);
+}
+
+/**
+ * The pips of the discard pile (mausoleum-pool-hint): for each discarded
+ * card that the server describes for a Mausoleum owner, the highest pip of
+ * both seats' entries (discardPip, merged), by card slug. None with the
+ * local hide's board switch off, as on the board.
+ */
+export function discardPips(
+  view: Pick<View, 'hints'>,
+  screen: HintScreen | undefined
+): ReadonlyMap<string, CardPip> {
+  const out = new Map<string, CardPip>();
+  if (!screen || !screen.boardMarks) return out;
+  const bySlug = new Map<string, DiscardHintView[]>();
+  for (const d of view.hints?.discard ?? []) bySlug.set(d.card, [...(bySlug.get(d.card) ?? []), d]);
+  for (const [slug, list] of bySlug) {
+    const pips = list
+      .map((d) => discardPip(d, screen.perspective, screen.families, screen.names))
+      .filter((p): p is CardPip => p !== undefined);
+    if (pips.length === 0) continue;
+    const entries = pips
+      .flatMap((p) => p.entries)
+      .sort((a, b) => rank(a.code, a.side) - rank(b.code, b.side));
+    out.set(slug, { top: entries[0]!, entries, more: entries.length > 1 });
+  }
+  return out;
 }
 
 /** The lines under one destroy candidate (destroy-price-drop). */
