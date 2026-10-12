@@ -258,9 +258,13 @@ test.describe('who is who', () => {
       await driverB.waitReady();
       await finishDraft(driverA, driverB);
 
+      // The name line only: the panels also carry hint lines that name the
+      // other seat ("toward sara 2's capital").
+      const nameOf = (driver: GameDriver, seat: 0 | 1) =>
+        seatPanel(driver, seat).locator('[dir="auto"]').first().textContent();
       const names = async (driver: GameDriver): Promise<[string, string]> => [
-        (await seatPanel(driver, 0).textContent()) ?? '',
-        (await seatPanel(driver, 1).textContent()) ?? ''
+        (await nameOf(driver, 0)) ?? '',
+        (await nameOf(driver, 1)) ?? ''
       ];
       for (const driver of [driverA, driverB]) {
         const [first, second] = await names(driver);
