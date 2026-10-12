@@ -246,8 +246,10 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
     clearHover();
     endPress();
     if (e.pointerType === 'mouse') {
-      // A click acts as usual; it only closes a hover tooltip.
-      if (store.active && store.active.via !== 'focus') store.hide();
+      // A click acts as usual, and closes any open tooltip, a keyboard focus
+      // one too: a focus tooltip left open over a menu or sheet that the
+      // click opened would take the Escape meant to close it.
+      if (store.active) store.hide();
       return;
     }
     // Touch or pen. Any tap while a tooltip is open closes it, and is
