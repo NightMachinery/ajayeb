@@ -315,6 +315,9 @@ func TestHintEnumsMatchView(t *testing.T) {
 		// (hints_board.go), so the list here is the vocabulary itself.
 		"SymbolState": {"paired", "live", "owned", "open", "dead"},
 		"TieBreak":    {"total", "blue", "shared"},
+		// The move review's reasons are the room's (room/review.go), which
+		// names them with the view's constants too.
+		"ReviewReason": {"none", "wins", "stopsWin", "pair", "deniesPair", "loot", "points"},
 	}
 	if len(got) != len(want) {
 		t.Errorf("view/hints.go has vocabularies %v; this test checks %d", reflect.ValueOf(got).MapKeys(), len(want))

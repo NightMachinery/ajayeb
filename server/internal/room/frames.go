@@ -117,6 +117,11 @@ func (r *Room) sendState(c *Client, mem member, ack *wire.Ack, withHistory bool)
 func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]bool, fc *frameCache, withHistory bool) wire.State {
 	viewer := r.viewer(mem)
 	v, events := fc.get(&r.state, *r.file.Hints, viewer, ev)
+	if seat, ok := viewer.Seat(); ok && r.file.Hints.Advisor {
+		// The move review is the mover's alone: only a seat's own view
+		// carries it (v is this frame's copy of the cached view).
+		v.Review = r.review(seat)
+	}
 	if withHistory {
 		// The history already holds the last action's events.
 		events = nil

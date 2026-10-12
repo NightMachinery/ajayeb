@@ -1200,3 +1200,95 @@ func destroyHints(s *State) []view.PendingCardHint {
 	}
 	return out
 }
+
+// MoveFacts are the public facts about one play action of the seat to move
+// that the move review compares (the advisor family: package room ranks
+// the mover's actions with package ai and explains the gap with these).
+// Like the decider's hints, they are read from copies of the state that
+// use only the cards face up before the action (the face-up mask), so a
+// card the action would turn over never counts and is never named.
+type MoveFacts struct {
+	// Win: the action wins, at once or through the mover's own follow-up
+	// (WinsNow).
+	Win  Win
+	Wins bool
+	// Pair: it builds the second card of one of the mover's science
+	// symbols while the board has a token. DeniesPair: it takes out of the
+	// structure (built, discarded or tucked) the card that would complete
+	// the opponent's pair while the board has a token. Symbol is the
+	// symbol of either.
+	Pair       bool
+	DeniesPair bool
+	Symbol     catalog.Symbol
+	// Loot is the coins the pawn's looting takes from the opponent.
+	Loot int
+	// OppWin is a win the opponent would have with one action of its next
+	// turn after this one (the cards of the mask only), when OppKnown: the
+	// action hands the turn over in the same age and the budget held.
+	OppWin   *view.ThreatView
+	OppKnown bool
+}
+
+// ReviewFacts returns the MoveFacts of action a, a legal play action of the
+// seat to move in s (PhasePlay). The simulations spend one hintApplyBudget
+// at most.
+func ReviewFacts(s *State, a Action) MoveFacts {
+	return reviewFacts(s, a, &simCtx{budget: hintApplyBudget})
+}
+
+// reviewFacts is ReviewFacts under a simulation context, which the leak
+// tests may trace.
+func reviewFacts(s *State, a Action, c *simCtx) MoveFacts {
+	var f MoveFacts
+	if s.Over() || s.Phase != PhasePlay {
+		return f
+	}
+	mover := s.ToMove
+	opp := mover.Opp()
+	mask := FaceUpSlots(s)
+	if !actionInMask(s, a, mask) {
+		return f
+	}
+	f.Win, f.Wins = winsNow(s, a, mask, c)
+	if a.Type == ActConstructBuilding {
+		if p := previewBuild(s, mover, a.Card, false); p.HasScience && p.Science.Kind == ScienceEffectPair && p.Science.TokenOnBoard {
+			f.Pair, f.Symbol = true, p.Science.Symbol
+		}
+	}
+	switch a.Type {
+	case ActConstructBuilding, ActDiscardBuilding, ActConstructWonder:
+		if p := previewBuild(s, opp, a.Card, false); p.HasScience && p.Science.Kind == ScienceEffectPair && p.Science.TokenOnBoard {
+			f.DeniesPair = true
+			if !f.Pair {
+				f.Symbol = p.Science.Symbol
+			}
+		}
+	}
+	if !c.apply(s, a, 0, mask) {
+		return f
+	}
+	x := *s
+	var evbuf [32]Event
+	ev := evbuf[:0]
+	apply(&x, a, &ev)
+	if m, moved := readPawnMove(ev, s.Looting); moved {
+		for _, l := range m.Loot[:m.NLoot] {
+			f.Loot += int(l.Lost)
+		}
+	}
+	if x.Over() || x.Phase != PhasePlay || x.ToMove != opp || x.Age != s.Age {
+		return f
+	}
+	y := scrubbed(&x, mask)
+	c.nest += 2
+	list, ok := threatsFor(&y, opp, mask, c, true)
+	c.nest -= 2
+	if !ok {
+		return f
+	}
+	f.OppKnown = true
+	if list.N > 0 {
+		f.OppWin = &(*viewThreats(opp, &list))[0]
+	}
+	return f
+}

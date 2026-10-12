@@ -42,6 +42,8 @@ type View struct {
 	Revealed     *RevealView  `json:"revealed,omitempty"`                    // the hidden cards, wonders and tokens, once the game is over (unless the game hides them)
 
 	Hints *HintsView `json:"hints,omitempty"` // the board-level hints (hints.go); absent once the game is over and when the view was built without hint settings
+
+	Review *ReviewView `json:"review,omitempty"` // the move review of the viewer's own last play action (hints.go), added by the room while its advisor family is on; never in a spectator's view
 }
 
 // DraftView is the wonder draft in progress.

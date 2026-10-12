@@ -713,6 +713,46 @@ export const LastProducerVisible = "lastVisible"; // none is in view, but unseen
  * The last-producer states.
  */
 export type LastProducer = typeof LastProducerCertain | typeof LastProducerVisible;
+/**
+ * ReviewView is the move review (the advisor family): whether a clearly
+ * better move than the one a seat just made existed in that position, and
+ * why. The room computes it from the mover's own observation of the
+ * position before the move (never from the real state), so it uses only
+ * what the mover knew: it names only the move made, the better one and a
+ * card or wonder that was in view, never a card the move turned over.
+ * Only the mover's own view carries it (View.review), from that move until
+ * the seat's next play action, while the room's advisor family is on;
+ * spectators and the opponent never get it. It also stays in the view at
+ * the end of the game, for the final summary.
+ */
+export interface ReviewView {
+  ply: number /* int */; // the ply of the reviewed move: the seat's last play action (build, discard or wonder)
+  played: string; // that move's action key
+  better?: string; // a clearly better action's key; absent when none was found
+  reason: ReviewReason; // why it is better; none without better
+  gap: number /* int */; // how much better, in points (the bot's victory-point equivalents, rounded); 0 without better
+  /**
+   * The reason's details, each only for its reason.
+   */
+  threat?: ThreatView; // stopsWin: the opponent's win the move left open (a card or a wonder in view before the move)
+  symbol?: ScienceSymbol; // pair and deniesPair: the science symbol
+  coins?: number /* int */; // loot: the coins the better move's looting would have taken
+}
+/**
+ * ReviewReason is why a move review's better move is better, from the
+ * facts that tell the two moves apart, in this order of priority.
+ */
+export const ReviewReasonNone = "none"; // no clearly better move was found
+export const ReviewReasonWins = "wins"; // the better move wins the game at once (or through the mover's own follow-up)
+export const ReviewReasonStopsWin = "stopsWin"; // the move left the opponent a win with one action; the better move does not
+export const ReviewReasonPair = "pair"; // the better move completes a science pair of the mover's
+export const ReviewReasonDeniesPair = "deniesPair"; // the better move takes the card that completes the opponent's pair
+export const ReviewReasonLoot = "loot"; // the better move's pawn takes more coins from the opponent
+export const ReviewReasonPoints = "points"; // no single fact: the bot's evaluation rates it gap points higher
+/**
+ * The review reasons.
+ */
+export type ReviewReason = typeof ReviewReasonNone | typeof ReviewReasonWins | typeof ReviewReasonStopsWin | typeof ReviewReasonPair | typeof ReviewReasonDeniesPair | typeof ReviewReasonLoot | typeof ReviewReasonPoints;
 
 //////////
 // source: schema.go
@@ -768,6 +808,7 @@ export interface View {
   result?: ResultView; // once the game is over
   revealed?: RevealView; // the hidden cards, wonders and tokens, once the game is over (unless the game hides them)
   hints?: HintsView; // the board-level hints (hints.go); absent once the game is over and when the view was built without hint settings
+  review?: ReviewView; // the move review of the viewer's own last play action (hints.go), added by the room while its advisor family is on; never in a spectator's view
 }
 /**
  * DraftView is the wonder draft in progress.

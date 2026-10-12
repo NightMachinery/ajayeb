@@ -429,3 +429,41 @@ const (
 	LastProducerCertain LastProducer = "lastCertain" // no other producer of the resource can still come into play
 	LastProducerVisible LastProducer = "lastVisible" // none is in view, but unseen cards may hold one
 )
+
+// ReviewView is the move review (the advisor family): whether a clearly
+// better move than the one a seat just made existed in that position, and
+// why. The room computes it from the mover's own observation of the
+// position before the move (never from the real state), so it uses only
+// what the mover knew: it names only the move made, the better one and a
+// card or wonder that was in view, never a card the move turned over.
+//
+// Only the mover's own view carries it (View.review), from that move until
+// the seat's next play action, while the room's advisor family is on;
+// spectators and the opponent never get it. It also stays in the view at
+// the end of the game, for the final summary.
+type ReviewView struct {
+	Ply    int          `json:"ply"`              // the ply of the reviewed move: the seat's last play action (build, discard or wonder)
+	Played string       `json:"played"`           // that move's action key
+	Better *string      `json:"better,omitempty"` // a clearly better action's key; absent when none was found
+	Reason ReviewReason `json:"reason"`           // why it is better; none without better
+	Gap    int          `json:"gap"`              // how much better, in points (the bot's victory-point equivalents, rounded); 0 without better
+	// The reason's details, each only for its reason.
+	Threat *ThreatView    `json:"threat,omitempty"` // stopsWin: the opponent's win the move left open (a card or a wonder in view before the move)
+	Symbol *ScienceSymbol `json:"symbol,omitempty"` // pair and deniesPair: the science symbol
+	Coins  *int           `json:"coins,omitempty"`  // loot: the coins the better move's looting would have taken
+}
+
+// ReviewReason is why a move review's better move is better, from the
+// facts that tell the two moves apart, in this order of priority.
+type ReviewReason string
+
+// The review reasons.
+const (
+	ReviewReasonNone       ReviewReason = "none"       // no clearly better move was found
+	ReviewReasonWins       ReviewReason = "wins"       // the better move wins the game at once (or through the mover's own follow-up)
+	ReviewReasonStopsWin   ReviewReason = "stopsWin"   // the move left the opponent a win with one action; the better move does not
+	ReviewReasonPair       ReviewReason = "pair"       // the better move completes a science pair of the mover's
+	ReviewReasonDeniesPair ReviewReason = "deniesPair" // the better move takes the card that completes the opponent's pair
+	ReviewReasonLoot       ReviewReason = "loot"       // the better move's pawn takes more coins from the opponent
+	ReviewReasonPoints     ReviewReason = "points"     // no single fact: the bot's evaluation rates it gap points higher
+)

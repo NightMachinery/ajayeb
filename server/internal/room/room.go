@@ -67,6 +67,10 @@ type Room struct {
 	dropped    int    // stale bot results dropped, for tests and diagnostics
 	shownIdle  bool   // what the actor last published as idle (see publishIdle)
 
+	// reviews holds each seat's last play action and its move review
+	// (review.go).
+	reviews reviewState
+
 	// Guarded by the Manager's mu: what the Manager knows about this room
 	// when it must evict one to make room for another (see Manager.reserve).
 	evictable bool      // no connection is attached and nothing is left to save
@@ -591,12 +595,14 @@ func (r *Room) rejectStale(c *Client, mem member, seq int) {
 // that the frames already say it is thinking.
 func (r *Room) commit(a engine.Action, sender *Client, ack *wire.Ack) {
 	e := histEntry{ply: r.state.Ply, seat: actor(&r.state, a)}
+	pre := r.state
 	if err := engine.Apply(&r.state, a, &e.events); err != nil {
 		// a came from LegalActions (or resignByKey) for this exact state, so
 		// this is a bug.
 		r.log.Error("legal action failed to apply", "key", a.Key(), "err", err)
 		return
 	}
+	r.noteMove(&pre, a)
 	r.file.Actions = append(r.file.Actions, a.Key())
 	r.hist = append(r.hist, e)
 	r.version++
@@ -657,6 +663,7 @@ func (r *Room) undo(c *Client, m wire.Undo) {
 	r.state = s
 	r.file.Actions = keys
 	r.hist = r.hist[:cut]
+	r.forgetReviews()
 	r.clampRoomLog()
 	r.version++
 	r.record(c, ack)
