@@ -6,7 +6,14 @@
   // key) and each becomes a real button carrying that key; otherwise the
   // row is purely informational. This never decides which slugs are legal
   // and never builds a key itself.
+  //
+  // Board hints (M10.HS4): each token's value now and the Law laurel
+  // (view/board-hints.ts tokenHint), from the page's game context.
+  import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
+  import { tokenHint } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { tryGameContext } from '../choices/room';
   import ProgressToken from './ProgressToken.svelte';
 
   interface Props {
@@ -21,6 +28,13 @@
   }
 
   let { tokens, pickable, selectedSlug, compact = false, class: className = '' }: Props = $props();
+
+  const ctx = tryGameContext();
+  const screen = $derived(sessionHintScreen(ctx?.session, hintHide.value));
+  function hintOf(slug: string) {
+    const view = ctx?.session.view;
+    return view && screen ? tokenHint(view, slug, screen) : undefined;
+  }
 </script>
 
 <div
@@ -40,6 +54,7 @@
       selected={selectedSlug === slug}
       selectable={pickable?.has(slug) ?? false}
       actionKey={pickable?.get(slug)}
+      hint={hintOf(slug)}
     />
   {/each}
 </div>

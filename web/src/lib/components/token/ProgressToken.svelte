@@ -7,11 +7,18 @@
   // its own message key; see i18n/en/board.ts). A leaf
   // component, plain props: the caller decides whether it is selectable
   // (the pending pick choice) and whether it should act as a real button.
+  //
+  // Board hints (M10.HS4, `hint`, view/board-hints.ts tokenHint): the
+  // tooltip adds what the token is worth now to each seat (token-value-now,
+  // token-deny-note), and the Law medallion gets a laurel ring while Law
+  // would be a seat's sixth symbol (law-token-marks): solid for this
+  // screen's own seat, dashed in the opponent's crest colour.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId, tokenArtSizes } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import type { TokenHint } from '$lib/view/board-hints';
 
   interface Props {
     /** A TokenSlug, e.g. "agriculture". Untrusted-width string so this also
@@ -37,6 +44,8 @@
     /** xs (20 px) is for a phone strip's owned tokens, sm (26 px) for
      *  compact rows, md (36 px) for the board. */
     size?: 'xs' | 'sm' | 'md';
+    /** The board hints about it: its value now, and the Law laurel. */
+    hint?: TokenHint;
     class?: string;
   }
 
@@ -48,6 +57,7 @@
     actionKey,
     selectable = true,
     size = 'md',
+    hint,
     class: className = ''
   }: Props = $props();
 
@@ -87,6 +97,10 @@
         : label
   );
   const initial = $derived(label.charAt(0).toUpperCase());
+  const hintText = $derived(
+    hint ? [...hint.lines, hint.mark?.tip ?? ''].filter(Boolean).join(' ') : ''
+  );
+  const tipText = (base: string): string => (hintText ? `${base}. ${hintText}` : base);
   const sizeClass = $derived(
     size === 'xs'
       ? 'size-5 text-[10px]'
@@ -98,6 +112,15 @@
 
 {#snippet medallion()}
   <span class="relative grid place-items-center {sizeClass}">
+    {#if hint?.mark}
+      <span
+        class="law-mark pointer-events-none absolute -inset-1 rounded-full"
+        data-hint="law"
+        data-style={hint.mark.style}
+        data-tone={hint.mark.tone}
+        aria-hidden="true"
+      ></span>
+    {/if}
     <ArtImage
       id={artId('token', slug)}
       size="thumb"
@@ -120,8 +143,8 @@
     type="button"
     data-act={actionKey}
     disabled={!selectable}
-    aria-label={t('board.token.take', { name: label })}
-    {@attach tooltip({ text: label })}
+    aria-label={tipText(t('board.token.take', { name: label }))}
+    {@attach tooltip({ text: tipText(label) })}
     data-tap-ok={size === 'md' ? undefined : ''}
     class="token-tile grid place-items-center rounded-full transition-transform duration-(--dur-fast)
       {size === 'md' ? 'min-h-11 min-w-11' : ''}
@@ -137,12 +160,29 @@
     class="token-tile grid place-items-center rounded-full {taken && !owned
       ? 'opacity-40 grayscale'
       : ''} {className}"
-    {@attach tooltip({ text: staticLabel })}
+    {@attach tooltip({ text: tipText(staticLabel) })}
     role="img"
-    aria-label={staticLabel}
+    aria-label={tipText(staticLabel)}
     data-owned={owned ? '' : undefined}
     data-taken={taken && !owned ? '' : undefined}
   >
     {@render medallion()}
   </div>
 {/if}
+
+<style>
+  /* The Law laurel: the hint pip's colours (card/HintPip.svelte). */
+  .law-mark {
+    --mark: var(--gold-deep);
+    border: 2px solid var(--mark);
+  }
+  .law-mark[data-tone='sun'] {
+    --mark: var(--sun-ink);
+  }
+  .law-mark[data-tone='moon'] {
+    --mark: var(--moon-ink);
+  }
+  .law-mark[data-style='outline'] {
+    border-style: dashed;
+  }
+</style>
