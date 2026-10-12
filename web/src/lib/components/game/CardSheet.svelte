@@ -15,6 +15,14 @@
   // cities are public, so the server sends both seats' costs for it as if
   // it were uncovered now (SlotView.costs): the sheet says what each player
   // would pay, with the server's totals only.
+  //
+  // Hints (M10.HS2): under the actions, the card's hint sections ("For you",
+  // then the opponent's, outlined), and muted notes beside the actions: what
+  // discarding it keeps from the opponent and whether a Mausoleum could
+  // rebuild it, what building or tucking a deny target does, and a short
+  // build a discard would cover. All of it re-shapes the server's
+  // slot.hints and costs (view/hints.ts); the game context supplies the
+  // families shown, and the gallery passes `hints`.
   import { cardBySlug } from '$lib/catalog';
   import {
     backName,
@@ -24,7 +32,17 @@
     wonderName
   } from '$lib/components/card/effect-text';
   import { t } from '$lib/i18n';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import {
+    cardSections,
+    denyNotes,
+    discardNotes,
+    sessionHintScreen,
+    shortByDiscard,
+    type HintScreen
+  } from '$lib/view/hints';
   import type { SlotView, View } from '$lib/wire';
+  import { tryGameContext } from '../choices/room';
   import Button from '../shell/Button.svelte';
   import Sheet from '../shell/Sheet.svelte';
   import CardBack from '../card/CardBack.svelte';
@@ -32,6 +50,7 @@
   import ActionButton from './ActionButton.svelte';
   import { cardActions, wonderChoicesByCard } from './card-actions';
   import CostBreakdown from './CostBreakdown.svelte';
+  import HintLines from './HintLines.svelte';
   import { reasonText } from './reasons';
   import WonderStep from './WonderStep.svelte';
 
@@ -59,6 +78,8 @@
     step: 'card' | 'wonders';
     /** Wonder-first mode: the wonder waiting for a card. */
     pickFor: string | null;
+    /** The hint display of this screen; on a room page it comes from the game context. */
+    hints?: HintScreen;
     onact: (key: string) => void;
     onwonders: () => void;
     onback: () => void;
@@ -79,6 +100,7 @@
     spectator = false,
     step,
     pickFor,
+    hints,
     onact,
     onwonders,
     onback,
@@ -108,6 +130,34 @@
   );
   const pickChoice = $derived(
     pickFor && slug ? wonderChoicesByCard(view, pickFor).get(slug) : undefined
+  );
+
+  const ctx = tryGameContext();
+  const screen = $derived(
+    view.result ? undefined : (hints ?? sessionHintScreen(ctx?.session, hintHide.value))
+  );
+  const hintSections = $derived(
+    screen && slug && slot
+      ? cardSections(slug, slot.hints, screen.perspective, screen.families, screen.names)
+      : []
+  );
+  const sheetSeat = $derived(seat === 1 ? 1 : 0);
+  const notes = $derived(
+    screen && slot && slug ? discardNotes(slot, view, sheetSeat, screen.families, screen.names) : []
+  );
+  const deny = $derived(
+    screen && slot
+      ? denyNotes(slot.hints, sheetSeat, screen.families, screen.names)
+      : ({} as ReturnType<typeof denyNotes>)
+  );
+  const shortNote = $derived(
+    screen && actions?.buildBlocked?.cost
+      ? shortByDiscard(
+          actions.buildBlocked.cost.shortfall,
+          view.players[sheetSeat].discardValue,
+          screen.families
+        )
+      : undefined
   );
 </script>
 
@@ -215,6 +265,7 @@
               </p>
             </section>
           {/if}
+          <HintLines sections={hintSections} />
         {/if}
 
         {#if takeable && slug && actions}
@@ -286,12 +337,20 @@
                     disabled={!canAct}
                     {onact}
                   />
+                  {#if deny.build}
+                    <p class="text-xs text-fg-muted" dir="auto" data-hint-note="deny-build">
+                      {deny.build}
+                    </p>
+                  {/if}
                 {:else if actions.buildBlocked}
                   <Button variant="primary" full disabled>
                     {t('game.action.build', { count: actions.buildBlocked.cost?.total ?? 0 })}
                   </Button>
                   <p class="text-sm text-fg-muted" data-reason={actions.buildBlocked.reason}>
                     {reasonText(actions.buildBlocked.reason, actions.buildBlocked.cost)}
+                    {#if shortNote}
+                      <span data-hint-note="short-by-discard">{shortNote}</span>
+                    {/if}
                   </p>
                 {/if}
                 <div class="grid grid-cols-2 gap-2">
@@ -318,11 +377,26 @@
                     </Button>
                   {/if}
                 </div>
+                {#if notes.length > 0 && actions.discard}
+                  <ul class="flex flex-col gap-0.5" data-hint-notes="discard">
+                    {#each notes as note (note.id)}
+                      <li class="text-xs text-fg-muted" dir="auto" data-hint-note={note.id}>
+                        {note.text}
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+                {#if deny.wonder && actions.wonders.length > 0}
+                  <p class="text-xs text-fg-muted" dir="auto" data-hint-note="deny-tuck">
+                    {deny.wonder}
+                  </p>
+                {/if}
                 {#if !canAct && connected}
                   <p class="text-sm text-fg-muted">{t('game.card.locked')}</p>
                 {/if}
               </div>
             {/if}
+            <HintLines sections={hintSections} />
           {/if}
         {/if}
       </div>
