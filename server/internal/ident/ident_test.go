@@ -239,3 +239,101 @@ func TestLoadSecretConcurrentCreate(t *testing.T) {
 		}
 	}
 }
+
+func mustSecret(t *testing.T) ident.Secret {
+	t.Helper()
+	s, err := ident.LoadSecret(t.TempDir())
+	if err != nil {
+		t.Fatalf("LoadSecret: %v", err)
+	}
+	return s
+}
+
+func TestClaimShapeAndDeterminism(t *testing.T) {
+	s := mustSecret(t)
+	user, err := s.UserID(mustToken(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c1 := s.Claim("K7QX2M", user, 0)
+	c2 := s.Claim("K7QX2M", user, 0)
+	if c1 != c2 {
+		t.Fatalf("Claim is not deterministic: %q != %q", c1, c2)
+	}
+	if len(c1) != ident.ClaimLen {
+		t.Fatalf("Claim length %d, want %d", len(c1), ident.ClaimLen)
+	}
+	if err := ident.ValidateClaim(c1); err != nil {
+		t.Fatalf("ValidateClaim(%q): %v", c1, err)
+	}
+	if !s.VerifyClaim(c1, "K7QX2M", user, 0) {
+		t.Fatal("VerifyClaim refused the claim it derived")
+	}
+}
+
+func TestClaimRevealsNothing(t *testing.T) {
+	s := mustSecret(t)
+	tok := mustToken(t)
+	user, err := s.UserID(tok)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := s.Claim("K7QX2M", user, 0)
+	for _, secret := range []string{tok, user, user[:ident.ClaimLen]} {
+		if strings.Contains(c, secret[:8]) || strings.Contains(secret, c[:8]) {
+			t.Fatalf("claim %q shares a run with %q", c, secret)
+		}
+	}
+}
+
+func TestClaimScopedByRoomUserEpochAndSecret(t *testing.T) {
+	s := mustSecret(t)
+	other := mustSecret(t)
+	a, _ := s.UserID(mustToken(t))
+	b, _ := s.UserID(mustToken(t))
+	c := s.Claim("K7QX2M", a, 0)
+	cases := map[string]bool{
+		"same":         s.VerifyClaim(c, "K7QX2M", a, 0),
+		"other room":   s.VerifyClaim(c, "K7QX2N", a, 0),
+		"other user":   s.VerifyClaim(c, "K7QX2M", b, 0),
+		"next epoch":   s.VerifyClaim(c, "K7QX2M", a, 1),
+		"other secret": other.VerifyClaim(c, "K7QX2M", a, 0),
+		"no user":      s.VerifyClaim(c, "K7QX2M", "", 0),
+	}
+	for name, ok := range cases {
+		if ok != (name == "same") {
+			t.Errorf("%s: VerifyClaim = %v", name, ok)
+		}
+	}
+	// A reset (the next epoch) derives a new claim, which works, and the
+	// old one stops working.
+	next := s.Claim("K7QX2M", a, 1)
+	if next == c {
+		t.Fatal("a new epoch derived the same claim")
+	}
+	if !s.VerifyClaim(next, "K7QX2M", a, 1) || s.VerifyClaim(c, "K7QX2M", a, 1) {
+		t.Fatal("the epoch change did not revoke the old claim")
+	}
+}
+
+func TestValidateClaimRejects(t *testing.T) {
+	cases := map[string]string{
+		"empty":     "",
+		"too short": strings.Repeat("A", ident.ClaimLen-1),
+		"too long":  strings.Repeat("A", ident.ClaimLen+1),
+		"plus":      strings.Repeat("A", ident.ClaimLen-1) + "+",
+		"slash":     strings.Repeat("A", ident.ClaimLen-1) + "/",
+		"padding":   strings.Repeat("A", ident.ClaimLen-1) + "=",
+		"space":     strings.Repeat("A", ident.ClaimLen-1) + " ",
+		"unicode":   strings.Repeat("A", ident.ClaimLen-2) + "é",
+	}
+	s := mustSecret(t)
+	for name, c := range cases {
+		if err := ident.ValidateClaim(c); err == nil {
+			t.Errorf("%s: ValidateClaim(%q) accepted it", name, c)
+		}
+		if s.VerifyClaim(c, "K7QX2M", "u", 0) {
+			t.Errorf("%s: VerifyClaim accepted %q", name, c)
+		}
+	}
+}

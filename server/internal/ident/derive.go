@@ -25,15 +25,14 @@ func (s Secret) UserID(token string) (string, error) {
 }
 
 // derive computes hex(HMAC-SHA256(secret, prefix+":"+id))[:userIDHexLen],
-// the one building block behind every identity this package derives. The
-// prefix is domain separation: it is part of what is MACed, not appended to
-// the result, so an id valid under one prefix (for example "user") can never
-// be mistaken for a different kind of id derived under another prefix (for
-// example a future room-scoped seat claim, "claim"). Any later comparison of
-// a MAC against an expected value must use hmac.Equal (or
-// crypto/subtle.ConstantTimeCompare), never ==, so that a timing difference
-// cannot leak information about the secret; this package does not currently
-// compare a derived value against anything, only computes and returns it.
+// the building block behind user ids. The prefix is domain separation: it
+// is part of what is MACed, not appended to the result, so an id valid
+// under one prefix (for example "user") can never be mistaken for a
+// different kind of value derived under another prefix (a room-scoped seat
+// claim, "claim", see Claim). Any comparison of a MAC against an expected
+// value must use hmac.Equal (or crypto/subtle.ConstantTimeCompare), never
+// ==, so that a timing difference cannot leak information about the
+// secret; VerifyClaim is the one place this package compares.
 func (s Secret) derive(prefix, id string) string {
 	mac := hmac.New(sha256.New, s.key)
 	mac.Write([]byte(prefix))
