@@ -206,7 +206,15 @@ export const STATIC_ASSETS = [
 // mask: 'circle' for progress tokens (onto the paper colour), else none.
 // sizes: shipped AVIF outputs, each { suffix, w, h, budgetBytes }. A bare
 //   suffix '' means "<slug>.avif"; otherwise "<slug>@<suffix>.avif" to
-//   match the asset table ("cards/<id>@thumb.avif").
+//   match the asset table ("cards/<id>@thumb.avif"). A size added later
+//   reaches every approved asset with `process.mjs --batch`, which writes
+//   only the files that are missing.
+// displayCss: the largest width, in CSS px, at which the app draws the
+//   kind's art, measured in a headless browser over the screens that show
+//   it (M10.AD1; see docs/art/bitmaps.md "High-DPI sizes"). index.mjs
+//   checks it against the widest shipped size at a device pixel ratio of 3
+//   (HIDPI_DPR): a kind needs a wider size once that width is more than
+//   HIDPI_SLACK times its widest one. null: not measured.
 
 export const KIND_SPEC = {
   card: {
@@ -218,6 +226,9 @@ export const KIND_SPEC = {
       { suffix: '', w: 480, h: 360, budgetBytes: 35 * 1024 },
       { suffix: 'thumb', w: 240, h: 180, budgetBytes: 10 * 1024 },
     ],
+    // The card sheet's full-tier card (140 px wide, the art drawn 142 px
+    // by its cover crop); the board's cards are smaller.
+    displayCss: 142,
   },
   wonder: {
     gen: '1536x1024',
@@ -227,7 +238,12 @@ export const KIND_SPEC = {
     sizes: [
       { suffix: '', w: 960, h: 640, budgetBytes: 70 * 1024 },
       { suffix: 'thumb', w: 480, h: 320, budgetBytes: 20 * 1024 },
+      // High-DPI (M10.AD1): a large wonder tile is half the viewport below
+      // 64rem, up to 486 CSS px on a 1020 px tablet, so 1458 device px at
+      // DPR 3. The budget keeps the 960 size's 70 KB per 614,400 pixels.
+      { suffix: '1440', w: 1440, h: 960, budgetBytes: 158 * 1024 },
     ],
+    displayCss: 486,
   },
   token: {
     gen: '1024x1024',
@@ -238,6 +254,8 @@ export const KIND_SPEC = {
       { suffix: '', w: 256, h: 256, budgetBytes: 14 * 1024 },
       { suffix: 'thumb', w: 96, h: 96, budgetBytes: 5 * 1024 },
     ],
+    // The token sheet's medallion: the board's 36 px one, scaled 1.25.
+    displayCss: 45,
   },
   back: {
     gen: '1024x1536',
@@ -245,6 +263,8 @@ export const KIND_SPEC = {
     outDir: 'backs',
     mask: 'none',
     sizes: [{ suffix: '', w: 320, h: 495, budgetBytes: 30 * 1024 }],
+    // A face-down card on a 2560 px desktop board.
+    displayCss: 132,
   },
   texture: {
     gen: '1024x1024',
@@ -252,6 +272,7 @@ export const KIND_SPEC = {
     outDir: 'ui',
     mask: 'none',
     sizes: [{ suffix: '', w: 512, h: 512, budgetBytes: 60 * 1024 }],
+    displayCss: null,
   },
   hero: {
     gen: '1536x1024',
@@ -264,6 +285,8 @@ export const KIND_SPEC = {
       { suffix: '', w: 1600, h: 900, budgetBytes: 120 * 1024, nameOverride: 'hero' },
       { suffix: '800', w: 800, h: 450, budgetBytes: 60 * 1024, nameOverride: 'hero' },
     ],
+    // Home's hero above 64rem (28rem).
+    displayCss: 448,
   },
   avatar: {
     gen: '1024x1024',
@@ -271,6 +294,7 @@ export const KIND_SPEC = {
     outDir: 'avatars',
     mask: 'none',
     sizes: [{ suffix: '', w: 192, h: 192, budgetBytes: 12 * 1024 }],
+    displayCss: null,
   },
   victory: {
     gen: '1536x1024',
@@ -278,6 +302,8 @@ export const KIND_SPEC = {
     outDir: 'victory',
     mask: 'none',
     sizes: [{ suffix: '', w: 960, h: 540, budgetBytes: 60 * 1024 }],
+    // The result screen's scene on a desktop.
+    displayCss: 158,
   },
   icon: {
     gen: '1024x1024',
@@ -290,8 +316,26 @@ export const KIND_SPEC = {
       { suffix: '180', w: 180, h: 180, budgetBytes: 20 * 1024 },
       { suffix: '32', w: 32, h: 32, budgetBytes: 4 * 1024 },
     ],
+    displayCss: null,
   },
 };
+
+/** The device pixel ratio the high-DPI check plans for (a phone at DPR 3). */
+export const HIDPI_DPR = 3;
+/** How far a kind's widest shipped size may fall short of its largest
+ *  display at HIDPI_DPR before it needs a wider one: up to 1.25 times
+ *  upscaled still looks sharp enough on a dense screen. */
+export const HIDPI_SLACK = 1.25;
+
+/** The high-DPI check of one kind: the device pixels its largest display
+ *  needs at HIDPI_DPR, its widest shipped size, and whether that is enough. */
+export function hiDpiCheck(kind) {
+  const spec = KIND_SPEC[kind];
+  const widest = Math.max(...spec.sizes.map((s) => s.w));
+  if (spec.displayCss == null) return { kind, displayCss: null, needed: null, widest, ok: true };
+  const needed = spec.displayCss * HIDPI_DPR;
+  return { kind, displayCss: spec.displayCss, needed, widest, ok: needed <= widest * HIDPI_SLACK };
+}
 
 export function shippedFileName(kind, slug, size) {
   const base = size.nameOverride || slug;

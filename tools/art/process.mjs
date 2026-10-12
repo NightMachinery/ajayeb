@@ -71,6 +71,20 @@
 // icon-512.png (or the same names under DIR). It touches neither the
 // manifest nor web/static/art/.
 //
+// Batch mode, for a size added to KIND_SPEC after the art shipped (and for
+// any other re-derivation of the shipped files from the committed
+// originals):
+//   node tools/art/process.mjs --batch [--kind wonder] [--ids a,b] [--force] [--out DIR]
+// reprocesses every approved asset (or those of --kind, or the --ids)
+// from its committed original, art/originals/<kind>/<slug>.webp, with the
+// same crop, paper mapping, mask and quality stepping as above. By default
+// it writes only the shipped files that do not exist yet, so the files
+// already shipped stay byte-identical and only a new size appears;
+// --force rewrites every size. It never writes art/originals/ or the
+// manifest (index.mjs reads the byte counts from the shipped files), and
+// it prints the files it wrote, with their bytes, and the files it kept.
+// An approved id with no committed original is reported and skipped.
+//
 // With --out, nothing is written to art/originals/ or web/static/art/: the
 // WebP original goes to DIR/originals/<kind>/<slug>.webp and the AVIFs to
 // DIR/<outDir>/. This is how a pipeline change is proved without shipping
@@ -79,6 +93,7 @@
 
 import { spawn } from 'node:child_process';
 import { mkdir, copyFile, rename, rm, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
@@ -95,6 +110,7 @@ import {
   idKind,
   idSlug,
   originalPath,
+  findOriginal,
   shippedRoot,
   loadManifest,
   saveManifest,
@@ -118,8 +134,18 @@ function parseArgs(argv) {
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--manifest') setManifestPath(argv[++i]);
     else if (a === '--app-icons') args.appIcons = true;
+    else if (a === '--batch') args.batch = true;
+    else if (a === '--kind') args.kind = argv[++i];
+    else if (a === '--ids') args.ids = argv[++i].split(',').filter(Boolean);
+    else if (a === '--force') args.force = true;
     else die(`unknown argument "${a}" (see --help)`, 2);
   }
+  if (args.batch) {
+    if (args.appIcons || args.id || args.src) die('--batch takes no --id, --src or --app-icons', 2);
+    if (args.kind && !KIND_SPEC[args.kind]) die(`no KIND_SPEC for kind "${args.kind}"`, 2);
+    return args;
+  }
+  if (args.kind || args.ids || args.force) die('--kind, --ids and --force go with --batch', 2);
   if (args.appIcons) {
     if (args.id || args.src) die('--app-icons takes no --id or --src (it reads the icon/app original)', 2);
     return args;
@@ -437,9 +463,104 @@ async function appIcons(args) {
   }
 }
 
+/**
+ * Writes one shipped size of an original: the fill crop to the size's
+ * exact pixels, the paper-tone mapping, the token rim mask, then AVIF at
+ * the first quality of `qualities` that meets the size's byte budget (see
+ * the steps at the top). Returns encodeAvif's { bytes, quality, overBudget }.
+ */
+async function shipSize(src, kind, size, outPath, scratchRoot, qualities = [55, 45, 35]) {
+  const spec = KIND_SPEC[kind];
+  const croppedPng = path.join(scratchRoot, `_crop-${path.basename(outPath)}.png`);
+  const { buf, w, h } = await cropToRawRgb(src, size.w, size.h);
+  const ownPaperRgb = cornerPaperColor(buf, w, h);
+  // The rim is detected on the unmapped pixels, against the crop's own
+  // paper colour: after mapPaperTone the paper sits at PAPER_HEX, so a
+  // deep generated paper would no longer match ownPaperRgb and the rim
+  // scan would stop at the first pixel, leaving the ivory ring in place.
+  const radius = spec.mask === 'circle' ? detectTokenRadius(buf, w, h, ownPaperRgb) : 0;
+  const targetPaperRgb = hexToRgb(PAPER_HEX);
+  mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
+  if (spec.mask === 'circle') applyCircleMask(buf, w, h, radius, targetPaperRgb);
+  await rawRgbToPng(buf, w, h, croppedPng);
+  try {
+    return await encodeAvif(croppedPng, outPath, size.budgetBytes, qualities);
+  } finally {
+    await rm(croppedPng, { force: true });
+  }
+}
+
+/** "480x360 q55 -> 30.1 KB (budget 35 KB)", flagged when over budget. */
+function sizeReport(size, result) {
+  const kb = (result.bytes / 1024).toFixed(1);
+  const budgetKb = (size.budgetBytes / 1024).toFixed(0);
+  const flag = result.overBudget ? ' OVER BUDGET' : '';
+  return `${size.w}x${size.h} q${result.quality} -> ${kb} KB (budget ${budgetKb} KB)${flag}`;
+}
+
+/**
+ * --batch: re-derives shipped sizes from the committed originals (see the
+ * usage above). Only missing files are written unless --force.
+ */
+async function batch(args) {
+  const manifest = await loadManifest();
+  const ids = Object.keys(manifest.assets)
+    .sort()
+    .filter((id) => approvedAttemptOf(manifest.assets[id]))
+    .filter((id) => !args.kind || idKind(id) === args.kind)
+    .filter((id) => !args.ids || args.ids.includes(id));
+  for (const id of args.ids ?? []) {
+    if (!ids.includes(id)) die(`--ids: ${id} is not an approved asset in ${manifestLabel()}`);
+  }
+  const outRoot = args.out ? path.resolve(args.out) : shippedRoot;
+  const scratchRoot = path.join(os.tmpdir(), `ajayeb-art-batch-${process.pid}-${Date.now()}`);
+  await mkdir(scratchRoot, { recursive: true });
+  let written = 0;
+  let writtenBytes = 0;
+  let kept = 0;
+  let over = 0;
+  const noOriginal = [];
+  try {
+    for (const id of ids) {
+      const kind = idKind(id);
+      const slug = idSlug(id);
+      const spec = KIND_SPEC[kind];
+      if (!spec) die(`no KIND_SPEC for kind "${kind}" (${id})`);
+      const todo = spec.sizes
+        .map((size) => ({ size, outPath: path.join(outRoot, spec.outDir, shippedFileName(kind, slug, size)) }))
+        .filter(({ outPath }) => args.force || !existsSync(outPath));
+      kept += spec.sizes.length - todo.length;
+      if (todo.length === 0) continue;
+      const src = findOriginal(id);
+      if (!src) {
+        noOriginal.push(id);
+        continue;
+      }
+      for (const { size, outPath } of todo) {
+        const result = await shipSize(src, kind, size, outPath, scratchRoot, args.qualities);
+        written++;
+        writtenBytes += result.bytes;
+        if (result.overBudget) over++;
+        process.stdout.write(`process.mjs: ${displayPath(outPath)} ${sizeReport(size, result)}\n`);
+      }
+    }
+  } finally {
+    await rm(scratchRoot, { recursive: true, force: true });
+  }
+  process.stdout.write(
+    `process.mjs: batch: ${ids.length} approved id(s); wrote ${written} file(s), ${(writtenBytes / 1024).toFixed(1)} KB` +
+      `${over ? `, ${over} over budget` : ''}; kept ${kept} existing file(s) untouched` +
+      `${args.force ? '' : ' (--force rewrites them)'}; ${manifestLabel()} left unchanged\n`,
+  );
+  if (noOriginal.length) {
+    die(`no committed original under art/originals/ for ${noOriginal.join(', ')}; their missing sizes were not written`);
+  }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.appIcons) return appIcons(args);
+  if (args.batch) return batch(args);
   const kind = idKind(args.id);
   const slug = idSlug(args.id);
   const spec = KIND_SPEC[kind];
@@ -470,31 +591,12 @@ async function main() {
 
   const shippedDir = args.out ? path.join(args.out, spec.outDir) : path.join(shippedRoot, spec.outDir);
   const bytes = {};
-  const targetPaperRgb = hexToRgb(PAPER_HEX);
 
   for (const size of spec.sizes) {
     const fileName = shippedFileName(kind, slug, size);
-    const croppedPng = path.join(scratchRoot, `_crop-${fileName}.png`);
-
-    const { buf, w, h } = await cropToRawRgb(args.src, size.w, size.h);
-    const ownPaperRgb = cornerPaperColor(buf, w, h);
-    // The rim is detected on the unmapped pixels, against the crop's own
-    // paper colour: after mapPaperTone the paper sits at PAPER_HEX, so a
-    // deep generated paper would no longer match ownPaperRgb and the rim
-    // scan would stop at the first pixel, leaving the ivory ring in place.
-    const radius = spec.mask === 'circle' ? detectTokenRadius(buf, w, h, ownPaperRgb) : 0;
-    mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
-    if (spec.mask === 'circle') applyCircleMask(buf, w, h, radius, targetPaperRgb);
-    await rawRgbToPng(buf, w, h, croppedPng);
-
-    const outPath = path.join(shippedDir, fileName);
-    const result = await encodeAvif(croppedPng, outPath, size.budgetBytes, args.qualities ?? [55, 45, 35]);
+    const result = await shipSize(args.src, kind, size, path.join(shippedDir, fileName), scratchRoot, args.qualities);
     bytes[fileName] = result.bytes;
-
-    const kb = (result.bytes / 1024).toFixed(1);
-    const budgetKb = (size.budgetBytes / 1024).toFixed(0);
-    const flag = result.overBudget ? ' OVER BUDGET' : '';
-    process.stdout.write(`process.mjs: ${fileName} ${size.w}x${size.h} q${result.quality} -> ${kb} KB (budget ${budgetKb} KB)${flag}\n`);
+    process.stdout.write(`process.mjs: ${fileName} ${sizeReport(size, result)}\n`);
   }
 
   if (args.out) {
