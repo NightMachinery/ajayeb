@@ -12,6 +12,11 @@
   // here), and once the game has ended the replay download. It is a native
   // popover: light dismiss, Escape and the top layer come with it. The
   // undo arrow in the bar itself does the same as the menu item.
+  //
+  // Next to the log, the eye opens the opponent move summary (M10.S03b);
+  // the caller passes onOpenSummary only while there is a summary to show.
+  // Below 26rem the bar has no room for five buttons, the age and the cards
+  // left, so the settings gear leaves it there (Settings stays in the menu).
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import HintsMenuItem from '../hints/HintsMenuItem.svelte';
@@ -21,6 +26,7 @@
   import Settings from '@lucide/svelte/icons/settings';
   import ScrollText from '@lucide/svelte/icons/scroll-text';
   import Download from '@lucide/svelte/icons/download';
+  import Eye from '@lucide/svelte/icons/eye';
   import Flag from '@lucide/svelte/icons/flag';
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
@@ -34,6 +40,8 @@
     /** Why undo is greyed out now (shown under the menu item while !canUndo). */
     undoReason?: string;
     onOpenLog?: () => void;
+    /** Opens the opponent move summary; absent while there is none. */
+    onOpenSummary?: () => void;
     onOpenSettings?: () => void;
     /** Leaves the room for Home; when given, the game menu shows. */
     onHome?: () => void;
@@ -59,6 +67,7 @@
     onUndo,
     undoReason,
     onOpenLog,
+    onOpenSummary,
     onOpenSettings,
     onHome,
     homeHint = true,
@@ -141,6 +150,18 @@
         <Undo2 class="size-5" />
       </button>
     {/if}
+    {#if onOpenSummary}
+      <button
+        type="button"
+        onclick={onOpenSummary}
+        data-control="move-summary"
+        aria-label={t('game.summary.open')}
+        {@attach tooltip({ text: t('game.summary.open') })}
+        class={iconButton}
+      >
+        <Eye class="size-5" />
+      </button>
+    {/if}
     {#if onOpenLog}
       <button
         type="button"
@@ -160,7 +181,7 @@
         data-control="settings"
         aria-label={t('board.topbar.settings')}
         {@attach tooltip({ text: t('board.topbar.settings') })}
-        class={iconButton}
+        class="{iconButton} max-[25.99rem]:hidden"
       >
         <Settings class="size-5" />
       </button>

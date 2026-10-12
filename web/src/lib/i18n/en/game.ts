@@ -170,5 +170,67 @@ export const game = {
   'game.gallery.scene.gameOver': 'Game over',
   'game.gallery.scene.lobby': 'Online lobby',
   'game.gallery.scene.away': 'Opponent away',
-  'game.gallery.scene.watching': 'Spectator'
+  'game.gallery.scene.watching': 'Spectator',
+  'game.gallery.summary': 'Opponent move summary',
+  'game.gallery.summaryIntro':
+    'The popup of what the other side just did, on recorded moves. Open one, then tap anywhere to close it.',
+  'game.gallery.summaryOpen': 'Show: {scene}',
+  'game.gallery.summary.bot': 'A bot reply with a science pair and a token',
+  'game.gallery.summary.extra': 'An extra turn with trade, the pawn and looting',
+  'game.gallery.summary.special': 'A wonder that destroys, an age change and the end',
+
+  // The opponent move summary (MoveSummary.svelte): what the other side
+  // did since the viewer last moved, one line per move. The player is named
+  // in the title, so the lines leave them out.
+  'game.summary.title': "{name}'s move",
+  'game.summary.open': "Show the opponent's last move",
+  'game.summary.close': 'Tap anywhere to close',
+  'game.summary.build': 'Built {card}',
+  'game.summary.discard': {
+    one: 'Discarded {card} for {count} coin',
+    other: 'Discarded {card} for {count} coins'
+  },
+  'game.summary.wonder': 'Built the wonder {wonder}, using {card}',
+  'game.summary.wonderPlain': 'Built the wonder {wonder}',
+  'game.summary.draft': 'Took {wonder} in the draft',
+  'game.summary.draftAuto': '{wonder}, the last of the round, went to {name}',
+  'game.summary.token': 'Took the {token} token',
+  'game.summary.tokenLibrary': 'Took the {token} token from the Great Library',
+  'game.summary.destroy': "Destroyed {name}'s {card}",
+  'game.summary.rebuild': 'Built {card} from the discard pile',
+  'game.summary.starter': 'Chose {name} to start the next age',
+  'game.summary.resign': 'Forfeited the game',
+  'game.summary.ageStart': 'Age {age} begins',
+  'game.summary.extraTurn': 'Plays again',
+  'game.summary.extraTurnLost': 'The extra turn is lost at the end of the age',
+  'game.summary.wonderRemoved': "{name}'s {wonder} leaves the game",
+  'game.summary.wonderRemovedTip': 'Seven wonders are built, so the eighth leaves the game.',
+  'game.summary.wins': '{name} wins: {kind}',
+  'game.summary.paid': {
+    one: 'Paid {count} coin',
+    other: 'Paid {count} coins'
+  },
+  'game.summary.trade': {
+    one: '{count} coin of it went to {name} for trade',
+    other: '{count} coins of it went to {name} for trade'
+  },
+  'game.summary.gains': {
+    one: '{name} gains {count} coin',
+    other: '{name} gains {count} coins'
+  },
+  'game.summary.loses': {
+    one: '{name} loses {count} coin',
+    other: '{name} loses {count} coins'
+  },
+  'game.summary.pawn': {
+    one: 'The conflict pawn moves {count} space toward {name}',
+    other: 'The conflict pawn moves {count} spaces toward {name}'
+  },
+  'game.summary.pawnShort': '{count} toward {name}',
+  'game.summary.loot': {
+    one: '{name} loses {count} coin to looting',
+    other: '{name} loses {count} coins to looting'
+  },
+  'game.summary.pair': 'A pair of {symbol} symbols: a progress token to take',
+  'game.summary.pairShort': 'Pair'
 } as const satisfies Messages;

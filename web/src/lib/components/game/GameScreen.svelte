@@ -55,6 +55,15 @@
   // server fixes for the game's life: room.allowUndo) is the game menu's
   // "Undo last move", the top bar's arrow, U or Ctrl+Z, and the pass-device
   // screen's "Undo X's move". A game without undo shows none of them.
+  //
+  // The opponent move summary (MoveSummary, lib/view/move-summary.ts): when
+  // a live frame hands the turn back after the other side's moves, a popup
+  // lists them, once the Presenter shows that frame (and, in hot-seat, after
+  // the pass-device screen). Frames that replay history (a join, a resync,
+  // an undo) never open it. Settings can turn that off; the top bar's eye
+  // still opens the latest summary. Any tap or Escape closes it, and the tap
+  // is swallowed. It sits over the structure's top on a phone and over the
+  // viewer's own column on wide screens and in phone landscape.
   import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
   import ArtPrefetch from '$lib/art/ArtPrefetch.svelte';
@@ -70,6 +79,7 @@
   import { settings } from '$lib/ui/settings.svelte';
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
+  import { lastPly, latestSummary, summaryTrigger, summaryViewer } from '$lib/view/move-summary';
   import { gameEnded } from '$lib/view/threats';
   import { playAgainFrom, turnState } from '$lib/view/turn';
   import { buildableWonders } from '$lib/view/wonders';
@@ -97,6 +107,7 @@
   import ProgressTokenRow from '../token/ProgressTokenRow.svelte';
   import CardSheet from './CardSheet.svelte';
   import ForfeitConfirm from './ForfeitConfirm.svelte';
+  import MoveSummary from './MoveSummary.svelte';
   import {
     botPick,
     eventLines,
@@ -139,6 +150,15 @@
   let wonderListShown = $state<Seat>(0);
   // The forfeit's confirm step (from the game menu).
   let forfeitOpen = $state(false);
+  // The opponent move summary: the ply of the entry a live frame opened it
+  // for (shown once the Presenter has that entry on screen), and whether
+  // the top bar's button opened it.
+  let summaryAuto = $state<number | null>(null);
+  let summaryManual = $state(false);
+  // The boxes the summary is placed over.
+  let structureEl = $state<HTMLElement | undefined>();
+  let homeEl = $state<HTMLElement | undefined>();
+  let awayEl = $state<HTMLElement | undefined>();
 
   // Settings, with the device defaults of the hot-seat sheet.
   const passDevice = $derived(settings.value.hotseatPassDevice ?? coarsePointer.current);
@@ -281,6 +301,42 @@
   );
   const lastLines = $derived(frame ? eventLines(frame.events, names) : []);
 
+  // The history up to the frame on screen: a bot's answer still being
+  // paced by the Presenter is not in it yet.
+  const shownHistory = $derived.by(() => {
+    const history = session.history;
+    const ply = view?.ply;
+    const last = history[history.length - 1];
+    if (ply === undefined || !last || last.ply < ply) return history;
+    return history.filter((e) => e.ply < ply);
+  });
+  const summarySeat = $derived(view ? summaryViewer(mode, mySeats, view.toMove) : null);
+  const moveSummary = $derived(
+    summarySeat === null ? null : latestSummary(shownHistory, summarySeat)
+  );
+  const summaryOpen = $derived(
+    !!moveSummary &&
+      (summaryManual ||
+        (summaryAuto !== null &&
+          settings.value.showOpponentMove &&
+          !showPass &&
+          lastPly(moveSummary) === summaryAuto))
+  );
+  // On wide screens, the viewer's own column (in a fixed hot-seat board the
+  // player to move may sit on the far side), so the mover's city stays in view.
+  const summaryAnchor = $derived(
+    layout === 'desktop' || layout === 'phone-landscape'
+      ? summarySeat === away
+        ? awayEl
+        : homeEl
+      : structureEl
+  );
+
+  function closeSummary(): void {
+    summaryAuto = null;
+    summaryManual = false;
+  }
+
   // The wonder sheet's wonder, its owner and whether the view can build it now.
   const wonderOwner = $derived.by(() => {
     if (!view || !ui.wonder) return undefined;
@@ -308,7 +364,18 @@
       wonderFromList = null;
     }
     announcePresence(lastFrame, f);
+    const prevFrame = lastFrame;
     lastFrame = f;
+    // The move summary opens for a live frame that hands the turn back after
+    // the other side moved; any other frame with events, and every frame
+    // that replays history, closes it.
+    const trigger = summaryTrigger(prevFrame, f, session.history);
+    if (trigger !== null) {
+      summaryAuto = trigger;
+      summaryManual = false;
+    } else if (f.events.length > 0 || f.history) {
+      closeSummary();
+    }
     let acked: Acked = null;
     if (f.ack && f.ack.clientId === session.clientId && lastRequest?.seq === f.ack.seq) {
       acked = lastRequest.kind;
@@ -590,6 +657,7 @@
         onUndo={undoAllowed ? undo : undefined}
         {undoReason}
         onOpenLog={() => ui.openLog()}
+        onOpenSummary={moveSummary ? () => (summaryManual = true) : undefined}
         onOpenSettings={() => ui.openSettings()}
         onHome={onhome}
         homeHint={view?.phase !== 'gameOver'}
@@ -624,7 +692,7 @@
     {:else}
       <!-- The panels scroll inside a positioned box, so nothing absolutely
          positioned in them (sr-only text) can reach past it and stretch the page. -->
-      <div class="area-away relative min-h-0 min-w-0" dir={i18n.dir}>
+      <div class="area-away relative min-h-0 min-w-0" dir={i18n.dir} bind:this={awayEl}>
         {@render seatPanel(away, 'relative max-h-full overflow-y-auto')}
       </div>
 
@@ -634,7 +702,11 @@
         </div>
       {/if}
 
-      <div class="area-structure relative min-h-0 min-w-0" {@attach markBotPick(pickSlot)}>
+      <div
+        class="area-structure relative min-h-0 min-w-0"
+        bind:this={structureEl}
+        {@attach markBotPick(pickSlot)}
+      >
         <CardStructure
           slots={view.structure}
           age={view.age}
@@ -660,7 +732,7 @@
         {/if}
       </div>
 
-      <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir}>
+      <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir} bind:this={homeEl}>
         {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
         {#if toastSpot === 'home'}
           <!-- Desktop and phone landscape: the foot of this player's own
@@ -833,6 +905,14 @@
   winner={names[resignWinner]}
   onconfirm={forfeit}
   onclose={() => (forfeitOpen = false)}
+/>
+
+<MoveSummary
+  open={summaryOpen}
+  summary={moveSummary}
+  {names}
+  anchor={summaryAnchor}
+  onclose={closeSummary}
 />
 
 <LiveRegion message={lastLines.join(' ')} />

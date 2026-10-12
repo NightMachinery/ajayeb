@@ -6,6 +6,7 @@
   // could not change. The frames are scaled down to fit the gallery.
   import { resolve } from '$app/paths';
   import { t } from '$lib/i18n';
+  import MoveSummaries from './MoveSummaries.svelte';
 
   type SceneKey =
     | 'game.gallery.scene.draft'
@@ -112,6 +113,7 @@
       {@render framed(scene, DESKTOP)}
     {/each}
   </div>
+  <MoveSummaries />
 </div>
 
 <style>
