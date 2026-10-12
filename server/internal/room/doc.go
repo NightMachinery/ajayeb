@@ -74,7 +74,8 @@
 // kept in a bounded LRU (Config.SeqClients) and stored in the room file, keyed
 // by user id and client id together ("<user>:<client>"): clients pick their
 // own ids, so the user id keeps one user's seqs from ever shadowing another's.
-// Undo (hot-seat and bot rooms, never once the game is over) cuts the log back
+// Undo (hot-seat and bot rooms not created with undo off, a setting fixed for
+// the game's life; never once the game is over) cuts the log back
 // to just before the previous human decision, which in a bot room also removes
 // the bot's answers after it, and replays from the seed, so hidden cards
 // cannot change. Rematch, once the game is over, creates one new room with the

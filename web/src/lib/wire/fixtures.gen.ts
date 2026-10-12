@@ -49,6 +49,12 @@ export const fixtures = [
     "msg": "base 41 is behind the current version 43"
   },
   {
+    "t": "reject",
+    "seq": 9,
+    "code": "undo-off",
+    "msg": "this game was created with undo off"
+  },
+  {
     "t": "state",
     "code": "B4TQ7N",
     "version": 1,
@@ -88,7 +94,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": true
-      }
+      },
+      "allowUndo": true
     },
     "you": {
       "seats": [
@@ -370,7 +377,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": false
-      }
+      },
+      "allowUndo": true
     },
     "you": {
       "seats": [
@@ -613,7 +621,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": false
-      }
+      },
+      "allowUndo": false
     },
     "you": {
       "seats": [
@@ -2056,7 +2065,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": true
-      }
+      },
+      "allowUndo": true
     },
     "you": {
       "seats": [
@@ -3747,7 +3757,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": true
-      }
+      },
+      "allowUndo": false
     },
     "you": {
       "seats": [
@@ -4200,7 +4211,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": false
-      }
+      },
+      "allowUndo": false
     },
     "you": {
       "seats": [
@@ -6883,7 +6895,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": false
-      }
+      },
+      "allowUndo": false
     },
     "you": {
       "seats": [
@@ -8332,7 +8345,8 @@ export const fixtures = [
         "counting": true,
         "recap": true,
         "advisor": false
-      }
+      },
+      "allowUndo": true
     },
     "you": {
       "seats": [
@@ -103354,6 +103368,7 @@ export const fixtureNames = [
   "linked",
   "reject-not-admin",
   "reject-stale",
+  "reject-undo-off",
   "state-ai-thinking",
   "state-draft",
   "state-forfeit",

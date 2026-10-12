@@ -38,7 +38,8 @@
       "counting": true,
       "recap": true,
       "advisor": true
-    }
+    },
+    "allowUndo": true
   },
   "you": {
     "seats": [

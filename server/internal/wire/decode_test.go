@@ -20,20 +20,22 @@ func validToken(t *testing.T) string {
 func TestDecodeClientAccepts(t *testing.T) {
 	tok := validToken(t)
 	cases := map[string]string{
-		"hello":       `{"t":"hello","v":1,"token":"` + tok + `","name":"Sara","clientId":"c1"}`,
-		"create":      `{"t":"create","mode":"online","seat":"random","names":["Sara"]}`,
-		"create ai":   `{"t":"create","mode":"ai","bot":"hard","seat":0,"names":["Sara"]}`,
-		"join":        `{"t":"join","code":"K7QX2M"}`,
-		"act":         `{"t":"act","code":"K7QX2M","seq":1,"base":0,"key":"construct:baths"}`,
-		"act hotseat": `{"t":"act","code":"K7QX2M","seq":1,"base":0,"key":"construct:baths","seat":1}`,
-		"undo":        `{"t":"undo","code":"K7QX2M","seq":2,"base":1}`,
-		"resync":      `{"t":"resync","code":"K7QX2M"}`,
-		"leave":       `{"t":"leave","code":"K7QX2M"}`,
-		"rematch":     `{"t":"rematch","code":"K7QX2M"}`,
-		"join claim":  `{"t":"join","code":"K7QX2M","claim":"q3Vb8Kx0Zr7TnW2mYc5JhA"}`,
-		"join junk":   `{"t":"join","code":"K7QX2M","claim":"not a claim"}`,
-		"link":        `{"t":"link","code":"K7QX2M","seat":0}`,
-		"relink":      `{"t":"relink","code":"K7QX2M","seat":1}`,
+		"hello":          `{"t":"hello","v":1,"token":"` + tok + `","name":"Sara","clientId":"c1"}`,
+		"create":         `{"t":"create","mode":"online","seat":"random","names":["Sara"]}`,
+		"create ai":      `{"t":"create","mode":"ai","bot":"hard","seat":0,"names":["Sara"]}`,
+		"create no undo": `{"t":"create","mode":"hotseat","seat":0,"names":[],"allowUndo":false}`,
+		"create undo":    `{"t":"create","mode":"ai","bot":"easy","seat":0,"names":[],"allowUndo":true}`,
+		"join":           `{"t":"join","code":"K7QX2M"}`,
+		"act":            `{"t":"act","code":"K7QX2M","seq":1,"base":0,"key":"construct:baths"}`,
+		"act hotseat":    `{"t":"act","code":"K7QX2M","seq":1,"base":0,"key":"construct:baths","seat":1}`,
+		"undo":           `{"t":"undo","code":"K7QX2M","seq":2,"base":1}`,
+		"resync":         `{"t":"resync","code":"K7QX2M"}`,
+		"leave":          `{"t":"leave","code":"K7QX2M"}`,
+		"rematch":        `{"t":"rematch","code":"K7QX2M"}`,
+		"join claim":     `{"t":"join","code":"K7QX2M","claim":"q3Vb8Kx0Zr7TnW2mYc5JhA"}`,
+		"join junk":      `{"t":"join","code":"K7QX2M","claim":"not a claim"}`,
+		"link":           `{"t":"link","code":"K7QX2M","seat":0}`,
+		"relink":         `{"t":"relink","code":"K7QX2M","seat":1}`,
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -124,6 +126,9 @@ func TestDecodeClientRejectsBadCreate(t *testing.T) {
 		"bad seat string":   `{"t":"create","mode":"online","seat":"left","names":[]}`,
 		"bad seat number":   `{"t":"create","mode":"online","seat":2,"names":[]}`,
 		"too many names":    `{"t":"create","mode":"online","seat":"random","names":["A","B","C"]}`,
+		"online allowUndo":  `{"t":"create","mode":"online","seat":"random","names":[],"allowUndo":true}`,
+		"online no undo":    `{"t":"create","mode":"online","seat":"random","names":[],"allowUndo":false}`,
+		"allowUndo string":  `{"t":"create","mode":"hotseat","seat":0,"names":[],"allowUndo":"no"}`,
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {

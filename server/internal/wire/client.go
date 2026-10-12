@@ -167,6 +167,10 @@ type Create struct {
 	// means the defaults of the mode. The creator becomes the game's admin,
 	// who may change them later (the hints frame).
 	Hints *view.HintSettings `json:"hints,omitempty"`
+	// AllowUndo says whether the game allows undo, fixed for its whole
+	// life; absent means true. Hot-seat and ai rooms only: an online room
+	// has no undo, so the field must be absent there.
+	AllowUndo *bool `json:"allowUndo,omitempty"`
 }
 
 // NewCreate returns a Create frame with "t" filled in. names is copied as
@@ -196,6 +200,9 @@ func (m Create) validate() error {
 		}
 	} else if m.Bot != nil {
 		return fmt.Errorf("create: mode %q must not set \"bot\"", m.Mode)
+	}
+	if m.Mode == ModeOnline && m.AllowUndo != nil {
+		return fmt.Errorf("create: mode %q has no undo and must not set \"allowUndo\"", m.Mode)
 	}
 	if seat, ok := m.Seat.Seat(); ok && seat != 0 && seat != 1 {
 		return fmt.Errorf("create: seat %d is not 0 or 1", seat)

@@ -98,6 +98,11 @@ type RoomInfo struct {
 	// Hints are the game's hint settings, the same for every connection
 	// (players and spectators alike); the room sets them.
 	Hints view.HintSettings `json:"hints"`
+	// AllowUndo says whether the game allows undo at all, fixed when the
+	// room was created: false in an online room, which has no undo, and in
+	// a hot-seat or ai room created with it off. State.CanUndo says whether
+	// an undo would be accepted right now.
+	AllowUndo bool `json:"allowUndo"`
 }
 
 // NewRoomInfo returns a RoomInfo with seats normalized to a non-nil,
@@ -165,7 +170,8 @@ type State struct {
 	You     YouInfo  `json:"you"`
 	// CanUndo says whether an undo from this connection, sent with this
 	// frame's version as its base, would be accepted now: a hot-seat or ai
-	// room, a game that is not over, and a human decision to take back.
+	// room that allows undo (RoomInfo.AllowUndo), a game that is not over,
+	// and a human decision to take back.
 	CanUndo bool `json:"canUndo"`
 	// Thinking is the seat whose bot is searching for its move right now;
 	// absent when no bot is searching.
@@ -212,6 +218,7 @@ const (
 	RejectCodeBadRequest  RejectCode = "bad-request"   // the frame itself was malformed in some other way
 	RejectCodeNotAdmin    RejectCode = "not-admin"     // only the game's admin may do that (change the hint settings; another seat's device link)
 	RejectCodeGameOver    RejectCode = "game-over"     // the game has ended, so its settings no longer change
+	RejectCodeUndoOff     RejectCode = "undo-off"      // the game was created with undo off
 )
 
 // Reject answers one request (identified by its Seq) that could not be

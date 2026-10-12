@@ -168,7 +168,8 @@ export function stateFrameFromView(view: View, opts: ViewFrameOptions = {}): Sta
         nameNo: 0
       })),
       spectators: view.viewer === undefined ? 1 : 0,
-      hints: defaultHints('online')
+      hints: defaultHints('online'),
+      allowUndo: false
     },
     // Seat 0 created the room, so it is the game's admin.
     you: { seats, canAct: view.choices.length > 0, admin: seats.includes(0) },

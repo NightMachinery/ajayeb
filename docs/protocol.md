@@ -240,6 +240,12 @@ Creates a room and joins the sender to it.
   of the mode: every family on, except `advisor`, which is on only in an
   `ai` room. A `hints` object that lacks a family, or holds `null` for one,
   is refused as `bad-request`.
+- `allowUndo` is optional, for a hot-seat or `ai` room: `false` makes a
+  game without undo. Absent means `true`. It is fixed when the room is
+  created: nothing changes it afterwards, a rematch keeps it, and a room
+  stored before the field existed allows undo. An online room has no undo,
+  so a `create` for one that names `allowUndo` at all, `true` or `false`,
+  is refused as `bad-request`.
 
 The creator becomes the game's **admin**, the one user who may change its
 hint settings. The admin and the settings are stored with the room, so they
@@ -354,7 +360,8 @@ Because the room replays the shortened log from the seed, hidden cards
 cannot change. The `canUndo` field of the latest `state` says whether an
 undo would be accepted now. The answer is a `state` with an `ack`, or a
 `reject`: `bad-request` (not joined, an online room, a spectator),
-`illegal` (the game is over, or there is nothing to undo), `stale`, or
+`undo-off` (the game was created with `allowUndo` false), `illegal` (the
+game is over, or there is nothing to undo), `stale`, or
 `rate` (the client address sent more than its undo limit, 60 at once and
 then one a second; the `seq` is not used up).
 
@@ -525,7 +532,8 @@ full game view described under "The view and its events" below.
       {"seat": 1, "name": "Omid", "nameNo": 0, "kind": "human", "connected": true, "you": true}
     ],
     "spectators": 0,
-    "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": true, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false}
+    "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": true, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false},
+    "allowUndo": true
   },
   "you": {"seats": [0, 1], "canAct": true, "admin": true},
   "canUndo": true,
@@ -555,8 +563,10 @@ full game view described under "The view and its events" below.
   (`nameNo`, below), its `kind` (`human`, `bot`, or `open` for a seat
   nobody has taken yet), the bot's level as `bot` for a bot seat, whether
   someone is `connected` there (a bot always is), and whether this
-  connection holds it (`you`); the number of `spectators`; and the game's
-  hint settings, `hints` (see the `hints` frame).
+  connection holds it (`you`); the number of `spectators`; the game's hint
+  settings, `hints` (see the `hints` frame); and `allowUndo`, whether the
+  game allows undo at all (fixed at creation; always `false` in an online
+  room). Every viewer sees the same value.
 - `nameNo` tells equal display names apart. It is 0 for a name that needs
   no number. When a human takes a seat, or renames it, under a name equal
   to the other human seat's (compared without case and outer spaces), the
@@ -572,7 +582,7 @@ full game view described under "The view and its events" below.
   connection's user is the game's admin, who may send `hints`; it is never
   true for a spectator.
 - `canUndo` says whether an `undo` with this frame's version as its base
-  would be accepted now.
+  would be accepted now. It is never true when `room.allowUndo` is false.
 - `thinking`, present only while a bot is searching, is the bot's seat.
 - `ack`, present only in the sender's copy of the direct answer to an `act`
   or `undo`, names that request's client id and `seq`.
@@ -653,7 +663,8 @@ A reject refuses one request, and the client can usually recover.
   `rematch` that would create a room, went over the room creation limit
   (seq 0); a `join` came from a client address over its limit of joins that
   named no room (seq 0); or an `undo` went over the undo limit (its `seq`).
-- `bad-request`: the frame is malformed; a second `hello`; a request for a
+- `bad-request`: the frame is malformed (a `create` for an online room
+  with `allowUndo` counts); a second `hello`; a request for a
   room this connection has not joined; an `undo` in an online room or from a
   spectator; a `rematch` before the game is over; a `link` or `relink` for a
   seat that is open or a bot's, or on a server whose device links are off.
@@ -662,6 +673,8 @@ A reject refuses one request, and the client can usually recover.
   who is neither that seat's user nor the game's admin.
 - `game-over`: a `hints` frame after the game has ended; the settings of a
   finished game no longer change.
+- `undo-off`: an `undo` in a hot-seat or `ai` room created with `allowUndo`
+  false.
 
 A refused `act`, `undo` or `hints` does not use up its `seq`, so the client may send
 it again with the same `seq`.

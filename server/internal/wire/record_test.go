@@ -46,6 +46,9 @@ var recordCases = []recordCase{
 	{"reject-not-admin", func(t *testing.T) wire.ServerMessage {
 		return wire.NewReject(5, wire.RejectCodeNotAdmin, "only the game's admin may change its hints")
 	}},
+	{"reject-undo-off", func(t *testing.T) wire.ServerMessage {
+		return wire.NewReject(9, wire.RejectCodeUndoOff, "this game was created with undo off")
+	}},
 	{"state-hints-changed", func(t *testing.T) wire.ServerMessage {
 		// An online game whose admin (Sara) turned the prices and threats
 		// off and the advisor on after the fourth move: the frame the other
@@ -221,8 +224,9 @@ var recordCases = []recordCase{
 // of the mode (Sara on seat 0; in a hot-seat room she holds seat 1 too and
 // sees the view of the seat to move, in an ai room seat 1 is a bot, online
 // it is Bob), and the view and filtered events of Sara's viewer. Sara
-// created the room, so she is its admin, and its hint settings are the
-// mode's defaults. Cases set CanUndo and Thinking themselves.
+// created the room, so she is its admin, its hint settings are the mode's
+// defaults, and a hot-seat or ai room allows undo. Cases set CanUndo and
+// Thinking themselves.
 func stateFrame(t *testing.T, code string, s *engine.State, ev []engine.Event, mode wire.Mode, status wire.RoomStatus, ack *wire.Ack) wire.State {
 	t.Helper()
 	viewer := engine.Seat(0)
@@ -247,6 +251,7 @@ func stateFrame(t *testing.T, code string, s *engine.State, ev []engine.Event, m
 	}
 	info := wire.NewRoomInfo(mode, status, seats, 0)
 	info.Hints = room.DefaultHints(store.Mode(mode))
+	info.AllowUndo = mode != wire.ModeOnline
 	you := wire.NewYouInfo(mine, canAct)
 	you.Admin = true // Sara created the room
 	return wire.NewState(code, int(s.Ply), info, you, ack, events, v)

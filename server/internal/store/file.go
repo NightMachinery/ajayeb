@@ -159,6 +159,12 @@ type File struct {
 	// RoomLog is the room-level part of the game log, oldest first: each
 	// change of the hint settings. Package room bounds it.
 	RoomLog []LogEntry `json:"roomLog,omitempty"`
+	// NoUndo is set when the game was created with undo off (a hot-seat or
+	// bot room; an online room has no undo anyway). It is fixed at creation
+	// and never changes. False, and so absent, in a file written before the
+	// field existed: such a room allows undo, as every room did then. Like
+	// Hints it is not part of the game (the replay and Hash ignore it).
+	NoUndo bool `json:"noUndo,omitempty"`
 }
 
 // LogEntry is one room-level event of the game log, as the room file keeps

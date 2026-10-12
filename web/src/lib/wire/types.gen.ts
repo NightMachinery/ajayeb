@@ -87,6 +87,12 @@ export interface Create {
    * who may change them later (the hints frame).
    */
   hints?: view.HintSettings;
+  /**
+   * AllowUndo says whether the game allows undo, fixed for its whole
+   * life; absent means true. Hot-seat and ai rooms only: an online room
+   * has no undo, so the field must be absent there.
+   */
+  allowUndo?: boolean;
 }
 /**
  * Join asks to join an existing room as a player or spectator.
@@ -380,6 +386,13 @@ export interface RoomInfo {
    * (players and spectators alike); the room sets them.
    */
   hints: view.HintSettings;
+  /**
+   * AllowUndo says whether the game allows undo at all, fixed when the
+   * room was created: false in an online room, which has no undo, and in
+   * a hot-seat or ai room created with it off. State.CanUndo says whether
+   * an undo would be accepted right now.
+   */
+  allowUndo: boolean;
 }
 /**
  * YouInfo is what this connection may do.
@@ -439,7 +452,8 @@ export interface State {
   /**
    * CanUndo says whether an undo from this connection, sent with this
    * frame's version as its base, would be accepted now: a hot-seat or ai
-   * room, a game that is not over, and a human decision to take back.
+   * room that allows undo (RoomInfo.AllowUndo), a game that is not over,
+   * and a human decision to take back.
    */
   canUndo: boolean;
   /**
@@ -482,10 +496,11 @@ export const RejectCodeRate = "rate"; // the client is sending faster than the r
 export const RejectCodeBadRequest = "bad-request"; // the frame itself was malformed in some other way
 export const RejectCodeNotAdmin = "not-admin"; // only the game's admin may do that (change the hint settings; another seat's device link)
 export const RejectCodeGameOver = "game-over"; // the game has ended, so its settings no longer change
+export const RejectCodeUndoOff = "undo-off"; // the game was created with undo off
 /**
  * The reject codes.
  */
-export type RejectCode = typeof RejectCodeStale | typeof RejectCodeIllegal | typeof RejectCodeNotYourTurn | typeof RejectCodeRate | typeof RejectCodeBadRequest | typeof RejectCodeNotAdmin | typeof RejectCodeGameOver;
+export type RejectCode = typeof RejectCodeStale | typeof RejectCodeIllegal | typeof RejectCodeNotYourTurn | typeof RejectCodeRate | typeof RejectCodeBadRequest | typeof RejectCodeNotAdmin | typeof RejectCodeGameOver | typeof RejectCodeUndoOff;
 /**
  * Reject answers one request (identified by its Seq) that could not be
  * applied. code is a stable, machine-readable reason; msg is a developer

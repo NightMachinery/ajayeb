@@ -131,6 +131,14 @@ func (m *Manager) newFile(c *Client, req wire.Create) (*store.File, error) {
 		h := *req.Hints
 		f.Hints = &h
 	}
+	// Undo is on unless the creator turned it off, and stays as it is for
+	// the life of the game. An online room has no undo to turn off.
+	if req.AllowUndo != nil {
+		if req.Mode == wire.ModeOnline {
+			return nil, fmt.Errorf("%w: an online room has no undo setting", ErrInvalidSpec)
+		}
+		f.NoUndo = !*req.AllowUndo
+	}
 	switch req.Mode {
 	case wire.ModeOnline:
 		f.Seats[seat] = human(name(seat, c.Name))
@@ -168,6 +176,9 @@ type Spec struct {
 	// Hints are the game's hint settings; nil means the defaults of the
 	// mode. The room's admin is the first user to claim a seat.
 	Hints *view.HintSettings
+	// NoUndo makes a hot-seat or bot room that refuses undo, as a create
+	// frame with allowUndo false does.
+	NoUndo bool
 }
 
 // CreateFromSpec makes a room from spec and returns its code. Nobody is
@@ -182,6 +193,10 @@ func (m *Manager) CreateFromSpec(spec Spec) (string, error) {
 		h := *spec.Hints
 		f.Hints = &h
 	}
+	if spec.NoUndo && spec.Mode == store.ModeOnline {
+		return "", fmt.Errorf("%w: an online room has no undo setting", ErrInvalidSpec)
+	}
+	f.NoUndo = spec.NoUndo
 	return m.createRoom(f)
 }
 

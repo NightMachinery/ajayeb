@@ -192,6 +192,7 @@ func (r *Room) roomInfo(mem member, presence [2]bool) wire.RoomInfo {
 	}
 	info := wire.NewRoomInfo(wire.Mode(r.file.Mode), wireStatus(r.status()), seats, spectators)
 	info.Hints = *r.file.Hints
+	info.AllowUndo = r.undoAllowed()
 	return info
 }
 

@@ -606,7 +606,8 @@ func (r *Room) commit(a engine.Action, sender *Client, ack *wire.Ack) {
 	r.broadcast(e.events, sender, ack, noHistory)
 }
 
-// undo takes back the previous human decision in a hot-seat or bot room:
+// undo takes back the previous human decision in a hot-seat or bot room
+// that allows undo (a room created with undo off refuses it as undo-off):
 // the log is cut to just before it and the game is replayed from the seed
 // (so hidden cards cannot change). In a bot room this also removes the
 // bot's answers after it, and a bot still thinking is cancelled; its result
@@ -621,6 +622,10 @@ func (r *Room) undo(c *Client, m wire.Undo) {
 	}
 	if r.file.Mode == store.ModeOnline || mem.role == roleSpectator {
 		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeBadRequest, "undo is only for hot-seat and bot rooms"))
+		return
+	}
+	if !r.undoAllowed() {
+		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeUndoOff, "this game was created with undo off"))
 		return
 	}
 	ack := &wire.Ack{ClientID: c.ClientID, Seq: m.Seq}
@@ -674,11 +679,17 @@ func (r *Room) lastHumanDecision() int {
 }
 
 // canUndo reports whether an undo from mem, sent against the current
-// version, would be accepted: a hot-seat or bot room, a player, a game that
-// is not over, and a human decision to take back.
+// version, would be accepted: a hot-seat or bot room that allows undo, a
+// player, a game that is not over, and a human decision to take back.
 func (r *Room) canUndo(mem member) bool {
-	return r.file.Mode != store.ModeOnline && mem.role != roleSpectator &&
+	return r.undoAllowed() && mem.role != roleSpectator &&
 		!r.state.Over() && r.lastHumanDecision() >= 0
+}
+
+// undoAllowed reports whether the game allows undo at all: a hot-seat or
+// bot room not created with undo off. It never changes during a game.
+func (r *Room) undoAllowed() bool {
+	return r.file.Mode != store.ModeOnline && !r.file.NoUndo
 }
 
 // doRematch creates (once) a new room with the same mode and seats and a
@@ -709,10 +720,12 @@ func (r *Room) doRematch(c *Client) (string, error) {
 		for i := range f.Seats {
 			f.Seats[i].Epoch = 0
 		}
-		// The rematch keeps the game's admin and its hint settings.
+		// The rematch keeps the game's admin, its hint settings and
+		// whether it allows undo.
 		f.Admin = r.file.Admin
 		hints := *r.file.Hints
 		f.Hints = &hints
+		f.NoUndo = r.file.NoUndo
 		code, err := r.m.createRoom(f)
 		if err != nil {
 			return "", err
@@ -859,6 +872,7 @@ type Snapshot struct {
 	Admin             string
 	Hints             view.HintSettings
 	RoomLog           []store.LogEntry
+	AllowUndo         bool // the game allows undo (fixed at creation)
 }
 
 func (r *Room) snapshot() Snapshot {
@@ -887,5 +901,6 @@ func (r *Room) snapshot() Snapshot {
 		Admin:             r.file.Admin,
 		Hints:             *r.file.Hints,
 		RoomLog:           append([]store.LogEntry{}, r.file.RoomLog...),
+		AllowUndo:         r.undoAllowed(),
 	}
 }
