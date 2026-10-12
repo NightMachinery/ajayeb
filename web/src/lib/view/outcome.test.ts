@@ -174,6 +174,19 @@ describe('outcomeTerms', () => {
     expect(outcomeTerms(end, ctx())[0]!.tone).toBe('warn');
   });
 
+  it('lets the end on points carry a civilian win', () => {
+    const end = outcome({
+      wins: { kind: 'civilian', steps: 1 },
+      end: { victory: 'civilian', winner: 0, shared: false, scores: [score(60), score(50)] }
+    });
+    const terms = outcomeTerms(end, ctx());
+    expect(terms.map((x) => x.id)).toEqual(['end']);
+    expect(terms[0]).toMatchObject({ icon: 'crown', tone: 'win' });
+    expect(terms[0]!.text).toBe('Ends the game: you win on points, 60 to 50.');
+    const threatsOnly = outcomeTerms(end, ctx({ families: new Set(['threats']) }));
+    expect(threatsOnly.map((x) => x.text)).toEqual(['Wins the game (points).']);
+  });
+
   it('says the turn order and the choice it opens', () => {
     const terms = outcomeTerms(
       outcome({

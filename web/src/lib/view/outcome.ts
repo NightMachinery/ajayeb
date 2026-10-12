@@ -208,13 +208,16 @@ export function outcomeTerms(o: OutcomeView | undefined, ctx: OutcomeContext): O
   const me = ctx.mover;
   const opp = other(me);
   const out: OutcomeTerm[] = [];
-  if (f.has('threats')) {
+  // A civilian win is the game's end on points: with scoring on, the end
+  // term says it (with the crown), so the win term would only repeat it.
+  const endSaysWin = f.has('scoring') && o.end !== undefined && o.wins?.kind === 'civilian';
+  if (f.has('threats') && !endSaysWin) {
     const w = winTerm(o);
     if (w) out.push(w);
   }
   if (f.has('scoring')) {
     const e = endTerm(o, ctx);
-    if (e) out.push(e);
+    if (e) out.push(endSaysWin ? { ...e, icon: 'crown', tone: 'win' } : e);
     if (o.score[me] !== 0) {
       out.push({
         id: 'vp',
