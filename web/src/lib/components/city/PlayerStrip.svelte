@@ -33,7 +33,17 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import { isSelfSeat } from '$lib/view/display-name';
-  import { militaryDanger, scienceDanger } from '$lib/view/threats';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { threatList } from '$lib/view/outcome';
+  import {
+    glowHints,
+    glowWarns,
+    militaryGlow,
+    scienceGlow,
+    strongerGlow,
+    winsOf
+  } from '$lib/view/threats';
   import { wonderTally } from '$lib/view/wonders';
   import type { Presence } from '$lib/ui/online';
   import type { BotLevel, MilitaryView, PlayerView, ScoreView } from '$lib/wire';
@@ -111,9 +121,27 @@
   );
 
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
-  const militaryThreat = $derived(militaryDanger(military, seat, ended));
-  const scienceThreat = $derived(scienceDanger(player.science, ended));
+  // The glows read the board hints when this screen shows them (M10.HS4,
+  // lib/view/threats.ts): calm, soft or strong; else the coarse rules.
+  const hintScreen = $derived(ended ? undefined : sessionHintScreen(ctx?.session, hintHide.value));
+  const glowIn = $derived(glowHints(ctx?.session.view, hintScreen));
+  const militaryLevel = $derived(militaryGlow(military, seat, ended, glowIn));
+  const scienceLevel = $derived(scienceGlow(player.science, seat, ended, glowIn));
+  const glow = $derived(strongerGlow(militaryLevel, scienceLevel));
+  const militaryThreat = $derived(glowWarns(militaryLevel));
+  const scienceThreat = $derived(glowWarns(scienceLevel));
   const danger = $derived(militaryThreat || scienceThreat);
+  const militaryTip = $derived.by(() => {
+    const wins = winsOf(glowIn?.hints[seat === 0 ? 1 : 0], 'military');
+    if (militaryLevel !== 'strong' || wins.length === 0) return t('board.player.militaryDanger');
+    const attacker = seat === 0 ? 1 : 0;
+    return hintScreen?.names.you === attacker
+      ? t('hints.glow.militaryWinYou', { list: threatList(wins) })
+      : t('hints.glow.militaryWin', {
+          name: hintScreen?.names.names[attacker] ?? '',
+          list: threatList(wins)
+        });
+  });
   const tally = $derived(wonderTally(player));
 </script>
 
@@ -146,8 +174,15 @@
 
 <div
   class="player-strip flex flex-col gap-1 rounded-panel border px-2 py-1.5
-    {danger ? 'border-cinnabar ring-2 ring-cinnabar/25' : 'border-rule'} {className}"
+    {glow === 'strong'
+    ? 'border-cinnabar ring-[3px] ring-cinnabar/45'
+    : danger
+      ? 'border-cinnabar ring-2 ring-cinnabar/25'
+      : glow === 'calm'
+        ? 'border-cinnabar/45'
+        : 'border-rule'} {className}"
   data-danger={danger ? '' : undefined}
+  data-glow={glow}
 >
   <div class="strip-row flex min-w-0 items-center gap-x-1.5 gap-y-1 short:flex-wrap short:gap-x-1">
     {#if onopen}
@@ -184,8 +219,9 @@
       <span
         class="grid size-6 shrink-0 place-items-center rounded-full bg-cinnabar/15 text-cinnabar"
         role="img"
-        aria-label={t('board.player.militaryDanger')}
-        data-military-danger
+        aria-label={militaryTip}
+        data-military-danger={militaryLevel}
+        {@attach tooltip({ text: militaryTip })}
       >
         <Icon name="shield" class="text-sm" />
       </span>
@@ -224,6 +260,7 @@
       total={tally.total}
       buildable={wonderBuildable}
       {name}
+      {seat}
       onclick={onwonders}
     />
   </div>
@@ -237,6 +274,6 @@
       compact
       class="flex-nowrap! short:flex-wrap!"
     />
-    <ScienceTracker science={player.science} pill {ended} />
+    <ScienceTracker science={player.science} pill {ended} {seat} glow={scienceLevel} />
   </div>
 </div>

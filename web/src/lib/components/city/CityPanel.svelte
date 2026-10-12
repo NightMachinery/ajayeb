@@ -15,7 +15,17 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { cardBySlug } from '$lib/catalog';
   import { isSelfSeat } from '$lib/view/display-name';
-  import { militaryDanger, scienceDanger } from '$lib/view/threats';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { threatList } from '$lib/view/outcome';
+  import {
+    glowHints,
+    glowWarns,
+    militaryGlow,
+    scienceGlow,
+    strongerGlow,
+    winsOf
+  } from '$lib/view/threats';
   import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import { tryGameContext } from '../choices/room';
@@ -107,9 +117,27 @@
   });
 
   const crestTextClass = $derived(seat === 0 ? 'text-sun-ink' : 'text-moon-ink');
-  const militaryThreat = $derived(militaryDanger(military, seat, ended));
-  const scienceThreat = $derived(scienceDanger(player.science, ended));
+  // The glows read the board hints when this screen shows them (M10.HS4,
+  // lib/view/threats.ts): calm, soft or strong; else the coarse rules.
+  const hintScreen = $derived(ended ? undefined : sessionHintScreen(ctx?.session, hintHide.value));
+  const glowIn = $derived(glowHints(ctx?.session.view, hintScreen));
+  const militaryLevel = $derived(militaryGlow(military, seat, ended, glowIn));
+  const scienceLevel = $derived(scienceGlow(player.science, seat, ended, glowIn));
+  const glow = $derived(strongerGlow(militaryLevel, scienceLevel));
+  const militaryThreat = $derived(glowWarns(militaryLevel));
+  const scienceThreat = $derived(glowWarns(scienceLevel));
   const danger = $derived(militaryThreat || scienceThreat);
+  const militaryTip = $derived.by(() => {
+    const wins = winsOf(glowIn?.hints[seat === 0 ? 1 : 0], 'military');
+    if (militaryLevel !== 'strong' || wins.length === 0) return t('board.player.militaryDanger');
+    const attacker = seat === 0 ? 1 : 0;
+    return hintScreen?.names.you === attacker
+      ? t('hints.glow.militaryWinYou', { list: threatList(wins) })
+      : t('hints.glow.militaryWin', {
+          name: hintScreen?.names.names[attacker] ?? '',
+          list: threatList(wins)
+        });
+  });
 </script>
 
 {#snippet ghostTally(kind: 'coins' | 'points', value: number)}
@@ -134,10 +162,18 @@
 
 <div
   class="city-panel flex w-full flex-col gap-2.5 rounded-panel border p-3
-    {danger ? 'border-cinnabar ring-2 ring-cinnabar/25' : 'border-rule'} {className}"
+    {glow === 'strong'
+    ? 'border-cinnabar ring-[3px] ring-cinnabar/45'
+    : danger
+      ? 'border-cinnabar ring-2 ring-cinnabar/25'
+      : glow === 'calm'
+        ? 'border-cinnabar/45'
+        : 'border-rule'} {className}"
+  data-danger={danger ? '' : undefined}
+  data-glow={glow}
 >
-  <div class="flex items-center justify-between gap-2">
-    <div class="flex min-w-0 items-center gap-1.5">
+  <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+    <div class="flex min-w-[7rem] flex-1 items-center gap-1.5">
       <SelfCrest {seat} self={isSelf} class="text-xl" />
       {#if bot}<BotAvatar level={bot} class="size-7" />{/if}
       <span class="min-w-0 truncate font-display text-base text-fg" dir="auto">{name}</span>
@@ -153,7 +189,7 @@
         </span>
       {/if}
     </div>
-    <div class="flex shrink-0 items-center gap-1.5">
+    <div class="ms-auto flex shrink-0 items-center gap-1.5">
       <Tally kind="coins" value={player.coins} label={t('coins.count', { count: player.coins })} />
       {#if ghost?.coins !== undefined && ghost.coins !== player.coins}
         {@render ghostTally('coins', ghost.coins)}
@@ -176,8 +212,9 @@
       {#if militaryThreat}
         <span
           class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar"
+          data-military-danger={militaryLevel}
         >
-          {t('board.player.militaryDanger')}
+          {militaryLevel === 'strong' ? militaryTip : t('board.player.militaryDanger')}
         </span>
       {/if}
       {#if scienceThreat}
@@ -191,7 +228,7 @@
   {/if}
 
   <ResourceChips production={player.production} tradePrices={player.tradePrices} />
-  <ScienceTracker science={player.science} {ended} />
+  <ScienceTracker science={player.science} {ended} {seat} glow={scienceLevel} />
 
   <div class="flex flex-col gap-1">
     <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">

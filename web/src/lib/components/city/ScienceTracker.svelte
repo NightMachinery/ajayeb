@@ -6,12 +6,29 @@
   // token. The `pill` form is the phone strip's: the green building's
   // glyph (the science category) and the count out of 6, nothing more; the
   // city sheet has the slots.
+  //
+  // Hints (M10.HS4, symbol-status and science-reach): with the science
+  // hints, each slot shows where the seat stands on its symbol (the
+  // server's PlayerHintsView.symbols): paired (the ring), live (one card,
+  // and a dot under it: the other may still come), owned (one card, no
+  // dot: the other can no longer come), open (a dotted outline: none yet,
+  // and a card may still come) or dead (a hairline strike: none can come).
+  // Each slot's tooltip names its two cards and where they are, and the
+  // counter's tooltip says what the seat still needs. The glow is the
+  // caller's (lib/view/threats.ts scienceGlow): calm turns the 5/6 warning
+  // into a hairline when the missing symbols can no longer come, strong
+  // means the seat can win by science with one action now. With `seat`
+  // and no `hints`, the hints come from the page's game context.
+  import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
-  import { scienceDanger } from '$lib/view/threats';
+  import { scienceHints, type ScienceHints } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { scienceDanger, type Glow } from '$lib/view/threats';
   import type { ScienceSymbol, ScienceView } from '$lib/wire';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { tryGameContext } from '../choices/room';
 
   interface Props {
     science: ScienceView;
@@ -20,6 +37,12 @@
     pill?: boolean;
     /** The game has ended: no danger tint. */
     ended?: boolean;
+    /** Whose science this is, for the hints from the game context. */
+    seat?: 0 | 1;
+    /** The science hints (view/board-hints.ts scienceHints); else from the context. */
+    hints?: ScienceHints;
+    /** The warning level (view/threats.ts scienceGlow); else the 5/6 rule. */
+    glow?: Glow;
     class?: string;
   }
 
@@ -28,8 +51,20 @@
     compact = false,
     pill = false,
     ended = false,
+    seat,
+    hints,
+    glow,
     class: className = ''
   }: Props = $props();
+
+  const ctx = tryGameContext();
+  const sh = $derived.by((): ScienceHints | undefined => {
+    if (hints || ended) return hints;
+    const view = ctx?.session.view;
+    const screen = sessionHintScreen(ctx?.session, hintHide.value);
+    if (!view || !screen || seat === undefined) return undefined;
+    return scienceHints(view, seat, screen.families, screen.names);
+  });
 
   const SYMBOLS = [
     'globe',
@@ -76,12 +111,29 @@
     return science.symbols.find((s) => s.symbol === symbol)?.count ?? 0;
   }
 
-  const danger = $derived(scienceDanger(science, ended));
+  const level = $derived<Glow>(
+    ended ? 'none' : (glow ?? (scienceDanger(science, ended) ? 'soft' : 'none'))
+  );
+  const danger = $derived(level === 'soft' || level === 'strong');
+  const reach = $derived(sh?.reach ?? '');
   const label = $derived(
-    [t('board.science.label', { count: science.distinct }), danger ? t('board.science.danger') : '']
+    [
+      t('board.science.label', { count: science.distinct }),
+      danger ? t('board.science.danger') : '',
+      reach
+    ]
       .filter(Boolean)
       .join('. ')
   );
+  const counterTip = $derived(
+    [danger ? t('board.science.danger') : '', level === 'calm' ? t('hints.glow.calm') : '', reach]
+      .filter(Boolean)
+      .join(' ')
+  );
+
+  function slotTip(symbol: ScienceSymbol): string {
+    return sh?.slots[symbol]?.tip ?? t(labelKey(symbol));
+  }
 </script>
 
 {#if pill}
@@ -89,11 +141,17 @@
     class="science-pill inline-flex h-5 shrink-0 items-center gap-0.5 rounded-control border px-1 text-[11px] font-semibold tabular-nums
       {danger
       ? 'border-cinnabar bg-cinnabar/15 text-cinnabar'
-      : 'border-rule bg-panel text-fg'} {className}"
+      : level === 'calm'
+        ? 'border-dashed border-rule-strong bg-panel text-fg'
+        : 'border-rule bg-panel text-fg'} {level === 'strong'
+      ? 'ring-2 ring-cinnabar/45'
+      : ''} {className}"
     role="img"
     aria-label={label}
     data-science={science.distinct}
     data-danger={danger ? '' : undefined}
+    data-glow={level}
+    {@attach tooltip(counterTip ? { text: counterTip } : undefined)}
   >
     <Icon name="category-green-sm" class="text-xs {danger ? '' : 'text-card-green-ink'}" />
     <span data-must-fit>{science.distinct}/6</span>
@@ -102,33 +160,55 @@
   <div
     class="science-tracker flex flex-wrap items-center {compact ? 'gap-1' : 'gap-2'} {className}"
     role="group"
-    aria-label={t('board.science.label', { count: science.distinct })}
+    aria-label={label}
   >
     <ul class="flex {compact ? 'gap-0.5' : 'gap-1'}">
       {#each SYMBOLS as symbol (symbol)}
         {@const count = countOf(symbol)}
+        {@const state = sh?.slots[symbol]?.state}
         <li
-          class="grid place-items-center rounded-control border {compact
+          class="slot relative grid place-items-center rounded-control border {compact
             ? 'size-5'
             : 'size-7'} {count >= 2
             ? 'border-gild bg-accent-soft text-accent-soft-fg'
             : count === 1
               ? 'border-rule-strong text-fg'
-              : 'border-rule/40 text-fg-muted/40'}"
-          {@attach tooltip({ text: t(labelKey(symbol)) })}
+              : state === 'open'
+                ? 'border-dotted border-fg-muted text-fg-muted/70'
+                : 'border-rule/40 text-fg-muted/40'}"
+          data-symbol={symbol}
+          data-symbol-state={state}
+          {@attach tooltip({ text: slotTip(symbol) })}
         >
           <!-- The glyph is 12 px (compact) or 14 px: both at or under the
              14 px where the small-grid (-sm) variant reads better than the
              scaled-down md one (art/vector/STYLE.md). -->
           <Icon name={`${SYMBOL_ICON[symbol]}-sm`} class={compact ? 'text-xs' : 'text-sm'} />
+          {#if state === 'live'}
+            <span
+              class="live-dot absolute bottom-0.5 size-[3px] rounded-full bg-fg"
+              aria-hidden="true"
+            ></span>
+          {:else if state === 'dead' && count === 0}
+            <span
+              class="dead-strike absolute inset-x-0.5 top-1/2 h-px bg-fg-muted/70"
+              aria-hidden="true"
+            ></span>
+          {/if}
         </li>
       {/each}
     </ul>
     <span
       class="rounded-control px-1.5 py-0.5 {compact ? 'text-[11px]' : 'text-xs'} font-semibold
-      tabular-nums {danger ? 'bg-cinnabar/15 text-cinnabar' : 'text-fg-muted'}"
+      tabular-nums {danger
+        ? 'bg-cinnabar/15 text-cinnabar'
+        : level === 'calm'
+          ? 'border border-dashed border-rule-strong text-fg-muted'
+          : 'text-fg-muted'} {level === 'strong' ? 'ring-2 ring-cinnabar/45' : ''}"
       data-must-fit
-      {@attach tooltip(danger ? { text: t('board.science.danger') } : undefined)}
+      data-glow={level}
+      data-science-counter
+      {@attach tooltip(counterTip ? { text: counterTip } : undefined)}
     >
       {science.distinct}/6
     </span>
