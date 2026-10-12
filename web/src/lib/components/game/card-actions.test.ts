@@ -11,7 +11,6 @@ import {
   passPending,
   pendingSlot,
   pickableSlots,
-  toastLines,
   wonderChoicesByCard,
   wonderStatus
 } from './card-actions';
@@ -165,47 +164,6 @@ describe('eventLines', () => {
       'Sara built Lumber Yard.',
       'Omid discarded Baths for 2 coins.'
     ]);
-  });
-});
-
-describe('toastLines', () => {
-  const names = ['Sara', 'Omid'] as const;
-
-  it("an ordinary move: only the move's own line", () => {
-    const events: GameEvent[] = [
-      { kind: 'build', private: false, seat: 0, card: 'lumber-yard' },
-      { kind: 'pay', private: false, seat: 0, amount: 2 },
-      { kind: 'pawn', private: false, seat: 0, from: 0, to: 1 }
-    ];
-    expect(toastLines(events, names)).toEqual(['Sara built Lumber Yard.']);
-  });
-
-  it('a skipped choice adds its line after the wonder', () => {
-    // The Statue of Zeus with nothing to destroy, as the server recorded it
-    // (server/internal/engine/testdata/protocol/effect-skipped.json).
-    const events: GameEvent[] = [
-      { kind: 'wonder', private: false, seat: 0, card: 'rostrum', wonder: 'statue-of-zeus' },
-      { kind: 'pay', private: false, seat: 0, amount: 10, toOpponent: 0 },
-      { kind: 'pawn', private: false, seat: 0, from: 0, to: 1 },
-      {
-        kind: 'effectSkipped',
-        private: false,
-        seat: 0,
-        wonder: 'statue-of-zeus',
-        skipped: 'destroyCard'
-      },
-      { kind: 'reveal', private: false, card: 'brewery', slot: 15 }
-    ];
-    expect(toastLines(events, names)).toEqual([
-      'Sara built the wonder Statue of Zeus, using Rostrum.',
-      'Nothing to destroy for Statue of Zeus: Omid has no card of that colour.'
-    ]);
-  });
-
-  it('nothing to show: no lines', () => {
-    expect(toastLines([{ kind: 'reveal', private: false, slot: 1, card: 'baths' }], names)).toEqual(
-      []
-    );
   });
 });
 

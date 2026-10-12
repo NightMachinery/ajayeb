@@ -97,7 +97,6 @@ export const game = {
   },
   'game.cost.nothing': 'Nothing to pay',
   'game.cost.total': 'Total',
-  'game.cost.left': 'You have {have}; {after} left after',
   'game.cost.short': {
     one: 'You have {have}: {count} coin short',
     other: 'You have {have}: {count} coins short'
