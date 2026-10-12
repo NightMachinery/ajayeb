@@ -215,6 +215,9 @@ type Choice struct {
 	Starter *int       `json:"starter,omitempty"` // starter: the seat that will start the age
 	Cost    *CostView  `json:"cost,omitempty"`    // construct and wonder: what the seat pays
 	Gain    *int       `json:"gain,omitempty"`    // discard: coins received
+	// Outcome is what the action would do (hints.go), only in the
+	// decider's view, while a family that needs it is on.
+	Outcome *OutcomeView `json:"outcome,omitempty"`
 }
 
 // DisabledChoice is a play action the seat to move cannot take now: a card
@@ -226,6 +229,7 @@ type DisabledChoice struct {
 	Wonder *string    `json:"wonder,omitempty"`
 	Reason Reason     `json:"reason"`
 	Cost   *CostView  `json:"cost,omitempty"` // what it would cost
+	Wins   *WinView   `json:"wins,omitempty"` // threats: a supremacy the action would win if the seat had the coins (hints.go)
 }
 
 // ScoreView is one seat's points by category, as on the score sheet.

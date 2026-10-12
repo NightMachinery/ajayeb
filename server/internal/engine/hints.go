@@ -60,7 +60,7 @@ import (
 // # Cost
 //
 // The shared hints are a few dozen previews per broadcast. The decider's
-// hints (a later slice) Apply each legal action and some follow-ups; they
+// hints (hints_decider.go) Apply each legal action and some follow-ups; they
 // run under hintApplyBudget, a count of Applies and not a clock, so a hint
 // is a pure function of the state and the settings, and what the budget
 // cuts is left out, never guessed.
@@ -118,9 +118,10 @@ func computeHints(s *State, f view.HintSettings, _ *simCtx) Hints {
 	return h
 }
 
-// addHints copies the shared hints h into out, the view of s for v. The
-// caller has checked that h is not nil and that the game is not over.
-func addHints(_ *State, _ Viewer, h *Hints, out *view.View) {
+// addHints copies the shared hints h into out, the view of s for v, and
+// adds the decider's hints when v is the seat to move. The caller has
+// checked that h is not nil and that the game is not over.
+func addHints(s *State, v Viewer, h *Hints, out *view.View) {
 	board := h.board
 	out.Hints = &board
 	// The per-card hints are the same for every viewer; the views share the
@@ -137,17 +138,26 @@ func addHints(_ *State, _ Viewer, h *Hints, out *view.View) {
 		p := *h.pending
 		out.Pending.CardHints = &p
 	}
-	// The decider's hints (Choice.outcome, under a fresh hintApplyBudget)
-	// come with a later slice.
+	// The decider's hints (Choice.outcome and DisabledChoice.wins), under
+	// a fresh hintApplyBudget for this view (hints_decider.go).
+	if seat, ok := v.Seat(); ok && seat == s.ToMove && deciderFamilies(h.settings) {
+		deciderHints(s, h.settings, out, &simCtx{budget: hintApplyBudget})
+	}
 }
 
 // simCtx counts the Applies of one hint computation against a budget and,
 // in tests, reports every simulation. The nil context has no budget and
 // reports nothing.
 type simCtx struct {
-	budget  int // Applies allowed; 0 means no limit
-	applies int // Applies spent
-	trace   func(simNote)
+	budget  int  // Applies allowed; 0 means no limit
+	applies int  // Applies spent
+	out     bool // an Apply was refused: the budget ran out
+	// nest is added to the depth of every simulation reported: 2 while the
+	// decider's hints simulate the next turn on a copy whose unseen cards
+	// are scrubbed (hints_decider.go), so the leak tests can tell those
+	// simulations apart.
+	nest  int
+	trace func(simNote)
 }
 
 // simNote describes one simulated action, for the leak tests. It holds a
@@ -157,7 +167,7 @@ type simNote struct {
 	State  State    // the state the action is applied to
 	For    Seat     // the seat the simulation is for (the mover)
 	Action Action   // the action simulated
-	Depth  int      // 0 for the action asked about, 1 for a follow-up
+	Depth  int      // 0 for the action asked about, 1 for a follow-up; 2 and 3 for the same a turn later, on a scrubbed copy (hints_decider.go)
 	Mask   SlotMask // the face-up mask the simulation is limited to
 }
 
@@ -169,11 +179,12 @@ func (c *simCtx) apply(s *State, a Action, depth int, mask SlotMask) bool {
 		return true
 	}
 	if c.budget > 0 && c.applies >= c.budget {
+		c.out = true
 		return false
 	}
 	c.applies++
 	if c.trace != nil {
-		c.trace(simNote{State: *s, For: s.ToMove, Action: a, Depth: depth, Mask: mask})
+		c.trace(simNote{State: *s, For: s.ToMove, Action: a, Depth: depth + c.nest, Mask: mask})
 	}
 	return true
 }

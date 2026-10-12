@@ -832,19 +832,34 @@ func hnCount(m uint32) int {
 }
 
 // TestHintsFrameSize logs the size of mid-age views with and without the
-// hints, for docs/architecture.md, and bounds the growth: the per-card
-// hints of M10.HS2 (both seats, every face-up card) may add at most a
-// third to the view.
+// hints, for docs/architecture.md, and bounds the growth: the shared hints
+// (the per-card hints of M10.HS2, both seats, every face-up card) may add
+// at most a third to the view, and the decider's outcomes of M10.HS3
+// (Choice.outcome, DisabledChoice.wins) at most a sixth more.
 func TestHintsFrameSize(t *testing.T) {
 	for seed := uint64(1); seed <= 3; seed++ {
 		for _, age := range []uint8{1, 2} {
 			s := hnMidAge(t, seed, age)
 			h := ComputeHints(&s, hnAllHints)
 			plain, _ := json.Marshal(ViewFor(&s, SeatViewer(s.ToMove)))
-			with, _ := json.Marshal(ViewWithHints(&s, SeatViewer(s.ToMove), &h))
-			t.Logf("seed %d, age %d, ply %d: decider view %d bytes, %d with hints (+%d)", seed, age, s.Ply, len(plain), len(with), len(with)-len(plain))
-			if 3*len(with) > 4*len(plain) {
-				t.Errorf("the hints add %d bytes to a %d-byte view", len(with)-len(plain), len(plain))
+			vw := ViewWithHints(&s, SeatViewer(s.ToMove), &h)
+			with, _ := json.Marshal(vw)
+			vw.Choices = slices.Clone(vw.Choices)
+			for i := range vw.Choices {
+				vw.Choices[i].Outcome = nil
+			}
+			vw.Disabled = slices.Clone(vw.Disabled)
+			for i := range vw.Disabled {
+				vw.Disabled[i].Wins = nil
+			}
+			shared, _ := json.Marshal(vw)
+			t.Logf("seed %d, age %d, ply %d: decider view %d bytes, %d with the shared hints (+%d), %d with the outcomes (+%d more, %d choices)",
+				seed, age, s.Ply, len(plain), len(shared), len(shared)-len(plain), len(with), len(with)-len(shared), len(vw.Choices))
+			if 3*len(shared) > 4*len(plain) {
+				t.Errorf("the shared hints add %d bytes to a %d-byte view", len(shared)-len(plain), len(plain))
+			}
+			if 6*(len(with)-len(shared)) > len(plain) {
+				t.Errorf("the outcomes add %d bytes to a %d-byte view", len(with)-len(shared), len(plain))
 			}
 		}
 	}
@@ -906,23 +921,30 @@ func hnBusiest(tb testing.TB, seed uint64) State {
 	return best
 }
 
-// BenchmarkDeciderHints measures the decider's part as far as M10.HS1 has
-// it: WinsNow (with its follow-ups, under the Apply budget) and
-// extraTurnOutcome for every legal action of the seat to move, in the
-// play state with the most legal actions of a seeded game.
+// BenchmarkDeciderHints measures the decider's hints of one view
+// (hints_decider.go): every legal action's outcome, the disabled wins, the
+// threats one turn ahead and the reveal risk, under the Apply budget, in
+// the play state with the most legal actions of a seeded game ("busiest")
+// and in a mid-Age II state ("midAge").
 func BenchmarkDeciderHints(b *testing.B) {
-	s := hnBusiest(b, 2)
-	legal := LegalActions(&s, make([]Action, 0, MaxLegalActions))
-	mask := FaceUpSlots(&s)
-	applies := 0
-	for b.Loop() {
-		ctx := &simCtx{budget: hintApplyBudget}
-		for _, a := range legal {
-			_, _ = winsNow(&s, a, mask, ctx)
-			_, _ = extraTurnOutcome(&s, a)
-		}
-		applies = ctx.applies
+	for _, c := range []struct {
+		name string
+		s    State
+	}{{"busiest", hnBusiest(b, 2)}, {"midAge", hnMidAge(b, 2, 2)}} {
+		b.Run(c.name, func(b *testing.B) {
+			s := c.s
+			base := ViewFor(&s, SeatViewer(s.ToMove))
+			applies := 0
+			for b.Loop() {
+				vw := base
+				vw.Choices = slices.Clone(base.Choices)
+				vw.Disabled = slices.Clone(base.Disabled)
+				ctx := &simCtx{budget: hintApplyBudget}
+				deciderHints(&s, hnAllHints, &vw, ctx)
+				applies = ctx.applies
+			}
+			b.ReportMetric(float64(len(base.Choices)), "actions")
+			b.ReportMetric(float64(applies), "applies")
+		})
 	}
-	b.ReportMetric(float64(len(legal)), "actions")
-	b.ReportMetric(float64(applies), "applies")
 }

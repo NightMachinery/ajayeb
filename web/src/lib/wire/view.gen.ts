@@ -413,6 +413,77 @@ export interface PendingCardHint {
   onlySource: boolean; // the card is the victim's only fixed producer of a resource it makes
 }
 /**
+ * OutcomeView is what one legal action of the decider would do, before
+ * any choice it opens (the hints design, section 4.4): Choice.outcome, in
+ * the decider's view only, while the game runs and one of the families it
+ * serves is on. Each part follows its family's switch and is zero or
+ * absent while that family is off. Everything is measured on a copy of the
+ * state with the action applied, reading only public fields, so it is the
+ * same on every state the decider cannot tell apart from the real one.
+ * To keep the decider's view small, every rare part is a pointer that is
+ * absent when it says nothing: a typical outcome is only the coins and the
+ * score change.
+ */
+export interface OutcomeView {
+  coins: Pair<Amount>; // scoring: both seats' coins afterwards (payment, Economy, rewards, looting)
+  score: Pair<Amount>; // scoring: the change of each seat's score preview total
+  pawn?: PawnMoveView; // military: the pawn move and the looting tokens it takes
+  distinct?: number /* int */; // science: the mover's different symbols afterwards, when they change
+  opens?: PendingKind; // the choice the action opens for its mover (a progress token, a card to destroy or rebuild)
+  tempo?: TempoView; // tempo: an extra turn gained or lost, the age's last card; absent when the turn simply passes
+  wins?: WinView; // threats: the action wins, at once or through the mover's own follow-up
+  end?: ResultView; // scoring: the action ends the game on points (Age III's last card)
+  gives?: ThreatView[]; // threats: wins the opponent would have after the action that it does not have now
+  blocks?: ThreatView[]; // threats: wins the opponent has now that the action takes away
+  threatens?: ThreatView[]; // threats: wins the mover would have next turn that it does not have now; for a starter choice, the starting seat's wins at once
+  flips?: AffordFlip[]; // economy: cards in view and open wonders whose affordability the action changes
+  prices?: PriceShift[]; // economy: the trade prices the action changes, for either seat
+  revealRisk?: Odds; // threats: the chance that a card the action turns over lets the opponent win
+}
+/**
+ * Amount is a whole number in a pair by seat (coins, points). It is a
+ * named type only so the pair carries a TypeScript name (Pair<Amount>).
+ */
+export type Amount = number /* int */;
+/**
+ * TempoView is what an action does to the turn order.
+ */
+export interface TempoView {
+  extraTurn: ExtraTurnState; // the mover plays again, loses the extra turn (the age's last card), or neither
+  source: ExtraTurnSource; // why a wonder grants the extra turn
+  lastCard: boolean; // the action takes the age's last card
+  starterChooser?: number /* int */; // a last card of Age I or II: the seat that will choose who starts the next age
+}
+/**
+ * ThreatView is a win a seat would have with one action: building or
+ * discarding a card, or building a wonder (with any card).
+ */
+export interface ThreatView {
+  seat: number /* int */; // the seat that would win
+  card?: string; // the card it would take, for a card action
+  wonder?: string; // the wonder it would build
+  kind: VictoryKind;
+}
+/**
+ * AffordFlip is a card or an open wonder that one seat can afford before
+ * an action and not after it, or the other way round.
+ */
+export interface AffordFlip {
+  seat: number /* int */;
+  card?: string;
+  wonder?: string;
+  affordable: boolean; // after the action
+}
+/**
+ * Odds is a chance, num in den, of something that a card the action turns
+ * over would allow.
+ */
+export interface Odds {
+  num: number /* int */;
+  den: number /* int */;
+  freed: number /* int */; // face-down cards the action turns over
+}
+/**
  * PublicPlace is where a card is, as far as both players can know.
  */
 export const PublicPlaceFaceUp = "faceUp"; // face up in a structure slot
@@ -720,6 +791,11 @@ export interface Choice {
   starter?: number /* int */; // starter: the seat that will start the age
   cost?: CostView; // construct and wonder: what the seat pays
   gain?: number /* int */; // discard: coins received
+  /**
+   * Outcome is what the action would do (hints.go), only in the
+   * decider's view, while a family that needs it is on.
+   */
+  outcome?: OutcomeView;
 }
 /**
  * DisabledChoice is a play action the seat to move cannot take now: a card
@@ -732,6 +808,7 @@ export interface DisabledChoice {
   wonder?: string;
   reason: Reason;
   cost?: CostView; // what it would cost
+  wins?: WinView; // threats: a supremacy the action would win if the seat had the coins (hints.go)
 }
 /**
  * ScoreView is one seat's points by category, as on the score sheet.

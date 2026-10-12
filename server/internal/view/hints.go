@@ -138,6 +138,72 @@ type PendingCardHint struct {
 	OnlySource  bool         `json:"onlySource"`  // the card is the victim's only fixed producer of a resource it makes
 }
 
+// OutcomeView is what one legal action of the decider would do, before
+// any choice it opens (the hints design, section 4.4): Choice.outcome, in
+// the decider's view only, while the game runs and one of the families it
+// serves is on. Each part follows its family's switch and is zero or
+// absent while that family is off. Everything is measured on a copy of the
+// state with the action applied, reading only public fields, so it is the
+// same on every state the decider cannot tell apart from the real one.
+//
+// To keep the decider's view small, every rare part is a pointer that is
+// absent when it says nothing: a typical outcome is only the coins and the
+// score change.
+type OutcomeView struct {
+	Coins      [2]Amount     `json:"coins" tstype:"Pair<Amount>"` // scoring: both seats' coins afterwards (payment, Economy, rewards, looting)
+	Score      [2]Amount     `json:"score" tstype:"Pair<Amount>"` // scoring: the change of each seat's score preview total
+	Pawn       *PawnMoveView `json:"pawn,omitempty"`              // military: the pawn move and the looting tokens it takes
+	Distinct   *int          `json:"distinct,omitempty"`          // science: the mover's different symbols afterwards, when they change
+	Opens      *PendingKind  `json:"opens,omitempty"`             // the choice the action opens for its mover (a progress token, a card to destroy or rebuild)
+	Tempo      *TempoView    `json:"tempo,omitempty"`             // tempo: an extra turn gained or lost, the age's last card; absent when the turn simply passes
+	Wins       *WinView      `json:"wins,omitempty"`              // threats: the action wins, at once or through the mover's own follow-up
+	End        *ResultView   `json:"end,omitempty"`               // scoring: the action ends the game on points (Age III's last card)
+	Gives      *[]ThreatView `json:"gives,omitempty"`             // threats: wins the opponent would have after the action that it does not have now
+	Blocks     *[]ThreatView `json:"blocks,omitempty"`            // threats: wins the opponent has now that the action takes away
+	Threatens  *[]ThreatView `json:"threatens,omitempty"`         // threats: wins the mover would have next turn that it does not have now; for a starter choice, the starting seat's wins at once
+	Flips      *[]AffordFlip `json:"flips,omitempty"`             // economy: cards in view and open wonders whose affordability the action changes
+	Prices     *[]PriceShift `json:"prices,omitempty"`            // economy: the trade prices the action changes, for either seat
+	RevealRisk *Odds         `json:"revealRisk,omitempty"`        // threats: the chance that a card the action turns over lets the opponent win
+}
+
+// Amount is a whole number in a pair by seat (coins, points). It is a
+// named type only so the pair carries a TypeScript name (Pair<Amount>).
+type Amount int
+
+// TempoView is what an action does to the turn order.
+type TempoView struct {
+	ExtraTurn      ExtraTurnState  `json:"extraTurn"`                // the mover plays again, loses the extra turn (the age's last card), or neither
+	Source         ExtraTurnSource `json:"source"`                   // why a wonder grants the extra turn
+	LastCard       bool            `json:"lastCard"`                 // the action takes the age's last card
+	StarterChooser *int            `json:"starterChooser,omitempty"` // a last card of Age I or II: the seat that will choose who starts the next age
+}
+
+// ThreatView is a win a seat would have with one action: building or
+// discarding a card, or building a wonder (with any card).
+type ThreatView struct {
+	Seat   int         `json:"seat"`             // the seat that would win
+	Card   *string     `json:"card,omitempty"`   // the card it would take, for a card action
+	Wonder *string     `json:"wonder,omitempty"` // the wonder it would build
+	Kind   VictoryKind `json:"kind"`
+}
+
+// AffordFlip is a card or an open wonder that one seat can afford before
+// an action and not after it, or the other way round.
+type AffordFlip struct {
+	Seat       int     `json:"seat"`
+	Card       *string `json:"card,omitempty"`
+	Wonder     *string `json:"wonder,omitempty"`
+	Affordable bool    `json:"affordable"` // after the action
+}
+
+// Odds is a chance, num in den, of something that a card the action turns
+// over would allow.
+type Odds struct {
+	Num   int `json:"num"`
+	Den   int `json:"den"`
+	Freed int `json:"freed"` // face-down cards the action turns over
+}
+
 // The hint vocabularies below are the engine's own names (engine
 // PublicPlace, ExtraTurnState, ExtraTurnSource and ScienceEffectKind); a
 // test in the engine checks that both sides list the same values in the
