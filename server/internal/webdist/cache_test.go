@@ -27,14 +27,35 @@ func TestCacheControl(t *testing.T) {
 		"_app/immutable.js":                  CacheRevalidate,
 		"art":                                CacheRevalidate,
 	} {
-		if got := CacheControl(name); got != want {
-			t.Errorf("CacheControl(%q) = %q, want %q", name, got, want)
+		if got := CacheControl(name, false); got != want {
+			t.Errorf("CacheControl(%q, false) = %q, want %q", name, got, want)
 		}
 	}
 }
 
-// The art policy must stay cacheable but never immutable: art file names
-// are not content-hashed, so a regenerated asset reuses its name.
+// A content-hashed art URL is cached for a year; the hash changes nothing
+// outside art/.
+func TestCacheControlVersioned(t *testing.T) {
+	for name, want := range map[string]string{
+		"art/cards/baths.avif":               CacheImmutable,
+		"art/cards/baths@thumb.avif":         CacheImmutable,
+		"art/icon/app@512.avif":              CacheImmutable,
+		"_app/immutable/entry/start.Bx81.js": CacheImmutable,
+		"index.html":                         CacheRevalidate,
+		"favicon.svg":                        CacheRevalidate,
+		"icons/apple-touch-icon.png":         CacheRevalidate,
+		"play/art/cards.avif":                CacheRevalidate,
+		"art":                                CacheRevalidate,
+	} {
+		if got := CacheControl(name, true); got != want {
+			t.Errorf("CacheControl(%q, true) = %q, want %q", name, got, want)
+		}
+	}
+}
+
+// The policy for art without a content hash must stay cacheable but never
+// immutable: art file names are not content-hashed, so a regenerated asset
+// reuses its name.
 func TestArtIsCachedButRevalidated(t *testing.T) {
 	if strings.Contains(CacheArt, "immutable") || strings.Contains(CacheArt, "no-cache") {
 		t.Fatalf("CacheArt = %q: art must be cached and then revalidated", CacheArt)

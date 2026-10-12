@@ -148,7 +148,6 @@ func TestOtherFilesRevalidate(t *testing.T) {
 	for target, wantType := range map[string]string{
 		"/_app/version.json":        "application/json",
 		"/favicon.svg":              "image/svg+xml",
-		"/art/cards/baths.avif":     "image/avif",
 		"/fonts/body.woff2":         "font/woff2",
 		"/.well-known/security.txt": "text/plain; charset=utf-8",
 	} {
