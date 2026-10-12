@@ -86,8 +86,9 @@ wonder and token slugs come from the engine's presentation catalog
 - 73 cards (23 Age I, 23 Age II, 20 Age III, 7 guilds): generated
   1536x1024, cropped 4:3, shipped at 480x360 (<=35 KB) and a 240x180 thumb
   (<=10 KB)
-- 12 wonders: 1536x1024, 3:2, shipped 960x640 (<=70 KB) and a 480x320
-  thumb (<=20 KB)
+- 12 wonders: 1536x1024, 3:2, shipped 960x640 (<=70 KB), a 480x320
+  thumb (<=20 KB) and a 1440x960 `@1440` for dense large screens
+  (<=158 KB; see "High-DPI sizes")
 - 10 progress tokens: 1024x1024, circle-masked onto the paper colour,
   shipped 256px (<=14 KB) and a 96px thumb (<=5 KB)
 - 4 card backs (age1, age2, age3, guild): 1024x1536, 1:1.545, shipped
@@ -104,6 +105,94 @@ wonder and token slugs come from the engine's presentation catalog
 The exact numbers live in one place, `KIND_SPEC` in `tools/art/lib.mjs`, so
 this list and the code cannot drift silently; check the code first if they
 ever disagree.
+
+## Budgets
+
+Every shipped size has its own byte budget (the list above), and
+`process.mjs` steps the AVIF quality down until it holds. There is **no
+total cap** on the shipped art: no screen loads all of it at once, the
+prefetch below fetches it one file at a time while the browser is idle,
+and a browser keeps each file for a year. The 5 MB total that M9 used as
+its acceptance line was never enforced in code and is gone. Instead
+`index.mjs` prints the shipped total and the full prefetch plan's bytes
+every time it runs, so a change in either shows up in the log. After
+`M10.AD1`: 220 files, 4.23 MB shipped; the full plan is about 2.6 MB on a
+390 px phone at DPR 3 and about 0.8 MB on a 1280 px desktop at DPR 1.
+
+## High-DPI sizes
+
+A size is worth shipping only when some screen draws the art wider than
+the widest file already shipped. `KIND_SPEC` records, per kind, the
+largest width in CSS px at which the app draws it (`displayCss`, measured
+in headless Chrome over the screens that show it), and `index.mjs`
+checks it at a device pixel ratio of 3: a kind needs a wider size once
+`displayCss` times 3 is more than 1.25 times its widest file, bounded by
+the original's resolution (a card's 4:3 crop of a 1536x1024 original is at
+most 1365x1024, a wonder's 3:2 crop 1536x1024). The measured widths in
+`M10.AD1`:
+
+- Cards: 142 px, the card sheet's full-tier card (140 px wide; its art
+  covers 142 px). The board's cards are at most 132 px and draw the
+  thumbnail. 426 device px at DPR 3, so the 480 px file is enough and no
+  card size was added.
+- Wonders: 486 px, a large tile at half the viewport on a 1020 px tablet,
+  so 1458 device px at DPR 3. This added the 1440x960 size (12 files,
+  1.48 MB). Its budget keeps the 960 size's bytes per pixel (70 KB per
+  614,400 pixels).
+- Tokens: 45 px (the token sheet's medallion), 135 device px, under the
+  256 px file. The board's tokens now pass a `sizes`, so a DPR 3 phone
+  draws the 256 px file instead of upscaling the 96 px thumbnail.
+- Backs 132 px, the hero 448 px and the victory scenes 158 px are all
+  within their widest files.
+
+A new size reaches every approved asset with `process.mjs --batch` (step
+7), which by default writes only the files that are missing, so the files
+already shipped stay byte-identical.
+
+## Caching
+
+Each variant path in `available.gen.ts` ends in `?v=` and the first 10
+hex digits of the shipped file's SHA-256; the file keeps its name. The Go
+server (`server/internal/httpapi/spa.go`, policy in
+`server/internal/webdist/cache.go`) answers a request under `/art/` whose
+`v` is a prefix of the file's own hash with `Cache-Control: public,
+max-age=31536000, immutable` and no ETag: that URL can never serve other
+bytes. A request without `v`, or with a stale one (the textures named in
+CSS, an old page asking for replaced art), gets `public, max-age=86400,
+stale-while-revalidate=604800` plus a strong ETag. Replaced art therefore
+reaches a reader as soon as the app shell (served `no-cache`) carries the
+new index, whatever any cache in between does with `Cache-Control`.
+`index.mjs` takes the hashes and byte counts from the files themselves, so
+the same files always give the same index.
+
+## Prefetch
+
+The game screen mounts `web/src/lib/art/ArtPrefetch.svelte`, which runs
+the plan of `prefetch.ts`. After the board's first paint, while the
+browser is idle (`requestIdleCallback`, or a timer where it is missing),
+it fetches one file at a time at low priority (`fetchPriority = 'low'`),
+in this order:
+
+1. the current age's cards, as the card sheet shows them, then their
+   thumbnails;
+2. the next age's cards, thumbnail then card sheet file;
+3. the remaining ages, then the guilds;
+4. all 12 wonders (thumbnail, then the large tile);
+5. all 10 tokens; the 4 card backs; the victory scenes.
+
+The plan is built from complete public lists only (the whole catalog of
+an age), never from which cards were dealt, removed or lie face down, so
+it reveals and depends on nothing hidden: it is a function of the age
+alone. Each item is preloaded through an `Image` given the same `srcset`
+and `sizes` strings the displayed `<img>` uses (`artSource` and the sizes
+helpers in `lookup.ts`), so the browser runs the same candidate selection
+and the frame's later request is a cache hit. The prefetch pauses while
+the page is hidden, stops when the game screen goes away, and skips what
+this page already fetched.
+
+With Save-Data on, or when `navigator.connection` reports an effective
+type of `slow-2g` or `2g`, it keeps the small plan instead: the next age's
+backs and card thumbnails, within 200 KB.
 
 ## Running it, step by step
 
@@ -267,6 +356,14 @@ ever disagree.
    reached (reported either way), and records the shipped byte counts in
    the manifest.
 
+   **`--batch`** re-derives the shipped sizes of every approved asset (or
+   one `--kind`, or the comma-separated `--ids`) from its committed
+   original in `art/originals/`, with the same crop, paper mapping, mask
+   and quality stepping. It writes only the files that are missing, so a
+   size added to `KIND_SPEC` reaches every approved asset while the
+   shipped files stay byte-identical; `--force` rewrites every size and
+   `--out DIR` writes under `DIR` instead (`tools/art/README.md`).
+
    Before any of that, it writes the committed original,
    `art/originals/<kind>/<slug>.webp`, as **lossless WebP** (`cwebp
    -lossless -exact -z 9`, falling back to ImageMagick's
@@ -313,8 +410,10 @@ ever disagree.
 
 8. **`node tools/art/index.mjs`** regenerates
    `web/src/lib/art/available.gen.ts` from every `"approved"` asset in the
-   manifest: an id, its kind, and its shipped variants' paths, pixel sizes
-   and byte counts. An id the app looks up here and doesn't find has no
+   manifest: an id, its kind, and its shipped variants' paths (each with
+   its content hash, see "Caching"), pixel sizes and byte counts, formatted
+   as the web package's Prettier would (`--check` compares without
+   writing, and a unit test runs it). An id the app looks up here and doesn't find has no
    approved art yet, and the app's procedural placeholder draws instead
    (`AGENTS.md` "Assets"): nothing ever 404s.
 

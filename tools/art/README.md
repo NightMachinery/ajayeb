@@ -230,22 +230,51 @@ untouched. This is how a
 pipeline change (or `M9.B0`'s pilot) is proved end to end without
 approving or shipping anything for real.
 
+```
+node tools/art/process.mjs --batch                 # every approved asset
+node tools/art/process.mjs --batch --kind wonder --force --out /scratch/dir
+```
+
+`--batch` re-derives the shipped sizes of every approved asset (or those of
+`--kind`, or the comma-separated `--ids`) from its committed original in
+`art/originals/`, with the same crop, paper mapping, mask and quality
+stepping. By default it writes only the files that do not exist yet, so a
+size added to `KIND_SPEC` reaches every approved asset while the files
+already shipped stay byte-identical; `--force` rewrites every size, and
+`--out DIR` writes under `DIR` instead. It never writes `art/originals/` or
+the manifest (`index.mjs` takes the byte counts from the files), and it
+fails at the end if an approved id that needed a file has no original. A
+`--force --out` run reproduces the shipped files byte for byte with the
+same `avifenc`, which is the quick proof that the originals and the
+pipeline still agree.
+
 ### `index.mjs`
 
 ```
 node tools/art/index.mjs
+node tools/art/index.mjs --check
 node tools/art/index.mjs --manifest /scratch/manifest.json --out /scratch/available.gen.ts
 ```
 
 Regenerates `web/src/lib/art/available.gen.ts` from every `"approved"`
 asset in `art/manifest.json`: an id, its kind, and its shipped variants'
-paths, pixel sizes and byte counts. It prints each approved id's approved
-attempt (and notes when it is earlier than the latest) and its committed
-original (`.webp`, or a legacy `.png`), and warns about an approved id with
-no original yet. `--manifest` and
-`--out` point it at scratch files for a proof. Run it after any `apply-review.mjs` or
-`process.mjs` call that changes which assets are approved, so the app's
-index never claims a file that was not actually shipped.
+paths, pixel sizes and byte counts. Each path ends in `?v=` and the first
+10 hex digits of the shipped file's SHA-256 (the file keeps its name), so
+the server can cache it for a year; the byte counts are read from the
+files, and a missing file is an error. The module is formatted with the
+web package's Prettier (so `make install` first), which is what `make
+lint-web` checks. `--check` writes nothing and exits 1 when the file on
+disk differs from what it would write; `src/lib/art/index-check.test.ts`
+runs it in `make test-web`. It prints each approved id's approved attempt
+(and notes when it is earlier than the latest) and its committed original
+(`.webp`, or a legacy `.png`), and warns about an approved id with no
+original yet (`--quiet` drops these lines). Then a report: the shipped
+total, the full prefetch plan's bytes per part on a phone at DPR 3 and a
+desktop at DPR 1, and the high-DPI check of each kind (its largest display
+times 3 against its widest size). `--manifest` and `--out` point it at
+scratch files for a proof. Run it after any `apply-review.mjs` or
+`process.mjs` call that changes which assets are approved or which files
+ship, so the app's index never claims a file that was not actually shipped.
 
 ## Vector pipeline (`vector/`)
 
