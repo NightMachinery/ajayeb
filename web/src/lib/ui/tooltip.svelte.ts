@@ -24,7 +24,7 @@
 
 import { untrack, type Snippet } from 'svelte';
 import type { Attachment } from 'svelte/attachments';
-import { swallowClick } from './dismiss';
+import { isQuietFocus, swallowClick } from './dismiss';
 import {
   HOVER_DELAY_MS,
   HOVER_HIDE_MS,
@@ -321,6 +321,11 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   const onFocusIn = (e: FocusEvent): void => {
     const el = e.target;
     if (!(el instanceof Element)) return;
+    // The focus given back to an opener (ui/dismiss.ts) opens no tooltip.
+    if (isQuietFocus(el)) {
+      if (store.active?.via === 'focus') store.hide();
+      return;
+    }
     if (store.contentOf(el) && el.matches(':focus-visible')) {
       clearHover();
       store.show(el, 'focus');

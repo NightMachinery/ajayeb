@@ -135,6 +135,39 @@ test.describe('tooltips on a fine pointer', () => {
     expect(problems).toEqual([]);
   });
 
+  test('the dismiss layer takes the focus, keeps Tab inside and gives it back', async ({
+    page
+  }) => {
+    const problems = watchHygiene(page);
+    await page.goto(URL);
+    const open = page.getByTestId('tip-dismiss-open');
+    const layer = page.locator('[data-dismiss-layer]');
+    const close = page.getByTestId('tip-dismiss-close');
+    await open.focus();
+    await page.keyboard.press('Enter');
+    await expect(layer).toBeVisible();
+    await expect(layer).toBeFocused();
+    // Tab and Shift+Tab stay on the panel's one button.
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(close).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(close).toBeFocused();
+    // Escape closes it, and the focus goes back to the button that opened it.
+    await page.keyboard.press('Escape');
+    await expect(layer).toHaveCount(0);
+    await expect(open).toBeFocused();
+    // So does the panel's own Close button.
+    await page.keyboard.press('Enter');
+    await expect(layer).toBeFocused();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Enter');
+    await expect(layer).toHaveCount(0);
+    await expect(open).toBeFocused();
+    expect(problems).toEqual([]);
+  });
+
   test('the bubble stays inside the viewport at the edges, and passes axe while open', async ({
     page
   }) => {

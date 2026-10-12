@@ -14,8 +14,15 @@
   // place it elsewhere. With `keepInside`, a tap inside the panel reaches its
   // target as usual (a coach mark's Next button) and only taps outside
   // close it.
+  //
+  // As a dialog (the default role) it manages the keyboard focus: the panel
+  // takes the focus when it opens, Tab and Shift+Tab stay inside it while it
+  // is open, and when it closes the focus goes back to the element that had
+  // it before (the button that opened it), unless the focus has meanwhile
+  // moved on to something else. A status or note panel leaves the focus
+  // alone.
   import type { Snippet } from 'svelte';
-  import { installDismiss } from '$lib/ui/dismiss';
+  import { installDismiss, trapFocus } from '$lib/ui/dismiss';
 
   interface Props {
     /** Bindable: true shows the panel; a tap or Escape sets it false. */
@@ -53,6 +60,14 @@
     }
   });
 
+  // DOM-only: the focus moves in when a dialog panel mounts, stays inside,
+  // and goes back to its opener when the panel goes away.
+  $effect(() => {
+    const el = panelEl;
+    if (!el || role !== 'dialog') return;
+    return trapFocus(el);
+  });
+
   // The dismiss listeners, only while open. They write `open` from events,
   // never from this effect's own run.
   $effect(() => {
@@ -72,6 +87,7 @@
     bind:this={panelEl}
     popover="manual"
     {role}
+    tabindex="-1"
     aria-label={label}
     aria-labelledby={labelledby}
     class="dismiss-layer fixed inset-0 m-auto h-fit max-w-[calc(100vw-2rem)] rounded-panel border border-rule-strong bg-panel p-4 text-fg shadow-panel {className}"
@@ -84,6 +100,11 @@
 <style>
   .dismiss-layer {
     animation: dismiss-in var(--dur-base) ease-out;
+  }
+  /* The panel itself takes the focus only so the keyboard is inside it;
+     its border already shows where it is. */
+  .dismiss-layer:focus {
+    outline: none;
   }
   @keyframes dismiss-in {
     from {

@@ -231,4 +231,13 @@
 
 <DismissLayer bind:open={dismissOpen} label={t('dev.tooltips.dismiss')} class="w-72">
   <p class="text-sm" data-testid="tip-dismiss-panel">{t('dev.tooltips.dismissBody')}</p>
+  <!-- Something to Tab to: the focus stays inside the open panel. -->
+  <Button
+    variant="secondary"
+    class="mt-3"
+    data-testid="tip-dismiss-close"
+    onclick={() => (dismissOpen = false)}
+  >
+    {t('shell.close')}
+  </Button>
 </DismissLayer>

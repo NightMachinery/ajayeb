@@ -105,3 +105,116 @@ export function installDismiss(opts: DismissOptions): () => void {
     window.removeEventListener('keydown', onKey, true);
   };
 }
+
+let quietFocus: Element | null = null;
+
+/**
+ * Gives the focus back to `el` without opening its keyboard focus tooltip
+ * (the tooltip layer asks isQuietFocus). The focus that returns to an
+ * opener is not the user moving it, and a tooltip popping up there would
+ * also take the next tap on a touch screen.
+ */
+export function restoreFocus(el: HTMLElement): void {
+  quietFocus = el;
+  try {
+    el.focus({ preventScroll: true });
+  } finally {
+    quietFocus = null;
+  }
+}
+
+/** Whether `el` is taking the focus through restoreFocus right now. */
+export function isQuietFocus(el: Element): boolean {
+  return quietFocus !== null && el === quietFocus;
+}
+
+/** What can take the keyboard focus inside a panel. */
+const FOCUSABLE = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+  '[contenteditable="true"]'
+].join(', ');
+
+/**
+ * Where Tab (or Shift+Tab, `backwards`) goes inside a panel of `count`
+ * focusable elements when the focus is on the one at `current` (-1: on the
+ * panel itself or elsewhere): the index to focus, -1 for the panel itself
+ * (it has nothing focusable), or null to let the browser move it (a step
+ * that stays inside).
+ */
+export function tabTarget(count: number, current: number, backwards: boolean): number | null {
+  if (count === 0) return -1;
+  if (current < 0 || current >= count) return backwards ? count - 1 : 0;
+  if (backwards && current === 0) return count - 1;
+  if (!backwards && current === count - 1) return 0;
+  return null;
+}
+
+/**
+ * Whether the focus must go back to the opener once a panel has closed:
+ * it was inside the panel (or fell to the page when the panel went away),
+ * and the opener is still on the page. A focus that has moved on to
+ * something else is left there.
+ */
+export function shouldRestoreFocus(opts: {
+  /** The focus has no element, or is on the page's body. */
+  onBody: boolean;
+  /** The focus is inside the (closing) panel. */
+  inPanel: boolean;
+  /** The opener is still in the document. */
+  openerConnected: boolean;
+}): boolean {
+  return opts.openerConnected && (opts.onBody || opts.inPanel);
+}
+
+/**
+ * The focus management of a dialog-like panel (components/shell/
+ * DismissLayer.svelte): it takes the focus now, keeps Tab and Shift+Tab
+ * inside while it is open, and the cleanup gives the focus back to the
+ * element that had it before, quietly (no focus tooltip opens there). A
+ * panel that cannot take the focus (made inert by a modal dialog) is left
+ * alone. DOM-only: install it from an effect once the panel is in the
+ * document, and return its cleanup.
+ */
+export function trapFocus(panel: HTMLElement): () => void {
+  if (typeof document === 'undefined') return () => {};
+  const before = document.activeElement;
+  const opener = before instanceof HTMLElement && before !== document.body ? before : null;
+  if (!panel.contains(document.activeElement)) panel.focus({ preventScroll: true });
+  if (!panel.contains(document.activeElement)) return () => {};
+
+  const focusables = (): HTMLElement[] =>
+    [...panel.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+      (el) => el.getClientRects().length > 0
+    );
+  const onKey = (e: KeyboardEvent): void => {
+    if (e.key !== 'Tab' || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    const items = focusables();
+    const active = document.activeElement;
+    const current = active instanceof HTMLElement ? items.indexOf(active) : -1;
+    const to = tabTarget(items.length, current, e.shiftKey);
+    if (to === null) return;
+    e.preventDefault();
+    (to < 0 ? panel : (items[to] ?? panel)).focus({ preventScroll: true });
+  };
+  const onFocusIn = (e: FocusEvent): void => {
+    if (e.target instanceof Node && !panel.contains(e.target)) panel.focus({ preventScroll: true });
+  };
+  document.addEventListener('keydown', onKey, true);
+  document.addEventListener('focusin', onFocusIn, true);
+  return () => {
+    document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener('focusin', onFocusIn, true);
+    const active = document.activeElement;
+    const restore = shouldRestoreFocus({
+      onBody: !active || active === document.body,
+      inPanel: !!active && panel.contains(active),
+      openerConnected: !!opener?.isConnected
+    });
+    if (restore && opener) restoreFocus(opener);
+  };
+}
