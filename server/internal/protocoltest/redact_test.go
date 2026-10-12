@@ -249,6 +249,9 @@ func (lt *leakTracker) judge(who string, chunk []byte, hidden map[string]bool) {
 // names includes "economy", also the id of a progress token. Every other
 // frame comes back as it is. The wire decoder and the hygiene tests pin
 // that vocabulary, so nothing hidden can travel there.
+//
+// It also drops the board hints that list candidate sets by name (see
+// candidateHints), which name hidden ids by design, among public ones.
 func withoutHintNames(chunk []byte) []byte {
 	var frame map[string]json.RawMessage
 	if err := json.Unmarshal(chunk, &frame); err != nil || string(frame["t"]) != `"state"` {
@@ -262,11 +265,67 @@ func withoutHintNames(chunk []byte) []byte {
 			frame["room"] = b
 		}
 	}
+	if b, ok := withoutCandidateHints(frame["view"]); ok {
+		frame["view"] = b
+	}
 	out, err := json.Marshal(frame)
 	if err != nil {
 		return chunk
 	}
 	return out
+}
+
+// candidateHints are the board hint fields (M10.HS4) that name a public
+// candidate set: the cards of an age not yet seen (view.hints.unseen), both
+// cards of each science pair with their public place (view.hints.pairs),
+// the progress tokens not on the board or in a city (view.hints.boxTokens),
+// the guilds that may still come (view.hints.guildPreview), and the cards a
+// seat's chains make free (players[].hints.chainTargets). Each set is the
+// catalog minus what both players have seen, so it names the set-aside
+// cards, the box guilds and the box tokens among the rest without saying
+// which is which, exactly as a player can work out. A byte scan cannot
+// tell that apart from a leak; the engine's determinization guard
+// (engine/hints_leak_test.go) checks these fields instead, by recomputing
+// them from a determinized observation and requiring the same value.
+var candidateHints = struct{ shared, seat []string }{
+	shared: []string{"unseen", "pairs", "boxTokens", "guildPreview"},
+	seat:   []string{"chainTargets"},
+}
+
+// withoutCandidateHints returns a view without the fields of
+// candidateHints, and false when raw is not a view with hints.
+func withoutCandidateHints(raw json.RawMessage) (json.RawMessage, bool) {
+	var v map[string]json.RawMessage
+	if len(raw) == 0 || json.Unmarshal(raw, &v) != nil {
+		return nil, false
+	}
+	drop := func(raw json.RawMessage, keys []string) (json.RawMessage, bool) {
+		var m map[string]json.RawMessage
+		if len(raw) == 0 || json.Unmarshal(raw, &m) != nil || m == nil {
+			return nil, false
+		}
+		for _, k := range keys {
+			delete(m, k)
+		}
+		b, err := json.Marshal(m)
+		return b, err == nil
+	}
+	if b, ok := drop(v["hints"], candidateHints.shared); ok {
+		v["hints"] = b
+	}
+	var players []map[string]json.RawMessage
+	if json.Unmarshal(v["players"], &players) == nil {
+		for _, p := range players {
+			if b, ok := drop(p["hints"], candidateHints.seat); ok {
+				p["hints"] = b
+			}
+		}
+		if b, err := json.Marshal(players); err == nil {
+			v["players"] = b
+		}
+	}
+	b, err := json.Marshal(v)
+	return b, err == nil
 }
 
 // stateVersion returns the room version of a state frame, and false for any

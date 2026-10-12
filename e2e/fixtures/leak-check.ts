@@ -182,7 +182,49 @@ export function withoutHintNames<T>(msg: T): T {
     const { hints: _hints, ...roomRest } = room as Record<string, unknown>;
     rest['room'] = roomRest;
   }
+  const view = rest['view'];
+  if (view && typeof view === 'object') rest['view'] = withoutCandidateHints(view);
   return rest as T;
+}
+
+/**
+ * The board hint fields (M10.HS4) that name a public candidate set: the
+ * cards of an age not yet seen (hints.unseen), both cards of each science
+ * pair with their public place (hints.pairs), the progress tokens not on the
+ * board or in a city (hints.boxTokens), the guilds that may still come
+ * (hints.guildPreview), and the cards a seat's chains make free
+ * (players[].hints.chainTargets). Each is the catalog minus what both
+ * players have seen, so it names set-aside cards, box guilds and box tokens
+ * among the rest without saying which is which. A name scan cannot tell
+ * that from a leak; the engine's determinization guard
+ * (server/internal/engine/hints_leak_test.go) checks these fields instead.
+ */
+const CANDIDATE_HINTS = {
+  shared: ['unseen', 'pairs', 'boxTokens', 'guildPreview'],
+  seat: ['chainTargets']
+} as const;
+
+function withoutKeys(value: unknown, keys: readonly string[]): unknown {
+  if (!value || typeof value !== 'object') return value;
+  const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
+  for (const k of keys) delete out[k];
+  return out;
+}
+
+function withoutCandidateHints(view: object): object {
+  const v: Record<string, unknown> = { ...(view as Record<string, unknown>) };
+  v['hints'] = withoutKeys(v['hints'], CANDIDATE_HINTS.shared);
+  if (Array.isArray(v['players'])) {
+    v['players'] = v['players'].map((p: unknown) =>
+      p && typeof p === 'object'
+        ? {
+            ...(p as Record<string, unknown>),
+            hints: withoutKeys((p as Record<string, unknown>)['hints'], CANDIDATE_HINTS.seat)
+          }
+        : p
+    );
+  }
+  return v;
 }
 
 /** The slugs a view shows in public places: what this viewer may name from now on. */
