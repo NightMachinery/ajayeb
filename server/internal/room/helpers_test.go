@@ -10,6 +10,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	"github.com/NightMachinery/ajayeb/server/internal/ident"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/room/roomtest"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -33,11 +34,12 @@ var roomEpoch = time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
 
 // harness is a Manager over a temporary store and a fake clock.
 type harness struct {
-	t     *testing.T
-	m     *room.Manager
-	st    *store.Store
-	clock *roomtest.FakeClock
-	cfg   room.Config
+	t      *testing.T
+	m      *room.Manager
+	st     *store.Store
+	clock  *roomtest.FakeClock
+	cfg    room.Config
+	secret ident.Secret // the Claims of device links
 }
 
 // newHarness starts a Manager whose bots play the first legal action, with
@@ -50,6 +52,10 @@ func newHarness(t *testing.T, opts ...func(*room.Config)) *harness {
 	if err != nil {
 		t.Fatalf("store.Open: %v", err)
 	}
+	secret, err := ident.LoadSecret(t.TempDir())
+	if err != nil {
+		t.Fatalf("ident.LoadSecret: %v", err)
+	}
 	clock := roomtest.NewFakeClock(roomEpoch)
 	var seed atomic.Uint64
 	cfg := room.Config{
@@ -57,6 +63,7 @@ func newHarness(t *testing.T, opts ...func(*room.Config)) *harness {
 		Clock:  clock,
 		NewBot: func(store.BotLevel, uint64) room.Bot { return firstLegalBot{} },
 		Seed:   func() uint64 { return 1000 + seed.Add(1) },
+		Claims: secret,
 	}
 	for _, opt := range opts {
 		opt(&cfg)
@@ -65,7 +72,7 @@ func newHarness(t *testing.T, opts ...func(*room.Config)) *harness {
 	if err != nil {
 		t.Fatalf("NewManager: %v", err)
 	}
-	h := &harness{t: t, m: m, st: st, clock: clock, cfg: cfg}
+	h := &harness{t: t, m: m, st: st, clock: clock, cfg: cfg, secret: secret}
 	t.Cleanup(func() {
 		m.Close()
 		checkGoroutines(t, baseline)

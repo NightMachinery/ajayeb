@@ -455,10 +455,18 @@ func (m *Manager) get(code string, check func(*store.File) error) (*Room, error)
 // are taken. A hot-seat or bot room admits only its owner. Joining another
 // room first leaves the one c was in.
 func (m *Manager) Join(ctx context.Context, c *Client, code string) error {
+	return m.JoinClaim(ctx, c, code, nil)
+}
+
+// JoinClaim is Join with a join frame's optional claim (a device link,
+// package ident): with a valid claim c acts in this room, and only here, as
+// the user of the seat the claim was made for. A claim that is no current
+// claim of the room's seats fails with ErrBadClaim (error frame bad-claim).
+func (m *Manager) JoinClaim(ctx context.Context, c *Client, code string, claim *string) error {
 	if c.joined != "" && c.joined != code {
 		m.Leave(c, c.joined)
 	}
-	err := m.join(ctx, c, code)
+	err := m.join(ctx, c, code, claim)
 	if err != nil {
 		if !errors.Is(err, ErrClosed) && !isContextErr(err) {
 			c.Out.Push(wire.NewError(errorCode(err), errorMsg(err)))
@@ -469,11 +477,20 @@ func (m *Manager) Join(ctx context.Context, c *Client, code string) error {
 	return nil
 }
 
-func (m *Manager) join(ctx context.Context, c *Client, code string) error {
-	// A room this user could never enter is refused from its file's header,
-	// without loading it (see get); a room in memory decides in admit.
+func (m *Manager) join(ctx context.Context, c *Client, code string, claim *string) error {
+	// A room this user could never enter, or a claim that is not one of the
+	// room's, is refused from its file's header without loading it (see
+	// get); a room in memory decides in admit.
 	check := func(f *store.File) error {
-		if closedTo(f.Mode, f.Seats, c.UserID) {
+		user := c.UserID
+		if claim != nil {
+			u, ok := claimHolder(m.cfg.Claims, code, f.Seats, *claim)
+			if !ok {
+				return ErrBadClaim
+			}
+			user = u
+		}
+		if closedTo(f.Mode, f.Seats, user) {
 			return ErrForbidden
 		}
 		return nil
@@ -489,7 +506,7 @@ func (m *Manager) join(ctx context.Context, c *Client, code string) error {
 		if r == nil {
 			continue
 		}
-		res, err := request(ctx, r, func(reply chan error) any { return msgAttach{c: c, reply: reply} })
+		res, err := request(ctx, r, func(reply chan error) any { return msgAttach{c: c, claim: claim, reply: reply} })
 		if errors.Is(err, errRoomGone) {
 			continue
 		}

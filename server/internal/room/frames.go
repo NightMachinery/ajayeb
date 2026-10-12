@@ -144,8 +144,8 @@ func (r *Room) presence() [2]bool {
 		case store.SeatKindBot:
 			out[i] = true
 		case store.SeatKindHuman:
-			for c := range r.clients {
-				if c.UserID == s.UserID {
+			for _, mem := range r.clients {
+				if mem.user == s.UserID {
 					out[i] = true
 					break
 				}
@@ -176,6 +176,7 @@ func (r *Room) roomInfo(mem member, presence [2]bool) wire.RoomInfo {
 			Kind:      wire.SeatKind(s.Kind),
 			Connected: presence[i],
 			You:       mem.holds(engine.Seat(i)),
+			NameNo:    s.NameNo,
 		}
 		if s.Kind == store.SeatKindBot {
 			level := wire.BotLevel(s.Bot)

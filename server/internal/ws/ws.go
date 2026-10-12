@@ -79,7 +79,7 @@ const (
 // loop makes them one after another, and Disconnect comes last.
 type Rooms interface {
 	Create(ctx context.Context, c *room.Client, req wire.Create) (string, error)
-	Join(ctx context.Context, c *room.Client, code string) error
+	JoinClaim(ctx context.Context, c *room.Client, code string, claim *string) error
 	Leave(c *room.Client, code string)
 	Disconnect(c *room.Client)
 	Act(ctx context.Context, c *room.Client, act wire.Act) error
@@ -87,6 +87,8 @@ type Rooms interface {
 	Resync(ctx context.Context, c *room.Client, code string) error
 	Rematch(ctx context.Context, c *room.Client, code string) (string, error)
 	Hints(ctx context.Context, c *room.Client, h wire.Hints) error
+	Link(ctx context.Context, c *room.Client, l wire.Link) error
+	Relink(ctx context.Context, c *room.Client, l wire.Relink) error
 }
 
 // Identity derives a user id from a client token; ident.Secret satisfies

@@ -254,8 +254,9 @@ func (c *conn) handle(data []byte) bool {
 			c.out.Push(wire.NewReject(0, wire.RejectCodeRate, "too many joins of unknown rooms; try again later"))
 			return true
 		}
-		err = rooms.Join(c.ctx, c.client, m.Code)
-		if errors.Is(err, room.ErrRoomNotFound) {
+		err = rooms.JoinClaim(c.ctx, c.client, m.Code, m.Claim)
+		// A bad claim counts like an unknown room: both are guesses.
+		if errors.Is(err, room.ErrRoomNotFound) || errors.Is(err, room.ErrBadClaim) {
 			c.s.joinMissed(c.key)
 		}
 	case wire.Act:
@@ -274,6 +275,10 @@ func (c *conn) handle(data []byte) bool {
 		_, err = rooms.Rematch(c.ctx, c.client, m.Code)
 	case wire.Hints:
 		err = rooms.Hints(c.ctx, c.client, m)
+	case wire.Link:
+		err = rooms.Link(c.ctx, c.client, m)
+	case wire.Relink:
+		err = rooms.Relink(c.ctx, c.client, m)
 	}
 	switch {
 	case err == nil:

@@ -108,6 +108,20 @@ type Config struct {
 
 	// Seed returns the seed of a new game. Default: crypto/rand.
 	Seed func() uint64
+
+	// Claims derives and checks the claims of device links (package
+	// ident's Secret). Nil turns device links off: a join with a claim is
+	// refused as a bad claim, and link and relink frames are refused.
+	Claims Claims
+}
+
+// Claims is what the rooms need from package ident for device links;
+// ident.Secret satisfies it.
+type Claims interface {
+	// Claim derives the claim of userID in room code at a seat's epoch.
+	Claim(code, userID string, epoch int) string
+	// VerifyClaim reports, in constant time, whether claim is that claim.
+	VerifyClaim(claim, code, userID string, epoch int) bool
 }
 
 // withDefaults returns cfg with every zero field replaced by its default.

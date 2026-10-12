@@ -40,8 +40,9 @@
 //     rate, and so is a rematch that would create its room (the rooms ask
 //     room.Client.AllowCreate).
 //   - Joins of unknown rooms: a token bucket of 30 per hour per client
-//     address, used up by every join that finds no room; past it every join
-//     of the address is answered with reject rate. This bounds guessing
+//     address, used up by every join that finds no room or carries a bad
+//     claim (a device link that is not, or no longer, the room's); past it
+//     every join of the address is answered with reject rate. This bounds guessing
 //     from one address only. Someone with many /64s gets 30 misses an hour
 //     from each, and misses go uncounted once the limiter is full of
 //     addresses that are all still refilling (keyedLimiter.record), while a

@@ -315,6 +315,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		BotPool:  ai.NewPool(opts.botSearches),
 		BotDelay: opts.botDelay,
 		Seed:     seed,
+		Claims:   secret,
 	})
 	if err != nil {
 		return err

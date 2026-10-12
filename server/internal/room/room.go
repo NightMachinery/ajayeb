@@ -30,7 +30,12 @@ const (
 type member struct {
 	role role
 	seat engine.Seat // for rolePlayer
-	user string      // the connection's user id
+	// user is the user id the connection acts as in this room: its own
+	// (Client.UserID), or the seat's user when it joined with a claim.
+	user string
+	// claim is the claim the connection joined with, or "" (see
+	// revokeClaims).
+	claim string
 }
 
 // Room is one game room: an actor goroutine that owns everything below the
@@ -73,6 +78,7 @@ type Room struct {
 type (
 	msgAttach struct {
 		c     *Client
+		claim *string // the join's claim, if it has one
 		reply chan error
 	}
 	msgDetach struct{ c *Client }
@@ -88,6 +94,11 @@ type (
 	msgHints  struct {
 		c     *Client
 		hints wire.Hints
+	}
+	msgLink struct {
+		c     *Client
+		seat  int
+		reset bool // a relink frame
 	}
 	msgRematch struct {
 		c     *Client
@@ -115,6 +126,7 @@ type rematchResult struct {
 // below the length of the log.
 func newRoom(m *Manager, f *store.File, s engine.State, hist []histEntry) *Room {
 	fillHintFields(f)
+	numberNewSeats(&f.Seats)
 	ctx, cancel := context.WithCancel(m.ctx)
 	r := &Room{
 		code:    f.Code,
@@ -174,7 +186,7 @@ func (r *Room) exit() {
 func (r *Room) handle(msg any) bool {
 	switch msg := msg.(type) {
 	case msgAttach:
-		msg.reply <- r.attach(msg.c)
+		msg.reply <- r.attach(msg.c, msg.claim)
 	case msgDetach:
 		r.detach(msg.c)
 	case msgAct:
@@ -185,6 +197,8 @@ func (r *Room) handle(msg any) bool {
 		r.resync(msg.c)
 	case msgHints:
 		r.setHints(msg.c, msg.hints)
+	case msgLink:
+		r.link(msg.c, msg.seat, msg.reset)
 	case msgRematch:
 		code, err := r.doRematch(msg.c)
 		msg.reply <- rematchResult{code: code, err: err}
@@ -242,20 +256,21 @@ func request[T any](ctx context.Context, r *Room, build func(reply chan T) any) 
 
 // attach admits c, claiming a seat if it may, and sends every connection a
 // fresh state (the newcomer its first one, the others the new presence).
-func (r *Room) attach(c *Client) error {
+// With a claim, c acts as the user of the seat the claim was made for (see
+// admit).
+func (r *Room) attach(c *Client, claim *string) error {
 	if mem, ok := r.clients[c]; ok {
 		r.sendState(c, mem, nil, true)
 		return nil
 	}
-	mem, claimed, err := r.admit(c)
+	mem, changed, err := r.admit(c, claim)
 	if err != nil {
 		return err
 	}
-	mem.user = c.UserID
 	r.clients[c] = mem
 	r.stopIdle()
 	r.publishIdle()
-	if claimed {
+	if changed {
 		r.persist()
 	}
 	r.maybeStartBot()
@@ -266,30 +281,48 @@ func (r *Room) attach(c *Client) error {
 }
 
 // admit decides what c is in this room, claiming open seats for it where
-// the mode allows, and reports whether it claimed any.
+// the mode allows, and reports whether the room file changed (a seat
+// claimed, or renamed).
+//
+// With a claim, c acts as the user of the seat the claim was made for: a
+// claim that is no current claim of this room's seats is refused with
+// ErrBadClaim, and a valid one admits c exactly as that user would be
+// (its seat in an online or bot room, both seats in a hot-seat room).
+// Without one, c acts as its own user, and a seated user whose hello name
+// changed renames the seat (online rooms only; see rename).
 //
 // Connections are bounded so that spectators can never lock a player out:
 // a new spectator is refused once the room has MaxClients connections,
 // while a user who holds a seat is refused only once that user alone has
 // MaxClients connections here. A room thus holds at most three times
 // MaxClients connections (spectators, and each seated user's tabs).
-func (r *Room) admit(c *Client) (member, bool, error) {
+func (r *Room) admit(c *Client, claim *string) (member, bool, error) {
+	user := c.UserID
+	var via string
+	if claim != nil {
+		u, ok := claimHolder(r.m.cfg.Claims, r.code, r.file.Seats, *claim)
+		if !ok {
+			return member{}, false, ErrBadClaim
+		}
+		user, via = u, *claim
+	}
 	var held []engine.Seat
 	for i, s := range r.file.Seats {
-		if s.Kind == store.SeatKindHuman && s.UserID == c.UserID {
+		if s.Kind == store.SeatKindHuman && s.UserID == user {
 			held = append(held, engine.Seat(i))
 		}
 	}
-	if len(held) > 0 && r.userConns(c.UserID) >= r.m.cfg.MaxClients {
+	if len(held) > 0 && r.userConns(user) >= r.m.cfg.MaxClients {
 		return member{}, false, ErrRoomFull
 	}
 	switch len(held) {
 	case 2:
-		return member{role: roleHotseat}, false, nil
+		return member{role: roleHotseat, user: user, claim: via}, false, nil
 	case 1:
-		return member{role: rolePlayer, seat: held[0]}, false, nil
+		renamed := claim == nil && r.rename(held[0], c.Name)
+		return member{role: rolePlayer, seat: held[0], user: user, claim: via}, renamed, nil
 	}
-	if closedTo(r.file.Mode, r.file.Seats, c.UserID) {
+	if closedTo(r.file.Mode, r.file.Seats, user) {
 		return member{}, false, ErrForbidden
 	}
 
@@ -300,17 +333,17 @@ func (r *Room) admit(c *Client) (member, bool, error) {
 			if len(r.clients) >= r.m.cfg.MaxClients {
 				return member{}, false, ErrRoomFull
 			}
-			return member{role: roleSpectator}, false, nil
+			return member{role: roleSpectator, user: user}, false, nil
 		}
-		r.claim(open[0], c, c.Name)
-		return member{role: rolePlayer, seat: open[0]}, true, nil
+		r.claim(open[0], user, c.Name)
+		return member{role: rolePlayer, seat: open[0], user: user}, true, nil
 	case store.ModeHotseat:
-		r.claim(0, c, c.Name)
-		r.claim(1, c, "")
-		return member{role: roleHotseat}, true, nil
+		r.claim(0, user, c.Name)
+		r.claim(1, user, "")
+		return member{role: roleHotseat, user: user}, true, nil
 	default: // store.ModeAI, the only other mode closedTo lets through
-		r.claim(open[0], c, c.Name)
-		return member{role: rolePlayer, seat: open[0]}, true, nil
+		r.claim(open[0], user, c.Name)
+		return member{role: rolePlayer, seat: open[0], user: user}, true, nil
 	}
 }
 
@@ -340,11 +373,12 @@ func closedTo(mode store.Mode, seats [2]store.Seat, userID string) bool {
 	return true
 }
 
-// userConns counts the connections of one user attached to the room.
+// userConns counts the connections attached to the room that act as one
+// user (their own, or through a claim).
 func (r *Room) userConns(userID string) int {
 	n := 0
-	for c := range r.clients {
-		if c.UserID == userID {
+	for _, mem := range r.clients {
+		if mem.user == userID {
 			n++
 		}
 	}
@@ -362,18 +396,20 @@ func (r *Room) openSeats() []engine.Seat {
 	return open
 }
 
-// claim gives seat to c's user, keeping a name the room was created with.
-// The first user to claim a seat of a room that has no admin yet (a room
-// made with open seats) becomes its admin.
-func (r *Room) claim(seat engine.Seat, c *Client, name string) {
+// claim gives seat to user, keeping a name the room was created with, and
+// numbers the name when it equals the other seat's (numberSeat). The first
+// user to claim a seat of a room that has no admin yet (a room made with
+// open seats) becomes its admin.
+func (r *Room) claim(seat engine.Seat, user, name string) {
 	if r.file.Admin == "" {
-		r.file.Admin = c.UserID
+		r.file.Admin = user
 	}
 	s := &r.file.Seats[seat]
 	if s.Name != "" {
 		name = s.Name
 	}
-	*s = store.Seat{Kind: store.SeatKindHuman, UserID: c.UserID, Name: name}
+	*s = store.Seat{Kind: store.SeatKindHuman, UserID: user, Name: name, Epoch: s.Epoch}
+	numberSeat(&r.file.Seats, int(seat))
 }
 
 // detach removes c and tells the others about the presence change. The
@@ -494,7 +530,7 @@ func (r *Room) resign(c *Client, mem member, m wire.Act, a engine.Action, ack *w
 // on. Seqs are recorded only when a request is applied (see record), so a
 // refused request does not use up its seq.
 func (r *Room) applied(c *Client, seq int) bool {
-	last, ok := r.seqs.get(seqKey(c))
+	last, ok := r.seqs.get(r.seqKey(c))
 	return ok && seq <= last
 }
 
@@ -502,16 +538,17 @@ func (r *Room) applied(c *Client, seq int) bool {
 // client id. A bot's move (no sender) records nothing.
 func (r *Room) record(sender *Client, ack *wire.Ack) {
 	if sender != nil && ack != nil {
-		r.seqs.put(seqKey(sender), ack.Seq)
+		r.seqs.put(r.seqKey(sender), ack.Seq)
 	}
 }
 
-// seqKey is the key of a client's seqs: its user id and its client id. The
-// client id alone is not enough, because every client picks its own: another
-// user who chose (or learned) the same one could otherwise send a huge seq
-// and make the room take this client's next requests for old ones. User ids
-// are hex (package ident), so the colon keeps keys of different users apart.
-func seqKey(c *Client) string { return c.UserID + ":" + c.ClientID }
+// seqKey is the key of an attached client's seqs: the user id it acts as
+// here and its client id. The client id alone is not enough, because every
+// client picks its own: another user who chose (or learned) the same one
+// could otherwise send a huge seq and make the room take this client's next
+// requests for old ones. User ids are hex (package ident), so the colon
+// keeps keys of different users apart.
+func (r *Room) seqKey(c *Client) string { return r.clients[c].user + ":" + c.ClientID }
 
 // mayAct reports whether the member may act for the seat to move. seat is
 // the act frame's optional seat, which must then be that seat.
@@ -656,6 +693,11 @@ func (r *Room) doRematch(c *Client) (string, error) {
 		}
 		f := store.New("", r.file.Mode, r.file.Options, r.m.cfg.Seed(), r.m.cfg.Clock.Now())
 		f.Seats = r.file.Seats
+		// The rematch keeps the name numbers; its device links start
+		// afresh (a claim names its room anyway).
+		for i := range f.Seats {
+			f.Seats[i].Epoch = 0
+		}
 		// The rematch keeps the game's admin and its hint settings.
 		f.Admin = r.file.Admin
 		hints := *r.file.Hints
@@ -668,8 +710,8 @@ func (r *Room) doRematch(c *Client) (string, error) {
 		r.persist()
 		r.log.Info("rematch", "code", code)
 	}
-	for cl := range r.clients {
-		cl.Out.Push(wire.NewCreated(r.rematch))
+	for cl, mem := range r.clients {
+		cl.Out.Push(r.rematchCreated(cl, mem))
 	}
 	return r.rematch, nil
 }

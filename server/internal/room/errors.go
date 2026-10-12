@@ -42,6 +42,10 @@ var (
 	// bot level, seats that do not fit the mode, or an action log or
 	// scenario that does not replay. Frame: error forbidden.
 	ErrInvalidSpec = errors.New("room: invalid room settings")
+	// ErrBadClaim: a join's claim is not a current claim of any seat of
+	// the room (malformed, made for another room, or revoked by a link
+	// reset), or the Manager has no Claims. Frame: error bad-claim.
+	ErrBadClaim = errors.New("room: not a device link of this room")
 	// ErrStorage: the room could not be read or written. Frame: error
 	// room-not-found for a load, nothing else (the room keeps running in
 	// memory and retries).
@@ -58,6 +62,8 @@ func errorCode(err error) wire.ErrorCode {
 		return wire.ErrorCodeBusy
 	case errors.Is(err, ErrForbidden), errors.Is(err, ErrInvalidSpec):
 		return wire.ErrorCodeForbidden
+	case errors.Is(err, ErrBadClaim):
+		return wire.ErrorCodeBadClaim
 	default:
 		return wire.ErrorCodeRoomNotFound
 	}
@@ -75,6 +81,8 @@ func errorMsg(err error) string {
 		return "this user may not do that in this room"
 	case errors.Is(err, ErrInvalidSpec):
 		return "invalid room settings"
+	case errors.Is(err, ErrBadClaim):
+		return "that device link does not work in this room (any more)"
 	default:
 		return "no room with that code"
 	}

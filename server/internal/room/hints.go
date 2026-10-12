@@ -90,7 +90,7 @@ func (r *Room) setHints(c *Client, m wire.Hints) {
 		r.sendState(c, mem, ack, false)
 		return
 	}
-	if c.UserID != r.file.Admin {
+	if mem.user != r.file.Admin {
 		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeNotAdmin, "only the game's admin may change its hints"))
 		return
 	}
@@ -168,7 +168,7 @@ func familyNames(fs []wire.HintFamily) []string {
 }
 
 // wireRoomLog is the room log as every state frame carries it: the newest
-// wire.MaxRoomLog entries.
+// wire.MaxRoomLog entries (hint changes, and link resets from identity.go).
 func wireRoomLog(log []store.LogEntry) []wire.RoomLogEntry {
 	log = log[max(0, len(log)-wire.MaxRoomLog):]
 	out := make([]wire.RoomLogEntry, 0, len(log))
@@ -182,6 +182,10 @@ func wireRoomLog(log []store.LogEntry) []wire.RoomLogEntry {
 		if e.Seat == 0 || e.Seat == 1 {
 			seat := e.Seat
 			w.Seat = &seat
+		}
+		if e.Target != nil && (*e.Target == 0 || *e.Target == 1) {
+			target := *e.Target
+			w.Target = &target
 		}
 		for _, f := range e.On {
 			w.On = append(w.On, wire.HintFamily(f))
