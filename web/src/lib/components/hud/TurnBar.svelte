@@ -9,11 +9,22 @@
   // height on a phone. A seat's own turn shows that seat's crest; the Retry
   // button, when it shows, keeps a 44 px tap height and the bar grows to
   // hold it.
+  //
+  // At its end, the hint-settings badge (M10.HS5): a small bulb whose
+  // tooltip says which hints the game has and who sets them, so both
+  // players can see the rules of help they play under. Struck through when
+  // the game has no hints.
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { TurnState } from '$lib/view/turn';
   import Loader2 from '@lucide/svelte/icons/loader-2';
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
+  import Lightbulb from '@lucide/svelte/icons/lightbulb';
+  import LightbulbOff from '@lucide/svelte/icons/lightbulb-off';
+  import { summaryText } from '$lib/hints/text';
+  import { enabledFamilies } from '$lib/hints/families';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import type { HintSettings } from '$lib/wire';
   import { wonderName } from '$lib/components/card/effect-text';
   import ThinkingDots from './ThinkingDots.svelte';
 
@@ -24,10 +35,31 @@
      *  gallery. */
     names?: readonly [string, string];
     onRetry?: () => void;
+    /** The game's hint settings, for the badge; no badge without them. */
+    hints?: HintSettings | null;
+    /** Whether this player may change them (the game's admin). */
+    hintsAdmin?: boolean;
     class?: string;
   }
 
-  let { state, names, onRetry, class: className = '' }: Props = $props();
+  let {
+    state,
+    names,
+    onRetry,
+    hints = null,
+    hintsAdmin = false,
+    class: className = ''
+  }: Props = $props();
+
+  const hintsTip = $derived(
+    hints
+      ? t('hints.status.tip', {
+          summary: summaryText(hints),
+          setBy: t(hintsAdmin ? 'hints.status.setByYou' : 'hints.status.setByCreator')
+        })
+      : ''
+  );
+  const hintsNone = $derived(!!hints && enabledFamilies(hints).length === 0);
 
   function nameOf(seat: 0 | 1): string {
     return names?.[seat] ?? t('debug.seat', { seat });
@@ -130,6 +162,21 @@
     {/if}
     <span class="min-w-0" dir="auto">{text}</span>
   </span>
+  {#if hints}
+    <span
+      class="ms-auto grid size-8 shrink-0 place-items-center rounded-full text-fg-muted"
+      role="img"
+      aria-label={hintsTip}
+      data-hint-status={hintsNone ? 'none' : 'some'}
+      {@attach tooltip({ text: hintsTip, rulesId: 'hints' })}
+    >
+      {#if hintsNone}
+        <LightbulbOff class="size-4" aria-hidden="true" />
+      {:else}
+        <Lightbulb class="size-4" aria-hidden="true" />
+      {/if}
+    </span>
+  {/if}
   {#if offerRetry}
     <button
       type="button"

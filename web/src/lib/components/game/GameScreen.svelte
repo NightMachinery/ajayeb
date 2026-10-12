@@ -869,6 +869,8 @@
         <TurnBar
           state={turn}
           {names}
+          hints={session.hints}
+          hintsAdmin={!!frame?.you.admin}
           onRetry={() => session.retry()}
           class="pb-[max(0.25rem,var(--safe-b))]"
         />

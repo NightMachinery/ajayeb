@@ -456,7 +456,6 @@ export const hints = {
     other: '{count} of these coins go to {name} (Economy).'
   },
 
-
   // The move review (lib/view/review.ts, components/game/MoveReview.svelte,
   // M10.HS5): inside the summary of the opponent's next move, what the
   // player did and whether a clearly better move was there. {move} is one
@@ -514,6 +513,13 @@ export const hints = {
   'hints.settings.tipsHint': 'Explain each hint mark the first time it appears on this device.',
   'hints.settings.tipsReset': 'Show the tips again',
   'hints.settings.tipsResetDone': 'The tips will show again.',
+
+  // The hint-settings badge (hud/TurnBar.svelte). {summary} is one of the
+  // hints.summary.* lines.
+  'hints.status.label': 'Hints in this game',
+  'hints.status.tip': 'Hints in this game: {summary}. {setBy}',
+  'hints.status.setByYou': 'You can change them in the game menu.',
+  'hints.status.setByCreator': 'The player who created the game sets them.',
 
   // The rules reference's "Hint glyphs" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules
