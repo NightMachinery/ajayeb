@@ -12,6 +12,11 @@
 //                    must be 22 base64url characters, or the app replaces it
 //   --name N         written to localStorage ajayeb:name
 //   --theme T        light | dark | system, written to localStorage ajayeb:theme
+//   --storage JSON   a JSON object of localStorage keys to write before the page
+//                    loads, such as '{"ajayeb:settings":{"animationSpeed":"off"}}': a
+//                    string value is written as it is, any other value as its
+//                    JSON. Repeatable; later keys win, and --token, --name and
+//                    --theme win over the same key here
 //   --scheme S       light | dark: the emulated OS colour scheme (what "system" follows)
 //   --vp V           WxH[@dpr] or a preset: mobile (390x844@2), desktop (1280x800@1);
 //                    default 390x844@2. A short side under 600 px also emulates a phone
@@ -36,11 +41,12 @@
 //                    active element is blurred before the probe and the capture
 //   --force          launch Chrome without the heavy.py browser lock
 //
-// Identity works as in the app: the token, name and theme go into
-// localStorage on the page's origin before any of its scripts run, so the
-// app starts as that player. The token must have the real shape (22
-// characters of A-Z, a-z, 0-9, - and _): the client replaces any other
-// stored value with a fresh token, so the page would open as a stranger.
+// Identity works as in the app: the token, name and theme (and any
+// --storage keys) go into localStorage on the page's origin before any of
+// its scripts run, so the app starts as that player with those settings.
+// The token must have the real shape (22 characters of A-Z, a-z, 0-9, -
+// and _): the client replaces any other stored value with a fresh token,
+// so the page would open as a stranger.
 // Each run uses a fresh browser context, so nothing carries over between
 // runs.
 
@@ -80,6 +86,31 @@ const NO_AUTOFOCUS = `(() => {
 })();`;
 /** The tallest viewport --selector grows to, in CSS px. */
 const MAX_GROWN_HEIGHT = 12_000;
+
+/**
+ * Parses the --storage values into [key, value] pairs, in order: each is a
+ * JSON object whose string values are kept as they are and whose other
+ * values are stored as their JSON (localStorage holds strings only).
+ */
+export function parseStorage(specs) {
+  const pairs = [];
+  for (const spec of specs) {
+    let obj;
+    try {
+      obj = JSON.parse(spec);
+    } catch (e) {
+      throw new Error(`--storage: not JSON (${e.message}): ${spec}`);
+    }
+    if (obj === null || typeof obj !== 'object' || Array.isArray(obj))
+      throw new Error(`--storage: expected a JSON object of key to value, got ${spec}`);
+    for (const [k, v] of Object.entries(obj)) {
+      if (v === undefined || v === null)
+        throw new Error(`--storage: ${k} has no value; leave the key out instead`);
+      pairs.push([k, typeof v === 'string' ? v : JSON.stringify(v)]);
+    }
+  }
+  return pairs;
+}
 
 export function parseViewport(spec) {
   const m = /^(\d+)x(\d+)(?:@(\d+(?:\.\d+)?))?$/.exec(PRESETS[spec] ?? spec);
@@ -255,6 +286,7 @@ async function main() {
       token: { type: 'string' },
       name: { type: 'string' },
       theme: { type: 'string' },
+      storage: { type: 'string', multiple: true, default: [] },
       scheme: { type: 'string' },
       vp: { type: 'string', default: '390x844@2' },
       motion: { type: 'string', default: 'reduce' },
@@ -289,6 +321,7 @@ async function main() {
   if (o.vision !== undefined && !VISIONS.includes(o.vision))
     throw new Error(`--vision: one of ${VISIONS.join(', ')}, got ${o.vision}`);
   const vp = parseViewport(o.vp);
+  const extraStorage = parseStorage(o.storage);
   const target = new URL(o.url, o.origin);
 
   const chrome = await launch({ force: o.force });
@@ -348,7 +381,8 @@ async function main() {
       await page.send('Page.addScriptToEvaluateOnNewDocument', { source: NO_AUTOFOCUS });
     }
 
-    const storage = [];
+    // --storage first, so the dedicated flags win over the same key.
+    const storage = [...extraStorage];
     if (o.token !== undefined) storage.push(['ajayeb:token', o.token]);
     if (o.name !== undefined) storage.push(['ajayeb:name', o.name]);
     if (o.theme !== undefined) storage.push(['ajayeb:theme', o.theme]);
