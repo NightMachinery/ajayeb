@@ -257,11 +257,22 @@ func request[T any](ctx context.Context, r *Room, build func(reply chan T) any) 
 // attach admits c, claiming a seat if it may, and sends every connection a
 // fresh state (the newcomer its first one, the others the new presence).
 // With a claim, c acts as the user of the seat the claim was made for (see
-// admit).
+// admit). A connection already in the room that joins again with the same
+// claim, or again without one, just gets a fresh state. One that comes with
+// another claim (a device link opened over the room's page, which changes
+// only the fragment and keeps the socket) is detached and admitted afresh
+// under it; if that fails it stays detached, like a refused join.
 func (r *Room) attach(c *Client, claim *string) error {
 	if mem, ok := r.clients[c]; ok {
-		r.sendState(c, mem, nil, true)
-		return nil
+		want := ""
+		if claim != nil {
+			want = *claim
+		}
+		if want == mem.claim {
+			r.sendState(c, mem, nil, true)
+			return nil
+		}
+		r.detach(c)
 	}
 	mem, changed, err := r.admit(c, claim)
 	if err != nil {

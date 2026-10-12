@@ -146,6 +146,47 @@ func TestClaimJoinOnline(t *testing.T) {
 	}
 }
 
+// TestClaimJoinOverAttached checks a claim that comes to a connection
+// already in the room (a device link opened over the room's page keeps the
+// socket): a spectator becomes the seat's player, the same claim again
+// changes nothing, and a bad claim detaches it.
+func TestClaimJoinOverAttached(t *testing.T) {
+	h := newHarness(t)
+	code, a, b := onlinePair(h, "Ann", "Bob")
+	claim := b.link(1, false).Claim
+	a.current()
+
+	s := h.client("user-s", "tab-s", "Sam")
+	if st := s.join(code); len(st.You.Seats) != 0 {
+		t.Fatalf("the third user is not a spectator: you %+v", st.You)
+	}
+	if snap := h.snapshot(code); snap.Spectators != 1 || snap.Clients != 3 {
+		t.Fatalf("before the claim: %d spectators, %d clients", snap.Spectators, snap.Clients)
+	}
+	s.drain()
+	st := s.joinClaim(code, claim)
+	if len(st.You.Seats) != 1 || st.You.Seats[0] != 1 || !st.Room.Seats[1].You {
+		t.Fatalf("a claim over a spectator: you %+v", st.You)
+	}
+	if snap := h.snapshot(code); snap.Spectators != 0 || snap.Clients != 3 {
+		t.Fatalf("after the claim: %d spectators, %d clients", snap.Spectators, snap.Clients)
+	}
+	s.drain()
+	if st := s.joinClaim(code, claim); len(st.You.Seats) != 1 || st.You.Seats[0] != 1 {
+		t.Fatalf("the same claim again: you %+v", st.You)
+	}
+	if snap := h.snapshot(code); snap.Clients != 3 {
+		t.Fatalf("the same claim again: %d clients", snap.Clients)
+	}
+	s.drain()
+	if e, err := s.joinClaimErr(code, h.secret.Claim(code, "user-b", 1)); !errors.Is(err, room.ErrBadClaim) || e.Code != wire.ErrorCodeBadClaim {
+		t.Fatalf("a bad claim over the claimed connection: %v %+v", err, e)
+	}
+	if snap := h.snapshot(code); snap.Clients != 2 {
+		t.Fatalf("a bad claim left the connection attached: %d clients", snap.Clients)
+	}
+}
+
 // TestClaimJoinHotseatAndAI checks claims of the rooms only their owner may
 // enter: the connection gets both seats of a hot-seat room, the human seat
 // of a bot room, and without the claim it is refused.

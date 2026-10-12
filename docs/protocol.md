@@ -263,7 +263,10 @@ open seat (the room goes from `lobby` to `playing`), and once both seats are
 taken later users watch as spectators, with a public view and no choices.
 Hot-seat and `ai` rooms admit only their creator. A room that is not in
 memory is loaded from disk first. Joining a room the connection is already
-in just sends a fresh `state`. In an online room, a user who comes back to
+in just sends a fresh `state`, unless the join's `claim` differs from the
+one it joined with (a device link opened over the room's page): the
+connection is then detached and admitted afresh under the new claim, and
+stays detached if that fails. In an online room, a user who comes back to
 their seat under another display name (the `name` of their `hello`) renames
 the seat, and only that seat's name number is recomputed (see `nameNo`
 under `state`).
