@@ -13,6 +13,9 @@
 //   360 x 740 in all three ages; it is checked at every viewport);
 // - on a phone (portrait or landscape), neither player strip scrolls
 //   inside: both fit their box whole;
+// - the phone strip's compact controls (the name that opens the city, the
+//   wonder button, the device link) draw smaller than 44 px but take taps
+//   over 44 px of height, and the two square ones over 44 px of width too;
 // - every enabled primary control at least 44 px tall, on the screen and in
 //   the card sheet of the first takeable card;
 // - no console errors, page errors or failed requests.
@@ -24,6 +27,7 @@ import { expect } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { probeLayout, quiet, settle, type LayoutReport } from '../fixtures/layout-probes';
+import { openHotseatRoom } from '../fixtures/scenario';
 import { createDevRoom, recordGame, type GameMarks, type RecordedGame } from '../fixtures/ws-game';
 
 const VIEWPORTS = [
@@ -182,3 +186,48 @@ for (const viewport of VIEWPORTS) {
     });
   });
 }
+
+test('the phone strip takes taps over 44 px on its compact controls', async ({ page }) => {
+  const problems = watchHygiene(page);
+  await page.setViewportSize({ width: 360, height: 740 });
+  await openHotseatRoom(page, 'mausoleum');
+  await settle(page);
+  // The span around each control's centre, along each axis, over which a
+  // tap still lands on it (its ::after hit area included).
+  const spans = await page.evaluate(() => {
+    const out: { what: string; w: number; h: number }[] = [];
+    const sel =
+      '[data-control="open-city"], [data-control="wonders"], [data-control="device-link"]';
+    for (const el of document.querySelectorAll<HTMLElement>(sel)) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) continue;
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const on = (x: number, y: number) => {
+        const hit = document.elementFromPoint(x, y);
+        return !!hit && el.contains(hit);
+      };
+      const reach = (dx: number, dy: number) => {
+        let d = 0;
+        while (d < 40 && on(cx + dx * (d + 0.5), cy + dy * (d + 0.5))) d += 0.5;
+        return d;
+      };
+      out.push({
+        what: `${el.dataset['control']} ${el.getAttribute('aria-label') ?? ''}`,
+        w: reach(-1, 0) + reach(1, 0),
+        h: reach(0, -1) + reach(0, 1)
+      });
+    }
+    return out;
+  });
+  expect(spans.map((s) => s.what.split(' ')[0]).sort()).toEqual(
+    expect.arrayContaining(['device-link', 'open-city', 'open-city', 'wonders', 'wonders'])
+  );
+  for (const span of spans) {
+    expect.soft(span.h, `${span.what}: tap height`).toBeGreaterThanOrEqual(MIN_TAP - 1);
+    if (!span.what.startsWith('open-city')) {
+      expect.soft(span.w, `${span.what}: tap width`).toBeGreaterThanOrEqual(MIN_TAP - 1);
+    }
+  }
+  expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+});

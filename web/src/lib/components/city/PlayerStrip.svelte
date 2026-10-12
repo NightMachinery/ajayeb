@@ -24,6 +24,10 @@
   // `self` prop, else the room's SeatInfo.you from the page's game context,
   // never on a hot-seat device), and the device link button (SeatLink) sits
   // after the name where the room allows it.
+  //
+  // The name button draws 36 px tall to keep the strip short, but takes taps
+  // over 44 px: a transparent ::after reaches 4 px above and below it (the
+  // wonder button does the same).
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -149,7 +153,8 @@
     {#if onopen}
       <button
         type="button"
-        class="-ms-1 flex min-h-9 min-w-0 shrink items-center gap-1.5 rounded-control px-1 hover:bg-panel-sunken"
+        class="relative -ms-1 flex min-h-9 min-w-0 shrink items-center gap-1.5 rounded-control px-1
+          after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] hover:bg-panel-sunken"
         aria-label={openLabel}
         data-control="open-city"
         onclick={onopen}

@@ -108,7 +108,7 @@
 <style>
   .chip {
     display: inline-flex;
-    min-height: 2.25rem;
+    min-height: 2.75rem;
     align-items: center;
     gap: 0.35rem;
     border-radius: 999px;
