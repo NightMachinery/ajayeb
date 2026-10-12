@@ -135,7 +135,10 @@ describe('findHardcodedText (whole template)', () => {
  *  and the `{title}` shorthand, at the top level of an element's opening
  *  tag. Script and style blocks and comments are skipped, and so is
  *  anything inside an attribute's own braces (a tooltip's `{ title: ... }`
- *  object, for instance). Returns the 1-based line of each. */
+ *  object, for instance). A component's prop named title (`<HintsSummary
+ *  title={...}>`) is not a native attribute and is not flagged; the
+ *  component's own file is scanned like any other. Returns the 1-based line
+ *  of each. */
 function findTitleAttributes(src: string): { line: number; match: string }[] {
   const found: { line: number; match: string }[] = [];
   const blank = (m: string): string => m.replace(/[^\n]/g, ' ');
@@ -167,6 +170,9 @@ function findTitleAttributes(src: string): { line: number; match: string }[] {
   const tag = /<[a-zA-Z][\w:.-]*/g;
   for (let m = tag.exec(text); m; m = tag.exec(text)) {
     let k = m.index + m[0].length;
+    // A component (a capitalised or dotted tag name) takes props, not
+    // native attributes.
+    const component = /^<(?:[A-Z]|[\w-]+\.)/.test(m[0]);
     while (k < text.length) {
       const c = text.charAt(k);
       if (/[\s/]/.test(c)) {
@@ -177,11 +183,15 @@ function findTitleAttributes(src: string): { line: number; match: string }[] {
         // An attachment, a spread or the {name} shorthand.
         const end = skipValue(k);
         const inner = text.slice(k, end);
-        if (/^\{\s*title\s*\}$/.test(inner)) found.push({ line: lineAt(k), match: inner });
+        if (!component && /^\{\s*title\s*\}$/.test(inner)) {
+          found.push({ line: lineAt(k), match: inner });
+        }
         k = end;
       } else {
         const name = /^[^\s=>/]+/.exec(text.slice(k))?.[0] ?? c;
-        if (name.toLowerCase() === 'title') found.push({ line: lineAt(k), match: name });
+        if (!component && name.toLowerCase() === 'title') {
+          found.push({ line: lineAt(k), match: name });
+        }
         k += name.length;
         while (/\s/.test(text.charAt(k))) k++;
         if (text.charAt(k) === '=') {
@@ -204,7 +214,8 @@ describe('findTitleAttributes', () => {
     ["<span title={t('board.resource.chip')}>", 'an expression'],
     ['<iframe {title} src="/x"></iframe>', 'the shorthand'],
     ['<button\n  type="button"\n  title={label}\n>', 'on a line of its own'],
-    ['<div class="a" title="x" />', 'self-closing']
+    ['<div class="a" title="x" />', 'self-closing'],
+    ['<svelte:element this="span" title="x">', 'a dynamic element']
   ])('flags %s (%s)', (src) => {
     expect(findTitleAttributes(src)).toHaveLength(1);
   });
@@ -222,7 +233,10 @@ describe('findTitleAttributes', () => {
     ['<script>\n  const o = { title: 1 };\n  x.title = "a";\n</script>', 'script code'],
     ['<!-- a title="x" comment -->', 'a comment'],
     ['<h2 id={titleId} data-title="a">', 'other names containing title'],
-    ['<Sheet titleId="x" aria-label={t(\'a\')}>', 'a component prop named titleId']
+    ['<Sheet titleId="x" aria-label={t(\'a\')}>', 'a component prop named titleId'],
+    ["<HintsSummary hints={h} title={t('x')} />", 'a component prop named title'],
+    ['<Foo {title} />', 'the shorthand on a component'],
+    ['<ui.Card title="x">', 'a dotted component']
   ])('does not flag %s (%s)', (src) => {
     expect(findTitleAttributes(src)).toEqual([]);
   });
