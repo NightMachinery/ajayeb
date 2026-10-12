@@ -49,7 +49,12 @@
       </span>
     </span>
   </button>
-  <div class="contents" {@attach toBody}>
-    <GameHintsSheet bind:open />
+  <!-- The moved node is an inner one: Svelte removes this block's nodes by
+       walking siblings up to its last node, so that last node must stay in
+       the menu, or the walk would also remove every menu item after it. -->
+  <div class="contents">
+    <div class="contents" {@attach toBody}>
+      <GameHintsSheet bind:open />
+    </div>
   </div>
 {/if}
