@@ -8,7 +8,9 @@
   //
   // A leaf component with plain props. The visible box is 36 px tall to
   // keep the strip short; its hit area reaches 44 px through an invisible
-  // margin (the ::after layer).
+  // margin (the ::after layer). The margin is 6 px, since an absolute
+  // ::after starts inside the 1 px border: 34 + 2 x 6 = 46 px, of which the
+  // science pill just below takes back a pixel or two.
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
 
@@ -38,7 +40,7 @@
 <button
   type="button"
   class="wonder-button relative flex h-9 shrink-0 items-center gap-1 rounded-control border px-2 text-[13px] font-semibold
-    tabular-nums transition-colors after:absolute after:-inset-1 after:content-[''] short:px-1.5
+    tabular-nums transition-colors after:absolute after:-inset-1.5 after:content-[''] short:px-1.5
     {buildable
     ? 'border-accent bg-accent-soft text-accent-soft-fg ring-2 ring-accent/45'
     : 'border-rule-strong bg-panel text-fg hover:border-accent'} {className}"
