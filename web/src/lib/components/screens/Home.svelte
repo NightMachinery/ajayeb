@@ -15,6 +15,7 @@
   // 360 x 740 phone, and on a short landscape screen (where split applies
   // too, so short wins with !) it is no taller than the star it replaces,
   // so the tagline stays on screen.
+  import { resolve } from '$app/paths';
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId } from '$lib/art/lookup';
   import Bot from '@lucide/svelte/icons/bot';
@@ -255,6 +256,13 @@
       <p>{t('app.legal')}</p>
       <p class="mt-1">{t('app.foss')}</p>
       <p class="mt-1 flex flex-wrap items-center justify-center gap-x-5">
+        <a
+          class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"
+          href={resolve('/rules')}
+          data-control="home-rules"
+        >
+          {t('rules.homeLink')}
+        </a>
         <a
           class="inline-flex min-h-11 items-center font-semibold text-fg underline decoration-gild underline-offset-2"
           href={PUBLISHER_URL}

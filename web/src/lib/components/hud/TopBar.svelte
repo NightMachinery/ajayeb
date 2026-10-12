@@ -29,6 +29,8 @@
   import Eye from '@lucide/svelte/icons/eye';
   import Flag from '@lucide/svelte/icons/flag';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import BookOpen from '@lucide/svelte/icons/book-open';
+  import { openRules } from '../rules/rules-overlay.svelte';
 
   interface Props {
     /** 1 to 3, or 0 during the wonder draft. */
@@ -250,6 +252,15 @@
         </span>
       </button>
     {/if}
+    <button
+      type="button"
+      class={menuItem}
+      data-control="menu-rules"
+      onclick={() => choose(() => void openRules())}
+    >
+      <BookOpen class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+      {t('rules.menu')}
+    </button>
     {#if onForfeit}
       <button
         type="button"
