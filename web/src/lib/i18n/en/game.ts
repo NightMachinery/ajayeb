@@ -137,6 +137,12 @@ export const game = {
   'game.menu.log': 'Log',
   'game.menu.replay': 'Download replay',
   'game.menu.forfeit': 'Forfeit the game',
+  // The menu's undo item, and why it is greyed out when it is.
+  'game.menu.undo': 'Undo last move',
+  'game.menu.undoNothing': 'No move of yours to take back yet.',
+  'game.menu.undoOver': 'The game is over.',
+  'game.menu.undoWaiting': 'Waiting for the server…',
+  'game.menu.undoOffline': 'Waiting for connection.',
 
   // The forfeit's confirm step (ForfeitConfirm.svelte).
   'game.forfeit.title': 'Forfeit the game?',
@@ -145,9 +151,6 @@ export const game = {
   'game.forfeit.final': 'A forfeit ends the game for good: it cannot be undone.',
   'game.forfeit.confirm': 'Forfeit',
   'game.forfeit.cancel': 'Keep playing',
-
-  // Toasts after a move in a local room.
-  'game.toast.undo': 'Undo',
 
   // The settings sheet inside a game.
   'game.settings.title': 'Settings',

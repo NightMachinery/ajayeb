@@ -46,9 +46,15 @@
   // every move takes the confirm step the settings ask for.
   //
   // A wonder's extra turn reads "Play again" in the turn bar for the whole
-  // turn (playAgainFrom over the events seen), and a choice the server
-  // skipped (nothing to destroy, an empty discard pile) is explained in the
-  // move toast.
+  // turn (playAgainFrom over the events seen). A player's own move gets no
+  // toast (they just made it); the one exception is a choice the server
+  // skipped (nothing to destroy, an empty discard pile), which the player
+  // could not foresee, so a toast explains it.
+  //
+  // Undo (hot-seat and bot games created with undo allowed, a setting the
+  // server fixes for the game's life: room.allowUndo) is the game menu's
+  // "Undo last move", the top bar's arrow, U or Ctrl+Z, and the pass-device
+  // screen's "Undo X's move". A game without undo shows none of them.
   import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
   import ArtPrefetch from '$lib/art/ArtPrefetch.svelte';
@@ -99,7 +105,6 @@
     passPending,
     pendingSlot,
     pickableSlots,
-    toastLines,
     wonderStatus
   } from './card-actions';
   import { botSeat, seatNames } from './names';
@@ -161,9 +166,25 @@
     frame ? inviteUrl(location.origin, resolve('/play/[code]', { code: frame.code })) : ''
   );
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
-  // Undo stays available while a bot's answer is held on screen: undo()
-  // shows it at once and then takes it back with the player's move.
-  const canUndo = $derived(mode !== 'online' && session.canUndo);
+  // Whether the game has undo at all (fixed when it was created), and
+  // whether it can be sent now. Undo stays available while a bot's answer
+  // is held on screen: undo() shows it at once and then takes it back with
+  // the player's move.
+  const undoAllowed = $derived(mode !== 'online' && !!frame?.room.allowUndo);
+  const canUndo = $derived(undoAllowed && session.canUndo);
+  // Why the menu's undo is greyed out, read from the frame and the
+  // connection only (the server's canUndo is the rule).
+  const undoReason = $derived(
+    canUndo
+      ? undefined
+      : session.conn !== 'open'
+        ? t('game.menu.undoOffline')
+        : session.pending
+          ? t('game.menu.undoWaiting')
+          : gameEnded(view?.phase)
+            ? t('game.menu.undoOver')
+            : t('game.menu.undoNothing')
+  );
   // The seat a forfeit would give up now (the Session says when it can be
   // sent: a seated player while the game runs, the player to move in a
   // hot-seat game), and the seat that would win.
@@ -276,7 +297,7 @@
   );
 
   // The Session's frames, in order: the log, undo bookkeeping, the hot-seat
-  // device holder and the "Built ... · Undo" toast. Runs outside any effect.
+  // device holder and the skipped-choice toast. Runs outside any effect.
   function onFrame(f: State): void {
     if (f.code !== roomCode) {
       roomCode = f.code;
@@ -292,9 +313,8 @@
     if (f.ack && f.ack.clientId === session.clientId && lastRequest?.seq === f.ack.seq) {
       acked = lastRequest.kind;
     }
-    // An undo toast speaks of the latest move only: a newer move or an undo
-    // replaces it. In a bot room the bot's reply keeps it, since Undo there
-    // takes back the player's move together with the reply.
+    // A skipped-choice toast speaks of the latest move only: a newer move
+    // or an undo replaces it. In a bot room the bot's reply keeps it.
     if (acked !== null || f.room.mode === 'hotseat') toasts.clear();
     const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
     const holderBefore = ui.holder;
@@ -305,23 +325,16 @@
         passOn &&
         f.view.toMove !== undefined &&
         f.view.toMove !== holderBefore;
-      // The move's line, and why a choice it should have opened was skipped
+      // No toast echoes the player's own move. Only a choice the move
+      // should have opened but the server skipped gets one, saying why
       // (UX design: "the server skips it and a toast explains why"). The
       // pass-device screen shows the same lines in its summary instead.
-      const lines = toastLines(f.events, seatNames(f.room));
-      const skipped = f.events.some((e) => e.kind === 'effectSkipped');
-      if (lines.length > 0 && !passNext) {
-        if (f.room.mode !== 'online' && f.canUndo) {
-          toasts.show(lines.join(' '), {
-            kind: 'success',
-            actionLabel: t('game.toast.undo'),
-            onAction: undo,
-            duration: skipped ? 8000 : undefined
-          });
-        } else if (skipped) {
-          // Online moves have no undo toast, but a skip still needs saying.
-          toasts.show(lines.join(' '), { kind: 'info', duration: 8000 });
-        }
+      const skippedLines = eventLines(
+        f.events.filter((e) => e.kind === 'effectSkipped'),
+        seatNames(f.room)
+      );
+      if (skippedLines.length > 0 && !passNext) {
+        toasts.show(skippedLines.join(' '), { kind: 'info', duration: 8000 });
       }
     }
   }
@@ -478,8 +491,25 @@
     pick?.wonder !== undefined ? `[data-wonder-offer="${CSS.escape(pick.wonder)}"]` : undefined
   );
 
+  /** Whether a key press belongs to a text field rather than the board. */
+  function typing(target: EventTarget | null): boolean {
+    return (
+      target instanceof HTMLElement &&
+      (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+    );
+  }
+
   function onKey(event: KeyboardEvent): void {
     if (event.key === 'Escape' && ui.pickFor && ui.sheet === null) ui.cancelWonderPick();
+    // U or Ctrl+Z (Cmd+Z on a Mac): undo, in a game that has it.
+    if (event.defaultPrevented || event.repeat || event.altKey || typing(event.target)) return;
+    const key = event.key.toLowerCase();
+    const plainU = key === 'u' && !event.ctrlKey && !event.metaKey && !event.shiftKey;
+    const ctrlZ = key === 'z' && (event.ctrlKey || event.metaKey) && !event.shiftKey;
+    if ((plainU || ctrlZ) && undoAllowed) {
+      event.preventDefault();
+      if (canUndo) undo();
+    }
   }
 </script>
 
@@ -557,7 +587,8 @@
         age={view?.age ?? 0}
         {cardsLeft}
         {canUndo}
-        onUndo={mode === 'online' ? undefined : undo}
+        onUndo={undoAllowed ? undo : undefined}
+        {undoReason}
         onOpenLog={() => ui.openLog()}
         onOpenSettings={() => ui.openSettings()}
         onHome={onhome}
@@ -791,7 +822,7 @@
       {canUndo}
       previousName={ui.holder !== null ? names[ui.holder] : undefined}
       onReady={() => ui.ready(view?.toMove)}
-      onUndo={undo}
+      onUndo={undoAllowed ? undo : undefined}
     />
   </div>
 {/if}

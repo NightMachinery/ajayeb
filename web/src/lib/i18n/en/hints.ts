@@ -60,6 +60,11 @@ export const hints = {
   // The game menu item and its sheet (HintsMenuItem.svelte, GameHintsSheet.svelte).
   'hints.menu': 'Hints',
   'hints.sheet.title': 'Hints in this game',
+  // The game's undo setting, read-only under the hints (hot-seat and bot games).
+  'hints.sheet.undoTitle': 'Undo',
+  'hints.sheet.undoOn': 'Undo is allowed in this game.',
+  'hints.sheet.undoOff': 'Undo is off in this game.',
+  'hints.sheet.undoFixed': 'Set when the game was created; it cannot be changed.',
 
   // A change in the game log (lib/hints/log.ts). {families} is a list of
   // family names; {changes} joins the "on" and "off" parts.

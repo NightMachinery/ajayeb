@@ -5,11 +5,13 @@
   // caller passes the age, the count and whether undo is available right
   // now (view.canUndo) and gets a click back for each button.
   //
-  // The game menu (every mode) holds Home, Settings and the log, Forfeit
-  // while the caller says a forfeit is possible (it opens a confirm step;
-  // nothing is sent from here), and once the game has ended the replay
-  // download. It is a native popover: light dismiss, Escape and the top
-  // layer come with it.
+  // The game menu (every mode) holds Home, Settings and the log, "Undo last
+  // move" in a game that allows undo (greyed out, with the caller's reason,
+  // while undo is not possible now), Forfeit while the caller says a
+  // forfeit is possible (it opens a confirm step; nothing is sent from
+  // here), and once the game has ended the replay download. It is a native
+  // popover: light dismiss, Escape and the top layer come with it. The
+  // undo arrow in the bar itself does the same as the menu item.
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import HintsMenuItem from '../hints/HintsMenuItem.svelte';
@@ -27,7 +29,10 @@
     age: number;
     cardsLeft: number;
     canUndo?: boolean;
+    /** Undo, in the bar and in the menu; absent in a game without undo. */
     onUndo?: () => void;
+    /** Why undo is greyed out now (shown under the menu item while !canUndo). */
+    undoReason?: string;
     onOpenLog?: () => void;
     onOpenSettings?: () => void;
     /** Leaves the room for Home; when given, the game menu shows. */
@@ -52,6 +57,7 @@
     cardsLeft,
     canUndo = false,
     onUndo,
+    undoReason,
     onOpenLog,
     onOpenSettings,
     onHome,
@@ -204,6 +210,23 @@
       >
         <ScrollText class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
         {t('game.menu.log')}
+      </button>
+    {/if}
+    {#if onUndo}
+      <button
+        type="button"
+        class="{menuItem} disabled:cursor-not-allowed disabled:text-fg-muted disabled:hover:bg-transparent"
+        data-control="menu-undo"
+        disabled={!canUndo}
+        onclick={() => choose(onUndo)}
+      >
+        <Undo2 class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+        <span class="flex min-w-0 flex-col py-1.5">
+          <span>{t('game.menu.undo')}</span>
+          {#if !canUndo && undoReason}
+            <span class="text-xs font-normal text-fg-muted" data-undo-reason>{undoReason}</span>
+          {/if}
+        </span>
       </button>
     {/if}
     {#if onForfeit}
