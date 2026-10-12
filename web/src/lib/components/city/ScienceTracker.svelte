@@ -158,11 +158,15 @@
   </span>
 {:else}
   <div
-    class="science-tracker flex flex-wrap items-center {compact ? 'gap-1' : 'gap-2'} {className}"
+    class="science-tracker flex flex-wrap items-center {compact
+      ? 'gap-1'
+      : 'gap-2 lg:gap-1.5'} {className}"
     role="group"
     aria-label={label}
   >
-    <ul class="flex {compact ? 'gap-0.5' : 'gap-1'}">
+    <!-- At lg the desktop side panel is narrow: tighter gaps keep the
+         counter on the slots' line. -->
+    <ul class="flex {compact ? 'gap-0.5' : 'gap-1 lg:gap-0.5'}">
       {#each SYMBOLS as symbol (symbol)}
         {@const count = countOf(symbol)}
         {@const state = sh?.slots[symbol]?.state}
