@@ -72,6 +72,18 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
 const TAKE_KINDS: ReadonlySet<string> = new Set(['build', 'discard', 'wonder', 'draft']);
 
 /**
+ * The frame the sound cues of `next` are measured against: `prev`, or null
+ * (no cues) when `next` carries a history. Only a join, a resync and the
+ * frames after an undo carry one (docs/protocol.md, the state frame's
+ * `history`): they replay the game rather than report something that just
+ * happened, so a newer version arriving that way never plays a move's cues
+ * again, as the client must not animate or toast such a frame either.
+ */
+export function cuePrev(prev: State | null, next: State): State | null {
+  return next.history ? null : prev;
+}
+
+/**
  * Whether `next` is a bot's answer to the thinking frame `prev`: the same
  * room, a bot was thinking on screen, and something happened since.
  */
@@ -236,7 +248,7 @@ export class Presenter {
           this.#thinkingSince = this.#now();
         }
         await this.#afterSwap();
-        playFrameFx(next, prev);
+        playFrameFx(next, cuePrev(prev, next));
         if (this.hooks.play) {
           try {
             await this.hooks.play(next, prev, captured);

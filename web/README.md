@@ -120,7 +120,7 @@ Any component can open the overlay at a section with `openRules('military')` fro
 
 ## Sound and haptics
 
-`src/lib/fx/` plays short cues when a frame's events arrive. There are no audio files: `sfx.ts` synthesizes seven cues with WebAudio (card slide, coin clink, flip, war drum, science chime, fanfare, draft tick). `cues.ts` is the pure, unit-tested mapper from a frame's events to cues and a vibration pattern. The Presenter calls `playFrameFx` once per shown frame.
+`src/lib/fx/` plays short cues when a frame's events arrive. There are no audio files: `sfx.ts` synthesizes seven cues with WebAudio (card slide, coin clink, flip, war drum, science chime, fanfare, draft tick). `cues.ts` is the pure, unit-tested mapper from a frame's events to cues and a vibration pattern. The Presenter calls `playFrameFx` once per shown frame. A frame that carries a `history` (a join, a resync, the frames after an undo) plays nothing, so a move already heard is never heard again (`cuePrev`).
 
 - Only live events play. The first snapshot of a room, another room's frame, and a frame whose version does not move forward (an undo, a resync) are silent.
 - Each cue kind plays at most once per frame, 90 ms apart, in the order of its first event. `play(cue, { delayMs })` takes a delay, so animations can retime cues later.

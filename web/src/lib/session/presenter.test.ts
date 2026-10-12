@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GameEvent, State } from '$lib/wire';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
-import { isBotAnswer, isBotTake, Presenter, type FrameSource } from './presenter.svelte';
+import { planCues } from '$lib/fx/cues';
+import { cuePrev, isBotAnswer, isBotTake, Presenter, type FrameSource } from './presenter.svelte';
 import type { Unsubscribe } from './transport';
 
 function frame(version: number, thinking?: 0 | 1): State {
@@ -374,5 +375,22 @@ describe('isBotAnswer and isBotTake', () => {
     const other = botMove(2, 'build');
     other.code = 'OTHER1';
     expect(isBotAnswer(frame(1, 1), other)).toBe(false);
+  });
+});
+
+describe('cuePrev', () => {
+  it('a live frame plays its cues against the frame before it', () => {
+    const prev = frame(1);
+    const next = botMove(2, 'build');
+    expect(cuePrev(prev, next)).toBe(prev);
+    expect(planCues(next, cuePrev(prev, next)).cues.length).toBeGreaterThan(0);
+  });
+
+  it('a resync frame with a newer version replays no cue of a move already heard', () => {
+    const heard = botMove(2, 'build');
+    const resync = botMove(3, 'build');
+    resync.history = [{ ply: 1, seat: 1, events: heard.events }];
+    expect(cuePrev(heard, resync)).toBeNull();
+    expect(planCues(resync, cuePrev(heard, resync))).toEqual({ cues: [], haptic: null });
   });
 });
