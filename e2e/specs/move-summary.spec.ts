@@ -56,11 +56,16 @@ async function lastMover(page: Page): Promise<number | null> {
   });
 }
 
-/** Taps (on touch) or clicks a locator. */
-async function press(page: Page, isMobile: boolean, selector: string): Promise<void> {
+/** Taps (on touch) or clicks a locator; `force` presses even a covered, inert card. */
+async function press(
+  page: Page,
+  isMobile: boolean,
+  selector: string,
+  force = false
+): Promise<void> {
   const target = page.locator(selector).filter({ visible: true }).first();
-  if (isMobile) await target.tap();
-  else await target.click();
+  if (isMobile) await target.tap({ force });
+  else await target.click({ force });
 }
 
 /** Plays this client's moves until the bot has just moved in play; returns the turn then. */
@@ -88,7 +93,7 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     await page.goto('/');
     await page.getByRole('button', { name: /Play vs AI/ }).click();
     const sheet = page.locator('dialog[open]');
-    await sheet.getByText('easy', { exact: true }).click();
+    await sheet.getByText('Apprentice', { exact: true }).click();
     await sheet.getByText('Sun', { exact: true }).click();
     await sheet.getByRole('button', { name: 'Start game' }).click();
     await page.waitForURL(/\/play\/[A-Z0-9]+$/);
@@ -200,7 +205,7 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
 
     // Any tap closes it without acting.
     const version = (await driver.snapshot()).version;
-    await press(page, isMobile, '.card-structure [data-card]');
+    await press(page, isMobile, '.card-structure [data-card]', true);
     await expect(page.locator(POPUP)).toHaveCount(0);
     await expect(page.locator('dialog[open]')).toHaveCount(0);
     expect((await driver.snapshot()).version).toBe(version);
