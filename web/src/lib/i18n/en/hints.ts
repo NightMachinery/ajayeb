@@ -177,6 +177,107 @@ export const hints = {
   'hints.discard.empty': 'Nothing in the pile would do anything special.',
   'hints.cardWith': '{card}: {hint}',
 
+  // The decider's hints (lib/view/outcome.ts, M10.HS3): the outcome line
+  // under each move, the confirm step's warning, the card sheet's "After
+  // this pick" panel and the starter choice. {delta} is a signed number
+  // ("+3"), {card} and {list} are names, {age} a number.
+  'hints.outcome.label': 'What this move does',
+  'hints.outcome.separator': '; ',
+  'hints.outcome.win': 'Wins the game ({kind}).',
+  'hints.outcome.winLaw': 'Wins: it completes a pair, and Law is the sixth symbol.',
+  'hints.outcome.winVia': 'Wins with the follow-up: {card}.',
+  'hints.outcome.winTwoStep': 'Wins in the extra turn, with {card}.',
+  'hints.outcome.endYou': 'Ends the game: you win on points, {a} to {b}.',
+  'hints.outcome.endNamed': 'Ends the game: {name} wins on points, {a} to {b}.',
+  'hints.outcome.endBlueYou': 'Ends the game: {a} points each, and you win on blue points.',
+  'hints.outcome.endBlueNamed': 'Ends the game: {a} points each, and {name} wins on blue points.',
+  'hints.outcome.endShared': 'Ends the game in a shared victory, {a} points each.',
+  'hints.outcome.vp': '{delta} VP',
+  'hints.outcome.vpNamed': '{name}: {delta} VP',
+  'hints.outcome.pawn': {
+    one: 'Pawn {count} space toward {name}’s capital',
+    other: 'Pawn {count} spaces toward {name}’s capital'
+  },
+  'hints.outcome.pawnYou': {
+    one: 'Pawn {count} space toward your capital',
+    other: 'Pawn {count} spaces toward your capital'
+  },
+  'hints.outcome.loot': {
+    one: '{name} loses {count} coin to looting',
+    other: '{name} loses {count} coins to looting'
+  },
+  'hints.outcome.lootYou': {
+    one: 'You lose {count} coin to looting',
+    other: 'You lose {count} coins to looting'
+  },
+  'hints.outcome.coins': {
+    one: '{count} coin after ({delta})',
+    other: '{count} coins after ({delta})'
+  },
+  'hints.outcome.coinsNamed': {
+    one: '{name}: {count} coin after ({delta})',
+    other: '{name}: {count} coins after ({delta})'
+  },
+  'hints.outcome.distinct': {
+    one: '{count} different science symbol',
+    other: '{count} different science symbols'
+  },
+  'hints.outcome.playAgain': 'Play again',
+  'hints.outcome.playAgainTheology': 'Play again (Theology)',
+  'hints.outcome.extraLost': 'The age ends: no extra turn',
+  'hints.outcome.starterYou': 'You choose who starts Age {age}',
+  'hints.outcome.starterNamed': '{name} chooses who starts Age {age}',
+  'hints.outcome.opens.chooseStarter': 'Then choose who starts',
+  'hints.outcome.opens.destroyCard': 'Then pick a card to destroy',
+  'hints.outcome.opens.buildFromDiscard': 'Then rebuild a discarded card',
+  'hints.outcome.opens.pickBoardToken': 'Then pick a progress token',
+  'hints.outcome.opens.pickLibraryToken': 'Then pick from three tokens',
+  'hints.outcome.shortWin': {
+    one: 'Short {count} coin of a win ({kind}).',
+    other: 'Short {count} coins of a win ({kind}).'
+  },
+
+  'hints.blunder.gives': 'This hands {name} a win: {list}.',
+  'hints.blunder.missedYou': 'You could win this turn instead: {list}.',
+  'hints.blunder.missedNamed': '{name} could win this turn instead: {list}.',
+
+  'hints.after.title': 'After this pick',
+  'hints.after.freesNothing': 'Uncovers no card.',
+  'hints.after.frees': {
+    one: 'Uncovers {list}.',
+    other: 'Uncovers {count} cards: {list}.'
+  },
+  'hints.after.faceDown': {
+    one: '{count} face-down card',
+    other: '{count} face-down cards'
+  },
+  'hints.after.reveal': {
+    one: 'The card turned over is {name}’s to take first.',
+    other: 'The cards turned over are {name}’s to take first.'
+  },
+  'hints.after.revealWonder': 'With the extra turn, you see the turned card first.',
+  'hints.after.giftWin': '{card} would then win the game for {name}.',
+  'hints.after.giftPair': '{card} would then give {name} a science pair.',
+  'hints.after.giftChain': '{card} would then be free for {name} by chain.',
+  'hints.after.giftPays': {
+    one: '{card} would then cost {name} {count} coin.',
+    other: '{card} would then cost {name} {count} coins.'
+  },
+  'hints.after.gives': '{name} could then win with {list}.',
+  'hints.after.blocks': 'Takes away {name}’s win with {list}.',
+  'hints.after.threatensYou': 'Next turn you could win with {list}, unless {name} stops it.',
+  'hints.after.threatensNamed':
+    'Next turn {mover} could win with {list}, unless {name} stops it.',
+  'hints.after.risk': {
+    one: 'A {num} in {den} chance the card turned over lets {name} win.',
+    other: 'A {num} in {den} chance a card turned over lets {name} win.'
+  },
+  'hints.after.byMove': '{move}: {line}',
+
+  'hints.starter.threatYou': 'If you start, you can win at once with {list}.',
+  'hints.starter.threatNamed': 'If {name} starts, they can win at once with {list}.',
+  'hints.starter.opening': 'The age opens with {list}.',
+
   // The badge modifiers (card/AffordBadge.svelte).
   'hints.badge.bonus': '+{count}',
   'hints.badge.urbanismTip': {
