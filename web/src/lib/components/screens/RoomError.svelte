@@ -2,10 +2,12 @@
   // A room that could not be opened: the server's error or reject code
   // (room-not-found, room-full, forbidden, busy, rate), mapped to a friendly
   // message, with what the player can do next and a way Home. A leaf: the
-  // caller passes the code and the room it tried.
+  // caller passes the code and the room it tried. A join is forbidden only
+  // for a pass-and-play or bot game that another browser started (its user
+  // token), so that message says so and points at the game's device link.
   import House from '@lucide/svelte/icons/house';
   import { t } from '$lib/i18n';
-  import { errorMessage, rejectMessage } from '$lib/session/messages';
+  import { errorMessage, rejectMessage, type NoticeKey } from '$lib/session/messages';
   import Button from '../shell/Button.svelte';
 
   interface Props {
@@ -18,9 +20,19 @@
 
   let { error, code, onhome }: Props = $props();
 
-  const message = $derived(error === 'rate' ? rejectMessage(error) : errorMessage(error));
+  const message: NoticeKey | 'online.error.forbidden' = $derived(
+    error === 'rate'
+      ? rejectMessage(error)
+      : error === 'forbidden'
+        ? 'online.error.forbidden'
+        : errorMessage(error)
+  );
   const hint = $derived(
-    error === 'room-not-found' ? t('online.error.notFoundHint') : t('online.error.retryHint')
+    error === 'room-not-found'
+      ? t('online.error.notFoundHint')
+      : error === 'forbidden'
+        ? t('online.error.forbiddenHint')
+        : t('online.error.retryHint')
   );
 </script>
 

@@ -84,6 +84,10 @@ export const online = {
   'online.error.notFoundHint':
     'Check the code or the link. A game also closes some time after it ends.',
   'online.error.retryHint': 'Try again in a moment, or start a game of your own.',
+  // A pass-and-play or bot game opens only in the browser that started it.
+  'online.error.forbidden': 'This game belongs to another browser or device.',
+  'online.error.forbiddenHint':
+    'A pass-and-play or bot game opens only in the browser that started it. To play it here, open it there and copy its device link with the link button beside your name.',
   'online.error.home': 'Home',
 
   // Who is who (components/identity, lib/view/display-name): a name that
