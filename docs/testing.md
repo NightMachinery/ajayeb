@@ -263,8 +263,9 @@ With the dev routes on (they are on in the test-mode build from `make build-web-
   the fonts have loaded, for screenshots.
 
 A token written into `localStorage` for a tool (`ajayeb:token`) must have
-the real shape, 22 base64url characters; the client replaces any other
-value with a fresh token.
+the real shape, the base64url form of 16 bytes: 22 characters whose last
+is `A`, `Q`, `g` or `w`. The client replaces any other value with a fresh
+token, and `tools/chrome/shot.mjs --token` refuses one.
 
 ## End-to-end specs (Playwright)
 

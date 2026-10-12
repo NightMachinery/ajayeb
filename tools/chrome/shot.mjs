@@ -2,14 +2,15 @@
 // Screenshot and DOM probe for one page of the running app, over CDP.
 //
 //   python3 tools/heavy.py run --kind browser -- node tools/chrome/shot.mjs \
-//     --url /play/ABCD --token ajayebShotTokenA000001 --name Ana --vp 390x844@3 --theme dark \
+//     --url /play/ABCD --token ajayebShotTokenA00000A --name Ana --vp 390x844@3 --theme dark \
 //     --probe --out x.png
 //
 // Flags (`--flag value` or `--flag=value`):
 //   --origin URL     app origin (default $AJAYEB_ORIGIN or http://127.0.0.1:38951)
 //   --url PATH       page to open, relative to --origin (default /); a full URL also works
 //   --token T        written to localStorage ajayeb:token before the page loads; it
-//                    must be 22 base64url characters, or the app replaces it
+//                    must be 22 base64url characters ending in A, Q, g or w, or
+//                    the app replaces it (so the script refuses any other value)
 //   --name N         written to localStorage ajayeb:name
 //   --theme T        light | dark | system, written to localStorage ajayeb:theme
 //   --storage JSON   a JSON object of localStorage keys to write before the page
@@ -44,9 +45,11 @@
 // Identity works as in the app: the token, name and theme (and any
 // --storage keys) go into localStorage on the page's origin before any of
 // its scripts run, so the app starts as that player with those settings.
-// The token must have the real shape (22 characters of A-Z, a-z, 0-9, -
-// and _): the client replaces any other stored value with a fresh token,
-// so the page would open as a stranger.
+// The token must have the real shape, the base64url form of 16 bytes: 22
+// characters of A-Z, a-z, 0-9, - and _, the last of which only carries two
+// bits and so is A, Q, g or w (web/src/lib/session/identity.ts
+// isValidToken). The client replaces any other stored value with a fresh
+// token, and the page would open as a stranger, so --token refuses it.
 // Each run uses a fresh browser context, so nothing carries over between
 // runs.
 
@@ -58,6 +61,9 @@ import { isMain, launch, printHeader, reportAndExit } from './launch.mjs';
 
 const PRESETS = { mobile: '390x844@2', desktop: '1280x800@1' };
 const THEMES = ['light', 'dark', 'system'];
+
+/** The token shape the client keeps (identity.ts isValidToken). */
+export const TOKEN_RE = /^[A-Za-z0-9_-]{21}[AQgw]$/;
 /** --vision values: greyscale is a CSS filter, the rest Chrome's emulation. */
 const VISIONS = ['greyscale', 'deuteranopia', 'protanopia', 'tritanopia'];
 
@@ -314,6 +320,10 @@ async function main() {
   const pad = Number(o.pad);
   if (!Number.isFinite(pad) || pad < 0)
     throw new Error(`--pad: expected a number >= 0, got ${o.pad}`);
+  if (o.token !== undefined && !TOKEN_RE.test(o.token))
+    throw new Error(
+      `--token: expected 22 base64url characters ending in A, Q, g or w (the client replaces anything else), got ${o.token}`
+    );
   if (o.theme && !THEMES.includes(o.theme)) throw new Error(`--theme: one of ${THEMES.join(', ')}`);
   if (o.scheme && !['light', 'dark'].includes(o.scheme)) throw new Error('--scheme: light or dark');
   if (!['reduce', 'no-preference'].includes(o.motion))
