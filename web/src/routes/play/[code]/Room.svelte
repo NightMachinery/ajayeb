@@ -34,12 +34,14 @@
   // Joins the page's room now (Room may mount after the navigation, once
   // the name prompt is answered) and after every navigation within this
   // page, such as /play/A to /play/B for a rematch; joining B leaves A on
-  // the server.
+  // the server. A device link opened over this page changes only the
+  // fragment, which is no navigation to SvelteKit, so hashchange joins too.
+  // The claim is read from location, which is current in both cases.
   let joined: string | null = null;
   function joinPageRoom(): void {
     const code = page.params.code;
     if (!code) return;
-    const claim = parseClaimFragment(page.url.hash) ?? savedRooms().claimFor(normalizeCode(code));
+    const claim = parseClaimFragment(location.hash) ?? savedRooms().claimFor(normalizeCode(code));
     const key = `${code}#${claim ?? ''}`;
     if (key === joined) return;
     joined = key;
@@ -83,11 +85,17 @@
   });
 
   // This device reset its own link: the address bar takes the new claim,
-  // so a reload still plays the seat. URL only; it writes no state.
+  // so a reload still plays the seat. Only a change of the session's claim
+  // away from the one the address showed counts: a new fragment typed or
+  // opened over the old one (joinPageRoom joins with it) must win, not be
+  // put back. URL only; `synced` is a plain variable, not state.
+  let synced: string | null = null;
   $effect(() => {
     const claim = session.claim;
     const shown = parseClaimFragment(page.url.hash);
-    if (!claim || !shown || shown === claim) return;
+    const before = synced;
+    synced = claim;
+    if (!claim || !shown || shown === claim || before !== shown) return;
     const path = resolve('/play/[code]', { code: page.params.code ?? '' });
     // The same page, with only the fragment (the claim) replaced.
     // eslint-disable-next-line svelte/no-navigation-without-resolve
@@ -98,6 +106,8 @@
     void goto(resolve('/'));
   }
 </script>
+
+<svelte:window onhashchange={joinPageRoom} />
 
 <svelte:head>
   <title>{t('game.title', { code: session.code ?? '' })} · {t('app.name')}</title>
