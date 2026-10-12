@@ -38,10 +38,105 @@ type HintSettings struct {
 // does a view built without settings (engine.ViewFor, used by the
 // simulator, tests and replays).
 //
-// It is empty for now: the hints slices after M10.HS1 add its fields, each
-// zero or empty while its family is off. A client reads the room's
-// settings (RoomInfo.hints) to know which fields are meaningful.
-type HintsView struct{}
+// Its fields are zero or empty while their family is off. A client reads
+// the room's settings (RoomInfo.hints) to know which fields are
+// meaningful.
+type HintsView struct {
+	// Discard is what rebuilding each discarded card would do, for each
+	// seat whose Mausoleum is open, and for the seat choosing a card to
+	// rebuild while it does (the wonders family): one entry per card and
+	// seat that has something to say (a pip, an effect or a price it
+	// moves), by seat, then in ascending card order.
+	Discard []DiscardHintView `json:"discard"`
+}
+
+// CardHints is what building one face-up card would do for one seat now,
+// as the cities stand: SlotView.hints holds one per seat, for every face-up
+// card, covered or not (as if it were accessible), while the game runs and
+// any per-card family is on. The numbers are those of now; the opponent's
+// next move can change them.
+type CardHints struct {
+	Codes        []HintCode    `json:"codes"`                  // the board pips this card earns for this seat, in a fixed order (win, pair, loot); the client ranks them
+	Effect       *EffectView   `json:"effect,omitempty"`       // the immediate result of building it, when one of its parts is on and says something
+	PriceShift   []PriceShift  `json:"priceShift"`             // economy: the trade prices building it would change, for either seat
+	SavesInView  *int          `json:"savesInView,omitempty"`  // economy, producer cards only (brown, grey, flexible producers, fixed prices): the coins it would save this seat on the other face-up cards and its open wonders, summed
+	LastProducer *LastProducer `json:"lastProducer,omitempty"` // counting, brown and grey cards only, when no other producer of its resource is in view
+}
+
+// EffectView is the immediate result of building a card for one seat:
+// payment (when the seat can pay), the building's coins, shields and
+// looting, and science, before any choice it opens. To keep the view small
+// it is sent only when one of its parts says something: a green card's
+// science, a red card's pawn move, a win, or the worth of a yellow card or
+// a guild (coins and scoreDelta are sent for those only).
+type EffectView struct {
+	Paid          bool           `json:"paid"`               // the seat can afford it now, and the preview paid the cheapest payment; otherwise it paid nothing
+	Coins         int            `json:"coins"`              // scoring: coins the building gives on construction (Urbanism's chain bonus included), the payment not counted
+	ScoreDelta    int            `json:"scoreDelta"`         // scoring: change of this seat's score preview
+	OppScoreDelta int            `json:"oppScoreDelta"`      // scoring: change of the other seat's score preview (looting, the pawn)
+	Science       *ScienceEffect `json:"science,omitempty"`  // science: a green card's symbol
+	Military      *PawnMoveView  `json:"military,omitempty"` // military: the pawn move, when the card has shields
+	Wins          *WinView       `json:"wins,omitempty"`     // threats: building it wins, at once or through the board token its pair lets the seat take
+}
+
+// ScienceEffect is what a green card does to its builder's symbols.
+type ScienceEffect struct {
+	Symbol        ScienceSymbol     `json:"symbol"`
+	Kind          ScienceEffectKind `json:"kind"`
+	DistinctAfter int               `json:"distinctAfter"` // the builder's different symbols afterwards
+	TokenOnBoard  bool              `json:"tokenOnBoard"`  // a pair opens the board token choice (the board still has a token)
+}
+
+// PawnMoveView is how an action moves the conflict pawn, and the looting
+// tokens it takes.
+type PawnMoveView struct {
+	From int         `json:"from"`
+	To   int         `json:"to"`
+	Loot []LootTaken `json:"loot"` // in the order the pawn reaches them
+}
+
+// LootTaken is one looting token a pawn move takes.
+type LootTaken struct {
+	At   int `json:"at"`   // its space: -6, -3, 3 or 6
+	Lost int `json:"lost"` // coins the victim actually loses (no more than it has)
+}
+
+// WinView is a win an action would bring its mover.
+type WinView struct {
+	Kind  VictoryKind `json:"kind"`
+	Steps int         `json:"steps"`         // 1 for a win this turn; 2 through the mover's own extra turn
+	Via   *string     `json:"via,omitempty"` // the follow-up action key that wins, such as "token:law"; absent for a win at once
+}
+
+// PriceShift is one trade price that changes: seat's price of one unit of
+// resource.
+type PriceShift struct {
+	Seat     int      `json:"seat"` // whose price changes
+	Resource Resource `json:"resource"`
+	From     int      `json:"from"`
+	To       int      `json:"to"`
+}
+
+// DiscardHintView is what rebuilding one discarded card with the Mausoleum
+// would do for one seat (the Mausoleum's owner).
+type DiscardHintView struct {
+	Card      string    `json:"card"`
+	Seat      int       `json:"seat"`      // the seat it is computed for
+	Hints     CardHints `json:"hints"`     // as for a face-up card; the rebuild is free, so effect.paid is false
+	Total     int       `json:"total"`     // what the seat would pay to build it now, for "worth N coins to you"
+	ChainFree bool      `json:"chainFree"` // the seat would build it free by chain anyway
+}
+
+// PendingCardHint is what destroying one of the candidates of a destroy
+// choice (the Statue of Zeus, Circus Maximus) would do (the economy
+// family). PendingView.cardHints lists one per candidate, in both seats'
+// views, since the cities are public.
+type PendingCardHint struct {
+	Card        string       `json:"card"`
+	PriceShift  []PriceShift `json:"priceShift"`  // the trade prices the loss would change (the destroyer's fall)
+	SavesInView int          `json:"savesInView"` // coins the loss would save the destroyer on the face-up cards and its open wonders
+	OnlySource  bool         `json:"onlySource"`  // the card is the victim's only fixed producer of a resource it makes
+}
 
 // The hint vocabularies below are the engine's own names (engine
 // PublicPlace, ExtraTurnState, ExtraTurnSource and ScienceEffectKind); a
@@ -90,4 +185,24 @@ type ScienceEffectKind string
 const (
 	ScienceEffectKindNew  ScienceEffectKind = "new"  // a symbol the seat did not have
 	ScienceEffectKindPair ScienceEffectKind = "pair" // the second card of a symbol
+)
+
+// HintCode is a board pip: a fact about building one card, for one seat.
+type HintCode string
+
+// The hint codes.
+const (
+	HintCodeWin  HintCode = "win"  // building it wins at once, or through the board token its pair lets the seat take
+	HintCodePair HintCode = "pair" // building it completes this seat's science pair while a board token remains
+	HintCodeLoot HintCode = "loot" // building it takes a looting token from the other seat
+)
+
+// LastProducer says that no other producer of a brown or grey card's
+// resource is in view.
+type LastProducer string
+
+// The last-producer states.
+const (
+	LastProducerCertain LastProducer = "lastCertain" // no other producer of the resource can still come into play
+	LastProducerVisible LastProducer = "lastVisible" // none is in view, but unseen cards may hold one
 )

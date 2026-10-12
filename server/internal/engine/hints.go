@@ -79,6 +79,12 @@ const hintApplyBudget = 20000
 type Hints struct {
 	settings view.HintSettings
 	board    view.HintsView
+	// slots holds the per-card hints of each face-up slot, by seat, for the
+	// slots in cards; nil when no per-card family is on.
+	slots *[SlotsPerAge][2]view.CardHints
+	cards SlotMask
+	// pending is the destroy choice's per-candidate hints, or nil.
+	pending *[]view.PendingCardHint
 }
 
 // Settings returns the hint settings the hints were computed with.
@@ -93,12 +99,22 @@ func ComputeHints(s *State, f view.HintSettings) Hints {
 // computeHints is ComputeHints with a simulation context, which the leak
 // tests pass to watch every simulation the hints run.
 func computeHints(s *State, f view.HintSettings, _ *simCtx) Hints {
-	h := Hints{settings: f}
+	h := Hints{settings: f, board: view.HintsView{Discard: []view.DiscardHintView{}}}
 	if s.Over() {
 		return h
 	}
-	// The slices after M10.HS1 fill h.board here, each part under its
-	// family's switch (f.Science, f.Military and so on).
+	// Each part under its family's switch; a field of a family that is off
+	// stays zero or empty.
+	if perCardFamilies(f) {
+		h.slots, h.cards = slotHints(s, f)
+	}
+	if f.Wonders {
+		h.board.Discard = discardHints(s, f)
+	}
+	if f.Economy && s.Phase == PhaseDestroyCard {
+		p := destroyHints(s)
+		h.pending = &p
+	}
 	return h
 }
 
@@ -107,6 +123,20 @@ func computeHints(s *State, f view.HintSettings, _ *simCtx) Hints {
 func addHints(_ *State, _ Viewer, h *Hints, out *view.View) {
 	board := h.board
 	out.Hints = &board
+	// The per-card hints are the same for every viewer; the views share the
+	// slices, which nobody changes once built.
+	if h.slots != nil {
+		for i := range out.Structure {
+			if sv := &out.Structure[i]; sv.Index < SlotsPerAge && h.cards&(1<<sv.Index) != 0 {
+				ch := h.slots[sv.Index]
+				sv.Hints = &ch
+			}
+		}
+	}
+	if h.pending != nil && out.Pending != nil && out.Pending.Kind == view.PendingKindDestroyCard {
+		p := *h.pending
+		out.Pending.CardHints = &p
+	}
 	// The decider's hints (Choice.outcome, under a fresh hintApplyBudget)
 	// come with a later slice.
 }
@@ -783,4 +813,346 @@ func extraTurnOutcome(s *State, a Action) (ExtraTurnState, ExtraTurnSource) {
 		return ExtraTurnLost, src
 	}
 	return ExtraTurnGain, src
+}
+
+// --- Per-card hints (M10.HS2) ---
+//
+// What building each face-up card would do for each seat, the board pips
+// (win, pair, loot) and the card sheet's lines: the science pair it
+// completes, the pawn move and looting, a win, the trade prices it moves,
+// the coins a producer saves on the cards in view, whether it is the last
+// producer of its resource, and its worth now. Each part is computed only
+// while its family is on. The hints are shared: the same for every viewer,
+// computed once per broadcast from public information only (previewBuild,
+// priceShift, savesInView and publicPlace never touch the structure).
+
+// HintCode is a board pip a card earns for a seat. The view's names are
+// view.HintCode.
+type HintCode uint8
+
+// The hint codes, in the order a card's codes are listed.
+const (
+	HintWin  HintCode = iota // building it wins, at once or through the board token its pair lets the seat take
+	HintPair                 // building it completes the seat's science pair while a board token remains
+	HintLoot                 // building it takes a looting token from the other seat
+	numHintCodes
+)
+
+var hintCodeNames = [numHintCodes]string{"win", "pair", "loot"}
+
+// String returns the wire name.
+func (c HintCode) String() string { return enumString(hintCodeNames[:], uint8(c), "hintCode") }
+
+// LastProducer says that a brown or grey card is the last producer of its
+// resource in view. The view's names are view.LastProducer.
+type LastProducer uint8
+
+// The last-producer states.
+const (
+	LastProducerCertain LastProducer = iota // no other producer can still come into play
+	LastProducerVisible                     // none in view, but unseen cards may hold one
+	numLastProducers
+)
+
+var lastProducerNames = [numLastProducers]string{"lastCertain", "lastVisible"}
+
+// String returns the wire name.
+func (l LastProducer) String() string {
+	return enumString(lastProducerNames[:], uint8(l), "lastProducer")
+}
+
+// perCardFamilies reports whether any family that the per-card hints serve
+// is on.
+func perCardFamilies(f view.HintSettings) bool {
+	return f.Science || f.Military || f.Threats || f.Economy || f.Scoring || f.Counting
+}
+
+// slotHints computes the per-card hints of every face-up slot of s, for
+// both seats, and the set of slots it filled.
+func slotHints(s *State, f view.HintSettings) (*[SlotsPerAge][2]view.CardHints, SlotMask) {
+	ids, n := faceUpTargets(s)
+	if n == 0 {
+		return nil, 0
+	}
+	var out [SlotsPerAge][2]view.CardHints
+	var filled SlotMask
+	for i := range s.Slots {
+		sl := &s.Slots[i]
+		if sl.Card == 0 || !sl.FaceUp {
+			continue
+		}
+		for seat := range Seat(2) {
+			out[i][seat] = cardHints(s, seat, sl.Card, f, ids[:n], false)
+		}
+		filled |= 1 << i
+	}
+	return &out, filled
+}
+
+// cardHints is what building card c would do for seat now, with the parts
+// of the families f switches on. targets are the face-up cards, for
+// savesInView. With rebuild set it is the Mausoleum's free rebuild of a
+// discarded card.
+func cardHints(s *State, seat Seat, c catalog.CardID, f view.HintSettings, targets []catalog.CardID, rebuild bool) view.CardHints {
+	ch := view.CardHints{Codes: []view.HintCode{}, PriceShift: []view.PriceShift{}}
+	p := previewBuild(s, seat, c, rebuild)
+	e := view.EffectView{Paid: p.Paid}
+	said := false
+	if f.Scoring && worthCard(c) && (p.Coins != 0 || p.ScoreDelta[seat] != 0) {
+		e.Coins = p.Coins
+		e.ScoreDelta = p.ScoreDelta[seat]
+		e.OppScoreDelta = p.ScoreDelta[seat.Opp()]
+		said = true
+	}
+	if f.Threats && p.Wins {
+		e.Wins = viewWin(p.Win)
+		said = true
+		if p.Paid || rebuild {
+			ch.Codes = append(ch.Codes, view.HintCode(HintWin.String()))
+		}
+	}
+	if f.Science && p.HasScience {
+		e.Science = &view.ScienceEffect{
+			Symbol:        view.ScienceSymbol(p.Science.Symbol.String()),
+			Kind:          view.ScienceEffectKind(p.Science.Kind.String()),
+			DistinctAfter: p.Science.DistinctAfter,
+			TokenOnBoard:  p.Science.TokenOnBoard,
+		}
+		said = true
+		if p.Science.Kind == ScienceEffectPair && p.Science.TokenOnBoard {
+			ch.Codes = append(ch.Codes, view.HintCode(HintPair.String()))
+		}
+	}
+	if f.Military && p.Moved {
+		m := &view.PawnMoveView{From: int(p.Pawn.From), To: int(p.Pawn.To), Loot: make([]view.LootTaken, 0, p.Pawn.NLoot)}
+		for _, l := range p.Pawn.Loot[:p.Pawn.NLoot] {
+			m.Loot = append(m.Loot, view.LootTaken{At: int(l.At), Lost: int(l.Lost)})
+		}
+		e.Military = m
+		said = true
+		if len(m.Loot) > 0 {
+			ch.Codes = append(ch.Codes, view.HintCode(HintLoot.String()))
+		}
+	}
+	if said {
+		ch.Effect = &e
+	}
+	if f.Economy {
+		ch.PriceShift = viewPriceShifts(priceShift(s, seat, c))
+		if producerCard(c) {
+			saved := savesInView(s, seat, c, targets)
+			ch.SavesInView = &saved
+		}
+	}
+	if f.Counting {
+		if l, ok := lastProducer(s, c); ok {
+			v := view.LastProducer(l.String())
+			ch.LastProducer = &v
+		}
+	}
+	return ch
+}
+
+// worthCard reports whether c is a yellow card or a guild, whose worth now
+// (coins and points) the scoring family sends.
+func worthCard(c catalog.CardID) bool {
+	if int(c) >= len(catalog.T.Color) {
+		return false
+	}
+	col := catalog.T.Color[c]
+	return col == catalog.Yellow || col == catalog.Purple
+}
+
+// saysSomething reports whether a card's hints carry anything beyond its
+// price: a pip, an effect, a price it moves or the last-producer note.
+func saysSomething(ch *view.CardHints) bool {
+	return len(ch.Codes) > 0 || ch.Effect != nil || len(ch.PriceShift) > 0 || ch.LastProducer != nil ||
+		(ch.SavesInView != nil && *ch.SavesInView > 0)
+}
+
+// viewWin converts a Win to its DTO.
+func viewWin(w Win) *view.WinView {
+	out := &view.WinView{Kind: view.VictoryKind(w.Kind.String()), Steps: w.Steps}
+	if w.Via.Type != ActNone {
+		if k := w.Via.Key(); k != "" {
+			out.Via = &k
+		}
+	}
+	return out
+}
+
+// viewPriceShifts converts price shifts to their DTOs.
+func viewPriceShifts(ps priceShifts) []view.PriceShift {
+	out := make([]view.PriceShift, 0, ps.N)
+	for _, e := range ps.E[:ps.N] {
+		out = append(out, view.PriceShift{Seat: int(e.Seat), Resource: dtoResource(e.Res), From: int(e.From), To: int(e.To)})
+	}
+	return out
+}
+
+// producerCard reports whether c changes what its owner pays for
+// resources: a brown or grey card (fixed production), a flexible producer
+// (the Forum, the Caravansery) or a card that fixes trade prices (the
+// Reserves, the Customs House). savesInView is sent for these only.
+func producerCard(c catalog.CardID) bool {
+	t := &catalog.T
+	if int(c) >= len(t.Color) {
+		return false
+	}
+	col := t.Color[c]
+	return col == catalog.Brown || col == catalog.Grey || t.Choice[c] != 0 || t.TradeFix[c] != 0
+}
+
+// lastProducer says whether brown or grey card c is the last producer of
+// its resources in view (economy.md "Resources"): another brown or grey
+// card producing one of them counts while it may still come into play,
+// that is face up, unseen in this age or a later one, or in the discard
+// pile while some seat's Mausoleum is open. With none in view it is the
+// last for certain, unless an unseen card may hold one. Cards in a city,
+// tucked, or certainly set aside never come back. The same for both
+// seats, from public places only. It reports false when c is not a brown
+// or grey card, or another producer is in view.
+func lastProducer(s *State, c catalog.CardID) (LastProducer, bool) {
+	t := &catalog.T
+	if int(c) >= len(t.Color) || (t.Color[c] != catalog.Brown && t.Color[c] != catalog.Grey) {
+		return 0, false
+	}
+	mausoleum := mausoleumOpen(s, 0) || mausoleumOpen(s, 1)
+	unseen := false
+	for d, ok := t.All.Next(1); ok; d, ok = t.All.Next(d + 1) {
+		if d == c || (t.Color[d] != catalog.Brown && t.Color[d] != catalog.Grey) || !sharesProduction(c, d) {
+			continue
+		}
+		switch publicPlace(s, d).Place {
+		case PlaceFaceUp:
+			return 0, false
+		case PlaceDiscard:
+			if mausoleum {
+				return 0, false
+			}
+		case PlaceUnseenThisAge, PlaceUnseenLaterAge:
+			unseen = true
+		}
+	}
+	if unseen {
+		return LastProducerVisible, true
+	}
+	return LastProducerCertain, true
+}
+
+// sharesProduction reports whether cards c and d produce a resource in
+// common.
+func sharesProduction(c, d catalog.CardID) bool {
+	for r := range catalog.NumResources {
+		if catalog.T.Prod[c][r] > 0 && catalog.T.Prod[d][r] > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// mausoleumOpen reports whether seat has an open wonder that rebuilds from
+// the discard pile (the Mausoleum).
+func mausoleumOpen(s *State, seat Seat) bool {
+	p := &s.Players[seat]
+	for k := range p.Wonders {
+		w := p.Wonders[k].ID
+		if int(w) < len(catalog.T.WRebuild) && catalog.T.WRebuild[w] && wonderOpen(s, seat, k) {
+			return true
+		}
+	}
+	return false
+}
+
+// discardHints computes what rebuilding each discarded card would do, for
+// each seat whose Mausoleum is open and for the seat choosing a card to
+// rebuild (mausoleum-pool-hint): by seat, then in ascending card order.
+// The discard pile and the cities are public.
+func discardHints(s *State, f view.HintSettings) []view.DiscardHintView {
+	out := []view.DiscardHintView{}
+	if s.Discard.Empty() {
+		return out
+	}
+	ids, n := faceUpTargets(s)
+	for seat := range Seat(2) {
+		if !mausoleumOpen(s, seat) && (s.Phase != PhaseBuildFromDiscard || s.ToMove != seat) {
+			continue
+		}
+		for d, ok := s.Discard.Next(1); ok; d, ok = s.Discard.Next(d + 1) {
+			slug, ok := dtoCard(d)
+			if !ok || s.Players[seat].City.Has(d) {
+				continue
+			}
+			ch := cardHints(s, seat, d, f, ids[:n], true)
+			if !saysSomething(&ch) {
+				continue
+			}
+			q := BuildingQuote(s, seat, d)
+			out = append(out, view.DiscardHintView{
+				Card:      slug,
+				Seat:      int(seat),
+				Hints:     ch,
+				Total:     int(q.Total),
+				ChainFree: q.ChainFree,
+			})
+		}
+	}
+	return out
+}
+
+// destroyHints computes, for each candidate of the open destroy choice,
+// what its loss would change (destroy-price-drop, opponent-pending-impact):
+// the trade prices it moves (the destroyer's fall), the coins the
+// destroyer would save on the face-up cards and its open wonders, and
+// whether it is the victim's only fixed producer of a resource. The
+// candidates are the victim's cards of the destroy colour, which are
+// public, in ascending card order as PendingView.cards lists them.
+func destroyHints(s *State) []view.PendingCardHint {
+	out := []view.PendingCardHint{}
+	destroyer := s.ToMove
+	victim := destroyer.Opp()
+	vp := &s.Players[victim]
+	ids, n := faceUpTargets(s)
+	for c, ok := vp.City.Next(1); ok; c, ok = vp.City.Next(c + 1) {
+		if cardColor(c) != s.Destroy {
+			continue
+		}
+		slug, ok := dtoCard(c)
+		if !ok {
+			continue
+		}
+		x := *s
+		removeCard(&x, victim, c)
+		var ps priceShifts
+		for who := range Seat(2) {
+			from, to := TradePrices(s, who), TradePrices(&x, who)
+			for r := range catalog.NumResources {
+				if from[r] != to[r] {
+					ps.E[ps.N] = priceShiftEntry{Seat: who, Res: r, From: from[r], To: to[r]}
+					ps.N++
+				}
+			}
+		}
+		saved := 0
+		for _, t := range ids[:n] {
+			if s.Players[destroyer].City.Has(t) {
+				continue
+			}
+			saved += int(BuildingQuote(s, destroyer, t).Total) - int(BuildingQuote(&x, destroyer, t).Total)
+		}
+		for k := range s.Players[destroyer].Wonders {
+			if wonderOpen(s, destroyer, k) {
+				w := s.Players[destroyer].Wonders[k].ID
+				saved += int(WonderQuote(s, destroyer, w).Total) - int(WonderQuote(&x, destroyer, w).Total)
+			}
+		}
+		only := false
+		for r := range catalog.NumResources {
+			if pr := catalog.T.Prod[c][r]; pr > 0 && vp.Prod[r] == pr {
+				only = true
+			}
+		}
+		out = append(out, view.PendingCardHint{Card: slug, PriceShift: viewPriceShifts(ps), SavesInView: saved, OnlySource: only})
+	}
+	return out
 }

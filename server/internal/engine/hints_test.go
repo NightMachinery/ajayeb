@@ -307,6 +307,8 @@ func TestHintEnumsMatchView(t *testing.T) {
 		"ExtraTurnState":    extraTurnStateNames[:],
 		"ExtraTurnSource":   extraTurnSourceNames[:],
 		"ScienceEffectKind": scienceEffectNames[:],
+		"HintCode":          hintCodeNames[:],
+		"LastProducer":      lastProducerNames[:],
 	}
 	if len(got) != len(want) {
 		t.Errorf("view/hints.go has vocabularies %v; this test checks %d", reflect.ValueOf(got).MapKeys(), len(want))
@@ -830,7 +832,9 @@ func hnCount(m uint32) int {
 }
 
 // TestHintsFrameSize logs the size of mid-age views with and without the
-// (still empty) hints, for docs/architecture.md, and bounds the growth.
+// hints, for docs/architecture.md, and bounds the growth: the per-card
+// hints of M10.HS2 (both seats, every face-up card) may add at most a
+// third to the view.
 func TestHintsFrameSize(t *testing.T) {
 	for seed := uint64(1); seed <= 3; seed++ {
 		for _, age := range []uint8{1, 2} {
@@ -838,9 +842,9 @@ func TestHintsFrameSize(t *testing.T) {
 			h := ComputeHints(&s, hnAllHints)
 			plain, _ := json.Marshal(ViewFor(&s, SeatViewer(s.ToMove)))
 			with, _ := json.Marshal(ViewWithHints(&s, SeatViewer(s.ToMove), &h))
-			t.Logf("seed %d, age %d, ply %d: decider view %d bytes, %d with hints", seed, age, s.Ply, len(plain), len(with))
-			if len(with) > len(plain)+64 {
-				t.Errorf("the empty hints add %d bytes", len(with)-len(plain))
+			t.Logf("seed %d, age %d, ply %d: decider view %d bytes, %d with hints (+%d)", seed, age, s.Ply, len(plain), len(with), len(with)-len(plain))
+			if 3*len(with) > 4*len(plain) {
+				t.Errorf("the hints add %d bytes to a %d-byte view", len(with)-len(plain), len(plain))
 			}
 		}
 	}

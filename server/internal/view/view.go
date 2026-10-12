@@ -59,15 +59,16 @@ type DraftOfferView struct {
 
 // SlotView is one place of the current age's structure.
 type SlotView struct {
-	Index      int          `json:"index"` // 0 to 19, in layout order (row by row from the top, left to right)
-	Row        int          `json:"row"`   // 1 at the top
-	Col        int          `json:"col"`   // in half-card widths, 1 at the left
-	State      SlotState    `json:"state"`
-	Back       *Back        `json:"back,omitempty"`                          // the card's back; absent for an empty slot
-	Card       *string      `json:"card,omitempty"`                          // only when face up
-	Accessible bool         `json:"accessible"`                              // holds a card and no card covers it
-	CoveredBy  []int        `json:"coveredBy"`                               // the slots still covering this one
-	Costs      *[2]CostView `json:"costs,omitempty" tstype:"Pair<CostView>"` // both seats' cost of building the card now, by seat, as if it were accessible; for every face-up card, covered or not
+	Index      int           `json:"index"` // 0 to 19, in layout order (row by row from the top, left to right)
+	Row        int           `json:"row"`   // 1 at the top
+	Col        int           `json:"col"`   // in half-card widths, 1 at the left
+	State      SlotState     `json:"state"`
+	Back       *Back         `json:"back,omitempty"`                           // the card's back; absent for an empty slot
+	Card       *string       `json:"card,omitempty"`                           // only when face up
+	Accessible bool          `json:"accessible"`                               // holds a card and no card covers it
+	CoveredBy  []int         `json:"coveredBy"`                                // the slots still covering this one
+	Costs      *[2]CostView  `json:"costs,omitempty" tstype:"Pair<CostView>"`  // both seats' cost of building the card now, by seat, as if it were accessible; for every face-up card, covered or not
+	Hints      *[2]CardHints `json:"hints,omitempty" tstype:"Pair<CardHints>"` // what building the card would do for each seat, by seat (hints.go); for every face-up card while the game runs and a per-card hint family is on
 }
 
 // ResourceCounts holds a number per resource.
@@ -194,12 +195,13 @@ type LootingView struct {
 
 // PendingView is an open choice that is not a plain turn.
 type PendingView struct {
-	Kind         PendingKind `json:"kind"`
-	Seat         int         `json:"seat"`            // who decides
-	Color        *Color      `json:"color,omitempty"` // destroyCard: the colour of the card to destroy
-	Cards        []string    `json:"cards"`           // destroyCard: the opponent's cards that may be destroyed; buildFromDiscard: the discard pile
-	Tokens       []string    `json:"tokens"`          // pickBoardToken: the board tokens; pickLibraryToken: the offer, only in the decider's view
-	HiddenTokens int         `json:"hiddenTokens"`    // pickLibraryToken: the tokens on offer that this viewer may not see
+	Kind         PendingKind        `json:"kind"`
+	Seat         int                `json:"seat"`                // who decides
+	Color        *Color             `json:"color,omitempty"`     // destroyCard: the colour of the card to destroy
+	Cards        []string           `json:"cards"`               // destroyCard: the opponent's cards that may be destroyed; buildFromDiscard: the discard pile
+	Tokens       []string           `json:"tokens"`              // pickBoardToken: the board tokens; pickLibraryToken: the offer, only in the decider's view
+	HiddenTokens int                `json:"hiddenTokens"`        // pickLibraryToken: the tokens on offer that this viewer may not see
+	CardHints    *[]PendingCardHint `json:"cardHints,omitempty"` // destroyCard, while the economy hints are on: what losing each candidate would change (hints.go)
 }
 
 // Choice is one legal action of the seat to move. Only the fields its kind

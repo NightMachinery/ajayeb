@@ -301,11 +301,116 @@ export interface HintSettings {
  * hints (engine.ViewWithHints); a gameOver view never does, and neither
  * does a view built without settings (engine.ViewFor, used by the
  * simulator, tests and replays).
- * It is empty for now: the hints slices after M10.HS1 add its fields, each
- * zero or empty while its family is off. A client reads the room's
- * settings (RoomInfo.hints) to know which fields are meaningful.
+ * Its fields are zero or empty while their family is off. A client reads
+ * the room's settings (RoomInfo.hints) to know which fields are
+ * meaningful.
  */
 export interface HintsView {
+  /**
+   * Discard is what rebuilding each discarded card would do, for each
+   * seat whose Mausoleum is open, and for the seat choosing a card to
+   * rebuild while it does (the wonders family): one entry per card and
+   * seat that has something to say (a pip, an effect or a price it
+   * moves), by seat, then in ascending card order.
+   */
+  discard: DiscardHintView[];
+}
+/**
+ * CardHints is what building one face-up card would do for one seat now,
+ * as the cities stand: SlotView.hints holds one per seat, for every face-up
+ * card, covered or not (as if it were accessible), while the game runs and
+ * any per-card family is on. The numbers are those of now; the opponent's
+ * next move can change them.
+ */
+export interface CardHints {
+  codes: HintCode[]; // the board pips this card earns for this seat, in a fixed order (win, pair, loot); the client ranks them
+  effect?: EffectView; // the immediate result of building it, when one of its parts is on and says something
+  priceShift: PriceShift[]; // economy: the trade prices building it would change, for either seat
+  savesInView?: number /* int */; // economy, producer cards only (brown, grey, flexible producers, fixed prices): the coins it would save this seat on the other face-up cards and its open wonders, summed
+  lastProducer?: LastProducer; // counting, brown and grey cards only, when no other producer of its resource is in view
+}
+/**
+ * EffectView is the immediate result of building a card for one seat:
+ * payment (when the seat can pay), the building's coins, shields and
+ * looting, and science, before any choice it opens. To keep the view small
+ * it is sent only when one of its parts says something: a green card's
+ * science, a red card's pawn move, a win, or the worth of a yellow card or
+ * a guild (coins and scoreDelta are sent for those only).
+ */
+export interface EffectView {
+  paid: boolean; // the seat can afford it now, and the preview paid the cheapest payment; otherwise it paid nothing
+  coins: number /* int */; // scoring: coins the building gives on construction (Urbanism's chain bonus included), the payment not counted
+  scoreDelta: number /* int */; // scoring: change of this seat's score preview
+  oppScoreDelta: number /* int */; // scoring: change of the other seat's score preview (looting, the pawn)
+  science?: ScienceEffect; // science: a green card's symbol
+  military?: PawnMoveView; // military: the pawn move, when the card has shields
+  wins?: WinView; // threats: building it wins, at once or through the board token its pair lets the seat take
+}
+/**
+ * ScienceEffect is what a green card does to its builder's symbols.
+ */
+export interface ScienceEffect {
+  symbol: ScienceSymbol;
+  kind: ScienceEffectKind;
+  distinctAfter: number /* int */; // the builder's different symbols afterwards
+  tokenOnBoard: boolean; // a pair opens the board token choice (the board still has a token)
+}
+/**
+ * PawnMoveView is how an action moves the conflict pawn, and the looting
+ * tokens it takes.
+ */
+export interface PawnMoveView {
+  from: number /* int */;
+  to: number /* int */;
+  loot: LootTaken[]; // in the order the pawn reaches them
+}
+/**
+ * LootTaken is one looting token a pawn move takes.
+ */
+export interface LootTaken {
+  at: number /* int */; // its space: -6, -3, 3 or 6
+  lost: number /* int */; // coins the victim actually loses (no more than it has)
+}
+/**
+ * WinView is a win an action would bring its mover.
+ */
+export interface WinView {
+  kind: VictoryKind;
+  steps: number /* int */; // 1 for a win this turn; 2 through the mover's own extra turn
+  via?: string; // the follow-up action key that wins, such as "token:law"; absent for a win at once
+}
+/**
+ * PriceShift is one trade price that changes: seat's price of one unit of
+ * resource.
+ */
+export interface PriceShift {
+  seat: number /* int */; // whose price changes
+  resource: Resource;
+  from: number /* int */;
+  to: number /* int */;
+}
+/**
+ * DiscardHintView is what rebuilding one discarded card with the Mausoleum
+ * would do for one seat (the Mausoleum's owner).
+ */
+export interface DiscardHintView {
+  card: string;
+  seat: number /* int */; // the seat it is computed for
+  hints: CardHints; // as for a face-up card; the rebuild is free, so effect.paid is false
+  total: number /* int */; // what the seat would pay to build it now, for "worth N coins to you"
+  chainFree: boolean; // the seat would build it free by chain anyway
+}
+/**
+ * PendingCardHint is what destroying one of the candidates of a destroy
+ * choice (the Statue of Zeus, Circus Maximus) would do (the economy
+ * family). PendingView.cardHints lists one per candidate, in both seats'
+ * views, since the cities are public.
+ */
+export interface PendingCardHint {
+  card: string;
+  priceShift: PriceShift[]; // the trade prices the loss would change (the destroyer's fall)
+  savesInView: number /* int */; // coins the loss would save the destroyer on the face-up cards and its open wonders
+  onlySource: boolean; // the card is the victim's only fixed producer of a resource it makes
 }
 /**
  * PublicPlace is where a card is, as far as both players can know.
@@ -350,6 +455,26 @@ export const ScienceEffectKindPair = "pair"; // the second card of a symbol
  * The science effect kinds.
  */
 export type ScienceEffectKind = typeof ScienceEffectKindNew | typeof ScienceEffectKindPair;
+/**
+ * HintCode is a board pip: a fact about building one card, for one seat.
+ */
+export const HintCodeWin = "win"; // building it wins at once, or through the board token its pair lets the seat take
+export const HintCodePair = "pair"; // building it completes this seat's science pair while a board token remains
+export const HintCodeLoot = "loot"; // building it takes a looting token from the other seat
+/**
+ * The hint codes.
+ */
+export type HintCode = typeof HintCodeWin | typeof HintCodePair | typeof HintCodeLoot;
+/**
+ * LastProducer says that no other producer of a brown or grey card's
+ * resource is in view.
+ */
+export const LastProducerCertain = "lastCertain"; // no other producer of the resource can still come into play
+export const LastProducerVisible = "lastVisible"; // none is in view, but unseen cards may hold one
+/**
+ * The last-producer states.
+ */
+export type LastProducer = typeof LastProducerCertain | typeof LastProducerVisible;
 
 //////////
 // source: schema.go
@@ -434,6 +559,7 @@ export interface SlotView {
   accessible: boolean; // holds a card and no card covers it
   coveredBy: number /* int */[]; // the slots still covering this one
   costs?: Pair<CostView>; // both seats' cost of building the card now, by seat, as if it were accessible; for every face-up card, covered or not
+  hints?: Pair<CardHints>; // what building the card would do for each seat, by seat (hints.go); for every face-up card while the game runs and a per-card hint family is on
 }
 /**
  * ResourceCounts holds a number per resource.
@@ -579,6 +705,7 @@ export interface PendingView {
   cards: string[]; // destroyCard: the opponent's cards that may be destroyed; buildFromDiscard: the discard pile
   tokens: string[]; // pickBoardToken: the board tokens; pickLibraryToken: the offer, only in the decider's view
   hiddenTokens: number /* int */; // pickLibraryToken: the tokens on offer that this viewer may not see
+  cardHints?: PendingCardHint[]; // destroyCard, while the economy hints are on: what losing each candidate would change (hints.go)
 }
 /**
  * Choice is one legal action of the seat to move. Only the fields its kind
