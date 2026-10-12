@@ -181,7 +181,6 @@ export const hints = {
   // under each move, the confirm step's warning, the card sheet's "After
   // this pick" panel and the starter choice. {delta} is a signed number
   // ("+3"), {card} and {list} are names, {age} a number.
-  'hints.outcome.label': 'What this move does',
   'hints.outcome.separator': '; ',
   'hints.outcome.win': 'Wins the game ({kind}).',
   'hints.outcome.winLaw': 'Wins: it completes a pair, and Law is the sixth symbol.',
