@@ -276,14 +276,18 @@ function worthCard(slug: string): boolean {
 
 /**
  * The lines of one seat's hints for card `slug`: what building it would do
- * for that seat, as the server computed it, each under its family.
+ * for that seat, as the server computed it, each under its family. With
+ * `free` set the build costs nothing (the Mausoleum's rebuild), so a win
+ * is never "cannot be paid for now", although the server's preview of a
+ * rebuild leaves `effect.paid` false.
  */
 export function seatLines(
   slug: string,
   seat: Seat,
   ch: CardHints,
   families: ReadonlySet<HintFamily>,
-  names: HintNames
+  names: HintNames,
+  free = false
 ): HintLine[] {
   const out: HintLine[] = [];
   const otherSeat = other(seat);
@@ -296,7 +300,7 @@ export function seatLines(
       text:
         e.wins.via === 'token:law'
           ? t('hints.line.winLaw')
-          : e.paid
+          : e.paid || free
             ? t('hints.line.win', { kind })
             : t('hints.line.winShort', { kind })
     });
@@ -529,7 +533,7 @@ export function discardLines(
   names: HintNames
 ): HintLine[] {
   const seat: Seat = d.seat === 1 ? 1 : 0;
-  const lines = seatLines(d.card, seat, d.hints, families, names);
+  const lines = seatLines(d.card, seat, d.hints, families, names, true);
   if (families.has('wonders') && d.total > 0 && !d.chainFree) {
     lines.push({ id: 'worthCoins', text: t('hints.line.worthCoins', { count: d.total }) });
   }

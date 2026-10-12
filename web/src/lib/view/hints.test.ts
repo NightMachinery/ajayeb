@@ -387,6 +387,18 @@ describe('the Mausoleum pool and the destroy choice', () => {
     ]);
   });
 
+  it('a free rebuild that wins is never "cannot be paid for now"', () => {
+    // The server's rebuild preview pays nothing, so effect.paid is false.
+    const rebuildWin = hints({ ...WIN, effect: { ...WIN.effect!, paid: false } });
+    const view = {
+      hints: {
+        discard: [{ card: 'garrison', seat: 0, hints: rebuildWin, total: 2, chainFree: false }]
+      }
+    } as unknown as View;
+    const [section] = discardSections(view, ['garrison'], 0, screen);
+    expect(section?.lines[0]?.text).toBe('Building it wins the game (military).');
+  });
+
   it('names what losing each candidate changes', () => {
     const pending = {
       kind: 'destroyCard',
