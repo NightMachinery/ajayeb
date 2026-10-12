@@ -14,10 +14,13 @@
   // first player picks once, the other twice, then the first player gets
   // the last wonder; round 2 is the mirror), from the view's firstPlayer
   // and round, for display only. Whose pick it is now is the view's toMove.
+  // With the server's own pick order (DraftView.order, draft-order, M10.HS4)
+  // the chips follow it, and each chip's tooltip says the round's order.
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderBySlug } from '$lib/catalog';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import { describeWonder } from '$lib/view/describe';
   import type { View } from '$lib/wire';
   import { costText, effectSentence, wonderName } from '../card/effect-text';
@@ -79,12 +82,17 @@
   const firstOfRound = $derived(
     round === 1 ? asSeat(view.firstPlayer) : otherSeat(asSeat(view.firstPlayer))
   );
-  const order = $derived([
-    firstOfRound,
-    otherSeat(firstOfRound),
-    otherSeat(firstOfRound),
-    firstOfRound
-  ]);
+  const order = $derived(
+    view.draft?.order.length === 4
+      ? view.draft.order.map(asSeat)
+      : [firstOfRound, otherSeat(firstOfRound), otherSeat(firstOfRound), firstOfRound]
+  );
+  const orderTip = $derived(
+    t('hints.draft.order', {
+      first: names[order[0] ?? firstOfRound],
+      second: names[order[1] ?? otherSeat(firstOfRound)]
+    })
+  );
   const picksDone = $derived(offer.filter((o) => o.takenBy !== undefined).length);
   const toMove = $derived(view.toMove === undefined ? null : asSeat(view.toMove));
   const youMove = $derived(toMove !== null && isYou(toMove, view.viewer, mode));
@@ -184,6 +192,7 @@
           data-pick-chip={i}
           data-seat={seat}
           data-done={done}
+          {@attach tooltip({ text: `${chipLabel(i)}. ${orderTip}` })}
         >
           <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} class="text-[15px]" />
           <span aria-hidden="true">{formatNumber(i + 1)}</span>

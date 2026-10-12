@@ -5,7 +5,15 @@
   // to begin the next age) through `children`, so a player always has a way
   // to continue. Every number is the server's (coins, the score preview,
   // the pawn's position); nothing is computed here.
+  //
+  // Hints (M10.HS4, symbol-status): one line for each science pair the
+  // ended age killed (its other card was set aside), from `notes` or the
+  // page's game context (view/board-hints.ts deadPairLines).
   import type { Snippet } from 'svelte';
+  import { hintHide } from '$lib/hints/local.svelte';
+  import { deadPairLines } from '$lib/view/board-hints';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { tryGameContext } from '../choices/room';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryLeader, militaryMargin } from '$lib/view/threats';
@@ -24,6 +32,8 @@
     titleId?: string;
     /** The way to continue: the starter choice, a waiting note, a button. */
     children?: Snippet;
+    /** Hint lines about the ended age; else from the game context. */
+    notes?: readonly string[];
   }
 
   let {
@@ -34,8 +44,17 @@
     military,
     you,
     titleId = 'age-interstitial-title',
-    children
+    children,
+    notes
   }: Props = $props();
+
+  const ctx = tryGameContext();
+  const lines = $derived.by((): readonly string[] => {
+    if (notes) return notes;
+    const view = ctx?.session.view;
+    const screen = sessionHintScreen(ctx?.session, hintHide.value);
+    return view && screen ? deadPairLines(view, age, screen.families, screen.names) : [];
+  });
 
   const seats = [0, 1] as const;
   const leader = $derived(militaryLeader(military));
@@ -94,6 +113,17 @@
     <Icon name="shield" class="shrink-0 text-card-red-ink" />
     <span dir="auto">{militaryText}</span>
   </p>
+
+  {#if lines.length > 0}
+    <ul class="flex flex-col gap-1 text-center text-sm text-fg-muted" data-age-notes>
+      {#each lines as line (line)}
+        <li class="flex items-center justify-center gap-1.5" data-age-note>
+          <Icon name="category-green-sm" class="shrink-0 text-card-green-ink" />
+          <span>{line}</span>
+        </li>
+      {/each}
+    </ul>
+  {/if}
 
   {#if children}
     <div class="border-t border-rule pt-4">

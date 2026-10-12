@@ -56,6 +56,8 @@
     /** When given, the menu offers Forfeit, which reports this (the caller
      *  shows the confirm step). */
     onForfeit?: () => void;
+    /** The age chip's tooltip (age-countdown and next-starter, M10.HS4). */
+    ageTip?: string;
     /** Extra content between the age and the buttons (the compact military
      *  track and tokens of the phone landscape layout). */
     children?: Snippet;
@@ -75,6 +77,7 @@
     homeHint = true,
     replayCode,
     onForfeit,
+    ageTip,
     children,
     class: className = ''
   }: Props = $props();
@@ -128,7 +131,12 @@
       {age > 0 ? t('board.age', { age }) : t('board.age.draft')}
     </span>
     {#if age > 0}
-      <span class="whitespace-nowrap text-fg-muted" data-must-fit>
+      <span
+        class="whitespace-nowrap text-fg-muted"
+        data-must-fit
+        data-age-tip={ageTip ? '' : undefined}
+        {@attach tooltip(ageTip ? { text: ageTip } : undefined)}
+      >
         {t('cards.left', { count: cardsLeft })}
       </span>
     {/if}
