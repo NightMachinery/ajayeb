@@ -13,6 +13,7 @@
   import Settings from '$lib/components/screens/Settings.svelte';
   import Hints from './Hints.svelte';
   import Online from './Online.svelte';
+  import Rules from './Rules.svelte';
   import SoundBoard from './SoundBoard.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
 
@@ -125,4 +126,6 @@
   <Online />
 
   <Hints />
+
+  <Rules />
 </div>
