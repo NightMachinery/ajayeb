@@ -15,6 +15,7 @@
   import RulesContent from './RulesContent.svelte';
   import RulesToc from './RulesToc.svelte';
   import type { RuleSectionId } from './sections';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     /** The heading's id, for the container's aria-labelledby. */
@@ -70,6 +71,7 @@
           aria-label={t('rules.close')}
           data-control="rules-close"
           onclick={onclose}
+          {@attach tooltip({ text: t('rules.close') })}
         >
           <X class="size-5" aria-hidden="true" />
         </button>

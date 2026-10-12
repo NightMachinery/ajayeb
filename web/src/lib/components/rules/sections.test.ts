@@ -122,6 +122,7 @@ describe('deep links', () => {
     expect(sectionFromHash('#unknown')).toBeUndefined();
     expect(sectionFromHash('')).toBeUndefined();
     expect(sectionFromHash(null)).toBeUndefined();
+    expect(sectionFromHash('#%E0')).toBeUndefined();
   });
 
   it('builds the page path, at a section when given', () => {

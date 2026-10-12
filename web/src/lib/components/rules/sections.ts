@@ -352,7 +352,12 @@ export function isRuleSectionId(value: string | null | undefined): value is Rule
 
 /** The section a URL hash names ('#military' or 'military'), if any. */
 export function sectionFromHash(hash: string | null | undefined): RuleSectionId | undefined {
-  const id = decodeURIComponent((hash ?? '').replace(/^#/, ''));
+  let id: string;
+  try {
+    id = decodeURIComponent((hash ?? '').replace(/^#/, ''));
+  } catch {
+    return undefined; // A malformed escape such as '#%E0' names no section.
+  }
   return isRuleSectionId(id) ? id : undefined;
 }
 
