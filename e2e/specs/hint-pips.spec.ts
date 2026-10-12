@@ -170,7 +170,9 @@ test.describe('hint pips', { tag: ['@mobile'] }, () => {
     const science = hints.locator('[data-hint-family="science"]');
     await science.getByRole('switch').click();
     await expect(science).not.toHaveAttribute('data-on');
-    // Escape first closes a tooltip the tap may have opened, then the sheet.
+    // The switch keeps focus and is disabled until the server answers; an
+    // Escape that lands on it then is lost, so press again until the sheet
+    // closes (hints.spec.ts closeSheet has the same race).
     await expect(async () => {
       await page.keyboard.press('Escape');
       await expect(hints).toHaveCount(0, { timeout: 1_000 });
