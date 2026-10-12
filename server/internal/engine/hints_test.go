@@ -851,7 +851,7 @@ func TestHintsFrameSize(t *testing.T) {
 }
 
 // BenchmarkComputeHints measures the shared hints of one broadcast: the
-// hints themselves (empty in M10.HS1) with the three views of a frame, and
+// hints themselves (the per-card hints since M10.HS2) with the three views of a frame, and
 // the projected work of the later slices with the helpers above: a
 // previewBuild, a priceShift and a savesInView for each face-up card and
 // seat, a previewWonder for each open wonder, a tokenPreview for each board

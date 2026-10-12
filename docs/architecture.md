@@ -170,7 +170,16 @@ Everything else is public, as it is at the table: face-up cards, both cities, co
 
 The hints (decision D23; the design is the hints design of M10) are facts the server works out from public information and sends in the view, so the thin client never derives a rule to explain the game. They live in `internal/engine/hints.go`.
 
-**Data flow.** For each broadcast the room's frame cache calls `ComputeHints(state, settings)` once, with the room's hint settings, and passes the result to `ViewWithHints` for each of the at most three views it builds. `ComputeHints` computes the shared hints, which are the same for every viewer; a later slice adds the decider's hints about its own choices inside `ViewWithHints`. `ViewFor(state, viewer)` is `ViewWithHints(state, viewer, nil)`, so the simulator, the tests and replays never see hints, and a finished game's view carries none. `view.hints` is still empty in M10.HS1: the later hints slices fill it, each part only while its family is on.
+**Data flow.** For each broadcast the room's frame cache calls `ComputeHints(state, settings)` once, with the room's hint settings, and passes the result to `ViewWithHints` for each of the at most three views it builds. `ComputeHints` computes the shared hints, which are the same for every viewer; a later slice adds the decider's hints about its own choices inside `ViewWithHints`. `ViewFor(state, viewer)` is `ViewWithHints(state, viewer, nil)`, so the simulator, the tests and replays never see hints, and a finished game's view carries none. Each part is computed only while its family is on, and the client also drops what its own player hides (`visibleFamilies`).
+
+**Per-card hints (M10.HS2).** Every face-up slot of the structure, covered or not, carries `hints`: a pair of `CardHints`, one per seat, saying what building that card now would do for that seat. They are shared hints, so the three views carry the same values. A `CardHints` holds:
+
+- `codes`: the pip codes, the facts strong enough to mark the card on the board. `win` (building it wins the game, from the threats family), `pair` (it completes a pair of science symbols while a progress token is still on the board, science) and `loot` (its shields take coins from the opponent, military). The client draws one pip per card, in the priority own win, opponent's win, own pair, opponent's pair, own loot, opponent's loot; a pip for the opponent is a deny target.
+- `effect`, sent only when it says something: whether the seat can pay for it now, its science symbol and what it does to the seat's set, the pawn move with the coins each looting space would take, a win and how, and, for yellow cards and guilds only, the coins and points it is worth now.
+- `priceShift` and `savesInView` (economy): how it would move a trade price, and what the seat's own production would save on the cards in view.
+- `lastProducer` (counting): no other producer of its resource can still come (`lastCertain`), or none is in view and unseen cards may hold one (`lastVisible`).
+
+Two pools get the same kind of hints. `hints.discard` lists, for each seat with an open Mausoleum (and for the seat choosing from the discard pile), the discarded cards whose hints say something, with their worth and whether a chain makes them free. A pending destroy choice carries `cardHints`: for each card that may be destroyed, how the trade prices would move, what the destroyer's payments in view would lose, and whether it is the opponent's only source of its resource. All of it comes from `previewBuild`, `priceShift`, `savesInView` and `publicPlace` on copies, so the leak guard below covers these fields with no extra code.
 
 **Core fields.** Three facts that every view carries, whatever the settings, came with the hints: `players[i].shields` (the shields each seat has placed, Strategy's included, which the cities cannot tell because Strategy counts only for red cards built after it), `playingAgain` (the current turn is an extra turn, so the client no longer infers it from the event history) and `draft.order` (the seats of the round's four picks).
 
@@ -180,13 +189,21 @@ The hints (decision D23; the design is the hints design of M10) are facts the se
 
 **The leak guard.** `hints_leak_test.go` builds, for random states and every named scenario, each viewer's view with every hint family on, and checks that it is identical on the real state and on several determinizations of that viewer's observation (the decider keeps its Great Library offer). This one equality catches any hint, present or future, that reads a face-down card, the deals, the removed cards, the box guilds, the box order or a hidden offer. A second test traces every simulation and checks that no shared hint simulates for the waiting seat during a Great Library offer and that every follow-up stays inside the face-up mask. The fuzz target `FuzzHintsLeak` runs the same checks on fuzzer-chosen games in the nightly fuzz job.
 
-**Cost** (Apple M2, `go test -bench` in `internal/engine`, M10.HS1):
+**Cost** (Apple M2, `go test -bench` in `internal/engine`, M10.HS1, with the frame measured again in M10.HS2):
 
-- `BenchmarkComputeHints/frame`: the hints and the three views of one broadcast, about 42 to 47 microseconds, almost all of it the views themselves, since the hints are still empty.
+- `BenchmarkComputeHints/frame`: the hints and the three views of one broadcast. About 42 to 47 microseconds in M10.HS1, when the hints were still empty; about 50 to 60 microseconds, 40 kilobytes and 444 allocations with the per-card hints of M10.HS2.
 - `BenchmarkComputeHints/projected`: the shared work the later slices will add, measured with the helpers (a `previewBuild`, a `priceShift` and a `savesInView` for each face-up card and seat, a `previewWonder` for each open wonder, a `tokenPreview` for each board token and seat, and `publicPlace` for all 73 cards) on a mid-Age II state: about 20 microseconds and 17 allocations.
 - `BenchmarkDeciderHints`: `WinsNow` and `extraTurnOutcome` for every legal action of the busiest play state of a seeded game (18 actions, 34 Applies): about 7 microseconds, with no allocation.
 
 **Frame size.** The core fields and the empty `hints` object add 56 bytes to a mid-age view: measured on seeds 1 to 3, with both seats played by the simple policy, at the first play state of Age I and of Age II with at most ten cards left, the decider's view went from 15402 to 17989 bytes before to 15458 to 18045 bytes after (seed 1, Age II: 16826 before, 16882 after).
+
+The per-card hints of M10.HS2 add about 2 to 4.4 kilobytes, measured by `TestHintsFrameSize` with every family on, at the same kind of positions (the decider's view without and with the hints):
+
+- seed 1: Age I 15013 to 17623 bytes, Age II 14589 to 18980;
+- seed 2: Age I 15190 to 17798, Age II 13597 to 15621;
+- seed 3: Age I 17147 to 19245, Age II 13705 to 17752.
+
+The test fails if the hints ever add more than a third. Most of the cost is the `effect` of science and military cards; the first draft, which sent every effect and every discarded card, added up to 5.4 kilobytes.
 
 ## Rooms, identity and reconnect
 
