@@ -134,6 +134,8 @@
   --color-card-red-ink: var(--card-red-ink);
   --color-card-purple-ink: var(--card-purple-ink);
   --color-coin-ink: var(--coin-ink);
+  --color-vp: var(--vp);
+  --color-vp-edge: var(--vp-edge);
   --color-sun: var(--sun);
   --color-moon: var(--moon);
   --color-sun-ink: var(--sun-ink);
@@ -157,6 +159,15 @@
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-l: env(safe-area-inset-left, 0px);
     color-scheme: light;
+
+    /* The victory-point tablet (bg-vp, border-vp-edge): a fixed printed
+       green like the coin's gold, the same in both themes, with light
+       numerals on it (track, tallies, effect glyphs). */
+    --vp: oklch(0.45 0.1 150);
+    --vp-edge: oklch(0.35 0.08 150);
+    /* The pale sky behind a scene that has no approved art yet (the result
+       screen's placeholder). */
+    --scene-sky: oklch(0.9 0.04 230);
   }
   :root[data-theme='dark'] {
     color-scheme: dark;

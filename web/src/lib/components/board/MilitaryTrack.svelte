@@ -136,7 +136,7 @@
 
 {#snippet tablet(points: number, cls: string)}
   <span
-    class="inline-grid h-4 min-w-4 place-items-center rounded-[4px] border border-(color:--vp-edge) bg-(--vp) px-0.5 text-[10px] leading-none font-bold text-(--paper-bright) tabular-nums {cls}"
+    class="inline-grid h-4 min-w-4 place-items-center rounded-[4px] border border-vp-edge bg-vp px-0.5 text-[10px] leading-none font-bold text-(--paper-bright) tabular-nums {cls}"
     data-min-font="10"
     data-zone-points={points}>{points}</span
   >
@@ -262,10 +262,6 @@
 </div>
 
 <style>
-  .military-track {
-    --vp: oklch(0.45 0.1 150);
-    --vp-edge: oklch(0.35 0.08 150);
-  }
   /* physical-ok: the board is fixed LTR regardless of reading direction
      (AGENTS.md), so everything on the track sits at a physical offset
      along it, never a logical inset-inline-start. */

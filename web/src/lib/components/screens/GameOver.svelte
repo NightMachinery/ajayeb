@@ -228,7 +228,11 @@
   .victory-placeholder {
     background:
       radial-gradient(circle, var(--gold) 0 1px, transparent 1.5px) 0 0 / 12px 12px,
-      linear-gradient(to bottom, oklch(0.9 0.04 230 / 0.6), transparent 80%);
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--scene-sky) 60%, transparent),
+        transparent 80%
+      );
     opacity: 0.6;
   }
 </style>

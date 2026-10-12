@@ -37,7 +37,7 @@
   <span
     class="{stacked
       ? '-ms-[0.4em]'
-      : ''} inline-grid h-[1.25em] min-w-[1.25em] shrink-0 place-items-center rounded-[0.45em] border border-(color:--vp-edge) bg-(--vp) px-[0.15em] leading-none font-bold text-(--paper-bright) tabular-nums"
+      : ''} inline-grid h-[1.25em] min-w-[1.25em] shrink-0 place-items-center rounded-[0.45em] border border-vp-edge bg-vp px-[0.15em] leading-none font-bold text-(--paper-bright) tabular-nums"
     data-min-font="10">{formatNumber(value)}</span
   >
 {/snippet}
@@ -181,10 +181,3 @@
     <Coin {n} />
   {/if}
 </span>
-
-<style>
-  .glyph {
-    --vp: oklch(0.45 0.1 150);
-    --vp-edge: oklch(0.35 0.08 150);
-  }
-</style>

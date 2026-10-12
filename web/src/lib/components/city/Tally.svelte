@@ -26,7 +26,7 @@
     {size === 'sm' ? 'h-5 px-1.5 text-[13px]' : 'h-6 px-2 text-sm'}
     {kind === 'coins'
     ? 'rounded-full border-(color:--gold-deep) bg-gold text-card-ink'
-    : 'rounded-[0.45em] border-(color:--vp-edge) bg-(--vp) text-(--paper-bright)'} {className}"
+    : 'rounded-[0.45em] border-vp-edge bg-vp text-(--paper-bright)'} {className}"
   data-tally={kind}
   role="img"
   aria-label={label}
@@ -38,10 +38,3 @@
   {/if}
   <span data-must-fit>{formatNumber(value)}</span>
 </span>
-
-<style>
-  .tally {
-    --vp: oklch(0.45 0.1 150);
-    --vp-edge: oklch(0.35 0.08 150);
-  }
-</style>
