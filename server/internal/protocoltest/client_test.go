@@ -41,6 +41,9 @@ func decodeServerFrame(raw []byte) (any, error) {
 	case "error":
 		var m wire.Error
 		return m, json.Unmarshal(raw, &m)
+	case "linked":
+		var m wire.Linked
+		return m, json.Unmarshal(raw, &m)
 	default:
 		return nil, fmt.Errorf("unknown server frame type %q", head.T)
 	}

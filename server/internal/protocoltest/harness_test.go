@@ -66,6 +66,7 @@ func newServer(t *testing.T, dataDir string, seedBase uint64) *server {
 		BotBudget: func(store.BotLevel) ai.Budget { return tinyBudget },
 		BotDelay:  0,
 		Seed:      func() uint64 { return seedBase + srv.seed.Add(1) },
+		Claims:    secret,
 	})
 	if err != nil {
 		t.Fatalf("room.NewManager: %v", err)
