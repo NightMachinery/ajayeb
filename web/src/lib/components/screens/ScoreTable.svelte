@@ -92,11 +92,14 @@
           class="w-[5.5rem] max-w-[5.5rem] px-1 pb-1.5 text-end text-xs font-semibold
             {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
         >
-          <!-- A long name (a bot's persona, "Apprentice") wraps under its
-               crest rather than being cut off. -->
-          <span class="flex flex-wrap items-center justify-end gap-x-1">
+          <!-- A long name (a bot's persona, "Apprentice") goes under its
+               crest, and wraps at its spaces, never inside a word; only a
+               single word too long for the column breaks, at its edge. The
+               column's width caps the block, so such a word cannot widen
+               it. -->
+          <span class="ms-auto flex max-w-[5rem] flex-wrap items-center justify-end gap-x-1">
             <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} class="shrink-0 text-[15px]" />
-            <span class="min-w-0 text-end leading-tight [overflow-wrap:anywhere]" dir="auto"
+            <span class="max-w-full text-end leading-tight wrap-break-word" dir="auto"
               >{names[seat]}</span
             >
           </span>
