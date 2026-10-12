@@ -84,7 +84,7 @@
 
   <section class="flex flex-col gap-2">
     <h3 class="text-sm font-semibold text-fg-muted">City panels <!-- i18n-ok --></h3>
-    <div class="grid max-w-3xl grid-cols-2 gap-3">
+    <div class="grid max-w-3xl gap-3 sm:grid-cols-2">
       {#each [0, 1] as const as seat (seat)}
         <CityPanel
           name={names[seat]}
