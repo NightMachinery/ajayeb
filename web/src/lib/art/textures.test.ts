@@ -19,7 +19,9 @@ function declared(selector: string, prop: string): string | undefined {
 
 const shipped = new Map<string, string>();
 for (const [id, entry] of Object.entries(art)) {
-  for (const v of Object.values(entry.variants)) shipped.set(v.path, id);
+  // CSS names the file without the index's ?v= content hash (the server
+  // then revalidates it, see docs/art/bitmaps.md "Caching").
+  for (const v of Object.values(entry.variants)) shipped.set(v.path.split('?')[0] ?? '', id);
 }
 
 describe('table textures', () => {

@@ -134,7 +134,7 @@ describe('the generated index', () => {
       }
       const pick = pickArt(id);
       expect(pick, id).toBeDefined();
-      expect(pick?.src, id).toMatch(/^\/art\/[a-z0-9-]+\/[a-z0-9@-]+\.avif$/);
+      expect(pick?.src, id).toMatch(/^\/art\/[a-z0-9-]+\/[a-z0-9@-]+\.avif\?v=[0-9a-f]{10}$/);
     }
   });
 

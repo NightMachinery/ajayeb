@@ -11,6 +11,10 @@
 // Ids are "<kind>/<slug>", e.g. "card/lumber-yard", "wonder/pyramids",
 // "token/agriculture", "back/age1", "texture/paper", "hero/hero",
 // "avatar/apprentice", "victory/military", "icon/app".
+//
+// Each path ends in ?v= and the start of the file's SHA-256, so it names
+// one exact file: the server caches it for a year, and new art gets a new
+// URL. bytes is the shipped file's size.
 
 export interface ArtVariant {
   readonly path: string;
@@ -20,7 +24,7 @@ export interface ArtVariant {
 }
 
 /** variants is keyed by the shipped size's suffix: 'default' for a kind's
- * one size, otherwise the asset table's suffix ('thumb', '512', '192', …). */
+ * main size, otherwise the asset table's suffix ('thumb', '1440', '512', …). */
 export interface ArtEntry {
   readonly kind: string;
   readonly variants: { readonly [suffix: string]: ArtVariant };
@@ -31,7 +35,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'avatar',
     variants: {
       default: {
-        path: '/art/avatars/apprentice.avif',
+        path: '/art/avatars/apprentice.avif?v=2749e1e0fc',
         width: 192,
         height: 192,
         bytes: 4895
@@ -42,7 +46,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'avatar',
     variants: {
       default: {
-        path: '/art/avatars/master.avif',
+        path: '/art/avatars/master.avif?v=38f6a66d47',
         width: 192,
         height: 192,
         bytes: 4334
@@ -53,7 +57,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'avatar',
     variants: {
       default: {
-        path: '/art/avatars/scholar.avif',
+        path: '/art/avatars/scholar.avif?v=a635a4193b',
         width: 192,
         height: 192,
         bytes: 4843
@@ -64,7 +68,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'back',
     variants: {
       default: {
-        path: '/art/backs/age1.avif',
+        path: '/art/backs/age1.avif?v=050a5efb0e',
         width: 320,
         height: 495,
         bytes: 14168
@@ -75,7 +79,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'back',
     variants: {
       default: {
-        path: '/art/backs/age2.avif',
+        path: '/art/backs/age2.avif?v=c7e2847c36',
         width: 320,
         height: 495,
         bytes: 11422
@@ -86,7 +90,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'back',
     variants: {
       default: {
-        path: '/art/backs/age3.avif',
+        path: '/art/backs/age3.avif?v=bc0207a00f',
         width: 320,
         height: 495,
         bytes: 18453
@@ -97,7 +101,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'back',
     variants: {
       default: {
-        path: '/art/backs/guild.avif',
+        path: '/art/backs/guild.avif?v=3a5764afb5',
         width: 320,
         height: 495,
         bytes: 25134
@@ -108,13 +112,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/academy.avif',
+        path: '/art/cards/academy.avif?v=98cb2d6bdf',
         width: 480,
         height: 360,
         bytes: 19976
       },
       thumb: {
-        path: '/art/cards/academy@thumb.avif',
+        path: '/art/cards/academy@thumb.avif?v=8b745291fa',
         width: 240,
         height: 180,
         bytes: 6063
@@ -125,13 +129,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/altar.avif',
+        path: '/art/cards/altar.avif?v=236f7b8671',
         width: 480,
         height: 360,
         bytes: 18888
       },
       thumb: {
-        path: '/art/cards/altar@thumb.avif',
+        path: '/art/cards/altar@thumb.avif?v=dba92a90fe',
         width: 240,
         height: 180,
         bytes: 5917
@@ -142,13 +146,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/apothecary.avif',
+        path: '/art/cards/apothecary.avif?v=f3f37be01d',
         width: 480,
         height: 360,
         bytes: 14582
       },
       thumb: {
-        path: '/art/cards/apothecary@thumb.avif',
+        path: '/art/cards/apothecary@thumb.avif?v=83e08ff0fc',
         width: 240,
         height: 180,
         bytes: 4198
@@ -159,13 +163,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/aqueduct.avif',
+        path: '/art/cards/aqueduct.avif?v=8aa9dbe200',
         width: 480,
         height: 360,
         bytes: 15078
       },
       thumb: {
-        path: '/art/cards/aqueduct@thumb.avif',
+        path: '/art/cards/aqueduct@thumb.avif?v=3fb0a9b89b',
         width: 240,
         height: 180,
         bytes: 5120
@@ -176,13 +180,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/archery-range.avif',
+        path: '/art/cards/archery-range.avif?v=447432491c',
         width: 480,
         height: 360,
         bytes: 17112
       },
       thumb: {
-        path: '/art/cards/archery-range@thumb.avif',
+        path: '/art/cards/archery-range@thumb.avif?v=79bdb73e21',
         width: 240,
         height: 180,
         bytes: 5666
@@ -193,13 +197,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/arena.avif',
+        path: '/art/cards/arena.avif?v=2682f6b1b2',
         width: 480,
         height: 360,
         bytes: 16557
       },
       thumb: {
-        path: '/art/cards/arena@thumb.avif',
+        path: '/art/cards/arena@thumb.avif?v=2510684744',
         width: 240,
         height: 180,
         bytes: 5219
@@ -210,13 +214,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/armory.avif',
+        path: '/art/cards/armory.avif?v=c63856c124',
         width: 480,
         height: 360,
         bytes: 16988
       },
       thumb: {
-        path: '/art/cards/armory@thumb.avif',
+        path: '/art/cards/armory@thumb.avif?v=8896896b40',
         width: 240,
         height: 180,
         bytes: 6027
@@ -227,13 +231,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/arsenal.avif',
+        path: '/art/cards/arsenal.avif?v=47c69c3fa0',
         width: 480,
         height: 360,
         bytes: 18168
       },
       thumb: {
-        path: '/art/cards/arsenal@thumb.avif',
+        path: '/art/cards/arsenal@thumb.avif?v=34735f12b6',
         width: 240,
         height: 180,
         bytes: 6044
@@ -244,13 +248,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/barracks.avif',
+        path: '/art/cards/barracks.avif?v=6f6fa443fe',
         width: 480,
         height: 360,
         bytes: 13377
       },
       thumb: {
-        path: '/art/cards/barracks@thumb.avif',
+        path: '/art/cards/barracks@thumb.avif?v=7e1dfb415f',
         width: 240,
         height: 180,
         bytes: 4809
@@ -261,13 +265,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/baths.avif',
+        path: '/art/cards/baths.avif?v=5b6f84adfb',
         width: 480,
         height: 360,
         bytes: 19606
       },
       thumb: {
-        path: '/art/cards/baths@thumb.avif',
+        path: '/art/cards/baths@thumb.avif?v=819399ef16',
         width: 240,
         height: 180,
         bytes: 5984
@@ -278,13 +282,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/brewery.avif',
+        path: '/art/cards/brewery.avif?v=28cc218118',
         width: 480,
         height: 360,
         bytes: 15235
       },
       thumb: {
-        path: '/art/cards/brewery@thumb.avif',
+        path: '/art/cards/brewery@thumb.avif?v=5fdefc3f69',
         width: 240,
         height: 180,
         bytes: 5500
@@ -295,13 +299,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/brickyard.avif',
+        path: '/art/cards/brickyard.avif?v=56983307e4',
         width: 480,
         height: 360,
         bytes: 14508
       },
       thumb: {
-        path: '/art/cards/brickyard@thumb.avif',
+        path: '/art/cards/brickyard@thumb.avif?v=432889ef29',
         width: 240,
         height: 180,
         bytes: 4651
@@ -312,13 +316,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/builders-guild.avif',
+        path: '/art/cards/builders-guild.avif?v=9147fdde25',
         width: 480,
         height: 360,
         bytes: 17966
       },
       thumb: {
-        path: '/art/cards/builders-guild@thumb.avif',
+        path: '/art/cards/builders-guild@thumb.avif?v=d46993116d',
         width: 240,
         height: 180,
         bytes: 5705
@@ -329,13 +333,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/caravansery.avif',
+        path: '/art/cards/caravansery.avif?v=cfc8f546d7',
         width: 480,
         height: 360,
         bytes: 17376
       },
       thumb: {
-        path: '/art/cards/caravansery@thumb.avif',
+        path: '/art/cards/caravansery@thumb.avif?v=3abb06f29d',
         width: 240,
         height: 180,
         bytes: 5677
@@ -346,13 +350,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/chamber-of-commerce.avif',
+        path: '/art/cards/chamber-of-commerce.avif?v=e0ff933d0b',
         width: 480,
         height: 360,
         bytes: 16054
       },
       thumb: {
-        path: '/art/cards/chamber-of-commerce@thumb.avif',
+        path: '/art/cards/chamber-of-commerce@thumb.avif?v=2ab5498034',
         width: 240,
         height: 180,
         bytes: 5126
@@ -363,13 +367,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/circus.avif',
+        path: '/art/cards/circus.avif?v=c83558a53e',
         width: 480,
         height: 360,
         bytes: 10864
       },
       thumb: {
-        path: '/art/cards/circus@thumb.avif',
+        path: '/art/cards/circus@thumb.avif?v=a172a2f178',
         width: 240,
         height: 180,
         bytes: 3632
@@ -380,13 +384,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/clay-pit.avif',
+        path: '/art/cards/clay-pit.avif?v=7e686d5e74',
         width: 480,
         height: 360,
         bytes: 11127
       },
       thumb: {
-        path: '/art/cards/clay-pit@thumb.avif',
+        path: '/art/cards/clay-pit@thumb.avif?v=b45379b6e7',
         width: 240,
         height: 180,
         bytes: 3780
@@ -397,13 +401,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/clay-pool.avif',
+        path: '/art/cards/clay-pool.avif?v=34e5090653',
         width: 480,
         height: 360,
         bytes: 15308
       },
       thumb: {
-        path: '/art/cards/clay-pool@thumb.avif',
+        path: '/art/cards/clay-pool@thumb.avif?v=17a49c8d93',
         width: 240,
         height: 180,
         bytes: 4683
@@ -414,13 +418,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/clay-reserve.avif',
+        path: '/art/cards/clay-reserve.avif?v=a39826d454',
         width: 480,
         height: 360,
         bytes: 12759
       },
       thumb: {
-        path: '/art/cards/clay-reserve@thumb.avif',
+        path: '/art/cards/clay-reserve@thumb.avif?v=5d3ce2a94e',
         width: 240,
         height: 180,
         bytes: 4600
@@ -431,13 +435,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/courthouse.avif',
+        path: '/art/cards/courthouse.avif?v=e71c31915f',
         width: 480,
         height: 360,
         bytes: 15289
       },
       thumb: {
-        path: '/art/cards/courthouse@thumb.avif',
+        path: '/art/cards/courthouse@thumb.avif?v=90fe84033d',
         width: 240,
         height: 180,
         bytes: 5016
@@ -448,13 +452,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/customs-house.avif',
+        path: '/art/cards/customs-house.avif?v=207153caa2',
         width: 480,
         height: 360,
         bytes: 15020
       },
       thumb: {
-        path: '/art/cards/customs-house@thumb.avif',
+        path: '/art/cards/customs-house@thumb.avif?v=b4b5993be0',
         width: 240,
         height: 180,
         bytes: 5109
@@ -465,13 +469,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/dispensary.avif',
+        path: '/art/cards/dispensary.avif?v=ab41f49557',
         width: 480,
         height: 360,
         bytes: 16993
       },
       thumb: {
-        path: '/art/cards/dispensary@thumb.avif',
+        path: '/art/cards/dispensary@thumb.avif?v=fc86e2d866',
         width: 240,
         height: 180,
         bytes: 5382
@@ -482,13 +486,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/drying-room.avif',
+        path: '/art/cards/drying-room.avif?v=4a924d8c7f',
         width: 480,
         height: 360,
         bytes: 16935
       },
       thumb: {
-        path: '/art/cards/drying-room@thumb.avif',
+        path: '/art/cards/drying-room@thumb.avif?v=21f4611c36',
         width: 240,
         height: 180,
         bytes: 5427
@@ -499,13 +503,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/fortifications.avif',
+        path: '/art/cards/fortifications.avif?v=8365a1f050',
         width: 480,
         height: 360,
         bytes: 13297
       },
       thumb: {
-        path: '/art/cards/fortifications@thumb.avif',
+        path: '/art/cards/fortifications@thumb.avif?v=058d9c695f',
         width: 240,
         height: 180,
         bytes: 4731
@@ -516,13 +520,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/forum.avif',
+        path: '/art/cards/forum.avif?v=fc95e35430',
         width: 480,
         height: 360,
         bytes: 16822
       },
       thumb: {
-        path: '/art/cards/forum@thumb.avif',
+        path: '/art/cards/forum@thumb.avif?v=205f4b55b6',
         width: 240,
         height: 180,
         bytes: 5436
@@ -533,13 +537,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/gardens.avif',
+        path: '/art/cards/gardens.avif?v=8930e39f10',
         width: 480,
         height: 360,
         bytes: 19136
       },
       thumb: {
-        path: '/art/cards/gardens@thumb.avif',
+        path: '/art/cards/gardens@thumb.avif?v=a7b6ad5e06',
         width: 240,
         height: 180,
         bytes: 6216
@@ -550,13 +554,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/garrison.avif',
+        path: '/art/cards/garrison.avif?v=891f39602f',
         width: 480,
         height: 360,
         bytes: 15608
       },
       thumb: {
-        path: '/art/cards/garrison@thumb.avif',
+        path: '/art/cards/garrison@thumb.avif?v=48fb14d229',
         width: 240,
         height: 180,
         bytes: 5252
@@ -567,13 +571,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/glass-blower.avif',
+        path: '/art/cards/glass-blower.avif?v=7e9277bd9f',
         width: 480,
         height: 360,
         bytes: 16168
       },
       thumb: {
-        path: '/art/cards/glass-blower@thumb.avif',
+        path: '/art/cards/glass-blower@thumb.avif?v=c230bc8b7e',
         width: 240,
         height: 180,
         bytes: 5045
@@ -584,13 +588,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/glassworks.avif',
+        path: '/art/cards/glassworks.avif?v=75a1f31b58',
         width: 480,
         height: 360,
         bytes: 14838
       },
       thumb: {
-        path: '/art/cards/glassworks@thumb.avif',
+        path: '/art/cards/glassworks@thumb.avif?v=febefca24a',
         width: 240,
         height: 180,
         bytes: 4876
@@ -601,13 +605,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/guard-tower.avif',
+        path: '/art/cards/guard-tower.avif?v=f807c30020',
         width: 480,
         height: 360,
         bytes: 13094
       },
       thumb: {
-        path: '/art/cards/guard-tower@thumb.avif',
+        path: '/art/cards/guard-tower@thumb.avif?v=444256b101',
         width: 240,
         height: 180,
         bytes: 4167
@@ -618,13 +622,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/horse-breeders.avif',
+        path: '/art/cards/horse-breeders.avif?v=430d7795fa',
         width: 480,
         height: 360,
         bytes: 15873
       },
       thumb: {
-        path: '/art/cards/horse-breeders@thumb.avif',
+        path: '/art/cards/horse-breeders@thumb.avif?v=da83888408',
         width: 240,
         height: 180,
         bytes: 5288
@@ -635,13 +639,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/laboratory.avif',
+        path: '/art/cards/laboratory.avif?v=da6f845a1b',
         width: 480,
         height: 360,
         bytes: 17026
       },
       thumb: {
-        path: '/art/cards/laboratory@thumb.avif',
+        path: '/art/cards/laboratory@thumb.avif?v=ae43a3cc0f',
         width: 240,
         height: 180,
         bytes: 5657
@@ -652,13 +656,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/library.avif',
+        path: '/art/cards/library.avif?v=b23a5084f9',
         width: 480,
         height: 360,
         bytes: 15470
       },
       thumb: {
-        path: '/art/cards/library@thumb.avif',
+        path: '/art/cards/library@thumb.avif?v=057d237534',
         width: 240,
         height: 180,
         bytes: 5287
@@ -669,13 +673,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/lighthouse.avif',
+        path: '/art/cards/lighthouse.avif?v=06f91072f6',
         width: 480,
         height: 360,
         bytes: 12787
       },
       thumb: {
-        path: '/art/cards/lighthouse@thumb.avif',
+        path: '/art/cards/lighthouse@thumb.avif?v=7a6c416639',
         width: 240,
         height: 180,
         bytes: 4130
@@ -686,13 +690,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/logging-camp.avif',
+        path: '/art/cards/logging-camp.avif?v=55fe16806e',
         width: 480,
         height: 360,
         bytes: 13686
       },
       thumb: {
-        path: '/art/cards/logging-camp@thumb.avif',
+        path: '/art/cards/logging-camp@thumb.avif?v=a7524a7611',
         width: 240,
         height: 180,
         bytes: 4560
@@ -703,13 +707,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/lumber-yard.avif',
+        path: '/art/cards/lumber-yard.avif?v=3d236647a7',
         width: 480,
         height: 360,
         bytes: 13100
       },
       thumb: {
-        path: '/art/cards/lumber-yard@thumb.avif',
+        path: '/art/cards/lumber-yard@thumb.avif?v=aa85bfdbc4',
         width: 240,
         height: 180,
         bytes: 4181
@@ -720,13 +724,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/magistrates-guild.avif',
+        path: '/art/cards/magistrates-guild.avif?v=9afcd5713e',
         width: 480,
         height: 360,
         bytes: 15753
       },
       thumb: {
-        path: '/art/cards/magistrates-guild@thumb.avif',
+        path: '/art/cards/magistrates-guild@thumb.avif?v=2dadba1183',
         width: 240,
         height: 180,
         bytes: 5517
@@ -737,13 +741,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/merchants-guild.avif',
+        path: '/art/cards/merchants-guild.avif?v=9ebb7d308d',
         width: 480,
         height: 360,
         bytes: 18321
       },
       thumb: {
-        path: '/art/cards/merchants-guild@thumb.avif',
+        path: '/art/cards/merchants-guild@thumb.avif?v=0f8a5514d6',
         width: 240,
         height: 180,
         bytes: 5868
@@ -754,13 +758,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/moneylenders-guild.avif',
+        path: '/art/cards/moneylenders-guild.avif?v=203f46ec7e',
         width: 480,
         height: 360,
         bytes: 15061
       },
       thumb: {
-        path: '/art/cards/moneylenders-guild@thumb.avif',
+        path: '/art/cards/moneylenders-guild@thumb.avif?v=6fc92e0c27',
         width: 240,
         height: 180,
         bytes: 5214
@@ -771,13 +775,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/obelisk.avif',
+        path: '/art/cards/obelisk.avif?v=a9b469c466',
         width: 480,
         height: 360,
         bytes: 10990
       },
       thumb: {
-        path: '/art/cards/obelisk@thumb.avif',
+        path: '/art/cards/obelisk@thumb.avif?v=51671df2b8',
         width: 240,
         height: 180,
         bytes: 3773
@@ -788,13 +792,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/observatory.avif',
+        path: '/art/cards/observatory.avif?v=4f0d3a56c6',
         width: 480,
         height: 360,
         bytes: 14424
       },
       thumb: {
-        path: '/art/cards/observatory@thumb.avif',
+        path: '/art/cards/observatory@thumb.avif?v=13443aac62',
         width: 240,
         height: 180,
         bytes: 5024
@@ -805,13 +809,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/palace.avif',
+        path: '/art/cards/palace.avif?v=e9926b1281',
         width: 480,
         height: 360,
         bytes: 18334
       },
       thumb: {
-        path: '/art/cards/palace@thumb.avif',
+        path: '/art/cards/palace@thumb.avif?v=78316e0f04',
         width: 240,
         height: 180,
         bytes: 5689
@@ -822,13 +826,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/palisade.avif',
+        path: '/art/cards/palisade.avif?v=8637e2cb16',
         width: 480,
         height: 360,
         bytes: 14632
       },
       thumb: {
-        path: '/art/cards/palisade@thumb.avif',
+        path: '/art/cards/palisade@thumb.avif?v=cb5ab162d6',
         width: 240,
         height: 180,
         bytes: 5135
@@ -839,13 +843,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/pantheon.avif',
+        path: '/art/cards/pantheon.avif?v=4f52bb05df',
         width: 480,
         height: 360,
         bytes: 18523
       },
       thumb: {
-        path: '/art/cards/pantheon@thumb.avif',
+        path: '/art/cards/pantheon@thumb.avif?v=8d0a81b262',
         width: 240,
         height: 180,
         bytes: 5796
@@ -856,13 +860,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/parade-ground.avif',
+        path: '/art/cards/parade-ground.avif?v=a621473f3e',
         width: 480,
         height: 360,
         bytes: 11342
       },
       thumb: {
-        path: '/art/cards/parade-ground@thumb.avif',
+        path: '/art/cards/parade-ground@thumb.avif?v=9b2709cac4',
         width: 240,
         height: 180,
         bytes: 4180
@@ -873,13 +877,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/pharmacist.avif',
+        path: '/art/cards/pharmacist.avif?v=02a550fd19',
         width: 480,
         height: 360,
         bytes: 14866
       },
       thumb: {
-        path: '/art/cards/pharmacist@thumb.avif',
+        path: '/art/cards/pharmacist@thumb.avif?v=734b754193',
         width: 240,
         height: 180,
         bytes: 4897
@@ -890,13 +894,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/port.avif',
+        path: '/art/cards/port.avif?v=71c0aa8fdf',
         width: 480,
         height: 360,
         bytes: 14187
       },
       thumb: {
-        path: '/art/cards/port@thumb.avif',
+        path: '/art/cards/port@thumb.avif?v=7c00496166',
         width: 240,
         height: 180,
         bytes: 4765
@@ -907,13 +911,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/press.avif',
+        path: '/art/cards/press.avif?v=6918f52fa1',
         width: 480,
         height: 360,
         bytes: 15548
       },
       thumb: {
-        path: '/art/cards/press@thumb.avif',
+        path: '/art/cards/press@thumb.avif?v=14d0846236',
         width: 240,
         height: 180,
         bytes: 5308
@@ -924,13 +928,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/pretorium.avif',
+        path: '/art/cards/pretorium.avif?v=f498c85c41',
         width: 480,
         height: 360,
         bytes: 18526
       },
       thumb: {
-        path: '/art/cards/pretorium@thumb.avif',
+        path: '/art/cards/pretorium@thumb.avif?v=3c06104a17',
         width: 240,
         height: 180,
         bytes: 6098
@@ -941,13 +945,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/quarry.avif',
+        path: '/art/cards/quarry.avif?v=9eb7bfc103',
         width: 480,
         height: 360,
         bytes: 15026
       },
       thumb: {
-        path: '/art/cards/quarry@thumb.avif',
+        path: '/art/cards/quarry@thumb.avif?v=59e7839188',
         width: 240,
         height: 180,
         bytes: 4730
@@ -958,13 +962,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/rostrum.avif',
+        path: '/art/cards/rostrum.avif?v=e09e7ef446',
         width: 480,
         height: 360,
         bytes: 15638
       },
       thumb: {
-        path: '/art/cards/rostrum@thumb.avif',
+        path: '/art/cards/rostrum@thumb.avif?v=43c269a3d1',
         width: 240,
         height: 180,
         bytes: 4936
@@ -975,13 +979,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/sawmill.avif',
+        path: '/art/cards/sawmill.avif?v=fe092588b9',
         width: 480,
         height: 360,
         bytes: 12793
       },
       thumb: {
-        path: '/art/cards/sawmill@thumb.avif',
+        path: '/art/cards/sawmill@thumb.avif?v=a07abcf9da',
         width: 240,
         height: 180,
         bytes: 4262
@@ -992,13 +996,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/school.avif',
+        path: '/art/cards/school.avif?v=99afc8cc3b',
         width: 480,
         height: 360,
         bytes: 15195
       },
       thumb: {
-        path: '/art/cards/school@thumb.avif',
+        path: '/art/cards/school@thumb.avif?v=b187b793b2',
         width: 240,
         height: 180,
         bytes: 4936
@@ -1009,13 +1013,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/scientists-guild.avif',
+        path: '/art/cards/scientists-guild.avif?v=5bf8fd7eda',
         width: 480,
         height: 360,
         bytes: 15272
       },
       thumb: {
-        path: '/art/cards/scientists-guild@thumb.avif',
+        path: '/art/cards/scientists-guild@thumb.avif?v=361c34bc51',
         width: 240,
         height: 180,
         bytes: 5655
@@ -1026,13 +1030,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/scriptorium.avif',
+        path: '/art/cards/scriptorium.avif?v=be54046642',
         width: 480,
         height: 360,
         bytes: 13780
       },
       thumb: {
-        path: '/art/cards/scriptorium@thumb.avif',
+        path: '/art/cards/scriptorium@thumb.avif?v=37a0af0521',
         width: 240,
         height: 180,
         bytes: 4488
@@ -1043,13 +1047,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/senate.avif',
+        path: '/art/cards/senate.avif?v=66f8a31132',
         width: 480,
         height: 360,
         bytes: 17059
       },
       thumb: {
-        path: '/art/cards/senate@thumb.avif',
+        path: '/art/cards/senate@thumb.avif?v=feae8728de',
         width: 240,
         height: 180,
         bytes: 5158
@@ -1060,13 +1064,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/shelf-quarry.avif',
+        path: '/art/cards/shelf-quarry.avif?v=b1c8398adc',
         width: 480,
         height: 360,
         bytes: 14652
       },
       thumb: {
-        path: '/art/cards/shelf-quarry@thumb.avif',
+        path: '/art/cards/shelf-quarry@thumb.avif?v=bd2a9877cb',
         width: 240,
         height: 180,
         bytes: 5352
@@ -1077,13 +1081,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/shipowners-guild.avif',
+        path: '/art/cards/shipowners-guild.avif?v=a37e8a9253',
         width: 480,
         height: 360,
         bytes: 11846
       },
       thumb: {
-        path: '/art/cards/shipowners-guild@thumb.avif',
+        path: '/art/cards/shipowners-guild@thumb.avif?v=2e6e7cae2a',
         width: 240,
         height: 180,
         bytes: 4057
@@ -1094,13 +1098,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/siege-workshop.avif',
+        path: '/art/cards/siege-workshop.avif?v=2c9850dc2f',
         width: 480,
         height: 360,
         bytes: 13741
       },
       thumb: {
-        path: '/art/cards/siege-workshop@thumb.avif',
+        path: '/art/cards/siege-workshop@thumb.avif?v=d48842c338',
         width: 240,
         height: 180,
         bytes: 4773
@@ -1111,13 +1115,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/stable.avif',
+        path: '/art/cards/stable.avif?v=fac95fc823',
         width: 480,
         height: 360,
         bytes: 13786
       },
       thumb: {
-        path: '/art/cards/stable@thumb.avif',
+        path: '/art/cards/stable@thumb.avif?v=83bad6a7f4',
         width: 240,
         height: 180,
         bytes: 4796
@@ -1128,13 +1132,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/statue.avif',
+        path: '/art/cards/statue.avif?v=85516d04d4',
         width: 480,
         height: 360,
         bytes: 14462
       },
       thumb: {
-        path: '/art/cards/statue@thumb.avif',
+        path: '/art/cards/statue@thumb.avif?v=e185c3d614',
         width: 240,
         height: 180,
         bytes: 5317
@@ -1145,13 +1149,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/stone-pit.avif',
+        path: '/art/cards/stone-pit.avif?v=c6ebd4f651',
         width: 480,
         height: 360,
         bytes: 15163
       },
       thumb: {
-        path: '/art/cards/stone-pit@thumb.avif',
+        path: '/art/cards/stone-pit@thumb.avif?v=21c2201212',
         width: 240,
         height: 180,
         bytes: 5034
@@ -1162,13 +1166,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/stone-reserve.avif',
+        path: '/art/cards/stone-reserve.avif?v=64ee21923e',
         width: 480,
         height: 360,
         bytes: 15260
       },
       thumb: {
-        path: '/art/cards/stone-reserve@thumb.avif',
+        path: '/art/cards/stone-reserve@thumb.avif?v=74079c1e28',
         width: 240,
         height: 180,
         bytes: 5257
@@ -1179,13 +1183,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/study.avif',
+        path: '/art/cards/study.avif?v=50eae4edc3',
         width: 480,
         height: 360,
         bytes: 18260
       },
       thumb: {
-        path: '/art/cards/study@thumb.avif',
+        path: '/art/cards/study@thumb.avif?v=ff31f58e96',
         width: 240,
         height: 180,
         bytes: 5540
@@ -1196,13 +1200,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/tacticians-guild.avif',
+        path: '/art/cards/tacticians-guild.avif?v=c03840f08e',
         width: 480,
         height: 360,
         bytes: 17059
       },
       thumb: {
-        path: '/art/cards/tacticians-guild@thumb.avif',
+        path: '/art/cards/tacticians-guild@thumb.avif?v=2966d91afd',
         width: 240,
         height: 180,
         bytes: 5388
@@ -1213,13 +1217,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/tavern.avif',
+        path: '/art/cards/tavern.avif?v=6e44cff871',
         width: 480,
         height: 360,
         bytes: 9871
       },
       thumb: {
-        path: '/art/cards/tavern@thumb.avif',
+        path: '/art/cards/tavern@thumb.avif?v=dfd44a8c30',
         width: 240,
         height: 180,
         bytes: 3538
@@ -1230,13 +1234,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/temple.avif',
+        path: '/art/cards/temple.avif?v=1e813e5f4b',
         width: 480,
         height: 360,
         bytes: 15667
       },
       thumb: {
-        path: '/art/cards/temple@thumb.avif',
+        path: '/art/cards/temple@thumb.avif?v=a9a9885855',
         width: 240,
         height: 180,
         bytes: 5249
@@ -1247,13 +1251,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/theater.avif',
+        path: '/art/cards/theater.avif?v=4be0365527',
         width: 480,
         height: 360,
         bytes: 16293
       },
       thumb: {
-        path: '/art/cards/theater@thumb.avif',
+        path: '/art/cards/theater@thumb.avif?v=83c33a5071',
         width: 240,
         height: 180,
         bytes: 5512
@@ -1264,13 +1268,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/town-hall.avif',
+        path: '/art/cards/town-hall.avif?v=fe39583d17',
         width: 480,
         height: 360,
         bytes: 16757
       },
       thumb: {
-        path: '/art/cards/town-hall@thumb.avif',
+        path: '/art/cards/town-hall@thumb.avif?v=53444f833f',
         width: 240,
         height: 180,
         bytes: 5142
@@ -1281,13 +1285,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/university.avif',
+        path: '/art/cards/university.avif?v=1205dadb97',
         width: 480,
         height: 360,
         bytes: 16295
       },
       thumb: {
-        path: '/art/cards/university@thumb.avif',
+        path: '/art/cards/university@thumb.avif?v=242fc21d5b',
         width: 240,
         height: 180,
         bytes: 5335
@@ -1298,13 +1302,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/walls.avif',
+        path: '/art/cards/walls.avif?v=b2e5bb4b11',
         width: 480,
         height: 360,
         bytes: 16228
       },
       thumb: {
-        path: '/art/cards/walls@thumb.avif',
+        path: '/art/cards/walls@thumb.avif?v=7b767c9883',
         width: 240,
         height: 180,
         bytes: 5211
@@ -1315,13 +1319,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/wood-reserve.avif',
+        path: '/art/cards/wood-reserve.avif?v=c85bef9e96',
         width: 480,
         height: 360,
         bytes: 15318
       },
       thumb: {
-        path: '/art/cards/wood-reserve@thumb.avif',
+        path: '/art/cards/wood-reserve@thumb.avif?v=67aa00212c',
         width: 240,
         height: 180,
         bytes: 5859
@@ -1332,13 +1336,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'card',
     variants: {
       default: {
-        path: '/art/cards/workshop.avif',
+        path: '/art/cards/workshop.avif?v=f1a4e616b0',
         width: 480,
         height: 360,
         bytes: 17013
       },
       thumb: {
-        path: '/art/cards/workshop@thumb.avif',
+        path: '/art/cards/workshop@thumb.avif?v=087a515770',
         width: 240,
         height: 180,
         bytes: 5456
@@ -1349,13 +1353,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'hero',
     variants: {
       '800': {
-        path: '/art/ui/hero@800.avif',
+        path: '/art/ui/hero@800.avif?v=740e63b2c9',
         width: 800,
         height: 450,
         bytes: 26212
       },
       default: {
-        path: '/art/ui/hero.avif',
+        path: '/art/ui/hero.avif?v=eefd762a0d',
         width: 1600,
         height: 900,
         bytes: 90120
@@ -1366,25 +1370,25 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'icon',
     variants: {
       '32': {
-        path: '/art/icon/app@32.avif',
+        path: '/art/icon/app@32.avif?v=99b4885c95',
         width: 32,
         height: 32,
         bytes: 671
       },
       '180': {
-        path: '/art/icon/app@180.avif',
+        path: '/art/icon/app@180.avif?v=1f8fc54948',
         width: 180,
         height: 180,
         bytes: 3609
       },
       '192': {
-        path: '/art/icon/app@192.avif',
+        path: '/art/icon/app@192.avif?v=c55b84fd07',
         width: 192,
         height: 192,
         bytes: 3604
       },
       '512': {
-        path: '/art/icon/app@512.avif',
+        path: '/art/icon/app@512.avif?v=07ebbd0437',
         width: 512,
         height: 512,
         bytes: 18935
@@ -1395,7 +1399,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'texture',
     variants: {
       default: {
-        path: '/art/ui/night.avif',
+        path: '/art/ui/night.avif?v=84e4e3e22d',
         width: 512,
         height: 512,
         bytes: 31386
@@ -1406,7 +1410,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'texture',
     variants: {
       default: {
-        path: '/art/ui/paper.avif',
+        path: '/art/ui/paper.avif?v=ceb4f38a41',
         width: 512,
         height: 512,
         bytes: 5102
@@ -1417,13 +1421,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/agriculture.avif',
+        path: '/art/tokens/agriculture.avif?v=d6bfe82de3',
         width: 256,
         height: 256,
         bytes: 6316
       },
       thumb: {
-        path: '/art/tokens/agriculture@thumb.avif',
+        path: '/art/tokens/agriculture@thumb.avif?v=d8f753dff7',
         width: 96,
         height: 96,
         bytes: 1429
@@ -1434,13 +1438,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/architecture.avif',
+        path: '/art/tokens/architecture.avif?v=98c585442b',
         width: 256,
         height: 256,
         bytes: 4183
       },
       thumb: {
-        path: '/art/tokens/architecture@thumb.avif',
+        path: '/art/tokens/architecture@thumb.avif?v=be6816005e',
         width: 96,
         height: 96,
         bytes: 1230
@@ -1451,13 +1455,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/economy.avif',
+        path: '/art/tokens/economy.avif?v=ef28c6909d',
         width: 256,
         height: 256,
         bytes: 6185
       },
       thumb: {
-        path: '/art/tokens/economy@thumb.avif',
+        path: '/art/tokens/economy@thumb.avif?v=0674908407',
         width: 96,
         height: 96,
         bytes: 1538
@@ -1468,13 +1472,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/law.avif',
+        path: '/art/tokens/law.avif?v=935243e05d',
         width: 256,
         height: 256,
         bytes: 6169
       },
       thumb: {
-        path: '/art/tokens/law@thumb.avif',
+        path: '/art/tokens/law@thumb.avif?v=ba2dca5629',
         width: 96,
         height: 96,
         bytes: 1658
@@ -1485,13 +1489,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/masonry.avif',
+        path: '/art/tokens/masonry.avif?v=6dbb9f2d87',
         width: 256,
         height: 256,
         bytes: 4408
       },
       thumb: {
-        path: '/art/tokens/masonry@thumb.avif',
+        path: '/art/tokens/masonry@thumb.avif?v=8df91a57f2',
         width: 96,
         height: 96,
         bytes: 1348
@@ -1502,13 +1506,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/mathematics.avif',
+        path: '/art/tokens/mathematics.avif?v=0b5ccaa1f8',
         width: 256,
         height: 256,
         bytes: 4370
       },
       thumb: {
-        path: '/art/tokens/mathematics@thumb.avif',
+        path: '/art/tokens/mathematics@thumb.avif?v=f69bd90575',
         width: 96,
         height: 96,
         bytes: 1174
@@ -1519,13 +1523,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/philosophy.avif',
+        path: '/art/tokens/philosophy.avif?v=21f556a8b6',
         width: 256,
         height: 256,
         bytes: 5921
       },
       thumb: {
-        path: '/art/tokens/philosophy@thumb.avif',
+        path: '/art/tokens/philosophy@thumb.avif?v=a6600b7fe4',
         width: 96,
         height: 96,
         bytes: 1473
@@ -1536,13 +1540,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/strategy.avif',
+        path: '/art/tokens/strategy.avif?v=8c5f470c5d',
         width: 256,
         height: 256,
         bytes: 5527
       },
       thumb: {
-        path: '/art/tokens/strategy@thumb.avif',
+        path: '/art/tokens/strategy@thumb.avif?v=f3f2f0a9cd',
         width: 96,
         height: 96,
         bytes: 1576
@@ -1553,13 +1557,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/theology.avif',
+        path: '/art/tokens/theology.avif?v=58dcaf05c4',
         width: 256,
         height: 256,
         bytes: 8208
       },
       thumb: {
-        path: '/art/tokens/theology@thumb.avif',
+        path: '/art/tokens/theology@thumb.avif?v=cf5ee4bc77',
         width: 96,
         height: 96,
         bytes: 2395
@@ -1570,13 +1574,13 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'token',
     variants: {
       default: {
-        path: '/art/tokens/urbanism.avif',
+        path: '/art/tokens/urbanism.avif?v=6f26861149',
         width: 256,
         height: 256,
         bytes: 4433
       },
       thumb: {
-        path: '/art/tokens/urbanism@thumb.avif',
+        path: '/art/tokens/urbanism@thumb.avif?v=55b75fa32a',
         width: 96,
         height: 96,
         bytes: 1357
@@ -1587,7 +1591,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'victory',
     variants: {
       default: {
-        path: '/art/victory/civilian.avif',
+        path: '/art/victory/civilian.avif?v=e109bb3aa0',
         width: 960,
         height: 540,
         bytes: 56361
@@ -1598,7 +1602,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'victory',
     variants: {
       default: {
-        path: '/art/victory/military.avif',
+        path: '/art/victory/military.avif?v=50e2ae6fa3',
         width: 960,
         height: 540,
         bytes: 52894
@@ -1609,7 +1613,7 @@ export const art: { readonly [id: string]: ArtEntry } = {
     kind: 'victory',
     variants: {
       default: {
-        path: '/art/victory/science.avif',
+        path: '/art/victory/science.avif?v=96c1a5e476',
         width: 960,
         height: 540,
         bytes: 48378
@@ -1619,14 +1623,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/appian-way': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/appian-way@1440.avif?v=bb12af0384',
+        width: 1440,
+        height: 960,
+        bytes: 116511
+      },
       default: {
-        path: '/art/wonders/appian-way.avif',
+        path: '/art/wonders/appian-way.avif?v=9cd74c60e8',
         width: 960,
         height: 640,
         bytes: 56457
       },
       thumb: {
-        path: '/art/wonders/appian-way@thumb.avif',
+        path: '/art/wonders/appian-way@thumb.avif?v=bbd9b2c245',
         width: 480,
         height: 320,
         bytes: 15914
@@ -1636,14 +1646,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/circus-maximus': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/circus-maximus@1440.avif?v=a0e849bb73',
+        width: 1440,
+        height: 960,
+        bytes: 128625
+      },
       default: {
-        path: '/art/wonders/circus-maximus.avif',
+        path: '/art/wonders/circus-maximus.avif?v=6b27979f10',
         width: 960,
         height: 640,
         bytes: 61588
       },
       thumb: {
-        path: '/art/wonders/circus-maximus@thumb.avif',
+        path: '/art/wonders/circus-maximus@thumb.avif?v=57f52c1bfd',
         width: 480,
         height: 320,
         bytes: 17170
@@ -1653,14 +1669,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/colossus': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/colossus@1440.avif?v=c10c83ef5d',
+        width: 1440,
+        height: 960,
+        bytes: 129432
+      },
       default: {
-        path: '/art/wonders/colossus.avif',
+        path: '/art/wonders/colossus.avif?v=431d9d9eed',
         width: 960,
         height: 640,
         bytes: 60975
       },
       thumb: {
-        path: '/art/wonders/colossus@thumb.avif',
+        path: '/art/wonders/colossus@thumb.avif?v=f3e9367251',
         width: 480,
         height: 320,
         bytes: 16068
@@ -1670,14 +1692,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/great-library': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/great-library@1440.avif?v=352dde1ad3',
+        width: 1440,
+        height: 960,
+        bytes: 153294
+      },
       default: {
-        path: '/art/wonders/great-library.avif',
+        path: '/art/wonders/great-library.avif?v=0289a3fa5c',
         width: 960,
         height: 640,
         bytes: 52126
       },
       thumb: {
-        path: '/art/wonders/great-library@thumb.avif',
+        path: '/art/wonders/great-library@thumb.avif?v=a1f2d6f850',
         width: 480,
         height: 320,
         bytes: 20218
@@ -1687,14 +1715,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/great-lighthouse': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/great-lighthouse@1440.avif?v=5fcb448ac7',
+        width: 1440,
+        height: 960,
+        bytes: 147634
+      },
       default: {
-        path: '/art/wonders/great-lighthouse.avif',
+        path: '/art/wonders/great-lighthouse.avif?v=6719617d93',
         width: 960,
         height: 640,
         bytes: 71639
       },
       thumb: {
-        path: '/art/wonders/great-lighthouse@thumb.avif',
+        path: '/art/wonders/great-lighthouse@thumb.avif?v=5a14d224da',
         width: 480,
         height: 320,
         bytes: 19141
@@ -1704,14 +1738,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/hanging-gardens': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/hanging-gardens@1440.avif?v=5dd5eee245',
+        width: 1440,
+        height: 960,
+        bytes: 122777
+      },
       default: {
-        path: '/art/wonders/hanging-gardens.avif',
+        path: '/art/wonders/hanging-gardens.avif?v=cfc211a77c',
         width: 960,
         height: 640,
         bytes: 58335
       },
       thumb: {
-        path: '/art/wonders/hanging-gardens@thumb.avif',
+        path: '/art/wonders/hanging-gardens@thumb.avif?v=341cb6d0c8',
         width: 480,
         height: 320,
         bytes: 15179
@@ -1721,14 +1761,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/mausoleum': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/mausoleum@1440.avif?v=b68d2e7015',
+        width: 1440,
+        height: 960,
+        bytes: 126095
+      },
       default: {
-        path: '/art/wonders/mausoleum.avif',
+        path: '/art/wonders/mausoleum.avif?v=cb54eead71',
         width: 960,
         height: 640,
         bytes: 61500
       },
       thumb: {
-        path: '/art/wonders/mausoleum@thumb.avif',
+        path: '/art/wonders/mausoleum@thumb.avif?v=93b14ad4cd',
         width: 480,
         height: 320,
         bytes: 17584
@@ -1738,14 +1784,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/piraeus': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/piraeus@1440.avif?v=0d269522c2',
+        width: 1440,
+        height: 960,
+        bytes: 122505
+      },
       default: {
-        path: '/art/wonders/piraeus.avif',
+        path: '/art/wonders/piraeus.avif?v=dc06930ecf',
         width: 960,
         height: 640,
         bytes: 58454
       },
       thumb: {
-        path: '/art/wonders/piraeus@thumb.avif',
+        path: '/art/wonders/piraeus@thumb.avif?v=b3083c6909',
         width: 480,
         height: 320,
         bytes: 16606
@@ -1755,14 +1807,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/pyramids': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/pyramids@1440.avif?v=d08c9f545a',
+        width: 1440,
+        height: 960,
+        bytes: 149239
+      },
       default: {
-        path: '/art/wonders/pyramids.avif',
+        path: '/art/wonders/pyramids.avif?v=4a25f419bd',
         width: 960,
         height: 640,
         bytes: 49373
       },
       thumb: {
-        path: '/art/wonders/pyramids@thumb.avif',
+        path: '/art/wonders/pyramids@thumb.avif?v=3ad97f0379',
         width: 480,
         height: 320,
         bytes: 19243
@@ -1772,14 +1830,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/sphinx': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/sphinx@1440.avif?v=00938c1b8a',
+        width: 1440,
+        height: 960,
+        bytes: 139417
+      },
       default: {
-        path: '/art/wonders/sphinx.avif',
+        path: '/art/wonders/sphinx.avif?v=bbf14600fb',
         width: 960,
         height: 640,
         bytes: 67571
       },
       thumb: {
-        path: '/art/wonders/sphinx@thumb.avif',
+        path: '/art/wonders/sphinx@thumb.avif?v=47ac8574a1',
         width: 480,
         height: 320,
         bytes: 19180
@@ -1789,14 +1853,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/statue-of-zeus': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/statue-of-zeus@1440.avif?v=cb33b647aa',
+        width: 1440,
+        height: 960,
+        bytes: 91103
+      },
       default: {
-        path: '/art/wonders/statue-of-zeus.avif',
+        path: '/art/wonders/statue-of-zeus.avif?v=edf08e5ef8',
         width: 960,
         height: 640,
         bytes: 42950
       },
       thumb: {
-        path: '/art/wonders/statue-of-zeus@thumb.avif',
+        path: '/art/wonders/statue-of-zeus@thumb.avif?v=6387d3bb55',
         width: 480,
         height: 320,
         bytes: 12277
@@ -1806,14 +1876,20 @@ export const art: { readonly [id: string]: ArtEntry } = {
   'wonder/temple-of-artemis': {
     kind: 'wonder',
     variants: {
+      '1440': {
+        path: '/art/wonders/temple-of-artemis@1440.avif?v=5ed2d6fe86',
+        width: 1440,
+        height: 960,
+        bytes: 121488
+      },
       default: {
-        path: '/art/wonders/temple-of-artemis.avif',
+        path: '/art/wonders/temple-of-artemis.avif?v=7789d89863',
         width: 960,
         height: 640,
         bytes: 57283
       },
       thumb: {
-        path: '/art/wonders/temple-of-artemis@thumb.avif',
+        path: '/art/wonders/temple-of-artemis@thumb.avif?v=41990d5522',
         width: 480,
         height: 320,
         bytes: 15157
