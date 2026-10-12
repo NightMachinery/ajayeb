@@ -1,8 +1,9 @@
 <script lang="ts">
   // The small "you" mark beside the player's own name (in the strips, the
-  // city panel, the lobby and the log), so a player always knows which seat
-  // is theirs. Text, not colour alone: the accent fill only reinforces the
-  // word. A leaf with no props but a class.
+  // city panel and the lobby; the log draws the same pill as generated
+  // content, see LogSheet), so a player always knows which seat is theirs.
+  // Text, not colour alone: the accent fill only reinforces the word. A
+  // leaf with no props but a class.
   import { t } from '$lib/i18n';
 
   interface Props {

@@ -9,13 +9,15 @@
   // are lines among the events. Without a game context (the gallery), or
   // before the Session has any history, it shows the `events` it is given.
   // The player's own lines (their seat's, outside hot-seat rooms) carry a
-  // "you" mark and an accent edge: `selfSeat`, else the room's.
+  // "you" mark and an accent edge: `selfSeat`, else the room's. The mark is
+  // generated content (::before, from data-you, translated) rather than a
+  // SelfMark element, so a line's text stays the log entry alone, the same
+  // for every player; it still has text, so it is not colour alone.
   import { t } from '$lib/i18n';
   import type { GameEvent } from '$lib/wire';
   import { groupLogByAge } from '$lib/view/log-format';
   import { groupGameLog, type GameLogGroup } from '$lib/hints/log';
   import { tryGameContext } from '../choices/room';
-  import SelfMark from '../identity/SelfMark.svelte';
   import Sheet from '../shell/Sheet.svelte';
 
   interface Props {
@@ -72,10 +74,13 @@
               {@const self = mine !== null && line.seat === mine}
               <li
                 class="rounded-control border border-rule bg-panel px-2.5 py-1.5 text-sm text-fg
-                  {self ? 'border-s-4 border-s-accent' : ''}"
+                  {self
+                  ? 'border-s-4 border-s-accent before:me-1.5 before:inline-block before:rounded-full before:bg-accent before:px-1.5 before:align-[0.1em] before:text-[0.625rem] before:leading-4 before:font-semibold before:tracking-wide before:text-on-accent before:uppercase before:content-[attr(data-you)]'
+                  : ''}"
                 data-self-line={self ? '' : undefined}
+                data-you={self ? t('online.identity.you') : undefined}
               >
-                {#if self}<SelfMark class="me-1 align-[0.1em]" />{/if}{line.text}
+                {line.text}
               </li>
             {/each}
           </ol>
