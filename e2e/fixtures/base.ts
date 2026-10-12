@@ -1,6 +1,7 @@
 // The shared `test` every spec imports instead of '@playwright/test'
 // directly. Its only job is to make the default `context` (and so `page`)
-// fixture start with the game's own Animation setting forced off.
+// fixture start with the game's own Animation setting forced off, and the
+// opponent move summary popup off.
 //
 // This replaces playwright.config.ts's old `use.reducedMotion: 'reduce'`.
 // The client no longer reads the OS's prefers-reduced-motion at all (D21,
@@ -24,10 +25,11 @@ const GUARD_KEY = 'ajayeb:e2e-motion-off-applied';
 
 /**
  * Runs in the page, before any app script, on every navigation. Merges
- * `animationSpeed: 'off'` into whatever JSON is already under settingsKey
- * (or starts fresh if there is none or it fails to parse, the same way the
- * app's own SettingsStore drops a value it cannot read), then sets the
- * guard so a later reload of this same tab leaves the settings alone.
+ * `animationSpeed: 'off'` and `showOpponentMove: false` into whatever JSON
+ * is already under settingsKey (or starts fresh if there is none or it fails
+ * to parse, the same way the app's own SettingsStore drops a value it cannot
+ * read), then sets the guard so a later reload of this same tab leaves the
+ * settings alone.
  */
 function installMotionOffScript(opts: { settingsKey: string; guardKey: string }): void {
   const { settingsKey, guardKey } = opts;
@@ -42,6 +44,10 @@ function installMotionOffScript(opts: { settingsKey: string; guardKey: string })
       current = {};
     }
     current['animationSpeed'] = 'off';
+    // The opponent move summary popup (M10.S03b) closes on any tap and
+    // swallows it, which would eat a driver's next click after every move
+    // of the other side. Specs about it (move-summary.spec.ts) turn it on.
+    current['showOpponentMove'] = false;
     window.localStorage.setItem(settingsKey, JSON.stringify(current));
   } catch {
     // Storage may be unavailable; nothing to force, and nothing to crash on.
