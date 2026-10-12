@@ -273,7 +273,8 @@ export const rules = {
   'rules.diagram.military':
     'One side of the track, from the centre to a capital; the other side is the same. The looting tokens on spaces 3 and 6 take 2 and 5 coins from the player on this side.',
   'rules.diagram.trade.opponent': 'Your opponent produces 3 clay.',
-  'rules.diagram.trade.price': 'Each clay you buy costs 2 + 3 = 5 coins.',
+  // The sum stays on one line (no-break spaces).
+  'rules.diagram.trade.price': 'Each clay you buy costs 2\u00a0+\u00a03\u00a0=\u00a05 coins.',
   'rules.diagram.trade.label':
     'Example: your opponent produces 3 clay, so each clay you buy costs 5 coins.',
   'rules.diagram.science.six': 'The six symbols of the green cards',
