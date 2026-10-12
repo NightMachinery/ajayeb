@@ -38,8 +38,10 @@ interface PairPosition {
 
 /** Thrown by the policy to stop the recording at the wanted position. */
 class Found extends Error {
-  constructor(readonly position: Omit<PairPosition, 'seed' | 'keys'>) {
+  readonly position: Omit<PairPosition, 'seed' | 'keys'>;
+  constructor(position: Omit<PairPosition, 'seed' | 'keys'>) {
     super('found');
+    this.position = position;
   }
 }
 
