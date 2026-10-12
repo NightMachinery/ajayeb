@@ -10,6 +10,14 @@
   // Economy notch, the card sheet's hint sections, the Mausoleum pool and
   // the destroy choice's lines.
   import HintLocalHide from '$lib/components/hints/HintLocalHide.svelte';
+  import FirstTip from '$lib/components/hints/FirstTip.svelte';
+  import HintGlyphLegend from '$lib/components/hints/HintGlyphLegend.svelte';
+  import MoveReview from '$lib/components/game/MoveReview.svelte';
+  import MoveSummary from '$lib/components/game/MoveSummary.svelte';
+  import Button from '$lib/components/shell/Button.svelte';
+  import { summarize } from '$lib/view/move-summary';
+  import { reviewLines } from '$lib/view/review';
+  import type { PriceTick } from '$lib/view/recap';
   import HintSettingsEditor from '$lib/components/hints/HintSettingsEditor.svelte';
   import HintsSection from '$lib/components/hints/HintsSection.svelte';
   import HintsSummary from '$lib/components/hints/HintsSummary.svelte';
@@ -176,6 +184,48 @@
       }
     ]
   } as unknown as View['pending'];
+
+  // M10.HS5: the move review, the price ticks, a first-time tip and the
+  // Rules panel's glyph legend.
+  const REVIEW_NAMES = { names: ['Sun', 'Moon'] as const, seat: 0 as const }; // i18n-ok
+  const reviewBetter = reviewLines(
+    { ply: 20, played: 'discard:walls', better: 'construct:walls', reason: 'wins', gap: 40 },
+    REVIEW_NAMES
+  );
+  const reviewLoot = reviewLines(
+    {
+      ply: 20,
+      played: 'construct:clay-pool',
+      better: 'construct:garrison',
+      reason: 'loot',
+      gap: 4,
+      coins: 2
+    },
+    REVIEW_NAMES
+  );
+  const reviewNone = reviewLines(
+    { ply: 20, played: 'wonder:pyramids:baths', reason: 'none', gap: 0 },
+    REVIEW_NAMES
+  );
+  const reviewSummary = summarize(
+    [
+      {
+        ply: 21,
+        seat: 1,
+        events: [
+          { kind: 'build', private: false, seat: 1, card: 'clay-pit' },
+          { kind: 'pay', private: false, seat: 1, amount: 1, toOpponent: 0 }
+        ]
+      }
+    ],
+    1
+  );
+  const reviewPrices: PriceTick[] = [
+    { resource: 'clay', from: 2, to: 3, cause: { seat: 1, card: 'clay-pit' } },
+    { resource: 'stone', from: 3, to: 2 }
+  ];
+  let summaryShown = $state(false);
+  let tipShown = $state(false);
 </script>
 
 <div class="flex flex-col gap-10" data-testid="gallery-hints-section">
@@ -322,6 +372,32 @@
     </div>
   </section>
 
+  <section class="flex flex-col gap-2" data-testid="gallery-move-review">
+    <h3 class="text-sm font-semibold text-fg-muted">
+      Move review, price ticks and a first-time tip <!-- i18n-ok -->
+    </h3>
+    <div class="flex max-w-sm flex-col gap-3 rounded-panel border border-rule bg-panel p-4">
+      <MoveReview lines={reviewBetter} />
+      <MoveReview lines={reviewLoot} />
+      <MoveReview lines={reviewNone} />
+      <div class="flex flex-wrap gap-2">
+        <Button variant="secondary" onclick={() => (summaryShown = true)}>
+          Open a summary with a review <!-- i18n-ok -->
+        </Button>
+        <Button variant="secondary" onclick={() => (tipShown = true)}>
+          Open a first-time tip <!-- i18n-ok -->
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <section class="flex flex-col gap-2" data-testid="gallery-hint-legend">
+    <h3 class="text-sm font-semibold text-fg-muted">Rules: hint glyphs <!-- i18n-ok --></h3>
+    <div class="max-w-md rounded-panel border border-rule bg-panel p-4">
+      <HintGlyphLegend />
+    </div>
+  </section>
+
   <section class="flex flex-col gap-2">
     <h3 class="text-sm font-semibold text-fg-muted">Lobby summary <!-- i18n-ok --></h3>
     <div class="flex flex-col gap-4 rounded-panel border border-rule bg-table p-4">
@@ -330,3 +406,21 @@
     </div>
   </section>
 </div>
+
+<MoveSummary
+  open={summaryShown}
+  summary={reviewSummary}
+  names={REVIEW_NAMES.names}
+  prices={reviewPrices}
+  onclose={() => (summaryShown = false)}
+>
+  {#snippet review()}<MoveReview lines={reviewBetter} />{/snippet}
+</MoveSummary>
+
+<FirstTip
+  open={tipShown}
+  id="pair"
+  text={t('hints.tip.pair')}
+  onclose={() => (tipShown = false)}
+  onmore={() => {}}
+/>
