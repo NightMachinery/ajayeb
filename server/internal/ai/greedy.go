@@ -307,48 +307,20 @@ func (sr *greedySearch) reply(c *engine.State, depth, extra int) float64 {
 // Greedy's own (before any card is revealed, a new age is dealt or the Great
 // Library draws) in which some option wins. Such a win depends only on
 // public information, so one determinization d proves it. It returns the
-// action's index in legal.
+// action's index in legal. The check is engine.WinsNow, which the hints
+// share, limited to the cards face up in d.
 //
 // Without this check a sure win could lose to a line that wins only in the
 // sampled determinization (an extra turn that happens to reveal the card
 // the line needs), with the sample's luck counted as certainty.
 func (sr *greedySearch) sureWin(d *engine.State, legal []engine.Action) (int, bool) {
+	mask := engine.FaceUpSlots(d)
 	for i, a := range legal {
-		x := *d
-		engine.ApplyTrusted(&x, a)
-		if sr.won(&x, sr.me) {
+		if _, ok := engine.WinsNow(d, a, mask); ok {
 			return i, true
-		}
-		if x.Over() || x.ToMove != sr.me || !sameHidden(d, &x) {
-			continue
-		}
-		for _, b := range engine.LegalActions(&x, sr.bufs[0][:0]) {
-			y := x
-			engine.ApplyTrusted(&y, b)
-			if sr.won(&y, sr.me) {
-				return i, true
-			}
 		}
 	}
 	return 0, false
-}
-
-// sameHidden reports whether going from state a to state b used no hidden
-// information: no card was revealed, no age was dealt and no Great Library
-// offer was drawn.
-func sameHidden(a, b *engine.State) bool {
-	return a.Age == b.Age && faceDown(a) == faceDown(b) && b.Phase != engine.PhasePickLibraryToken
-}
-
-// faceDown counts the face-down cards of the structure.
-func faceDown(s *engine.State) int {
-	n := 0
-	for i := range s.Slots {
-		if s.Slots[i].Card != 0 && !s.Slots[i].FaceUp {
-			n++
-		}
-	}
-	return n
 }
 
 // won reports whether x is a finished game won by seat.
