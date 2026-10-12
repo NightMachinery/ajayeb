@@ -113,7 +113,6 @@ export const online = {
   'online.link.reset': 'Reset link',
   'online.link.resetHint': 'A reset stops every earlier link to this seat at once.',
   'online.link.resetDone': 'Link reset. Earlier links no longer work.',
-  'online.link.close': 'Close',
 
   // The game log: a reset of a device link.
   'online.log.linkResetOwn': '{name} reset their device link.',
