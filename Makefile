@@ -28,7 +28,7 @@ HEAVY := python3 "$(CURDIR)/tools/heavy.py"
 GREP ?=
 PW_ARGS ?=
 E2E_BUILD ?= 1
-PROD_URL ?= https://ajayeb.pinky.lilf.ir
+PROD_URL ?= https://ajayeb.lilf.ir
 AJAYEB_SWEEP ?= 300
 GO_PKGS ?= ./...
 GO_RUN ?=
@@ -60,7 +60,7 @@ help: ## List the targets and the variables they read (the default target)
 	  'GREP=@full' 'Playwright --grep filter for e2e' \
 	  'PW_ARGS=...' 'extra Playwright flags for e2e and shots' \
 	  'E2E_BUILD=0' 'skip the server and test-mode web builds before e2e and shots' \
-	  'PROD_URL=...' 'site for e2e-prod (default https://ajayeb.pinky.lilf.ir)' \
+	  'PROD_URL=...' 'site for e2e-prod (default https://ajayeb.lilf.ir)' \
 	  'AJAYEB_SWEEP=300' 'games in the Go playout sweep (verify-full uses 5000)' \
 	  'GO_PKGS=./...' 'packages for test-go, e.g. ./internal/engine/...' \
 	  'GO_RUN=regexp' 'go test -run filter for test-go' \

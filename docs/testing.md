@@ -728,7 +728,7 @@ viewports wider than 844 px on the mobile project).
 
 `e2e/specs/prod.smoke.spec.ts` is the only spec that is ever allowed to run
 against a real deployment instead of the local test server. `make e2e-prod`
-runs it against `PROD_URL` (default `https://ajayeb.pinky.lilf.ir`), builds
+runs it against `PROD_URL` (default `https://ajayeb.lilf.ir`), builds
 nothing and starts nothing local:
 
     make e2e-prod                               # PROD_URL defaults to the production site
