@@ -620,6 +620,19 @@ full game view described under "The view and its events" below.
   `target` the seat whose link was reset, and `on` and `off` are empty.
   Link entries never fold together.
 - `view` is the game as this viewer may see it, including its `choices`.
+- `view.review`, present only while the game's `advisor` family is on and
+  only in a seat's own view, is the move review of that seat's last play
+  action (a build, a discard or a wonder): the action's `ply` and key
+  (`played`), and, when a clearly better action existed, its key
+  (`better`), a `reason` code (`wins`, `stopsWin`, `pair`, `deniesPair`,
+  `loot` or `points`; `none` without `better`), the rounded `gap` in
+  points, and the reason's detail (`threat`, `symbol` or `coins`). The
+  server ranks the actions on that seat's own observation of the position
+  before the move, under a fixed evaluation budget, so the review is the
+  same for every hidden deal the seat could not tell apart and never names
+  a card the move turned over. It stays until the seat's next play action,
+  goes with an undo, and is absent from the opponent's and a spectator's
+  view. The client shows it inside the summary of the opponent's next move.
 
 ### reject
 
