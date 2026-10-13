@@ -8,13 +8,13 @@ Docker. It is adapted from the snow-white project's `self_host.py`.
 
 Run `./self_host.py <command> [url]` from the repository root. The url
 argument is optional; it defaults to the site recorded in
-`.self-host/config.json`, or `https://ajayeb.pinky.lilf.ir` if nothing is
+`.self-host/config.json`, or `https://ajayeb.lilf.ir` if nothing is
 recorded yet.
 
 - `setup [url] [--prebuilt PATH]`: first-time install. Installs web
   dependencies, builds the production web bundle, builds the Go server with
-  the bundle embedded, writes the Caddy block, reloads Caddy and starts the
-  server. With `--prebuilt PATH`, skips the dependency install, the web
+  the bundle embedded, writes the Caddy block, has Caddy load it and starts
+  the server. With `--prebuilt PATH`, skips the dependency install, the web
   build, the webdist sync and the Go build, and installs `PATH` instead; see
   "Deploying from another machine" below.
 - `redeploy [url] [--prebuilt PATH]`: rebuilds and restarts for a new
@@ -24,8 +24,9 @@ recorded yet.
   works the same way as for `setup`.
 - `start [url]`: starts the already-built server. Builds it first only if
   `.self-host/bin/ajayeb` does not exist yet. Safe to run at boot: an
-  already-correct `~/Caddyfile` is left untouched, and the server still
-  starts even if `caddy reload` fails because Caddy is not listening yet.
+  already-correct Caddyfile is left untouched, and the server still
+  starts even if Caddy is not running yet (with one exception, under
+  "Starting at boot").
   See "Starting at boot" below.
 - `stop`: stops every tmux session this script manages. Leaves the Caddyfile
   and the built binary alone.
@@ -45,6 +46,15 @@ recorded yet.
 `--both-schemes` or `--no-both-schemes`; see "Serving both schemes" below.
 Without either flag they keep the recorded choice, which is off for a new
 install. `ship` passes the flag on to the remote `setup` or `redeploy`.
+
+The same commands take `--caddyfile PATH`, the Caddyfile the running Caddy
+reads. In this document, **the Caddyfile** means that file: `~/Caddyfile`
+unless `--caddyfile` has named another. `PATH` is absolute or relative to
+the home directory (write `scripts/Caddyfile`, not `~/scripts/Caddyfile`, so
+your own shell does not expand the `~` before `ship` forwards it to the
+remote host). The choice is recorded like the others, so later runs and the
+boot-time `start` keep it. A file that `--caddyfile` names must already
+exist; see "Caddy safety" below for why it is never created.
 
 ## Processes
 
@@ -76,8 +86,9 @@ server's port is reselected when busy.
 ## Configuration file
 
 `.self-host/config.json` records the site URL, the mode (`prod` or `dev`),
-the chosen ports, whether both schemes serve the site (`both_schemes`), and
-on the dev machine the remembered ship target. It is not committed; `.self-host/` is gitignored
+the chosen ports, whether both schemes serve the site (`both_schemes`), the
+Caddyfile when it is not `~/Caddyfile` (`caddyfile`), and on the dev machine
+the remembered ship target. It is not committed; `.self-host/` is gitignored
 entirely, since it holds local build output, the production data directory
 and Caddyfile backups.
 
@@ -121,7 +132,7 @@ instead of counting every player as Caddy. `--origin` restricts which WebSocket 
 server accepts.
 
 Caddy's managed block, between `# BEGIN ajayeb self_host.py` and `# END
-ajayeb self_host.py` in `~/Caddyfile`, is a redirect from the opposite scheme
+ajayeb self_host.py` in the Caddyfile, is a redirect from the opposite scheme
 plus a single `reverse_proxy` to the server port with `encode zstd gzip`.
 There is no `try_files` or static file serving in Caddy: the Go binary
 embeds and serves the SPA itself.
@@ -177,30 +188,96 @@ Ajayeb's own local services.
 
 ## Caddy safety
 
-Because `~/Caddyfile` is shared with other sites on the same machine, every
+Because the Caddyfile is shared with other sites on the same machine, every
 edit goes through a safe path, and nothing happens at all when there is
 nothing to change:
 
-1. If `~/Caddyfile` already contains exactly the managed block this command
-   would write, stop here: no backup, no write, no validate, no reload. This
-   is what makes `start` safe to run at boot, before Caddy is necessarily up
-   yet to take a reload; see "Starting at boot" below.
-2. Otherwise, copy `~/Caddyfile` to `.self-host/Caddyfile.bak.<timestamp>`
-   before writing anything.
-3. Write the managed block in place (or append it, if this is the first
+1. If the Caddyfile already contains exactly the managed block this command
+   would write, stop here: no backup, no write, no load. This is what makes
+   `start` safe to run at boot, before Caddy is necessarily up yet; see
+   "Starting at boot" below.
+2. If the Caddyfile does not exist, refuse to create it when a new file could
+   cost a running Caddy its other sites. A new file would hold the managed
+   block alone, and loading it replaces everything that Caddy serves. So a
+   missing file that `--caddyfile` named is taken as a wrong path, and a
+   missing `~/Caddyfile` is created only when no Caddy on its default admin
+   address (`localhost:2019`) is already serving a config, which it would be
+   reading from some other file. Every command makes this check right after
+   it reads its config, before it stops or saves anything.
+3. Copy the Caddyfile to `.self-host/Caddyfile.bak.<timestamp>` before
+   writing anything.
+4. Write the managed block in place (or append it, if this is the first
    time), already in Caddy's own tab-indented format.
-4. Run `caddy validate --config ~/Caddyfile`. If validation fails, restore
-   the backup immediately and stop with an error, without reloading.
-5. Only if validation passes, run `caddy reload --config ~/Caddyfile`. If the
-   reload itself fails, for example because Caddy is not listening yet, print
-   a warning and continue instead of aborting: Caddy reads `~/Caddyfile`
-   itself the next time it starts, so a failed reload here does not stop
-   `start`/`setup`/`redeploy` from starting the game server.
+5. Hand the Caddyfile to the running Caddy. `caddy adapt` finds the admin
+   address the file's global options name (Caddy's default when they name
+   none); when the file does not adapt in the script's environment (an
+   unset `{$VAR}` can make an option invalid there), the address is read
+   from the global options block as text instead. Everything else goes
+   through that Caddy's admin API, so Caddy adapts the file in its own
+   process, and a `{$VAR}` placeholder in the shared file resolves from
+   Caddy's environment, as it did when Caddy started, whatever the shell
+   running the script exports (an ssh session often exports less than the
+   shell that started Caddy):
+   - **The check.** Caddy adapts the file as it was before the edit
+     (`/adapt`, which loads nothing), and the result must equal the config
+     Caddy is running. If it does not, the file is not what this Caddy
+     serves: the path is wrong, another Caddy owns that admin address, the
+     file imports relative paths (Caddy resolves those against its own
+     working directory when it adapts text, not against the file's), or
+     the file holds edits Caddy has not loaded yet. Hide lists are compared
+     as sets, since Caddy orders the config files in them differently from
+     one version to the next. Restore the backup and stop without loading
+     anything, with a message naming those causes.
+     For a Caddyfile this command is creating, the check is that the Caddy
+     serves no config at all.
+   - **The hidden config file.** Caddy's `file_server` hides the Caddyfile
+     it was started from, by that file's path. Text adapted with no file
+     name gets a relative stand-in (`./Caddyfile`) instead, so the script
+     reads the real path from the running config and puts it back, both
+     for the check and in what it loads. Loading the text as it comes would
+     otherwise weaken that protection for every site on the shared Caddy.
+   - **The load.** Caddy adapts the edited file the same way, the hidden
+     path goes back in, and the result goes to `/load` as JSON. Caddy
+     switches to it only if all of it loads. If Caddy refuses it, restore
+     the backup and stop with Caddy's error; Caddy keeps serving the old
+     config. Caddy restarts its admin listener after a load, so if the
+     reply is lost, the script waits a moment and compares the running
+     config with what it sent: a match means the load took, and anything
+     else (a different config, or no answer to that question) restores the
+     backup and stops, saying the outcome is unknown.
+6. If nothing listens on that address (the connection is refused, or a name
+   such as `localhost` resolves to an address this host cannot use), Caddy
+   is not running: run `caddy
+   validate --config` on the Caddyfile instead, restore the backup and stop
+   if it fails, and otherwise print a warning and go on. Caddy reads the
+   Caddyfile itself the next time it starts, so its absence does not stop
+   `start`/`setup`/`redeploy` from starting the game server. `caddy
+   validate` reads `{$VAR}` placeholders from the script's own environment,
+   so it can fail on a file that Caddy itself would load; the error says so
+   when the file has placeholders.
+7. If the Caddyfile turns the admin API off, puts it on a Unix socket or
+   gives its address as a `{$VAR}` placeholder, fall back to `caddy validate` and then `caddy reload --config`, where a
+   failed reload only prints a warning.
 
-`self_host.py` never runs `caddy fmt`: `~/Caddyfile` is shared with other
+Any other error after the write, a Ctrl-C included, also restores the
+backup before it stops the command. Left behind unloaded, the block would
+make the next run believe there was nothing to do.
+
+`setup`, `redeploy` and `start` also run the check of step 5 as a
+preflight, before they stop the game server, whenever the block will need
+writing and a Caddy answers. A Caddy that does not serve the file as it
+stands is then reported while the game is still up, with nothing stopped
+or changed. The preflight loads nothing, and a block that already matches
+skips it, so a reboot is never held up by it.
+
+Every `caddy` command gets `--adapter caddyfile`, so a Caddyfile under any
+file name is read as one (Caddy only guesses the adapter from names that
+start with `Caddyfile`).
+
+`self_host.py` never runs `caddy fmt`: the Caddyfile is shared with other
 sites, and reformatting the whole file on every deploy is not ours to do. The
 managed block is already written in Caddy's own tab-indented format, so a
-reload never has anything of ours to normalize.
+load never has anything of ours to normalize.
 
 After starting the server, the script polls `http://127.0.0.1:<port>/health`
 for up to 10 seconds and prints a warning if it never answers, rather than
@@ -210,19 +287,29 @@ failing silently.
 
 Run `python3 self_host.py start` from the deploy directory in the host's own
 boot script, after it brings up Caddy (for example in tmux, with `caddy run
---config ~/Caddyfile`). A `@reboot` crontab line works just as well:
+--config` on the Caddyfile). A `@reboot` crontab line works just as well:
 
 ```
 @reboot cd ~/ajayeb && python3 self_host.py start
 ```
 
+Cron runs with a minimal `PATH`, so when `caddy` or `tmux` live elsewhere
+(`~/bin`, Homebrew on Linux), set `PATH` on the line itself, and send the
+output to a log so a failed boot can be read afterward.
+
 `start` is idempotent and safe to run unattended this way:
 
-- An already-correct `~/Caddyfile` is left completely untouched (see "Caddy
+- An already-correct Caddyfile is left completely untouched (see "Caddy
   safety" above), so a reboot never rewrites or reformats the shared file.
-- The server still starts even when Caddy is not up yet to take a reload:
-  a failed `caddy reload` only prints a warning, since Caddy reads
-  `~/Caddyfile` itself the next time it starts.
+- The server still starts even when Caddy is not up yet: if the block
+  does need writing (say the stored port was taken and `start` chose
+  another), no answer from Caddy only prints a warning, since Caddy reads
+  the Caddyfile itself the next time it starts. The exception is a block
+  that needs writing while Caddy is down and `caddy validate` fails: then
+  `start` restores the file and stops with an error before starting the
+  server. A Caddyfile with `{$VAR}` placeholders makes that failure likely
+  unless the boot line's environment has those variables, so run `start`
+  in the same environment that starts Caddy.
 - `start` only builds when `.self-host/bin/ajayeb` does not exist yet, so a
   normal reboot restarts the existing binary without rebuilding anything.
 
@@ -266,7 +353,10 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
    `DIR/.self-host/bin/ajayeb.upload` with `rsync`.
 4. Runs `setup --prebuilt .self-host/bin/ajayeb.upload [url]` over SSH on
    the remote side, or `redeploy` instead of `setup` when the remote
-   already has a `.self-host/config.json`. `--prebuilt` installs by moving
+   already has a `.self-host/config.json`. `--both-schemes`,
+   `--no-both-schemes` and `--caddyfile PATH` are passed on when given, and
+   the remote host records them in its own config, so a later `ship` can
+   leave them out. `--prebuilt` installs by moving
    the uploaded binary into `.self-host/bin/ajayeb` rather than copying it,
    so the upload does not also linger on disk as a second ~8.5 MB copy once
    it is installed (falling back to copying and then removing it only when
@@ -281,7 +371,7 @@ remembered. A later `ship url` (just the url, with no target) reuses the
 remembered target too; it is treated as the url rather than the target
 whenever the first argument starts with `http://` or `https://`, and it is
 an error if no target has been remembered yet. Every argument that reaches a
-remote shell (the directory, the url) is shell-quoted. `ship` refuses a
+remote shell (the directory, the url, the Caddyfile path) is shell-quoted. `ship` refuses a
 `TARGET` or `DIR` that starts with `-`, and a `DIR` with characters outside
 letters, digits and `. _ - /`, because rsync would otherwise pass it to the
 remote differently from ssh.
@@ -298,10 +388,29 @@ do not need to keep afterward.
 `tests/test_self_host.py` covers URL parsing, the rendered Caddy blocks for
 both modes, port allocation and reselection, the config file round trip
 (including the remembered ship target), the node and pnpm commands, the Go
-build command, the Caddy validate-then-reload and restore-on-failure paths,
-skipping an already-matching Caddyfile entirely (no backup, no write, no
-validate, no reload) and continuing with only a warning when `caddy reload`
-fails, that `reload_caddy` never runs `caddy fmt`, the health poll, the
+build command, the Caddy paths against a local stand-in for Caddy's admin
+API (a stateful fake that serves a config, adapts and loads: the edit
+loaded as JSON with the config file hidden by the running config's path,
+past any proxy; hide lists in any order; refusing a Caddy that does not
+serve the file as it stood, or that hides two different paths, and the
+same check as a preflight before setup, redeploy and start stop anything; the backup restored when Caddy refuses
+the edit or cannot adapt it; a lost reply accepted only when the running
+config shows the load took, and an unknown outcome when the recheck gets no
+answer; a new Caddyfile loaded only into a Caddy with no config; `caddy
+validate` only when nothing listens (a refused connection, or `localhost`
+resolving to an unusable address), with a
+hint about `{$VAR}` placeholders when it
+fails, the validate-then-reload fallback, and the backup restored on any
+other error after the write, a Ctrl-C included), the admin address read from the adapted
+Caddyfile or, when it does not adapt, from its global options as text,
+`--adapter caddyfile` on every `caddy` command,
+never creating a named Caddyfile that does not exist (refused by every
+command before anything stops) or a `~/Caddyfile` over a Caddy that serves
+a config, skipping an already-matching Caddyfile
+entirely (no backup, no write, no load), continuing with only a warning
+when `caddy reload` fails, that `reload_caddy` never runs `caddy fmt`, the
+`--caddyfile` path (resolved from home, remembered, forwarded quoted by
+`ship`, and used by every Caddy step), the health poll, the
 rooms backup pruning, the `uname` to `GOOS`/`GOARCH` mapping and its refusal
 of unsupported platforms, the cross-compile command and environment, the
 quoting of every remote command, the `setup` versus `redeploy` choice,
@@ -333,7 +442,7 @@ of the deployed site itself: `GET /health`, Home in both themes, a full
 online game between two isolated browser contexts (at least five moves,
 through the confirm step), and a short game against the bot. It builds
 nothing and starts nothing local; it only drives a browser against
-`PROD_URL` (default `https://ajayeb.pinky.lilf.ir`, the site `self_host.py`
+`PROD_URL` (default `https://ajayeb.lilf.ir`, the site `self_host.py`
 targets by default too):
 
 ```

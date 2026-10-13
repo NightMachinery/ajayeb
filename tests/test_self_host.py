@@ -1,8 +1,15 @@
+import errno
 import io
+import json
 import os
 import shlex
+import socket
 import subprocess
+import tempfile
+import threading
 import unittest
+import urllib.error
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import replace
 from pathlib import Path
@@ -12,6 +19,17 @@ import self_host
 
 
 class SelfHostTests(unittest.TestCase):
+    def setUp(self):
+        # The apply tests here drive the `caddy reload` fallback path, and no
+        # test may reach a real Caddy: no admin address, no Caddy serving.
+        for name, value in (("caddy_admin_address", None), ("caddy_serves_a_config", False)):
+            patcher = mock.patch.object(self_host, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        patcher = mock.patch.object(self_host, "CADDYFILE_NAMED", False)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_parse_url_rejects_paths(self):
         with self.assertRaises(ValueError):
             self_host.parse_site_url("https://ajayeb.example.com/room/demo")
@@ -19,8 +37,8 @@ class SelfHostTests(unittest.TestCase):
     def test_parse_url_defaults_to_https_ajayeb(self):
         site = self_host.parse_site_url(None)
         self.assertEqual(site.scheme, "https")
-        self.assertEqual(site.host, "ajayeb.pinky.lilf.ir")
-        self.assertEqual(site.origin, "https://ajayeb.pinky.lilf.ir")
+        self.assertEqual(site.host, "ajayeb.lilf.ir")
+        self.assertEqual(site.origin, "https://ajayeb.lilf.ir")
 
     def test_prod_caddy_block_is_single_reverse_proxy_with_redirect(self):
         site = self_host.parse_site_url("https://game.example.test")
@@ -174,6 +192,14 @@ class SelfHostTests(unittest.TestCase):
             site=self_host.parse_site_url("https://game.example.test"), mode=self_host.Mode.PROD, both_schemes=True
         )
         self.assertTrue(self_host.Config.from_json(cfg.to_json()).both_schemes)
+
+    def test_config_roundtrip_keeps_the_caddyfile_and_omits_the_default(self):
+        site = self_host.parse_site_url("https://game.example.test")
+        named = self_host.Config(site=site, mode=self_host.Mode.PROD, caddyfile="sites/Caddyfile")
+        self.assertEqual(self_host.Config.from_json(named.to_json()).caddyfile, "sites/Caddyfile")
+        plain = self_host.Config(site=site, mode=self_host.Mode.PROD)
+        self.assertNotIn("caddyfile", plain.to_json())
+        self.assertIsNone(self_host.Config.from_json(plain.to_json()).caddyfile)
 
     def test_legacy_config_serves_one_scheme(self):
         restored = self_host.Config.from_json('{"url": "https://game.example.test", "mode": "prod"}')
@@ -402,7 +428,7 @@ class SelfHostTests(unittest.TestCase):
             run.return_value = subprocess.CompletedProcess([], returncode=0)
             self_host.reload_caddy()
             run.assert_called_once_with(
-                ["caddy", "reload", "--config", str(self_host.CADDYFILE)],
+                ["caddy", "reload", "--config", str(self_host.CADDYFILE), "--adapter", "caddyfile"],
                 cwd=self_host.ROOT,
                 check=True,
                 text=True,
@@ -543,6 +569,595 @@ class SelfHostTests(unittest.TestCase):
         self.assertEqual(args.target, "user@example.host")
         self.assertEqual(args.url, "https://x.test")
         self.assertEqual(args.remote_dir, "custom")
+
+
+def fake_adapt(text: bytes) -> dict:
+    """What the fake Caddy adapts Caddyfile text to: the text itself, and two
+    file_servers whose hide lists end with the stand-in the real adapter
+    writes for the config file when the text comes with no file name."""
+    route = {"handle": [{"handler": "file_server", "hide": ["*.bak", self_host.ADAPTED_TEXT_HIDE]}]}
+    return {"apps": {"http": {"servers": {"s": {"routes": [route, json.loads(json.dumps(route))]}}}}, "text": text.decode()}
+
+
+def served_from(text: str, hide_path: str = "/srv/conf/Caddyfile") -> dict:
+    """The config `caddy run --config <hide_path>` serves for text."""
+    return self_host.with_config_file_hidden(fake_adapt(text.encode()), hide_path)
+
+
+class FakeCaddyAdmin:
+    """A local HTTP server standing in for Caddy's admin API. It holds a
+    running config (`running`, None for none), answers GET /config/ with it,
+    POST /adapt with {"result": fake_adapt(body)} (or an error status when
+    `adapt_rejects(body)` is true), and POST /load by applying the JSON body,
+    or answering `load_status` with `load_body` when that is not 200.
+    `drop_load` loses the reply to /load, after applying it ("after") or
+    without applying it ("before"). Every request is recorded."""
+
+    def __init__(self, running=None, load_status=200, load_body=b"", adapt_rejects=None, drop_load=None):
+        self.running = running
+        self.load_status, self.load_body = load_status, load_body
+        self.adapt_rejects = adapt_rejects or (lambda body: False)
+        self.drop_load = drop_load
+        self.requests = []
+        outer = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def _answer(self, status, body):
+                self.send_response(status)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_GET(self):
+                outer.requests.append(("GET", self.path, dict(self.headers), b""))
+                self._answer(200, json.dumps(outer.running).encode() + b"\n")
+
+            def do_POST(self):
+                data = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+                outer.requests.append(("POST", self.path, dict(self.headers), data))
+                if self.path == "/adapt":
+                    if outer.adapt_rejects(data):
+                        self._answer(400, b'{"error":"adapting config: boom"}')
+                    else:
+                        self._answer(200, json.dumps({"result": fake_adapt(data)}).encode())
+                elif self.path == "/load":
+                    if outer.drop_load:
+                        if outer.drop_load == "after":
+                            outer.running = json.loads(data)
+                        self.close_connection = True
+                        return
+                    if outer.load_status == 200:
+                        outer.running = json.loads(data)
+                    self._answer(outer.load_status, outer.load_body)
+                else:
+                    self._answer(404, b"")
+
+            def log_message(self, *args):
+                pass
+
+        self.server = HTTPServer(("127.0.0.1", 0), Handler)
+        self.address = f"127.0.0.1:{self.server.server_port}"
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+
+    def paths(self):
+        return [(method, path) for method, path, _headers, _body in self.requests]
+
+    def __enter__(self):
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc):
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def closed_address() -> str:
+    """A 127.0.0.1 port nothing listens on."""
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return f"127.0.0.1:{sock.getsockname()[1]}"
+
+
+# A proxy that would swallow every request: the admin API calls must bypass it.
+DEAD_PROXY_ENV = {
+    "http_proxy": "http://127.0.0.1:9",
+    "HTTP_PROXY": "http://127.0.0.1:9",
+    "no_proxy": "",
+    "NO_PROXY": "",
+}
+
+
+def setUpModule():
+    # No test may reach a real Caddy or read a real Caddyfile (a developer
+    # machine may run one): Caddy's default admin address points at a dead
+    # port, and the default Caddyfile at a path that does not exist.
+    nowhere = Path(tempfile.mkdtemp()) / "no-such-Caddyfile"
+    for name, value in (
+        ("CADDY_DEFAULT_ADMIN", closed_address()),
+        ("DEFAULT_CADDYFILE", nowhere),
+        ("CADDYFILE", nowhere),
+    ):
+        patcher = mock.patch.object(self_host, name, value)
+        patcher.start()
+        unittest.addModuleCleanup(patcher.stop)
+
+
+# setUp below replaces validate_caddyfile; this is the real one.
+REAL_VALIDATE_CADDYFILE = self_host.validate_caddyfile
+
+
+class CaddyLoadTests(unittest.TestCase):
+    """The running Caddy loads the edited Caddyfile only when it serves the
+    file as it stood (load_through_caddy), and a Caddyfile that does not
+    exist is never created over a Caddy that serves other sites
+    (refuse_to_create_caddyfile)."""
+
+    OTHER_SITE = "other-site.test {\n\treverse_proxy localhost:9000\n}\n"
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.tmp = Path(tmp.name)
+        self.caddyfile = self.tmp / "Caddyfile"
+        self.config_dir = self.tmp / ".self-host"
+        for name, value in (
+            ("CADDYFILE", self.caddyfile),
+            ("CONFIG_DIR", self.config_dir),
+            ("CADDYFILE_NAMED", False),
+            ("CADDY_RECHECK_DELAY", 0.0),
+        ):
+            patcher = mock.patch.object(self_host, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.calls = []
+        validate = mock.patch.object(self_host, "validate_caddyfile", side_effect=self._validate)
+        reload = mock.patch.object(self_host, "reload_caddy", side_effect=lambda: self.calls.append("reload"))
+        for patcher in (validate, reload):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        self.validate_rc = 0
+        self.site = self_host.parse_site_url("https://game.example.test")
+        self.ports = self_host.Ports(server=39111, web_dev=39112)
+
+    def _validate(self):
+        self.calls.append("validate")
+        return subprocess.CompletedProcess([], self.validate_rc, stdout="", stderr="bad")
+
+    def _apply(self):
+        self_host.apply_caddyfile_safely(self.site, self_host.Mode.PROD, self.ports)
+
+    def _apply_through(self, admin):
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=admin.address):
+            self._apply()
+
+    # The load path.
+
+    def test_apply_loads_the_edit_as_caddy_adapts_it_with_the_file_hidden_as_before(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=served_from(self.OTHER_SITE)) as admin, mock.patch.dict(os.environ, DEAD_PROXY_ENV):
+            self._apply_through(admin)
+        edited = self.caddyfile.read_text()
+        self.assertIn("reverse_proxy localhost:39111", edited)
+        self.assertIn("other-site.test", edited)
+        self.assertEqual(
+            admin.paths(), [("GET", "/config/"), ("POST", "/adapt"), ("POST", "/adapt"), ("POST", "/load")]
+        )
+        _, _, adapt_headers, before = admin.requests[1]
+        self.assertEqual(adapt_headers["Content-Type"], "text/caddyfile")
+        self.assertEqual(before, self.OTHER_SITE.encode())
+        self.assertEqual(admin.requests[2][3], edited.encode())
+        _, _, load_headers, loaded = admin.requests[3]
+        self.assertEqual(load_headers["Content-Type"], "application/json")
+        self.assertEqual(load_headers["Cache-Control"], "must-revalidate")
+        self.assertEqual(json.loads(loaded), served_from(edited))
+        self.assertNotIn(self_host.ADAPTED_TEXT_HIDE, loaded.decode())
+        self.assertEqual(admin.running, served_from(edited))
+        self.assertEqual(self.calls, [], "no caddy validate or caddy reload when Caddy loads the file itself")
+
+    def test_apply_refuses_a_caddy_that_does_not_serve_the_file_as_it_stands(self):
+        """A wrong path, another Caddy on the address, relative imports or
+        unloaded edits all show up as a running config that differs."""
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=served_from("another-file.test {\n}\n")) as admin:
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply_through(admin)
+        self.assertIn("--caddyfile", str(caught.exception))
+        self.assertIn("Nothing was loaded", str(caught.exception))
+        self.assertNotIn(("POST", "/load"), admin.paths())
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+        self.assertEqual(self.calls, [])
+
+    def test_apply_refuses_when_the_running_config_hides_two_different_config_paths(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        running = served_from(self.OTHER_SITE)
+        running["apps"]["http"]["servers"]["s"]["routes"][1]["handle"][0]["hide"][1] = "/elsewhere/Caddyfile"
+        with FakeCaddyAdmin(running=running) as admin:
+            with self.assertRaises(RuntimeError):
+                self._apply_through(admin)
+        self.assertNotIn(("POST", "/load"), admin.paths())
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+
+    def test_apply_restores_the_caddyfile_when_caddy_refuses_the_load(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        running = served_from(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=running, load_status=400, load_body=b"provision http: boom") as admin:
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply_through(admin)
+        self.assertIn("boom", str(caught.exception))
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+        self.assertEqual(admin.running, running)
+        self.assertEqual(self.calls, [])
+
+    def test_apply_restores_the_caddyfile_when_caddy_cannot_adapt_the_edit(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        rejects_ours = lambda body: self_host.MANAGED_START.encode() in body
+        with FakeCaddyAdmin(running=served_from(self.OTHER_SITE), adapt_rejects=rejects_ours) as admin:
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply_through(admin)
+        self.assertIn("boom", str(caught.exception))
+        self.assertNotIn(("POST", "/load"), admin.paths())
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+
+    def test_apply_accepts_a_load_whose_reply_was_lost_after_caddy_applied_it(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=served_from(self.OTHER_SITE), drop_load="after") as admin:
+            self._apply_through(admin)
+        edited = self.caddyfile.read_text()
+        self.assertIn("reverse_proxy localhost:39111", edited)
+        self.assertEqual(admin.running, served_from(edited))
+        self.assertEqual(admin.paths()[-1], ("GET", "/config/"))
+        self.assertEqual(self.calls, [], "a running Caddy is never reported as down, and validate never runs")
+
+    def test_apply_restores_the_caddyfile_when_a_lost_reply_left_caddy_on_its_old_config(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        running = served_from(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=running, drop_load="before") as admin:
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply_through(admin)
+        self.assertIn("lost", str(caught.exception))
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+        self.assertEqual(admin.running, running)
+        self.assertEqual(self.calls, [])
+
+    def test_a_lost_load_reply_with_no_answer_to_the_recheck_restores_and_never_validates(self):
+        """Whether the recheck is refused, refused with an error status or
+        lost again, the outcome is unknown: restore and stop, and never
+        report Caddy as down or as having kept its config."""
+        real_request = self_host.caddy_admin_request
+        for failure in (self_host.CaddyUnreachable, self_host.CaddyRejected, self_host.CaddyUnsure):
+            self.caddyfile.write_text(self.OTHER_SITE)
+            gets = []
+
+            def request(address, path, **kwargs):
+                if path == "/config/":
+                    gets.append(path)
+                    if len(gets) == 2:
+                        raise failure("recheck failed")
+                return real_request(address, path, **kwargs)
+
+            with self.subTest(failure=failure.__name__), FakeCaddyAdmin(
+                running=served_from(self.OTHER_SITE), drop_load="after"
+            ) as admin, mock.patch.object(self_host, "caddy_admin_request", side_effect=request):
+                with self.assertRaises(RuntimeError) as caught:
+                    self._apply_through(admin)
+                self.assertIn("could not be asked", str(caught.exception))
+                self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+                self.assertEqual(self.calls, [])
+
+    def test_apply_matches_hide_lists_in_any_order(self):
+        """Caddy orders the config files in a hide list differently across
+        versions; the same paths in another order are the same config."""
+        self.caddyfile.write_text(self.OTHER_SITE)
+        running = served_from(self.OTHER_SITE)
+        for route in running["apps"]["http"]["servers"]["s"]["routes"]:
+            route["handle"][0]["hide"].reverse()
+        with FakeCaddyAdmin(running=running) as admin:
+            self._apply_through(admin)
+        self.assertEqual(admin.paths()[-1], ("POST", "/load"))
+        self.assertTrue(self_host.same_config(admin.running, served_from(self.caddyfile.read_text())))
+
+    def test_apply_restores_the_caddyfile_on_an_interrupt(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=closed_address()), mock.patch.object(
+            self_host, "load_through_caddy", side_effect=KeyboardInterrupt
+        ):
+            with self.assertRaises(KeyboardInterrupt):
+                self._apply()
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+
+    # The preflight, before anything is stopped.
+
+    def test_preflight_refuses_a_caddy_that_does_not_serve_the_file_while_nothing_is_stopped(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=served_from("another-file.test {\n}\n")) as admin, mock.patch.object(
+            self_host, "caddy_admin_address", return_value=admin.address
+        ):
+            with self.assertRaisesRegex(RuntimeError, "Nothing was stopped"):
+                self_host.preflight_caddyfile(self.site, self_host.Mode.PROD, self.ports)
+        self.assertNotIn(("POST", "/load"), admin.paths())
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+
+    def test_preflight_passes_a_caddy_that_serves_the_file_and_changes_nothing(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with FakeCaddyAdmin(running=served_from(self.OTHER_SITE)) as admin, mock.patch.object(
+            self_host, "caddy_admin_address", return_value=admin.address
+        ):
+            self_host.preflight_caddyfile(self.site, self_host.Mode.PROD, self.ports)
+        self.assertEqual(admin.paths(), [("GET", "/config/"), ("POST", "/adapt")])
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+
+    def test_preflight_leaves_a_matching_block_a_new_file_and_a_stopped_caddy_alone(self):
+        address = mock.Mock(return_value=closed_address())
+        with mock.patch.object(self_host, "caddy_admin_address", address):
+            self_host.preflight_caddyfile(self.site, self_host.Mode.PROD, self.ports)  # no file yet
+            address.assert_not_called()
+            self_host.update_caddyfile(self.site, self_host.Mode.PROD, self.ports)
+            self_host.preflight_caddyfile(self.site, self_host.Mode.PROD, self.ports)  # block matches
+            address.assert_not_called()
+            self_host.preflight_caddyfile(self.site, self_host.Mode.PROD, replace(self.ports, server=39113))
+            address.assert_called_once()  # block differs, but no Caddy answers: nothing raised
+
+    def test_setup_redeploy_and_start_run_the_preflight_before_the_stop(self):
+        config = self_host.Config(site=self.site, mode=self_host.Mode.PROD, ports=self.ports)
+        runs = [
+            lambda: self_host.command_setup(None, "/tmp/bin"),
+            lambda: self_host.command_redeploy(None, "/tmp/bin"),
+            lambda: self_host.command_start(None),
+        ]
+        for run_command in runs:
+            order = mock.Mock()
+            order.command_stop.side_effect = AssertionError("stopped")
+            order.preflight_caddyfile.side_effect = RuntimeError("refused. Nothing was stopped or changed")
+            with self.subTest(command=run_command), mock.patch.multiple(
+                self_host,
+                resolve_config=mock.Mock(return_value=config),
+                refuse_to_create_caddyfile=mock.DEFAULT,
+                ensure_tools=mock.DEFAULT,
+                check_prebuilt_binary=mock.DEFAULT,
+                preflight_caddyfile=order.preflight_caddyfile,
+                command_stop=order.command_stop,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "Nothing was stopped"):
+                    run_command()
+                order.preflight_caddyfile.assert_called_once_with(config.site, self_host.Mode.PROD, config.ports, False)
+                order.command_stop.assert_not_called()
+
+    def test_apply_still_hands_caddy_a_file_that_does_not_adapt_here(self):
+        """The case the load path exists for: `caddy adapt` fails in this
+        shell over a placeholder, and the running Caddy still gets the file."""
+        with FakeCaddyAdmin() as admin:
+            original = f"{{\n\tadmin {admin.address}\n}}\n" + self.OTHER_SITE
+            self.caddyfile.write_text(original)
+            admin.running = served_from(original)
+            failed_adapt = subprocess.CompletedProcess([], 1, stdout="", stderr="Error: password is required")
+            with mock.patch("self_host.subprocess.run", return_value=failed_adapt):
+                self._apply()
+        self.assertEqual(admin.paths()[-1], ("POST", "/load"))
+        self.assertEqual(self.calls, [])
+        self.assertEqual(admin.running, served_from(self.caddyfile.read_text()))
+
+    def test_a_new_caddyfile_is_loaded_only_into_a_caddy_with_no_config(self):
+        with FakeCaddyAdmin(running=None) as admin:
+            self._apply_through(admin)
+        self.assertEqual(admin.paths(), [("GET", "/config/"), ("POST", "/adapt"), ("POST", "/load")])
+        self.assertEqual(admin.running, served_from(self.caddyfile.read_text(), str(self.caddyfile)))
+        self.caddyfile.unlink()
+        with FakeCaddyAdmin(running={"apps": {"http": {}}}) as admin:
+            with self.assertRaises(RuntimeError):
+                self._apply_through(admin)
+        self.assertNotIn(("POST", "/load"), admin.paths())
+        self.assertFalse(self.caddyfile.exists())
+
+    def test_apply_validates_when_no_caddy_answers(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        stderr = io.StringIO()
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=closed_address()), redirect_stderr(stderr):
+            self._apply()
+        self.assertEqual(self.calls, ["validate"])
+        self.assertIn("reverse_proxy localhost:39111", self.caddyfile.read_text())
+        self.assertIn("next start", stderr.getvalue())
+
+    def test_apply_restores_and_hints_when_validate_fails_on_a_placeholder(self):
+        original = "{$SECRET_PLACEHOLDER}\n" + self.OTHER_SITE
+        self.caddyfile.write_text(original)
+        self.validate_rc = 1
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=closed_address()), redirect_stderr(io.StringIO()):
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply()
+        self.assertEqual(self.caddyfile.read_text(), original)
+        self.assertIn("{$VAR}", str(caught.exception))
+
+    def test_apply_restores_the_caddyfile_on_an_unexpected_error_after_the_write(self):
+        self.caddyfile.write_text(self.OTHER_SITE)
+        with mock.patch.object(self_host, "caddy_admin_address", return_value=closed_address()), mock.patch.object(
+            self_host, "load_through_caddy", side_effect=ValueError("surprise")
+        ):
+            with self.assertRaises(ValueError):
+                self._apply()
+        self.assertEqual(self.caddyfile.read_text(), self.OTHER_SITE)
+
+    # The pieces.
+
+    def test_admin_requests_bypass_any_proxy_and_classify_failures(self):
+        with mock.patch.dict(os.environ, DEAD_PROXY_ENV):
+            with FakeCaddyAdmin(running={"apps": {}}) as admin:
+                self.assertEqual(self_host.caddy_admin_request(admin.address, "/config/"), {"apps": {}})
+            with FakeCaddyAdmin(load_status=400, load_body=b'{"error":"boom"}') as admin:
+                with self.assertRaises(self_host.CaddyRejected) as caught:
+                    self_host.caddy_admin_request(admin.address, "/load", data=b"{}")
+                self.assertIn("boom", str(caught.exception))
+            with FakeCaddyAdmin(drop_load="before") as admin:
+                with self.assertRaises(self_host.CaddyUnsure):
+                    self_host.caddy_admin_request(admin.address, "/load", data=b"{}")
+            with self.assertRaises(self_host.CaddyUnreachable):
+                self_host.caddy_admin_request(closed_address(), "/config/")
+        timed_out = mock.Mock()
+        timed_out.open.side_effect = urllib.error.URLError(TimeoutError("timed out"))
+        with mock.patch.object(self_host, "caddy_admin_opener", return_value=timed_out):
+            with self.assertRaises(self_host.CaddyUnsure):
+                self_host.caddy_admin_request("localhost:1", "/load", data=b"{}")
+        # localhost can resolve to ::1 on a host without IPv6, and Python
+        # reports the last address's error: still nothing listening.
+        for code in (errno.EINVAL, errno.EADDRNOTAVAIL, errno.ENETUNREACH):
+            unusable = mock.Mock()
+            unusable.open.side_effect = urllib.error.URLError(OSError(code, os.strerror(code)))
+            with self.subTest(errno=code), mock.patch.object(self_host, "caddy_admin_opener", return_value=unusable):
+                with self.assertRaises(self_host.CaddyUnreachable):
+                    self_host.caddy_admin_request("localhost:1", "/config/")
+        dead_port = closed_address().split(":")[1]
+        with self.assertRaises(self_host.CaddyUnreachable):
+            self_host.caddy_admin_request(f"localhost:{dead_port}", "/config/")
+
+    def test_hide_paths_and_putting_them_back(self):
+        hidden = served_from("x", "/srv/conf/Caddyfile")
+        self.assertEqual(self_host.hide_paths_for_adapted_text(fake_adapt(b"x"), hidden, set()), {"/srv/conf/Caddyfile"})
+        self.assertEqual(self_host.with_config_file_hidden(fake_adapt(b"x"), "/srv/conf/Caddyfile"), hidden)
+        plain = {"handler": "reverse_proxy", "hide": [self_host.ADAPTED_TEXT_HIDE]}
+        self.assertEqual(self_host.with_config_file_hidden(plain, "/p"), plain, "only file_server hide lists change")
+
+    def test_serves_a_config_only_when_a_caddy_has_one_loaded(self):
+        with mock.patch.dict(os.environ, DEAD_PROXY_ENV):
+            with FakeCaddyAdmin(running={"apps": {}}) as admin:
+                self.assertTrue(self_host.caddy_serves_a_config(admin.address))
+                self.assertEqual(admin.paths(), [("GET", "/config/")])
+            for empty in (None, {}):
+                with FakeCaddyAdmin(running=empty) as admin:
+                    self.assertFalse(self_host.caddy_serves_a_config(admin.address))
+            self.assertFalse(self_host.caddy_serves_a_config(closed_address()))
+
+    def test_admin_address_comes_from_the_adapted_caddyfile(self):
+        cases = [
+            ("{}", "localhost:2019"),
+            ('{"admin":{"listen":"localhost:2999"}}', "localhost:2999"),
+            ('{"admin":{"listen":"tcp/127.0.0.1:2999"}}', "127.0.0.1:2999"),
+            ('{"admin":{"listen":"unix//run/caddy.sock"}}', None),
+            ('{"admin":{"disabled":true}}', None),
+        ]
+        with mock.patch.object(self_host, "CADDY_DEFAULT_ADMIN", "localhost:2019"):
+            for stdout, want in cases:
+                with self.subTest(stdout=stdout), mock.patch("self_host.subprocess.run") as run:
+                    run.return_value = subprocess.CompletedProcess([], 0, stdout=stdout, stderr="")
+                    self.assertEqual(self_host.caddy_admin_address(), want)
+                    self.assertEqual(
+                        run.call_args.args[0],
+                        ["caddy", "adapt", "--config", str(self.caddyfile), "--adapter", "caddyfile"],
+                    )
+
+    def test_admin_address_is_read_as_text_when_the_caddyfile_does_not_adapt_here(self):
+        """An unset {$VAR} can make `caddy adapt` fail in this shell while the
+        running Caddy, which has it, would load the file."""
+        cases = [
+            ("{\n\tadmin localhost:2999\n}\n", "localhost:2999"),
+            ("{\n\temail ops@example.test\n}\n" + self.OTHER_SITE, "localhost:2019"),
+            ("{\n\tadmin off\n}\n", None),
+        ]
+        with mock.patch.object(self_host, "CADDY_DEFAULT_ADMIN", "localhost:2019"):
+            for text, want in cases:
+                self.caddyfile.write_text(text)
+                for adapt in (
+                    subprocess.CompletedProcess([], 1, stdout="", stderr="Error: bad"),
+                    subprocess.CompletedProcess([], 0, stdout="not json", stderr=""),
+                ):
+                    with self.subTest(text=text, rc=adapt.returncode), mock.patch(
+                        "self_host.subprocess.run", return_value=adapt
+                    ):
+                        self.assertEqual(self_host.caddy_admin_address(), want)
+
+    def test_scanned_admin_address_reads_only_the_global_options_block(self):
+        cases = [
+            ("", "localhost:2019"),
+            (self.OTHER_SITE, "localhost:2019"),
+            ("# a comment\n{\n\tadmin localhost:2999\n}\n", "localhost:2999"),
+            ("{\n\tadmin tcp/127.0.0.1:2999 {\n\t\torigins localhost\n\t}\n}\n", "127.0.0.1:2999"),
+            ("{\n\tadmin {\n\t\torigins localhost\n\t}\n}\n", "localhost:2019"),
+            ("{\n\tadmin unix//run/caddy.sock\n}\n", None),
+            ("{\n\tadmin {$ADMIN_ADDRESS}\n}\n", None),
+            ("{\n\tadmin off\n}\n", None),
+            ("{\n\t# admin off\n\tdebug\n}\n", "localhost:2019"),
+            ("{\n\tservers {\n\t\tadmin nope:1\n\t}\n}\n" + self.OTHER_SITE, "localhost:2019"),
+            ("{\n\tdebug\n}\nsite.test {\n\tadmin nope:1\n}\n", "localhost:2019"),
+        ]
+        with mock.patch.object(self_host, "CADDY_DEFAULT_ADMIN", "localhost:2019"):
+            for text, want in cases:
+                with self.subTest(text=text):
+                    self.assertEqual(self_host.scanned_admin_address(text), want)
+
+    def test_validate_names_the_caddyfile_adapter(self):
+        """A Caddyfile under another name would otherwise be read as JSON."""
+        with mock.patch("self_host.subprocess.run") as run:
+            run.return_value = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+            REAL_VALIDATE_CADDYFILE()
+        self.assertEqual(
+            run.call_args.args[0],
+            ["caddy", "validate", "--config", str(self.caddyfile), "--adapter", "caddyfile"],
+        )
+
+    # Never creating a Caddyfile over a serving Caddy.
+
+    def test_a_named_caddyfile_that_does_not_exist_is_never_created(self):
+        admin_address, serves = mock.Mock(), mock.Mock()
+        with mock.patch.object(self_host, "CADDYFILE_NAMED", True), mock.patch.object(
+            self_host, "caddy_admin_address", admin_address
+        ), mock.patch.object(self_host, "caddy_serves_a_config", serves):
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply()
+        self.assertIn(str(self.caddyfile), str(caught.exception))
+        self.assertFalse(self.caddyfile.exists())
+        self.assertFalse(self.config_dir.exists(), "no backup either")
+        admin_address.assert_not_called()
+        serves.assert_not_called()
+        self.assertEqual(self.calls, [])
+
+    def test_a_missing_default_caddyfile_is_not_created_over_a_serving_caddy(self):
+        with FakeCaddyAdmin(running={"apps": {"http": {}}}) as admin, mock.patch.object(
+            self_host, "CADDY_DEFAULT_ADMIN", admin.address
+        ):
+            with self.assertRaises(RuntimeError) as caught:
+                self._apply()
+        self.assertIn("--caddyfile", str(caught.exception))
+        self.assertFalse(self.caddyfile.exists())
+        self.assertEqual(self.calls, [])
+
+    def test_a_missing_default_caddyfile_is_created_when_no_caddy_serves_a_config(self):
+        with FakeCaddyAdmin(running=None) as admin, mock.patch.object(
+            self_host, "CADDY_DEFAULT_ADMIN", admin.address
+        ), mock.patch.object(self_host, "caddy_admin_address", return_value=None):
+            self._apply()
+        self.assertIn("reverse_proxy localhost:39111", self.caddyfile.read_text())
+        self.assertEqual(self.calls, ["validate", "reload"])
+
+    def test_every_command_refuses_a_missing_named_caddyfile_before_stopping_anything(self):
+        config = self_host.Config(site=self.site, mode=self_host.Mode.PROD, caddyfile=str(self.tmp / "missing"))
+        commands = [
+            lambda: self_host.command_setup(None, None),
+            lambda: self_host.command_redeploy(None, None),
+            lambda: self_host.command_start(None),
+            lambda: self_host.command_dev_start(None),
+        ]
+        reached = lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("reached past the Caddyfile check"))
+        steps = ("find_go", "install_web", "build_web", "sync_webdist", "build_server_release", "check_prebuilt_binary")
+        for run_command in commands:
+            stop, save = mock.Mock(), mock.Mock()
+            with self.subTest(command=run_command), mock.patch.multiple(
+                self_host,
+                resolve_config=mock.Mock(return_value=config),
+                command_stop=stop,
+                save_config=save,
+                ensure_tools=mock.DEFAULT,
+                **{step: mock.Mock(side_effect=reached) for step in steps},
+            ):
+                with self.assertRaisesRegex(RuntimeError, "check --caddyfile"):
+                    run_command()
+                stop.assert_not_called()
+                save.assert_not_called()
+
+    def test_use_caddyfile_records_whether_the_config_names_one(self):
+        config = self_host.Config(site=self.site, mode=self_host.Mode.PROD)
+        self_host.use_caddyfile(replace(config, caddyfile="scripts/Caddyfile"))
+        self.assertTrue(self_host.CADDYFILE_NAMED)
+        self_host.use_caddyfile(config)
+        self.assertFalse(self_host.CADDYFILE_NAMED)
+        self.assertEqual(self_host.CADDYFILE, self_host.DEFAULT_CADDYFILE)
 
 
 class UnameMappingTests(unittest.TestCase):
@@ -718,6 +1333,15 @@ class RemoteCommandQuotingTests(unittest.TestCase):
         self.assertTrue(remote.endswith(self_host.REMOTE_UPLOAD_BIN))
         self.assertIn(" redeploy ", remote)
 
+
+    def test_remote_deploy_command_forwards_a_quoted_caddyfile_only_when_given(self):
+        named = self_host.remote_deploy_command(
+            "user@example.host", "ajayeb", "setup", "https://x.test", None, "my dir/Caddyfile"
+        )[2]
+        kept = self_host.remote_deploy_command("user@example.host", "ajayeb", "setup", "https://x.test")[2]
+        self.assertIn(" --caddyfile " + shlex.quote("my dir/Caddyfile") + " ", named)
+        self.assertNotIn("--caddyfile", kept)
+        self.assertTrue(named.endswith(shlex.quote("https://x.test")))
 
     def test_remote_deploy_command_forwards_both_schemes_only_when_given(self):
         on = self_host.remote_deploy_command("user@example.host", "ajayeb", "redeploy", "https://x.test", True)[2]
@@ -1170,16 +1794,18 @@ class PortsAfterStopTests(unittest.TestCase):
                 )
         dev = dict(
             common,
-            resolve_runtime_config=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            allocate_ports=mock.DEFAULT,
             find_go=mock.DEFAULT,
             install_web=mock.DEFAULT,
             start_server_dev=mock.DEFAULT,
             start_web_dev=mock.DEFAULT,
         )
         with mock.patch.multiple(self_host, **dev) as mocks:
-            mocks["resolve_runtime_config"].return_value = replace(config, mode=self_host.Mode.DEV)
+            mocks["resolve_config"].return_value = replace(config, mode=self_host.Mode.DEV)
+            mocks["allocate_ports"].side_effect = lambda ports: ports
             self_host.command_dev_start(None, True)
-            mocks["resolve_runtime_config"].assert_called_once_with(None, self_host.Mode.DEV, True)
+            mocks["resolve_config"].assert_called_once_with(None, self_host.Mode.DEV, True, None)
             mocks["apply_caddyfile_safely"].assert_called_once_with(config.site, self_host.Mode.DEV, config.ports, True)
 
     def test_main_routes_both_schemes_to_each_command(self):
@@ -1199,6 +1825,62 @@ class PortsAfterStopTests(unittest.TestCase):
     def test_both_schemes_flags_exclude_each_other(self):
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             self_host.build_parser().parse_args(["redeploy", "--both-schemes", "--no-both-schemes"])
+
+
+    def test_caddyfile_path_reads_relative_paths_from_home(self):
+        home = Path.home()
+        self.assertEqual(self_host.caddyfile_path(None), self_host.DEFAULT_CADDYFILE)
+        self.assertEqual(self_host.caddyfile_path(""), self_host.DEFAULT_CADDYFILE)
+        self.assertEqual(self_host.caddyfile_path("scripts/Caddyfile"), home / "scripts/Caddyfile")
+        self.assertEqual(self_host.caddyfile_path("~/scripts/Caddyfile"), home / "scripts/Caddyfile")
+        self.assertEqual(self_host.caddyfile_path("/etc/caddy/Caddyfile"), Path("/etc/caddy/Caddyfile"))
+
+    def test_commands_edit_the_caddyfile_the_config_names(self):
+        config = replace(self._config(), caddyfile="sites/Caddyfile")
+        patches = dict(
+            # Covered in CaddyLoadTests; here the path need not exist.
+            refuse_to_create_caddyfile=mock.DEFAULT,
+            preflight_caddyfile=mock.DEFAULT,
+            command_stop=mock.DEFAULT,
+            resolve_config=mock.DEFAULT,
+            ports_after_stop=mock.DEFAULT,
+            ensure_tools=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            apply_caddyfile_safely=mock.DEFAULT,
+            start_server_prod=mock.DEFAULT,
+            poll_health=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        )
+        seen = []
+        original, original_named = self_host.CADDYFILE, self_host.CADDYFILE_NAMED
+        try:
+            with mock.patch.multiple(self_host, **patches) as mocks, mock.patch.object(
+                self_host, "BIN_PATH", Path(__file__)
+            ):
+                mocks["resolve_config"].return_value = config
+                mocks["ports_after_stop"].side_effect = lambda c: c
+                mocks["poll_health"].return_value = True
+                mocks["apply_caddyfile_safely"].side_effect = lambda *a: seen.append(self_host.CADDYFILE)
+                self_host.command_start(None, None, "sites/Caddyfile")
+                self.assertEqual(mocks["resolve_config"].call_args.args[3], "sites/Caddyfile")
+            self.assertEqual(seen, [Path.home() / "sites/Caddyfile"])
+            self.assertTrue(self_host.CADDYFILE_NAMED)
+        finally:
+            self_host.CADDYFILE, self_host.CADDYFILE_NAMED = original, original_named
+
+    def test_main_routes_caddyfile_to_each_command(self):
+        cases = [
+            (["setup"], "command_setup", 3),
+            (["redeploy"], "command_redeploy", 3),
+            (["start"], "command_start", 2),
+            (["dev-start"], "command_dev_start", 2),
+            (["ship"], "command_ship", 4),
+        ]
+        for argv, target, index in cases:
+            for extra, want in (([], None), (["--caddyfile", "scripts/Caddyfile"], "scripts/Caddyfile")):
+                with self.subTest(argv=argv, extra=extra), mock.patch.object(self_host, target) as command:
+                    self.assertEqual(self_host.main(argv + extra), 0)
+                    self.assertEqual(command.call_args.args[index], want)
 
 
 class ShipTargetMemoryTests(unittest.TestCase):
@@ -1270,6 +1952,28 @@ class ShipTargetMemoryTests(unittest.TestCase):
                 self.assertTrue(self_host.resolve_config("https://other.example.test").both_schemes)
                 self.assertFalse(self_host.resolve_config(None, both_schemes=False).both_schemes)
                 self.assertTrue(self_host.resolve_config(None, both_schemes=True).both_schemes)
+            finally:
+                self._restore(originals)
+
+    def test_resolve_config_keeps_the_caddyfile_unless_overridden(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            originals = self._with_config_file(tmp)
+            try:
+                self.assertIsNone(self_host.resolve_config(None).caddyfile)
+                self_host.save_config(
+                    self_host.Config(
+                        site=self_host.parse_site_url("https://game.example.test"),
+                        mode=self_host.Mode.PROD,
+                        caddyfile="sites/Caddyfile",
+                    )
+                )
+                self.assertEqual(self_host.resolve_config(None).caddyfile, "sites/Caddyfile")
+                self.assertEqual(self_host.resolve_config(None, caddyfile="/etc/Caddyfile").caddyfile, "/etc/Caddyfile")
+                self.assertEqual(
+                    self_host.resolve_config(None, both_schemes=True).caddyfile, "sites/Caddyfile"
+                )
             finally:
                 self._restore(originals)
 
@@ -1354,7 +2058,7 @@ class CommandShipTests(unittest.TestCase):
             self.assertIn("v1.0.0", stderr.getvalue())
             mocks["remember_ship_target"].assert_called_once_with("user@example.host", "ajayeb")
             mocks["deploy_remote"].assert_called_once_with(
-                "user@example.host", "ajayeb", "setup", "https://game.example.test", None
+                "user@example.host", "ajayeb", "setup", "https://game.example.test", None, None
             )
 
     def test_command_ship_reports_matching_version(self):
@@ -1399,7 +2103,7 @@ class CommandShipTests(unittest.TestCase):
 
             mocks["resolve_ship_target"].assert_called_once_with(None, None)
             mocks["deploy_remote"].assert_called_once_with(
-                "user@example.host", "ajayeb", "redeploy", "https://game.example.test", None
+                "user@example.host", "ajayeb", "redeploy", "https://game.example.test", None, None
             )
             mocks["poll_remote_version"].assert_called_once_with("https://game.example.test")
 

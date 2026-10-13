@@ -11,6 +11,8 @@ process easy to inspect or restart without Docker.
 from __future__ import annotations
 
 import argparse
+import errno
+import http.client
 import json
 import os
 import platform
@@ -45,8 +47,22 @@ DATA_DIR = CONFIG_DIR / "data"
 BACKUPS_DIR = CONFIG_DIR / "backups"
 DIST_DIR = CONFIG_DIR / "dist"
 ROOMS_BACKUP_KEEP = 10
-CADDYFILE = Path.home() / "Caddyfile"
-DEFAULT_URL = "https://ajayeb.pinky.lilf.ir"
+DEFAULT_CADDYFILE = Path.home() / "Caddyfile"
+# The Caddyfile this run edits and reloads: DEFAULT_CADDYFILE unless the
+# config names another one (use_caddyfile sets both at the start of a command).
+CADDYFILE = DEFAULT_CADDYFILE
+CADDYFILE_NAMED = False
+# Caddy's own default admin address, used when the Caddyfile names none.
+CADDY_DEFAULT_ADMIN = "localhost:2019"
+CADDY_LOAD_TIMEOUT = 60.0
+CADDY_PROBE_TIMEOUT = 2.0
+CADDY_RECHECK_DELAY = 1.0
+# What Caddy's Caddyfile adapter puts in every file_server's hide list for
+# the config file when it adapts text that came with no file name (the admin
+# API's /adapt and /load). `caddy run --config FILE` and `caddy reload
+# --config FILE` hide FILE itself there instead.
+ADAPTED_TEXT_HIDE = "./Caddyfile"
+DEFAULT_URL = "https://ajayeb.lilf.ir"
 DEFAULT_NODE_VERSION = "24"
 HEALTH_POLL_TIMEOUT = 10.0
 HEALTH_POLL_INTERVAL = 0.3
@@ -168,6 +184,9 @@ class Config:
     # Serve the site on both http:// and https:// instead of redirecting the
     # other scheme to the site's own (render_caddy_block).
     both_schemes: bool = False
+    # The Caddyfile the running Caddy reads, if not ~/Caddyfile: absolute, or
+    # relative to the home directory (caddyfile_path).
+    caddyfile: str | None = None
 
     def to_json(self) -> str:
         payload: dict[str, object] = {
@@ -178,6 +197,8 @@ class Config:
         }
         if self.ship is not None:
             payload["ship"] = self.ship.to_json()
+        if self.caddyfile is not None:
+            payload["caddyfile"] = self.caddyfile
         return json.dumps(payload, indent=2, sort_keys=True)
 
     @classmethod
@@ -189,6 +210,7 @@ class Config:
             ports=Ports.from_json(raw.get("ports")),
             ship=ShipTarget.from_json(raw.get("ship")),
             both_schemes=raw.get("both_schemes") is True,
+            caddyfile=str(raw["caddyfile"]) if raw.get("caddyfile") else None,
         )
 
 
@@ -212,6 +234,24 @@ def load_config() -> Config | None:
 def save_config(config: Config) -> None:
     CONFIG_DIR.mkdir(exist_ok=True)
     CONFIG_FILE.write_text(config.to_json() + "\n")
+
+
+def caddyfile_path(value: str | None) -> Path:
+    """The Caddyfile a config names: ~/Caddyfile when it names none, an
+    absolute path as is, and anything else relative to the home directory
+    (a leading ~/ included), so the same value means the same file whether
+    it was typed here or forwarded to a remote host by ship."""
+    if not value:
+        return DEFAULT_CADDYFILE
+    path = Path(value).expanduser()
+    return path if path.is_absolute() else Path.home() / path
+
+
+def use_caddyfile(config: Config) -> None:
+    """Point this run's Caddy steps at the Caddyfile config names."""
+    global CADDYFILE, CADDYFILE_NAMED
+    CADDYFILE = caddyfile_path(config.caddyfile)
+    CADDYFILE_NAMED = bool(config.caddyfile)
 
 
 def tmux_env_args(env: dict[str, str] | None = None) -> list[str]:
@@ -274,10 +314,10 @@ def render_caddy_block(site: Site, mode: Mode, ports: Ports = Ports(), both_sche
 
 
 def backup_caddyfile() -> Path | None:
-    """Copy ~/Caddyfile to .self-host/Caddyfile.bak.<ts> before editing it.
+    """Copy the Caddyfile to .self-host/Caddyfile.bak.<ts> before editing it.
 
     Other sites may share this file, so we never touch it without a backup
-    we can restore from if `caddy validate` then fails.
+    we can restore from if Caddy then refuses it.
     """
     if not CADDYFILE.exists():
         return None
@@ -304,7 +344,7 @@ def find_managed_block(text: str) -> tuple[int, int] | None:
 
 
 def caddyfile_block_matches(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> bool:
-    """True when ~/Caddyfile already has exactly the managed block we would
+    """True when the Caddyfile already has exactly the managed block we would
     write for site/mode/ports, so writing it again would be a no-op."""
     if not CADDYFILE.exists():
         return False
@@ -523,48 +563,408 @@ def swap_in_binary(source: Path, *, move: bool = False) -> None:
 
 def validate_caddyfile() -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["caddy", "validate", "--config", str(CADDYFILE)], text=True, capture_output=True, check=False
+        ["caddy", "validate", "--config", str(CADDYFILE), "--adapter", "caddyfile"],
+        text=True,
+        capture_output=True,
+        check=False,
     )
 
 
 def reload_caddy() -> None:
-    """Ask the running Caddy to reload ~/Caddyfile.
+    """Ask the running Caddy to reload the Caddyfile with `caddy reload`.
 
-    This never runs `caddy fmt --overwrite`: ~/Caddyfile is shared with other
-    sites, and reformatting the whole file on every deploy is not ours to
-    do. render_caddy_block already renders our block in Caddy's own
-    tab-indented format, so there is nothing of ours for a reload to
-    complain about.
+    Only the fallback for a Caddyfile whose admin API load_through_caddy cannot
+    reach (turned off, or on a Unix socket). This never runs `caddy fmt
+    --overwrite`: the Caddyfile is shared with other sites, and reformatting
+    the whole file on every deploy is not ours to do. render_caddy_block
+    already renders our block in Caddy's own tab-indented format, so there is
+    nothing of ours for a reload to complain about.
     """
-    run(["caddy", "reload", "--config", str(CADDYFILE)])
+    run(["caddy", "reload", "--config", str(CADDYFILE), "--adapter", "caddyfile"])
+
+
+class CaddyUnreachable(Exception):
+    """No Caddy answered on the admin address."""
+
+
+# Connect failures that mean no Caddy listens there. A name like localhost
+# can resolve to an address this host cannot use (::1 without IPv6), and
+# Python reports the error from the last address it tried, which is then
+# not ECONNREFUSED.
+NOTHING_LISTENS = frozenset(
+    {errno.ECONNREFUSED, errno.EADDRNOTAVAIL, errno.ENETUNREACH, errno.EHOSTUNREACH, errno.EINVAL, errno.EAFNOSUPPORT}
+)
+
+
+class CaddyRejected(Exception):
+    """The running Caddy refused a request (an error status), changing nothing."""
+
+
+class CaddyUnsure(Exception):
+    """A request reached Caddy but its reply was lost (a reset, a timeout), so
+    Caddy may or may not have acted on it."""
+
+
+class CaddyMismatch(Exception):
+    """The Caddy on the admin address does not serve the Caddyfile as it stood
+    before our edit, so loading the edited file there is not safe."""
+
+
+def admin_listen_address(listen: str) -> str | None:
+    """host:port for an admin listen address; None for a Unix socket or an
+    address that is still a {$VAR} placeholder."""
+    if listen.startswith("tcp/"):
+        listen = listen[len("tcp/") :]
+    return None if "/" in listen or "{" in listen else listen
+
+
+def scanned_admin_address(text: str) -> str | None:
+    """The admin address the global options block of Caddyfile text names,
+    read as plain text: Caddy's default when the block names none, None for
+    `admin off`, a Unix socket or a placeholder.
+
+    Only for a file that does not adapt in this shell's environment (a
+    {$VAR} placeholder the shell lacks can make an option invalid here)
+    while the running Caddy, which has the variable, may still load it.
+    """
+    depth = 0
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        if depth == 0:
+            if line != "{":
+                return CADDY_DEFAULT_ADMIN
+            depth = 1
+            continue
+        tokens = line.split()
+        if depth == 1 and tokens[0] == "admin":
+            argument = tokens[1] if len(tokens) > 1 and tokens[1] != "{" else None
+            if argument is None:
+                return CADDY_DEFAULT_ADMIN
+            return None if argument == "off" else admin_listen_address(argument)
+        depth += line.count("{") - line.count("}")
+        if depth <= 0:
+            return CADDY_DEFAULT_ADMIN
+    return CADDY_DEFAULT_ADMIN
+
+
+def caddy_admin_address() -> str | None:
+    """The host:port of the admin API the Caddyfile's own global options
+    name, or Caddy's default when they name none: the Caddy that `caddy
+    reload` would talk to. None when the file turns the admin API off or
+    puts it on a Unix socket.
+
+    `caddy adapt` reads the file the way Caddy does. When it fails here,
+    which an unset {$VAR} can cause, the global options block is read as
+    text instead (scanned_admin_address), so the file still goes to the
+    running Caddy, which adapts it with its own environment.
+    """
+    adapted = subprocess.run(
+        ["caddy", "adapt", "--config", str(CADDYFILE), "--adapter", "caddyfile"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    admin = None
+    if adapted.returncode == 0:
+        try:
+            config = json.loads(adapted.stdout)
+            admin = config.get("admin") or {} if isinstance(config, dict) else None
+        except ValueError:
+            admin = None
+    if not isinstance(admin, dict):
+        return scanned_admin_address(CADDYFILE.read_text() if CADDYFILE.exists() else "")
+    if admin.get("disabled"):
+        return None
+    return admin_listen_address(str(admin.get("listen") or CADDY_DEFAULT_ADMIN))
+
+
+def caddy_admin_opener() -> urllib.request.OpenerDirector:
+    """An opener that never goes through a proxy: the admin API is local,
+    and a host's https_proxy or http_proxy must not catch these requests."""
+    return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+
+def caddy_admin_request(
+    address: str,
+    path: str,
+    *,
+    data: bytes | None = None,
+    headers: dict[str, str] | None = None,
+    timeout: float = CADDY_LOAD_TIMEOUT,
+) -> object:
+    """One request to the admin API on address (a POST when data is given),
+    with the reply parsed as JSON (None for an empty reply).
+
+    Raises CaddyRejected with Caddy's reason for an error status,
+    CaddyUnreachable when the connection is refused (no Caddy listens), and
+    CaddyUnsure for any other transport failure.
+    """
+    request = urllib.request.Request(
+        f"http://{address}{path}", data=data, method="POST" if data is not None else "GET", headers=headers or {}
+    )
+    try:
+        with caddy_admin_opener().open(request, timeout=timeout) as resp:
+            body = resp.read()
+    except urllib.error.HTTPError as exc:
+        with exc:
+            detail = exc.read().decode("utf-8", errors="replace").strip()
+        raise CaddyRejected(detail or f"HTTP {exc.code}") from exc
+    except urllib.error.URLError as exc:
+        # urllib wraps what fails while connecting and sending; a connect
+        # failure means nothing reached a Caddy.
+        if isinstance(exc.reason, OSError) and exc.reason.errno in NOTHING_LISTENS:
+            raise CaddyUnreachable(str(exc.reason)) from exc
+        raise CaddyUnsure(str(exc.reason)) from exc
+    except ConnectionRefusedError as exc:
+        raise CaddyUnreachable(str(exc)) from exc
+    except (OSError, http.client.HTTPException) as exc:
+        raise CaddyUnsure(str(exc) or type(exc).__name__) from exc
+    return json.loads(body) if body.strip() else None
+
+
+def adapt_in_caddy(address: str, text: bytes) -> object:
+    """Caddyfile text as the running Caddy adapts it to JSON (/adapt), with
+    Caddy's own environment. Loads nothing."""
+    reply = caddy_admin_request(address, "/adapt", data=text, headers={"Content-Type": "text/caddyfile"})
+    if not isinstance(reply, dict) or "result" not in reply:
+        raise CaddyRejected("Caddy's /adapt gave no result")
+    return reply["result"]
+
+
+def hide_paths_for_adapted_text(adapted: object, running: object, found: set[str]) -> set[str]:
+    """The values running has wherever adapted has ADAPTED_TEXT_HIDE in a
+    file_server's hide list: the path the running Caddy hides its config
+    file by."""
+    if isinstance(adapted, dict) and isinstance(running, dict):
+        if adapted.get("handler") == "file_server":
+            ours, theirs = adapted.get("hide"), running.get("hide")
+            # Caddy orders the config files in a hide list differently from
+            # one version to the next, so match them as sets.
+            if isinstance(ours, list) and isinstance(theirs, list) and ADAPTED_TEXT_HIDE in ours:
+                found.update(t for t in set(map(str, theirs)) - set(map(str, ours)))
+        for key in adapted.keys() & running.keys():
+            hide_paths_for_adapted_text(adapted[key], running[key], found)
+    elif isinstance(adapted, list) and isinstance(running, list) and len(adapted) == len(running):
+        for ours, theirs in zip(adapted, running):
+            hide_paths_for_adapted_text(ours, theirs, found)
+    return found
+
+
+def with_config_file_hidden(config: object, path: str) -> object:
+    """config with ADAPTED_TEXT_HIDE in every file_server's hide list
+    replaced by path, as `caddy reload --config` would have hidden the file."""
+    if isinstance(config, list):
+        return [with_config_file_hidden(item, path) for item in config]
+    if not isinstance(config, dict):
+        return config
+    out = {key: with_config_file_hidden(value, path) for key, value in config.items()}
+    if config.get("handler") == "file_server" and isinstance(config.get("hide"), list):
+        out["hide"] = [path if item == ADAPTED_TEXT_HIDE else item for item in config["hide"]]
+    return out
+
+
+def with_hide_lists_sorted(config: object) -> object:
+    """config with every file_server hide list sorted, for comparing configs
+    whose hide lists hold the same paths in another order."""
+    if isinstance(config, list):
+        return [with_hide_lists_sorted(item) for item in config]
+    if not isinstance(config, dict):
+        return config
+    out = {key: with_hide_lists_sorted(value) for key, value in config.items()}
+    if config.get("handler") == "file_server" and isinstance(config.get("hide"), list):
+        out["hide"] = sorted(config["hide"], key=str)
+    return out
+
+
+def same_config(a: object, b: object) -> bool:
+    return with_hide_lists_sorted(a) == with_hide_lists_sorted(b)
+
+
+def check_caddy_serves(address: str, before: bytes | None) -> str:
+    """Raise CaddyMismatch unless the running Caddy on address serves the
+    Caddyfile text before (None for a file not created yet, which needs a
+    Caddy with no config). Loads nothing. Returns the path the running
+    Caddy hides its config file by (see load_through_caddy)."""
+    running = caddy_admin_request(address, "/config/")
+    if before is None:
+        if running not in (None, {}):
+            raise CaddyMismatch(f"{CADDYFILE} is new, but the Caddy on {address} already serves a config")
+        return str(CADDYFILE)
+    adapted = adapt_in_caddy(address, before)
+    found = hide_paths_for_adapted_text(adapted, running, set())
+    hide_path = next(iter(found)) if len(found) == 1 else str(CADDYFILE)
+    if len(found) > 1 or not same_config(with_config_file_hidden(adapted, hide_path), running):
+        raise CaddyMismatch(
+            f"the Caddy on {address} does not serve {CADDYFILE} as it stands: the path may be wrong "
+            "(check --caddyfile), another Caddy may own that admin address, the file may import relative "
+            "paths, or it may hold edits Caddy has not loaded yet (reload Caddy with it first)"
+        )
+    return hide_path
+
+
+def load_through_caddy(address: str, before: bytes | None) -> None:
+    """Have the running Caddy on address load the edited Caddyfile, but only
+    if it is the Caddy that serves the file as it stood before the edit.
+
+    Caddy adapts both versions itself (/adapt), so a {$VAR} placeholder in
+    the shared file resolves from Caddy's environment, as it did when Caddy
+    started, whatever the shell running this script exports. Adapted text
+    hides the config file by a relative stand-in (ADAPTED_TEXT_HIDE), so the
+    path Caddy really hides it by is read from the running config and put
+    back. The unedited version must then equal the running config (hide
+    lists compared as sets; check_caddy_serves).
+    If it does not, the file is not what this Caddy serves: a wrong path,
+    another Caddy on the address, imports that resolve differently here, or
+    edits not loaded yet. Then this raises CaddyMismatch before loading
+    anything. The edited version, with the same hide path, goes to /load as
+    JSON, which Caddy applies only if all of it provisions. When the reply
+    to that is lost, the running config shows whether the load took.
+    """
+    hide_path = check_caddy_serves(address, before)
+    edited = with_config_file_hidden(adapt_in_caddy(address, CADDYFILE.read_bytes()), hide_path)
+    try:
+        caddy_admin_request(
+            address,
+            "/load",
+            data=json.dumps(edited).encode(),
+            headers={"Content-Type": "application/json", "Cache-Control": "must-revalidate"},
+        )
+    except CaddyUnsure as exc:
+        # Caddy restarts its admin listener after a load, so a lost reply
+        # may follow a load that took: look at what Caddy runs now. Any
+        # failure here is an unknown outcome, never a reason to treat Caddy
+        # as down or as having refused.
+        time.sleep(CADDY_RECHECK_DELAY)
+        try:
+            now = caddy_admin_request(address, "/config/")
+        except (CaddyUnreachable, CaddyRejected, CaddyUnsure, ValueError) as again:
+            raise RuntimeError(
+                f"the reply to the load was lost ({exc}), and Caddy could not be asked whether it took ({again})"
+            ) from again
+        if not same_config(now, edited):
+            raise RuntimeError(f"the reply to the load was lost ({exc}), and Caddy does not run the edited config") from exc
+
+
+def caddy_serves_a_config(address: str) -> bool:
+    """True when a Caddy answers on address with a config already loaded."""
+    try:
+        return caddy_admin_request(address, "/config/", timeout=CADDY_PROBE_TIMEOUT) not in (None, {})
+    except (CaddyUnreachable, CaddyUnsure, CaddyRejected, ValueError):
+        return False
+
+
+def refuse_to_create_caddyfile() -> None:
+    """Stop before creating a Caddyfile when a new one could cost a running
+    Caddy its other sites.
+
+    A Caddyfile that does not exist yet would be written with our block
+    alone, and loading that replaces everything the Caddy serves. So a
+    missing file that --caddyfile named is taken as a wrong path, and a
+    missing ~/Caddyfile is created only when no Caddy on Caddy's default
+    admin address already serves a config (which it would be reading from
+    some other file).
+    """
+    if CADDYFILE.exists():
+        return
+    if CADDYFILE_NAMED:
+        raise RuntimeError(f"the Caddyfile {CADDYFILE} does not exist; check --caddyfile (nothing was changed)")
+    if caddy_serves_a_config(CADDY_DEFAULT_ADMIN):
+        raise RuntimeError(
+            f"{CADDYFILE} does not exist, but the Caddy on {CADDY_DEFAULT_ADMIN} already serves a config, "
+            "so it reads another file: name that file with --caddyfile (nothing was changed)"
+        )
+
+
+def preflight_caddyfile(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> None:
+    """Before a command stops the game server: when the managed block will
+    need writing and a running Caddy answers, check that it serves the
+    Caddyfile as it stands (check_caddy_serves), so a refusal that the
+    load would meet anyway comes while the game is still up. Changes
+    nothing. A block that already matches, a file not created yet, or no
+    Caddy answering leaves everything to apply_caddyfile_safely."""
+    if caddyfile_block_matches(site, mode, ports, both_schemes) or not CADDYFILE.exists():
+        return
+    address = caddy_admin_address()
+    if address is None:
+        return
+    try:
+        check_caddy_serves(address, CADDYFILE.read_bytes())
+    except CaddyUnreachable:
+        return
+    except CaddyMismatch as exc:
+        raise RuntimeError(f"{exc}. Nothing was stopped or changed") from exc
+
+
+def restore_caddyfile(backup: Path | None) -> None:
+    if backup is not None:
+        shutil.copy2(backup, CADDYFILE)
+    elif CADDYFILE.exists():
+        CADDYFILE.unlink()
 
 
 def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> None:
-    """Back up ~/Caddyfile, write the managed block, validate, then reload.
+    """Back up the Caddyfile, write the managed block, then have Caddy load it.
 
-    If ~/Caddyfile already has exactly the managed block we would write,
-    this does nothing at all: no backup, no write, no validate, no reload.
-    That is what makes `start` safe to call at boot, before Caddy is
-    necessarily listening yet to take a reload.
+    If the Caddyfile already has exactly the managed block we would write,
+    this does nothing at all: no backup, no write, no load. That is what
+    makes `start` safe to call at boot, before Caddy is necessarily
+    listening yet.
 
-    ~/Caddyfile is shared with other sites, so a `caddy validate` failure
-    restores the backup and raises: the file must never be left broken. A
-    `caddy reload` failure does not raise; it only warns and continues,
-    because Caddy reads ~/Caddyfile itself the next time it starts, so a
-    reload that fails now (for example because Caddy is not up yet) does not
-    need to block the rest of `start`/`setup`/`redeploy`.
+    The Caddyfile is shared with other sites, so it must never be left in a
+    state Caddy cannot load. When the running Caddy answers on the admin
+    address the file names, and serves the file as it stood before the edit,
+    it loads the edited file (load_through_caddy); if it does not serve that
+    file, or refuses the edit, the backup is restored and this raises, and
+    Caddy keeps its old config. When no Caddy answers, `caddy
+    validate` checks the file instead (a failure restores and raises), and
+    Caddy reads it on its next start. When the file turns the admin API off
+    or puts it on a Unix socket, this validates and then runs `caddy
+    reload`, whose failure only warns. Any other error after the write also
+    restores the backup before it propagates.
     """
     if caddyfile_block_matches(site, mode, ports, both_schemes):
         return
+    refuse_to_create_caddyfile()
     backup = backup_caddyfile()
     update_caddyfile(site, mode, ports, both_schemes)
+    try:
+        load_or_validate_caddyfile(backup)
+    except BaseException:
+        # Whatever went wrong after the write, a refusal or a Ctrl-C
+        # included, the shared file goes back to what it was before the
+        # error propagates. Left behind unloaded, our block would make the
+        # next run believe there is nothing to do.
+        restore_caddyfile(backup)
+        raise
+
+
+def load_or_validate_caddyfile(backup: Path | None) -> None:
+    """The steps of apply_caddyfile_safely after the write. Raising means
+    the caller restores the backup."""
+    address = caddy_admin_address()
+    if address is not None:
+        try:
+            load_through_caddy(address, backup.read_bytes() if backup is not None else None)
+            return
+        except CaddyRejected as exc:
+            raise RuntimeError(
+                f"Caddy refused the Caddyfile and kept its running config; restored the previous Caddyfile:\n{exc}"
+            ) from exc
+        except CaddyMismatch as exc:
+            raise RuntimeError(f"{exc}. Nothing was loaded; restored the previous Caddyfile") from exc
+        except CaddyUnreachable as exc:
+            print(f"warning: no Caddy answered on {address} ({exc}); checking the Caddyfile with caddy validate", file=sys.stderr)
     validated = validate_caddyfile()
     if validated.returncode != 0:
-        if backup is not None:
-            shutil.copy2(backup, CADDYFILE)
-        elif CADDYFILE.exists():
-            CADDYFILE.unlink()
-        raise RuntimeError(f"caddy validate failed, restored previous Caddyfile:\n{validated.stderr}")
+        hint = ""
+        if CADDYFILE.exists() and "{$" in CADDYFILE.read_text():
+            hint = "\n(the Caddyfile uses {$VAR} placeholders: caddy validate reads them from this shell's environment)"
+        raise RuntimeError(f"caddy validate failed, restored previous Caddyfile:\n{validated.stderr}{hint}")
+    if address is not None:
+        print(f"warning: Caddy is not running; it will read {CADDYFILE} on its own next start", file=sys.stderr)
+        return
     try:
         reload_caddy()
     except subprocess.CalledProcessError as exc:
@@ -638,26 +1038,29 @@ def start_web_dev(ports: Ports) -> None:
     tmuxnew(DEV_WEB_SESSION, shell_with_node(command), cwd=ROOT, env_args=tmux_env_args(os.environ | env))
 
 
-def resolve_config(url: str | None, fallback_mode: Mode = Mode.PROD, both_schemes: bool | None = None) -> Config:
+def resolve_config(
+    url: str | None,
+    fallback_mode: Mode = Mode.PROD,
+    both_schemes: bool | None = None,
+    caddyfile: str | None = None,
+) -> Config:
     """The config to run with: the stored one, overridden by url, and by
-    both_schemes unless it is None (None keeps the stored choice, so a
-    plain redeploy or the boot-time start never drops it)."""
+    both_schemes and caddyfile unless they are None (None keeps the stored
+    choice, so a plain redeploy or the boot-time start never drops it)."""
     existing = load_config()
     site = parse_site_url(url) if url else existing.site if existing else parse_site_url(None)
     if both_schemes is None:
         both_schemes = existing.both_schemes if existing else False
+    if caddyfile is None:
+        caddyfile = existing.caddyfile if existing else None
     return Config(
         site,
         fallback_mode,
         existing.ports if existing else Ports(),
         existing.ship if existing else None,
         both_schemes,
+        caddyfile or None,
     )
-
-
-def resolve_runtime_config(url: str | None, mode: Mode, both_schemes: bool | None = None) -> Config:
-    config = resolve_config(url, mode, both_schemes)
-    return replace(config, ports=allocate_ports(config.ports))
 
 
 def wait_for_port_free(
@@ -863,7 +1266,12 @@ def determine_deploy_command(target: str, remote_dir: str) -> str:
 
 
 def remote_deploy_command(
-    target: str, remote_dir: str, deploy_command: str, url: str | None, both_schemes: bool | None = None
+    target: str,
+    remote_dir: str,
+    deploy_command: str,
+    url: str | None,
+    both_schemes: bool | None = None,
+    caddyfile: str | None = None,
 ) -> list[str]:
     parts = [
         "cd",
@@ -877,15 +1285,22 @@ def remote_deploy_command(
     ]
     if both_schemes is not None:
         parts.append("--both-schemes" if both_schemes else "--no-both-schemes")
+    if caddyfile is not None:
+        parts.extend(["--caddyfile", shlex.quote(caddyfile)])
     if url:
         parts.append(shlex.quote(url))
     return ssh_command(target, " ".join(parts))
 
 
 def deploy_remote(
-    target: str, remote_dir: str, deploy_command: str, url: str | None, both_schemes: bool | None = None
+    target: str,
+    remote_dir: str,
+    deploy_command: str,
+    url: str | None,
+    both_schemes: bool | None = None,
+    caddyfile: str | None = None,
 ) -> None:
-    run(remote_deploy_command(target, remote_dir, deploy_command, url, both_schemes))
+    run(remote_deploy_command(target, remote_dir, deploy_command, url, both_schemes, caddyfile))
 
 
 def poll_remote_version(
@@ -951,7 +1366,11 @@ def looks_like_url(value: str) -> bool:
 
 
 def command_ship(
-    target: str | None, url: str | None, remote_dir: str | None, both_schemes: bool | None = None
+    target: str | None,
+    url: str | None,
+    remote_dir: str | None,
+    both_schemes: bool | None = None,
+    caddyfile: str | None = None,
 ) -> None:
     if target is not None and looks_like_url(target):
         # `ship URL` with a remembered target: argparse puts URL in the
@@ -979,7 +1398,7 @@ def command_ship(
 
     deploy_command = determine_deploy_command(target, remote_dir)
     print(f"remote command: {deploy_command}")
-    deploy_remote(target, remote_dir, deploy_command, url, both_schemes)
+    deploy_remote(target, remote_dir, deploy_command, url, both_schemes, caddyfile)
 
     remember_ship_target(target, remote_dir)
 
@@ -995,8 +1414,12 @@ def command_ship(
         print(f"remote is running version {remote_version}")
 
 
-def command_setup(url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None) -> None:
-    config = resolve_config(url, Mode.PROD, both_schemes)
+def command_setup(
+    url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None
+) -> None:
+    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
+    use_caddyfile(config)
+    refuse_to_create_caddyfile()
     ensure_tools(["caddy", "tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
@@ -1012,6 +1435,7 @@ def command_setup(url: str | None, prebuilt: str | None = None, both_schemes: bo
     # Everything above only builds and checks; nothing has been stopped yet,
     # so a failing build or a bad --prebuilt path never takes a running
     # server down. The swap below is the first thing that touches it.
+    preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
     command_stop()
     config = ports_after_stop(config)
     save_config(config)
@@ -1023,8 +1447,12 @@ def command_setup(url: str | None, prebuilt: str | None = None, both_schemes: bo
     announce_serving(config)
 
 
-def command_redeploy(url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None) -> None:
-    config = resolve_config(url, Mode.PROD, both_schemes)
+def command_redeploy(
+    url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None
+) -> None:
+    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
+    use_caddyfile(config)
+    refuse_to_create_caddyfile()
     ensure_tools(["caddy", "tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
@@ -1041,6 +1469,7 @@ def command_redeploy(url: str | None, prebuilt: str | None = None, both_schemes:
     # build and check, so a failing one never takes the running server down.
     # The rooms archive still runs with the server already stopped (so it
     # never captures a file mid-write), and still before the swap.
+    preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
     command_stop()
     config = ports_after_stop(config)
     save_config(config)
@@ -1055,9 +1484,13 @@ def command_redeploy(url: str | None, prebuilt: str | None = None, both_schemes:
     announce_serving(config)
 
 
-def command_start(url: str | None, both_schemes: bool | None = None) -> None:
+def command_start(url: str | None, both_schemes: bool | None = None, caddyfile: str | None = None) -> None:
+    config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
+    use_caddyfile(config)
+    refuse_to_create_caddyfile()
+    preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
     command_stop()
-    config = ports_after_stop(resolve_config(url, Mode.PROD, both_schemes))
+    config = ports_after_stop(config)
     ensure_tools(["caddy", "tmux"])
     if not BIN_PATH.exists():
         ensure_tools(["zsh", "rsync"])
@@ -1074,9 +1507,12 @@ def command_start(url: str | None, both_schemes: bool | None = None) -> None:
     announce_serving(config)
 
 
-def command_dev_start(url: str | None, both_schemes: bool | None = None) -> None:
+def command_dev_start(url: str | None, both_schemes: bool | None = None, caddyfile: str | None = None) -> None:
+    config = resolve_config(url, Mode.DEV, both_schemes, caddyfile)
+    use_caddyfile(config)
+    refuse_to_create_caddyfile()
     command_stop()
-    config = resolve_runtime_config(url, Mode.DEV, both_schemes)
+    config = replace(config, ports=allocate_ports(config.ports))
     ensure_tools(["caddy", "tmux", "zsh"])
     find_go()
     install_web()
@@ -1116,6 +1552,7 @@ def command_status() -> None:
         print(f"url: {config.site.origin}")
         print(f"mode: {config.mode.value}")
         print(f"both schemes: {'yes, http:// and https:// both serve the site' if config.both_schemes else 'no'}")
+        print(f"caddyfile: {caddyfile_path(config.caddyfile)}")
         print(f"server port: {config.ports.server}")
         print(f"web dev port: {config.ports.web_dev}")
     for session in (PROD_SESSION, DEV_SERVER_SESSION, DEV_WEB_SESSION):
@@ -1175,6 +1612,15 @@ def build_parser() -> argparse.ArgumentParser:
             help="redirect the other scheme to the site's own again (remembered)",
         )
 
+    def add_caddyfile(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "--caddyfile",
+            metavar="PATH",
+            default=None,
+            help="the Caddyfile the running Caddy reads, absolute or relative to the home directory "
+            "(remembered; default: keep the stored one, ~/Caddyfile for a new install)",
+        )
+
     def add_prebuilt(p: argparse.ArgumentParser) -> None:
         p.add_argument(
             "--prebuilt",
@@ -1186,21 +1632,25 @@ def build_parser() -> argparse.ArgumentParser:
     add_url(setup_p)
     add_prebuilt(setup_p)
     add_both_schemes(setup_p)
+    add_caddyfile(setup_p)
 
     redeploy_p = sub.add_parser("redeploy", help="rebuild and restart for a new version")
     add_url(redeploy_p)
     add_prebuilt(redeploy_p)
     add_both_schemes(redeploy_p)
+    add_caddyfile(redeploy_p)
 
     start_p = sub.add_parser("start", help="start the already-built server")
     add_url(start_p)
     add_both_schemes(start_p)
+    add_caddyfile(start_p)
 
     sub.add_parser("stop", help="stop every tmux session this script manages")
 
     dev_p = sub.add_parser("dev-start", help="start a development setup instead of production")
     add_url(dev_p)
     add_both_schemes(dev_p)
+    add_caddyfile(dev_p)
 
     status_p = sub.add_parser("status", help="print the recorded configuration and health")
     add_url(status_p)
@@ -1214,6 +1664,7 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Remote directory, relative to the remote home (default {DEFAULT_REMOTE_DIR})",
     )
     add_both_schemes(ship_p)
+    add_caddyfile(ship_p)
 
     return parser
 
@@ -1224,19 +1675,19 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "setup":
-            command_setup(args.url, args.prebuilt, args.both_schemes)
+            command_setup(args.url, args.prebuilt, args.both_schemes, args.caddyfile)
         elif args.command == "redeploy":
-            command_redeploy(args.url, args.prebuilt, args.both_schemes)
+            command_redeploy(args.url, args.prebuilt, args.both_schemes, args.caddyfile)
         elif args.command == "start":
-            command_start(args.url, args.both_schemes)
+            command_start(args.url, args.both_schemes, args.caddyfile)
         elif args.command == "dev-start":
-            command_dev_start(args.url, args.both_schemes)
+            command_dev_start(args.url, args.both_schemes, args.caddyfile)
         elif args.command == "stop":
             command_stop()
         elif args.command == "status":
             command_status()
         elif args.command == "ship":
-            command_ship(args.target, args.url, args.remote_dir, args.both_schemes)
+            command_ship(args.target, args.url, args.remote_dir, args.both_schemes, args.caddyfile)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
