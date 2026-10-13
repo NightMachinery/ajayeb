@@ -47,6 +47,7 @@ export const board = {
   'token.theology': 'Theology',
   'token.urbanism': 'Urbanism',
   'board.token.take': 'Take the {name} token',
+  'board.token.open': 'The {name} token: what it does',
   'board.token.owned': '{name} (owned)',
   'board.token.taken': '{name} (taken)',
   'board.tokens.boardLabel': 'Progress tokens on the board',

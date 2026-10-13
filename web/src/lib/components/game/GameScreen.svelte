@@ -113,6 +113,7 @@
   import ToastList from '../shell/Toasts.svelte';
   import { Toasts } from '../shell/toast-queue.svelte';
   import ProgressTokenRow from '../token/ProgressTokenRow.svelte';
+  import TokenSheet from '../sheets/TokenSheet.svelte';
   import CardSheet from './CardSheet.svelte';
   import ForfeitConfirm from './ForfeitConfirm.svelte';
   import MoveSummary from './MoveSummary.svelte';
@@ -162,6 +163,10 @@
   let wonderListShown = $state<Seat>(0);
   // The forfeit's confirm step (from the game menu).
   let forfeitOpen = $state(false);
+  // The board token whose sheet is open (a tap on a board token while no
+  // token pick is pending), kept while the sheet closes.
+  let tokenOpen = $state(false);
+  let tokenSlug = $state<string | null>(null);
   // The opponent move summary: the ply of the entry a live frame opened it
   // for (shown once the Presenter has that entry on screen), and whether
   // the top bar's button opened it.
@@ -275,6 +280,15 @@
   );
 
   const cardsLeft = $derived(view ? view.structure.filter((s) => s.state !== 'empty').length : 0);
+  // A board token opens its sheet unless a token pick is pending, which
+  // keeps its own pick behaviour (the choice panel).
+  const tokenPick = $derived(
+    view?.pending?.kind === 'pickBoardToken' || view?.pending?.kind === 'pickLibraryToken'
+  );
+  function openToken(slug: string): void {
+    tokenSlug = slug;
+    tokenOpen = true;
+  }
   const pendingKey = $derived(
     session.pending?.frame.t === 'act' ? session.pending.frame.key : undefined
   );
@@ -660,6 +674,7 @@
     <ProgressTokenRow
       tokens={view.boardTokens}
       {compact}
+      onopen={tokenPick ? undefined : openToken}
       class="flex-nowrap justify-center {compact ? 'shrink-0' : ''}"
     />
   {/if}
@@ -934,6 +949,8 @@
     bots={[seatBotLevel(frame?.room, 0), seatBotLevel(frame?.room, 1)]}
     bind:activeSeat={ui.citySeat}
   />
+
+  <TokenSheet bind:open={() => tokenOpen && !tokenPick, (v) => (tokenOpen = v)} slug={tokenSlug} />
 
   <LogSheet
     bind:open={() => ui.isOpen('log'), (v) => !v && ui.close('log')}

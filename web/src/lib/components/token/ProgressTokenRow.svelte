@@ -9,6 +9,9 @@
   //
   // Board hints (M10.HS4): each token's value now and the Law laurel
   // (view/board-hints.ts tokenHint), from the page's game context.
+  //
+  // `onopen` (M10.F3): a token that is not a legal pick opens its sheet on
+  // a tap (the game screen passes it while no token pick is pending).
   import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
   import { tokenHint } from '$lib/view/board-hints';
@@ -24,10 +27,19 @@
     /** The slug chosen so far in an open pick, if any, for the selected ring. */
     selectedSlug?: string;
     compact?: boolean;
+    /** Opens a token's sheet (TokenSheet) on a tap. */
+    onopen?: (slug: string) => void;
     class?: string;
   }
 
-  let { tokens, pickable, selectedSlug, compact = false, class: className = '' }: Props = $props();
+  let {
+    tokens,
+    pickable,
+    selectedSlug,
+    compact = false,
+    onopen,
+    class: className = ''
+  }: Props = $props();
 
   const ctx = tryGameContext();
   const screen = $derived(sessionHintScreen(ctx?.session, hintHide.value));
@@ -55,6 +67,7 @@
       selectable={pickable?.has(slug) ?? false}
       actionKey={pickable?.get(slug)}
       hint={hintOf(slug)}
+      onopen={onopen && !pickable?.has(slug) ? () => onopen(slug) : undefined}
     />
   {/each}
 </div>

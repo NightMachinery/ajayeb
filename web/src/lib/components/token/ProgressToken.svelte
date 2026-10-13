@@ -13,6 +13,11 @@
   // token-deny-note), and the Law medallion gets a laurel ring while Law
   // would be a seat's sixth symbol (law-token-marks): solid for this
   // screen's own seat, dashed in the opponent's crest colour.
+  //
+  // `onopen` (M10.F3) makes a board token a button that opens its sheet
+  // (TokenSheet: what it does and what it is worth), the model of a card:
+  // a tap opens it, a long-press on touch shows the tooltip. It carries no
+  // action key; the pick of a pending choice stays `actionKey`.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId, tokenArtSizes } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
@@ -46,6 +51,8 @@
     size?: 'xs' | 'sm' | 'md';
     /** The board hints about it: its value now, and the Law laurel. */
     hint?: TokenHint;
+    /** Opens the token's sheet on a tap (a board token with no pick open). */
+    onopen?: () => void;
     class?: string;
   }
 
@@ -58,6 +65,7 @@
     selectable = true,
     size = 'md',
     hint,
+    onopen,
     class: className = ''
   }: Props = $props();
 
@@ -152,6 +160,20 @@
       {selectable
       ? 'cursor-pointer hover:-translate-y-0.5'
       : 'cursor-not-allowed opacity-40'} {className}"
+  >
+    {@render medallion()}
+  </button>
+{:else if onopen}
+  <button
+    type="button"
+    aria-label={tipText(t('board.token.open', { name: label }))}
+    aria-haspopup="dialog"
+    {@attach tooltip({ text: tipText(label) })}
+    data-token-open={slug}
+    data-tap-ok={size === 'md' ? undefined : ''}
+    class="token-tile grid cursor-pointer place-items-center rounded-full transition-transform duration-(--dur-fast) hover:-translate-y-0.5
+      {size === 'md' ? 'min-h-11 min-w-11' : ''} {className}"
+    onclick={onopen}
   >
     {@render medallion()}
   </button>
