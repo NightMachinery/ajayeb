@@ -15,8 +15,11 @@ const (
 	CacheImmutable = "public, max-age=31536000, immutable"
 
 	// CacheArt is for the shipped bitmap art under art/ requested without a
-	// content hash (an app icon named in static HTML or the web app manifest,
-	// the table textures named in CSS). Its file names are not content-hashed
+	// matching content hash. The app names all of its art with one (the
+	// generated art index, and the table textures in CSS, carry ?v=), so
+	// this is left to the app icons that static HTML and the web app
+	// manifest name by a stable URL, to a stale v from an older deployment,
+	// and to a request without v. Such a URL does not name its content
 	// (art/cards/baths.avif stays that name when the art is regenerated), so
 	// it cannot be immutable; but it changes rarely. A browser uses its copy
 	// for a day without asking, then for up to a week more it still shows the
