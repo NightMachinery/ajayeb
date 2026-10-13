@@ -976,12 +976,16 @@ do. The policy is computed with the file's ETag and cached with it, so the
 embedded build gets it once and a `-static` directory gets a new one when
 the file changes. A new inline script needs no server change.
 
-A `-dev` server sends the same policy as
-`Content-Security-Policy-Report-Only`, with `frame-ancestors 'self'` and
-`X-Frame-Options: SAMEORIGIN` (the test build's gallery frames the app):
-the browser logs a violation as a console error instead of blocking it.
-The end-to-end tests run such a server and fail on console errors, so they
-catch a violation without a dev setup ever breaking on one.
+A `-dev` server enforces the same policy, except that it allows framing
+by same-origin pages (`frame-ancestors 'self'` and `X-Frame-Options:
+SAMEORIGIN`), because the test build's gallery frames the app. It is
+enforced rather than report-only so that the end-to-end tests, which run
+such a server, play the app under the real policy: a blocked script breaks
+a test, and Chrome logs each refusal as a console error, which the tests'
+hygiene check fails on (a report-only violation would only reach the
+console's info level, which the check does not read). The Vite dev server
+serves its pages itself and forwards only `/ws`, `/api` and `/health`, so
+this policy never applies to its pages.
 
 The server sends no `Strict-Transport-Security`: one deployment serves
 plain HTTP on purpose, so HSTS belongs to each deployment's TLS proxy

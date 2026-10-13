@@ -189,7 +189,7 @@ func (s *spa) serveFile(w http.ResponseWriter, r *http.Request, name string) boo
 			return true
 		}
 		if html {
-			h.Set(s.policy.cspHeader(), sum.csp)
+			h.Set(headerCSP, sum.csp)
 		}
 	}
 	cc := webdist.CacheControl(name, versionMatches(r.URL.Query().Get("v"), sum.hash))

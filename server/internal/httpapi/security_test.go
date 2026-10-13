@@ -48,7 +48,7 @@ func TestSecurityHeadersOnEveryResponse(t *testing.T) {
 		if !strings.HasPrefix(csp, "default-src 'self'; script-src 'self'") || !strings.Contains(csp, "frame-ancestors 'none'") {
 			t.Errorf("GET %s CSP = %q", target, csp)
 		}
-		if ro := hd.Get(headerCSPReportOnly); ro != "" {
+		if ro := hd.Get("Content-Security-Policy-Report-Only"); ro != "" {
 			t.Errorf("GET %s sends a report-only CSP too: %q", target, ro)
 		}
 		if hsts := hd.Get("Strict-Transport-Security"); hsts != "" {
@@ -68,23 +68,21 @@ func TestBaseCSP(t *testing.T) {
 	}
 }
 
-// A development server sends the policy report-only, so nothing it serves
-// is blocked, and lets same-origin pages frame the app (the test build's
-// gallery).
-func TestDevCSPIsReportOnly(t *testing.T) {
+// A development server enforces the same policy, but lets same-origin
+// pages frame the app (the test build's gallery).
+func TestDevCSPAllowsSameOriginFraming(t *testing.T) {
 	h, err := New(Config{Version: "dev", Dev: true}, testFS())
 	if err != nil {
 		t.Fatal(err)
 	}
+	want := strings.Replace(newSecurityPolicy(false).base, "frame-ancestors 'none'", "frame-ancestors 'self'", 1)
 	for _, target := range []string{"/health", "/", "/favicon.svg"} {
-		rec := do(t, h, http.MethodGet, target, nil)
-		hd := rec.Header()
-		if got := hd.Get(headerCSP); got != "" {
-			t.Errorf("GET %s enforces a CSP in dev: %q", target, got)
+		hd := do(t, h, http.MethodGet, target, nil).Header()
+		if got := hd.Get(headerCSP); got != want {
+			t.Errorf("GET %s dev CSP = %q, want %q", target, got, want)
 		}
-		ro := hd.Get(headerCSPReportOnly)
-		if !strings.HasPrefix(ro, "default-src 'self'; script-src 'self'") || !strings.Contains(ro, "frame-ancestors 'self'") {
-			t.Errorf("GET %s report-only CSP = %q", target, ro)
+		if ro := hd.Get("Content-Security-Policy-Report-Only"); ro != "" {
+			t.Errorf("GET %s sends a report-only CSP: %q", target, ro)
 		}
 		if got := hd.Get("X-Frame-Options"); got != "SAMEORIGIN" {
 			t.Errorf("GET %s X-Frame-Options = %q, want SAMEORIGIN", target, got)
@@ -176,17 +174,17 @@ func TestDocumentCSPFollowsTheFile(t *testing.T) {
 	}
 }
 
-// The dev policy carries the hashes too, report-only.
-func TestDevDocumentCSPIsReportOnly(t *testing.T) {
+// The dev policy carries the hashes too.
+func TestDevDocumentCSPHasTheHashes(t *testing.T) {
 	fsys := testFS()
 	fsys["index.html"] = &fstest.MapFile{Data: []byte(twoScriptPage(themeScript, startScript))}
 	h, err := New(Config{Dev: true}, fsys)
 	if err != nil {
 		t.Fatal(err)
 	}
-	hd := do(t, h, http.MethodGet, "/", nil).Header()
-	if hd.Get(headerCSP) != "" || !strings.Contains(hd.Get(headerCSPReportOnly), cspHash(themeScript)) {
-		t.Errorf("dev / CSP = %q, report-only = %q", hd.Get(headerCSP), hd.Get(headerCSPReportOnly))
+	csp := do(t, h, http.MethodGet, "/", nil).Header().Get(headerCSP)
+	if !strings.Contains(csp, cspHash(themeScript)) || !strings.Contains(csp, "frame-ancestors 'self'") {
+		t.Errorf("dev / CSP = %q", csp)
 	}
 }
 
