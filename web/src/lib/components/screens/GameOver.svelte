@@ -14,13 +14,22 @@
   // the wonder tiles so it feathers the same way in both themes, with the
   // winner's crest on its lower edge. It replaces the crest row and sits
   // beside the headline, so the score table and the buttons keep their room.
+  //
+  // The move review (the advisor family, M10.F3, view/end-review.ts): when
+  // the viewer's own move ended the game, their review of it shows under
+  // the score sheet (when the opponent's move ended it, that move's summary
+  // carries the review instead).
   import House from '@lucide/svelte/icons/house';
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
   import Eye from '@lucide/svelte/icons/eye';
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { victoryArtId } from '$lib/art/lookup';
+  import { visibleFamilies } from '$lib/hints/families';
+  import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { endReview } from '$lib/view/end-review';
+  import { reviewLines, type ReviewLines } from '$lib/view/review';
   import { finalScores, outcomeOf, scoreRows, type Outcome } from '$lib/view/score';
   import type { View } from '$lib/wire';
   import Button from '../shell/Button.svelte';
@@ -28,6 +37,7 @@
   import PeekBar from '../choices/PeekBar.svelte';
   import { asSeat, isYou, seatNames, tryGameContext, type SeatNames } from '../choices/room';
   import ScoreTable from './ScoreTable.svelte';
+  import MoveReview from '../game/MoveReview.svelte';
 
   interface Props {
     view: View;
@@ -42,9 +52,20 @@
     onhome: () => void;
     /** Display names by seat; read from the room when not given. */
     names?: SeatNames;
+    /** The viewer's review of the move that ended the game; else from the
+     *  view and the page's game context. */
+    review?: ReviewLines;
   }
 
-  let { view, onrematch, rematchLabel, rematchNote, onhome, names: namesProp }: Props = $props();
+  let {
+    view,
+    onrematch,
+    rematchLabel,
+    rematchNote,
+    onhome,
+    names: namesProp,
+    review: reviewProp
+  }: Props = $props();
 
   const ctx = tryGameContext();
   const names = $derived(namesProp ?? seatNames(ctx?.presenter.frame?.room));
@@ -90,6 +111,16 @@
           ? ''
           : t('choices.over.reason.forfeit', { name: names[winner === 0 ? 1 : 0] });
     }
+  });
+
+  const review = $derived.by((): ReviewLines | null => {
+    if (reviewProp) return reviewProp;
+    const session = ctx?.session;
+    if (!session || !visibleFamilies(session.hints, hintHide.value).has('advisor')) return null;
+    const own = endReview(view.review, view.viewer, session.history, outcome?.kind);
+    return own && view.viewer !== undefined
+      ? reviewLines(own, { names, seat: asSeat(view.viewer) })
+      : null;
   });
 
   const crest = $derived(winner === 1 ? 'crest-moon' : 'crest-sun');
@@ -169,6 +200,10 @@
       </header>
 
       <ScoreTable {rows} {names} {winner} you={youSeat} />
+
+      {#if review}
+        <div data-end-review><MoveReview lines={review} /></div>
+      {/if}
 
       {#if outcome?.tieBreak}
         <p
