@@ -163,7 +163,7 @@
     -webkit-touch-callout: none;
   }
   .covered {
-    box-shadow: 0 1px 2px oklch(0.24 0.04 260 / 0.25);
+    box-shadow: 0 1px 2px var(--card-rest-shadow);
   }
   :global([data-theme='dark']) .covered {
     filter: brightness(0.92);
@@ -177,7 +177,7 @@
     );
     box-shadow:
       0 0 0 2px var(--ring),
-      0 4px 10px -3px oklch(0.2 0.04 260 / 0.45);
+      0 4px 10px -3px var(--card-lift-shadow);
     cursor: pointer;
   }
   @media (hover: hover) {
@@ -191,7 +191,7 @@
   .selected {
     box-shadow:
       0 0 0 3px var(--accent),
-      0 6px 14px -4px oklch(0.2 0.04 260 / 0.5);
+      0 6px 14px -4px var(--card-raised-shadow);
   }
   .pending {
     outline: 2px dashed var(--accent);
@@ -201,6 +201,6 @@
   .marked {
     box-shadow:
       0 0 0 3px var(--gold),
-      0 4px 10px -3px oklch(0.2 0.04 260 / 0.45);
+      0 4px 10px -3px var(--card-lift-shadow);
   }
 </style>

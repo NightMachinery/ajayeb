@@ -65,8 +65,8 @@
 </span>
 
 <style>
+  /* Colours: the --back-* tokens (styles/tokens.css), fixed like the cards. */
   .card-back {
-    --back-line: oklch(1 0 0 / 0.16);
     background:
       radial-gradient(circle, var(--gold) 0 1.2px, transparent 1.7px) 0 0 / 12px 12px,
       repeating-linear-gradient(45deg, var(--back-line) 0 1px, transparent 1px 8.5px),
@@ -81,22 +81,22 @@
       inset 0 0 0 8px color-mix(in oklch, var(--gold) 60%, transparent);
   }
   .back-age1 {
-    --back-base: oklch(0.5 0.11 55);
-    --back-glow: oklch(0.62 0.12 65);
+    --back-base: var(--back-age1-base);
+    --back-glow: var(--back-age1-glow);
   }
   .back-age2 {
-    --back-base: oklch(0.42 0.1 235);
-    --back-glow: oklch(0.54 0.1 215);
+    --back-base: var(--back-age2-base);
+    --back-glow: var(--back-age2-glow);
   }
   .back-age3 {
-    --back-base: oklch(0.42 0.13 20);
-    --back-glow: oklch(0.53 0.14 30);
+    --back-base: var(--back-age3-base);
+    --back-glow: var(--back-age3-glow);
   }
   .back-guild {
-    --back-base: oklch(0.36 0.12 315);
-    --back-glow: oklch(0.46 0.13 315);
+    --back-base: var(--back-guild-base);
+    --back-glow: var(--back-guild-glow);
     background:
-      repeating-conic-gradient(oklch(1 0 0 / 0.1) 0 25%, transparent 0 50%) 0 0 / 12px 12px,
+      repeating-conic-gradient(var(--back-check) 0 25%, transparent 0 50%) 0 0 / 12px 12px,
       radial-gradient(circle at 50% 50%, var(--back-glow), var(--back-base) 75%);
   }
 </style>

@@ -268,7 +268,7 @@
   .wonder-art {
     background:
       radial-gradient(circle, var(--gold) 0 1px, transparent 1.5px) 0 0 / 10px 10px,
-      linear-gradient(to bottom, oklch(0.88 0.05 230), oklch(0.93 0.04 85) 70%);
+      linear-gradient(to bottom, var(--scene-sky), var(--scene-horizon) 70%);
   }
   /* The ready mark: the hint pip's look (card/HintPip.svelte). Solid for
      this screen's own seat, outlined in the opponent's crest colour, a

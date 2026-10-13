@@ -100,15 +100,8 @@
 </span>
 
 <style>
-  /* Badge colours. Fixed in both themes: badges sit on cards, which stay
-     paper-coloured. The text pairs are at least 4.5:1. */
-  .afford {
-    --afford-ok: oklch(0.47 0.1 160);
-    --afford-ok-edge: oklch(0.36 0.08 160);
-    --afford-trade-edge: oklch(0.6 0.13 70);
-    --afford-short: oklch(0.47 0.12 25);
-    --afford-short-bg: oklch(0.93 0.015 40);
-  }
+  /* Badge colours: the --afford-* tokens (styles/tokens.css), fixed in
+     both themes because badges sit on cards, which stay paper-coloured. */
   /* The Economy notch: an outlined tab on the end edge. */
   .flow {
     background: var(--card-paper);

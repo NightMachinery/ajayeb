@@ -70,10 +70,10 @@
 </div>
 
 <style>
-  /* A deep cinnabar, dark enough for white text in both themes. Unlayered,
-     so it wins over the button's accent utilities. */
+  /* A deep cinnabar (--danger), dark enough for white text in both themes.
+     Unlayered, so it wins over the button's accent utilities. */
   .danger :global(.commit) {
-    background: color-mix(in oklch, var(--cinnabar) 78%, black);
-    color: white;
+    background: var(--danger);
+    color: var(--on-danger);
   }
 </style>

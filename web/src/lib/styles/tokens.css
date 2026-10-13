@@ -119,6 +119,39 @@
   --sun-ink: oklch(0.5 0.09 200);
   --moon-ink: oklch(0.5 0.16 12);
 
+  /* Affordability badges (card/AffordBadge.svelte): fixed in both themes,
+     because the badges sit on cards, which stay paper-coloured. Each text
+     pair is 4.5:1 or more. */
+  --afford-ok: oklch(0.47 0.1 160);
+  --afford-ok-edge: oklch(0.36 0.08 160);
+  --afford-trade-edge: oklch(0.6 0.13 70);
+  --afford-short: oklch(0.47 0.12 25);
+  --afford-short-bg: oklch(0.93 0.015 40);
+
+  /* Card backs (card/CardBack.svelte): each back's base and glow, the
+     lattice line and the guild back's checker. Fixed, like the cards. */
+  --back-age1-base: oklch(0.5 0.11 55);
+  --back-age1-glow: oklch(0.62 0.12 65);
+  --back-age2-base: oklch(0.42 0.1 235);
+  --back-age2-glow: oklch(0.54 0.1 215);
+  --back-age3-base: oklch(0.42 0.13 20);
+  --back-age3-glow: oklch(0.53 0.14 30);
+  --back-guild-base: oklch(0.36 0.12 315);
+  --back-guild-glow: oklch(0.46 0.13 315);
+  --back-line: oklch(1 0 0 / 0.16);
+  --back-check: oklch(1 0 0 / 0.1);
+
+  /* The wonder placeholder's scene (wonder/WonderTile.svelte): the pale
+     --scene-sky (app.css) fading into this horizon, the paper's own tone,
+     until a wonder's art is approved. Fixed, like the tile's paper. */
+  --scene-horizon: oklch(0.93 0.04 85);
+
+  /* The danger commit button (choices/CommitButton.svelte): cinnabar
+     deepened (as color-mix with 22% black), dark enough for its white
+     label in both themes. */
+  --danger: oklch(0.452 0.148 32);
+  --on-danger: oklch(1 0 0);
+
   /* Type. Fraunces 600 for headings and card names; Inter for the UI, with
      tabular figures. Vazirmatn is reserved for a future Persian locale. */
   --type-display: 'Fraunces', ui-serif, Georgia, serif;
@@ -168,6 +201,12 @@
   --gild: var(--gold-deep);
   --focus: var(--lapis);
   --shadow: 0 1px 2px oklch(0.24 0.04 260 / 0.12), 0 6px 18px -8px oklch(0.24 0.04 260 / 0.28);
+  /* The structure's card shadows (board/StructureSlot.svelte): a covered
+     card's contact shadow, a takeable card's lift and the selected card's
+     deeper lift. */
+  --card-rest-shadow: oklch(0.24 0.04 260 / 0.25);
+  --card-lift-shadow: oklch(0.2 0.04 260 / 0.45);
+  --card-raised-shadow: oklch(0.2 0.04 260 / 0.5);
 }
 
 /* Dark theme: lapis night with gold. */
@@ -209,6 +248,9 @@
   --card-purple-ink: oklch(0.68 0.13 315);
   --coin-ink: var(--gold);
   --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 22px -8px oklch(0 0 0 / 0.55);
+  --card-rest-shadow: oklch(0 0 0 / 0.35);
+  --card-lift-shadow: oklch(0 0 0 / 0.55);
+  --card-raised-shadow: oklch(0 0 0 / 0.6);
 }
 
 /* More contrast on request: heavier rules and borders. The attribute selector
