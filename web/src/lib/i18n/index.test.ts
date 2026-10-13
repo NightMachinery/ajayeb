@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   dirFor,
   formatNumber,
+  formatSigned,
   i18n,
+  MINUS_SIGN,
   interpolate,
   isLocale,
   pluralCategory,
@@ -107,5 +109,28 @@ describe('locale state', () => {
     expect(isLocale('en')).toBe(true);
     expect(isLocale('xx')).toBe(false);
     expect(isLocale(3)).toBe(false);
+  });
+});
+
+describe('formatSigned', () => {
+  it('writes the English minus as U+2212, never a hyphen', () => {
+    expect(MINUS_SIGN).toBe('\u2212');
+    expect(formatSigned(-5, undefined, 'en')).toBe('\u22125');
+    expect(formatSigned(-1200, undefined, 'en')).toBe('\u22121,200');
+    expect(formatSigned(-5, undefined, 'en')).not.toContain('-');
+  });
+
+  it('keeps the plus and zero rules of signDisplay', () => {
+    expect(formatSigned(3, { signDisplay: 'exceptZero' }, 'en')).toBe('+3');
+    expect(formatSigned(0, { signDisplay: 'exceptZero' }, 'en')).toBe('0');
+    expect(formatSigned(-2, { signDisplay: 'exceptZero' }, 'en')).toBe('\u22122');
+    expect(formatSigned(4, { signDisplay: 'negative' }, 'en')).toBe('4');
+  });
+
+  it("leaves a locale's own minus sign and digits alone (Persian)", () => {
+    const own = new Intl.NumberFormat('fa').format(-5);
+    expect(formatSigned(-5, undefined, 'fa')).toBe(own);
+    expect(formatSigned(-5, undefined, 'fa')).not.toContain('-');
+    expect(formatSigned(-5, undefined, 'fa')).toContain('\u06f5');
   });
 });

@@ -17,7 +17,7 @@
   import { artId } from '$lib/art/lookup';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
-  import { formatNumber, t } from '$lib/i18n';
+  import { formatSigned, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { formatLogEvent } from '$lib/view/log-format';
   import type { SummaryLine } from '$lib/view/move-summary';
@@ -124,7 +124,7 @@
 {#snippet coins(n: number, loss: boolean)}
   <Icon name="coin" class="text-sm text-gold [--i2:var(--gold-deep)]" />
   <span class="font-semibold tabular-nums" aria-hidden="true"
-    >{formatNumber(loss ? -n : n, { signDisplay: 'negative' })}</span
+    >{formatSigned(loss ? -n : n)}</span
   >
 {/snippet}
 

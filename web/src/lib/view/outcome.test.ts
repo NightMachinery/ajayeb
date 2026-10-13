@@ -122,7 +122,7 @@ describe('outcomeTerms', () => {
     const terms = outcomeTerms(outcome({ coins: [4, 7], score: [3, 0] }), ctx());
     expect(terms.map((x) => x.id)).toEqual(['vp', 'coins']);
     expect(terms[0]!.short).toBe('+3');
-    expect(terms[1]!.text).toBe('4 coins after (-3)');
+    expect(terms[1]!.text).toBe('4 coins after (\u22123)');
   });
 
   it('moves the pawn and loots, without repeating the loss as coins', () => {

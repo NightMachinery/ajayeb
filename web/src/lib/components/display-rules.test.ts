@@ -3,7 +3,7 @@
 // Intl, word-safe names in the score table, and the Allow undo switch rows.
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
-import { formatNumber } from '$lib/i18n';
+import { formatSigned } from '$lib/i18n';
 import { protocolFixtureNames, protocolFixtures } from '$lib/wire/fixtures.gen';
 import type { View } from '$lib/wire';
 import LootingToken from './board/LootingToken.svelte';
@@ -42,11 +42,11 @@ describe('the city sheet', () => {
   });
 });
 
-describe('signed coin amounts come from Intl', () => {
-  it('a looting token reads its loss with the locale sign', () => {
+describe('signed coin amounts read with one minus sign (U+2212, formatSigned)', () => {
+  it('a looting token reads its loss with the typographic minus', () => {
     const markup = render(LootingToken, { props: { value: 5, magnitude: 6, present: true } }).body;
-    expect(markup).toContain(`>${formatNumber(-5, { signDisplay: 'negative' })}<`);
-    expect(markup).not.toContain('−');
+    expect(markup).toContain(`>${formatSigned(-5)}<`);
+    expect(markup).toContain('>\u22125<');
   });
 
   it("a move summary's paid coins read as a loss, with the locale sign", () => {
@@ -68,8 +68,8 @@ describe('signed coin amounts come from Intl', () => {
         }
       }
     }).body;
-    expect(markup).toContain(formatNumber(-4, { signDisplay: 'negative' }));
-    expect(markup).not.toContain('−');
+    expect(markup).toContain(formatSigned(-4));
+    expect(markup).toContain('\u22124');
   });
 });
 

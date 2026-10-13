@@ -8,7 +8,7 @@
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
   import X from '@lucide/svelte/icons/x';
   import Icon from '$lib/icons/Icon.svelte';
-  import { formatNumber } from '$lib/i18n';
+  import { formatNumber, formatSigned } from '$lib/i18n';
   import type { CatalogEffect } from '$lib/catalog';
   import type { Color } from '$lib/wire';
   import Coin from './Coin.svelte';
@@ -160,7 +160,7 @@
     <Icon name="coin-loss" class="text-[1.1em] text-(--cinnabar)" />
     <Coin {n} loss />
   {:else if effect.kind === 'discount'}
-    <span class="font-bold tabular-nums" data-min-font="10">−{formatNumber(n)}</span>
+    <span class="font-bold tabular-nums" data-min-font="10">{formatSigned(-n)}</span>
     {#if effect.target === 'wonder'}
       <Icon name="wonder" class="text-[1.1em]" />
     {:else}
@@ -173,7 +173,7 @@
     />
   {:else if effect.kind === 'extra-shield'}
     <Icon name="shield" class="text-[1.15em] text-(--card-red) [--i2:var(--paper-bright)]" />
-    <span class="font-bold tabular-nums" data-min-font="10">+{formatNumber(n)}</span>
+    <span class="font-bold tabular-nums" data-min-font="10">{formatSigned(n, { signDisplay: 'always' })}</span>
   {:else if effect.kind === 'wonders-play-again'}
     <Icon name="wonder" class="text-[1.1em]" />{@render playAgain()}
   {:else if effect.kind === 'chain-bonus'}

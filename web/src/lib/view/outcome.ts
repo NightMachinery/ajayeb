@@ -26,7 +26,7 @@ import type {
 import type { IconName } from '$lib/icons/names';
 import { cardName, joinList, wonderName } from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/game/names';
-import { formatNumber, t } from '$lib/i18n';
+import { formatNumber, formatSigned, t } from '$lib/i18n';
 import { freedSplit } from './freed';
 import type { HintNames, Seat } from './hints';
 
@@ -34,9 +34,9 @@ function other(seat: Seat): Seat {
   return seat === 0 ? 1 : 0;
 }
 
-/** A signed number for display: "+3", "−1", "0". */
+/** A signed number for display: "+3", "−1" (U+2212), "0". */
 export function signed(n: number): string {
-  return formatNumber(n, { signDisplay: 'exceptZero' });
+  return formatSigned(n, { signDisplay: 'exceptZero' });
 }
 
 /**

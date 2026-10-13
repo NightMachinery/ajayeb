@@ -81,19 +81,46 @@ type AnyParams = Readonly<Record<string, string | number>>;
 const numberFormats = new Map<string, Intl.NumberFormat>();
 const pluralRules = new Map<string, Intl.PluralRules>();
 
-/** Formats a number for the locale (default: the current one). */
-export function formatNumber(
-  value: number,
-  options?: Intl.NumberFormatOptions,
-  locale: string = i18n.locale
-): string {
+function numberFormat(locale: string, options?: Intl.NumberFormatOptions): Intl.NumberFormat {
   const cacheKey = `${locale}|${options ? JSON.stringify(options) : ''}`;
   let format = numberFormats.get(cacheKey);
   if (!format) {
     format = new Intl.NumberFormat(locale, options);
     numberFormats.set(cacheKey, format);
   }
-  return format.format(value);
+  return format;
+}
+
+/** Formats a number for the locale (default: the current one). */
+export function formatNumber(
+  value: number,
+  options?: Intl.NumberFormatOptions,
+  locale: string = i18n.locale
+): string {
+  return numberFormat(locale, options).format(value);
+}
+
+/** The typographic minus sign, U+2212. */
+export const MINUS_SIGN = '\u2212';
+
+/**
+ * Formats a signed number for display: Intl's digits and sign rules, with
+ * the one minus sign the game shows (U+2212) where the locale writes an
+ * ASCII hyphen-minus (English does). A locale whose own minus sign is
+ * something else (Persian's U+2212 with direction marks, for one) keeps it.
+ * Every signed number on screen (a coin lost, a looting token, an outcome
+ * delta) goes through this, so the board never mixes two minus signs.
+ * Pass signDisplay for the plus: 'exceptZero' gives "+3", "−1", "0".
+ */
+export function formatSigned(
+  value: number,
+  options?: Intl.NumberFormatOptions,
+  locale: string = i18n.locale
+): string {
+  return numberFormat(locale, options)
+    .formatToParts(value)
+    .map((part) => (part.type === 'minusSign' && part.value === '-' ? MINUS_SIGN : part.value))
+    .join('');
 }
 
 /** The CLDR plural category of a count in the locale (default: the current one). */
