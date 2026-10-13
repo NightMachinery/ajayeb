@@ -24,6 +24,13 @@ type Client struct {
 	// its room creation limits. Nil allows every creation.
 	AllowCreate func() bool
 
+	// Addr is the key the transport counts the client's network address
+	// under for its per-address limits (an IPv4 address, or an IPv6 /64),
+	// or "" when it is not known. A bot room's searches wait for the bot
+	// pool under the address of the person playing it (ai.Pool), so that
+	// one address with many bot rooms cannot hold up the bots of others.
+	Addr string
+
 	joined string // the code of the room this client is attached to, or ""
 }
 

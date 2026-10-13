@@ -58,6 +58,7 @@ func (r *Room) maybeStartBot() {
 
 	cfg := &r.m.cfg
 	job := botJob{
+		addr:    r.botAddr(),
 		bot:     cfg.NewBot(sd.Bot, botSeed(r.file.Seed, r.state.Ply)),
 		obs:     engine.Observe(&r.state, seat),
 		budget:  cfg.BotBudget(sd.Bot),
@@ -74,6 +75,21 @@ func (r *Room) maybeStartBot() {
 		defer r.m.wg.Done()
 		job.run(ctx)
 	}()
+}
+
+// botAddr is the address the room's bot searches queue under in the bot
+// pool: that of the people watching. A bot room has one human seat, but
+// its player may watch from more than one connection; the smallest
+// address among them is taken, so the choice does not depend on map order.
+// "" when none is known.
+func (r *Room) botAddr() string {
+	addr := ""
+	for c := range r.clients {
+		if c.Addr != "" && (addr == "" || c.Addr < addr) {
+			addr = c.Addr
+		}
+	}
+	return addr
 }
 
 // thinking returns the seat whose bot is searching for the current
@@ -132,6 +148,7 @@ func (r *Room) botResult(m msgBotResult) {
 // botJob is one search, with everything it needs copied out of the room so
 // that the search goroutine never touches room state.
 type botJob struct {
+	addr    string // the key of the search in the pool (botAddr)
 	bot     Bot
 	obs     engine.Observation
 	budget  ai.Budget
@@ -153,7 +170,7 @@ func (j botJob) run(ctx context.Context) {
 	var a engine.Action
 	var err error
 	if j.pool != nil {
-		a, err = j.pool.Choose(ctx, j.bot, j.obs, j.budget, nil)
+		a, err = j.pool.ChooseFor(ctx, j.addr, j.bot, j.obs, j.budget, nil)
 	} else {
 		a, err = j.bot.Choose(ctx, j.obs, j.budget, nil)
 	}

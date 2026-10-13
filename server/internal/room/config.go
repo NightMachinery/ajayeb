@@ -80,7 +80,8 @@ type Config struct {
 	// ai.Budget (each bot's own defaults).
 	BotBudget func(level store.BotLevel) ai.Budget
 	// BotPool, when set, bounds the searches running at once across every
-	// room (a semaphore). Default: none.
+	// room, and shares them fairly between the addresses of the players
+	// (Client.Addr; see ai.Pool). Default: none.
 	BotPool *ai.Pool
 	// BotDelay is the bot's minimum think time, used as given: zero means
 	// none. Production passes DefaultBotDelay.

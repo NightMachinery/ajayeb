@@ -76,6 +76,7 @@ type options struct {
 	trustProxy   []netip.Prefix
 	botDelay     time.Duration
 	botSearches  int
+	botPerAddr   int
 	seedBase     uint64
 	showVersion  bool
 }
@@ -135,6 +136,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
 	fset.IntVar(&opts.botSearches, "bot-searches", defaultBotSearches, "how many bot searches may run at once across all rooms")
+	fset.IntVar(&opts.botPerAddr, "bot-searches-per-address", ai.DefaultPerKey, "how many of those one client address (an IPv4 address or IPv6 /64) may hold at once; its further bot turns wait without holding up other addresses")
 	fset.Uint64Var(&opts.seedBase, "seed-base", 0, "derive room seeds from this `base` for reproducible tests (requires -dev; 0 means random seeds)")
 	fset.BoolVar(&opts.showVersion, "version", false, "print the version and exit")
 	fset.Usage = func() {
@@ -164,6 +166,9 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	}
 	if opts.botSearches < 1 {
 		return options{}, errors.New("-bot-searches must be at least 1")
+	}
+	if opts.botPerAddr < 1 {
+		return options{}, errors.New("-bot-searches-per-address must be at least 1")
 	}
 	if opts.dataDir == "" {
 		return options{}, errors.New("-data must not be empty")
@@ -312,7 +317,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 	rooms, err := room.NewManager(room.Config{
 		Store:    st,
 		Logger:   logger,
-		BotPool:  ai.NewPool(opts.botSearches),
+		BotPool:  ai.NewPoolPerKey(opts.botSearches, opts.botPerAddr),
 		BotDelay: opts.botDelay,
 		Seed:     seed,
 		Claims:   secret,
@@ -383,6 +388,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		"trustedProxies", len(opts.trustProxy),
 		"botDelay", opts.botDelay,
 		"botSearches", opts.botSearches,
+		"botSearchesPerAddress", opts.botPerAddr,
 		"seedBase", seedLabel,
 	)
 

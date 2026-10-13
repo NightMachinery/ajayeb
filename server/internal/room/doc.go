@@ -91,7 +91,8 @@
 // room starts one search in its own goroutine, under a context that is
 // cancelled by an undo, when the last connection leaves (the next attach
 // starts it again) and when the room stops, through Config.BotPool when one is
-// set. A room nobody is attached to never searches, so rooms left behind
+// set, where it waits its turn under its player's address (Client.Addr), so
+// one address's many bot rooms cannot hold up another's. A room nobody is attached to never searches, so rooms left behind
 // cannot keep the pool busy. The bot receives only an engine Observation of
 // its seat. Its seed is derived from the room's seed and the game's ply (not
 // the room version), so a game replays the same way and an undo cannot reroll

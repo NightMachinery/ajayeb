@@ -332,6 +332,8 @@ func (c *conn) hello(data []byte) bool {
 		// A rematch that creates a room counts against the same limits as
 		// a create.
 		AllowCreate: func() bool { return c.s.allowCreate(userID, c.key) },
+		// The bot pool shares its slots fairly between addresses.
+		Addr: c.key.String(),
 	}
 	c.log.Debug("hello", "user", userID)
 	c.out.Push(c.s.welcome)
