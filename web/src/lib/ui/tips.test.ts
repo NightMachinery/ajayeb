@@ -6,9 +6,12 @@ import {
   TipsStore,
   dueTip,
   parseTips,
+  TIP_IDS,
+  TIPS,
   tipSelector,
   tipsInView,
-  type StorageLike
+  type StorageLike,
+  type TipView
 } from './tips.svelte';
 
 function memory(initial: Record<string, string> = {}): StorageLike & { data: Map<string, string> } {
@@ -122,5 +125,91 @@ describe('which tip is due', () => {
 
   it("points at the board pip's attributes", () => {
     expect(tipSelector('denyPair')).toBe('[data-hint="pair"][data-hint-side="opp"]');
+  });
+});
+
+describe('the tips beyond the pips (M10.F3)', () => {
+  const FAMILIES = new Set<HintFamily>(['science', 'threats', 'military', 'wonders']);
+
+  function full(over: Record<string, unknown>): TipView {
+    return {
+      structure: [],
+      players: [
+        { hints: { lawWins: false }, wonders: [] },
+        { hints: { lawWins: false }, wonders: [] }
+      ],
+      boardTokens: [],
+      ...over
+    } as unknown as TipView;
+  }
+
+  it('the Law laurel, while Law is on the board and would be a sixth symbol', () => {
+    const v = full({
+      boardTokens: ['law'],
+      players: [
+        { hints: { lawWins: false }, wonders: [] },
+        { hints: { lawWins: true }, wonders: [] }
+      ]
+    });
+    expect(tipsInView(v, 0, FAMILIES, true)).toEqual(['lawLaurel']);
+    expect(tipsInView(v, 0, FAMILIES, false)).toEqual([]);
+    expect(tipsInView({ ...v, boardTokens: [] }, 0, FAMILIES, true)).toEqual([]);
+    expect(tipSelector('lawLaurel')).toBe('.progress-token-row [data-hint="law"]');
+  });
+
+  it('a looting token within reach, pointing at the token a card would take', () => {
+    const v = full({
+      structure: [
+        {
+          state: 'faceUp',
+          accessible: true,
+          hints: [
+            { codes: ['loot'], priceShift: [] },
+            { codes: [], priceShift: [] }
+          ]
+        }
+      ],
+      hints: {
+        looting: [
+          { at: -3, wouldLose: 2 },
+          { at: 3, wouldLose: 2 },
+          { at: 6, wouldLose: 4 }
+        ],
+        wondersLeft: 3
+      }
+    });
+    expect(tipsInView(v, 0, FAMILIES, true)).toEqual(['loot', 'ghostLoot']);
+    // Seat 0's shields push toward seat 1's capital: the nearest token there.
+    expect(tipSelector('ghostLoot', v, 0)).toBe('[data-loot-at="3"]');
+    expect(tipsInView(v, 0, new Set<HintFamily>(['science']), true)).toEqual([]);
+  });
+
+  it('the hourglass once one wonder is left to build', () => {
+    const v = full({
+      hints: { looting: [], wondersLeft: 1 },
+      players: [
+        { hints: { lawWins: false }, wonders: [{ built: false, removed: false }] },
+        { hints: { lawWins: false }, wonders: [{ built: true, removed: false }] }
+      ]
+    });
+    expect(tipsInView(v, 1, FAMILIES, true)).toEqual(['hourglass']);
+    expect(tipSelector('hourglass')).toBe('[data-hint="hourglass"], [data-hourglass]');
+  });
+
+  it('the chain badge and the guild back need no hint family nor board marks', () => {
+    const v = full({
+      structure: [
+        { state: 'faceUp', accessible: true, costs: [{ chainFree: true }, { chainFree: false }] },
+        { state: 'faceDown', back: 'guild' }
+      ]
+    });
+    expect(tipsInView(v, 0, new Set<HintFamily>(), false)).toEqual(['freeChain', 'guildBack']);
+    expect(tipsInView(v, 1, new Set<HintFamily>(), false)).toEqual(['guildBack']);
+    expect(tipSelector('freeChain')).toBe('.card-structure [data-afford="chain"]');
+    expect(tipSelector('guildBack')).toBe('.card-structure [data-back="guild"]');
+  });
+
+  it('every tip names a rules section', () => {
+    for (const id of TIP_IDS) expect(TIPS[id].rules).toBeTruthy();
   });
 });

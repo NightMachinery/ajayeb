@@ -522,6 +522,16 @@ export const hints = {
   'hints.tip.winOpp': 'An outlined crown marks a card that would win the game for {name}.',
   'hints.tip.loot':
     'This card’s shields would push the pawn onto a looting token, and the other player would lose coins.',
+  'hints.tip.lawLaurel':
+    'A laurel round Law: its symbol would be that player’s sixth different one, so a pair they complete now could take Law and win the game.',
+  'hints.tip.ghostLoot':
+    'A looting token: when the pawn enters its space, that side loses these coins at once. While you look at a card with shields, a dashed ring marks each token it would take.',
+  'hints.tip.hourglass':
+    'An hourglass: only one more wonder can be built in this game. Whoever builds one first takes the last place, and the other unbuilt wonder goes back to the box.',
+  'hints.tip.freeChain':
+    'A chain badge: you own the card with this card’s chain symbol, so you build it for free.',
+  'hints.tip.guildBack':
+    'A purple back hides a guild. Guilds score at the end of the game for what both cities hold; 3 of the 7 are in each game.',
   'hints.tip.gotIt': 'Got it',
   'hints.tip.more': 'More in Rules',
 

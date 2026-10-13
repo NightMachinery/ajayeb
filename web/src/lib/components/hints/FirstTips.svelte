@@ -5,6 +5,8 @@
   // Only on the player's own turn, with nothing else open over the board
   // (the caller's `canShow`), so it never lands on the other player's turn
   // on a shared hot-seat device. A tip counts as seen once it is closed.
+  // Besides the pips (M10.F3): the Law laurel, a looting token within
+  // reach, the wonder hourglass, the chain badge and the guild back.
   import { t } from '$lib/i18n';
   import { openRules } from '../rules/rules-overlay.svelte';
   import { dueTip, TIPS, tips, tipSelector, tipsInView, type TipId } from '$lib/ui/tips.svelte';
@@ -47,6 +49,16 @@
         return t('hints.tip.winOpp', { name });
       case 'loot':
         return t('hints.tip.loot');
+      case 'lawLaurel':
+        return t('hints.tip.lawLaurel');
+      case 'ghostLoot':
+        return t('hints.tip.ghostLoot');
+      case 'hourglass':
+        return t('hints.tip.hourglass');
+      case 'freeChain':
+        return t('hints.tip.freeChain');
+      case 'guildBack':
+        return t('hints.tip.guildBack');
     }
   }
 
@@ -62,7 +74,7 @@
     open
     {id}
     text={text(id)}
-    anchor={tipSelector(id)}
+    anchor={tipSelector(id, view ?? undefined, seat ?? 0)}
     onclose={() => close(id)}
     onmore={() => void openRules(TIPS[id].rules)}
   />
