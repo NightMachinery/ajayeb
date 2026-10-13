@@ -7,21 +7,42 @@
   // amount on it, the way cards print coin costs, so the two numbers never
   // read alike. A small choice glyph marks a resource at least one flexible
   // producer can also make.
+  //
+  // The recap (price-changed-tick, M10.F3): on the viewer's own strip or
+  // panel, a trade price the other side's moves changed since the viewer's
+  // last move carries a static up or down caret on the chip's bottom-end
+  // corner until that seat's move ends, with the old and new price in its
+  // tooltip (data-recap-tick). From `recap`, or the game screen's context
+  // (view/recap.ts recapBoard) when these are that seat's prices.
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
+  import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import { t } from '$lib/i18n';
   import Coin from '$lib/components/card/Coin.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import type { ProductionView, Resource, ResourceCounts } from '$lib/wire';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { getRecapBoard, type RecapChip } from '$lib/view/recap';
 
   interface Props {
     production: ProductionView;
     tradePrices: ResourceCounts;
     compact?: boolean;
+    /** The recap's carets by resource; else from the game screen's context. */
+    recap?: ReadonlyMap<Resource, RecapChip>;
     class?: string;
   }
 
-  let { production, tradePrices, compact = false, class: className = '' }: Props = $props();
+  let { production, tradePrices, compact = false, recap, class: className = '' }: Props = $props();
+
+  const recapBoard = getRecapBoard();
+  // The context's carets belong to one seat: they show on the chips of the
+  // strip or panel that draws that seat's own prices (the same object).
+  const carets = $derived.by((): ReadonlyMap<Resource, RecapChip> | undefined => {
+    if (recap) return recap;
+    const board = recapBoard();
+    return board?.marks && board.prices === tradePrices ? board.chips : undefined;
+  });
 
   const RESOURCES = [
     'wood',
@@ -83,6 +104,7 @@
     {@const count = production.fixed[resource]}
     {@const price = tradePrices[resource]}
     {@const resourceName = t(labelKey(resource))}
+    {@const caret = carets?.get(resource)}
     <li
       class="relative flex items-center rounded-control border border-rule bg-panel {compact
         ? 'h-5 gap-0.5 px-1 text-[11px]'
@@ -95,6 +117,21 @@
       <Icon name={RESOURCE_ICON[resource]} class={RESOURCE_TEXT_CLASS[resource]} />
       <span class="font-semibold tabular-nums" data-must-fit aria-hidden="true">{count}</span>
       <Coin n={price} class={compact ? 'text-[10px]' : 'text-[11px]'} />
+      {#if caret}
+        <span
+          class="recap-caret absolute -end-1 -bottom-1 grid size-3 place-items-center rounded-full text-(--paper-bright)
+            {caret.up ? 'bg-cinnabar' : 'bg-malachite'}"
+          data-recap-tick={caret.up ? 'up' : 'down'}
+          {@attach tooltip({ text: caret.text })}
+        >
+          {#if caret.up}
+            <ChevronUp class="size-2.5" strokeWidth={3.5} aria-hidden="true" />
+          {:else}
+            <ChevronDown class="size-2.5" strokeWidth={3.5} aria-hidden="true" />
+          {/if}
+          <span class="sr-only">{caret.text}</span>
+        </span>
+      {/if}
       {#if hasChoice(resource)}
         <span
           class="absolute -end-1 -top-1 grid size-3 place-items-center rounded-full bg-gild text-[8px] text-on-accent"

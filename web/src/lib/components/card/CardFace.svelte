@@ -53,6 +53,8 @@
     flow?: number;
     /** Who receives `flow` (user text). */
     flowTo?: string;
+    /** The badge's recap line: how its price changed (AffordBadge priceTip). */
+    priceTip?: string;
     class?: string;
   }
 
@@ -65,6 +67,7 @@
     bonus = 0,
     flow = 0,
     flowTo = '',
+    priceTip,
     class: className = ''
   }: Props = $props();
 
@@ -161,7 +164,15 @@
         {/if}
         {#if afford}
           <span class="pointer-events-none absolute inset-x-0 bottom-[0.3em] flex justify-center">
-            <AffordBadge {afford} {dim} compact={tier === 'mini'} {bonus} {flow} {flowTo} />
+            <AffordBadge
+              {afford}
+              {dim}
+              compact={tier === 'mini'}
+              {bonus}
+              {flow}
+              {flowTo}
+              {priceTip}
+            />
           </span>
         {/if}
       </span>

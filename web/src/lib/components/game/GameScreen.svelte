@@ -83,7 +83,14 @@
   import { lastPly, latestSummary, summaryTrigger, summaryViewer } from '$lib/view/move-summary';
   import { hintHide } from '$lib/hints/local.svelte';
   import { visibleFamilies } from '$lib/hints/families';
-  import { EMPTY_RECAP, isCurrentRun, nextRecap, priceTicks } from '$lib/view/recap';
+  import {
+    EMPTY_RECAP,
+    isCurrentRun,
+    nextRecap,
+    priceTicks,
+    recapBoard,
+    setRecapBoard
+  } from '$lib/view/recap';
   import { reviewForSummary, reviewLines } from '$lib/view/review';
   import { ageTip } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
@@ -410,6 +417,17 @@
       ? priceTicks(recap, view, summarySeat)
       : []
   );
+
+  // The recap's board marks (M10.F3): the trade-price carets, the badge
+  // lines, the emptied slots' traces and the fresh cards' dots, for the
+  // viewer's seat until its move ends, while the recap family shows here.
+  // The strips and the structure read them from this context.
+  const recapMarks = $derived(
+    view && !ended && shownFamilies.has('recap')
+      ? recapBoard(recap, view, summarySeat, names, !hintHide.value.boardMarks)
+      : null
+  );
+  setRecapBoard(() => recapMarks);
 
   function closeSummary(): void {
     summaryAuto = null;

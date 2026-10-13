@@ -20,6 +20,13 @@
   // deny target, when there is one. The pip follows the game's hint
   // families and this screen's local hide; on a room page it reads them
   // from the game context, and the gallery passes `hints` instead.
+  //
+  // The recap (last-move-trace and price-changed-tick, M10.F3, from the
+  // game screen's context or `recap`): until the viewer's move ends, a slot
+  // the other side emptied keeps a faint gold trace (data-recap-trace), a
+  // card it turned face up carries a small gold dot on its top-start corner
+  // (data-recap-revealed), and a card whose price changed says so in its
+  // badge's tooltip (data-recap-price). All static.
   import Icon from '$lib/icons/Icon.svelte';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
@@ -32,6 +39,9 @@
   import CardFace from '../card/CardFace.svelte';
   import HintPip from '../card/HintPip.svelte';
   import { tryGameContext } from '../choices/room';
+  import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { getRecapBoard, type RecapBoard } from '$lib/view/recap';
 
   interface Props {
     slot: SlotView;
@@ -53,6 +63,8 @@
     marked?: boolean;
     /** The hint display of this screen; on a room page it comes from the game context. */
     hints?: HintScreen;
+    /** The recap's board marks; on a room page they come from the game screen. */
+    recap?: RecapBoard | null;
     onselect?: (slot: SlotView) => void;
   }
 
@@ -69,8 +81,19 @@
     pending = false,
     marked = false,
     hints,
+    recap,
     onselect
   }: Props = $props();
+
+  const recapContext = getRecapBoard();
+  const board = $derived(recap === undefined ? recapContext() : recap);
+  const traced = $derived(!!board?.marks && board.emptied.has(slot.index));
+  const fresh = $derived(
+    !!board?.marks && slot.state === 'faceUp' && !!slot.card && board.revealed.has(slot.card)
+  );
+  const priceTip = $derived(
+    slot.state === 'faceUp' && slot.card ? board?.cardPrice.get(slot.card) : undefined
+  );
 
   const takeable = $derived(slot.accessible && slot.state === 'faceUp');
 
@@ -89,7 +112,19 @@
   });
 </script>
 
-{#if slot.state === 'empty'}
+{#if slot.state === 'empty' && traced}
+  <span
+    class="slot empty recap-trace absolute start-0 top-0 rounded-[7%/4.5%] border-2 border-dotted"
+    style:--x={place.x}
+    style:--y={place.y}
+    style:z-index="0"
+    data-slot={slot.index}
+    data-state="empty"
+    data-recap-trace=""
+    aria-hidden="true"
+    {@attach tooltip({ text: t('hints.recap.emptied') })}
+  ></span>
+{:else if slot.state === 'empty'}
   <span
     class="slot empty absolute start-0 top-0 rounded-[7%/4.5%] border border-dashed border-rule/60"
     style:--x={place.x}
@@ -132,9 +167,17 @@
         bonus={badgeCost?.chainFree ? badgeCost.urbanismBonus : 0}
         flow={badgeCost?.affordable ? badgeCost.toOpponent : 0}
         flowTo={screen ? screen.names.names[screen.perspective.seat === 0 ? 1 : 0] : ''}
+        {priceTip}
       />
     {:else}
       <CardBack back={slot.back ?? 'age1'} class="h-full w-full" />
+    {/if}
+    {#if fresh}
+      <span
+        class="recap-spark absolute -start-1 -top-1 size-2.5 rounded-full border-[1.5px] border-(color:--gold-deep) bg-gold"
+        data-recap-revealed=""
+        {@attach tooltip({ text: t('hints.recap.revealed') })}
+      ></span>
     {/if}
     {#if shownPip}
       <HintPip pip={shownPip} card={name} size={tier === 'mini' ? 'sm' : 'md'} faint={!takeable} />
@@ -164,6 +207,12 @@
   }
   .covered {
     box-shadow: 0 1px 2px var(--card-rest-shadow);
+  }
+  /* The recap's trace of a slot the other side emptied: a faint gold
+     outline, static (the animation wave may animate it). */
+  .recap-trace {
+    border-color: color-mix(in oklch, var(--gild) 70%, transparent);
+    background: color-mix(in oklch, var(--gold) 10%, transparent);
   }
   :global([data-theme='dark']) .covered {
     filter: brightness(0.92);

@@ -18,6 +18,10 @@
   //          glyph (only the glyph on the mini tier; the tooltip says it)
   //   flow   part of the trade goes to the opponent (Economy): a small
   //          outlined notch on the badge's end edge
+  //
+  // The recap (price-changed-tick, M10.F3): when the card's price changed
+  // since the viewer's last move, the badge takes a tooltip that says so
+  // ("Was 4, now 5: Moon built Clay Pit.", `priceTip`, data-recap-price).
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -35,6 +39,8 @@
     flow?: number;
     /** The opponent who receives `flow` (user text). */
     flowTo?: string;
+    /** How the price changed since the viewer's last move (the recap). */
+    priceTip?: string;
     class?: string;
   }
 
@@ -45,8 +51,13 @@
     bonus = 0,
     flow = 0,
     flowTo = '',
+    priceTip,
     class: className = ''
   }: Props = $props();
+
+  // An attachment only when there is a line, so a badge without one stays
+  // out of the tooltip registry (and lets taps through to the card).
+  const priceTooltip = $derived(priceTip ? tooltip({ text: priceTip }) : undefined);
 
   const STYLE = {
     chain: 'border-(color:--gold-deep) bg-gold text-card-ink',
@@ -64,7 +75,10 @@
     afford.state
   ]} {className}"
   class:opacity-50={dim}
+  class:pointer-events-auto={!!priceTip}
   data-afford={afford.state}
+  data-recap-price={priceTip ? '' : undefined}
+  {@attach priceTooltip}
   data-min-font="10"
   aria-hidden="true"
 >

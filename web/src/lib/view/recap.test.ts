@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { GameEvent, HistoryEntry, ResourceCounts } from '$lib/wire';
+import type { CostView, GameEvent, HistoryEntry, ResourceCounts, SlotView } from '$lib/wire';
 import {
+  cardPriceTick,
   EMPTY_RECAP,
+  emptiedSince,
+  recapBoard,
   isCurrentRun,
   nextRecap,
   priceTicks,
@@ -133,5 +136,113 @@ describe('revealedSince', () => {
     );
     expect(revealedSince(state, 1)).toEqual(['quarry', 'press']);
     expect(revealedSince(state, 0)).toEqual(['press']);
+  });
+});
+
+// --- The board halves (M10.F3) ----------------------------------------------
+
+function cost(total: number): CostView {
+  return { total } as unknown as CostView;
+}
+
+function slot(index: number, card: string | null, totals: [number, number] = [0, 0]): SlotView {
+  return (card === null
+    ? { index, state: 'empty', accessible: false, coveredBy: [] }
+    : {
+        index,
+        state: 'faceUp',
+        card,
+        accessible: true,
+        coveredBy: [],
+        costs: [cost(totals[0]), cost(totals[1])]
+      }) as unknown as SlotView;
+}
+
+function boardFrame(
+  version: number,
+  p1: Partial<ResourceCounts>,
+  structure: SlotView[],
+  events: GameEvent[] = []
+): RecapFrame {
+  const f = frame(version, {}, p1, events);
+  return { ...f, view: { ...f.view, structure } };
+}
+
+describe('last-move-trace and the card badge (board halves)', () => {
+  const start = [slot(0, 'clay-pit', [1, 1]), slot(1, 'baths', [3, 2]), slot(2, 'walls', [4, 4])];
+
+  it('remembers the slots the other side emptied, until the seat moves', () => {
+    const { state } = run(
+      boardFrame(1, {}, start),
+      boardFrame(
+        2,
+        { clay: 3 },
+        [slot(0, null), start[1]!, start[2]!],
+        [ev({ kind: 'build', seat: 0, card: 'clay-pit' })]
+      )
+    );
+    expect(emptiedSince(state, 1)).toEqual([0]);
+    expect(emptiedSince(state, 0)).toEqual([]);
+    const after = run(
+      boardFrame(1, {}, start),
+      boardFrame(
+        2,
+        { clay: 3 },
+        [slot(0, null), start[1]!, start[2]!],
+        [ev({ kind: 'build', seat: 0, card: 'clay-pit' })]
+      ),
+      boardFrame(
+        3,
+        { clay: 3 },
+        [slot(0, null), slot(1, null), start[2]!],
+        [ev({ kind: 'discard', seat: 1, card: 'baths' })]
+      )
+    );
+    // Seat 1's own move ends its trace; seat 0 now sees the slot seat 1 took.
+    expect(emptiedSince(after.state, 1)).toEqual([]);
+    expect(emptiedSince(after.state, 0)).toEqual([1]);
+  });
+
+  it("says how a card's price changed, with the build that changed it", () => {
+    const later = [slot(0, null), slot(1, 'baths', [3, 3]), slot(2, 'walls', [4, 4])];
+    const { state, last } = run(
+      boardFrame(1, {}, start),
+      boardFrame(2, { stone: 3 }, later, [ev({ kind: 'build', seat: 0, card: 'quarry' })])
+    );
+    const view = last.view as Parameters<typeof cardPriceTick>[1];
+    expect(cardPriceTick(state, view, 1, 'baths')).toEqual({
+      from: 2,
+      to: 3,
+      cause: { seat: 0, card: 'quarry' }
+    });
+    expect(cardPriceTick(state, view, 1, 'walls')).toBeUndefined();
+    const board = recapBoard(state, view, 1, ['Sun', 'Moon'], true)!;
+    expect(board.cardPrice.get('baths')).toBe('Was 2, now 3: Sun built Quarry.');
+    expect(board.chips.get('stone')).toEqual({
+      up: true,
+      text: 'Since your last move: was 2, now 3: Sun built Quarry.'
+    });
+    expect([...board.emptied]).toEqual([0]);
+    expect(board.prices).toBe(view.players[1].tradePrices);
+    expect(recapBoard(state, view, null, ['Sun', 'Moon'], true)).toBeNull();
+  });
+
+  it('lists the cards turned face up for the board marks', () => {
+    const { state, last } = run(
+      boardFrame(1, {}, start),
+      boardFrame(2, {}, start, [
+        ev({ kind: 'build', seat: 0, card: 'lumber-yard' }),
+        ev({ kind: 'reveal', card: 'tavern', slot: 5 })
+      ])
+    );
+    const board = recapBoard(
+      state,
+      last.view as Parameters<typeof recapBoard>[1],
+      1,
+      ['Sun', 'Moon'],
+      false
+    )!;
+    expect([...board.revealed]).toEqual(['tavern']);
+    expect(board.marks).toBe(false);
   });
 });

@@ -502,6 +502,14 @@ export const hints = {
   'hints.recap.tip': 'Trade prices that changed since your last move.',
   'hints.recap.price': 'Your {resource}: was {from}, now {to} coins.',
   'hints.recap.priceBuilt': 'Your {resource}: was {from}, now {to} coins. {name} built {card}.',
+  // The board's marks of the same changes (M10.F3): the trade-price chip's
+  // caret, a card's badge, the emptied slot and a card just turned face up.
+  'hints.recap.chip': 'Since your last move: was {from}, now {to}.',
+  'hints.recap.chipBuilt': 'Since your last move: was {from}, now {to}: {name} built {card}.',
+  'hints.recap.cardPrice': 'Was {from}, now {to}.',
+  'hints.recap.cardPriceBuilt': 'Was {from}, now {to}: {name} built {card}.',
+  'hints.recap.emptied': 'Taken since your last move.',
+  'hints.recap.revealed': 'Turned face up since your last move.',
 
   // First-time tips (lib/ui/tips.svelte.ts, components/hints/FirstTip.svelte):
   // each explains a hint mark once, the first time it appears on this device.
