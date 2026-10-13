@@ -29,6 +29,7 @@
   import { tryGameContext } from '../choices/room';
   import Hourglass from '../wonder/Hourglass.svelte';
   import WonderTile from '../wonder/WonderTile.svelte';
+  import { WONDER_SHEET_ART_SIZES } from '$lib/art/lookup';
 
   interface Props {
     open: boolean;
@@ -89,6 +90,7 @@
         <WonderTile
           {slug}
           size="draft"
+          artSizes={WONDER_SHEET_ART_SIZES}
           afford={state?.cost && !state.built ? affordOf(state.cost) : undefined}
         />
       </div>

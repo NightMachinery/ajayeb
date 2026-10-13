@@ -64,6 +64,9 @@
     buildable?: boolean;
     /** The board hints about it (row and city sizes). */
     hint?: WonderHint;
+    /** The large art's `sizes`, when the caller draws the tile at another
+     *  width than the draft (the wonder sheet). */
+    artSizes?: string;
     class?: string;
   }
 
@@ -77,6 +80,7 @@
     compactArt = false,
     buildable = false,
     hint,
+    artSizes = WONDER_ART_SIZES,
     class: className = ''
   }: Props = $props();
 
@@ -91,7 +95,7 @@
     <ArtImage
       id={artId('wonder', slug)}
       size={small ? 'thumb' : 'default'}
-      sizes={small ? undefined : WONDER_ART_SIZES}
+      sizes={small ? undefined : artSizes}
       feather={small ? 'edge' : crop.feather}
       position={crop.position}
       class="absolute inset-0 h-full w-full"

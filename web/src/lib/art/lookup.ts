@@ -159,6 +159,13 @@ export function cardArtSizes(width: number): string {
 export const WONDER_ART_SIZES =
   '(min-width: 64rem) 280px, (orientation: landscape) and (max-height: 32rem) 280px, 50vw';
 
+/** The `sizes` of the wonder sheet's tile art: the sheet draws the tile at
+ *  most 280 px wide (WonderSheet's max-w-[280px]), less only on a screen
+ *  narrower than 20rem, where the sheet's own width bounds it. Without
+ *  this a tablet would read WONDER_ART_SIZES' 50vw and fetch the widest
+ *  file for a 280 px tile. */
+export const WONDER_SHEET_ART_SIZES = '(max-width: 20rem) 100vw, 280px';
+
 /** The medallion sizes of ProgressToken. */
 export type TokenSize = 'xs' | 'sm' | 'md';
 
