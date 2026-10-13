@@ -16,8 +16,8 @@ export interface PlayAgain {
 }
 
 /**
- * Who is taking an extra turn right now, read from the events this client
- * has seen, oldest first. The view cannot say it: its extraTurn flag means
+ * Who is taking an extra turn right now, read from the game's events,
+ * oldest first. The view cannot say it: its extraTurn flag means
  * "plays again once this turn is over", and the engine clears it the moment
  * the extra turn starts. The events can: a wonder's extraTurn event grants
  * the extra turn, and the extra turn lasts until that seat's next play
@@ -30,9 +30,12 @@ export interface PlayAgain {
  * pawn, reveals, tokens, a destroy or a rebuild resolving the wonder's own
  * choice) happens inside a turn and is skipped.
  *
- * Display only: it re-reads the server's own events. A client that joined
- * (or reloaded) during the extra turn never saw the grant and gets
- * undefined.
+ * Display only: it re-reads the server's own events. The caller passes the
+ * whole history's events (State.history, which a join, a reload or a
+ * resync brings in full), so a page reloaded during the extra turn still
+ * finds the grant. Only a log that lacks it (a fixture room seen from a
+ * late join) gets undefined; the caller then falls back on the view's
+ * playingAgain flag.
  */
 export function playAgainFrom(log: readonly GameEvent[]): PlayAgain | undefined {
   for (let i = log.length - 1; i >= 0; i--) {
@@ -91,7 +94,7 @@ export interface TurnContext {
    *  rooms only): false for a player who dropped. */
   connected?: readonly [boolean | undefined, boolean | undefined];
   /** The seat taking an extra turn now, if any (playAgainFrom over the
-   *  events this client has seen). */
+   *  whole history's events, up to the frame on screen). */
   playAgain?: PlayAgain;
 }
 
