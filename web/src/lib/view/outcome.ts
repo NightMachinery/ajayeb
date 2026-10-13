@@ -84,8 +84,9 @@ export interface OutcomeTerm {
   readonly text: string;
   /** The short form beside its glyph (phone); the text when it has no glyph. */
   readonly short: string;
-  /** The glyph before the term: an icon of the sprite, or the crown. */
-  readonly icon?: IconName | 'crown';
+  /** The glyph before the term: an icon of the sprite (a win is the
+   *  hint-crown, the same crown as the board's win pip). */
+  readonly icon?: IconName;
   /** How it reads: a win, a gain or loss for the mover, or a warning. */
   readonly tone?: 'win' | 'gain' | 'loss' | 'warn';
 }
@@ -160,7 +161,7 @@ function winTerm(o: OutcomeView): OutcomeTerm | undefined {
     text = t('hints.outcome.winTwoStep', { card: keyTargetName(w.via) ?? '' });
   } else if (w.via) text = t('hints.outcome.winVia', { card: keyTargetName(w.via) ?? '' });
   else text = t('hints.outcome.win', { kind });
-  return { id: 'win', text, short: text, icon: 'crown', tone: 'win' };
+  return { id: 'win', text, short: text, icon: 'hint-crown', tone: 'win' };
 }
 
 /** The pawn and looting terms. */
@@ -220,7 +221,7 @@ export function outcomeTerms(o: OutcomeView | undefined, ctx: OutcomeContext): O
   const supremacy = o.wins !== undefined && o.wins.kind !== 'civilian';
   if (f.has('scoring')) {
     const e = endTerm(o, ctx);
-    if (e) out.push(endSaysWin ? { ...e, icon: 'crown', tone: 'win' } : e);
+    if (e) out.push(endSaysWin ? { ...e, icon: 'hint-crown', tone: 'win' } : e);
   }
   if (f.has('scoring') && !supremacy) {
     if (o.score[me] !== 0) {

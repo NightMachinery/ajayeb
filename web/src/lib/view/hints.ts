@@ -240,7 +240,6 @@ export interface HintLine {
   readonly text: string;
   /** A pip glyph beside the line, when the line is a pip's fact. */
   readonly code?: HintCode;
-  readonly symbol?: ScienceSymbol;
 }
 
 /** The hint lines of one seat, under its header ("For you", "For Moon"). */
@@ -310,12 +309,7 @@ export function seatLines(
     if (e.science.kind === 'pair') {
       out.push(
         e.science.tokenOnBoard
-          ? {
-              id: 'pair',
-              code: 'pair',
-              symbol: e.science.symbol,
-              text: t('hints.line.pair', { symbol })
-            }
+          ? { id: 'pair', code: 'pair', text: t('hints.line.pair', { symbol }) }
           : { id: 'pair', text: t('hints.line.pairNoToken', { symbol }) }
       );
     } else {

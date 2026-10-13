@@ -100,7 +100,7 @@ describe('outcomeTerms', () => {
       outcome({ wins: { kind: 'military', steps: 1 }, coins: [4, 7], score: [-3, 0] }),
       ctx()
     );
-    expect(terms[0]).toMatchObject({ id: 'win', icon: 'crown', tone: 'win' });
+    expect(terms[0]).toMatchObject({ id: 'win', icon: 'hint-crown', tone: 'win' });
     expect(terms[0]!.text).toBe('Wins the game (military).');
     expect(terms.map((x) => x.id)).toEqual(['win', 'coins']);
   });
@@ -181,7 +181,7 @@ describe('outcomeTerms', () => {
     });
     const terms = outcomeTerms(end, ctx());
     expect(terms.map((x) => x.id)).toEqual(['end']);
-    expect(terms[0]).toMatchObject({ icon: 'crown', tone: 'win' });
+    expect(terms[0]).toMatchObject({ icon: 'hint-crown', tone: 'win' });
     expect(terms[0]!.text).toBe('Ends the game: you win on points, 60 to 50.');
     const threatsOnly = outcomeTerms(end, ctx({ families: new Set(['threats']) }));
     expect(threatsOnly.map((x) => x.text)).toEqual(['Wins the game (points).']);

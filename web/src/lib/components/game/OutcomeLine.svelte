@@ -42,18 +42,7 @@
             data-tone={term.tone}
             {@attach tooltip({ text: term.text })}
           >
-            {#if term.icon === 'crown'}
-              <svg class="glyph size-[1.15em] shrink-0" viewBox="0 0 24 24">
-                <path
-                  d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
-                  fill="currentColor"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linejoin="round"
-                />
-                <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
-              </svg>
-            {:else if term.icon}
+            {#if term.icon}
               <Icon name={term.icon} class="glyph size-[1.15em] shrink-0" />
             {/if}
             {#if term.short !== term.text}
