@@ -808,9 +808,10 @@ the seat's own user and the game's admin may see or reset a seat's link.
 
 ## Limits
 
-These are the production values. Every one is a field of `ws.Limits` or
+These are the production values. Most are fields of `ws.Limits` or
 `room.Config`, whose defaults these are, and tests set them through a fake
-clock instead of waiting.
+clock instead of waiting; the bot pool's are server flags, and the room
+file cap is a constant of the store.
 
 - **Frame size:** 8192 bytes per client frame; a bigger one closes the
   socket with 1009. Inside a frame: `name` up to 64 characters, `clientId`
@@ -854,9 +855,11 @@ clock instead of waiting.
   uncounted, so they are not limited at all. A room code is 6 characters
   from a 31-character alphabet, about 8.9e8 codes, so such an attacker can
   find stored rooms, watch games in progress, and take the open seat of an
-  online lobby before the invited friend does. Whether online rooms should
-  get a longer code, or an invite secret kept apart from the code and
-  required to claim a seat, is an open question.
+  online lobby before the invited friend does. A device link cannot be
+  guessed this way: its claim is an HMAC under the server's secret, and a
+  wrong one counts as a miss. Room codes stay 6 characters for now; a
+  longer code for online rooms, or an invite secret kept apart from the
+  code and required to claim an open seat, is left to a later decision.
 - **Undo:** 60 per minute per client address, as a token bucket of 60; an
   `undo` over it gets `reject rate` with its `seq`. Every applied undo
   replays and rewrites the room file.
@@ -881,21 +884,40 @@ clock instead of waiting.
   reloaded from disk on the next `join`. A bot searches only while its
   room has a connection: the last connection to leave cancels the search,
   and the next one to join starts it again.
+- **Bot searches:** at most 2 run at once across the server
+  (`-bot-searches`), and one client address (an IPv4 address or an IPv6
+  /64, the key of the limits above) holds at most 2 of them at once
+  (`-bot-searches-per-address`). A bot room's search counts under the
+  address of the person playing it. Further searches wait without holding
+  a slot, and a search whose room is left, evicted or undone leaves the
+  queue at once. When a slot frees up it goes to a waiting search whose
+  address holds the fewest slots, and among those to the address that got
+  one longest ago, so however many bot rooms one address runs, another
+  address's bot waits for at most one search to end (`ai.Pool`). The room
+  never waits for the pool itself: the search runs in its own goroutine.
+- **Room files:** the store reads a room file of at most 704 KiB
+  (`store.MaxFileBytes`), four times the most that a room file can hold
+  (189 actions, the 64 entries of the room log, and the 32 remembered
+  clients). A larger file, which this server never writes, is refused
+  unread (`store.ErrTooLarge`): the room is not found, and its log
+  download answers 500. The file stays on disk for a look.
+- **The identity secret:** `<data>/secret.key` must be a regular file (a
+  symbolic link is refused, not followed) of exactly 32 bytes. If its
+  group or other users may read or write it, the server sets its mode to
+  0600 and logs a warning, and refuses to start if it cannot.
 - **Development endpoint bodies:** 64 KiB.
 
 Known gaps, each left for a larger design change:
 
-- **Bot search queue:** the server-wide search pool has no per-user or
-  per-address fairness. One address with many bot rooms can queue up to 16
-  searches, which at Hard delays other players' bots by about 16 seconds
-  with a pool of 2.
 - **Room writes:** every applied act or undo replays the room and rewrites
   its file at once; writes are not coalesced. Rooms banked in advance,
   within the create limits, can therefore drive disk writes at the frame
   rate.
 - **Loads of known codes:** a `join` of an existing room that is not in
-  memory loads it from disk, at up to the frame rate. This costs CPU but no
-  longer locks anyone out, because idle rooms are evicted to make space.
+  memory loads it from disk, at up to the frame rate. This costs CPU (a
+  read of at most the room file cap and a replay of at most 189 actions)
+  but no longer locks anyone out, because idle rooms are evicted to make
+  space.
 - **Room codes:** guessable from many addresses, as described under joins
   above.
 
@@ -919,9 +941,54 @@ Beside the socket, the server answers plain HTTP:
 - Every other path serves the web client: its built files, and
   `index.html` for client routes such as `/play/K7QX2M`.
 
-Every response carries `X-Content-Type-Options: nosniff` and
-`Referrer-Policy: same-origin`, and every JSON response `Cache-Control:
-no-store`. An API error always has the shape
+Every response carries these security headers (`httpapi/security.go`):
+
+- `X-Content-Type-Options: nosniff` and `Referrer-Policy: same-origin`.
+- `X-Frame-Options: DENY`, and the CSP's `frame-ancestors 'none'`: no
+  other page may frame the app.
+- `Cross-Origin-Opener-Policy: same-origin` and
+  `Cross-Origin-Resource-Policy: same-origin`.
+- A `Permissions-Policy` that turns off the powerful features the app
+  never uses: accelerometer, bluetooth, camera, display-capture,
+  geolocation, gyroscope, hid, idle-detection, magnetometer, microphone,
+  midi, payment, serial, usb and xr-spatial-tracking. It leaves the
+  clipboard (device links are copied), full screen and autoplay alone.
+  Vibration and Web Audio, which the app uses, have no feature in it.
+- A `Content-Security-Policy`:
+  `default-src 'self'; script-src 'self' <hashes>; style-src 'self'
+  'unsafe-inline'; img-src 'self' data: blob:; font-src 'self';
+  connect-src 'self'; worker-src 'self'; manifest-src 'self';
+  frame-ancestors 'none'; base-uri 'self'; form-action 'self';
+  object-src 'none'`. `style-src` allows inline styles because Svelte's
+  `style:` directives and the tooltip placement write style attributes.
+  `connect-src 'self'` covers the same-origin `ws:` and `wss:` socket in
+  current browsers (CSP level 3; the end-to-end tests check Chrome, whose
+  online games play over that socket under the policy).
+
+The CSP is computed, never kept by hand. A response that is not an HTML
+file has no `<hashes>`. An HTML file the server serves (the app shell
+`index.html`, for every client route too) gets a `'sha256-...'` source for
+each of its inline scripts: today the theme bootstrap of `web/src/app.html`
+and SvelteKit's start script. The server finds them in the bytes it
+serves, with a small scanner that skips scripts with `src` and those inside
+comments, and hashes their text with line breaks normalized as browsers
+do. The policy is computed with the file's ETag and cached with it, so the
+embedded build gets it once and a `-static` directory gets a new one when
+the file changes. A new inline script needs no server change.
+
+A `-dev` server sends the same policy as
+`Content-Security-Policy-Report-Only`, with `frame-ancestors 'self'` and
+`X-Frame-Options: SAMEORIGIN` (the test build's gallery frames the app):
+the browser logs a violation as a console error instead of blocking it.
+The end-to-end tests run such a server and fail on console errors, so they
+catch a violation without a dev setup ever breaking on one.
+
+The server sends no `Strict-Transport-Security`: one deployment serves
+plain HTTP on purpose, so HSTS belongs to each deployment's TLS proxy
+(`docs/self-hosting.md`).
+
+Every JSON response also carries `Cache-Control: no-store`. An API error
+always has the shape
 `{"ok": false, "code": "...", "msg": "..."}`, where `code` is stable and
 `msg` is a developer hint.
 
