@@ -529,7 +529,7 @@ export const hints = {
     'Hint marks state facts about a card as the board stands now, never advice. Each card shows at most one mark at its top corner.',
   'rules.hints.win': 'Crown: building this card wins the game.',
   'rules.hints.pair':
-    'Token frame with a science symbol: building this card completes a science pair, so its builder picks a progress token.',
+    'Progress-token rosette with an equals sign: building this card completes a science pair, so its builder picks a progress token. Its tooltip names the symbol.',
   'rules.hints.loot':
     'Coin loss: this card’s shields push the pawn onto a looting token, and the other player loses coins.',
   'rules.hints.own': 'Filled in gold: the fact is for you.',
