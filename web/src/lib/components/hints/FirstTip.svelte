@@ -7,7 +7,7 @@
   //
   // A leaf with plain props: the container (FirstTips.svelte) decides which
   // tip is due; the gallery renders it standalone. `anchor` is a CSS
-  // selector of the mark: the panel sits below it (above when there is no
+  // selector of the mark: the panel sits above it (below when there is no
   // room), with a small arrow pointing at it, or centred when it is absent.
   import type { Attachment } from 'svelte/attachments';
   import Lightbulb from '@lucide/svelte/icons/lightbulb';
@@ -33,9 +33,11 @@
   /** Places the panel next to the anchor's box, in viewport pixels. DOM only. */
   function placeNear(selector: string | null): Attachment<HTMLElement> {
     return (content) => {
-      const panel = content.closest<HTMLElement>('[data-dismiss-layer]');
-      if (!panel) return;
+      // Looked up on each layout: the attachment may run before the content
+      // is inside the panel, which the next frame's layout then finds.
       const layout = (): void => {
+        const panel = content.closest<HTMLElement>('[data-dismiss-layer]');
+        if (!panel) return;
         const box = selector ? document.querySelector<HTMLElement>(selector) : null;
         if (!box) return;
         const r = box.getBoundingClientRect();
@@ -46,7 +48,8 @@
         const width = Math.min(18 * rem, vw - 2 * gap);
         const height = panel.offsetHeight;
         const left = Math.min(Math.max(gap, r.left + r.width / 2 - width / 2), vw - width - gap);
-        const below = r.bottom + gap + height <= vh - gap;
+        // Above the mark when it fits, so the card it sits on stays in view.
+        const below = r.top - gap - height < gap && r.bottom + gap + height <= vh - gap;
         const top = below ? r.bottom + gap : Math.max(gap, r.top - gap - height);
         panel.style.inset = 'auto';
         panel.style.margin = '0';
@@ -59,11 +62,18 @@
         panel.style.setProperty('--tip-arrow', `${arrow - 6}px`); // the arrow's start edge
       };
       layout();
-      const frame = requestAnimationFrame(layout);
+      // Again once the panel is shown and laid out (it has no height before).
+      let frame = requestAnimationFrame(() => {
+        layout();
+        frame = requestAnimationFrame(layout);
+      });
+      // The board scrolls inside its own container on a short screen.
       window.addEventListener('resize', layout);
+      window.addEventListener('scroll', layout, true);
       return () => {
         cancelAnimationFrame(frame);
         window.removeEventListener('resize', layout);
+        window.removeEventListener('scroll', layout, true);
       };
     };
   }
