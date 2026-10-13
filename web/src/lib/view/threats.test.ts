@@ -15,7 +15,8 @@ import {
   militaryLeader,
   militaryMargin,
   nextLooting,
-  scienceDanger
+  scienceDanger,
+  threatLines
 } from './threats';
 
 /** A real recorded view, by the scenario/viewer name a protocol fixture
@@ -260,5 +261,40 @@ describe('glow helpers', () => {
     expect(
       glowHints({ players, result: {} as never }, { families: EVERY, boardMarks: true })
     ).toBeUndefined();
+  });
+});
+
+describe('threatLines', () => {
+  const names = { names: ['Sara', 'Omid'] as const, you: 0 as const };
+  const wins = ph({
+    threats: [
+      { seat: 1, card: 'arsenal', kind: 'military' },
+      { seat: 1, wonder: 'colossus', kind: 'military' },
+      { seat: 1, card: 'laboratory', kind: 'science' }
+    ]
+  });
+
+  it('lists every win of the seat, one line per kind, naming the other seat', () => {
+    expect(threatLines(wins, 1, EVERY, names)).toEqual([
+      {
+        kind: 'military',
+        text: 'On their turn Omid could take the capital with Arsenal or Colossus.'
+      },
+      { kind: 'science', text: 'On their turn Omid could win by science with Laboratory.' }
+    ]);
+  });
+
+  it('speaks to the viewer about their own wins', () => {
+    const own = ph({ threats: [{ seat: 0, card: 'senate', kind: 'civilian' }] });
+    expect(threatLines(own, 0, EVERY, names)).toEqual([
+      { kind: 'civilian', text: 'On your turn you could end the game ahead on points with Senate.' }
+    ]);
+  });
+
+  it('is empty with the threats family hidden, or without a list', () => {
+    const noThreats = new Set([...EVERY].filter((f) => f !== 'threats'));
+    expect(threatLines(wins, 1, noThreats, names)).toEqual([]);
+    expect(threatLines(undefined, 1, EVERY, names)).toEqual([]);
+    expect(threatLines(ph({ threats: undefined }), 1, EVERY, names)).toEqual([]);
   });
 });

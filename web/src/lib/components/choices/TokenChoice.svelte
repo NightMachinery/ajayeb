@@ -6,11 +6,14 @@
   //
   // Hints (M10.HS3): under each token, its outcome line (the server's
   // Choice.outcome for that key: points, coins, a win), from the page's
-  // game context.
+  // game context. With the tokens family (M10.F3, view/token-values.ts),
+  // what the token is worth now: the decider's line, and the other seat's
+  // on a board pick (a Great Library offer is the decider's alone).
   import { hintHide } from '$lib/hints/local.svelte';
   import { t } from '$lib/i18n';
   import { sessionHintScreen } from '$lib/view/hints';
   import { outcomeContext, outcomeTerms, type OutcomeTerm } from '$lib/view/outcome';
+  import { tokenPickLines } from '$lib/view/token-values';
   import OutcomeLine from '../game/OutcomeLine.svelte';
   import { tryGameContext } from './room';
   import Icon from '$lib/icons/Icon.svelte';
@@ -47,6 +50,13 @@
       view.choices
         .filter((c) => c.kind === 'token' && c.outcome)
         .map((c) => [c.key, outcomeTerms(c.outcome, octx)])
+    );
+  });
+  const valuesBySlug = $derived.by((): Readonly<Record<string, string[]>> => {
+    const view = ctx?.session.view;
+    if (!view) return {};
+    return Object.fromEntries(
+      tokens.map((slug) => [slug, tokenPickLines(view, slug, library, screen)])
     );
   });
   const selectedToken = $derived(
@@ -90,6 +100,13 @@
           {/if}
         </button>
         <OutcomeLine terms={termsByKey[key] ?? []} actKey={key} class="mt-1 ps-3" />
+        {#if (valuesBySlug[slug] ?? []).length > 0}
+          <ul class="mt-0.5 flex flex-col ps-3 text-xs text-fg-muted" data-token-values={slug}>
+            {#each valuesBySlug[slug] ?? [] as line (line)}
+              <li data-token-value dir="auto">{line}</li>
+            {/each}
+          </ul>
+        {/if}
       </li>
     {/each}
   </ul>

@@ -21,6 +21,7 @@
 // about, so the danger checks answer false; the result screen says what
 // happened instead.
 
+import { t } from '$lib/i18n';
 import type {
   HintFamily,
   LootingView,
@@ -32,6 +33,8 @@ import type {
   VictoryKind,
   View
 } from '$lib/wire';
+import type { HintNames } from './hints';
+import { threatList } from './outcome';
 
 export type Seat = 0 | 1;
 
@@ -210,4 +213,58 @@ export function strongerGlow(a: Glow, b: Glow): Glow {
 /** Whether a glow is a warning (soft or strong), not calm or none. */
 export function glowWarns(g: Glow): boolean {
   return g === 'soft' || g === 'strong';
+}
+
+// --- The threats list (the city sheet's "Threats", M10.F3) -----------------
+
+/** One line of a seat's threats: the wins of one kind, with what gives them. */
+export interface ThreatLine {
+  readonly kind: VictoryKind;
+  readonly text: string;
+}
+
+const THREAT_KINDS = ['military', 'science', 'civilian'] as const satisfies readonly VictoryKind[];
+
+/**
+ * The full threats list of `seat` (PlayerHintsView.threats: the wins it
+ * would have with one action if it were its turn now), one line per kind
+ * of victory, each naming the cards or wonders that give it. Empty while
+ * the threats family is hidden on this screen, when the view sends no list
+ * (a pending choice) or once the game is over (no hints then).
+ */
+export function threatLines(
+  hints: PlayerHintsView | undefined,
+  seat: Seat,
+  families: ReadonlySet<HintFamily>,
+  names: HintNames
+): ThreatLine[] {
+  if (!families.has('threats')) return [];
+  const you = names.you === seat;
+  const name = names.names[seat];
+  const out: ThreatLine[] = [];
+  for (const kind of THREAT_KINDS) {
+    const wins = winsOf(hints, kind);
+    if (wins.length === 0) continue;
+    const list = threatList(wins);
+    let text: string;
+    switch (kind) {
+      case 'military':
+        text = you
+          ? t('hints.threats.militaryYou', { list })
+          : t('hints.threats.military', { name, list });
+        break;
+      case 'science':
+        text = you
+          ? t('hints.threats.scienceYou', { list })
+          : t('hints.threats.science', { name, list });
+        break;
+      case 'civilian':
+        text = you
+          ? t('hints.threats.civilianYou', { list })
+          : t('hints.threats.civilian', { name, list });
+        break;
+    }
+    out.push({ kind, text });
+  }
+  return out;
 }

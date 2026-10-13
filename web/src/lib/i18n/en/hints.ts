@@ -382,6 +382,16 @@ export const hints = {
   'hints.glow.militaryWinYou': 'You could take this capital now with {list}.',
   'hints.glow.calm': 'Close, but it can no longer happen.',
 
+  // The city sheet's threats list (view/threats.ts threatLines): the wins a
+  // seat would have with one move on its turn.
+  'hints.threats.title': 'Threats',
+  'hints.threats.militaryYou': 'On your turn you could take the capital with {list}.',
+  'hints.threats.military': 'On their turn {name} could take the capital with {list}.',
+  'hints.threats.scienceYou': 'On your turn you could win by science with {list}.',
+  'hints.threats.science': 'On their turn {name} could win by science with {list}.',
+  'hints.threats.civilianYou': 'On your turn you could end the game ahead on points with {list}.',
+  'hints.threats.civilian': 'On their turn {name} could end the game ahead on points with {list}.',
+
   'hints.wonder.library':
     'Draws {count} of the {total} tokens in the box: {list}. Only its owner sees them.',
   'hints.wonder.lastSlot': 'Only one more wonder can be built.',
