@@ -173,7 +173,9 @@
     />
   {:else if effect.kind === 'extra-shield'}
     <Icon name="shield" class="text-[1.15em] text-(--card-red) [--i2:var(--paper-bright)]" />
-    <span class="font-bold tabular-nums" data-min-font="10">{formatSigned(n, { signDisplay: 'always' })}</span>
+    <span class="font-bold tabular-nums" data-min-font="10"
+      >{formatSigned(n, { signDisplay: 'always' })}</span
+    >
   {:else if effect.kind === 'wonders-play-again'}
     <Icon name="wonder" class="text-[1.1em]" />{@render playAgain()}
   {:else if effect.kind === 'chain-bonus'}

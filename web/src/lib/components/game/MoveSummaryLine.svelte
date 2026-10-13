@@ -123,9 +123,7 @@
 
 {#snippet coins(n: number, loss: boolean)}
   <Icon name="coin" class="text-sm text-gold [--i2:var(--gold-deep)]" />
-  <span class="font-semibold tabular-nums" aria-hidden="true"
-    >{formatSigned(loss ? -n : n)}</span
-  >
+  <span class="font-semibold tabular-nums" aria-hidden="true">{formatSigned(loss ? -n : n)}</span>
 {/snippet}
 
 <li class="flex items-start gap-2.5" data-summary-line={line.kind}>
