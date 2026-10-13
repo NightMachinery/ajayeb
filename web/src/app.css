@@ -18,7 +18,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/fonts/fraunces-600.woff2') format('woff2');
+  src: url('./lib/fonts/fraunces-600.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
     U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
@@ -28,7 +28,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/inter-400.woff2') format('woff2');
+  src: url('./lib/fonts/inter-400.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
     U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
@@ -38,7 +38,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/fonts/inter-600.woff2') format('woff2');
+  src: url('./lib/fonts/inter-600.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
     U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
@@ -48,7 +48,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/inter-700.woff2') format('woff2');
+  src: url('./lib/fonts/inter-700.woff2') format('woff2');
   unicode-range:
     U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC,
     U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;

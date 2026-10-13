@@ -22,20 +22,9 @@
          The manifest's colours are the light --table (see theme-color). -->
     <link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
     <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
-    <link
-      rel="preload"
-      href="%sveltekit.assets%/fonts/inter-400.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="%sveltekit.assets%/fonts/fraunces-600.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+    <!-- No font preloads: src/app.css names the fonts, so the build gives
+         them content-hashed URLs, which this template cannot know. The
+         service worker precaches them for every later load. -->
     <script>
       // Theme bootstrap. It runs before the first paint, so the page never
       // flashes the wrong theme. src/lib/ui/theme.svelte.ts owns the theme

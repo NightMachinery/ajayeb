@@ -25,8 +25,9 @@ Ports: Vite dev listens on 38952 and `vite preview` on 38953. Both forward `/ws`
 - `src/lib/ui/` holds UI state classes, such as the theme (`theme.svelte.ts`) and the safe-area override (`safe-area.ts`), and small display mappers such as the military track's side (`track.ts`) and the online helpers (`online.ts`: the room-code input normaliser and alphabet, the invite link, seat presence and its changes, the QR path).
 - `src/lib/dev/flags.ts` decides whether the `/dev` routes exist.
 - `src/routes/` holds the pages. `/` is Home, `/play/<code>` is a room, `/rules` is the rules reference, and `/dev/*` holds the developer pages.
-- `static/` is served as is: the fonts with their licenses, the favicon, and the approved bitmap art under `static/art/` (see Bitmap art).
-- `font-sources/` keeps the original TTF fonts and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `static/fonts/`.
+- `static/` is served as is under stable names: the font licenses, the favicon, the web manifest and app icons, and the approved bitmap art under `static/art/` (see Bitmap art).
+- `src/lib/fonts/` holds the shipped WOFF2 fonts and their licenses. `src/app.css` names them, so the build emits them under content-hashed URLs in `/_app/immutable/assets/`.
+- `font-sources/` keeps the original TTF fonts and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `src/lib/fonts/`.
 
 ## Session: talking to the server
 
@@ -207,7 +208,7 @@ A third rule lives in `src/lib/lint-ui.test.ts` itself, so `make test-web` enfor
 
 ## Fonts
 
-Fraunces (600, headings) and Inter (400, 600 and 700, the interface) are self-hosted under the SIL Open Font License 1.1. The license texts ship next to the fonts in `static/fonts/`. The WOFF2 files are Latin subsets made by `font-sources/subset.sh` from the original TTFs in `font-sources/`. Upstream: Fraunces 1.000 from github.com/undercasetype/Fraunces and Inter 4.001 from github.com/rsms/inter.
+Fraunces (600, headings) and Inter (400, 600 and 700, the interface) are self-hosted under the SIL Open Font License 1.1. The WOFF2 files live in `src/lib/fonts/`, with the license texts beside them. The `@font-face` rules in `src/app.css` point at them with relative URLs, so Vite emits each one as `/_app/immutable/assets/<name>.<hash>.woff2`: a URL that changes with the file, which the server caches for a year and the service worker precaches (see App shell). The licenses are also served at `/fonts/OFL-Fraunces.txt` and `/fonts/OFL-Inter.txt` from `static/fonts/`. There is no font preload in `src/app.html`, because the template cannot name a hashed URL; first visits fetch the fonts once the stylesheet asks for them, later ones from the precache. The WOFF2 files are Latin subsets made by `font-sources/subset.sh` from the original TTFs in `font-sources/`. Upstream: Fraunces 1.000 from github.com/undercasetype/Fraunces and Inter 4.001 from github.com/rsms/inter.
 
 ## Environment
 
