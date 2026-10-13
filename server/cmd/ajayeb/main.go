@@ -295,7 +295,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 	if err := os.MkdirAll(opts.dataDir, 0o700); err != nil {
 		return fmt.Errorf("create data directory: %w", err)
 	}
-	secret, err := ident.LoadSecret(opts.dataDir)
+	secret, err := ident.LoadSecretLogged(opts.dataDir, logger)
 	if err != nil {
 		return err
 	}
