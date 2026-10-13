@@ -96,16 +96,20 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 	} else {
 		mux.HandleFunc("/ws", wsNotImplemented)
 	}
-	mux.Handle("/", newSPA(static))
-	return withCommonHeaders(mux), nil
+	policy := newSecurityPolicy(cfg.Dev)
+	site := newSPA(static)
+	site.policy = policy
+	mux.Handle("/", site)
+	return withCommonHeaders(policy, mux), nil
 }
 
-// withCommonHeaders sets headers that every response should carry.
-func withCommonHeaders(next http.Handler) http.Handler {
+// withCommonHeaders sets the headers that every response carries: the
+// security headers of security.go, with the base content security policy
+// (the static handler replaces it with the document's own for an HTML
+// file).
+func withCommonHeaders(policy securityPolicy, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := w.Header()
-		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("Referrer-Policy", "same-origin")
+		policy.setHeaders(w.Header())
 		next.ServeHTTP(w, r)
 	})
 }

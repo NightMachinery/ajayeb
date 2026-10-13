@@ -59,14 +59,20 @@ var contentTypes = map[string]string{
 // Cache-Control comes from webdist.CacheControl. Files under _app/immutable/,
 // and art under art/ requested with a v query parameter that matches the
 // start of the file's SHA-256 in hex (the generated art index writes every
-// art path that way), are cached for a year with no ETag. Art without a
-// matching v (an app icon named by static HTML or the web app manifest, a
-// texture named in CSS, or a stale v left over from an older deployment)
+// art path that way, and the CSS names its textures with one too), are
+// cached for a year with no ETag. Art without a matching v (an app icon
+// named by static HTML or the web app manifest, or a stale v left over from
+// an older deployment)
 // gets the shorter art policy and a content-hash ETag, and everything else,
 // the app shell included, carries Cache-Control: no-cache and the ETag, so
 // browsers revalidate cheaply and pick up a new deployment immediately.
+//
+// An HTML file gets its own content security policy, with the hash of each
+// of its inline scripts (security.go). The policy is computed with the
+// file's digest and cached with it, so it follows the file's content.
 type spa struct {
-	fsys fs.FS
+	fsys   fs.FS
+	policy securityPolicy
 
 	mu    sync.Mutex
 	etags map[string]etagEntry
@@ -80,10 +86,11 @@ type etagEntry struct {
 	mod  time.Time
 	tag  string
 	hash string // the SHA-256 in lowercase hex
+	csp  string // an HTML file's content security policy; "" for other files
 }
 
 func newSPA(fsys fs.FS) *spa {
-	return &spa{fsys: fsys, etags: make(map[string]etagEntry)}
+	return &spa{fsys: fsys, policy: newSecurityPolicy(false), etags: make(map[string]etagEntry)}
 }
 
 func (s *spa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -175,11 +182,14 @@ func (s *spa) serveFile(w http.ResponseWriter, r *http.Request, name string) boo
 		h.Set("Content-Type", ct)
 	}
 	var sum etagEntry
-	if !strings.HasPrefix(name, immutablePrefix) {
+	if html := isHTML(name); html || !strings.HasPrefix(name, immutablePrefix) {
 		var err error
-		if sum, err = s.digest(name, info, content); err != nil {
+		if sum, err = s.digest(name, info, content, html); err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return true
+		}
+		if html {
+			h.Set(s.policy.cspHeader(), sum.csp)
 		}
 	}
 	cc := webdist.CacheControl(name, versionMatches(r.URL.Query().Get("v"), sum.hash))
@@ -203,10 +213,11 @@ func versionMatches(v, hash string) bool {
 	return len(v) >= minVersionLen && len(v) <= len(hash) && strings.HasPrefix(hash, strings.ToLower(v))
 }
 
-// digest returns a strong ETag and the hex SHA-256 of the file, reusing the
-// cached values while the size and modification time are unchanged. It leaves
-// content positioned at the start.
-func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker) (etagEntry, error) {
+// digest returns a strong ETag and the hex SHA-256 of the file, and for an
+// HTML file (html) its content security policy, reusing the cached values
+// while the size and modification time are unchanged. It leaves content
+// positioned at the start.
+func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker, html bool) (etagEntry, error) {
 	s.mu.Lock()
 	cached, ok := s.etags[name]
 	s.mu.Unlock()
@@ -215,7 +226,12 @@ func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker) (etag
 	}
 
 	hash := sha256.New()
-	if _, err := io.Copy(hash, content); err != nil {
+	var doc bytes.Buffer
+	var sink io.Writer = hash
+	if html {
+		sink = io.MultiWriter(hash, &doc)
+	}
+	if _, err := io.Copy(sink, content); err != nil {
 		return etagEntry{}, err
 	}
 	if _, err := content.Seek(0, io.SeekStart); err != nil {
@@ -228,11 +244,20 @@ func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker) (etag
 		tag:  `"` + base64.RawURLEncoding.EncodeToString(sum[:16]) + `"`,
 		hash: hex.EncodeToString(sum),
 	}
+	if html {
+		entry.csp = s.policy.documentCSP(doc.Bytes())
+	}
 
 	s.mu.Lock()
 	s.etags[name] = entry
 	s.mu.Unlock()
 	return entry, nil
+}
+
+// isHTML reports whether name is an HTML document, which gets its own
+// content security policy.
+func isHTML(name string) bool {
+	return strings.EqualFold(path.Ext(name), ".html")
 }
 
 func contentType(name string) string {
