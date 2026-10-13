@@ -51,7 +51,7 @@ func fullHash() string {
 }
 
 // Art requested without a content hash (an icon named by static HTML or the
-// web app manifest, a texture named in CSS), or with a v that does not match
+// web app manifest), or with a v that does not match
 // the file (left over from an older deployment, or too short to be a hash),
 // keeps the shorter art policy and the ETag, so it is revalidated in time.
 func TestUnversionedArtIsRevalidated(t *testing.T) {
