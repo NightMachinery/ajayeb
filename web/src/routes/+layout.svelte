@@ -1,5 +1,7 @@
 <script lang="ts">
   import '../app.css';
+  import interRegular from '$lib/fonts/inter-400.woff2?url';
+  import frauncesHeading from '$lib/fonts/fraunces-600.woff2?url';
   import { page } from '$app/state';
   import { online } from 'svelte/reactivity/window';
   import OfflineNotice from '$lib/components/shell/OfflineNotice.svelte';
@@ -52,11 +54,16 @@
 
 <svelte:head>
   <title>{t('app.name')}</title>
+  <link rel="preload" href={interRegular} as="font" type="font/woff2" crossorigin="anonymous" />
+  <link rel="preload" href={frauncesHeading} as="font" type="font/woff2" crossorigin="anonymous" />
 </svelte:head>
 
 <IconSprite />
 
-<div class="app-shell">
+<div
+  class="app-shell"
+  style:padding-block-end={offline ? 'calc(var(--safe-b) + 4.5rem)' : undefined}
+>
   {@render children()}
 </div>
 

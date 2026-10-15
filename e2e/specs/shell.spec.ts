@@ -14,15 +14,27 @@ test.use({ serviceWorkers: 'allow' });
 
 /** Loads Home, waits for the worker to be active, and reloads once so the
  *  page is certainly loaded through it. */
-async function installWorker(page: Page): Promise<void> {
+async function installWorker(page: Page): Promise<{ first: number; repeat: number }> {
   await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Ajayeb' })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  const transfer = () =>
+    page.evaluate(() =>
+      [
+        ...performance.getEntriesByType('navigation'),
+        ...performance.getEntriesByType('resource')
+      ].reduce((sum, entry) => sum + (entry as PerformanceResourceTiming).transferSize, 0)
+    );
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
   });
+  const first = await transfer();
   await page.reload();
   await expect
     .poll(() => page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? null))
     .toMatch(/\/service-worker\.js$/);
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  return { first, repeat: await transfer() };
 }
 
 /** Every key in every cache of the page's origin, as a path with its query. */
@@ -45,7 +57,7 @@ const HASHED_FONT = /\/_app\/immutable\/assets\/(inter|fraunces)-\d00\.[\w-]+\.w
 test.describe('app shell', { tag: '@mobile' }, () => {
   test('the worker installs, controls the page after one reload and serves the fonts by hashed URL', async ({
     page
-  }) => {
+  }, testInfo) => {
     const problems = watchHygiene(page);
     const fonts: { url: string; fromWorker: boolean }[] = [];
     page.on('response', (res) => {
@@ -54,7 +66,22 @@ test.describe('app shell', { tag: '@mobile' }, () => {
       }
     });
 
-    await installWorker(page);
+    const transfer = await installWorker(page);
+    const precache = await page.evaluate(async () => {
+      const name = (await caches.keys()).find((key) => key.startsWith('ajayeb-shell-'));
+      if (!name) throw new Error('shell cache missing');
+      const cache = await caches.open(name);
+      const keys = await cache.keys();
+      let bytes = 0;
+      for (const key of keys) bytes += (await (await cache.match(key))!.arrayBuffer()).byteLength;
+      return { files: keys.length, bytes };
+    });
+    const measurement = { project: testInfo.project.name, precache, pageTransferBytes: transfer };
+    console.log('offline-shell measurement', JSON.stringify(measurement));
+    await testInfo.attach('shell-measurement', {
+      body: JSON.stringify(measurement),
+      contentType: 'application/json'
+    });
     await expect(page.getByRole('heading', { level: 1, name: 'Ajayeb' })).toBeVisible();
     await page.evaluate(async () => {
       await document.fonts.ready;
@@ -71,8 +98,8 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     expect(loaded.join(' ')).toMatch(/Fraunces/);
 
     // The precache: the build, the stable statics and the shell; no art.
-    const caches = await cachedPaths(page);
-    const shell = Object.entries(caches).find(([name]) => name.startsWith('ajayeb-shell-'));
+    const cachePaths = await cachedPaths(page);
+    const shell = Object.entries(cachePaths).find(([name]) => name.startsWith('ajayeb-shell-'));
     expect(shell, 'a versioned shell cache').toBeDefined();
     const keys = shell?.[1] ?? [];
     for (const path of ['/', '/favicon.svg', '/manifest.webmanifest', '/icons/icon-192.png']) {
@@ -88,7 +115,7 @@ test.describe('app shell', { tag: '@mobile' }, () => {
   test('offline, Home and a room page open from the cache with their offline state', async ({
     page,
     context
-  }) => {
+  }, testInfo) => {
     // A room this browser played, opened while online.
     await installWorker(page);
     await openHotseatRoom(page, null);
@@ -101,6 +128,32 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Ajayeb' })).toBeVisible();
     await expect(page.locator('[data-offline-notice]')).toBeVisible();
     await expect(page.locator('[data-offline-notice]')).toHaveText(/offline/i);
+    await page.setViewportSize(
+      testInfo.project.name === 'mobile'
+        ? { width: 360, height: 740 }
+        : { width: 1280, height: 800 }
+    );
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate((value) => localStorage.setItem('ajayeb:theme', value), theme);
+      await page.reload();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+      await expect(page.locator('[data-offline-notice]')).toBeVisible();
+      // A lazy image's decode() can stay pending while offline. Give
+      // already cached artwork time to paint without waiting indefinitely.
+      await page.evaluate(async () => {
+        await Promise.race([
+          (async () => {
+            await document.fonts.ready;
+            await Promise.all([...document.images].map((image) => image.decode().catch(() => {})));
+            await new Promise((resolve) =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve))
+            );
+          })(),
+          new Promise((resolve) => setTimeout(resolve, 1000))
+        ]);
+      });
+      await page.screenshot({ path: testInfo.outputPath(`home-offline-${theme}.png`) });
+    }
 
     // A full load of the room page: the shell from the cache, then the
     // session's own offline state where the game would be.

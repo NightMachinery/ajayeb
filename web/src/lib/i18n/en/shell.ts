@@ -12,7 +12,7 @@ export const shell = {
   'shell.confirmArmed': 'Confirm: {label}',
   'shell.tapAgainToConfirm': 'Tap again to confirm',
   // OfflineNotice: the browser is offline on Home, the rules or Settings.
-  'shell.offline': 'You are offline. Games need a connection.',
+  'shell.offline': 'Offline. Games need a connection.',
 
   // /dev/gallery demo strings for the primitives in this file's folder.
   'shell.demo.openSheet': 'Open a sheet',

@@ -6,7 +6,7 @@
 import { GAME_LOCK } from './policy';
 
 /** Takes the game lock and returns the function that lets it go. Does
- *  nothing where Web Locks are missing (the worker then goes by URL). */
+ *  nothing where Web Locks are missing (updates then wait for all tabs to close). */
 export function holdGameLock(): () => void {
   if (typeof navigator === 'undefined' || !('locks' in navigator)) return () => {};
   let release = (): void => {};

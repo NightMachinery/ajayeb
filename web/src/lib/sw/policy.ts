@@ -7,8 +7,7 @@
 //     HTTP API (/api/*, /api/dev/* included), the health check, the worker
 //     script itself, other origins, non-GET requests and range requests.
 //   - navigate: an HTML page load. Network first; the cached shell
-//     (index.html) only when the network fails, times out or answers with a
-//     gateway error.
+//     (index.html) only when the network fails or times out.
 //   - immutable: a content-hashed build file under /_app/immutable/. Cache
 //     first from this version's precache, then the network.
 //   - precached: a stable-named static file the worker precached (the
@@ -114,54 +113,52 @@ export function isGamePath(path: string): boolean {
   return /^\/play\/[^/]/.test(path);
 }
 
-/** A URL mid-game, for the worker's fallback when it cannot read locks. */
-export function isGamePage(url: string): boolean {
-  try {
-    return isGamePath(new URL(url).pathname);
-  } catch {
-    return false;
-  }
-}
-
 /** The ids of the clients holding the game lock, from LockManager.query(). */
 export function gameClientIds(
-  held: readonly { name?: string | undefined; clientId?: string | undefined }[]
-): Set<string> {
+  held: readonly { name?: string | undefined; clientId?: string | undefined }[] | undefined
+): Set<string> | null {
+  if (!held) return null;
   const ids = new Set<string>();
   for (const lock of held) {
-    if (lock.name === GAME_LOCK && lock.clientId) ids.add(lock.clientId);
+    if (lock.name !== GAME_LOCK) continue;
+    // A game lock without an owner cannot prove which window is safe.
+    if (!lock.clientId) return null;
+    ids.add(lock.clientId);
   }
   return ids;
 }
 
 /** An open window of the app, as the worker sees it. */
 export interface OpenWindow {
-  /** WindowClient.focused: the window the user is acting in. */
-  focused: boolean;
   /** Whether it shows a game (it holds the game lock). */
   game: boolean;
 }
 
-/**
- * Whether an open game page holds a new version back. `loading` says
- * whether a page load is being handled; when false, the new version has
- * just installed, and any open game page holds it back.
- *
- * During a page load, the worker cannot tell which open window the load
- * replaces. The focused window is the one the user is loading the page in
- * (a reload of the game, or Home typed over it), so it holds nothing back;
- * any other open game page does. A wrong guess (two game windows side by
- * side) costs the other page one full reload later, when it misses a chunk
- * of its old version, and the game itself lives on the server.
- */
-export function updateHeldBack(open: readonly OpenWindow[], loading: boolean): boolean {
-  return open.some((w) => w.game && !(loading && w.focused));
+/** Infer current game windows from their locks, never their load URLs.
+ *  Missing query data or an unidentified lock makes every window unknown,
+ *  which holds an update back until the browser's normal activation. */
+export function gameWindows(
+  clientIds: readonly string[],
+  snapshot:
+    | {
+        held?: readonly { name?: string | undefined; clientId?: string | undefined }[];
+        pending?: readonly { name?: string | undefined; clientId?: string | undefined }[];
+      }
+    | undefined
+): OpenWindow[] {
+  // Pending shared locks are game intent too: request() is asynchronous.
+  const games =
+    snapshot?.held && snapshot.pending
+      ? gameClientIds([...snapshot.held, ...snapshot.pending])
+      : null;
+  return clientIds.map((id) => ({ game: games === null || !id || games.has(id) }));
 }
 
-/** Whether a navigation's answer means the server is unreachable behind a
- *  proxy (bad gateway, unavailable, gateway timeout). */
-export function isGatewayError(status: number): boolean {
-  return status === 502 || status === 503 || status === 504;
+/** Any open game page holds a waiting version back. Never guess which
+ *  window a navigation replaces: keeping an update waiting is safer than
+ *  changing the chunks underneath a second game tab. */
+export function updateHeldBack(open: readonly OpenWindow[]): boolean {
+  return open.some((w) => w.game);
 }
 
 /**

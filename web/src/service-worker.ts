@@ -13,29 +13,27 @@
 //   the content-hashed fonts), the stable-named statics svelte.config.js
 //   lets through (favicon, manifest, app icons) and the shell, index.html.
 // - Page loads go network first. The cached shell answers only when the
-//   network fails, takes longer than NAVIGATION_TIMEOUT_MS or answers with a
-//   gateway error; a page the network answers is never replaced by it.
+//   network fails or takes longer than NAVIGATION_TIMEOUT_MS; a network response is never replaced by it.
 // - Art is cached as it is shown, by its ?v= URL, in a bounded cache that
 //   outlives versions. It is never precached: the app's idle prefetch
 //   (lib/art/prefetch.ts) already warms it (D24).
 // - /ws, /api/* (and /api/dev/*), /health and everything else are left to
 //   the browser untouched.
-// - Updates: a new version takes over at once unless a game page is open,
+// - Updates: a new version takes over on a full page load with no game open,
 //   because a page mid-game keeps loading the code it started with. Then it
 //   waits, and the next full page load that no other open game page holds
 //   back hands over to it (updateHeldBack in the policy). Game pages say
 //   so by holding a shared Web Lock (lib/sw/game-lock.ts).
 
 import { build, files, version } from '$service-worker';
+import { networkFirst } from '$lib/sw/navigation';
 import {
   ART_CACHE,
   ART_CACHE_MAX_ENTRIES,
   NAVIGATION_TIMEOUT_MS,
   SHELL_KEY,
   SKIP_WAITING,
-  gameClientIds,
-  isGamePage,
-  isGatewayError,
+  gameWindows,
   overflow,
   shellCacheName,
   staleCaches,
@@ -48,22 +46,21 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 const SHELL_CACHE = shellCacheName(version);
 const PRECACHED = new Set(files);
 
-/** The app's open windows, controlled by any version or none, and which of
- *  them show a game: those holding the game lock, or, where the worker
- *  cannot read locks, those loaded at a game URL. */
+/** The app's open windows, controlled by any version or none. When locks
+ *  cannot be queried, every open window holds updates back: its load URL
+ *  cannot prove that client-side navigation has not opened a game. */
 async function openWindows(): Promise<OpenWindow[]> {
   const windows = await sw.clients.matchAll({ type: 'window', includeUncontrolled: true });
-  let games: Set<string> | null = null;
+  let snapshot: LockManagerSnapshot | undefined;
   try {
-    const { held } = await sw.navigator.locks.query();
-    games = gameClientIds(held ?? []);
+    snapshot = await sw.navigator.locks.query();
   } catch {
-    // No Web Locks here: fall back to the URL each window was loaded at.
+    // No Web Locks: use the browser's normal close-all-tabs lifecycle.
   }
-  return windows.map((client) => ({
-    focused: client.focused,
-    game: games ? games.has(client.id) : isGamePage(client.url)
-  }));
+  return gameWindows(
+    windows.map((client) => client.id),
+    snapshot
+  );
 }
 
 sw.addEventListener('install', (event) => {
@@ -75,7 +72,7 @@ sw.addEventListener('install', (event) => {
       await cache.addAll(build);
       await cache.addAll(files.map((path) => new Request(path, { cache: 'no-cache' })));
       await cache.add(new Request(SHELL_KEY, { cache: 'no-cache' }));
-      if (!updateHeldBack(await openWindows(), false)) await sw.skipWaiting();
+      // First installs activate normally. Updates wait for a full load.
     })()
   );
 });
@@ -95,7 +92,11 @@ sw.addEventListener('activate', (event) => {
 sw.addEventListener('message', (event) => {
   const data: unknown = event.data;
   if (typeof data === 'object' && data !== null && 'type' in data && data.type === SKIP_WAITING) {
-    void sw.skipWaiting();
+    event.waitUntil(
+      (async () => {
+        if (!updateHeldBack(await openWindows())) await sw.skipWaiting();
+      })()
+    );
   }
 });
 
@@ -132,7 +133,7 @@ sw.addEventListener('fetch', (event) => {
  *  holds back. This page itself loads from the network either way. */
 async function handOver(): Promise<void> {
   const waiting = sw.registration.waiting;
-  if (!waiting || updateHeldBack(await openWindows(), true)) return;
+  if (!waiting || updateHeldBack(await openWindows())) return;
   waiting.postMessage({ type: SKIP_WAITING });
 }
 
@@ -141,26 +142,8 @@ async function cachedShell(): Promise<Response | undefined> {
   return cache.match(SHELL_KEY);
 }
 
-async function navigate(request: Request): Promise<Response> {
-  const network = fetch(request);
-  // If the timeout wins, a later failure must not surface as unhandled.
-  network.catch(() => undefined);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<'timeout'>((resolve) => {
-    timer = setTimeout(() => resolve('timeout'), NAVIGATION_TIMEOUT_MS);
-  });
-  try {
-    const first = await Promise.race([network, timeout]);
-    if (first !== 'timeout' && !isGatewayError(first.status)) return first;
-  } catch {
-    // Offline or refused: the cached shell below.
-  } finally {
-    clearTimeout(timer);
-  }
-  const shell = await cachedShell();
-  // No shell yet (the very first install is still running): the network's
-  // own answer, or its error, exactly as without a worker.
-  return shell ?? network;
+function navigate(request: Request): Promise<Response> {
+  return networkFirst(() => fetch(request), cachedShell, NAVIGATION_TIMEOUT_MS);
 }
 
 async function fromShellCache(request: Request): Promise<Response> {
@@ -169,28 +152,34 @@ async function fromShellCache(request: Request): Promise<Response> {
   return hit ?? fetch(request);
 }
 
+// Serialize cache mutations: concurrent image loads cannot leave the cache
+// above its bound or move the same key ahead of a newer hit.
+let artWrites = Promise.resolve();
+
+function rememberArt(request: Request, response: Response): Promise<void> {
+  artWrites = artWrites
+    .then(async () => {
+      const cache = await caches.open(ART_CACHE);
+      // Cache.put replaces in place, so delete first to move a hit to the end.
+      await cache.delete(request);
+      await cache.put(request, response);
+      for (const key of overflow(await cache.keys(), ART_CACHE_MAX_ENTRIES)) {
+        await cache.delete(key);
+      }
+    })
+    .catch(() => undefined);
+  return artWrites;
+}
+
 async function art(event: FetchEvent): Promise<Response> {
   const request = event.request;
   const cache = await caches.open(ART_CACHE);
   const hit = await cache.match(request, { ignoreVary: true });
   if (hit) {
-    // Putting it again moves it to the end of the cache's key order, which
-    // is what makes the trim below drop the least recently used first.
-    event.waitUntil(cache.put(request, hit.clone()).catch(() => undefined));
+    event.waitUntil(rememberArt(request, hit.clone()));
     return hit;
   }
   const response = await fetch(request);
-  if (response.status === 200) {
-    event.waitUntil(
-      cache
-        .put(request, response.clone())
-        .then(async () => {
-          for (const key of overflow(await cache.keys(), ART_CACHE_MAX_ENTRIES)) {
-            await cache.delete(key);
-          }
-        })
-        .catch(() => undefined)
-    );
-  }
+  if (response.status === 200) event.waitUntil(rememberArt(request, response.clone()));
   return response;
 }

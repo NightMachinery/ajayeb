@@ -3,9 +3,8 @@ import {
   ART_CACHE,
   GAME_LOCK,
   gameClientIds,
-  isGamePage,
+  gameWindows,
   isGamePath,
-  isGatewayError,
   overflow,
   shellCacheName,
   staleCaches,
@@ -97,48 +96,59 @@ describe('caches', () => {
 });
 
 describe('updates', () => {
-  it('knows a game page', () => {
-    expect(isGamePage(ORIGIN + '/play/ABCD')).toBe(true);
-    expect(isGamePage(ORIGIN + '/play/ABCD#claim=x')).toBe(true);
-    expect(isGamePage(ORIGIN + '/play/')).toBe(false);
-    expect(isGamePage(ORIGIN + '/')).toBe(false);
-    expect(isGamePage(ORIGIN + '/rules')).toBe(false);
-    expect(isGamePage('nonsense')).toBe(false);
-  });
-
   it('finds the game pages by their lock', () => {
     expect(
       gameClientIds([
         { name: GAME_LOCK, clientId: 'a' },
         { name: 'other', clientId: 'b' },
-        { name: GAME_LOCK, clientId: 'c' },
-        { name: GAME_LOCK }
+        { name: GAME_LOCK, clientId: 'c' }
       ])
     ).toEqual(new Set(['a', 'c']));
     expect(isGamePath('/play/ABCD')).toBe(true);
     expect(isGamePath('/')).toBe(false);
   });
 
-  const win = (game: boolean, focused = false) => ({ game, focused });
-
-  it('holds a fresh install back while any game page is open', () => {
-    expect(updateHeldBack([win(false), win(false, true)], false)).toBe(false);
-    expect(updateHeldBack([win(false), win(true, true)], false)).toBe(true);
-    expect(updateHeldBack([], false)).toBe(false);
+  it('holds updates for SPA game entry even when the document loaded at Home', () => {
+    // Client.url is the old Home URL after SPA entry. Only the game lock
+    // says which of the two open windows now displays a game.
+    const clients = [
+      { id: 'game', loadUrl: '/' },
+      { id: 'home', loadUrl: '/' }
+    ];
+    const windows = gameWindows(
+      clients.map((client) => client.id),
+      { held: [{ name: GAME_LOCK, clientId: 'game' }], pending: [] }
+    );
+    expect(windows).toEqual([{ game: true }, { game: false }]);
+    expect(updateHeldBack(windows)).toBe(true);
   });
 
-  it('lets a page load hand over unless another game page is open', () => {
-    // A second tab loads Home while a game plays in the background.
-    expect(updateHeldBack([win(true)], true)).toBe(true);
-    // The game's own tab, focused, reloads or loads Home.
-    expect(updateHeldBack([win(true, true)], true)).toBe(false);
-    // Another game stays open in the background.
-    expect(updateHeldBack([win(true, true), win(true)], true)).toBe(true);
-    expect(updateHeldBack([win(false), win(false, true)], true)).toBe(false);
+  it('holds updates if locks cannot be queried or a game lock has no client ID', () => {
+    for (const held of [undefined, [{ name: GAME_LOCK }], [{ name: GAME_LOCK, clientId: '' }]]) {
+      expect(gameClientIds(held)).toBeNull();
+      expect(
+        updateHeldBack(gameWindows(['loaded-at-home'], held ? { held, pending: [] } : undefined))
+      ).toBe(true);
+      expect(updateHeldBack(gameWindows([], held ? { held, pending: [] } : undefined))).toBe(false);
+    }
+    expect(updateHeldBack(gameWindows([''], { held: [], pending: [] }))).toBe(true);
+    expect(updateHeldBack(gameWindows(['home'], { held: [], pending: [] }))).toBe(false);
   });
 
-  it('treats gateway errors as an unreachable server', () => {
-    expect([502, 503, 504].every(isGatewayError)).toBe(true);
-    expect([200, 404, 500].some(isGatewayError)).toBe(false);
+  it('treats pending game locks as intent, including unidentified owners', () => {
+    const snapshot = { held: [], pending: [{ name: GAME_LOCK, clientId: 'spa-game' }] };
+    expect(gameWindows(['spa-game', 'home'], snapshot)).toEqual([{ game: true }, { game: false }]);
+    expect(updateHeldBack(gameWindows(['spa-game', 'home'], snapshot))).toBe(true);
+    expect(
+      updateHeldBack(gameWindows(['home'], { held: [], pending: [{ name: GAME_LOCK }] }))
+    ).toBe(true);
+    expect(updateHeldBack(gameWindows(['home'], { held: [] }))).toBe(true);
+  });
+
+  it('holds an update back while any game page is open', () => {
+    expect(updateHeldBack([{ game: false }, { game: false }])).toBe(false);
+    expect(updateHeldBack([{ game: false }, { game: true }])).toBe(true);
+    expect(updateHeldBack([{ game: true }, { game: true }])).toBe(true);
+    expect(updateHeldBack([])).toBe(false);
   });
 });
