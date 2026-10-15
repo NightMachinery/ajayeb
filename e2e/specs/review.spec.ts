@@ -125,7 +125,7 @@ test.describe('move review', () => {
 });
 
 test.describe('first-time tips', () => {
-  test('the pair tip shows once, and not again after a reload', async ({ page }) => {
+  test('the pair and free-chain tips each show once across reloads', async ({ page }) => {
     test.setTimeout(90_000);
     const problems = watchHygiene(page);
     await tipsOn(page);
@@ -149,9 +149,22 @@ test.describe('first-time tips', () => {
     await driver.waitReady();
     await driver.nextTurn();
     await expect(pip.first()).toBeVisible();
-    // Give a due tip the time to open before checking that none did.
+    // The pair is remembered, while the next unseen tip explains why
+    // Scriptorium lets the Library be built free through its chain.
+    await expect(tip).toHaveCount(0);
+    const chain = page.locator('[data-first-tip="freeChain"]');
+    await expect(chain).toBeVisible();
+    await expect(chain).toContainText('A chain badge:');
+    await chain.locator('[data-tip-ok]').click();
+    const bothSeen = await page.evaluate(() => localStorage.getItem('ajayeb:tips'));
+    expect(JSON.parse(bothSeen ?? '{}')).toEqual({ off: false, seen: ['pair', 'freeChain'] });
+
+    await page.reload();
+    await driver.waitReady();
+    await driver.nextTurn();
     await page.waitForTimeout(500);
-    await expect(page.locator('[data-first-tip]')).toHaveCount(0);
+    await expect(tip).toHaveCount(0);
+    await expect(chain).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 });
