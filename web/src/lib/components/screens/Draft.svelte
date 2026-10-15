@@ -25,6 +25,7 @@
   import type { View } from '$lib/wire';
   import { costText, effectSentence, wonderName } from '../card/effect-text';
   import ConfirmButton from '../shell/ConfirmButton.svelte';
+  import { actButtonState } from '../game/act-button';
   import Sheet from '../shell/Sheet.svelte';
   import WonderTile from '../wonder/WonderTile.svelte';
   import {
@@ -132,15 +133,22 @@
 </script>
 
 {#snippet takeButton(slug: string, key: string | undefined)}
-  {@const label = connected
-    ? t('choices.draft.take', { wonder: wonderName(slug) })
-    : t('online.waitingConnection')}
-  {#if confirm && key !== undefined}
+  {@const rule = actButtonState({
+    label: t('choices.draft.take', { wonder: wonderName(slug) }),
+    canAct,
+    connected,
+    confirm,
+    ready: key !== undefined
+  })}
+  <!-- The act-button rule (game/act-button.ts), as on the card sheet's
+       actions: disabled and "Waiting for connection" while the connection
+       is down, and the confirm step when the room asks for it. -->
+  {#if rule.confirm && key !== undefined}
     <ConfirmButton
-      {label}
+      label={rule.label}
       class="h-auto! min-h-12 w-full px-4 py-2 leading-tight"
       data-act={key}
-      disabled={!canAct}
+      disabled={rule.disabled}
       onConfirm={() => take(key)}
     />
   {:else}
@@ -149,10 +157,10 @@
       class="inline-flex h-12 w-full items-center justify-center rounded-control bg-accent px-4 text-[15px] font-semibold
         text-on-accent hover:brightness-105 active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
       data-act={key}
-      disabled={!canAct || key === undefined}
+      disabled={rule.disabled}
       onclick={() => key !== undefined && take(key)}
     >
-      {label}
+      {rule.label}
     </button>
   {/if}
 {/snippet}
