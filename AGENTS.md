@@ -116,13 +116,13 @@ The engine is the single source of truth for the rules, so it must be determinis
 
 ```sh
 git add -- server/internal/engine/military.go server/internal/engine/military_test.go
-git commit -m "engine: add military track and looting (M2.S5a)" \
-  -m "Slice: M2.S5a" \
+git commit -m "engine: add military track and looting (M2.military-looting)" \
+  -m "Slice: M2.military-looting" \
   -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" \
   -- server/internal/engine/military.go server/internal/engine/military_test.go
 ```
 
-- The subject format is `area: summary (slice id)`. Areas include `engine`, `ai`, `sim`, `server`, `web`, `e2e`, `ux`, `art`, `tools`, `docs`, `ci` and `chore`. Slice ids look like `M2.S5a` (see [docs/dev/roadmap.md](docs/dev/roadmap.md)).
+- The subject format is `area: summary (slice id)`. Areas include `engine`, `ai`, `sim`, `server`, `web`, `e2e`, `ux`, `art`, `tools`, `docs`, `ci` and `chore`. A slice id is the milestone plus a short kebab-case name of the slice's outcome, such as `M10.tooltip-coverage`: plain words, never letter-and-number codes. Name milestones, waves and other items just as plainly; [docs/dev/roadmap.md](docs/dev/roadmap.md) has the convention. Older history keeps codes such as `M2.S5a`.
 - Every agent-authored commit ends with the trailer `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>`.
 - Never rewrite or force-push published history. If a commit picked up someone else's staged work, report it instead of fixing it.
 - Some files have a single writer (the coordinator or the integrator): `server/go.mod`, `server/go.sum`, `package.json` files, `pnpm-lock.yaml`, the `Makefile`, `*.gen.ts`, `AGENTS.md`, `docs/protocol.md`, and the frozen engine types (`state.go`, `action.go`, `events.go`). A worker that needs a change there describes it in its result file.

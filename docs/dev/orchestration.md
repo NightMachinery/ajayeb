@@ -19,7 +19,7 @@ The repository is public, so operational state lives outside it, in a private ru
 - `NOTES.md`: iteration notes, written only by the coordinator. A curated "Learnings index" of at most 40 lines sits at the top, followed by one entry per iteration:
 
   ```
-  ### 2026-10-02 01:14 M2.S5a effects [OK] 3f2a1c9
+  ### 2026-10-02 01:14 M2.military-looting [OK] 3f2a1c9
   Summary: ...
   Key changes: ...
   Key learnings: ...
@@ -104,7 +104,7 @@ Every brief also says that the agent runs unattended (the brief settles the desi
 
 ```sh
 git add -- <paths>
-git commit -m "engine: add military track and looting (M2.S5a)" -m "Slice: M2.S5a" \
+git commit -m "engine: add military track and looting (M2.military-looting)" -m "Slice: M2.military-looting" \
   -m "Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>" -- <paths>
 ```
 

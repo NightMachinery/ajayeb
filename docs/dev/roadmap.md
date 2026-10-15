@@ -2,7 +2,13 @@
 
 Ajayeb is built in twelve milestones, M0 to M11. Each milestone ends green (its acceptance criteria pass), committed and pushed. This file changes only when a milestone ends; day-to-day progress is tracked in the private run state.
 
-**Slice ids.** Work inside a milestone is cut into bounded slices (see [orchestration.md](orchestration.md)). A slice id is the milestone plus the slice, such as `M2.S5a`, and it appears in the commit subject and in a `Slice:` line of the commit body. The engine and AI slices keep the numbering below. Other milestones number their slices in order (`M4.S01`, `M4.S02` and so on) when they are planned.
+**Slice ids and other names.** Every shorthand name must tell a reader what it is without a lookup.
+
+- A milestone is `M0` to `M11`. The first mention in any report, brief or document also gives its title, such as "M10 (game feel, tutorial and polish)".
+- Work inside a milestone is cut into bounded slices (see [orchestration.md](orchestration.md)). A slice id is the milestone plus a short kebab-case name of the slice's outcome: two or three plain words, such as `M10.security-pass`, `M10.tooltip-coverage` or `M10.persian-rtl`. No letter-and-number codes. When the same kind of slice recurs, the name takes a number: `M10.hints-followups-2`.
+- The slice id appears in the commit subject, as in `server: security headers on every response (M10.security-pass)`, and in a `Slice: M10.security-pass` line of the commit body. Its branch is `slice/security-pass` and its worktree directory `M10-security-pass`.
+- Slices launched together form a wave, numbered within its milestone and named by its theme on first mention: "M10 wave 4 (security, tooltips, offline shell, Persian)".
+- Older history keeps the codes it was committed with: the engine and AI slices below (`M2.S5a`), and the early M10 slices (`M10.HS4`, `M10.F1`). Published commits are never renamed.
 
 **Standing gates.** On top of each milestone's own criteria, a milestone is done only when `make verify-quick` and `python3 -m unittest discover -s tests` are green, no headless Chrome is left running, and the docs describe what was built.
 
