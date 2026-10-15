@@ -123,7 +123,7 @@ git commit -m "engine: add military track and looting (M2.military-looting)" \
 ```
 
 - The subject format is `area: summary (slice id)`. Areas include `engine`, `ai`, `sim`, `server`, `web`, `e2e`, `ux`, `art`, `tools`, `docs`, `ci` and `chore`. A slice id is the milestone plus a short kebab-case name of the slice's outcome, such as `M10.tooltip-coverage`: plain words, never letter-and-number codes. Name milestones, waves and other items just as plainly; [docs/dev/roadmap.md](docs/dev/roadmap.md) has the convention. Older history keeps codes such as `M2.S5a`.
-- Every agent-authored commit ends with a trailer naming the model that wrote it: `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>` for Claude agents, `Co-Authored-By: Codex GPT-6.1-Sol <noreply@openai.com>` for Codex agents.
+- Every agent-authored commit ends with a `Co-Authored-By:` trailer naming the agent and the model that actually wrote it, with the vendor's no-reply address, in the form `Co-Authored-By: <agent> <model> <noreply@<vendor domain>>`. The example above shows the form; do not copy its model name.
 - Never rewrite or force-push published history. If a commit picked up someone else's staged work, report it instead of fixing it.
 - Some files have a single writer (the coordinator or the integrator): `server/go.mod`, `server/go.sum`, `package.json` files, `pnpm-lock.yaml`, the `Makefile`, `*.gen.ts`, `AGENTS.md`, `docs/protocol.md`, and the frozen engine types (`state.go`, `action.go`, `events.go`). A worker that needs a change there describes it in its result file.
 
