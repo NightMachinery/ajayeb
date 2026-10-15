@@ -21,19 +21,19 @@
 
   const marks: readonly { key: MessageKey; pip: CardPip; id: string }[] = [
     { id: 'win', key: 'rules.hints.win', pip: pip({ ...own, code: 'win' }) },
-    { id: 'pair', key: 'rules.hints.pair', pip: pip({ ...own, code: 'pair', symbol: 'quill' }) },
+    { id: 'pair', key: 'rules.hints.pair', pip: pip({ ...own, code: 'pair' }) },
     { id: 'loot', key: 'rules.hints.loot', pip: pip({ ...own, code: 'loot' }) }
   ];
 
   const sides: readonly { key: MessageKey; pips: CardPip[]; id: string }[] = [
-    { id: 'own', key: 'rules.hints.own', pips: [pip({ ...own, code: 'pair', symbol: 'wheel' })] },
-    { id: 'opp', key: 'rules.hints.opp', pips: [pip({ ...opp, code: 'pair', symbol: 'wheel' })] },
+    { id: 'own', key: 'rules.hints.own', pips: [pip({ ...own, code: 'pair' })] },
+    { id: 'opp', key: 'rules.hints.opp', pips: [pip({ ...opp, code: 'pair' })] },
     {
       id: 'seat',
       key: 'rules.hints.seat',
       pips: [
-        pip({ seat: 0, side: 'own', style: 'solid', tone: 'sun', code: 'pair', symbol: 'wheel' }),
-        pip({ seat: 1, side: 'opp', style: 'tint', tone: 'moon', code: 'pair', symbol: 'wheel' })
+        pip({ seat: 0, side: 'own', style: 'solid', tone: 'sun', code: 'pair' }),
+        pip({ seat: 1, side: 'opp', style: 'tint', tone: 'moon', code: 'pair' })
       ]
     },
     { id: 'more', key: 'rules.hints.more', pips: [pip({ ...own, code: 'win' }, true)] }
