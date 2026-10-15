@@ -962,8 +962,7 @@ Every response carries these security headers (`httpapi/security.go`):
   object-src 'none'`. `style-src` allows inline styles because Svelte's
   `style:` directives and the tooltip placement write style attributes.
   `connect-src 'self'` covers the same-origin `ws:` and `wss:` socket in
-  current browsers (CSP level 3; the end-to-end tests check Chrome, whose
-  online games play over that socket under the policy).
+  current Chrome (checked by a production-mode browser probe).
 
 The CSP is computed, never kept by hand. A response that is not an HTML
 file has no `<hashes>`. An HTML file the server serves (the app shell
@@ -972,20 +971,17 @@ each of its inline scripts: today the theme bootstrap of `web/src/app.html`
 and SvelteKit's start script. The server finds them in the bytes it
 serves, with a small scanner that skips scripts with `src` and those inside
 comments, and hashes their text with line breaks normalized as browsers
-do. The policy is computed with the file's ETag and cached with it, so the
-embedded build gets it once and a `-static` directory gets a new one when
-the file changes. A new inline script needs no server change.
+do. HTML is hashed on each request and its policy cached by that digest,
+so a `-static` rebuild gets a new policy even if it preserves file size
+and timestamp. A new inline script needs no server change.
 
-A `-dev` server enforces the same policy, except that it allows framing
-by same-origin pages (`frame-ancestors 'self'` and `X-Frame-Options:
-SAMEORIGIN`), because the test build's gallery frames the app. It is
-enforced rather than report-only so that the end-to-end tests, which run
-such a server, play the app under the real policy: a blocked script breaks
-a test, and Chrome logs each refusal as a console error, which the tests'
-hygiene check fails on (a report-only violation would only reach the
-console's info level, which the check does not read). The Vite dev server
-serves its pages itself and forwards only `/ws`, `/api` and `/health`, so
-this policy never applies to its pages.
+A `-dev` server sends the CSP in `Content-Security-Policy-Report-Only`
+instead, so a Vite setup on another port is not blocked. Its report-only
+policy permits same-origin framing, and `X-Frame-Options: SAMEORIGIN`
+lets the test gallery frame fixtures. Production enforces the policy and
+sends `X-Frame-Options: DENY`. End-to-end tests use development mode;
+a separate production-mode Chrome probe must check enforced CSP, including
+the same-origin WebSocket, after security changes.
 
 The server sends no `Strict-Transport-Security`: one deployment serves
 plain HTTP on purpose, so HSTS belongs to each deployment's TLS proxy

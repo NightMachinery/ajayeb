@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 	"testing/fstest"
-	"time"
 )
 
 // The tests of security.go.
@@ -68,9 +67,9 @@ func TestBaseCSP(t *testing.T) {
 	}
 }
 
-// A development server enforces the same policy, but lets same-origin
-// pages frame the app (the test build's gallery).
-func TestDevCSPAllowsSameOriginFraming(t *testing.T) {
+// Development reports the policy, allowing same-origin gallery frames.
+// Production enforcement is tested separately above.
+func TestDevCSPIsReportOnly(t *testing.T) {
 	h, err := New(Config{Version: "dev", Dev: true}, testFS())
 	if err != nil {
 		t.Fatal(err)
@@ -78,11 +77,11 @@ func TestDevCSPAllowsSameOriginFraming(t *testing.T) {
 	want := strings.Replace(newSecurityPolicy(false).base, "frame-ancestors 'none'", "frame-ancestors 'self'", 1)
 	for _, target := range []string{"/health", "/", "/favicon.svg"} {
 		hd := do(t, h, http.MethodGet, target, nil).Header()
-		if got := hd.Get(headerCSP); got != want {
-			t.Errorf("GET %s dev CSP = %q, want %q", target, got, want)
+		if got := hd.Get(headerCSPReportOnly); got != want {
+			t.Errorf("GET %s dev report-only CSP = %q, want %q", target, got, want)
 		}
-		if ro := hd.Get("Content-Security-Policy-Report-Only"); ro != "" {
-			t.Errorf("GET %s sends a report-only CSP: %q", target, ro)
+		if enforcing := hd.Get(headerCSP); enforcing != "" {
+			t.Errorf("GET %s enforces a development CSP: %q", target, enforcing)
 		}
 		if got := hd.Get("X-Frame-Options"); got != "SAMEORIGIN" {
 			t.Errorf("GET %s X-Frame-Options = %q, want SAMEORIGIN", target, got)
@@ -151,17 +150,23 @@ func TestDocumentCSPFollowsTheFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	original, err := os.Stat(index)
+	if err != nil {
+		t.Fatal(err)
+	}
 	before := do(t, h, http.MethodGet, "/", nil).Header().Get(headerCSP)
 	if !strings.Contains(before, cspHash(startScript)) {
 		t.Fatalf("CSP %q lacks the start script's hash", before)
 	}
 
-	changed := strings.Replace(startScript, "base: ''", "base: '/x'", 1)
+	changed := strings.Replace(startScript, "base: ''", "base: 42", 1)
 	if err := os.WriteFile(index, []byte(twoScriptPage(themeScript, changed)), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	later := time.Now().Add(time.Minute)
-	if err := os.Chtimes(index, later, later); err != nil {
+	if len(changed) != len(startScript) {
+		t.Fatal("test requires same-length scripts")
+	}
+	if err := os.Chtimes(index, original.ModTime(), original.ModTime()); err != nil {
 		t.Fatal(err)
 	}
 	after := do(t, h, http.MethodGet, "/", nil).Header().Get(headerCSP)
@@ -182,7 +187,7 @@ func TestDevDocumentCSPHasTheHashes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	csp := do(t, h, http.MethodGet, "/", nil).Header().Get(headerCSP)
+	csp := do(t, h, http.MethodGet, "/", nil).Header().Get(headerCSPReportOnly)
 	if !strings.Contains(csp, cspHash(themeScript)) || !strings.Contains(csp, "frame-ancestors 'self'") {
 		t.Errorf("dev / CSP = %q", csp)
 	}

@@ -189,7 +189,7 @@ func (s *spa) serveFile(w http.ResponseWriter, r *http.Request, name string) boo
 			return true
 		}
 		if html {
-			h.Set(headerCSP, sum.csp)
+			h.Set(s.policy.header(), sum.csp)
 		}
 	}
 	cc := webdist.CacheControl(name, versionMatches(r.URL.Query().Get("v"), sum.hash))
@@ -215,13 +215,15 @@ func versionMatches(v, hash string) bool {
 
 // digest returns a strong ETag and the hex SHA-256 of the file, and for an
 // HTML file (html) its content security policy, reusing the cached values
-// while the size and modification time are unchanged. It leaves content
-// positioned at the start.
+// while size and modification time are unchanged for non-HTML files. HTML
+// is always hashed, with its policy cached by content digest, so even a
+// same-size rebuild preserving timestamps picks up new scripts. It leaves
+// content positioned at the start.
 func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker, html bool) (etagEntry, error) {
 	s.mu.Lock()
 	cached, ok := s.etags[name]
 	s.mu.Unlock()
-	if ok && cached.size == info.Size() && cached.mod.Equal(info.ModTime()) {
+	if !html && ok && cached.size == info.Size() && cached.mod.Equal(info.ModTime()) {
 		return cached, nil
 	}
 
@@ -245,7 +247,14 @@ func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker, html 
 		hash: hex.EncodeToString(sum),
 	}
 	if html {
-		entry.csp = s.policy.documentCSP(doc.Bytes())
+		// Hash HTML on every request: a static build may replace a file
+		// while preserving its size and timestamp. Reuse the policy only
+		// when the content digest itself matches.
+		if ok && cached.hash == entry.hash {
+			entry.csp = cached.csp
+		} else {
+			entry.csp = s.policy.documentCSP(doc.Bytes())
+		}
 	}
 
 	s.mu.Lock()

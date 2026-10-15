@@ -21,18 +21,11 @@ import (
 // spa.digest), so a rebuilt web client, an edited --static directory and the
 // embedded build all carry the right policy without a list to keep in step.
 //
-// A development server (Config.Dev) enforces the same policy, except that
-// it lets same-origin pages frame the app (frame-ancestors 'self' and
-// X-Frame-Options SAMEORIGIN), because the test build's /dev/gallery shows
-// game fixtures in iframes; a production server forbids framing
-// altogether. The policy is enforced, not report-only, in development too,
-// for two reasons. The end-to-end tests run a --dev server, and only an
-// enforced policy makes them prove the app works under it: Chrome logs a
-// report-only violation at the console's info level, which the tests'
-// console-error check never sees. And with the Vite dev server, which
-// serves the pages itself and forwards only /ws, /api and /health here,
-// this server's policy never reaches a page, so it cannot get in the way
-// of a dev setup.
+// A development server (Config.Dev) sends the policy report-only, so a
+// Vite setup on another port is not blocked. It allows same-origin framing
+// in reports because the test gallery embeds fixtures. Production enforces
+// the policy and forbids framing. All responses still carry X-Frame-Options
+// DENY except the development gallery's same-origin framing allowance.
 //
 // HSTS is deliberately not sent from here: one deployment serves plain HTTP
 // on purpose, so Strict-Transport-Security belongs to the TLS-terminating
@@ -50,8 +43,16 @@ const permissionsPolicy = "accelerometer=(), bluetooth=(), camera=(), display-ca
 	"geolocation=(), gyroscope=(), hid=(), idle-detection=(), magnetometer=(), " +
 	"microphone=(), midi=(), payment=(), serial=(), usb=(), xr-spatial-tracking=()"
 
-// headerCSP is the header the policy goes in.
+// headerCSP is the enforcing header; development uses its report-only form.
 const headerCSP = "Content-Security-Policy"
+const headerCSPReportOnly = "Content-Security-Policy-Report-Only"
+
+func (p securityPolicy) header() string {
+	if p.dev {
+		return headerCSPReportOnly
+	}
+	return headerCSP
+}
 
 // securityPolicy decides the security headers of a server.
 type securityPolicy struct {
@@ -110,7 +111,7 @@ func (p securityPolicy) setHeaders(h http.Header) {
 	} else {
 		h.Set("X-Frame-Options", "DENY")
 	}
-	h.Set(headerCSP, p.base)
+	h.Set(p.header(), p.base)
 }
 
 // scriptHashes returns the CSP hash source ("sha256-<base64>") of each
