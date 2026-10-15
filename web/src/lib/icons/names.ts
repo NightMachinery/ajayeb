@@ -75,6 +75,12 @@ export const ICON_NAMES = [
   'crest-sun',
   'crest-sun-sm',
   'crest-moon',
+  'crest-moon-sm',
+
+  // Effect glyphs that replace the Lucide outlines (M10.icons-and-diagrams).
+  'play-again',
+  'build-from-discard',
+  'destroy-card',
 
   // Hint pips (M10.F2): a win, and a science pair that earns a progress token.
   'hint-crown',

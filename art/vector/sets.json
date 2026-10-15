@@ -68,7 +68,7 @@
         {"id": "badge-chain", "ink": "var(--fg)", "i2": "var(--gold-deep)", "badge": "chain", "band": "yellow", "cardInk": "var(--card-ink)"},
         {"id": "badge-lock", "ink": "oklch(0.47 0.12 25)", "i2": "oklch(0.93 0.015 40)", "badge": "short", "band": "red"},
         {"id": "crest-sun", "sm": "crest-sun-sm", "ink": "var(--sun-ink)", "band": "blue"},
-        {"id": "crest-moon", "ink": "var(--moon-ink)", "band": "blue"},
+        {"id": "crest-moon", "sm": "crest-moon-sm", "ink": "var(--moon-ink)", "band": "blue"},
         {"id": "vp-laurel", "ink": "var(--gild)", "band": "blue"},
         {"id": "wonder", "ink": "var(--fg)", "band": "purple", "cardInk": "var(--card-ink)"},
         {"id": "token-frame", "ink": "var(--gild)", "band": "green"}
@@ -79,6 +79,14 @@
       "icons": [
         {"id": "hint-crown", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "red"},
         {"id": "hint-pair", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "green"}
+      ]
+    },
+    "tt2-glyphs": {
+      "title": "Effect glyphs for play again, build from discard and destroy",
+      "icons": [
+        {"id": "play-again", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "blue"},
+        {"id": "build-from-discard", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "purple"},
+        {"id": "destroy-card", "ink": "var(--cinnabar)", "band": "red"}
       ]
     },
     "ornaments-track-logo": {
