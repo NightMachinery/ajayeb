@@ -36,7 +36,6 @@ import type {
   HintSettings,
   PriceShift,
   RoomInfo,
-  ScienceSymbol,
   SlotView,
   View
 } from '$lib/wire';
@@ -88,8 +87,6 @@ export interface PipEntry {
   readonly side: 'own' | 'opp';
   readonly style: PipStyle;
   readonly tone: PipTone;
-  /** The science symbol, for a pair pip. */
-  readonly symbol?: ScienceSymbol;
   /** The tooltip line, already translated. */
   readonly text: string;
 }
@@ -189,13 +186,11 @@ export function cardPip(
     for (const code of ch.codes) {
       if (!families.has(CODE_FAMILY[code])) continue;
       const side = seat === p.seat ? 'own' : 'opp';
-      const symbol = code === 'pair' ? ch.effect?.science?.symbol : undefined;
       entries.push({
         code,
         seat,
         side,
         ...pipLook(p, seat),
-        ...(symbol ? { symbol } : {}),
         text: pipText(code, seat, ch, names),
         rank: rank(code, side)
       });

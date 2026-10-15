@@ -88,7 +88,7 @@ describe('the pip priority table', () => {
     const both: CardHints = { ...LOOT, codes: ['loot'] };
     const pip = cardPip([PAIR, both], SEAT0, ALL, NAMES)!;
     expect(pip.top.code).toBe('pair');
-    expect(pip.top.symbol).toBe('quill');
+    expect(pip.top.text).toContain('quill');
     const flipped = cardPip([both, PAIR], SEAT0, ALL, NAMES)!;
     expect(flipped.top).toMatchObject({ code: 'pair', side: 'opp' });
     expect(flipped.entries.map((e) => `${e.code}-${e.side}`)).toEqual(['pair-opp', 'loot-own']);
