@@ -1,0 +1,174 @@
+// The service worker's cache policy, as pure functions so vitest can check
+// them without a worker (policy.test.ts). src/service-worker.ts applies it.
+//
+// What the worker does with a request, by strategy:
+//   - bypass: nothing. It never calls respondWith, so the browser goes to
+//     the network exactly as it would with no worker. The socket (/ws), the
+//     HTTP API (/api/*, /api/dev/* included), the health check, the worker
+//     script itself, other origins, non-GET requests and range requests.
+//   - navigate: an HTML page load. Network first; the cached shell
+//     (index.html) only when the network fails, times out or answers with a
+//     gateway error.
+//   - immutable: a content-hashed build file under /_app/immutable/. Cache
+//     first from this version's precache, then the network.
+//   - precached: a stable-named static file the worker precached (the
+//     favicon, the web manifest, the app icons). Cache first, then the
+//     network; a new version precaches them again.
+//   - art: bitmap art requested with its ?v= content hash. Cache first from
+//     a bounded runtime cache that outlives versions, then the network.
+
+/** The prefix of the versioned shell cache; the version follows it. */
+export const SHELL_CACHE_PREFIX = 'ajayeb-shell-';
+/** The runtime art cache. It is not versioned: art URLs carry their hash. */
+export const ART_CACHE = 'ajayeb-art';
+/** At most this many art responses stay cached (the oldest-used go first). */
+export const ART_CACHE_MAX_ENTRIES = 150;
+/** How long a page load waits for the network before the cached shell. */
+export const NAVIGATION_TIMEOUT_MS = 4000;
+/** The key the shell (index.html) is cached under. The server answers every
+ *  app path with the same index.html, so one copy serves them all. */
+export const SHELL_KEY = '/';
+/** The message an old worker sends a waiting one to make it take over. */
+export const SKIP_WAITING = 'ajayeb:skip-waiting';
+
+export type Strategy = 'bypass' | 'navigate' | 'immutable' | 'precached' | 'art';
+
+export interface RequestFacts {
+  method: string;
+  url: string;
+  /** Request.mode: 'navigate' for a page load. */
+  mode: string;
+  /** Whether the request carries a Range header (audio and video do). */
+  range: boolean;
+}
+
+/** The server's own endpoints, which the worker never answers. */
+function isServerEndpoint(path: string): boolean {
+  return (
+    path === '/ws' ||
+    path.startsWith('/ws/') ||
+    path === '/api' ||
+    path.startsWith('/api/') ||
+    path === '/health' ||
+    path === '/service-worker.js'
+  );
+}
+
+/** A path the client router renders (/, /play/<code>, /rules, ...): not a
+ *  build file, not art and no file name with an extension. */
+function isAppRoute(path: string): boolean {
+  if (path.startsWith('/_app/') || path.startsWith('/art/')) return false;
+  const last = path.slice(path.lastIndexOf('/') + 1);
+  return !last.includes('.');
+}
+
+/**
+ * Which strategy the worker uses for a request. `origin` is the worker's
+ * own origin, and `precached` holds the paths of the stable-named static
+ * files it precached.
+ */
+export function strategyFor(
+  req: RequestFacts,
+  origin: string,
+  precached: ReadonlySet<string>
+): Strategy {
+  if (req.method !== 'GET' || req.range) return 'bypass';
+  let url: URL;
+  try {
+    url = new URL(req.url);
+  } catch {
+    return 'bypass';
+  }
+  if (url.origin !== origin) return 'bypass';
+  const path = url.pathname;
+  if (isServerEndpoint(path)) return 'bypass';
+  // A page load of an app route. Opening a file in a tab (an image, the
+  // manifest) is left to the browser: the shell is no answer to it.
+  if (req.mode === 'navigate') return isAppRoute(path) ? 'navigate' : 'bypass';
+  if (path.startsWith('/_app/immutable/')) return 'immutable';
+  if (path.startsWith('/art/') && url.searchParams.get('v')) return 'art';
+  if (url.search === '' && precached.has(path)) return 'precached';
+  return 'bypass';
+}
+
+/** The name of a version's shell cache. */
+export function shellCacheName(version: string): string {
+  return SHELL_CACHE_PREFIX + version;
+}
+
+/** The caches a newly active worker deletes: older shell caches, never the
+ *  art cache and never a cache of another app on the same origin. */
+export function staleCaches(names: readonly string[], current: string): string[] {
+  return names.filter((name) => name.startsWith(SHELL_CACHE_PREFIX) && name !== current);
+}
+
+/** The Web Lock every game page holds, shared, while it shows a game
+ *  (game-lock.ts). The worker reads who holds it to know which open
+ *  windows are mid-game: a window's URL as the worker sees it (Client.url)
+ *  is the URL the page was loaded at, and the client router moves on from
+ *  there without telling the worker. */
+export const GAME_LOCK = 'ajayeb:game-page';
+
+/** A path mid-game: /play/<code>. */
+export function isGamePath(path: string): boolean {
+  return /^\/play\/[^/]/.test(path);
+}
+
+/** A URL mid-game, for the worker's fallback when it cannot read locks. */
+export function isGamePage(url: string): boolean {
+  try {
+    return isGamePath(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}
+
+/** The ids of the clients holding the game lock, from LockManager.query(). */
+export function gameClientIds(
+  held: readonly { name?: string | undefined; clientId?: string | undefined }[]
+): Set<string> {
+  const ids = new Set<string>();
+  for (const lock of held) {
+    if (lock.name === GAME_LOCK && lock.clientId) ids.add(lock.clientId);
+  }
+  return ids;
+}
+
+/** An open window of the app, as the worker sees it. */
+export interface OpenWindow {
+  /** WindowClient.focused: the window the user is acting in. */
+  focused: boolean;
+  /** Whether it shows a game (it holds the game lock). */
+  game: boolean;
+}
+
+/**
+ * Whether an open game page holds a new version back. `loading` says
+ * whether a page load is being handled; when false, the new version has
+ * just installed, and any open game page holds it back.
+ *
+ * During a page load, the worker cannot tell which open window the load
+ * replaces. The focused window is the one the user is loading the page in
+ * (a reload of the game, or Home typed over it), so it holds nothing back;
+ * any other open game page does. A wrong guess (two game windows side by
+ * side) costs the other page one full reload later, when it misses a chunk
+ * of its old version, and the game itself lives on the server.
+ */
+export function updateHeldBack(open: readonly OpenWindow[], loading: boolean): boolean {
+  return open.some((w) => w.game && !(loading && w.focused));
+}
+
+/** Whether a navigation's answer means the server is unreachable behind a
+ *  proxy (bad gateway, unavailable, gateway timeout). */
+export function isGatewayError(status: number): boolean {
+  return status === 502 || status === 503 || status === 504;
+}
+
+/**
+ * The art cache's least recently used keys to delete so that at most `max`
+ * remain. `keys` is in Cache.keys() order, which is insertion order; the
+ * worker re-puts an entry on every hit, which moves it to the end.
+ */
+export function overflow<T>(keys: readonly T[], max: number): T[] {
+  return keys.length > max ? keys.slice(0, keys.length - max) : [];
+}

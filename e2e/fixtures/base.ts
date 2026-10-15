@@ -12,6 +12,13 @@
 // `newDeviceContext` (fixtures/online.ts) creates its extra browser contexts
 // by hand with `browser.newContext()`, which bypasses this fixture, so it
 // calls `installMotionOff` itself.
+//
+// It also blocks the app's service worker (M10.SH1, src/service-worker.ts)
+// for every spec: the `serviceWorkers` option defaults to 'block' here, and
+// `installMotionOff` blocks registration in a hand-made context the same way
+// Playwright's own 'block' does. So no ordinary spec ever runs behind the
+// worker's cache. shell.spec.ts, which tests the worker, sets
+// `test.use({ serviceWorkers: 'allow' })`.
 
 import { test as base, type BrowserContext } from '@playwright/test';
 
@@ -63,11 +70,7 @@ function installMotionOffScript(opts: {
   }
 }
 
-/** Adds the init script to a context created outside the `context` fixture
- *  below (online.ts's extra browser tabs for a second player or a
- *  spectator). Call it right after `newContext()`, before the first
- *  `page.goto`, the same way an init script must be added before it. */
-export async function installMotionOff(context: BrowserContext): Promise<void> {
+async function addMotionOff(context: BrowserContext): Promise<void> {
   await context.addInitScript(installMotionOffScript, {
     settingsKey: SETTINGS_KEY,
     guardKey: GUARD_KEY,
@@ -75,13 +78,34 @@ export async function installMotionOff(context: BrowserContext): Promise<void> {
   });
 }
 
+/** Runs in the page before any app script: service worker registration
+ *  becomes a no-op, which is what Playwright's `serviceWorkers: 'block'`
+ *  does too (without its console warning). */
+function blockServiceWorkersScript(): void {
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.register = () => new Promise<ServiceWorkerRegistration>(() => {});
+  }
+}
+
+/** Adds the init scripts to a context created outside the `context` fixture
+ *  below (online.ts's extra browser tabs for a second player or a
+ *  spectator): Animation off, and no service worker, which such a context
+ *  would otherwise allow. Call it right after `newContext()`, before the
+ *  first `page.goto`, the same way an init script must be added before it. */
+export async function installMotionOff(context: BrowserContext): Promise<void> {
+  await addMotionOff(context);
+  await context.addInitScript(blockServiceWorkersScript);
+}
+
 /** Every spec imports `test` (and `test.describe`, `test.use`, and so on)
  *  from here instead of from '@playwright/test', so its default `context`,
  *  and therefore its default `page`, starts with Animation off. `expect`
  *  needs no override: specs keep importing it from '@playwright/test'. */
 export const test = base.extend({
+  // The default for every spec; a spec that tests the worker allows it.
+  serviceWorkers: 'block',
   context: async ({ context }, use) => {
-    await installMotionOff(context);
+    await addMotionOff(context);
     await use(context);
   }
 });

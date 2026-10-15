@@ -11,6 +11,8 @@ export const shell = {
   // {label} is the action's own text, e.g. "Build for 4 coins".
   'shell.confirmArmed': 'Confirm: {label}',
   'shell.tapAgainToConfirm': 'Tap again to confirm',
+  // OfflineNotice: the browser is offline on Home, the rules or Settings.
+  'shell.offline': 'You are offline. Games need a connection.',
 
   // /dev/gallery demo strings for the primitives in this file's folder.
   'shell.demo.openSheet': 'Open a sheet',

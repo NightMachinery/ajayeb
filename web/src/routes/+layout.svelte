@@ -1,6 +1,10 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/state';
+  import { online } from 'svelte/reactivity/window';
+  import OfflineNotice from '$lib/components/shell/OfflineNotice.svelte';
+  import { holdGameLock } from '$lib/sw/game-lock';
+  import { isGamePath } from '$lib/sw/policy';
   import TooltipLayer from '$lib/components/shell/TooltipLayer.svelte';
   import IconSprite from '$lib/icons/IconSprite.svelte';
   import { i18n, t } from '$lib/i18n';
@@ -10,6 +14,19 @@
   import type { LayoutProps } from './$types';
 
   let { children }: LayoutProps = $props();
+
+  const inGame = $derived(isGamePath(page.url.pathname));
+
+  // The app opens offline from the service worker's cache. A game page
+  // shows the session's own offline state; every other page gets the
+  // shell's one-line notice. `online.current` is undefined on the server.
+  const offline = $derived(online.current === false && !inGame);
+
+  // A game page holds the game lock, so a new service worker waits for the
+  // game (lib/sw/game-lock.ts). It takes and releases a lock, never state.
+  $effect(() => {
+    if (inGame) return holdGameLock();
+  });
 
   // These effects only write to the DOM; they never write $state.
   $effect(() => {
@@ -42,6 +59,8 @@
 <div class="app-shell">
   {@render children()}
 </div>
+
+<OfflineNotice {offline} />
 
 <!-- The one tooltip layer (ui/tooltip.svelte.ts): every anchor given a
      tooltip with the tooltip attachment shows it here. -->
