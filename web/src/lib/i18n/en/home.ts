@@ -97,6 +97,6 @@ export const home = {
 
   // /dev/gallery demo content for this slice's screens.
   'home.demo.continueCode': 'Sample saved games',
-  'home.demo.passSummary1': 'Darius built Lumber Yard (−4 coins)',
+  'home.demo.passSummary1': 'Darius built Lumber Yard (paid 4 coins)',
   'home.demo.passSummary2': 'Pawn moved 1 toward you'
 } as const satisfies Messages;
