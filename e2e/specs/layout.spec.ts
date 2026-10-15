@@ -20,8 +20,8 @@
 //   the card sheet of the first takeable card;
 // - no console errors, page errors or failed requests.
 //
-// The desktop project checks all nine viewports with a mouse; the mobile
-// project checks the phone and tablet ones with touch.
+// The desktop project checks all ten viewports with a mouse; the mobile
+// project checks the phone and tablet ones through 1024 px with touch.
 
 import { expect } from '@playwright/test';
 import { test } from '../fixtures/base';
@@ -43,8 +43,8 @@ const VIEWPORTS = [
   { width: 1920, height: 1080 }
 ] as const;
 
-/** The viewports the mobile project checks: phones and the tablet. */
-const TOUCH_WIDTHS = new Set([360, 390, 412, 430, 844, 740, 768]);
+/** Touch viewports, including the 1024 px sheet-dismissal regression. */
+const TOUCH_WIDTHS = new Set([360, 390, 412, 430, 844, 740, 768, 1024]);
 
 const POSITIONS = [
   'draft',
@@ -176,6 +176,11 @@ for (const viewport of VIEWPORTS) {
             await expect(page.locator('dialog[open] [data-card-sheet]')).toBeVisible();
             await quiet(page);
             check(await probeLayout(page), `${name} ${position} card sheet`);
+            // The opening sheet can put a tooltip under the stationary
+            // mouse. That tooltip intentionally owns the next Escape.
+            // Move away and wait for it to close before testing the sheet.
+            await page.mouse.move(0, 0);
+            await expect(page.locator('[data-tooltip-layer] [role="tooltip"]')).toBeHidden();
             await page.keyboard.press('Escape');
             await expect(page.locator('dialog[open]')).toHaveCount(0);
           }

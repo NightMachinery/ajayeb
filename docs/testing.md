@@ -491,10 +491,10 @@ its counts on one `vs-AI game:` line and attaches them as
 
 ### `layout.spec.ts` (`@mobile`)
 
-The game screen at the UX plan's viewports: 360x740, 390x844, 430x932,
-844x390, 740x360, 768x1024, 1024x768, 1280x800 and 1920x1080. The desktop
-project checks all nine; the mobile project checks the six phone and
-tablet ones (up to 844 wide) with touch, and skips the rest. A seeded game
+The game screen at the UX plan's viewports: 360x740, 390x844, 412x915,
+430x932, 844x390, 740x360, 768x1024, 1024x768, 1280x800 and 1920x1080.
+The desktop project checks all ten; the mobile project checks the eight
+phone and tablet sizes through 1024 px with touch, and skips the rest. A seeded game
 is recorded once per worker (`recordGame`), and each viewport opens it at
 five positions: the wonder draft, a fresh Age I, Age II and Age III
 structure, and the result screen, with the pass-device screen off. At each
@@ -858,3 +858,25 @@ Four rooms in all, every one left for the server's reaper. No stray Chrome
 process afterwards (`ps -axo pid=,command= | grep -F -e ajayeb-chrome -e
 playwright_chromiumdev_profile`).
 
+## Hint and layout follow-up checks (M10.hints-followups)
+
+`followups.spec.ts` checks board tokens opening TokenSheet with hint values,
+a token pick showing both seats' values, the viewer's winning move showing
+its review on the result screen, and a fixed seed's producer leaving a
+trade-price caret and an emptied-slot trace until the next player's move.
+It also checks a short own name beside the YOU mark, device link and owned
+token, the inline final-board bar, a long skipped-choice toast in phone
+landscape without strip overlap, and every mini card at 48 by 74 px.
+Each scene saves phone and desktop screenshots in light and dark.
+
+`layout.spec.ts` probes the actual hit span of compact strip controls,
+including their transparent extended tap areas. It moves the pointer away
+and waits for a delayed tooltip to close before testing Escape on a card
+sheet: an open tooltip intentionally takes the first Escape itself. The
+1024 by 768 regression also runs on the mobile project with touch.
+`tooltips.spec.ts` checks the DismissLayer focus trap, Tab cycling and focus
+restoration to the opener after Escape.
+
+Unit checks cover the signed-number helper in English and Persian, the
+new first-time tips, the recap board mappers and WonderSheet's 280 px art
+sizes attribute.

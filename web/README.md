@@ -212,3 +212,25 @@ Fraunces (600, headings) and Inter (400, 600 and 700, the interface) are self-ho
 ## Environment
 
 `PUBLIC_DEV_ROUTES=1` turns on the `/dev` routes in a build; they are always on under `vite dev` and in the test-mode build (`make build-web-test`). When it is unset they answer 404. See `.env.example`.
+
+## Hint and layout follow-ups (M10.hints-followups)
+
+Board progress tokens open TokenSheet on a tap when no token pick is pending.
+Long-press keeps the tooltip gesture; the sheet shows the token effect and
+its server-provided hint values. The pending token pick lists both seats'
+values when the view supplies them, and CitySheet lists all enabled threats.
+
+Use `formatSigned` beside `formatNumber` for displayed signed numbers. It
+formats with Intl, replacing an ASCII minusSign part with U+2212 while
+preserving a locale's own minus sign and digit shapes.
+
+The recap's static board hooks are `data-recap-tick` (`up` or `down`) on a
+trade-price caret, `data-recap-price` on a changed affordability badge,
+`data-recap-trace` on an emptied slot and `data-recap-revealed` on a fresh
+card. Marks last until the viewer's move ends, and follow the recap family
+and the local board-marks switch. The result screen's `data-end-review`
+contains the review when the viewer's own move ended the game.
+
+The first-time tips also explain `ghostLoot` (military), `freeChain` (costs),
+`hourglass` (wonders), `guildBack` (guilds) and `lawLaurel` (science). They use
+the existing once-per-device `ajayeb:tips` seen-set and link to Rules.
