@@ -134,10 +134,15 @@
       >
         <span
           class="flex max-w-full min-w-0 items-center justify-center rounded-[0.35em] bg-(--paper)/92 py-[0.12em] {small
-            ? 'px-[0.15em]'
+            ? 'px-0 py-0!'
             : 'px-[0.3em]'}"
         >
-          <EffectGlyphs effects={card.effects} chainOut={card.chainOut} {small} />
+          <EffectGlyphs
+            effects={card.effects}
+            chainOut={card.chainOut}
+            {small}
+            class={small ? 'gap-x-[0.05em]!' : ''}
+          />
         </span>
       </span>
 
@@ -239,15 +244,22 @@
       )
     );
   }
-  /* The mini tier's 10 px font would draw the chain chip at 13 px with a
-     9.5 px glyph; ChainChip keeps the glyph at 12 px in a 14 px chip, so
-     the cost row takes 1% of the band's height to hold it. The two still
-     end at the 40% line (the covered-card rule). */
+  /* A 48 by 74 px card still needs a 14 px chain chip in each row.
+     Reserve its height in the cost row, taking the remainder of the
+     printed top 40% for the effect band. Tighter padding and gaps keep
+     the effects on one row without shrinking their 10 px numerals. */
   .card-face[data-tier='mini'] .cost {
-    height: 17%;
+    flex-shrink: 0;
+    height: max(14px, 17%);
+    padding-inline: 0;
+  }
+  .card-face[data-tier='mini'] .cost :global([role='img']) {
+    column-gap: 0;
   }
   .card-face[data-tier='mini'] .band {
-    height: 23%;
+    flex-shrink: 0;
+    height: calc(40% - max(14px, 17%));
+    padding-inline: 0;
   }
   /* The full tier (sheets, 150 px and up) is roomier. */
   .card-face.full {

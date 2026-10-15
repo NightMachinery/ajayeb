@@ -98,7 +98,7 @@
     {#each effect.resources ?? [] as r (r)}
       <ResourceTile resource={r} {small} />
     {/each}
-    <Icon name="price-tag" class="text-[0.9em] text-(--gold-deep)" />
+    <Icon name="price-tag" class="text-[1.1em] text-(--gold-deep)" />
     <Coin n={1} />
   {:else if effect.kind === 'shields'}
     {#each { length: n }, i (i)}

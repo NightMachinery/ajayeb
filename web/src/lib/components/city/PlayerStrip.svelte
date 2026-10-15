@@ -168,8 +168,8 @@
 {#snippet identity()}
   <SelfCrest {seat} self={isSelf} class="text-lg" />
   {#if bot}<BotAvatar level={bot} class="size-6 shrink-0 short:size-5" />{/if}
-  <span class="min-w-0 truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
-  {#if isSelf}<SelfMark />{/if}
+  <span class="min-w-[3ch] truncate text-sm font-semibold text-fg" dir="auto">{name}</span>
+  {#if isSelf}<SelfMark class="px-1! text-[9px]! tracking-normal!" />{/if}
 {/snippet}
 
 <div
@@ -188,7 +188,7 @@
     {#if onopen}
       <button
         type="button"
-        class="relative -ms-1 flex min-h-9 min-w-0 shrink items-center gap-1.5 rounded-control px-1
+        class="relative -ms-1 flex min-h-9 min-w-0 shrink items-center gap-1 rounded-control px-1
           after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] hover:bg-panel-sunken"
         aria-label={openLabel}
         data-control="open-city"
@@ -197,7 +197,7 @@
         {@render identity()}
       </button>
     {:else}
-      <div class="flex min-h-9 min-w-0 shrink items-center gap-1.5">
+      <div class="flex min-h-9 min-w-0 shrink items-center gap-1">
         {@render identity()}
       </div>
     {/if}

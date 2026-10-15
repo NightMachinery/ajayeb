@@ -817,19 +817,6 @@
           {marked}
           onselect={selectSlot}
         />
-        {#if view.phase === 'gameOver'}
-          <!-- GameOver is its own centred dialog with a peek bar, so it needs no frame here. -->
-          <div class="contents" dir={i18n.dir}>
-            <GameOver
-              {view}
-              {names}
-              onrematch={rematchOffer ? () => session.rematch() : undefined}
-              rematchLabel={rematchOffer?.label}
-              rematchNote={rematchOffer?.note}
-              {onhome}
-            />
-          </div>
-        {/if}
       </div>
 
       <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir} bind:this={homeEl}>
@@ -877,6 +864,19 @@
          player's own strip. It waits while the pass-device screen is up,
          because its panels are modal dialogs that would cover that screen and
          make it inert. -->
+      {#if view?.phase === 'gameOver'}
+        <!-- Its modal stays in the top layer; its inline peek bar shares the choice bars' row. -->
+        <div class="contents" dir={i18n.dir}>
+          <GameOver
+            {view}
+            {names}
+            onrematch={rematchOffer ? () => session.rematch() : undefined}
+            rematchLabel={rematchOffer?.label}
+            rematchNote={rematchOffer?.note}
+            {onhome}
+          />
+        </div>
+      {/if}
       {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
         <ChoiceHost {view} canAct={inputOpen} onact={act} {names} {confirm} {connected} />
       {/if}
@@ -1129,6 +1129,17 @@
   }
   .game-screen[data-layout='phone-landscape'] .area-away {
     padding-inline: 0.25rem max(0.25rem, var(--safe-r));
+  }
+  /* A toast shares the narrow strip's column. Compact its spacing so a
+     long skipped-choice sentence fits below the strip, while the dismiss
+     button keeps its 44 px hit target. */
+  .game-screen[data-layout='phone-landscape'] .area-home :global([data-toast]) {
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+  .game-screen[data-layout='phone-landscape'] .area-home :global([data-toast] p) {
+    font-size: 0.75rem;
+    line-height: 1.25;
   }
   .game-screen[data-layout='phone-landscape'] .area-structure {
     padding-inline: 0.25rem;

@@ -22,6 +22,7 @@
   const BACKS: Back[] = ['age1', 'age2', 'age3', 'guild'];
 
   const TIERS = [
+    { tier: 'mini', w: 48, h: 74 },
     { tier: 'mini', w: 54, h: 83 },
     { tier: 'medium', w: 101, h: 156 },
     { tier: 'full', w: 180, h: 278 }
@@ -141,8 +142,12 @@
       </div>
     </section>
 
-    {#each TIERS as size (size.tier)}
-      <section id="cards-{size.tier}" class="flex flex-col gap-3">
+    {#each TIERS as size (size.w)}
+      <section
+        id={size.w === 48 ? 'cards-mini-48' : `cards-${size.tier}`}
+        data-card-grid={size.w}
+        class="flex flex-col gap-3"
+      >
         <h3 class="font-display text-lg text-fg">{t('dev.cards.tier', { tier: size.tier })}</h3>
         <div
           class="grid justify-center gap-2 rounded-panel border border-rule bg-panel p-3"
@@ -150,6 +155,7 @@
         >
           {#each cardSlugs as slug (slug)}
             <div
+              data-mini-card={slug}
               style:width="{size.w}px"
               style:height="{size.h}px"
               {@attach tooltip({ text: describeCard(slug) })}

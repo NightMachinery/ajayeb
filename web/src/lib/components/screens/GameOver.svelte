@@ -233,14 +233,19 @@
         {/if}
         <Button
           variant="secondary"
-          class="px-2 text-[14px]"
+          class="px-1! text-[13px]! whitespace-nowrap sm:px-2! sm:text-[14px]!"
           onclick={() => (collapsed = true)}
           data-view-board
         >
           <Eye class="hidden size-4 shrink-0 sm:block" aria-hidden="true" />
           {t('choices.over.viewBoard')}
         </Button>
-        <Button variant="secondary" class="px-2 text-[14px]" onclick={onhome} data-home>
+        <Button
+          variant="secondary"
+          class="px-1! text-[13px]! whitespace-nowrap sm:px-2! sm:text-[14px]!"
+          onclick={onhome}
+          data-home
+        >
           <House class="hidden size-4 shrink-0 sm:block" aria-hidden="true" />
           {t('choices.over.home')}
         </Button>
@@ -250,6 +255,7 @@
 
   {#if collapsed}
     <PeekBar
+      inline
       text="{t('choices.over.bar')} · {headline}"
       openLabel={t('choices.over.results')}
       onopen={() => (collapsed = false)}
