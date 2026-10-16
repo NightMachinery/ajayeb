@@ -115,6 +115,15 @@ export function inertClone(el: Element): HTMLElement {
   };
   strip(clone);
   for (const node of clone.querySelectorAll('*')) strip(node);
+  // ArtImage shows its art from its own load handler, which a copy does not
+  // get: art not yet loaded when it was copied (a card just turned face up)
+  // would stay transparent through the whole flip, so the copy shows it.
+  for (const img of clone.querySelectorAll<HTMLImageElement>('img.art-image:not(.loaded)')) {
+    const show = () => img.classList.add('loaded');
+    img.loading = 'eager';
+    if (img.complete && img.naturalWidth > 0) show();
+    else img.addEventListener('load', show, { once: true });
+  }
   clone.setAttribute('aria-hidden', 'true');
   clone.setAttribute('inert', '');
   clone.setAttribute('data-fx-clone', '');
