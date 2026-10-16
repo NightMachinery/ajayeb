@@ -2129,5 +2129,264 @@ class CommandShipTests(unittest.TestCase):
                 self_host.CONFIG_FILE = orig_config_file
 
 
+class DeployTargetsConfigTests(unittest.TestCase):
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.config_dir = Path(temporary.name) / ".self-host"
+        self.config_dir.mkdir()
+        self.path = self.config_dir / "deploy-targets.json"
+        patcher = mock.patch.object(self_host, "CONFIG_DIR", self.config_dir)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch.dict(os.environ)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        os.environ.pop("AJAYEB_DEPLOY_TARGETS", None)
+
+    def valid(self, **fields):
+        return {"target": "deploy@example.host", "url": "https://game.example.host", **fields}
+
+    def test_default_path_and_environment_override(self):
+        self.path.write_text(json.dumps({"targets": [self.valid()]}))
+        targets = self_host.load_deploy_targets()
+        self.assertEqual(targets, [self_host.DeployTarget(
+            self_host.ShipTarget("deploy@example.host", "ajayeb"),
+            self_host.Site("https", "game.example.host"),
+        )])
+        other = self.config_dir / "other.json"
+        other.write_text(json.dumps({"targets": [self.valid(remote_dir="apps/game", url="http://other.example.host:8080/")]}))
+        os.environ["AJAYEB_DEPLOY_TARGETS"] = str(other)
+        target = self_host.load_deploy_targets()[0]
+        self.assertEqual(target.destination.remote_dir, "apps/game")
+        self.assertEqual(target.site.origin, "http://other.example.host:8080")
+
+    def test_missing_config_fails_before_every_subprocess_or_build(self):
+        stderr = io.StringIO()
+        with mock.patch.object(self_host.subprocess, "run") as run, mock.patch.object(self_host, "cross_build") as build:
+            with redirect_stderr(stderr):
+                self.assertEqual(self_host.main(["ship-all"]), 1)
+        run.assert_not_called()
+        build.assert_not_called()
+        self.assertIn(str(self.path), stderr.getvalue())
+        self.assertIn('"targets"', stderr.getvalue())
+        self.assertIn("example.host", stderr.getvalue())
+
+    def test_all_invalid_config_is_checked_before_any_remote_or_build_boundary(self):
+        invalid = [
+            None, [], {}, {"targets": []}, {"targets": {}},
+            {"targets": [None]}, {"targets": [self.valid(), {"target": "other.example.host"}]},
+            {"targets": [self.valid(target=23)]}, {"targets": [self.valid(url=None)]},
+            {"targets": [self.valid(remote_dir=None)]}, {"targets": [self.valid(target="")]},
+            {"targets": [self.valid(target="-oProxyCommand=printf")]},
+            {"targets": [self.valid(target="example.host:directory")]},
+            {"targets": [self.valid(target="user@example.host;printf")]},
+            {"targets": [self.valid(remote_dir="a dir")]},
+            {"targets": [self.valid(remote_dir="-option")]},
+            {"targets": [self.valid(url="https://secret:credential@example.host")]},
+            {"targets": [self.valid(url="ftp://example.host")]},
+            {"targets": [self.valid(url="https://game.example.host/path")]},
+            {"targets": [self.valid(url="https://game.example.host?token=credential")]},
+            {"targets": [self.valid(url="https://game.example.host:bad")]},
+            {"targets": [self.valid(url="https://game.example.host:0")]},
+            {"targets": [self.valid(url="https://game.example.host:")]},
+            {"targets": [self.valid(url="https://game.example.host:65536")]},
+            {"targets": [self.valid(url="https://game. example.host")]},
+            {"targets": [self.valid(url="https://[::1]")]},
+            {"targets": [self.valid(both_schemes=True)]},
+            {"targets": [self.valid(), self.valid()]},
+        ]
+        for raw in invalid:
+            with self.subTest(raw=raw):
+                self.path.write_text(json.dumps(raw))
+                stderr = io.StringIO()
+                with mock.patch.object(self_host.subprocess, "run") as run, mock.patch.object(self_host, "cross_build") as build:
+                    with redirect_stderr(stderr):
+                        self.assertEqual(self_host.main(["ship-all"]), 1)
+                run.assert_not_called()
+                build.assert_not_called()
+                self.assertIn(str(self.path), stderr.getvalue())
+                self.assertIn("Expected format:", stderr.getvalue())
+                self.assertNotIn("credential", stderr.getvalue().split("Expected format:")[0].replace("no credentials", ""))
+
+    def test_bad_json_and_encoding_never_echo_config_contents(self):
+        for contents in (b'{"credential": unclosed', b'\xff'):
+            with self.subTest(contents=contents):
+                self.path.write_bytes(contents)
+                with self.assertRaisesRegex(RuntimeError, "Expected format") as caught:
+                    self_host.load_deploy_targets()
+                self.assertNotIn("credential", str(caught.exception))
+
+
+class CommandShipAllTests(unittest.TestCase):
+    def setUp(self):
+        self.targets = [
+            self_host.DeployTarget(self_host.ShipTarget("deploy@one.example.host"), self_host.Site("https", "one.example.host")),
+            self_host.DeployTarget(self_host.ShipTarget("deploy@two.example.host", "apps/game"), self_host.Site("http", "two.example.host", 8080)),
+        ]
+        self.output = io.StringIO()
+        for redirect in (redirect_stdout(self.output), redirect_stderr(self.output)):
+            redirect.__enter__()
+            self.addCleanup(redirect.__exit__, None, None, None)
+        patcher = mock.patch.multiple(
+            self_host, load_deploy_targets=mock.DEFAULT, detect_remote_platform=mock.DEFAULT,
+            git_version=mock.DEFAULT, cross_build=mock.DEFAULT, upload_to_remote=mock.DEFAULT,
+            determine_deploy_command=mock.DEFAULT, deploy_remote=mock.DEFAULT,
+            poll_host_version=mock.DEFAULT, poll_remote_version=mock.DEFAULT,
+            remember_ship_target=mock.DEFAULT,
+        )
+        self.mocks = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.mocks["load_deploy_targets"].return_value = self.targets
+        self.mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+        self.mocks["git_version"].return_value = "v-test"
+        self.mocks["cross_build"].return_value = Path("artifact")
+        self.mocks["determine_deploy_command"].side_effect = ["redeploy", "setup"]
+        self.mocks["poll_host_version"].return_value = "v-test"
+        self.mocks["poll_remote_version"].return_value = "v-test"
+        self.events = mock.Mock()
+        for name, boundary in self.mocks.items():
+            self.events.attach_mock(boundary, name)
+
+    def test_one_build_then_sequential_deployments_and_both_health_checks(self):
+        self.assertEqual(self_host.main(["ship-all"]), 0)
+        self.mocks["cross_build"].assert_called_once_with("v-test", "linux", "amd64")
+        calls = self.events.mock_calls
+        names = [call[0] for call in calls]
+        self.assertEqual(names, [
+            "load_deploy_targets", "detect_remote_platform", "detect_remote_platform", "git_version", "cross_build",
+            "upload_to_remote", "determine_deploy_command", "deploy_remote", "poll_host_version", "poll_remote_version",
+            "upload_to_remote", "determine_deploy_command", "deploy_remote", "poll_host_version", "poll_remote_version",
+        ])
+        self.assertEqual(self.mocks["upload_to_remote"].call_args_list, [
+            mock.call("deploy@one.example.host", "ajayeb", Path("artifact")),
+            mock.call("deploy@two.example.host", "apps/game", Path("artifact")),
+        ])
+        self.assertEqual(self.mocks["deploy_remote"].call_args_list, [
+            mock.call("deploy@one.example.host", "ajayeb", "redeploy", "https://one.example.host"),
+            mock.call("deploy@two.example.host", "apps/game", "setup", "http://two.example.host:8080"),
+        ])
+        self.mocks["remember_ship_target"].assert_not_called()
+        self.assertIn("target 1", self.output.getvalue())
+        self.assertIn("target 2", self.output.getvalue())
+        self.assertEqual(self.output.getvalue().count("remote-health=ok, local-health=ok"), 2)
+
+    def test_remote_saved_flags_are_not_overridden(self):
+        self.assertEqual(self_host.command_ship_all(), 0)
+        for call in self.mocks["deploy_remote"].call_args_list:
+            command = self_host.remote_deploy_command(*call.args)[-1]
+            self.assertNotIn("--both-schemes", command)
+            self.assertNotIn("--no-both-schemes", command)
+            self.assertNotIn("--caddyfile", command)
+            existing = self_host.Config(
+                self_host.Site("https", "saved.example.host"), self_host.Mode.PROD,
+                self_host.Ports(server=38955, web_dev=38956), both_schemes=True,
+                caddyfile="config/Caddyfile",
+            )
+            with mock.patch.object(self_host, "load_config", return_value=existing):
+                resolved = self_host.resolve_config(call.args[3], self_host.Mode.PROD)
+            self.assertEqual(resolved.ports, existing.ports)
+            self.assertTrue(resolved.both_schemes)
+            self.assertEqual(resolved.caddyfile, existing.caddyfile)
+
+    def test_mixed_architectures_refuse_the_entire_batch_before_building(self):
+        self.mocks["detect_remote_platform"].side_effect = [("linux", "amd64"), ("linux", "arm64")]
+        self.assertEqual(self_host.command_ship_all(), 1)
+        self.mocks["cross_build"].assert_not_called()
+        self.mocks["upload_to_remote"].assert_not_called()
+        self.assertIn("same supported platform", self.output.getvalue())
+        self.assertIn("target 1", self.output.getvalue())
+        self.assertIn("target 2", self.output.getvalue())
+
+    def test_preflight_failure_still_checks_and_reports_later_targets(self):
+        self.mocks["detect_remote_platform"].side_effect = [RuntimeError("credential"), ("linux", "amd64")]
+        self.assertEqual(self_host.command_ship_all(), 1)
+        self.assertEqual(self.mocks["detect_remote_platform"].call_count, 2)
+        self.mocks["cross_build"].assert_not_called()
+        self.assertIn("target 2", self.output.getvalue())
+        self.assertNotIn("credential", self.output.getvalue())
+
+    def test_build_failure_reports_all_targets_and_never_uploads(self):
+        self.mocks["cross_build"].side_effect = RuntimeError("credential")
+        self.assertEqual(self_host.command_ship_all(), 1)
+        self.mocks["upload_to_remote"].assert_not_called()
+        self.assertEqual(self.output.getvalue().count("skipped: build failed"), 2)
+        self.assertNotIn("credential", self.output.getvalue())
+
+    def test_deploy_failure_still_probes_both_sides_and_ships_next_target(self):
+        self.mocks["deploy_remote"].side_effect = [RuntimeError("credential"), None]
+        self.assertEqual(self_host.command_ship_all(), 1)
+        for name in ("upload_to_remote", "deploy_remote", "poll_host_version", "poll_remote_version"):
+            self.assertEqual(self.mocks[name].call_count, 2)
+        self.assertIn("deploy=failed (RuntimeError)", self.output.getvalue())
+        self.assertIn("target 2 (http://two.example.host:8080): deploy=ok", self.output.getvalue())
+        self.assertNotIn("credential", self.output.getvalue())
+
+    def test_remote_and_local_health_failures_continue_and_fail_overall(self):
+        for boundary, failure in (("poll_host_version", None), ("poll_remote_version", None),
+                                  ("poll_host_version", "old-version"), ("poll_remote_version", "old-version"),
+                                  ("poll_host_version", RuntimeError("credential"))):
+            with self.subTest(boundary=boundary, failure=failure):
+                # Reset only the changing mocks between subtests.
+                self.mocks["determine_deploy_command"].side_effect = ["redeploy", "setup"]
+                for name in ("poll_host_version", "poll_remote_version"):
+                    self.mocks[name].reset_mock(side_effect=True)
+                    self.mocks[name].return_value = "v-test"
+                self.mocks[boundary].side_effect = [failure, "v-test"]
+                self.assertEqual(self_host.command_ship_all(), 1)
+                self.assertEqual(self.mocks["poll_host_version"].call_count, 2)
+                self.assertEqual(self.mocks["poll_remote_version"].call_count, 2)
+        self.assertNotIn("credential", self.output.getvalue())
+
+    def test_cli_rejects_target_and_ship_flag_arguments_before_work(self):
+        self.assertIn("ship-all", self_host.build_parser().format_help())
+        for args in (["ship-all", "example.host"], ["ship-all", "--both-schemes"], ["ship-all", "--remote-dir", "apps"]):
+            with self.subTest(args=args), self.assertRaises(SystemExit) as caught:
+                self_host.main(args)
+            self.assertEqual(caught.exception.code, 2)
+        self.mocks["load_deploy_targets"].assert_not_called()
+
+
+class PollHostVersionTests(unittest.TestCase):
+    def test_curl_resolves_the_origin_on_loopback_with_correct_scheme_port_and_sni(self):
+        for scheme, port, expected in (("https", None, 443), ("http", None, 80), ("http", 8080, 8080), ("https", 8443, 8443)):
+            with self.subTest(scheme=scheme, port=port):
+                site = self_host.Site(scheme, "game.example.host", port)
+                with mock.patch.object(self_host.subprocess, "run") as run:
+                    run.return_value = subprocess.CompletedProcess([], 0, stdout='{"version":"v-test"}')
+                    self.assertEqual(self_host.poll_host_version("deploy@example.host", site, timeout=2), "v-test")
+                cmd = run.call_args.args[0]
+                self.assertEqual(cmd[:6], ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", "deploy@example.host"])
+                curl = shlex.split(cmd[-1])
+                self.assertEqual(curl[curl.index("--resolve") + 1], f"game.example.host:{expected}:127.0.0.1")
+                self.assertEqual(curl[curl.index("--noproxy") + 1], "*")
+                self.assertEqual(curl[-1], site.origin + "/health")
+                self.assertLessEqual(float(curl[curl.index("--max-time") + 1]), 2)
+                self.assertLessEqual(run.call_args.kwargs["timeout"], 2)
+
+    def test_timeouts_process_failures_and_malformed_payloads_are_bounded(self):
+        failures = [subprocess.TimeoutExpired("ssh", 1), OSError("unavailable"),
+                    subprocess.CompletedProcess([], 22, stdout=""),
+                    subprocess.CompletedProcess([], 0, stdout="not json"),
+                    subprocess.CompletedProcess([], 0, stdout="[]"),
+                    subprocess.CompletedProcess([], 0, stdout='{"version":23}')]
+        for failure in failures:
+            with self.subTest(failure=failure):
+                with mock.patch.object(self_host.subprocess, "run", side_effect=[failure]) as run, \
+                     mock.patch.object(self_host.time, "monotonic", side_effect=[0, 0, 1, 1]), \
+                     mock.patch.object(self_host.time, "sleep"):
+                    self.assertIsNone(self_host.poll_host_version("example.host", self_host.Site("https", "game.example.host"), timeout=1))
+                self.assertEqual(run.call_count, 1)
+
+    def test_failed_probe_is_retried_within_the_deadline(self):
+        with mock.patch.object(self_host.subprocess, "run", side_effect=[
+            subprocess.CompletedProcess([], 22, stdout=""),
+            subprocess.CompletedProcess([], 0, stdout='{"version":"v-test"}'),
+        ]) as run, mock.patch.object(self_host.time, "monotonic", side_effect=[0, 0, 0.2, 0.3]), \
+             mock.patch.object(self_host.time, "sleep"):
+            self.assertEqual(self_host.poll_host_version("example.host", self_host.Site("http", "game.example.host"), timeout=1), "v-test")
+        self.assertEqual(run.call_count, 2)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -383,6 +383,63 @@ version, before anything is stopped. `PATH` is then consumed: it is moved
 into place (or copied and removed, across filesystems), so pass a path you
 do not need to keep afterward.
 
+## Deploying to several hosts
+
+Run `./self_host.py ship-all` to build one release and deploy it sequentially
+on every host in a private targets file. The default path is
+`.self-host/deploy-targets.json`, inside the gitignored `.self-host/`
+directory. Set `AJAYEB_DEPLOY_TARGETS` to use another file, keeping it outside
+git too. For example:
+
+```json
+{
+  "targets": [
+    {"target": "deploy@one.example.host", "url": "https://one.example.host"},
+    {"target": "deploy@two.example.host", "url": "http://two.example.host:8080", "remote_dir": "apps/ajayeb"}
+  ]
+}
+```
+
+Each entry requires `target` (an SSH alias or `user@host`) and `url` (an
+HTTP or HTTPS origin with a DNS name or IPv4 host, without credentials).
+`remote_dir` is optional and defaults to `ajayeb`; it has the same character
+restrictions as `ship --remote-dir`. Duplicate target/directory pairs and
+unknown fields are refused. Missing or malformed config gives its expected
+path and an example format before any subprocess, build or SSH command runs.
+Store authentication in SSH configuration, never in the targets file.
+
+`ship-all` checks every host's architecture before building. Every target
+must use the same supported platform, either Linux x86_64 or Linux aarch64.
+If a host cannot be checked, or the targets mix architectures, the whole
+batch stops before building or uploading and reports every target. This
+keeps the command's build-once guarantee and prevents an incompatible binary
+from reaching a host. Use separate target files for different architectures.
+
+After preflight, it reuses `ship`'s build, upload and setup/redeploy steps.
+There are no batch flag overrides: each remote keeps its own remembered
+ports, `both_schemes` and Caddyfile path. The local remembered single-target
+`ship` destination is left alone. A new host uses the normal setup defaults;
+configure host-specific options with single-target `ship` first if needed.
+
+For each target it checks `<url>/health` twice, even if its deployment or
+first health check failed:
+
+- On the host, SSH runs curl with `--resolve HOST:PORT:127.0.0.1` and proxies
+  disabled, preserving the origin's Host header and TLS name. Scheme and port
+  come from the configured URL, defaulting to 443 for HTTPS or 80 for HTTP.
+  SSH is noninteractive; both SSH and curl have time limits. Curl must be
+  installed on each host.
+- On the dev machine, the existing `ship` health poll checks the public URL.
+
+Each probe gets up to 30 seconds. Success requires the health endpoint to
+report the version just built. The per-target report includes deployment,
+host-local health and public health results. A failed deployment, unavailable
+health endpoint or version mismatch makes the overall exit status nonzero,
+while later targets still deploy and get their own reports. Failures are
+reported by stage and exception type without echoing potentially sensitive
+exception messages. There is no automatic batch rollback; inspect the report
+before retrying failed hosts.
+
 ## Testing
 
 `tests/test_self_host.py` covers URL parsing, the rendered Caddy blocks for

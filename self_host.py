@@ -16,6 +16,7 @@ import http.client
 import json
 import os
 import platform
+import re
 import shlex
 import shutil
 import socket
@@ -75,6 +76,7 @@ REMOTE_UPLOAD_BIN = ".self-host/bin/ajayeb.upload"
 SHIP_BUILD_WAIT = 1800.0
 SHIP_HEALTH_POLL_TIMEOUT = 30.0
 SHIP_HEALTH_POLL_INTERVAL = 1.0
+SHIP_HEALTH_REQUEST_TIMEOUT = 5.0
 PORT_RELEASE_TIMEOUT = 5.0
 UNAME_TO_GOOS_GOARCH: dict[tuple[str, str], tuple[str, str]] = {
     ("Linux", "x86_64"): ("linux", "amd64"),
@@ -173,6 +175,12 @@ class ShipTarget:
         if not target:
             return None
         return cls(target=str(target), remote_dir=str(raw.get("remote_dir") or DEFAULT_REMOTE_DIR))
+
+
+@dataclass(frozen=True)
+class DeployTarget:
+    destination: ShipTarget
+    site: Site
 
 
 @dataclass(frozen=True)
@@ -1414,6 +1422,165 @@ def command_ship(
         print(f"remote is running version {remote_version}")
 
 
+def load_deploy_targets() -> list[DeployTarget]:
+    """Read the entire private config before any build or remote operation.
+
+    Errors deliberately describe fields, never their supplied values: malformed
+    SSH destinations and URLs can contain passwords or other credentials.
+    """
+    path = Path(os.environ.get("AJAYEB_DEPLOY_TARGETS", str(CONFIG_DIR / "deploy-targets.json"))).expanduser()
+    example = '{"targets": [{"target": "deploy@example.host", "url": "https://game.example.host"}]}'
+
+    def invalid(reason: str) -> RuntimeError:
+        return RuntimeError(f"deploy targets config {path}: {reason}. Expected format: {example}")
+
+    try:
+        raw = json.loads(path.read_text())
+    except (OSError, ValueError):
+        raise invalid("missing, unreadable, or invalid JSON") from None
+    if not isinstance(raw, dict) or set(raw) != {"targets"}:
+        raise invalid("expected an object with only a targets field")
+    entries = raw["targets"]
+    if not isinstance(entries, list) or not entries:
+        raise invalid("targets must be a nonempty array")
+    targets: list[DeployTarget] = []
+    seen: set[tuple[str, str]] = set()
+    for index, entry in enumerate(entries, 1):
+        label = f"target {index}"
+        if not isinstance(entry, dict) or not {"target", "url"} <= set(entry) <= {"target", "url", "remote_dir"}:
+            raise invalid(f"{label} needs target and url, with only optional remote_dir")
+        target, url = entry["target"], entry["url"]
+        remote_dir = entry.get("remote_dir", DEFAULT_REMOTE_DIR)
+        if not all(isinstance(value, str) and value for value in (target, url, remote_dir)):
+            raise invalid(f"{label} fields must be nonempty strings")
+        # Restrict destinations to SSH aliases or user@host. In particular,
+        # reject rsync's host:path syntax, credentials and shell metacharacters.
+        if not re.fullmatch(r"(?:[A-Za-z0-9_][A-Za-z0-9_.-]*@)?[A-Za-z0-9_][A-Za-z0-9_.-]*", target):
+            raise invalid(f"{label} target must be an SSH alias or user@host")
+        try:
+            validate_ship_target(target, remote_dir)
+        except RuntimeError:
+            raise invalid(f"{label} remote_dir must use letters, digits and . _ - / only") from None
+        try:
+            parsed = urlparse(url)
+            site = parse_site_url(url)
+            if (
+                parsed.username is not None or parsed.password is not None
+                or any(c.isspace() or ord(c) < 32 for c in url)
+                or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.-]*", site.host)
+                or parsed.netloc.endswith(":")
+                or (site.port is not None and not 1 <= site.port <= 65535)
+            ):
+                raise ValueError("invalid origin")
+        except ValueError:
+            raise invalid(f"{label} url must be an http(s) origin with a DNS name or IPv4 host, no credentials") from None
+        identity = (target, remote_dir)
+        if identity in seen:
+            raise invalid(f"{label} repeats a target and remote_dir")
+        seen.add(identity)
+        targets.append(DeployTarget(ShipTarget(target, remote_dir), site))
+    return targets
+
+
+def poll_host_version(
+    target: str,
+    site: Site,
+    *,
+    timeout: float = SHIP_HEALTH_POLL_TIMEOUT,
+    interval: float = SHIP_HEALTH_POLL_INTERVAL,
+) -> str | None:
+    """Probe the public origin on the host itself, bypassing DNS and proxies.
+
+    --resolve preserves the Host header and TLS SNI. Both curl and its SSH
+    subprocess have time limits, including when the connection never opens.
+    """
+    port = site.port or (443 if site.scheme == "https" else 80)
+    deadline = time.monotonic() + timeout
+    while (remaining := deadline - time.monotonic()) > 0:
+        request_timeout = min(SHIP_HEALTH_REQUEST_TIMEOUT, remaining)
+        curl = [
+            "curl", "--fail", "--silent", "--show-error", "--noproxy", "*",
+            "--connect-timeout", str(min(2.0, request_timeout)),
+            "--max-time", str(request_timeout),
+            "--resolve", f"{site.host}:{port}:127.0.0.1", site.origin + "/health",
+        ]
+        cmd = ssh_command(target, shlex.join(curl))
+        # SSH cannot prompt for a password and hang an unattended run.
+        cmd[1:1] = ["-o", "BatchMode=yes", "-o", "ConnectTimeout=5"]
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=remaining)
+            if result.returncode == 0:
+                payload = json.loads(result.stdout)
+                if isinstance(payload, dict) and isinstance(payload.get("version"), str) and payload["version"]:
+                    return payload["version"]
+        except (OSError, subprocess.TimeoutExpired, ValueError):
+            pass
+        time.sleep(min(interval, max(0, deadline - time.monotonic())))
+    return None
+
+
+def command_ship_all() -> int:
+    targets = load_deploy_targets()
+    platforms: list[tuple[str, str] | None] = []
+    platform_errors: list[str | None] = []
+    for entry in targets:
+        try:
+            platforms.append(detect_remote_platform(entry.destination.target))
+            platform_errors.append(None)
+        except Exception as exc:
+            platforms.append(None)
+            platform_errors.append(type(exc).__name__)
+    # A single static binary cannot serve mixed architectures. Refuse the
+    # whole batch before building or changing any host rather than quietly
+    # building twice or deploying an incompatible executable.
+    if None in platforms or len(set(platforms)) != 1:
+        for index, (entry, platform_pair, error) in enumerate(zip(targets, platforms, platform_errors), 1):
+            if platform_pair is None:
+                status = f"platform check failed ({error})"
+            else:
+                status = f"platform={'/'.join(platform_pair)}, skipped: incompatible or unavailable batch platform"
+            print(f"target {index} ({entry.site.origin}): {status}")
+        print("error: ship-all requires every target to have the same supported platform; nothing deployed", file=sys.stderr)
+        return 1
+    goos, goarch = platforms[0]
+    try:
+        version = git_version()
+        binary = cross_build(version, goos, goarch)
+    except Exception as exc:
+        for index, entry in enumerate(targets, 1):
+            print(f"target {index} ({entry.site.origin}): skipped: build failed")
+        print(f"error: ship-all build failed ({type(exc).__name__}); nothing deployed", file=sys.stderr)
+        return 1
+
+    failed = False
+    for index, entry in enumerate(targets, 1):
+        target, remote_dir = entry.destination.target, entry.destination.remote_dir
+        deployment = "ok"
+        try:
+            upload_to_remote(target, remote_dir, binary)
+            deploy_command = determine_deploy_command(target, remote_dir)
+            # No flag overrides: each host retains its own both_schemes,
+            # caddyfile and ports from its remembered config.
+            deploy_remote(target, remote_dir, deploy_command, entry.site.origin)
+        except Exception as exc:
+            deployment = f"failed ({type(exc).__name__})"
+
+        def health_status(probe: Callable[[], str | None]) -> str:
+            try:
+                observed = probe()
+                if observed == version:
+                    return "ok"
+                return "failed (version mismatch)" if observed else "failed (unavailable)"
+            except Exception as exc:
+                return f"failed ({type(exc).__name__})"
+
+        remote_health = health_status(lambda: poll_host_version(target, entry.site))
+        local_health = health_status(lambda: poll_remote_version(entry.site.origin))
+        failed |= any(status != "ok" for status in (deployment, remote_health, local_health))
+        print(f"target {index} ({entry.site.origin}): deploy={deployment}, remote-health={remote_health}, local-health={local_health}")
+    return 1 if failed else 0
+
+
 def command_setup(
     url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None
 ) -> None:
@@ -1666,6 +1833,8 @@ def build_parser() -> argparse.ArgumentParser:
     add_both_schemes(ship_p)
     add_caddyfile(ship_p)
 
+    sub.add_parser("ship-all", help="build once and deploy every target in the private deploy-targets.json config")
+
     return parser
 
 
@@ -1686,6 +1855,8 @@ def main(argv: list[str] | None = None) -> int:
             command_stop()
         elif args.command == "status":
             command_status()
+        elif args.command == "ship-all":
+            return command_ship_all()
         elif args.command == "ship":
             command_ship(args.target, args.url, args.remote_dir, args.both_schemes, args.caddyfile)
     except Exception as exc:
