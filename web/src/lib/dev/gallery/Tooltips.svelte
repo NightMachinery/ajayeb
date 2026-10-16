@@ -4,7 +4,13 @@
   // text, text with parameters, a diagram, the stacked chain tooltips, a
   // chip inside an actionable card (innermost wins; the card keeps its tap
   // and shows its own tooltip on a long-press), a button, the bubble and
-  // stack drawn standalone, and the dismiss layer.
+  // stack drawn standalone, and the dismiss layer. The micro-elements
+  // section (M10.tooltip-coverage) draws the board's own components with
+  // fixed data, each with the tooltip it has in a game: a cost pip with its
+  // pay lines, an effect glyph, the trade badge with the trade diagram, a
+  // face-down back with its candidates, the coin tally with the next point,
+  // a chain chip with its status lines, the compact track's zones, and a
+  // bubble with its "More in Rules" link.
   //
   // Two query parameters help screenshots: `show=<id>` opens the tooltip of
   // the element marked data-tip-demo="<id>" once the page has settled, and
@@ -25,6 +31,18 @@
   import TooltipStack from '$lib/components/shell/TooltipStack.svelte';
   import { tooltip, tooltips } from '$lib/ui/tooltip.svelte';
   import { describeCard } from '$lib/view/describe';
+  import AffordBadge from '$lib/components/card/AffordBadge.svelte';
+  import CardBack from '$lib/components/card/CardBack.svelte';
+  import CostPips from '$lib/components/card/CostPips.svelte';
+  import EffectGlyph from '$lib/components/card/EffectGlyph.svelte';
+  import MilitaryTrack from '$lib/components/board/MilitaryTrack.svelte';
+  import Tally from '$lib/components/city/Tally.svelte';
+  import ScienceTracker from '$lib/components/city/ScienceTracker.svelte';
+  import { cardBySlug } from '$lib/catalog';
+  import type { HintScreen } from '$lib/view/hints';
+  import { backTip, chainLines, coinsLines } from '$lib/view/tips';
+  import type { CostView, HintFamily, HintsView, PlayerHintsView } from '$lib/wire';
+  import { HINT_FAMILIES } from '$lib/hints/families';
 
   interface Props {
     /** Open this demo's tooltip once the page has settled. */
@@ -39,6 +57,63 @@
   let opened = $state(0);
   let pressed = $state(0);
   let dismissOpen = $state(false);
+
+  // --- Fixed data for the micro-elements -----------------------------------
+  const SCREEN: HintScreen = {
+    perspective: { kind: 'seat', seat: 0 },
+    families: new Set<HintFamily>(HINT_FAMILIES),
+    boardMarks: true,
+    names: { names: ['Sun', 'Moon'], you: 0 }
+  };
+  const ZERO = { wood: 0, clay: 0, stone: 0, glass: 0, papyrus: 0 };
+  /** Aqueduct's 3 stone: one made in the city, two bought at 3 each. */
+  const PAY: CostView = {
+    affordable: true,
+    shortfall: 0,
+    chainFree: false,
+    printedCoins: 0,
+    own: { ...ZERO, stone: 1 },
+    producers: [],
+    trade: [{ resource: 'stone', units: 2, unitPrice: 3, fixed: false, coins: 6 }],
+    tradeTotal: 6,
+    total: 6,
+    toOpponent: 0,
+    urbanismBonus: 0
+  };
+  const PLAYER_HINTS: PlayerHintsView = {
+    coinsToNextVp: 2,
+    symbols: [],
+    need: 6,
+    reachable: true,
+    lawWins: false,
+    chainTargets: [{ chain: 'drop', target: 'aqueduct', place: 'unseenLaterAge', worth: 6 }],
+    guildPoints: [],
+    toCapital: 9,
+    capitalSafe: false,
+    threats: []
+  };
+  const BOARD_HINTS: HintsView = {
+    discard: [],
+    wondersLeft: 7,
+    pairs: [],
+    looting: [],
+    tokens: [],
+    boxTokens: [],
+    guildPreview: [
+      { guild: 'builders-guild', coins: [0, 0], vp: [4, 2] },
+      { guild: 'moneylenders-guild', coins: [0, 0], vp: [3, 5] }
+    ],
+    unseen: [
+      {
+        back: 'guild',
+        cards: ['builders-guild', 'moneylenders-guild', 'scientists-guild'],
+        faceDown: 2,
+        setAside: 1
+      }
+    ]
+  };
+  const aqueduct = cardBySlug('aqueduct');
+  const glyphEffect = cardBySlug('library')?.effects[0];
 
   const EDGES = [
     { id: 'edge-tl', class: 'top-2 start-2', chain: 'drop', direction: 'out' },
@@ -198,6 +273,76 @@
     </section>
   </div>
 
+  <section class="flex flex-col gap-2" data-tip-micro>
+    <h3 class="text-sm font-semibold text-fg-muted">{t('dev.tooltips.micro')}</h3>
+    <div
+      class="flex flex-wrap items-center gap-4 rounded-panel border border-rule bg-panel p-3 text-lg text-card-ink"
+    >
+      {#if aqueduct}
+        <span class="rounded-control bg-card-paper px-1.5 py-1" data-tip-demo="pip">
+          <CostPips cost={aqueduct.cost} pay={PAY} />
+        </span>
+      {/if}
+      {#if glyphEffect}
+        <span class="rounded-control bg-card-paper px-1.5 py-1" data-tip-demo="glyph">
+          <EffectGlyph effect={glyphEffect} />
+        </span>
+      {/if}
+      <span class="text-sm" data-tip-demo="badge-trade">
+        <AffordBadge afford={{ state: 'trade', coins: 6, shortfall: 0 }} cost={PAY} />
+      </span>
+      <span class="block h-[74px] w-12" data-tip-demo="back">
+        <CardBack back="guild" tip={backTip('guild', BOARD_HINTS, SCREEN)} class="h-full w-full" />
+      </span>
+      <span data-tip-demo="tally">
+        <Tally
+          kind="coins"
+          value={7}
+          label={t('coins.count', { count: 7 })}
+          tip={{
+            text: t('coins.count', { count: 7 }),
+            lines: coinsLines(PLAYER_HINTS, SCREEN)
+          }}
+        />
+      </span>
+      <span data-tip-demo="chain-status">
+        <ChainChip
+          chain="drop"
+          direction="out"
+          lines={chainLines('drop', [{ hints: PLAYER_HINTS }, {}], SCREEN)}
+        />
+      </span>
+      <span data-tip-demo="science">
+        <ScienceTracker
+          science={{
+            distinct: 3,
+            symbols: [
+              { symbol: 'globe', count: 1 },
+              { symbol: 'quill', count: 1 },
+              { symbol: 'wheel', count: 1 }
+            ]
+          }}
+          pill
+        />
+      </span>
+      <span class="w-56" data-tip-demo="track-zone">
+        <MilitaryTrack
+          military={{
+            position: 2,
+            looting: [
+              { at: -6, seat: 0, value: 5, present: true },
+              { at: -3, seat: 0, value: 2, present: true },
+              { at: 3, seat: 1, value: 2, present: true },
+              { at: 6, seat: 1, value: 5, present: true }
+            ]
+          }}
+          viewerSeat={0}
+          compact
+        />
+      </span>
+    </div>
+  </section>
+
   <section class="flex flex-col gap-2">
     <h3 class="text-sm font-semibold text-fg-muted">{t('dev.tooltips.specimens')}</h3>
     <div
@@ -214,6 +359,12 @@
       <TooltipBubble text={t('rules.wonders.seventhTitle')} diagram={seventhDiagram} arrowX={40} />
       <TooltipBubble text={t('rules.guilds.title')} diagram={guildDiagram} arrowX={40} />
       <TooltipBubble text={t('rules.ageEnd.title')} diagram={starterDiagram} arrowX={40} />
+      <TooltipBubble
+        text={t('dev.tooltips.diagramTip')}
+        lines={[t('dev.tooltips.statusLine')]}
+        rulesId="military"
+        arrowX={40}
+      />
       <TooltipStack
         items={[{ kind: 'card', slug: 'aqueduct', caption: t('card.tip.chainOutStack') }]}
       />
