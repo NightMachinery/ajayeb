@@ -217,7 +217,8 @@ Fraunces (600, headings) and Inter (400, 600 and 700, the interface) are self-ho
 
 Board progress tokens open TokenSheet on a tap when no token pick is pending.
 Long-press keeps the tooltip gesture; the sheet shows the token effect and
-its server-provided hint values. The pending token pick lists both seats'
+its server-provided hint values. Changing rooms, including a rematch, closes
+the old token sheet. The pending token pick lists both seats'
 values when the view supplies them, and CitySheet lists all enabled threats.
 
 Use `formatSigned` beside `formatNumber` for displayed signed numbers. It

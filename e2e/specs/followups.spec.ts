@@ -123,6 +123,33 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     await photograph(page, info, 'token-choice');
   });
 
+  test('a token sheet from the previous game closes when the player starts a rematch', async ({
+    page
+  }) => {
+    await openHotseatRoom(page, 'military-supremacy');
+    const previous = page.url();
+    await page.locator('[data-token-open]').first().click();
+    await expect(page.locator('dialog[open] [data-token-sheet]')).toBeVisible();
+
+    // The same player can have two tabs open. End the game from the other
+    // tab while this tab is inspecting a token, then rematch through the UI.
+    const other = await page.context().newPage();
+    try {
+      await other.goto(previous);
+      const driver = new GameDriver(other);
+      await driver.waitReady();
+      await playKey(driver, 'construct:walls');
+      await expect(page.locator('[data-game-over] [data-rematch]')).toBeVisible();
+      await page.locator('[data-rematch]').click();
+      await page.waitForURL((url) => url.href !== previous);
+      await new GameDriver(page).waitReady();
+      await expect(page.locator('[data-phase="wonderDraft"]')).toBeVisible();
+      await expect(page.locator('dialog[open] [data-token-sheet]')).toHaveCount(0);
+    } finally {
+      await other.close();
+    }
+  });
+
   test('the viewer ending the game sees their own review and an inline final-board bar', async ({
     page
   }, info) => {

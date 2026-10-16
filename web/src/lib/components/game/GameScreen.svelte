@@ -456,6 +456,8 @@
       roomCode = f.code;
       lastFrame = null;
       ui.reset();
+      tokenOpen = false;
+      tokenSlug = null;
       toasts.clear();
       wonderListSeat = null;
       wonderFromList = null;

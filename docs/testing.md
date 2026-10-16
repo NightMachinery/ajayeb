@@ -861,7 +861,8 @@ playwright_chromiumdev_profile`).
 ## Hint and layout follow-up checks (M10.hints-followups)
 
 `followups.spec.ts` checks board tokens opening TokenSheet with hint values,
-a token pick showing both seats' values, the viewer's winning move showing
+a token pick showing both seats' values, an open token sheet closing when
+another tab ends the game and this tab starts a rematch, the viewer's winning move showing
 its review on the result screen, and a fixed seed's producer leaving a
 trade-price caret and an emptied-slot trace until the next player's move.
 It also checks a short own name beside the YOU mark, device link and owned
