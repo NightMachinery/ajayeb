@@ -184,7 +184,9 @@
         <span class="line-clamp-2 font-display text-[15px] leading-tight wrap-normal"
           >{wonderName(slug)}</span
         >
-        <span class="line-clamp-2 text-xs leading-snug text-fg-muted"
+        <!-- dir="auto": clamped text keeps its own direction, so an English
+             fallback in a right-to-left locale loses its end, not its start. -->
+        <span class="line-clamp-2 text-xs leading-snug text-fg-muted" dir="auto"
           >{effectsText(wonder.effects)}</span
         >
         {#if hint && hint.terms.length > 0}

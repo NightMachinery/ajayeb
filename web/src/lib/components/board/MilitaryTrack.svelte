@@ -36,7 +36,7 @@
   // capital it leans toward; and each looting token says what it would take
   // now (looting-token-tooltip).
   import { hintHide } from '$lib/hints/local.svelte';
-  import { i18n, t } from '$lib/i18n';
+  import { formatNumber, i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { trackEnds, trackMirrored, type Seat } from '$lib/ui/track';
   import { militaryLeader, militaryMargin, nextLooting } from '$lib/view/threats';
@@ -208,7 +208,7 @@
   <span
     class="inline-grid h-4 min-w-4 place-items-center rounded-[4px] border border-vp-edge bg-vp px-0.5 text-[10px] leading-none font-bold text-(--paper-bright) tabular-nums {cls}"
     data-min-font="10"
-    data-zone-points={points}>{points}</span
+    data-zone-points={points}>{formatNumber(points)}</span
   >
 {/snippet}
 

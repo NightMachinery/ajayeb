@@ -16,7 +16,7 @@
   // (view/recap.ts recapBoard) when these are that seat's prices.
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
-  import { t } from '$lib/i18n';
+  import { formatNumber, t } from '$lib/i18n';
   import Coin from '$lib/components/card/Coin.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
@@ -115,7 +115,9 @@
       data-resource={resource}
     >
       <Icon name={RESOURCE_ICON[resource]} class={RESOURCE_TEXT_CLASS[resource]} />
-      <span class="font-semibold tabular-nums" data-must-fit aria-hidden="true">{count}</span>
+      <span class="font-semibold tabular-nums" data-must-fit aria-hidden="true"
+        >{formatNumber(count)}</span
+      >
       <Coin n={price} class={compact ? 'text-[10px]' : 'text-[11px]'} />
       {#if caret}
         <span

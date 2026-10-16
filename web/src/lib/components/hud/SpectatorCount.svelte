@@ -2,7 +2,7 @@
   // How many spectators watch an online game: a quiet eye and a number in
   // the top bar, for the players. Nothing shows while nobody watches.
   import Eye from '@lucide/svelte/icons/eye';
-  import { t } from '$lib/i18n';
+  import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
@@ -20,7 +20,7 @@
     data-spectators={count}
   >
     <Eye class="size-3.5" aria-hidden="true" />
-    <span aria-hidden="true">{count}</span>
+    <span aria-hidden="true">{formatNumber(count)}</span>
     <span class="sr-only">{t('online.spectatorsLabel', { count })}</span>
   </span>
 {/if}

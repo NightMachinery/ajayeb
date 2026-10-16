@@ -171,7 +171,7 @@
           {@attach tooltip(canUndo ? { text: t('board.topbar.undo') } : undefined)}
           class="{iconButton} disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
         >
-          <Undo2 class="size-5" />
+          <Undo2 class="size-5 rtl:-scale-x-100" />
         </button>
       </span>
     {/if}
@@ -284,7 +284,7 @@
           disabled={!canUndo}
           onclick={() => choose(onUndo)}
         >
-          <Undo2 class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+          <Undo2 class="size-5 shrink-0 text-fg-muted rtl:-scale-x-100" aria-hidden="true" />
           <span class="flex min-w-0 flex-col py-1.5">
             <span>{t('game.menu.undo')}</span>
             {#if !canUndo && undoReason}

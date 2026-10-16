@@ -20,7 +20,7 @@
   // means the seat can win by science with one action now. With `seat`
   // and no `hints`, the hints come from the page's game context.
   import { hintHide } from '$lib/hints/local.svelte';
-  import { t } from '$lib/i18n';
+  import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import { scienceHints, type ScienceHints } from '$lib/view/board-hints';
@@ -154,7 +154,7 @@
     {@attach tooltip(counterTip ? { text: counterTip } : undefined)}
   >
     <Icon name="category-green-sm" class="text-xs {danger ? '' : 'text-card-green-ink'}" />
-    <span data-must-fit>{science.distinct}/6</span>
+    <span data-must-fit>{formatNumber(science.distinct)}/{formatNumber(6)}</span>
   </span>
 {:else}
   <div
@@ -214,7 +214,7 @@
       data-science-counter
       {@attach tooltip(counterTip ? { text: counterTip } : undefined)}
     >
-      {science.distinct}/6
+      {formatNumber(science.distinct)}/{formatNumber(6)}
     </span>
   </div>
 {/if}

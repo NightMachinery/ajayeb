@@ -5,7 +5,7 @@
   // this slice does not import). A simple local stand-in: one tick per
   // card, a category icon and a count, legible well under the mini-card
   // widths the real CardFace hits on a phone.
-  import { t } from '$lib/i18n';
+  import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import type { Color } from '$lib/wire';
@@ -86,7 +86,7 @@
       {/each}
     </span>
     <span class="text-xs font-semibold text-fg-muted tabular-nums" data-must-fit aria-hidden="true"
-      >{count}</span
+      >{formatNumber(count)}</span
     >
     <span class="sr-only">{t('board.city.colorCount', { count, color: t(colorKey(color)) })}</span>
   </div>
