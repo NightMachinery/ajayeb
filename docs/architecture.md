@@ -134,7 +134,7 @@ An online game, seat 0 builds the Baths:
 9. The Presenter shows the new view in three steps, through its hooks (the animation runner, `web/src/lib/fx/anim/`):
    - **capture**: before the swap, the runner plans the frame's live events into a timeline (`plan.ts`, scaled by the game's Animation setting) and reads what it needs from the old DOM: the rectangle and a copy of the card being taken (its slot is gone after the swap), the face-down cards about to flip, and where the pawn stood. With Animation off it plans nothing and reads nothing;
    - **swap**: the new view is rendered, at once and in full; the state on screen is always the server's;
-   - **play**: the runner reads the new rectangles once, then animates from the old ones to the new (FLIP, transform and opacity only, with the Web Animations API): the card flies to the city, a discard into the coins, a wonder's card under its wonder; newly revealed cards flip; a coin float rises and the counter counts; the pawn walks cell by cell. Input comes back when the card lands (320 ms at normal speed, counted from the swap); the rest plays on, and a new frame finishes it at once.
+   - **play**: the runner reads the new rectangles once, then animates from the old ones to the new (FLIP, transform and opacity only, with the Web Animations API): the card flies to the city, a discard into the coins, a wonder's card under its wonder; newly revealed cards flip; a coin float rises and the counter counts; the pawn walks cell by cell. Input comes back as the card settles (240 ms into its 320 ms flight at normal speed, counted from the swap); the rest plays on, and a new frame finishes it at once.
 
    The TurnBar now says it is the opponent's turn.
 

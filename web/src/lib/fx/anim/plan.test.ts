@@ -8,6 +8,7 @@ import {
   FLIP_MS,
   FLIP_STAGGER_MS,
   FLOAT_MS,
+  LAND_MS,
   PAWN_STEP_MS,
   planTimeline,
   TAKE_MS,
@@ -51,7 +52,7 @@ describe('planTimeline: per event kind', () => {
     expect(t.steps).toEqual([
       { kind: 'take', seat: 1, card: 'baths', dest: 'city', at: 0, dur: TAKE_MS }
     ]);
-    expect(t.blockingMs).toBe(TAKE_MS);
+    expect(t.blockingMs).toBe(TAKE_MS - LAND_MS);
     expect(t.totalMs).toBe(TAKE_MS);
   });
 
@@ -101,7 +102,7 @@ describe('planTimeline: per event kind', () => {
         dur: FLIP_MS
       }
     ]);
-    expect(t.blockingMs).toBe(TAKE_MS);
+    expect(t.blockingMs).toBe(TAKE_MS - LAND_MS);
     expect(t.totalMs).toBe(TAKE_MS + FLIP_DELAY_MS + FLIP_STAGGER_MS + FLIP_MS);
   });
 
@@ -218,7 +219,7 @@ describe('planTimeline: per event kind', () => {
   });
 
   it('never holds input longer than the cap', () => {
-    expect(TAKE_MS).toBeLessThanOrEqual(BLOCK_CAP_MS);
+    expect(TAKE_MS - LAND_MS).toBeLessThanOrEqual(BLOCK_CAP_MS);
   });
 });
 

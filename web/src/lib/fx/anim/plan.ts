@@ -24,9 +24,11 @@
 // anything the other animation slice owns (looting, tokens, the age deal,
 // the draft, destroy and rebuild, the end).
 //
-// `blockingMs` is the part input waits for: the take's landing, at most
-// BLOCK_CAP_MS. Everything after it (flips, floats, the pawn) plays on
-// while the player may already move; a new frame finishes it at once.
+// `blockingMs` is the part input waits for: the take's flight up to its
+// landing (the last LAND_MS of it, when the card only settles, do not hold
+// input), at most BLOCK_CAP_MS. Everything after it (the landing, flips,
+// floats, the pawn) plays on while the player may already move; a new
+// frame finishes it at once.
 
 import type { GameEvent } from '$lib/wire';
 import { isLive, type Cue } from '../cues';
@@ -43,6 +45,8 @@ export const FLOAT_MS = 800;
 export const TWEEN_MS = 450;
 /** The pawn's time per cell. */
 export const PAWN_STEP_MS = 150;
+/** The end of a flight, when the card settles: input is back by then. */
+export const LAND_MS = 80;
 /** The most a frame may hold input, at normal speed (450 ms is the budget). */
 export const BLOCK_CAP_MS = 350;
 
@@ -229,7 +233,8 @@ export function planTimeline(next: PlanFrame, prev: PlanFrame | null): Timeline 
 
   if (steps.length === 0) return EMPTY_TIMELINE;
   const totalMs = Math.max(...steps.map((s) => s.at + s.dur));
-  return { steps, blockingMs: Math.min(after, BLOCK_CAP_MS), totalMs };
+  const blockingMs = take ? Math.min(TAKE_MS - LAND_MS, BLOCK_CAP_MS) : 0;
+  return { steps, blockingMs, totalMs };
 }
 
 /**
