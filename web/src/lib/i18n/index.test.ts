@@ -8,6 +8,7 @@ import {
   i18n,
   MINUS_SIGN,
   interpolate,
+  isFallbackText,
   isLocale,
   pluralCategory,
   selectPlural,
@@ -141,8 +142,8 @@ describe('formatSigned', () => {
 describe('the Persian stub table', () => {
   afterEach(() => i18n.set('en'));
 
-  const LRI = '\u2066';
-  const PDI = '\u2069';
+  const START = '\u200e\u2066';
+  const END = '\u2069\u200e';
 
   it('is right to left once chosen', () => {
     i18n.set('fa');
@@ -153,19 +154,27 @@ describe('the Persian stub table', () => {
   it('uses its own wording, with Persian digits', () => {
     i18n.set('fa');
     expect(t('home.settings.title')).toBe('تنظیمات');
-    expect(t('turn.player', { name: 'رستم' })).toBe('نوبت رستم');
+    // A string param is isolated (U+2068 ... U+2069) with its own direction.
+    expect(t('turn.player', { name: 'Omid!' })).toBe('نوبت \u2068Omid!\u2069');
     expect(t('coins.count', { count: 3 })).toBe('۳ سکه');
     expect(t('cards.left', { count: 0 })).toBe('کارتی نمانده');
     expect(t('board.age', { age: 2 })).toBe('دوران ۲');
   });
 
-  it('falls back to English per key, in a left-to-right isolate', () => {
+  it('falls back to English per key, marked left to right', () => {
     i18n.set('fa');
     expect(fa['game.card.faceDown']).toBeUndefined();
-    expect(t('game.card.faceDown')).toBe(LRI + en['game.card.faceDown'] + PDI);
+    expect(t('game.card.faceDown')).toBe(START + en['game.card.faceDown'] + END);
     // A fallback's plural form follows English rules; its digits stay Persian.
-    expect(t('board.player.points', { count: 0 })).toBe(LRI + '۰ points' + PDI);
-    expect(t('board.player.points', { count: 1 })).toBe(LRI + '۱ point' + PDI);
+    expect(t('debug.hiddenTokens', { count: 0 })).toBe(START + '۰ hidden tokens' + END);
+    expect(t('debug.hiddenTokens', { count: 1 })).toBe(START + '۱ hidden token' + END);
+  });
+
+  it('joins words left in English the English way', () => {
+    i18n.set('fa');
+    const words = [t('card.resource.glass'), t('card.resource.papyrus')];
+    expect(words.every(isFallbackText)).toBe(true);
+    expect(isFallbackText(t('home.settings.title'))).toBe(false);
   });
 
   it('leaves English untouched', () => {

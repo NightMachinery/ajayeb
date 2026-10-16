@@ -29,5 +29,10 @@ export const board = {
   'board.age.draft': 'گزینش شگفتی‌ها',
   'board.topbar.undo': 'برگرداندن',
   'board.topbar.log': 'گزارش',
-  'board.topbar.settings': 'تنظیمات'
+  'board.topbar.settings': 'تنظیمات',
+
+  'board.wonders.tally': '{built} از {total} ساخته شده',
+  'board.wonders.back': 'همه‌ی شگفتی‌ها',
+  'board.player.points': { other: '{count} امتیاز' },
+  'board.player.thinking': 'در حال فکر'
 } as const satisfies Translation<typeof en>;

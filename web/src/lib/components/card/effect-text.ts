@@ -5,7 +5,7 @@
 
 import type { CatalogCost, CatalogEffect } from '$lib/catalog';
 import { cardBySlug, wonderBySlug } from '$lib/catalog';
-import { i18n, t } from '$lib/i18n';
+import { i18n, isFallbackText, t } from '$lib/i18n';
 import type { Back, Chain, Color, Resource, ScienceSymbol } from '$lib/wire';
 
 export const RESOURCES = [
@@ -20,10 +20,12 @@ const listFormats = new Map<string, Intl.ListFormat>();
 
 /** Joins words for the current locale: "wood, clay and stone" or "glass or papyrus". */
 export function joinList(items: readonly string[], type: 'conjunction' | 'disjunction'): string {
-  const cacheKey = `${i18n.locale}|${type}`;
+  // Words a partial table left in English are joined in English too.
+  const locale = items.length > 0 && items.every(isFallbackText) ? 'en' : i18n.locale;
+  const cacheKey = `${locale}|${type}`;
   let format = listFormats.get(cacheKey);
   if (!format) {
-    format = new Intl.ListFormat(i18n.locale, { style: 'long', type });
+    format = new Intl.ListFormat(locale, { style: 'long', type });
     listFormats.set(cacheKey, format);
   }
   return format.format(items);

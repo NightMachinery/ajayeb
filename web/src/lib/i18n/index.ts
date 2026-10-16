@@ -7,9 +7,9 @@
 // Keys and placeholders are checked at compile time against the English
 // tables, which define the message set and are the only complete ones.
 // Another locale's table (./fa/ for Persian) may leave keys out
-// (PartialLocaleTable below): t() falls back to English per key, and wraps
-// the English text in a left-to-right isolate when the locale is
-// right-to-left, so its punctuation stays where English puts it.
+// (PartialLocaleTable below): t() falls back to English per key, and in a
+// right-to-left locale marks the English text as left to right (see t()),
+// so its punctuation stays where English puts it.
 // Numbers go through Intl.NumberFormat and plural forms through
 // Intl.PluralRules, so a locale with its own digits or plural rules needs
 // no code changes.
@@ -151,8 +151,15 @@ export function selectPlural(
   return forms[pluralCategory(count, locale)] ?? forms.other;
 }
 
+/** U+2068 FIRST STRONG ISOLATE and U+2069 POP DIRECTIONAL ISOLATE. */
+const FSI = '\u2068';
+const PDI = '\u2069';
+
 /**
  * Replaces each {name} with its param, formatting numbers for the locale.
+ * In a right-to-left locale a string param (a player's name, a card name)
+ * is isolated with its own direction, so a Latin name's punctuation or
+ * digits never trade places with the Persian words around it.
  * A placeholder without a param is left as it is, so the gap shows.
  */
 export function interpolate(
@@ -161,25 +168,34 @@ export function interpolate(
   locale: string = i18n.locale
 ): string {
   if (!params) return text;
+  const isolate = dirFor(locale) === 'rtl';
   return text.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
     const value = params[name];
     if (value === undefined) return placeholder;
-    return typeof value === 'number' ? formatNumber(value, undefined, locale) : value;
+    if (typeof value === 'number') return formatNumber(value, undefined, locale);
+    return isolate ? FSI + value + PDI : value;
   });
 }
 
 // t() ------------------------------------------------------------------------
 
-/** U+2066 LEFT-TO-RIGHT ISOLATE and U+2069 POP DIRECTIONAL ISOLATE. */
-const LRI = '\u2066';
-const PDI = '\u2069';
+/**
+ * How an English fallback sits in right-to-left text: a left-to-right
+ * isolate (U+2066 ... U+2069), so the punctuation and any right-to-left
+ * param inside it keep their English places, between two LEFT-TO-RIGHT
+ * MARKs (U+200E), so that fallbacks joined into one string (". " between
+ * effect sentences) still read left to right instead of being reordered as
+ * neutral runs of a right-to-left paragraph.
+ */
+const FALLBACK_START = '\u200e\u2066';
+const FALLBACK_END = '\u2069\u200e';
 
 /**
  * The message for a key in the current locale, with its params filled in.
  * A key the locale's table leaves out falls back to English: its plural
  * form is chosen by English rules (the forms are English ones), its numbers
  * still use the locale's digits, and in a right-to-left locale the text is
- * wrapped in a left-to-right isolate. An unknown key (only possible through
+ * marked left to right (FALLBACK_START above). An unknown key (only possible through
  * a cast) returns the key itself.
  */
 export function t<K extends MessageKey>(key: K, ...args: ParamsArg<K>): string {
@@ -194,5 +210,11 @@ export function t<K extends MessageKey>(key: K, ...args: ParamsArg<K>): string {
       ? message
       : selectPlural(message, Number(params?.['count'] ?? Number.NaN), fallback ? 'en' : locale);
   const filled = interpolate(text, params, locale);
-  return fallback && dirFor(locale) === 'rtl' ? LRI + filled + PDI : filled;
+  return fallback && dirFor(locale) === 'rtl' ? FALLBACK_START + filled + FALLBACK_END : filled;
+}
+
+/** Whether t() returned this text as an English fallback in a right-to-left
+ *  locale (so a list of such words is joined the English way). */
+export function isFallbackText(text: string): boolean {
+  return text.startsWith(FALLBACK_START);
 }

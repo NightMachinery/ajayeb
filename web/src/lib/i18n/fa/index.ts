@@ -6,10 +6,13 @@
 
 import type { PartialLocaleTable } from '../index';
 import { board } from './board';
+import { card } from './card';
+import { choices } from './choices';
 import { common } from './common';
 import { game } from './game';
 import { hints } from './hints';
 import { home } from './home';
+import { online } from './online';
 import { rules } from './rules';
 import { session } from './session';
 import { shell } from './shell';
@@ -18,9 +21,12 @@ export const fa: PartialLocaleTable = {
   ...common,
   ...session,
   ...shell,
+  ...card,
   ...board,
   ...home,
   ...game,
+  ...choices,
+  ...online,
   ...hints,
   ...rules
 };
