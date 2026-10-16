@@ -53,6 +53,12 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
       page.locator('[data-game-menu]:popover-open [data-control="menu-undo"]')
     ).toBeEnabled();
     await expect(page.locator('[data-game-menu]:popover-open [data-undo-reason]')).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Tab');
+    const arrow = driver.visible('[data-control="undo"]');
+    await arrow.focus();
+    await expect(page.getByRole('tooltip')).toHaveText('Undo');
+    await expect(arrow).toHaveAttribute('aria-describedby', 'ajayeb-tooltip');
     expect(problems).toEqual([]);
   });
 

@@ -155,10 +155,9 @@
         class="inline-flex"
         tabindex={!canUndo ? 0 : undefined}
         data-undo-tooltip
-        {@attach tooltip({
-          text: !canUndo && undoReason ? undoReason : t('board.topbar.undo'),
-          actionable: canUndo
-        })}
+        {@attach tooltip(
+          !canUndo ? { text: undoReason ?? t('board.topbar.undo'), actionable: false } : undefined
+        )}
       >
         <button
           type="button"
@@ -166,6 +165,7 @@
           disabled={!canUndo}
           data-control="undo"
           aria-label={t('board.topbar.undo')}
+          {@attach tooltip(canUndo ? { text: t('board.topbar.undo') } : undefined)}
           class="{iconButton} disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
         >
           <Undo2 class="size-5" />
