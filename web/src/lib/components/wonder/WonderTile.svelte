@@ -31,6 +31,10 @@
   // view builds it now (solid for this screen's own seat, outlined in the
   // opponent's crest colour). The row also shows what building it would do
   // now, as an outcome line.
+  //
+  // Tooltips: the cost pips, the effect glyphs and the badge carry their own
+  // (CostPips, EffectGlyph, AffordBadge); the built mark says so, and the
+  // hint marks link the rules' wonders section.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId, WONDER_ART_SIZES } from '$lib/art/lookup';
   import { wonderArtCrop } from '$lib/art/crops';
@@ -88,6 +92,9 @@
   const crop = $derived(wonderArtCrop(slug));
   const built = $derived(state?.built ?? false);
   const removed = $derived(state?.removed ?? false);
+  const builtTip = $derived(
+    state?.tucked ? t('wonder.builtWith', { card: cardName(state.tucked) }) : t('wonder.built')
+  );
 </script>
 
 {#snippet art(cls: string, small: boolean)}
@@ -121,7 +128,7 @@
         : 'border-rule-strong'}"
       data-hint="hourglass"
       data-hourglass={hint.hourglass.solid ? 'solid' : 'hollow'}
-      {@attach tooltip({ text: hint.hourglass.tip })}
+      {@attach tooltip({ text: hint.hourglass.tip, rulesId: 'wonders' })}
     >
       <Hourglass solid={hint.hourglass.solid} class="size-3" />
     </span>
@@ -132,7 +139,7 @@
       data-hint="ready"
       data-style={hint.ready.style}
       data-tone={hint.ready.tone}
-      {@attach tooltip({ text: hint.ready.tip })}
+      {@attach tooltip({ text: hint.ready.tip, rulesId: 'wonders' })}
     >
       <Icon name="badge-check" class="text-[13px]" />
     </span>
@@ -245,10 +252,9 @@
             >{wonderName(slug)}</span
           >
           {#if built}
-            <Icon
-              name="badge-check"
-              class="shrink-0 text-[14px] text-(--gold-deep) [--i2:var(--paper)]"
-            />
+            <span class="inline-flex shrink-0" {@attach tooltip({ text: builtTip })}>
+              <Icon name="badge-check" class="text-[14px] text-(--gold-deep) [--i2:var(--paper)]" />
+            </span>
           {/if}
           {@render marks()}
         </span>

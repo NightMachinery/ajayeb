@@ -18,12 +18,16 @@
   // (TokenSheet: what it does and what it is worth), the model of a card:
   // a tap opens it, a long-press on touch shows the tooltip. It carries no
   // action key; the pick of a pending choice stays `actionKey`.
+  //
+  // The tooltip names the token, says what it does (choices/token-text.ts
+  // tokenEffect) and adds the hint lines; it links the rules' tokens section.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId, tokenArtSizes } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { TokenHint } from '$lib/view/board-hints';
+  import { tokenEffect } from '../choices/token-text';
 
   interface Props {
     /** A TokenSlug, e.g. "agriculture". Untrusted-width string so this also
@@ -109,6 +113,14 @@
     hint ? [...hint.lines, hint.mark?.tip ?? ''].filter(Boolean).join(' ') : ''
   );
   const tipText = (base: string): string => (hintText ? `${base}. ${hintText}` : base);
+  const effect = $derived(tokenEffect(slug));
+  /** The tooltip: the name (as the caller words it) and what the token does,
+   *  then the hint lines. */
+  const tipFor = (base: string) => ({
+    text: effect ? `${base}: ${effect}` : base,
+    lines: hint ? [...hint.lines, hint.mark?.tip ?? ''].filter(Boolean) : [],
+    rulesId: 'tokens' as const
+  });
   const sizeClass = $derived(
     size === 'xs'
       ? 'size-5 text-[10px]'
@@ -152,7 +164,7 @@
     data-act={actionKey}
     disabled={!selectable}
     aria-label={tipText(t('board.token.take', { name: label }))}
-    {@attach tooltip({ text: tipText(label) })}
+    {@attach tooltip(tipFor(label))}
     data-tap-ok={size === 'md' ? undefined : ''}
     class="token-tile grid place-items-center rounded-full transition-transform duration-(--dur-fast)
       {size === 'md' ? 'min-h-11 min-w-11' : ''}
@@ -168,7 +180,7 @@
     type="button"
     aria-label={tipText(t('board.token.open', { name: label }))}
     aria-haspopup="dialog"
-    {@attach tooltip({ text: tipText(label) })}
+    {@attach tooltip(tipFor(label))}
     data-token-open={slug}
     data-tap-ok={size === 'md' ? undefined : ''}
     class="token-tile grid cursor-pointer place-items-center rounded-full transition-transform duration-(--dur-fast) hover:-translate-y-0.5
@@ -182,7 +194,7 @@
     class="token-tile grid place-items-center rounded-full {taken && !owned
       ? 'opacity-40 grayscale'
       : ''} {className}"
-    {@attach tooltip({ text: tipText(staticLabel) })}
+    {@attach tooltip(tipFor(staticLabel))}
     role="img"
     aria-label={tipText(staticLabel)}
     data-owned={owned ? '' : undefined}

@@ -4,7 +4,9 @@
   // names, no per-card detail -- those need CardFace, which M5.S02 owns and
   // this slice does not import). A simple local stand-in: one tick per
   // card, a category icon and a count, legible well under the mini-card
-  // widths the real CardFace hits on a phone.
+  // widths the real CardFace hits on a phone. Its tooltip counts the cards;
+  // `lines` adds status lines (an owned guild's points now, from the city
+  // panel), and the purple band links the rules' guilds section.
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
@@ -14,10 +16,12 @@
   interface Props {
     color: Color;
     count: number;
+    /** Status lines for the tooltip (the guilds' points now). */
+    lines?: readonly string[];
     class?: string;
   }
 
-  let { color, count, class: className = '' }: Props = $props();
+  let { color, count, lines = [], class: className = '' }: Props = $props();
 
   const CATEGORY_ICON: Record<Color, IconName> = {
     brown: 'category-brown',
@@ -77,7 +81,12 @@
 {#if count > 0}
   <div
     class="city-band flex items-center gap-1 rounded-control border border-rule bg-panel py-1 ps-1.5 pe-2 {className}"
-    {@attach tooltip({ text: t('board.city.colorCount', { count, color: t(colorKey(color)) }) })}
+    data-city-band={color}
+    {@attach tooltip({
+      text: t('board.city.colorCount', { count, color: t(colorKey(color)) }),
+      lines,
+      rulesId: color === 'purple' ? 'guilds' : undefined
+    })}
   >
     <Icon name={CATEGORY_ICON[color]} class="shrink-0 {TEXT_CLASS[color]}" />
     <span class="flex gap-0.5" aria-hidden="true">

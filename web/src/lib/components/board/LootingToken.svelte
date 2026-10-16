@@ -4,7 +4,9 @@
   // loses as soon as the pawn enters its space (3 or 6 from the centre).
   // Once taken it leaves a faint dashed ring where it stood. A leaf
   // component, plain props, so MilitaryTrack just maps view.military.looting
-  // over it.
+  // over it. Its tooltip links the rules' military section, and the track
+  // passes the rules diagram of looting (`diagram`).
+  import type { Snippet } from 'svelte';
   import { formatSigned, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
@@ -19,10 +21,20 @@
     size?: 'sm' | 'md';
     /** A fuller tooltip (the track's looting hint, M10.HS4); else the label. */
     tip?: string;
+    /** A concept diagram for the tooltip. */
+    diagram?: Snippet;
     class?: string;
   }
 
-  let { value, magnitude, present, size = 'md', tip, class: className = '' }: Props = $props();
+  let {
+    value,
+    magnitude,
+    present,
+    size = 'md',
+    tip,
+    diagram,
+    class: className = ''
+  }: Props = $props();
 
   const label = $derived(
     t(present ? 'board.military.lootCell' : 'board.military.lootTaken', { value, magnitude })
@@ -36,7 +48,7 @@
     ? 'border border-(color:--gold-deep) bg-gold text-card-ink'
     : 'border border-dashed border-fg-muted/60 bg-transparent'} {className}"
   role="img"
-  {@attach tooltip({ text: tip ?? label })}
+  {@attach tooltip({ text: tip ?? label, diagram, rulesId: 'military' })}
   aria-label={tip ? `${label}. ${tip}` : label}
   data-present={present ? '' : undefined}
   data-min-font="10"

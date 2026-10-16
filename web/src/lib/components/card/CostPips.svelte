@@ -5,9 +5,16 @@
   // the `room` (or more than `max` groups) collapse into "+n"; the sheet
   // always shows the whole cost. Printed data from the catalog, for display;
   // what a player actually pays is the server's cost breakdown (AffordBadge).
+  //
+  // Each group has a tooltip (view/tips.ts): the coins paid to the bank, or
+  // the units a resource needs and, given the server's breakdown (`pay`),
+  // how that payment covers them; the "+n" says what it hides; the row
+  // itself, between the pips, gives the whole cost.
   import { formatNumber, t } from '$lib/i18n';
   import type { CatalogCost } from '$lib/catalog';
-  import type { Chain, Resource } from '$lib/wire';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { costMoreTip, costPipTip } from '$lib/view/tips';
+  import type { Chain, CostView, Resource } from '$lib/wire';
   import ChainChip from './ChainChip.svelte';
   import Coin from './Coin.svelte';
   import ResourceTile from './ResourceTile.svelte';
@@ -25,6 +32,8 @@
     small?: boolean;
     /** Tighter tiles and gaps, for cards in the structure (mini and medium). */
     dense?: boolean;
+    /** The server's cost breakdown for the seat in view, for the tooltips. */
+    pay?: CostView;
     class?: string;
   }
 
@@ -35,6 +44,7 @@
     room = Infinity,
     small = false,
     dense = false,
+    pay,
     class: className = ''
   }: Props = $props();
 
@@ -79,12 +89,17 @@
     : 'gap-[0.2em]'} {className}"
   role="img"
   aria-label={label}
+  {@attach tooltip({ text: label })}
 >
   {#each shown as g (g.kind === 'coins' ? 'coins' : g.resource)}
     {#if g.kind === 'coins'}
-      <Coin n={g.n} />
+      <Coin n={g.n} tip={costPipTip(g)} />
     {:else}
-      <span class="inline-flex items-center gap-[0.04em]">
+      <span
+        class="inline-flex items-center gap-[0.04em]"
+        data-cost-pip={g.resource}
+        {@attach tooltip(costPipTip(g, pay))}
+      >
         <ResourceTile
           resource={g.resource}
           {small}
@@ -99,7 +114,12 @@
     {/if}
   {/each}
   {#if hidden > 0}
-    <span class="font-bold text-card-ink" data-min-font="10" aria-hidden="true"
+    <span
+      class="font-bold text-card-ink"
+      data-min-font="10"
+      aria-hidden="true"
+      data-cost-more={hidden}
+      {@attach tooltip(costMoreTip(groups.slice(shown.length)))}
       >{t('card.cost.more', { n: hidden })}</span
     >
   {/if}

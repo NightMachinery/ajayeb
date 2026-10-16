@@ -235,6 +235,46 @@ export const card = {
   'card.tip.chainOutStack': 'Free through this chain',
   'card.tip.chainIn': 'Free if your city has {card}, which shows the {symbol} chain symbol.',
   'card.tip.chainInStack': 'Gives the chain symbol',
+  // Tooltips of a card's micro-elements (view/tips.ts). {resource} is a
+  // resource name, {token} a token name, {back} 'Age I' and the like.
+  'card.tip.card': '{card}. {category}.',
+  'card.tip.costCoins': {
+    one: 'Costs {count} coin, paid to the bank.',
+    other: 'Costs {count} coins, paid to the bank.'
+  },
+  'card.tip.costUnits': 'Needs {n} {resource}.',
+  'card.tip.costMore': 'Also needs {items}.',
+  'card.tip.payOwn': 'Made in the city: {n}.',
+  'card.tip.payFlex': 'From a yellow card or a wonder: {n}.',
+  'card.tip.payDiscount': 'Waived by {token}: {n}.',
+  'card.tip.payTrade': {
+    one: 'Bought from the bank: {n} at {count} coin each.',
+    other: 'Bought from the bank: {n} at {count} coins each.'
+  },
+  'card.tip.badgeChain': 'Free: the city shows the chain symbol of {card}.',
+  'card.tip.badgeChainBare': 'Free through a chain symbol.',
+  'card.tip.badgeFree': 'Free to build: nothing to pay.',
+  'card.tip.badgeOwn': {
+    one: 'The city makes every resource it needs. Pay {count} coin.',
+    other: 'The city makes every resource it needs. Pay {count} coins.'
+  },
+  'card.tip.badgeTrade': {
+    one: 'Buy the missing resources from the bank: {count} coin in all.',
+    other: 'Buy the missing resources from the bank: {count} coins in all.'
+  },
+  'card.tip.tradeLine': {
+    one: '{n} {resource} at {count} coin each',
+    other: '{n} {resource} at {count} coins each'
+  },
+  // Heads the trade rule's worked example in the badge's bubble, so its
+  // numbers never read as this game's.
+  'card.tip.example': 'For example:',
+  'card.tip.badgeShort': {
+    one: 'Costs {coins} coins: {count} coin short.',
+    other: 'Costs {coins} coins: {count} coins short.'
+  },
+  'card.tip.backAge': 'A face-down {back} card.',
+  'card.tip.backGuild': 'A face-down guild card.',
 
   // Costs.
   'card.cost.free': 'No cost',

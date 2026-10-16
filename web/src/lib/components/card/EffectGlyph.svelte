@@ -3,9 +3,15 @@
   // and for wonder tiles: "wood wood", "shield ×2", "laurel 4", "coin 2 per
   // grey card" and so on, one form per effect kind of the catalog. The
   // sentence form is effect-text.ts; EffectGlyphs shows either. Decorative:
-  // the card's ARIA name carries the words.
+  // the card's ARIA name carries the words. The glyph's tooltip is its
+  // sentence (view/tips.ts effectTip), with a "More in Rules" link for a
+  // concept (shields, science, trade, guilds); it covers the laurel, the
+  // coins and the colour swatches inside it. The full form, which prints the
+  // sentence beside the glyph, turns it off (`tip`).
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, formatSigned } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { effectTip } from '$lib/view/tips';
   import type { CatalogEffect } from '$lib/catalog';
   import type { Color } from '$lib/wire';
   import Coin from './Coin.svelte';
@@ -19,9 +25,11 @@
     /** For coins-per-card: the points per card of a matching points-per-card
      *  effect, drawn in the same glyph (guilds). */
     points?: number;
+    /** The glyph's own tooltip (off where its sentence is printed beside it). */
+    tip?: boolean;
   }
 
-  let { effect, small = false, points }: Props = $props();
+  let { effect, small = false, points, tip = true }: Props = $props();
 
   const n = $derived(effect.n ?? 1);
   const max = $derived(effect.scope === 'max');
@@ -81,6 +89,7 @@
     : 'gap-[0.12em]'}"
   data-effect={effect.kind}
   aria-hidden="true"
+  {@attach tooltip(tip ? effectTip(effect, points) : undefined)}
 >
   {#if effect.kind === 'produce' && effect.resource}
     {#each { length: n }, i (i)}

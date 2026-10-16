@@ -5,19 +5,34 @@
   // chip. The two differ by fill as well as position, so they read in
   // greyscale. Decorative for assistive tech (the card's own description
   // names the chain); its tooltip names the linked card and stacks a
-  // preview of it (ui/chain-links.ts).
+  // preview of it (ui/chain-links.ts). With the counting hints, it adds the
+  // server's chainTargets as status lines: which city shows the symbol, the
+  // card it makes free there and where that card is (view/tips.ts
+  // chainLines), from the page's game context or `lines`.
   import Icon from '$lib/icons/Icon.svelte';
+  import { hintHide } from '$lib/hints/local.svelte';
   import type { Chain } from '$lib/wire';
   import { chainTooltip } from '$lib/ui/chain-links';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { sessionHintScreen } from '$lib/view/hints';
+  import { chainLines } from '$lib/view/tips';
+  import { tryGameContext } from '../choices/room';
 
   interface Props {
     chain: Chain;
     direction: 'in' | 'out';
+    /** The status lines; else from the game context. */
+    lines?: readonly string[];
     class?: string;
   }
 
-  let { chain, direction, class: className = '' }: Props = $props();
+  let { chain, direction, lines, class: className = '' }: Props = $props();
+
+  const ctx = tryGameContext();
+  const shown = $derived(
+    lines ??
+      chainLines(chain, ctx?.session.view?.players, sessionHintScreen(ctx?.session, hintHide.value))
+  );
 </script>
 
 <!-- The chip is 1.3 em with the glyph at 0.95 em, but never under 14 px
@@ -32,7 +47,7 @@
   aria-hidden="true"
   data-chain={chain}
   data-chain-direction={direction}
-  {@attach tooltip(chainTooltip(chain, direction))}
+  {@attach tooltip(chainTooltip(chain, direction, shown))}
 >
   <Icon name={`chain-${chain}`} class="text-[length:max(0.95em,12px)]" />
 </span>

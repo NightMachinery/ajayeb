@@ -27,6 +27,7 @@
   import Sun from '@lucide/svelte/icons/sun';
   import Users from '@lucide/svelte/icons/users';
   import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
   import { theme, THEME_PREFS } from '$lib/ui/theme.svelte';
 
@@ -133,6 +134,7 @@
         class="flex size-11 items-center justify-center rounded-full border border-rule bg-panel text-fg-muted transition-colors duration-150 hover:text-fg"
         onclick={onSettings}
         aria-label={t('home.settings')}
+        {@attach tooltip({ text: t('home.settings') })}
       >
         <SettingsIcon size={18} aria-hidden="true" />
       </button>

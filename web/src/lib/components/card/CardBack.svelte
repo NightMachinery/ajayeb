@@ -5,7 +5,9 @@
   // art, so it stays crisp and translatable). The guild back carries a crown
   // over the numeral and a checker field, so it differs from Age III by
   // shape as well as colour. Fills its container; decorative unless the
-  // parent labels it.
+  // parent labels it. Its tooltip says which back it is (view/tips.ts
+  // backText); the structure passes a fuller one (`tip`) with the cards
+  // that may lie under it.
   //
   // Once a back's bitmap art is approved (back/age1 and so on in the
   // generated art index), it fills the card under the same gold frame and
@@ -14,15 +16,19 @@
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { backArtId } from '$lib/art/lookup';
   import { t } from '$lib/i18n';
+  import { tooltip, type TooltipContent } from '$lib/ui/tooltip.svelte';
+  import { backText } from '$lib/view/tips';
   import type { Back } from '$lib/wire';
   import { backAge } from './card-style';
 
   interface Props {
     back: Back;
+    /** The tooltip; by default it names the back. */
+    tip?: TooltipContent;
     class?: string;
   }
 
-  let { back, class: className = '' }: Props = $props();
+  let { back, tip, class: className = '' }: Props = $props();
 
   const numeral = $derived(t(`card.ageNumeral.${backAge(back)}`));
 </script>
@@ -31,6 +37,7 @@
   class="card-back back-{back} relative flex items-center justify-center overflow-hidden rounded-[6%/4%] {className}"
   data-back={back}
   aria-hidden="true"
+  {@attach tooltip(tip ?? { text: backText(back) })}
 >
   <ArtImage id={backArtId(back)} feather="none" class="absolute inset-0 h-full w-full" />
   <!-- The frame sits over the art (an inset shadow alone would sit under it). -->

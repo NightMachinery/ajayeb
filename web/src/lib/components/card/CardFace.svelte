@@ -25,12 +25,22 @@
   // A plain leaf component: it takes a slug and the display state, fills its
   // container (give the container the card's size, or pass `width`), and is
   // decorative; the slot button around it carries the ARIA name.
+  //
+  // Tooltips (M10.tooltip-coverage): every pip of the cost, every effect
+  // glyph, the chain chips and the badge carry their own; the colour band
+  // and the category glyph name the category; and a mini card, which prints
+  // no name, names itself (view/tips.ts cardTip). `cost`, the server's
+  // breakdown for the seat in view, lets the cost pips and the badge say how
+  // the payment covers each resource.
   import { artId, hasApprovedArt } from '$lib/art/lookup';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
   import { t } from '$lib/i18n';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { cardTip } from '$lib/view/tips';
+  import type { CostView } from '$lib/wire';
   import AffordBadge from './AffordBadge.svelte';
   import CardArt from './CardArt.svelte';
   import ChainChip from './ChainChip.svelte';
@@ -55,6 +65,8 @@
     flowTo?: string;
     /** The badge's recap line: how its price changed (AffordBadge priceTip). */
     priceTip?: string;
+    /** The server's cost breakdown for the seat in view (the tooltips). */
+    cost?: CostView;
     class?: string;
   }
 
@@ -68,6 +80,7 @@
     flow = 0,
     flowTo = '',
     priceTip,
+    cost,
     class: className = ''
   }: Props = $props();
 
@@ -98,6 +111,7 @@
       style:background={bandBackground(card.color)}
       data-tier="band"
       aria-hidden="true"
+      {@attach tooltip({ text: cardTip(card.slug) })}
     >
       <span class="flex min-w-0 flex-1 justify-start rounded-[3px] bg-(--paper)/90 px-1 py-px">
         <EffectGlyphs effects={card.effects} small class="flex-nowrap! justify-start!" />
@@ -116,6 +130,7 @@
       data-tier={tier}
       data-color={card.color}
       aria-hidden="true"
+      {@attach tooltip(tier === 'mini' ? { text: cardTip(card.slug) } : undefined)}
     >
       <!-- Top 40%: cost row, then the effect band. -->
       <span class="cost flex items-center {tier === 'full' ? 'px-[4%]' : 'px-[2.5%]'}">
@@ -125,12 +140,14 @@
           {small}
           dense={tier !== 'full'}
           room={costRoom}
+          pay={cost}
           class="w-full"
         />
       </span>
       <span
         class="band flex items-center justify-center px-[2.5%] [--pat:color-mix(in_oklch,var(--card-ink)_20%,transparent)]"
         style:background={bandBackground(card.color)}
+        {@attach tooltip({ text: t(`card.category.${card.color}`) })}
       >
         <span
           class="flex max-w-full min-w-0 items-center justify-center rounded-[0.35em] bg-(--paper)/92 py-[0.12em] {small
@@ -177,6 +194,7 @@
               {flow}
               {flowTo}
               {priceTip}
+              {cost}
             />
           </span>
         {/if}
@@ -195,10 +213,17 @@
                the paper it takes the card colour's paper ink, since the band
                colour itself (yellow, grey) is too pale there. -->
           {#if nameGlyph}
-            <Icon
-              name={categoryIcon(card.color)}
-              class="mt-[0.1em] text-[1.05em] text-(--glyph-ink) [--i2:color-mix(in_oklch,var(--glyph-ink)_45%,var(--card-paper))]"
-            />
+            <span
+              class="mt-[0.1em] inline-flex"
+              {@attach tooltip(
+                tier === 'full' ? undefined : { text: t(`card.category.${card.color}`) }
+              )}
+            >
+              <Icon
+                name={categoryIcon(card.color)}
+                class="text-[1.05em] text-(--glyph-ink) [--i2:color-mix(in_oklch,var(--glyph-ink)_45%,var(--card-paper))]"
+              />
+            </span>
           {/if}
         </span>
         {#if tier === 'full'}

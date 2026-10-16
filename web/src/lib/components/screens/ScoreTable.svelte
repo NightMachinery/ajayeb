@@ -5,6 +5,7 @@
   // re-shapes the server's numbers.
   import Trophy from '@lucide/svelte/icons/trophy';
   import { formatNumber, t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import type { ScoreRow } from '$lib/view/score';
@@ -136,11 +137,17 @@
               <!-- A trophy, not a crown: the crown is the guilds' category
                    glyph, one row up. -->
               {#if total && winner === seat}
-                <Trophy
-                  class="size-4 text-gild"
-                  role="img"
-                  aria-label={t('choices.score.winner')}
-                />
+                <span
+                  class="inline-flex"
+                  data-score-trophy
+                  {@attach tooltip({ text: t('choices.score.winner') })}
+                >
+                  <Trophy
+                    class="size-4 text-gild"
+                    role="img"
+                    aria-label={t('choices.score.winner')}
+                  />
+                </span>
               {/if}
               {formatNumber(row.values[seat])}
             </span>

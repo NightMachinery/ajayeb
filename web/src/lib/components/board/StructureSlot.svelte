@@ -27,11 +27,18 @@
   // card it turned face up carries a small gold dot on its top-start corner
   // (data-recap-revealed), and a card whose price changed says so in its
   // badge's tooltip (data-recap-price). All static.
+  //
+  // Tooltips (M10.tooltip-coverage): the card's own micro-elements carry
+  // theirs (CardFace, with `cost` for the pay lines); a face-down back names
+  // its age or the guilds and, with the counting hints, the cards that may
+  // lie under it (view/tips.ts backTip, from the server's unseen pool and
+  // guild preview); the wonder-first mark says what it marks.
   import Icon from '$lib/icons/Icon.svelte';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import type { SlotPlace } from '$lib/view/geometry';
-  import type { SlotView } from '$lib/wire';
+  import type { CostView, HintsView, SlotView } from '$lib/wire';
+  import { backTip } from '$lib/view/tips';
   import { hintHide } from '$lib/hints/local.svelte';
   import { denyPip, pipLabel, sessionHintScreen, slotPip, type HintScreen } from '$lib/view/hints';
   import { cardName } from '../card/effect-text';
@@ -65,6 +72,10 @@
     hints?: HintScreen;
     /** The recap's board marks; on a room page they come from the game screen. */
     recap?: RecapBoard | null;
+    /** The server's cost breakdown for the badge's seat (the tooltips). */
+    cost?: CostView;
+    /** The board hints (View.hints) for a back's tooltip; else from the game context. */
+    boardHints?: HintsView;
     onselect?: (slot: SlotView) => void;
   }
 
@@ -82,6 +93,8 @@
     marked = false,
     hints,
     recap,
+    cost,
+    boardHints,
     onselect
   }: Props = $props();
 
@@ -105,6 +118,12 @@
   // Wonder-first mode: only the opponent's pip claims the corner.
   const shownPip = $derived(screen?.boardMarks ? (marked ? denyPip(pip) : pip) : undefined);
   const name = $derived(slot.state === 'faceUp' && slot.card ? cardName(slot.card) : '');
+  const back = $derived(slot.back ?? 'age1');
+  const backTooltip = $derived(
+    slot.state === 'faceDown'
+      ? backTip(back, boardHints ?? ctx?.session.view?.hints, screen)
+      : undefined
+  );
   // The badge's Urbanism bonus and Economy flow (the prices family).
   const badgeCost = $derived.by(() => {
     if (!afford || !screen?.families.has('prices') || !slot.costs) return undefined;
@@ -168,9 +187,10 @@
         flow={badgeCost?.affordable ? badgeCost.toOpponent : 0}
         flowTo={screen ? screen.names.names[screen.perspective.seat === 0 ? 1 : 0] : ''}
         {priceTip}
+        {cost}
       />
     {:else}
-      <CardBack back={slot.back ?? 'age1'} class="h-full w-full" />
+      <CardBack {back} tip={backTooltip} class="h-full w-full" />
     {/if}
     {#if fresh}
       <span
@@ -183,8 +203,9 @@
       <HintPip pip={shownPip} card={name} size={tier === 'mini' ? 'sm' : 'md'} faint={!takeable} />
     {:else if marked}
       <span
-        class="wonder-mark pointer-events-none absolute -end-1.5 -top-1.5 grid size-6 place-items-center rounded-full border-2 border-(color:--gold-deep) bg-gold text-card-ink shadow-sm"
+        class="wonder-mark absolute -end-1.5 -top-1.5 grid size-6 place-items-center rounded-full border-2 border-(color:--gold-deep) bg-gold text-card-ink shadow-sm"
         aria-hidden="true"
+        {@attach tooltip({ text: t('board.slot.wonderMark'), rulesId: 'wonders' })}
       >
         <Icon name="wonder" class="text-[13px]" />
       </span>

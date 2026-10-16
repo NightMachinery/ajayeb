@@ -19,16 +19,22 @@
   // into a hairline when the missing symbols can no longer come, strong
   // means the seat can win by science with one action now. With `seat`
   // and no `hints`, the hints come from the page's game context.
+  //
+  // The counter (and the pill) always has a tooltip: the count, the warning
+  // and the reach, with the rules' science diagram (compact); it and every
+  // slot link the rules' science section.
   import { hintHide } from '$lib/hints/local.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import { scienceHints, type ScienceHints } from '$lib/view/board-hints';
+  import { sentences } from '$lib/view/tips';
   import { sessionHintScreen } from '$lib/view/hints';
   import { scienceDanger, type Glow } from '$lib/view/threats';
   import type { ScienceSymbol, ScienceView } from '$lib/wire';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { tryGameContext } from '../choices/room';
+  import ScienceDiagram from '../rules/ScienceDiagram.svelte';
 
   interface Props {
     science: ScienceView;
@@ -125,16 +131,25 @@
       .filter(Boolean)
       .join('. ')
   );
-  const counterTip = $derived(
-    [danger ? t('board.science.danger') : '', level === 'calm' ? t('hints.glow.calm') : '', reach]
-      .filter(Boolean)
-      .join(' ')
-  );
+  const counterTip = $derived({
+    text: sentences([
+      t('board.science.label', { count: science.distinct }),
+      danger ? t('board.science.danger') : '',
+      level === 'calm' ? t('hints.glow.calm') : '',
+      reach
+    ]),
+    diagram,
+    rulesId: 'science' as const
+  });
 
   function slotTip(symbol: ScienceSymbol): string {
     return sh?.slots[symbol]?.tip ?? t(labelKey(symbol));
   }
 </script>
+
+{#snippet diagram()}
+  <ScienceDiagram compact />
+{/snippet}
 
 {#if pill}
   <span
@@ -151,7 +166,7 @@
     data-science={science.distinct}
     data-danger={danger ? '' : undefined}
     data-glow={level}
-    {@attach tooltip(counterTip ? { text: counterTip } : undefined)}
+    {@attach tooltip(counterTip)}
   >
     <Icon name="category-green-sm" class="text-xs {danger ? '' : 'text-card-green-ink'}" />
     <span data-must-fit>{formatNumber(science.distinct)}/{formatNumber(6)}</span>
@@ -182,7 +197,7 @@
                 : 'border-rule/40 text-fg-muted/40'}"
           data-symbol={symbol}
           data-symbol-state={state}
-          {@attach tooltip({ text: slotTip(symbol) })}
+          {@attach tooltip({ text: slotTip(symbol), rulesId: 'science' })}
         >
           <!-- The glyph is 12 px (compact) or 14 px: both at or under the
              14 px where the small-grid (-sm) variant reads better than the
@@ -212,7 +227,7 @@
       data-must-fit
       data-glow={level}
       data-science-counter
-      {@attach tooltip(counterTip ? { text: counterTip } : undefined)}
+      {@attach tooltip(counterTip)}
     >
       {formatNumber(science.distinct)}/{formatNumber(6)}
     </span>

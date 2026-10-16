@@ -78,7 +78,7 @@
     {#each effects as effect, i (i)}
       <li class="flex items-start gap-[0.5em]">
         <span class="inline-flex min-w-[2.2em] justify-center pt-[0.05em]">
-          <EffectGlyph {effect} />
+          <EffectGlyph {effect} tip={false} />
         </span>
         <span class="leading-snug">{effectSentence(effect)}</span>
       </li>

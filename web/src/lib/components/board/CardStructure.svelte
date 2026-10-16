@@ -108,6 +108,7 @@
           width={fit.w}
           label={describeSlot(slot, { seat, waiting: dim, selected: selected === slot.index })}
           {afford}
+          cost={seat === undefined ? undefined : slot.costs?.[seat]}
           {dim}
           {ring}
           selected={selected === slot.index}

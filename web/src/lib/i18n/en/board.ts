@@ -173,5 +173,11 @@ export const board = {
   'board.log.extraTurn': '{name} plays again.',
   'board.log.extraTurnLost': "{name}'s extra turn is lost at the end of the age.",
   'board.log.starterChosen': '{name} chooses {starter} to start the next age.',
-  'board.log.resign': '{name} forfeits the game.'
+  'board.log.resign': '{name} forfeits the game.',
+
+  // Tooltips of board micro-elements (M10.tooltip-coverage).
+  'board.slot.wonderMark': 'This card can go under the chosen wonder.',
+  'board.military.trackTip': 'The military track. {lead} {next}',
+  'board.crest.tip': 'The {crest} crest.',
+  'board.crest.tipSelf': 'The {crest} crest: your seat.'
 } as const satisfies Messages;

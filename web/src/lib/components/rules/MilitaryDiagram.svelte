@@ -4,10 +4,18 @@
   // spaces 3 and 6, the pawn on the centre and the capital at the end. The
   // other side is the same. Fixed rule numbers only, no game state. Laid out
   // in HTML, so every label is translatable text; the board is spatial, so
-  // the strip is dir="ltr" like the real track.
+  // the strip is dir="ltr" like the real track. `compact` is the tooltip
+  // size (the track's zone and looting bubbles): narrower, no caption.
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import LootingToken from '../board/LootingToken.svelte';
+
+  interface Props {
+    /** The small variant, for a tooltip bubble. */
+    compact?: boolean;
+  }
+
+  let { compact = false }: Props = $props();
 
   const SPACES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
@@ -27,10 +35,17 @@
 </script>
 
 <figure
-  class="flex flex-col gap-2 rounded-panel border border-rule bg-panel-sunken p-3"
+  class="flex flex-col rounded-panel border border-rule bg-panel-sunken {compact
+    ? 'w-[13.5rem] gap-1 p-1.5'
+    : 'gap-2 p-3'}"
   data-rules-diagram="military"
+  data-compact={compact ? '' : undefined}
 >
-  <div dir="ltr" class="track grid w-full max-w-sm gap-y-1 self-center" aria-hidden="true">
+  <div
+    dir="ltr"
+    class="track grid w-full max-w-sm self-center {compact ? 'gap-y-0.5' : 'gap-y-1'}"
+    aria-hidden="true"
+  >
     <!-- Row 1: the looting tokens above spaces 3 and 6. -->
     <div class="row-start-1 grid place-items-center" style:grid-column={col(3)}>
       <LootingToken value={2} magnitude={3} present />
@@ -81,7 +96,11 @@
       {t('rules.diagram.win')}
     </span>
   </div>
-  <figcaption class="text-xs leading-snug text-fg-muted">{t('rules.diagram.military')}</figcaption>
+  {#if !compact}
+    <figcaption class="text-xs leading-snug text-fg-muted">
+      {t('rules.diagram.military')}
+    </figcaption>
+  {/if}
 </figure>
 
 <style>

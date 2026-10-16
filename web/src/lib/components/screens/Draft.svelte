@@ -129,6 +129,13 @@
     return (wonderBySlug(slug)?.effects ?? []).map(effectSentence);
   }
 
+  /** A picked wonder's chip: its name is printed, so the tooltip says what it does. */
+  function pickedTip(slug: string): string {
+    return effectLines(slug)
+      .map((line) => `${line}.`)
+      .join(' ');
+  }
+
   const seats = [0, 1] as const;
 </script>
 
@@ -281,6 +288,7 @@
                 class="flex h-7 max-w-full min-w-0 items-center gap-1 rounded-[8px] border border-(color:--gold-deep)
                   bg-card-paper px-2 text-[12px] text-card-ink"
                 data-picked={w.wonder}
+                {@attach tooltip({ text: pickedTip(w.wonder) })}
               >
                 <Icon name="wonder" class="shrink-0 text-[13px] text-(--lapis)" />
                 <span class="truncate font-semibold">{wonderName(w.wonder)}</span>

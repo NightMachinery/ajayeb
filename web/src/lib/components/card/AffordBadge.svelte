@@ -19,13 +19,20 @@
   //   flow   part of the trade goes to the opponent (Economy): a small
   //          outlined notch on the badge's end edge
   //
-  // The recap (price-changed-tick, M10.F3): when the card's price changed
-  // since the viewer's last move, the badge takes a tooltip that says so
-  // ("Was 4, now 5: Moon built Clay Pit.", `priceTip`, data-recap-price).
+  // The badge's tooltip says why (view/tips.ts affordTip): the chain and
+  // the card that gives it, free, the city's own production, what a trade
+  // buys at what price (with the trade diagram of the rules, compact), or
+  // how many coins it is short; the chain, trade and short states link the
+  // rules' costs section. The recap (price-changed-tick, M10.F3) adds a line
+  // when the card's price changed since the viewer's last move ("Was 4, now
+  // 5: Moon built Clay Pit.", `priceTip`, data-recap-price).
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Afford } from '$lib/view/afford';
+  import { affordTip } from '$lib/view/tips';
+  import type { CostView } from '$lib/wire';
+  import TradeDiagram from '../rules/TradeDiagram.svelte';
 
   interface Props {
     afford: Afford;
@@ -41,6 +48,8 @@
     flowTo?: string;
     /** How the price changed since the viewer's last move (the recap). */
     priceTip?: string;
+    /** The server's cost breakdown behind the badge, for its tooltip. */
+    cost?: CostView;
     class?: string;
   }
 
@@ -52,12 +61,18 @@
     flow = 0,
     flowTo = '',
     priceTip,
+    cost,
     class: className = ''
   }: Props = $props();
 
-  // An attachment only when there is a line, so a badge without one stays
-  // out of the tooltip registry (and lets taps through to the card).
-  const priceTooltip = $derived(priceTip ? tooltip({ text: priceTip }) : undefined);
+  const tip = $derived.by(() => {
+    const words = affordTip(afford, cost);
+    return {
+      ...words,
+      lines: [...(words.lines ?? []), ...(priceTip ? [priceTip] : [])],
+      diagram: afford.state === 'trade' ? tradeDiagram : undefined
+    };
+  });
 
   const STYLE = {
     chain: 'border-(color:--gold-deep) bg-gold text-card-ink',
@@ -69,16 +84,19 @@
   } as const;
 </script>
 
+{#snippet tradeDiagram()}
+  <TradeDiagram compact />
+{/snippet}
+
 <span
-  class="afford relative inline-flex h-[1.5em] items-center gap-[0.2em] rounded-full border-[1.5px] px-[0.4em]
+  class="afford pointer-events-auto relative inline-flex h-[1.5em] items-center gap-[0.2em] rounded-full border-[1.5px] px-[0.4em]
     leading-none font-bold whitespace-nowrap tabular-nums shadow-sm {STYLE[
     afford.state
   ]} {className}"
   class:opacity-50={dim}
-  class:pointer-events-auto={!!priceTip}
   data-afford={afford.state}
   data-recap-price={priceTip ? '' : undefined}
-  {@attach priceTooltip}
+  {@attach tooltip(tip)}
   data-min-font="10"
   aria-hidden="true"
 >

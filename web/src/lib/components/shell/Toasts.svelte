@@ -14,6 +14,7 @@
   // instead of the class module.
   import X from '@lucide/svelte/icons/x';
   import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { ToastKind, Toasts } from './toast-queue.svelte';
 
   interface Props {
@@ -73,6 +74,7 @@
         type="button"
         class="-me-2 grid size-11 shrink-0 place-items-center text-fg-muted hover:text-fg"
         aria-label={t('shell.dismiss')}
+        {@attach tooltip({ text: t('shell.dismiss') })}
         onclick={() => toasts.dismiss(item.id)}
       >
         <X size={16} />

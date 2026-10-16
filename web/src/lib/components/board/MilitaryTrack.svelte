@@ -35,6 +35,13 @@
   // the capital at 5 or fewer; the pawn's tooltip says the same for the
   // capital it leans toward; and each looting token says what it would take
   // now (looting-token-tooltip).
+  //
+  // Tooltips (M10.tooltip-coverage): every part of the bar has one, in the
+  // compact top-bar variant too. Each zone's shading takes a transparent hit
+  // area with the zone's tooltip (who scores it), the bar itself says who
+  // leads and the next looting, and the zone, looting and capital tooltips
+  // show the rules' military diagram (compact) and link the rules' military
+  // section.
   import { hintHide } from '$lib/hints/local.svelte';
   import { formatNumber, i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
@@ -50,6 +57,7 @@
   } from '$lib/view/track-cells';
   import type { MilitaryView, PawnMoveView } from '$lib/wire';
   import LootingToken from './LootingToken.svelte';
+  import MilitaryDiagram from '../rules/MilitaryDiagram.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { lootText, trackHints, type TrackHints } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
@@ -169,7 +177,12 @@
   });
 
   const ariaLabel = $derived(`${leadText} ${nextText}`);
+  const barTip = $derived(t('board.military.trackTip', { lead: leadText, next: nextText }));
 </script>
+
+{#snippet diagram()}
+  <MilitaryDiagram compact />
+{/snippet}
 
 {#snippet capital(seat: Seat)}
   <div
@@ -198,7 +211,7 @@
     class="capital-crown absolute top-0 grid h-4 w-4 place-items-center rounded-[4px] border border-(color:--gold-deep) bg-gold text-card-ink"
     style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
     data-capital-crown={seat}
-    {@attach tooltip({ text: capitalTip(seat) })}
+    {@attach tooltip({ text: capitalTip(seat), rulesId: 'military' })}
   >
     <Icon name="hint-crown" class="size-3" />
   </span>
@@ -224,6 +237,7 @@
     class="track-bar relative rounded-[5px] border border-rule-strong bg-panel {compact
       ? 'h-4'
       : 'h-6'}"
+    {@attach tooltip({ text: barTip, rulesId: 'military' })}
   >
     <div class="absolute inset-0 overflow-hidden rounded-[4px]" aria-hidden="true">
       {#each SIDES as side (side)}
@@ -240,13 +254,26 @@
       {@render capital(ends[0])}
       {@render capital(ends[1])}
     </div>
+    {#each SIDES as side (side)}
+      {#each TRACK_ZONES as zone (zone.first)}
+        {@const span = zoneSpan(zone, side, leftSeat)}
+        <!-- The zone's tooltip target, above the clipped shading layer. -->
+        <div
+          class="zone zone-hit absolute inset-y-0"
+          style:--from="{span.start}%"
+          style:--to="{span.end}%"
+          data-zone-tip={zone.points * side}
+          {@attach tooltip({ text: zoneTip(side, zone.points), diagram, rulesId: 'military' })}
+        ></div>
+      {/each}
+    {/each}
     {#each ends as seat (seat)}
       <!-- The capital's tooltip target, above the clipped shading layer. -->
       <div
         class="capital capital-hit absolute inset-y-0"
         style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
         data-capital-tip={seat}
-        {@attach tooltip({ text: capitalTip(seat) })}
+        {@attach tooltip({ text: capitalTip(seat), rulesId: 'military' })}
       ></div>
     {/each}
     {#each boundaries as at (at)}
@@ -268,6 +295,7 @@
           present={loot.present}
           size={compact ? 'sm' : 'md'}
           tip={th ? lootText(loot, th.wouldLose.get(loot.at), th.names) : undefined}
+          {diagram}
         />
       </div>
     {/each}
@@ -302,7 +330,7 @@
       style:--pos="{cellCenter(military.position, leftSeat)}%"
       data-pawn={military.position}
       aria-hidden="true"
-      {@attach tooltip({ text: pawnTip })}
+      {@attach tooltip({ text: pawnTip, rulesId: 'military' })}
     >
       <Icon name="military-pawn" class={compact ? 'text-[10px]' : 'text-xs'} />
     </div>
@@ -317,7 +345,7 @@
           <span
             class="zone-value absolute top-0 flex h-4"
             style:--pos="{zoneMiddle(zone, side, leftSeat)}%"
-            {@attach tooltip({ text: zoneTip(side, zone.points) })}
+            {@attach tooltip({ text: zoneTip(side, zone.points), diagram, rulesId: 'military' })}
           >
             {@render tablet(zone.points, '')}
           </span>

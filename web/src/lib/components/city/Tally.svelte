@@ -5,9 +5,11 @@
   // (the counterparts of a card's coin disc and points tablet, which also
   // differ in greyscale: dark on gold, light on green). A leaf component:
   // the number comes from the view; `label` is its spoken form, given by
-  // the caller through t().
+  // the caller through t(). Its tooltip is the spoken form, or `tip` (the
+  // strip's and the city panel's, with the scoring hints as status lines).
   import { formatNumber } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { tooltip, type TooltipContent } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     kind: 'coins' | 'points';
@@ -15,10 +17,12 @@
     /** The spoken form, such as "14 coins" or "If the game ended now: 7 points". */
     label: string;
     size?: 'sm' | 'md';
+    /** The tooltip; by default the spoken form. */
+    tip?: TooltipContent;
     class?: string;
   }
 
-  let { kind, value, label, size = 'sm', class: className = '' }: Props = $props();
+  let { kind, value, label, size = 'sm', tip, class: className = '' }: Props = $props();
 </script>
 
 <span
@@ -30,6 +34,7 @@
   data-tally={kind}
   role="img"
   aria-label={label}
+  {@attach tooltip(tip ?? { text: label })}
 >
   {#if kind === 'points'}
     <Icon name="vp-laurel" class="text-[0.95em]" />

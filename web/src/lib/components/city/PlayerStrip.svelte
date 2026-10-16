@@ -36,6 +36,7 @@
   import { hintHide } from '$lib/hints/local.svelte';
   import { sessionHintScreen } from '$lib/view/hints';
   import { threatList } from '$lib/view/outcome';
+  import { coinsLines, scoreLines } from '$lib/view/tips';
   import {
     glowHints,
     glowWarns,
@@ -131,6 +132,20 @@
   const militaryThreat = $derived(glowWarns(militaryLevel));
   const scienceThreat = $derived(glowWarns(scienceLevel));
   const danger = $derived(militaryThreat || scienceThreat);
+  // The tallies' tooltips: the scoring hints as status lines (M10.HS4's
+  // coinsToNextVp and previewWinner, view/tips.ts).
+  const coinsTip = $derived({
+    text: t('coins.count', { count: player.coins }),
+    lines: coinsLines(player.hints, hintScreen)
+  });
+  const scoreTip = $derived.by(() => {
+    const lines = scoreLines(ctx?.session.view?.hints, hintScreen);
+    return {
+      text: t('board.player.scorePreview', { total: score?.total ?? 0 }),
+      lines,
+      rulesId: lines.length > 0 ? ('scoring' as const) : undefined
+    };
+  });
   const militaryTip = $derived.by(() => {
     const wins = winsOf(glowIn?.hints[seat === 0 ? 1 : 0], 'military');
     if (militaryLevel !== 'strong' || wins.length === 0) return t('board.player.militaryDanger');
@@ -240,7 +255,12 @@
       </ul>
     {/if}
 
-    <Tally kind="coins" value={player.coins} label={t('coins.count', { count: player.coins })} />
+    <Tally
+      kind="coins"
+      value={player.coins}
+      label={t('coins.count', { count: player.coins })}
+      tip={coinsTip}
+    />
     {#if ghost?.coins !== undefined && ghost.coins !== player.coins}
       {@render ghostTally('coins', ghost.coins)}
     {/if}
@@ -249,6 +269,7 @@
         kind="points"
         value={score.total}
         label={t('board.player.scorePreview', { total: score.total })}
+        tip={scoreTip}
       />
       {#if ghost?.score !== undefined && ghost.score !== score.total}
         {@render ghostTally('points', ghost.score)}

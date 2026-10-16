@@ -569,5 +569,51 @@ export const hints = {
     'A small dot beside the mark: the card has more than one hint. Its tooltip lists them all.',
   'rules.hints.review':
     'The advisor, when the game turns it on, reviews your own move after you play: the summary of the other player’s next move says whether a clearly better move was there, and why. Only you see it.',
-  'rules.hints.sampleCard': 'a card'
+  'rules.hints.sampleCard': 'a card',
+
+  // Board-level facts drawn in tooltips (M10.tooltip-coverage, view/tips.ts).
+  // A face-down back (counting): {list} card names; a guild's worth to each
+  // seat now, {first} and {second} hints.unseen.guildYou/Named for seats 0 and 1.
+  'hints.unseen.pool': {
+    one: 'It is {list}.',
+    other: 'One of {count}: {list}.'
+  },
+  'hints.unseen.setAside': {
+    one: '{count} of them is not in the structure.',
+    other: '{count} of them are not in the structure.'
+  },
+  'hints.unseen.guild': '{card}: {first}, {second}.',
+  'hints.unseen.guildYou': '{count} VP for you',
+  'hints.unseen.guildNamed': '{count} VP for {name}',
+  // The coin tally (scoring).
+  'hints.tally.nextVp': {
+    one: '{count} more coin for the next point from coins.',
+    other: '{count} more coins for the next point from coins.'
+  },
+  // The points tally (scoring): who would win on points if the game ended now.
+  'hints.preview.leadYou': {
+    one: 'You would win on points now, by {count}.',
+    other: 'You would win on points now, by {count}.'
+  },
+  'hints.preview.leadNamed': {
+    one: '{name} would win on points now, by {count}.',
+    other: '{name} would win on points now, by {count}.'
+  },
+  'hints.preview.blueYou': 'Tied on points now: you would win on blue points.',
+  'hints.preview.blueNamed': 'Tied on points now: {name} would win on blue points.',
+  'hints.preview.shared': 'Tied on points and on blue points now: a shared victory.',
+  // The chain chips (counting): {place} a hints.place.* phrase.
+  'hints.chain.statusYou': 'You show this symbol: {card} is free for you. It is {place}.',
+  'hints.chain.statusNamed': '{name} shows this symbol: {card} is free for {name}. It is {place}.',
+  'hints.chain.saves': {
+    one: 'The chain saves {count} coin today.',
+    other: 'The chain saves {count} coins today.'
+  },
+  // An owned guild (scoring): {city} is hints.guild.cityYou or cityNamed.
+  'hints.guild.points': {
+    one: '{card}: {count} point now, counting {city}.',
+    other: '{card}: {count} points now, counting {city}.'
+  },
+  'hints.guild.cityYou': 'your city',
+  'hints.guild.cityNamed': '{name}’s city'
 } as const satisfies Messages;

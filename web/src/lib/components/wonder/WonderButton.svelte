@@ -16,7 +16,10 @@
   // `seat`): an hourglass once only one more wonder can be built and this
   // seat still has one to build, and a ring when the seat could afford a
   // wonder at today's prices though no choice of the view builds it now
-  // (the opponent's half of the ready mark). Both have a tooltip.
+  // (the opponent's half of the ready mark). Its tooltip is the spoken
+  // label: the tally, whether a wonder can be built now (the accent dot), and
+  // the hints (the hourglass, the ready ring); it links the rules' wonders
+  // section.
   import { hintHide } from '$lib/hints/local.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
@@ -84,7 +87,7 @@
   data-buildable={buildable ? '' : undefined}
   data-hourglass={bh?.hourglass ? '' : undefined}
   data-ready={bh && bh.ready > 0 && !buildable ? bh.ready : undefined}
-  {@attach tooltip(bh?.tip ? { text: bh.tip } : undefined)}
+  {@attach tooltip({ text: label, rulesId: 'wonders' })}
   {onclick}
 >
   <Icon name="wonder" class="text-base" />

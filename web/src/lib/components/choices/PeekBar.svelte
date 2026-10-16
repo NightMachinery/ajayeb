@@ -9,6 +9,7 @@
   import ChevronUp from '@lucide/svelte/icons/chevron-up';
   import X from '@lucide/svelte/icons/x';
   import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
     /** Already translated. */
@@ -68,6 +69,7 @@
         type="button"
         class="grid min-h-11 min-w-11 shrink-0 place-items-center rounded-full text-fg-muted hover:bg-panel-sunken hover:text-fg"
         aria-label={t('shell.dismiss')}
+        {@attach tooltip({ text: t('shell.dismiss') })}
         onclick={ondismiss}
       >
         <X class="size-4" aria-hidden="true" />

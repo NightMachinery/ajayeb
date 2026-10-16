@@ -18,6 +18,7 @@
   import Copy from '@lucide/svelte/icons/copy';
   import Share2 from '@lucide/svelte/icons/share-2';
   import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import { qrPath, type Presence } from '$lib/ui/online';
   import { seatDisplayName } from '$lib/view/display-name';
   import type { HintSettings, SeatInfo } from '$lib/wire';
@@ -180,6 +181,7 @@
         <div
           class="grid size-44 place-items-center rounded-control bg-card-paper p-3 shadow-panel"
           data-qr
+          {@attach tooltip({ text: t('online.lobby.qr') })}
         >
           {#await qr}
             <span class="size-full rounded-[4px] bg-panel-sunken/40" aria-hidden="true"></span>
