@@ -12,6 +12,11 @@
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import CardFace from '$lib/components/card/CardFace.svelte';
+  import ChainDiagram from '$lib/components/rules/ChainDiagram.svelte';
+  import DiscardDiagram from '$lib/components/rules/DiscardDiagram.svelte';
+  import GuildDiagram from '$lib/components/rules/GuildDiagram.svelte';
+  import SeventhWonderDiagram from '$lib/components/rules/SeventhWonderDiagram.svelte';
+  import StarterDiagram from '$lib/components/rules/StarterDiagram.svelte';
   import ChainChip from '$lib/components/card/ChainChip.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import DismissLayer from '$lib/components/shell/DismissLayer.svelte';
@@ -80,6 +85,13 @@
     </span>
   </span>
 {/snippet}
+
+<!-- The concept diagrams in their compact form, as tooltip diagrams. -->
+{#snippet chainDiagram()}<ChainDiagram compact />{/snippet}
+{#snippet discardDiagram()}<DiscardDiagram compact />{/snippet}
+{#snippet seventhDiagram()}<SeventhWonderDiagram compact />{/snippet}
+{#snippet guildDiagram()}<GuildDiagram compact />{/snippet}
+{#snippet starterDiagram()}<StarterDiagram compact />{/snippet}
 
 <div class="flex flex-col gap-6 text-fg" data-tooltips-gallery>
   <p class="max-w-prose text-sm text-fg-muted">{t('dev.tooltips.intro')}</p>
@@ -193,6 +205,15 @@
     >
       <TooltipBubble text={t('dev.tooltips.laurelTip')} arrowX={40} />
       <TooltipBubble text={t('dev.tooltips.diagramTip')} diagram={trackDiagram} arrowX={120} />
+      <TooltipBubble text={t('rules.costs.chainTitle')} diagram={chainDiagram} arrowX={40} />
+      <TooltipBubble
+        text={t('rules.diagram.discard.action')}
+        diagram={discardDiagram}
+        arrowX={40}
+      />
+      <TooltipBubble text={t('rules.wonders.seventhTitle')} diagram={seventhDiagram} arrowX={40} />
+      <TooltipBubble text={t('rules.guilds.title')} diagram={guildDiagram} arrowX={40} />
+      <TooltipBubble text={t('rules.ageEnd.title')} diagram={starterDiagram} arrowX={40} />
       <TooltipStack
         items={[{ kind: 'card', slug: 'aqueduct', caption: t('card.tip.chainOutStack') }]}
       />
