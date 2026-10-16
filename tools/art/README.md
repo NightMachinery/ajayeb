@@ -307,7 +307,7 @@ Run from the repository root. Commands that launch Chrome must run inside the gu
 - `family.mjs` (browser): `python3 tools/heavy.py run --kind browser -- node tools/art/vector/family.mjs` writes `art-work/vector/family/family@1x.png` and `family@2x.png`: every drawn icon of every set at 16 and 24 px, on paper and on night.
 - `lib.mjs`: shared helpers (paths, `sets.json`, the XML reader, sprite symbols, the Chrome page). Not a command.
 
-Every script prints its usage with `--help`.
+Every script prints its usage with `--help`. A usage mistake or another expected error prints only its message and exits 1 (a refused browser launch exits 2); set `AJAYEB_STACK=1` to print the stack trace for every error. The `tools/chrome/` scripts follow the same rule.
 
 ### Make targets
 

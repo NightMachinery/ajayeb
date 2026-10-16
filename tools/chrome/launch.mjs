@@ -306,10 +306,21 @@ export async function withChrome(fn, opts = {}) {
   }
 }
 
-/** Shared CLI error handling for the tools: refusals and errors exit 2 and 1. */
+/**
+ * Shared CLI error handling for the tools: refusals exit 2, errors 1.
+ * Expected errors (a plain Error, such as a usage mistake, or a parseArgs
+ * error) print their message only, crashes their stack; AJAYEB_STACK=1
+ * prints the stack for every error.
+ */
 export function reportAndExit(err) {
-  console.error(err instanceof LaunchRefused ? err.message : `${err.stack ?? err}`);
-  process.exit(err instanceof LaunchRefused ? 2 : 1);
+  const refused = err instanceof LaunchRefused;
+  const expected =
+    err instanceof Error &&
+    ((typeof err.code === 'string' && err.code.startsWith('ERR_PARSE_ARGS_')) ||
+      Object.getPrototypeOf(err) === Error.prototype);
+  const brief = refused || (expected && process.env.AJAYEB_STACK !== '1');
+  console.error(brief ? err.message : `${err?.stack ?? err}`);
+  process.exit(refused ? 2 : 1);
 }
 
 /** True when the module at `metaUrl` is the script node was asked to run. */
