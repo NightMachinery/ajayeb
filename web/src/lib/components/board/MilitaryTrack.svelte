@@ -187,8 +187,8 @@
         data-to-capital={th.capitals[seat]?.toCapital}>{th.capitals[seat]?.toCapital}</span
       >
     {:else}
-      <!-- About 11 px, where the sun's -sm file reads. -->
-      <Icon name={seat === 0 ? 'crest-sun-sm' : 'crest-moon'} class="text-[11px]" />
+      <!-- About 11 px, where the crests' -sm files read. -->
+      <Icon name={seat === 0 ? 'crest-sun-sm' : 'crest-moon-sm'} class="text-[11px]" />
     {/if}
   </div>
 {/snippet}

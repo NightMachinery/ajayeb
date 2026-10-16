@@ -4,9 +4,6 @@
   // grey card" and so on, one form per effect kind of the catalog. The
   // sentence form is effect-text.ts; EffectGlyphs shows either. Decorative:
   // the card's ARIA name carries the words.
-  import ArchiveRestore from '@lucide/svelte/icons/archive-restore';
-  import RotateCw from '@lucide/svelte/icons/rotate-cw';
-  import X from '@lucide/svelte/icons/x';
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, formatSigned } from '$lib/i18n';
   import type { CatalogEffect } from '$lib/catalog';
@@ -75,7 +72,7 @@
 {/snippet}
 
 {#snippet playAgain()}
-  <RotateCw size="1em" strokeWidth={3} class="shrink-0" />
+  <Icon name="play-again" class="text-[1.1em]" />
 {/snippet}
 
 <span
@@ -141,18 +138,12 @@
   {:else if effect.kind === 'play-again'}
     {@render playAgain()}
   {:else if effect.kind === 'destroy'}
-    <!-- The cross sits on the swatch's corner, so the category glyph under
-         it stays readable. -->
-    <span class="relative me-[0.3em] inline-flex">
-      {@render swatches(effect.colors ?? [])}
-      <span
-        class="absolute -end-[0.45em] -bottom-[0.3em] inline-grid size-[0.8em] place-items-center rounded-full bg-(--paper-bright) text-(--cinnabar) ring-1 ring-(--cinnabar)/50"
-      >
-        <X size="0.7em" strokeWidth={4} />
-      </span>
-    </span>
+    <!-- A broken card, then the colour it destroys: "destroy a brown card". -->
+    <Icon name="destroy-card" class="text-[1.1em] text-(--cinnabar)" />{@render swatches(
+      effect.colors ?? []
+    )}
   {:else if effect.kind === 'build-from-discard'}
-    <ArchiveRestore size="1.1em" strokeWidth={2.5} class="shrink-0" />
+    <Icon name="build-from-discard" class="text-[1.1em]" />
   {:else if effect.kind === 'draw-tokens'}
     <Icon name="token-frame" class="text-[1.1em]" />
     <span class="font-bold tabular-nums" data-min-font="10">×{formatNumber(n)}</span>
