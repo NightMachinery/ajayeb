@@ -14,7 +14,7 @@ export const ICON_DIR = path.join(REPO, 'web/src/lib/icons/svg');
 export const NAMES_TS = path.join(REPO, 'web/src/lib/icons/names.ts');
 export const TOKENS_CSS = path.join(REPO, 'web/src/lib/styles/tokens.css');
 export const SETS_JSON = path.join(REPO, 'art/vector/sets.json');
-export const FONT_DIR = path.join(REPO, 'web/static/fonts');
+export const FONT_DIR = path.join(REPO, 'web/src/lib/fonts');
 
 /** The private run directory (never inside the repo); AJAYEB_RUN_DIR overrides it. */
 export const RUN_DIR = process.env.AJAYEB_RUN_DIR || path.join(os.homedir(), 'tmp/agents/ajayeb');
