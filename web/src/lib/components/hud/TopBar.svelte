@@ -29,6 +29,7 @@
   import Eye from '@lucide/svelte/icons/eye';
   import Flag from '@lucide/svelte/icons/flag';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { restoreFocus } from '$lib/ui/dismiss';
   import BookOpen from '@lucide/svelte/icons/book-open';
   import { openRules } from '../rules/rules-overlay.svelte';
 
@@ -84,6 +85,7 @@
 
   const menuId = $props.id();
   let menu = $state<HTMLElement | undefined>();
+  let menuOpener = $state<HTMLButtonElement | undefined>();
 
   /** Closes the menu, then runs the item's action. */
   function choose(action: (() => void) | undefined): void {
@@ -119,6 +121,7 @@
       <button
         type="button"
         popovertarget="game-menu-{menuId}"
+        bind:this={menuOpener}
         data-control="menu"
         aria-label={t('game.menu.open')}
         {@attach tooltip({ text: t('game.menu.open') })}
@@ -216,6 +219,13 @@
     id="game-menu-{menuId}"
     popover="auto"
     bind:this={menu}
+    onbeforetoggle={(event) => {
+      // Native closing restores focus synchronously. Quietly return it
+      // before that operation so a focus tooltip cannot reenter popovers.
+      if (event.newState === 'closed' && menuOpener && menu?.contains(document.activeElement)) {
+        restoreFocus(menuOpener);
+      }
+    }}
     class="game-menu w-64 max-w-[calc(100vw-1rem)] rounded-panel border border-rule bg-panel p-1.5 text-fg shadow-lg"
     data-game-menu
     role="group"

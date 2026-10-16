@@ -21,6 +21,8 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
   }, testInfo) => {
     const problems = watchHygiene(page);
     const driver = await openHotseatRoom(page, null, 4343);
+    await page.bringToFront();
+    expect(await page.evaluate(() => document.visibilityState)).toBe('visible');
     await driver.visible('[data-control="menu"]').click();
     const item = page.locator('[data-game-menu]:popover-open [data-control="menu-undo"]');
     const anchor = page.locator('[data-game-menu]:popover-open [data-undo-tooltip]');
@@ -48,9 +50,11 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
     await expect(page.locator('[data-game-menu]:popover-open')).toHaveCount(0);
+    await expect(driver.visible('[data-control="menu"]')).toBeFocused();
     expect((await driver.snapshot()).version).toBe(version);
     const view = await currentView(page);
     await playKey(driver, view.choices[0]!.key);
+    await driver.nextTurn();
     await driver.visible('[data-control="menu"]').click();
     await expect(
       page.locator('[data-game-menu]:popover-open [data-control="menu-undo"]')
@@ -62,6 +66,23 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     await arrow.focus();
     await expect(page.getByRole('tooltip')).toHaveText('Undo');
     await expect(arrow).toHaveAttribute('aria-describedby', 'ajayeb-tooltip');
+    await page.keyboard.press('Escape');
+    // Closing a menu must leave focus that has already moved outside alone.
+    await driver.visible('[data-control="menu"]').click();
+    await arrow.focus();
+    await expect(page.getByRole('tooltip')).toHaveText('Undo');
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('[data-game-menu]:popover-open')).toHaveCount(0);
+    await expect(arrow).toBeFocused();
+    // An item action closes quietly too, and sends exactly one undo.
+    await driver.visible('[data-control="menu"]').click();
+    const moved = await driver.snapshot();
+    await page.locator('[data-game-menu]:popover-open [data-control="menu-undo"]').click();
+    await driver.waitAdvance(moved.version);
+    expect((await driver.snapshot()).version).toBe(moved.version + 1);
+    expect((await driver.snapshot()).ply).toBe(moved.ply - 1);
+    await expect(page.locator('[data-game-menu]:popover-open')).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 
@@ -136,12 +157,14 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     // Prove Sound is enabled and the real Presenter instrumentation works
     // before emptiness is evidence of replay suppression.
     expect((await recordedEffects(page)).cues.length).toBeGreaterThan(0);
+    await driver.nextTurn();
     const url = page.url();
     const before = await logLines(driver);
     const history = await page.evaluate(() => window.__ajayeb?.history());
     expect(history).toHaveLength(12);
     await page.reload();
     await driver.waitReady();
+    await driver.nextTurn();
     expect(await logLines(driver)).toEqual(before);
     expect(await recordedEffects(page)).toEqual({ cues: [], haptics: [] });
     expect(await page.evaluate(() => window.__ajayeb?.history())).toEqual(history);
@@ -152,11 +175,13 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     });
     await expect.poll(() => historyFrames).toBe(count + 1);
     await driver.waitReady();
+    await driver.nextTurn();
     expect(await logLines(driver)).toEqual(before);
     expect(await recordedEffects(page)).toEqual({ cues: [], haptics: [] });
     const version = (await driver.snapshot()).version;
     await page.keyboard.press('u');
     await driver.waitAdvance(version);
+    await driver.nextTurn();
     expect(await page.evaluate(() => window.__ajayeb?.history())).toEqual(history!.slice(0, -1));
     expect(await recordedEffects(page)).toEqual({ cues: [], haptics: [] });
     const undone = await logLines(driver);
@@ -164,6 +189,7 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     await page.goto('/');
     await page.goto(url);
     await driver.waitReady();
+    await driver.nextTurn();
     expect(await logLines(driver)).toEqual(undone);
     expect(await recordedEffects(page)).toEqual({ cues: [], haptics: [] });
     expect(problems).toEqual([]);
