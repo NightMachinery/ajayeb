@@ -5,10 +5,10 @@ The effect glyphs that replace the Lucide outlines in EffectGlyph.svelte, and `c
 ## Status
 
 - play-again: done (iteration 3)
-- build-from-discard: done (iteration 2); weakest of the four at 12 px, see below
-- destroy-card: done (iteration 1)
+- build-from-discard: done (iteration 4); still the weakest of the four at 12 px, see below
+- destroy-card: done (iteration 4)
 - crest-moon-sm: done (iteration 3)
-- Browser check, family check and blind check: not yet run (the browser lock was held by another agent's Playwright run when the slice paused).
+- Blind check, browser check and family check: run on 2026-10-16, see the last three sections.
 
 ## Iteration 1 (2026-10-15)
 
@@ -51,3 +51,33 @@ Lint: clean, 0 warnings; the sprite is 27206 bytes raw and 5615 gzipped (budgets
 
 - play-again: clean at 12 to 48 px on paper and night. Done.
 - crest-moon-sm: a fat crescent face at 12 to 48 px, the profile readable from 16 px. Done.
+
+## Blind check (2026-10-16)
+
+One fresh subagent saw only the four icons, unnamed, at 48 px and at their true 16 px raster enlarged, on paper, and was told only what kind of game they come from.
+
+- play-again: "a refresh or rotate arrow"; the most recognisable of the four at 16 px. Good: in context it sits after a wonder or alone, and "again" is what a loop arrow says.
+- crest-moon-sm: "a crescent moon, or a coin with a bite"; at 16 px the bite rounds off. Acceptable: it only ever appears at the track's end beside the sun, where the pair reads as the two capitals.
+- destroy-card: "two tilted bars, like matchsticks". The two halves splayed apart symmetrically, so the card was lost.
+- build-from-discard: "a pin or banner on a stand"; the arrow inside the card was lost at 16 px and the two slabs merged.
+
+## Iteration 4 (2026-10-16)
+
+Renders: art-work/vector/tt2-glyphs/iter-4/ (render-fast.sh at 12, 16 and 48 px on paper and night; the current file and two variants of each icon side by side).
+Lint: clean, 0 warnings; the sprite is 27273 bytes raw and 5638 gzipped.
+
+- destroy-card: the left half now stands upright with the card's rounded corners and only the right half falls away (4 degrees), so the outline reads as one card with a crack through it rather than two bars. A variant with both halves at 3 degrees still read as a pair. Done.
+- build-from-discard: the card is larger (11 by 13), tilted 8 degrees instead of 10, with a wider arrow, and the slabs are 2 units thick. The arrow now survives at 16 px as a light notch with a stem. An upright card over a tray was tried and dropped: it reads as the generic upload icon. Done; at 12 px it is still a small card over a pile and leans on the tooltip and card sheet words.
+
+## Browser check (2026-10-16)
+
+Sheet: art-work/vector/tt2-glyphs/browser/sheet@2x.png (tools/chrome/svg-render.mjs, the four icons and crest-sun-sm for comparison, at 12, 16, 24 and 48 px on paper #f4ecdc, bright paper #fbf6ea, night #1c1915 and the dark theme's navy #14213d, at DPR 2).
+
+- All four hold their shape at every size on all four grounds. crest-moon-sm and crest-sun-sm have the same mass and sit as a pair at 12 px.
+- play-again and destroy-card read from 12 px; build-from-discard from 16 px.
+
+## Family check (2026-10-16)
+
+Sheet: art-work/vector/tt2-glyphs/family/family@1x.png and @2x (tools/art/vector/family.mjs, every set at 16 and 24 px on paper and night).
+
+- The tt2 glyphs are solid fills like the chain and ui-category sets, with the same stroke weight in the loop of play-again as in the chain set's horseshoe. No outline icon is left among the effect glyphs.
