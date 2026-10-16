@@ -218,3 +218,21 @@ export function t<K extends MessageKey>(key: K, ...args: ParamsArg<K>): string {
 export function isFallbackText(text: string): boolean {
   return text.startsWith(FALLBACK_START);
 }
+
+/** Ends a sentence with a full stop. After an English fallback the stop goes
+ *  inside its left-to-right marks, so right-to-left text does not move it to
+ *  the start of the English sentence. */
+export function fullStop(text: string): string {
+  return text.endsWith(FALLBACK_END)
+    ? text.slice(0, -FALLBACK_END.length) + '.' + FALLBACK_END
+    : text + '.';
+}
+
+/** U+200E, U+200F and U+2066 to U+2069: the invisible direction marks that
+ *  t() and interpolate() add in a right-to-left locale. */
+const BIDI_MARKS = /[\u200e\u200f\u2066-\u2069]/g;
+
+/** The text without its invisible direction marks, for counting letters. */
+export function stripBidiMarks(text: string): string {
+  return text.replace(BIDI_MARKS, '');
+}

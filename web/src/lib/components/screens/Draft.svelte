@@ -18,7 +18,7 @@
   // the chips follow it, and each chip's tooltip says the round's order.
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderBySlug } from '$lib/catalog';
-  import { formatNumber, t } from '$lib/i18n';
+  import { formatNumber, fullStop, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { describeWonder } from '$lib/view/describe';
@@ -168,7 +168,7 @@
 {#snippet effects(slug: string, cls: string)}
   <ul class="flex flex-col gap-0.5 {cls}">
     {#each effectLines(slug) as line, i (i)}
-      <li>{line}.</li>
+      <li>{fullStop(line)}</li>
     {/each}
   </ul>
 {/snippet}

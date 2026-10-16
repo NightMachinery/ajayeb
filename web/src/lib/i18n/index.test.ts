@@ -5,6 +5,7 @@ import {
   en,
   formatNumber,
   formatSigned,
+  fullStop,
   i18n,
   MINUS_SIGN,
   interpolate,
@@ -12,6 +13,7 @@ import {
   isLocale,
   pluralCategory,
   selectPlural,
+  stripBidiMarks,
   t
 } from './index';
 
@@ -175,6 +177,14 @@ describe('the Persian stub table', () => {
     const words = [t('card.resource.glass'), t('card.resource.papyrus')];
     expect(words.every(isFallbackText)).toBe(true);
     expect(isFallbackText(t('home.settings.title'))).toBe(false);
+  });
+
+  it('ends an English fallback sentence inside its marks', () => {
+    i18n.set('fa');
+    const english = t('card.effect.buildFromDiscard');
+    expect(fullStop(english)).toBe(START + en['card.effect.buildFromDiscard'] + '.' + END);
+    expect(fullStop(t('home.settings.title'))).toBe('تنظیمات.');
+    expect(stripBidiMarks(fullStop(english))).toBe(en['card.effect.buildFromDiscard'] + '.');
   });
 
   it('leaves English untouched', () => {
