@@ -19,6 +19,12 @@
 // Playwright's own 'block' does. So no ordinary spec ever runs behind the
 // worker's cache. shell.spec.ts, which tests the worker, sets
 // `test.use({ serviceWorkers: 'allow' })`.
+//
+// The `appLocale` option sets the app's own language setting (the locale
+// field of ajayeb:settings) in the same init script, for a spec that runs in
+// another language: rtl.spec.ts uses `test.use({ appLocale: 'fa' })`. It is
+// not Playwright's own `locale` option, which sets the browser's language;
+// the app does not read that.
 
 import { test as base, type BrowserContext } from '@playwright/test';
 
@@ -44,8 +50,9 @@ function installMotionOffScript(opts: {
   settingsKey: string;
   guardKey: string;
   tipsKey: string;
+  locale?: string;
 }): void {
-  const { settingsKey, guardKey, tipsKey } = opts;
+  const { settingsKey, guardKey, tipsKey, locale } = opts;
   try {
     if (window.sessionStorage.getItem(guardKey)) return;
     window.sessionStorage.setItem(guardKey, '1');
@@ -61,6 +68,7 @@ function installMotionOffScript(opts: {
     // swallows it, which would eat a driver's next click after every move
     // of the other side. Specs about it (move-summary.spec.ts) turn it on.
     current['showOpponentMove'] = false;
+    if (locale) current['locale'] = locale;
     window.localStorage.setItem(settingsKey, JSON.stringify(current));
     // A first-time tip (M10.HS5) is a callout that swallows the next tap
     // elsewhere, like the summary. Specs about tips turn them back on.
@@ -70,11 +78,12 @@ function installMotionOffScript(opts: {
   }
 }
 
-async function addMotionOff(context: BrowserContext): Promise<void> {
+async function addMotionOff(context: BrowserContext, locale?: string): Promise<void> {
   await context.addInitScript(installMotionOffScript, {
     settingsKey: SETTINGS_KEY,
     guardKey: GUARD_KEY,
-    tipsKey: TIPS_KEY
+    tipsKey: TIPS_KEY,
+    ...(locale ? { locale } : {})
   });
 }
 
@@ -101,11 +110,13 @@ export async function installMotionOff(context: BrowserContext): Promise<void> {
  *  from here instead of from '@playwright/test', so its default `context`,
  *  and therefore its default `page`, starts with Animation off. `expect`
  *  needs no override: specs keep importing it from '@playwright/test'. */
-export const test = base.extend({
+export const test = base.extend<{ appLocale: string | undefined }>({
   // The default for every spec; a spec that tests the worker allows it.
   serviceWorkers: 'block',
-  context: async ({ context }, use) => {
-    await addMotionOff(context);
+  // The app's language setting; unset leaves the app's default (English).
+  appLocale: [undefined, { option: true }],
+  context: async ({ context, appLocale }, use) => {
+    await addMotionOff(context, appLocale);
     await use(context);
   }
 });
