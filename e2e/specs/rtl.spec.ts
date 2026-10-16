@@ -274,9 +274,10 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
     await test.step('the result screen', async () => {
       await openAt(page, baseURL, rec, rec.marks.gameOver);
       expect(await page.evaluate(() => window.__ajayeb?.view()?.phase)).toBe('gameOver');
-      await expect(page.locator('[data-game-over]').filter({ visible: true })).toHaveCount(1);
+      const result = 'dialog[open]:has([data-score-table])';
+      await expect(page.locator(result)).toBeVisible();
       expect(await documentDir(page)).toEqual({ dir: 'rtl', lang: 'fa' });
-      expect(await computedDir(page, '[data-game-over]')).toBe('rtl');
+      expect(await computedDir(page, result)).toBe('rtl');
       expectNoHorizontalScroll(await probeLayout(page), 'result');
     });
 
