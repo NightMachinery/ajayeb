@@ -259,8 +259,8 @@ export const card = {
     other: 'The city makes every resource it needs. Pay {count} coins.'
   },
   'card.tip.badgeTrade': {
-    one: 'Buy the missing resources from the bank: {count} coin in all.',
-    other: 'Buy the missing resources from the bank: {count} coins in all.'
+    one: 'Buy the missing resources from the bank. Pay {count} coin in all.',
+    other: 'Buy the missing resources from the bank. Pay {count} coins in all.'
   },
   'card.tip.tradeLine': {
     one: '{n} {resource} at {count} coin each',
