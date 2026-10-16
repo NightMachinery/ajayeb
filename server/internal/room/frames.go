@@ -127,7 +127,8 @@ func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]b
 		events = nil
 	}
 	st := wire.NewState(r.code, r.version, r.roomInfo(mem, presence), r.you(mem), ack, events, v)
-	st.CanUndo = r.canUndo(mem)
+	st.UndoUnavailable = r.undoUnavailable(mem)
+	st.CanUndo = st.UndoUnavailable == nil
 	st.Thinking = r.thinking()
 	if fc.roomLog == nil {
 		fc.roomLog = wireRoomLog(r.file.RoomLog)

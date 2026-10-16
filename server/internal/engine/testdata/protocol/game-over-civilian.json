@@ -190,6 +190,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 3,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -236,6 +237,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 1,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -282,6 +284,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 1,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -335,6 +338,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 3,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -971,6 +975,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 3,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1017,6 +1022,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 1,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1063,6 +1069,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 1,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1116,6 +1123,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 3,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1751,6 +1759,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 3,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1797,6 +1806,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 1,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1843,6 +1853,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 1,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1896,6 +1907,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 3,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,

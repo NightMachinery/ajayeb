@@ -48,6 +48,7 @@
     "admin": false
   },
   "canUndo": false,
+  "undoUnavailable": "online",
   "events": [],
   "roomLog": [
     {

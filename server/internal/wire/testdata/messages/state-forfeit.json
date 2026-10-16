@@ -48,6 +48,7 @@
     "admin": true
   },
   "canUndo": false,
+  "undoUnavailable": "online",
   "events": [
     {
       "kind": "resign",
@@ -89,6 +90,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -116,6 +118,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -158,6 +161,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -177,6 +181,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -247,6 +252,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -266,6 +272,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -300,6 +307,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -319,6 +327,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -353,6 +362,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -372,6 +382,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -406,6 +417,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -433,6 +445,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -539,6 +552,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -558,6 +572,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -589,6 +604,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -608,6 +624,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -639,6 +656,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -658,6 +676,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -689,6 +708,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -708,6 +728,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -739,6 +760,7 @@
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -758,6 +780,7 @@
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,

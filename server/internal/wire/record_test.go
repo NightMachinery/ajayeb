@@ -138,6 +138,7 @@ var recordCases = []recordCase{
 		}
 		st := stateFrame(t, "H8TQ4R", &s, lastEv, wire.ModeHotseat, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 10})
 		st.CanUndo = true
+		st.UndoUnavailable = nil
 		return st
 	}},
 	{"state-ai-thinking", func(t *testing.T) wire.ServerMessage {
@@ -153,6 +154,7 @@ var recordCases = []recordCase{
 		st := stateFrame(t, "B4TQ7N", &s, ev, wire.ModeAI, wire.RoomStatusPlaying, &wire.Ack{ClientID: "c1", Seq: 1})
 		bot := 1
 		st.CanUndo, st.Thinking = true, &bot
+		st.UndoUnavailable = nil
 		return st
 	}},
 	{"state-pending-token", func(t *testing.T) wire.ServerMessage {

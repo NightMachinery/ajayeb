@@ -429,6 +429,13 @@ func vwCheckCost(t *testing.T, s *engine.State, seat engine.Seat, cv *view.CostV
 	printed catalog.Cost, discountBy string, chainIn catalog.Chain, where string) {
 	t.Helper()
 	p := &s.Players[seat]
+	if q.Affordable {
+		if cv.CoinsAfter == nil || *cv.CoinsAfter != int(p.Coins)-int(q.Total) {
+			t.Errorf("%s: coinsAfter %v, want %d", where, cv.CoinsAfter, int(p.Coins)-int(q.Total))
+		}
+	} else if cv.CoinsAfter != nil {
+		t.Errorf("%s: unaffordable cost has coinsAfter %d", where, *cv.CoinsAfter)
+	}
 	if cv.Total != int(q.Total) || cv.Affordable != q.Affordable || cv.ChainFree != q.ChainFree || cv.ToOpponent != int(q.ToOpponent) {
 		t.Errorf("%s: total %d affordable %v chainFree %v toOpponent %d, the quote is %+v",
 			where, cv.Total, cv.Affordable, cv.ChainFree, cv.ToOpponent, q)
@@ -996,6 +1003,14 @@ func TestViewCostBreakdown(t *testing.T) {
 			Affordable: w.shortfall == 0, Shortfall: w.shortfall, ChainFree: w.chainFrom != "", PrintedCoins: w.printed,
 			Own: w.own, Producers: w.producers, Discount: w.discount, Trade: w.trade, TradeTotal: tradeTotal,
 			Total: w.total, ToOpponent: w.toOpp, UrbanismBonus: w.bonus,
+		}
+		if wantCV.Affordable {
+			seat := 0
+			if strings.HasPrefix(c.what, "seat 1") {
+				seat = 1
+			}
+			n := int(s.Players[seat].Coins) - w.total
+			wantCV.CoinsAfter = &n
 		}
 		if w.chainFrom != "" {
 			wantCV.ChainFrom = vwStr(w.chainFrom)

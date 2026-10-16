@@ -584,6 +584,22 @@ full game view described under "The view and its events" below.
   true for a spectator.
 - `canUndo` says whether an `undo` with this frame's version as its base
   would be accepted now. It is never true when `room.allowUndo` is false.
+  `undoUnavailable` is present exactly when `canUndo` is false, with the
+  first applicable code in this precedence: `online` (online room),
+  `disabled` (undo explicitly off), `spectator` (no held seat), `game-over`,
+  `no-human-decision` (no human decision remains to take back). The last
+  includes an untouched game and a bot-first game before the human acts.
+  Every frame path carries this pair, including presence, join, resync and
+  undo. An available undo omits the reason. The client translates the code;
+  local offline and pending-request explanations take precedence while the
+  transport prevents sending.
+- Every affordable cost breakdown carries `coinsAfter`, the payer's purse
+  immediately after subtracting `total`, before Urbanism or any later
+  building/wonder effect. This includes free, chain-free, traded and wonder
+  payments, both seats' face-up previews and available wonder costs. Economy
+  changes the recipient, not this purse. Unaffordable previews omit the
+  field and retain `shortfall`; no impossible purse or clamped deficit is
+  reported. Every legal choice with a cost carries it.
 - `thinking`, present only while a bot is searching, is the bot's seat.
 - `ack`, present only in the sender's copy of the direct answer to an `act`
   or `undo`, names that request's client id and `seq`.

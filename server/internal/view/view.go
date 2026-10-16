@@ -90,7 +90,10 @@ type ResourceCounts struct {
 // covered once: by own production, by a flexible producer, by a discount or
 // by trade.
 type CostView struct {
-	Affordable    bool           `json:"affordable"`
+	Affordable bool `json:"affordable"`
+	// CoinsAfter is the payer's purse immediately after payment, before
+	// Urbanism or any building/wonder effect. Absent when unaffordable.
+	CoinsAfter    *int           `json:"coinsAfter,omitempty"`
 	Shortfall     int            `json:"shortfall"` // coins missing when not affordable, else 0
 	ChainFree     bool           `json:"chainFree"` // free through a chain symbol: nothing else applies
 	ChainFrom     *string        `json:"chainFrom,omitempty"`

@@ -49,6 +49,7 @@
     "admin": true
   },
   "canUndo": false,
+  "undoUnavailable": "no-human-decision",
   "events": [],
   "roomLog": [],
   "view": {

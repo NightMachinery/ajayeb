@@ -389,6 +389,7 @@ export const fixtures = [
       "admin": true
     },
     "canUndo": false,
+    "undoUnavailable": "no-human-decision",
     "events": [],
     "roomLog": [],
     "view": {
@@ -632,6 +633,7 @@ export const fixtures = [
       "admin": true
     },
     "canUndo": false,
+    "undoUnavailable": "online",
     "events": [
       {
         "kind": "resign",
@@ -673,6 +675,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -700,6 +703,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -742,6 +746,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -761,6 +766,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -831,6 +837,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -850,6 +857,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -884,6 +892,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -903,6 +912,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -937,6 +947,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -956,6 +967,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -990,6 +1002,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -1017,6 +1030,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -1123,6 +1137,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -1142,6 +1157,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -1173,6 +1189,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -1192,6 +1209,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -1223,6 +1241,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -1242,6 +1261,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -1273,6 +1293,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -1292,6 +1313,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -1323,6 +1345,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -1342,6 +1365,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -2076,6 +2100,7 @@ export const fixtures = [
       "admin": true
     },
     "canUndo": false,
+    "undoUnavailable": "game-over",
     "events": [
       {
         "kind": "build",
@@ -2131,6 +2156,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2165,6 +2191,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2214,6 +2241,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2241,6 +2269,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2283,6 +2312,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -2317,6 +2347,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -2366,6 +2397,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2407,6 +2439,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2463,6 +2496,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2497,6 +2531,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2545,6 +2580,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2579,6 +2615,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2685,6 +2722,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2719,6 +2757,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2768,6 +2807,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 36,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2787,6 +2827,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2821,6 +2862,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2855,6 +2897,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -2903,6 +2946,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 34,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -2922,6 +2966,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -2992,6 +3037,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -3033,6 +3079,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -3090,6 +3137,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 26,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -3136,6 +3184,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 26,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -3189,6 +3238,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 28,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -3228,6 +3278,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 28,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -3768,6 +3819,7 @@ export const fixtures = [
       "admin": false
     },
     "canUndo": false,
+    "undoUnavailable": "online",
     "events": [],
     "roomLog": [
       {
@@ -4222,6 +4274,7 @@ export const fixtures = [
       "admin": true
     },
     "canUndo": false,
+    "undoUnavailable": "online",
     "events": [],
     "history": [
       {
@@ -4401,6 +4454,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -4428,6 +4482,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 9,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -4470,6 +4525,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -4489,6 +4545,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 10,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -4559,6 +4616,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -4578,6 +4636,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 10,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -4612,6 +4671,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -4631,6 +4691,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 10,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -4665,6 +4726,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -4692,6 +4754,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 9,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -4734,6 +4797,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -4753,6 +4817,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 11,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -4784,6 +4849,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -4803,6 +4869,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 8,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -4897,6 +4964,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -4916,6 +4984,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 9,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -4947,6 +5016,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -4966,6 +5036,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 9,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -4997,6 +5068,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -5016,6 +5088,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 11,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -5047,6 +5120,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -5066,6 +5140,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 11,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -5186,6 +5261,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 0,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -5306,6 +5382,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 3,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -5352,6 +5429,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 3,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -5398,6 +5476,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 3,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -5451,6 +5530,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 2,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -5568,6 +5648,7 @@ export const fixtures = [
           "card": "wood-reserve",
           "cost": {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -5599,6 +5680,7 @@ export const fixtures = [
           "wonder": "colossus",
           "cost": {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -5638,6 +5720,7 @@ export const fixtures = [
           "card": "pharmacist",
           "cost": {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -5669,6 +5752,7 @@ export const fixtures = [
           "wonder": "colossus",
           "cost": {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -5708,6 +5792,7 @@ export const fixtures = [
           "card": "palisade",
           "cost": {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -5739,6 +5824,7 @@ export const fixtures = [
           "wonder": "colossus",
           "cost": {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -5778,6 +5864,7 @@ export const fixtures = [
           "card": "altar",
           "cost": {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -5809,6 +5896,7 @@ export const fixtures = [
           "wonder": "colossus",
           "cost": {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -5848,6 +5936,7 @@ export const fixtures = [
           "card": "theater",
           "cost": {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -5879,6 +5968,7 @@ export const fixtures = [
           "wonder": "colossus",
           "cost": {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -6676,6 +6766,7 @@ export const fixtures = [
       "admin": false
     },
     "canUndo": false,
+    "undoUnavailable": "online",
     "events": [],
     "roomLog": [
       {
@@ -6907,6 +6998,7 @@ export const fixtures = [
       "admin": true
     },
     "canUndo": false,
+    "undoUnavailable": "online",
     "events": [
       {
         "kind": "build",
@@ -6949,6 +7041,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 36,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -6983,6 +7076,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7032,6 +7126,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 40,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7051,6 +7146,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7085,6 +7181,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 38,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -7104,6 +7201,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -7138,6 +7236,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 37,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -7157,6 +7256,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -7191,6 +7291,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 34,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7225,6 +7326,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7273,6 +7375,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 34,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7307,6 +7410,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7413,6 +7517,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 36,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7447,6 +7552,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7496,6 +7602,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 36,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 4,
@@ -7515,6 +7622,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 4,
@@ -7549,6 +7657,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 38,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -7568,6 +7677,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 2,
@@ -7601,6 +7711,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 34,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7628,6 +7739,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7706,6 +7818,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 36,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7733,6 +7846,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -7777,6 +7891,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 32,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -7823,6 +7938,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 30,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -7869,6 +7985,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 32,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -7915,6 +8032,7 @@ export const fixtures = [
               "removed": false,
               "cost": {
                 "affordable": true,
+                "coinsAfter": 30,
                 "shortfall": 0,
                 "chainFree": false,
                 "printedCoins": 0,
@@ -8405,6 +8523,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8424,6 +8543,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8458,6 +8578,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8477,6 +8598,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8546,6 +8668,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8573,6 +8696,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8615,6 +8739,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8642,6 +8767,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8684,6 +8810,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -8703,6 +8830,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -8737,6 +8865,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8756,6 +8885,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8795,6 +8925,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -8814,6 +8945,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 3,
@@ -8904,6 +9036,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -8923,6 +9056,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 1,
@@ -8954,6 +9088,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -8973,6 +9108,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 4,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -9004,6 +9140,7 @@ export const fixtures = [
           "costs": [
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -9031,6 +9168,7 @@ export const fixtures = [
             },
             {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -9545,6 +9683,7 @@ export const fixtures = [
           "card": "stone-reserve",
           "cost": {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -9575,6 +9714,7 @@ export const fixtures = [
           "card": "stone-pit",
           "cost": {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -9605,6 +9745,7 @@ export const fixtures = [
           "card": "altar",
           "cost": {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -9635,6 +9776,7 @@ export const fixtures = [
           "card": "stable",
           "cost": {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10503,6 +10645,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10522,6 +10665,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10556,6 +10700,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -10575,6 +10720,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -10645,6 +10791,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -10664,6 +10811,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -10698,6 +10846,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -10717,6 +10866,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -10751,6 +10901,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10778,6 +10929,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10820,6 +10972,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10847,6 +11000,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10886,6 +11040,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -10913,6 +11068,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -11015,6 +11171,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -11042,6 +11199,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -11081,6 +11239,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -11100,6 +11259,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -11131,6 +11291,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -11150,6 +11311,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -11181,6 +11343,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -11200,6 +11363,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -11233,6 +11397,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -11279,6 +11444,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -11332,6 +11498,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -11464,6 +11631,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -11549,6 +11717,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -11588,6 +11757,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -11706,6 +11876,7 @@ export const protocolFixtures = [
         "card": "stable",
         "cost": {
           "affordable": true,
+          "coinsAfter": 7,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -11745,6 +11916,7 @@ export const protocolFixtures = [
         "wonder": "piraeus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -11792,6 +11964,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -11846,6 +12019,7 @@ export const protocolFixtures = [
         "wonder": "circus-maximus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -11892,6 +12066,7 @@ export const protocolFixtures = [
         "card": "garrison",
         "cost": {
           "affordable": true,
+          "coinsAfter": 7,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -11931,6 +12106,7 @@ export const protocolFixtures = [
         "wonder": "piraeus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -11978,6 +12154,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12032,6 +12209,7 @@ export const protocolFixtures = [
         "wonder": "circus-maximus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12078,6 +12256,7 @@ export const protocolFixtures = [
         "card": "stone-pit",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 1,
@@ -12109,6 +12288,7 @@ export const protocolFixtures = [
         "wonder": "piraeus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12156,6 +12336,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12210,6 +12391,7 @@ export const protocolFixtures = [
         "wonder": "circus-maximus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12256,6 +12438,7 @@ export const protocolFixtures = [
         "card": "quarry",
         "cost": {
           "affordable": true,
+          "coinsAfter": 9,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12287,6 +12470,7 @@ export const protocolFixtures = [
         "wonder": "piraeus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12334,6 +12518,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12388,6 +12573,7 @@ export const protocolFixtures = [
         "wonder": "circus-maximus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12434,6 +12620,7 @@ export const protocolFixtures = [
         "card": "stone-reserve",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 3,
@@ -12465,6 +12652,7 @@ export const protocolFixtures = [
         "wonder": "piraeus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12512,6 +12700,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12566,6 +12755,7 @@ export const protocolFixtures = [
         "wonder": "circus-maximus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -12937,6 +13127,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -12956,6 +13147,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -12990,6 +13182,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -13009,6 +13202,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -13079,6 +13273,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -13098,6 +13293,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -13132,6 +13328,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -13151,6 +13348,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -13185,6 +13383,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13212,6 +13411,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13254,6 +13454,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13281,6 +13482,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13320,6 +13522,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13347,6 +13550,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13449,6 +13653,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13476,6 +13681,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13515,6 +13721,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -13534,6 +13741,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -13565,6 +13773,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13584,6 +13793,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -13615,6 +13825,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -13634,6 +13845,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -13667,6 +13879,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -13713,6 +13926,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -13766,6 +13980,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -13898,6 +14113,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -13983,6 +14199,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -14022,6 +14239,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -14187,6 +14405,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14206,6 +14425,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14240,6 +14460,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -14259,6 +14480,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -14329,6 +14551,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -14348,6 +14571,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -14382,6 +14606,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -14401,6 +14626,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -14435,6 +14661,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14462,6 +14689,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14504,6 +14732,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14531,6 +14760,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14570,6 +14800,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14597,6 +14828,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14699,6 +14931,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14726,6 +14959,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14765,6 +14999,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -14784,6 +15019,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -14815,6 +15051,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14834,6 +15071,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -14865,6 +15103,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -14884,6 +15123,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -14917,6 +15157,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -14963,6 +15204,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -15016,6 +15258,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -15148,6 +15391,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -15233,6 +15477,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -15272,6 +15517,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -15438,6 +15684,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -15457,6 +15704,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -15491,6 +15739,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15510,6 +15759,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15580,6 +15830,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15599,6 +15850,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15633,6 +15885,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15660,6 +15913,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15702,6 +15956,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -15721,6 +15976,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -15755,6 +16011,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -15774,6 +16031,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -15865,6 +16123,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15892,6 +16151,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15931,6 +16191,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15958,6 +16219,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -15997,6 +16259,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -16016,6 +16279,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -16047,6 +16311,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -16074,6 +16339,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -16113,6 +16379,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -16132,6 +16399,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -16163,6 +16431,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -16190,6 +16459,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -16687,6 +16957,7 @@ export const protocolFixtures = [
         "card": "workshop",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -16725,6 +16996,7 @@ export const protocolFixtures = [
         "card": "baths",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -16763,6 +17035,7 @@ export const protocolFixtures = [
         "card": "quarry",
         "cost": {
           "affordable": true,
+          "coinsAfter": 7,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -16793,6 +17066,7 @@ export const protocolFixtures = [
         "card": "apothecary",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -16831,6 +17105,7 @@ export const protocolFixtures = [
         "card": "scriptorium",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 2,
@@ -16861,6 +17136,7 @@ export const protocolFixtures = [
         "card": "garrison",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -18059,6 +18335,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -18078,6 +18355,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -18112,6 +18390,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18131,6 +18410,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18201,6 +18481,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18220,6 +18501,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18254,6 +18536,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18281,6 +18564,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18323,6 +18607,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -18342,6 +18627,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -18376,6 +18662,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -18395,6 +18682,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -18486,6 +18774,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18513,6 +18802,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18552,6 +18842,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18579,6 +18870,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18618,6 +18910,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18637,6 +18930,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18668,6 +18962,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18695,6 +18990,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18734,6 +19030,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -18753,6 +19050,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -18784,6 +19082,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -18811,6 +19110,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19355,6 +19655,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -19374,6 +19675,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -19408,6 +19710,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19427,6 +19730,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19497,6 +19801,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19516,6 +19821,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19550,6 +19856,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19577,6 +19884,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19619,6 +19927,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -19638,6 +19947,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 1,
@@ -19672,6 +19982,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -19691,6 +20002,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -19782,6 +20094,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19809,6 +20122,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19848,6 +20162,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19875,6 +20190,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19914,6 +20230,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19933,6 +20250,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19964,6 +20282,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -19991,6 +20310,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20030,6 +20350,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -20049,6 +20370,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -20080,6 +20402,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20107,6 +20430,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20651,6 +20975,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20670,6 +20995,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20704,6 +21030,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20738,6 +21065,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20787,6 +21115,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -20806,6 +21135,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -20840,6 +21170,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20867,6 +21198,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -20909,6 +21241,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -20943,6 +21276,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -20991,6 +21325,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -21025,6 +21360,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -21131,6 +21467,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -21172,6 +21509,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -21228,6 +21566,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -21247,6 +21586,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -21281,6 +21621,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -21300,6 +21641,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -21333,6 +21675,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -21367,6 +21710,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -21413,6 +21757,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -21432,6 +21777,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -21493,6 +21839,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -21512,6 +21859,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -21551,6 +21899,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -21590,6 +21939,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -21629,6 +21979,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -21969,6 +22320,7 @@ export const protocolFixtures = [
         "card": "shelf-quarry",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 2,
@@ -22000,6 +22352,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 0,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -22040,6 +22393,7 @@ export const protocolFixtures = [
         "wonder": "colossus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 0,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -22080,6 +22434,7 @@ export const protocolFixtures = [
         "wonder": "great-lighthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 0,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -22126,6 +22481,7 @@ export const protocolFixtures = [
         "card": "sawmill",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 2,
@@ -22157,6 +22513,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 0,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -22197,6 +22554,7 @@ export const protocolFixtures = [
         "wonder": "colossus",
         "cost": {
           "affordable": true,
+          "coinsAfter": 0,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -22237,6 +22595,7 @@ export const protocolFixtures = [
         "wonder": "great-lighthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 0,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -22331,6 +22690,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22350,6 +22710,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22384,6 +22745,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22418,6 +22780,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22467,6 +22830,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -22486,6 +22850,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -22520,6 +22885,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22547,6 +22913,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22589,6 +22956,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -22623,6 +22991,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -22671,6 +23040,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22705,6 +23075,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22811,6 +23182,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22852,6 +23224,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -22908,6 +23281,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -22927,6 +23301,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -22961,6 +23336,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -22980,6 +23356,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -23013,6 +23390,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23047,6 +23425,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23093,6 +23472,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23112,6 +23492,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23173,6 +23554,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23192,6 +23574,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23231,6 +23614,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -23270,6 +23654,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -23309,6 +23694,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -23695,6 +24081,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23714,6 +24101,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23748,6 +24136,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23782,6 +24171,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23831,6 +24221,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23850,6 +24241,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23884,6 +24276,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23911,6 +24304,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -23953,6 +24347,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -23987,6 +24382,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -24035,6 +24431,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -24069,6 +24466,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -24175,6 +24573,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -24216,6 +24615,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -24272,6 +24672,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -24291,6 +24692,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -24325,6 +24727,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -24344,6 +24747,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -24377,6 +24781,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -24411,6 +24816,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -24457,6 +24863,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -24476,6 +24883,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -24537,6 +24945,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -24556,6 +24965,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -24595,6 +25005,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -24634,6 +25045,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -24673,6 +25085,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 0,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -25060,6 +25473,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -25079,6 +25493,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -25113,6 +25528,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25147,6 +25563,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25196,6 +25613,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -25215,6 +25633,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -25249,6 +25668,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25283,6 +25703,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25332,6 +25753,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25366,6 +25788,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25414,6 +25837,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -25448,6 +25872,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -25554,6 +25979,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -25573,6 +25999,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -25607,6 +26034,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25634,6 +26062,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25676,6 +26105,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25695,6 +26125,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25728,6 +26159,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25762,6 +26194,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25839,6 +26272,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25858,6 +26292,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -25905,6 +26340,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -25944,6 +26380,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -25983,6 +26420,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -26386,6 +26824,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -26405,6 +26844,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -26439,6 +26879,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26473,6 +26914,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26522,6 +26964,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -26541,6 +26984,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -26575,6 +27019,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26609,6 +27054,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26658,6 +27104,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26692,6 +27139,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26740,6 +27188,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -26774,6 +27223,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -26880,6 +27330,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -26899,6 +27350,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -26933,6 +27385,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -26960,6 +27413,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27002,6 +27456,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27021,6 +27476,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27054,6 +27510,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27088,6 +27545,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27165,6 +27623,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27184,6 +27643,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27231,6 +27691,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -27270,6 +27731,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -27309,6 +27771,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -27705,6 +28168,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -27724,6 +28188,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -27758,6 +28223,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27792,6 +28258,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27841,6 +28308,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -27860,6 +28328,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -27894,6 +28363,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27928,6 +28398,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -27977,6 +28448,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28011,6 +28483,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28059,6 +28532,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -28093,6 +28567,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -28199,6 +28674,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -28218,6 +28694,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -28252,6 +28729,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28279,6 +28757,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28321,6 +28800,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28340,6 +28820,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28373,6 +28854,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28407,6 +28889,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28484,6 +28967,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28503,6 +28987,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -28550,6 +29035,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -28589,6 +29075,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -28628,6 +29115,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -29025,6 +29513,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29044,6 +29533,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29078,6 +29568,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29105,6 +29596,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29147,6 +29639,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29174,6 +29667,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29216,6 +29710,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29235,6 +29730,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29269,6 +29765,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29310,6 +29807,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29365,6 +29863,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29406,6 +29905,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29519,6 +30019,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29538,6 +30039,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29572,6 +30074,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29599,6 +30102,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29641,6 +30145,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29675,6 +30180,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29723,6 +30229,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29757,6 +30264,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29803,6 +30311,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29837,6 +30346,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -29913,6 +30423,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -29932,6 +30443,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -29971,6 +30483,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -30010,6 +30523,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -30049,6 +30563,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -30437,6 +30952,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30456,6 +30972,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30490,6 +31007,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30517,6 +31035,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30559,6 +31078,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30586,6 +31106,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30628,6 +31149,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30647,6 +31169,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30681,6 +31204,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30722,6 +31246,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30777,6 +31302,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30818,6 +31344,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30931,6 +31458,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30950,6 +31478,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -30984,6 +31513,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31011,6 +31541,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31053,6 +31584,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31087,6 +31619,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31135,6 +31668,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31169,6 +31703,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31215,6 +31750,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31249,6 +31785,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -31325,6 +31862,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -31344,6 +31882,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -31383,6 +31922,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -31422,6 +31962,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -31461,6 +32002,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -31802,6 +32344,7 @@ export const protocolFixtures = [
         "card": "laboratory",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -31847,6 +32390,7 @@ export const protocolFixtures = [
         "card": "sawmill",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 2,
@@ -32323,6 +32867,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32342,6 +32887,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32376,6 +32922,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32403,6 +32950,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32445,6 +32993,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32472,6 +33021,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32514,6 +33064,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32533,6 +33084,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32567,6 +33119,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32608,6 +33161,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32663,6 +33217,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32704,6 +33259,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32817,6 +33373,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 29,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32836,6 +33393,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32870,6 +33428,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32897,6 +33456,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32939,6 +33499,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -32973,6 +33534,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33021,6 +33583,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33055,6 +33618,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33101,6 +33665,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33135,6 +33700,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33211,6 +33777,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -33230,6 +33797,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -33269,6 +33837,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -33308,6 +33877,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -33347,6 +33917,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -33735,6 +34306,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -33769,6 +34341,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -33818,6 +34391,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33837,6 +34411,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33871,6 +34446,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33890,6 +34466,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33924,6 +34501,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -33965,6 +34543,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34021,6 +34600,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34055,6 +34635,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34103,6 +34684,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -34122,6 +34704,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -34213,6 +34796,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34240,6 +34824,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34282,6 +34867,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34301,6 +34887,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34335,6 +34922,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34369,6 +34957,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34417,6 +35006,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -34436,6 +35026,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -34467,6 +35058,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34501,6 +35093,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34577,6 +35170,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34611,6 +35205,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -34667,6 +35262,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -34706,6 +35302,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -34745,6 +35342,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -35133,6 +35731,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -35167,6 +35766,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -35216,6 +35816,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35235,6 +35836,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35269,6 +35871,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35288,6 +35891,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35322,6 +35926,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35363,6 +35968,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35419,6 +36025,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35453,6 +36060,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35501,6 +36109,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -35520,6 +36129,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -35611,6 +36221,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35638,6 +36249,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35680,6 +36292,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35699,6 +36312,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35733,6 +36347,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35767,6 +36382,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35815,6 +36431,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -35834,6 +36451,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -35865,6 +36483,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35899,6 +36518,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -35975,6 +36595,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -36009,6 +36630,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -36065,6 +36687,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -36104,6 +36727,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -36143,6 +36767,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -36484,6 +37109,7 @@ export const protocolFixtures = [
         "card": "parade-ground",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -36529,6 +37155,7 @@ export const protocolFixtures = [
         "card": "school",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -37020,6 +37647,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -37054,6 +37682,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -37103,6 +37732,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37122,6 +37752,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37156,6 +37787,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37175,6 +37807,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37209,6 +37842,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37250,6 +37884,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37306,6 +37941,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37340,6 +37976,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37388,6 +38025,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -37407,6 +38045,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -37498,6 +38137,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37525,6 +38165,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37567,6 +38208,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37586,6 +38228,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37620,6 +38263,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37654,6 +38298,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37702,6 +38347,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -37721,6 +38367,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -37752,6 +38399,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37786,6 +38434,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37862,6 +38511,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37896,6 +38546,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -37952,6 +38603,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -37991,6 +38643,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -38030,6 +38683,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -38418,6 +39072,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38452,6 +39107,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38501,6 +39157,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38535,6 +39192,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38584,6 +39242,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -38611,6 +39270,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -38653,6 +39313,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38687,6 +39348,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38736,6 +39398,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38755,6 +39418,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38788,6 +39452,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38822,6 +39487,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -38928,6 +39594,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -38947,6 +39614,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -38981,6 +39649,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -39015,6 +39684,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -39064,6 +39734,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39098,6 +39769,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39146,6 +39818,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39173,6 +39846,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39246,6 +39920,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39287,6 +39962,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39340,6 +40016,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39374,6 +40051,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39428,6 +40106,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -39467,6 +40146,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -39506,6 +40186,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -39910,6 +40591,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39944,6 +40626,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -39993,6 +40676,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40027,6 +40711,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40076,6 +40761,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -40103,6 +40789,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -40145,6 +40832,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40179,6 +40867,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40228,6 +40917,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40247,6 +40937,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40280,6 +40971,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40314,6 +41006,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40420,6 +41113,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -40439,6 +41133,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -40473,6 +41168,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -40507,6 +41203,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -40556,6 +41253,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40590,6 +41288,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40638,6 +41337,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40665,6 +41365,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40738,6 +41439,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40779,6 +41481,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40832,6 +41535,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40866,6 +41570,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -40920,6 +41625,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -40959,6 +41665,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -40998,6 +41705,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -41390,6 +42098,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41424,6 +42133,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41473,6 +42183,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41507,6 +42218,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41556,6 +42268,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -41583,6 +42296,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -41625,6 +42339,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41659,6 +42374,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41708,6 +42424,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41727,6 +42444,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41760,6 +42478,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41794,6 +42513,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -41900,6 +42620,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -41919,6 +42640,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -41953,6 +42675,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -41987,6 +42710,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -42036,6 +42760,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42070,6 +42795,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42118,6 +42844,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42145,6 +42872,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42218,6 +42946,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42259,6 +42988,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42312,6 +43042,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42346,6 +43077,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42400,6 +43132,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -42439,6 +43172,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -42478,6 +43212,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -42869,6 +43604,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42898,6 +43634,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -42949,6 +43686,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": true,
             "chainFrom": "theater",
@@ -42969,6 +43707,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -43000,6 +43739,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -43037,6 +43777,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -43081,6 +43822,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -43105,6 +43847,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -43151,6 +43894,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -43178,6 +43922,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -43249,6 +43994,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -43411,6 +44157,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -43480,6 +44227,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 8,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -43618,6 +44366,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -43672,6 +44421,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -43711,6 +44461,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -43834,6 +44585,7 @@ export const protocolFixtures = [
         "card": "courthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 9,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -43875,6 +44627,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -43913,6 +44666,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -43950,6 +44704,7 @@ export const protocolFixtures = [
         "card": "statue",
         "cost": {
           "affordable": true,
+          "coinsAfter": 9,
           "shortfall": 0,
           "chainFree": true,
           "chainFrom": "theater",
@@ -43982,6 +44737,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44020,6 +44776,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44057,6 +44814,7 @@ export const protocolFixtures = [
         "card": "aqueduct",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44106,6 +44864,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44144,6 +44903,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44181,6 +44941,7 @@ export const protocolFixtures = [
         "card": "caravansery",
         "cost": {
           "affordable": true,
+          "coinsAfter": 7,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 2,
@@ -44217,6 +44978,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44255,6 +45017,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44292,6 +45055,7 @@ export const protocolFixtures = [
         "card": "walls",
         "cost": {
           "affordable": true,
+          "coinsAfter": 7,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44331,6 +45095,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44369,6 +45134,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44413,6 +45179,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 6,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -44451,6 +45218,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 8,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -45048,6 +45816,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45077,6 +45846,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45128,6 +45898,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": true,
             "chainFrom": "theater",
@@ -45148,6 +45919,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45179,6 +45951,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45216,6 +45989,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45260,6 +46034,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -45284,6 +46059,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -45330,6 +46106,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45357,6 +46134,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45428,6 +46206,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -45590,6 +46369,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -45659,6 +46439,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 8,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -45797,6 +46578,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -45851,6 +46633,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -45890,6 +46673,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -46057,6 +46841,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46086,6 +46871,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46137,6 +46923,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": true,
             "chainFrom": "theater",
@@ -46157,6 +46944,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46188,6 +46976,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 8,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46225,6 +47014,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46269,6 +47059,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -46293,6 +47084,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 0,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -46339,6 +47131,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46366,6 +47159,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46437,6 +47231,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -46599,6 +47394,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 6,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -46668,6 +47464,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 8,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -46806,6 +47603,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 2,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -46860,6 +47658,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 7,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -46899,6 +47698,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -47069,6 +47869,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47103,6 +47904,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47152,6 +47954,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47193,6 +47996,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47242,6 +48046,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47276,6 +48081,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47318,6 +48124,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47352,6 +48159,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47401,6 +48209,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47428,6 +48237,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47469,6 +48279,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -47488,6 +48299,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -47579,6 +48391,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47606,6 +48419,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47648,6 +48462,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -47682,6 +48497,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -47731,6 +48547,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -47750,6 +48567,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -47783,6 +48601,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47810,6 +48629,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47888,6 +48708,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47922,6 +48743,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -47976,6 +48798,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 18,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -48015,6 +48838,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -48054,6 +48878,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -48135,6 +48960,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -48273,6 +49099,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -48444,6 +49271,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48478,6 +49306,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48527,6 +49356,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48568,6 +49398,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48617,6 +49448,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48651,6 +49483,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48693,6 +49526,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48727,6 +49561,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48776,6 +49611,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48803,6 +49639,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48844,6 +49681,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -48863,6 +49701,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -48954,6 +49793,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -48981,6 +49821,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49023,6 +49864,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -49057,6 +49899,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -49106,6 +49949,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -49125,6 +49969,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -49158,6 +50003,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49185,6 +50031,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49263,6 +50110,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49297,6 +50145,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49351,6 +50200,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 18,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -49390,6 +50240,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -49429,6 +50280,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -49510,6 +50362,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -49648,6 +50501,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -49812,6 +50666,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49846,6 +50701,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49895,6 +50751,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49936,6 +50793,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -49985,6 +50843,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50019,6 +50878,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50061,6 +50921,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50095,6 +50956,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50144,6 +51006,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50171,6 +51034,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50212,6 +51076,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -50231,6 +51096,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -50322,6 +51188,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50349,6 +51216,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50391,6 +51259,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -50425,6 +51294,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -50474,6 +51344,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 27,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -50493,6 +51364,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -50526,6 +51398,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50553,6 +51426,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50631,6 +51505,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 23,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50665,6 +51540,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -50719,6 +51595,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 18,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -50758,6 +51635,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 21,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -50797,6 +51675,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -50878,6 +51757,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -51016,6 +51896,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -52911,6 +53792,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -52930,6 +53812,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -52964,6 +53847,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -52998,6 +53882,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53047,6 +53932,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53081,6 +53967,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53130,6 +54017,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53157,6 +54045,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53199,6 +54088,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -53233,6 +54123,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -53281,6 +54172,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53315,6 +54207,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53421,6 +54314,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53462,6 +54356,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53518,6 +54413,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53552,6 +54448,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53601,6 +54498,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53642,6 +54540,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53697,6 +54596,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -53716,6 +54616,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -53747,6 +54648,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53766,6 +54668,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -53827,6 +54730,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -53846,6 +54750,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -53885,6 +54790,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -53924,6 +54830,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -53963,6 +54870,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -54349,6 +55257,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54368,6 +55277,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54402,6 +55312,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54436,6 +55347,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54485,6 +55397,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54519,6 +55432,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54568,6 +55482,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54595,6 +55510,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54637,6 +55553,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -54671,6 +55588,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -54719,6 +55637,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54753,6 +55672,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54859,6 +55779,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54900,6 +55821,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54956,6 +55878,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -54990,6 +55913,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -55039,6 +55963,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -55080,6 +56005,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -55135,6 +56061,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -55154,6 +56081,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -55185,6 +56113,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -55204,6 +56133,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -55265,6 +56195,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -55284,6 +56215,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -55323,6 +56255,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -55362,6 +56295,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -55401,6 +56335,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -55740,6 +56675,7 @@ export const protocolFixtures = [
         "card": "brewery",
         "cost": {
           "affordable": true,
+          "coinsAfter": 7,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -55770,6 +56706,7 @@ export const protocolFixtures = [
         "card": "shelf-quarry",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 2,
@@ -56246,6 +57183,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56265,6 +57203,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56299,6 +57238,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56333,6 +57273,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56382,6 +57323,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56416,6 +57358,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56465,6 +57408,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56492,6 +57436,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56534,6 +57479,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -56568,6 +57514,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -56616,6 +57563,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56650,6 +57598,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56756,6 +57705,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56797,6 +57747,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56853,6 +57804,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56887,6 +57839,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56936,6 +57889,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -56977,6 +57931,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -57032,6 +57987,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -57051,6 +58007,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -57082,6 +58039,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -57101,6 +58059,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -57162,6 +58121,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -57181,6 +58141,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -57220,6 +58181,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -57259,6 +58221,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -57298,6 +58261,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -57843,6 +58807,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -57889,6 +58854,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -57935,6 +58901,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -57988,6 +58955,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -58606,6 +59574,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -58652,6 +59621,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -58698,6 +59668,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -58751,6 +59722,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -59368,6 +60340,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -59414,6 +60387,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -59460,6 +60434,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -59513,6 +60488,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -59971,6 +60947,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60005,6 +60982,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60054,6 +61032,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -60073,6 +61052,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -60107,6 +61087,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60134,6 +61115,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60176,6 +61158,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -60210,6 +61193,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -60259,6 +61243,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60293,6 +61278,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60341,6 +61327,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -60360,6 +61347,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -60451,6 +61439,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -60470,6 +61459,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -60504,6 +61494,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -60531,6 +61522,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -60573,6 +61565,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60600,6 +61593,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60641,6 +61635,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60675,6 +61670,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60760,6 +61756,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60794,6 +61791,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -60848,6 +61846,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -60887,6 +61886,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -60926,6 +61926,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -61448,6 +62449,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -61482,6 +62484,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -61531,6 +62534,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -61550,6 +62554,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -61584,6 +62589,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -61611,6 +62617,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -61653,6 +62660,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -61687,6 +62695,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -61736,6 +62745,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -61770,6 +62780,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -61818,6 +62829,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -61837,6 +62849,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -61928,6 +62941,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -61947,6 +62961,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -61981,6 +62996,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -62008,6 +63024,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -62050,6 +63067,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62077,6 +63095,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62118,6 +63137,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62152,6 +63172,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62237,6 +63258,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62271,6 +63293,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62325,6 +63348,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -62364,6 +63388,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -62403,6 +63428,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -62924,6 +63950,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -62958,6 +63985,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63007,6 +64035,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -63026,6 +64055,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -63060,6 +64090,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63087,6 +64118,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63129,6 +64161,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -63163,6 +64196,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -63212,6 +64246,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63246,6 +64281,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63294,6 +64330,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -63313,6 +64350,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -63404,6 +64442,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -63423,6 +64462,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -63457,6 +64497,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 25,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -63484,6 +64525,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -63526,6 +64568,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63553,6 +64596,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63594,6 +64638,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63628,6 +64673,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63713,6 +64759,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63747,6 +64794,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -63801,6 +64849,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -63840,6 +64889,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -63879,6 +64929,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -64401,6 +65452,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64435,6 +65487,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64484,6 +65537,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64503,6 +65557,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64537,6 +65592,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64571,6 +65627,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64620,6 +65677,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -64639,6 +65697,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -64673,6 +65732,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -64692,6 +65752,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -64725,6 +65786,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 33,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -64744,6 +65806,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -64835,6 +65898,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -64854,6 +65918,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -64888,6 +65953,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64915,6 +65981,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64957,6 +66024,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -64984,6 +66052,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65025,6 +66094,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65059,6 +66129,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65144,6 +66215,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65178,6 +66250,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65228,6 +66301,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -65274,6 +66348,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 26,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -65327,6 +66402,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -65366,6 +66442,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -65773,6 +66850,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65807,6 +66885,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65856,6 +66935,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65875,6 +66955,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65909,6 +66990,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65943,6 +67025,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -65992,6 +67075,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -66011,6 +67095,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -66045,6 +67130,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -66064,6 +67150,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -66097,6 +67184,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 33,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -66116,6 +67204,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -66207,6 +67296,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -66226,6 +67316,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -66260,6 +67351,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66287,6 +67379,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66329,6 +67422,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66356,6 +67450,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66397,6 +67492,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66431,6 +67527,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66516,6 +67613,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66550,6 +67648,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -66600,6 +67699,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -66646,6 +67746,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 26,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -66699,6 +67800,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -66738,6 +67840,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -67144,6 +68247,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67178,6 +68282,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67227,6 +68332,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67246,6 +68352,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67280,6 +68387,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67314,6 +68422,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67363,6 +68472,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -67382,6 +68492,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -67416,6 +68527,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -67435,6 +68547,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -67468,6 +68581,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 33,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -67487,6 +68601,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -67578,6 +68693,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -67597,6 +68713,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -67631,6 +68748,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67658,6 +68776,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67700,6 +68819,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67727,6 +68847,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67768,6 +68889,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67802,6 +68924,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67887,6 +69010,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67921,6 +69045,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -67971,6 +69096,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -68017,6 +69143,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 26,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -68070,6 +69197,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -68109,6 +69237,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 28,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -68517,6 +69646,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68600,6 +69730,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68732,6 +69863,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68773,6 +69905,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68828,6 +69961,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68855,6 +69989,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68896,6 +70031,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68937,6 +70073,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -68992,6 +70129,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69112,6 +70250,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69223,6 +70362,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69334,6 +70474,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69368,6 +70509,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69416,6 +70558,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69563,6 +70706,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -69654,6 +70798,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -69700,6 +70845,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -69746,6 +70892,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -69792,6 +70939,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -70308,6 +71456,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70391,6 +71540,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70523,6 +71673,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70564,6 +71715,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70619,6 +71771,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70646,6 +71799,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70687,6 +71841,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70728,6 +71883,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70783,6 +71939,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -70903,6 +72060,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -71014,6 +72172,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -71125,6 +72284,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -71159,6 +72319,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -71207,6 +72368,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -71354,6 +72516,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -71445,6 +72608,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -71491,6 +72655,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -71537,6 +72702,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -71583,6 +72749,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -72098,6 +73265,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72181,6 +73349,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72313,6 +73482,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72354,6 +73524,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72409,6 +73580,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72436,6 +73608,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72477,6 +73650,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72518,6 +73692,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72573,6 +73748,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72693,6 +73869,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72804,6 +73981,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72915,6 +74093,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72949,6 +74128,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -72997,6 +74177,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -73144,6 +74325,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -73235,6 +74417,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 24,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -73281,6 +74464,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -73327,6 +74511,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -73373,6 +74558,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74048,6 +75234,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74101,6 +75288,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74154,6 +75342,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74200,6 +75389,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74279,6 +75469,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74325,6 +75516,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74371,6 +75563,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74410,6 +75603,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74810,6 +76004,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74863,6 +76058,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74916,6 +76112,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -74962,6 +76159,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75041,6 +76239,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75087,6 +76286,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75133,6 +76333,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75172,6 +76373,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75571,6 +76773,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75624,6 +76827,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75677,6 +76881,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75723,6 +76928,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75802,6 +77008,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75848,6 +77055,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75894,6 +77102,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -75933,6 +77142,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -76174,6 +77384,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76201,6 +77412,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76243,6 +77455,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76277,6 +77490,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76326,6 +77540,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -76345,6 +77560,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -76379,6 +77595,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76406,6 +77623,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76448,6 +77666,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76489,6 +77708,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76544,6 +77764,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76563,6 +77784,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76654,6 +77876,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -76673,6 +77896,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -76707,6 +77931,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76741,6 +77966,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76790,6 +78016,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76824,6 +78051,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76872,6 +78100,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76906,6 +78135,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76952,6 +78182,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -76979,6 +78210,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77048,6 +78280,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77082,6 +78315,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77138,6 +78372,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -77177,6 +78412,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -77216,6 +78452,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -77607,6 +78844,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77634,6 +78872,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77676,6 +78915,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77710,6 +78950,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77759,6 +79000,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -77778,6 +79020,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -77812,6 +79055,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77839,6 +79083,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77881,6 +79126,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77922,6 +79168,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77977,6 +79224,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -77996,6 +79244,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78087,6 +79336,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -78106,6 +79356,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -78140,6 +79391,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78174,6 +79426,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78223,6 +79476,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78257,6 +79511,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78305,6 +79560,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78339,6 +79595,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78385,6 +79642,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78412,6 +79670,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78481,6 +79740,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78515,6 +79775,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -78571,6 +79832,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -78610,6 +79872,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -78649,6 +79912,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -78993,6 +80257,7 @@ export const protocolFixtures = [
         "card": "walls",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -79031,6 +80296,7 @@ export const protocolFixtures = [
         "card": "horse-breeders",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -79522,6 +80788,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79549,6 +80816,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79591,6 +80859,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79625,6 +80894,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79674,6 +80944,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -79693,6 +80964,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -79727,6 +80999,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79754,6 +81027,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79796,6 +81070,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79837,6 +81112,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79892,6 +81168,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -79911,6 +81188,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80002,6 +81280,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -80021,6 +81300,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -80055,6 +81335,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80089,6 +81370,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80138,6 +81420,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80172,6 +81455,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80220,6 +81504,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80254,6 +81539,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80300,6 +81586,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80327,6 +81614,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80396,6 +81684,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80430,6 +81719,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80486,6 +81776,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -80525,6 +81816,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -80564,6 +81856,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -80956,6 +82249,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -80983,6 +82277,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81025,6 +82320,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81059,6 +82355,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81143,6 +82440,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81177,6 +82475,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81225,6 +82524,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81259,6 +82559,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81307,6 +82608,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81341,6 +82643,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81389,6 +82692,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81430,6 +82734,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81509,6 +82814,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81550,6 +82856,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81606,6 +82913,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81647,6 +82955,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81703,6 +83012,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81751,6 +83061,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81813,6 +83124,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81854,6 +83166,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81907,6 +83220,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -81955,6 +83269,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82045,6 +83360,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82093,6 +83409,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82159,6 +83476,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82198,6 +83516,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82244,6 +83563,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82297,6 +83617,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82376,6 +83697,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82422,6 +83744,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82475,6 +83798,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82521,6 +83845,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -82683,6 +84008,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82710,6 +84036,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82752,6 +84079,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82786,6 +84114,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82870,6 +84199,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82904,6 +84234,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82952,6 +84283,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -82986,6 +84318,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83034,6 +84367,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83068,6 +84402,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83116,6 +84451,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83157,6 +84493,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83236,6 +84573,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83277,6 +84615,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83333,6 +84672,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83374,6 +84714,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83430,6 +84771,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83478,6 +84820,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83540,6 +84883,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83581,6 +84925,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83634,6 +84979,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83682,6 +85028,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83772,6 +85119,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83820,6 +85168,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -83886,6 +85235,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -83925,6 +85275,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -83971,6 +85322,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -84024,6 +85376,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -84103,6 +85456,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -84149,6 +85503,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -84202,6 +85557,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -84248,6 +85604,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -84362,6 +85719,7 @@ export const protocolFixtures = [
         "card": "palace",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84422,6 +85780,7 @@ export const protocolFixtures = [
         "wonder": "hanging-gardens",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84469,6 +85828,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84523,6 +85883,7 @@ export const protocolFixtures = [
         "wonder": "great-lighthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84570,6 +85931,7 @@ export const protocolFixtures = [
         "wonder": "appian-way",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84616,6 +85978,7 @@ export const protocolFixtures = [
         "card": "builders-guild",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84676,6 +86039,7 @@ export const protocolFixtures = [
         "wonder": "hanging-gardens",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84723,6 +86087,7 @@ export const protocolFixtures = [
         "wonder": "temple-of-artemis",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84777,6 +86142,7 @@ export const protocolFixtures = [
         "wonder": "great-lighthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 5,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84824,6 +86190,7 @@ export const protocolFixtures = [
         "wonder": "appian-way",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -84918,6 +86285,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -84945,6 +86313,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -84987,6 +86356,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85021,6 +86391,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85105,6 +86476,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85139,6 +86511,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85187,6 +86560,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85221,6 +86595,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85269,6 +86644,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85303,6 +86679,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85351,6 +86728,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85392,6 +86770,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85471,6 +86850,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85512,6 +86892,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85568,6 +86949,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85609,6 +86991,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85665,6 +87048,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85713,6 +87097,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85775,6 +87160,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 22,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85816,6 +87202,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85869,6 +87256,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -85917,6 +87305,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86007,6 +87396,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 20,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86055,6 +87445,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86121,6 +87512,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86160,6 +87552,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86206,6 +87599,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86259,6 +87653,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 20,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86338,6 +87733,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86384,6 +87780,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86437,6 +87834,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 5,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86483,6 +87881,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 3,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -86644,6 +88043,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 37,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -86663,6 +88063,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -86697,6 +88098,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86716,6 +88118,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86750,6 +88153,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86777,6 +88181,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86819,6 +88224,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86860,6 +88266,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86916,6 +88323,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86950,6 +88358,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -86998,6 +88407,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87025,6 +88435,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87124,6 +88535,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87143,6 +88555,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87177,6 +88590,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87211,6 +88625,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87260,6 +88675,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87279,6 +88695,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87312,6 +88729,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -87331,6 +88749,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -87401,6 +88820,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87435,6 +88855,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -87486,6 +88907,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -87532,6 +88954,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -87578,6 +89001,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -87624,6 +89048,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -88049,6 +89474,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 37,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -88068,6 +89494,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -88102,6 +89529,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88121,6 +89549,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88155,6 +89584,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88182,6 +89612,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88224,6 +89655,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88265,6 +89697,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88321,6 +89754,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88355,6 +89789,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88403,6 +89838,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88430,6 +89866,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88529,6 +89966,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88548,6 +89986,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88582,6 +90021,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88616,6 +90056,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88665,6 +90106,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88684,6 +90126,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88717,6 +90160,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -88736,6 +90180,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -88806,6 +90251,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88840,6 +90286,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -88891,6 +90338,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -88937,6 +90385,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -88983,6 +90432,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -89029,6 +90479,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -89427,6 +90878,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 37,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -89446,6 +90898,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -89480,6 +90933,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89499,6 +90953,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89533,6 +90988,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89560,6 +91016,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89602,6 +91059,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89643,6 +91101,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89699,6 +91158,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89733,6 +91193,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89781,6 +91242,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89808,6 +91270,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89907,6 +91370,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89926,6 +91390,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89960,6 +91425,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -89994,6 +91460,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90043,6 +91510,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 40,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90062,6 +91530,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90095,6 +91564,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 36,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -90114,6 +91584,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -90184,6 +91655,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90218,6 +91690,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90269,6 +91742,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -90315,6 +91789,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 30,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -90361,6 +91836,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -90407,6 +91883,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 32,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -90806,6 +92283,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -90825,6 +92303,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -90859,6 +92338,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90893,6 +92373,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90942,6 +92423,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -90976,6 +92458,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91025,6 +92508,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91059,6 +92543,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91108,6 +92593,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91149,6 +92635,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91204,6 +92691,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91223,6 +92711,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91314,6 +92803,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91348,6 +92838,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91397,6 +92888,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91431,6 +92923,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91480,6 +92973,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -91499,6 +92993,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -91532,6 +93027,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91566,6 +93062,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91651,6 +93148,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91678,6 +93176,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -91725,6 +93224,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -91764,6 +93264,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -91803,6 +93304,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -92216,6 +93718,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -92235,6 +93738,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -92269,6 +93773,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92303,6 +93808,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92352,6 +93858,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92386,6 +93893,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92435,6 +93943,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92469,6 +93978,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92518,6 +94028,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92559,6 +94070,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92614,6 +94126,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92633,6 +94146,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92724,6 +94238,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92758,6 +94273,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92807,6 +94323,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92841,6 +94358,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92890,6 +94408,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -92909,6 +94428,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -92942,6 +94462,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -92976,6 +94497,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93061,6 +94583,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93088,6 +94611,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93135,6 +94659,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -93174,6 +94699,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -93213,6 +94739,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -93605,6 +95132,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -93624,6 +95152,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -93658,6 +95187,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 26,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93692,6 +95222,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93741,6 +95272,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93775,6 +95307,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93824,6 +95357,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93858,6 +95392,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93907,6 +95442,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -93948,6 +95484,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94003,6 +95540,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94022,6 +95560,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94113,6 +95652,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94147,6 +95687,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94196,6 +95737,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94230,6 +95772,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94279,6 +95822,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -94298,6 +95842,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -94331,6 +95876,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94365,6 +95911,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94450,6 +95997,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 24,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94477,6 +96025,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -94524,6 +96073,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -94563,6 +96113,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -94602,6 +96153,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 22,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -94995,6 +96547,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 31,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -95019,6 +96572,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -95061,6 +96615,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95093,6 +96648,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95135,6 +96691,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -95169,6 +96726,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -95218,6 +96776,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -95237,6 +96796,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -95271,6 +96831,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95290,6 +96851,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95323,6 +96885,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -95342,6 +96905,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -95433,6 +96997,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95472,6 +97037,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95528,6 +97094,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95567,6 +97134,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95623,6 +97191,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95642,6 +97211,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95675,6 +97245,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95707,6 +97278,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95753,6 +97325,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95785,6 +97358,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95861,6 +97435,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -95893,6 +97468,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96092,6 +97668,7 @@ export const protocolFixtures = [
         "card": "laboratory",
         "cost": {
           "affordable": true,
+          "coinsAfter": 30,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -96135,6 +97712,7 @@ export const protocolFixtures = [
         "card": "walls",
         "cost": {
           "affordable": true,
+          "coinsAfter": 32,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -96226,6 +97804,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 31,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -96250,6 +97829,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -96292,6 +97872,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96324,6 +97905,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96366,6 +97948,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -96400,6 +97983,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -96449,6 +98033,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -96468,6 +98053,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -96502,6 +98088,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96521,6 +98108,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96554,6 +98142,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -96573,6 +98162,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -96664,6 +98254,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96703,6 +98294,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96759,6 +98351,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96798,6 +98391,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96854,6 +98448,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96873,6 +98468,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96906,6 +98502,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96938,6 +98535,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -96984,6 +98582,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97016,6 +98615,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97092,6 +98692,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97124,6 +98725,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97369,6 +98971,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 31,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -97393,6 +98996,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -97435,6 +99039,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97467,6 +99072,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97509,6 +99115,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 28,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -97543,6 +99150,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -97592,6 +99200,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -97611,6 +99220,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 4,
@@ -97645,6 +99255,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97664,6 +99275,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97697,6 +99309,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -97716,6 +99329,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -97807,6 +99421,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97846,6 +99461,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97902,6 +99518,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97941,6 +99558,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -97997,6 +99615,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 34,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98016,6 +99635,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98049,6 +99669,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98081,6 +99702,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98127,6 +99749,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 30,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98159,6 +99782,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98235,6 +99859,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 32,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98267,6 +99892,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98513,6 +100139,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98547,6 +100174,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98596,6 +100224,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98623,6 +100252,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98665,6 +100295,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -98684,6 +100315,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -98718,6 +100350,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98752,6 +100385,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98801,6 +100435,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -98828,6 +100463,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -98869,6 +100505,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98888,6 +100525,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -98979,6 +100617,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99013,6 +100652,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99062,6 +100702,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -99096,6 +100737,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -99145,6 +100787,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99164,6 +100807,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99197,6 +100841,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -99216,6 +100861,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -99281,6 +100927,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99322,6 +100969,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99375,6 +101023,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99409,6 +101058,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -99457,6 +101107,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -99503,6 +101154,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -99588,6 +101240,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -99936,6 +101589,7 @@ export const protocolFixtures = [
         "card": "archery-range",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -99989,6 +101643,7 @@ export const protocolFixtures = [
         "wonder": "great-lighthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100036,6 +101691,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100076,6 +101732,7 @@ export const protocolFixtures = [
         "wonder": "hanging-gardens",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100122,6 +101779,7 @@ export const protocolFixtures = [
         "card": "parade-ground",
         "cost": {
           "affordable": true,
+          "coinsAfter": 3,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100168,6 +101826,7 @@ export const protocolFixtures = [
         "wonder": "great-lighthouse",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100215,6 +101874,7 @@ export const protocolFixtures = [
         "wonder": "pyramids",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100255,6 +101915,7 @@ export const protocolFixtures = [
         "wonder": "hanging-gardens",
         "cost": {
           "affordable": true,
+          "coinsAfter": 1,
           "shortfall": 0,
           "chainFree": false,
           "printedCoins": 0,
@@ -100446,6 +102107,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100480,6 +102142,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100529,6 +102192,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100556,6 +102220,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100598,6 +102263,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -100617,6 +102283,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -100651,6 +102318,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100685,6 +102353,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100734,6 +102403,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -100761,6 +102431,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -100802,6 +102473,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100821,6 +102493,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100912,6 +102585,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100946,6 +102620,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -100995,6 +102670,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -101029,6 +102705,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -101078,6 +102755,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101097,6 +102775,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101130,6 +102809,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -101149,6 +102829,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -101214,6 +102895,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101255,6 +102937,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101308,6 +102991,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101342,6 +103026,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101390,6 +103075,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -101436,6 +103122,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -101521,6 +103208,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -101915,6 +103603,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101949,6 +103638,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -101998,6 +103688,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102025,6 +103716,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102067,6 +103759,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 6,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -102086,6 +103779,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -102120,6 +103814,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102154,6 +103849,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102203,6 +103899,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 4,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -102230,6 +103927,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 2,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 3,
@@ -102271,6 +103969,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102290,6 +103989,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102381,6 +104081,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102415,6 +104116,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102464,6 +104166,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -102498,6 +104201,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -102547,6 +104251,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 9,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102566,6 +104271,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102599,6 +104305,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 7,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -102618,6 +104325,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 5,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 2,
@@ -102683,6 +104391,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102724,6 +104433,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102777,6 +104487,7 @@ export const protocolFixtures = [
         "costs": [
           {
             "affordable": true,
+            "coinsAfter": 3,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102811,6 +104522,7 @@ export const protocolFixtures = [
           },
           {
             "affordable": true,
+            "coinsAfter": 1,
             "shortfall": 0,
             "chainFree": false,
             "printedCoins": 0,
@@ -102859,6 +104571,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -102905,6 +104618,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,
@@ -102990,6 +104704,7 @@ export const protocolFixtures = [
             "removed": false,
             "cost": {
               "affordable": true,
+              "coinsAfter": 1,
               "shortfall": 0,
               "chainFree": false,
               "printedCoins": 0,

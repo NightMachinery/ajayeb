@@ -31,6 +31,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -104,6 +105,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "altar",
@@ -173,6 +175,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -261,6 +264,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 3,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -293,6 +297,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "theater",
@@ -328,6 +333,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -403,6 +409,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -533,6 +540,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "baths",
@@ -595,6 +603,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -676,6 +685,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 4,
@@ -728,6 +738,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -747,6 +758,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -885,6 +897,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1472,6 +1485,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1545,6 +1559,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "altar",
@@ -1614,6 +1629,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1702,6 +1718,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 3,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1734,6 +1751,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "theater",
@@ -1769,6 +1787,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1844,6 +1863,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1974,6 +1994,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "baths",
@@ -2036,6 +2057,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2117,6 +2139,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 4,
@@ -2169,6 +2192,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2188,6 +2212,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2326,6 +2351,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2901,6 +2927,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2974,6 +3001,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "altar",
@@ -3043,6 +3071,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3131,6 +3160,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 3,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3163,6 +3193,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "theater",
@@ -3198,6 +3229,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3273,6 +3305,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3403,6 +3436,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "baths",
@@ -3465,6 +3499,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3546,6 +3581,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 4,
@@ -3598,6 +3634,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 4,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3617,6 +3654,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3755,6 +3793,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,

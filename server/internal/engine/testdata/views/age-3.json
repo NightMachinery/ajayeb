@@ -32,6 +32,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -68,6 +69,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -110,6 +112,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 7,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -142,6 +145,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -219,6 +223,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -292,6 +297,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -369,6 +375,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -446,6 +453,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -489,6 +497,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "palisade",
@@ -547,6 +556,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -632,6 +642,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -664,6 +675,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -706,6 +718,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -790,6 +803,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -822,6 +836,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -895,6 +910,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 8,
@@ -945,6 +961,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1031,6 +1048,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 2,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -1454,6 +1472,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1490,6 +1509,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1532,6 +1552,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 7,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1564,6 +1585,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1641,6 +1663,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1714,6 +1737,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1791,6 +1815,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1868,6 +1893,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -1911,6 +1937,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "palisade",
@@ -1969,6 +1996,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2054,6 +2082,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2086,6 +2115,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2128,6 +2158,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2212,6 +2243,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2244,6 +2276,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2317,6 +2350,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 8,
@@ -2367,6 +2401,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2453,6 +2488,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 2,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,
@@ -2864,6 +2900,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2900,6 +2937,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2942,6 +2980,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 7,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -2974,6 +3013,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3051,6 +3091,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3124,6 +3165,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3201,6 +3243,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3278,6 +3321,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3321,6 +3365,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 2,
         "shortfall": 0,
         "chainFree": true,
         "chainFrom": "palisade",
@@ -3379,6 +3424,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3464,6 +3510,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 5,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3496,6 +3543,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3538,6 +3586,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3622,6 +3671,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3654,6 +3704,7 @@
        },
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3727,6 +3778,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 0,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 8,
@@ -3777,6 +3829,7 @@
       "costs": [
        {
         "affordable": true,
+        "coinsAfter": 6,
         "shortfall": 0,
         "chainFree": false,
         "printedCoins": 0,
@@ -3863,6 +3916,7 @@
         "removed": false,
         "cost": {
          "affordable": true,
+         "coinsAfter": 2,
          "shortfall": 0,
          "chainFree": false,
          "printedCoins": 0,

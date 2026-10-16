@@ -860,6 +860,11 @@ export interface ResourceCounts {
  */
 export interface CostView {
   affordable: boolean;
+  /**
+   * CoinsAfter is the payer's purse immediately after payment, before
+   * Urbanism or any building/wonder effect. Absent when unaffordable.
+   */
+  coinsAfter?: number /* int */;
   shortfall: number /* int */; // coins missing when not affordable, else 0
   chainFree: boolean; // free through a chain symbol: nothing else applies
   chainFrom?: string;

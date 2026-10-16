@@ -208,7 +208,9 @@ func viewCost(s *State, seat Seat, p *Payment) view.CostView {
 		ToOpponent:    int(p.ToOpponent),
 		UrbanismBonus: int(p.UrbanismBonus),
 	}
-	if !p.Affordable {
+	if p.Affordable {
+		cv.CoinsAfter = dtoInt(int(s.Players[seat].Coins) - int(p.Total))
+	} else {
 		cv.Shortfall = max(0, int(p.Total)-int(s.Players[seat].Coins))
 	}
 	for k := range min(int(p.NChoice), MaxChoice) {

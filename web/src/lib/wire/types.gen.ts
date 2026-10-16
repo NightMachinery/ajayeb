@@ -437,6 +437,17 @@ export interface HistoryEntry {
   events: view.GameEvent[];
 }
 /**
+ * UndoUnavailableReason says why this connection cannot undo. The first
+ * matching reason wins: online, disabled, spectator, game over, no human
+ * decision. An available undo has no reason.
+ */
+export type UndoUnavailableReason = string;
+export const UndoUnavailableOnline: UndoUnavailableReason = "online";
+export const UndoUnavailableDisabled: UndoUnavailableReason = "disabled";
+export const UndoUnavailableSpectator: UndoUnavailableReason = "spectator";
+export const UndoUnavailableGameOver: UndoUnavailableReason = "game-over";
+export const UndoUnavailableNoHumanDecision: UndoUnavailableReason = "no-human-decision";
+/**
  * State is a full snapshot: the room, what this connection may do, an
  * optional ack, the events the triggering action produced (redacted for this
  * viewer) and the full game view. Every state frame is a complete snapshot,
@@ -456,6 +467,10 @@ export interface State {
    * and a human decision to take back.
    */
   canUndo: boolean;
+  /**
+   * UndoUnavailable is present exactly when CanUndo is false.
+   */
+  undoUnavailable?: UndoUnavailableReason;
   /**
    * Thinking is the seat whose bot is searching for its move right now;
    * absent when no bot is searching.

@@ -689,8 +689,28 @@ func (r *Room) lastHumanDecision() int {
 // version, would be accepted: a hot-seat or bot room that allows undo, a
 // player, a game that is not over, and a human decision to take back.
 func (r *Room) canUndo(mem member) bool {
-	return r.undoAllowed() && mem.role != roleSpectator &&
-		!r.state.Over() && r.lastHumanDecision() >= 0
+	return r.undoUnavailable(mem) == nil
+}
+
+// undoUnavailable follows the same restrictions as undo, with stable
+// precedence when more than one applies. nil means available.
+func (r *Room) undoUnavailable(mem member) *wire.UndoUnavailableReason {
+	var reason wire.UndoUnavailableReason
+	switch {
+	case r.file.Mode == store.ModeOnline:
+		reason = wire.UndoUnavailableOnline
+	case r.file.NoUndo:
+		reason = wire.UndoUnavailableDisabled
+	case mem.role == roleSpectator:
+		reason = wire.UndoUnavailableSpectator
+	case r.state.Over():
+		reason = wire.UndoUnavailableGameOver
+	case r.lastHumanDecision() < 0:
+		reason = wire.UndoUnavailableNoHumanDecision
+	default:
+		return nil
+	}
+	return &reason
 }
 
 // undoAllowed reports whether the game allows undo at all: a hot-seat or

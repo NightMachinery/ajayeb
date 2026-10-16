@@ -157,6 +157,19 @@ type HistoryEntry struct {
 	Events []view.GameEvent `json:"events"`
 }
 
+// UndoUnavailableReason says why this connection cannot undo. The first
+// matching reason wins: online, disabled, spectator, game over, no human
+// decision. An available undo has no reason.
+type UndoUnavailableReason string
+
+const (
+	UndoUnavailableOnline          UndoUnavailableReason = "online"
+	UndoUnavailableDisabled        UndoUnavailableReason = "disabled"
+	UndoUnavailableSpectator       UndoUnavailableReason = "spectator"
+	UndoUnavailableGameOver        UndoUnavailableReason = "game-over"
+	UndoUnavailableNoHumanDecision UndoUnavailableReason = "no-human-decision"
+)
+
 // State is a full snapshot: the room, what this connection may do, an
 // optional ack, the events the triggering action produced (redacted for this
 // viewer) and the full game view. Every state frame is a complete snapshot,
@@ -173,6 +186,8 @@ type State struct {
 	// room that allows undo (RoomInfo.AllowUndo), a game that is not over,
 	// and a human decision to take back.
 	CanUndo bool `json:"canUndo"`
+	// UndoUnavailable is present exactly when CanUndo is false.
+	UndoUnavailable *UndoUnavailableReason `json:"undoUnavailable,omitempty"`
 	// Thinking is the seat whose bot is searching for its move right now;
 	// absent when no bot is searching.
 	Thinking *int `json:"thinking,omitempty" tstype:"0 | 1"`
@@ -196,12 +211,25 @@ type State struct {
 
 // NewState returns a State frame with "t" filled in. events is normalized to
 // a non-nil, possibly empty slice, and RoomLog starts empty. CanUndo and
-// Thinking start out false and absent; the room sets them.
+// Thinking start out false and absent; the room sets them. UndoUnavailable
+// starts with the first public restriction, or no-human-decision until the
+// room has checked its history.
 func NewState(code string, version int, room RoomInfo, you YouInfo, ack *Ack, events []view.GameEvent, v view.View) State {
 	if events == nil {
 		events = []view.GameEvent{}
 	}
-	return State{T: "state", Code: code, Version: version, Room: room, You: you, Ack: ack, Events: events, RoomLog: []RoomLogEntry{}, View: v}
+	reason := UndoUnavailableNoHumanDecision
+	switch {
+	case room.Mode == ModeOnline:
+		reason = UndoUnavailableOnline
+	case !room.AllowUndo:
+		reason = UndoUnavailableDisabled
+	case len(you.Seats) == 0:
+		reason = UndoUnavailableSpectator
+	case v.Phase == view.PhaseGameOver:
+		reason = UndoUnavailableGameOver
+	}
+	return State{UndoUnavailable: &reason, T: "state", Code: code, Version: version, Room: room, You: you, Ack: ack, Events: events, RoomLog: []RoomLogEntry{}, View: v}
 }
 
 // RejectCode says why an act, undo or similar request was refused without
