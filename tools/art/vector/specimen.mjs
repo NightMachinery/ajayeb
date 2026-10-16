@@ -138,7 +138,7 @@ function miniCard(entry, existing) {
     effect = `${tile('1em')}${tile('1em')}`;
   } else if (entry.chip) {
     const chip = (bg) =>
-      `<span class="chip" style="background:${bg};--i2:var(--gold-deep)">${use(id, 12.35)}</span>`;
+      `<span class="chip" style="background:${bg};--i2:var(--gold-deep)">${use(id, 12)}</span>`;
     cost = `<span class="coin">3</span><span style="margin-inline-start:auto">${chip('var(--gold)')}</span>`;
     // The chain-out chip is outlined on paper: the same symbol, other fill.
     effect = chip('var(--paper)');
@@ -265,14 +265,14 @@ table { border-collapse: collapse; }
   font: 700 10px/1 Inter, ui-sans-serif, sans-serif; font-variant-numeric: tabular-nums;
   background: var(--card-paper); color: var(--card-ink); border-radius: 7% / 4.5%;
   border: 1.5px solid color-mix(in oklch, var(--band) 75%, var(--card-ink)); box-sizing: border-box; }
-.cost { height: 16%; display: flex; align-items: center; gap: 0.12em; padding: 0 2.5%; }
-.band { height: 24%; display: flex; align-items: center; justify-content: center; --pat: color-mix(in oklch, var(--card-ink) 20%, transparent); }
+.cost { height: 17%; display: flex; align-items: center; gap: 0.12em; padding: 0 2.5%; }
+.band { height: 23%; display: flex; align-items: center; justify-content: center; --pat: color-mix(in oklch, var(--card-ink) 20%, transparent); }
 .inset { display: inline-flex; align-items: center; gap: 0.12em; padding: 0.12em 0.15em; border-radius: 0.35em;
   background: color-mix(in oklch, var(--paper) 92%, transparent); }
 .art { flex: 1; position: relative; background: color-mix(in oklch, var(--band) 14%, var(--card-paper));
   display: flex; align-items: flex-end; justify-content: center; padding-bottom: 0.3em; }
 .tile { display: inline-grid; place-items: center; border-radius: 0.25em; }
-.chip { display: inline-grid; place-items: center; width: 1.3em; height: 1.3em; border-radius: 0.35em;
+.chip { display: inline-grid; place-items: center; width: max(1.3em, 14px); height: max(1.3em, 14px); border-radius: 0.35em;
   border: 1px solid var(--gold-deep); color: var(--card-ink); box-sizing: border-box; }
 .coin { display: inline-grid; place-items: center; width: 1.25em; height: 1.25em; border-radius: 50%;
   background: var(--gold); border: 1px solid var(--gold-deep); box-sizing: border-box; }
