@@ -1,12 +1,13 @@
 package room
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
-	"reflect"
-	"testing"
 )
 
 func TestChronologicalDiscardPublicProjection(t *testing.T) {
@@ -71,8 +72,19 @@ func TestDiscardDestructionAndRevivalReplayFrames(t *testing.T) {
 					if v.Pending != nil && v.Pending.Kind == view.PendingKindBuildFromDiscard && !reflect.DeepEqual(v.Pending.Cards, v.Discard) {
 						t.Fatal("pending pile order differs")
 					}
-					// Frames use the same projection with and without history.
-					_ = r
+					// Both live and history-bearing frames carry the same public
+					// order for each seated viewer and the spectator.
+					mem := member{role: roleSpectator}
+					if seat, ok := viewer.Seat(); ok {
+						mem = member{role: rolePlayer, seat: seat}
+					}
+					for _, withHistory := range []bool{false, true} {
+						var cache frameCache
+						frame := r.frame(mem, nil, nil, [2]bool{}, &cache, withHistory)
+						if !reflect.DeepEqual(frame.View.Discard, want) {
+							t.Fatal("frame pile order differs")
+						}
+					}
 				}
 			}
 		})
