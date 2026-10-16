@@ -8,7 +8,10 @@ async function recordedEffects(page: Page) {
   return page.evaluate(() => {
     const fx = (window as unknown as { __ajayebFx?: { cues(): unknown[]; haptics(): number[][] } })
       .__ajayebFx;
-    return { cues: fx?.cues() ?? [], haptics: fx?.haptics() ?? [] };
+    if (!fx || typeof fx.cues !== 'function' || typeof fx.haptics !== 'function') {
+      throw new Error('expected the active frame-effects test hook');
+    }
+    return { cues: fx.cues(), haptics: fx.haptics() };
   });
 }
 
@@ -130,6 +133,9 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
       const view = await currentView(page);
       await playKey(driver, view.choices.find((c) => c.kind !== 'wonder')!.key);
     }
+    // Prove Sound is enabled and the real Presenter instrumentation works
+    // before emptiness is evidence of replay suppression.
+    expect((await recordedEffects(page)).cues.length).toBeGreaterThan(0);
     const url = page.url();
     const before = await logLines(driver);
     const history = await page.evaluate(() => window.__ajayeb?.history());
