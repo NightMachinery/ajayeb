@@ -137,6 +137,35 @@ plus a single `reverse_proxy` to the server port with `encode zstd gzip`.
 There is no `try_files` or static file serving in Caddy: the Go binary
 embeds and serves the SPA itself.
 
+### Security defaults
+
+The server needs no security settings from Caddy:
+
+- It sends its own security headers and a content security policy that
+  allows same-origin scripts plus the hash of each inline script in the
+  served HTML. In production the policy is enforced. Under `--dev` it is
+  report-only, so a Vite page on another port is not blocked.
+- The identity secret, `.self-host/data/secret.key`, must be a regular file
+  of exactly 32 bytes. If its group or other users may read or write it, the
+  server sets its mode to 0600 and logs a warning, and it refuses to start
+  if it cannot.
+- Bot searches are capped at 2 at once across the server (`--bot-searches`)
+  and at 2 per client address (`--bot-searches-per-address`), counted by the
+  same address as the other per-address limits, so behind `--trust-proxy`
+  each player's own address.
+
+[protocol.md](protocol.md#limits) has every limit.
+
+### Caching and offline
+
+The service worker needs no reverse-proxy configuration either. The server
+marks the HTML, `/service-worker.js`, the web manifest, the favicon and the
+home-screen icons `no-cache`, and marks content-hashed assets and versioned
+art immutable. A layer in front that rewrites `Cache-Control` (some CDNs
+give scripts a fixed lifetime) would delay updates, so check the headers
+through it with `curl -sI <url>/service-worker.js`. The cached app shell
+opens offline; playing still needs the server.
+
 ### Serving both schemes
 
 With `--both-schemes` the managed block has no redirect: one site block

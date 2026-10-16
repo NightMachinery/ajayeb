@@ -84,8 +84,9 @@ plain text.
 
 ### The client address
 
-Four limits count per **client address**: sockets, rooms created, joins of
-codes that name no room, and undos. The client address is the TCP peer's
+Six limits count per **client address**: on the socket, sockets, rooms
+created, joins of codes that name no room, undos and bot searches; over HTTP,
+game log downloads. The client address is the TCP peer's
 address, unless that peer is one of the reverse proxies given with
 `-trust-proxy` (IP addresses or CIDR prefixes, repeatable or comma
 separated). For a trusted peer the server reads `X-Forwarded-For` from the
