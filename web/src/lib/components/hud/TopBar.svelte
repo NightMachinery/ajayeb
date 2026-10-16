@@ -148,17 +148,29 @@
 
   <div class="flex items-center gap-1">
     {#if onUndo}
-      <button
-        type="button"
-        onclick={onUndo}
-        disabled={!canUndo}
-        data-control="undo"
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (This named tooltip group explains its native disabled button to keyboard users.) -->
+      <span
+        role="group"
         aria-label={t('board.topbar.undo')}
-        {@attach tooltip({ text: t('board.topbar.undo') })}
-        class="{iconButton} disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
+        class="inline-flex"
+        tabindex={!canUndo ? 0 : undefined}
+        data-undo-tooltip
+        {@attach tooltip({
+          text: !canUndo && undoReason ? undoReason : t('board.topbar.undo'),
+          actionable: canUndo
+        })}
       >
-        <Undo2 class="size-5" />
-      </button>
+        <button
+          type="button"
+          onclick={onUndo}
+          disabled={!canUndo}
+          data-control="undo"
+          aria-label={t('board.topbar.undo')}
+          class="{iconButton} disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent"
+        >
+          <Undo2 class="size-5" />
+        </button>
+      </span>
     {/if}
     {#if onOpenSummary}
       <button
@@ -244,21 +256,33 @@
       </button>
     {/if}
     {#if onUndo}
-      <button
-        type="button"
-        class="{menuItem} disabled:cursor-not-allowed disabled:text-fg-muted disabled:hover:bg-transparent"
-        data-control="menu-undo"
-        disabled={!canUndo}
-        onclick={() => choose(onUndo)}
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (This named tooltip group explains its native disabled button to keyboard users.) -->
+      <span
+        role="group"
+        aria-label={t('game.menu.undo')}
+        class="block"
+        tabindex={!canUndo ? 0 : undefined}
+        data-undo-tooltip
+        {@attach tooltip(
+          !canUndo && undoReason ? { text: undoReason, actionable: false } : undefined
+        )}
       >
-        <Undo2 class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
-        <span class="flex min-w-0 flex-col py-1.5">
-          <span>{t('game.menu.undo')}</span>
-          {#if !canUndo && undoReason}
-            <span class="text-xs font-normal text-fg-muted" data-undo-reason>{undoReason}</span>
-          {/if}
-        </span>
-      </button>
+        <button
+          type="button"
+          class="{menuItem} disabled:cursor-not-allowed disabled:text-fg-muted disabled:hover:bg-transparent"
+          data-control="menu-undo"
+          disabled={!canUndo}
+          onclick={() => choose(onUndo)}
+        >
+          <Undo2 class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+          <span class="flex min-w-0 flex-col py-1.5">
+            <span>{t('game.menu.undo')}</span>
+            {#if !canUndo && undoReason}
+              <span class="text-xs font-normal text-fg-muted" data-undo-reason>{undoReason}</span>
+            {/if}
+          </span>
+        </button>
+      </span>
     {/if}
     <button
       type="button"

@@ -138,6 +138,9 @@ export const game = {
   'game.menu.forfeit': 'Forfeit the game',
   // The menu's undo item, and why it is greyed out when it is.
   'game.menu.undo': 'Undo last move',
+  'game.menu.undoOnline': 'Undo is unavailable in online games.',
+  'game.menu.undoDisabled': 'Undo is off for this game.',
+  'game.menu.undoSpectator': 'Spectators cannot undo moves.',
   'game.menu.undoNothing': 'No move of yours to take back yet.',
   'game.menu.undoOver': 'The game is over.',
   'game.menu.undoWaiting': 'Waiting for the server…',

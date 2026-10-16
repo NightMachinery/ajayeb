@@ -228,9 +228,15 @@
         ? t('game.menu.undoOffline')
         : session.pending
           ? t('game.menu.undoWaiting')
-          : gameEnded(view?.phase)
-            ? t('game.menu.undoOver')
-            : t('game.menu.undoNothing')
+          : frame?.undoUnavailable === 'online'
+            ? t('game.menu.undoOnline')
+            : frame?.undoUnavailable === 'disabled'
+              ? t('game.menu.undoDisabled')
+              : frame?.undoUnavailable === 'spectator'
+                ? t('game.menu.undoSpectator')
+                : frame?.undoUnavailable === 'game-over'
+                  ? t('game.menu.undoOver')
+                  : t('game.menu.undoNothing')
   );
   // The seat a forfeit would give up now (the Session says when it can be
   // sent: a seated player while the game runs, the player to move in a
