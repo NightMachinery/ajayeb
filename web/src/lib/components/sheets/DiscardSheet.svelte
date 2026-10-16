@@ -1,6 +1,6 @@
 <script lang="ts">
   // The discard pile, read-only (the board's discard button opens it): every
-  // discarded card as a medium card, latest age first, with colour filter
+  // discarded card as a medium card, in server arrival order, with colour filter
   // chips. The Mausoleum's choice uses the same pile, selectable, in its own
   // panel (choices/DiscardPickChoice.svelte).
   //

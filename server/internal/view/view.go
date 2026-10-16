@@ -30,7 +30,7 @@ type View struct {
 	BoardTokens   []string `json:"boardTokens"`   // progress tokens still on the board
 	BoxTokenCount int      `json:"boxTokenCount"` // progress tokens in the box (never their names before the end)
 	RemovedCount  int      `json:"removedCount"`  // cards set aside unseen from the current age's deck
-	Discard       []string `json:"discard"`       // the discard pile, which is public
+	Discard       []string `json:"discard"`       // public discard pile; room frames order arrivals oldest first (scenario initial batch uses canonical order)
 	WondersBuilt  int      `json:"wondersBuilt"`  // by both players together; at seven the last unbuilt wonder leaves the game
 
 	Pending  *PendingView     `json:"pending,omitempty"` // an open starter choice or a choice that a card or wonder opened

@@ -1,9 +1,7 @@
 <script lang="ts">
-  // The discard pile as medium cards with colour filter chips, latest age
-  // first. The view sends the pile as a set in card id order, and ids follow
-  // the ages, so "latest age first" is as close to "newest first" as the
-  // view allows. Used read-only by the discard sheet, and selectable by the
-  // Mausoleum's build-from-discard choice.
+  // The public discard pile in the server's oldest-first arrival order.
+  // Colour filtering preserves that order, including the deterministic
+  // initial batch in synthetic scenario rooms.
   //
   // Hints (M10.HS4, mausoleum-pool-hint): a card that a Mausoleum could
   // rebuild to some effect carries its pip, as on the board (view/hints.ts
@@ -49,14 +47,6 @@
 
   let filter = $state<Color | 'all'>('all');
 
-  const sorted = $derived(
-    [...cards].sort((a, b) => {
-      const ca = cardBySlug(a);
-      const cb = cardBySlug(b);
-      return (cb?.age ?? 0) - (ca?.age ?? 0) || (ca?.id ?? 0) - (cb?.id ?? 0);
-    })
-  );
-
   // Cards per colour present in the pile, in colour order.
   const counts = $derived(
     COLOR_ORDER.map(
@@ -72,7 +62,7 @@
   // A filter whose colour left the pile falls back to everything.
   const active = $derived(filter !== 'all' && colors.includes(filter) ? filter : 'all');
   const shown = $derived(
-    active === 'all' ? sorted : sorted.filter((slug) => cardBySlug(slug)?.color === active)
+    active === 'all' ? cards : cards.filter((slug) => cardBySlug(slug)?.color === active)
   );
 </script>
 

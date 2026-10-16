@@ -593,6 +593,15 @@ full game view described under "The view and its events" below.
   undo. An available undo omits the reason. The client translates the code;
   local offline and pending-request explanations take precedence while the
   transport prevents sending.
+- `view.discard` is the current public pile in oldest-first arrival order.
+  Discards and destroyed city cards append; rebuilding a card removes it.
+  Undo and room reload reconstruct the same order from public action events.
+  The build-from-discard pending list uses this same order, and colour
+  filtering preserves it in the client. Synthetic scenario cards already
+  discarded at the start have no arrival history: they form an initial
+  batch in canonical card-id order, before played arrivals. Standalone
+  engine views and engine protocol fixtures have only set membership and
+  retain canonical card-id order; chronology is supplied by the room.
 - Every affordable cost breakdown carries `coinsAfter`, the payer's purse
   immediately after subtracting `total`, before Urbanism or any later
   building/wonder effect. This includes free, chain-free, traded and wonder

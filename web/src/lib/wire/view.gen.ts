@@ -799,7 +799,7 @@ export interface View {
   boardTokens: string[]; // progress tokens still on the board
   boxTokenCount: number /* int */; // progress tokens in the box (never their names before the end)
   removedCount: number /* int */; // cards set aside unseen from the current age's deck
-  discard: string[]; // the discard pile, which is public
+  discard: string[]; // public discard pile; room frames order arrivals oldest first (scenario initial batch uses canonical order)
   wondersBuilt: number /* int */; // by both players together; at seven the last unbuilt wonder leaves the game
   pending?: PendingView; // an open starter choice or a choice that a card or wonder opened
   choices: Choice[]; // the legal actions, only in the view of the seat to move

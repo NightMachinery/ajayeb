@@ -1,6 +1,8 @@
 package room
 
 import (
+	"slices"
+
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
@@ -38,7 +40,7 @@ func viewerIndex(v engine.Viewer) int {
 // get returns viewer v's view of s, with the hints of settings, and v's
 // share of the events ev. The shared hints are computed once, with the
 // first view the cache builds, and every view of the broadcast reuses them.
-func (fc *frameCache) get(s *engine.State, settings view.HintSettings, v engine.Viewer, ev []engine.Event) (view.View, []view.GameEvent) {
+func (fc *frameCache) get(s *engine.State, settings view.HintSettings, v engine.Viewer, ev []engine.Event, hist []histEntry) (view.View, []view.GameEvent) {
 	i := viewerIndex(v)
 	if !fc.built[i] {
 		if fc.hints == nil {
@@ -46,6 +48,10 @@ func (fc *frameCache) get(s *engine.State, settings view.HintSettings, v engine.
 			fc.hints = &h
 		}
 		vw := engine.ViewWithHints(s, v, fc.hints)
+		vw.Discard = chronologicalDiscard(vw.Discard, hist)
+		if vw.Pending != nil && vw.Pending.Kind == view.PendingKindBuildFromDiscard {
+			vw.Pending.Cards = slices.Clone(vw.Discard)
+		}
 		fc.views[i] = &vw
 		fc.events[i] = engine.FilterEvents(ev, v)
 		fc.built[i] = true
@@ -116,7 +122,7 @@ func (r *Room) sendState(c *Client, mem member, ack *wire.Ack, withHistory bool)
 // frame builds one connection's state frame.
 func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]bool, fc *frameCache, withHistory bool) wire.State {
 	viewer := r.viewer(mem)
-	v, events := fc.get(&r.state, *r.file.Hints, viewer, ev)
+	v, events := fc.get(&r.state, *r.file.Hints, viewer, ev, r.hist)
 	if seat, ok := viewer.Seat(); ok && r.file.Hints.Advisor {
 		// The move review is the mover's alone: only a seat's own view
 		// carries it (v is this frame's copy of the cached view).
@@ -227,4 +233,38 @@ func wireStatus(s store.Status) wire.RoomStatus {
 		return wire.RoomStatusPlaying
 	}
 	return wire.RoomStatusFinished
+}
+
+// chronologicalDiscard orders the current public pile by its public arrivals.
+// The engine retains membership only. Room history supplies actual discard and
+// destruction arrivals and removes rebuilds. Scenario cards without an arrival
+// form an initial batch in their canonical engine order, before played cards.
+func chronologicalDiscard(current []string, hist []histEntry) []string {
+	arrivals := []string{}
+	for _, entry := range hist {
+		for _, ev := range engine.FilterEvents(entry.events, engine.Spectator) {
+			if ev.Kind != view.EventKindDiscard && ev.Kind != view.EventKindDestroy && ev.Kind != view.EventKindRebuild || ev.Card == nil {
+				continue
+			}
+			card := *ev.Card
+			if i := slices.Index(arrivals, card); i >= 0 {
+				arrivals = slices.Delete(arrivals, i, i+1)
+			}
+			if ev.Kind != view.EventKindRebuild {
+				arrivals = append(arrivals, card)
+			}
+		}
+	}
+	out := make([]string, 0, len(current))
+	for _, card := range current {
+		if !slices.Contains(arrivals, card) {
+			out = append(out, card)
+		}
+	}
+	for _, card := range arrivals {
+		if slices.Contains(current, card) {
+			out = append(out, card)
+		}
+	}
+	return out
 }

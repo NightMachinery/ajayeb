@@ -56,6 +56,39 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     expect(problems).toEqual([]);
   });
 
+  test('discard cards keep server arrival order and payment purse comes from the wire', async ({
+    page
+  }) => {
+    const problems = watchHygiene(page);
+    const driver = await openHotseatRoom(page, 'mausoleum', 4343);
+    const expected: string[] = ['baths'];
+    for (let i = 0; i < 2; i++) {
+      const view = await currentView(page);
+      for (const choice of view.choices) {
+        if (choice.cost) expect(choice.cost.coinsAfter).toBeDefined();
+      }
+      const discards = view.choices.filter((c) => c.kind === 'discard');
+      const choice = i === 0 ? discards.at(-1)! : discards[0]!;
+      expected.push(choice.card!);
+      await playKey(driver, choice.key);
+    }
+    expect((await currentView(page)).discard).toEqual(expected);
+    await page.reload();
+    await driver.waitReady();
+    const view = await currentView(page);
+    expect(view.discard).toEqual(expected);
+    const wonder = view.choices.find((c) => c.key.startsWith('wonder:mausoleum:'));
+    expect(wonder).toBeDefined();
+    await playKey(driver, wonder!.key);
+    const pile = page.locator('[data-discard-choice]');
+    await expect(pile).toContainText('Oldest first.');
+    const cards = pile.locator('li[data-card]');
+    expect(await cards.evaluateAll((els) => els.map((el) => el.getAttribute('data-card')))).toEqual(
+      expected
+    );
+    expect(problems).toEqual([]);
+  });
+
   test('reload, resync, undo and rejoin restore the whole log without replay cues', async ({
     page
   }) => {

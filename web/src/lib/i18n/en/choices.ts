@@ -34,7 +34,7 @@ export const choices = {
   'choices.discard.intro': 'Choose a discarded card to build for free.',
   'choices.discard.confirm': 'Build {card} for free',
   'choices.discard.sheetTitle': 'Discard pile',
-  'choices.discard.order': 'Latest age first.',
+  'choices.discard.order': 'Oldest first.',
   'choices.discard.filter': 'Show cards by colour',
   'choices.discard.all': 'All',
   'choices.discard.count': {
