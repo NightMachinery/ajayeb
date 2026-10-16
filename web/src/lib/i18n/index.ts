@@ -5,8 +5,11 @@
 //   t('cards.left', { count: 3 })           // '3 cards left'
 //
 // Keys and placeholders are checked at compile time against the English
-// tables, which define the message set. Other locales must provide the same
-// keys (LocaleTable below), so a missing translation is a type error.
+// tables, which define the message set and are the only complete ones.
+// Another locale's table (./fa/ for Persian) may leave keys out
+// (PartialLocaleTable below): t() falls back to English per key, and wraps
+// the English text in a left-to-right isolate when the locale is
+// right-to-left, so its punctuation stays where English puts it.
 // Numbers go through Intl.NumberFormat and plural forms through
 // Intl.PluralRules, so a locale with its own digits or plural rules needs
 // no code changes.
@@ -22,7 +25,8 @@ import { online } from './en/online';
 import { rules } from './en/rules';
 import { session } from './en/session';
 import { shell } from './en/shell';
-import { i18n, type Locale } from './locale.svelte';
+import { fa } from './fa';
+import { dirFor, i18n, type Locale } from './locale.svelte';
 import type { Message, PluralForms } from './types';
 
 export { i18n, dirFor, isLocale, LOCALES, type Dir, type Locale } from './locale.svelte';
@@ -47,12 +51,15 @@ export const en = {
 
 export type MessageKey = keyof typeof en;
 
-/** The shape every other locale's table must have: every key, any wording. */
+/** A complete table: every key, any wording. */
 export type LocaleTable = {
   readonly [K in MessageKey]: (typeof en)[K] extends string ? string : PluralForms;
 };
 
-const tables: Record<Locale, LocaleTable> = { en };
+/** Another locale's table: any subset of the keys (t() falls back to English). */
+export type PartialLocaleTable = Partial<LocaleTable>;
+
+const tables: Record<Locale, PartialLocaleTable> = { en, fa };
 
 // Compile-time parameter checking --------------------------------------------
 
@@ -163,18 +170,29 @@ export function interpolate(
 
 // t() ------------------------------------------------------------------------
 
+/** U+2066 LEFT-TO-RIGHT ISOLATE and U+2069 POP DIRECTIONAL ISOLATE. */
+const LRI = '\u2066';
+const PDI = '\u2069';
+
 /**
  * The message for a key in the current locale, with its params filled in.
- * An unknown key (only possible through a cast) returns the key itself.
+ * A key the locale's table leaves out falls back to English: its plural
+ * form is chosen by English rules (the forms are English ones), its numbers
+ * still use the locale's digits, and in a right-to-left locale the text is
+ * wrapped in a left-to-right isolate. An unknown key (only possible through
+ * a cast) returns the key itself.
  */
 export function t<K extends MessageKey>(key: K, ...args: ParamsArg<K>): string {
   const locale = i18n.locale;
   const params = args[0] as AnyParams | undefined;
-  const message: Message | undefined = tables[locale][key] ?? en[key];
+  const own: Message | undefined = tables[locale][key];
+  const message: Message | undefined = own ?? en[key];
   if (message === undefined) return key;
+  const fallback = own === undefined && locale !== 'en';
   const text =
     typeof message === 'string'
       ? message
-      : selectPlural(message, Number(params?.['count'] ?? Number.NaN), locale);
-  return interpolate(text, params, locale);
+      : selectPlural(message, Number(params?.['count'] ?? Number.NaN), fallback ? 'en' : locale);
+  const filled = interpolate(text, params, locale);
+  return fallback && dirFor(locale) === 'rtl' ? LRI + filled + PDI : filled;
 }

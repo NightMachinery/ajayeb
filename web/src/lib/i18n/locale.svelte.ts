@@ -2,8 +2,9 @@
 // i18n.locale (t() does) inside a component or effect makes it re-run when
 // the locale changes.
 
-/** Locales with a message table. A future Persian table adds 'fa' here. */
-export const LOCALES = ['en'] as const;
+/** Locales with a message table. English (en) is the complete one; every
+ *  other table may be partial, and t() falls back to English per key. */
+export const LOCALES = ['en', 'fa'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export type Dir = 'ltr' | 'rtl';

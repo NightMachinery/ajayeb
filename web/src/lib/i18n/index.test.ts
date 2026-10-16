@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { fa } from './fa';
 import {
   dirFor,
+  en,
   formatNumber,
   formatSigned,
   i18n,
@@ -107,6 +109,7 @@ describe('locale state', () => {
 
   it('accepts only locales with a table', () => {
     expect(isLocale('en')).toBe(true);
+    expect(isLocale('fa')).toBe(true);
     expect(isLocale('xx')).toBe(false);
     expect(isLocale(3)).toBe(false);
   });
@@ -132,5 +135,55 @@ describe('formatSigned', () => {
     expect(formatSigned(-5, undefined, 'fa')).toBe(own);
     expect(formatSigned(-5, undefined, 'fa')).not.toContain('-');
     expect(formatSigned(-5, undefined, 'fa')).toContain('\u06f5');
+  });
+});
+
+describe('the Persian stub table', () => {
+  afterEach(() => i18n.set('en'));
+
+  const LRI = '\u2066';
+  const PDI = '\u2069';
+
+  it('is right to left once chosen', () => {
+    i18n.set('fa');
+    expect(i18n.locale).toBe('fa');
+    expect(i18n.dir).toBe('rtl');
+  });
+
+  it('uses its own wording, with Persian digits', () => {
+    i18n.set('fa');
+    expect(t('home.settings.title')).toBe('تنظیمات');
+    expect(t('turn.player', { name: 'رستم' })).toBe('نوبت رستم');
+    expect(t('coins.count', { count: 3 })).toBe('۳ سکه');
+    expect(t('cards.left', { count: 0 })).toBe('کارتی نمانده');
+    expect(t('board.age', { age: 2 })).toBe('دوران ۲');
+  });
+
+  it('falls back to English per key, in a left-to-right isolate', () => {
+    i18n.set('fa');
+    expect(fa['game.card.faceDown']).toBeUndefined();
+    expect(t('game.card.faceDown')).toBe(LRI + en['game.card.faceDown'] + PDI);
+    // A fallback's plural form follows English rules; its digits stay Persian.
+    expect(t('board.player.points', { count: 0 })).toBe(LRI + '۰ points' + PDI);
+    expect(t('board.player.points', { count: 1 })).toBe(LRI + '۱ point' + PDI);
+  });
+
+  it('leaves English untouched', () => {
+    expect(t('game.card.faceDown')).toBe(en['game.card.faceDown']);
+    expect(t('home.settings.title')).toBe('Settings');
+  });
+
+  it('only holds keys that English has', () => {
+    const extra = Object.keys(fa).filter((k) => !(k in en));
+    expect(extra).toEqual([]);
+  });
+
+  it('keeps every placeholder of the English message', () => {
+    const names = (m: unknown): string[] =>
+      [...JSON.stringify(m).matchAll(/\{(\w+)\}/g)].map((x) => x[1]!).sort();
+    for (const [key, message] of Object.entries(fa)) {
+      const english = en[key as keyof typeof en];
+      expect(new Set(names(message)), key).toEqual(new Set(names(english)));
+    }
   });
 });
