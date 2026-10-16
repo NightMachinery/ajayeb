@@ -897,7 +897,7 @@ class CaddyLoadTests(unittest.TestCase):
             self_host.preflight_caddyfile(self.site, self_host.Mode.PROD, replace(self.ports, server=39113))
             address.assert_called_once()  # block differs, but no Caddy answers: nothing raised
 
-    def test_setup_redeploy_and_start_run_the_preflight_before_the_stop(self):
+    def test_production_commands_retain_preflight_before_stop_and_continue_after_refusal(self):
         config = self_host.Config(site=self.site, mode=self_host.Mode.PROD, ports=self.ports)
         runs = [
             lambda: self_host.command_setup(None, "/tmp/bin"),
@@ -905,22 +905,29 @@ class CaddyLoadTests(unittest.TestCase):
             lambda: self_host.command_start(None),
         ]
         for run_command in runs:
-            order = mock.Mock()
-            order.command_stop.side_effect = AssertionError("stopped")
-            order.preflight_caddyfile.side_effect = RuntimeError("refused. Nothing was stopped or changed")
+            order = []
+            failure = RuntimeError("refused. Nothing was stopped or changed")
+            def preflight(*args):
+                order.append("preflight")
+                raise failure
             with self.subTest(command=run_command), mock.patch.multiple(
                 self_host,
                 resolve_config=mock.Mock(return_value=config),
                 refuse_to_create_caddyfile=mock.DEFAULT,
                 ensure_tools=mock.DEFAULT,
                 check_prebuilt_binary=mock.DEFAULT,
-                preflight_caddyfile=order.preflight_caddyfile,
-                command_stop=order.command_stop,
-            ):
-                with self.assertRaisesRegex(RuntimeError, "Nothing was stopped"):
-                    run_command()
-                order.preflight_caddyfile.assert_called_once_with(config.site, self_host.Mode.PROD, config.ports, False)
-                order.command_stop.assert_not_called()
+                preflight_caddyfile=mock.Mock(side_effect=preflight),
+                command_stop=mock.Mock(side_effect=lambda: order.append("stop")),
+                ports_after_stop=mock.Mock(return_value=config),
+                save_config=mock.DEFAULT,
+                swap_in_binary=mock.DEFAULT,
+                archive_rooms=mock.Mock(return_value=None),
+                start_prod_with_caddy=mock.DEFAULT,
+            ) as mocks, mock.patch.object(self_host, "BIN_PATH", Path(__file__)), redirect_stderr(io.StringIO()):
+                run_command()
+                self.assertEqual(order, ["preflight", "stop"])
+                self_host.preflight_caddyfile.assert_called_once_with(config.site, self_host.Mode.PROD, config.ports, False)
+                mocks["start_prod_with_caddy"].assert_called_once_with(config, failure)
 
     def test_apply_still_hands_caddy_a_file_that_does_not_adapt_here(self):
         """The case the load path exists for: `caddy adapt` fails in this
@@ -1126,14 +1133,9 @@ class CaddyLoadTests(unittest.TestCase):
         self.assertIn("reverse_proxy localhost:39111", self.caddyfile.read_text())
         self.assertEqual(self.calls, ["validate", "reload"])
 
-    def test_every_command_refuses_a_missing_named_caddyfile_before_stopping_anything(self):
+    def test_dev_start_refuses_a_missing_named_caddyfile_before_stopping_anything(self):
         config = self_host.Config(site=self.site, mode=self_host.Mode.PROD, caddyfile=str(self.tmp / "missing"))
-        commands = [
-            lambda: self_host.command_setup(None, None),
-            lambda: self_host.command_redeploy(None, None),
-            lambda: self_host.command_start(None),
-            lambda: self_host.command_dev_start(None),
-        ]
+        commands = [lambda: self_host.command_dev_start(None)]
         reached = lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("reached past the Caddyfile check"))
         steps = ("find_go", "install_web", "build_web", "sync_webdist", "build_server_release", "check_prebuilt_binary")
         for run_command in commands:
@@ -1701,6 +1703,322 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             self.assertEqual(calls, ["build", "stop", "ports", "save", "archive", "swap"])
 
 
+class ProductionCaddyFailureTests(unittest.TestCase):
+    """Production commands continue after Caddy failures, without real services."""
+
+    COMMANDS = ("setup", "redeploy", "start")
+    ORIGINAL = "other.example.test {\n\treverse_proxy localhost:38959\n}\n"
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.caddyfile = self.root / "Caddyfile"
+        self.caddyfile.write_text(self.ORIGINAL)
+        self.config = self_host.Config(
+            site=self_host.parse_site_url("https://game.example.test"),
+            mode=self_host.Mode.PROD,
+            ports=self_host.Ports(server=38951, web_dev=38952),
+        )
+        for name, value in (
+            ("DEFAULT_CADDYFILE", self.caddyfile),
+            ("CADDYFILE", self.caddyfile),
+            ("CADDYFILE_NAMED", False),
+            ("CONFIG_DIR", self.root / "config"),
+            ("BIN_PATH", Path(__file__)),
+        ):
+            patcher = mock.patch.object(self_host, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _run(self, command, **overrides):
+        patches = {
+            "resolve_config": mock.Mock(return_value=self.config),
+            "ensure_tools": mock.Mock(),
+            "check_prebuilt_binary": mock.Mock(),
+            "command_stop": mock.Mock(),
+            "ports_after_stop": mock.Mock(return_value=replace(self.config, ports=replace(self.config.ports, server=38953))),
+            "save_config": mock.Mock(),
+            "swap_in_binary": mock.Mock(),
+            "archive_rooms": mock.Mock(return_value=None),
+            "start_server_prod": mock.Mock(),
+            "poll_health": mock.Mock(return_value=True),
+            "announce_serving": mock.Mock(),
+            "caddy_serves_a_config": mock.Mock(return_value=False),
+            "caddy_admin_address": mock.Mock(return_value="mock-admin"),
+            "check_caddy_serves": mock.Mock(),
+            "load_through_caddy": mock.Mock(),
+            "validate_caddyfile": mock.Mock(return_value=subprocess.CompletedProcess([], 0, stderr="")),
+            "reload_caddy": mock.Mock(),
+        }
+        patches.update(overrides)
+        order = mock.Mock()
+        for name in ("command_stop", "start_server_prod", "poll_health", "announce_serving"):
+            order.attach_mock(patches[name], name)
+        args = [command]
+        if command != "start":
+            args += ["--prebuilt", str(self.root / "uploaded-binary")]
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with mock.patch.multiple(self_host, **patches), redirect_stdout(stdout), redirect_stderr(stderr):
+            code = self_host.main(args)
+        patches["order"] = order
+        return code, stdout.getvalue(), stderr.getvalue(), patches
+
+    def _assert_unpublished(self, result):
+        code, stdout, stderr, mocks = result
+        self.assertEqual(code, 1)
+        mocks["command_stop"].assert_called_once()
+        mocks["start_server_prod"].assert_called_once_with(replace(self.config.ports, server=38953), self.config.site)
+        mocks["poll_health"].assert_called_once_with(38953)
+        mocks["announce_serving"].assert_not_called()
+        self.assertEqual([call[0] for call in mocks["order"].mock_calls], ["command_stop", "start_server_prod", "poll_health"])
+        self.assertIn("Caddy configuration failed", stderr)
+        self.assertIn("game server is running on http://127.0.0.1:38953 but is not published", stderr)
+        self.assertNotIn("serving:", stdout)
+
+    def test_missing_named_caddyfile_still_starts_each_production_command(self):
+        self.config = replace(self.config, caddyfile=str(self.root / "missing"))
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                result = self._run(command)
+                self._assert_unpublished(result)
+                self.assertIn("check --caddyfile", result[2])
+                result[3]["load_through_caddy"].assert_not_called()
+                self.assertFalse((self.root / "missing").exists())
+                self.assertEqual(self.caddyfile.read_text(), self.ORIGINAL)
+
+    def test_missing_default_file_never_replaces_a_serving_caddy(self):
+        self.caddyfile.unlink()
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                result = self._run(command, caddy_serves_a_config=mock.Mock(return_value=True))
+                self._assert_unpublished(result)
+                self.assertIn("already serves a config", result[2])
+                result[3]["load_through_caddy"].assert_not_called()
+                self.assertFalse(self.caddyfile.exists())
+
+    def test_preflight_mismatch_or_adapt_refusal_still_starts_without_edit_or_load(self):
+        for error in (self_host.CaddyMismatch("wrong config"), self_host.CaddyRejected("adapt refused")):
+            for command in self.COMMANDS:
+                with self.subTest(command=command, error=type(error).__name__):
+                    result = self._run(command, check_caddy_serves=mock.Mock(side_effect=error))
+                    self._assert_unpublished(result)
+                    self.assertIn(str(error), result[2])
+                    result[3]["load_through_caddy"].assert_not_called()
+                    self.assertEqual(self.caddyfile.read_text(), self.ORIGINAL)
+                    self.assertFalse((self.root / "config").exists())
+
+    def test_refused_load_and_unknown_outcome_restore_file_and_still_start(self):
+        for error in (self_host.CaddyRejected("load refused"), self_host.CaddyUnsure("outcome unknown")):
+            for command in self.COMMANDS:
+                with self.subTest(command=command, error=type(error).__name__):
+                    result = self._run(command, load_through_caddy=mock.Mock(side_effect=error))
+                    self._assert_unpublished(result)
+                    result[3]["load_through_caddy"].assert_called_once()
+                    result[3]["reload_caddy"].assert_not_called()
+                    self.assertIn(str(error), result[2])
+                    self.assertEqual(self.caddyfile.read_text(), self.ORIGINAL)
+
+    def test_invalid_file_restores_file_and_still_starts(self):
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                result = self._run(
+                    command,
+                    caddy_admin_address=mock.Mock(return_value=None),
+                    validate_caddyfile=mock.Mock(return_value=subprocess.CompletedProcess([], 1, stderr="invalid directive")),
+                )
+                self._assert_unpublished(result)
+                self.assertIn("invalid directive", result[2])
+                result[3]["reload_caddy"].assert_not_called()
+                self.assertEqual(self.caddyfile.read_text(), self.ORIGINAL)
+
+    def test_stopped_caddy_keeps_valid_edit_but_returns_nonzero(self):
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                self.caddyfile.write_text(self.ORIGINAL)
+                result = self._run(
+                    command,
+                    check_caddy_serves=mock.Mock(side_effect=self_host.CaddyUnreachable("not listening")),
+                    load_through_caddy=mock.Mock(side_effect=self_host.CaddyUnreachable("not listening")),
+                )
+                self._assert_unpublished(result)
+                result[3]["validate_caddyfile"].assert_called_once()
+                result[3]["reload_caddy"].assert_not_called()
+                self.assertIn("reverse_proxy localhost:38953", self.caddyfile.read_text())
+
+    def test_reload_failure_keeps_valid_edit_but_returns_nonzero(self):
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                self.caddyfile.write_text(self.ORIGINAL)
+                result = self._run(
+                    command,
+                    caddy_admin_address=mock.Mock(return_value=None),
+                    reload_caddy=mock.Mock(side_effect=subprocess.CalledProcessError(1, ["caddy", "reload"])),
+                )
+                self._assert_unpublished(result)
+                self.assertIn("caddy reload failed", result[2])
+                self.assertIn("reverse_proxy localhost:38953", self.caddyfile.read_text())
+
+    def test_missing_caddy_command_still_starts(self):
+        def tools(names):
+            if "caddy" in names:
+                raise RuntimeError("Missing required command(s): caddy")
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                result = self._run(command, ensure_tools=mock.Mock(side_effect=tools))
+                self._assert_unpublished(result)
+                self.assertIn("Missing required command(s): caddy", result[2])
+                result[3]["load_through_caddy"].assert_not_called()
+                self.assertEqual(self.caddyfile.read_text(), self.ORIGINAL)
+
+    def test_normal_load_and_reload_paths_succeed(self):
+        for address in ("mock-admin", None):
+            for command in self.COMMANDS:
+                with self.subTest(command=command, address=address):
+                    self.caddyfile.write_text(self.ORIGINAL)
+                    code, _, stderr, mocks = self._run(command, caddy_admin_address=mock.Mock(return_value=address))
+                    self.assertEqual(code, 0, stderr)
+                    mocks["start_server_prod"].assert_called_once()
+                    mocks["poll_health"].assert_called_once_with(38953)
+                    mocks["announce_serving"].assert_called_once()
+                    if address:
+                        mocks["load_through_caddy"].assert_called_once()
+                        mocks["reload_caddy"].assert_not_called()
+                    else:
+                        mocks["validate_caddyfile"].assert_called_once()
+                        mocks["reload_caddy"].assert_called_once()
+
+    def test_unchanged_file_checks_observable_caddy_without_mutation(self):
+        ports = replace(self.config.ports, server=38953)
+        self.caddyfile.write_text(self_host.render_caddy_block(self.config.site, self_host.Mode.PROD, ports))
+        original = self.caddyfile.read_bytes()
+        for command in self.COMMANDS:
+            for down in (False, True):
+                with self.subTest(command=command, down=down):
+                    check = mock.Mock(side_effect=self_host.CaddyUnreachable("not running") if down else None)
+                    result = self._run(command, preflight_caddyfile=mock.Mock(), check_caddy_serves=check)
+                    if down:
+                        self._assert_unpublished(result)
+                    else:
+                        self.assertEqual(result[0], 0, result[2])
+                    check.assert_called_once_with("mock-admin", original)
+                    result[3]["load_through_caddy"].assert_not_called()
+                    result[3]["validate_caddyfile"].assert_not_called()
+                    result[3]["reload_caddy"].assert_not_called()
+                    self.assertEqual(self.caddyfile.read_bytes(), original)
+                    self.assertFalse((self.root / "config").exists())
+
+    def test_unchanged_unobservable_caddy_is_reported_as_unverified(self):
+        ports = replace(self.config.ports, server=38953)
+        self.caddyfile.write_text(self_host.render_caddy_block(self.config.site, self_host.Mode.PROD, ports))
+        original = self.caddyfile.read_bytes()
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                code, stdout, stderr, mocks = self._run(command, caddy_admin_address=mock.Mock(return_value=None))
+                self.assertEqual(code, 0, stderr)
+                self.assertIn("publication at https://game.example.test is unverified", stdout)
+                mocks["announce_serving"].assert_not_called()
+                mocks["load_through_caddy"].assert_not_called()
+                mocks["reload_caddy"].assert_not_called()
+                self.assertEqual(self.caddyfile.read_bytes(), original)
+
+    def test_dev_start_keeps_warning_only_reload_behavior(self):
+        self.config = replace(self.config, mode=self_host.Mode.DEV)
+        with mock.patch.multiple(
+            self_host,
+            resolve_config=mock.Mock(return_value=self.config),
+            command_stop=mock.DEFAULT,
+            allocate_ports=mock.Mock(return_value=self.config.ports),
+            ensure_tools=mock.DEFAULT,
+            find_go=mock.DEFAULT,
+            install_web=mock.DEFAULT,
+            save_config=mock.DEFAULT,
+            caddy_admin_address=mock.Mock(return_value=None),
+            validate_caddyfile=mock.Mock(return_value=subprocess.CompletedProcess([], 0, stderr="")),
+            reload_caddy=mock.Mock(side_effect=subprocess.CalledProcessError(1, ["caddy", "reload"])),
+            start_server_dev=mock.DEFAULT,
+            start_web_dev=mock.DEFAULT,
+            announce_serving=mock.DEFAULT,
+        ) as mocks, redirect_stderr(io.StringIO()) as stderr:
+            self.assertEqual(self_host.main(["dev-start"]), 0)
+        mocks["start_server_dev"].assert_called_once_with(self.config.ports)
+        mocks["start_web_dev"].assert_called_once_with(self.config.ports)
+        mocks["announce_serving"].assert_called_once()
+        self.assertIn("warning: caddy reload failed", stderr.getvalue())
+
+    def test_failed_server_start_never_claims_running_even_after_caddy_failure(self):
+        for command in self.COMMANDS:
+            for caddy_failed in (False, True):
+                with self.subTest(command=command, caddy_failed=caddy_failed):
+                    self.caddyfile.write_text(self.ORIGINAL)
+                    result = self._run(
+                        command,
+                        start_server_prod=mock.Mock(side_effect=RuntimeError("tmux refused")),
+                        load_through_caddy=mock.Mock(side_effect=self_host.CaddyRejected("load refused") if caddy_failed else None),
+                    )
+                    code, stdout, stderr, mocks = result
+                    self.assertEqual(code, 1)
+                    self.assertIn("game server startup failed on port 38953: tmux refused", stderr)
+                    self.assertNotIn("game server is running", stderr + stdout)
+                    mocks["poll_health"].assert_not_called()
+                    mocks["announce_serving"].assert_not_called()
+                    if caddy_failed:
+                        self.assertIn("load refused", stderr)
+
+    def test_failed_health_never_claims_running_even_after_caddy_failure(self):
+        for command in self.COMMANDS:
+            for caddy_failed in (False, True):
+                with self.subTest(command=command, caddy_failed=caddy_failed):
+                    self.caddyfile.write_text(self.ORIGINAL)
+                    code, stdout, stderr, mocks = self._run(
+                        command,
+                        poll_health=mock.Mock(return_value=False),
+                        load_through_caddy=mock.Mock(side_effect=self_host.CaddyRejected("load refused") if caddy_failed else None),
+                    )
+                    self.assertEqual(code, 1)
+                    self.assertIn("game server startup could not be verified on port 38953", stderr)
+                    self.assertNotIn("game server is running", stderr + stdout)
+                    mocks["start_server_prod"].assert_called_once()
+                    mocks["announce_serving"].assert_not_called()
+                    if caddy_failed:
+                        self.assertIn("load refused", stderr)
+
+    def test_missing_tmux_is_not_a_caddy_failure_and_never_stops_or_starts(self):
+        def tools(names):
+            if "tmux" in names:
+                raise RuntimeError("Missing required command(s): tmux")
+        for command in self.COMMANDS:
+            with self.subTest(command=command):
+                code, stdout, stderr, mocks = self._run(command, ensure_tools=mock.Mock(side_effect=tools))
+                self.assertEqual(code, 1)
+                self.assertIn("Missing required command(s): tmux", stderr)
+                self.assertNotIn("Caddy configuration failed", stderr)
+                self.assertNotIn("game server is running", stderr + stdout)
+                mocks["command_stop"].assert_not_called()
+                mocks["start_server_prod"].assert_not_called()
+
+    def test_bad_prebuilt_is_not_a_caddy_failure_and_never_stops_or_starts(self):
+        for command in ("setup", "redeploy"):
+            with self.subTest(command=command):
+                code, stdout, stderr, mocks = self._run(command, check_prebuilt_binary=mock.Mock(side_effect=RuntimeError("invalid binary")))
+                self.assertEqual(code, 1)
+                self.assertIn("invalid binary", stderr)
+                self.assertNotIn("Caddy configuration failed", stderr)
+                self.assertNotIn("game server is running", stderr + stdout)
+                mocks["command_stop"].assert_not_called()
+                mocks["start_server_prod"].assert_not_called()
+
+    def test_failed_binary_install_is_not_reported_as_caddy_failure(self):
+        for command in ("setup", "redeploy"):
+            with self.subTest(command=command):
+                code, stdout, stderr, mocks = self._run(command, swap_in_binary=mock.Mock(side_effect=OSError("install failed")))
+                self.assertEqual(code, 1)
+                self.assertIn("install failed", stderr)
+                self.assertNotIn("Caddy configuration failed", stderr)
+                self.assertNotIn("game server is running", stderr + stdout)
+                mocks["start_server_prod"].assert_not_called()
+
+
 class PortsAfterStopTests(unittest.TestCase):
     """Ports are chosen after our own server stops, so a redeploy keeps its
     port instead of moving to the next one and rewriting the Caddyfile."""
@@ -1860,7 +2178,7 @@ class PortsAfterStopTests(unittest.TestCase):
                 mocks["resolve_config"].return_value = config
                 mocks["ports_after_stop"].side_effect = lambda c: c
                 mocks["poll_health"].return_value = True
-                mocks["apply_caddyfile_safely"].side_effect = lambda *a: seen.append(self_host.CADDYFILE)
+                mocks["apply_caddyfile_safely"].side_effect = lambda *a: seen.append(self_host.CADDYFILE) or True
                 self_host.command_start(None, None, "sites/Caddyfile")
                 self.assertEqual(mocks["resolve_config"].call_args.args[3], "sites/Caddyfile")
             self.assertEqual(seen, [Path.home() / "sites/Caddyfile"])

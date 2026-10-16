@@ -914,7 +914,7 @@ def restore_caddyfile(backup: Path | None) -> None:
         CADDYFILE.unlink()
 
 
-def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> None:
+def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: bool = False) -> bool | None:
     """Back up the Caddyfile, write the managed block, then have Caddy load it.
 
     If the Caddyfile already has exactly the managed block we would write,
@@ -933,6 +933,9 @@ def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: b
     or puts it on a Unix socket, this validates and then runs `caddy
     reload`, whose failure only warns. Any other error after the write also
     restores the backup before it propagates.
+
+    Returns True after loading, False when only validated or reload failed,
+    and None when the managed block already matched.
     """
     if caddyfile_block_matches(site, mode, ports, both_schemes):
         return
@@ -940,7 +943,7 @@ def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: b
     backup = backup_caddyfile()
     update_caddyfile(site, mode, ports, both_schemes)
     try:
-        load_or_validate_caddyfile(backup)
+        return load_or_validate_caddyfile(backup)
     except BaseException:
         # Whatever went wrong after the write, a refusal or a Ctrl-C
         # included, the shared file goes back to what it was before the
@@ -950,14 +953,14 @@ def apply_caddyfile_safely(site: Site, mode: Mode, ports: Ports, both_schemes: b
         raise
 
 
-def load_or_validate_caddyfile(backup: Path | None) -> None:
+def load_or_validate_caddyfile(backup: Path | None) -> bool:
     """The steps of apply_caddyfile_safely after the write. Raising means
     the caller restores the backup."""
     address = caddy_admin_address()
     if address is not None:
         try:
             load_through_caddy(address, backup.read_bytes() if backup is not None else None)
-            return
+            return True
         except CaddyRejected as exc:
             raise RuntimeError(
                 f"Caddy refused the Caddyfile and kept its running config; restored the previous Caddyfile:\n{exc}"
@@ -974,7 +977,7 @@ def load_or_validate_caddyfile(backup: Path | None) -> None:
         raise RuntimeError(f"caddy validate failed, restored previous Caddyfile:\n{validated.stderr}{hint}")
     if address is not None:
         print(f"warning: Caddy is not running; it will read {CADDYFILE} on its own next start", file=sys.stderr)
-        return
+        return False
     try:
         reload_caddy()
     except subprocess.CalledProcessError as exc:
@@ -982,6 +985,8 @@ def load_or_validate_caddyfile(backup: Path | None) -> None:
             f"warning: caddy reload failed ({exc}); Caddy will read {CADDYFILE} on its own next start",
             file=sys.stderr,
         )
+        return False
+    return True
 
 
 def announce_serving(config: Config) -> None:
@@ -1664,13 +1669,67 @@ def command_ship_all() -> int:
     return 1 if failed else 0
 
 
+def prepare_prod_caddy(config: Config) -> Exception | None:
+    """Check Caddy before stopping, but keep its failure separate from startup."""
+    try:
+        refuse_to_create_caddyfile()
+        ensure_tools(["caddy"])
+        preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
+    except Exception as exc:
+        print(f"warning: Caddy configuration failed: {exc}", file=sys.stderr)
+        return exc
+    return None
+
+
+def start_prod_with_caddy(config: Config, caddy_error: Exception | None) -> None:
+    """Start the game even when the independent Caddy step has failed."""
+    publication_verified = True
+    if caddy_error is None:
+        try:
+            loaded = apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
+            if loaded is False:
+                raise RuntimeError("Caddy did not load the Caddyfile")
+            if loaded is None:
+                # An unchanged block requires no write or reload, but a stopped
+                # TCP-admin Caddy must not produce a successful publication claim.
+                address = caddy_admin_address()
+                if address is not None:
+                    check_caddy_serves(address, CADDYFILE.read_bytes())
+                else:
+                    publication_verified = False
+        except Exception as exc:
+            caddy_error = exc
+            print(f"warning: Caddy configuration failed: {exc}", file=sys.stderr)
+    try:
+        start_server_prod(config.ports, config.site)
+        healthy = poll_health(config.ports.server)
+    except Exception as exc:
+        raise RuntimeError(f"game server startup failed on port {config.ports.server}: {exc}") from exc
+    if not healthy:
+        raise RuntimeError(
+            f"game server startup could not be verified on port {config.ports.server}: "
+            "/health did not respond within the poll window"
+        )
+    if caddy_error is not None:
+        raise RuntimeError(
+            f"Caddy configuration failed; game server is running on http://127.0.0.1:{config.ports.server} "
+            f"but is not published at {config.site.origin}"
+        ) from caddy_error
+    if not publication_verified:
+        print(
+            f"game server is running on http://127.0.0.1:{config.ports.server}; "
+            f"Caddyfile unchanged, publication at {config.site.origin} is unverified (no TCP admin API)"
+        )
+        return
+    announce_serving(config)
+
+
 def command_setup(
     url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None
 ) -> None:
     config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
     use_caddyfile(config)
-    refuse_to_create_caddyfile()
-    ensure_tools(["caddy", "tmux"])
+    ensure_tools(["tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
         check_prebuilt_binary(prebuilt_path)
@@ -1685,16 +1744,12 @@ def command_setup(
     # Everything above only builds and checks; nothing has been stopped yet,
     # so a failing build or a bad --prebuilt path never takes a running
     # server down. The swap below is the first thing that touches it.
-    preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
+    caddy_error = prepare_prod_caddy(config)
     command_stop()
     config = ports_after_stop(config)
     save_config(config)
     swap_in_binary(new_binary, move=prebuilt_path is not None)
-    apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
-    start_server_prod(config.ports, config.site)
-    if not poll_health(config.ports.server):
-        print("warning: /health did not respond within the poll window", file=sys.stderr)
-    announce_serving(config)
+    start_prod_with_caddy(config, caddy_error)
 
 
 def command_redeploy(
@@ -1702,8 +1757,7 @@ def command_redeploy(
 ) -> None:
     config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
     use_caddyfile(config)
-    refuse_to_create_caddyfile()
-    ensure_tools(["caddy", "tmux"])
+    ensure_tools(["tmux"])
     prebuilt_path = Path(prebuilt).expanduser() if prebuilt else None
     if prebuilt_path is not None:
         check_prebuilt_binary(prebuilt_path)
@@ -1719,7 +1773,7 @@ def command_redeploy(
     # build and check, so a failing one never takes the running server down.
     # The rooms archive still runs with the server already stopped (so it
     # never captures a file mid-write), and still before the swap.
-    preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
+    caddy_error = prepare_prod_caddy(config)
     command_stop()
     config = ports_after_stop(config)
     save_config(config)
@@ -1727,21 +1781,16 @@ def command_redeploy(
     if archived is not None:
         print(f"archived rooms: {archived}")
     swap_in_binary(new_binary, move=prebuilt_path is not None)
-    apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
-    start_server_prod(config.ports, config.site)
-    if not poll_health(config.ports.server):
-        print("warning: /health did not respond within the poll window", file=sys.stderr)
-    announce_serving(config)
+    start_prod_with_caddy(config, caddy_error)
 
 
 def command_start(url: str | None, both_schemes: bool | None = None, caddyfile: str | None = None) -> None:
     config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
     use_caddyfile(config)
-    refuse_to_create_caddyfile()
-    preflight_caddyfile(config.site, Mode.PROD, config.ports, config.both_schemes)
+    ensure_tools(["tmux"])
+    caddy_error = prepare_prod_caddy(config)
     command_stop()
     config = ports_after_stop(config)
-    ensure_tools(["caddy", "tmux"])
     if not BIN_PATH.exists():
         ensure_tools(["zsh", "rsync"])
         find_go()
@@ -1750,11 +1799,7 @@ def command_start(url: str | None, both_schemes: bool | None = None, caddyfile: 
         sync_webdist()
         swap_in_binary(build_server_release())
     save_config(config)
-    apply_caddyfile_safely(config.site, Mode.PROD, config.ports, config.both_schemes)
-    start_server_prod(config.ports, config.site)
-    if not poll_health(config.ports.server):
-        print("warning: /health did not respond within the poll window", file=sys.stderr)
-    announce_serving(config)
+    start_prod_with_caddy(config, caddy_error)
 
 
 def command_dev_start(url: str | None, both_schemes: bool | None = None, caddyfile: str | None = None) -> None:

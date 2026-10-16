@@ -25,8 +25,8 @@ recorded yet.
 - `start [url]`: starts the already-built server. Builds it first only if
   `.self-host/bin/ajayeb` does not exist yet. Safe to run at boot: an
   already-correct Caddyfile is left untouched, and the server still
-  starts even if Caddy is not running yet (with one exception, under
-  "Starting at boot").
+  starts even if Caddy configuration fails or Caddy is not running yet.
+  A known Caddy failure still makes the command exit nonzero.
   See "Starting at boot" below.
 - `stop`: stops every tmux session this script manages. Leaves the Caddyfile
   and the built binary alone.
@@ -218,8 +218,8 @@ Ajayeb's own local services.
 ## Caddy safety
 
 Because the Caddyfile is shared with other sites on the same machine, every
-edit goes through a safe path, and nothing happens at all when there is
-nothing to change:
+edit goes through a safe path. An unchanged managed block never needs a
+backup, write or load:
 
 1. If the Caddyfile already contains exactly the managed block this command
    would write, stop here: no backup, no write, no load. This is what makes
@@ -231,8 +231,9 @@ nothing to change:
    missing file that `--caddyfile` named is taken as a wrong path, and a
    missing `~/Caddyfile` is created only when no Caddy on its default admin
    address (`localhost:2019`) is already serving a config, which it would be
-   reading from some other file. Every command makes this check right after
-   it reads its config, before it stops or saves anything.
+   reading from some other file. This check happens before any Caddyfile
+   edit. Production commands record its failure and still start the game
+   server without editing or loading the file; `dev-start` stops on failure.
 3. Copy the Caddyfile to `.self-host/Caddyfile.bak.<timestamp>` before
    writing anything.
 4. Write the managed block in place (or append it, if this is the first
@@ -255,7 +256,7 @@ nothing to change:
      working directory when it adapts text, not against the file's), or
      the file holds edits Caddy has not loaded yet. Hide lists are compared
      as sets, since Caddy orders the config files in them differently from
-     one version to the next. Restore the backup and stop without loading
+     one version to the next. Restore the backup and stop the Caddy step without loading
      anything, with a message naming those causes.
      For a Caddyfile this command is creating, the check is that the Caddy
      serves no config at all.
@@ -268,36 +269,40 @@ nothing to change:
    - **The load.** Caddy adapts the edited file the same way, the hidden
      path goes back in, and the result goes to `/load` as JSON. Caddy
      switches to it only if all of it loads. If Caddy refuses it, restore
-     the backup and stop with Caddy's error; Caddy keeps serving the old
+     the backup and stop the Caddy step with Caddy's error; Caddy keeps serving the old
      config. Caddy restarts its admin listener after a load, so if the
      reply is lost, the script waits a moment and compares the running
      config with what it sent: a match means the load took, and anything
      else (a different config, or no answer to that question) restores the
-     backup and stops, saying the outcome is unknown.
+     backup and stops the Caddy step, saying the outcome is unknown.
 6. If nothing listens on that address (the connection is refused, or a name
    such as `localhost` resolves to an address this host cannot use), Caddy
    is not running: run `caddy
    validate --config` on the Caddyfile instead, restore the backup and stop
-   if it fails, and otherwise print a warning and go on. Caddy reads the
-   Caddyfile itself the next time it starts, so its absence does not stop
-   `start`/`setup`/`redeploy` from starting the game server. `caddy
+   the Caddy step if it fails, and otherwise keep the validated edit and print a warning.
+   Caddy reads the Caddyfile itself the next time it starts. Production
+   commands still start the game server, but exit nonzero because Caddy
+   has not published it. `caddy
    validate` reads `{$VAR}` placeholders from the script's own environment,
    so it can fail on a file that Caddy itself would load; the error says so
    when the file has placeholders.
 7. If the Caddyfile turns the admin API off, puts it on a Unix socket or
    gives its address as a `{$VAR}` placeholder, fall back to `caddy validate` and then `caddy reload --config`, where a
-   failed reload only prints a warning.
+   failed reload keeps the valid edit and prints a warning. Production
+   commands still start the game server and exit nonzero on this failure.
 
 Any other error after the write, a Ctrl-C included, also restores the
-backup before it stops the command. Left behind unloaded, the block would
+backup before the error leaves the Caddy step. Production commands catch
+ordinary errors there and still attempt game startup; a Ctrl-C interrupts
+the command. Left behind unloaded, the block would
 make the next run believe there was nothing to do.
 
 `setup`, `redeploy` and `start` also run the check of step 5 as a
 preflight, before they stop the game server, whenever the block will need
 writing and a Caddy answers. A Caddy that does not serve the file as it
-stands is then reported while the game is still up, with nothing stopped
-or changed. The preflight loads nothing, and a block that already matches
-skips it, so a reboot is never held up by it.
+stands is then reported before the game is stopped. The production
+command proceeds with the game restart, skipping the Caddy edit and load.
+The preflight loads nothing, and a block that already matches skips it.
 
 Every `caddy` command gets `--adapter caddyfile`, so a Caddyfile under any
 file name is read as one (Caddy only guesses the adapter from names that
@@ -308,9 +313,26 @@ sites, and reformatting the whole file on every deploy is not ours to do. The
 managed block is already written in Caddy's own tab-indented format, so a
 load never has anything of ours to normalize.
 
-After starting the server, the script polls `http://127.0.0.1:<port>/health`
-for up to 10 seconds and prints a warning if it never answers, rather than
-failing silently.
+Production commands treat Caddy configuration and game startup separately.
+A Caddy refusal, missing or invalid Caddyfile, missing Caddy executable,
+failed reload or stopped Caddy never prevents the server start attempt.
+The existing backup, refusal and check-then-load rules above still apply.
+After startup, the script polls `http://127.0.0.1:<port>/health` for up to
+10 seconds. Only a successful health check permits a message saying the
+game server is running. If Caddy failed, the command reports its reason,
+says the server is running on its loopback port but is not published at the
+configured URL, and exits nonzero. This conservative status also covers an
+unknown load outcome; the previous Caddy config may still serve a site.
+A failed server start or health check exits nonzero without claiming that
+the server runs or that the site is serving.
+
+For an unchanged managed block, production commands also check the running
+config through Caddy's TCP admin API when its address is available. The
+file is still never written or reloaded. If the file disables that API or
+uses a Unix socket, the unchanged path remains untouched, exits zero after
+successful game health, and reports publication as unverified. It cannot
+detect a stopped Caddy on that path. Even a successful admin check confirms
+the config, not public DNS, TLS or reachability.
 
 ## Starting at boot
 
@@ -332,13 +354,13 @@ output to a log so a failed boot can be read afterward.
   safety" above), so a reboot never rewrites or reformats the shared file.
 - The server still starts even when Caddy is not up yet: if the block
   does need writing (say the stored port was taken and `start` chose
-  another), no answer from Caddy only prints a warning, since Caddy reads
-  the Caddyfile itself the next time it starts. The exception is a block
-  that needs writing while Caddy is down and `caddy validate` fails: then
-  `start` restores the file and stops with an error before starting the
-  server. A Caddyfile with `{$VAR}` placeholders makes that failure likely
-  unless the boot line's environment has those variables, so run `start`
-  in the same environment that starts Caddy.
+  another), it leaves a valid edit ready for Caddy's next start. If
+  `caddy validate` fails instead, `start` restores the previous file and
+  still starts the game server. Both cases exit nonzero and report that
+  the game runs on its port but is not published. A Caddyfile with `{$VAR}`
+  placeholders can fail validation unless the boot environment has those
+  variables, so use the same environment that starts Caddy. An unchanged
+  block uses only the read-only publication check described above.
 - `start` only builds when `.self-host/bin/ajayeb` does not exist yet, so a
   normal reboot restarts the existing binary without rebuilding anything.
 
@@ -490,7 +512,8 @@ API (a stateful fake that serves a config, adapts and loads: the edit
 loaded as JSON with the config file hidden by the running config's path,
 past any proxy; hide lists in any order; refusing a Caddy that does not
 serve the file as it stood, or that hides two different paths, and the
-same check as a preflight before setup, redeploy and start stop anything; the backup restored when Caddy refuses
+same check as a preflight before setup, redeploy and start stop the game;
+the backup restored when Caddy refuses
 the edit or cannot adapt it; a lost reply accepted only when the running
 config shows the load took, and an unknown outcome when the recheck gets no
 answer; a new Caddyfile loaded only into a Caddy with no config; `caddy
@@ -502,10 +525,14 @@ other error after the write, a Ctrl-C included), the admin address read from the
 Caddyfile or, when it does not adapt, from its global options as text,
 `--adapter caddyfile` on every `caddy` command,
 never creating a named Caddyfile that does not exist (refused by every
-command before anything stops) or a `~/Caddyfile` over a Caddy that serves
-a config, skipping an already-matching Caddyfile
-entirely (no backup, no write, no load), continuing with only a warning
-when `caddy reload` fails, that `reload_caddy` never runs `caddy fmt`, the
+Caddy edit, with production still starting the game) or a `~/Caddyfile`
+over a Caddy that serves a config, skipping an already-matching Caddyfile
+entirely (no backup, no write, no load), continuing game startup with a
+nonzero unpublished result after Caddy failures, preserving valid pending
+edits after validate-only or reload failures, verifying unchanged configs
+through an observable TCP admin API and reporting unobservable configs as
+unverified, refusing a running-server claim after startup or health failure,
+that `reload_caddy` never runs `caddy fmt`, the
 `--caddyfile` path (resolved from home, remembered, forwarded quoted by
 `ship`, and used by every Caddy step), the health poll, the
 rooms backup pruning, the `uname` to `GOOS`/`GOARCH` mapping and its refusal
@@ -521,7 +548,7 @@ never touches the real `~/Caddyfile`, starts a real tmux session, or reaches
 the network. Run it with:
 
 ```
-python3 -m unittest discover -s tests
+make test-py
 ```
 
 ## Production smoke
