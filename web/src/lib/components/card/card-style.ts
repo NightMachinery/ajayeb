@@ -4,6 +4,7 @@
 // apart. Patterns are CSS gradients, drawn over the colour on the card's band
 // and in the placeholder art; they cost nothing to ship.
 
+import { stripBidiMarks } from '$lib/i18n';
 import type { IconName } from '$lib/icons/names';
 import type { Back, Color, Resource } from '$lib/wire';
 
@@ -84,9 +85,12 @@ export function backAge(back: Back): 1 | 2 | 3 {
 }
 
 /** The length in characters of a name's longest word, which CardFace uses to
- *  shrink a name that would otherwise have to break inside a word. At least 1. */
+ *  shrink a name that would otherwise have to break inside a word. At least 1.
+ *  The invisible direction marks of a right-to-left locale do not count. */
 export function longestWord(name: string): number {
   let longest = 1;
-  for (const word of name.split(/\s+/)) longest = Math.max(longest, [...word].length);
+  for (const word of stripBidiMarks(name).split(/\s+/)) {
+    longest = Math.max(longest, [...word].length);
+  }
   return longest;
 }
