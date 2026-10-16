@@ -12,11 +12,19 @@
 // next tap closes it without acting; a plain tap still acts. Touches are
 // real CDP touch events (Input.dispatchTouchEvent), so the page sees touch
 // pointer events, as on a phone.
+//
+// The "More in Rules" link (M10.tooltip-coverage), in a real hot-seat game:
+// on a fine pointer the mouse crosses from a looting token into its bubble
+// and clicks the link; on touch a tap shows the token's tooltip and a tap on
+// the link acts (the one tap that is not swallowed). Either way the rules
+// overlay opens at the military section, the tooltip closes, and the game is
+// untouched and still takes moves.
 
 import AxeBuilder from '@axe-core/playwright';
 import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
+import { openHotseatRoom } from '../fixtures/scenario';
 
 const URL = '/dev/gallery/tooltips';
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -52,6 +60,20 @@ async function tap(page: Page, locator: Locator): Promise<void> {
   const { x, y } = await center(locator);
   await page.touchscreen.tap(x, y);
 }
+
+/** The game as the page holds it: what must not change while the rules are open. */
+async function gameState(page: Page): Promise<{ url: string; version: number; view: string }> {
+  return page.evaluate(() => {
+    const hook = window.__ajayeb;
+    const view = hook?.view();
+    const room = hook?.room();
+    if (!view || !room) throw new Error('no game on screen');
+    return { url: location.href, version: room.version, view: JSON.stringify(view) };
+  });
+}
+
+const LOOT = '.military-track [data-loot-at] .loot-token[data-present]';
+const RULES_LINK = '[data-tooltip-layer] [data-tooltip-rules="military"]';
 
 test('the main gallery links the tooltip gallery', async ({ page }) => {
   await page.goto('/dev/gallery');
@@ -206,6 +228,59 @@ test.describe('tooltips on a fine pointer', () => {
   });
 });
 
+test.describe('the "More in Rules" link on a fine pointer', () => {
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== 'desktop', 'hover needs a mouse');
+  });
+
+  test('opens the rules at its section, and the game stays live', async ({ page }) => {
+    const problems = watchHygiene(page);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const driver = await openHotseatRoom(page, 'circus-maximus');
+    await driver.nextTurn();
+    const before = await gameState(page);
+
+    await page.locator(LOOT).first().hover();
+    const link = page.locator(RULES_LINK);
+    await expect(link).toBeVisible();
+    await expect(bubble(page)).toHaveText(/More in Rules/);
+    // The pointer crosses from the anchor into the bubble: it stays open.
+    const target = await center(link);
+    await page.mouse.move(target.x, target.y, { steps: 12 });
+    await page.waitForTimeout(400);
+    await expect(link).toBeVisible();
+    // A press inside the bubble does not close it before the click lands.
+    await page.mouse.down();
+    await expect(link).toBeVisible();
+    await page.mouse.up();
+
+    const overlay = page.locator('[data-rules-overlay]');
+    await expect(overlay).toBeVisible();
+    await expect(overlay.locator('[data-rules-section="military"]')).toBeInViewport();
+    await expect(bubble(page)).toHaveCount(0);
+    expect(page.url()).toBe(before.url);
+
+    await overlay.locator('[data-control="rules-close"]').click();
+    await expect(overlay).toBeHidden();
+    expect(await gameState(page)).toEqual(before);
+    // The game still takes moves: a card opens its sheet.
+    await page.locator('.card-structure [data-card][data-accessible]').first().click();
+    await expect(page.locator('dialog[open] [data-card-sheet]')).toBeVisible();
+    expect(problems).toEqual([]);
+  });
+
+  test('a bubble without a link lets the pointer through', async ({ page }) => {
+    await page.goto(URL);
+    await page.getByTestId('tip-text').hover();
+    await expect(bubble(page)).toBeVisible();
+    await expect(page.locator('[data-tooltip-layer] [data-tooltip-rules]')).toHaveCount(0);
+    expect(
+      await bubble(page).evaluate((el) => getComputedStyle(el).pointerEvents),
+      'a plain bubble never blocks the board'
+    ).toBe('none');
+  });
+});
+
 test.describe('tooltips on touch', { tag: ['@mobile'] }, () => {
   test.beforeEach(({}, info) => {
     test.skip(info.project.name !== 'mobile', 'touch needs the phone project');
@@ -287,6 +362,42 @@ test.describe('tooltips on touch', { tag: ['@mobile'] }, () => {
       await expect(stack).toHaveCount(0);
       await expect(bubble(page)).toHaveCount(0);
     }
+  });
+
+  test('a tap on the "More in Rules" link acts: the rules open at its section', async ({
+    page
+  }) => {
+    const problems = watchHygiene(page);
+    const driver = await openHotseatRoom(page, 'circus-maximus');
+    await driver.nextTurn();
+    const before = await gameState(page);
+
+    const token = page.locator(LOOT).first();
+    await tap(page, token);
+    const link = page.locator(RULES_LINK);
+    await expect(link).toBeVisible();
+    // A tap elsewhere in the bubble is any other tap: it closes the bubble.
+    const box = await bubble(page).boundingBox();
+    if (!box) throw new Error('no bubble box');
+    await page.touchscreen.tap(box.x + 6, box.y + 6);
+    await expect(bubble(page)).toHaveCount(0);
+
+    await tap(page, token);
+    await expect(link).toBeVisible();
+    await tap(page, link);
+    const overlay = page.locator('[data-rules-overlay]');
+    await expect(overlay).toBeVisible();
+    await expect(overlay.locator('[data-rules-section="military"]')).toBeInViewport();
+    await expect(bubble(page)).toHaveCount(0);
+    expect(page.url()).toBe(before.url);
+
+    await tap(page, overlay.locator('[data-control="rules-close"]'));
+    await expect(overlay).toBeHidden();
+    expect(await gameState(page)).toEqual(before);
+    // The game still takes moves: a tap on a card opens its sheet.
+    await tap(page, page.locator('.card-structure [data-card][data-accessible]').first());
+    await expect(page.locator('dialog[open] [data-card-sheet]')).toBeVisible();
+    expect(problems).toEqual([]);
   });
 
   test('the dismiss layer closes on any tap, and the tap does nothing else', async ({ page }) => {
