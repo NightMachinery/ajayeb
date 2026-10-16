@@ -17,6 +17,7 @@ import json
 import os
 import platform
 import re
+import select
 import shlex
 import shutil
 import socket
@@ -77,6 +78,7 @@ SHIP_BUILD_WAIT = 1800.0
 SHIP_HEALTH_POLL_TIMEOUT = 30.0
 SHIP_HEALTH_POLL_INTERVAL = 1.0
 SHIP_HEALTH_REQUEST_TIMEOUT = 5.0
+SHIP_HEALTH_MAX_BYTES = 16 * 1024
 PORT_RELEASE_TIMEOUT = 5.0
 UNAME_TO_GOOS_GOARCH: dict[tuple[str, str], tuple[str, str]] = {
     ("Linux", "x86_64"): ("linux", "amd64"),
@@ -1519,6 +1521,87 @@ def poll_host_version(
     return None
 
 
+class InvalidHealthResponse(RuntimeError):
+    """The public health endpoint did not send the expected version JSON."""
+
+
+class HealthResponseTooLarge(RuntimeError):
+    """The public health endpoint exceeded the batch response-size limit."""
+
+
+def public_health_version(url: str, deadline: float) -> str:
+    """Read at most 16 KiB from curl before an absolute monotonic deadline.
+
+    Curl's own total timeout also covers DNS, headers and trickling bodies.
+    The pipe reader independently bounds time and bytes, without relying on
+    curl's version-dependent --max-filesize behavior or buffering stderr.
+    """
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise TimeoutError("public health deadline expired")
+    cmd = [
+        "curl", "--disable", "--fail", "--silent", "--show-error",
+        "--connect-timeout", str(min(2.0, remaining)),
+        "--max-time", str(remaining), url.rstrip("/") + "/health",
+    ]
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL) as process:
+        try:
+            assert process.stdout is not None
+            body = bytearray()
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or not select.select([process.stdout], [], [], remaining)[0]:
+                    raise TimeoutError("public health deadline expired")
+                # Read one byte past the cap so an oversized response is
+                # rejected even when its Content-Length is absent or false.
+                chunk = os.read(process.stdout.fileno(), min(4096, SHIP_HEALTH_MAX_BYTES + 1 - len(body)))
+                if not chunk:
+                    break
+                body.extend(chunk)
+                if len(body) > SHIP_HEALTH_MAX_BYTES:
+                    raise HealthResponseTooLarge("public health body exceeds the size limit")
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("public health deadline expired")
+            returncode = process.wait(timeout=remaining)
+            if time.monotonic() >= deadline:
+                raise TimeoutError("public health deadline expired")
+            if returncode == 28:  # curl CURLE_OPERATION_TIMEDOUT
+                raise TimeoutError("public health deadline expired")
+            if returncode != 0:
+                raise RuntimeError("public health request failed")
+            try:
+                payload = json.loads(body.decode("utf-8"))
+            except (ValueError, RecursionError):
+                raise InvalidHealthResponse("public health body is not valid JSON") from None
+            if not isinstance(payload, dict) or not isinstance(payload.get("version"), str) or not payload["version"]:
+                raise InvalidHealthResponse("public health body has no version string")
+            return payload["version"]
+        except subprocess.TimeoutExpired:
+            raise TimeoutError("public health deadline expired") from None
+        finally:
+            # No background reader or curl may survive a timeout, early size
+            # rejection, malformed response or interrupted batch.
+            if process.poll() is None:
+                process.kill()
+            process.wait()
+
+
+def poll_public_version(
+    url: str, *, timeout: float = SHIP_HEALTH_POLL_TIMEOUT, interval: float = SHIP_HEALTH_POLL_INTERVAL
+) -> str:
+    """Batch-only public poll with one total deadline across every attempt."""
+    deadline = time.monotonic() + timeout
+    failure: Exception = TimeoutError("public health deadline expired")
+    while (remaining := deadline - time.monotonic()) > 0:
+        try:
+            return public_health_version(url, min(deadline, time.monotonic() + SHIP_HEALTH_REQUEST_TIMEOUT))
+        except (OSError, RuntimeError) as exc:
+            failure = exc
+        time.sleep(min(interval, max(0, deadline - time.monotonic())))
+    raise failure
+
+
 def command_ship_all() -> int:
     targets = load_deploy_targets()
     platforms: list[tuple[str, str] | None] = []
@@ -1575,7 +1658,7 @@ def command_ship_all() -> int:
                 return f"failed ({type(exc).__name__})"
 
         remote_health = health_status(lambda: poll_host_version(target, entry.site))
-        local_health = health_status(lambda: poll_remote_version(entry.site.origin))
+        local_health = health_status(lambda: poll_public_version(entry.site.origin))
         failed |= any(status != "ok" for status in (deployment, remote_health, local_health))
         print(f"target {index} ({entry.site.origin}): deploy={deployment}, remote-health={remote_health}, local-health={local_health}")
     return 1 if failed else 0

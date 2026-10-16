@@ -429,16 +429,27 @@ first health check failed:
   come from the configured URL, defaulting to 443 for HTTPS or 80 for HTTP.
   SSH is noninteractive; both SSH and curl have time limits. Curl must be
   installed on each host.
-- On the dev machine, the existing `ship` health poll checks the public URL.
+- On the dev machine, a separate batch poll checks the public URL using
+  local curl, which must also be installed. Each attempt has a total curl
+  timeout of at most five seconds. An independent pipe reader enforces the
+  same absolute deadline across DNS, connection, headers and body transfer,
+  even if the endpoint trickles bytes indefinitely. It accepts at most
+  16 KiB per response, regardless of the reported Content-Length, and kills
+  and reaps curl after timeout or early rejection. Curl configuration files
+  are ignored; proxy environment variables retain their normal effect.
 
-Each probe gets up to 30 seconds. Success requires the health endpoint to
-report the version just built. The per-target report includes deployment,
+Each probe gets a total 30-second polling window, including attempts and
+retry delays. Success requires the health endpoint to report the version just
+built. The per-target report includes deployment,
 host-local health and public health results. A failed deployment, unavailable
 health endpoint or version mismatch makes the overall exit status nonzero,
 while later targets still deploy and get their own reports. Failures are
 reported by stage and exception type without echoing potentially sensitive
-exception messages. There is no automatic batch rollback; inspect the report
-before retrying failed hosts.
+exception messages. Public timeouts report `TimeoutError`, malformed or
+wrong-type health JSON reports `InvalidHealthResponse`, and oversized bodies
+report `HealthResponseTooLarge`. A stale version reports a version mismatch.
+The single-target `ship` health poll is unchanged. There is no automatic
+batch rollback; inspect the report before retrying failed hosts.
 
 ## Testing
 

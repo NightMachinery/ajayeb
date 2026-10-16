@@ -2220,6 +2220,7 @@ class DeployTargetsConfigTests(unittest.TestCase):
 
 class CommandShipAllTests(unittest.TestCase):
     def setUp(self):
+        self.public_poll = self_host.poll_public_version
         self.targets = [
             self_host.DeployTarget(self_host.ShipTarget("deploy@one.example.host"), self_host.Site("https", "one.example.host")),
             self_host.DeployTarget(self_host.ShipTarget("deploy@two.example.host", "apps/game"), self_host.Site("http", "two.example.host", 8080)),
@@ -2232,7 +2233,7 @@ class CommandShipAllTests(unittest.TestCase):
             self_host, load_deploy_targets=mock.DEFAULT, detect_remote_platform=mock.DEFAULT,
             git_version=mock.DEFAULT, cross_build=mock.DEFAULT, upload_to_remote=mock.DEFAULT,
             determine_deploy_command=mock.DEFAULT, deploy_remote=mock.DEFAULT,
-            poll_host_version=mock.DEFAULT, poll_remote_version=mock.DEFAULT,
+            poll_host_version=mock.DEFAULT, poll_public_version=mock.DEFAULT,
             remember_ship_target=mock.DEFAULT,
         )
         self.mocks = patcher.start()
@@ -2243,7 +2244,7 @@ class CommandShipAllTests(unittest.TestCase):
         self.mocks["cross_build"].return_value = Path("artifact")
         self.mocks["determine_deploy_command"].side_effect = ["redeploy", "setup"]
         self.mocks["poll_host_version"].return_value = "v-test"
-        self.mocks["poll_remote_version"].return_value = "v-test"
+        self.mocks["poll_public_version"].return_value = "v-test"
         self.events = mock.Mock()
         for name, boundary in self.mocks.items():
             self.events.attach_mock(boundary, name)
@@ -2255,8 +2256,8 @@ class CommandShipAllTests(unittest.TestCase):
         names = [call[0] for call in calls]
         self.assertEqual(names, [
             "load_deploy_targets", "detect_remote_platform", "detect_remote_platform", "git_version", "cross_build",
-            "upload_to_remote", "determine_deploy_command", "deploy_remote", "poll_host_version", "poll_remote_version",
-            "upload_to_remote", "determine_deploy_command", "deploy_remote", "poll_host_version", "poll_remote_version",
+            "upload_to_remote", "determine_deploy_command", "deploy_remote", "poll_host_version", "poll_public_version",
+            "upload_to_remote", "determine_deploy_command", "deploy_remote", "poll_host_version", "poll_public_version",
         ])
         self.assertEqual(self.mocks["upload_to_remote"].call_args_list, [
             mock.call("deploy@one.example.host", "ajayeb", Path("artifact")),
@@ -2316,27 +2317,65 @@ class CommandShipAllTests(unittest.TestCase):
     def test_deploy_failure_still_probes_both_sides_and_ships_next_target(self):
         self.mocks["deploy_remote"].side_effect = [RuntimeError("credential"), None]
         self.assertEqual(self_host.command_ship_all(), 1)
-        for name in ("upload_to_remote", "deploy_remote", "poll_host_version", "poll_remote_version"):
+        for name in ("upload_to_remote", "deploy_remote", "poll_host_version", "poll_public_version"):
             self.assertEqual(self.mocks[name].call_count, 2)
         self.assertIn("deploy=failed (RuntimeError)", self.output.getvalue())
         self.assertIn("target 2 (http://two.example.host:8080): deploy=ok", self.output.getvalue())
         self.assertNotIn("credential", self.output.getvalue())
 
     def test_remote_and_local_health_failures_continue_and_fail_overall(self):
-        for boundary, failure in (("poll_host_version", None), ("poll_remote_version", None),
-                                  ("poll_host_version", "old-version"), ("poll_remote_version", "old-version"),
-                                  ("poll_host_version", RuntimeError("credential"))):
+        for boundary, failure in (("poll_host_version", None), ("poll_public_version", None),
+                                  ("poll_host_version", "old-version"), ("poll_public_version", "old-version"),
+                                  ("poll_host_version", RuntimeError("credential")),
+                                  ("poll_public_version", TimeoutError("credential")),
+                                  ("poll_public_version", self_host.InvalidHealthResponse("credential")),
+                                  ("poll_public_version", self_host.HealthResponseTooLarge("credential"))):
             with self.subTest(boundary=boundary, failure=failure):
                 # Reset only the changing mocks between subtests.
                 self.mocks["determine_deploy_command"].side_effect = ["redeploy", "setup"]
-                for name in ("poll_host_version", "poll_remote_version"):
+                for name in ("poll_host_version", "poll_public_version"):
                     self.mocks[name].reset_mock(side_effect=True)
                     self.mocks[name].return_value = "v-test"
                 self.mocks[boundary].side_effect = [failure, "v-test"]
                 self.assertEqual(self_host.command_ship_all(), 1)
                 self.assertEqual(self.mocks["poll_host_version"].call_count, 2)
-                self.assertEqual(self.mocks["poll_remote_version"].call_count, 2)
+                self.assertEqual(self.mocks["poll_public_version"].call_count, 2)
         self.assertNotIn("credential", self.output.getvalue())
+
+    def test_actual_public_probe_timeout_still_checks_both_sides_and_deploys_next_target(self):
+        clock = {"now": 0.0}
+        processes = [mock.MagicMock(), mock.MagicMock()]
+        for process in processes:
+            process.__enter__.return_value = process
+            process.wait.return_value = 0
+            process.poll.return_value = 0
+        processes[0].poll.return_value = None
+
+        def readable(streams, _write, _errors, timeout):
+            if streams == [processes[0].stdout]:
+                # A stalled body consumes the entire request budget. Advance
+                # the fake clock, never the real machine's clock.
+                clock["now"] += timeout
+                return [], [], []
+            return streams, [], []
+
+        self.mocks["poll_public_version"].side_effect = lambda url: self.public_poll(url, timeout=1)
+        with mock.patch.object(self_host.subprocess, "Popen", side_effect=processes) as popen, \
+             mock.patch.object(self_host.select, "select", side_effect=readable), \
+             mock.patch.object(self_host.os, "read", side_effect=[b'{"version":"v-test"}', b""]), \
+             mock.patch.object(self_host.time, "monotonic", side_effect=lambda: clock["now"]), \
+             mock.patch.object(self_host.time, "sleep") as sleep:
+            self.assertEqual(self_host.command_ship_all(), 1)
+        self.assertEqual(popen.call_count, 2)
+        processes[0].kill.assert_called_once_with()
+        processes[0].wait.assert_called_once_with()
+        sleep.assert_called_once_with(0)
+        for name in ("deploy_remote", "poll_host_version", "poll_public_version"):
+            self.assertEqual(self.mocks[name].call_count, 2)
+        self.assertIn("target 1 (https://one.example.host): deploy=ok, remote-health=ok, local-health=failed (TimeoutError)",
+                      self.output.getvalue())
+        self.assertIn("target 2 (http://two.example.host:8080): deploy=ok, remote-health=ok, local-health=ok",
+                      self.output.getvalue())
 
     def test_cli_rejects_target_and_ship_flag_arguments_before_work(self):
         self.assertIn("ship-all", self_host.build_parser().format_help())
@@ -2345,6 +2384,155 @@ class CommandShipAllTests(unittest.TestCase):
                 self_host.main(args)
             self.assertEqual(caught.exception.code, 2)
         self.mocks["load_deploy_targets"].assert_not_called()
+
+
+class PublicHealthVersionTests(unittest.TestCase):
+    def setUp(self):
+        self.process = mock.MagicMock()
+        self.process.__enter__.return_value = self.process
+        self.process.stdout.fileno.return_value = 101
+        self.process.poll.return_value = 0
+        self.process.wait.return_value = 0
+        self.popen = self.patch(self_host.subprocess, "Popen", return_value=self.process)
+        self.select = self.patch(self_host.select, "select", side_effect=lambda streams, *_: (streams, [], []))
+        self.read = self.patch(self_host.os, "read", side_effect=[b'{"version":"v-test"}', b""])
+        self.patch(self_host.time, "monotonic", return_value=0)
+
+    def patch(self, owner, name, **kwargs):
+        patcher = mock.patch.object(owner, name, **kwargs)
+        boundary = patcher.start()
+        self.addCleanup(patcher.stop)
+        return boundary
+
+    def test_curl_and_pipe_reader_share_the_total_deadline_and_bounded_reads(self):
+        self.assertEqual(self_host.public_health_version("https://game.example.host:8443/", 1), "v-test")
+        cmd = self.popen.call_args.args[0]
+        self.assertEqual(cmd[:2], ["curl", "--disable"])
+        self.assertEqual(cmd[-1], "https://game.example.host:8443/health")
+        self.assertEqual(float(cmd[cmd.index("--max-time") + 1]), 1)
+        self.assertEqual(float(cmd[cmd.index("--connect-timeout") + 1]), 1)
+        self.assertEqual(self.popen.call_args.kwargs, {"stdout": subprocess.PIPE, "stderr": subprocess.DEVNULL})
+        self.assertTrue(all(call.args[-1] <= 1 for call in self.select.call_args_list))
+        self.assertTrue(all(call.args[1] <= 4096 for call in self.read.call_args_list))
+        self.process.wait.assert_any_call(timeout=1)
+        self.process.kill.assert_not_called()
+
+    def test_stalled_body_times_out_and_curl_is_killed_and_reaped(self):
+        self.select.side_effect = None
+        self.select.return_value = ([], [], [])
+        self.process.poll.return_value = None
+        with self.assertRaises(TimeoutError):
+            self_host.public_health_version("https://game.example.host", 1)
+        self.read.assert_not_called()
+        self.process.kill.assert_called_once_with()
+        self.process.wait.assert_called_once_with()
+        self.process.__exit__.assert_called_once()
+
+    def test_expired_deadline_starts_no_process(self):
+        with self.assertRaises(TimeoutError):
+            self_host.public_health_version("https://game.example.host", 0)
+        self.popen.assert_not_called()
+
+    def test_pipe_failure_or_interruption_kills_and_reaps_curl(self):
+        self.process.poll.return_value = None
+        for failure in (OSError("private"), KeyboardInterrupt()):
+            with self.subTest(failure=type(failure).__name__):
+                self.process.reset_mock()
+                self.select.side_effect = failure
+                with self.assertRaises(type(failure)):
+                    self_host.public_health_version("https://game.example.host", 1)
+                self.process.kill.assert_called_once_with()
+                self.process.wait.assert_called_once_with()
+
+    def test_process_exit_cannot_report_success_after_the_deadline(self):
+        clock = {"now": 0.0}
+
+        def finish(*, timeout):
+            self.assertEqual(timeout, 1)
+            clock["now"] = 1.1
+            return 0
+
+        # Preserve a normal cleanup wait after the delayed first wait.
+        self.process.wait.side_effect = lambda **kwargs: finish(**kwargs) if kwargs else 0
+        with mock.patch.object(self_host.time, "monotonic", side_effect=lambda: clock["now"]):
+            with self.assertRaises(TimeoutError):
+                self_host.public_health_version("https://game.example.host", 1)
+        self.process.wait.assert_any_call(timeout=1)
+        self.assertEqual(self.process.wait.call_args, mock.call())
+
+    def test_trickling_body_cannot_extend_the_absolute_deadline(self):
+        self.read.side_effect = [b"{", b'"']
+        self.process.poll.return_value = None
+        with mock.patch.object(self_host.time, "monotonic", side_effect=[0, 0.1, 0.6, 1]):
+            with self.assertRaises(TimeoutError):
+                self_host.public_health_version("https://game.example.host", 1)
+        self.assertEqual(self.read.call_count, 2)
+        self.assertEqual(self.select.call_count, 2)
+        self.assertAlmostEqual(self.select.call_args_list[0].args[-1], 0.9)
+        self.assertAlmostEqual(self.select.call_args_list[1].args[-1], 0.4)
+        self.process.kill.assert_called_once_with()
+        self.process.wait.assert_called_once_with()
+
+    def test_oversized_body_is_rejected_without_waiting_for_eof_or_content_length(self):
+        self.read.side_effect = [b"x" * 4096] * 4 + [b"x"]
+        self.process.poll.return_value = None
+        with self.assertRaises(self_host.HealthResponseTooLarge):
+            self_host.public_health_version("https://game.example.host", 1)
+        self.assertEqual([call.args[1] for call in self.read.call_args_list], [4096, 4096, 4096, 4096, 1])
+        self.process.kill.assert_called_once_with()
+        self.process.wait.assert_called_once_with()
+
+    def test_exactly_the_size_limit_is_accepted(self):
+        body = b'{"version":"v-test"}'
+        body += b" " * (self_host.SHIP_HEALTH_MAX_BYTES - len(body))
+        self.read.side_effect = [body[i:i + 4096] for i in range(0, len(body), 4096)] + [b""]
+        self.assertEqual(self_host.public_health_version("https://game.example.host", 1), "v-test")
+        self.assertEqual(self.read.call_args.args[1], 1)
+
+    def test_malformed_wrong_type_and_deeply_nested_bodies_fail_safely(self):
+        for body in (b"not json", b"[]", b'{"version":23}', b"{}", b'{"version":""}', b"\xff", b"[" * 1200):
+            with self.subTest(body=body):
+                self.read.side_effect = [body, b""]
+                with self.assertRaises(self_host.InvalidHealthResponse):
+                    self_host.public_health_version("https://game.example.host", 1)
+        self.process.kill.assert_not_called()
+
+    def test_curl_errors_and_wait_timeout_have_safe_failure_types_and_cleanup(self):
+        for returncode, error in ((22, RuntimeError), (28, TimeoutError)):
+            with self.subTest(returncode=returncode):
+                self.read.side_effect = [b"", b""]
+                self.process.wait.return_value = returncode
+                with self.assertRaises(error):
+                    self_host.public_health_version("https://game.example.host", 1)
+        self.read.side_effect = [b""]
+        self.process.wait.side_effect = [subprocess.TimeoutExpired("curl", 1), 0]
+        self.process.poll.return_value = None
+        with self.assertRaises(TimeoutError):
+            self_host.public_health_version("https://game.example.host", 1)
+        self.process.kill.assert_called_once_with()
+        self.assertEqual(self.process.wait.call_args, mock.call())
+
+
+class PollPublicVersionTests(unittest.TestCase):
+    def test_retry_budget_includes_requests_and_delays_without_resetting_deadline(self):
+        with mock.patch.object(self_host, "public_health_version", side_effect=[TimeoutError("private"), "v-test"]) as probe, \
+             mock.patch.object(self_host.time, "monotonic", side_effect=[10, 10, 10, 15, 16, 16]), \
+             mock.patch.object(self_host.time, "sleep") as sleep:
+            self.assertEqual(self_host.poll_public_version("https://game.example.host", timeout=7), "v-test")
+        self.assertEqual(probe.call_args_list, [mock.call("https://game.example.host", 15), mock.call("https://game.example.host", 17)])
+        sleep.assert_called_once_with(1)
+
+    def test_expired_budget_reports_the_last_failure_without_an_extra_attempt(self):
+        for error in (TimeoutError("private"), self_host.InvalidHealthResponse("private"),
+                      self_host.HealthResponseTooLarge("private"), OSError("private")):
+            with self.subTest(error=type(error).__name__):
+                with mock.patch.object(self_host, "public_health_version", side_effect=error) as probe, \
+                     mock.patch.object(self_host.time, "monotonic", side_effect=[0, 0, 0, 1, 1]), \
+                     mock.patch.object(self_host.time, "sleep") as sleep:
+                    with self.assertRaises(type(error)):
+                        self_host.poll_public_version("https://game.example.host", timeout=1)
+                probe.assert_called_once_with("https://game.example.host", 1)
+                sleep.assert_called_once_with(0)
 
 
 class PollHostVersionTests(unittest.TestCase):
