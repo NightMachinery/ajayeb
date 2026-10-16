@@ -38,7 +38,39 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
       await item.hover();
     }
     await expect(page.getByRole('tooltip')).toContainText(reason);
+    // Let finite tooltip animations and the following paint finish before
+    // recording pixels. DOM text alone does not prove the raster is ready.
+    await page.getByRole('tooltip').evaluate(async (el) => {
+      const group = el.closest('[data-tooltip-open]');
+      if (!group) throw new Error('missing active tooltip group');
+      const finite = group.getAnimations().filter((a) => {
+        const end = a.effect?.getComputedTiming().endTime;
+        return typeof end === 'number' && Number.isFinite(end);
+      });
+      await new Promise<void>((resolve, reject) => {
+        const limit = window.setTimeout(() => reject(new Error('tooltip paint timed out')), 2000);
+        void Promise.all(finite.map((a) => a.finished)).then(() => {
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              window.clearTimeout(limit);
+              resolve();
+            })
+          );
+        }, reject);
+      });
+    });
+    await expect
+      .poll(() =>
+        page.getByRole('tooltip').evaluate((el) => {
+          const group = el.closest('[data-tooltip-open]');
+          return group ? getComputedStyle(group).opacity : '';
+        })
+      )
+      .toBe('1');
     await page.screenshot({ path: testInfo.outputPath('undo-disabled-tooltip.png') });
+    await page
+      .getByRole('tooltip')
+      .screenshot({ path: testInfo.outputPath('undo-disabled-tooltip-detail.png') });
     await page.keyboard.press('Escape');
     await expect(page.getByRole('tooltip')).toHaveCount(0);
     // Native disabled controls cannot focus. The tooltip's focusable wrapper
@@ -69,6 +101,7 @@ test.describe('view gaps', { tag: ['@mobile'] }, () => {
     await page.keyboard.press('Escape');
     // Closing a menu must leave focus that has already moved outside alone.
     await driver.visible('[data-control="menu"]').click();
+    await page.keyboard.press('Tab');
     await arrow.focus();
     await expect(page.getByRole('tooltip')).toHaveText('Undo');
     await page.keyboard.press('Escape');
