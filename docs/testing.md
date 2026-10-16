@@ -542,6 +542,52 @@ over, and the file it saves is named `ajayeb-<code>.json` and holds the
 room's `ajayeb-log/1` log (format, seed, scenario, one entry per action
 played, final hash). Each test takes 2 to 4 s.
 
+### `animation.spec.ts` (`@mobile`, one case `@perf`)
+
+The move animations' four acceptance checks (UX design section 12), on
+both projects. Each case writes its own Animation speed with
+`fixtures/anim.ts` `useSettings` (after the base fixture's motion-off
+override) and opens its own rooms through `POST /api/dev/rooms`: seed 11
+after its draft (played over the socket with the first offer each time),
+the first position of that game with an affordable build that trades and
+reveals a card (`findPosition`), and the `appian-economy` and
+`looting-double` scenarios.
+
+- **a. Off is instant.** `recordMotion` wraps `Element.prototype.animate`
+  and listens for `animationstart` and `transitionrun` before the app
+  loads. Five sequences (that build, a discard, a wonder that moves coins,
+  the Arsenal pushing the pawn, a bot's reply) are played with Animation
+  off: nothing may run longer than 10 ms, the runner plans and starts
+  nothing, and the moment the frame lands the coins, the pawn and the
+  face-up cards on screen are the view's, with nothing hidden.
+- **b. Purely visual.** The same five sequences, each once at normal speed
+  and once off, in fresh rooms; after the page is ready and every
+  animation has ended, the game screen's DOM is serialized (`screenDom`:
+  the room code, `data-fx-hidden`, ids, `aria-describedby` and transforms
+  in style attributes taken out) and the two must be identical.
+- **c. Input back within 450 ms.** `recordInputBack` notes, at each
+  animation frame, the first moment the test hook's `ready()` and
+  `you().canAct` are true for each version. For six hot-seat moves and
+  three bot answers that animated, that moment minus the frame's `swapAt`
+  (`__ajayebFx.frames()`) must be at most 450 ms. The bot's dwell and pick
+  come before the swap and are not counted. The failure message lists
+  every measurement.
+- **d. No long task during an animation (`@perf`).** A CDP session sets
+  `Emulation.setCPUThrottlingRate` to 4, a buffered `PerformanceObserver`
+  collects `longtask` entries, and ten hot-seat moves are played, each
+  after the last one's animations ended. No long task may overlap an
+  animation's window (`__ajayebFx.anims()`: from its WAAPI `ready`, the
+  first frame it really moves, to its end). The annotation `perf` gives
+  the moves, animations, long tasks, how many overlap and the worst
+  overlapping and overall task in ms: read the worst overlapping one
+  against the 50 ms limit, and the overall one for how loaded the machine
+  was. This laptop is often busy, so the case retries up to twice; a pass
+  with the failed runs within 20 ms of the limit is acceptable.
+
+To film the animations for a visual check, slow them with CDP
+`Animation.setPlaybackRate` (0.2 shows a 320 ms flight over 1.6 s) rather
+than shooting faster; a headless screenshot takes 50 to 300 ms here.
+
 ### `flows.spec.ts` (`@mobile`)
 
 One test per special choice, each checking that the pending panel opens
