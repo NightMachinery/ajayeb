@@ -16,7 +16,7 @@ Ajayeb's art is original and comes from two independent pipelines. Both follow t
 - `web/src/lib/icons/svg/<id>.svg`: the icon sources, the single source of truth. `web/src/lib/icons/names.ts` lists their ids; `sprite.ts` builds them into one inline sprite of `<symbol>`s, which `Icon.svelte` uses with `<use href="#i-<id>">`.
 - `tools/art/vector/`: the tools, documented in [tools/art/README.md](../../tools/art/README.md#vector-pipeline-vector).
 
-The five sets are `resources-economy-military`, `science`, `chain`, `ui-category` and `ornaments-track-logo`. They are drawn in that order: the most frequent and most critical glyphs first.
+The five sets are `resources-economy-military`, `science`, `chain`, `ui-category` and `ornaments-track-logo`. They are drawn in that order: the most frequent and most critical glyphs first. Two small sets followed in M10: `hints` (the hint pip glyphs) and `tt2-glyphs` (`play-again`, `build-from-discard` and `destroy-card`, which replaced the last Lucide outlines on cards; spec in `art/vector/specs/tt2-glyphs-diagrams.md`). `crest-moon-sm`, drawn with them, belongs to `ui-category` as the `-sm` of `crest-moon`.
 
 ### How one set is drawn
 

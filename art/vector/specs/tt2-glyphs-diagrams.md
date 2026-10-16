@@ -1,6 +1,6 @@
 # Spec: effect glyphs for play again, build from discard and destroy, the small moon crest, and the concept diagrams
 
-Set name in `sets.json`: `tt2-glyphs`. 4 files. Read [../STYLE.md](../STYLE.md) first. Slice M10.icons-and-diagrams, the vector and diagram work the second tooltip pass needs. Acceptance: lint clean, the sprite under its budget, each icon legible at 12 to 16 px on a light and a dark card, the family check passed (no stroke, size or density outlier beside the other sets), and the contact sheet looked at.
+Set name in `sets.json`: `tt2-glyphs`, 3 files; `crest-moon-sm` is listed in `ui-category` as the `sm` of `crest-moon`. Read [../STYLE.md](../STYLE.md) first. Slice M10.icons-and-diagrams, the vector and diagram work the second tooltip pass needs. Acceptance: lint clean, the sprite under its budget, each icon legible at 12 to 16 px on a light and a dark card, the family check passed (no stroke, size or density outlier beside the other sets), and the contact sheet looked at.
 
 Until this set, `EffectGlyph.svelte` borrowed three outline icons from Lucide. Their 2 px outline style does not belong to this family (STYLE.md section 5: solid silhouettes, not line drawings), and the ui-category spec listed them as optional replacements. D20 holds in both directions: an effect glyph never reuses a category glyph's subject (mountain, anvil, dome, eight-pointed star, purse, crossed spears, crown), and the reverse.
 
