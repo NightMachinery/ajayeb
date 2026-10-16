@@ -145,6 +145,18 @@ describe('updates', () => {
     expect(updateHeldBack(gameWindows(['home'], { held: [] }))).toBe(true);
   });
 
+  it('holds every window when lock owners cannot be matched to worker client IDs', () => {
+    for (const snapshot of [
+      { held: [{ name: GAME_LOCK, clientId: 'lock-owner' }], pending: [] },
+      { held: [], pending: [{ name: GAME_LOCK, clientId: 'lock-owner' }] }
+    ]) {
+      // Browsers may expose different identifiers through the two APIs.
+      const windows = gameWindows(['worker-window-a', 'worker-window-b'], snapshot);
+      expect(windows).toEqual([{ game: true }, { game: true }]);
+      expect(updateHeldBack(windows)).toBe(true);
+    }
+  });
+
   it('holds an update back while any game page is open', () => {
     expect(updateHeldBack([{ game: false }, { game: false }])).toBe(false);
     expect(updateHeldBack([{ game: false }, { game: true }])).toBe(true);

@@ -151,7 +151,10 @@ export function gameWindows(
     snapshot?.held && snapshot.pending
       ? gameClientIds([...snapshot.held, ...snapshot.pending])
       : null;
-  return clientIds.map((id) => ({ game: games === null || !id || games.has(id) }));
+  // Web Locks owner IDs and Service Worker Client IDs need not match.
+  // An unmatched owner cannot identify a safe window, so hold every one.
+  const unknownOwner = games === null || [...games].some((owner) => !clientIds.includes(owner));
+  return clientIds.map((id) => ({ game: unknownOwner || !id || games?.has(id) === true }));
 }
 
 /** Any open game page holds a waiting version back. Never guess which
