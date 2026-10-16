@@ -185,7 +185,7 @@
           >{wonderName(slug)}</span
         >
         <!-- dir="auto": clamped text keeps its own direction, so an English
-             fallback in a right-to-left locale loses its end, not its start. -->
+             fallback in Persian loses its end, not its start. -->
         <span class="line-clamp-2 text-xs leading-snug text-fg-muted" dir="auto"
           >{effectsText(wonder.effects)}</span
         >
