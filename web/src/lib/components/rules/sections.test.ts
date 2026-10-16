@@ -143,6 +143,8 @@ describe('RulesContent', () => {
     expect(body).toContain('data-rules-diagram="military"');
     expect(body).toContain('data-rules-diagram="trade"');
     expect(body).toContain('data-rules-diagram="science"');
+    for (const name of ['chain', 'discard', 'seventh', 'guild', 'starter'])
+      expect(body).toContain(`data-rules-diagram="${name}"`);
   });
 
   it('leaves the anchors off in the panel, so no id is repeated on a page', () => {

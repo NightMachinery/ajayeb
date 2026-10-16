@@ -9,8 +9,13 @@
   // a page that shows both never has two elements with one id.
   import { t } from '$lib/i18n';
   import HintGlyphLegend from '../hints/HintGlyphLegend.svelte';
+  import ChainDiagram from './ChainDiagram.svelte';
+  import DiscardDiagram from './DiscardDiagram.svelte';
+  import GuildDiagram from './GuildDiagram.svelte';
   import MilitaryDiagram from './MilitaryDiagram.svelte';
   import ScienceDiagram from './ScienceDiagram.svelte';
+  import SeventhWonderDiagram from './SeventhWonderDiagram.svelte';
+  import StarterDiagram from './StarterDiagram.svelte';
   import TradeDiagram from './TradeDiagram.svelte';
   import {
     lineText,
@@ -121,6 +126,16 @@
           <MilitaryDiagram />
         {:else if block.diagram === 'trade'}
           <TradeDiagram />
+        {:else if block.diagram === 'chain'}
+          <ChainDiagram />
+        {:else if block.diagram === 'discard'}
+          <DiscardDiagram />
+        {:else if block.diagram === 'seventh'}
+          <SeventhWonderDiagram />
+        {:else if block.diagram === 'guild'}
+          <GuildDiagram />
+        {:else if block.diagram === 'starter'}
+          <StarterDiagram />
         {:else if block.diagram === 'hintGlyphs'}
           <HintGlyphLegend />
         {:else}

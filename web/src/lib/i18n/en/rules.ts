@@ -278,5 +278,24 @@ export const rules = {
   'rules.diagram.trade.label':
     'Example: your opponent produces 3 clay, so each clay you buy costs 5 coins.',
   'rules.diagram.science.six': 'The six symbols of the green cards',
-  'rules.diagram.science.scales': 'The scales, from the {law} token only'
+  'rules.diagram.science.scales': 'The scales, from the {law} token only',
+  'rules.diagram.chain.earlier': 'Built earlier',
+  'rules.diagram.chain.free': 'Free',
+  'rules.diagram.chain.label':
+    'Example: the {stable} shows the horseshoe. Once it is in your city, the {breeders}, which shows the horseshoe beside its cost, is free for you.',
+  'rules.diagram.discard.action': 'Discard',
+  'rules.diagram.discard.example': 'With 2 yellow cards: 4 coins',
+  'rules.diagram.discard.label':
+    'Discarding a card gives 2 coins, plus 1 for each yellow card in your city: with 2 yellow cards, 4 coins.',
+  'rules.diagram.seventh.built': { one: '{count} wonder built', other: '{count} wonders built' },
+  'rules.diagram.seventh.out': 'Leaves the game',
+  'rules.diagram.seventh.label':
+    'Eight wonders are drafted, but only seven can be built. When the seventh is built, the last unbuilt one leaves the game.',
+  'rules.diagram.guild.counted': 'Counted',
+  'rules.diagram.guild.label':
+    'Example: the {guild} counts the yellow cards of whichever city has more of them. Here that is the {moon} city, with 3, even when the {sun} player builds the guild.',
+  'rules.diagram.starter.weaker': 'Pawn on the {moon} side: the {moon} chooses who starts',
+  'rules.diagram.starter.centre': 'Pawn on the centre: whoever took the last card chooses',
+  'rules.diagram.starter.label':
+    'At the end of an age, the player on whose side the pawn stands chooses who starts the next one. With the pawn on the centre, the player who took the last card chooses.'
 } as const satisfies Messages;

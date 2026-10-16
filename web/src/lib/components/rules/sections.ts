@@ -47,7 +47,16 @@ export interface Line {
 /** The card colours, for the colour list of the goal section. */
 export type CardColour = 'brown' | 'grey' | 'blue' | 'green' | 'yellow' | 'red' | 'purple';
 
-export type Diagram = 'military' | 'trade' | 'science' | 'hintGlyphs';
+export type Diagram =
+  | 'military'
+  | 'trade'
+  | 'science'
+  | 'hintGlyphs'
+  | 'chain'
+  | 'discard'
+  | 'seventh'
+  | 'guild'
+  | 'starter';
 
 export type Block =
   | { kind: 'p'; line: Line }
@@ -175,6 +184,7 @@ export const RULE_SECTIONS: readonly RuleSection[] = [
     blocks: [
       p('rules.turn.p1'),
       steps('rules.turn.build', 'rules.turn.discard', 'rules.turn.wonder'),
+      diagram('discard'),
       p('rules.turn.p2'),
       p('rules.turn.p3')
     ]
@@ -215,6 +225,7 @@ export const RULE_SECTIONS: readonly RuleSection[] = [
       }),
       h('rules.costs.chainTitle'),
       p('rules.costs.chain'),
+      diagram('chain'),
       h('rules.costs.payTitle'),
       p('rules.costs.pay')
     ]
@@ -256,6 +267,7 @@ export const RULE_SECTIONS: readonly RuleSection[] = [
       p('rules.wonders.p1'),
       h('rules.wonders.seventhTitle'),
       p('rules.wonders.seventh'),
+      diagram('seventh'),
       h('rules.wonders.againTitle'),
       p('rules.wonders.again', {
         artemis: 'wonder.name.temple-of-artemis',
@@ -298,6 +310,7 @@ export const RULE_SECTIONS: readonly RuleSection[] = [
     title: 'rules.guilds.title',
     blocks: [
       p('rules.guilds.p1'),
+      diagram('guild'),
       {
         kind: 'terms',
         items: GUILDS.map((guild) => ({
@@ -310,7 +323,7 @@ export const RULE_SECTIONS: readonly RuleSection[] = [
   {
     id: 'age-end',
     title: 'rules.ageEnd.title',
-    blocks: [p('rules.ageEnd.p1'), p('rules.ageEnd.p2'), p('rules.ageEnd.p3')]
+    blocks: [p('rules.ageEnd.p1'), p('rules.ageEnd.p2'), diagram('starter'), p('rules.ageEnd.p3')]
   },
   {
     id: 'scoring',
