@@ -207,12 +207,13 @@
           after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] hover:bg-panel-sunken"
         aria-label={openLabel}
         data-control="open-city"
+        data-fx-city
         onclick={onopen}
       >
         {@render identity()}
       </button>
     {:else}
-      <div class="flex min-h-9 min-w-0 shrink items-center gap-1">
+      <div class="flex min-h-9 min-w-0 shrink items-center gap-1" data-fx-city>
         {@render identity()}
       </div>
     {/if}

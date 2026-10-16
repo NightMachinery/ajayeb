@@ -8,9 +8,24 @@
 // an AudioContext exists (CI has no audio device, and headless Chrome
 // never unlocks one without a real gesture). A cue is recorded when Sound
 // is on, a vibration when Haptics is on; with a setting off nothing of its
-// kind is recorded, which is what "would play" means.
+// kind is recorded, which is what "would play" means. The same hook lists
+// what the animation runner did (fx/anim/records.ts): each frame's swap
+// time and the moment it let input go, and each animation's start and end.
+//
+// When the frame animates (fx/anim), its cues sound with their animations
+// (anim/speed.ts): the slide when the card lands, and so on. With
+// Animation off they keep cues.ts's own spacing.
 
 import { settings } from '$lib/ui/settings.svelte';
+import { retimeCues } from './anim/speed';
+import {
+  animRecords,
+  clearRecords,
+  frameRecords,
+  plannedFor,
+  type AnimRecord,
+  type FrameRecord
+} from './anim/records';
 import { planCues, type Cue, type CueFrame } from './cues';
 import { hapticsSupported, vibrate } from './haptics';
 import { play, unlockAudio } from './sfx';
@@ -18,6 +33,7 @@ import { play, unlockAudio } from './sfx';
 export { CUES, type Cue } from './cues';
 export { play, unlockAudio, VOLUME_GAIN } from './sfx';
 export { hapticsSupported } from './haptics';
+export type { AnimRecord, FrameRecord } from './anim/records';
 
 export interface RecordedCue {
   cue: Cue;
@@ -31,6 +47,10 @@ export interface AjayebFxHook {
   cues(): RecordedCue[];
   /** The vibration patterns recorded likewise. */
   haptics(): number[][];
+  /** The frames the animation runner was handed, oldest first. */
+  frames(): FrameRecord[];
+  /** The animations it started, oldest first. */
+  anims(): AnimRecord[];
   clear(): void;
 }
 
@@ -52,9 +72,12 @@ function push<T>(list: T[], item: T): void {
 const hook: AjayebFxHook = {
   cues: () => recordedCues.map((c) => ({ ...c })),
   haptics: () => recordedHaptics.map((h) => [...h]),
+  frames: frameRecords,
+  anims: animRecords,
   clear: () => {
     recordedCues.length = 0;
     recordedHaptics.length = 0;
+    clearRecords();
   }
 };
 
@@ -81,9 +104,11 @@ function install(): void {
 export function playFrameFx(next: CueFrame, prev: CueFrame | null): void {
   install();
   const plan = planCues(next, prev);
+  const planned = plannedFor(next.version);
+  const cues = planned ? retimeCues(plan.cues, planned) : plan.cues;
   const { sound, soundVolume, haptics } = settings.value;
   if (sound) {
-    for (const { cue, delayMs } of plan.cues) {
+    for (const { cue, delayMs } of cues) {
       push(recordedCues, { cue, delayMs, version: next.version });
       play(cue, { delayMs, volume: soundVolume });
     }

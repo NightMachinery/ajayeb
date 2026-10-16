@@ -329,6 +329,7 @@
         : 'size-6'}"
       style:--pos="{cellCenter(military.position, leftSeat)}%"
       data-pawn={military.position}
+      data-fx-pawn
       aria-hidden="true"
       {@attach tooltip({ text: pawnTip, rulesId: 'military' })}
     >

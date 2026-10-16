@@ -41,5 +41,5 @@
   {:else}
     <Icon name="coin" class="text-[0.95em] text-(--gold-deep)" />
   {/if}
-  <span data-must-fit>{formatNumber(value)}</span>
+  <span data-must-fit data-fx-count>{formatNumber(value)}</span>
 </span>

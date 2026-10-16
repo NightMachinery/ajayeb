@@ -178,6 +178,7 @@
       class="wonder-tile relative flex w-full items-center gap-2.5 text-start text-fg {className}"
       class:removed
       data-wonder-row={slug}
+      data-fx-wonder={slug}
       data-size="row"
       data-built={built}
       data-buildable={buildable ? '' : undefined}

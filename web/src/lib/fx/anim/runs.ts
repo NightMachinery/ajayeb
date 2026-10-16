@@ -4,7 +4,8 @@
 //
 //   track   adds a run: its WAAPI animations, and the cleanup that puts the
 //           page back in the frame's own state (removes a clone, shows a
-//           hidden destination, writes a counter's number back);
+//           hidden destination, writes a counter's number back). Its
+//           record starts when the animations do (their `ready`);
 //   end     ends one run once: finishes its animations, runs its cleanup,
 //           and stamps its record (endAt, and whether it was cut short);
 //   hold    the play hook's promise: it resolves after `ms`, or at once on
@@ -19,6 +20,7 @@ import { recordAnim, type AnimRecord } from './records';
 /** What the runs need of a WAAPI Animation. */
 export interface Playing {
   readonly playState: string;
+  readonly ready: Promise<unknown>;
   readonly finished: Promise<unknown>;
   finish(): void;
   cancel(): void;
@@ -61,6 +63,14 @@ export class Runs {
       record: recordAnim({ version, kind, startAt: this.#now(), endAt: null, interrupted: false })
     };
     this.#running.add(run);
+    // The motion starts at the first frame after the swap's task, when
+    // the browser resolves the animations' start time.
+    void Promise.all(anims.map((a) => a.ready)).then(
+      () => {
+        if (!run.done) run.record.startAt = this.#now();
+      },
+      () => {}
+    );
     if (follow) {
       void Promise.all(anims.map((a) => a.finished)).then(
         () => this.end(run, false),

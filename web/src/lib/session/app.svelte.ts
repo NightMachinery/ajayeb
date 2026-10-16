@@ -2,10 +2,11 @@
 // asks for it (Home never does), and stays open across page changes, so
 // creating a room on one page and playing it on the next reuses the socket.
 
+import { AnimRunner } from '$lib/fx/anim/runner';
 import { hintDefaults } from '$lib/hints/local.svelte';
 import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
 import { loadIdentity } from './identity';
-import { Presenter } from './presenter.svelte';
+import { cuePrev, Presenter } from './presenter.svelte';
 import { SavedRooms } from './rooms.svelte';
 import { Session } from './session.svelte';
 import { installTestHook } from './test-hook';
@@ -52,9 +53,22 @@ export function liveGame(): { session: Session; presenter: Presenter } {
       });
       // A bot's move waits out its thinking dwell, then its pick is
       // highlighted, both scaled by the animation speed (read at each move).
-      const presenter = new Presenter(session, {
+      // Each frame's events then animate (fx/anim): the runner reads the
+      // old DOM before the swap and plays after it, at the same speed; a
+      // frame with more queued behind it shows at once.
+      const anim: AnimRunner = new AnimRunner({
+        speed: () => motion.effective,
+        // Read only while a frame shows, long after `presenter` exists.
+        backlog: (): number => presenter.queued
+      });
+      const presenter: Presenter = new Presenter(session, {
         minThinkingMs: () => botDwellMs(motion.effective),
-        preRollMs: () => botPickMs(motion.effective)
+        preRollMs: () => botPickMs(motion.effective),
+        hooks: {
+          capture: (next, prev) => anim.capture(next, cuePrev(prev, next)),
+          play: (_next, _prev, captured) => anim.play(captured),
+          finish: () => anim.finish()
+        }
       });
       return { session, presenter };
     });

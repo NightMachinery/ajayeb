@@ -82,6 +82,7 @@
   <div
     class="city-band flex items-center gap-1 rounded-control border border-rule bg-panel py-1 ps-1.5 pe-2 {className}"
     data-city-band={color}
+    data-fx-band={color}
     {@attach tooltip({
       text: t('board.city.colorCount', { count, color: t(colorKey(color)) }),
       lines,

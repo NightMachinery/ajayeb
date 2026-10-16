@@ -103,6 +103,51 @@ describe('Presenter', () => {
     expect(p.idle).toBe(true);
   });
 
+  it('hurry(), clear() and destroy() call the finish hook, which ends a playing animation', async () => {
+    let release: (() => void) | null = null;
+    const finish = vi.fn(() => {
+      release?.();
+      release = null;
+    });
+    const p = new Presenter(null, {
+      afterSwap: async () => {},
+      hooks: { play: () => new Promise<void>((r) => (release = r)), finish }
+    });
+    p.enqueue(frame(1));
+    await settle();
+    expect(p.idle).toBe(false);
+    p.hurry();
+    expect(finish).toHaveBeenCalledTimes(1);
+    await settle();
+    expect(p.idle).toBe(true);
+    // Even idle, hurry() ends the tail of an animation that no longer blocks.
+    p.hurry();
+    expect(finish).toHaveBeenCalledTimes(2);
+    p.clear();
+    expect(finish).toHaveBeenCalledTimes(3);
+    p.destroy();
+    expect(finish).toHaveBeenCalledTimes(4);
+  });
+
+  it('says how many frames wait behind the one being shown', async () => {
+    const seen: number[] = [];
+    let release!: () => void;
+    const p = new Presenter(null, { afterSwap: async () => {} });
+    p.hooks = {
+      capture: () => void seen.push(p.queued),
+      play: (next) => (next.version === 1 ? new Promise<void>((r) => (release = r)) : undefined)
+    };
+    p.enqueue(frame(1));
+    await settle();
+    p.enqueue(frame(2));
+    p.enqueue(frame(3));
+    expect(p.queued).toBe(2);
+    release();
+    await settle();
+    // Frame 1 had nothing behind it; frame 2 had frame 3; frame 3 nothing.
+    expect(seen).toEqual([0, 1, 0]);
+  });
+
   it('fast-forwards a long queue to the newest frame', async () => {
     const p = new Presenter(null, { afterSwap: async () => {}, fastForwardAfter: 2 });
     const seen: number[] = [];

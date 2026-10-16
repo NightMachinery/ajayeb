@@ -8,9 +8,13 @@
 //   3. tick: Svelte updates the DOM;
 //   4. play: a hook plays the animations of the new frame's events.
 //
-// There are no animations yet (M11 adds them through the hooks). With no
-// hooks, frames are shown as they arrive, except for a bot's answer, which
-// is paced so a player can follow it (UX design section 5, "AI thinking"):
+// The app's hooks are the animation runner (fx/anim/runner.ts); a third
+// hook, finish, ends whatever it still plays the moment hurry() or clear()
+// is called, so the screen never shows two frames at once. `queued` says
+// how many frames wait behind the one being shown (a frame with any behind
+// it is not animated). With no hooks, frames are shown as they arrive,
+// except for a bot's answer, which is paced so a player can follow it (UX
+// design section 5, "AI thinking"):
 //
 //   - dwell: a frame that answers a bot's thinking frame (the frame on
 //     screen says a bot is thinking, and the next one carries events) is
@@ -42,6 +46,8 @@ export interface PresenterHooks {
   capture?(next: State, prev: State | null): unknown;
   /** After the swap and a tick: animate. The next frame waits for it. */
   play?(next: State, prev: State | null, captured: unknown): void | Promise<void>;
+  /** Ends every running animation at once (hurry, clear, destroy). */
+  finish?(): void;
 }
 
 /** A duration in ms, or a function read each time it is needed. */
@@ -149,6 +155,11 @@ export class Presenter {
     if (source) this.#off = source.subscribe((frame) => this.enqueue(frame));
   }
 
+  /** The frames waiting behind the one being shown. */
+  get queued(): number {
+    return this.#queue.length;
+  }
+
   /** Queues a frame to present. */
   enqueue(frame: State): void {
     if (this.#destroyed) return;
@@ -168,6 +179,8 @@ export class Presenter {
    * frame at once, unpaced.
    */
   hurry(): void {
+    // A running animation ends either way, even the tail of an idle frame.
+    this.hooks.finish?.();
     if (this.idle) return;
     this.flush();
     this.#hurried = true;
@@ -181,6 +194,7 @@ export class Presenter {
     this.#thinkingSince = null;
     this.#hurried = false;
     this.#wake?.();
+    this.hooks.finish?.();
     this.frame = null;
     this.preview = null;
     this.idle = true;
@@ -190,6 +204,7 @@ export class Presenter {
     this.#destroyed = true;
     this.#queue = [];
     this.#wake?.();
+    this.hooks.finish?.();
     this.#off?.();
     this.#off = null;
   }

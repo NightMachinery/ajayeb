@@ -255,7 +255,7 @@
     <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
       {t('board.citySheet.city')}
     </h3>
-    <div class="flex flex-wrap gap-1.5" aria-label={t('board.citySheet.city')}>
+    <div class="flex flex-wrap gap-1.5" aria-label={t('board.citySheet.city')} data-fx-city>
       {#each COLORS as color (color)}
         <CityBand
           {color}

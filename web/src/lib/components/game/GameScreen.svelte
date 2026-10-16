@@ -115,6 +115,7 @@
   import LogSheet from '../sheets/LogSheet.svelte';
   import WonderListSheet from '../sheets/WonderListSheet.svelte';
   import WonderSheet from '../sheets/WonderSheet.svelte';
+  import FxLayer from '../shell/FxLayer.svelte';
   import LiveRegion from '../shell/LiveRegion.svelte';
   import Sheet from '../shell/Sheet.svelte';
   import ToastList from '../shell/Toasts.svelte';
@@ -1047,6 +1048,8 @@
 />
 
 <LiveRegion message={lastLines.join(' ')} />
+<!-- What the move animations draw over the board (lib/fx/anim). -->
+<FxLayer />
 <!-- The next age's approved card art, fetched while this one is played. -->
 <ArtPrefetch age={view?.age ?? null} />
 

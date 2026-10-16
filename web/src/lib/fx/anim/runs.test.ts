@@ -8,6 +8,7 @@ function fake(): Playing & { end: () => void; finishes: number } {
   const finished = new Promise<void>((r) => (resolve = r));
   const anim = {
     playState: 'running',
+    ready: Promise.resolve(),
     finished,
     finishes: 0,
     finish() {
@@ -43,13 +44,15 @@ describe('Runs', () => {
     const cleanup = vi.fn();
     runs.track(5, 'take', [a], cleanup);
     expect(runs.size).toBe(1);
+    now = 16;
+    await vi.advanceTimersByTimeAsync(0);
     now = 320;
     a.end();
     await vi.advanceTimersByTimeAsync(0);
     expect(runs.size).toBe(0);
     expect(cleanup).toHaveBeenCalledTimes(1);
     expect(animRecords()).toEqual([
-      { version: 5, kind: 'take', startAt: 0, endAt: 320, interrupted: false }
+      { version: 5, kind: 'take', startAt: 16, endAt: 320, interrupted: false }
     ]);
   });
 
