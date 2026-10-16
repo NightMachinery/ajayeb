@@ -16,7 +16,9 @@
 
   let { compact = false }: Props = $props();
 
+  // A mini card's box is 54 by 83 px; the face fills the box it is given.
   const width = $derived(compact ? 46 : 64);
+  const height = $derived(Math.round((width * 83) / 54));
 </script>
 
 <DiagramFrame
@@ -29,7 +31,9 @@
 >
   <div dir="ltr" class="flex items-center justify-center gap-2">
     <div class="flex flex-col items-center gap-1">
-      <CardFace slug="stable" tier="mini" {width} />
+      <div style:width="{width}px" style:height="{height}px">
+        <CardFace slug="stable" tier="mini" {width} />
+      </div>
       <span class="text-[11px] leading-tight text-fg-muted">{t('rules.diagram.chain.earlier')}</span
       >
     </div>
@@ -38,7 +42,9 @@
       <Arrow class="text-lg" />
     </div>
     <div class="flex flex-col items-center gap-1">
-      <CardFace slug="horse-breeders" tier="mini" {width} />
+      <div style:width="{width}px" style:height="{height}px">
+        <CardFace slug="horse-breeders" tier="mini" {width} />
+      </div>
       <span
         class="rounded-full bg-malachite px-1.5 text-[11px] leading-tight font-semibold text-(--paper-bright)"
       >

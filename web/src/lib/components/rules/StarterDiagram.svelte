@@ -23,27 +23,32 @@
 </script>
 
 {#snippet track(pawn: number)}
-  <span dir="ltr" class="flex shrink-0 items-center gap-px" aria-hidden="true">
-    <Icon name="crest-sun-sm" class="me-0.5 text-[11px] text-sun-ink" />
+  <!-- Sized in em, so the track grows with the full variant. -->
+  <span
+    dir="ltr"
+    class="flex shrink-0 items-center gap-px {compact ? 'text-[11px]' : 'text-base'}"
+    aria-hidden="true"
+  >
+    <Icon name="crest-sun-sm" class="me-[0.2em] text-[1em] text-sun-ink" />
     {#each CELLS as cell (cell)}
       <span
-        class="grid size-3 place-items-center rounded-[2px] border border-rule {cell === 3
+        class="grid size-[1.15em] place-items-center rounded-[0.2em] border border-rule {cell === 3
           ? 'bg-panel'
           : 'bg-cinnabar/15'}"
       >
         {#if cell === pawn}
-          <Icon name="military-pawn" class="text-[9px] text-fg" />
+          <Icon name="military-pawn" class="text-[0.8em] text-fg" />
         {/if}
       </span>
     {/each}
-    <Icon name="crest-moon-sm" class="ms-0.5 text-[11px] text-moon-ink" />
+    <Icon name="crest-moon-sm" class="ms-[0.2em] text-[1em] text-moon-ink" />
   </span>
 {/snippet}
 
 <DiagramFrame name="starter" {compact} caption={t('rules.diagram.starter.label')}>
   <div class="flex flex-col gap-1.5">
     {#each ROWS as row (row.pawn)}
-      <div class="flex items-center gap-2" data-starter-pawn={row.pawn}>
+      <div class="flex flex-col gap-0.5" data-starter-pawn={row.pawn}>
         {@render track(row.pawn)}
         <span class="text-xs leading-tight">
           {t(row.line, { moon: t('board.crest.moon') })}

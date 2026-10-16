@@ -45,7 +45,7 @@ Sizes for all three: 1 to 1.1 em of the effect band's font, so about 10 to 12 px
 Not sprite icons: Svelte components in `web/src/lib/components/rules/`, built from the real card components and sprite icons, in the manner of TradeDiagram, MilitaryDiagram and ScienceDiagram. HTML and inline layout, every label through `t()`, nothing baked into an SVG. Each takes a `compact` prop: the compact variant fits a tooltip bubble (at most about 220 by 120 CSS px) and drops the caption sentence; the full variant sits in the rules reference.
 
 - **ChainDiagram** (rules section costs, under Chains): an Age I card whose band shows a chain symbol (the out chip), an arrow, then a later card with the same symbol beside its cost (the in chip) and the cost shown as free.
-- **DiscardDiagram** (rules section turn, after the three actions): a card going to the discard pile, then 2 coins plus 1 coin per yellow card, with a worked example of two yellow cards giving 4 coins.
+- **DiscardDiagram** (rules section turn, after the three actions): the word Discard, then 2 coins plus 1 coin per yellow card, with a worked example of two yellow cards giving 4 coins.
 - **SeventhWonderDiagram** (rules section wonders, under the seventh wonder): eight wonder glyphs, seven of them built (four and three, one row per player), and the eighth crossed out as leaving the game.
 - **GuildDiagram** (rules section guilds): the two cities' counts of one colour side by side, the larger one marked as the one the guild counts, whoever owns it.
 - **StarterDiagram** (rules section age-end): the track with the pawn off centre, the weaker player's crest choosing who starts; and the pawn on the centre, the last active player's crest choosing (docs/rules/decisions.md).
