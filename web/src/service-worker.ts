@@ -27,6 +27,7 @@
 
 import { build, files, version } from '$service-worker';
 import { networkFirst } from '$lib/sw/navigation';
+import { artCache } from '$lib/sw/art-cache';
 import {
   ART_CACHE,
   ART_CACHE_MAX_ENTRIES,
@@ -34,7 +35,6 @@ import {
   SHELL_KEY,
   SKIP_WAITING,
   gameWindows,
-  overflow,
   shellCacheName,
   staleCaches,
   strategyFor,
@@ -152,34 +152,15 @@ async function fromShellCache(request: Request): Promise<Response> {
   return hit ?? fetch(request);
 }
 
-// Serialize cache mutations: concurrent image loads cannot leave the cache
-// above its bound or move the same key ahead of a newer hit.
-let artWrites = Promise.resolve();
-
-function rememberArt(request: Request, response: Response): Promise<void> {
-  artWrites = artWrites
-    .then(async () => {
-      const cache = await caches.open(ART_CACHE);
-      // Cache.put replaces in place, so delete first to move a hit to the end.
-      await cache.delete(request);
-      await cache.put(request, response);
-      for (const key of overflow(await cache.keys(), ART_CACHE_MAX_ENTRIES)) {
-        await cache.delete(key);
-      }
-    })
-    .catch(() => undefined);
-  return artWrites;
-}
+// Reads share the LRU transaction queue, so a concurrent offline request
+// cannot observe the temporary deletion used to move a hit to the end.
+const runtimeArt = artCache(() => caches.open(ART_CACHE), ART_CACHE_MAX_ENTRIES);
 
 async function art(event: FetchEvent): Promise<Response> {
   const request = event.request;
-  const cache = await caches.open(ART_CACHE);
-  const hit = await cache.match(request, { ignoreVary: true });
-  if (hit) {
-    event.waitUntil(rememberArt(request, hit.clone()));
-    return hit;
-  }
+  const hit = await runtimeArt.match(request);
+  if (hit) return hit;
   const response = await fetch(request);
-  if (response.status === 200) event.waitUntil(rememberArt(request, response.clone()));
+  if (response.status === 200) event.waitUntil(runtimeArt.remember(request, response.clone()));
   return response;
 }
