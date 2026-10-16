@@ -20,14 +20,23 @@
 // The content is text (through t()), with an optional diagram snippet, an
 // optional stack of linked previews (a second panel attached to the bubble,
 // such as the card a chain symbol makes free), and an optional rules
-// section id for the rules reference's "More in Rules" link.
+// section id, drawn as a "More in Rules" link that opens the rules overlay
+// at that section and closes the tooltip. A bubble with a link takes the
+// pointer (the layer is otherwise pointer-events: none): a mouse may move
+// from the anchor into it without it closing, a press inside it does not
+// close it, and on touch a tap on the link is the one tap that acts rather
+// than being swallowed. Keyboard users reach the rules from the game menu.
 
 import { untrack, type Snippet } from 'svelte';
 import type { Attachment } from 'svelte/attachments';
+import type { RuleSectionId } from '$lib/components/rules/sections';
 import { isQuietFocus, swallowClick } from './dismiss';
 import {
+  downAction,
   HOVER_DELAY_MS,
+  HOVER_HIDE_LINK_MS,
   HOVER_HIDE_MS,
+  HOVER_RESUME_PX,
   HOVER_SKIP_MS,
   isActionable,
   LONG_PRESS_MS,
@@ -45,6 +54,9 @@ export type TooltipStackItem =
 export interface TooltipContent {
   /** The tooltip's text, already translated. Short: one or two lines. */
   text: string;
+  /** Status lines under the text, already translated: facts the server
+   *  sent about the anchor now (where a card is, what a guild is worth). */
+  lines?: readonly string[];
   /** A small concept diagram under the text. Its labels must be
    *  translatable text, not baked into the SVG. */
   diagram?: Snippet;
@@ -52,9 +64,9 @@ export interface TooltipContent {
    *  wide screens, on its far side on phones). At most two items; the stack
    *  itself has no stack, so a tooltip is never more than two levels deep. */
   stack?: readonly TooltipStackItem[];
-  /** The rules reference section this tooltip's topic belongs to, for a
-   *  later "More in Rules" link. */
-  rulesId?: string;
+  /** The rules reference section this tooltip's topic belongs to: the
+   *  bubble shows a "More in Rules" link that opens it. */
+  rulesId?: RuleSectionId;
   /** Whether a tap on the anchor acts, when the DOM cannot tell (the
    *  default looks for a button, a link, a data-act and the like on the
    *  anchor or an ancestor). */
@@ -77,6 +89,13 @@ export interface ActiveTooltip {
 export const TOOLTIP_ID = 'ajayeb-tooltip';
 /** The attribute every registered anchor carries. */
 export const ANCHOR_ATTR = 'data-tooltip';
+/** The open bubble, and its "More in Rules" link. */
+const BUBBLE_SELECTOR = '[data-tooltip-layer] [data-tooltip-bubble]';
+const LINK_SELECTOR = '[data-tooltip-layer] [data-tooltip-rules]';
+
+function inside(target: EventTarget | null, selector: string): boolean {
+  return target instanceof Element && target.closest(selector) !== null;
+}
 
 const FOCUSABLE =
   'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
@@ -125,9 +144,12 @@ class TooltipStore {
     return this.#registry.get(el);
   }
 
-  /** The innermost registered anchor at or above `target`. */
+  /** The innermost registered anchor at or above `target`. Nothing inside
+   *  the tooltip layer counts: a diagram in a bubble is drawn with the
+   *  board's own components, which may carry tooltips of their own. */
   anchorFor(target: EventTarget | null): Element | null {
     const start = target instanceof Element ? target : null;
+    if (start?.closest('[data-tooltip-layer]')) return null;
     return resolveAnchor<Element>(
       start,
       (node) => node.parentElement,
@@ -206,6 +228,9 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   let pressTimer: ReturnType<typeof setTimeout> | undefined;
   let hovered: Element | null = null;
   let press: { state: Press; anchor: Element; pointerId: number } | null = null;
+  // Where the mouse last pressed: hovering shows nothing new until it has
+  // moved away from there (HOVER_RESUME_PX).
+  let clickedAt: { x: number; y: number } | null = null;
 
   const clearHover = (): void => {
     clearTimeout(hoverTimer);
@@ -218,43 +243,71 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
     press = null;
   };
 
-  const onOver = (e: PointerEvent): void => {
-    if (e.pointerType !== 'mouse') return;
-    const anchor = store.anchorFor(e.target);
-    if (anchor === hovered) return;
-    hovered = anchor;
-    clearHover();
-    if (!anchor) {
-      if (store.active?.via === 'hover') hideTimer = setTimeout(() => store.hide(), HOVER_HIDE_MS);
-      return;
-    }
+  /** Shows the hovered anchor's tooltip, now or after the delay. */
+  const hoverShow = (anchor: Element): void => {
     // A keyboard focus tooltip stays until focus moves.
     if (store.active?.via === 'focus') return;
     if (store.warm) store.show(anchor, 'hover');
     else hoverTimer = setTimeout(() => store.show(anchor, 'hover'), HOVER_DELAY_MS);
   };
 
+  const onOver = (e: PointerEvent): void => {
+    if (e.pointerType !== 'mouse') return;
+    // The pointer moved into the open bubble (to reach its link): it counts
+    // as still on the anchor, so the bubble stays.
+    if (store.active && inside(e.target, BUBBLE_SELECTOR)) {
+      hovered = store.active.anchor;
+      clearHover();
+      return;
+    }
+    const anchor = store.anchorFor(e.target);
+    if (anchor === hovered) return;
+    hovered = anchor;
+    clearHover();
+    if (!anchor) {
+      if (store.active?.via === 'hover') {
+        const delay = store.active.content.rulesId ? HOVER_HIDE_LINK_MS : HOVER_HIDE_MS;
+        hideTimer = setTimeout(() => store.hide(), delay);
+      }
+      return;
+    }
+    if (clickedAt) return;
+    hoverShow(anchor);
+  };
+
   const onOut = (e: PointerEvent): void => {
     if (e.pointerType !== 'mouse' || e.relatedTarget !== null) return;
     // The pointer left the window.
     hovered = null;
+    clickedAt = null;
     clearHover();
     if (store.active?.via === 'hover') store.hide();
   };
 
   const onDown = (e: PointerEvent): void => {
+    const mouse = e.pointerType === 'mouse';
+    const action = downAction({
+      mouse,
+      open: store.active !== null,
+      inBubble: inside(e.target, BUBBLE_SELECTOR),
+      onLink: inside(e.target, LINK_SELECTOR)
+    });
+    if (mouse) clickedAt = { x: e.clientX, y: e.clientY };
+    // A press inside the bubble (its link) leaves it open; the link's click
+    // closes it.
+    if (action === 'keep' && store.active) return;
     clearHover();
     endPress();
-    if (e.pointerType === 'mouse') {
+    if (mouse) {
       // A click acts as usual, and closes any open tooltip, a keyboard focus
       // one too: a focus tooltip left open over a menu or sheet that the
       // click opened would take the Escape meant to close it.
-      if (store.active) store.hide();
+      if (action === 'hide') store.hide();
       return;
     }
     // Touch or pen. Any tap while a tooltip is open closes it, and is
     // swallowed: neither the press nor its click reaches the page.
-    if (store.active) {
+    if (action === 'swallow') {
       e.stopPropagation();
       swallowClick(e);
       store.hide();
@@ -280,6 +333,14 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   };
 
   const onMove = (e: PointerEvent): void => {
+    if (e.pointerType === 'mouse') {
+      // The mouse moved on from its click: hovering shows tooltips again.
+      if (!clickedAt) return;
+      if (Math.hypot(e.clientX - clickedAt.x, e.clientY - clickedAt.y) < HOVER_RESUME_PX) return;
+      clickedAt = null;
+      if (hovered && hovered !== store.active?.anchor) hoverShow(hovered);
+      return;
+    }
     if (!press || e.pointerId !== press.pointerId) return;
     press.state.move(e.clientX, e.clientY);
     if (press.state.cancelled) endPress();

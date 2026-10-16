@@ -27,6 +27,15 @@ describe('chain links', () => {
     const into = chainTooltip('drop', 'in');
     expect(into.text).toContain('Baths');
     expect(into.stack).toEqual([expect.objectContaining({ kind: 'card', slug: 'baths' })]);
-    expect(out.rulesId).toBe('chains');
+    // Chains are explained in the rules' costs section.
+    expect(out.rulesId).toBe('costs');
+    expect(into.rulesId).toBe('costs');
+  });
+
+  it('carries the status lines it is given', () => {
+    expect(chainTooltip('drop', 'out').lines).toEqual([]);
+    expect(chainTooltip('drop', 'in', ['You show this symbol.']).lines).toEqual([
+      'You show this symbol.'
+    ]);
   });
 });

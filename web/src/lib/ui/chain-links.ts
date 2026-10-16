@@ -3,7 +3,9 @@
 // display mapper over the printed catalog, which links every chain symbol
 // to exactly one card that shows it (chainOut) and one card it makes free
 // (chainIn); whether a player actually builds for free is the server's cost
-// breakdown, never this.
+// breakdown, never this. The status lines, when given, are the server's
+// facts about the symbol now (view/tips.ts chainLines). Chains are part of
+// the rules' costs section.
 
 import { cardBySlug, cardSlugs, type CardSlug } from '$lib/catalog';
 import { t } from '$lib/i18n';
@@ -27,22 +29,29 @@ export function chainSource(chain: Chain): CardSlug | undefined {
  * cost row): this card is free for a city that shows the symbol, and the
  * stack previews the card that provides it.
  */
-export function chainTooltip(chain: Chain, direction: 'in' | 'out'): TooltipContent {
+export function chainTooltip(
+  chain: Chain,
+  direction: 'in' | 'out',
+  lines: readonly string[] = []
+): TooltipContent {
   const symbol = chainName(chain);
+  const rulesId = 'costs';
   if (direction === 'out') {
     const target = chainTarget(chain);
-    if (!target) return { text: t('card.tip.chainOutBare', { symbol }), rulesId: 'chains' };
+    if (!target) return { text: t('card.tip.chainOutBare', { symbol }), lines, rulesId };
     return {
       text: t('card.tip.chainOut', { symbol, card: cardName(target) }),
+      lines,
       stack: [{ kind: 'card', slug: target, caption: t('card.tip.chainOutStack') }],
-      rulesId: 'chains'
+      rulesId
     };
   }
   const source = chainSource(chain);
-  if (!source) return { text: t('card.chainInShort', { symbol }), rulesId: 'chains' };
+  if (!source) return { text: t('card.chainInShort', { symbol }), lines, rulesId };
   return {
     text: t('card.tip.chainIn', { symbol, card: cardName(source) }),
+    lines,
     stack: [{ kind: 'card', slug: source, caption: t('card.tip.chainInStack') }],
-    rulesId: 'chains'
+    rulesId
   };
 }

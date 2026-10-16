@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LONG_PRESS_MS, Press, resolveAnchor, TOUCH_SLOP_PX } from './tooltip-gesture';
+import { downAction, LONG_PRESS_MS, Press, resolveAnchor, TOUCH_SLOP_PX } from './tooltip-gesture';
 
 interface FakeNode {
   name: string;
@@ -104,5 +104,25 @@ describe('Press (touch model B)', () => {
     const late = new Press(0, 0, 0, true);
     late.due(LONG_PRESS_MS);
     expect(late.cancel()).toBe('swallow');
+  });
+});
+
+describe('downAction (the "More in Rules" link exception)', () => {
+  const at = (mouse: boolean, open: boolean, inBubble = false, onLink = false) =>
+    downAction({ mouse, open, inBubble, onLink });
+
+  it('a mouse press closes an open tooltip, except inside its bubble', () => {
+    expect(at(true, false)).toBe('keep');
+    expect(at(true, true)).toBe('hide');
+    expect(at(true, true, true)).toBe('keep');
+    expect(at(true, true, true, true)).toBe('keep');
+  });
+
+  it('a touch closes an open tooltip and is swallowed, except on its link', () => {
+    expect(at(false, false)).toBe('press');
+    expect(at(false, true)).toBe('swallow');
+    // Elsewhere in the bubble is still "any tap": it closes and is swallowed.
+    expect(at(false, true, true)).toBe('swallow');
+    expect(at(false, true, true, true)).toBe('keep');
   });
 });

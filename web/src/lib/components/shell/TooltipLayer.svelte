@@ -12,6 +12,8 @@
   // measures the viewport less the safe-area insets, which the tooltip
   // never crosses.
   import { tooltips, installTooltipGestures, TOOLTIP_ID } from '$lib/ui/tooltip.svelte';
+  import { openRules } from '../rules/rules-overlay.svelte';
+  import type { RuleSectionId } from '../rules/sections';
   import { placeTooltip } from '$lib/ui/tooltip-place';
   import type { Attachment } from 'svelte/attachments';
   import TooltipBubble from './TooltipBubble.svelte';
@@ -24,6 +26,12 @@
   let probeEl: HTMLDivElement | undefined = $state();
 
   const active = $derived(tooltips.active);
+
+  /** The bubble's "More in Rules" link: close the tooltip, open the rules. */
+  function moreRules(section: RuleSectionId): void {
+    tooltips.hide();
+    void openRules(section);
+  }
 
   // DOM listeners only; they write the store from events, never here.
   $effect(() => installTooltipGestures());
@@ -142,8 +150,10 @@
         <TooltipBubble
           id={TOOLTIP_ID}
           text={active.content.text}
+          lines={active.content.lines}
           diagram={active.content.diagram}
           rulesId={active.content.rulesId}
+          onrules={moreRules}
           arrowX={0}
           class="absolute start-0 top-0"
         />

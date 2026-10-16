@@ -6,7 +6,8 @@
 // The touch model (AGENTS.md, "Tooltips"): a tap shows the tooltip of an
 // element with no action. An actionable element keeps its tap action and
 // shows its tooltip on a long-press, whose release never triggers the
-// action. Any tap while a tooltip is open closes it and is swallowed.
+// action. Any tap while a tooltip is open closes it and is swallowed, except
+// a tap on the bubble's "More in Rules" link, which acts (downAction).
 
 /** How long a finger must rest for a long-press. Long enough that an
  *  ordinary tap (about 100 to 250 ms) never reaches it, short enough not to
@@ -24,6 +25,13 @@ export const HOVER_SKIP_MS = 300;
 /** A fine pointer leaving the anchor hides the tooltip after this, so
  *  passing over a gap between two chips does not flicker. */
 export const HOVER_HIDE_MS = 100;
+/** The same, for a bubble with a "More in Rules" link: long enough for the
+ *  pointer to cross the gap between the anchor and the bubble. */
+export const HOVER_HIDE_LINK_MS = 300;
+/** A mouse that pressed (a click) must move this far before hovering shows
+ *  tooltips again, so a click never pops one up under a resting pointer
+ *  (over the sheet the click opened, say). */
+export const HOVER_RESUME_PX = 4;
 
 /** Walks from `start` up through `parentOf` and returns the first node for
  *  which `isAnchor` holds: the innermost registered anchor wins, so a chip
@@ -137,4 +145,32 @@ export class Press {
     this.cancelled = true;
     return 'cancel';
   }
+}
+
+/** What a pointerdown does to the tooltips. */
+export type DownAction =
+  /** Nothing is open (a mouse), or the press is inside the open bubble (a
+   *  mouse moving to click its link): leave everything as it is. */
+  | 'keep'
+  /** A mouse press elsewhere: close the open tooltip, and let the click act. */
+  | 'hide'
+  /** A touch while one is open: close it, and swallow the tap. */
+  | 'swallow'
+  /** A touch with none open: start a press (a tap or a long-press). */
+  | 'press';
+
+/**
+ * The pointerdown rule. `inBubble` is a press inside the open bubble, and
+ * `onLink` one on its "More in Rules" link: the one tap that is not
+ * swallowed, so the link works under the touch model too.
+ */
+export function downAction(p: {
+  mouse: boolean;
+  open: boolean;
+  inBubble: boolean;
+  onLink: boolean;
+}): DownAction {
+  if (p.mouse) return p.open && !p.inBubble ? 'hide' : 'keep';
+  if (!p.open) return 'press';
+  return p.onLink ? 'keep' : 'swallow';
 }

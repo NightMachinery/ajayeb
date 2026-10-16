@@ -8,6 +8,8 @@ import type { Messages } from '../types';
 export const shell = {
   'shell.close': 'Close',
   'shell.dismiss': 'Dismiss',
+  // The link at the end of a tooltip that opens the rules at its topic.
+  'shell.tooltip.moreRules': 'More in Rules',
   // {label} is the action's own text, e.g. "Build for 4 coins".
   'shell.confirmArmed': 'Confirm: {label}',
   'shell.tapAgainToConfirm': 'Tap again to confirm',
@@ -44,6 +46,8 @@ export const shell = {
   'dev.tooltips.inCard': 'A chip inside an actionable card',
   'dev.tooltips.button': 'Long-press a button',
   'dev.tooltips.specimens': 'Bubble and stack, standalone',
+  'dev.tooltips.micro': 'Board micro-elements',
+  'dev.tooltips.statusLine': 'A status line: a fact the server sent.',
   'dev.tooltips.dismiss': 'Dismiss layer',
   'dev.tooltips.openDismiss': 'Open a floating panel',
   'dev.tooltips.dismissBody': 'Any tap closes this panel, and the tap does nothing else.',
