@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { i18n, type Locale } from '$lib/i18n';
 import {
   DEFAULT_SETTINGS,
   parseSettings,
@@ -50,7 +51,8 @@ describe('parseSettings', () => {
       sound: true,
       soundVolume: 'loud',
       haptics: false,
-      showOpponentMove: false
+      showOpponentMove: false,
+      locale: 'fa'
     };
     expect(parseSettings(JSON.stringify(stored))).toEqual(stored);
   });
@@ -66,7 +68,8 @@ describe('parseSettings', () => {
       sound: 1, // not a boolean
       soundVolume: 11, // not a volume step
       haptics: 'off', // not a boolean
-      showOpponentMove: 'yes' // not a boolean
+      showOpponentMove: 'yes', // not a boolean
+      locale: 'xx' // not a locale with a table
     });
     expect(parseSettings(raw)).toEqual({
       ...DEFAULT_SETTINGS,
@@ -167,5 +170,42 @@ describe('SettingsStore', () => {
     store.set('animationSpeed', 'off');
     expect(store.value.animationSpeed).toBe('off');
     expect(new SettingsStore(null).value).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('the language setting', () => {
+  afterEach(() => i18n.set('en'));
+
+  it('is English by default, also for a value stored before it existed', () => {
+    expect(DEFAULT_SETTINGS.locale).toBe('en');
+    expect(parseSettings(JSON.stringify({ sound: true })).locale).toBe('en');
+    expect(parseSettings(JSON.stringify({ locale: 'fa' })).locale).toBe('fa');
+  });
+
+  it('applies the stored locale when the store loads, before anything renders', () => {
+    const applied: Locale[] = [];
+    new SettingsStore(memory({ [SETTINGS_KEY]: '{"locale":"fa"}' }), (l) => applied.push(l));
+    expect(applied).toEqual(['fa']);
+  });
+
+  it('switches the language and its direction at once', () => {
+    const storage = memory();
+    const store = new SettingsStore(storage, (l) => i18n.set(l));
+    expect(i18n.dir).toBe('ltr');
+    store.set('locale', 'fa');
+    expect(i18n.locale).toBe('fa');
+    expect(i18n.dir).toBe('rtl');
+    expect(JSON.parse(storage.data.get(SETTINGS_KEY)!).locale).toBe('fa');
+    store.set('locale', 'en');
+    expect(i18n.dir).toBe('ltr');
+  });
+
+  it('keeps the language when another field changes', () => {
+    const applied: Locale[] = [];
+    const store = new SettingsStore(memory(), (l) => applied.push(l));
+    store.set('locale', 'fa');
+    store.set('sound', true);
+    expect(store.value.locale).toBe('fa');
+    expect(applied).toEqual(['en', 'fa', 'fa']);
   });
 });

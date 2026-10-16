@@ -54,6 +54,19 @@
     U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Persian: the self-hosted fonts are Latin subsets, so Arabic-script text
+   falls through to the next family. For lang="fa" the stacks name the
+   device's Persian-capable fonts first (Vazirmatn where installed, then
+   Noto, which Android ships), so a Persian page does not land on whatever
+   the generic family happens to pick. No Persian font is self-hosted yet. */
+:root:lang(fa) {
+  --type-display:
+    'Fraunces', 'Vazirmatn', 'Noto Naskh Arabic', 'Geeza Pro', ui-serif, Georgia, Tahoma, serif;
+  --type-ui:
+    'Inter', 'Vazirmatn', 'Noto Sans Arabic', ui-sans-serif, system-ui, 'Segoe UI', Tahoma,
+    sans-serif;
+}
+
 /* `dark:` follows the resolved theme on <html>, not the media query, so the
    in-app System / Light / Dark choice wins. */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));

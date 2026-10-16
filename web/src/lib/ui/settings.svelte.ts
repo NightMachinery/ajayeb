@@ -8,6 +8,8 @@
 // saved room, so an older or newer build sharing the same browser never
 // crashes on the other's shape.
 
+import { i18n, isLocale, type Locale } from '$lib/i18n/locale.svelte';
+
 export const ANIMATION_SPEEDS = ['normal', 'fast', 'relaxed', 'off'] as const;
 export type AnimationSpeed = (typeof ANIMATION_SPEEDS)[number];
 
@@ -53,6 +55,11 @@ export interface Settings {
    *  popup of what the other side just did opens by itself after their
    *  move. Off, it opens only from the top bar's button. */
   showOpponentMove: boolean;
+  /** The app's language (i18n/locale.svelte.ts LOCALES), chosen in Settings
+   *  and never detected from the browser while only English is complete.
+   *  The inline bootstrap in src/app.html reads it too, to set lang and dir
+   *  on <html> before the first paint. */
+  locale: Locale;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -65,7 +72,8 @@ export const DEFAULT_SETTINGS: Settings = {
   sound: false,
   soundVolume: 'medium',
   haptics: true,
-  showOpponentMove: true
+  showOpponentMove: true,
+  locale: 'en'
 };
 
 export const SETTINGS_KEY = 'ajayeb:settings';
@@ -128,7 +136,8 @@ export function parseSettings(raw: string | null): Settings {
     showOpponentMove:
       typeof r['showOpponentMove'] === 'boolean'
         ? r['showOpponentMove']
-        : DEFAULT_SETTINGS.showOpponentMove
+        : DEFAULT_SETTINGS.showOpponentMove,
+    locale: isLocale(r['locale']) ? r['locale'] : DEFAULT_SETTINGS.locale
   };
 }
 
@@ -150,11 +159,20 @@ function defaultStorage(): StorageLike | null {
 
 export class SettingsStore {
   #storage: StorageLike | null;
+  #applyLocale: ((locale: Locale) => void) | undefined;
   value = $state<Settings>(DEFAULT_SETTINGS);
 
-  constructor(storage: StorageLike | null = defaultStorage()) {
+  /** applyLocale, when given, is called with the stored locale at once and
+   *  again on every save, so the app's language follows this store without
+   *  an effect (the app's store passes i18n.set). */
+  constructor(
+    storage: StorageLike | null = defaultStorage(),
+    applyLocale?: (locale: Locale) => void
+  ) {
     this.#storage = storage;
+    this.#applyLocale = applyLocale;
     this.value = parseSettings(readRaw(storage));
+    applyLocale?.(this.value.locale);
   }
 
   /** Updates one field and persists the whole object. */
@@ -174,6 +192,7 @@ export class SettingsStore {
 
   #save(next: Settings): void {
     this.value = next;
+    this.#applyLocale?.(next.locale);
     try {
       this.#storage?.setItem(SETTINGS_KEY, JSON.stringify(next));
     } catch {
@@ -184,4 +203,4 @@ export class SettingsStore {
 
 /** The app's one settings store, read and written from anywhere (Home's
  *  gear icon, the /settings route, and later the in-room TopBar). */
-export const settings = new SettingsStore();
+export const settings = new SettingsStore(defaultStorage(), (locale) => i18n.set(locale));

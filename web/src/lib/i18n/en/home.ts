@@ -89,6 +89,10 @@ export const home = {
     'After their move, a popup lists what they did. Any tap closes it.',
   'home.settings.haptics': 'Vibration',
   'home.settings.hapticsHint': 'A light buzz when a card is taken, more for military.',
+  // The language row. Each language is named in itself, in every locale.
+  'home.settings.languageLegend': 'Language',
+  'home.settings.languageEn': 'English',
+  'home.settings.languageFa': 'فارسی',
 
   // PassDevice (the hot-seat interstitial; M5.S04 wires it into the game).
   'home.pass.title': 'Pass to {name}',

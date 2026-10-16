@@ -54,6 +54,22 @@
         }
       })();
     </script>
+    <script>
+      // Language bootstrap: lang and dir from the stored Settings locale
+      // (src/lib/ui/settings.svelte.ts), so a Persian page is never first
+      // painted left to right. The app's layout owns them after it starts.
+      (function () {
+        try {
+          var s = JSON.parse(localStorage.getItem('ajayeb:settings') || '{}');
+          if (s && s.locale === 'fa') {
+            document.documentElement.lang = 'fa';
+            document.documentElement.dir = 'rtl';
+          }
+        } catch (e) {
+          // Blocked storage or malformed JSON: stay English.
+        }
+      })();
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

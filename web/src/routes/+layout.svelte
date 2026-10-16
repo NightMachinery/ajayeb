@@ -41,6 +41,9 @@
     motion.apply();
   });
 
+  // lang and dir follow the locale, which the settings store applies when
+  // it loads (before anything renders) and on every change; src/app.html
+  // sets both before the first paint from the same stored value.
   $effect(() => {
     const root = document.documentElement;
     root.lang = i18n.locale;

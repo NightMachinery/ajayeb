@@ -6,7 +6,7 @@
   // theme.svelte.ts, rather than taking it all as props: there is exactly
   // one of each, for the life of the app, and every caller wants the same
   // live one.
-  import { t, type MessageKey } from '$lib/i18n';
+  import { LOCALES, t, type Locale, type MessageKey } from '$lib/i18n';
   import Segmented from '$lib/components/shell/Segmented.svelte';
   import {
     ANIMATION_SPEEDS,
@@ -35,6 +35,11 @@
     relaxed: 'home.settings.speedRelaxed',
     off: 'home.settings.speedOff'
   } as const satisfies Record<AnimationSpeed, MessageKey>;
+  // Each language is named in itself (the same text in every locale).
+  const LANGUAGE_LABEL = {
+    en: 'home.settings.languageEn',
+    fa: 'home.settings.languageFa'
+  } as const satisfies Record<Locale, MessageKey>;
   const CONFIRM_LABEL = {
     onlineOnly: 'home.settings.confirmOnlineOnly',
     always: 'home.settings.confirmAlways',
@@ -82,6 +87,7 @@
     play('coin', { volume: v });
   }
 
+  const languageOptions = $derived(LOCALES.map((l) => ({ value: l, label: t(LANGUAGE_LABEL[l]) })));
   const themeOptions = $derived(THEME_PREFS.map((p) => ({ value: p, label: t(`theme.${p}`) })));
   const speedOptions = $derived(
     ANIMATION_SPEEDS.map((s) => ({ value: s, label: t(SPEED_LABEL[s]) }))
@@ -98,6 +104,19 @@
 </script>
 
 <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-1.5" data-setting="language">
+    <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
+      {t('home.settings.languageLegend')}
+    </span>
+    <!-- Applied at once: the store sets the app's locale on every save. -->
+    <Segmented
+      name="settings-language"
+      legend={t('home.settings.languageLegend')}
+      options={languageOptions}
+      bind:value={() => settings.value.locale, (v) => settings.set('locale', v as Locale)}
+    />
+  </div>
+
   <div class="flex flex-col gap-1.5">
     <span class="text-sm font-medium text-fg-muted" aria-hidden="true">{t('theme.label')}</span>
     <Segmented
