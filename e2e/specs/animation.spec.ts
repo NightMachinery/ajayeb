@@ -226,71 +226,72 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
     expect(problems, 'console errors, page errors or failed requests').toEqual([]);
   });
 
-  test('c. input comes back within 450 ms of a frame at normal speed', async ({
-    page,
-    baseURL
-  }) => {
-    test.setTimeout(240_000);
-    if (!baseURL) throw new Error('no baseURL');
-    const problems = watchHygiene(page);
-    await recordInputBack(page);
-    await useSettings(page, 'normal');
-    const draft = await draftKeys(baseURL, SEED);
-    const waits: { room: string; version: number; ms: number; steps: number }[] = [];
-
-    const measure = async (room: string) => {
-      const { frames } = await fxRecords(page);
-      const at = await inputAt(page);
-      for (const f of frames) {
-        const back = at[f.version];
-        if (back === undefined || f.steps === 0) continue;
-        if (waits.some((w) => w.room === room && w.version === f.version)) continue;
-        waits.push({ room, version: f.version, ms: Math.round(back - f.swapAt), steps: f.steps });
-      }
-    };
-
-    // Hot-seat: every move is the next player's, so every frame counts.
-    const hot = await openPosition(page, baseURL, { mode: 'hotseat', seed: SEED, keys: draft });
-    for (let i = 0; i < 6; i++) {
-      const snap = await hot.nextTurn();
-      if (snap.phase !== 'play' || snap.pending) break;
-      const view = await viewOf(page);
-      await hot.dismissToasts();
-      await playThrough(hot, recordPolicy(view).key);
-      await measure('hotseat');
-    }
-
-    // Against a bot: its answers are the frames that hand input back.
-    const ai = await openPosition(page, baseURL, { mode: 'ai', seed: SEED, keys: draft });
-    for (let i = 0; i < 3; i++) {
-      const snap = await ai.nextTurn();
-      if (snap.phase !== 'play' || snap.pending) break;
-      await ai.dismissToasts();
-      await playThrough(ai, recordPolicy(await viewOf(page)).key);
-      await ai.waitTurn();
-      await measure('ai');
-    }
-
-    test.info().annotations.push({
-      type: 'input back (ms)',
-      description: waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ')
-    });
-    expect(waits.filter((w) => w.room === 'hotseat').length).toBeGreaterThanOrEqual(4);
-    expect(waits.filter((w) => w.room === 'ai').length).toBeGreaterThanOrEqual(2);
-    const all = waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ');
-    for (const w of waits) {
-      expect(
-        w.ms,
-        `${w.room} frame ${w.version}: input back after ${w.ms} ms (${all})`
-      ).toBeLessThanOrEqual(450);
-    }
-    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
-  });
-
   test.describe(() => {
-    // A loaded machine can push one run over; up to three runs, each one's
-    // worst task in the annotations (docs/testing.md says how to read them).
+    // Both measure wall time, so a loaded machine can push one run over: up
+    // to three runs, each one's numbers in the failure message or the
+    // annotations (docs/testing.md says how to read them).
     test.describe.configure({ retries: 2 });
+
+    test('c. input comes back within 450 ms of a frame at normal speed', async ({
+      page,
+      baseURL
+    }) => {
+      test.setTimeout(240_000);
+      if (!baseURL) throw new Error('no baseURL');
+      const problems = watchHygiene(page);
+      await recordInputBack(page);
+      await useSettings(page, 'normal');
+      const draft = await draftKeys(baseURL, SEED);
+      const waits: { room: string; version: number; ms: number; steps: number }[] = [];
+
+      const measure = async (room: string) => {
+        const { frames } = await fxRecords(page);
+        const at = await inputAt(page);
+        for (const f of frames) {
+          const back = at[f.version];
+          if (back === undefined || f.steps === 0) continue;
+          if (waits.some((w) => w.room === room && w.version === f.version)) continue;
+          waits.push({ room, version: f.version, ms: Math.round(back - f.swapAt), steps: f.steps });
+        }
+      };
+
+      // Hot-seat: every move is the next player's, so every frame counts.
+      const hot = await openPosition(page, baseURL, { mode: 'hotseat', seed: SEED, keys: draft });
+      for (let i = 0; i < 6; i++) {
+        const snap = await hot.nextTurn();
+        if (snap.phase !== 'play' || snap.pending) break;
+        const view = await viewOf(page);
+        await hot.dismissToasts();
+        await playThrough(hot, recordPolicy(view).key);
+        await measure('hotseat');
+      }
+
+      // Against a bot: its answers are the frames that hand input back.
+      const ai = await openPosition(page, baseURL, { mode: 'ai', seed: SEED, keys: draft });
+      for (let i = 0; i < 3; i++) {
+        const snap = await ai.nextTurn();
+        if (snap.phase !== 'play' || snap.pending) break;
+        await ai.dismissToasts();
+        await playThrough(ai, recordPolicy(await viewOf(page)).key);
+        await ai.waitTurn();
+        await measure('ai');
+      }
+
+      test.info().annotations.push({
+        type: 'input back (ms)',
+        description: waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ')
+      });
+      expect(waits.filter((w) => w.room === 'hotseat').length).toBeGreaterThanOrEqual(4);
+      expect(waits.filter((w) => w.room === 'ai').length).toBeGreaterThanOrEqual(2);
+      const all = waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ');
+      for (const w of waits) {
+        expect(
+          w.ms,
+          `${w.room} frame ${w.version}: input back after ${w.ms} ms (${all})`
+        ).toBeLessThanOrEqual(450);
+      }
+      expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+    });
 
     test(
       'd. no long task over 50 ms during an animation at 4x CPU',

@@ -571,7 +571,8 @@ reveals a card (`findPosition`), and the `appian-economy` and
   three bot answers that animated, that moment minus the frame's `swapAt`
   (`__ajayebFx.frames()`) must be at most 450 ms. The bot's dwell and pick
   come before the swap and are not counted. The failure message lists
-  every measurement.
+  every measurement. Like d it measures wall time, so it retries up to
+  twice on this often-loaded laptop.
 - **d. No long task during an animation (`@perf`).** A CDP session sets
   `Emulation.setCPUThrottlingRate` to 4, a buffered `PerformanceObserver`
   collects `longtask` entries, and ten hot-seat moves are played, each
