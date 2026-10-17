@@ -117,7 +117,9 @@
   onPlayOnline={() => (onlineOpen = true)}
   onJoinCode={() => (joinOpen = true)}
   onSettings={() => (settingsOpen = true)}
-  tutorialOffer={rooms.list.length === 0 && tips.value.tutorial.offer === 'new'}
+  tutorialOffer={rooms.list.length === 0 &&
+    tips.value.tutorial.offer === 'new' &&
+    !tips.value.tutorial.done}
   tutorialDone={tips.value.tutorial.done}
   onTutorial={tutorialFromHome}
   onDeclineTutorial={() => tips.declineOffer()}
