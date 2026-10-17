@@ -1037,3 +1037,91 @@ python3 tools/heavy.py run --kind browser -- node tools/chrome/tutorial-walk.mjs
   --origin http://127.0.0.1:38951 --vp 360x740@2 --out /tmp/walk
 ```
 
+
+## UX screenshot matrix and probes
+
+Run `make shots` to build the test client and Go binary, start the test
+server, and generate the opt-in Playwright `ux` project. It captures 38
+screens at 360x740, 390x844, 740x360 and 1280x800 in English, light and
+dark, plus Persian at 390x844 and 1280x800 in light. The three phone
+sizes emulate touch and a mobile viewport, including landscape. Every
+capture uses Animation off, a fresh context, loaded fonts and decoded visible
+images, and a device scale factor of one so its PNG pixels match CSS pixels.
+
+The ordinary `make e2e` and CI commands do not configure the `ux` project.
+It is enabled only when the invocation explicitly requests `--project ux`
+(or `--project=ux`); that choice is passed to Playwright's worker processes
+in `AJAYEB_UX_PROJECT`. Do not export that internal flag in the shell.
+Production-smoke mode never enables it.
+
+Output goes to the gitignored `e2e/ux-out/` by default. Set `SHOTS_DIR`
+to a different directory (an absolute path avoids ambiguity):
+
+```sh
+SHOTS_DIR=/tmp/ajayeb-shots-before make shots
+SHOTS_DIR=/tmp/ajayeb-shots-after make shots PW_ARGS='--grep board-age2'
+```
+
+The filter matches stable screen ids in test names; add the viewport,
+theme or locale to narrow further, for example
+`PW_ARGS='--grep "390x844 light en.*board-age2"'`. `E2E_BUILD=0`
+skips rebuilding when the existing test build is current. Each invocation
+replaces its report and known matrix PNGs in its output directory, so use
+separate directories to preserve before and after evidence. Never point
+`SHOTS_DIR` at a directory holding other screenshot runs you need to keep.
+
+Open `index.html` directly from disk. Its contact sheet groups the captures
+by screen, links each image at full size, and lists that capture's findings.
+Each PNG is named `<screen>__<viewport>__<theme>__<locale>.png`.
+`probes.json` contains one record per capture and the run's budgets;
+`summary.md` lists unreachable screens, budget misses and probe findings,
+with severe findings first. P0 marks critical accessibility errors and uncaught
+exceptions; P1 marks serious accessibility errors, hygiene, scroll, covered
+actions and budget misses; P2 marks overflow and targets below 24 px; P3 marks
+targets below the recommended 44 px. Serious and critical axe findings use the same
+WCAG tags as the smoke spec. Geometry and tap measurements share
+`tools/chrome/probe.mjs` with `shot.mjs --probe`.
+
+Each capture measures horizontal scroll, painted elements crossing a viewport
+edge using the root layout viewport (`clientWidth` and `clientHeight`), the smallest enabled control and counts below 24 and 44 CSS pixels,
+and covered enabled `button[data-act]` centres. Hidden, modal-inert and
+clipped content is excluded; vertically scrolled content wholly outside the
+viewport is not an overflow finding. Console errors, uncaught exceptions,
+HTTP errors and failed requests are recorded. Normal cancelled navigation
+requests are excluded. Findings do not fail the project. A missing state,
+wrong pending choice, wrong ending or missing distinguishing UI does fail it.
+The probes are evidence for a reviewer, not a substitute for playing the game.
+
+Most screens come from the existing recorded `/dev/fixture` states.
+The blue-card tie, tutorial steps and pass-device screen use seeded dev rooms
+and the existing scenario/tutorial helpers. `discard-pile` opens the existing
+DiscardSheet specimen in `/dev/gallery`: the current app has no live-game
+opener for that component. The modal is the actual component, with the gallery
+inert behind it. Its axe scan is scoped to the open discard dialog to exclude
+unrelated gallery demonstrations; geometry and hygiene still cover the page.
+Every other axe scan covers the document. Capture metadata records the source
+route and axe scope. This provenance is a known review-loop finding. Tutorial
+outro captures the first outro lesson, `tokens`, after all scripted actions.
+
+The `run budgets` test runs once in a full invocation. It sums gzipped bodies
+of the scripts loaded by a cold Home load (200 KB, or 200,000 bytes, limit), measures the full
+Age III board after the fixed-seed recorded game's first two ages (2500 DOM
+nodes at 1280x800 and 390x844), and takes the median of three cold Home LCP
+loads at 390x844 (2.5 seconds). LCP uses CDP: 4x CPU slowdown, 1.6 Mbps
+download, 750 Kbps upload, 150 ms latency, cache disabled and a fresh context
+per load. Fonts and images must finish within bounded waits; all measured
+samples and profile parameters are in the report. Timing varies by machine.
+A screen-only grep skips budgets for fast reshoots; include `run budgets` in
+the grep, or run the full command, when budget evidence is needed.
+
+The capture settles running transitions before probing, including the open
+dialog's entry opacity. Settings, Join and tutorial sheets also wait for their
+distinguishing controls. Incidental pointer hover is cleared; tutorial target
+focus and the two intentional open tooltips are preserved. Tap probes measure
+text inputs themselves and use labels for radio, checkbox and visually hidden
+inputs. Hidden lazy images in closed sheets do not delay a capture.
+
+The shared probe retains `iw` and `ih` as `innerWidth` and `innerHeight` for
+CLI compatibility. Its explicit `viewportWidth` and `viewportHeight` drive
+scroll, bounds and covered-action checks: mobile Chrome can expand
+`innerWidth` when content overflows, which would otherwise hide the problem.

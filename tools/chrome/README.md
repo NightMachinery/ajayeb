@@ -25,6 +25,8 @@ Environment:
 - `CHROME_BIN` names the Chrome executable. On macOS the default is the copy in `/Applications`; on Linux the scripts look for `google-chrome` or `chromium` on `PATH`.
 - `AJAYEB_ORIGIN` changes the default app origin of `shot.mjs`.
 
+For the regenerable UX screenshot matrix and contact sheet, run `make shots`; see [docs/testing.md](../../docs/testing.md#ux-screenshot-matrix-and-probes). Its geometry probes share `probe.mjs` with `shot.mjs`.
+
 ## shot.mjs
 
 ```sh
@@ -46,9 +48,10 @@ python3 tools/heavy.py run --kind browser -- node tools/chrome/shot.mjs --origin
 
 `--probe` prints one JSON object on stdout; status lines go to stderr. Its fields:
 
-- `hscroll`, `iw`, `sw`: horizontal scroll, `innerWidth` and `scrollWidth` (`vscroll`, `ih` and `sh` are the vertical counterparts).
+- `hscroll`, `sw`: horizontal scroll and document scroll width. Bounds and scroll detection use `viewportWidth` and `viewportHeight` (the root layout viewport, `clientWidth` and `clientHeight`), so mobile automatic zoom cannot hide overflow. `iw` and `ih` retain the original `innerWidth` and `innerHeight` values for compatibility; `vscroll` and `sh` are the vertical counterparts.
 - `body`: the first 400 characters of visible text, for checking state without pixels.
-- `overflow`: up to 15 visible elements that stick out of the viewport, outermost first, skipping those clipped by an on-screen scroll or overflow container.
+- `viewportOutside`: painted elements crossing a horizontal or vertical viewport edge; modal-inert and clipped content is excluded. `covered` lists enabled action-button centres hit by another element, and `domNodes` counts the full DOM.
+- `overflow`: visible elements that stick out of the viewport, outermost first, skipping those clipped by an on-screen scroll or overflow container.
 - `tap`: the number of enabled controls, the smallest one (`el`, `w`, `h`, `min` in CSS px; a visually hidden input counts through its label), and how many are under 24 and under 44 px.
 - `theme` (the `data-theme` on `<html>`), `ready` (`data-ready`), `storage` (the `ajayeb:*` keys, with the token shown only by its length), `url`, `title` and `vp`.
 - `errors` and `failed`: console errors, uncaught exceptions, and requests that failed or returned 400 or more.

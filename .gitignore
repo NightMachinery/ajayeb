@@ -66,3 +66,7 @@ CLAUDE.local.md
 # Re-include them.
 !/art/originals/icon/
 !/web/static/art/icon/
+
+# UX screenshot reports and local task checklist
+e2e/ux-out/
+TASKS.org

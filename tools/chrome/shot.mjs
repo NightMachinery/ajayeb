@@ -54,6 +54,7 @@
 // runs.
 
 import fs from 'node:fs';
+import { probePage } from './probe.mjs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { CDP, evaluate, openPage, sleep } from './cdp.mjs';
@@ -162,126 +163,6 @@ async function locate(selector, pad) {
     return { error: `--selector: ${selector} matched an element with no size (hidden?)` };
   const count = document.querySelectorAll(selector).length;
   return { x: r.left, y: r.top, width: r.width, height: r.height, count };
-}
-
-/** Runs in the page: the probe report. Keep it self-contained. */
-function probePage() {
-  const de = document.documentElement;
-  const iw = window.innerWidth;
-  const ih = window.innerHeight;
-  const visible = (el) =>
-    el.checkVisibility
-      ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
-      : true;
-  const round = (n) => Math.round(n * 10) / 10;
-  const describe = (el) => {
-    let s = el.tagName.toLowerCase();
-    if (el.id) s += `#${el.id}`;
-    const cls = [...el.classList].slice(0, 2);
-    if (cls.length) s += `.${cls.join('.')}`;
-    for (const a of ['data-act', 'data-card', 'data-testid', 'aria-label', 'name']) {
-      const v = el.getAttribute(a);
-      if (v) {
-        s += `[${a}="${v.slice(0, 40)}"]`;
-        break;
-      }
-    }
-    const text = (el.innerText || el.value || '').trim().replace(/\s+/g, ' ').slice(0, 30);
-    return text ? `${s} "${text}"` : s;
-  };
-  const outside = (r) => r.right > iw + 0.5 || r.left < -0.5;
-  // An overflowing element inside an on-screen ancestor that clips or
-  // scrolls horizontally does not widen the page.
-  const clipped = (el) => {
-    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
-      if (getComputedStyle(p).overflowX !== 'visible' && !outside(p.getBoundingClientRect()))
-        return true;
-    }
-    return false;
-  };
-
-  const overflow = [];
-  const reported = [];
-  for (const el of document.body.querySelectorAll('*')) {
-    if (el.closest('[inert]') || !visible(el)) continue;
-    const r = el.getBoundingClientRect();
-    if ((r.width === 0 && r.height === 0) || !outside(r)) continue;
-    if (reported.some((p) => p.contains(el)) || clipped(el)) continue;
-    reported.push(el);
-    overflow.push({
-      el: describe(el),
-      left: round(r.left),
-      right: round(r.right),
-      width: round(r.width)
-    });
-    if (overflow.length >= 15) break;
-  }
-
-  const tapSelector = [
-    'button',
-    'a[href]',
-    'input:not([type="hidden"])',
-    'select',
-    'textarea',
-    'summary',
-    '[role="button"]',
-    '[role="link"]',
-    '[role="tab"]',
-    '[role="radio"]',
-    '[role="checkbox"]',
-    '[tabindex]:not([tabindex="-1"])',
-    '[data-act]'
-  ].join(',');
-  let smallest = null;
-  let count = 0;
-  let under24 = 0;
-  let under44 = 0;
-  for (const el of document.querySelectorAll(tapSelector)) {
-    if (el.matches(':disabled, [aria-disabled="true"]') || el.closest('[inert]')) continue;
-    // A visually hidden input is hit through its label.
-    let target = el;
-    if (el.labels && el.labels.length) target = [...el.labels].find(visible) ?? el;
-    if (!visible(target)) continue;
-    const r = target.getBoundingClientRect();
-    if (r.width <= 1 && r.height <= 1) continue; // screen-reader-only
-    count++;
-    const min = Math.min(r.width, r.height);
-    if (min < 24) under24++;
-    if (min < 44) under44++;
-    if (!smallest || min < smallest.min) {
-      smallest = { el: describe(target), w: round(r.width), h: round(r.height), min: round(min) };
-    }
-  }
-
-  return {
-    url: location.href,
-    title: document.title,
-    iw,
-    ih,
-    sw: de.scrollWidth,
-    sh: de.scrollHeight,
-    hscroll: de.scrollWidth > iw,
-    vscroll: de.scrollHeight > ih,
-    theme: de.dataset.theme ?? null,
-    ready: de.hasAttribute('data-ready'),
-    // The app's own keys; a token is shown only by its length.
-    storage: (() => {
-      try {
-        const keys = Object.keys(localStorage).filter((k) => k.startsWith('ajayeb:'));
-        return Object.fromEntries(
-          keys.sort().map((k) => {
-            const v = localStorage.getItem(k) ?? '';
-            return [k, k === 'ajayeb:token' ? `<${v.length} chars>` : v];
-          })
-        );
-      } catch {
-        return null;
-      }
-    })(),
-    body: (document.body?.innerText ?? '').slice(0, 400),
-    overflow,
-    tap: { count, smallest, under24, under44 }
-  };
 }
 
 async function main() {

@@ -9,7 +9,8 @@
 // installed by `playwright install --with-deps chromium`.
 //
 // Paths are relative to this file's directory, which is also the webServer's
-// working directory. Every output goes under ../.cache/e2e/ (git ignores it).
+// working directory. Runner diagnostics go under ../.cache/e2e/; the opt-in
+// UX report uses SHOTS_DIR (default ux-out/). Both defaults are gitignored.
 //
 // E2E_BASE_URL switches the whole config to production-smoke mode (`make
 // e2e-prod`, docs/testing.md "Production smoke"): it becomes `baseURL`
@@ -31,6 +32,17 @@
 // way. Without E2E_BASE_URL nothing here changes.
 
 import { defineConfig, devices } from '@playwright/test';
+
+// UX is opt-in even when Playwright defaults to every configured project.
+// Both CLI spellings work; E2E_BASE_URL can never enable dev-only captures.
+const uxRequested =
+  process.env.AJAYEB_UX_PROJECT === '1' ||
+  process.argv.some(
+    (arg, i, args) => arg === '--project=ux' || (arg === '--project' && args[i + 1] === 'ux')
+  );
+// Workers re-read the config without the CLI arguments. Propagate this run's
+// explicit selection to them, rather than changing the project set midway.
+if (uxRequested) process.env.AJAYEB_UX_PROJECT = '1';
 
 const CI = !!process.env.CI;
 const PORT = 38954;
@@ -78,6 +90,7 @@ export default defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: '../.cache/e2e/report' }],
+    ...(uxRequested ? [['./ux/reporter.ts'] as [string]] : []),
     ...(CI ? ([['github']] as const) : [])
   ],
   use: {
@@ -110,6 +123,16 @@ export default defineConfig({
         }
       }),
   projects: [
+    ...(uxRequested && !PROD_BASE_URL
+      ? [
+          {
+            name: 'ux',
+            testDir: './ux',
+            timeout: 120_000,
+            use: { viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' as const }
+          }
+        ]
+      : []),
     // Unset, this project's grep falls back to the top-level config.grep
     // above, so the @prod forcing already reaches it with no extra code.
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
