@@ -258,7 +258,7 @@ Why, where there was a choice:
 No key falls back to English. Within the Persian table:
 
 - `app.name` stays "Ajayeb": Home shows `app.nameNative` (عجایب) right above it. `home.settings.languageEn` stays "English", because each language is named in itself.
-- Inside translated strings, proper nouns and codes stay in Latin script: the game's own name and its publishers in `app.legal` (7 Wonders Duel, Repos Production, Asmodee), GitHub, MIT and QR, the key name Esc, the letters and digits a game code never uses (`online.join.invalid`), and the developer-only paths and URL parameters (`dev.gallery.intro`, `game.gallery.intro`, `dev.new.badMode`).
+- Inside translated strings, proper nouns and codes stay in Latin script: the game's own name and its publishers in `app.legal` (7 Wonders Duel, Repos Production, Asmodee), GitHub, MIT and QR, the key name Esc, the letters and digits a game code never uses (`online.join.invalid`), and the developer-only paths and URL parameters (`dev.gallery.intro`, `game.gallery.intro`, `dev.new.badMode`). A Latin run that starts with a digit needs a left-to-right isolate (U+2066 ... U+2069) around it, or the bidi algorithm moves the digit to its other end: `app.legal` wraps "7 Wonders Duel" that way.
 - Strings with no words keep their English form: `card.cost.more` and `hints.badge.bonus` ("+{n}", "+{count}"), `hints.cardWith`, `hints.after.byMove`, `hints.science.symbol`, `hints.science.card` and the diagram signs `rules.diagram.discard.plus` and `.equals`. They are still listed in the Persian table, so they do not fall back.
 
 Everything else is translated, the `/dev/gallery` and demo strings included.

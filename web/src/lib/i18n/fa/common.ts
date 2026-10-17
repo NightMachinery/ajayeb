@@ -3,7 +3,9 @@
 // script on purpose: 'app.name' (the wordmark, under the Persian name that
 // 'app.nameNative' shows as decoration) and the proper nouns in 'app.legal'
 // (7 Wonders Duel, Repos Production, Asmodee), 'app.foss' (MIT) and
-// 'app.source' (GitHub). See ./index.ts.
+// 'app.source' (GitHub). The game's name sits in a left-to-right isolate
+// (U+2066 ... U+2069) in 'app.legal': without it, the bidi algorithm shows
+// its leading 7 after "Wonders Duel" in a right-to-left line. See ./index.ts.
 
 import type { common as en } from '../en/common';
 import type { Translation } from '../types';
@@ -19,7 +21,7 @@ export const common = {
   'app.nameNative': 'عجایب',
   'app.tagline': 'نبرد عجایب برای دو نفر',
   'app.legal':
-    'عجایب پیاده‌سازی غیررسمی و غیرتجاری قوانین بازی 7 Wonders Duel، اثر آنتوان بوزا و برونو کاتالا (Repos Production)، به دست علاقه‌مندان آن است. این برنامه وابسته به Repos Production یا Asmodee نیست و تأیید آن‌ها را ندارد؛ 7 Wonders Duel علامت تجاری آن‌هاست.',
+    'عجایب پیاده‌سازی غیررسمی و غیرتجاری قوانین بازی \u20667 Wonders Duel\u2069، اثر آنتوان بوزا و برونو کاتالا (Repos Production)، به دست علاقه‌مندان آن است. این برنامه وابسته به Repos Production یا Asmodee نیست و تأیید آن‌ها را ندارد؛ \u20667 Wonders Duel\u2069 علامت تجاری آن‌هاست.',
   'app.getGame': 'نسخه‌ی اصلی بازی را از ناشرش تهیه کنید',
   'app.foss': 'خود عجایب نرم‌افزاری آزاد و متن‌باز است که با مجوز MIT منتشر شده است.',
   'app.source': 'کد منبع در GitHub',
