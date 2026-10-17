@@ -134,6 +134,8 @@ export const game = {
   'game.menu.homeHint': 'You can continue this game from Home.',
   'game.menu.settings': 'Settings',
   'game.menu.log': 'Log',
+  'game.menu.replayRunning': 'Available when this game ends.',
+  'game.menu.replayHidden': 'This game keeps its record hidden after the end.',
   'game.menu.replay': 'Download replay',
   'game.menu.forfeit': 'Forfeit the game',
   // The menu's undo item, and why it is greyed out when it is.

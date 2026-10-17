@@ -28,6 +28,8 @@ export const game = {
   'game.menu.homeHint': 'می‌توانید این بازی را از خانه ادامه دهید.',
   'game.menu.settings': 'تنظیمات',
   'game.menu.log': 'گزارش',
+  'game.menu.replayRunning': 'پس از پایان این بازی در دسترس است.',
+  'game.menu.replayHidden': 'این بازی گزارش خود را پس از پایان هم پنهان نگه می‌دارد.',
   'game.menu.replay': 'دریافت بازپخش',
   'game.menu.forfeit': 'واگذار کردن بازی',
   'game.menu.undo': 'برگرداندن آخرین حرکت',

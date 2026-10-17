@@ -1293,10 +1293,16 @@ same shape, so none of them needs to agree with the others out of band.
 ### Downloading a game's log
 
 `GET /api/rooms/{code}/log` answers the log of a room's game once that game
-has ended, for the game menu's "Download replay" item. The answer is 200
+has ended, for the game menu's and result screen's "Download replay" actions.
+The menu shows the item during play, disabled with an explanation until the
+game ends. A finished view without `revealed` keeps the download disabled
+and explains that the record stays hidden. The client saves the server's
+response directly, without constructing or modifying any rules data.
+The answer is 200
 with the log above as its body, `Content-Type: application/json` and
-`Content-Disposition: attachment; filename="ajayeb-K7QX2M.json"`. The code
-is matched without regard to case. The log of a room that started from a
+`Content-Disposition: attachment; filename="ajayeb-K7QX2M-2026-10-01.json"`. The code
+is matched without regard to case. The filename carries the room code and
+the download date in UTC (`YYYY-MM-DD`). The log of a room that started from a
 named scenario carries that scenario as an object, so it replays anywhere.
 
 The seed determines every card, wonder and token the game kept hidden, so
@@ -1320,7 +1326,7 @@ the code is all the request needs. The refusals:
   still refilling.
 
 To replay a downloaded log and check its final hash, run
-`go -C server run ./cmd/ajayeb-sim replay ajayeb-K7QX2M.json` (or a built
+`go -C server run ./cmd/ajayeb-sim replay ajayeb-K7QX2M-2026-10-01.json` (or a built
 `ajayeb-sim replay FILE`). It replays every action through the engine's own
 legality checks and reports a mismatch with the log's `finalHash`.
 

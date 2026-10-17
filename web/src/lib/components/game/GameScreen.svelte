@@ -946,7 +946,12 @@
         onOpenSettings={() => ui.openSettings()}
         onHome={onhome}
         homeHint={view?.phase !== 'gameOver'}
-        replayCode={view?.phase === 'gameOver' && view.revealed ? frame?.code : undefined}
+        replayCode={frame?.code}
+        replayReason={view?.phase !== 'gameOver'
+          ? t('game.menu.replayRunning')
+          : !view.revealed
+            ? t('game.menu.replayHidden')
+            : undefined}
         onForfeit={resignSeat !== null ? () => (forfeitOpen = true) : undefined}
         tutorialPaused={tutorial && tutorial.status !== 'complete' ? tutorialPaused : undefined}
         onTutorial={tutorialPaused ? resumeTutorial : pauseTutorial}
@@ -1071,6 +1076,7 @@
         <div class="contents" dir={i18n.dir}>
           <GameOver
             {view}
+            replayCode={frame?.code}
             {names}
             onrematch={rematchOffer ? () => session.rematch() : undefined}
             rematchLabel={rematchOffer?.label}

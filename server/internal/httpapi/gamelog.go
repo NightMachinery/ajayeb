@@ -125,7 +125,7 @@ func (a *logAPI) serve(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal", "the room's log does not replay")
 		return
 	}
-	w.Header().Set("Content-Disposition", `attachment; filename="ajayeb-`+f.Code+`.json"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="ajayeb-`+f.Code+`-`+a.now().UTC().Format("2006-01-02")+`.json"`)
 	writeJSON(w, http.StatusOK, l)
 }
 

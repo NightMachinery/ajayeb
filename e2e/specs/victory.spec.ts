@@ -37,10 +37,13 @@ async function menuOffersReplay(driver: GameDriver): Promise<boolean> {
 
 /**
  * The finished game's replay download (docs/protocol.md, "Downloading a
- * game's log"): the game menu offers it only after the end, and the saved
- * file is the room's ajayeb-log/1 log, named after the room code.
+ * game's log"): the game menu enables it after the end, and the saved
+ * file is the server's exact ajayeb-log/1 response, named with room and date.
  */
 async function expectReplayDownload(page: Page, driver: GameDriver, plies: number): Promise<void> {
+  const cta = page.locator('[data-download-replay]').filter({ visible: true });
+  await expect(cta).toBeEnabled();
+  const [ctaDownload] = await Promise.all([page.waitForEvent('download'), cta.click()]);
   await page.locator('[data-view-board]').filter({ visible: true }).first().click();
   expect(await menuOffersReplay(driver), 'the menu offers the replay once the game is over').toBe(
     true
@@ -51,9 +54,15 @@ async function expectReplayDownload(page: Page, driver: GameDriver, plies: numbe
     page.waitForEvent('download'),
     driver.visible('[data-game-menu] [data-control="menu-replay"]').click()
   ]);
-  expect(download.suggestedFilename()).toBe(`ajayeb-${code}.json`);
+  const utcDate = new Date().toISOString().slice(0, 10);
+  expect(download.suggestedFilename()).toBe(`ajayeb-${code}-${utcDate}.json`);
+  expect(ctaDownload.suggestedFilename()).toBe(download.suggestedFilename());
+  // Both links save the endpoint response directly. Reuse the first body
+  // rather than spending another request from the server's download burst.
+  const serverBody = await readFile(await ctaDownload.path());
   const path = await download.path();
-  const log = JSON.parse(await readFile(path, 'utf8')) as {
+  expect(await readFile(path)).toEqual(serverBody);
+  const log = JSON.parse(serverBody.toString('utf8')) as {
     format: string;
     seed: string;
     scenario: unknown;
@@ -117,10 +126,36 @@ test.describe('victory', { tag: ['@mobile'] }, () => {
     test(`${c.title} (${c.scenario})`, async ({ page }) => {
       const problems = watchHygiene(page);
       const driver = await openHotseatRoom(page, c.scenario);
-      // One case checks the replay download, which the menu hides until the end.
+      // One case checks the disabled running menu and both finished downloads.
       const checkReplay = c.scenario === 'military-supremacy';
       if (checkReplay) {
-        expect(await menuOffersReplay(driver), 'no replay while the game runs').toBe(false);
+        expect(await menuOffersReplay(driver), 'replay is discoverable during play').toBe(true);
+        await expect(driver.visible('[data-control="menu-replay"]')).toBeDisabled();
+        await page.keyboard.press('Tab');
+        await driver.visible('[data-replay-tooltip]').focus();
+        await expect(page.locator('#ajayeb-tooltip')).toHaveText('Available when this game ends.');
+        await page.keyboard.press('Escape');
+        const originalSize = page.viewportSize();
+        for (const [width, height] of [
+          [360, 740],
+          [390, 844],
+          [740, 360],
+          [1280, 800]
+        ] as const) {
+          await page.setViewportSize({ width, height });
+          const replay = driver.visible('[data-control="menu-replay"]');
+          // Scroll the native popover itself as a player does; Chromium's
+          // scrollIntoViewIfNeeded does not scroll its clipped children.
+          await driver.visible('[data-game-menu]').hover();
+          await page.mouse.wheel(0, 500);
+          await expect(replay).toBeInViewport();
+          await page.screenshot({
+            path: test.info().outputPath(`running-menu-${width}x${height}.png`)
+          });
+        }
+        if (originalSize) await page.setViewportSize(originalSize);
+        // Hovering during the screenshots may have opened another tooltip.
+        await page.keyboard.press('Escape');
         await page.keyboard.press('Escape');
         await expect(page.locator('[data-game-menu]')).toBeHidden();
       }

@@ -9,7 +9,7 @@
   // move" in a game that allows undo (greyed out, with the caller's reason,
   // while undo is not possible now), Forfeit while the caller says a
   // forfeit is possible (it opens a confirm step; nothing is sent from
-  // here), and once the game has ended the replay download. It is a native
+  // here), and the replay download (disabled until the game has ended). It is a native
   // popover: light dismiss, Escape and the top layer come with it. The
   // undo arrow in the bar itself does the same as the menu item.
   //
@@ -30,6 +30,7 @@
   import Settings from '@lucide/svelte/icons/settings';
   import ScrollText from '@lucide/svelte/icons/scroll-text';
   import Download from '@lucide/svelte/icons/download';
+  import { downloadReplay } from '$lib/session/replay';
   import Eye from '@lucide/svelte/icons/eye';
   import Flag from '@lucide/svelte/icons/flag';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -55,10 +56,10 @@
     onHome?: () => void;
     /** Under Home, say the game can be continued from there (not once it is over). */
     homeHint?: boolean;
-    /** The room code, given once the game has ended and the server will
-     *  hand out its log: the menu then offers "Download replay", which saves
-     *  GET /api/rooms/{code}/log (docs/protocol.md) as ajayeb-<code>.json. */
+    /** The room code for the server's unchanged replay download. */
     replayCode?: string;
+    /** When set, downloading is disabled and this explains why. */
+    replayReason?: string;
     /** When given, the menu offers Forfeit, which reports this (the caller
      *  shows the confirm step). */
     onForfeit?: () => void;
@@ -89,6 +90,7 @@
     onHome,
     homeHint = true,
     replayCode,
+    replayReason,
     onForfeit,
     tutorialPaused,
     onTutorial,
@@ -110,16 +112,6 @@
       // Already closed.
     }
     action?.();
-  }
-
-  /** Saves the room's game log through a temporary download link. */
-  function downloadReplay(code: string): void {
-    const link = document.createElement('a');
-    link.href = `/api/rooms/${encodeURIComponent(code)}/log`;
-    link.download = `ajayeb-${code}.json`;
-    document.body.append(link);
-    link.click();
-    link.remove();
   }
 
   const iconButton =
@@ -353,15 +345,26 @@
     {/if}
     {#if replayCode}
       {@const code = replayCode}
-      <button
-        type="button"
-        class={menuItem}
-        data-control="menu-replay"
-        onclick={() => choose(() => downloadReplay(code))}
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (The wrapper explains the disabled download to keyboard users.) -->
+      <span
+        role="group"
+        aria-label={t('game.menu.replay')}
+        class="block"
+        tabindex={replayReason ? 0 : undefined}
+        data-replay-tooltip
+        {@attach tooltip(replayReason ? { text: replayReason, actionable: false } : undefined)}
       >
-        <Download class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
-        {t('game.menu.replay')}
-      </button>
+        <button
+          type="button"
+          class="{menuItem} disabled:cursor-not-allowed disabled:text-fg-muted disabled:hover:bg-transparent"
+          data-control="menu-replay"
+          disabled={!!replayReason}
+          onclick={() => choose(() => downloadReplay(code))}
+        >
+          <Download class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+          {t('game.menu.replay')}
+        </button>
+      </span>
     {/if}
   </div>
 {/if}
@@ -374,6 +377,8 @@
     margin: 0;
     top: calc(var(--safe-t, 0px) + 2.875rem);
     inset-inline-start: 0.375rem;
+    max-height: calc(100dvh - var(--safe-t, 0px) - 3.25rem);
+    overflow-y: auto;
   }
   .game-menu:not(:popover-open) {
     display: none;

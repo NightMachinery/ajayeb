@@ -98,6 +98,8 @@ func errCode(t *testing.T, rec *httptest.ResponseRecorder) string {
 
 func TestGameLogFinished(t *testing.T) {
 	fx := newLogFixture(t)
+	// The suggested date is UTC even on a server whose clock uses another zone.
+	fx.now = fx.now.In(time.FixedZone("download-zone", 14*60*60))
 	for _, path := range []string{"/api/rooms/FNSHED/log", "/api/rooms/fnshed/log"} {
 		rec := do(t, fx.h, http.MethodGet, path, nil)
 		if rec.Code != http.StatusOK {
@@ -106,7 +108,7 @@ func TestGameLogFinished(t *testing.T) {
 		if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
 			t.Errorf("Content-Type %q", ct)
 		}
-		if cd := rec.Header().Get("Content-Disposition"); cd != `attachment; filename="ajayeb-FNSHED.json"` {
+		if cd := rec.Header().Get("Content-Disposition"); cd != `attachment; filename="ajayeb-FNSHED-2026-10-01.json"` {
 			t.Errorf("Content-Disposition %q", cd)
 		}
 		var l engine.Log

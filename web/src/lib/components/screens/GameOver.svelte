@@ -19,6 +19,8 @@
   // the viewer's own move ended the game, their review of it shows under
   // the score sheet (when the opponent's move ended it, that move's summary
   // carries the review instead).
+  import Download from '@lucide/svelte/icons/download';
+  import { downloadReplay } from '$lib/session/replay';
   import House from '@lucide/svelte/icons/house';
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
   import Eye from '@lucide/svelte/icons/eye';
@@ -41,6 +43,8 @@
 
   interface Props {
     view: View;
+    /** The room whose finished, revealed log may be downloaded. */
+    replayCode?: string;
     /** Asks the server for a rematch; absent when the room cannot offer one. */
     onrematch?: () => void;
     /** The rematch button's label, when it is not a plain Rematch (joining
@@ -59,6 +63,7 @@
 
   let {
     view,
+    replayCode,
     onrematch,
     rematchLabel,
     rematchNote,
@@ -230,6 +235,21 @@
             <RotateCw class="size-4" aria-hidden="true" />
             {rematchLabel ?? t('choices.over.rematch')}
           </Button>
+        {/if}
+        {#if replayCode && view.revealed}
+          <Button
+            variant="secondary"
+            class="col-span-2"
+            onclick={() => replayCode && downloadReplay(replayCode)}
+            data-download-replay
+          >
+            <Download class="size-4" aria-hidden="true" />
+            {t('game.menu.replay')}
+          </Button>
+        {:else if replayCode}
+          <p class="col-span-2 text-center text-sm text-fg-muted" data-replay-hidden>
+            {t('game.menu.replayHidden')}
+          </p>
         {/if}
         <Button
           variant="secondary"
