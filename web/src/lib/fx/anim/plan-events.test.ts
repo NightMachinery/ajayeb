@@ -282,6 +282,30 @@ describe('the age deal', () => {
     expect(t.steps.map((s) => s.kind)).toEqual(['deal']);
     expect(t.blockingMs).toBe(0);
   });
+
+  it('an age that opens on the starter choice deals as the choice is answered, with no fade', () => {
+    const opened = planTimeline(
+      frame(
+        11,
+        [ev('discard', { seat: 0, card: 'theater', amount: 2 }), ev('ageStart', { age: 2 })],
+        view([9, 7], { structure: structure(20), phase: 'chooseStarter', age: 2 })
+      ),
+      before
+    );
+    // The dialog covers the board: the discard's take and coins, no deal.
+    expect(opened.steps.map((s) => s.kind)).toEqual(['take', 'coins']);
+    const answered = planTimeline(
+      frame(
+        12,
+        [ev('starterChosen', { seat: 1, starter: 0 })],
+        view([9, 7], { structure: structure(20), phase: 'play', age: 2 })
+      ),
+      frame(11, [], view([9, 7], { structure: structure(20), phase: 'chooseStarter', age: 2 }))
+    );
+    const deal = only(answered.steps, 'deal')[0]!;
+    expect(deal).toMatchObject({ kind: 'deal', age: 2, at: 0, fade: 0, lead: DEAL_LEAD_MS });
+    expect(answered.blockingMs).toBe(0);
+  });
 });
 
 describe('the draft', () => {

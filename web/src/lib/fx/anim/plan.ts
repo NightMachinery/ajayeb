@@ -36,7 +36,11 @@
 //            everyone else;
 //   deal     a new age: the old structure fades out and the new one is
 //            dealt card by card (it starts with the frame, beside the take
-//            of the age's last card);
+//            of the age's last card). When the age opens on the starter
+//            choice (Ages II and III), whose dialog covers the board, the
+//            deal waits for the frame that answers it (starterChosen), as
+//            the dialog closes; the old structure is gone by then, so that
+//            deal has no fade;
 //   victory  the end of the game: a banner over the result screen, after
 //            everything else of the frame has played.
 //
@@ -283,6 +287,9 @@ export interface PlanView {
   military?: { looting: readonly { at: number; present: boolean }[] };
   /** The structure, to count the cards an age deals. */
   structure?: readonly { state: string }[];
+  /** The phase and age, to hold a deal for the starter choice. */
+  phase?: string;
+  age?: number;
 }
 
 /** The part of a state frame the planner reads. */
@@ -523,15 +530,22 @@ export function planTimeline(next: PlanFrame, prev: PlanFrame | null): Timeline 
     draws += 1;
   }
 
-  const age = events.find((e) => e.kind === 'ageStart');
+  // The starter choice's dialog covers the board: its answer deals instead.
+  const opened = events.find((e) => e.kind === 'ageStart');
+  const age =
+    opened && next.view?.phase !== 'chooseStarter'
+      ? { age: opened.age ?? 0, fade: DEAL_FADE_MS }
+      : events.some((e) => e.kind === 'starterChosen')
+        ? { age: next.view?.age ?? 0, fade: 0 }
+        : null;
   if (age) {
     const cards = next.view?.structure?.filter((s) => s.state !== 'empty').length ?? DEAL_CARDS;
     steps.push({
       kind: 'deal',
-      age: age.age ?? 0,
+      age: age.age,
       at: 0,
       dur: DEAL_LEAD_MS + Math.max(0, cards - 1) * DEAL_STAGGER_MS + DEAL_EACH_MS,
-      fade: DEAL_FADE_MS,
+      fade: age.fade,
       lead: DEAL_LEAD_MS,
       each: DEAL_EACH_MS,
       stagger: DEAL_STAGGER_MS
