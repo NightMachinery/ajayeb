@@ -59,9 +59,13 @@
   const ready = $derived(due !== null && readyKey === due.key);
   const bubble = $derived(ready && due?.surface === 'board' && !modal);
 
-  // The targets already scrolled into view: each element once, so a sheet
-  // opened again (a new element) is scrolled again.
-  const revealed = new WeakSet<Element>();
+  // The targets already scrolled into view, with when: each element once,
+  // so a sheet opened again (a new element) is scrolled again. An image that
+  // loads soon after (a card sheet's art) can push the target back out, so
+  // within REVEAL_SETTLE_MS of the first scroll a load scrolls it again;
+  // later, the player's own scrolling is left alone.
+  const revealed = new WeakMap<Element, number>();
+  const REVEAL_SETTLE_MS = 2000;
 
   /** Finds the step's target now; writes state from callbacks only. */
   function resolve(): void {
@@ -69,7 +73,16 @@
     const el = s?.target ? findAnchor(s.target) : null;
     if (el !== anchorEl) anchorEl = el;
     if (el && !revealed.has(el)) {
-      revealed.add(el);
+      revealed.set(el, performance.now());
+      revealInScroller(el);
+    }
+  }
+
+  /** A load just after the first scroll: scroll the target in again. */
+  function revealAgain(): void {
+    const el = anchorEl;
+    const at = el ? revealed.get(el) : undefined;
+    if (el && at !== undefined && performance.now() - at < REVEAL_SETTLE_MS) {
       revealInScroller(el);
     }
   }
@@ -114,10 +127,13 @@
     });
     schedule();
     window.addEventListener('resize', schedule);
+    // An image's load does not bubble; capture it.
+    window.addEventListener('load', revealAgain, true);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
       window.removeEventListener('resize', schedule);
+      window.removeEventListener('load', revealAgain, true);
     };
   });
 
