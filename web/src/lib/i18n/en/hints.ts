@@ -537,10 +537,8 @@ export const hints = {
     'The pawn left the centre. Shields push it toward the other capital, and reaching a capital wins at once.',
   'hints.tip.science':
     'Your first science symbol. A pair of the same symbol takes a progress token, and six different ones win at once.',
-  'hints.tip.starter':
-    'The age is over, and you choose who begins the next one. Whoever begins takes the first card of the new structure.',
   'hints.tip.newAge':
-    'A new age: a new structure of stronger cards. The age ends when its last card is taken.',
+    'A new age: a new structure of stronger cards. The player behind on the pawn chose who begins it, and it ends when its last card is taken.',
   'hints.tip.gotIt': 'Got it',
   'hints.tip.more': 'More in Rules',
 

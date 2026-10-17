@@ -65,8 +65,6 @@
         return t('hints.tip.track');
       case 'science':
         return t('hints.tip.science');
-      case 'starter':
-        return t('hints.tip.starter');
       case 'newAge':
         return t('hints.tip.newAge');
     }

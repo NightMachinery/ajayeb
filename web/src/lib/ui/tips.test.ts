@@ -280,7 +280,7 @@ describe('the tips beyond the pips (M10.F3)', () => {
     expect(tipSelector('guildBack')).toBe('.card-structure [data-back="guild"]');
   });
 
-  it('the concept tips: the pawn, science, the starter and a new age', () => {
+  it('the concept tips: the pawn, science and a new age', () => {
     const none = new Set<HintFamily>();
     const base = full({
       phase: 'play',
@@ -298,9 +298,8 @@ describe('the tips beyond the pips (M10.F3)', () => {
     expect(
       tipsInView({ ...base, military: { position: -1, looting: [] } }, 0, none, false)
     ).toEqual(['track']);
-    expect(tipsInView({ ...base, phase: 'chooseStarter', age: 2 }, 0, none, false)).toEqual([
-      'starter'
-    ]);
+    // None at the starter choice (a modal dialog): the new age's tip waits for play.
+    expect(tipsInView({ ...base, phase: 'chooseStarter', age: 2 }, 0, none, false)).toEqual([]);
     expect(tipsInView({ ...base, phase: 'chooseStarter', age: 2 }, 1, none, false)).toEqual([
       'science'
     ]);
@@ -308,7 +307,6 @@ describe('the tips beyond the pips (M10.F3)', () => {
     expect(tipsInView({ ...base, age: 3, result: {} } as TipView, 0, none, false)).toEqual([]);
     expect(tipSelector('track')).toBe('[data-tut="track"] [data-pawn]');
     expect(tipSelector('science')).toBe('[data-tut="home"] [data-science]');
-    expect(tipSelector('starter')).toBe('[data-starter-choice]');
     expect(tipSelector('newAge')).toBe('[data-tut="age"]');
   });
 

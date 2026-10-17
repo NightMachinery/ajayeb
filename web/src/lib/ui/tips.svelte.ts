@@ -22,11 +22,14 @@
 // sixth symbol (lawLaurel). The chain badge and the guild back are drawn
 // whatever the hint settings, so their tips need no family.
 //
-// Four concept tips (M10.tutorial-client) explain a game concept rather
+// Three concept tips (M10.tutorial-client) explain a game concept rather
 // than a mark, the first time it comes up on this device: the pawn off
-// centre (track), the seat's first science symbol (science), choosing who
-// starts the next age (starter) and a new age in play (newAge). They need
-// no family either. The tutorial's lessons mark the ones they teach seen.
+// centre (track), the seat's first science symbol (science) and a new age
+// in play (newAge), which also says who chose its starter. They need no
+// family either. The tutorial's lessons mark the ones they teach seen.
+// There is no tip at the starter choice itself: that choice is a modal
+// dialog, which makes a tip outside it inert, and the tip's dismissal
+// would swallow the player's first tap in the dialog.
 //
 // The same store keeps the tutorial's device state (TutorialData): Home's
 // first-launch offer, whether the device finished the tutorial once, and
@@ -51,7 +54,6 @@ export const TIP_IDS = [
   'guildBack',
   'track',
   'science',
-  'starter',
   'newAge'
 ] as const;
 export type TipId = (typeof TIP_IDS)[number];
@@ -163,7 +165,6 @@ export const TIPS: Readonly<Record<TipId, TipSpec>> = {
   guildBack: { boardMark: false, rules: 'guilds' },
   track: { boardMark: false, rules: 'military' },
   science: { boardMark: false, rules: 'science' },
-  starter: { boardMark: false, rules: 'age-end' },
   newAge: { boardMark: false, rules: 'age-end' }
 };
 
@@ -214,8 +215,6 @@ export function tipSelector(id: TipId, view?: TipView, seat: 0 | 1 = 0): string 
       return '[data-tut="track"] [data-pawn]';
     case 'science':
       return '[data-tut="home"] [data-science]';
-    case 'starter':
-      return '[data-starter-choice]';
     case 'newAge':
       return '[data-tut="age"]';
     default:
@@ -248,8 +247,6 @@ function markInView(id: TipId, view: TipView, seat: 0 | 1): boolean {
       return (view.military?.position ?? 0) !== 0;
     case 'science':
       return (view.players?.[seat]?.science?.symbols?.length ?? 0) > 0;
-    case 'starter':
-      return view.phase === 'chooseStarter' && view.toMove === seat;
     case 'newAge':
       return (view.age === 2 || view.age === 3) && view.phase === 'play';
     default:

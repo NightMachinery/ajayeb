@@ -505,10 +505,14 @@
       !tips.isCompleted(frame.code)
   );
   const doneReady = $derived(doneDue && presenter.idle && !summaryOpen && !showPass);
-  // First-time tips wait while a coach step is due, through the guided part
-  // and until the completion card has shown (it marks newAge seen).
+  // First-time tips wait while a coach step is due, through the guided part,
+  // until the completion card has shown (it marks newAge seen) and while it
+  // is open (a tip beside it would swallow the tap on its buttons).
   const tipsQuiet = $derived(
-    !!coach || (tutorial?.status === 'guided' && !tutorialPaused) || doneDue
+    !!coach ||
+      (tutorial?.status === 'guided' && !tutorialPaused) ||
+      doneDue ||
+      (!!frame && doneRoom === frame.code)
   );
 
   // On wide screens, the viewer's own column (in a fixed hot-seat board the
@@ -1237,9 +1241,7 @@
   families={boardHints?.families ?? shownFamilies}
   boardMarks={!!boardHints?.boardMarks}
   {names}
-  canShow={(turn.kind === 'yourTurn' ||
-    turn.kind === 'hotseatTurn' ||
-    (turn.kind === 'pendingChoice' && turn.pendingKind === 'chooseStarter')) &&
+  canShow={(turn.kind === 'yourTurn' || turn.kind === 'hotseatTurn') &&
     !summaryOpen &&
     !showPass &&
     !selectedSlot &&
