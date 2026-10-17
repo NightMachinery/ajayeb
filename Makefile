@@ -194,13 +194,13 @@ e2e-smoke: ## The @smoke e2e specs
 e2e-prod: ## The production smoke (@prod specs) against PROD_URL; no local build or server (docs/testing.md)
 	E2E_BASE_URL=$(PROD_URL) $(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test $(PW_ARGS)
 
-# The ux project and its e2e/ux/ directory are planned for the M11 review loop;
-# until then shots skips.
-shots: $(if $(wildcard e2e/ux),$(E2E_PREREQS)) ## The UX screenshot matrix (Playwright project ux, planned for M11; until then use tools/chrome); builds first unless E2E_BUILD=0
+# The ux project (e2e/ux/) captures the M11 review loop's screenshot set with
+# its probes and budgets; docs/testing.md "UX screenshot matrix and probes".
+shots: $(if $(wildcard e2e/ux),$(E2E_PREREQS)) ## The UX screenshot matrix with probes and budgets (Playwright project ux; SHOTS_DIR, PW_ARGS='--grep <screen>'); builds first unless E2E_BUILD=0
 ifneq ($(wildcard e2e/ux),)
 	$(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test --project ux $(PW_ARGS)
 else
-	@echo "shots: e2e/ux/ does not exist yet (the screenshot matrix is planned for M11; use tools/chrome meanwhile), skipping"
+	@echo "shots: e2e/ux/ is missing, skipping"
 endif
 
 ##@ Vector art (tools/art/vector; outputs go to the run dir, never the repo)
