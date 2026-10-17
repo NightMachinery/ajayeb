@@ -99,10 +99,16 @@ jobs:
         run: pnpm -C e2e lint
 
   e2e:
-    name: e2e (Playwright, bundled Chromium)
+    # Two shards, each with its own server: the whole suite (278 tests, about
+    # 31 minutes on one runner) outgrew one 30-minute job in M10.
+    name: e2e (Playwright, bundled Chromium, shard ${{ matrix.shard }} of 2)
     needs: [go, web]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -126,12 +132,12 @@ jobs:
         # of the system Chrome, and turns on retries and forbidOnly.
         env:
           CI: 'true'
-        run: pnpm -C e2e exec playwright test
+        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/2
       - name: Keep the report and traces
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.shard }}
           path: |
             .cache/e2e/report/
             .cache/e2e/results/

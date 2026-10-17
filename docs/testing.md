@@ -284,8 +284,10 @@ token, and `tools/chrome/shot.mjs --token` refuses one.
 and the test-mode web build, which the Playwright config starts itself
 (`server/bin/ajayeb --dev --dev-endpoints --bot-delay 0 --seed-base 1000`
 on port 38954, with a fresh data directory under `.cache/e2e/`), in the
-installed Chrome locally and in Playwright's Chromium on CI. There are two
-projects: `desktop` (Desktop Chrome, a mouse) runs every spec, and `mobile`
+installed Chrome locally and in Playwright's Chromium on CI. CI splits the
+suite into two shards (`--shard=1/2` and `--shard=2/2`), each a job with its
+own server, and keeps each shard's report and traces when it fails or runs
+out of time. There are two projects: `desktop` (Desktop Chrome, a mouse) runs every spec, and `mobile`
 (Pixel 7, touch) runs the specs tagged `@mobile`.
 
 Run them through the guard, which holds the machine's one browser lock:
