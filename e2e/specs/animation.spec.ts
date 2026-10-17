@@ -1,15 +1,21 @@
-// The move animations (M10.animations-moves, web/src/lib/fx/anim): the four
-// acceptance checks of the UX design's section 12, "M4: animation and game
-// feel", read with the game's own Animation setting (D21).
+// The move and event animations (M10.animations-moves and
+// M10.animations-events, web/src/lib/fx/anim): the four acceptance checks of
+// the UX design's section 12, "M4: animation and game feel", read with the
+// game's own Animation setting (D21), and the log's Replay last move.
 //
 //   a. With Animation off nothing animates for more than 10 ms, and every
 //      change is on screen the moment the frame lands.
-//   b. Animations are purely visual: five scripted sequences played once at
+//   b. Animations are purely visual: the scripted sequences (moves, a
+//      looting, a science pair's token, the Great Library, a destroy, a
+//      rebuild, an age change, a draft pick and a game end) played once at
 //      normal speed and once with Animation off leave the same game screen.
 //   c. Input is back within 450 ms of a frame's swap at normal speed (the
-//      bot's dwell and pick, before the swap, are deliberate pacing).
+//      bot's dwell and pick, before the swap, are deliberate pacing),
+//      including an age deal and the first move after it.
 //   d. @perf: no long task over 50 ms overlaps an animation on a CPU slowed
-//      4 times, over at least ten moves.
+//      4 times, over at least ten moves, an age deal and a game end.
+//   e. Replay last move plays the move again and leaves the same screen; with
+//      Animation off it is disabled and its tooltip says why.
 //
 // Every case turns the setting on for its own tab (fixtures/anim.ts
 // useSettings, after the base fixture's motion-off override) and opens its
@@ -36,6 +42,8 @@ import {
   useSettings,
   viewOf,
   waitSettled,
+  type AnimRecord,
+  type LongTask,
   type Position,
   type Speed
 } from '../fixtures/anim';
@@ -43,14 +51,23 @@ import type { GameDriver } from '../fixtures/driver';
 
 const SEED = '11';
 
-/** One scripted sequence: where it starts, and the move it plays there. */
+/** One scripted sequence: where it starts, and the moves it plays there. */
 interface Sequence {
   name: string;
   at: Position;
-  /** The key to play, read from the view on screen. */
-  pick: (view: View) => string;
+  /** The keys to play, one after another, each read from the view on screen. */
+  picks: ((view: View) => string)[];
   /** A vs-AI room: after the move, the bot answers before the check. */
   bot?: boolean;
+}
+
+/** A sequence at a named scenario that plays its trigger, key by key. */
+function scenario(name: string, scenario: string, keys: string[]): Sequence {
+  return {
+    name,
+    at: { mode: 'hotseat', seed: SEED, scenario, keys: [] },
+    picks: keys.map((key) => () => key)
+  };
 }
 
 /** Whether taking `card` turns a face-down card up. */
@@ -70,7 +87,7 @@ function firstOf(view: View, kind: string): string {
 
 let sequences: Promise<Sequence[]> | null = null;
 
-/** The five sequences of check b (also played by a), found once per worker. */
+/** The sequences of check b (also played by a), found once per worker. */
 function scripted(origin: string): Promise<Sequence[]> {
   sequences ??= (async () => {
     const draft = await draftKeys(origin, SEED);
@@ -90,28 +107,41 @@ function scripted(origin: string): Promise<Sequence[]> {
       recordPolicy
     );
     return [
-      { name: 'a build that trades and reveals a card', at: trade.at, pick: () => trade.key },
+      { name: 'a build that trades and reveals a card', at: trade.at, picks: [() => trade.key] },
       {
         name: 'a discard',
         at: { mode: 'hotseat', seed: SEED, keys: draft },
-        pick: (view) => firstOf(view, 'discard')
+        picks: [(view) => firstOf(view, 'discard')]
       },
-      {
-        name: 'a wonder that moves coins',
-        at: { mode: 'hotseat', seed: SEED, scenario: 'appian-economy', keys: [] },
-        pick: () => 'wonder:appian-way:rostrum'
-      },
-      {
-        name: 'a military build that moves the pawn',
-        at: { mode: 'hotseat', seed: SEED, scenario: 'looting-double', keys: [] },
-        pick: () => 'construct:arsenal'
-      },
+      scenario('a wonder that moves coins', 'appian-economy', ['wonder:appian-way:rostrum']),
+      scenario('a military build that loots twice', 'looting-double', ['construct:arsenal']),
       {
         name: 'a bot reply',
         at: { mode: 'ai', seed: SEED, keys: draft },
-        pick: (view) => firstOf(view, 'construct'),
+        picks: [(view) => firstOf(view, 'construct')],
         bot: true
-      }
+      },
+      {
+        name: 'a science pair and its token',
+        at: { mode: 'hotseat', seed: SEED, scenario: 'science-pair', keys: [] },
+        picks: [() => 'construct:library', (view) => firstOf(view, 'token')]
+      },
+      scenario('the Great Library', 'great-library', ['wonder:great-library:rostrum', 'token:law']),
+      scenario('a destroy', 'zeus-destroy', ['wonder:statue-of-zeus:rostrum', 'destroy:quarry']),
+      scenario('a rebuild from the discard pile', 'mausoleum', [
+        'wonder:mausoleum:rostrum',
+        'revive:baths'
+      ]),
+      scenario('an age change and its starter', 'age-transition-chooser', [
+        'discard:theater',
+        'starter:0'
+      ]),
+      {
+        name: 'a draft pick',
+        at: { mode: 'hotseat', seed: SEED, keys: [] },
+        picks: [(view) => firstOf(view, 'draft'), (view) => firstOf(view, 'draft')]
+      },
+      scenario('a game end', 'civilian-end', ['discard:academy'])
     ];
   })();
   return sequences;
@@ -122,7 +152,10 @@ async function playSequence(page: Page, origin: string, seq: Sequence): Promise<
   const driver = await openPosition(page, origin, seq.at);
   await driver.waitTurn();
   await driver.dismissToasts();
-  await playThrough(driver, seq.pick(await viewOf(page)));
+  for (const pick of seq.picks) {
+    await driver.dismissToasts();
+    await playThrough(driver, pick(await viewOf(page)));
+  }
   if (seq.bot) await driver.waitTurn();
   await waitSettled(page);
   return driver;
@@ -147,14 +180,19 @@ async function expectStateShown(page: Page, what: string): Promise<void> {
       pawn: pawn === null || pawn === undefined ? null : Number(pawn),
       faces,
       hidden: document.querySelectorAll('[data-fx-hidden]').length,
-      drawn: document.querySelector('.fx-layer')?.childElementCount ?? 0
+      drawn:
+        (document.querySelector('.fx-layer')?.childElementCount ?? 0) +
+        (document.querySelector('.fx-top')?.childElementCount ?? 0)
     };
   });
   expect(shown.hidden, `${what}: nothing hidden`).toBe(0);
   expect(shown.drawn, `${what}: nothing in the FX layer`).toBe(0);
-  expect(shown.coins, `${what}: the coins`).toEqual(
-    view.players.map((p) => new Intl.NumberFormat('en').format(p.coins))
-  );
+  // The draft shows no coins.
+  if (view.phase !== 'wonderDraft') {
+    expect(shown.coins, `${what}: the coins`).toEqual(
+      view.players.map((p) => new Intl.NumberFormat('en').format(p.coins))
+    );
+  }
   if (view.phase === 'play') {
     expect(shown.pawn, `${what}: the pawn`).toBe(view.military.position);
     expect(shown.faces.sort(), `${what}: the face-up cards`).toEqual(
@@ -171,7 +209,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
     page,
     baseURL
   }) => {
-    test.setTimeout(240_000);
+    test.setTimeout(420_000);
     if (!baseURL) throw new Error('no baseURL');
     const problems = watchHygiene(page);
     await recordMotion(page);
@@ -181,11 +219,13 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       await driver.waitTurn();
       await driver.dismissToasts();
       await motionLog(page, true);
-      const key = seq.pick(await viewOf(page));
       const before = await driver.snapshot();
-      await playThrough(driver, key);
-      // The moment the frame lands: no waiting for anything to settle.
-      await expectStateShown(page, seq.name);
+      for (const [n, pick] of seq.picks.entries()) {
+        await driver.dismissToasts();
+        await playThrough(driver, pick(await viewOf(page)));
+        // The moment the frame lands: no waiting for anything to settle.
+        await expectStateShown(page, `${seq.name}, move ${n + 1}`);
+      }
       if (seq.bot) {
         await driver.waitTurn();
         await expectStateShown(page, `${seq.name}, the bot's answer`);
@@ -205,7 +245,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
     page,
     baseURL
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(540_000);
     if (!baseURL) throw new Error('no baseURL');
     const problems = watchHygiene(page);
     for (const seq of await scripted(baseURL)) {
@@ -236,7 +276,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       page,
       baseURL
     }) => {
-      test.setTimeout(240_000);
+      test.setTimeout(300_000);
       if (!baseURL) throw new Error('no baseURL');
       const problems = watchHygiene(page);
       await recordInputBack(page);
@@ -266,6 +306,29 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         await measure('hotseat');
       }
 
+      // An age change: the age's last card, the starter's answer (the deal
+      // plays then, as the dialog closes), and the first move of the age,
+      // which waits only for its own card to be dealt (a hidden card cannot
+      // be clicked).
+      const age = await openPosition(page, baseURL, {
+        mode: 'hotseat',
+        seed: SEED,
+        scenario: 'age-transition-chooser',
+        keys: []
+      });
+      for (const pick of [
+        () => 'discard:theater',
+        () => 'starter:0',
+        (view: View) => recordPolicy(view).key
+      ]) {
+        await age.nextTurn();
+        await age.dismissToasts();
+        await playThrough(age, pick(await viewOf(page)));
+        await measure('age');
+      }
+      const dealt = (await fxRecords(page)).anims.filter((a) => a.kind === 'deal');
+      expect(dealt.length, 'the age change dealt its cards').toBeGreaterThan(0);
+
       // Against a bot: its answers are the frames that hand input back.
       const ai = await openPosition(page, baseURL, { mode: 'ai', seed: SEED, keys: draft });
       for (let i = 0; i < 3; i++) {
@@ -282,6 +345,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         description: waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ')
       });
       expect(waits.filter((w) => w.room === 'hotseat').length).toBeGreaterThanOrEqual(4);
+      expect(waits.filter((w) => w.room === 'age').length).toBeGreaterThanOrEqual(3);
       expect(waits.filter((w) => w.room === 'ai').length).toBeGreaterThanOrEqual(2);
       const all = waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ');
       for (const w of waits) {
@@ -297,56 +361,169 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       'd. no long task over 50 ms during an animation at 4x CPU',
       { tag: ['@perf'] },
       async ({ page, baseURL }) => {
-        test.setTimeout(300_000);
+        test.setTimeout(420_000);
         if (!baseURL) throw new Error('no baseURL');
         const problems = watchHygiene(page);
         await recordLongTasks(page);
         await useSettings(page, 'normal');
         const draft = await draftKeys(baseURL, SEED);
-        const driver = await openPosition(page, baseURL, {
-          mode: 'hotseat',
-          seed: SEED,
-          keys: draft
-        });
+        // Each room is its own page load, so its records are read before the next.
+        const rooms: { name: string; anims: AnimRecord[]; tasks: LongTask[] }[] = [];
+        const collect = async (name: string) => {
+          rooms.push({ name, anims: (await fxRecords(page)).anims, tasks: await longTasks(page) });
+        };
+        // A deliberate player: the next tap comes after the move has played.
+        const play = async (driver: GameDriver, key: string) => {
+          await driver.dismissToasts();
+          await playThrough(driver, key);
+          await waitSettled(page, 20_000);
+        };
         const cdp = await page.context().newCDPSession(page);
         await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
         let moves = 0;
         try {
+          const driver = await openPosition(page, baseURL, {
+            mode: 'hotseat',
+            seed: SEED,
+            keys: draft
+          });
           while (moves < 10) {
             const snap = await driver.nextTurn();
             if (snap.phase !== 'play') break;
-            await driver.dismissToasts();
             const view = await viewOf(page);
-            const key = snap.pending ? (view.choices[0]?.key ?? '') : recordPolicy(view).key;
-            await playThrough(driver, key);
-            // A deliberate player: the next tap comes after the move has played.
-            await waitSettled(page, 20_000);
+            await play(
+              driver,
+              snap.pending ? (view.choices[0]?.key ?? '') : recordPolicy(view).key
+            );
             moves += 1;
           }
+          await collect('Age I');
+
+          // An age deal, and the first move after it.
+          const age = await openPosition(page, baseURL, {
+            mode: 'hotseat',
+            seed: SEED,
+            scenario: 'age-transition-chooser',
+            keys: []
+          });
+          for (const key of ['discard:theater', 'starter:0']) {
+            await age.nextTurn();
+            await play(age, key);
+          }
+          await age.nextTurn();
+          await play(age, recordPolicy(await viewOf(page)).key);
+          await collect('age change');
+
+          // A game end, with its victory banner.
+          const end = await openPosition(page, baseURL, {
+            mode: 'hotseat',
+            seed: SEED,
+            scenario: 'civilian-end',
+            keys: []
+          });
+          await end.nextTurn();
+          await play(end, 'discard:academy');
+          await collect('game end');
         } finally {
           await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
         }
-        const { anims } = await fxRecords(page);
-        const tasks = await longTasks(page);
-        const overlapping = tasks.filter((task) =>
-          anims.some(
-            (a) =>
-              a.endAt !== null && task.start < a.endAt && task.start + task.duration > a.startAt
+        const anims = rooms.flatMap((r) => r.anims);
+        const tasks = rooms.flatMap((r) => r.tasks);
+        const overlapping = rooms.flatMap((r) =>
+          r.tasks.filter((task) =>
+            r.anims.some(
+              (a) =>
+                a.endAt !== null && task.start < a.endAt && task.start + task.duration > a.startAt
+            )
           )
         );
         const worst = Math.max(0, ...overlapping.map((t) => Math.round(t.duration)));
         test.info().annotations.push({
           type: 'perf',
           description:
-            `moves ${moves}, animations ${anims.length}, long tasks ${tasks.length}, ` +
-            `overlapping ${overlapping.length}, worst overlapping ${worst} ms, ` +
+            `moves ${moves} (and an age change, a game end), animations ${anims.length}, ` +
+            `long tasks ${tasks.length}, overlapping ${overlapping.length}, ` +
+            `worst overlapping ${worst} ms, ` +
             `worst overall ${Math.max(0, ...tasks.map((t) => Math.round(t.duration)))} ms`
         });
         expect(moves).toBeGreaterThanOrEqual(10);
         expect(anims.length).toBeGreaterThan(10);
+        expect(
+          anims.some((a) => a.kind === 'deal'),
+          'an age deal played'
+        ).toBe(true);
+        expect(
+          anims.some((a) => a.kind === 'victory'),
+          'the victory banner played'
+        ).toBe(true);
         expect(overlapping, `long tasks during animations (worst ${worst} ms)`).toEqual([]);
         expect(problems, 'console errors, page errors or failed requests').toEqual([]);
       }
     );
+  });
+
+  test('e. Replay last move plays the move again and changes nothing', async ({
+    page,
+    baseURL
+  }) => {
+    test.setTimeout(180_000);
+    if (!baseURL) throw new Error('no baseURL');
+    const problems = watchHygiene(page);
+    const log = page.locator('dialog[open]').filter({ has: page.locator('#log-sheet-title') });
+    const control = log.locator('[data-control="replay-last-move"]');
+    const openLog = async (driver: GameDriver) => {
+      await driver.dismissToasts();
+      await driver.visible('[data-control="log"]').click();
+      await expect(log).toBeVisible();
+    };
+    const at: Position = { mode: 'hotseat', seed: SEED, scenario: 'looting-double', keys: [] };
+
+    // With Animation off: disabled, and its tooltip says why.
+    await useSettings(page, 'off');
+    let driver = await openPosition(page, baseURL, at);
+    await driver.waitTurn();
+    await playThrough(driver, 'construct:arsenal');
+    await openLog(driver);
+    await expect(control).toBeDisabled();
+    const group = log.locator('[data-replay-tooltip]');
+    if (test.info().project.use.hasTouch) {
+      await group.tap();
+    } else {
+      // Keyboard focus (focus-visible) shows it: a Tab first, so the focus
+      // that follows counts as the keyboard's.
+      await page.keyboard.press('Tab');
+      await group.focus();
+    }
+    await expect(page.locator('[data-tooltip-layer] [role="tooltip"]')).toContainText(
+      'Turn Animation on'
+    );
+    await page.keyboard.press('Escape');
+
+    // At normal speed: the move's animations play again, the screen stays.
+    await useSettings(page, 'normal');
+    driver = await openPosition(page, baseURL, at);
+    await driver.waitTurn();
+    await openLog(driver);
+    await expect(control, 'no move to replay yet').toBeDisabled();
+    await page.keyboard.press('Escape');
+    await expect(log).toHaveCount(0);
+    await playThrough(driver, 'construct:arsenal');
+    await waitSettled(page);
+    const before = await screenDom(page);
+    const version = (await driver.snapshot()).version;
+    const played = (await fxRecords(page)).anims.length;
+    await openLog(driver);
+    await expect(control).toBeEnabled();
+    await control.click();
+    await expect(log).toHaveCount(0);
+    await expect
+      .poll(async () => (await fxRecords(page)).anims.length, { message: 'the replay animated' })
+      .toBeGreaterThan(played);
+    const kinds = new Set((await fxRecords(page)).anims.slice(played).map((a) => a.kind));
+    expect([...kinds], 'the replay played the looting').toContain('loot');
+    await waitSettled(page);
+    expect((await driver.snapshot()).version, 'the replay sent nothing').toBe(version);
+    expect(await screenDom(page), 'the screen after the replay').toBe(before);
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
   });
 });

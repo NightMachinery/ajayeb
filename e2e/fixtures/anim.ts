@@ -32,7 +32,20 @@ export interface FrameRecord {
 /** What the runner recorded for an animation. */
 export interface AnimRecord {
   version: number;
-  kind: 'take' | 'flip' | 'coins' | 'pawn';
+  kind:
+    | 'take'
+    | 'rebuild'
+    | 'destroy'
+    | 'token'
+    | 'draft'
+    | 'flip'
+    | 'coins'
+    | 'pawn'
+    | 'loot'
+    | 'glow'
+    | 'draw'
+    | 'deal'
+    | 'victory';
   startAt: number;
   endAt: number | null;
   interrupted: boolean;
@@ -219,7 +232,8 @@ export async function clearFx(page: Page): Promise<void> {
 
 /**
  * Waits until every animation the runner started has ended and nothing it
- * drew is left: no clone, flip or float in the FX layer, nothing hidden.
+ * drew is left: no clone, flip or float in the FX layer or its top part
+ * (the one over dialogs), nothing hidden.
  */
 export async function waitSettled(page: Page, timeout = 10_000): Promise<void> {
   await page.waitForFunction(
@@ -230,7 +244,8 @@ export async function waitSettled(page: Page, timeout = 10_000): Promise<void> {
         window.__ajayeb?.ready() === true &&
         !running &&
         document.querySelectorAll('[data-fx-clone], .fx-flip, .fx-float, [data-fx-hidden]')
-          .length === 0
+          .length === 0 &&
+        (document.querySelector('.fx-top')?.childElementCount ?? 0) === 0
       );
     },
     null,
@@ -240,13 +255,15 @@ export async function waitSettled(page: Page, timeout = 10_000): Promise<void> {
 
 /**
  * The game screen's DOM as text, for comparing two runs: the room code,
- * the FX attributes, transforms in style attributes and the ids tooltips
- * point at are taken out, because they differ by run, not by state.
+ * the FX attributes, transforms in style attributes, the ids tooltips
+ * point at and whether an art image has loaded yet are taken out, because
+ * they differ by run, not by state.
  */
 export async function screenDom(page: Page): Promise<string> {
   const { html, code } = await page.evaluate(() => {
     const screen = document.querySelector('.game-screen');
     const layer = document.querySelector('.fx-layer');
+    const top = document.querySelector('.fx-top');
     if (!screen) return { html: '', code: '' };
     const copy = screen.cloneNode(true) as HTMLElement;
     for (const el of [copy, ...copy.querySelectorAll('*')]) {
@@ -254,6 +271,8 @@ export async function screenDom(page: Page): Promise<string> {
       for (const name of ['data-fx-hidden', 'aria-describedby', 'id', 'for']) {
         el.removeAttribute(name);
       }
+      // An image's own load (ArtImage's `loaded`) races the screenshot, not the FX.
+      if (el.classList.contains('art-image')) el.classList.remove('loaded');
       const style = el.getAttribute('style');
       if (style !== null) {
         const kept = style
@@ -265,12 +284,16 @@ export async function screenDom(page: Page): Promise<string> {
       }
     }
     return {
-      html: copy.outerHTML + `\n<!-- fx layer children: ${layer?.childElementCount ?? -1} -->`,
+      html:
+        copy.outerHTML +
+        `\n<!-- fx layer children: ${layer?.childElementCount ?? -1}, ` +
+        `top: ${top?.childElementCount ?? -1} -->`,
       code: window.__ajayeb?.room()?.code ?? ''
     };
   });
   expect(html, 'the game screen is on the page').not.toBe('');
-  return code ? html.split(code).join('ROOM') : html;
+  // One tag per line, so a difference shows as the lines that differ.
+  return (code ? html.split(code).join('ROOM') : html).replaceAll('><', '>\n<');
 }
 
 /**
@@ -365,7 +388,13 @@ export async function recordLongTasks(page: Page): Promise<void> {
   });
 }
 
-export async function longTasks(page: Page): Promise<{ start: number; duration: number }[]> {
+/** A long task the page recorded (recordLongTasks). */
+export interface LongTask {
+  start: number;
+  duration: number;
+}
+
+export async function longTasks(page: Page): Promise<LongTask[]> {
   return page.evaluate(
     () =>
       (window as unknown as { __longTasks?: { start: number; duration: number }[] }).__longTasks ??
