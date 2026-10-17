@@ -93,6 +93,14 @@ export interface Create {
    * has no undo, so the field must be absent there.
    */
   allowUndo?: boolean;
+  /**
+   * Tutorial asks for a tutorial room: the guided first game against the
+   * Easy bot, on the tutorial script's fixed deal (package tutorial).
+   * Absent means false. With true the mode must be ai, the bot easy and
+   * the seat 0 or absent; the server then fixes the seed, the options and
+   * the seats.
+   */
+  tutorial?: boolean;
 }
 /**
  * Join asks to join an existing room as a player or spectator.
@@ -393,6 +401,11 @@ export interface RoomInfo {
    * an undo would be accepted right now.
    */
   allowUndo: boolean;
+  /**
+   * Tutorial says the room is a tutorial room (Create.Tutorial) whose
+   * script this server knows: the player's frames carry State.Tutorial.
+   */
+  tutorial: boolean;
 }
 /**
  * YouInfo is what this connection may do.
@@ -497,6 +510,12 @@ export interface State {
    * Every frame carries the whole list, the same for every viewer.
    */
   roomLog: RoomLogEntry[];
+  /**
+   * Tutorial is where the tutorial stands, in a tutorial room's frames
+   * for the connection that holds the player's seat; absent in every
+   * other frame (other rooms, spectators).
+   */
+  tutorial?: TutorialState;
   view: view.View;
 }
 /**
@@ -550,6 +569,143 @@ export interface Error {
   t: 'error';
   code: ErrorCode;
   msg: string;
+}
+
+//////////
+// source: tutorial.go
+
+/**
+ * TutorialStatus is where a tutorial game stands for its player.
+ */
+export const TutorialStatusGuided = "guided"; // on the script, a guided turn ahead
+export const TutorialStatusFree = "free"; // the guided part is over: finished, or the player left the path
+export const TutorialStatusComplete = "complete"; // Age II is in play, or the game is over
+/**
+ * The tutorial statuses.
+ */
+export type TutorialStatus = typeof TutorialStatusGuided | typeof TutorialStatusFree | typeof TutorialStatusComplete;
+/**
+ * TutorialLessonID names one lesson; the client words it.
+ */
+export type TutorialLessonID = string;
+/**
+ * The lessons.
+ */
+export const TutorialLessonDraftIntro: TutorialLessonID = "draftIntro"; // info: the wonder draft
+/**
+ * The lessons.
+ */
+export const TutorialLessonDraftRound2: TutorialLessonID = "draftRound2"; // info: the second draft round
+/**
+ * The lessons.
+ */
+export const TutorialLessonDraftPick: TutorialLessonID = "draftPick"; // action: take a wonder in the draft
+/**
+ * The lessons.
+ */
+export const TutorialLessonDraftPickAgain: TutorialLessonID = "draftPickAgain"; // action: take another wonder
+/**
+ * The lessons.
+ */
+export const TutorialLessonAgeOne: TutorialLessonID = "ageOne"; // info: the card structure
+/**
+ * The lessons.
+ */
+export const TutorialLessonTurn: TutorialLessonID = "turn"; // info: what a turn is
+/**
+ * The lessons.
+ */
+export const TutorialLessonBuildFree: TutorialLessonID = "buildFree"; // action: build a free card
+/**
+ * The lessons.
+ */
+export const TutorialLessonReveal: TutorialLessonID = "reveal"; // info: an uncovered card turns face up
+/**
+ * The lessons.
+ */
+export const TutorialLessonBuildOwn: TutorialLessonID = "buildOwn"; // action: build a card paid with your own production
+/**
+ * The lessons.
+ */
+export const TutorialLessonMilitary: TutorialLessonID = "military"; // info: the conflict pawn
+/**
+ * The lessons.
+ */
+export const TutorialLessonTrade: TutorialLessonID = "trade"; // action: build a card buying a resource from the bank
+/**
+ * The lessons.
+ */
+export const TutorialLessonCoins: TutorialLessonID = "coins"; // info: coins
+/**
+ * The lessons.
+ */
+export const TutorialLessonDiscard: TutorialLessonID = "discard"; // action: sell a card for coins
+/**
+ * The lessons.
+ */
+export const TutorialLessonWonders: TutorialLessonID = "wonders"; // info: building a wonder
+/**
+ * The lessons.
+ */
+export const TutorialLessonBuildWonder: TutorialLessonID = "buildWonder"; // action: build a wonder
+/**
+ * The lessons.
+ */
+export const TutorialLessonScience: TutorialLessonID = "science"; // action: build a green card
+/**
+ * The lessons.
+ */
+export const TutorialLessonTokens: TutorialLessonID = "tokens"; // info: the progress tokens
+/**
+ * The lessons.
+ */
+export const TutorialLessonChain: TutorialLessonID = "chain"; // action: build a card with a chain symbol
+/**
+ * The lessons.
+ */
+export const TutorialLessonPlayOn: TutorialLessonID = "playOn"; // info: the guided part is over, play on
+/**
+ * The lessons.
+ */
+export const TutorialLessonLeftPath: TutorialLessonID = "leftPath"; // info: the player left the script
+/**
+ * TutorialLesson is one info lesson: its id and the card or wonder it names
+ * or points at (catalog slugs).
+ */
+export interface TutorialLesson {
+  id: TutorialLessonID;
+  card?: string;
+  wonder?: string;
+}
+/**
+ * TutorialAction is the guided turn's move: the lesson that explains it and
+ * the one action key the turn asks for (a key of the view's choices), with
+ * the card and wonder the key names (catalog slugs).
+ */
+export interface TutorialAction {
+  id: TutorialLessonID;
+  key: string;
+  card?: string;
+  wonder?: string;
+}
+/**
+ * TutorialState is the tutorial as the player's frame carries it, derived
+ * from the script and the room's action log (package tutorial).
+ */
+export interface TutorialState {
+  script: string; // the script's name, such as "first-game"
+  status: TutorialStatus;
+  left: boolean; // the log left the script before its end
+  turn: number /* int */; // the player's guided turn, 1-based; 0 outside the guided part
+  turns: number /* int */; // the player's guided turns in the script; 0 outside the guided part
+  /**
+   * Lessons are the info lessons to show now, in order; never nil.
+   */
+  lessons: TutorialLesson[];
+  /**
+   * Action is the guided move, while guided and the player is to move.
+   */
+  action?: TutorialAction;
 }
 
 //////////
