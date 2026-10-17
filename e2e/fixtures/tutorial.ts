@@ -356,6 +356,27 @@ export function recordSent(page: Page): string[] {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/** The boxes a step check reads, to tell when they stop moving. */
+const boxesOf = (s: CoachSnapshot) =>
+  JSON.stringify([s.target?.box ?? null, s.bubble?.box ?? null, s.note?.step ?? null]);
+
+/**
+ * A snapshot once the step's boxes are still: a sheet may still be sliding
+ * in (Animation normal), and a note inside it moves with it. Two reads 50 ms
+ * apart must agree, for at most 2 s; then the last read is checked anyway.
+ */
+async function stillSnapshot(page: Page): Promise<CoachSnapshot> {
+  await sleep(50);
+  let last = await snapshot(page);
+  for (const until = Date.now() + 2000; Date.now() < until;) {
+    await sleep(50);
+    const next = await snapshot(page);
+    if (boxesOf(next) === boxesOf(last)) return next;
+    last = next;
+  }
+  return last;
+}
+
 /** Presses a selector's first visible match as a pointer would, at a person's pace. */
 export async function pressOn(page: Page, selector: string, touch: boolean): Promise<void> {
   const target = page.locator(selector).locator('visible=true').first();
@@ -471,8 +492,7 @@ export async function walkTutorial(
       const key = `${s.version}:${shown.step}:${shown.kind}:${shown.surface}`;
       if (key !== lastKey) {
         lastKey = key;
-        await sleep(50);
-        const settled = await snapshot(page);
+        const settled = await stillSnapshot(page);
         const step: WalkStep = { ...shown, version: s.version, failures: stepFailures(settled) };
         result.steps.push(step);
         if (shown.kind === 'info') result.observed.push(shown.step);

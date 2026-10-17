@@ -384,8 +384,19 @@ export async function walk(opts) {
         const key = `${s.version}:${shown.step}:${shown.kind}:${s.note ? 'note' : 'bubble'}`;
         if (key !== lastStep) {
           lastStep = key;
-          await sleep(opts.animation === 'off' ? 50 : 300);
-          const settled = await evaluate(page, snapshot);
+          // Check once the boxes are still: a sheet may still be sliding in,
+          // and a note inside it moves with it (two reads 50 ms apart agree,
+          // for at most 2 s).
+          await sleep(50);
+          let settled = await evaluate(page, snapshot);
+          for (const until = Date.now() + 2000; Date.now() < until; ) {
+            await sleep(50);
+            const next = await evaluate(page, snapshot);
+            const same = JSON.stringify([next.target?.box, next.bubble?.box, next.note?.step]) ===
+              JSON.stringify([settled.target?.box, settled.bubble?.box, settled.note?.step]);
+            settled = next;
+            if (same) break;
+          }
           const fails = check(settled);
           const name = `${String(++n).padStart(2, '0')}-${shown.step}-${shown.kind}${s.note ? '-note' : ''}`;
           await shoot(name);
