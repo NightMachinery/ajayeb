@@ -26,11 +26,6 @@ export const home = {
   'home.mode.online': 'Online',
   'home.mode.hotseat': 'Pass and play',
   'home.mode.ai': 'vs AI',
-  'home.mode.tutorial': 'Tutorial',
-  // The tutorial's permanent entry, under the mode buttons.
-  'home.tutorial': 'Learn to play',
-  'home.tutorialHint': 'A guided first game against the Apprentice',
-  'home.tutorialDone': 'Tutorial done: play it again',
   'home.settings': 'Settings',
 
   // Home: joining an online game by its code.
@@ -54,7 +49,6 @@ export const home = {
   'home.undo.toggle': 'Allow undo',
   'home.undo.note': 'Fixed for the whole game: it cannot be changed once the game starts.',
   'home.ai.start': 'Start game',
-  'home.ai.tutorialLink': 'First game? Play the tutorial instead.',
 
   // HotseatSheet (pass and play).
   'home.hotseat.title': 'Pass and play',

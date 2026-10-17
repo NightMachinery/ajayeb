@@ -1,7 +1,10 @@
 // English messages for the guided first game (M10.tutorial-client): the
 // coach marks and notes (components/tutorial/), the lessons the server
 // names by id (lib/tutorial/text.ts words them), the rails' reasons, Home's
-// offer and the completion card. See ../index.ts for the conventions.
+// offer and the completion card. The tutorial's few keys on other screens
+// (Home's row, the vs-AI sheet's link, the Settings reset) live here too,
+// under those screens' prefixes, so that one file per language holds the
+// whole tutorial. See ../index.ts for the conventions.
 //
 // Parameters: {card} and {wonder} are catalog names, {resource} a
 // lower-case resource name, {name} the bot's display name, {n} and {total}
@@ -91,5 +94,14 @@ export const tutorial = {
   'tutorial.done.civilian': 'Civilian: have the most points after Age III.',
   'tutorial.done.keep': 'Keep playing',
   'tutorial.done.new': 'New game',
-  'tutorial.done.home': 'Home'
+  'tutorial.done.home': 'Home',
+
+  // The tutorial on other screens.
+  'home.mode.tutorial': 'Tutorial',
+  'home.tutorial': 'Learn to play',
+  'home.tutorialHint': 'A guided first game against the Apprentice',
+  'home.tutorialDone': 'Tutorial done: play it again',
+  'home.ai.tutorialLink': 'First game? Play the tutorial instead.',
+  'hints.settings.tutorialReset': 'Show the tutorial offer again',
+  'hints.settings.tutorialResetDone': 'Home will offer the tutorial again.'
 } as const satisfies Messages;

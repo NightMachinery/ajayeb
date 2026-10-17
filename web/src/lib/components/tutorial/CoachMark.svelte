@@ -161,7 +161,7 @@
   {#if open}
     {#key `${step}:${kind}:${text}`}
       <div
-        class="coach-bubble group/coach pointer-events-auto absolute start-0 top-0 flex w-[min(20rem,calc(100vw-1rem))] flex-col rounded-panel border border-rule-strong bg-panel text-fg shadow-panel"
+        class="coach-bubble group/coach pointer-events-auto absolute start-0 top-0 flex w-[min(20rem,calc(100vw-1rem))] flex-col rounded-panel border border-rule-strong bg-panel text-fg shadow-panel short:w-[min(28rem,calc(100vw-1rem))]"
         role="dialog"
         aria-modal="false"
         aria-labelledby={titleId}
@@ -232,11 +232,12 @@
 </div>
 
 <style>
-  /* On a short screen (a phone held sideways) the text scrolls inside the
-     bubble, which stays under 40% of the viewport's height. */
+  /* On a short screen (a phone held sideways) the bubble is wider, so the
+     text takes fewer lines, and a longer text scrolls inside it: the bubble
+     stays under about half the viewport's height. */
   @media (max-height: 32rem) {
     .coach-text {
-      max-height: calc(40vh - 6.5rem);
+      max-height: calc(50vh - 6.5rem);
     }
   }
   .coach-bubble:not([data-placed]) {
