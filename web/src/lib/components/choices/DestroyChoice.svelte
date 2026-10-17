@@ -64,7 +64,7 @@
 </script>
 
 <div class="flex flex-col gap-3" data-destroy-choice>
-  <p class="text-sm text-fg" dir="auto">
+  <p class="text-sm text-fg">
     {t('choices.destroy.intro', { name: opponentName, color: color ? colorName(color) : '' })}
   </p>
   <CardPickGrid

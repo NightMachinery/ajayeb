@@ -27,7 +27,7 @@
   // when the card's price changed since the viewer's last move ("Was 4, now
   // 5: Moon built Clay Pit.", `priceTip`, data-recap-price).
   import Icon from '$lib/icons/Icon.svelte';
-  import { formatNumber, t } from '$lib/i18n';
+  import { formatNumber, i18n, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Afford } from '$lib/view/afford';
   import { affordTip } from '$lib/view/tips';
@@ -109,7 +109,7 @@
         {@attach tooltip({ text: t('hints.badge.urbanismTip', { count: bonus }) })}
         >{compact ? '' : t('hints.badge.bonus', { count: bonus })}</span
       >
-    {:else if !compact}<span>{t('card.badge.free')}</span>{/if}
+    {:else if !compact}<span dir={i18n.dir}>{t('card.badge.free')}</span>{/if}
   {:else if afford.state === 'free'}
     <Icon name="badge-check" class="text-[1.05em] [--i2:var(--afford-ok)]" />
   {:else if afford.state === 'own'}

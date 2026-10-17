@@ -77,7 +77,7 @@
     {#if lines.length > 0}
       <ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-fg-muted" data-tooltip-lines>
         {#each lines as line, i (i)}
-          <li dir="auto">{line}</li>
+          <li>{line}</li>
         {/each}
       </ul>
     {/if}

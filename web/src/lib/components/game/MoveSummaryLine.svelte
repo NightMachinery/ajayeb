@@ -186,7 +186,7 @@
 
   <span class="flex min-w-0 flex-1 flex-col gap-1">
     <span class="flex min-w-0 flex-wrap items-center gap-x-1.5 text-sm leading-snug text-fg">
-      <span dir="auto" data-summary-text>{text}</span>
+      <span data-summary-text>{text}</span>
       {#if card && (line.kind === 'build' || line.kind === 'rebuild')}
         <EffectGlyphs effects={card.effects} small class="text-xs" />
       {/if}
@@ -228,7 +228,7 @@
           {@const pawnText = t('game.summary.pawn', pawn)}
           <span class={chip} data-chip="pawn" {@attach tooltip({ text: pawnText })}>
             <Icon name="military-pawn" class="text-sm" />
-            <span aria-hidden="true" dir="auto">{t('game.summary.pawnShort', pawn)}</span>
+            <span aria-hidden="true">{t('game.summary.pawnShort', pawn)}</span>
             <span class="sr-only">{pawnText}</span>
           </span>
         {/if}

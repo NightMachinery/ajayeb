@@ -46,17 +46,17 @@
               <Icon name={term.icon} class="glyph size-[1.15em] shrink-0" />
             {/if}
             {#if term.short !== term.text}
-              <span class="sm:hidden" dir="auto">{term.short}</span>
-              <span class="hidden sm:inline" dir="auto">{term.text}</span>
+              <span class="sm:hidden">{term.short}</span>
+              <span class="hidden sm:inline">{term.text}</span>
             {:else}
-              <span dir="auto">{term.text}</span>
+              <span>{term.text}</span>
             {/if}
           </span>
         {/each}
       </p>
     {/if}
     {#if blunder}
-      <p class="blunder text-xs font-semibold" role="status" dir="auto" data-blunder>
+      <p class="blunder text-xs font-semibold" role="status" data-blunder>
         {blunder}
       </p>
     {/if}

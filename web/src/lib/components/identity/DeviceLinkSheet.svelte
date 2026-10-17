@@ -73,10 +73,10 @@
 
 <Sheet bind:open {titleId}>
   <div class="flex flex-col gap-3 px-4 pt-1 pb-5 split:w-[26rem]" data-device-link-sheet={seat}>
-    <h2 id={titleId} class="font-display text-xl text-fg" dir="auto">
+    <h2 id={titleId} class="font-display text-xl text-fg">
       {own ? t('online.link.title') : t('online.link.titleOther', { name })}
     </h2>
-    <p class="text-sm text-fg-muted" dir="auto">
+    <p class="text-sm text-fg-muted">
       {own ? t('online.link.intro') : t('online.link.introOther', { name })}
     </p>
 

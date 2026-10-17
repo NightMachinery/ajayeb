@@ -39,7 +39,7 @@
         class="shrink-0 text-xl {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
       />
       <h2 id={titleId} class="min-w-0 flex-1 font-display text-xl text-fg">
-        <span dir="auto">{t('board.wonders.title', { name })}</span>
+        <span>{t('board.wonders.title', { name })}</span>
       </h2>
       <span class="shrink-0 text-sm font-semibold text-fg-muted tabular-nums">
         {t('board.wonders.tally', { built: tally.built, total: tally.total })}

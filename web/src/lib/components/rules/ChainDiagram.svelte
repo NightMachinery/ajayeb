@@ -3,7 +3,7 @@
   // its band, and the Horse Breeders, which shows it beside its cost, is
   // then free. Real cards and the real chain chip; every label is
   // translatable text.
-  import { t } from '$lib/i18n';
+  import { i18n, t } from '$lib/i18n';
   import CardFace from '../card/CardFace.svelte';
   import ChainChip from '../card/ChainChip.svelte';
   import Arrow from './Arrow.svelte';
@@ -34,7 +34,8 @@
       <div style:width="{width}px" style:height="{height}px">
         <CardFace slug="stable" tier="mini" {width} />
       </div>
-      <span class="text-[11px] leading-tight text-fg-muted">{t('rules.diagram.chain.earlier')}</span
+      <span dir={i18n.dir} class="text-[11px] leading-tight text-fg-muted"
+        >{t('rules.diagram.chain.earlier')}</span
       >
     </div>
     <div class="flex flex-col items-center gap-1 text-fg-muted">
@@ -46,6 +47,7 @@
         <CardFace slug="horse-breeders" tier="mini" {width} />
       </div>
       <span
+        dir={i18n.dir}
         class="rounded-full bg-malachite px-1.5 text-[11px] leading-tight font-semibold text-(--paper-bright)"
       >
         {t('rules.diagram.chain.free')}

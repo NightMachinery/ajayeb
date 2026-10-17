@@ -1155,3 +1155,17 @@ The dense 26 px progress-token tooltip buttons in short landscape remain
 information controls with long-press access. Inline Rules and Home links
 remain text links. The UX probes continue to count these under 44 px; neither
 case is hidden from the report.
+
+### Persian sentence direction
+
+`rtl.spec.ts` measures the browser's computed direction and character positions
+for Persian pass-device log sentences and starter options beginning with Latin
+player names. The name appears to the right of the next Persian word, while its
+own letters read left to right. Card geometry remains left to right and its
+translated name, category and card-back ordinal follow the locale. Diagram labels inside spatial
+rows also follow the locale without reversing those rows. Bare names and name fields keep automatic
+direction. A MutationObserver records the ordinary victory caption while it
+is in the spatial FX layer, checking locale direction without adding an
+animation timing assertion. The spec also checks single-line lobby sharing labels, 44 px button
+heights and no horizontal overflow at the four review sizes. Longer card action
+phrases may wrap to preserve readable text and action spacing.

@@ -35,7 +35,7 @@
   import { artId, hasApprovedArt } from '$lib/art/lookup';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
-  import { t } from '$lib/i18n';
+  import { i18n, t } from '$lib/i18n';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -204,7 +204,7 @@
       {#if tier !== 'mini'}
         <span class="name flex items-start gap-[0.25em] px-[5%] pt-[0.2em] pb-[0.3em]">
           <span
-            dir="auto"
+            dir={i18n.dir}
             class="name-text line-clamp-2 min-w-0 flex-1 font-display leading-[1.1] wrap-normal hyphens-manual"
             style:--name-chars={longestWord(name)}
             style:--glyph-room={nameGlyph ? 1.3 : 0}>{name}</span
@@ -231,6 +231,7 @@
         </span>
         {#if tier === 'full'}
           <span
+            dir={i18n.dir}
             class="px-[5%] pb-[0.5em] text-[length:max(12px,0.75em)] leading-tight text-(--ink-soft)"
           >
             {t(`card.category.${card.color}`)}

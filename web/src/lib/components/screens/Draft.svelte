@@ -196,7 +196,7 @@
     </button>
   {/if}
   {#if !open && reason}
-    <p class="mt-1 text-center text-xs text-fg-muted" dir="auto" data-tutorial-reason>
+    <p class="mt-1 text-center text-xs text-fg-muted" data-tutorial-reason>
       {lockedReason}
     </p>
   {/if}
@@ -262,11 +262,11 @@
         class="shrink-0 text-lg {toMove === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
       />
     {/if}
-    <span dir="auto">{prompt}</span>
+    <span>{prompt}</span>
   </p>
   {#if split.current && canAct && [...keys.values()].some((k) => !allow(k))}
     <!-- Once for the page's Take buttons; the phone sheet says it under its own. -->
-    <p class="-mt-1 text-xs text-fg-muted" dir="auto" data-tutorial-reason>{lockedReason}</p>
+    <p class="-mt-1 text-xs text-fg-muted" data-tutorial-reason>{lockedReason}</p>
   {/if}
 
   <ul
@@ -381,7 +381,7 @@
       {#if item?.takenBy === undefined}
         {@render takeButton(slug, keys.get(slug), true)}
         {#if !keys.has(slug) && toMove !== null}
-          <p class="text-center text-xs text-fg-muted" dir="auto">
+          <p class="text-center text-xs text-fg-muted">
             {t('choices.draft.waiting', { name: names[toMove] })}
           </p>
         {/if}

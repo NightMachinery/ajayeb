@@ -2,7 +2,7 @@
   // The discard rule: discarding a card gives 2 coins plus 1 for each
   // yellow card in your city, with a worked example of two yellow cards.
   // Built from the coin and a yellow card swatch; labels are translatable.
-  import { t } from '$lib/i18n';
+  import { i18n, t } from '$lib/i18n';
   import Coin from '../card/Coin.svelte';
   import Arrow from './Arrow.svelte';
   import CardSwatch from './CardSwatch.svelte';
@@ -25,7 +25,7 @@
         <Coin n={2} />
         <span class="font-semibold">{t('rules.diagram.discard.plus')}</span>
         <Coin n={1} />
-        <span class="font-semibold">{t('rules.diagram.discard.per')}</span>
+        <span dir={i18n.dir} class="font-semibold">{t('rules.diagram.discard.per')}</span>
         <CardSwatch color="yellow" />
       </span>
     </div>

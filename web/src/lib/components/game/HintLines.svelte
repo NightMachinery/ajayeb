@@ -27,7 +27,7 @@
         data-style={section.style}
         data-tone={section.tone}
       >
-        <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase" dir="auto">
+        <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
           {section.title}
         </h3>
         <ul class="mt-0.5 flex flex-col gap-0.5">
@@ -47,7 +47,7 @@
                   {/if}
                 </span>
               {/if}
-              <span class="min-w-0" dir="auto">{line.text}</span>
+              <span class="min-w-0">{line.text}</span>
             </li>
           {/each}
         </ul>

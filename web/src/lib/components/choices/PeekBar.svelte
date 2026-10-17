@@ -51,7 +51,7 @@
       : 'min-h-11 pe-4'}"
     role="status"
   >
-    <span class="line-clamp-2 min-w-0 flex-auto leading-snug font-semibold" dir="auto">{text}</span>
+    <span class="line-clamp-2 min-w-0 flex-auto leading-snug font-semibold">{text}</span>
     {#if onopen}
       <button
         type="button"

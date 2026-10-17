@@ -64,7 +64,7 @@
     <DiscardPile {cards} />
     {#each pools as pool (pool.seat)}
       <section class="flex flex-col gap-1.5" data-hint-pool={pool.seat}>
-        <h3 class="font-display text-base text-fg" dir="auto">{pool.title}</h3>
+        <h3 class="font-display text-base text-fg">{pool.title}</h3>
         <HintLines sections={pool.sections} />
       </section>
     {/each}

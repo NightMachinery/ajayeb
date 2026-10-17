@@ -195,11 +195,11 @@
         {/if}
         <div class="flex min-w-0 flex-col gap-1">
           <p class="text-xs font-semibold tracking-wider text-fg-muted uppercase">{kindText}</p>
-          <h2 id={titleId} class="font-display text-2xl leading-tight text-fg" dir="auto">
+          <h2 id={titleId} class="font-display text-2xl leading-tight text-fg">
             {headline}
           </h2>
           {#if reason}
-            <p class="text-sm text-fg-muted" dir="auto">{reason}</p>
+            <p class="text-sm text-fg-muted">{reason}</p>
           {/if}
         </div>
       </header>
@@ -223,11 +223,7 @@
       <div class="grid grid-cols-2 gap-2 pb-2">
         {#if onrematch}
           {#if rematchNote}
-            <p
-              class="col-span-2 text-center text-sm font-semibold text-fg"
-              dir="auto"
-              role="status"
-            >
+            <p class="col-span-2 text-center text-sm font-semibold text-fg" role="status">
               {rematchNote}
             </p>
           {/if}

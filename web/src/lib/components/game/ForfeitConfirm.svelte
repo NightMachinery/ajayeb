@@ -32,11 +32,11 @@
   <div class="flex flex-col gap-3 px-5 pt-5 pb-1" data-forfeit-confirm>
     <div class="flex items-center gap-2">
       <Flag class="size-5 shrink-0 text-cinnabar-ink" aria-hidden="true" />
-      <h2 id={titleId} class="font-display text-xl text-fg" dir="auto">
+      <h2 id={titleId} class="font-display text-xl text-fg">
         {name !== undefined ? t('game.forfeit.titleName', { name }) : t('game.forfeit.title')}
       </h2>
     </div>
-    <p class="text-sm text-fg" dir="auto">{t('game.forfeit.consequence', { name: winner })}</p>
+    <p class="text-sm text-fg">{t('game.forfeit.consequence', { name: winner })}</p>
     <p class="text-sm text-fg-muted">{t('game.forfeit.final')}</p>
     <div class="mt-1 flex flex-col gap-2 split:flex-row-reverse">
       <Button

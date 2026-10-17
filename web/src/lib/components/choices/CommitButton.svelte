@@ -64,7 +64,7 @@
     {/key}
   {:else}
     <Button full class={cls} data-act={actKey ?? undefined} disabled={rule.disabled} onclick={send}>
-      <span class="min-w-0" dir="auto">{rule.label}</span>
+      <span class="min-w-0">{rule.label}</span>
     </Button>
   {/if}
 </div>

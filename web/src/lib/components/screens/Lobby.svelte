@@ -163,14 +163,24 @@
           />
         </div>
 
-        <div class="grid gap-2 {canShare && onshare ? 'grid-cols-2' : 'grid-cols-1'}">
-          <Button variant="primary" full onclick={oncopy} data-control="copy-link">
-            <Copy class="size-4" aria-hidden="true" />
+        <div class="flex flex-wrap gap-2">
+          <Button
+            variant="primary"
+            class="flex-1 px-3! whitespace-nowrap"
+            onclick={oncopy}
+            data-control="copy-link"
+          >
+            <Copy class="size-4 shrink-0" aria-hidden="true" />
             {t('online.lobby.copy')}
           </Button>
           {#if canShare && onshare}
-            <Button variant="secondary" full onclick={onshare} data-control="share-link">
-              <Share2 class="size-4" aria-hidden="true" />
+            <Button
+              variant="secondary"
+              class="flex-1 px-3! whitespace-nowrap"
+              onclick={onshare}
+              data-control="share-link"
+            >
+              <Share2 class="size-4 shrink-0" aria-hidden="true" />
               {t('online.lobby.share')}
             </Button>
           {/if}

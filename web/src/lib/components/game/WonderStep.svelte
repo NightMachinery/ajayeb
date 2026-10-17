@@ -194,7 +194,7 @@
     {/each}
   </ul>
   {#if canAct && options.some((o) => o.choice && !allow(o.key))}
-    <p class="text-xs text-fg-muted" dir="auto" data-tutorial-reason>{lockedReason}</p>
+    <p class="text-xs text-fg-muted" data-tutorial-reason>{lockedReason}</p>
   {/if}
 
   <p class="text-xs text-fg-muted">{t('game.wonders.tuckNote')}</p>

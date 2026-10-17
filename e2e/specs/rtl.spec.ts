@@ -16,12 +16,13 @@
 // the app's own setting before the page loads. The English runs open the
 // same states in a second browser context with the default language.
 
-import { expect, type Browser, type Page, type TestInfo } from '@playwright/test';
+import { expect, type Browser, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { probeLayout, settle, type LayoutReport } from '../fixtures/layout-probes';
 import { newDeviceContext } from '../fixtures/online';
 import { GameDriver } from '../fixtures/driver';
+import { playKey } from '../fixtures/scenario';
 import { createDevRoom, recordGame, type RecordedGame } from '../fixtures/ws-game';
 
 /** Seeds tried in turn until one game is recorded to its end. */
@@ -129,6 +130,55 @@ async function openAt(page: Page, origin: string, rec: RecordedGame, plies: numb
   await settle(page);
 }
 
+/** Check the browser's paragraph direction and visual order, not just dir attributes.
+ * Latin letters in an interpolated name must sit to the right of the next
+ * Persian word, while the name's own letters still read left to right. */
+async function expectLatinNameFirstInRtl(line: Locator, name: string): Promise<void> {
+  await expect(line).toBeVisible();
+  const visual = await line.evaluate((node, name) => {
+    const text = node.textContent ?? '';
+    const start = text.indexOf(name);
+    const next = text.slice(start + name.length).search(/[\u0620-\u06ff]/u);
+    function characterBox(index: number): { x: number; y: number } {
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+      let textNode: Node | null;
+      while ((textNode = walker.nextNode())) {
+        const length = textNode.textContent?.length ?? 0;
+        if (index < length) {
+          const range = document.createRange();
+          range.setStart(textNode, index);
+          range.setEnd(textNode, index + 1);
+          const box = range.getBoundingClientRect();
+          return { x: box.x, y: box.y };
+        }
+        index -= length;
+      }
+      throw new Error('The sentence has no character at the requested index');
+    }
+    if (start < 0 || next < 0) throw new Error('Expected a Latin name followed by Persian text');
+    return {
+      text: text.replace(/[\u200e\u200f\u2066-\u2069]/gu, '').trim(),
+      direction: getComputedStyle(node).direction,
+      first: characterBox(start),
+      last: characterBox(start + name.length - 1),
+      persian: characterBox(start + name.length + next)
+    };
+  }, name);
+  expect(visual.text.startsWith(name), 'the translated sentence starts with the Latin name').toBe(
+    true
+  );
+  expect(visual.direction).toBe('rtl');
+  expect(
+    Math.abs(visual.first.y - visual.persian.y),
+    'name and first Persian word share a line'
+  ).toBeLessThan(3);
+  expect(
+    visual.first.x,
+    'the leading name is visually before the Persian words in RTL'
+  ).toBeGreaterThan(visual.persian.x);
+  expect(visual.first.x, 'the Latin name itself still reads LTR').toBeLessThan(visual.last.x);
+}
+
 test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
   test.use({ appLocale: 'fa' });
 
@@ -209,6 +259,173 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
     expect(problems, 'console errors, page errors or failed requests').toEqual([]);
   });
 
+  test('a Latin name leads a Persian pass-device sentence from the right', async ({
+    page,
+    baseURL
+  }) => {
+    if (!baseURL) throw new Error('no baseURL');
+    const problems = watchHygiene(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('ajayeb:name', 'Player');
+      const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+      localStorage.setItem(
+        'ajayeb:settings',
+        JSON.stringify({ ...settings, hotseatPassDevice: true })
+      );
+    });
+    const room = await createDevRoom(baseURL, {
+      mode: 'hotseat',
+      seed: '7',
+      scenario: 'mausoleum'
+    });
+    await page.goto(room.path);
+    const driver = new GameDriver(page);
+    await driver.waitReady();
+    await playKey(driver, 'discard:rostrum');
+    await expectLatinNameFirstInRtl(page.locator('[data-pass-device] li').first(), 'Player');
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
+
+  test('Latin names lead Persian starter options from the right', async ({ page }) => {
+    const problems = watchHygiene(page);
+    await page.addInitScript(() => {
+      const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+      localStorage.setItem(
+        'ajayeb:settings',
+        JSON.stringify({ ...settings, confirmMoves: 'never' })
+      );
+    });
+    await page.goto('/dev/fixture/choose-starter-seat0');
+    await expect(page.locator('html')).toHaveAttribute('data-ready', '1');
+    const option = page.locator('[data-starter-choice] [data-act="starter:1"] span');
+    await expectLatinNameFirstInRtl(option, 'Omid');
+    const rawName = page
+      .locator('[data-age-interstitial] [dir="auto"]')
+      .filter({ hasText: 'Sara' });
+    await expect(rawName).toBeVisible();
+    expect(await rawName.evaluate((node) => getComputedStyle(node).direction)).toBe('ltr');
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
+
+  test('lobby sharing labels stay on one line at the four review sizes', async ({ page }) => {
+    const problems = watchHygiene(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'share', { value: async () => {} });
+    });
+    for (const [width, height] of [
+      [360, 740],
+      [390, 844],
+      [740, 360],
+      [1280, 800]
+    ] as const) {
+      await page.setViewportSize({ width, height });
+      await page.goto('/dev/fixture/online-lobby-seat0');
+      await expect(page.locator('html')).toHaveAttribute('data-ready', '1');
+      for (const control of ['copy-link', 'share-link']) {
+        const button = page.locator(`[data-control="${control}"]`);
+        await expect(button).toBeVisible();
+        const layout = await button.evaluate((node) => {
+          const text = [...node.childNodes].find(
+            (child) => child.nodeType === Node.TEXT_NODE && child.textContent?.trim()
+          );
+          if (!text) throw new Error('No sharing button label');
+          const value = text.textContent ?? '';
+          const range = document.createRange();
+          range.setStart(text, value.length - value.trimStart().length);
+          range.setEnd(text, value.trimEnd().length);
+          return {
+            lines: range.getClientRects().length,
+            height: node.getBoundingClientRect().height
+          };
+        });
+        expect(layout.lines, `${control} at ${width}px`).toBe(1);
+        expect(layout.height).toBeGreaterThanOrEqual(44);
+      }
+      expectNoHorizontalScroll(await probeLayout(page), `lobby at ${width}px`);
+    }
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
+
+  test('translated labels in spatial diagram rows follow Persian direction', async ({ page }) => {
+    const problems = watchHygiene(page);
+    await page.goto('/rules');
+    for (const name of ['chain', 'military', 'discard']) {
+      const diagram = page.locator(`[data-rules-diagram="${name}"]`).first();
+      await expect(diagram).toBeVisible();
+      const spatial = diagram.locator('[dir="ltr"]').first();
+      expect(await spatial.evaluate((node) => getComputedStyle(node).direction)).toBe('ltr');
+      const labels = await diagram.locator('[dir="ltr"]').evaluateAll((rows) => {
+        const seen = new Set<Node>();
+        const labels: { text: string; direction: string }[] = [];
+        for (const row of rows) {
+          const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+          let node: Node | null;
+          while ((node = walker.nextNode())) {
+            const text = node.textContent?.trim() ?? '';
+            if (seen.has(node) || !/[\u0620-\u06d3]/u.test(text) || !node.parentElement) continue;
+            seen.add(node);
+            labels.push({ text, direction: getComputedStyle(node.parentElement).direction });
+          }
+        }
+        return labels;
+      });
+      expect(
+        labels.length,
+        `${name} has translated labels inside its spatial rows`
+      ).toBeGreaterThan(0);
+      for (const label of labels) expect(label.direction, label.text).toBe('rtl');
+    }
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
+
+  test('the translated victory caption follows Persian direction inside the spatial FX layer', async ({
+    page,
+    baseURL
+  }) => {
+    const problems = watchHygiene(page);
+    if (!baseURL) throw new Error('no baseURL');
+    await page.addInitScript(() => {
+      localStorage.setItem('ajayeb:name', 'Player');
+      const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+      localStorage.setItem(
+        'ajayeb:settings',
+        JSON.stringify({ ...settings, animationSpeed: 'normal' })
+      );
+      // Record the real label while the ordinary animation owns it. Its
+      // direction is the assertion; this test adds no timing requirement.
+      new MutationObserver(() => {
+        const label = document.querySelector('.fx-banner-text');
+        const layer = label?.closest('.fx-top');
+        if (label && layer) {
+          (
+            window as { __bidiVictory?: { text: string; label: string; layer: string } }
+          ).__bidiVictory = {
+            text: label.textContent ?? '',
+            label: getComputedStyle(label).direction,
+            layer: getComputedStyle(layer).direction
+          };
+        }
+      }).observe(document, { childList: true, subtree: true });
+    });
+    const room = await createDevRoom(baseURL, {
+      mode: 'hotseat',
+      seed: '7',
+      scenario: 'civilian-end'
+    });
+    await page.goto(room.path);
+    const driver = new GameDriver(page);
+    await driver.waitReady();
+    await playKey(driver, 'discard:academy');
+    const caption = await page.evaluate(
+      () =>
+        (window as { __bidiVictory?: { text: string; label: string; layer: string } }).__bidiVictory
+    );
+    expect(caption?.text).toMatch(/[\u0620-\u06ff]/u);
+    expect(caption?.label).toBe('rtl');
+    expect(caption?.layer).toBe('ltr');
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
+
   test('a hot-seat game: mirrored chrome and a left-to-right board at Age I, one move, and the result', async ({
     page,
     browser,
@@ -260,6 +477,9 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
 
       // The board is not: same direction, same slot.
       expect(await computedDir(page, '.card-structure')).toBe('ltr');
+      const backLabel = page.locator('.card-structure .card-back text').first();
+      await expect(backLabel).toBeVisible();
+      expect(await backLabel.evaluate((node) => getComputedStyle(node).direction)).toBe('rtl');
       expect(await computedDir(page, '.military-track')).toBe('ltr');
       expect(await computedDir(page, '.progress-token-row')).toBe('ltr');
       const tokens = page
@@ -283,6 +503,13 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
       const face = page.locator('dialog[open] [data-card-sheet] .card-face').first();
       await expect(face).toBeVisible();
       expect(await face.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+      expect(await computedDir(page, 'dialog[open] [data-card-sheet] .name-text')).toBe('rtl');
+      expect(
+        await face
+          .locator(':scope > span')
+          .last()
+          .evaluate((node) => getComputedStyle(node).direction)
+      ).toBe('rtl');
       const rows = face.locator('.cost, .band');
       for (const row of await rows.all())
         expect(await row.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');

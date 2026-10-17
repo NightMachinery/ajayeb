@@ -339,7 +339,7 @@
           titleId="age-start-title"
         >
           <div class="flex flex-col gap-3">
-            <p class="text-center text-sm font-semibold text-fg" dir="auto">{startsText}</p>
+            <p class="text-center text-sm font-semibold text-fg">{startsText}</p>
             <button
               type="button"
               class="inline-flex h-[48px] w-full items-center justify-center rounded-control bg-accent px-5 text-[15px]

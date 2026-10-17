@@ -250,7 +250,7 @@
 
 {#snippet locked(key: string)}
   {#if !allow(key)}
-    <p class="text-xs text-fg-muted" dir="auto" data-tutorial-reason>{lockedReason}</p>
+    <p class="text-xs text-fg-muted" data-tutorial-reason>{lockedReason}</p>
   {/if}
 {/snippet}
 
@@ -351,7 +351,7 @@
               >
                 {t('game.card.coveredCostTitle')}
               </h3>
-              <p class="text-sm text-fg" dir="auto" data-covered-cost="own">
+              <p class="text-sm text-fg" data-covered-cost="own">
                 {#if ownName !== undefined}
                   {coveredCosts.own.affordable
                     ? t('game.card.opponentPays', { name: ownName, count: coveredCosts.own.total })
@@ -365,7 +365,7 @@
                     : t('game.card.youShort', { count: coveredCosts.own.total })}
                 {/if}
               </p>
-              <p class="text-sm text-fg" dir="auto" data-covered-cost="other">
+              <p class="text-sm text-fg" data-covered-cost="other">
                 {coveredCosts.other.affordable
                   ? t('game.card.opponentPays', {
                       name: opponentName,
@@ -434,7 +434,7 @@
               </section>
             {/if}
             {#if opponentCost}
-              <p class="text-sm text-fg-muted" dir="auto">
+              <p class="text-sm text-fg-muted">
                 {opponentCost.affordable
                   ? t('game.card.opponentPays', {
                       name: opponentName,
@@ -485,7 +485,7 @@
                     {/if}
                   </div>
                   {#if deny.build}
-                    <p class="text-xs text-fg-muted" dir="auto" data-hint-note="deny-build">
+                    <p class="text-xs text-fg-muted" data-hint-note="deny-build">
                       {deny.build}
                     </p>
                   {/if}
@@ -500,7 +500,7 @@
                     {/if}
                   </p>
                   {#if shortWin}
-                    <p class="text-sm font-semibold text-fg" dir="auto" data-hint-note="short-win">
+                    <p class="text-sm font-semibold text-fg" data-hint-note="short-win">
                       {shortWin}
                     </p>
                   {/if}
@@ -550,21 +550,21 @@
                 {#if notes.length > 0 && actions.discard}
                   <ul class="flex flex-col gap-0.5" data-hint-notes="discard">
                     {#each notes as note (note.id)}
-                      <li class="text-xs text-fg-muted" dir="auto" data-hint-note={note.id}>
+                      <li class="text-xs text-fg-muted" data-hint-note={note.id}>
                         {note.text}
                       </li>
                     {/each}
                   </ul>
                 {/if}
                 {#if deny.wonder && actions.wonders.length > 0}
-                  <p class="text-xs text-fg-muted" dir="auto" data-hint-note="deny-tuck">
+                  <p class="text-xs text-fg-muted" data-hint-note="deny-tuck">
                     {deny.wonder}
                   </p>
                 {/if}
                 {#if !canAct && connected}
                   <p class="text-sm text-fg-muted">{t('game.card.locked')}</p>
                 {:else if canAct && ((actions.build && !allow(actions.build.key)) || (actions.discard && !allow(actions.discard.key)))}
-                  <p class="text-xs text-fg-muted" dir="auto" data-tutorial-reason>
+                  <p class="text-xs text-fg-muted" data-tutorial-reason>
                     {lockedReason}
                   </p>
                 {/if}

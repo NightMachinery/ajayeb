@@ -13,7 +13,7 @@
   // `onopen` (M10.F3): a token that is not a legal pick opens its sheet on
   // a tap (the game screen passes it while no token pick is pending).
   import { hintHide } from '$lib/hints/local.svelte';
-  import { t } from '$lib/i18n';
+  import { i18n, t } from '$lib/i18n';
   import { tokenHint } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
   import { tryGameContext } from '../choices/room';
@@ -59,7 +59,7 @@
     : 'gap-2.5'} {className}"
 >
   {#if tokens.length === 0}
-    <p class="text-xs text-fg-muted">{t('board.tokens.empty')}</p>
+    <p dir={i18n.dir} class="text-xs text-fg-muted">{t('board.tokens.empty')}</p>
   {/if}
   {#each tokens as slug (slug)}
     <ProgressToken

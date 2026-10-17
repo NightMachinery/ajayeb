@@ -66,11 +66,11 @@
     </div>
 
     <Button type="submit" variant="primary" full data-control="name-submit">
-      <span class="truncate" dir="auto">{t('online.prompt.submit', { name })}</span>
+      <span class="truncate">{t('online.prompt.submit', { name })}</span>
     </Button>
 
     {#if code}
-      <p class="text-center text-xs text-fg-muted" dir="ltr">
+      <p class="text-center text-xs text-fg-muted">
         {t('game.title', { code })}
       </p>
     {/if}

@@ -103,8 +103,8 @@
       The device link button and its sheet <!-- i18n-ok -->
     </h3>
     <div class="flex flex-wrap items-center gap-3 rounded-panel border border-rule bg-panel p-3">
-      <span class="flex items-center gap-1.5 text-sm font-semibold text-fg" dir="auto">
-        {names[1]}
+      <span class="flex items-center gap-1.5 text-sm font-semibold text-fg">
+        <span dir="auto">{names[1]}</span>
         <SelfMark />
         <DeviceLinkButton
           seat={1}
@@ -112,8 +112,8 @@
           onclick={() => show('copied')}
         />
       </span>
-      <span class="flex items-center gap-1.5 text-sm font-semibold text-fg" dir="auto">
-        {names[0]}
+      <span class="flex items-center gap-1.5 text-sm font-semibold text-fg">
+        <span dir="auto">{names[0]}</span>
         <DeviceLinkButton
           seat={0}
           label={t('online.link.button', { name: names[0] })}

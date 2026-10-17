@@ -161,7 +161,7 @@
           : 'text-sun-ink'}"
       />
     {/if}
-    <span class="min-w-0" dir="auto">{text}</span>
+    <span class="min-w-0">{text}</span>
   </span>
   {#if hints}
     <span

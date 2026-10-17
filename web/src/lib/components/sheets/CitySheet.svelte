@@ -103,7 +103,7 @@
         </h3>
         <ul class="flex flex-col gap-0.5 text-sm leading-snug text-fg">
           {#each shownThreats as line (line.kind)}
-            <li data-threat={line.kind} dir="auto">{line.text}</li>
+            <li data-threat={line.kind}>{line.text}</li>
           {/each}
         </ul>
       </section>

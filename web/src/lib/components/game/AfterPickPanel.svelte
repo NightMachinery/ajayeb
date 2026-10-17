@@ -70,11 +70,7 @@
     </summary>
     <ul class="flex flex-col gap-1 px-3 pb-2">
       {#each lines as line (line.id)}
-        <li
-          class="text-sm text-fg {line.threat ? 'threat ps-2' : ''}"
-          dir="auto"
-          data-after-line={line.id}
-        >
+        <li class="text-sm text-fg {line.threat ? 'threat ps-2' : ''}" data-after-line={line.id}>
           {line.text}
         </li>
       {/each}

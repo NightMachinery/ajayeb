@@ -6,7 +6,7 @@
   // in HTML, so every label is translatable text; the board is spatial, so
   // the strip is dir="ltr" like the real track. `compact` is the tooltip
   // size (the track's zone and looting bubbles): narrower, no caption.
-  import { formatNumber, t } from '$lib/i18n';
+  import { formatNumber, i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import LootingToken from '../board/LootingToken.svelte';
 
@@ -83,6 +83,7 @@
     <!-- Row 4: what each zone is worth. -->
     {#each ZONES as zone (zone.points)}
       <span
+        dir={i18n.dir}
         class="zone-label row-start-4 text-center text-[11px] leading-tight font-semibold text-fg"
         style:grid-column="{col(zone.from)} / {col(zone.to) + 1}"
       >
@@ -90,6 +91,7 @@
       </span>
     {/each}
     <span
+      dir={i18n.dir}
       class="row-start-4 text-center text-[11px] leading-tight font-semibold text-moon-ink"
       style:grid-column={col(9)}
     >

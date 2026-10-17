@@ -167,8 +167,7 @@
         </span>
         <EffectGlyphs effects={wonder.effects} class="justify-start! gap-x-[0.5em]" />
         {#if takenBy !== undefined}
-          <span class="text-[12px] text-(--ink-soft)" dir="auto"
-            >{t('wonder.takenBy', { name: takenBy })}</span
+          <span class="text-[12px] text-(--ink-soft)">{t('wonder.takenBy', { name: takenBy })}</span
           >
         {/if}
       </span>
@@ -192,9 +191,7 @@
         <span class="line-clamp-2 font-display text-[15px] leading-tight wrap-normal"
           >{wonderName(slug)}</span
         >
-        <!-- dir="auto": clamped text keeps its own direction, so an English
-             fallback in Persian loses its end, not its start. -->
-        <span class="line-clamp-2 text-xs leading-snug text-fg-muted" dir="auto"
+        <span class="line-clamp-2 text-xs leading-snug text-fg-muted"
           >{effectsText(wonder.effects)}</span
         >
         {#if hint && hint.terms.length > 0}

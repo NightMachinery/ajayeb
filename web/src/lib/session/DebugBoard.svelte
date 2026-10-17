@@ -24,9 +24,8 @@
   const view = $derived(presenter.view);
   const inputOpen = $derived(presenter.idle && session.canAct);
 
-  function seatName(seat: number): string {
-    const name = frame?.room.seats.find((s) => s.seat === seat)?.name;
-    return name || t('debug.seat', { seat });
+  function rawName(seat: number): string | undefined {
+    return frame?.room.seats.find((s) => s.seat === seat)?.name;
   }
 
   function choiceTarget(c: Choice): string {
@@ -35,6 +34,11 @@
     return c.card ?? c.wonder ?? c.token ?? '';
   }
 </script>
+
+{#snippet seatLabel(seat: number)}
+  {@const name = rawName(seat)}
+  {#if name}<span dir="auto">{name}</span>{:else}{t('debug.seat', { seat })}{/if}
+{/snippet}
 
 <main class="h-full overflow-y-auto" data-debug-board>
   <div class="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-4">
@@ -80,9 +84,13 @@
         <dt class="text-fg-muted">{t('debug.age')}</dt>
         <dd>{formatNumber(view.age)}</dd>
         <dt class="text-fg-muted">{t('debug.toMove')}</dt>
-        <dd dir="auto">{view.toMove === undefined ? t('debug.none') : seatName(view.toMove)}</dd>
+        <dd>
+          {#if view.toMove === undefined}{t('debug.none')}{:else}{@render seatLabel(
+              view.toMove
+            )}{/if}
+        </dd>
         <dt class="text-fg-muted">{t('debug.active')}</dt>
-        <dd dir="auto">{seatName(view.active)}</dd>
+        <dd>{@render seatLabel(view.active)}</dd>
         <dt class="text-fg-muted">{t('debug.extraTurn')}</dt>
         <dd>{view.extraTurn ? t('debug.yes') : t('debug.no')}</dd>
         <dt class="text-fg-muted">{t('debug.military')}</dt>
@@ -156,7 +164,7 @@
           <h2 id="debug-pending" class="font-semibold text-fg">{t('debug.pending')}</h2>
           <p>
             <code>{view.pending.kind}</code>
-            <span dir="auto">({seatName(view.pending.seat)})</span>
+            <span>({@render seatLabel(view.pending.seat)})</span>
             {#if view.pending.color}<code>{view.pending.color}</code>{/if}
           </p>
           {#if view.pending.cards.length > 0}<p>
@@ -181,7 +189,7 @@
           <p>
             <code>{view.result.victory}</code>
             {#if view.result.winner !== undefined}
-              · {t('debug.winner')}: <span dir="auto">{seatName(view.result.winner)}</span>
+              · {t('debug.winner')}: <span>{@render seatLabel(view.result.winner)}</span>
             {:else if view.result.shared}
               · {t('debug.shared')}
             {/if}
@@ -189,7 +197,7 @@
           <p>
             {#each view.result.scores as score, seat (seat)}
               <span class="me-3"
-                ><span dir="auto">{seatName(seat)}</span>: {formatNumber(score.total)}</span
+                ><span>{@render seatLabel(seat)}</span>: {formatNumber(score.total)}</span
               >
             {/each}
           </p>
@@ -222,7 +230,7 @@
             data-seat={player.seat}
           >
             <h2 class="font-semibold text-fg">
-              <span dir="auto">{seatName(player.seat)}</span>
+              <span>{@render seatLabel(player.seat)}</span>
               {#if frame?.you.seats.includes(player.seat)}<span class="text-fg-muted"
                   >({t('debug.you')})</span
                 >{/if}

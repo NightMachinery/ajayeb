@@ -15,7 +15,7 @@
   // lattice shows.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { backArtId } from '$lib/art/lookup';
-  import { t } from '$lib/i18n';
+  import { i18n, t } from '$lib/i18n';
   import { tooltip, type TooltipContent } from '$lib/ui/tooltip.svelte';
   import { backText } from '$lib/view/tips';
   import type { Back } from '$lib/wire';
@@ -59,6 +59,7 @@
       />
     {/if}
     <text
+      direction={i18n.dir}
       x="50"
       y={back === 'guild' ? 49 : 43}
       text-anchor="middle"

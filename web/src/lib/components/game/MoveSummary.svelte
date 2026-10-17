@@ -126,7 +126,7 @@
       data-plies={summary.plies.join(' ')}
       {@attach placeOver(anchor)}
     >
-      <h2 class="font-display text-base leading-tight font-semibold text-fg" dir="auto">{title}</h2>
+      <h2 class="font-display text-base leading-tight font-semibold text-fg">{title}</h2>
       <ol class="flex flex-col gap-2">
         {#each summary.lines as line, i (`${line.ply}:${i}`)}
           <MoveSummaryLine {line} seat={summary.seat} {names} />
@@ -153,7 +153,7 @@
                 {:else}
                   <ChevronDown class="mt-0.5 size-4 shrink-0 text-fg" aria-hidden="true" />
                 {/if}
-                <span dir="auto">{priceText(p)}</span>
+                <span>{priceText(p)}</span>
               </li>
             {/each}
           </ul>

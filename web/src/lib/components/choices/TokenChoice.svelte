@@ -103,7 +103,7 @@
         {#if (valuesBySlug[slug] ?? []).length > 0}
           <ul class="mt-0.5 flex flex-col ps-3 text-xs text-fg-muted" data-token-values={slug}>
             {#each valuesBySlug[slug] ?? [] as line (line)}
-              <li data-token-value dir="auto">{line}</li>
+              <li data-token-value>{line}</li>
             {/each}
           </ul>
         {/if}

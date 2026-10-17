@@ -111,7 +111,6 @@
   <h3 class="text-center font-display text-lg text-fg">{t('choices.starter.title', { age })}</h3>
   <p
     class="text-center text-sm text-fg"
-    dir="auto"
     {@attach tooltip({
       text: why,
       rulesId: 'age-end',
@@ -158,7 +157,7 @@
               name={seat === 0 ? 'crest-sun' : 'crest-moon'}
               class="shrink-0 text-xl {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
             />
-            <span class="min-w-0 truncate" dir="auto">{rule.label}</span>
+            <span class="min-w-0 truncate">{rule.label}</span>
           </button>
         {/if}
       {/each}
@@ -169,7 +168,6 @@
         {#each threatLines as line (line.seat)}
           <li
             class="threat-line border-s-[3px] ps-2 text-sm font-semibold text-fg"
-            dir="auto"
             data-starter-threat={line.seat}
           >
             {line.text}
@@ -181,13 +179,12 @@
     <p
       class="rounded-control bg-panel-sunken px-3 py-2 text-center text-sm text-fg-muted"
       role="status"
-      dir="auto"
     >
       {t('choices.waiting.chooseStarter', { name: names[chooser], age })}
     </p>
   {/if}
   {#if opening}
-    <p class="text-center text-xs text-fg-muted" dir="auto" data-starter-preview>{opening}</p>
+    <p class="text-center text-xs text-fg-muted" data-starter-preview>{opening}</p>
   {/if}
 </div>
 

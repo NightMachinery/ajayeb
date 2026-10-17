@@ -111,7 +111,7 @@
 
   <p class="flex items-center justify-center gap-1.5 text-center text-sm text-fg">
     <Icon name="shield" class="shrink-0 text-card-red-ink" />
-    <span dir="auto">{militaryText}</span>
+    <span>{militaryText}</span>
   </p>
 
   {#if lines.length > 0}

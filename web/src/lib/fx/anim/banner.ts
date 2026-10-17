@@ -7,7 +7,7 @@
 // military supremacy, green for a scientific one, gold for a civilian
 // victory, neutral for a shared one or a forfeit.
 
-import { t } from '$lib/i18n';
+import { i18n, t } from '$lib/i18n';
 import { drawn } from './dom';
 
 export const PARTICLES = 12;
@@ -53,6 +53,7 @@ export function victoryBanner(victory: string | undefined, winner: 0 | 1 | undef
   }
   const label = document.createElement('span');
   label.className = 'fx-banner-text';
+  label.dir = i18n.dir;
   label.textContent = t(`choices.over.kind.${kind}`);
   ribbon.append(label);
   const particles: HTMLElement[] = [];

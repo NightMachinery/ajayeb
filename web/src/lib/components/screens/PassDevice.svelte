@@ -47,11 +47,11 @@
   class:text-white={nextSeat === 1}
 >
   <Icon name={crest} class="text-6xl" />
-  <h1 class="font-display text-3xl" dir="auto">{t('home.pass.title', { name: nextName })}</h1>
+  <h1 class="font-display text-3xl">{t('home.pass.title', { name: nextName })}</h1>
   {#if summary.length > 0}
     <ul class="flex flex-col gap-1 text-base opacity-90">
       {#each summary as line, i (i)}
-        <li dir="auto">{line}</li>
+        <li>{line}</li>
       {/each}
     </ul>
   {/if}

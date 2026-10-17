@@ -46,7 +46,7 @@
     <p class="text-base text-fg">{t(message)}</p>
     <p class="text-sm text-fg-muted">{hint}</p>
     {#if code}
-      <p class="text-xs text-fg-muted" dir="ltr">{t('game.title', { code })}</p>
+      <p class="text-xs text-fg-muted">{t('game.title', { code })}</p>
     {/if}
     <Button variant="primary" full class="mt-2" onclick={onhome} data-control="error-home">
       <House class="size-4" aria-hidden="true" />

@@ -226,8 +226,8 @@ Every user-visible string goes through `t(key, params)` from `$lib/i18n`. The En
 - **The language setting.** Settings has a Language row (English, فارسی), stored as `locale` in `ajayeb:settings` and applied at once: the settings store calls `i18n.set` when it loads and on every save, before anything renders. The browser's language is not read. The web manifest stays English.
 - **Before the first paint.** A second inline script in `src/app.html`, beside the theme one, sets `lang="fa"` and `dir="rtl"` on `<html>` from the same stored value, so a Persian page is never painted left to right first. The server's CSP hashes every inline script of the page it serves, so this script needs no other change.
 - **Fonts.** The self-hosted fonts are Latin subsets, so Arabic-script text falls through the font stack. For `lang="fa"`, `src/app.css` names Vazirmatn (where installed), Noto Naskh Arabic or Noto Sans Arabic, then the system fonts. No Persian font is shipped yet.
-- **Direction.** The app chrome follows `i18n.dir` (logical properties, `rtl:-scale-x-100` on back and undo arrows). The board region, the card structure and the military track are `dir="ltr"` in every locale, because their layout is spatial. Show numbers through `formatNumber`, never as a bare `{n}`, so they take the locale's digits. A clamped text that can be an English fallback gets `dir="auto"`, so it loses its end, not its start.
-- **The fixture.** `e2e/specs/rtl.spec.ts` runs Home, Settings and a hot-seat game in Persian on both projects: no horizontal scroll, mirrored chrome measured against the same state in English, a left-to-right board, one move and the result screen. The base fixture's `appLocale` option sets the language (`test.use({ appLocale: 'fa' })`).
+- **Direction.** The app chrome follows `i18n.dir` (logical properties, `rtl:-scale-x-100` on back and undo arrows). The board region, the card structure and the military track are `dir="ltr"` in every locale, because their layout is spatial. Show numbers through `formatNumber`, never as a bare `{n}`, so they take the locale's digits. Translated text inherits the locale direction, including sentences beginning with a Latin player name. Use `dir="auto"` only on bare player names and name fields; interpolated names already have directional isolates. Card names, categories, age labels and textual badge labels explicitly use `i18n.dir` inside the left-to-right card geometry, as do translated labels inside spatial diagram rows. Numerical markers and operators keep their spatial direction.
+- **The fixture.** `e2e/specs/rtl.spec.ts` runs Home, Settings and a hot-seat game in Persian on both projects: no horizontal scroll, mirrored chrome measured against the same state in English, a left-to-right board, one move and the result screen. It also measures the visual order of Latin names in Persian pass-device logs and starter options, and checks that lobby sharing labels stay on one line at the four review sizes. The base fixture's `appLocale` option sets the language (`test.use({ appLocale: 'fa' })`).
 
 ## Icons
 
@@ -322,8 +322,8 @@ use the displayed age until an age boundary is recorded.
 Review follow-ups keep card faces and board progress-token rows `dir="ltr"`
 wherever they appear, including a mini card in a Persian card sheet. The
 tooltip preview panel also keeps its positioning box left to right while
-its captions follow the locale. Text
-may still use `dir="auto"` locally. Sentence endings, joins and label/detail
+its captions follow the locale. Bare player names
+and name fields use `dir="auto"` locally. Sentence endings, joins and label/detail
 punctuation live in the message tables; `fullStop`, `sentences`,
 `joinPhrases` and `labelDetail` preserve the English fallback isolates.
 
