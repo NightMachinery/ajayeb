@@ -325,6 +325,9 @@ export async function walk(opts) {
     let actions = 0;
     let lastVersion = null;
     let versionAt = Date.now();
+    // When Next was last pressed: the next lesson shows two frames later,
+    // with no new frame, so it gets the same grace.
+    let pressedAt = 0;
     let lastStep = null;
     let lastAction = null;
     for (;;) {
@@ -427,6 +430,7 @@ export async function walk(opts) {
         }
         if (shown.kind === 'info') {
           await pressSel('[data-coach-next]');
+          pressedAt = Date.now();
         } else if (shown.kind === 'note' || !s.target) {
           // A note with no target: close the sheet (Escape) and look again.
           await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
@@ -458,9 +462,10 @@ export async function walk(opts) {
         await sleep(80);
         continue;
       }
-      // A short grace for a frame's info lesson (the outro lessons stay
-      // listed once acknowledged, so their presence alone proves nothing).
-      if (tut && tut.status !== 'complete' && Date.now() - versionAt < 600) {
+      // A short grace for a frame's info lesson, and for the next one after
+      // Next (the outro lessons stay listed once acknowledged, so their
+      // presence alone proves nothing).
+      if (tut && tut.status !== 'complete' && Date.now() - Math.max(versionAt, pressedAt) < 600) {
         await sleep(80);
         continue;
       }

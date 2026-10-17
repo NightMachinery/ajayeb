@@ -447,6 +447,9 @@ export async function walkTutorial(
   let lastAction: string | null = null;
   let lastVersion: number | null = null;
   let versionAt = Date.now();
+  // When the last coach step was pressed: the next one shows two frames
+  // later, with no new frame, so it gets the same grace.
+  let pressedAt = 0;
   let moves = 0;
   const maxMoves = opts.maxMoves ?? 120;
   const debug = process.env['TUTORIAL_WALK_DEBUG'] === '1';
@@ -510,6 +513,7 @@ export async function walkTutorial(
       }
       if (shown.kind === 'info') {
         await pressOn(page, '[data-coach-next]', opts.touch);
+        pressedAt = Date.now();
         if (opts.until === shown.step) return result;
       } else if (shown.kind === 'note' || !s.target) {
         if (shown.kind === 'note') await page.keyboard.press('Escape');
@@ -543,10 +547,11 @@ export async function walkTutorial(
       await sleep(80);
       continue;
     }
-    // A frame's info lesson shows two frames after the presenter settles:
-    // a short grace before the free part moves on (its outro lessons stay
-    // listed once acknowledged, so their presence alone proves nothing).
-    if (tut && tut.status !== 'complete' && Date.now() - versionAt < 600) {
+    // A frame's info lesson shows two frames after the presenter settles
+    // (the next one two frames after Next): a short grace before the free
+    // part moves on (its outro lessons stay listed once acknowledged, so
+    // their presence alone proves nothing).
+    if (tut && tut.status !== 'complete' && Date.now() - Math.max(versionAt, pressedAt) < 600) {
       await sleep(80);
       continue;
     }
