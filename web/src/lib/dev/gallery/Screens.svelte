@@ -2,7 +2,8 @@
   // M5.S05's screens, for a visual check in both themes: Home (with and
   // without a saved game to continue), the two new-game sheets, Settings,
   // the hot-seat pass-device interstitial, the sound board and the hint
-  // settings (Hints.svelte). No live connection: the
+  // settings (Hints.svelte), and the tutorial's components (Tutorial.svelte).
+  // No live connection: the
   // sheets' Start buttons are wired to a no-op here, same as the rest of
   // this gallery page's demo controls (see dev/gallery/+page.svelte).
   import { t } from '$lib/i18n';
@@ -15,11 +16,20 @@
   import Online from './Online.svelte';
   import Rules from './Rules.svelte';
   import SoundBoard from './SoundBoard.svelte';
+  import Tutorial from './Tutorial.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
 
   const sampleRooms: readonly SavedRoom[] = [
     { code: 'ZAGROS41', mode: 'ai', lastSeen: Date.now() },
-    { code: 'K7QX2M', mode: 'hotseat', lastSeen: Date.now() - 3600_000 }
+    { code: 'K7QX2M', mode: 'hotseat', lastSeen: Date.now() - 3600_000 },
+    {
+      code: 'TUTOR1',
+      mode: 'ai',
+      lastSeen: Date.now() - 7200_000,
+      bot: 'easy',
+      age: 1,
+      tutorial: true
+    }
   ];
 
   let aiOpen = $state(false);
@@ -40,12 +50,16 @@
         onPlayOnline={noop}
         onJoinCode={noop}
         onSettings={noop}
+        tutorialDone
+        onTutorial={noop}
       />
     </div>
   </section>
 
   <section class="flex flex-col gap-2">
-    <h3 class="text-sm font-semibold text-fg-muted">Home — no saved game <!-- i18n-ok --></h3>
+    <h3 class="text-sm font-semibold text-fg-muted">
+      Home — no saved game, the tutorial offer <!-- i18n-ok -->
+    </h3>
     <div class="relative h-[700px] overflow-hidden rounded-panel border border-rule">
       <Home
         rooms={[]}
@@ -54,6 +68,9 @@
         onPassAndPlay={noop}
         onPlayOnline={noop}
         onSettings={noop}
+        tutorialOffer
+        onTutorial={noop}
+        onDeclineTutorial={noop}
       />
     </div>
   </section>
@@ -67,7 +84,7 @@
     >
       {t('home.playAi')}
     </button>
-    <NewGameSheet bind:open={aiOpen} onStart={noop} />
+    <NewGameSheet bind:open={aiOpen} onStart={noop} onTutorial={noop} />
   </section>
 
   <section class="flex flex-col gap-2">
@@ -128,4 +145,6 @@
   <Hints />
 
   <Rules />
+
+  <Tutorial />
 </div>

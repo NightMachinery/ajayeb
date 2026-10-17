@@ -74,11 +74,17 @@
 
   // "Show the tips again" says it worked until the next change.
   let tipsReset = $state(false);
+  // "Show the tutorial offer again" likewise.
+  let tutorialReset = $state(false);
   const uid = $props.id();
   const hintsTitleId = `${uid}-hints`;
   function resetTips(): void {
     tips.resetSeen();
     tipsReset = true;
+  }
+  function resetTutorial(): void {
+    tips.resetOffer();
+    tutorialReset = true;
   }
 
   function setVolume(v: SoundVolume): void {
@@ -275,6 +281,19 @@
         </span>
       </div>
     {/if}
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        class="min-h-9 rounded-control border border-rule bg-panel px-3 text-sm text-fg hover:bg-panel-sunken"
+        data-control="tutorial-reset"
+        onclick={resetTutorial}
+      >
+        {t('hints.settings.tutorialReset')}
+      </button>
+      <span class="text-xs text-fg-muted" role="status">
+        {tutorialReset ? t('hints.settings.tutorialResetDone') : ''}
+      </span>
+    </div>
     <HintLocalHide
       hide={hintHide.value}
       onfamily={(family, hidden) => hintHide.setFamily(family, hidden)}

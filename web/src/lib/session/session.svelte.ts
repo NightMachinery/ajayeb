@@ -118,6 +118,8 @@ export interface CreateOptions {
    * server's default, on. Never sent for an online room, which has no undo.
    */
   allowUndo?: boolean;
+  /** Asks for a tutorial room (an 'ai' room against the Easy bot only). */
+  tutorial?: boolean;
 }
 
 export interface PendingRequest {
@@ -369,6 +371,7 @@ export class Session {
       names: opts.names ?? []
     };
     if (opts.bot !== undefined) frame.bot = opts.bot;
+    if (opts.tutorial) frame.tutorial = true;
     const hints = opts.hints ?? this.#defaultHints?.(opts.mode) ?? null;
     if (hints) frame.hints = { ...hints };
     if (opts.mode !== 'online') {
@@ -781,7 +784,8 @@ export class Session {
     if (frame.room.status !== 'finished') {
       this.#rooms?.updateDetails(frame.code, {
         age: frame.view.age,
-        bot: frame.room.seats.find((seat) => seat.kind === 'bot')?.bot
+        bot: frame.room.seats.find((seat) => seat.kind === 'bot')?.bot,
+        ...(frame.room.tutorial ? { tutorial: true } : {})
       });
     }
     const ack = frame.ack;

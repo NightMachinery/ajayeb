@@ -550,6 +550,8 @@ export const hints = {
   'hints.settings.tipsHint': 'Explain each hint mark the first time it appears on this device.',
   'hints.settings.tipsReset': 'Show the tips again',
   'hints.settings.tipsResetDone': 'The tips will show again.',
+  'hints.settings.tutorialReset': 'Show the tutorial offer again',
+  'hints.settings.tutorialResetDone': 'Home will offer the tutorial again.',
 
   // The hint-settings badge (hud/TurnBar.svelte). {summary} is one of the
   // hints.summary.* lines.

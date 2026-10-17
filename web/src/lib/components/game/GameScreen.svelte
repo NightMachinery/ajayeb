@@ -141,6 +141,8 @@
   import MoveReview from './MoveReview.svelte';
   import FirstTips from '../hints/FirstTips.svelte';
   import CoachLayer from '../tutorial/CoachLayer.svelte';
+  import TutorialDone from '../tutorial/TutorialDone.svelte';
+  import { goto } from '$app/navigation';
   import { tips } from '$lib/ui/tips.svelte';
   import { COACH_TEXT_ID, coachAcks, type CoachNoteView } from '$lib/tutorial/coach.svelte';
   import { coachStep, type CoachStep, type CoachSurface } from '$lib/tutorial/steps';
@@ -200,6 +202,8 @@
   // Where the player resumed the tutorial after leaving its path (room and
   // ply): leftPath shows there, once.
   let resumedLeft = $state<{ code: string; ply: number } | null>(null);
+  // The room whose tutorial completion card is open, or null.
+  let doneRoom = $state<string | null>(null);
   // The board token whose sheet is open (a tap on a board token while no
   // token pick is pending), kept while the sheet closes.
   let tokenOpen = $state(false);
@@ -489,8 +493,23 @@
   }
   const cardNote = $derived(noteFor('card-sheet'));
   const draftNote = $derived(noteFor('draft-sheet'));
-  // First-time tips wait while a coach step is due, and through the guided part.
-  const tipsQuiet = $derived(!!coach || (tutorial?.status === 'guided' && !tutorialPaused));
+  // The completion card is due once per room when the tutorial completes
+  // in play (Age II), with nothing else on screen; it waits for the move
+  // summary, the presenter and any modal (checked in the DOM, below). A
+  // game over (a fast finish, or a forfeit) shows no card.
+  const doneDue = $derived(
+    !!frame &&
+      !!view &&
+      tutorial?.status === 'complete' &&
+      view.phase !== 'gameOver' &&
+      !tips.isCompleted(frame.code)
+  );
+  const doneReady = $derived(doneDue && presenter.idle && !summaryOpen && !showPass);
+  // First-time tips wait while a coach step is due, through the guided part
+  // and until the completion card has shown (it marks newAge seen).
+  const tipsQuiet = $derived(
+    !!coach || (tutorial?.status === 'guided' && !tutorialPaused) || doneDue
+  );
 
   // On wide screens, the viewer's own column (in a fixed hot-seat board the
   // player to move may sit on the far side), so the mover's city stays in view.
@@ -718,6 +737,44 @@
     if (!frame || !view) return;
     tips.resume(frame.code);
     resumedLeft = frame.tutorial?.left ? { code: frame.code, ply: view.ply } : null;
+  }
+
+  // The completion card opens when no modal is left (the age-start sheet,
+  // a first-time tip). DOM only: the observer callback writes the state.
+  $effect(() => {
+    if (!doneReady || !frame) return;
+    const code = frame.code;
+    let raf = 0;
+    const check = (): void => {
+      raf = 0;
+      if (modalOpen(document)) return;
+      doneRoom = code;
+      tips.markCompleted(code);
+      tips.markSeen('newAge');
+    };
+    const schedule = (): void => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['open']
+    });
+    schedule();
+    return () => {
+      observer.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  });
+
+  /** The completion card's New game: Home with the vs-AI sheet open. */
+  function tutorialNewGame(): void {
+    doneRoom = null;
+    // The query rides on the resolved Home path.
+    // eslint-disable-next-line svelte/no-navigation-without-resolve
+    void goto(`${resolve('/')}?play=ai`);
   }
 
   /** Sends the forfeit the confirm step agreed to. */
@@ -1196,6 +1253,16 @@
   active={coachActive}
   onnext={coachNext}
   onpause={pauseTutorial}
+/>
+
+<TutorialDone
+  open={!!frame && doneRoom === frame.code}
+  onkeep={() => (doneRoom = null)}
+  onnew={tutorialNewGame}
+  onhome={() => {
+    doneRoom = null;
+    onhome();
+  }}
 />
 
 <LiveRegion message={lastLines.join(' ')} />

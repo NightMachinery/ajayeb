@@ -16,11 +16,15 @@
   import { liveGame, savedRooms } from '$lib/session/app.svelte';
   import { loadName, saveName } from '$lib/session/identity';
   import { suggestName } from '$lib/ui/online';
+  import { tips } from '$lib/ui/tips.svelte';
+  import { page } from '$app/state';
+  import { onMount } from 'svelte';
   import type { BotLevel, SeatChoice } from '$lib/wire';
 
   const rooms = savedRooms();
 
-  let aiOpen = $state(false);
+  // ?play=ai (the tutorial's New game) opens the vs-AI sheet.
+  let aiOpen = $state(page.url.searchParams.get('play') === 'ai');
   let hotseatOpen = $state(false);
   let onlineOpen = $state(false);
   let joinOpen = $state(false);
@@ -38,6 +42,32 @@
     const code = await liveGame().session.create({ mode: 'ai', bot: opts.bot, seat: opts.seat });
     aiOpen = false;
     await toRoom(code);
+  }
+
+  /** The tutorial: a guided ai room against the Easy bot, from seat 0. */
+  async function startTutorial(): Promise<void> {
+    const code = await liveGame().session.create({
+      mode: 'ai',
+      bot: 'easy',
+      seat: 0,
+      tutorial: true
+    });
+    aiOpen = false;
+    await toRoom(code);
+  }
+
+  // The query is dropped once read, so a reload does not open it again.
+  onMount(() => {
+    if (page.url.searchParams.has('play')) {
+      void goto(resolve('/'), { replaceState: true, keepFocus: true, noScroll: true });
+    }
+  });
+
+  /** Home's offer and row: a failure leaves the player on Home. */
+  function tutorialFromHome(): void {
+    startTutorial().catch((err: unknown) => {
+      if (import.meta.env.DEV) console.warn('tutorial: create failed', err);
+    });
   }
 
   async function startHotseat(opts: { names: [string, string] }) {
@@ -87,9 +117,13 @@
   onPlayOnline={() => (onlineOpen = true)}
   onJoinCode={() => (joinOpen = true)}
   onSettings={() => (settingsOpen = true)}
+  tutorialOffer={rooms.list.length === 0 && tips.value.tutorial.offer === 'new'}
+  tutorialDone={tips.value.tutorial.done}
+  onTutorial={tutorialFromHome}
+  onDeclineTutorial={() => tips.declineOffer()}
 />
 
-<NewGameSheet bind:open={aiOpen} onStart={startAi} />
+<NewGameSheet bind:open={aiOpen} onStart={startAi} onTutorial={tutorialFromHome} />
 <HotseatSheet bind:open={hotseatOpen} onStart={startHotseat} />
 
 <OnlineSheet

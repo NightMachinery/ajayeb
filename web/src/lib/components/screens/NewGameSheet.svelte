@@ -4,7 +4,8 @@
   // component needs no live connection to render (gallery-safe). The game's
   // hints and its "Allow undo" switch start from this device's last choice
   // and are saved there on Start, where the Session's create reads them;
-  // the server then fixes undo for the game's life.
+  // the server then fixes undo for the game's life. With `onTutorial`, a
+  // link under Start offers the tutorial instead.
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { t, type MessageKey } from '$lib/i18n';
   import Button from '$lib/components/shell/Button.svelte';
@@ -19,9 +20,11 @@
   interface Props {
     open?: boolean;
     onStart: (opts: { bot: BotLevel; seat: SeatChoice }) => Promise<void> | void;
+    /** Starts the tutorial; the link is left out without it. */
+    onTutorial?: () => void;
   }
 
-  let { open = $bindable(false), onStart }: Props = $props();
+  let { open = $bindable(false), onStart, onTutorial }: Props = $props();
 
   const titleId = 'newgame-sheet-title';
 
@@ -140,5 +143,15 @@
     <Button type="submit" variant="primary" full disabled={starting}>
       {t('home.ai.start')}
     </Button>
+    {#if onTutorial}
+      <button
+        type="button"
+        class="mx-auto -mt-2 flex min-h-11 items-center rounded-control px-3 text-sm font-semibold text-fg underline decoration-gild underline-offset-2"
+        data-control="ai-tutorial"
+        onclick={onTutorial}
+      >
+        {t('home.ai.tutorialLink')}
+      </button>
+    {/if}
   </form>
 </Sheet>

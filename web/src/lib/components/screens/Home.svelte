@@ -15,11 +15,18 @@
   // 360 x 740 phone, and on a short landscape screen (where split applies
   // too, so short wins with !) it is no taller than the star it replaces,
   // so the tagline stays on screen.
+  //
+  // The tutorial (the tutorial design, section 2.5): with `tutorialOffer`,
+  // the first-launch offer panel sits above the mode buttons (it is inline,
+  // so it swallows nothing), and with `onTutorial` a quiet Learn to play row
+  // sits under them ("play it again" once `tutorialDone`). A saved tutorial
+  // room continues as "Tutorial".
   import { resolve } from '$app/paths';
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId } from '$lib/art/lookup';
   import Bot from '@lucide/svelte/icons/bot';
   import Globe from '@lucide/svelte/icons/globe';
+  import GraduationCap from '@lucide/svelte/icons/graduation-cap';
   import KeyRound from '@lucide/svelte/icons/key-round';
   import Monitor from '@lucide/svelte/icons/monitor';
   import Moon from '@lucide/svelte/icons/moon';
@@ -30,6 +37,7 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
   import { theme, THEME_PREFS } from '$lib/ui/theme.svelte';
+  import TutorialOffer from '../tutorial/TutorialOffer.svelte';
 
   const PUBLISHER_URL = 'https://www.rprod.com/en/games/7-wonders-duel';
   const SOURCE_URL = 'https://github.com/NightMachinery/ajayeb';
@@ -44,10 +52,29 @@
     /** Opens the join-by-code sheet; the link shows only when given. */
     onJoinCode?: () => void;
     onSettings: () => void;
+    /** Shows the first-launch tutorial offer (needs onTutorial). */
+    tutorialOffer?: boolean;
+    /** This device finished the tutorial: the row offers it again. */
+    tutorialDone?: boolean;
+    /** Starts the tutorial; the offer and the row show only when given. */
+    onTutorial?: () => void;
+    /** The offer's No thanks. */
+    onDeclineTutorial?: () => void;
   }
 
-  let { rooms, onContinue, onPlayAi, onPassAndPlay, onPlayOnline, onJoinCode, onSettings }: Props =
-    $props();
+  let {
+    rooms,
+    onContinue,
+    onPlayAi,
+    onPassAndPlay,
+    onPlayOnline,
+    onJoinCode,
+    onSettings,
+    tutorialOffer = false,
+    tutorialDone = false,
+    onTutorial,
+    onDeclineTutorial
+  }: Props = $props();
   // Unique per instance: the gallery shows Home more than once on a page.
   const uid = $props.id();
 
@@ -192,6 +219,15 @@
       </header>
 
       <div class="mt-8 short:mt-4 split:mt-0 split:w-full split:max-w-md split:justify-self-end">
+        {#if tutorialOffer && onTutorial}
+          <div class="mb-3">
+            <TutorialOffer
+              botName={t('game.persona.easy')}
+              onstart={onTutorial}
+              ondecline={() => onDeclineTutorial?.()}
+            />
+          </div>
+        {/if}
         {#if continueRooms.length > 0}
           <section class="mb-3" aria-labelledby="{uid}-continue">
             <h2 id="{uid}-continue" class="sr-only">{t('home.continueLabel')}</h2>
@@ -206,7 +242,7 @@
                     <span class="flex min-w-0 flex-col gap-0.5">
                       <span class="font-semibold"
                         >{t('home.continueEntry', {
-                          mode: t(MODE_LABEL[room.mode]),
+                          mode: t(room.tutorial ? 'home.mode.tutorial' : MODE_LABEL[room.mode]),
                           code: room.code
                         })}</span
                       >
@@ -262,6 +298,25 @@
               </li>
             {/each}
           </ul>
+          {#if onTutorial}
+            <button
+              type="button"
+              class="mt-3 flex min-h-12 w-full items-center gap-3 rounded-control border border-dashed border-rule-strong px-4 py-2 text-start text-fg hover:bg-panel-sunken short:mt-2"
+              data-control="home-tutorial"
+              data-tutorial-replay={tutorialDone ? '' : undefined}
+              onclick={onTutorial}
+            >
+              <GraduationCap class="shrink-0 text-accent" size={20} aria-hidden="true" />
+              <span class="flex min-w-0 flex-col">
+                <span class="text-sm font-semibold"
+                  >{tutorialDone ? t('home.tutorialDone') : t('home.tutorial')}</span
+                >
+                {#if !tutorialDone}
+                  <span class="text-xs text-fg-muted">{t('home.tutorialHint')}</span>
+                {/if}
+              </span>
+            </button>
+          {/if}
           {#if onJoinCode}
             <button
               type="button"

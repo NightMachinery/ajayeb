@@ -23,6 +23,8 @@ export interface SavedRoom {
   claim?: string;
   bot?: BotLevel;
   age?: number;
+  /** A tutorial room (Home labels it "Tutorial"); absent for any other. */
+  tutorial?: true;
 }
 
 const MODES: readonly string[] = ['online', 'hotseat', 'ai'];
@@ -46,7 +48,7 @@ function entry(
   mode: Mode,
   lastSeen: number,
   claim?: string,
-  details: { bot?: unknown; age?: unknown } = {}
+  details: { bot?: unknown; age?: unknown; tutorial?: unknown } = {}
 ): SavedRoom {
   const item: SavedRoom =
     claim === undefined ? { code, mode, lastSeen } : { code, mode, lastSeen, claim };
@@ -65,6 +67,7 @@ function entry(
   ) {
     item.age = details.age;
   }
+  if (mode === 'ai' && details.tutorial === true) item.tutorial = true;
   return item;
 }
 
@@ -122,9 +125,14 @@ export class SavedRooms {
   }
 
   /** Stores the latest server-sent summary without moving the room. */
-  updateDetails(code: string, details: Pick<SavedRoom, 'bot' | 'age'>): void {
+  updateDetails(code: string, details: Pick<SavedRoom, 'bot' | 'age' | 'tutorial'>): void {
     const room = this.list.find((r) => r.code === code);
-    if (!room || (room.bot === details.bot && room.age === details.age)) return;
+    if (
+      !room ||
+      (room.bot === details.bot && room.age === details.age && room.tutorial === details.tutorial)
+    ) {
+      return;
+    }
     this.#save(
       this.list.map((r) =>
         r.code === code ? entry(r.code, r.mode, r.lastSeen, r.claim, details) : r
