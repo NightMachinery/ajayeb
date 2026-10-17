@@ -42,7 +42,7 @@ export const choices = {
   'choices.discard.empty': 'هیچ کارت کنارگذاشته‌ای نیست.',
 
   // Progress tokens: a science pair, and the Great Library.
-  'choices.token.title': 'یک نشان پیشرفت برگزینید',
+  'choices.token.title': 'انتخاب نشان پیشرفت',
   'choices.token.intro': 'هر جفت نماد علمی یکسان یک نشان پیشرفت از صفحه‌ی بازی به شما می‌دهد.',
   'choices.token.confirm': 'برداشتن {token}',
   'choices.token.list': 'نشان‌های پیشرفت برای انتخاب',
