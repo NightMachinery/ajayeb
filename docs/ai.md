@@ -8,6 +8,8 @@ A bot never receives the real game state. It receives an `engine.Observation` of
 
 Bots are deterministic. A bot's random numbers come from its seed and the observation, never from earlier calls, so the same bot, observation and iteration budget give the same move every time, whatever the number of search workers and however the goroutines are scheduled. A wall-clock limit is the one thing that makes a bot's play depend on the machine. The room seeds its bot from the room seed, so a game against a bot can be replayed.
 
+**Tutorial rooms.** In a tutorial room (the guided first game, [architecture.md](architecture.md#tutorial-rooms)) the bot seat is Easy, but while the game's action log follows the tutorial script, the bot does not search: the room plays the script's next key through a bot that returns it at once, with the usual think delay and the same legality check as any bot answer. As soon as the log leaves the script, or the script is over, the room asks the Easy bot as in any other room. An undo back onto the script brings the scripted replies back, because "on the script" is worked out from the log.
+
 ## The four levels
 
 The rooms offer four levels: Random, Easy, Medium and Hard. Two kinds of search sit behind them.
