@@ -17,7 +17,8 @@
   import { onDestroy } from 'svelte';
   import GameScreen from '$lib/components/game/GameScreen.svelte';
   import RoomError from '$lib/components/screens/RoomError.svelte';
-  import { t } from '$lib/i18n';
+  import { i18n, t } from '$lib/i18n';
+  import { createFrameReadiness } from '$lib/ui/frame-readiness';
   import { liveGame, savedRooms } from '$lib/session/app.svelte';
   import { claimFragment, parseClaimFragment } from '$lib/session/claim';
   import { setGameContext } from '$lib/session/context';
@@ -52,22 +53,12 @@
 
   onDestroy(() => session.leave());
 
-  // Screenshots wait for data-ready on <html>: set once a state is on
-  // screen and the fonts have loaded. DOM only: it writes an attribute,
-  // never state.
+  // Screenshots require the current idle frame, loaded fonts and a rAF stamp.
+  // Reuse settled font readiness without forcing layout on every frame.
+  const markFrameReady = createFrameReadiness();
   $effect(() => {
     if (!presenter.frame || !presenter.idle) return;
-    const root = document.documentElement;
-    let live = true;
-    void document.fonts.ready.then(() =>
-      requestAnimationFrame(() => {
-        if (live) root.dataset['ready'] = '1';
-      })
-    );
-    return () => {
-      live = false;
-      delete root.dataset['ready'];
-    };
+    return markFrameReady(document.documentElement, document.fonts, i18n.locale);
   });
 
   // The server's answer to a rematch this player asked for: its room's

@@ -1377,3 +1377,5 @@ guided lesson into Age I free play, asserts that no coach is showing, and opens 
 Workshop to verify that an unbuilt Mausoleum does not introduce advice yet.
 Focused hint tests retain ordinary discard advice when Mausoleum explanations
 are hidden. Conditional sentences remain in each locale's message table.
+
+The room screenshot barrier retains its font-ready promise only after all registered font faces settle. New faces, pending loads and locale changes recheck font readiness. A later load clears the current stamp, and a stale presented-frame effect cancels its pending animation frame. This barrier is separate from the input-ready hook and the animation performance windows.
