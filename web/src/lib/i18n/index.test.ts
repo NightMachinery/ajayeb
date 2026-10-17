@@ -17,8 +17,22 @@ import {
   pluralCategory,
   selectPlural,
   stripBidiMarks,
-  t
+  t,
+  type MessageKey
 } from './index';
+
+/** Runs fn with keys taken out of the Persian table, as if they were not
+ *  translated yet, so the English fallback can be tested on a complete table. */
+function untranslated(keys: readonly MessageKey[], fn: () => void): void {
+  const table = fa as Record<string, unknown>;
+  const saved = keys.map((key) => [key, table[key]] as const);
+  for (const key of keys) delete table[key];
+  try {
+    fn();
+  } finally {
+    for (const [key, value] of saved) if (value !== undefined) table[key] = value;
+  }
+}
 
 describe('t', () => {
   it('returns a plain message', () => {
@@ -144,7 +158,7 @@ describe('formatSigned', () => {
   });
 });
 
-describe('the Persian stub table', () => {
+describe('the Persian table', () => {
   afterEach(() => i18n.set('en'));
 
   const START = '\u200e\u2066';
@@ -168,40 +182,49 @@ describe('the Persian stub table', () => {
 
   it('falls back to English per key, marked left to right', () => {
     i18n.set('fa');
-    expect(fa['game.card.faceDown']).toBeUndefined();
-    expect(t('game.card.faceDown')).toBe(START + en['game.card.faceDown'] + END);
-    // A fallback's plural form follows English rules; its digits stay Persian.
-    expect(t('debug.hiddenTokens', { count: 0 })).toBe(START + '۰ hidden tokens' + END);
-    expect(t('debug.hiddenTokens', { count: 1 })).toBe(START + '۱ hidden token' + END);
+    untranslated(['game.card.faceDown', 'debug.hiddenTokens'], () => {
+      expect(t('game.card.faceDown')).toBe(START + en['game.card.faceDown'] + END);
+      // A fallback's plural form follows English rules; its digits stay Persian.
+      expect(t('debug.hiddenTokens', { count: 0 })).toBe(START + '۰ hidden tokens' + END);
+      expect(t('debug.hiddenTokens', { count: 1 })).toBe(START + '۱ hidden token' + END);
+    });
+    expect(t('game.card.faceDown')).toBe(fa['game.card.faceDown']);
   });
 
   it('joins words left in English the English way', () => {
     i18n.set('fa');
-    const words = [t('card.resource.glass'), t('card.resource.papyrus')];
-    expect(words.every(isFallbackText)).toBe(true);
+    untranslated(['card.resource.glass', 'card.resource.papyrus'], () => {
+      const words = [t('card.resource.glass'), t('card.resource.papyrus')];
+      expect(words.every(isFallbackText)).toBe(true);
+    });
+    expect(isFallbackText(t('card.resource.glass'))).toBe(false);
     expect(isFallbackText(t('home.settings.title'))).toBe(false);
   });
 
   it('ends an English fallback sentence inside its marks', () => {
     i18n.set('fa');
-    const english = t('card.effect.buildFromDiscard');
-    expect(fullStop(english)).toBe(START + en['card.effect.buildFromDiscard'] + '.' + END);
-    expect(fullStop(t('home.settings.title'))).toBe('تنظیمات.');
-    expect(stripBidiMarks(fullStop(english))).toBe(en['card.effect.buildFromDiscard'] + '.');
+    untranslated(['card.effect.buildFromDiscard'], () => {
+      const english = t('card.effect.buildFromDiscard');
+      expect(fullStop(english)).toBe(START + en['card.effect.buildFromDiscard'] + '.' + END);
+      expect(fullStop(t('home.settings.title'))).toBe('تنظیمات.');
+      expect(stripBidiMarks(fullStop(english))).toBe(en['card.effect.buildFromDiscard'] + '.');
+    });
   });
 
   it('joins bilingual sentences without moving fallback punctuation or doubling stops', () => {
     i18n.set('fa');
-    const english = t('card.effect.buildFromDiscard');
-    const ended = fullStop(english);
-    expect(sentences([english, ended, ''])).toBe(ended + ' ' + ended);
-    expect(joinPhrases([ended, t('home.settings.title')], 'text.join')).toBe(ended + ' تنظیمات');
-    expect(fullStop(labelDetail(t('home.settings.title'), english))).toBe(
-      labelDetail(t('home.settings.title'), english).slice(0, -END.length) + '.' + END
-    );
-    expect(stripBidiMarks(labelDetail(t('home.settings.title'), english))).toBe(
-      'تنظیمات: ' + en['card.effect.buildFromDiscard']
-    );
+    untranslated(['card.effect.buildFromDiscard'], () => {
+      const english = t('card.effect.buildFromDiscard');
+      const ended = fullStop(english);
+      expect(sentences([english, ended, ''])).toBe(ended + ' ' + ended);
+      expect(joinPhrases([ended, t('home.settings.title')], 'text.join')).toBe(ended + ' تنظیمات');
+      expect(fullStop(labelDetail(t('home.settings.title'), english))).toBe(
+        labelDetail(t('home.settings.title'), english).slice(0, -END.length) + '.' + END
+      );
+      expect(stripBidiMarks(labelDetail(t('home.settings.title'), english))).toBe(
+        'تنظیمات: ' + en['card.effect.buildFromDiscard']
+      );
+    });
   });
 
   it('leaves English untouched', () => {

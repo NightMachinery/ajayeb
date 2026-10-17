@@ -11,9 +11,10 @@ describe('longestWord', () => {
   });
 
   it('does not count the direction marks of a right-to-left locale', () => {
-    const english = longestWord(t('card.name.workshop'));
     i18n.set('fa');
-    expect(t('card.name.workshop')).not.toBe('Workshop');
-    expect(longestWord(t('card.name.workshop'))).toBe(english);
+    // The age numerals stay English in Persian, so t() marks them left to right.
+    const numeral = t('card.ageNumeral.3');
+    expect(numeral).not.toBe('III');
+    expect(longestWord(numeral)).toBe(3);
   });
 });
