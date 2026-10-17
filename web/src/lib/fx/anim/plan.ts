@@ -537,7 +537,16 @@ export function planTimeline(next: PlanFrame, prev: PlanFrame | null): Timeline 
       ? { age: opened.age ?? 0, fade: DEAL_FADE_MS }
       : events.some((e) => e.kind === 'starterChosen')
         ? { age: next.view?.age ?? 0, fade: 0 }
-        : null;
+        : // The Presenter may coalesce a zero-delay burst before capture.
+          // Its final live snapshot still visibly enters this age, even if
+          // the final draft/starter event was in a dropped frame.
+          next.view?.phase === 'play' &&
+            (next.view.age ?? 0) > 0 &&
+            (prev.view?.phase === 'wonderDraft' ||
+              prev.view?.phase === 'chooseStarter' ||
+              (prev.view?.age !== undefined && next.view.age !== prev.view.age))
+          ? { age: next.view.age ?? 0, fade: prev.view?.phase === 'play' ? DEAL_FADE_MS : 0 }
+          : null;
   if (age) {
     const cards = next.view?.structure?.filter((s) => s.state !== 'empty').length ?? DEAL_CARDS;
     steps.push({

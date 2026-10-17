@@ -27,7 +27,7 @@ import {
   type FrameRecord
 } from './anim/records';
 import { planCues, type Cue, type CueFrame } from './cues';
-import { hapticsSupported, vibrate } from './haptics';
+import { scheduleHaptic } from './haptics';
 import { play, unlockAudio } from './sfx';
 
 export { CUES, type Cue } from './cues';
@@ -40,6 +40,8 @@ export interface RecordedCue {
   delayMs: number;
   /** The version of the frame that made it. */
   version: number;
+  /** Whether the cue belongs to a visual replay rather than a new frame. */
+  replay: boolean;
 }
 
 export interface AjayebFxHook {
@@ -100,23 +102,27 @@ function install(): void {
   window.addEventListener('keydown', onGesture, { capture: true, passive: true });
 }
 
-/** Plays the sound and haptics of the frame `next`, shown after `prev`. */
-export function playFrameFx(next: CueFrame, prev: CueFrame | null): void {
+/** Shared sound playback and recording for live frames and visual replays. */
+export function playRecordedCues(
+  cues: readonly { cue: Cue; delayMs: number }[],
+  version: number,
+  replay = false
+): void {
   install();
+  const { sound, soundVolume } = settings.value;
+  if (!sound) return;
+  for (const { cue, delayMs } of cues) {
+    push(recordedCues, { cue, delayMs, version, replay });
+    play(cue, { delayMs, volume: soundVolume });
+  }
+}
+
+/** Plays a frame's cues and schedules its single vibration at the matching step. */
+export function playFrameFx(next: CueFrame, prev: CueFrame | null): void {
   const plan = planCues(next, prev);
-  const planned = plannedFor(next.version);
-  const cues = planned ? retimeCues(plan.cues, planned) : plan.cues;
-  const { sound, soundVolume, haptics } = settings.value;
-  if (sound) {
-    for (const { cue, delayMs } of cues) {
-      push(recordedCues, { cue, delayMs, version: next.version });
-      play(cue, { delayMs, volume: soundVolume });
-    }
-  }
-  if (haptics && plan.haptic && hapticsSupported()) {
-    push(recordedHaptics, [...plan.haptic]);
-    vibrate(plan.haptic);
-  }
+  const timeline = plannedFor(next.version);
+  playRecordedCues(timeline ? retimeCues(plan.cues, timeline) : plan.cues, next.version);
+  scheduleHaptic(plan.haptic, timeline, (pattern) => push(recordedHaptics, [...pattern]));
 }
 
 /** Installs the gesture unlock early (the Settings screen calls it). */

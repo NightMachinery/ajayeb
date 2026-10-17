@@ -30,6 +30,7 @@ import {
   draftKeys,
   findPosition,
   fxRecords,
+  fxCues,
   inputAt,
   longTasks,
   motionLog,
@@ -501,6 +502,13 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
 
     // At normal speed: the move's animations play again, the screen stays.
     await useSettings(page, 'normal');
+    await page.evaluate(() => {
+      const current = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}') as Record<
+        string,
+        unknown
+      >;
+      localStorage.setItem('ajayeb:settings', JSON.stringify({ ...current, sound: true }));
+    });
     driver = await openPosition(page, baseURL, at);
     await driver.waitTurn();
     await openLog(driver);
@@ -512,6 +520,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
     const before = await screenDom(page);
     const version = (await driver.snapshot()).version;
     const played = (await fxRecords(page)).anims.length;
+    const cueCount = (await fxCues(page)).length;
     await openLog(driver);
     await expect(control).toBeEnabled();
     await control.click();
@@ -520,6 +529,10 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       .poll(async () => (await fxRecords(page)).anims.length, { message: 'the replay animated' })
       .toBeGreaterThan(played);
     const kinds = new Set((await fxRecords(page)).anims.slice(played).map((a) => a.kind));
+    const replayCues = (await fxCues(page)).slice(cueCount);
+    expect(replayCues.length).toBeGreaterThan(0);
+    expect(replayCues.every((cue) => cue.replay && cue.version === version)).toBe(true);
+    expect(replayCues.map((cue) => cue.cue)).toContain('drum');
     expect([...kinds], 'the replay played the looting').toContain('loot');
     await waitSettled(page);
     expect((await driver.snapshot()).version, 'the replay sent nothing').toBe(version);

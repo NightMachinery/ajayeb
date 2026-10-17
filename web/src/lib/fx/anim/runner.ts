@@ -36,11 +36,12 @@
 import { mount, unmount } from 'svelte';
 import { cardBySlug } from '$lib/catalog';
 import { formatSigned } from '$lib/i18n';
-import { settings } from '$lib/ui/settings.svelte';
 import { scaleMs, type AnimationSpeed } from '$lib/ui/motion.svelte';
 import CardFace from '$lib/components/card/CardFace.svelte';
 import { planCues, type PlannedCue } from '../cues';
-import { play as playCue } from '../sfx';
+import { playRecordedCues } from '../index';
+import { cancelHaptic } from '../haptics';
+import { DealCarry } from './backlog';
 import { particleOffset, victoryBanner } from './banner';
 import { CounterTween } from './counter';
 import {
@@ -218,6 +219,7 @@ export class AnimRunner {
   #runs: Runs;
   #topUsers = 0;
   #kept: Kept | null = null;
+  #deal = new DealCarry();
 
   constructor(opts: AnimRunnerOptions) {
     this.#speed = opts.speed;
@@ -238,12 +240,18 @@ export class AnimRunner {
 
   /** Ends every running animation now, in its final state, and lets input go. */
   finish(): void {
+    this.#deal.clear();
+    this.#finishRuns();
+  }
+
+  #finishRuns(): void {
+    cancelHaptic();
     this.#runs.finishAll();
   }
 
   /** The Presenter's capture hook: finishes what runs, then reads the old DOM. */
   capture(next: PlanFrame, prev: PlanFrame | null): Captured {
-    this.finish();
+    this.#finishRuns();
     const record = recordFrame({
       version: next.version,
       swapAt: this.#now(),
@@ -257,11 +265,12 @@ export class AnimRunner {
     // A move that plays nothing withdraws the replay; a frame with no
     // events (a bot starting to think, a presence change) keeps it.
     const moved = next.events.length > 0 || !prev;
-    if (speed === 'off' || !root || !layer || this.#backlog() > 0) {
+    if (speed === 'off' || !root || !layer) {
+      this.#deal.clear();
       if (moved) this.#withdraw();
       return this.#none(record);
     }
-    const plan = planTimeline(next, prev);
+    const plan = this.#deal.plan(next, prev, planTimeline(next, prev), this.#backlog());
     const timeline = scaleTimeline(plan, speed);
     if (timeline.steps.length === 0) {
       if (moved) this.#withdraw();
@@ -439,12 +448,7 @@ export class AnimRunner {
       counters: new Map()
     };
     void this.play(cap);
-    const { sound, soundVolume } = settings.value;
-    if (sound) {
-      for (const { cue, delayMs } of retimeCues(kept.cues, timeline)) {
-        playCue(cue, { delayMs, volume: soundVolume });
-      }
-    }
+    playRecordedCues(retimeCues(kept.cues, timeline), kept.version, true);
     return true;
   }
 

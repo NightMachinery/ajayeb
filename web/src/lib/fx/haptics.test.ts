@@ -1,11 +1,13 @@
 // Haptics timing (M10.animations-events): a vibration starts with its step
 // in the timeline the runner plays for the frame on screen.
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { setPlanned } from './anim/records';
+import { latestPlanned, setPlanned } from './anim/records';
 import { planTimeline, TAKE_MS, PAWN_STEP_MS, EMPTY_TIMELINE } from './anim/plan';
 import { scaleTimeline } from './anim/speed';
 import { HAPTIC_LOOT, HAPTIC_MILITARY, HAPTIC_TAKE } from './cues';
-import { hapticDelay, vibrate } from './haptics';
+import { cancelHaptic, hapticDelay, scheduleHaptic } from './haptics';
+import { settings } from '$lib/ui/settings.svelte';
+import { AnimRunner } from './anim/runner';
 import type { GameEvent } from '$lib/wire';
 
 function ev(kind: GameEvent['kind'], fields: Partial<GameEvent> = {}): GameEvent {
@@ -36,24 +38,59 @@ const next = {
 };
 
 afterEach(() => {
+  cancelHaptic();
+  settings.update({ haptics: true });
   vi.useRealTimers();
   vi.unstubAllGlobals();
   setPlanned(0, EMPTY_TIMELINE);
 });
 
 describe('haptics timing', () => {
+  it.each(['finish', 'hurry/clear/undo capture'])('cancels a delayed vibration on %s', (way) => {
+    vi.useFakeTimers();
+    const buzz = vi.fn();
+    vi.stubGlobal('navigator', { vibrate: buzz });
+    setPlanned(11, planTimeline(next, prev));
+    scheduleHaptic(HAPTIC_LOOT, latestPlanned(), () => {});
+    const runner = new AnimRunner({ speed: () => 'normal', root: () => null });
+    if (way === 'finish') runner.finish();
+    else runner.capture(next, null);
+    vi.runAllTimers();
+    expect(buzz).not.toHaveBeenCalled();
+  });
+
+  it.each(['switch off then on', 'timeout recheck'])(
+    'does not play a disabled vibration: %s',
+    (way) => {
+      vi.useFakeTimers();
+      const buzz = vi.fn();
+      const record = vi.fn();
+      vi.stubGlobal('navigator', { vibrate: buzz });
+      scheduleHaptic(HAPTIC_LOOT, planTimeline(next, prev), record);
+      if (way === 'switch off then on') {
+        settings.update({ haptics: false });
+        settings.update({ haptics: true });
+      } else settings.value.haptics = false;
+      vi.runAllTimers();
+      expect(buzz).not.toHaveBeenCalled();
+      expect(record).not.toHaveBeenCalled();
+    }
+  );
+
   it('times each pattern by its step, at the speed the frame plays', () => {
     setPlanned(11, planTimeline(next, prev));
-    expect(hapticDelay(HAPTIC_TAKE)).toBe(TAKE_MS);
-    expect(hapticDelay(HAPTIC_MILITARY)).toBe(TAKE_MS);
-    expect(hapticDelay(HAPTIC_LOOT)).toBe(TAKE_MS + 2 * PAWN_STEP_MS);
+    expect(hapticDelay(HAPTIC_TAKE, latestPlanned())).toBe(TAKE_MS);
+    expect(hapticDelay(HAPTIC_MILITARY, latestPlanned())).toBe(TAKE_MS);
+    expect(hapticDelay(HAPTIC_LOOT, latestPlanned())).toBe(TAKE_MS + 2 * PAWN_STEP_MS);
     setPlanned(11, scaleTimeline(planTimeline(next, prev), 'relaxed'));
-    expect(hapticDelay(HAPTIC_LOOT)).toBe(Math.round((TAKE_MS + 2 * PAWN_STEP_MS) * 1.6));
+    expect(hapticDelay(HAPTIC_LOOT, latestPlanned())).toBe(
+      Math.round((TAKE_MS + 2 * PAWN_STEP_MS) * 1.6)
+    );
   });
 
   it('with nothing animating, it vibrates at once', () => {
     setPlanned(11, EMPTY_TIMELINE);
-    expect(hapticDelay(HAPTIC_LOOT)).toBe(0);
+    expect(hapticDelay(HAPTIC_LOOT, latestPlanned())).toBe(0);
   });
 
   it('vibrates when the step comes, and a newer vibration replaces a waiting one', () => {
@@ -61,13 +98,13 @@ describe('haptics timing', () => {
     const calls: number[][] = [];
     vi.stubGlobal('navigator', { vibrate: (p: number[]) => calls.push(p) });
     setPlanned(11, planTimeline(next, prev));
-    vibrate(HAPTIC_LOOT);
+    scheduleHaptic(HAPTIC_LOOT, latestPlanned(), () => {});
     expect(calls).toEqual([]);
     vi.advanceTimersByTime(TAKE_MS + 2 * PAWN_STEP_MS);
     expect(calls).toEqual([[...HAPTIC_LOOT]]);
-    vibrate(HAPTIC_TAKE);
+    scheduleHaptic(HAPTIC_TAKE, latestPlanned(), () => {});
     setPlanned(12, EMPTY_TIMELINE);
-    vibrate(HAPTIC_MILITARY);
+    scheduleHaptic(HAPTIC_MILITARY, latestPlanned(), () => {});
     vi.advanceTimersByTime(1000);
     expect(calls).toEqual([[...HAPTIC_LOOT], [...HAPTIC_MILITARY]]);
   });

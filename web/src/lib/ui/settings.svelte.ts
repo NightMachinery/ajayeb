@@ -8,6 +8,7 @@
 // saved room, so an older or newer build sharing the same browser never
 // crashes on the other's shape.
 
+import { cancelHaptic } from '$lib/fx/haptic-pending';
 import { i18n, isLocale, type Locale } from '$lib/i18n/locale.svelte';
 
 export const ANIMATION_SPEEDS = ['normal', 'fast', 'relaxed', 'off'] as const;
@@ -191,6 +192,7 @@ export class SettingsStore {
   }
 
   #save(next: Settings): void {
+    if (!next.haptics) cancelHaptic();
     this.value = next;
     this.#applyLocale?.(next.locale);
     try {

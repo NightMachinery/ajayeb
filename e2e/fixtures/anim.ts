@@ -52,6 +52,7 @@ export interface AnimRecord {
 }
 
 interface FxHook {
+  cues(): { cue: string; delayMs: number; version: number; replay: boolean }[];
   frames(): FrameRecord[];
   anims(): AnimRecord[];
   clear(): void;
@@ -177,7 +178,13 @@ export async function openPosition(page: Page, origin: string, at: Position): Pr
     const res = await fetch(`${origin}/api/dev/rooms`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'ai', bot: 'easy', seed: at.seed, actions: at.keys })
+      body: JSON.stringify({
+        mode: 'ai',
+        bot: 'easy',
+        seed: at.seed,
+        ...(at.scenario ? { scenario: at.scenario } : {}),
+        actions: at.keys
+      })
     });
     const data = (await res.json()) as { ok?: boolean; path?: string };
     if (!data.ok || !data.path) throw new Error(`ai dev room: ${JSON.stringify(data)}`);
@@ -214,6 +221,13 @@ export async function playThrough(driver: GameDriver, key: string): Promise<void
   if (!choice) throw new Error(`${key} is not a choice: ${before.choices.map((c) => c.key)}`);
   await driver.perform({ flow: defaultFlow(before, choice), choice }, before);
   await driver.waitAdvance(before.version);
+}
+
+/** Sound cues recorded by live frames and visual replays. */
+export async function fxCues(page: Page): Promise<ReturnType<FxHook['cues']>> {
+  return page.evaluate(
+    () => (window as unknown as { __ajayebFx?: FxHook }).__ajayebFx?.cues() ?? []
+  );
 }
 
 /** The runner's records since the last clearFx(). */
