@@ -15,6 +15,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tutorial"
 )
 
 // fakeRooms records the specs it is asked for and answers with err, or a
@@ -79,6 +80,9 @@ func TestDevEndpointsAreOffByDefault(t *testing.T) {
 	if rec := do(t, h, http.MethodGet, "/api/dev/scenarios", nil); rec.Code != http.StatusNotFound {
 		t.Errorf("GET /api/dev/scenarios without DevEndpoints = %d, want 404", rec.Code)
 	}
+	if rec := do(t, h, http.MethodGet, "/api/dev/tutorial", nil); rec.Code != http.StatusNotFound {
+		t.Errorf("GET /api/dev/tutorial without DevEndpoints = %d, want 404", rec.Code)
+	}
 }
 
 func TestDevRoomSpecs(t *testing.T) {
@@ -118,6 +122,18 @@ func TestDevRoomSpecs(t *testing.T) {
 			"ai room, human on seat 1",
 			`{"mode":"ai","seed":"5","bot":"easy","seat":1}`,
 			room.Spec{Mode: store.ModeAI, Seats: [2]store.Seat{bot(store.BotEasy), open}, Seed: 5, Actions: []string{}},
+		},
+		{
+			"tutorial, with an actions prefix: the script's seed and options",
+			`{"mode":"ai","tutorial":true,"actions":["` + tutorial.Current.Entries[0].Key + `"]}`,
+			room.Spec{Mode: store.ModeAI, Seats: [2]store.Seat{open, bot(store.BotEasy)}, Seed: tutorial.Current.Seed,
+				Options: tutorial.Current.Options, Actions: []string{tutorial.Current.Entries[0].Key}, Tutorial: tutorial.Current.Name},
+		},
+		{
+			"tutorial naming its bot and seat",
+			`{"mode":"ai","tutorial":true,"bot":"easy","seat":0}`,
+			room.Spec{Mode: store.ModeAI, Seats: [2]store.Seat{open, bot(store.BotEasy)}, Seed: tutorial.Current.Seed,
+				Options: tutorial.Current.Options, Actions: []string{}, Tutorial: tutorial.Current.Name},
 		},
 		{
 			"options",
@@ -172,6 +188,14 @@ func TestDevRoomRefusals(t *testing.T) {
 		{"unknown option", `{"mode":"hotseat","options":{"firstPlayer":"seat9"}}`, 400, "bad-request"},
 		{"unknown scenario", `{"mode":"hotseat","scenario":"no-such-thing"}`, 400, "unknown-scenario"},
 		{"too large", `{"mode":"hotseat","actions":["` + strings.Repeat("a", maxDevBody) + `"]}`, 400, "bad-request"},
+		{"tutorial online", `{"mode":"online","tutorial":true}`, 400, "bad-request"},
+		{"tutorial hotseat", `{"mode":"hotseat","tutorial":true}`, 400, "bad-request"},
+		{"tutorial hard bot", `{"mode":"ai","bot":"hard","tutorial":true}`, 400, "bad-request"},
+		{"tutorial seat 1", `{"mode":"ai","seat":1,"tutorial":true}`, 400, "bad-request"},
+		{"tutorial seed", `{"mode":"ai","seed":"5","tutorial":true}`, 400, "bad-request"},
+		{"tutorial options", `{"mode":"ai","options":{"firstPlayer":"seat0"},"tutorial":true}`, 400, "bad-request"},
+		{"tutorial scenario", `{"mode":"ai","scenario":"mausoleum","tutorial":true}`, 400, "bad-request"},
+		{"tutorial not a bool", `{"mode":"ai","tutorial":"yes"}`, 400, "bad-request"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			rooms := &fakeRooms{}
@@ -259,6 +283,51 @@ func TestDevScenarios(t *testing.T) {
 	}
 }
 
+// TestDevTutorial checks GET /api/dev/tutorial: the current script in its
+// own JSON form, with ok, a decimal seed and no null anywhere.
+func TestDevTutorial(t *testing.T) {
+	h := newDevHandler(t, &fakeRooms{})
+	rec := do(t, h, http.MethodGet, "/api/dev/tutorial", nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d %s", rec.Code, rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "null") {
+		t.Errorf("the script has a null: %s", rec.Body.String())
+	}
+	var got map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	var want map[string]any
+	data, err := json.Marshal(tutorial.Current)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, &want); err != nil {
+		t.Fatal(err)
+	}
+	want["ok"] = true
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("GET /api/dev/tutorial = %v\nwant %v", got, want)
+	}
+	if got["seed"] != fmt.Sprint(tutorial.Current.Seed) || got["name"] != tutorial.Current.Name {
+		t.Errorf("seed %v name %v", got["seed"], got["name"])
+	}
+	entries, _ := got["entries"].([]any)
+	if len(entries) != len(tutorial.Current.Entries) {
+		t.Fatalf("%d entries, want %d", len(entries), len(tutorial.Current.Entries))
+	}
+	first, _ := entries[0].(map[string]any)
+	for _, k := range []string{"seat", "key", "lessons", "action"} {
+		if _, ok := first[k]; !ok {
+			t.Errorf("the first entry lacks %q: %v", k, first)
+		}
+	}
+	if rec := do(t, h, http.MethodPost, "/api/dev/tutorial", nil); rec.Code != http.StatusMethodNotAllowed {
+		t.Errorf("POST /api/dev/tutorial = %d, want 405", rec.Code)
+	}
+}
+
 // TestDevRoomsWithTheRealManager creates rooms through a real Manager: a
 // named scenario plus its trigger, a seed beyond a double's precision, and
 // an illegal action log.
@@ -302,6 +371,40 @@ func TestDevRoomsWithTheRealManager(t *testing.T) {
 		t.Errorf("stored seed %d scenario %q", f.Seed, f.Scenario)
 	}
 
+	// A tutorial room at a position of the script: its seed, options and
+	// name are the script's, the actions are applied as given.
+	sc := tutorial.Current
+	prefix := []string{}
+	for _, e := range sc.Entries[:8] {
+		prefix = append(prefix, e.Key)
+	}
+	prefixJSON, err := json.Marshal(prefix)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec = post(t, h, `{"mode":"ai","tutorial":true,"actions":`+string(prefixJSON)+`}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("tutorial: status %d %s", rec.Code, rec.Body.String())
+	}
+	created = decodeBody[devRoomResponse](t, rec)
+	if created.Seed != fmt.Sprint(sc.Seed) {
+		t.Errorf("tutorial seed = %q, want %d", created.Seed, sc.Seed)
+	}
+	snap, err = m.Snapshot(context.Background(), created.Code)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(snap.Actions, prefix) || snap.Seats[sc.Human].Kind != store.SeatKindOpen || snap.Seats[1-sc.Human].Bot != store.BotEasy {
+		t.Errorf("tutorial room = actions %q seats %+v", snap.Actions, snap.Seats)
+	}
+	f, err = st.PeekHeader(created.Code)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Seed != sc.Seed || f.Options != sc.Options || f.Tutorial != sc.Name {
+		t.Errorf("stored tutorial room: seed %d options %+v tutorial %q", f.Seed, f.Options, f.Tutorial)
+	}
+
 	rec = post(t, h, `{"mode":"ai","bot":"easy","actions":["construct:baths"]}`)
 	if rec.Code != http.StatusBadRequest || decodeBody[errorBody](t, rec).Code != "invalid-room" {
 		t.Errorf("an illegal action log: %d %s, want 400 invalid-room", rec.Code, rec.Body.String())
@@ -328,7 +431,7 @@ func TestDevEndpointsAnswerLoopbackOnly(t *testing.T) {
 		{"forwarded by a local proxy", "127.0.0.1:1234", http.Header{"X-Forwarded-For": {"192.0.2.1"}}},
 		{"forwarded (RFC 7239) by a local proxy", "[::1]:1234", http.Header{"Forwarded": {"for=192.0.2.1"}}},
 	} {
-		for _, target := range []string{"/api/dev/rooms", "/api/dev/scenarios"} {
+		for _, target := range []string{"/api/dev/rooms", "/api/dev/scenarios", "/api/dev/tutorial"} {
 			method := http.MethodGet
 			if target == "/api/dev/rooms" {
 				method = http.MethodPost

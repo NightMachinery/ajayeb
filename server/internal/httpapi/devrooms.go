@@ -17,6 +17,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tutorial"
 )
 
 // DevRooms creates a room directly from a Spec; *room.Manager satisfies it.
@@ -37,6 +38,10 @@ const maxDevBody = 64 << 10
 //     the human seat of a bot room, seat 0 and then seat 1 of an online
 //     room).
 //   - GET /api/dev/scenarios lists the named scenarios.
+//   - GET /api/dev/tutorial returns the tutorial script a new tutorial room
+//     plays (package tutorial), so tests read its order instead of copying
+//     it. POST /api/dev/rooms with tutorial true makes a tutorial room at
+//     any position of it.
 //
 // The body must be JSON (Content-Type application/json), so a page on
 // another site cannot post to it with a simple form or fetch. Both answer
@@ -98,6 +103,10 @@ type devRoomRequest struct {
 	Seat *int `json:"seat"`
 	// Options are the game's options; absent means the defaults.
 	Options *engine.Options `json:"options"`
+	// Tutorial makes a tutorial room (an ai room against the Easy bot, the
+	// human in the script's seat): the seed and options come from the
+	// script, so the request must not give them, nor a scenario.
+	Tutorial bool `json:"tutorial"`
 }
 
 // devRoomResponse answers a created room.
@@ -108,6 +117,13 @@ type devRoomResponse struct {
 	Seed     string     `json:"seed"` // decimal, so JavaScript keeps all 64 bits
 	Scenario string     `json:"scenario"`
 	Path     string     `json:"path"` // the page that plays the room
+}
+
+// devTutorialResponse is the tutorial script, as GET /api/dev/tutorial
+// answers it: the script's own JSON form (tutorial.Script), with ok.
+type devTutorialResponse struct {
+	OK bool `json:"ok"`
+	tutorial.Script
 }
 
 type devScenariosResponse struct {
@@ -215,6 +231,9 @@ func (d *devAPI) spec(req devRoomRequest) (room.Spec, error) {
 			errUnknownScenario, req.Scenario, strings.Join(engine.NamedScenarioNames(), ", "))
 	}
 
+	if req.Tutorial {
+		return tutorialSpec(req, spec)
+	}
 	switch req.Mode {
 	case store.ModeOnline, store.ModeHotseat:
 		if req.Bot != "" || req.Seat != nil {
@@ -238,6 +257,36 @@ func (d *devAPI) spec(req devRoomRequest) (room.Spec, error) {
 		return room.Spec{}, fmt.Errorf("unknown mode %q; use online, hotseat or ai", req.Mode)
 	}
 	return spec, nil
+}
+
+// tutorialSpec is spec for a tutorial room: the current script's seed and
+// options, its player's seat open and the Easy bot in the other.
+func tutorialSpec(req devRoomRequest, spec room.Spec) (room.Spec, error) {
+	sc := tutorial.Current
+	switch {
+	case req.Mode != store.ModeAI:
+		return room.Spec{}, fmt.Errorf("a tutorial room is mode ai, not %q", req.Mode)
+	case req.Bot != "" && req.Bot != store.BotEasy:
+		return room.Spec{}, fmt.Errorf("a tutorial room plays the easy bot, not %q", req.Bot)
+	case req.Seat != nil && *req.Seat != int(sc.Human):
+		return room.Spec{}, fmt.Errorf("a tutorial room's human is seat %d", sc.Human)
+	case req.Seed != nil || req.Options != nil || req.Scenario != "":
+		return room.Spec{}, errors.New("a tutorial room's seed and options come from its script, and it has no scenario")
+	}
+	spec.Tutorial = sc.Name
+	spec.Seed, spec.Options = sc.Seed, sc.Options
+	spec.Seats[sc.Human.Opp()] = store.Seat{Kind: store.SeatKindBot, Bot: store.BotEasy}
+	return spec, nil
+}
+
+// tutorialScript serves GET /api/dev/tutorial.
+func (d *devAPI) tutorialScript(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		writeError(w, http.StatusMethodNotAllowed, "method-not-allowed", "use GET")
+		return
+	}
+	writeJSON(w, http.StatusOK, devTutorialResponse{OK: true, Script: *tutorial.Current})
 }
 
 // scenarios serves GET /api/dev/scenarios.

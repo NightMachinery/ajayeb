@@ -87,6 +87,7 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 		d := newDevAPI(cfg.DevRooms, cfg.Seed)
 		mux.Handle("/api/dev/rooms", localOnly(http.HandlerFunc(d.createRoom)))
 		mux.Handle("/api/dev/scenarios", localOnly(http.HandlerFunc(d.scenarios)))
+		mux.Handle("/api/dev/tutorial", localOnly(http.HandlerFunc(d.tutorialScript)))
 	}
 	if cfg.Logs != nil {
 		mux.HandleFunc("/api/rooms/{code}/log", newLogAPI(cfg.Logs, cfg.TrustedProxies, cfg.Clock).serve)
