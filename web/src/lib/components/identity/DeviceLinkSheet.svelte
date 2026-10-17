@@ -100,7 +100,7 @@
 
     <p
       class="min-h-5 text-sm {status === 'failed' || copy === 'failed'
-        ? 'text-cinnabar'
+        ? 'text-cinnabar-ink'
         : 'text-fg'}"
       role="status"
       data-device-link-status={status === 'failed'

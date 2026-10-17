@@ -70,7 +70,7 @@
       />
       <span
         id={hintId}
-        class="text-xs {wrong ? 'text-cinnabar' : 'text-fg-muted'}"
+        class="text-xs {wrong ? 'text-cinnabar-ink' : 'text-fg-muted'}"
         role={wrong ? 'alert' : undefined}
       >
         {wrong ? t('online.join.invalid') : t('online.join.hint')}

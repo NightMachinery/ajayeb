@@ -39,7 +39,7 @@
     {@attach tooltip({ text: t(textKey(conn)) })}
     class="connection-pill inline-flex min-h-7 shrink-0 items-center gap-1 rounded-full px-2 text-xs font-semibold
       {conn === 'offline'
-      ? 'bg-cinnabar/15 text-cinnabar'
+      ? 'bg-cinnabar/15 text-cinnabar-ink'
       : 'bg-saffron/20 text-ink dark:text-fg'} {className}"
   >
     {#if conn === 'offline'}

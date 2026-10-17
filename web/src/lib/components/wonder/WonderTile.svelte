@@ -124,7 +124,7 @@
     <span
       class="hint-mark grid size-5 shrink-0 place-items-center rounded-full border text-fg
         {hint.hourglass.solid
-        ? 'border-cinnabar bg-cinnabar/15 text-cinnabar'
+        ? 'border-cinnabar bg-cinnabar/15 text-cinnabar-ink'
         : 'border-rule-strong'}"
       data-hint="hourglass"
       data-hourglass={hint.hourglass.solid ? 'solid' : 'hollow'}
@@ -278,6 +278,11 @@
 {/if}
 
 <style>
+  /* City tiles stay paper-coloured in both themes. Their warning glyphs
+     need the same paper ink as the light theme, rather than night ink. */
+  .wonder-tile[data-size='city'] {
+    --cinnabar-ink: var(--cinnabar-paper-ink);
+  }
   .wonder-art {
     background:
       radial-gradient(circle, var(--gold) 0 1px, transparent 1.5px) 0 0 / 10px 10px,

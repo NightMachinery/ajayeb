@@ -46,7 +46,7 @@
     <GraduationCap class="size-4 shrink-0" aria-hidden="true" />
     <span>{title}</span>
     {#if progress}
-      <span class="font-normal tracking-normal normal-case opacity-80">· {progress}</span>
+      <span class="font-normal tracking-normal normal-case">· {progress}</span>
     {/if}
   </p>
   {#if text}

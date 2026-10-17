@@ -100,7 +100,7 @@
           {#if hint.hourglass}
             <span
               class="grid size-6 shrink-0 place-items-center rounded-full border text-fg
-                {hint.hourglass.solid ? 'border-cinnabar text-cinnabar' : 'border-rule-strong'}"
+                {hint.hourglass.solid ? 'border-cinnabar text-cinnabar-ink' : 'border-rule-strong'}"
               data-hint="hourglass"
               {@attach tooltip({ text: hint.hourglass.tip })}
             >

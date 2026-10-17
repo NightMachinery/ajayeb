@@ -98,7 +98,7 @@
           id="{titleId}-threats"
           class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-fg-muted uppercase"
         >
-          <Icon name="hint-crown" class="text-sm text-cinnabar" />
+          <Icon name="hint-crown" class="text-sm text-cinnabar-ink" />
           {t('hints.threats.title')}
         </h3>
         <ul class="flex flex-col gap-0.5 text-sm leading-snug text-fg">

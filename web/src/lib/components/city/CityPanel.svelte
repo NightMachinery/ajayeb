@@ -238,7 +238,7 @@
     <div class="flex flex-wrap gap-1">
       {#if militaryThreat}
         <span
-          class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar"
+          class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar-ink"
           data-military-danger={militaryLevel}
         >
           {militaryLevel === 'strong' ? militaryTip : t('board.player.militaryDanger')}
@@ -246,7 +246,7 @@
       {/if}
       {#if scienceThreat}
         <span
-          class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar"
+          class="rounded-control bg-cinnabar/15 px-1.5 py-0.5 text-[11px] font-semibold text-cinnabar-ink"
         >
           {t('board.player.scienceDanger')}
         </span>

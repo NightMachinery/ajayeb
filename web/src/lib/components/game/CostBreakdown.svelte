@@ -141,7 +141,7 @@
     >
   </div>
   {#if coins !== undefined && !cost.affordable}
-    <p class="font-semibold text-cinnabar">
+    <p class="font-semibold text-cinnabar-ink">
       {t('game.cost.short', { have: formatNumber(coins), count: cost.shortfall })}
     </p>
   {/if}

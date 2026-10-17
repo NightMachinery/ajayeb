@@ -31,7 +31,7 @@
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId} centered>
   <div class="flex flex-col gap-3 px-5 pt-5 pb-1" data-forfeit-confirm>
     <div class="flex items-center gap-2">
-      <Flag class="size-5 shrink-0 text-cinnabar" aria-hidden="true" />
+      <Flag class="size-5 shrink-0 text-cinnabar-ink" aria-hidden="true" />
       <h2 id={titleId} class="font-display text-xl text-fg" dir="auto">
         {name !== undefined ? t('game.forfeit.titleName', { name }) : t('game.forfeit.title')}
       </h2>

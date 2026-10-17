@@ -335,7 +335,7 @@
     {#if onForfeit}
       <button
         type="button"
-        class="{menuItem} mt-1 border-t border-rule pt-1 text-cinnabar"
+        class="{menuItem} mt-1 border-t border-rule pt-1 text-cinnabar-ink"
         data-control="menu-forfeit"
         onclick={() => choose(onForfeit)}
       >

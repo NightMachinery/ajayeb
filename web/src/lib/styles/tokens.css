@@ -34,6 +34,10 @@
   --turquoise: oklch(0.72 0.11 195);
   --saffron: oklch(0.8 0.15 75);
   --cinnabar: oklch(0.58 0.19 32);
+  /* Text and standalone glyphs use ink, not the cinnabar fill. The fixed
+     paper ink also serves card-paper surfaces in the dark theme. */
+  --cinnabar-paper-ink: oklch(0.5 0.18 32);
+  --cinnabar-ink: var(--cinnabar-paper-ink);
   --malachite: oklch(0.6 0.13 160);
   --pomegranate: oklch(0.55 0.16 10);
 
@@ -116,7 +120,7 @@
      the -ink variants are the text-safe versions for the current theme. */
   --sun: oklch(0.72 0.11 195);
   --moon: oklch(0.55 0.16 10);
-  --sun-ink: oklch(0.5 0.09 200);
+  --sun-ink: oklch(0.47 0.09 200);
   --moon-ink: oklch(0.5 0.16 12);
 
   /* Affordability badges (card/AffordBadge.svelte): fixed in both themes,
@@ -232,6 +236,7 @@
   --accent-soft-fg: var(--gold);
   --gild: var(--gold);
   --focus: var(--gold);
+  --cinnabar-ink: oklch(0.72 0.15 32);
   --sun-ink: oklch(0.8 0.1 195);
   --moon-ink: oklch(0.72 0.14 12);
   --res-wood-ink: oklch(0.62 0.09 60);

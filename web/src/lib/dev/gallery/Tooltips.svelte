@@ -207,7 +207,7 @@
     <section class="flex flex-col gap-2 rounded-panel border border-rule bg-panel p-3">
       <h3 class="text-sm font-semibold text-fg-muted">{t('dev.tooltips.diagram')}</h3>
       <span
-        class="inline-grid size-11 place-items-center self-start rounded-control text-2xl text-cinnabar"
+        class="inline-grid size-11 place-items-center self-start rounded-control text-2xl text-cinnabar-ink"
         data-tip-demo="diagram"
         data-testid="tip-diagram"
         {@attach tooltip({

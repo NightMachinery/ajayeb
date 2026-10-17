@@ -233,7 +233,7 @@
 
     {#if militaryThreat}
       <span
-        class="grid size-6 shrink-0 place-items-center rounded-full bg-cinnabar/15 text-cinnabar"
+        class="grid size-6 shrink-0 place-items-center rounded-full bg-cinnabar/15 text-cinnabar-ink"
         role="img"
         aria-label={militaryTip}
         data-military-danger={militaryLevel}

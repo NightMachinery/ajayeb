@@ -6,7 +6,7 @@
   // it; override with a `class` that sets width/height or font-size.
   //
   //   <Icon name="resource-wood" />
-  //   <Icon name="shield" label={t('icons.shield')} class="text-cinnabar" />
+  //   <Icon name="shield" label={t('icons.shield')} class="text-cinnabar-ink" />
 
   import type { IconName } from './names';
 

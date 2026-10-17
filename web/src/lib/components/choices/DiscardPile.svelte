@@ -79,7 +79,7 @@
           onclick={() => (filter = 'all')}
         >
           {t('choices.discard.all')}
-          <span class="tabular-nums opacity-75">{formatNumber(cards.length)}</span>
+          <span class="font-normal tabular-nums">{formatNumber(cards.length)}</span>
         </button>
         {#each colors as color (color)}
           <button
@@ -92,7 +92,7 @@
               ><Icon name={categoryIcon(color)} class="text-[15px]" /></span
             >
             {t(`board.color.${color}`)}
-            <span class="tabular-nums opacity-75">{formatNumber(countOf(color))}</span>
+            <span class="font-normal tabular-nums">{formatNumber(countOf(color))}</span>
           </button>
         {/each}
       </div>

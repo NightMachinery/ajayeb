@@ -153,7 +153,7 @@
   <span
     class="science-pill inline-flex h-5 shrink-0 items-center gap-0.5 rounded-control border px-1 text-[11px] font-semibold tabular-nums
       {danger
-      ? 'border-cinnabar bg-cinnabar/15 text-cinnabar'
+      ? 'border-cinnabar bg-cinnabar/15 text-cinnabar-ink'
       : level === 'calm'
         ? 'border-dashed border-rule-strong bg-panel text-fg'
         : 'border-rule bg-panel text-fg'} {level === 'strong'
@@ -220,7 +220,7 @@
     <span
       class="rounded-control px-1.5 py-0.5 {compact ? 'text-[11px]' : 'text-xs'} font-semibold
       tabular-nums {danger
-        ? 'bg-cinnabar/15 text-cinnabar'
+        ? 'bg-cinnabar/15 text-cinnabar-ink'
         : level === 'calm'
           ? 'border border-dashed border-rule-strong text-fg-muted'
           : 'text-fg-muted'} {level === 'strong' ? 'ring-2 ring-cinnabar/45' : ''}"

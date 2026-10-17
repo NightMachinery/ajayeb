@@ -174,7 +174,7 @@
     {:else if line.kind === 'starterChosen'}
       <Icon name={line.starter === 1 ? 'crest-moon' : 'crest-sun'} class="text-2xl" />
     {:else if line.kind === 'resign'}
-      <Flag class="size-5 text-cinnabar" aria-hidden="true" />
+      <Flag class="size-5 text-cinnabar-ink" aria-hidden="true" />
     {:else if line.kind === 'extraTurn' || line.kind === 'extraTurnLost'}
       <Repeat class="size-5 text-fg-muted" aria-hidden="true" />
     {:else if line.kind === 'skipped'}

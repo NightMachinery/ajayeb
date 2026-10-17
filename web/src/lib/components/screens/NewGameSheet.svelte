@@ -137,7 +137,7 @@
     <HintsSection bind:value={hints} />
 
     {#if failure}
-      <p class="text-sm text-cinnabar" role="alert">{failure}</p>
+      <p class="text-sm text-cinnabar-ink" role="alert">{failure}</p>
     {/if}
 
     <Button type="submit" variant="primary" full disabled={starting}>

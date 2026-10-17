@@ -37,6 +37,6 @@
         {/each}
       </div>
     {/each}
-    <span class="self-end text-xs text-cinnabar">{t('rules.diagram.seventh.out')}</span>
+    <span class="self-end text-xs text-cinnabar-ink">{t('rules.diagram.seventh.out')}</span>
   </div>
 </DiagramFrame>

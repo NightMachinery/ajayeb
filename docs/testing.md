@@ -1038,6 +1038,19 @@ python3 tools/heavy.py run --kind browser -- node tools/chrome/tutorial-walk.mjs
 ```
 
 
+## Text contrast regressions
+
+`make e2e PW_ARGS='specs/contrast.spec.ts --project=desktop'` checks the
+warning and error text, discard filter counts, compact tutorial progress,
+and age-summary seat names with axe in both themes. It uses phone layouts
+for the compact text and desktop layouts for the danger chip and offline
+caption. Only colour contrast is checked here, so unrelated accessibility
+findings keep their own regression coverage. The screenshot matrix below
+adds all four sizes and the Persian captures. Disabled labels are exempt
+from axe's contrast rule, so the focused spec measures their painted text
+and background colours separately for primary, secondary and danger
+buttons. Those labels are also inspected in the captures.
+
 ## UX screenshot matrix and probes
 
 Run `make shots` to build the test client and Go binary, start the test

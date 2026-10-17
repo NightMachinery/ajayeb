@@ -96,7 +96,7 @@
   <Icon name="wonder" class="text-base" />
   <span data-must-fit>{formatNumber(built)}/{formatNumber(total)}</span>
   {#if bh?.hourglass}
-    <Hourglass class="size-3.5 text-cinnabar" />
+    <Hourglass class="size-3.5 text-cinnabar-ink" />
   {/if}
   {#if bh && bh.ready > 0 && !buildable}
     <span
