@@ -68,10 +68,10 @@ export function victoryBanner(victory: string | undefined, winner: 0 | 1 | undef
 /** Where particle `i` of PARTICLES flies, in px from the banner's centre. */
 export function particleOffset(i: number, width: number): { x: number; y: number; turn: number } {
   const angle = (i / PARTICLES) * Math.PI * 2 + 0.3;
-  const reach = Math.max(70, width * 0.32) * (i % 2 === 0 ? 1 : 0.7);
+  const reach = Math.max(90, width * 0.4) * (i % 2 === 0 ? 1 : 0.7);
   return {
     x: Math.round(Math.cos(angle) * reach),
-    y: Math.round(Math.sin(angle) * reach * 0.6),
+    y: Math.round(Math.sin(angle) * reach * 0.7),
     turn: (i % 2 === 0 ? 1 : -1) * (90 + i * 15)
   };
 }

@@ -25,7 +25,7 @@
 </script>
 
 <div
-  class="fx-layer pointer-events-none fixed inset-0 z-30 overflow-hidden"
+  class="fx-layer pointer-events-none fixed inset-0 z-30 list-none overflow-hidden"
   dir="ltr"
   aria-hidden="true"
   {@attach registerFxLayer}
@@ -49,6 +49,8 @@
     background: transparent;
     overflow: hidden;
     pointer-events: none;
+    /* A cloned list item (a pile card) keeps no marker outside its list. */
+    list-style: none;
   }
   :global(:is(.fx-layer, .fx-top) .fx-flight) {
     will-change: transform, opacity;
@@ -191,17 +193,18 @@
     position: absolute;
     inset-block-start: 0;
     inset-inline-start: 0;
-    width: 0.6rem;
-    height: 0.6rem;
+    width: 0.8rem;
+    height: 0.8rem;
     background: var(--gold);
+    box-shadow: 0 0 0 1px color-mix(in oklch, var(--card-ink) 25%, transparent);
     will-change: transform, opacity;
   }
   :global(:is(.fx-layer, .fx-top) .fx-particle-gem) {
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   }
   :global(:is(.fx-layer, .fx-top) .fx-particle-dot) {
-    width: 0.45rem;
-    height: 0.45rem;
+    width: 0.55rem;
+    height: 0.55rem;
     border-radius: 999px;
   }
   :global(:is(.fx-layer, .fx-top) .fx-hue-1) {

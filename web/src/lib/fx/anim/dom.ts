@@ -116,3 +116,36 @@ export function findShown(
   }
   return null;
 }
+
+/**
+ * Where `box` (an element inside an open dialog) comes to rest once the
+ * dialog's entry has played: a sheet slides in by its `translate` and a
+ * centred panel grows by its `scale` (Sheet.svelte), and a box read while
+ * that runs is off by the part still to go. Outside a dialog, or once it
+ * has settled, the box as it is.
+ */
+export function settled(el: Element, box: Box): Box {
+  const dialog = el.closest('dialog');
+  if (!dialog || typeof getComputedStyle !== 'function') return box;
+  const cs = getComputedStyle(dialog);
+  const sc = cs.scale && cs.scale !== 'none' ? parseFloat(cs.scale.split(/\s+/)[0]!) || 1 : 1;
+  const now = boxOf(dialog);
+  // A percentage is of the dialog's own (unscaled) size: `0 100%` is a
+  // sheet still below the screen.
+  const length = (v: string | undefined, size: number) =>
+    !v ? 0 : v.endsWith('%') ? ((parseFloat(v) || 0) / 100) * size : parseFloat(v) || 0;
+  const parts = cs.translate && cs.translate !== 'none' ? cs.translate.split(/\s+/) : [];
+  const tx = length(parts[0], now.w / sc);
+  const ty = length(parts[1], now.h / sc);
+  if (tx === 0 && ty === 0 && sc === 1) return box;
+  const cx = now.x + now.w / 2;
+  const cy = now.y + now.h / 2;
+  const restX = cx - tx;
+  const restY = cy - ty;
+  return {
+    x: restX + (box.x - cx) / sc,
+    y: restY + (box.y - cy) / sc,
+    w: box.w / sc,
+    h: box.h / sc
+  };
+}

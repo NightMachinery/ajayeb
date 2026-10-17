@@ -54,6 +54,7 @@ import {
   inertClone,
   makeInert,
   place,
+  settled,
   shown,
   type Box
 } from './dom';
@@ -171,8 +172,16 @@ interface FlightOpts {
   pulse?: boolean;
   /** The end opacity; by default the clone fades into a small target. */
   fade?: number;
+  /** When in the flight (0 to 1) the fade begins; by default after the lift. */
+  fadeFrom?: number;
+  /** Appear at the start (a token drawn from the box), not wait in place. */
+  fadeIn?: boolean;
   layer: HTMLElement;
   cleanup?: () => void;
+}
+
+function overlaps(a: Box, b: Box): boolean {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
 function other(seat: number): number {
@@ -376,7 +385,7 @@ export class AnimRunner {
           break;
         }
         case 'deal': {
-          const inner = root.querySelector('.card-structure > div');
+          const inner = step.fade > 0 ? root.querySelector('.card-structure > div') : null;
           if (!inner) break;
           const box = boxOf(inner);
           if (!shown(box)) break;
@@ -574,12 +583,19 @@ export class AnimRunner {
     // Into a chip it fades out; onto a big target (a phone strip) it stays.
     const fade = o.fade ?? (scale <= 0.5 ? 0 : 0.4);
     const keyframes: Keyframe[] = [
-      { transform: `translate(${src.x}px, ${src.y}px) scale(1)`, opacity: 1, offset: 0 },
+      {
+        transform: `translate(${src.x}px, ${src.y}px) scale(${o.fadeIn ? 0.6 : 1})`,
+        opacity: o.fadeIn ? 0 : 1,
+        offset: 0
+      },
       {
         transform: `translate(${liftX}px, ${liftY}px) scale(1.06)`,
         opacity: 1,
         offset: 0.22
       },
+      ...(o.fadeFrom !== undefined && o.fadeFrom > 0.22 && o.fadeFrom < 1
+        ? [{ opacity: 1, offset: o.fadeFrom }]
+        : []),
       { transform: `translate(${endX}px, ${endY}px) scale(${scale})`, opacity: fade, offset: 1 }
     ];
     const destEl = o.dest.el;
@@ -850,7 +866,9 @@ export class AnimRunner {
       from: from.box,
       dest,
       hide: !!picked,
-      pulse: !picked,
+      // The tile stays whole until it sinks into the chip, which pops as it shows.
+      pulse: true,
+      fadeFrom: 0.75,
       at: step.at,
       dur: step.dur,
       layer
@@ -1030,6 +1048,11 @@ export class AnimRunner {
     layer: HTMLElement
   ): (() => void) | null {
     const starts: (() => void)[] = [];
+    // The emptied spot under the token stays hidden until the token is gone.
+    const spots =
+      step.cell !== undefined && cap.loots.has(i)
+        ? [...root.querySelectorAll<HTMLElement>(`[data-loot-at="${step.cell}"] .loot-token`)]
+        : [];
     // The token flips (the coins it costs, then a blank coin), pops and fades.
     for (const token of cap.loots.get(i) ?? []) {
       if (!token.clone) continue;
@@ -1048,6 +1071,7 @@ export class AnimRunner {
       ];
       starts.push(() => {
         layer.append(holder);
+        for (const spot of spots) spot.setAttribute(HIDDEN_ATTR, '');
         const spin = flipper.spinner.animate(
           [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }],
           { duration: step.flip, delay: step.at, easing: EASE_OUT, fill: 'backwards' }
@@ -1058,7 +1082,10 @@ export class AnimRunner {
           easing: 'ease-out',
           fill: 'backwards'
         });
-        this.#runs.track(cap.version, 'loot', [spin, anim], () => holder.remove());
+        this.#runs.track(cap.version, 'loot', [spin, anim], () => {
+          holder.remove();
+          for (const spot of spots) spot.removeAttribute(HIDDEN_ATTR);
+        });
       });
     }
     // The victim's coins drop, with the loss float, as the token flips.
@@ -1104,8 +1131,15 @@ export class AnimRunner {
       return { el, base: el.style.transform };
     });
     return () => {
+      // Over a dialog's backdrop when the dialog leaves the symbol in view
+      // (the desktop's centred token choice), under a sheet that covers it.
+      const dialogs = [...document.querySelectorAll('dialog[open]')].map(boxOf).filter(shown);
+      const clear =
+        dialogs.length > 0 && !dialogs.some((d) => targets.some((box) => overlaps(d, box)));
+      const top = clear ? this.#useTop() : null;
+      const into = top?.layer ?? layer;
       const anims = glows.map(({ el, base }) => {
-        layer.append(el);
+        into.append(el);
         return el.animate(
           [
             { transform: `${base} scale(0.85)`, opacity: 0, offset: 0 },
@@ -1118,6 +1152,7 @@ export class AnimRunner {
       });
       this.#runs.track(cap.version, 'glow', anims, () => {
         for (const { el } of glows) el.remove();
+        top?.release();
       });
     };
   }
@@ -1146,16 +1181,19 @@ export class AnimRunner {
       : null;
     if (face) {
       const clone = inertClone(face.el);
-      const start = boxAround(from.x, from.y, face.box.w, face.box.h);
+      // The choice may still be sliding in: aim where its token comes to rest.
+      const rest = { el: face.el, box: settled(face.el, face.box) };
+      const start = boxAround(from.x, from.y, rest.box.w, rest.box.h);
       return () => {
         const top = this.#useTop();
         this.#flight(cap, {
           kind: 'draw',
           clone,
           from: start,
-          dest: face,
+          dest: rest,
           hide: true,
           fade: 1,
+          fadeIn: true,
           at: step.at,
           dur: step.each,
           layer: top?.layer ?? layer,
@@ -1308,7 +1346,7 @@ export class AnimRunner {
     const banner = victoryBanner(step.victory, step.winner);
     const dialog = findShown(root, ['[data-game-over] dialog[open]']);
     const vw = window.innerWidth;
-    const y = dialog ? Math.max(56, dialog.box.y) : window.innerHeight * 0.3;
+    const y = dialog ? Math.max(56, settled(dialog.el, dialog.box).y) : window.innerHeight * 0.3;
     banner.el.style.transform = `translate(${vw / 2}px, ${y}px)`;
     const reach = Math.min(vw, 480);
     const d = step.dur;
@@ -1336,7 +1374,8 @@ export class AnimRunner {
           return p.animate(
             [
               { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 0, offset: 0 },
-              { opacity: 1, offset: 0.2 },
+              { opacity: 1, offset: 0.12 },
+              { opacity: 1, offset: 0.6 },
               {
                 transform: `translate(-50%, -50%) translate(${o.x}px, ${o.y}px) rotate(${o.turn}deg) scale(1)`,
                 opacity: 0,
@@ -1344,7 +1383,7 @@ export class AnimRunner {
               }
             ],
             {
-              duration: Math.round(d * 0.55),
+              duration: Math.round(d * 0.6),
               delay: step.at + Math.round(d * 0.06) + (i % 3) * Math.round(d * 0.02),
               easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)',
               fill: 'backwards'
