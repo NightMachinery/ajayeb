@@ -20,6 +20,13 @@
   // The bot's pick (`botPick`): while the Presenter previews a bot's draft
   // answer, the wonder it is about to take carries data-bot-pick and a
   // static ring in the bot's crest colour (--bot-ink, from the game screen).
+  //
+  // The tutorial (M10.tutorial-client): the phone's wonder sheet is
+  // bindable (`detail`), so the game screen's coach step knows which wonder
+  // it shows, and a coach step in that sheet (`coach`) shows as a note
+  // above its Take button. The rails (`allow`) lock every Take button but
+  // the guided one, with `lockedReason` once (under the prompt on a wide
+  // page, under the sheet's Take button on a phone); the tiles stay open.
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderBySlug } from '$lib/catalog';
   import { formatNumber, fullStop, joinPhrases, sentences, t } from '$lib/i18n';
@@ -32,6 +39,9 @@
   import { actButtonState } from '../game/act-button';
   import Sheet from '../shell/Sheet.svelte';
   import WonderTile from '../wonder/WonderTile.svelte';
+  import CoachNote from '../tutorial/CoachNote.svelte';
+  import type { CoachNoteView } from '$lib/tutorial/coach.svelte';
+  import { ALLOW_ALL, type Allow } from '$lib/tutorial/gate';
   import {
     asSeat,
     isYou,
@@ -55,6 +65,14 @@
     connected?: boolean;
     /** The wonder the bot is about to take (the Presenter's pre-roll). */
     botPick?: string;
+    /** Bindable: the wonder the phone's detail sheet shows, or null. */
+    detail?: string | null;
+    /** The tutorial's coach step in the detail sheet, as a note. */
+    coach?: CoachNoteView | null;
+    /** The tutorial's rails: whether a move key may be sent now. */
+    allow?: Allow;
+    /** Why a move the rails refuse is locked. */
+    lockedReason?: string;
   }
 
   let {
@@ -64,7 +82,11 @@
     names: namesProp,
     confirm = false,
     connected = true,
-    botPick
+    botPick,
+    detail = $bindable(null),
+    coach = null,
+    allow = ALLOW_ALL,
+    lockedReason = ''
   }: Props = $props();
 
   const ctx = tryGameContext();
@@ -124,9 +146,6 @@
     return t('choices.draft.pick', params);
   }
 
-  // The phone detail sheet: the wonder it shows, or null when closed.
-  let detail = $state<string | null>(null);
-
   function take(key: string): void {
     detail = null;
     onact(key);
@@ -144,10 +163,11 @@
   const seats = [0, 1] as const;
 </script>
 
-{#snippet takeButton(slug: string, key: string | undefined)}
+{#snippet takeButton(slug: string, key: string | undefined, reason: boolean)}
+  {@const open = key === undefined || allow(key)}
   {@const rule = actButtonState({
     label: t('choices.draft.take', { wonder: wonderName(slug) }),
-    canAct,
+    canAct: canAct && open,
     connected,
     confirm,
     ready: key !== undefined
@@ -174,6 +194,11 @@
     >
       {rule.label}
     </button>
+  {/if}
+  {#if !open && reason}
+    <p class="mt-1 text-center text-xs text-fg-muted" dir="auto" data-tutorial-reason>
+      {lockedReason}
+    </p>
   {/if}
 {/snippet}
 
@@ -235,10 +260,15 @@
     {/if}
     <span dir="auto">{prompt}</span>
   </p>
+  {#if split.current && canAct && [...keys.values()].some((k) => !allow(k))}
+    <!-- Once for the page's Take buttons; the phone sheet says it under its own. -->
+    <p class="-mt-1 text-xs text-fg-muted" dir="auto" data-tutorial-reason>{lockedReason}</p>
+  {/if}
 
   <ul
     class="grid grid-cols-2 gap-2.5 sm:gap-3 split:grid-cols-4"
     aria-label={t('choices.draft.offer')}
+    data-tut="draft-offer"
   >
     {#each offer as item (item.wonder)}
       {@const key = keys.get(item.wonder)}
@@ -253,7 +283,7 @@
           {#if item.takenBy === undefined}
             {@render effects(item.wonder, 'text-[13px] leading-snug text-fg')}
             {#if keys.size > 0}
-              <div class="mt-auto">{@render takeButton(item.wonder, key)}</div>
+              <div class="mt-auto">{@render takeButton(item.wonder, key, false)}</div>
             {/if}
           {/if}
         {:else}
@@ -333,8 +363,19 @@
         </p>
       {/if}
       {@render effects(slug, 'text-sm text-fg')}
+      {#if coach}
+        <CoachNote
+          title={coach.title}
+          progress={coach.progress}
+          text={coach.text}
+          step={coach.step}
+          kind={coach.kind}
+          textId={coach.textId}
+          onpause={coach.onpause}
+        />
+      {/if}
       {#if item?.takenBy === undefined}
-        {@render takeButton(slug, keys.get(slug))}
+        {@render takeButton(slug, keys.get(slug), true)}
         {#if !keys.has(slug) && toMove !== null}
           <p class="text-center text-xs text-fg-muted" dir="auto">
             {t('choices.draft.waiting', { name: names[toMove] })}

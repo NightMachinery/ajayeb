@@ -10,6 +10,10 @@
   // step's warning, as in the card sheet; and on each wonder, the hourglass
   // of the race for the last wonder. The outcome context comes from the
   // page's game context unless `octx` is given.
+  //
+  // The tutorial's coach step in this step (`coach`) shows as a note above
+  // the list (M10.tutorial-client), and the rails (`allow`) lock every
+  // build button but the guided one, with `lockedReason` once under the list.
   import ArrowLeft from '@lucide/svelte/icons/arrow-left';
   import { hintHide } from '$lib/hints/local.svelte';
   import { wonderHint, wonderOwner } from '$lib/view/board-hints';
@@ -31,6 +35,9 @@
   import CostBreakdown from './CostBreakdown.svelte';
   import { reasonText } from './reasons';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import CoachNote from '../tutorial/CoachNote.svelte';
+  import type { CoachNoteView } from '$lib/tutorial/coach.svelte';
+  import { ALLOW_ALL, type Allow } from '$lib/tutorial/gate';
 
   interface Props {
     card: string;
@@ -48,6 +55,12 @@
     onback: () => void;
     /** The outcome line's context; else from the game context. */
     octx?: OutcomeContext;
+    /** The tutorial's coach step here, as a note; null for none. */
+    coach?: CoachNoteView | null;
+    /** The tutorial's rails: whether a move key may be sent now. */
+    allow?: Allow;
+    /** Why a move the rails refuse is locked. */
+    lockedReason?: string;
   }
 
   let {
@@ -61,7 +74,10 @@
     titleId,
     onact,
     onback,
-    octx: octxProp
+    octx: octxProp,
+    coach = null,
+    allow = ALLOW_ALL,
+    lockedReason = ''
   }: Props = $props();
 
   const ctx = tryGameContext();
@@ -116,6 +132,18 @@
     </h2>
   </div>
 
+  {#if coach}
+    <CoachNote
+      title={coach.title}
+      progress={coach.progress}
+      text={coach.text}
+      step={coach.step}
+      kind={coach.kind}
+      textId={coach.textId}
+      onpause={coach.onpause}
+    />
+  {/if}
+
   {#if sorted.length === 0}
     <p class="text-sm text-fg-muted">{t('game.wonders.none')}</p>
   {/if}
@@ -139,7 +167,11 @@
           </details>
         {/if}
         {#if option.choice}
-          <div class="flex flex-col gap-1" data-act-group>
+          <div
+            class="flex flex-col gap-1"
+            data-act-group
+            data-tutorial-locked={allow(option.key) ? undefined : ''}
+          >
             <ActionButton
               key={option.key}
               label={t('game.action.buildWonder', {
@@ -148,7 +180,7 @@
               })}
               {confirm}
               {connected}
-              disabled={!canAct}
+              disabled={!canAct || !allow(option.key)}
               {onact}
             />
             <OutcomeLine terms={termsOf(option)} actKey={option.key} blunder={blunderOf(option)} />
@@ -159,6 +191,9 @@
       </li>
     {/each}
   </ul>
+  {#if canAct && options.some((o) => o.choice && !allow(o.key))}
+    <p class="text-xs text-fg-muted" dir="auto" data-tutorial-reason>{lockedReason}</p>
+  {/if}
 
   <p class="text-xs text-fg-muted">{t('game.wonders.tuckNote')}</p>
   <p class="text-xs text-fg-muted">{t('game.wonders.sevenNote', { count: wondersBuilt })}</p>

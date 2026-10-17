@@ -138,6 +138,7 @@
   role="status"
   aria-live="polite"
   data-turn={state.kind}
+  data-tut="turn-bar"
   data-away={state.kind === 'waitingOpponent' && state.away ? '' : undefined}
 >
   <span class="flex min-w-0 items-center gap-2 text-sm font-semibold text-fg" data-must-fit>

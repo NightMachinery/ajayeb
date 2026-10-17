@@ -87,6 +87,7 @@
   aria-label={t('card.structure.label', { age: ageNumeral })}
   dir="ltr"
   data-age={age}
+  data-tut="structure"
   data-card-w={fit.w}
   data-card-h={fit.h}
   data-tier={fit.tier}

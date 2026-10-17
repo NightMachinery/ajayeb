@@ -85,6 +85,7 @@
     : 'border-rule-strong bg-panel text-fg hover:border-accent'} {className}"
   aria-label={label}
   data-control="wonders"
+  data-tut="wonders"
   data-fx-wonders
   data-buildable={buildable ? '' : undefined}
   data-hourglass={bh?.hourglass ? '' : undefined}

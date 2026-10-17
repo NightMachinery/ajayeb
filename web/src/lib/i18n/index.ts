@@ -25,6 +25,7 @@ import { online } from './en/online';
 import { rules } from './en/rules';
 import { session } from './en/session';
 import { shell } from './en/shell';
+import { tutorial } from './en/tutorial';
 import { fa } from './fa';
 import { dirFor, i18n, type Locale } from './locale.svelte';
 import type { Message, PluralForms } from './types';
@@ -46,7 +47,8 @@ export const en = {
   ...choices,
   ...online,
   ...hints,
-  ...rules
+  ...rules,
+  ...tutorial
 } as const;
 
 export type MessageKey = keyof typeof en;

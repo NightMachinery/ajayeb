@@ -272,7 +272,7 @@
     </div>
   </div>
 
-  <div class="flex flex-col gap-1">
+  <div class="flex flex-col gap-1" data-tut="wonders">
     <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
       {t('board.citySheet.wonders')}
     </h3>

@@ -230,6 +230,7 @@
   role="group"
   aria-label={ariaLabel}
   data-left-seat={leftSeat}
+  data-tut="track"
   data-mirrored={trackMirrored(leftSeat) ? '' : undefined}
   class="military-track flex flex-col gap-0.5 {compact ? 'min-w-24' : ''} {className}"
 >

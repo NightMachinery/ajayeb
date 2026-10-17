@@ -6,7 +6,8 @@
 // A driver waits for ready(), reads choices(), and clicks the button whose
 // data-act is the chosen key.
 
-import type { Choice, HistoryEntry, RoomInfo, View, YouInfo } from '$lib/wire';
+import { coachShown, type CoachShown } from '$lib/tutorial/coach.svelte';
+import type { Choice, HistoryEntry, RoomInfo, TutorialState, View, YouInfo } from '$lib/wire';
 import type { Presenter } from './presenter.svelte';
 import type { ConnState, Session } from './session.svelte';
 
@@ -35,6 +36,11 @@ export interface AjayebTestHook {
    * a state on screen, nothing queued in the Presenter, no request pending.
    */
   ready(): boolean;
+  /** The tutorial object of the frame on screen, or null outside a tutorial room. */
+  tutorial(): TutorialState | null;
+  /** The coach step on screen (its lesson id, kind, surface and target
+   *  selector), or null. */
+  coach(): CoachShown | null;
 }
 
 declare global {
@@ -72,6 +78,8 @@ const hook: AjayebTestHook = {
   you: () => copy(active?.presenter.frame?.you ?? null),
   conn: () => active?.session.conn ?? 'connecting',
   history: () => copy([...(active?.session.history ?? [])]),
+  tutorial: () => copy(active?.presenter.frame?.tutorial ?? null),
+  coach: () => copy(coachShown()),
   ready: () => {
     if (!active) return false;
     const { session, presenter } = active;

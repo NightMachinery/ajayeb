@@ -16,6 +16,7 @@ import { online } from './online';
 import { rules } from './rules';
 import { session } from './session';
 import { shell } from './shell';
+import { tutorial } from './tutorial';
 
 export const fa: PartialLocaleTable = {
   ...common,
@@ -28,5 +29,6 @@ export const fa: PartialLocaleTable = {
   ...choices,
   ...online,
   ...hints,
-  ...rules
+  ...rules,
+  ...tutorial
 };

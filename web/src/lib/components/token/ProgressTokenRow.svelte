@@ -53,6 +53,7 @@
   dir="ltr"
   role="group"
   aria-label={t('board.tokens.boardLabel')}
+  data-tut="tokens"
   class="progress-token-row flex flex-wrap items-center {compact
     ? 'gap-1.5'
     : 'gap-2.5'} {className}"

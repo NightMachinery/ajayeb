@@ -13,6 +13,9 @@
   // popover: light dismiss, Escape and the top layer come with it. The
   // undo arrow in the bar itself does the same as the menu item.
   //
+  // In a tutorial room the menu also pauses or resumes the tutorial
+  // (data-control="menu-tutorial"); the caller passes tutorialPaused there.
+  //
   // Next to the log, the eye opens the opponent move summary (M10.S03b);
   // the caller passes onOpenSummary only while there is a summary to show.
   // Below 26rem the bar has no room for five buttons, the age and the cards
@@ -32,6 +35,7 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { restoreFocus } from '$lib/ui/dismiss';
   import BookOpen from '@lucide/svelte/icons/book-open';
+  import GraduationCap from '@lucide/svelte/icons/graduation-cap';
   import { openRules } from '../rules/rules-overlay.svelte';
 
   interface Props {
@@ -58,6 +62,11 @@
     /** When given, the menu offers Forfeit, which reports this (the caller
      *  shows the confirm step). */
     onForfeit?: () => void;
+    /** In a tutorial room, whether the tutorial is paused here: the menu
+     *  then offers Resume tutorial, else Pause tutorial. Absent elsewhere. */
+    tutorialPaused?: boolean;
+    /** The tutorial menu item's action. */
+    onTutorial?: () => void;
     /** The age chip's tooltip (age-countdown and next-starter, M10.HS4). */
     ageTip?: string;
     /** The presented view has an actual centred-pawn choice (the default ruling). */
@@ -81,6 +90,8 @@
     homeHint = true,
     replayCode,
     onForfeit,
+    tutorialPaused,
+    onTutorial,
     ageTip,
     starterChoice = false,
     children,
@@ -136,7 +147,7 @@
         <Menu class="size-5" />
       </button>
     {/if}
-    <span class="font-display font-semibold whitespace-nowrap" data-must-fit>
+    <span class="font-display font-semibold whitespace-nowrap" data-must-fit data-tut="age">
       {age > 0 ? t('board.age', { age }) : t('board.age.draft')}
     </span>
     {#if age > 0}
@@ -307,6 +318,18 @@
           </span>
         </button>
       </span>
+    {/if}
+    {#if tutorialPaused !== undefined && onTutorial}
+      <button
+        type="button"
+        class={menuItem}
+        data-control="menu-tutorial"
+        data-tutorial-paused={tutorialPaused ? '' : undefined}
+        onclick={() => choose(onTutorial)}
+      >
+        <GraduationCap class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+        {tutorialPaused ? t('tutorial.menu.resume') : t('tutorial.menu.pause')}
+      </button>
     {/if}
     <button
       type="button"

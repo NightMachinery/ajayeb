@@ -66,6 +66,16 @@
   // still opens the latest summary. Any tap or Escape closes it, and the tap
   // is swallowed. It sits over the structure's top on a phone and over the
   // viewer's own column on wide screens and in phone landscape.
+  //
+  // The tutorial (M10.tutorial-client, the tutorial design): in a tutorial
+  // room the presented frame carries the server's tutorial object. The step
+  // machine (lib/tutorial/steps.ts) turns it, the Next acknowledgements and
+  // this screen's sheets into the coach step; CoachLayer shows it as a
+  // bubble on the board and rings its target, and the card sheet, its
+  // wonder step and the draft's wonder sheet show it as a note. Play on my
+  // own pauses the tutorial in this room (the tips store), and the game
+  // menu resumes it. No first-time tip shows while a coach step is due or
+  // the guided part runs.
   import { resolve } from '$app/paths';
   import { onDestroy } from 'svelte';
   import ArtPrefetch from '$lib/art/ArtPrefetch.svelte';
@@ -130,6 +140,12 @@
   import MoveSummary from './MoveSummary.svelte';
   import MoveReview from './MoveReview.svelte';
   import FirstTips from '../hints/FirstTips.svelte';
+  import CoachLayer from '../tutorial/CoachLayer.svelte';
+  import { tips } from '$lib/ui/tips.svelte';
+  import { COACH_TEXT_ID, coachAcks, type CoachNoteView } from '$lib/tutorial/coach.svelte';
+  import { coachStep, type CoachStep, type CoachSurface } from '$lib/tutorial/steps';
+  import { coachText, lockedReason } from '$lib/tutorial/text';
+  import { tutorialAllow } from '$lib/tutorial/gate';
   import {
     botPick,
     cardActions,
@@ -157,6 +173,11 @@
   const ui = new GameUi();
   const toasts = new Toasts();
   const coarsePointer = new MediaQuery('(pointer: coarse)', false);
+  // The draft's split layout (Draft.svelte): every tile shows its Take button.
+  const draftSplit = new MediaQuery(
+    '(min-width: 64rem), (orientation: landscape) and (max-height: 32rem)',
+    false
+  );
 
   // The request this screen sent last, to tell an act's ack from an undo's.
   let lastRequest: { seq: number; kind: 'act' | 'undo' } | null = null;
@@ -174,6 +195,11 @@
   let wonderListShown = $state<Seat>(0);
   // The forfeit's confirm step (from the game menu).
   let forfeitOpen = $state(false);
+  // The draft's wonder sheet on a phone: the wonder it shows, or null.
+  let draftDetail = $state<string | null>(null);
+  // Where the player resumed the tutorial after leaving its path (room and
+  // ply): leftPath shows there, once.
+  let resumedLeft = $state<{ code: string; ply: number } | null>(null);
   // The board token whose sheet is open (a tap on a board token while no
   // token pick is pending), kept while the sheet closes.
   let tokenOpen = $state(false);
@@ -315,6 +341,47 @@
     view && ui.selected !== null ? view.structure[ui.selected] : undefined
   );
 
+  // The tutorial: the presented frame's object, whether it is paused here,
+  // and the coach step due now.
+  const tutorial = $derived(frame?.tutorial);
+  const tutorialPaused = $derived(!!frame && tips.isPaused(frame.code));
+  // The rails: during a guided turn only the guided key's buttons are open.
+  const allow = $derived(tutorialAllow(tutorial, tutorialPaused));
+  const locked = $derived(lockedReason(tutorial));
+  const cardSheetOpen = $derived(
+    ui.isOpen('card') && !!selectedSlot && selectedSlot.state !== 'empty'
+  );
+  const coach = $derived.by((): CoachStep | null => {
+    if (!frame || !view || !tutorial) return null;
+    const extra =
+      resumedLeft?.code === frame.code &&
+      resumedLeft.ply === view.ply &&
+      tutorial.left &&
+      !tutorial.lessons.some((l) => l.id === 'leftPath')
+        ? [{ id: 'leftPath' }]
+        : [];
+    return coachStep({
+      tutorial,
+      code: frame.code,
+      ply: view.ply,
+      paused: tutorialPaused,
+      acked: (key) => coachAcks.has(key),
+      extra,
+      ui: {
+        sheet:
+          cardSheetOpen && selectedSlot
+            ? {
+                card: selectedSlot.state === 'faceUp' ? (selectedSlot.card ?? null) : null,
+                step: ui.step
+              }
+            : null,
+        draftSheet: view.phase === 'wonderDraft' ? draftDetail : null,
+        split: draftSplit.current,
+        pickBar: !!ui.pickFor
+      }
+    });
+  });
+
   // The history up to the frame on screen: a bot's answer still being
   // paced by the Presenter is not in it yet.
   const shownHistory = $derived.by(() => {
@@ -401,6 +468,30 @@
           !showPass &&
           lastPly(moveSummary) === summaryAuto))
   );
+  const coachWords = $derived(coach ? coachText(coach, names[bot === 0 ? 0 : 1]) : null);
+  // A coach step shows on the player's own turn of the frame on screen,
+  // with the Presenter idle and the move summary closed.
+  const coachActive = $derived(
+    !!coach && myTurn && presenter.idle && !summaryOpen && !showPass && session.pending === null
+  );
+  /** The coach step as a sheet's note, while it belongs to that sheet. */
+  function noteFor(surface: CoachSurface): CoachNoteView | null {
+    if (!coach || !coachWords || !coachActive || coach.surface !== surface) return null;
+    return {
+      title: coachWords.title,
+      progress: coachWords.progress,
+      text: coachWords.text,
+      step: coach.id,
+      kind: coach.kind,
+      textId: COACH_TEXT_ID,
+      onpause: pauseTutorial
+    };
+  }
+  const cardNote = $derived(noteFor('card-sheet'));
+  const draftNote = $derived(noteFor('draft-sheet'));
+  // First-time tips wait while a coach step is due, and through the guided part.
+  const tipsQuiet = $derived(!!coach || (tutorial?.status === 'guided' && !tutorialPaused));
+
   // On wide screens, the viewer's own column (in a fixed hot-seat board the
   // player to move may sit on the far side), so the mover's city stays in view.
   const summaryAnchor = $derived(
@@ -471,6 +562,8 @@
       toasts.clear();
       wonderListSeat = null;
       wonderFromList = null;
+      draftDetail = null;
+      resumedLeft = null;
     }
     announcePresence(lastFrame, f);
     const prevFrame = lastFrame;
@@ -493,6 +586,8 @@
     // A skipped-choice toast speaks of the latest move only: a newer move
     // or an undo replaces it. In a bot room the bot's reply keeps it.
     if (acked !== null || f.room.mode === 'hotseat') toasts.clear();
+    // An undo goes back to a guided turn: its lessons show again.
+    if (acked === 'undo' && f.tutorial) coachAcks.forgetFrom(f.code, f.view.ply);
     const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
     const holderBefore = ui.holder;
     ui.record(f, acked, passOn);
@@ -593,12 +688,36 @@
   });
 
   function act(key: string): void {
-    if (!inputOpen) return;
+    if (!inputOpen || !allow(key)) return;
     wonderListSeat = null;
+    // The science lesson teaches what the symbol tip would.
+    const science = tutorial?.action?.id === 'science' && tutorial.action.key === key;
     if (session.act(key)) {
       lastRequest = { seq: session.seq, kind: 'act' };
       ui.sent();
+      if (science) tips.markSeen('science');
     }
+  }
+
+  /** Next on a coach step's info lesson. */
+  function coachNext(step: CoachStep): void {
+    if (step.ack) coachAcks.add(step.ack);
+    // The military lesson teaches what the pawn tip would.
+    if (step.id === 'military') tips.markSeen('track');
+  }
+
+  /** Play on my own: no coach steps and no rails in this room. */
+  function pauseTutorial(): void {
+    if (!frame) return;
+    tips.pause(frame.code);
+    toasts.show(t('tutorial.paused.toast'), { kind: 'info', duration: 5000 });
+  }
+
+  /** Resume tutorial (the game menu). After leaving the path it says so. */
+  function resumeTutorial(): void {
+    if (!frame || !view) return;
+    tips.resume(frame.code);
+    resumedLeft = frame.tutorial?.left ? { code: frame.code, ply: view.ply } : null;
   }
 
   /** Sends the forfeit the confirm step agreed to. */
@@ -768,6 +887,8 @@
         homeHint={view?.phase !== 'gameOver'}
         replayCode={view?.phase === 'gameOver' && view.revealed ? frame?.code : undefined}
         onForfeit={resignSeat !== null ? () => (forfeitOpen = true) : undefined}
+        tutorialPaused={tutorial && tutorial.status !== 'complete' ? tutorialPaused : undefined}
+        onTutorial={tutorialPaused ? resumeTutorial : pauseTutorial}
         class="ps-[max(0.5rem,var(--safe-l))] pe-[max(0.5rem,var(--safe-r))] pt-(--safe-t)"
       >
         {#if layout === 'phone-landscape' && view?.phase !== 'wonderDraft'}
@@ -796,12 +917,21 @@
           {confirm}
           {connected}
           botPick={pick?.wonder}
+          bind:detail={draftDetail}
+          coach={draftNote}
+          {allow}
+          lockedReason={locked}
         />
       </div>
     {:else}
       <!-- The panels scroll inside a positioned box, so nothing absolutely
          positioned in them (sr-only text) can reach past it and stretch the page. -->
-      <div class="area-away relative min-h-0 min-w-0" dir={i18n.dir} bind:this={awayEl}>
+      <div
+        class="area-away relative min-h-0 min-w-0"
+        dir={i18n.dir}
+        data-tut="away"
+        bind:this={awayEl}
+      >
         {@render seatPanel(away, 'relative max-h-full overflow-y-auto')}
       </div>
 
@@ -825,7 +955,12 @@
         />
       </div>
 
-      <div class="area-home relative min-h-0 min-w-0" dir={i18n.dir} bind:this={homeEl}>
+      <div
+        class="area-home relative min-h-0 min-w-0"
+        dir={i18n.dir}
+        data-tut="home"
+        bind:this={homeEl}
+      >
         {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
         {#if toastSpot === 'home'}
           <!-- Desktop and phone landscape: the foot of this player's own
@@ -920,7 +1055,7 @@
 
 {#if view}
   <CardSheet
-    open={ui.isOpen('card') && !!selectedSlot && selectedSlot.state !== 'empty'}
+    open={cardSheetOpen}
     {view}
     slot={selectedSlot}
     seat={badge}
@@ -937,6 +1072,9 @@
     onwonders={() => ui.showWonders()}
     onback={() => ui.backToCard()}
     onclose={() => ui.close('card')}
+    coach={cardNote}
+    {allow}
+    lockedReason={locked}
   />
 
   <WonderListSheet
@@ -1048,7 +1186,16 @@
     !summaryOpen &&
     !showPass &&
     !selectedSlot &&
+    !tipsQuiet &&
     presenter.idle}
+/>
+
+<CoachLayer
+  step={coach}
+  text={coachWords}
+  active={coachActive}
+  onnext={coachNext}
+  onpause={pauseTutorial}
 />
 
 <LiveRegion message={lastLines.join(' ')} />

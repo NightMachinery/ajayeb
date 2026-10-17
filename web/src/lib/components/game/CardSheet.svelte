@@ -33,6 +33,14 @@
   // the opponent a win or misses one, the confirm step says so; with
   // Confirm moves off there is no confirm step, and the outcome line and
   // the panel carry it alone (owner Q3, A).
+  //
+  // The tutorial (M10.tutorial-client): a coach step that belongs to this
+  // sheet (`coach`, from the game screen) shows as a note right above the
+  // actions, or above the wonder step's list; the game screen's coach layer
+  // rings its target. The rails (`allow`, lib/tutorial/gate.ts): a move
+  // button whose key the guided turn does not ask for is disabled, its
+  // action group carries data-tutorial-locked, and `lockedReason` says why,
+  // once under the buttons (under the one button of a pick). The card itself and the sheet stay open to read.
   import { cardBySlug } from '$lib/catalog';
   import {
     backName,
@@ -75,6 +83,9 @@
   import OutcomeLine from './OutcomeLine.svelte';
   import { reasonText } from './reasons';
   import WonderStep from './WonderStep.svelte';
+  import CoachNote from '../tutorial/CoachNote.svelte';
+  import type { CoachNoteView } from '$lib/tutorial/coach.svelte';
+  import { ALLOW_ALL, type Allow } from '$lib/tutorial/gate';
 
   interface Props {
     open: boolean;
@@ -106,6 +117,12 @@
     onwonders: () => void;
     onback: () => void;
     onclose: () => void;
+    /** The tutorial's coach step in this sheet, as a note; null for none. */
+    coach?: CoachNoteView | null;
+    /** The tutorial's rails: whether a move key may be sent now. */
+    allow?: Allow;
+    /** Why a move the rails refuse is locked. */
+    lockedReason?: string;
   }
 
   let {
@@ -126,7 +143,10 @@
     onact,
     onwonders,
     onback,
-    onclose
+    onclose,
+    coach = null,
+    allow = ALLOW_ALL,
+    lockedReason = ''
   }: Props = $props();
 
   const titleId = 'card-sheet-title';
@@ -228,6 +248,26 @@
 
 {#snippet discardDiagram()}<DiscardDiagram compact />{/snippet}
 
+{#snippet locked(key: string)}
+  {#if !allow(key)}
+    <p class="text-xs text-fg-muted" dir="auto" data-tutorial-reason>{lockedReason}</p>
+  {/if}
+{/snippet}
+
+{#snippet coachNote()}
+  {#if coach}
+    <CoachNote
+      title={coach.title}
+      progress={coach.progress}
+      text={coach.text}
+      step={coach.step}
+      kind={coach.kind}
+      textId={coach.textId}
+      onpause={coach.onpause}
+    />
+  {/if}
+{/snippet}
+
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
   {#if slot && slot.state !== 'empty'}
     {#if step === 'wonders' && slug && actions}
@@ -242,6 +282,9 @@
         {titleId}
         {onact}
         {onback}
+        {coach}
+        {allow}
+        {lockedReason}
       />
     {:else}
       <div
@@ -293,6 +336,9 @@
           </div>
         </div>
 
+        {#if !takeable || !slug}
+          {@render coachNote()}
+        {/if}
         {#if slug && !takeable}
           <p class="text-sm text-fg-muted" data-covered={slot.coveredBy.length}>
             {t('game.card.covered', { count: slot.coveredBy.length })}
@@ -345,7 +391,11 @@
               {#if pickChoice.cost}
                 <CostBreakdown cost={pickChoice.cost} {coins} />
               {/if}
-              <div class="flex flex-col gap-1" data-act-group>
+              <div
+                class="flex flex-col gap-1"
+                data-act-group
+                data-tutorial-locked={allow(pickChoice.key) ? undefined : ''}
+              >
                 <ActionButton
                   key={pickChoice.key}
                   label={t('game.action.buildWonder', {
@@ -354,9 +404,10 @@
                   })}
                   {confirm}
                   {connected}
-                  disabled={!canAct}
+                  disabled={!canAct || !allow(pickChoice.key)}
                   {onact}
                 />
+                {@render locked(pickChoice.key)}
                 <OutcomeLine
                   terms={termsOf(pickChoice)}
                   actKey={pickChoice.key}
@@ -396,6 +447,7 @@
               </p>
             {/if}
 
+            {@render coachNote()}
             {#if spectator}
               <p class="text-sm text-fg-muted" data-watching>{t('online.watching')}</p>
             {:else if !myTurn}
@@ -403,13 +455,17 @@
             {:else}
               <div class="flex flex-col gap-2">
                 {#if actions.build}
-                  <div class="flex flex-col gap-1" data-act-group>
+                  <div
+                    class="flex flex-col gap-1"
+                    data-act-group
+                    data-tutorial-locked={allow(actions.build.key) ? undefined : ''}
+                  >
                     <ActionButton
                       key={actions.build.key}
                       label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
                       {confirm}
                       {connected}
-                      disabled={!canAct}
+                      disabled={!canAct || !allow(actions.build.key)}
                       {onact}
                     />
                     <OutcomeLine
@@ -454,12 +510,13 @@
                     <div
                       class="flex flex-col gap-1"
                       data-act-group
+                      data-tutorial-locked={allow(actions.discard.key) ? undefined : ''}
                       {@attach tooltip({
                         text: t('game.action.discard', { count: actions.discard.gain ?? 0 }),
                         rulesId: 'turn',
                         diagram: discardDiagram,
                         // This anchor wraps ActionButton, outside the ancestor lookup.
-                        actionable: canAct && connected
+                        actionable: canAct && connected && allow(actions.discard.key)
                       })}
                     >
                       <ActionButton
@@ -468,7 +525,7 @@
                         variant="secondary"
                         {confirm}
                         {connected}
-                        disabled={!canAct}
+                        disabled={!canAct || !allow(actions.discard.key)}
                         {onact}
                       />
                       <OutcomeLine
@@ -506,6 +563,10 @@
                 {/if}
                 {#if !canAct && connected}
                   <p class="text-sm text-fg-muted">{t('game.card.locked')}</p>
+                {:else if canAct && ((actions.build && !allow(actions.build.key)) || (actions.discard && !allow(actions.discard.key)))}
+                  <p class="text-xs text-fg-muted" dir="auto" data-tutorial-reason>
+                    {lockedReason}
+                  </p>
                 {/if}
               </div>
             {/if}
