@@ -16,6 +16,7 @@ Without the lock (the guard sets `AJAYEB_HEAVY_KIND=browser`), the scripts refus
 - `launch.mjs`: starts Chrome on `127.0.0.1:$CHROME_PORT` (default 38959) with a profile in the OS temp directory named `ajayeb-chrome-<pid>-XXXXXX`. Its `close()` kills Chrome's process group and any process still naming the profile, then deletes the profile; exit and SIGINT, SIGTERM or SIGHUP do the same. Run it alone as a self-test, or with `--hold SECONDS` to keep one browser open for several runs (export the `CHROME_CDP` it prints).
 - `shot.mjs`: one page, one screenshot and an optional probe. See below.
 - `svg-render.mjs`: a labelled contact sheet of SVG files at several sizes on several backgrounds, plus optional metadata. See below.
+- `tutorial-walk.mjs`: walks the guided first game from Home as a fresh player would, with a screenshot and checks at every coach step. See below.
 
 Environment:
 
@@ -62,6 +63,21 @@ node tools/chrome/svg-render.mjs --in web/src/lib/icons/svg --sizes 16,24,48,128
 It inlines every SVG into one HTML page through `Page.setDocumentContent` and takes a single screenshot. Each background is a band whose text colour is what `currentColor` and the `var(--i1, currentColor)` fallbacks resolve to; `--fg` overrides the automatic choice. Ids are prefixed in every copy, so gradients and other `url(#id)` references keep working. `--dpr` defaults to 1, which shows the real rasterization at small sizes. The metadata JSON lists, per file, its viewBox, width and height attributes, element and shape counts, bytes, the colours it uses, and warnings such as a missing viewBox or a `<text>` element.
 
 For the inner loop on a single icon, `tools/art/render-fast.sh in.svg SIZE out.png [bg] [ink]` renders with `rsvg-convert` in milliseconds and needs no browser. librsvg differs from Chrome in places, so check each finished batch with `svg-render.mjs`.
+
+## tutorial-walk.mjs
+
+```sh
+python3 tools/heavy.py run --kind browser -- node tools/chrome/tutorial-walk.mjs \
+  --origin http://127.0.0.1:38951 --vp 360x740@2 --theme light --locale en --out /tmp/walk
+```
+
+The M11 player reviewer's probe of the tutorial (docs/testing.md, "The tutorial"). It needs a test build served with `--dev --dev-endpoints`, because it reads the expected lesson order from `GET /api/dev/tutorial`. It seeds a fresh device (a new token, the name Walker, the theme, the Animation setting, the move summary, and the first-time tips on with the tutorial offer new), opens Home, presses Play the tutorial and walks with the same policy as the Playwright specs, through the free part to the completion card, whose New game must open the vs-AI sheet on Home. It uses touch when the viewport's short side is under 600 px, else a mouse.
+
+- `--vp WxH[@dpr]`, `--theme light|dark`, `--locale en|fa`, `--animation normal|off` (default off) and `--summary on|off` (default on) set up the device.
+- `--out DIR` gets one PNG per coach step (`NN-<step>-<kind>[-note].png`), the Home offer, the completion card and the Home it leads to, and `report.json`: per step its id, kind, surface, placement, target and bubble boxes, occlusion verdict, the milliseconds from the frame that brought it to the bubble, and the failed checks; then the expected and observed lesson order, the first-time tips seen, console errors and the first failure.
+- `--no-shots` skips the PNGs, `--trace` records what every press hit, and `--max-actions N` (default 120) bounds the free part.
+
+The checks at every coach step: the target in the viewport (a region taller than a short screen needs most of what fits on screen) and, for an element target, hit by `elementFromPoint` at its centre; the bubble inside the viewport, off an element target and over at most 40% of a region target; its buttons at least 44 px tall; no horizontal scroll; exactly one `[data-coach-target]`. It exits 1 on the first failed check, a lesson order that differs from the script, or a console error, and 0 when the walk is clean.
 
 ## Checking that nothing is left running
 

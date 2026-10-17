@@ -71,8 +71,13 @@ function installMotionOffScript(opts: {
     if (locale) current['locale'] = locale;
     window.localStorage.setItem(settingsKey, JSON.stringify(current));
     // A first-time tip (M10.HS5) is a callout that swallows the next tap
-    // elsewhere, like the summary. Specs about tips turn them back on.
-    window.localStorage.setItem(tipsKey, JSON.stringify({ off: true, seen: [] }));
+    // elsewhere, like the summary. Specs about tips turn them back on. Home's
+    // tutorial offer (M10.tutorial-client) is declined, so no ordinary spec
+    // sees it; the tutorial specs set it back to new.
+    window.localStorage.setItem(
+      tipsKey,
+      JSON.stringify({ off: true, seen: [], tutorial: { offer: 'declined' } })
+    );
   } catch {
     // Storage may be unavailable; nothing to force, and nothing to crash on.
   }
