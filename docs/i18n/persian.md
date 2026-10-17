@@ -278,3 +278,6 @@ Everything else is translated, the `/dev/gallery` and demo strings included.
 - **Colossus**: غول‌پیکر رودس or مجسمه‌ی رودس?
 - **Appian Way**: راه آپیا or جاده‌ی آپیان?
 - **Seat emblem**: نماد now names both the seat emblem and the science and chain symbols. The context always tells them apart, but a native reader may prefer another word for the seat (for example پرچم, flag).
+- **Ezafe after a silent ه**: the tables write it ‌ی after a zero-width non-joiner (کتابخانه‌ی بزرگ, صفحه‌ی بازی), as many apps do. The Academy's style writes ـهٔ (کتابخانهٔ بزرگ) or leaves the ezafe unwritten. Which should the locale use?
+- **Waiting lines**: the lines shown while the other player chooses read «منتظر بمانید تا {name} ... برگزیند…». Is a shorter form («{name} در حال انتخاب است…») more natural on a small screen?
+- **Draft round**: `choices.draft.round` reads «دور {round} از دو», a Persian digit followed by a word, because no digit is typed by hand. Is «دور یکم» / «دور دوم» alone better there?
