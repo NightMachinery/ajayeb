@@ -23,7 +23,7 @@
   // tokenEffect) and adds the hint lines; it links the rules' tokens section.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { artId, tokenArtSizes } from '$lib/art/lookup';
-  import { t } from '$lib/i18n';
+  import { joinPhrases, labelDetail, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { TokenHint } from '$lib/view/board-hints';
@@ -110,14 +110,14 @@
   );
   const initial = $derived(label.charAt(0).toUpperCase());
   const hintText = $derived(
-    hint ? [...hint.lines, hint.mark?.tip ?? ''].filter(Boolean).join(' ') : ''
+    hint ? joinPhrases([...hint.lines, hint.mark?.tip ?? ''], 'text.join') : ''
   );
-  const tipText = (base: string): string => (hintText ? `${base}. ${hintText}` : base);
+  const tipText = (base: string): string => joinPhrases([base, hintText]);
   const effect = $derived(tokenEffect(slug));
   /** The tooltip: the name (as the caller words it) and what the token does,
    *  then the hint lines. */
   const tipFor = (base: string) => ({
-    text: effect ? `${base}: ${effect}` : base,
+    text: labelDetail(base, effect),
     lines: hint ? [...hint.lines, hint.mark?.tip ?? ''].filter(Boolean) : [],
     rulesId: 'tokens' as const
   });

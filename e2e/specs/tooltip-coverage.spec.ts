@@ -15,7 +15,7 @@
 //   sets) on itself or an ancestor, or, for a button, on a descendant that
 //   fills most of it (a mini card's face); or
 // - by a visible text label it would only repeat: a letter in the visible
-//   text of its parent or grandparent (an icon beside its word).
+//   text of an immediate sibling (allowing one image-only wrapper).
 //
 // Elements inside the tooltip layer are skipped, and so is anything in
 // ALLOW below, each with its reason. The test prints every offender with a
@@ -151,9 +151,32 @@ async function uncovered(page: Page): Promise<Coverage> {
     const anchored = (el: Element): boolean => el.closest('[data-tooltip]') !== null;
 
     const labelled = (el: Element): boolean => {
-      let n = el.parentElement;
-      for (let i = 0; n && i < 2; i++, n = n.parentElement) {
-        if (hasLetter(visibleText(n))) return true;
+      let branch = el;
+      for (let depth = 0; depth < 2; depth++) {
+        const parent = branch.parentElement;
+        if (!parent) return false;
+        // Exactly one image-bearing branch belongs to this label. A new
+        // unrelated glyph in the same row must provide its own tooltip.
+        const images = [...parent.children].filter(
+          (child) =>
+            child.matches('svg, img, [role="img"]') || child.querySelector('svg, img, [role="img"]')
+        );
+        if (images.length !== 1) return false;
+        for (const sibling of parent.childNodes) {
+          if (sibling === branch) continue;
+          if (sibling.nodeType === Node.TEXT_NODE && hasLetter(sibling.textContent ?? ''))
+            return true;
+          if (
+            sibling instanceof Element &&
+            isVisible(sibling) &&
+            !sibling.querySelector('svg, img, [role="img"], button, a, input') &&
+            !sibling.matches('svg, img, [role="img"], button, a, input') &&
+            hasLetter(visibleText(sibling))
+          )
+            return true;
+        }
+        if (hasLetter(visibleText(parent))) return false;
+        branch = parent;
       }
       return false;
     };
@@ -214,6 +237,18 @@ async function uncovered(page: Page): Promise<Coverage> {
 }
 
 test.describe('tooltip coverage', { tag: '@mobile' }, () => {
+  test('a label beside one glyph does not excuse unrelated glyphs in its row', async ({ page }) => {
+    await page.goto('/');
+    await page.setContent(`<main class="game-screen">
+      <div><svg width="24" height="24"></svg><span>Its own label</span></div>
+      <div><span><svg width="24" height="24"></svg></span><span>One wrapped icon</span></div>
+      <div><svg width="24" height="24"></svg><span>A row label</span><svg width="24" height="24"></svg></div>
+    </main>`);
+    const result = await uncovered(page);
+    expect(result.byLabel).toHaveLength(2);
+    expect(result.offenders).toHaveLength(2);
+  });
+
   test('every image and icon-only button of the game screen has a tooltip', async ({
     page,
     baseURL

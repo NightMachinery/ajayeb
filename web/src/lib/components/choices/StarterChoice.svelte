@@ -14,6 +14,8 @@
   import { t } from '$lib/i18n';
   import { sessionHintScreen } from '$lib/view/hints';
   import { openingCards, starterThreatLines } from '$lib/view/outcome';
+  import StarterDiagram from '../rules/StarterDiagram.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryEndangered } from '$lib/view/threats';
   import type { Choice, MilitaryView } from '$lib/wire';
@@ -30,6 +32,8 @@
     /** The seat that reads as "you", if any. */
     you?: Seat;
     military: MilitaryView;
+    /** A centred actual choice proves this room uses the diagram’s default ruling. */
+    showDiagram?: boolean;
     /** The view's starter choices; empty when this client is not the chooser. */
     choices: readonly Choice[];
     canAct: boolean;
@@ -46,6 +50,7 @@
     names,
     you,
     military,
+    showDiagram = false,
     choices,
     canAct,
     confirm = false,
@@ -100,9 +105,21 @@
   );
 </script>
 
+{#snippet starterDiagram()}<StarterDiagram compact />{/snippet}
+
 <div class="flex flex-col gap-3" data-starter-choice>
   <h3 class="text-center font-display text-lg text-fg">{t('choices.starter.title', { age })}</h3>
-  <p class="text-center text-sm text-fg" dir="auto">{why}</p>
+  <p
+    class="text-center text-sm text-fg"
+    dir="auto"
+    {@attach tooltip({
+      text: why,
+      rulesId: 'age-end',
+      diagram: showDiagram ? starterDiagram : undefined
+    })}
+  >
+    {why}
+  </p>
 
   {#if options.length > 0}
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">

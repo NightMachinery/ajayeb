@@ -226,6 +226,7 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
     let enCard: Rect;
     let enWidth: number;
     let cardId: string;
+    let enTokens: string[];
     try {
       await openAt(en, baseURL, rec, rec.marks.age1);
       expect(await documentDir(en)).toEqual({ dir: 'ltr', lang: 'en' });
@@ -235,6 +236,12 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
       enWidth = await pageWidth(en);
       enMenu = await rect(en, '[data-control="menu"]');
       enCard = await rect(en, `.card-structure [data-card="${cardId}"]`);
+      enTokens = await en
+        .locator('.progress-token-row')
+        .filter({ visible: true })
+        .first()
+        .locator('[data-fx-token]')
+        .evaluateAll((els) => els.map((el) => el.getAttribute('data-fx-token') ?? ''));
     } finally {
       await en.context().close();
     }
@@ -254,10 +261,33 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
       // The board is not: same direction, same slot.
       expect(await computedDir(page, '.card-structure')).toBe('ltr');
       expect(await computedDir(page, '.military-track')).toBe('ltr');
+      expect(await computedDir(page, '.progress-token-row')).toBe('ltr');
+      const tokens = page
+        .locator('.progress-token-row')
+        .filter({ visible: true })
+        .first()
+        .locator('[data-fx-token]');
+      expect(
+        await tokens.evaluateAll((els) => els.map((el) => el.getAttribute('data-fx-token') ?? ''))
+      ).toEqual(enTokens);
+      const xs = await tokens.evaluateAll((els) => els.map((el) => el.getBoundingClientRect().x));
+      expect(xs).toEqual([...xs].sort((a, b) => a - b));
       const card = await rect(page, `.card-structure [data-card="${cardId}"]`);
       expectNear(card.x, enCard.x, 'the card slot x');
       expectNear(card.y, enCard.y, 'the card slot y');
       expectNear(card.w, enCard.w, 'the card width');
+    });
+
+    await test.step('the card sheet preserves the board card geometry', async () => {
+      await page.locator('.card-structure [data-card][data-accessible]').first().click();
+      const face = page.locator('dialog[open] [data-card-sheet] .card-face').first();
+      await expect(face).toBeVisible();
+      expect(await face.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+      const rows = face.locator('.cost, .band');
+      for (const row of await rows.all())
+        expect(await row.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+      await page.keyboard.press('Escape');
+      await expect(page.locator('dialog[open] [data-card-sheet]')).toHaveCount(0);
     });
 
     await test.step('one move', async () => {

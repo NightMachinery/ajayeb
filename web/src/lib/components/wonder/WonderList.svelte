@@ -10,7 +10,7 @@
   // the hourglass and the ready mark (view/board-hints.ts seatWonderHints),
   // given as `hints` or read from the page's game context.
   import { hintHide } from '$lib/hints/local.svelte';
-  import { t } from '$lib/i18n';
+  import { joinPhrases, t } from '$lib/i18n';
   import { seatWonderHints, wonderOwner, type WonderHint } from '$lib/view/board-hints';
   import { describeWonder } from '$lib/view/describe';
   import { sessionHintScreen } from '$lib/view/hints';
@@ -50,16 +50,14 @@
   function label(wonder: WonderView): string {
     const can = buildable?.has(wonder.wonder) ?? false;
     const h = wh?.get(wonder.wonder);
-    return [
+    return joinPhrases([
       describeWonder(wonder.wonder, wonder),
       can ? t('wonder.canBuild') : '',
       h ? outcomeText(h.terms) : '',
       h?.note ?? '',
       h?.hourglass?.tip ?? '',
       h?.ready?.tip ?? ''
-    ]
-      .filter(Boolean)
-      .join('. ');
+    ]);
   }
 </script>
 

@@ -51,7 +51,7 @@
   import CardFace from '../card/CardFace.svelte';
   import HintPip from '../card/HintPip.svelte';
   import { tryGameContext } from '../choices/room';
-  import { t } from '$lib/i18n';
+  import { joinPhrases, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { getRecapBoard, type RecapBoard } from '$lib/view/recap';
 
@@ -180,7 +180,7 @@
     data-accessible={slot.accessible ? '' : undefined}
     data-marked={marked ? '' : undefined}
     data-bot-pick={botPick ? '' : undefined}
-    aria-label={pip ? `${label}. ${pipLabel(pip)}` : label}
+    aria-label={pip ? joinPhrases([label, pipLabel(pip)]) : label}
     aria-disabled={takeable ? undefined : 'true'}
     aria-pressed={selected ? 'true' : undefined}
     onclick={() => onselect?.(slot)}

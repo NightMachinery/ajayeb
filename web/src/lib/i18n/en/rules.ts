@@ -285,6 +285,9 @@ export const rules = {
     'Example: the {stable} shows the horseshoe. Once it is in your city, the {breeders}, which shows the horseshoe beside its cost, is free for you.',
   'rules.diagram.discard.action': 'Discard',
   'rules.diagram.discard.example': 'With 2 yellow cards: 4 coins',
+  'rules.diagram.discard.plus': '+',
+  'rules.diagram.discard.per': 'per',
+  'rules.diagram.discard.equals': '=',
   'rules.diagram.discard.label':
     'Discarding a card gives 2 coins, plus 1 for each yellow card in your city: with 2 yellow cards, 4 coins.',
   'rules.diagram.seventh.built': { one: '{count} wonder built', other: '{count} wonders built' },

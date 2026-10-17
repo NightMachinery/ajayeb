@@ -964,3 +964,20 @@ removes its Continue entry when another tab finishes it. It checks the
 fixture link-state option and captures the who-starts bar, online presence,
 gallery wonder names and score headers at 360x740, 390x844, 740x360 and
 1280x800. The layout assertions check card overlap and clipped names.
+
+### Review follow-up checks
+
+`fx-followups.spec.ts` checks Age I after a draft and Age II after a bot’s
+starter choice against the normal zero-delay test server. It requires a
+deal to land, without slowing that server. `animation.spec.ts` also checks
+that replay cues carry the replay marker while Sound is on and that the
+replay changes neither state nor the final screen. Unit checks cover the
+Sound-off gate, single vibration timing, cancelled haptics and stale deal
+carry on interruption and resync.
+
+`rtl.spec.ts` checks the card sheet’s card layout and the progress-token
+row’s physical order as well as the board. `tooltip-coverage.spec.ts`
+accepts adjacent visible labels only when they accompany a single image
+branch; an unrelated glyph elsewhere in a labelled row cannot pass.
+`tooltips.spec.ts` exercises the linked bubble’s narrow hit region alongside
+the existing touch, long-press, keyboard and rules-link paths.

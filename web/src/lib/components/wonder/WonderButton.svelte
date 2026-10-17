@@ -21,12 +21,13 @@
   // the hints (the hourglass, the ready ring); it links the rules' wonders
   // section.
   import { hintHide } from '$lib/hints/local.svelte';
-  import { formatNumber, t } from '$lib/i18n';
+  import { joinPhrases, formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { wonderButtonHint, type WonderButtonHint } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
   import { tryGameContext } from '../choices/room';
+  import SeventhWonderDiagram from '../rules/SeventhWonderDiagram.svelte';
   import Hourglass from './Hourglass.svelte';
 
   interface Props {
@@ -65,15 +66,15 @@
   });
 
   const label = $derived(
-    [
+    joinPhrases([
       t('board.wonders.button', { name, built, total }),
       buildable ? t('board.wonders.buildableNow') : '',
       bh?.tip ?? ''
-    ]
-      .filter(Boolean)
-      .join('. ')
+    ])
   );
 </script>
+
+{#snippet seventhDiagram()}<SeventhWonderDiagram compact />{/snippet}
 
 <button
   type="button"
@@ -88,7 +89,7 @@
   data-buildable={buildable ? '' : undefined}
   data-hourglass={bh?.hourglass ? '' : undefined}
   data-ready={bh && bh.ready > 0 && !buildable ? bh.ready : undefined}
-  {@attach tooltip({ text: label, rulesId: 'wonders' })}
+  {@attach tooltip({ text: label, rulesId: 'wonders', diagram: seventhDiagram })}
   {onclick}
 >
   <Icon name="wonder" class="text-base" />

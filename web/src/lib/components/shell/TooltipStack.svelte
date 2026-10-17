@@ -19,12 +19,16 @@
 </script>
 
 <div
-  dir={i18n.dir}
+  dir="ltr"
   class="tooltip-stack flex w-max gap-2 rounded-panel border border-rule-strong bg-panel p-2 shadow-panel {className}"
   data-tooltip-stack
 >
   {#each shown as item, i (i)}
-    <figure class="flex flex-col items-center gap-1.5" data-tooltip-stack-item={item.kind}>
+    <figure
+      dir={i18n.dir}
+      class="flex flex-col items-center gap-1.5"
+      data-tooltip-stack-item={item.kind}
+    >
       <figcaption
         class="max-w-[140px] text-center text-xs leading-tight font-semibold text-fg-muted"
       >

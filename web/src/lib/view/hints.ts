@@ -43,7 +43,7 @@ import { cardBySlug, wonderBySlug } from '$lib/catalog';
 import { seatNames } from '$lib/components/choices/room';
 import { visibleFamilies, type LocalHide } from '$lib/hints/families';
 import { cardName, resourceName, scienceName } from '$lib/components/card/effect-text';
-import { t } from '$lib/i18n';
+import { joinPhrases, t } from '$lib/i18n';
 
 export type Seat = 0 | 1;
 
@@ -223,7 +223,7 @@ export function pipTooltip(pip: CardPip): string {
 
 /** The ARIA suffix for a card with a pip: what its hints say, in words. */
 export function pipLabel(pip: CardPip | undefined): string {
-  return pip ? pip.entries.map((e) => e.text).join('. ') : '';
+  return pip ? joinPhrases(pip.entries.map((e) => e.text)) : '';
 }
 
 // --- Sheet lines ---------------------------------------------------------

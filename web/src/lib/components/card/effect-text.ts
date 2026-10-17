@@ -5,7 +5,7 @@
 
 import type { CatalogCost, CatalogEffect } from '$lib/catalog';
 import { cardBySlug, wonderBySlug } from '$lib/catalog';
-import { i18n, isFallbackText, t } from '$lib/i18n';
+import { joinPhrases, i18n, isFallbackText, t } from '$lib/i18n';
 import type { Back, Chain, Color, Resource, ScienceSymbol } from '$lib/wire';
 
 export const RESOURCES = [
@@ -141,7 +141,7 @@ export function effectSentence(effect: CatalogEffect): string {
 /** All of a card's effects as sentences, joined by full stops. */
 export function effectsText(effects: readonly CatalogEffect[]): string {
   if (effects.length === 0) return t('card.effect.none');
-  return effects.map(effectSentence).join('. ');
+  return joinPhrases(effects.map(effectSentence));
 }
 
 /** A printed cost in words: "2 coins, 1 wood and 2 stone", or "No cost". */

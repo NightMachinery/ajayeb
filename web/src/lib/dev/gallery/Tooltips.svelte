@@ -23,6 +23,7 @@
   import GuildDiagram from '$lib/components/rules/GuildDiagram.svelte';
   import SeventhWonderDiagram from '$lib/components/rules/SeventhWonderDiagram.svelte';
   import StarterDiagram from '$lib/components/rules/StarterDiagram.svelte';
+  import WonderButton from '$lib/components/wonder/WonderButton.svelte';
   import ChainChip from '$lib/components/card/ChainChip.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import DismissLayer from '$lib/components/shell/DismissLayer.svelte';
@@ -288,6 +289,20 @@
           <EffectGlyph effect={glyphEffect} />
         </span>
       {/if}
+      <span class="rounded-control bg-card-paper px-1.5 py-1" data-tip-demo="guild-effect">
+        <EffectGlyph
+          effect={{ kind: 'coins-per-card', n: 1, colors: ['yellow'], scope: 'max' }}
+          points={1}
+        />
+      </span>
+      <span data-tip-demo="seventh-wonder">
+        <WonderButton
+          built={3}
+          total={4}
+          name={t('board.crest.sun')}
+          hint={{ hourglass: true, ready: 0, tip: '' }}
+        />
+      </span>
       <span class="text-sm" data-tip-demo="badge-trade">
         <AffordBadge afford={{ state: 'trade', coins: 6, shortfall: 0 }} cost={PAY} />
       </span>

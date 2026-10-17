@@ -22,7 +22,7 @@
   // static ring in the bot's crest colour (--bot-ink, from the game screen).
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderBySlug } from '$lib/catalog';
-  import { formatNumber, fullStop, t } from '$lib/i18n';
+  import { formatNumber, fullStop, joinPhrases, sentences, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { describeWonder } from '$lib/view/describe';
@@ -138,9 +138,7 @@
 
   /** A picked wonder's chip: its name is printed, so the tooltip says what it does. */
   function pickedTip(slug: string): string {
-    return effectLines(slug)
-      .map((line) => `${line}.`)
-      .join(' ');
+    return sentences(effectLines(slug));
   }
 
   const seats = [0, 1] as const;
@@ -214,7 +212,7 @@
           data-pick-chip={i}
           data-seat={seat}
           data-done={done}
-          {@attach tooltip({ text: `${chipLabel(i)}. ${orderTip}` })}
+          {@attach tooltip({ text: joinPhrases([chipLabel(i), orderTip]) })}
         >
           <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} class="text-[15px]" />
           <span aria-hidden="true">{formatNumber(i + 1)}</span>

@@ -42,6 +42,8 @@
     wonderName
   } from '$lib/components/card/effect-text';
   import { t } from '$lib/i18n';
+  import DiscardDiagram from '../rules/DiscardDiagram.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import { hintHide } from '$lib/hints/local.svelte';
   import {
     cardSections,
@@ -223,6 +225,8 @@
       : undefined
   );
 </script>
+
+{#snippet discardDiagram()}<DiscardDiagram compact />{/snippet}
 
 <Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
   {#if slot && slot.state !== 'empty'}
@@ -447,7 +451,15 @@
                 {/if}
                 <div class="grid grid-cols-2 items-start gap-2">
                   {#if actions.discard}
-                    <div class="flex flex-col gap-1" data-act-group>
+                    <div
+                      class="flex flex-col gap-1"
+                      data-act-group
+                      {@attach tooltip({
+                        text: t('game.action.discard', { count: actions.discard.gain ?? 0 }),
+                        rulesId: 'turn',
+                        diagram: discardDiagram
+                      })}
+                    >
                       <ActionButton
                         key={actions.discard.key}
                         label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}

@@ -8,9 +8,9 @@
   // left edge; the text inside follows the page.
   //
   // The layer is pointer-events: none so a tooltip never blocks the board;
-  // a bubble with a link takes the pointer, so the link can be clicked or
-  // tapped (ui/tooltip.svelte.ts keeps it open meanwhile). The link is not
-  // in the tab order: keyboard users open the rules from the game menu.
+  // only the link row takes the pointer, so neighboring cards remain
+  // reachable through the bubble body. ui/tooltip.svelte.ts keeps the link
+  // open. The link is not in the tab order: keyboard users open the rules from the game menu.
   import type { Snippet } from 'svelte';
   import { i18n, t } from '$lib/i18n';
   import type { RuleSectionId } from '../rules/sections';
@@ -53,8 +53,7 @@
   {id}
   role="tooltip"
   dir="ltr"
-  class="tooltip-bubble group/tip w-max max-w-[min(17rem,calc(100vw-1rem))] rounded-control border border-rule-strong bg-panel px-2.5 py-1.5 text-[13px] leading-snug text-fg shadow-panel {className}"
-  class:pointer-events-auto={!!rulesId}
+  class="tooltip-bubble group/tip pointer-events-none w-max max-w-[min(17rem,calc(100vw-1rem))] rounded-control border border-rule-strong bg-panel px-2.5 py-1.5 text-[13px] leading-snug text-fg shadow-panel {className}"
   data-tooltip-bubble
   data-side={side}
   data-rules-id={rulesId}
@@ -91,7 +90,7 @@
       <button
         type="button"
         tabindex="-1"
-        class="-mx-1 mt-1 inline-flex min-h-8 items-center gap-1 rounded-control px-1 text-[12px] font-semibold text-accent underline underline-offset-2 hover:bg-panel-sunken"
+        class="pointer-events-auto -mx-1 mt-1 inline-flex min-h-8 items-center gap-1 rounded-control px-1 text-[12px] font-semibold text-accent underline underline-offset-2 hover:bg-panel-sunken"
         data-tooltip-rules={rulesId}
         onclick={() => onrules?.(rulesId)}
       >

@@ -7,7 +7,7 @@
   // over it. Its tooltip links the rules' military section, and the track
   // passes the rules diagram of looting (`diagram`).
   import type { Snippet } from 'svelte';
-  import { formatSigned, t } from '$lib/i18n';
+  import { joinPhrases, formatSigned, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
 
   interface Props {
@@ -49,7 +49,7 @@
     : 'border border-dashed border-fg-muted/60 bg-transparent'} {className}"
   role="img"
   {@attach tooltip({ text: tip ?? label, diagram, rulesId: 'military' })}
-  aria-label={tip ? `${label}. ${tip}` : label}
+  aria-label={tip ? joinPhrases([label, tip]) : label}
   data-present={present ? '' : undefined}
   data-min-font="10"
 >

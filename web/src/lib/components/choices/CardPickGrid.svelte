@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { joinPhrases } from '$lib/i18n';
   // A grid of medium cards, optionally selectable: the opponent's cards a
   // destroy choice may hit, or the discard pile. Selecting a card only
   // marks it (the caller's commit button sends the move), so a tile carries
@@ -44,7 +45,7 @@
 
   function nameOf(slug: string): string {
     const pip = pips?.get(slug);
-    return pip ? `${describeCard(slug)}. ${pipLabel(pip)}` : describeCard(slug);
+    return pip ? joinPhrases([describeCard(slug), pipLabel(pip)]) : describeCard(slug);
   }
 
   const CARD_W = 96;

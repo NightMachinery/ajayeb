@@ -21,11 +21,11 @@
 // optional stack of linked previews (a second panel attached to the bubble,
 // such as the card a chain symbol makes free), and an optional rules
 // section id, drawn as a "More in Rules" link that opens the rules overlay
-// at that section and closes the tooltip. A bubble with a link takes the
-// pointer (the layer is otherwise pointer-events: none): a mouse may move
-// from the anchor into it without it closing, a press inside it does not
-// close it, and on touch a tap on the link is the one tap that acts rather
-// than being swallowed. Keyboard users reach the rules from the game menu.
+// at that section and closes the tooltip. Only the link takes the pointer;
+// the bubble body lets board clicks pass. Hover intent gives a moving
+// pointer time to cross to the link, and a resting neighbor takes over
+// within 300 ms. On touch the link is the one tap that acts rather than
+// being swallowed. Keyboard users reach the rules from the game menu.
 
 import { untrack, type Snippet } from 'svelte';
 import type { Attachment } from 'svelte/attachments';
@@ -227,6 +227,7 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   let hideTimer: ReturnType<typeof setTimeout> | undefined;
   let pressTimer: ReturnType<typeof setTimeout> | undefined;
   let hovered: Element | null = null;
+  let linkCandidate: Element | null = null;
   let press: { state: Press; anchor: Element; pointerId: number } | null = null;
   // Where the mouse last pressed: hovering shows nothing new until it has
   // moved away from there (HOVER_RESUME_PX).
@@ -236,6 +237,7 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
     clearTimeout(hoverTimer);
     clearTimeout(hideTimer);
     hoverTimer = hideTimer = undefined;
+    linkCandidate = null;
   };
   const endPress = (): void => {
     clearTimeout(pressTimer);
@@ -253,15 +255,17 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
 
   const onOver = (e: PointerEvent): void => {
     if (e.pointerType !== 'mouse') return;
-    // The pointer moved into the open bubble (to reach its link): it counts
-    // as still on the anchor, so the bubble stays.
-    if (store.active && inside(e.target, BUBBLE_SELECTOR)) {
-      hovered = store.active.anchor;
+    // Only the link keeps its bubble open. The rest of the bubble lets
+    // the pointer reach neighboring anchors.
+    if (store.active && inside(e.target, LINK_SELECTOR)) {
+      hovered = null;
       clearHover();
       return;
     }
     const anchor = store.anchorFor(e.target);
-    if (anchor === hovered) return;
+    // The link is not an anchor. Leaving it must still arm the hide
+    // timer when both the old and new hovered anchors are null.
+    if (anchor === hovered && !inside(e.relatedTarget, LINK_SELECTOR)) return;
     hovered = anchor;
     clearHover();
     if (!anchor) {
@@ -272,6 +276,22 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
       return;
     }
     if (clickedAt) return;
+    if (
+      store.active?.via === 'hover' &&
+      store.active.content.rulesId &&
+      anchor !== store.active.anchor
+    ) {
+      // Linked tooltips need a short hover intent delay even across the
+      // gap to the link. Movement refreshes it; after the pointer rests,
+      // a neighbor takes over within the same bounded delay. Clicks pass
+      // straight through and cancel it in onDown.
+      linkCandidate = anchor;
+      hoverTimer = setTimeout(() => {
+        linkCandidate = null;
+        hoverShow(anchor);
+      }, HOVER_HIDE_LINK_MS);
+      return;
+    }
     hoverShow(anchor);
   };
 
@@ -334,6 +354,21 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
 
   const onMove = (e: PointerEvent): void => {
     if (e.pointerType === 'mouse') {
+      if (linkCandidate) {
+        const candidate = linkCandidate;
+        clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => {
+          linkCandidate = null;
+          if (hovered === candidate) hoverShow(candidate);
+        }, HOVER_HIDE_LINK_MS);
+      } else if (
+        hideTimer !== undefined &&
+        store.active?.via === 'hover' &&
+        store.active.content.rulesId
+      ) {
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => store.hide(), HOVER_HIDE_LINK_MS);
+      }
       // The mouse moved on from its click: hovering shows tooltips again.
       if (!clickedAt) return;
       if (Math.hypot(e.clientX - clickedAt.x, e.clientY - clickedAt.y) < HOVER_RESUME_PX) return;
@@ -376,6 +411,7 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
     // Close the tooltip only, not the sheet beneath it.
     e.preventDefault();
     e.stopPropagation();
+    clearHover();
     store.hide();
   };
 

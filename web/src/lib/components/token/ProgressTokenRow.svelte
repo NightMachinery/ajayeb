@@ -50,6 +50,7 @@
 </script>
 
 <div
+  dir="ltr"
   role="group"
   aria-label={t('board.tokens.boardLabel')}
   class="progress-token-row flex flex-wrap items-center {compact

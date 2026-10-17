@@ -14,6 +14,11 @@
 import type { Messages } from '../types';
 
 export const common = {
+  'text.sentence': '{text}.',
+  'text.join': '{first} {second}',
+  'text.phrases': '{first}. {second}',
+  'text.detail': '{label}: {detail}',
+
   'app.name': 'Ajayeb',
   // The Persian name, shown as decoration next to the Latin one in every locale.
   'app.nameNative': 'عجایب',

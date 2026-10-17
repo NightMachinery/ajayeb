@@ -223,9 +223,44 @@ export function isFallbackText(text: string): boolean {
  *  inside its left-to-right marks, so right-to-left text does not move it to
  *  the start of the English sentence. */
 export function fullStop(text: string): string {
-  return text.endsWith(FALLBACK_END)
-    ? text.slice(0, -FALLBACK_END.length) + '.' + FALLBACK_END
-    : text + '.';
+  // The fallback keeps English punctuation as well as English word order.
+  const fallbackEnd = text.endsWith(FALLBACK_END);
+  const core = fallbackEnd ? text.slice(0, -FALLBACK_END.length) : text;
+  const pattern = fallbackEnd
+    ? en['text.sentence']
+    : (tables[i18n.locale]['text.sentence'] ?? en['text.sentence']);
+  const result = interpolate(pattern, { text: core }, 'en');
+  return fallbackEnd ? result + FALLBACK_END : result;
+}
+
+/** Join already translated text using the locale's punctuation templates.
+ *  Its existing isolates stay intact; no new isolate changes a fallback's direction. */
+export function joinPhrases(
+  parts: readonly string[],
+  separator: 'text.join' | 'text.phrases' = 'text.phrases'
+): string {
+  const pattern = tables[i18n.locale][separator] ?? en[separator];
+  return parts
+    .filter(Boolean)
+    .reduce(
+      (first, second) => (first ? interpolate(pattern, { first, second }, 'en') : second),
+      ''
+    );
+}
+
+export function labelDetail(label: string, detail: string): string {
+  return detail
+    ? interpolate(tables[i18n.locale]['text.detail'] ?? en['text.detail'], { label, detail }, 'en')
+    : label;
+}
+
+/** End phrases once and join sentences, including RTL English fallbacks. */
+export function sentences(parts: readonly string[]): string {
+  const ended = parts
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => (/[.!?…؟]$/.test(stripBidiMarks(p)) ? p : fullStop(p)));
+  return joinPhrases(ended, 'text.join');
 }
 
 /** U+200E, U+200F and U+2066 to U+2069: the invisible direction marks that

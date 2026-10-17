@@ -6,6 +6,9 @@ import {
   formatNumber,
   formatSigned,
   fullStop,
+  joinPhrases,
+  labelDetail,
+  sentences,
   i18n,
   MINUS_SIGN,
   interpolate,
@@ -185,6 +188,20 @@ describe('the Persian stub table', () => {
     expect(fullStop(english)).toBe(START + en['card.effect.buildFromDiscard'] + '.' + END);
     expect(fullStop(t('home.settings.title'))).toBe('تنظیمات.');
     expect(stripBidiMarks(fullStop(english))).toBe(en['card.effect.buildFromDiscard'] + '.');
+  });
+
+  it('joins bilingual sentences without moving fallback punctuation or doubling stops', () => {
+    i18n.set('fa');
+    const english = t('card.effect.buildFromDiscard');
+    const ended = fullStop(english);
+    expect(sentences([english, ended, ''])).toBe(ended + ' ' + ended);
+    expect(joinPhrases([ended, t('home.settings.title')], 'text.join')).toBe(ended + ' تنظیمات');
+    expect(fullStop(labelDetail(t('home.settings.title'), english))).toBe(
+      labelDetail(t('home.settings.title'), english).slice(0, -END.length) + '.' + END
+    );
+    expect(stripBidiMarks(labelDetail(t('home.settings.title'), english))).toBe(
+      'تنظیمات: ' + en['card.effect.buildFromDiscard']
+    );
   });
 
   it('leaves English untouched', () => {

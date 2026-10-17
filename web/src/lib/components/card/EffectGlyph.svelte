@@ -8,6 +8,7 @@
   // concept (shields, science, trade, guilds); it covers the laurel, the
   // coins and the colour swatches inside it. The full form, which prints the
   // sentence beside the glyph, turns it off (`tip`).
+  import GuildDiagram from '../rules/GuildDiagram.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import { formatNumber, formatSigned } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -83,13 +84,22 @@
   <Icon name="play-again" class="text-[1.1em]" />
 {/snippet}
 
+{#snippet guildDiagram()}<GuildDiagram compact />{/snippet}
+
 <span
   class="glyph inline-flex shrink-0 items-center leading-none {small
     ? 'gap-[0.06em]'
     : 'gap-[0.12em]'}"
   data-effect={effect.kind}
   aria-hidden="true"
-  {@attach tooltip(tip ? effectTip(effect, points) : undefined)}
+  {@attach tooltip(
+    tip
+      ? {
+          ...effectTip(effect, points),
+          diagram: effectTip(effect, points).rulesId === 'guilds' ? guildDiagram : undefined
+        }
+      : undefined
+  )}
 >
   {#if effect.kind === 'produce' && effect.resource}
     {#each { length: n }, i (i)}

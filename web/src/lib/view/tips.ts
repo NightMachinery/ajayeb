@@ -17,7 +17,8 @@ import { cardBySlug } from '$lib/catalog';
 import { cardName, effectSentence, joinList, resourceName } from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/game/names';
 import type { RuleSectionId } from '$lib/components/rules/sections';
-import { t } from '$lib/i18n';
+import { sentences, t } from '$lib/i18n';
+export { sentences } from '$lib/i18n';
 import type {
   Back,
   Chain,
@@ -37,16 +38,6 @@ export interface TipText {
   text: string;
   lines?: readonly string[];
   rulesId?: RuleSectionId;
-}
-
-/** Joins phrases into sentences, adding a full stop where one is missing
- *  and dropping the empty ones. */
-export function sentences(parts: readonly string[]): string {
-  return parts
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .map((p) => (/[.!?…]$/.test(p) ? p : `${p}.`))
-    .join(' ');
 }
 
 function asSeat(n: number | undefined): Seat {
@@ -147,13 +138,11 @@ export function effectRules(effect: CatalogEffect): RuleSectionId | undefined {
 /** An effect glyph's tooltip: its sentence (and the guild's paired points
  *  sentence when the glyph draws both), and its rules section. */
 export function effectTip(effect: CatalogEffect, points?: number): TipText {
-  const sentences = [effectSentence(effect)];
+  const parts = [effectSentence(effect)];
   if (points !== undefined && effect.kind === 'coins-per-card') {
-    sentences.push(
-      effectSentence({ ...effect, kind: 'points-per-card', n: points } as CatalogEffect)
-    );
+    parts.push(effectSentence({ ...effect, kind: 'points-per-card', n: points } as CatalogEffect));
   }
-  return { text: `${sentences.join('. ')}.`, rulesId: effectRules(effect) };
+  return { text: sentences(parts), rulesId: effectRules(effect) };
 }
 
 // --- The affordability badge -------------------------------------------------

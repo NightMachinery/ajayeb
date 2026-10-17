@@ -24,7 +24,7 @@
   // and the reach, with the rules' science diagram (compact); it and every
   // slot link the rules' science section.
   import { hintHide } from '$lib/hints/local.svelte';
-  import { formatNumber, t } from '$lib/i18n';
+  import { joinPhrases, formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import type { IconName } from '$lib/icons/names';
   import { scienceHints, type ScienceHints } from '$lib/view/board-hints';
@@ -123,13 +123,11 @@
   const danger = $derived(level === 'soft' || level === 'strong');
   const reach = $derived(sh?.reach ?? '');
   const label = $derived(
-    [
+    joinPhrases([
       t('board.science.label', { count: science.distinct }),
       danger ? t('board.science.danger') : '',
       reach
-    ]
-      .filter(Boolean)
-      .join('. ')
+    ])
   );
   const counterTip = $derived({
     text: sentences([

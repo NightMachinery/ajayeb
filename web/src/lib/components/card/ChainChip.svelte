@@ -9,6 +9,7 @@
   // server's chainTargets as status lines: which city shows the symbol, the
   // card it makes free there and where that card is (view/tips.ts
   // chainLines), from the page's game context or `lines`.
+  import ChainDiagram from '../rules/ChainDiagram.svelte';
   import Icon from '$lib/icons/Icon.svelte';
   import { hintHide } from '$lib/hints/local.svelte';
   import type { Chain } from '$lib/wire';
@@ -35,6 +36,8 @@
   );
 </script>
 
+{#snippet chainDiagram()}<ChainDiagram compact />{/snippet}
+
 <!-- The chip is 1.3 em with the glyph at 0.95 em, but never under 14 px
      with a 12 px glyph: on a mini card (a 10 px font) 0.95 em is 9.5 px,
      too small for the mask, lyre, amphora and barrel to read. -->
@@ -47,7 +50,11 @@
   aria-hidden="true"
   data-chain={chain}
   data-chain-direction={direction}
-  {@attach tooltip(chainTooltip(chain, direction, shown))}
+  {@attach tooltip({
+    ...chainTooltip(chain, direction, shown),
+    diagram: chainDiagram,
+    rulesId: 'costs'
+  })}
 >
   <Icon name={`chain-${chain}`} class="text-[length:max(0.95em,12px)]" />
 </span>

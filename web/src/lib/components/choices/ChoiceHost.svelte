@@ -251,6 +251,7 @@
               {names}
               {you}
               military={view.military}
+              showDiagram={view.military.position === 0}
               choices={options}
               {canAct}
               {confirm}

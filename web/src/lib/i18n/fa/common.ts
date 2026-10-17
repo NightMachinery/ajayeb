@@ -6,6 +6,11 @@ import type { common as en } from '../en/common';
 import type { Translation } from '../types';
 
 export const common = {
+  'text.sentence': '{text}.',
+  'text.join': '{first} {second}',
+  'text.phrases': '{first}. {second}',
+  'text.detail': '{label}: {detail}',
+
   'app.tagline': 'نبرد عجایب برای دو نفر',
   'app.legal':
     'عجایب پیاده‌سازی غیررسمی و غیرتجاری قوانین بازی 7 Wonders Duel، اثر آنتوان بوزا و برونو کاتالا (Repos Production)، به دست علاقه‌مندان آن است. این برنامه وابسته به Repos Production یا Asmodee نیست و تأیید آن‌ها را ندارد؛ 7 Wonders Duel نشان تجاری آن‌هاست.',

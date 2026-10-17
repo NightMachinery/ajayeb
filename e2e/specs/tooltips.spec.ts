@@ -34,6 +34,21 @@ function bubble(page: Page): Locator {
 }
 
 async function center(locator: Locator): Promise<{ x: number; y: number }> {
+  if (await locator.evaluate((el) => el.closest('[data-tooltip-layer]') !== null)) {
+    // Playwright treats opacity:0 as visible. A real tap needs the placed,
+    // painted bubble, rather than the measuring box at the origin.
+    await expect(
+      locator.page().locator('[data-tooltip-layer] .tooltip-group[data-placed]')
+    ).toHaveCSS('opacity', '1');
+    await locator
+      .page()
+      .evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          )
+      );
+  }
   const box = await locator.boundingBox();
   if (!box) throw new Error('element has no box');
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -157,6 +172,20 @@ test.describe('tooltips on a fine pointer', () => {
     expect(problems).toEqual([]);
   });
 
+  test('Escape also cancels a pending neighboring hover from a linked tooltip', async ({
+    page
+  }) => {
+    await page.goto(URL);
+    await page.getByTestId('tip-chain-out').locator('[data-chain]').hover();
+    await expect(bubble(page)).toBeVisible();
+    await page.getByTestId('tip-button').hover();
+    await page.keyboard.press('Escape');
+    await expect(bubble(page)).toHaveCount(0);
+    // Longer than the 300 ms hover-intent pause: it must not reopen.
+    await page.waitForTimeout(400);
+    await expect(bubble(page)).toHaveCount(0);
+  });
+
   test('the dismiss layer takes the focus, keeps Tab inside and gives it back', async ({
     page
   }) => {
@@ -269,6 +298,40 @@ test.describe('the "More in Rules" link on a fine pointer', () => {
     expect(problems).toEqual([]);
   });
 
+  test('only a linked bubble’s link catches the pointer, and a neighboring card still opens', async ({
+    page
+  }) => {
+    await page.goto(URL);
+    const chip = page.getByTestId('tip-card').locator('[data-chain="drop"]');
+    await chip.hover();
+    await expect(bubble(page)).toBeVisible();
+    const link = page.locator('[data-tooltip-layer] [data-tooltip-rules="costs"]');
+    expect(await bubble(page).evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('none');
+    expect(await link.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe('auto');
+    await link.hover();
+    await page.getByRole('heading', { level: 1 }).hover();
+    await expect(bubble(page)).toHaveCount(0);
+    await chip.hover();
+    await expect(bubble(page)).toBeVisible();
+    // Put the existing card beneath the bubble body. A hit there must
+    // reach the card, not leave the old anchor hovered indefinitely.
+    const box = await bubble(page).boundingBox();
+    if (!box) throw new Error('no bubble');
+    const point = { x: box.x + box.width / 2, y: box.y + 12 };
+    await page.getByTestId('tip-card').evaluate((el, point) => {
+      el.style.position = 'fixed';
+      el.style.insetInlineStart = `${point.x - 30}px`;
+      el.style.insetBlockStart = `${point.y - 30}px`;
+      el.style.width = '60px';
+      el.style.height = '60px';
+      el.style.zIndex = '50';
+    }, point);
+    await page.mouse.move(point.x, point.y);
+    await expect(page.locator('[data-tooltip-layer] [data-tooltip-stack]')).toHaveCount(0);
+    await page.mouse.click(point.x, point.y);
+    await expect(page.getByTestId('tip-card-sheet')).toBeVisible();
+  });
+
   test('a bubble without a link lets the pointer through', async ({ page }) => {
     await page.goto(URL);
     await page.getByTestId('tip-text').hover();
@@ -376,6 +439,7 @@ test.describe('tooltips on touch', { tag: ['@mobile'] }, () => {
     await tap(page, token);
     const link = page.locator(RULES_LINK);
     await expect(link).toBeVisible();
+    await center(link);
     // A tap elsewhere in the bubble is any other tap: it closes the bubble.
     const box = await bubble(page).boundingBox();
     if (!box) throw new Error('no bubble box');

@@ -109,6 +109,7 @@
       class="flex h-6 w-full items-center gap-1 overflow-hidden rounded-[4px] border border-black/25 px-1 text-[12px] text-card-ink
         [--pat:color-mix(in_oklch,var(--card-ink)_18%,transparent)] {className}"
       style:background={bandBackground(card.color)}
+      dir="ltr"
       data-tier="band"
       aria-hidden="true"
       {@attach tooltip({ text: cardTip(card.slug) })}
@@ -127,6 +128,7 @@
       style:--cw={width === undefined ? undefined : `${width}px`}
       style:--band={bandColor(card.color)}
       style:--glyph-ink="var(--card-{card.color}-paper-ink)"
+      dir="ltr"
       data-tier={tier}
       data-color={card.color}
       aria-hidden="true"
@@ -202,6 +204,7 @@
       {#if tier !== 'mini'}
         <span class="name flex items-start gap-[0.25em] px-[5%] pt-[0.2em] pb-[0.3em]">
           <span
+            dir="auto"
             class="name-text line-clamp-2 min-w-0 flex-1 font-display leading-[1.1] wrap-normal hyphens-manual"
             style:--name-chars={longestWord(name)}
             style:--glyph-room={nameGlyph ? 1.3 : 0}>{name}</span

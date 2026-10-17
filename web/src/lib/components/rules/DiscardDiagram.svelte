@@ -23,9 +23,9 @@
       <Arrow class="text-fg-muted" />
       <span dir="ltr" class="flex items-center gap-1" aria-hidden="true">
         <Coin n={2} />
-        <span class="font-semibold">+</span>
+        <span class="font-semibold">{t('rules.diagram.discard.plus')}</span>
         <Coin n={1} />
-        <span class="font-semibold">/</span>
+        <span class="font-semibold">{t('rules.diagram.discard.per')}</span>
         <CardSwatch color="yellow" />
       </span>
     </div>
@@ -35,9 +35,9 @@
         <CardSwatch color="yellow" />
         <Arrow class="mx-0.5 text-fg-muted" />
         <Coin n={2} />
-        <span class="font-semibold">+</span>
+        <span class="font-semibold">{t('rules.diagram.discard.plus')}</span>
         <Coin n={2} />
-        <span class="font-semibold">=</span>
+        <span class="font-semibold">{t('rules.diagram.discard.equals')}</span>
         <Coin n={4} />
       </span>
       <span class="text-xs text-fg-muted">{t('rules.diagram.discard.example')}</span>

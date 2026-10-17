@@ -17,6 +17,7 @@
   // the caller passes onOpenSummary only while there is a summary to show.
   // Below 26rem the bar has no room for five buttons, the age and the cards
   // left, so the settings gear leaves it there (Settings stays in the menu).
+  import StarterDiagram from '../rules/StarterDiagram.svelte';
   import type { Snippet } from 'svelte';
   import { t } from '$lib/i18n';
   import HintsMenuItem from '../hints/HintsMenuItem.svelte';
@@ -59,6 +60,8 @@
     onForfeit?: () => void;
     /** The age chip's tooltip (age-countdown and next-starter, M10.HS4). */
     ageTip?: string;
+    /** The presented view has an actual centred-pawn choice (the default ruling). */
+    starterChoice?: boolean;
     /** Extra content between the age and the buttons (the compact military
      *  track and tokens of the phone landscape layout). */
     children?: Snippet;
@@ -79,6 +82,7 @@
     replayCode,
     onForfeit,
     ageTip,
+    starterChoice = false,
     children,
     class: className = ''
   }: Props = $props();
@@ -113,6 +117,8 @@
     'flex min-h-11 w-full items-center gap-3 rounded-control px-3 text-start text-sm font-semibold text-fg hover:bg-panel-sunken focus-visible:bg-panel-sunken';
 </script>
 
+{#snippet starterDiagram()}<StarterDiagram compact />{/snippet}
+
 <header
   class="top-bar flex min-h-11 items-center justify-between gap-2 border-b border-rule bg-panel px-2 {className}"
 >
@@ -138,7 +144,15 @@
         class="whitespace-nowrap text-fg-muted"
         data-must-fit
         data-age-tip={ageTip ? '' : undefined}
-        {@attach tooltip(ageTip ? { text: ageTip } : undefined)}
+        {@attach tooltip(
+          ageTip || starterChoice
+            ? {
+                text: ageTip ?? t('choices.starter.hint'),
+                rulesId: 'age-end',
+                diagram: starterChoice ? starterDiagram : undefined
+              }
+            : undefined
+        )}
       >
         {t('cards.left', { count: cardsLeft })}
       </span>

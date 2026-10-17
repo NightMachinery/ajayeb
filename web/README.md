@@ -119,7 +119,7 @@ Pass `undefined` instead of the content for no tooltip (a conditional one). The 
 - **The layer.** `components/shell/TooltipLayer.svelte` is mounted once, in the root layout. It installs the gestures (`installTooltipGestures`) and draws the one open tooltip in a manual popover, so it shows above an open sheet too. The bubble (`TooltipBubble.svelte`) and the stack (`TooltipStack.svelte`) are plain leaf components that the gallery also renders standalone.
 - **Fine pointer.** A hover shows the tooltip after 450 ms; moving to the next anchor within 300 ms of a tooltip closing shows the next one at once. Keyboard focus (focus-visible only) shows it at once. Escape closes it, and only it: the sheet beneath stays open. A mouse click acts as usual and closes any open tooltip, a keyboard focus one included, so a tooltip never lingers over the menu or sheet the click opened and takes its Escape.
 - **Touch (model B).** A tap on an element with no action shows its tooltip. An element is actionable when it or an ancestor is a button, a link, a form control, a `summary`, a `label`, an element with an interactive role or a `data-act` (`ACTIONABLE_SELECTOR` in `ui/tooltip-gesture.ts`), and is not disabled. An actionable element keeps its tap and shows its tooltip on a 500 ms long-press, whose release is swallowed so it never acts. A finger that moves more than 10 px cancels the press, so a long-press never fights scrolling, and the browser's own long-press menu and callout are suppressed on anchors. Any tap while a tooltip is open closes it and is swallowed: neither the press nor its click reaches the page.
-- **The "More in Rules" link.** A tooltip with a `rulesId` shows a link under its text that closes the tooltip and opens the rules overlay at that section (`openRules`). Every concept tooltip carries one (a cost rule, a chain, a zone of the track, a science symbol, a guild, a wonder, a token); a tooltip whose sentence says it all (a cost pip, production, plain points or coins) does not. The bubble takes pointer events only while it carries the link, so a plain bubble never catches the pointer. With a fine pointer, the mouse can move from the anchor into the bubble (the hide delay grows to 300 ms for a linked bubble, `HOVER_HIDE_LINK_MS`), a press inside the bubble leaves it open, and the link's click closes it; after any click, hovering shows no new tooltip until the mouse moves 4 px, so the click never pops one up under a resting pointer. On touch, a tap on the link is the one tap that is not swallowed while a tooltip is open: it acts (`downAction` in `ui/tooltip-gesture.ts`); a tap anywhere else, the bubble's own text included, closes the tooltip as before. Escape still closes it. The link is not a tab stop (`tabindex="-1"`, like the tooltip itself): keyboard users reach the same sections through the game menu's Rules entry and the rules overlay's own section list.
+- **The "More in Rules" link.** A tooltip with a `rulesId` shows a link under its text that closes the tooltip and opens the rules overlay at that section (`openRules`). Every concept tooltip carries one (a cost rule, a chain, a zone of the track, a science symbol, a guild, a wonder, a token); a tooltip whose sentence says it all (a cost pip, production, plain points or coins) does not. Only the link row takes pointer events; the bubble body always lets the pointer through. With a fine pointer, the mouse can move from the anchor to the link (the hide delay grows to 300 ms for a linked bubble, `HOVER_HIDE_LINK_MS`), a press on the link leaves it open, and the link's click closes it; after any click, hovering shows no new tooltip until the mouse moves 4 px, so the click never pops one up under a resting pointer. On touch, a tap on the link is the one tap that is not swallowed while a tooltip is open: it acts (`downAction` in `ui/tooltip-gesture.ts`); a tap anywhere else, the bubble's own text included, closes the tooltip as before. Escape still closes it. The link is not a tab stop (`tabindex="-1"`, like the tooltip itself): keyboard users reach the same sections through the game menu's Rules entry and the rules overlay's own section list.
 - **Micro-element tooltips.** `src/lib/view/tips.ts` words the board's smallest elements from catalog data and the numbers the server sent, and decides nothing: each cost pip (and how the payment in view covers that resource), the "+n" of a cut cost row, each effect glyph, the affordability badge (a trade lists what it buys and at what price), a face-down back, the coin and point tallies, the chain chips' status lines and an owned guild's points. The hint lines follow the screen's hint families: the chain status lines and a back's candidates are the counting family, the next point from coins, the winner on points now and a guild's points the scoring family.
 - **Compact diagrams.** The rules reference's diagrams (`TradeDiagram`, `ScienceDiagram`, `MilitaryDiagram` in `components/rules/`) take a `compact` prop, at most about 220 by 120 px, for a tooltip's `diagram` snippet: the trade badge shows the trade rule (headed "For example:", so its numbers never read as the game's), the science counter the seven symbols, and the track's zones and looting tokens the zones.
 - **Innermost wins.** The anchor is the innermost registered element under the pointer or finger: a chain chip inside a card slot shows the chip's tooltip, and the rest of the slot the slot's own. One tooltip shows at a time.
@@ -152,8 +152,8 @@ Any component can open the overlay at a section with `openRules('military')` fro
 - Only live events play. The first snapshot of a room, another room's frame, and a frame whose version does not move forward (an undo, a resync) are silent.
 - Each cue kind plays at most once per frame, 90 ms apart, in the order of its first event. When the frame animates, the cues are retimed to their animations (see Animations below).
 - Settings: Show opponent move in detail (on by default; see the game screen's move summary). Sound (off by default) with a Quiet, Medium or Loud step, and Vibration (on by default, shown only on a touch device where `navigator.vibrate` exists, so never on desktop Chrome: `screens/vibration.ts`). Sound does not follow the Animation setting. The AudioContext starts only inside a user gesture: the Sound switch itself, or any later pointer or key press.
-- Haptics: 8 ms when a card or wonder is taken, a short pattern when the pawn moves, a longer one for looting. When the frame animates, `haptics.ts` waits for the step a pattern belongs to (`hapticOffset` in `fx/anim/plan.ts`, read from the timeline the runner planned last): the take as its card lands, the pawn's pattern with its first step, the looting's as the first token flips. A newer vibration cancels one still waiting.
-- Test hook: `window.__ajayebFx.cues()` and `.haptics()` list what would have played (a cue only while Sound is on, a vibration only while Vibration is on), and `.clear()` empties both. `e2e/specs/sound.spec.ts` reads it.
+- Haptics: 8 ms when a card or wonder is taken, a short pattern when the pawn moves, a longer one for looting. When the frame animates, `haptics.ts` waits for the step a pattern belongs to (`hapticOffset` in `fx/anim/plan.ts`, passed explicitly from the timeline for that frame): the take as its card lands, the pawn's pattern with its first step, the looting's as the first token flips. A newer frame, finish, hurry, undo, leaving the room or switching Haptics off cancels a vibration still waiting. The timeout also checks the setting before it plays. Animation off keeps one immediate vibration.
+- Test hook: `window.__ajayebFx.cues()` and `.haptics()` list what would have played (a cue only while Sound is on, a vibration only while Vibration is on), and `.clear()` empties both. Every cue carries its frame version and a `replay` boolean. Visual replays use the same recording and Sound gate. `e2e/specs/sound.spec.ts` reads it.
 - `/dev/gallery` has a sound board under Screens, with a button per cue.
 
 ## Animations
@@ -296,3 +296,31 @@ including removal when a game finishes. Older saved entries still open
 without summary details. Online presence sits beside the name in both the
 phone strip and the desktop city header. Logs opened from mid-game scenarios
 use the displayed age until an age boundary is recorded.
+
+Review follow-ups keep card faces and board progress-token rows `dir="ltr"`
+wherever they appear, including a mini card in a Persian card sheet. The
+tooltip preview panel also keeps its positioning box left to right while
+its captions follow the locale. Text
+may still use `dir="auto"` locally. Sentence endings, joins and label/detail
+punctuation live in the message tables; `fullStop`, `sentences`,
+`joinPhrases` and `labelDetail` preserve the English fallback isolates.
+
+Only the More in Rules link row intercepts the pointer. The rest of a
+linked tooltip lets a neighboring card receive clicks immediately and
+hover after a bounded 300 ms pause. Movement refreshes this hover-intent
+grace so a slow crossing can still reach the link. Touch
+still closes and swallows any tap except the rules link; keyboard focus
+and Escape keep their existing behavior. Chain, discard, seventh-wonder,
+guild and actual starter-choice tooltips show the existing compact rules
+diagrams. StarterChoice and the age chip show the starter diagram only during
+a real centred-pawn choice. That proves the default ruling applies; the
+room option is otherwise not exposed to the client, and a side-pawn
+choice alone cannot distinguish the two centred-pawn rulings.
+
+Queued ordinary moves still catch up without animation. If a zero-delay
+bot queues its response behind a live age transition, the runner carries
+only that deal to the last live snapshot of the same age. If the Presenter
+coalesced the transition before capture, the live view’s age/phase change
+still plans the deal. It deals the
+cards still present there; a taken card is never recreated. Room clear,
+hurry, undo/resync and an age or room change discard a pending deal.

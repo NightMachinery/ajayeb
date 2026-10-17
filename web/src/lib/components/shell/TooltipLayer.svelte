@@ -163,12 +163,17 @@
 </div>
 
 <style>
-  /* data-placed is set by the placing attachment, so Svelte cannot see it
+  /* Opacity, rather than inherited visibility, keeps SVGs inserted by a
+     diagram’s keyed rows from retaining a hidden computed style after placement.
+     data-placed is set by the placing attachment, so Svelte cannot see it
      (hence :global). Hidden until placed, so it never flashes at the corner; then a fade
      that follows the Animation setting (instant when it is off, through
      app.css's data-motion rule and --dur-fast). */
   .tooltip-group:not(:global([data-placed])) {
-    visibility: hidden;
+    opacity: 0;
+  }
+  .tooltip-group:not(:global([data-placed])) :global([data-tooltip-rules]) {
+    pointer-events: none;
   }
   .tooltip-group:global([data-placed]) {
     animation: tooltip-in var(--dur-fast) ease-out;

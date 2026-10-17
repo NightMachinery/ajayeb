@@ -17,7 +17,7 @@ import {
   effectsText,
   wonderName
 } from '$lib/components/card/effect-text';
-import { t } from '$lib/i18n';
+import { joinPhrases, t } from '$lib/i18n';
 import type { SlotView, WonderView } from '$lib/wire';
 import { affordOf, type Afford } from './afford';
 
@@ -62,7 +62,7 @@ export function describeCard(slug: string): string {
   return t('card.aria.card', {
     name: cardName(slug),
     color: colorName(card.color),
-    effects: parts.join('. ')
+    effects: joinPhrases(parts)
   });
 }
 
@@ -91,7 +91,7 @@ export function describeSlot(slot: SlotView, options: DescribeSlotOptions = {}):
     parts.push(capitalize(t('card.aria.covered', { count: slot.coveredBy.length })));
   }
   if (options.selected) parts.push(capitalize(t('card.aria.selected')));
-  return parts.join('. ');
+  return joinPhrases(parts);
 }
 
 /** The ARIA name of a wonder, with its state when a WonderView is given. */
@@ -110,5 +110,5 @@ export function describeWonder(slug: string, state?: WonderView): string {
   } else if (state?.cost) {
     parts.push(capitalize(describeAfford(affordOf(state.cost))));
   }
-  return parts.join('. ');
+  return joinPhrases(parts);
 }

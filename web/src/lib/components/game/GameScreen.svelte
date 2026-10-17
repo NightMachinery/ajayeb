@@ -757,6 +757,7 @@
         age={view?.age ?? 0}
         {cardsLeft}
         ageTip={ageChipTip}
+        starterChoice={view?.phase === 'chooseStarter' && view.military.position === 0}
         {canUndo}
         onUndo={undoAllowed ? undo : undefined}
         {undoReason}
