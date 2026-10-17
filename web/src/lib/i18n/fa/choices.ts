@@ -14,7 +14,8 @@ export const choices = {
   'choices.selectCard': 'اول یک کارت برگزینید',
   'choices.selectToken': 'اول یک نشان برگزینید',
   'choices.waiting.destroyCard': 'منتظر بمانید تا {name} کارتی را برای نابودی برگزیند…',
-  'choices.waiting.buildFromDiscard': 'منتظر بمانید تا {name} کارتی از کارت‌های کنارگذاشته برگزیند…',
+  'choices.waiting.buildFromDiscard':
+    'منتظر بمانید تا {name} کارتی از کارت‌های کنارگذاشته برگزیند…',
   'choices.waiting.pickBoardToken': 'منتظر بمانید تا {name} یک نشان پیشرفت برگزیند…',
   'choices.waiting.pickLibraryToken': {
     other: '{name} از میان {count} نشان پنهان کتابخانه‌ی بزرگ انتخاب می‌کند…'
