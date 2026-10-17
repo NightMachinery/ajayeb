@@ -161,7 +161,7 @@ frame actually fits them. `ajayeb-gen fixtures` closes that gap:
   slice marshaled without this convention is exactly the kind of mistake
   this check exists to catch).
 
-`ajayeb-gen` with no subcommand runs `fixtures` with its defaults, so
+`ajayeb-gen` with no subcommand writes both the fixtures and the presentation catalog, so
 `make gen` and `make gen-check` regenerate and check this file along with
 everything `tygo` produces.
 
@@ -227,7 +227,9 @@ onto the game the page shows, for end-to-end drivers:
   (welcomed, nothing queued in the Presenter, no request pending);
 - `history()`: the game's history as the session holds it, one entry per
   applied action (the `history` field of the state frame, kept across live
-  frames), so a spec can check the log after a reload.
+  frames), so a spec can check the log after a reload;
+- `tutorial()` and `coach()`: the tutorial state of the displayed frame and
+  the visible coach step, or `null` outside their respective contexts.
 
 A second hook, `window.__ajayebFx` (`web/src/lib/fx/index.ts`), records
 the sound cues and vibrations that would play, because CI has no audio
@@ -540,11 +542,33 @@ server's result, then a few facts of the scenario's Expect from the final
 view (the pawn in the capital and no destroy choice, Law in the winner's
 tokens, the equal totals of a tie), that the turn bar says the game is
 over and no move is offered, and that the page logged no error. The
-`military-supremacy` test also checks the replay download: the game menu
-has no "Download replay" item while the game runs, has one once it is
-over, and the file it saves is named `ajayeb-<code>.json` and holds the
-room's `ajayeb-log/1` log (format, seed, scenario, one entry per action
-played, final hash). Each test takes 2 to 4 s.
+`military-supremacy` test also checks replay availability: the menu entry
+is visible but disabled during play, and its focusable wrapper shows the
+custom tooltip "Available when this game ends." The eligible finished
+game enables that entry and shows a result-screen download button. Both
+save byte-identical files named by the server as
+`ajayeb-<code>-YYYY-MM-DD.json`, with the UTC download date. The decoded
+`ajayeb-log/1` record has the room's format, seed, scenario, action count
+and final hash. The spec also captures the running menu at 360x740,
+390x844, 740x360 and 1280x800, checking that the entry can be scrolled
+into view.
+
+### `replay-download.spec.ts` (`@mobile`)
+
+A fresh spectator, controlling neither seat, downloads an eligible
+finished room's record from the result screen and compares the saved
+bytes with the direct HTTP response. It checks the dated filename and
+the enabled menu, with result-action and menu screenshots at the four
+sizes above. A `hideAtEnd` room instead returns 403 without a seed, omits
+the result download button, explains that the record stays hidden, and
+keeps the menu entry disabled with that explanation in the custom tooltip.
+
+The HTTP tests in `server/internal/httpapi/gamelog_test.go` separately
+cover 409 for running games, 403 for hidden records and the other refusal
+cases. `TestGameLogFinished` decodes the downloaded record, calls
+`engine.Replay` and requires the same terminal state hash. The filename
+test uses a clock in UTC+14 across a date boundary to check that the
+server uses UTC. See [the format and access rules](protocol.md#downloading-a-games-log).
 
 ### `animation.spec.ts` (`@mobile`, one case `@perf`)
 
@@ -657,11 +681,11 @@ it lands in the server's next view:
 Each test takes 3 to 8 s (the draft is the longest). On mobile the
 pass-device screen is on, and the driver passes it wherever it appears.
 
-Measured on the laptop with `make e2e E2E_BUILD=0 GREP='victory|flows'`
+Historical M6 measurements on the laptop with `make e2e E2E_BUILD=0 GREP='victory|flows'`
 (both projects, 36 tests), green on two runs in a row, about two and a
 half minutes each:
 
-- desktop: `victory` about 26 s for its 7 tests, `flows` about 46 to 48 s
+- desktop: `victory` about 26 s for its then 7 tests, `flows` about 46 to 48 s
   for its 11;
 - mobile: `victory` about 21 to 22 s, `flows` about 46 s.
 
@@ -673,7 +697,7 @@ that viewer was entitled to see it. It is written from the rules of what
 is hidden, not from the server's redaction code, and its ground truth is
 what the game itself ends up revealing:
 
-- at game over every view carries a `revealed` section (the cards set
+- at game over every view of these games (created without `hideAtEnd`) carries a `revealed` section (the cards set
   aside from each age, the deals of ages never laid out, the cards still
   face down, and the guilds, wonders and progress tokens left in the box;
   docs/rules/decisions.md, "Reveal at game end"). None of them may appear
@@ -794,10 +818,11 @@ created, so a narrower `GREP` deals another game):
   law and architecture; a civilian win for seat 1, 62 to 45. Frames: A
   79, B 77, the spectator 65; 719 face-down checks. About 60 s.
 
-The Great Library test takes about 5 s (frames: seat 0 8, seat 1 7, the
-spectator 6). A whole `make e2e` (both projects, every spec) took about 6.5
-minutes after the builds, 73 tests passed and 3 skipped (the layout
-viewports wider than 844 px on the mobile project).
+These playthrough counts and timings were measured during M7. The suite
+has grown since then; use the current Playwright report for its test count
+and duration. For a bounded local run, select files with
+`make e2e PW_ARGS='specs/online.full.spec.ts'`. After a successful build,
+subsequent batches may use `E2E_BUILD=0` while those build inputs stay unchanged.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
@@ -824,7 +849,7 @@ that actually keeps a local-only spec off a real site, **every project's
 `grep` is forced to `@prod`**. `prod.smoke.spec.ts` is the only spec tagged
 `@prod`, so it is the only one that can ever be selected this way, whatever
 else is passed on the command line: a `--grep` (through `PW_ARGS`, since `e2e-prod` ignores `GREP`) is ANDed in
-on top, never used in place of the forced one, so it can narrow the five
+on top, never used in place of the forced one, so it can narrow the production
 tests further but never add a spec that is not `@prod`. Without
 `E2E_BASE_URL`, none of this changes; `make e2e` and `make e2e-smoke` run
 exactly as before.
@@ -868,7 +893,7 @@ network-free way to re-check it after any further change here: it must
 print exactly the tests below, and nothing else, regardless of what other
 flags are added.
 
-### The four tests
+### The production checks
 
 1. `GET /health` answers `ok` with a non-empty `version` (logged).
 2. Home renders in both themes (`light`, `dark`) with no console error, page

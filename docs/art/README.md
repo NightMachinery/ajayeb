@@ -9,14 +9,14 @@ Ajayeb's art is original and comes from two independent pipelines. Both follow t
 
 ### Where things are
 
-- `art/vector/STYLE.md`: the rules every vector follows (grid, minimum sizes, the two-tone paint convention, the halo, budgets, the visual language) and the iteration loop. Start there.
+- [art/vector/STYLE.md](../../art/vector/STYLE.md): the rules every vector follows (grid, minimum sizes, the two-tone paint convention, the halo, budgets, the visual language) and the iteration loop. Start there.
 - `art/vector/specs/<set>.md`: one brief per set: per icon its id, its meaning in the game, the metaphor, the required silhouette, what it must not be confused with, its sizes and the places it appears.
 - `art/vector/sets.json`: which files make up each set, and how the specimen shows them in context (their ink, detail tone, tile, chip, badge and band).
 - `art/vector/log/<set>.md`: the iteration log of each set: what each round saw and changed, the blind-check scores, and which icons are marked `needs-human`.
 - `web/src/lib/icons/svg/<id>.svg`: the icon sources, the single source of truth. `web/src/lib/icons/names.ts` lists their ids; `sprite.ts` builds them into one inline sprite of `<symbol>`s, which `Icon.svelte` uses with `<use href="#i-<id>">`.
 - `tools/art/vector/`: the tools, documented in [tools/art/README.md](../../tools/art/README.md#vector-pipeline-vector).
 
-The five sets are `resources-economy-military`, `science`, `chain`, `ui-category` and `ornaments-track-logo`. They are drawn in that order: the most frequent and most critical glyphs first. Two small sets followed in M10: `hints` (the hint pip glyphs) and `tt2-glyphs` (`play-again`, `build-from-discard` and `destroy-card`, which replaced the last Lucide outlines on cards; spec in `art/vector/specs/tt2-glyphs-diagrams.md`). `crest-moon-sm`, drawn with them, belongs to `ui-category` as the `-sm` of `crest-moon`.
+The five original sets are `resources-economy-military`, `science`, `chain`, `ui-category` and `ornaments-track-logo`. They were drawn in that order: the most frequent and most critical glyphs first. Two small sets followed in M10: `hints` (the hint pip glyphs) and `tt2-glyphs` (`play-again`, `build-from-discard` and `destroy-card`, which replaced the last Lucide outlines on cards; spec in `art/vector/specs/tt2-glyphs-diagrams.md`). `crest-moon-sm`, drawn with them, belongs to `ui-category` as the `-sm` of `crest-moon`.
 
 ### How one set is drawn
 

@@ -39,10 +39,10 @@ reader rather than for the code.
 
 ## The dev endpoint
 
-Once the server exists (milestone M4), it exposes `POST /api/dev/rooms` only
-when dev endpoints are enabled (the `--dev-endpoints` flag that
-`docs/architecture.md` describes), never in a normal deployment. The request
-body is JSON:
+The server exposes `POST /api/dev/rooms` only with both `--dev` and
+`--dev-endpoints`, and only to loopback clients. These endpoints are absent
+from normal deployments. See [the endpoint contract](../protocol.md#development-endpoints).
+The request body is JSON:
 
 ```json
 {"mode": "hotseat", "seed": "1", "scenario": "mausoleum"}
@@ -59,20 +59,20 @@ or, to start from a sequence of actions instead of a named scenario:
 - `seed` is the game's seed, sent as a string so a JavaScript caller does not
   lose precision on a 64-bit number.
 - `scenario`, when present, names one of `engine.NamedScenarioNames()`. The
-  server looks it up, builds the state with `NewGameFromScenario`, and the
-  room opens at that starting position, before the scenario's `Trigger`.
-  The trigger is not applied for the caller: a Playwright flow plays its
-  keys itself, by clicking the matching `[data-act]` buttons, and then
-  checks that the game landed where `Expect` says. That is what makes each
-  named scenario a test of the real UI for its flow, not just of the engine.
-- `actions`, when present instead of `scenario`, are applied to an ordinary
-  `NewGame(seed)` before the room opens: each key in order, through the
-  ordinary legality check, stopping with an error at the first illegal one.
+  server builds it with `NewGameFromScenario`. The named scenario's
+  `Trigger` is not applied automatically: a UI flow normally plays those
+  keys itself through `[data-act]` buttons and checks `Expect`.
+- `actions`, when present, are applied after the scenario, or after an
+  ordinary `NewGame(seed)` when no scenario was given: each key in order,
+  through the ordinary legality check, stopping at the first illegal one.
   This lets a test or a manual session reach an arbitrary position without
   adding a new named scenario for it.
-- Exactly one of `scenario` and `actions` is given; the response is the
-  room's code and its first view, the same shape a normal room's first
-  message takes.
+- `scenario` and `actions` are both optional and may be combined. The
+  response contains `ok`, `code`, `mode`, `seed`, `scenario` and `path`;
+  the client joins that path to receive its first state over WebSocket.
+- `GET /api/dev/scenarios` lists the accepted names. The endpoint also
+  accepts bot settings, engine options and tutorial rooms;
+  [protocol.md](../protocol.md#development-endpoints) documents those fields.
 
 ## The scenarios
 

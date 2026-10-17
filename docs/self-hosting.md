@@ -36,6 +36,8 @@ recorded yet.
 - `status [url]`: prints the recorded configuration, whether each tmux
   session is running (with its last 20 lines of output), whether its port is
   free, and the result of a server health check.
+- `ship-all`: builds once and deploys every host in the private targets
+  file; see "Deploying to several hosts" below.
 - `ship TARGET [url] [--remote-dir DIR]`: run on the dev machine, not on the
   production host. Cross-compiles for the target and installs the result
   there over SSH; see "Deploying from another machine" below. Once a `TARGET`
@@ -98,7 +100,7 @@ and Caddyfile backups.
 client and the Go server, unless `--prebuilt PATH` is given (see "Deploying
 from another machine"):
 
-1. `pnpm install` (offline and frozen, with a dependency dedupe pass on
+1. `CI=true pnpm install --frozen-lockfile` (with a dependency dedupe pass on
    `setup` only) and `pnpm -C web build`, both run under `zsh -lc` with
    `nvm-load` and `nvm use 24`.
 2. `rsync -a --delete` the built `web/build/` into
@@ -124,7 +126,8 @@ GOMEMLIMIT=96MiB .self-host/bin/ajayeb --addr 127.0.0.1:<port> \
   --data .self-host/data --origin <url> --trust-proxy 127.0.0.1
 ```
 
-`GOMEMLIMIT` keeps the process well inside its usual 10 to 20 MB RSS.
+`GOMEMLIMIT` sets Go's soft memory target to 96 MiB; it is not a hard
+limit on the process's resident memory.
 `--trust-proxy 127.0.0.1` tells the server to believe `X-Forwarded-For` only
 from Caddy on the same host; the per-address limits of the socket and of the
 replay download (`GET /api/rooms/{code}/log`) count the real client this way
@@ -373,8 +376,11 @@ file mid-write; it keeps only the 10 most recent archives. If there is no
 `rooms` directory yet (a fresh install), it skips the archive step.
 
 The replay download reads the same room files, so a finished game's log can
-be downloaded until the reaper deletes the room, 7 days after its last
-update.
+be downloaded, unless `hideAtEnd` is set, until the reaper deletes the
+room. Finished and archived rooms become eligible after 7 days without an
+update; unfinished rooms expire after 14 days. The menu shows the download
+as disabled during play and for a hidden record; eligible finished games
+also offer it on the result screen. See [the download contract](protocol.md#downloading-a-games-log).
 
 ## Deploying from another machine
 
@@ -562,7 +568,7 @@ make e2e-prod
 
 This is the M8 acceptance check ("the Playwright `@smoke` run (create,
 join, five moves) passes against production"), played through the real UI
-of the deployed site itself: `GET /health`, Home in both themes, a full
+of the deployed site itself: `GET /health`, Home in both themes, a short
 online game between two isolated browser contexts (at least five moves,
 through the confirm step), and a short game against the bot. It builds
 nothing and starts nothing local; it only drives a browser against

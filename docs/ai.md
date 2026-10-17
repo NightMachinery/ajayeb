@@ -37,7 +37,7 @@ A rollout that ends the game scores 1, 0.5 or 0. Otherwise the reward is `sigmoi
 
 **Root parallelism.** Hard runs several workers. Each grows its own tree from the same root with its own random stream, and when they stop, the statistics of the root's children are summed action by action, worker by worker in a fixed order, so the sum does not depend on scheduling.
 
-**Memory.** Each worker's tree lives in an arena of 24-byte nodes, taken in blocks of 1024 nodes only as the tree grows and recycled between searches. A search adds at most one node per iteration, so a worker never holds more nodes than its share of the iteration budget plus one; under a time limit the cap is the time times 250,000 nodes per second, and never more than about a million nodes (24 MiB) per worker. An iteration allocates nothing. A server-wide pool (`ai.Pool`, half the CPUs by default) bounds how many searches run at once.
+**Memory.** Each worker's tree lives in an arena of 24-byte nodes, taken in blocks of 1024 nodes only as the tree grows and recycled between searches. A search adds at most one node per iteration, so a worker never holds more nodes than its share of the iteration budget plus one; under a time limit the cap is the time times 250,000 nodes per second, and never more than about a million nodes (24 MiB) per worker. An iteration allocates nothing. A server-wide pool (`ai.Pool`) bounds simultaneous searches and shares slots fairly between client addresses. The game server defaults to 2 searches in total and 2 per address, configured by `--bot-searches` and `--bot-searches-per-address`; the pool library's fallback for an unspecified size is half the CPUs.
 
 ## The evaluation
 
@@ -140,7 +140,7 @@ The fixed budgets cost more time than the clock budgets on a loaded machine: in 
 
 ## Rerunning the measurements
 
-The tournaments and the calibration are subcommands of `ajayeb-sim`. Run them from `server/`; on the laptop, wrap every run in the memory guard (`python3 ../tools/heavy.py run --kind bench -- ...`) and keep `-p` at 2 or less. Build the command once with `go build -o bin/ajayeb-sim ./cmd/ajayeb-sim`.
+The tournaments and the calibration are subcommands of `ajayeb-sim`. Run them from `server/`; on the laptop, wrap every run in the memory guard (`python3 ../tools/heavy.py run --kind bench -- ...`) and keep `-p` at 2 or less. Build the command once with `python3 ../tools/heavy.py run --kind build -- go build -o bin/ajayeb-sim ./cmd/ajayeb-sim`. The commands below also need the `bench` wrapper when run locally.
 
 - `bin/ajayeb-sim match -a greedy -b random -games 100 -seed 1 -min 0.90` replays the Greedy target. `-a medium -b greedy -games 100 -min 0.65` replays Medium's and `-a hard -b medium -games 200 -min 0.58` Hard's. Medium and Hard play their fixed budgets, so the results depend only on the flags. `-min` makes the command exit with status 1 when bot A scores less than that share.
 - `-scale F` multiplies both sides' tree-search budgets by F, which gives the quicker proxy described above (`-scale 0.1` for the Hard proxy). Game i of a match depends only on the seed and i, so `-games 20` plays exactly the first 20 games of the 200-game match: that is the full-budget sample above. `-clock` plays the clock budgets instead of the fixed ones, so the results then depend on the machine and its load. `-v` prints one line per game, and `-logs DIR` writes every game as a log that `ajayeb-sim replay` checks.

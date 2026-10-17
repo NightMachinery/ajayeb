@@ -60,7 +60,7 @@ A ruling changes only with a deliberate decision. Changing one changes how games
 
 ### Reveal at game end
 
-- **Ruling.** When the game ends, every view shows what was hidden: the cards removed from each age deck and the guilds, wonders and progress tokens left in the box. The seed and the full action log stay on the server, in the room's file, so the game can be replayed there; no view ever carries the seed. This is an engine option, on by default.
+- **Ruling.** When the game ends, every view shows what was hidden: the cards removed from each age deck and the guilds, wonders and progress tokens left in the box. No WebSocket view carries the seed. When the reveal is enabled, players and spectators can download the seed and full action log through [the log endpoint](../protocol.md#downloading-a-games-log). The reveal is an engine option, on by default; `hideAtEnd` disables both it and the download.
 - **Why.** Hidden information has no game value once the game is over, and seeing it helps players review the game and learn.
 - **Alternative.** Keep it hidden forever, as at a real table, where nobody looks into the box.
 

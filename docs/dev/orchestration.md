@@ -5,16 +5,16 @@ Ajayeb is built by a long-running coordinator agent that hands bounded pieces of
 ## Roles
 
 - **The owner** sets direction and steers the run with a few fixed phrases (below).
-- **The coordinator** is one long-lived agent session, kept in a tmux session (`ajayeb-coord`) with the harness's auto-continue armed so it resumes after usage-limit resets. It plans slices, launches workflows, folds results into the notes, and owns the single-writer files.
-- **Slice agents** each do one bounded slice and leave verified, uncommitted changes.
-- **Reviewers** are fresh agents that re-verify a slice, read its diff adversarially, and then commit it or roll it back.
+- **The coordinator** is one long-lived agent session. It plans slices, launches workflows, folds results into the notes, and owns the single-writer files. Its session and recovery mechanism belong in the private run state.
+- **Slice agents** each do one bounded slice, verify it and commit the owned files on their assigned branch.
+- **Reviewers** are fresh agents that re-verify a slice, read its diff, and either approve it for integration or return concrete findings.
 - **Workflows** are scripts that fan work out to several agents and gather the results, for example blind extractors followed by a reconciler.
 
 ## Where state lives
 
 The repository is public, so operational state lives outside it, in a private run directory (`~/tmp/agents/ajayeb/` by default, or `AJAYEB_RUN_DIR`):
 
-- `TASK.md`: the original request verbatim, then every owner instruction, dated and verbatim, each followed by an "Acted on:" line.
+- `TASK.md`: the original request and every owner instruction, dated and verbatim. It contains only the owner's words. Coordinator prompts and progress go in checkpoints, events and `STATE.md`, never in `TASK.md`.
 - `STATE.md`: the handoff state, newest entry first, stamped with the output of `date`. It records the mode, the cron job ids and when they were armed, active workflow run ids and script paths, live worktrees, the task list with status tokens, and open questions for the owner with the assumption used meanwhile.
 - `NOTES.md`: iteration notes, written only by the coordinator. A curated "Learnings index" of at most 40 lines sits at the top, followed by one entry per iteration:
 
@@ -96,9 +96,9 @@ The practices are borrowed from gnhf (one bounded change per iteration, verified
 
 Every brief also says that the agent runs unattended (the brief settles the design questions), that it should read the Learnings index in `NOTES.md` first, and that it must stop every process it started before returning.
 
-**The slice agent** works only on its owned files, runs the verification, and leaves verified, uncommitted changes. It returns a structured result: success, a summary, the key changes, the key learnings, whether the loop should stop, and the files touched.
+**The slice agent** works only on its owned files, runs the verification, and commits a successful slice with an explicit pathspec. It returns a structured result: success, a summary, the key changes, the key learnings, whether the loop should stop, and the files touched.
 
-**The reviewer** is a fresh agent. It re-runs the verification itself, reads the diff looking for what is wrong rather than what is right, and then either commits the slice or saves the diff as a patch and restores the owned paths. Engine and server slices always get a review; trivial doc slices may skip it.
+**The reviewer** is a fresh agent. It re-runs verification, checks the diff against the brief and source, and either approves it or reports findings for another implementation round. The assigned integrator rebases an approved branch onto current `master`, verifies it again and fast-forwards a clean main checkout. The brief names who owns integration; workers never merge their own work unless explicitly assigned that role.
 
 **One commit per successful slice,** with an explicit pathspec:
 
@@ -112,8 +112,8 @@ The `git add` is needed because `git commit -- <paths>` refuses untracked files.
 
 **Failure handling.**
 
-- A failed slice is rolled back as above, and its learnings go into `NOTES.md`.
-- An iteration that changes nothing counts as a failure.
+- A failed slice reports its failing checks and keeps its state on the assigned branch for correction. Preserve unrelated changes and published history. The coordinator curates the learnings in `NOTES.md`.
+- An audit that needs no change reports already-done evidence rather than creating an artificial commit.
 - Three consecutive failures mark the slice `blocked`, with a question for the owner in `STATE.md`. The loop moves on to other work.
 
 **Resumability.** A slice agent first runs `git log --grep "Slice: <id>"`. If the slice is already committed, it reports done. If its owned files are dirty, it continues from that state instead of starting over.
@@ -123,7 +123,7 @@ The `git add` is needed because `git commit -- <paths>` refuses untracked files.
 ## Avoiding merge conflicts
 
 - Some files have a single writer, the coordinator or the integrator: `go.mod`, `go.sum`, the `package.json` files, `pnpm-lock.yaml`, the `Makefile`, generated `*.gen.ts` files, `AGENTS.md`, `docs/protocol.md`, and the frozen engine types once they are frozen. Workers ask for changes to these in their result file.
-- The engine has one file per rules area. The web client has one component per file, one i18n file per area and one gallery fixture per component. There are no barrel files.
+- The engine has one file per rules area. The web client has one component per file, one i18n file per area and gallery fixtures for leaf components. Shared entry modules such as `web/src/lib/wire/index.ts` re-export their public types.
 - At most three worktrees exist at once. Their branches are temporary: an integrator rebases each onto `master`, runs `make verify-quick` and fast-forwards, one branch at a time, so `master` stays linear.
 
 ## Workflows
@@ -136,6 +136,6 @@ The `git add` is needed because `git commit -- <paths>` refuses untracked files.
 - **W5 UI (M5 to M7):** the design system and shell slice runs alone; components then run in up to three worktrees, each component one file with its gallery fixture and its i18n file; one agent writes the end-to-end specs, because only one browser may run.
 - **W6 vector art (M9):** a pipeline over the asset manifest with a concurrency of two or three: draft, fast render, a separate critic that looks at the image, revise, for at most a few rounds; a batch contact sheet; then an art-director pass for consistency across the whole set.
 - **W7 bitmap art (M9):** not a fan-out. A script generates one asset at a time through the guard's codex lock, verifies and processes each file, and a small critique workflow approves or regenerates.
-- **W9 UX loop (M10, repeating):** a screenshot matrix, five lens critics (layout, mobile ergonomics, visual design, game feel and clarity, accessibility), deduplication, two refuters per issue who must reproduce it from the screenshot or probe data, at most two fix agents grouped by file, re-shots of the affected states, and a before-and-after judge that commits or rolls back. It stops after two rounds in a row with no major issue.
+- **UX review loop (M11):** after M10 builds the game-feel features, plain-script probes and two reviewers (player and screens) check the finished game. Fixers group reproducible findings by file, capture the affected screens before and after, and run regression checks. There are no refuters or separate judge. The loop stops when a round finds only small issues that do not affect real play, with no open P0 or P1 finding (D22 in [decisions.md](decisions.md#d22-build-the-game-feel-features-first-then-one-review-loop)).
 
 All workflow agents count against the cap on live agents in [ram-policy.md](ram-policy.md).

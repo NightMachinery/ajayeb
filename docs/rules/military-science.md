@@ -93,4 +93,4 @@ No single action can produce both. Shields come only from red buildings and thre
 - **Pawn moves are walked space by space.** Each step away from the centre that lands on space 3 or 6 checks that side's looting token; reaching 9 ends the game immediately with a military victory, inside the move itself. The engine emits a pawn event for the move and a loot event for each token taken.
 - **Science** is kept as a count per symbol for each player, with Law adding the scales. A count reaching 2 opens the board token pick if the board is not empty; a sixth distinct symbol ends the game with a science victory.
 - **The token pick** uses keys of the form `token:<token>`, for example `token:law`. During a board pick, the legal keys are the tokens still on the board.
-- **The victory kinds** are military, science and civilian, each with a winner, or a shared victory for civilian scoring.
+- **The victory kinds** are military, science, civilian and forfeit, each with a winner, or a shared victory for tied civilian scoring (see [ages-scoring.md](ages-scoring.md#the-end-of-the-game)).

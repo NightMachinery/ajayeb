@@ -20,10 +20,11 @@ The choice matters because the starter takes the first card from the new structu
 
 ## The end of the game
 
-The game ends in one of two ways.
+The game normally ends by supremacy or civilian scoring. Ajayeb also allows a player to forfeit:
 
 - **By supremacy:** a military or scientific supremacy ends the game the moment it happens, with a single winner and no scoring (see [military-science.md](military-science.md)).
 - **By civilian scoring:** otherwise, the game ends when the last card of Age III has been taken and that turn has finished, including its pending choices. An extra turn earned on that turn is lost. The players then count their victory points.
+- **By forfeit:** a player resigns before the game is over and the opponent wins at once. The score sheet records the current points without deciding the winner. See [the forfeit ruling](decisions.md#forfeit).
 
 ## The eight scoring categories
 
@@ -80,5 +81,5 @@ During the game, Ajayeb shows each player's score as if the game ended now: mili
 - **The starter choice** is its own phase. The key is `starter:<seat>`, with seat 0 or 1, for example `starter:1`. The seat to move is the chooser; the active seat stays the last active player until the choice is made.
 - **The chooser** is the seat on whose side the pawn stands. With the pawn in the centre it is the last active seat, under the default option. A room option provides the literal reading of the rulebook, in which the last active player simply starts the next age and no choice phase opens; an off-centre pawn still gives the choice to the weaker player.
 - **The next age is dealt before the choice.** The view shows the new structure while the chooser decides.
-- **Scores** are kept per category in the same eight fields as above, plus the total. The result records the kind of victory (military, science or civilian) and the winner, or a shared victory.
+- **Scores** are kept per category in the same eight fields as above, plus the total. The result records the kind of victory (military, science, civilian or forfeit) and the winner, or a shared victory on tied civilian scores.
 - **Guild and Age III yellow coins** are computed after the card has entered the city, which is why the Lighthouse counts itself. Guild points are computed from the end state only.

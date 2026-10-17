@@ -6,7 +6,7 @@ Persian-miniature-influenced illustration, generated one image at a time by
 Codex `image_gen` and reviewed before anything ships. This page is how the
 pipeline runs end to end. The icon set (resources, science symbols,
 category glyphs and ornaments) is a separate, hand-authored SVG pipeline;
-see `art/vector/`.
+see [the vector pipeline](README.md#the-vector-pipeline).
 
 Everything here follows [AGENTS.md](../../AGENTS.md)'s "Assets" rules:
 Codex runs strictly one image at a time, under the machine-wide `codex`
@@ -66,13 +66,11 @@ ${AJAYEB_RUN_DIR:-~/tmp/agents/ajayeb}/art-work/   outside the repo
   sheets/                           contact sheets
 ```
 
-Where the UX design draft (`~/tmp/agents/ajayeb/design/ux.md` §4, §8) says
-WebP, `scripts/art`, `apps/web` or `available.ts`, this repository's actual
-decisions win instead: **AVIF only** (`avifenc`; the design's WebP sizes
-and budgets carry over unchanged), `tools/art/*.mjs` as dependency-free
-Node 24 ESM scripts (no bundler, no npm dependency), shipped files under
-`web/static/art/<kind>/`, and the generated index at
-`web/src/lib/art/available.gen.ts`.
+The scripts use Node 24 ESM and its standard library, with no bundler or
+npm dependencies. Image processing also needs ImageMagick 7 (`magick`)
+and `avifenc`; `cwebp` is optional because lossless WebP has an
+ImageMagick fallback. See [the script reference](../../tools/art/README.md#bitmap-pipeline)
+for the individual commands.
 
 ## Asset ids and the asset table
 
@@ -160,13 +158,14 @@ server (`server/internal/httpapi/spa.go`, policy in
 `server/internal/webdist/cache.go`) answers a request under `/art/` whose
 `v` is a prefix of the file's own hash with `Cache-Control: public,
 max-age=31536000, immutable` and no ETag: that URL can never serve other
-bytes. A request without `v`, or with a stale one (an app icon named in
-HTML or the web app manifest, an old page asking for replaced art), gets `public, max-age=86400,
+bytes. An `/art/` request without `v`, or with a stale one (for example, an
+old page asking for replaced art), gets `public, max-age=86400,
 stale-while-revalidate=604800` plus a strong ETag. Replaced art therefore
 reaches a reader as soon as the app shell (served `no-cache`) carries the
 new index, whatever any cache in between does with `Cache-Control`.
 `index.mjs` takes the hashes and byte counts from the files themselves, so
-the same files always give the same index.
+the same files always give the same index. The app icon PNGs live under
+`/icons/`, outside this art policy; their stable URLs use `no-cache`.
 
 ## Prefetch
 
@@ -425,7 +424,7 @@ backs and card thumbnails, within 200 KB.
 
 An attempt is approved only when all of these hold, checked at full
 resolution and at the shipped thumbnail size (cards at 120 px, tokens at
-40 px, matching the render tiers in `design/ux.md` §4):
+40 px, matching the app's small render tiers):
 
 - **Passes `gate.mjs`** (step 3 above): the attempt has a real margin of
   its own paper colour after the shipping crop, not a painting that runs
@@ -457,9 +456,9 @@ resolution and at the shipped thumbnail size (cards at 120 px, tokens at
 
 Before a batch run, a small pilot proves prompts and anchors work: a few
 subjects per kind, a contact sheet, a human pick of the style anchors (into
-`art/refs/`), then the batch. `M9.B0` (this slice) proves the mechanics
+`art/refs/`), then the batch. `M9.B0` proved the mechanics
 end to end with one real card generation, one contact sheet and one
-scratch `process.mjs` run, but approves nothing.
+scratch `process.mjs` run, but approved nothing.
 
 `M9.B1`/`M9.B2` ran the actual 27-image style pilot (3 subjects x 3
 variants for card, wonder and token: `lumber-yard`, `scriptorium`,

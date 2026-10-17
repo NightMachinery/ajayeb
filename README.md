@@ -4,7 +4,7 @@ Ajayeb (Persian عجایب, "wonders") is a browser version of a two-player card
 
 If you like it, please buy the real game from its publisher: <https://www.rprod.com/en/games/7-wonders-duel>.
 
-**Status:** early development. The roadmap in [docs/dev/roadmap.md](docs/dev/roadmap.md) says what exists and what comes next. Once online play passes its end-to-end tests, a public instance will run at <https://ajayeb.lilf.ir>.
+All three game modes are implemented, with original art, a guided tutorial, in-game rules, hints and replay downloads. The remaining review work is tracked in [docs/dev/roadmap.md](docs/dev/roadmap.md). The public instance is <https://ajayeb.lilf.ir>.
 
 ## Modes
 
@@ -12,7 +12,7 @@ Every mode is a room on the server. The browser shows the room and sends moves; 
 
 - **Versus the computer.** Play against a bot at one of three levels (Easy, Medium, Hard). The stronger levels use information-set Monte Carlo tree search, and every bot sees only what a human in its seat would see. You can undo your last move.
 - **Hot-seat.** Two people share one device and pass it between turns. A short pass screen tells the next player what just happened. Undo works until the other player acts.
-- **Online.** Create a room, send the invite link (`/play/<code>`) to a friend, and play from two devices. If a connection drops, the game resumes where it was, and a server restart loses no game.
+- **Online.** Create a room, send the invite link (`/play/<code>`) to a friend, and play from two devices. Reconnects and server restarts restore the persisted game. Finished rooms expire after 7 days and unfinished rooms after 14 days without an update.
 
 ## Stack
 
@@ -34,9 +34,9 @@ make dev           # explains how to start the dev servers (python3 self_host.py
 
 `make dev` starts nothing itself. `python3 self_host.py dev-start` runs the Go server on 127.0.0.1:38951 and the Vite dev server on port 38952 in tmux; then open <http://localhost:38952>.
 
-Every target that compiles, tests, builds, installs or starts a browser runs through `tools/heavy.py`, a guard that waits while the machine is short of memory. If it gives up, it exits with code 75 and prints the reason. [docs/dev/ram-policy.md](docs/dev/ram-policy.md) explains the guard and its modes.
+Every target that compiles, tests, builds, installs or starts a browser runs through `tools/heavy.py`, a guard for memory, shared job slots and the current run mode. If it refuses a step, it exits with code 75 and prints the reason; `make` reports `Error 75` and exits 2. [docs/dev/ram-policy.md](docs/dev/ram-policy.md) explains the guard and its modes.
 
-To self-host on a machine with Caddy and tmux, use `./self_host.py setup <url>`; to build on a dev machine and deploy a prebuilt binary to a small production host, use `./self_host.py ship <target> <url>` or `./self_host.py ship-all` for all hosts in a private targets file (documentation in `docs/self-hosting.md`).
+To self-host on a machine with Caddy and tmux, use `./self_host.py setup <url>`; to build on a dev machine and deploy a prebuilt binary to a small production host, use `./self_host.py ship <target> <url>` or `./self_host.py ship-all` for all hosts in a private targets file (see [self-hosting](docs/self-hosting.md)).
 
 ## Repository layout
 
@@ -47,7 +47,7 @@ ajayeb/
   server/     Go module: cmd/{ajayeb, ajayeb-sim, ajayeb-drive, ajayeb-gen}
               internal/{engine, view, ai, room, store, ident, wire, ws, httpapi, webdist}
   web/        SvelteKit single-page app (the thin client)
-  e2e/        Playwright: specs/ (full playthroughs) and ux/ (screenshot matrix, probes, rubric)
+  e2e/        Playwright: specs/ (playthroughs and UI checks), fixtures/ (drivers and probes)
   tools/      heavy.py (memory and run-mode guard), chrome/ (headless Chrome tools), art/ (art scripts)
   art/        art direction, asset manifest, style references, approved originals, vector specs and logs
   docs/       architecture, protocol, testing, self-hosting, legal, rules/, art/, dev/
@@ -59,7 +59,7 @@ The server commands:
 - `ajayeb` is the game server.
 - `ajayeb-sim` runs bot tournaments, the AI benchmark, level calibration and the replay verifier.
 - `ajayeb-drive` plays full games over WebSocket against a running server, for smoke tests.
-- `ajayeb-gen` is the TypeScript generator (ids, display catalog, contract fixtures). Today it only dumps the engine catalog for review (`ajayeb-gen catalog -format csv|json|prose`); the TypeScript output arrives with milestone M2's later slices.
+- `ajayeb-gen` writes the display catalog (including typed id lists) and contract fixtures. `make gen` runs it after `tygo` generates the wire types. Its `catalog -format csv|json|prose|ts` subcommand also exports catalog data for review.
 
 ## Documentation
 

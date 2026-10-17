@@ -8,7 +8,7 @@ Run every launching command inside the guard's browser lock, which keeps the mac
 python3 tools/heavy.py run --kind browser -- node tools/chrome/shot.mjs --url / --probe --out /tmp/home.png
 ```
 
-Without the lock (the guard sets `AJAYEB_HEAVY_KIND=browser`), the scripts refuse to launch and exit 2. `--force` overrides this when you are sure no other browser job is running.
+Without the lock (the guard sets `AJAYEB_HEAVY_KIND=browser`), the scripts refuse to launch and exit 2. `--force` exists as a manual escape hatch, but repository checks and agent runs must use the guard.
 
 ## The scripts
 
@@ -28,7 +28,7 @@ Environment:
 ## shot.mjs
 
 ```sh
-node tools/chrome/shot.mjs --origin http://127.0.0.1:38951 --url /play/ABCD \
+python3 tools/heavy.py run --kind browser -- node tools/chrome/shot.mjs --origin http://127.0.0.1:38951 --url /play/ABCD \
   --token ajayebShotTokenA00000A --name Ana --vp 390x844@2 --theme dark --probe --out /tmp/a.png
 ```
 
@@ -36,7 +36,7 @@ node tools/chrome/shot.mjs --origin http://127.0.0.1:38951 --url /play/ABCD \
 - `--token`, `--name` and `--theme light|dark|system` are written to the localStorage keys `ajayeb:token`, `ajayeb:name` and `ajayeb:theme` before any page script runs. The server derives the player from the token, so a token shows exactly the seat that a driver client using the same token holds. It must have the real shape, the base64url form of 16 bytes: 22 characters of `A-Z`, `a-z`, `0-9`, `-` and `_`, whose last character carries only two bits and so is `A`, `Q`, `g` or `w`, such as `ajayebShotTokenA00000A`. The client replaces any other stored value with a fresh token, and the page then opens as a stranger, so the script refuses any other `--token`.
 - `--vp WxH[@dpr]`, or the presets `mobile` (390x844@2) and `desktop` (1280x800@1). The default is 390x844@2. A short side under 600 px also turns on mobile emulation and touch. The viewport is set with `Emulation.setDeviceMetricsOverride`, never by resizing a window.
 - `--storage JSON` writes more localStorage keys the same way, before any page script runs, so a screenshot can use settings other than the defaults. The value is a JSON object of keys to values: a string value is written as it is, any other value as its JSON, so `--storage '{"ajayeb:settings":{"animationSpeed":"off","showOpponentMove":false}}'` stores the settings object the app reads. The flag can be given more than once, a later key wins over an earlier one, and `--token`, `--name` and `--theme` win over the same key. Read the key names and value shapes from the app's code (for example `web/src/lib/ui/settings.svelte.ts` and `web/src/lib/session/undo-default.svelte.ts`); a value the app does not accept falls back to its default, as it would for a player.
-- `--scheme light|dark` emulates the system colour scheme, which the `system` theme follows. `--motion` defaults to `reduce`.
+- `--scheme light|dark` emulates the system colour scheme, which the `system` theme follows. `--motion` defaults to `reduce`, but the app deliberately follows its own Animation setting rather than that OS preference. Use `--storage` with `animationSpeed` to control game motion.
 - `--wait-ready` waits for `data-ready` on `<html>` (at most 2.5 s); otherwise the script waits a fixed `--settle` of 800 ms. Both then wait for fonts and two animation frames.
 - `--full` captures the whole page instead of the viewport.
 - `--selector CSS` captures one element instead: the script scrolls the first match into view, waits two animation frames for layout, and clips the PNG to its bounding box plus a `--pad PX` margin (default 8). It needs `--out` and does not mix with `--full`. It fails with a clear message, and exit 1, when the selector is invalid, matches nothing, or matches an element with no size; with several matches it takes the first and says so. An element taller than the viewport makes the script grow the emulated viewport's height (never its width) until the element fits, and the status line reports the grown size. That is needed because the app shell scrolls inside a container, not the window, so the browser does not paint content below the viewport, and the reason `--full` is unreliable on pages such as `/dev/gallery`. Growing the height can change layouts that depend on it (the `short:` variant), so prefer a selector box that fits the viewport when that matters. Example: `--url /dev/gallery --selector '.board-gallery > section:nth-of-type(3)'` shoots the resources and science section.
@@ -56,7 +56,7 @@ node tools/chrome/shot.mjs --origin http://127.0.0.1:38951 --url /play/ABCD \
 ## svg-render.mjs
 
 ```sh
-node tools/chrome/svg-render.mjs --in web/src/lib/icons/svg --sizes 16,24,48,128 \
+python3 tools/heavy.py run --kind browser -- node tools/chrome/svg-render.mjs --in web/src/lib/icons/svg --sizes 16,24,48,128 \
   --bg '#f4ecdc,#1c1915' --cols 6 --out /tmp/sheet.png --meta /tmp/sheet.json
 ```
 
@@ -71,7 +71,7 @@ python3 tools/heavy.py run --kind browser -- node tools/chrome/tutorial-walk.mjs
   --origin http://127.0.0.1:38951 --vp 360x740@2 --theme light --locale en --out /tmp/walk
 ```
 
-The M11 player reviewer's probe of the tutorial (docs/testing.md, "The tutorial"). It needs a test build served with `--dev --dev-endpoints`, because it reads the expected lesson order from `GET /api/dev/tutorial`. It seeds a fresh device (a new token, the name Walker, the theme, the Animation setting, the move summary, and the first-time tips on with the tutorial offer new), opens Home, presses Play the tutorial and walks with the same policy as the Playwright specs, through the free part to the completion card, whose New game must open the vs-AI sheet on Home. It uses touch when the viewport's short side is under 600 px, else a mouse.
+The standalone tutorial probe follows the same policy as [the tutorial specs](../../docs/testing.md#the-tutorial-m10tutorial-client). It needs a test build served with `--dev --dev-endpoints`, because it reads the expected lesson order from `GET /api/dev/tutorial`. It seeds a fresh device (a new token, the name Walker, the theme, the Animation setting, the move summary, and the first-time tips on with the tutorial offer new), opens Home, presses Play the tutorial and walks with the same policy as the Playwright specs, through the free part to the completion card, whose New game must open the vs-AI sheet on Home. It uses touch when the viewport's short side is under 600 px, else a mouse.
 
 - `--vp WxH[@dpr]`, `--theme light|dark`, `--locale en|fa`, `--animation normal|off` (default off) and `--summary on|off` (default on) set up the device.
 - `--out DIR` gets one PNG per coach step (`NN-<step>-<kind>[-note].png`), the Home offer, the completion card and the Home it leads to, and `report.json`: per step its id, kind, surface, placement, target and bubble boxes, occlusion verdict, the milliseconds from the frame that brought it to the bubble, and the failed checks; then the expected and observed lesson order, the first-time tips seen, console errors and the first failure.
