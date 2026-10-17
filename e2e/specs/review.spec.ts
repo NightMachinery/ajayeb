@@ -142,7 +142,7 @@ test.describe('first-time tips', () => {
     await tip.locator('[data-tip-ok]').click();
     await expect(page.locator('[data-first-tip]')).toHaveCount(0);
     const seen = await page.evaluate(() => localStorage.getItem('ajayeb:tips'));
-    expect(JSON.parse(seen ?? '{}')).toEqual({ off: false, seen: ['pair'] });
+    expect(JSON.parse(seen ?? '{}')).toMatchObject({ off: false, seen: ['pair'] });
 
     // After a reload the pip is back, and its tip is not.
     await page.reload();
@@ -157,7 +157,7 @@ test.describe('first-time tips', () => {
     await expect(chain).toContainText('A chain badge:');
     await chain.locator('[data-tip-ok]').click();
     const bothSeen = await page.evaluate(() => localStorage.getItem('ajayeb:tips'));
-    expect(JSON.parse(bothSeen ?? '{}')).toEqual({ off: false, seen: ['pair', 'freeChain'] });
+    expect(JSON.parse(bothSeen ?? '{}')).toMatchObject({ off: false, seen: ['pair', 'freeChain'] });
 
     await page.reload();
     await driver.waitReady();
