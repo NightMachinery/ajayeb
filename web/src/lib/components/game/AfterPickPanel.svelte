@@ -38,8 +38,13 @@
   // A tap or a key on the summary toggles the panel: remember where the
   // player left it (the toggle event also fires when `open` changes by
   // itself, so it cannot tell a choice).
-  function remember() {
+  function remember(event: MouseEvent) {
+    // Svelte can flush the saved preference before the native default
+    // toggle, which would toggle it a second time. Summary clicks from
+    // pointer, Enter and Space all follow this one activation path.
+    event.preventDefault();
     const next = !(details?.open ?? open);
+    if (details) details.open = next;
     saved = next;
     try {
       globalThis.localStorage?.setItem(KEY, String(next));
@@ -53,17 +58,17 @@
   <details
     bind:this={details}
     {open}
-    class="after-pick rounded-md border border-rule px-3 py-2 {className}"
+    class="after-pick rounded-md border border-rule {className}"
     data-after-pick
     data-threat={threat ? '' : undefined}
   >
     <summary
-      class="cursor-pointer text-xs font-semibold tracking-wide text-fg-muted uppercase"
+      class="min-h-11 cursor-pointer px-3 py-3 text-xs font-semibold tracking-wide text-fg-muted uppercase"
       onclick={remember}
     >
       {t('hints.after.title')}
     </summary>
-    <ul class="mt-1.5 flex flex-col gap-1">
+    <ul class="flex flex-col gap-1 px-3 pb-2">
       {#each lines as line (line.id)}
         <li
           class="text-sm text-fg {line.threat ? 'threat ps-2' : ''}"

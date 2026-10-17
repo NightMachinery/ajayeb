@@ -86,6 +86,8 @@
     class: className = ''
   }: Props = $props();
 
+  const uid = $props.id();
+  const cityId = `${uid}-city`;
   const ctx = tryGameContext();
   const isSelf = $derived(
     self ??
@@ -258,10 +260,10 @@
   <ScienceTracker science={player.science} {ended} {seat} glow={scienceLevel} />
 
   <div class="flex flex-col gap-1">
-    <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
+    <h3 id={cityId} class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
       {t('board.citySheet.city')}
     </h3>
-    <div class="flex flex-wrap gap-1.5" aria-label={t('board.citySheet.city')} data-fx-city>
+    <div class="flex flex-wrap gap-1.5" role="group" aria-labelledby={cityId} data-fx-city>
       {#each COLORS as color (color)}
         <CityBand
           {color}

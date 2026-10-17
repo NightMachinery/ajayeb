@@ -6,11 +6,8 @@
   // glows in the accent with a dot on its corner, so a player sees the
   // chance without opening anything; the spoken label says so too.
   //
-  // A leaf component with plain props. The visible box is 36 px tall to
-  // keep the strip short; its hit area reaches 44 px through an invisible
-  // margin (the ::after layer). The margin is 6 px, since an absolute
-  // ::after starts inside the 1 px border: 34 + 2 x 6 = 46 px, of which the
-  // science pill just below takes back a pixel or two.
+  // A leaf component with plain props. Its real 44 px box gives the strip
+  // a clear tap target without invisible margins over nearby chips.
   //
   // Board hints (M10.HS4, `hint` or from the page's game context with
   // `seat`): an hourglass once only one more wonder can be built and this
@@ -78,8 +75,8 @@
 
 <button
   type="button"
-  class="wonder-button relative flex h-9 shrink-0 items-center gap-1 rounded-control border px-2 text-[13px] font-semibold
-    tabular-nums transition-colors after:absolute after:-inset-1.5 after:content-[''] short:px-1.5
+  class="wonder-button relative flex h-11 min-w-11 shrink-0 items-center gap-1 rounded-control border px-2 text-[13px] font-semibold
+    tabular-nums transition-colors short:px-1.5
     {buildable
     ? 'border-accent bg-accent-soft text-accent-soft-fg ring-2 ring-accent/45'
     : 'border-rule-strong bg-panel text-fg hover:border-accent'} {className}"

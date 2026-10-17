@@ -213,8 +213,12 @@
 <!-- relative: the scroller must be the containing block of its absolutely
      positioned descendants (the sr-only labels), or they hang below the
      viewport and make the whole page scroll. -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex (This named scroll region must accept keyboard focus while no wonder action is available.) -->
 <div
   class="draft relative mx-auto flex h-full w-full max-w-5xl flex-col gap-3 overflow-y-auto px-4 pt-3 pb-4 split:gap-4"
+  role="region"
+  aria-label={t('choices.draft.title')}
+  tabindex="0"
   data-draft
   data-round={round}
 >

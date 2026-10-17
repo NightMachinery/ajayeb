@@ -241,6 +241,52 @@
     -webkit-user-select: none;
   }
 
+  /* Native inputs retain keyboard, label and form behaviour. Paint their
+     unchecked state too: accent-color alone leaves Chromium's grey boxes. */
+  input:is([type='checkbox'], [type='radio']):not(.sr-only) {
+    appearance: none;
+    direction: ltr;
+    display: inline-grid;
+    place-content: center;
+    border: 2px solid var(--rule-strong);
+    background: var(--panel-sunken);
+    color: var(--on-accent);
+    vertical-align: middle;
+  }
+  input[type='checkbox']:not(.sr-only) {
+    border-radius: 0.25rem;
+  }
+  input[type='radio']:not(.sr-only) {
+    border-radius: 50%;
+  }
+  input:is([type='checkbox'], [type='radio']):not(.sr-only):checked {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  input[type='checkbox']:not(.sr-only):checked::before {
+    content: '';
+    width: 0.35rem;
+    height: 0.65rem;
+    border-inline-end: 2px solid currentColor;
+    border-block-end: 2px solid currentColor;
+    transform: translateY(-1px) rotate(45deg);
+  }
+  input[type='radio']:not(.sr-only):checked::before {
+    content: '';
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  @media (forced-colors: active) {
+    input:is([type='checkbox'], [type='radio']):not(.sr-only) {
+      appearance: auto;
+    }
+    input:is([type='checkbox'], [type='radio'])::before {
+      content: none;
+    }
+  }
+
   /* One focus ring for keyboard users everywhere. Pointer clicks show none. */
   :where(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--focus);

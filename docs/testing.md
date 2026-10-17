@@ -1138,3 +1138,20 @@ The shared probe retains `iw` and `ih` as `innerWidth` and `innerHeight` for
 CLI compatibility. Its explicit `viewportWidth` and `viewportHeight` drive
 scroll, bounds and covered-action checks: mobile Chrome can expand
 `innerWidth` when content overflows, which would otherwise hide the problem.
+
+## Accessible control regressions
+
+`aria-targets.spec.ts` checks the city bands' named group, the waiting wonder
+draft's tab stop and keyboard scrolling in short landscape, and the actual
+44 px boxes of city, wonder and device-link buttons, segmented options and
+cost disclosures. It clicks the After this pick summary's padding and toggles
+it with Enter and Space, then reloads to check the saved preference. This
+catches a visually large box with a small active line and duplicate toggles
+from competing native and reactive updates.
+It also checks the unchecked checkbox and radio surfaces in both themes and
+keeps their native Space and arrow-key selection behaviour covered.
+
+The dense 26 px progress-token tooltip buttons in short landscape remain
+information controls with long-press access. Inline Rules and Home links
+remain text links. The UX probes continue to count these under 44 px; neither
+case is hidden from the report.

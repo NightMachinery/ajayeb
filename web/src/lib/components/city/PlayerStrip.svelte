@@ -199,12 +199,11 @@
   data-danger={danger ? '' : undefined}
   data-glow={glow}
 >
-  <div class="strip-row flex min-w-0 items-center gap-x-1.5 gap-y-1 short:flex-wrap short:gap-x-1">
+  <div class="strip-row flex min-w-0 items-center gap-x-1 gap-y-1 short:flex-wrap">
     {#if onopen}
       <button
         type="button"
-        class="relative -ms-1 flex min-h-9 min-w-0 shrink items-center gap-1 rounded-control px-1
-          after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] hover:bg-panel-sunken"
+        class="-ms-1 flex min-h-11 min-w-11 shrink items-center gap-1 rounded-control px-1 hover:bg-panel-sunken"
         aria-label={openLabel}
         data-control="open-city"
         data-fx-city

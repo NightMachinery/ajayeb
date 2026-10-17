@@ -26,7 +26,7 @@
 >
   {#each options as option (option.value)}
     <label
-      class="relative flex-1 cursor-pointer rounded-[calc(var(--radius-control)-4px)] px-3 py-2 text-center text-sm font-medium whitespace-nowrap
+      class="relative flex min-h-11 min-w-11 flex-1 cursor-pointer items-center justify-center rounded-[calc(var(--radius-control)-4px)] px-3 py-2 text-center text-sm font-medium whitespace-nowrap
         transition-colors duration-(--dur-fast)
         {value === option.value ? 'bg-accent text-on-accent' : 'text-fg-muted hover:text-fg'}"
     >

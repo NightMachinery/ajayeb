@@ -162,7 +162,9 @@
         />
         {#if option.cost}
           <details class="text-sm">
-            <summary class="min-h-8 cursor-pointer text-fg-muted">{t('game.cost.title')}</summary>
+            <summary class="min-h-11 cursor-pointer py-3 text-fg-muted"
+              >{t('game.cost.title')}</summary
+            >
             <CostBreakdown cost={option.cost} {coins} class="pt-1" />
           </details>
         {/if}

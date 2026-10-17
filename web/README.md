@@ -346,3 +346,14 @@ coalesced the transition before capture, the live view’s age/phase change
 still plans the deal. It deals the
 cards still present there; a taken card is never recreated. Room clear,
 hurry, undo/resync and an age or room change discard a pending deal.
+
+## Control accessibility
+
+City bands form a group named by their visible heading. The wonder draft's
+scroll region is a named keyboard stop even while the opponent chooses.
+Strip city, wonder and device-link buttons, segmented options and the
+After this pick and wonder-cost disclosures have real 44 px targets.
+Checkboxes and radios keep their native keyboard and label behaviour with
+theme colours for checked and unchecked states; forced-colour mode uses
+native rendering. Dense landscape token tooltips and inline text links
+keep their compact sizes and remain visible in the UX target probes.

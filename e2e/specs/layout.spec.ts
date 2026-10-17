@@ -13,9 +13,9 @@
 //   360 x 740 in all three ages; it is checked at every viewport);
 // - on a phone (portrait or landscape), neither player strip scrolls
 //   inside: both fit their box whole;
-// - the phone strip's compact controls (the name that opens the city, the
-//   wonder button, the device link) draw smaller than 44 px but take taps
-//   over 44 px of height, and the two square ones over 44 px of width too;
+// - the phone strip's controls (the name that opens the city, the wonder
+//   button and the device link) keep real 44 px targets, including an
+//   unobstructed span through each control's centre;
 // - every enabled primary control at least 44 px tall, on the screen and in
 //   the card sheet of the first takeable card;
 // - no console errors, page errors or failed requests.
@@ -198,7 +198,7 @@ test('the phone strip takes taps over 44 px on its compact controls', async ({ p
   await openHotseatRoom(page, 'mausoleum');
   await settle(page);
   // The span around each control's centre, along each axis, over which a
-  // tap still lands on it (its ::after hit area included).
+  // tap still lands on it, without a neighbouring control taking the edge.
   const spans = await page.evaluate(() => {
     const out: { what: string; w: number; h: number }[] = [];
     const sel =
