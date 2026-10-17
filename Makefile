@@ -97,7 +97,7 @@ dev: ## Explain how to run the dev servers with self_host.py dev-start (starts n
 
 ##@ Code generation
 
-gen: ## Regenerate web/src/lib/wire: tygo for the wire types, then ajayeb-gen once it exists
+gen: ## Regenerate web/src/lib/wire: tygo for the wire types, then ajayeb-gen
 	$(HEAVY) run --kind build -- go -C server tool tygo generate
 ifneq ($(wildcard server/cmd/ajayeb-gen),)
 	$(HEAVY) run --kind build -- go -C server run ./cmd/ajayeb-gen $(GEN_ARGS)
@@ -194,13 +194,13 @@ e2e-smoke: ## The @smoke e2e specs
 e2e-prod: ## The production smoke (@prod specs) against PROD_URL; no local build or server (docs/testing.md)
 	E2E_BASE_URL=$(PROD_URL) $(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test $(PW_ARGS)
 
-# The ux project and its e2e/ux/ directory arrive with the UX loop (M10);
-# until then shots skips, the way test-race and gen-check do.
-shots: $(if $(wildcard e2e/ux),$(E2E_PREREQS)) ## The UX screenshot matrix (Playwright project ux, from M10); builds first unless E2E_BUILD=0
+# The ux project and its e2e/ux/ directory are planned for the M11 review loop;
+# until then shots skips.
+shots: $(if $(wildcard e2e/ux),$(E2E_PREREQS)) ## The UX screenshot matrix (Playwright project ux, planned for M11; until then use tools/chrome); builds first unless E2E_BUILD=0
 ifneq ($(wildcard e2e/ux),)
 	$(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test --project ux $(PW_ARGS)
 else
-	@echo "shots: e2e/ux/ does not exist yet (the screenshot matrix arrives with M10), skipping"
+	@echo "shots: e2e/ux/ does not exist yet (the screenshot matrix is planned for M11; use tools/chrome meanwhile), skipping"
 endif
 
 ##@ Vector art (tools/art/vector; outputs go to the run dir, never the repo)

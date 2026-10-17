@@ -20,7 +20,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 - `server/internal/{ai, room, store, ident, ws, httpapi, webdist}`: bots, room actors, persistence, identity, transport, HTTP endpoints, the embedded web build.
 - `server/cmd/{ajayeb, ajayeb-sim, ajayeb-drive, ajayeb-gen}`: the server, the simulator, the WebSocket game driver, the code generator.
 - `web/`: the SvelteKit client. `web/src/lib/wire/*.gen.ts` is generated; never edit it by hand.
-- `e2e/`: Playwright playthroughs (`specs/`) and the UX screenshot loop (`ux/`).
+- `e2e/`: Playwright playthroughs (`specs/`) and their shared helpers (`fixtures/`). Screenshots and layout probes come from `tools/chrome/`.
 - `tools/`: `heavy.py` (the memory and run-mode guard), `chrome/` (headless Chrome tools), `art/` (art scripts).
 - `art/`: art direction, the asset manifest, style references, approved originals and the vector specs and logs.
 - `docs/`: start at [docs/README.md](docs/README.md).
