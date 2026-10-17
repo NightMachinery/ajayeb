@@ -115,7 +115,7 @@ describe('planTimeline: per event kind', () => {
       ]),
       before
     );
-    expect(t.steps.map((s) => s.kind)).toEqual(['take']);
+    expect(t.steps.map((s) => s.kind)).toEqual(['take', 'deal']);
   });
 
   it('pay: the payer, and the opponent when part of it went there', () => {
@@ -204,18 +204,6 @@ describe('planTimeline: per event kind', () => {
       before
     );
     expect(none.steps.map((s) => s.kind)).toEqual(['take']);
-  });
-
-  it('leaves the other slice its events: looting, tokens, destroy, the draft, the end', () => {
-    for (const e of [
-      ev('loot', { seat: 1, amount: 2, value: 2 }),
-      ev('token', { seat: 0, token: 'law' }),
-      ev('destroy', { seat: 0, card: 'quarry' }),
-      ev('draft', { seat: 0, wonder: 'pyramids' }),
-      ev('gameOver', { victory: 'civilian', winner: 0 })
-    ]) {
-      expect(planTimeline(frame(11, [e]), before), e.kind).toBe(EMPTY_TIMELINE);
-    }
   });
 
   it('never holds input longer than the cap', () => {

@@ -65,6 +65,11 @@ export function setPlanned(version: number, timeline: Timeline): void {
   planned = { version, timeline };
 }
 
+/** The timeline of the frame the runner saw last (empty when it plays none). */
+export function latestPlanned(): Timeline | null {
+  return planned?.timeline ?? null;
+}
+
 /** The timeline played for `version`, or null when the runner never saw it. */
 export function plannedFor(version: number): Timeline | null {
   return planned && planned.version === version ? planned.timeline : null;

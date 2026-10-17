@@ -53,6 +53,51 @@ describe('scaleTimeline and timelineFor', () => {
     }
   });
 
+  it('scales every time of a step, and leaves its other numbers alone', () => {
+    const deal: PlanFrame = {
+      code: 'ROOM',
+      version: 11,
+      events: [
+        ev('build', { seat: 0, card: 'arsenal' }),
+        ev('pawn', { seat: 0, from: 2, to: 3 }),
+        ev('loot', { seat: 1, amount: 2, value: 2 }),
+        ev('ageStart', { age: 2 })
+      ],
+      view: {
+        players: [{ coins: 7 }, { coins: 5 }],
+        military: { looting: [{ at: 3, present: false }] },
+        structure: []
+      }
+    };
+    const prev: PlanFrame = {
+      ...before,
+      view: {
+        players: [{ coins: 7 }, { coins: 7 }],
+        military: { looting: [{ at: 3, present: true }] }
+      }
+    };
+    const base = planTimeline(deal, prev);
+    const fast = scaleTimeline(base, 'fast');
+    const loot = (t: typeof base) => t.steps.find((s) => s.kind === 'loot');
+    const dealt = (t: typeof base) => t.steps.find((s) => s.kind === 'deal');
+    expect(loot(fast)).toMatchObject({
+      cell: 3,
+      amount: 2,
+      from: 7,
+      to: 5,
+      flip: Math.round(((loot(base) as { flip: number }).flip ?? 0) * 0.6),
+      tween: Math.round(((loot(base) as { tween: number }).tween ?? 0) * 0.6)
+    });
+    const d = dealt(base) as { stagger: number; each: number; lead: number; fade: number };
+    expect(dealt(fast)).toMatchObject({
+      age: 2,
+      stagger: Math.round(d.stagger * 0.6),
+      each: Math.round(d.each * 0.6),
+      lead: Math.round(d.lead * 0.6),
+      fade: Math.round(d.fade * 0.6)
+    });
+  });
+
   it('a frame that replays history (cuePrev gives null) plans nothing at any speed', () => {
     expect(timelineFor(move, null, 'normal')).toBe(EMPTY_TIMELINE);
   });
