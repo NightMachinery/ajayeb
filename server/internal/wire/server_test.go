@@ -95,3 +95,41 @@ func TestUndoUnavailableConstructorReasons(t *testing.T) {
 		}
 	}
 }
+
+// TestTutorialJSON pins the tutorial's place in a state frame: the room's
+// "tutorial" flag is always present, the frame's tutorial object only when
+// set, with its optional action and the lessons' optional card.
+func TestTutorialJSON(t *testing.T) {
+	room := NewRoomInfo(ModeAI, RoomStatusPlaying, nil, 0)
+	st := NewState("K7QX2M", 3, room, NewYouInfo([]int{0}, true), nil, nil, view.View{})
+	data, err := json.Marshal(st)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	if s := string(data); !strings.Contains(s, `"tutorial":false`) || strings.Count(s, `"tutorial"`) != 1 {
+		t.Fatalf("a frame with no tutorial: %s", s)
+	}
+
+	card, key := "baths", "construct:stable"
+	st.Room.Tutorial = true
+	st.Tutorial = &TutorialState{
+		Script:  "first-game",
+		Status:  TutorialStatusGuided,
+		Turn:    5,
+		Turns:   10,
+		Lessons: []TutorialLesson{{ID: TutorialLessonReveal, Card: &card}},
+		Action:  &TutorialAction{ID: TutorialLessonBuildOwn, Key: key},
+	}
+	data, err = json.Marshal(st)
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"tutorial":true`,
+		`"tutorial":{"script":"first-game","status":"guided","left":false,"turn":5,"turns":10,"lessons":[{"id":"reveal","card":"baths"}],"action":{"id":"buildOwn","key":"construct:stable"}}`,
+	} {
+		if !strings.Contains(string(data), want) {
+			t.Errorf("frame lacks %s: %s", want, data)
+		}
+	}
+}

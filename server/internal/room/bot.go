@@ -59,7 +59,7 @@ func (r *Room) maybeStartBot() {
 	cfg := &r.m.cfg
 	job := botJob{
 		addr:    r.botAddr(),
-		bot:     cfg.NewBot(sd.Bot, botSeed(r.file.Seed, r.state.Ply)),
+		bot:     r.newBot(sd),
 		obs:     engine.Observe(&r.state, seat),
 		budget:  cfg.BotBudget(sd.Bot),
 		gen:     r.botGen,
@@ -75,6 +75,16 @@ func (r *Room) maybeStartBot() {
 		defer r.m.wg.Done()
 		job.run(ctx)
 	}()
+}
+
+// newBot returns the bot that decides now for the bot seat sd: the
+// tutorial script's own move while a tutorial game is on it (tutorial.go),
+// else a fresh bot of the seat's level.
+func (r *Room) newBot(sd store.Seat) Bot {
+	if b, ok := r.scriptedBot(); ok {
+		return b
+	}
+	return r.m.cfg.NewBot(sd.Bot, botSeed(r.file.Seed, r.state.Ply))
 }
 
 // botAddr is the address the room's bot searches queue under in the bot

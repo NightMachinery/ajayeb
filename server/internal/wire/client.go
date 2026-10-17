@@ -2,6 +2,7 @@ package wire
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -171,6 +172,12 @@ type Create struct {
 	// life; absent means true. Hot-seat and ai rooms only: an online room
 	// has no undo, so the field must be absent there.
 	AllowUndo *bool `json:"allowUndo,omitempty"`
+	// Tutorial asks for a tutorial room: the guided first game against the
+	// Easy bot, on the tutorial script's fixed deal (package tutorial).
+	// Absent means false. With true the mode must be ai, the bot easy and
+	// the seat 0 or absent; the server then fixes the seed, the options and
+	// the seats.
+	Tutorial *bool `json:"tutorial,omitempty"`
 }
 
 // NewCreate returns a Create frame with "t" filled in. names is copied as
@@ -206,6 +213,14 @@ func (m Create) validate() error {
 	}
 	if seat, ok := m.Seat.Seat(); ok && seat != 0 && seat != 1 {
 		return fmt.Errorf("create: seat %d is not 0 or 1", seat)
+	}
+	if m.Tutorial != nil && *m.Tutorial {
+		if m.Mode != ModeAI || m.Bot == nil || *m.Bot != BotLevelEasy {
+			return fmt.Errorf("create: a tutorial is mode %q with bot %q", ModeAI, BotLevelEasy)
+		}
+		if seat, ok := m.Seat.Seat(); !ok || seat != 0 {
+			return errors.New("create: a tutorial player takes seat 0")
+		}
 	}
 	if len(m.Names) > 2 {
 		return fmt.Errorf("create: %d names, at most 2", len(m.Names))

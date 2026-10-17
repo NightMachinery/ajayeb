@@ -25,6 +25,9 @@ func TestDecodeClientAccepts(t *testing.T) {
 		"create ai":      `{"t":"create","mode":"ai","bot":"hard","seat":0,"names":["Sara"]}`,
 		"create no undo": `{"t":"create","mode":"hotseat","seat":0,"names":[],"allowUndo":false}`,
 		"create undo":    `{"t":"create","mode":"ai","bot":"easy","seat":0,"names":[],"allowUndo":true}`,
+		"tutorial":       `{"t":"create","mode":"ai","bot":"easy","seat":0,"names":["Sara"],"tutorial":true}`,
+		"tutorial seat":  `{"t":"create","mode":"ai","bot":"easy","names":[],"tutorial":true,"allowUndo":false}`,
+		"no tutorial":    `{"t":"create","mode":"online","seat":"random","names":[],"tutorial":false}`,
 		"join":           `{"t":"join","code":"K7QX2M"}`,
 		"act":            `{"t":"act","code":"K7QX2M","seq":1,"base":0,"key":"construct:baths"}`,
 		"act hotseat":    `{"t":"act","code":"K7QX2M","seq":1,"base":0,"key":"construct:baths","seat":1}`,
@@ -129,6 +132,13 @@ func TestDecodeClientRejectsBadCreate(t *testing.T) {
 		"online allowUndo":  `{"t":"create","mode":"online","seat":"random","names":[],"allowUndo":true}`,
 		"online no undo":    `{"t":"create","mode":"online","seat":"random","names":[],"allowUndo":false}`,
 		"allowUndo string":  `{"t":"create","mode":"hotseat","seat":0,"names":[],"allowUndo":"no"}`,
+		"tutorial online":   `{"t":"create","mode":"online","seat":0,"names":[],"tutorial":true}`,
+		"tutorial hotseat":  `{"t":"create","mode":"hotseat","seat":0,"names":[],"tutorial":true}`,
+		"tutorial normal":   `{"t":"create","mode":"ai","bot":"normal","seat":0,"names":[],"tutorial":true}`,
+		"tutorial hard":     `{"t":"create","mode":"ai","bot":"hard","seat":0,"names":[],"tutorial":true}`,
+		"tutorial seat 1":   `{"t":"create","mode":"ai","bot":"easy","seat":1,"names":[],"tutorial":true}`,
+		"tutorial random":   `{"t":"create","mode":"ai","bot":"easy","seat":"random","names":[],"tutorial":true}`,
+		"tutorial string":   `{"t":"create","mode":"ai","bot":"easy","seat":0,"names":[],"tutorial":"yes"}`,
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {

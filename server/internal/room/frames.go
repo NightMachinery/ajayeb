@@ -123,9 +123,10 @@ func (r *Room) sendState(c *Client, mem member, ack *wire.Ack, withHistory bool)
 func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]bool, fc *frameCache, withHistory bool) wire.State {
 	viewer := r.viewer(mem)
 	v, events := fc.get(&r.state, *r.file.Hints, viewer, ev, r.hist)
-	if seat, ok := viewer.Seat(); ok && r.file.Hints.Advisor {
+	if seat, ok := viewer.Seat(); ok && r.file.Hints.Advisor && !r.guidedLastMove(seat) {
 		// The move review is the mover's alone: only a seat's own view
-		// carries it (v is this frame's copy of the cached view).
+		// carries it (v is this frame's copy of the cached view). A move
+		// the tutorial asked for gets none.
 		v.Review = r.review(seat)
 	}
 	if withHistory {
@@ -143,6 +144,7 @@ func (r *Room) frame(mem member, ack *wire.Ack, ev []engine.Event, presence [2]b
 	if withHistory {
 		st.History = fc.historyFor(r.hist, viewer)
 	}
+	st.Tutorial = r.tutorialState(mem)
 	return st
 }
 
@@ -205,6 +207,7 @@ func (r *Room) roomInfo(mem member, presence [2]bool) wire.RoomInfo {
 	info := wire.NewRoomInfo(wire.Mode(r.file.Mode), wireStatus(r.status()), seats, spectators)
 	info.Hints = *r.file.Hints
 	info.AllowUndo = r.undoAllowed()
+	info.Tutorial = r.script() != nil
 	return info
 }
 

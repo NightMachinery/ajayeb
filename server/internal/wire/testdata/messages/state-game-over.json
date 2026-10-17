@@ -39,7 +39,8 @@
       "recap": true,
       "advisor": true
     },
-    "allowUndo": true
+    "allowUndo": true,
+    "tutorial": false
   },
   "you": {
     "seats": [

@@ -11,6 +11,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tutorial"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
@@ -112,6 +113,16 @@ func (m *Manager) newFile(c *Client, req wire.Create) (*store.File, error) {
 		}
 		return fallback
 	}
+	// A tutorial room plays its script's seed and options, with the player
+	// in the script's seat against the Easy bot (wire.Create's validation
+	// has already checked the mode, the bot and the seat).
+	var sc *tutorial.Script
+	if req.Tutorial != nil && *req.Tutorial {
+		sc = tutorial.Current
+		if s, ok := req.Seat.Seat(); req.Mode != wire.ModeAI || req.Bot == nil || *req.Bot != wire.BotLevelEasy || !ok || s != int(sc.Human) {
+			return nil, fmt.Errorf("%w: a tutorial is an ai room against the easy bot, the player in seat %d", ErrInvalidSpec, sc.Human)
+		}
+	}
 	seat, ok := req.Seat.Seat()
 	if !ok {
 		seat = int(m.cfg.Seed() & 1)
@@ -123,7 +134,13 @@ func (m *Manager) newFile(c *Client, req wire.Create) (*store.File, error) {
 		return store.Seat{Kind: store.SeatKindHuman, UserID: c.UserID, Name: name}
 	}
 
-	f := store.New("", store.Mode(req.Mode), engine.Options{}, m.cfg.Seed(), m.cfg.Clock.Now())
+	var f *store.File
+	if sc != nil {
+		f = store.New("", store.Mode(req.Mode), sc.Options, sc.Seed, m.cfg.Clock.Now())
+		f.Tutorial = sc.Name
+	} else {
+		f = store.New("", store.Mode(req.Mode), engine.Options{}, m.cfg.Seed(), m.cfg.Clock.Now())
+	}
 	// The creator is the game's admin, whatever seat they took, and the
 	// game starts from the hint settings they sent (or the defaults).
 	f.Admin = c.UserID
@@ -179,13 +196,31 @@ type Spec struct {
 	// NoUndo makes a hot-seat or bot room that refuses undo, as a create
 	// frame with allowUndo false does.
 	NoUndo bool
+	// Tutorial names a tutorial script (package tutorial) for a bot room:
+	// the script's seed and options replace Seed and Options, the script's
+	// seat must be human or open and the other the Easy bot. Empty for any
+	// other room.
+	Tutorial string
 }
 
 // CreateFromSpec makes a room from spec and returns its code. Nobody is
 // attached; the room is evicted after the idle timeout unless someone
 // joins.
 func (m *Manager) CreateFromSpec(spec Spec) (string, error) {
+	if spec.Tutorial != "" {
+		sc, ok := tutorial.ByName(spec.Tutorial)
+		if !ok {
+			return "", fmt.Errorf("%w: unknown tutorial %q", ErrInvalidSpec, spec.Tutorial)
+		}
+		player, bot := spec.Seats[sc.Human], spec.Seats[sc.Human.Opp()]
+		if spec.Mode != store.ModeAI || spec.Scenario != "" || player.Kind == store.SeatKindBot ||
+			bot.Kind != store.SeatKindBot || bot.Bot != store.BotEasy {
+			return "", fmt.Errorf("%w: a tutorial is an ai room with no scenario, the player in seat %d and the easy bot in the other", ErrInvalidSpec, sc.Human)
+		}
+		spec.Seed, spec.Options = sc.Seed, sc.Options
+	}
 	f := store.New("", spec.Mode, spec.Options, spec.Seed, m.cfg.Clock.Now())
+	f.Tutorial = spec.Tutorial
 	f.Seats = spec.Seats
 	f.Scenario = spec.Scenario
 	f.Actions = append(f.Actions, spec.Actions...)

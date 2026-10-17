@@ -65,3 +65,40 @@ func TestNoUndoAbsentInOldFile(t *testing.T) {
 		t.Fatalf("Load: NoUndo true for a file without the field")
 	}
 }
+
+// TestTutorialPersisted checks that a tutorial room's script name survives a
+// save and a load, stays out of the file of every other room, and is not
+// part of the game: the hash is the same with and without it.
+func TestTutorialPersisted(t *testing.T) {
+	st := newStore(t)
+	keys, _ := playActions(t, 5, engine.Options{FirstPlayer: engine.FirstPlayerSeat0}, 4)
+	plain := store.New("TUTXPA", store.ModeAI, engine.Options{FirstPlayer: engine.FirstPlayerSeat0}, 5, time.Now())
+	plain.Actions = keys
+	if err := st.Save(plain); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(st.Dir(), "TUTXPA.json"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if strings.Contains(string(data), `"tutorial"`) {
+		t.Fatalf("a room that is no tutorial has the key tutorial:\n%s", data)
+	}
+
+	f := store.New("TUTXFF", store.ModeAI, engine.Options{FirstPlayer: engine.FirstPlayerSeat0}, 5, time.Now())
+	f.Actions = keys
+	f.Tutorial = "first-game"
+	if err := st.Save(f); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	if f.Hash != plain.Hash {
+		t.Fatalf("hash %s with a tutorial, %s without: the name must not be part of the game", f.Hash, plain.Hash)
+	}
+	got, _, err := st.Load("TUTXFF")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.Tutorial != "first-game" {
+		t.Fatalf("Load: Tutorial %q, want first-game", got.Tutorial)
+	}
+}

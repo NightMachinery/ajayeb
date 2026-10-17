@@ -11,6 +11,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tutorial"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -206,6 +207,36 @@ var recordCases = []recordCase{
 		}
 		st := stateFrame(t, "J9HQ3T", &s, nil, wire.ModeOnline, wire.RoomStatusPlaying, nil)
 		st.History = &history
+		return st
+	}},
+	{"state-tutorial", func(t *testing.T) wire.ServerMessage {
+		// A tutorial room, seat 0's frame after the bot's first Age I
+		// reply: the reveal lesson and the buildOwn action.
+		sc := &tutorial.FirstGame
+		s := engine.NewGame(sc.Seed, sc.Options)
+		keys := []string{}
+		seats := []engine.Seat{}
+		var ev []engine.Event
+		for _, e := range sc.Entries[:8] {
+			a, err := engine.ParseKey(e.Key)
+			if err != nil {
+				t.Fatalf("ParseKey: %v", err)
+			}
+			seats = append(seats, s.ToMove)
+			ev = nil
+			if err := engine.Apply(&s, a, &ev); err != nil {
+				t.Fatalf("Apply %s: %v", e.Key, err)
+			}
+			keys = append(keys, e.Key)
+		}
+		st := stateFrame(t, "T7UQ2R", &s, ev, wire.ModeAI, wire.RoomStatusPlaying, nil)
+		easy := wire.BotLevelEasy
+		st.Room.Seats[1].Bot = &easy
+		st.Room.Tutorial = true
+		ts := tutorial.Derive(sc, keys, seats, &s)
+		st.Tutorial = &ts
+		st.CanUndo = true
+		st.UndoUnavailable = nil
 		return st
 	}},
 	{"state-forfeit", func(t *testing.T) wire.ServerMessage {

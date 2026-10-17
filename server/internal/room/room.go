@@ -740,7 +740,13 @@ func (r *Room) doRematch(c *Client) (string, error) {
 		if c.AllowCreate != nil && !c.AllowCreate() {
 			return "", ErrRateLimited
 		}
-		f := store.New("", r.file.Mode, r.file.Options, r.m.cfg.Seed(), r.m.cfg.Clock.Now())
+		// A tutorial's rematch is a normal game against the same bot: a
+		// fresh deal with the default options, and no script.
+		opts := r.file.Options
+		if r.file.Tutorial != "" {
+			opts = engine.Options{}
+		}
+		f := store.New("", r.file.Mode, opts, r.m.cfg.Seed(), r.m.cfg.Clock.Now())
 		f.Seats = r.file.Seats
 		// The rematch keeps the name numbers; its device links start
 		// afresh (a claim names its room anyway).

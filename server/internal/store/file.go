@@ -165,6 +165,12 @@ type File struct {
 	// field existed: such a room allows undo, as every room did then. Like
 	// Hints it is not part of the game (the replay and Hash ignore it).
 	NoUndo bool `json:"noUndo,omitempty"`
+	// Tutorial is the name of the tutorial script (package tutorial) of a
+	// tutorial room, empty for every other room. It is fixed at creation.
+	// Like Hints and NoUndo it is not part of the game: the seed and options
+	// above already describe it, and the replay and Hash ignore the name. A
+	// name this build does not know leaves a normal game.
+	Tutorial string `json:"tutorial,omitempty"`
 }
 
 // LogEntry is one room-level event of the game log, as the room file keeps

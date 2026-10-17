@@ -103,6 +103,9 @@ type RoomInfo struct {
 	// a hot-seat or ai room created with it off. State.CanUndo says whether
 	// an undo would be accepted right now.
 	AllowUndo bool `json:"allowUndo"`
+	// Tutorial says the room is a tutorial room (Create.Tutorial) whose
+	// script this server knows: the player's frames carry State.Tutorial.
+	Tutorial bool `json:"tutorial"`
 }
 
 // NewRoomInfo returns a RoomInfo with seats normalized to a non-nil,
@@ -206,7 +209,11 @@ type State struct {
 	// room rather than in the game, such as a change of the hint settings.
 	// Every frame carries the whole list, the same for every viewer.
 	RoomLog []RoomLogEntry `json:"roomLog"`
-	View    view.View      `json:"view"`
+	// Tutorial is where the tutorial stands, in a tutorial room's frames
+	// for the connection that holds the player's seat; absent in every
+	// other frame (other rooms, spectators).
+	Tutorial *TutorialState `json:"tutorial,omitempty"`
+	View     view.View      `json:"view"`
 }
 
 // NewState returns a State frame with "t" filled in. events is normalized to
