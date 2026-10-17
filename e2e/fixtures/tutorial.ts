@@ -278,6 +278,9 @@ export function stepFailures(s: CoachSnapshot): string[] {
   }
   if (s.bubble) {
     const b = s.bubble.box;
+    // Every bubble step points at something: a bubble with no ring showed
+    // before its target was drawn (or never found it).
+    if (!t) fail.push('the bubble shows with no ringed target');
     if (!inside(b, s.vw, s.vh)) fail.push('the bubble is not inside the viewport');
     if (t) {
       const share = overlap(b, t.box) / Math.max(1, t.box.width * t.box.height);

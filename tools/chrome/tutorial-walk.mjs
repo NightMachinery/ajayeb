@@ -26,8 +26,9 @@
 // after (a person's pace: two emulated taps inside the double-tap window
 // can be taken as one gesture).
 //
-// The checks at every coach step: the target is in the viewport and
-// elementFromPoint at its centre hits it; the bubble is inside the viewport,
+// The checks at every coach step: a bubble has a ringed target; the target
+// is in the viewport and elementFromPoint at its centre hits it; the bubble
+// is inside the viewport,
 // does not overlap an element target and covers at most 40% of a region
 // target; its buttons are at least 44 px tall; the page does not scroll
 // sideways. The report also has the placement and the milliseconds from
@@ -224,6 +225,9 @@ function check(s) {
   }
   if (s.bubble) {
     const b = s.bubble.box;
+    // Every bubble step points at something: a bubble with no ring showed
+    // before its target was drawn (or never found it).
+    if (!t) fail.push('the bubble shows with no ringed target');
     if (b.x < -1 || b.y < -1 || b.x + b.width > s.vw + 1 || b.y + b.height > s.vh + 1) {
       fail.push('the bubble is not inside the viewport');
     }

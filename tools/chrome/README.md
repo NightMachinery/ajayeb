@@ -77,7 +77,7 @@ The M11 player reviewer's probe of the tutorial (docs/testing.md, "The tutorial"
 - `--out DIR` gets one PNG per coach step (`NN-<step>-<kind>[-note].png`), the Home offer, the completion card and the Home it leads to, and `report.json`: per step its id, kind, surface, placement, target and bubble boxes, occlusion verdict, the milliseconds from the frame that brought it to the bubble, and the failed checks; then the expected and observed lesson order, the first-time tips seen, console errors and the first failure.
 - `--no-shots` skips the PNGs, `--trace` records what every press hit, and `--max-actions N` (default 120) bounds the free part.
 
-The checks at every coach step: the target in the viewport (a region taller than a short screen needs most of what fits on screen) and, for an element target, hit by `elementFromPoint` at its centre; the bubble inside the viewport, off an element target and over at most 40% of a region target; its buttons at least 44 px tall; no horizontal scroll; exactly one `[data-coach-target]`. It exits 1 on the first failed check, a lesson order that differs from the script, or a console error, and 0 when the walk is clean.
+The checks at every coach step: a bubble with a ringed target; the target in the viewport (a region taller than a short screen needs most of what fits on screen) and, for an element target, hit by `elementFromPoint` at its centre; the bubble inside the viewport, off an element target and over at most 40% of a region target; its buttons at least 44 px tall; no horizontal scroll; exactly one `[data-coach-target]`. It exits 1 on the first failed check, a lesson order that differs from the script, or a console error, and 0 when the walk is clean.
 
 ## Checking that nothing is left running
 

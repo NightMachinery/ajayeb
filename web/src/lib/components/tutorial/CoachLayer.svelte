@@ -9,9 +9,13 @@
   // When it shows: the caller's `active` (the player's own turn on the
   // frame on screen, the Presenter idle, the move summary closed, the
   // tutorial not paused here), then two animation frames later, so the
-  // target's box is final. The bubble hides while any modal is open (a
-  // sheet, the rules on a phone, the forfeit confirm, a popup): the page
-  // behind a modal dialog is inert. A DOM observer tells when one opens.
+  // target's box is final. A step with a target also waits until the target
+  // is drawn (a card a move animation still hides, such as one turning face
+  // up), for at most TARGET_WAIT_MS; only then does it show pinned with no
+  // ring, so the bubble never jumps from the edge to the card. The bubble
+  // hides while any modal is open (a sheet, the rules on a phone, the
+  // forfeit confirm, a popup): the page behind a modal dialog is inert. A
+  // DOM observer tells when one opens.
   //
   // The ring is the attribute data-coach-target, written on exactly one
   // element (with data-coach-region on a region) and removed when the step
@@ -54,10 +58,18 @@
   // The step's target on the page, once ready.
   let anchorEl = $state<HTMLElement | null>(null);
   let nextEl = $state<HTMLButtonElement | undefined>();
+  // The step that waited TARGET_WAIT_MS for its target in vain.
+  let waitedKey = $state<string | null>(null);
+  const TARGET_WAIT_MS = 1500;
 
   const due = $derived(active && step ? step : null);
   const ready = $derived(due !== null && readyKey === due.key);
-  const bubble = $derived(ready && due?.surface === 'board' && !modal);
+  const bubble = $derived(
+    ready &&
+      due?.surface === 'board' &&
+      !modal &&
+      (due.target === null || anchorEl !== null || waitedKey === due.key)
+  );
 
   // The targets already scrolled into view, with when: each element once,
   // so a sheet opened again (a new element) is scrolled again. An image that
@@ -99,9 +111,13 @@
         resolve();
       });
     });
+    const waited = setTimeout(() => {
+      waitedKey = key;
+    }, TARGET_WAIT_MS);
     return () => {
       cancelAnimationFrame(first);
       cancelAnimationFrame(second);
+      clearTimeout(waited);
     };
   });
 
