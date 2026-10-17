@@ -203,8 +203,31 @@
                     class="flex min-h-14 w-full items-center justify-between gap-3 rounded-control border border-rule-strong bg-accent-soft px-4 py-2 text-start text-accent-soft-fg"
                     onclick={() => onContinue(room.code)}
                   >
-                    <span class="font-semibold">
-                      {t('home.continueEntry', { mode: t(MODE_LABEL[room.mode]), code: room.code })}
+                    <span class="flex min-w-0 flex-col gap-0.5">
+                      <span class="font-semibold"
+                        >{t('home.continueEntry', {
+                          mode: t(MODE_LABEL[room.mode]),
+                          code: room.code
+                        })}</span
+                      >
+                      {#if room.age !== undefined || room.bot}
+                        {@const stage =
+                          room.age === undefined
+                            ? ''
+                            : room.age === 0
+                              ? t('home.continueDraft')
+                              : t('home.continueAge', { age: room.age })}
+                        <span class="text-sm" data-continue-details>
+                          {room.bot && stage
+                            ? t('home.continueDetails', {
+                                level: t(`game.persona.${room.bot}`),
+                                stage
+                              })
+                            : room.bot
+                              ? t(`game.persona.${room.bot}`)
+                              : stage}
+                        </span>
+                      {/if}
                     </span>
                   </button>
                 </li>

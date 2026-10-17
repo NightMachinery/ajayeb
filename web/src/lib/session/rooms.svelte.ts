@@ -1,10 +1,11 @@
 // The rooms this browser has played in, newest first, kept in localStorage
 // under ajayeb:rooms so Home can offer to continue them. Only the code, the
-// mode and when the room was last seen are kept: nothing about the game.
+// mode, bot level, age and when the room was last seen are kept. No cards
+// or hidden information are stored here.
 // A room opened through a device link also keeps its claim (./claim.ts), so
 // that reopening it from Home plays the same seat again.
 
-import type { Mode } from '$lib/wire';
+import type { BotLevel, Mode } from '$lib/wire';
 import { isValidClaim } from './claim';
 import type { StorageLike } from './identity';
 
@@ -20,6 +21,8 @@ export interface SavedRoom {
   lastSeen: number;
   /** The device link's claim this browser plays the room with, if any. */
   claim?: string;
+  bot?: BotLevel;
+  age?: number;
 }
 
 const MODES: readonly string[] = ['online', 'hotseat', 'ai'];
@@ -38,8 +41,31 @@ function isSavedRoom(value: unknown): value is SavedRoom {
   );
 }
 
-function entry(code: string, mode: Mode, lastSeen: number, claim?: string): SavedRoom {
-  return claim === undefined ? { code, mode, lastSeen } : { code, mode, lastSeen, claim };
+function entry(
+  code: string,
+  mode: Mode,
+  lastSeen: number,
+  claim?: string,
+  details: { bot?: unknown; age?: unknown } = {}
+): SavedRoom {
+  const item: SavedRoom =
+    claim === undefined ? { code, mode, lastSeen } : { code, mode, lastSeen, claim };
+  if (
+    mode === 'ai' &&
+    typeof details.bot === 'string' &&
+    ['easy', 'normal', 'hard'].includes(details.bot)
+  ) {
+    item.bot = details.bot as BotLevel;
+  }
+  if (
+    typeof details.age === 'number' &&
+    Number.isInteger(details.age) &&
+    details.age >= 0 &&
+    details.age <= 3
+  ) {
+    item.age = details.age;
+  }
+  return item;
 }
 
 /** Parses the stored list, dropping anything malformed. */
@@ -55,7 +81,7 @@ export function parseSavedRooms(raw: string | null): SavedRoom[] {
   const out: SavedRoom[] = [];
   for (const item of data) {
     if (!isSavedRoom(item) || out.some((r) => r.code === item.code)) continue;
-    out.push(entry(item.code, item.mode, item.lastSeen, item.claim));
+    out.push(entry(item.code, item.mode, item.lastSeen, item.claim, item));
   }
   return sortRooms(out).slice(0, MAX_SAVED_ROOMS);
 }
@@ -90,6 +116,22 @@ export class SavedRooms {
     this.list = parseSavedRooms(readRaw(storage));
   }
 
+  /** Reloads another tab's list without writing it back. */
+  refresh(raw: string | null = readRaw(this.#storage)): void {
+    this.list = parseSavedRooms(raw);
+  }
+
+  /** Stores the latest server-sent summary without moving the room. */
+  updateDetails(code: string, details: Pick<SavedRoom, 'bot' | 'age'>): void {
+    const room = this.list.find((r) => r.code === code);
+    if (!room || (room.bot === details.bot && room.age === details.age)) return;
+    this.#save(
+      this.list.map((r) =>
+        r.code === code ? entry(r.code, r.mode, r.lastSeen, r.claim, details) : r
+      )
+    );
+  }
+
   /**
    * Remembers a room as seen now (or at `at`), moving it to the front. A
    * claim replaces the room's saved one; null drops it; undefined (the
@@ -97,7 +139,13 @@ export class SavedRooms {
    */
   remember(code: string, mode: Mode, at: number = Date.now(), claim?: string | null): void {
     const kept = claim === undefined ? this.claimFor(code) : claim;
-    const item = entry(code, mode, at, kept ?? undefined);
+    const item = entry(
+      code,
+      mode,
+      at,
+      kept ?? undefined,
+      this.list.find((r) => r.code === code)
+    );
     if (!isSavedRoom(item)) return;
     const rest = this.list.filter((r) => r.code !== code);
     this.#save(sortRooms([item, ...rest]).slice(0, MAX_SAVED_ROOMS));
@@ -112,7 +160,9 @@ export class SavedRooms {
   dropClaim(code: string): void {
     const room = this.list.find((r) => r.code === code);
     if (!room?.claim) return;
-    this.#save(this.list.map((r) => (r.code === code ? entry(r.code, r.mode, r.lastSeen) : r)));
+    this.#save(
+      this.list.map((r) => (r.code === code ? entry(r.code, r.mode, r.lastSeen, undefined, r) : r))
+    );
   }
 
   /** Forgets a room, for example one the server no longer knows. */

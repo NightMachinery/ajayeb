@@ -7,7 +7,7 @@ import { hintDefaults } from '$lib/hints/local.svelte';
 import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
 import { loadIdentity } from './identity';
 import { cuePrev, Presenter } from './presenter.svelte';
-import { SavedRooms } from './rooms.svelte';
+import { ROOMS_KEY, SavedRooms } from './rooms.svelte';
 import { Session } from './session.svelte';
 import { installTestHook } from './test-hook';
 import { undoDefault } from './undo-default.svelte';
@@ -34,7 +34,21 @@ export function detached<T>(make: () => T): T {
 
 /** The rooms this browser has played in. */
 export function savedRooms(): SavedRooms {
-  rooms ??= detached(() => new SavedRooms());
+  if (!rooms) {
+    rooms = detached(() => new SavedRooms());
+    // localStorage's storage event reaches the other tabs, including Home
+    // tabs with no socket. No connection or polling is needed there.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event) => {
+        if (
+          event.storageArea === window.localStorage &&
+          (event.key === ROOMS_KEY || event.key === null)
+        ) {
+          rooms?.refresh(event.key === null ? null : event.newValue);
+        }
+      });
+    }
+  }
   return rooms;
 }
 

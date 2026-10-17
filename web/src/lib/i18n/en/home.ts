@@ -20,6 +20,9 @@ export const home = {
   // Home: the saved-rooms "Continue" list and the Settings entry point.
   'home.continueLabel': 'Continue a game',
   'home.continueEntry': 'Continue: {mode} · {code}',
+  'home.continueAge': 'Age {age}',
+  'home.continueDraft': 'Wonder draft',
+  'home.continueDetails': '{level} · {stage}',
   'home.mode.online': 'Online',
   'home.mode.hotseat': 'Pass and play',
   'home.mode.ai': 'vs AI',

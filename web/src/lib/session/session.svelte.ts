@@ -778,6 +778,12 @@ export class Session {
       this.#remembered = frame.code;
       this.#rooms?.remember(frame.code, frame.room.mode, Date.now(), this.claim ?? undefined);
     }
+    if (frame.room.status !== 'finished') {
+      this.#rooms?.updateDetails(frame.code, {
+        age: frame.view.age,
+        bot: frame.room.seats.find((seat) => seat.kind === 'bot')?.bot
+      });
+    }
     const ack = frame.ack;
     if (
       this.pending &&

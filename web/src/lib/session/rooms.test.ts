@@ -12,6 +12,25 @@ function memory(initial: Record<string, string> = {}): StorageLike & { data: Map
 }
 
 describe('SavedRooms', () => {
+  it('stores validated summary details, keeps them with a claim reset, and refreshes from another tab', () => {
+    const storage = memory();
+    const first = new SavedRooms(storage);
+    first.remember('AAAAAA', 'ai', 1000, 'q3Vb8Kx0Zr7TnW2mYc5JhA');
+    first.updateDetails('AAAAAA', { bot: 'easy', age: 2 });
+    first.dropClaim('AAAAAA');
+    const second = new SavedRooms(storage);
+    expect(second.list).toEqual([
+      { code: 'AAAAAA', mode: 'ai', lastSeen: 1000, bot: 'easy', age: 2 }
+    ]);
+    second.forget('AAAAAA');
+    first.refresh();
+    expect(first.list).toEqual([]);
+    expect(
+      parseSavedRooms(
+        JSON.stringify([{ code: 'AAAAAA', mode: 'ai', lastSeen: 1, bot: 'invalid', age: 99 }])
+      )
+    ).toEqual([{ code: 'AAAAAA', mode: 'ai', lastSeen: 1 }]);
+  });
   it('starts empty and remembers rooms newest first', () => {
     const storage = memory();
     const rooms = new SavedRooms(storage);
