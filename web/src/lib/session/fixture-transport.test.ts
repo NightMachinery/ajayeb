@@ -52,6 +52,12 @@ describe('the fixture registry', () => {
   });
 
   it('makes the online room states from recorded views', () => {
+    const ageStart = fixtureFrames('online-age-start-seat0')![0]!;
+    expect(ageStart.view.age).toBe(2);
+    expect(ageStart.events).toEqual([
+      { kind: 'starterChosen', private: false, seat: 1, starter: 0 }
+    ]);
+
     const lobby = fixtureFrames('online-lobby-seat0')![0]!;
     expect(lobby.room.status).toBe('lobby');
     expect(lobby.room.seats[1]?.kind).toBe('open');
@@ -68,6 +74,20 @@ describe('the fixture registry', () => {
 });
 
 describe('FixtureTransport', () => {
+  it('delivers its snapshot before simulating a dropped link', async () => {
+    const frames = fixtureFrames('state-play')!;
+    const transport = new FixtureTransport({ frames, linkState: 'offline' });
+    const session = new Session({
+      transport,
+      identity: { token: 'AAAAAAAAAAAAAAAAAAAAAA', clientId: 'fixture-link', name: '' }
+    });
+    session.join(frames[0]!.code);
+    await settle();
+    expect(session.view).toEqual(frames[0]!.view);
+    expect(session.conn).toBe('offline');
+    expect(session.canAct).toBe(false);
+    session.close();
+  });
   it('opens, welcomes, and answers join with the first frame', async () => {
     const frames = fixtureFrames('state-play')!;
     const t = new FixtureTransport({ frames });

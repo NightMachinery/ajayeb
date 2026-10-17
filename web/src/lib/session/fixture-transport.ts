@@ -17,11 +17,19 @@
 import type { ClientMessage, ServerMessage, State, View } from '$lib/wire';
 import { ProtocolVersion } from '$lib/wire/types.gen';
 import { defaultHints } from '$lib/hints/families';
-import { Listeners, type Transport, type TransportStatus, type Unsubscribe } from './transport';
+import {
+  Listeners,
+  type Transport,
+  type TransportStatus,
+  type LinkState,
+  type Unsubscribe
+} from './transport';
 
 export interface FixtureTransportOptions {
   /** The state frames, in order. */
   frames: readonly State[];
+  /** Show a dropped link after delivering the recorded snapshot. */
+  linkState?: LinkState;
   /** The server info in the welcome. */
   server?: { version: string; rules: number };
 }
@@ -29,6 +37,7 @@ export interface FixtureTransportOptions {
 export class FixtureTransport implements Transport {
   #frames: readonly State[];
   #index = 0;
+  #linkState: LinkState;
   #server: { version: string; rules: number };
   #status: TransportStatus = { state: 'connecting', attempt: 0 };
   #messages = new Listeners<ServerMessage>();
@@ -39,6 +48,7 @@ export class FixtureTransport implements Transport {
   constructor(opts: FixtureTransportOptions) {
     if (opts.frames.length === 0) throw new Error('FixtureTransport needs at least one frame');
     this.#frames = opts.frames;
+    this.#linkState = opts.linkState ?? 'open';
     this.#server = opts.server ?? { version: 'fixture', rules: 1 };
     queueMicrotask(() => {
       if (this.#status.state === 'connecting') this.#setStatus({ state: 'open', attempt: 0 });
@@ -128,7 +138,12 @@ export class FixtureTransport implements Transport {
 
   #later(msg: ServerMessage): void {
     queueMicrotask(() => {
-      if (this.#status.state === 'open') this.#messages.emit(msg);
+      if (this.#status.state === 'open') {
+        this.#messages.emit(msg);
+        if (msg.t === 'state' && this.#linkState !== 'open') {
+          this.#setStatus({ state: this.#linkState, attempt: 1 });
+        }
+      }
     });
   }
 

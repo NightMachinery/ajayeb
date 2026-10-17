@@ -260,7 +260,11 @@ With the dev routes on (they are on in the test-mode build from `make build-web-
   server. A view is named by its scenario file and viewer joined by a
   dash, never a dot, since the server answers a path with a dot with 404.
   It sets `data-ready` on `<html>` once the state is on screen and
-  the fonts have loaded, for screenshots.
+  the fonts have loaded, for screenshots. Append `?link=connecting`,
+  `?link=reconnecting`, `?link=offline` or `?link=closed` to show the link
+  state after loading that snapshot; the default is `open`. The
+  `online-age-start-seat0` scene includes the recorded starter choice event
+  so its who-starts bar can be checked without playing an age.
 
 A token written into `localStorage` for a tool (`ajayeb:token`) must have
 the real shape, the base64url form of 16 bytes: 22 characters whose last
@@ -646,7 +650,9 @@ it lands in the server's next view:
   log line and the starter choice that follows), and an ordinary one from
   the Appian Way (`appian-economy`): the same seat moves again, the turn
   bar reads "Sun plays again (Appian Way)" (`data-turn="playAgain"`), the
-  log says so, and after that move the turn passes.
+  log says so, and after that move the turn passes. The `theology-chain`
+  flow builds Pyramids and Colossus consecutively: Theology keeps the same
+  seat active after each wonder, with both builds and extra turns in the log.
 
 Each test takes 3 to 8 s (the draft is the longest). On mobile the
 pass-device screen is on, and the driver passes it wherever it appears.
@@ -950,3 +956,11 @@ restoration to the opener after Escape.
 Unit checks cover the signed-number helper in English and Persian, the
 new first-time tips, the recap board mappers and WonderSheet's 280 px art
 sizes attribute.
+
+### Small UI follow-ups (`small-ui.spec.ts`)
+
+The spec checks that a Home tab receives a bot game’s level and age and
+removes its Continue entry when another tab finishes it. It checks the
+fixture link-state option and captures the who-starts bar, online presence,
+gallery wonder names and score headers at 360x740, 390x844, 740x360 and
+1280x800. The layout assertions check card overlap and clipped names.

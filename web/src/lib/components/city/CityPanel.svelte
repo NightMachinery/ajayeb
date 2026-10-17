@@ -10,6 +10,7 @@
   // and a "you" mark (`self`, else the room's SeatInfo.you from the page's
   // game context, never on a hot-seat device), and the device link button
   // (SeatLink) follows the name where the room allows it.
+  import type { Presence } from '$lib/ui/online';
   import BotAvatar from '$lib/art/BotAvatar.svelte';
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -28,6 +29,7 @@
     winsOf
   } from '$lib/view/threats';
   import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import { tryGameContext } from '../choices/room';
   import SeatLink from '../identity/SeatLink.svelte';
@@ -56,6 +58,8 @@
     bot?: BotLevel;
     /** This seat's bot is thinking: a calm indicator shows by the name. */
     thinking?: boolean;
+    /** Online presence, beside the name within the header. */
+    presence?: Presence;
     /** This is the player's own seat; by default the room's SeatInfo.you. */
     self?: boolean;
     /** The selected move's coins and score total after it (a selection
@@ -76,6 +80,7 @@
     ended = false,
     bot,
     thinking = false,
+    presence,
     self,
     ghost,
     class: className = ''
@@ -193,6 +198,7 @@
       {#if bot}<BotAvatar level={bot} class="size-7" />{/if}
       <span class="min-w-0 truncate font-display text-base text-fg" dir="auto">{name}</span>
       {#if isSelf}<SelfMark />{/if}
+      {#if presence}<PresenceDot {presence} {name} />{/if}
       <SeatLink {seat} {name} class="-ms-1" />
       {#if thinking}
         <span

@@ -375,6 +375,29 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     expect(problems).toEqual([]);
   });
 
+  test('Theology keeps both wonder builds on the same seat (theology-chain)', async ({ page }) => {
+    const problems = watchHygiene(page);
+    const driver = await openHotseatRoom(page, 'theology-chain');
+    for (const [key, wonder] of [
+      ['wonder:pyramids:rostrum', 'pyramids'],
+      ['wonder:colossus:statue', 'colossus']
+    ] as const) {
+      await playKey(driver, key, 'wonderFirst');
+      const after = await driver.nextTurn();
+      expect(after.toMove).toBe(0);
+      expect(after.pending).toBeNull();
+      expect(
+        (await currentView(page)).players[0].wonders.find((w) => w.wonder === wonder)?.built
+      ).toBe(true);
+      await expect(page.locator('[data-turn="playAgain"]')).toContainText('Sun plays again');
+    }
+    const lines = await logLines(driver);
+    expect(lines).toContain('Sun built the wonder Pyramids, using Rostrum.');
+    expect(lines).toContain('Sun built the wonder Colossus, using Statue.');
+    expect(lines.filter((line) => line === 'Sun plays again.')).toHaveLength(2);
+    expect(problems).toEqual([]);
+  });
+
   test('a wonder that grants an extra turn (appian-economy)', async ({ page }) => {
     const problems = watchHygiene(page);
     const driver = await openHotseatRoom(page, 'appian-economy');

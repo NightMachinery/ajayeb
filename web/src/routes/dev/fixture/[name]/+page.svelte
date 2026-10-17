@@ -15,6 +15,7 @@
   import GameScreen from '$lib/components/game/GameScreen.svelte';
   import { t } from '$lib/i18n';
   import { setGameContext, type GameContext } from '$lib/session/context';
+  import type { LinkState } from '$lib/session/transport';
   import { FixtureTransport } from '$lib/session/fixture-transport';
   import { fixtureFrames } from '$lib/session/fixtures';
   import { newClientId, newToken } from '$lib/session/identity';
@@ -24,11 +25,19 @@
 
   const name = page.params.name ?? '';
   const frames = fixtureFrames(name);
+  const requestedLink = page.url.searchParams.get('link');
+  const linkState: LinkState =
+    requestedLink === 'connecting' ||
+    requestedLink === 'reconnecting' ||
+    requestedLink === 'offline' ||
+    requestedLink === 'closed'
+      ? requestedLink
+      : 'open';
 
   function makeGame(first: NonNullable<typeof frames>): GameContext {
     // A throwaway identity: nothing on this page reaches a server.
     const session = new Session({
-      transport: new FixtureTransport({ frames: first }),
+      transport: new FixtureTransport({ frames: first, linkState }),
       identity: { token: newToken(), clientId: newClientId(), name: '' }
     });
     session.join(first[0]!.code);

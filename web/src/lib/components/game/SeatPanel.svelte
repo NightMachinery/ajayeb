@@ -10,8 +10,8 @@
   // `lit` rings the panel in the seat's crest colour: the player to move in
   // a hot-seat game with fixed orientation. `thinking` shows the calm
   // indicator of a bot seat that is thinking. `presence` shows an online
-  // player's presence: on the strip by the name, and on
-  // a line above the desktop column. Wonder taps (the wonder-first flow)
+  // player's presence: on the strip by the name, and inside the desktop
+  // city header. Wonder taps (the wonder-first flow)
   // are reported through onwonder when the caller passes it (the desktop
   // column's rows); the strip's single wonder button reports onwonders,
   // which opens the seat's wonder sheet. `buildable` holds the wonders the
@@ -22,7 +22,6 @@
   import { cardBySlug } from '$lib/catalog';
   import { t } from '$lib/i18n';
   import type { Presence } from '$lib/ui/online';
-  import PresenceDot from '../hud/PresenceDot.svelte';
   import CityBand from '../city/CityBand.svelte';
   import CityPanel from '../city/CityPanel.svelte';
   import PlayerStrip from '../city/PlayerStrip.svelte';
@@ -112,11 +111,6 @@
   data-presence={presence}
 >
   {#if variant === 'column'}
-    {#if presence}
-      <div class="flex justify-end px-1 pb-1">
-        <PresenceDot {presence} {name} labelled />
-      </div>
-    {/if}
     <CityPanel
       {name}
       {seat}
@@ -128,6 +122,7 @@
       {bot}
       {ended}
       {thinking}
+      {presence}
       {ghost}
       class="bg-panel"
     />

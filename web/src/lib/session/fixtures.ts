@@ -6,7 +6,8 @@
 //     wrapped in the state frame its viewer would receive;
 //   - a few online room states made from those views (online-...): the
 //     lobby, an opponent who dropped, and a game with spectators. Only the
-//     room part is changed; the views are the recorded ones.
+//     room part is changed; the views are the recorded ones. The age-start
+//     scene also carries the recorded starterChosen event.
 //
 // The generated file is large (about 1.4 MB of JSON), so pages import this
 // module dynamically and it never reaches the bundle of a normal page.
@@ -29,6 +30,13 @@ function viewFrame(name: (typeof protocolFixtureNames)[number]): State | undefin
 
 /** The online room states, by name: each a recorded view in a changed room. */
 const ONLINE: Readonly<Record<string, () => State | undefined>> = {
+  // The starter-chosen golden fixture's event, restored beside its view.
+  'online-age-start-seat0': () => {
+    const frame = viewFrame('starter-chosen-seat0');
+    if (!frame) return undefined;
+    frame.events = [{ kind: 'starterChosen', private: false, seat: 1, starter: 0 }];
+    return frame;
+  },
   // Seat 0 created the room; seat 1 is still open.
   'online-lobby-seat0': () => {
     const f = viewFrame('draft-round-1-seat0');
