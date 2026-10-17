@@ -1,7 +1,7 @@
 // Persian messages for the card components: card and wonder names, the
 // effect sentences, costs, affordability badges, tooltips and the ARIA
-// descriptions. Complete, except the Roman age numerals, which stay as
-// they are on purpose. The names and the reasons behind them are listed in
+// descriptions. Complete; the age numerals are the ordinals یکم, دوم and
+// سوم. The names and the reasons behind them are listed in
 // docs/i18n/persian.md. See ./index.ts.
 
 import type { card as en } from '../en/card';
@@ -110,6 +110,10 @@ export const card = {
   'card.category.red': 'ساختمان نظامی',
   'card.category.purple': 'انجمن',
   'card.ageLabel': 'دوران {age}',
+  // The age on a card back, and after دوران in the card sheet: an ordinal word.
+  'card.ageNumeral.1': 'یکم',
+  'card.ageNumeral.2': 'دوم',
+  'card.ageNumeral.3': 'سوم',
 
   // Resources, science symbols and chain symbols.
   'card.resource.wood': 'چوب',

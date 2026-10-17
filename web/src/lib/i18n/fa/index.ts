@@ -1,9 +1,8 @@
 // The Persian (fa) message table. Each area file here translates its English
 // area (../en/<area>.ts), typed by Translation so a misspelt or stale key is
-// a type error. Every key is translated except the few kept English on
-// purpose (the Roman age numerals), listed with the glossary in
-// docs/i18n/persian.md; t() falls back to English per key for those and for
-// any key added to English later.
+// a type error. Every key is translated (the glossary is
+// docs/i18n/persian.md); t() falls back to English per key only for a key
+// added to English later.
 
 import type { PartialLocaleTable } from '../index';
 import { board } from './board';

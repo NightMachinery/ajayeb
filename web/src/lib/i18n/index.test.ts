@@ -180,10 +180,10 @@ describe('the Persian table', () => {
     expect(t('board.age', { age: 2 })).toBe('دوران ۲');
   });
 
-  it('translates every key but the ones kept English on purpose', () => {
-    // docs/i18n/persian.md lists them; a new English key needs its Persian too.
+  it('translates every key', () => {
+    // A new English key needs its Persian too (docs/i18n/persian.md).
     const missing = Object.keys(en).filter((k) => !(k in fa));
-    expect(missing).toEqual(['card.ageNumeral.1', 'card.ageNumeral.2', 'card.ageNumeral.3']);
+    expect(missing).toEqual([]);
   });
 
   it('falls back to English per key, marked left to right', () => {

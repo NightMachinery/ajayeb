@@ -35,7 +35,7 @@ These are fixed. Every string in the locale uses them, and only them, for these 
 - **the military track**: مسیر نظامی. The conflict pawn: مهره (in full مهره‌ی نظامی). A space on the track: خانه. A shield: سپر. A capital: پایتخت. Looting: غارت.
 - **science symbol**: نماد علمی. A pair of the same symbol: جفت. "Six different science symbols": شش نماد علمی متفاوت.
 - **chain**: زنجیره. A chain symbol: نماد زنجیره‌ای. "Free through a chain": رایگان از راه زنجیره.
-- **age**: دوران. "Age {age}": دوران {age}. On a card back, "Age I": دوران یکم (and دوم, سوم).
+- **age**: دوران. "Age {age}" with a number: دوران {age} (دوران ۱). The age numeral on a card back and in the card sheet is an ordinal word: یکم, دوم, سوم ("دوران یکم"), in place of the English Roman numerals.
 - **the card structure**: ساختار (the layout of an age's cards). Face up: رو. Face down: پشت‌ورو. To uncover: آزاد کردن. Covered: پوشیده.
 - **discard**: کنار گذاشتن (for coins). The discard pile: کارت‌های کنارگذاشته.
 - **tuck a card under a wonder**: زیر شگفتی گذاشتن.
@@ -255,7 +255,8 @@ Why, where there was a choice:
 
 ## Kept in English on purpose
 
-- `card.ageNumeral.1`, `.2`, `.3`: the Roman numerals I, II and III on a card back are an ornament, like the English game's. The table leaves them out, so they fall back to English.
+No key falls back to English. Within the Persian table:
+
 - `app.name` stays "Ajayeb": Home shows `app.nameNative` (عجایب) right above it. `home.settings.languageEn` stays "English", because each language is named in itself.
 - Inside translated strings, proper nouns and codes stay in Latin script: the game's own name and its publishers in `app.legal` (7 Wonders Duel, Repos Production, Asmodee), GitHub, MIT and QR, the key name Esc, the letters and digits a game code never uses (`online.join.invalid`), and the developer-only paths and URL parameters (`dev.gallery.intro`, `game.gallery.intro`, `dev.new.badMode`).
 - Strings with no words keep their English form: `card.cost.more` and `hints.badge.bonus` ("+{n}", "+{count}"), `hints.cardWith`, `hints.after.byMove`, `hints.science.symbol`, `hints.science.card` and the diagram signs `rules.diagram.discard.plus` and `.equals`. They are still listed in the Persian table, so they do not fall back.
