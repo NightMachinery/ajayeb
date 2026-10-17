@@ -249,6 +249,7 @@
       <ul
         class="flex shrink-0 items-center ps-1.5 short:order-last"
         aria-label={t('board.citySheet.tokens')}
+        data-fx-tokens
       >
         {#each player.tokens as slug (slug)}
           <li class="-ms-1.5"><ProgressToken {slug} size="xs" owned /></li>

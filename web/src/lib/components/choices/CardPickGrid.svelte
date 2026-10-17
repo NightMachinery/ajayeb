@@ -58,7 +58,7 @@
   {#each cards as slug (slug)}
     {@const key = keys?.get(slug)}
     {@const isSelected = key !== undefined && key === selected}
-    <li data-card={slug}>
+    <li data-card={slug} data-fx-pile-card={slug}>
       {#if key !== undefined && onselect}
         <button
           type="button"

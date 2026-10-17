@@ -164,6 +164,7 @@
     role="img"
     aria-label={label}
     data-science={science.distinct}
+    data-fx-science-pill
     data-danger={danger ? '' : undefined}
     data-glow={level}
     {@attach tooltip(counterTip)}
@@ -196,6 +197,7 @@
                 ? 'border-dotted border-fg-muted text-fg-muted/70'
                 : 'border-rule/40 text-fg-muted/40'}"
           data-symbol={symbol}
+          data-fx-science={symbol}
           data-symbol-state={state}
           {@attach tooltip({ text: slotTip(symbol), rulesId: 'science' })}
         >

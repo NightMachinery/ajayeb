@@ -162,6 +162,7 @@
   <button
     type="button"
     data-act={actionKey}
+    data-fx-token={slug}
     disabled={!selectable}
     aria-label={tipText(t('board.token.take', { name: label }))}
     {@attach tooltip(tipFor(label))}
@@ -182,6 +183,7 @@
     aria-haspopup="dialog"
     {@attach tooltip(tipFor(label))}
     data-token-open={slug}
+    data-fx-token={slug}
     data-tap-ok={size === 'md' ? undefined : ''}
     class="token-tile grid cursor-pointer place-items-center rounded-full transition-transform duration-(--dur-fast) hover:-translate-y-0.5
       {size === 'md' ? 'min-h-11 min-w-11' : ''} {className}"
@@ -198,6 +200,7 @@
     role="img"
     aria-label={tipText(staticLabel)}
     data-owned={owned ? '' : undefined}
+    data-fx-token={slug}
     data-taken={taken && !owned ? '' : undefined}
   >
     {@render medallion()}
