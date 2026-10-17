@@ -117,6 +117,8 @@
   import WonderListSheet from '../sheets/WonderListSheet.svelte';
   import WonderSheet from '../sheets/WonderSheet.svelte';
   import FxLayer from '../shell/FxLayer.svelte';
+  import { replay as moveReplay } from '$lib/fx/anim/replay.svelte';
+  import { motion } from '$lib/ui/motion.svelte';
   import LiveRegion from '../shell/LiveRegion.svelte';
   import Sheet from '../shell/Sheet.svelte';
   import ToastList from '../shell/Toasts.svelte';
@@ -648,6 +650,16 @@
     if (seat !== null) openWonderList(seat);
   }
 
+  /**
+   * Replay last move (the log sheet's control): closes the sheet, then lets
+   * the animation runner play the last move again on the board once the
+   * sheet is gone. Visual only (fx/anim/replay.svelte.ts).
+   */
+  function replayLastMove(): void {
+    ui.close('log');
+    requestAnimationFrame(() => requestAnimationFrame(() => moveReplay.play()));
+  }
+
   /** Whether a key press belongs to a text field rather than the board. */
   function typing(target: EventTarget | null): boolean {
     return (
@@ -967,6 +979,11 @@
     bind:open={() => ui.isOpen('log'), (v) => !v && ui.close('log')}
     events={ui.log}
     {names}
+    replay={{
+      available: moveReplay.available,
+      off: motion.effective === 'off',
+      onreplay: replayLastMove
+    }}
   />
 {/if}
 

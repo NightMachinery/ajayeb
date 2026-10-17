@@ -147,6 +147,10 @@ export const board = {
   'board.logSheet.empty': 'Nothing has happened yet.',
   'board.logSheet.age': 'Age {age}',
   'board.logSheet.draftAge': 'Wonder draft',
+  // Replay last move: the control, and why it is greyed out when it is.
+  'board.logSheet.replay': 'Replay last move',
+  'board.logSheet.replayOff': 'Turn Animation on in Settings to replay a move.',
+  'board.logSheet.replayNone': 'No move to replay yet.',
   'board.log.draft': '{name} drafted {wonder}.',
   'board.log.draftRound2': 'The second round of wonders is revealed.',
   'board.log.ageStart': 'Age {age} begins.',

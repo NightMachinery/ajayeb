@@ -13,7 +13,15 @@
   // generated content (::before, from data-you, translated) rather than a
   // SelfMark element, so a line's text stays the log entry alone, the same
   // for every player; it still has text, so it is not colour alone.
+  //
+  // Replay last move (UX design section 5, "Log"; `replay`, from the game
+  // screen): a control that plays the last move's animations again on the
+  // board as it is now (fx/anim/replay.svelte.ts), closing the sheet first.
+  // It changes nothing. It is disabled, with a tooltip saying why, while
+  // Animation is off or before any move has animated.
+  import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
   import { t } from '$lib/i18n';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { GameEvent } from '$lib/wire';
   import { groupLogByAge } from '$lib/view/log-format';
   import { groupGameLog, type GameLogGroup } from '$lib/hints/log';
@@ -27,6 +35,9 @@
     titleId?: string;
     /** The player's own seat, whose lines are marked; by default the room's. */
     selfSeat?: 0 | 1 | null;
+    /** Replay last move: whether a move is on offer, whether Animation is
+     *  off, and what replays it. Absent outside a game (the gallery). */
+    replay?: { available: boolean; off: boolean; onreplay: () => void };
   }
 
   let {
@@ -34,8 +45,20 @@
     events,
     names,
     titleId = 'log-sheet-title',
-    selfSeat
+    selfSeat,
+    replay
   }: Props = $props();
+
+  // Why the replay control is disabled, for its tooltip; none while it works.
+  const replayReason = $derived(
+    !replay
+      ? undefined
+      : replay.off
+        ? t('board.logSheet.replayOff')
+        : !replay.available
+          ? t('board.logSheet.replayNone')
+          : undefined
+  );
 
   const ctx = tryGameContext();
   const mine = $derived.by(() => {
@@ -58,7 +81,32 @@
 
 <Sheet bind:open {titleId}>
   <div class="flex flex-col gap-3 px-4 pt-1 pb-5">
-    <h2 id={titleId} class="font-display text-xl text-fg">{t('board.logSheet.title')}</h2>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id={titleId} class="font-display text-xl text-fg">{t('board.logSheet.title')}</h2>
+      {#if replay}
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex (This named tooltip group explains its native disabled button to keyboard users.) -->
+        <span
+          role="group"
+          aria-label={t('board.logSheet.replay')}
+          class="inline-flex"
+          tabindex={replayReason ? 0 : undefined}
+          data-replay-tooltip
+          {@attach tooltip(replayReason ? { text: replayReason, actionable: false } : undefined)}
+        >
+          <button
+            type="button"
+            class="inline-flex min-h-11 items-center gap-1.5 rounded-control border border-rule-strong bg-panel px-3 text-sm font-semibold text-fg
+              hover:bg-panel-sunken disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-panel"
+            data-control="replay-last-move"
+            disabled={!!replayReason}
+            onclick={() => replay?.onreplay()}
+          >
+            <RotateCcw class="size-4 rtl:-scale-x-100" aria-hidden="true" />
+            {t('board.logSheet.replay')}
+          </button>
+        </span>
+      {/if}
+    </div>
     {#if groups.length === 0}
       <p class="text-sm text-fg-muted">{t('board.logSheet.empty')}</p>
     {:else}
