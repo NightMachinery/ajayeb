@@ -457,7 +457,9 @@
                       {@attach tooltip({
                         text: t('game.action.discard', { count: actions.discard.gain ?? 0 }),
                         rulesId: 'turn',
-                        diagram: discardDiagram
+                        diagram: discardDiagram,
+                        // This anchor wraps ActionButton, outside the ancestor lookup.
+                        actionable: canAct && connected
                       })}
                     >
                       <ActionButton

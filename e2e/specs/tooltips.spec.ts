@@ -25,6 +25,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { openHotseatRoom } from '../fixtures/scenario';
+import { settle } from '../fixtures/layout-probes';
 
 const URL = '/dev/gallery/tooltips';
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -403,6 +404,100 @@ test.describe('tooltips on touch', { tag: ['@mobile'] }, () => {
     await expect(opened).toHaveText(/opened 1 times/);
     expect(problems).toEqual([]);
   });
+
+  for (const locale of ['en', 'fa'] as const) {
+    test.describe(`card-sheet discard in ${locale}`, () => {
+      test.use({ appLocale: locale });
+      for (const confirmMoves of ['never', 'always'] as const) {
+        test(`real touch preserves discard and its diagram, confirmation ${confirmMoves}`, async ({
+          page
+        }) => {
+          const problems = watchHygiene(page);
+          await page.setViewportSize({ width: 360, height: 740 });
+          await page.addInitScript((confirmMoves) => {
+            const current = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+            localStorage.setItem(
+              'ajayeb:settings',
+              JSON.stringify({ ...current, confirmMoves, hotseatPassDevice: false })
+            );
+          }, confirmMoves);
+          const sent: string[] = [];
+          page.on('websocket', (socket) => {
+            socket.on('framesent', ({ payload }) => {
+              const frame = JSON.parse(String(payload)) as { t: string; key?: string };
+              if (frame.t === 'act' && frame.key) sent.push(frame.key);
+            });
+          });
+          const driver = await openHotseatRoom(page, 'extra-turn-lost');
+          await driver.nextTurn();
+          await tap(page, page.locator('.card-structure [data-card="theater"]'));
+          const sheet = page.locator('dialog[open] [data-card-sheet]');
+          await expect(sheet).toBeVisible();
+          const discard = sheet.locator('[data-act="discard:theater"]');
+          await expect(discard).toBeEnabled();
+          // A raw touch has no locator actionability wait: finish font/layout
+          // changes and attachment setup before measuring its hit coordinates.
+          await settle(page);
+          await discard.scrollIntoViewIfNeeded();
+          await expect(discard.locator('..')).toHaveAttribute('data-tooltip', '');
+          const before = await gameState(page);
+
+          // Actual touchStart/touchEnd, not Locator.click's mouse events.
+          // The diagram appears while held, before the finger is released.
+          const point = await center(discard);
+          expect(
+            await discard.evaluate(
+              (el, p) => el.contains(document.elementFromPoint(p.x, p.y)),
+              point
+            )
+          ).toBe(true);
+          const cdp = await page.context().newCDPSession(page);
+          try {
+            await cdp.send('Input.dispatchTouchEvent', {
+              type: 'touchStart',
+              touchPoints: [point]
+            });
+            // Hold for the same 800 ms as the other real-touch long-press helper.
+            await page.waitForTimeout(800);
+            await expect(
+              page.locator('[data-tooltip-layer] [data-rules-diagram="discard"]')
+            ).toBeVisible();
+            expect(await gameState(page)).toEqual(before);
+            expect(sent).toEqual([]);
+          } finally {
+            await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+            await cdp.detach();
+          }
+          // Long-press release cannot send or arm the confirmation button.
+          expect(await gameState(page)).toEqual(before);
+          await expect(discard).not.toHaveAttribute('data-armed');
+          expect(sent).toEqual([]);
+
+          // Tapping the same enabled action dismisses only, even with confirm on.
+          await tap(page, discard);
+          await expect(bubble(page)).toHaveCount(0);
+          await expect(discard).not.toHaveAttribute('data-armed');
+          expect(await gameState(page)).toEqual(before);
+          expect(sent).toEqual([]);
+
+          await tap(page, discard);
+          await expect(bubble(page)).toHaveCount(0);
+          if (confirmMoves === 'always') {
+            await expect(discard).toHaveAttribute('data-armed', '');
+            expect(await gameState(page)).toEqual(before);
+            expect(sent).toEqual([]);
+            // The confirmation button deliberately ignores a double-tap for 350 ms.
+            await page.waitForTimeout(400);
+            await tap(page, discard);
+          }
+          await expect.poll(async () => (await gameState(page)).version).toBe(before.version + 1);
+          await expect(page.locator('[data-starter-choice]')).toBeVisible();
+          expect(sent).toEqual(['discard:theater']);
+          expect(problems).toEqual([]);
+        });
+      }
+    });
+  }
 
   test('the stacked tooltip fits a phone screen', async ({ page }) => {
     await page.goto(`${URL}?edges`);

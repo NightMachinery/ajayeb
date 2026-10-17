@@ -980,4 +980,11 @@ row’s physical order as well as the board. `tooltip-coverage.spec.ts`
 accepts adjacent visible labels only when they accompany a single image
 branch; an unrelated glyph elsewhere in a labelled row cannot pass.
 `tooltips.spec.ts` exercises the linked bubble’s narrow hit region alongside
-the existing touch, long-press, keyboard and rules-link paths.
+the existing touch, long-press, keyboard and rules-link paths. Its card-sheet
+regression uses real touchscreen and CDP touch events in English and Persian,
+with Confirm moves on and off. It requires a held discard to show its diagram,
+its release and a dismissing tap to send nothing, and the next short tap (plus
+confirmation when enabled) to send exactly one discard and advance one version.
+The discard group explicitly follows its button's enabled state for touch
+classification because the tooltip anchor wraps the button rather than being
+its descendant. The shared gesture rules and diagram placement stay unchanged.
