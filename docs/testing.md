@@ -99,6 +99,11 @@ It covers, per game mode (online with a spectator, hot-seat, versus a bot):
   `pickLibraryToken` step, but after it only in its own `libraryDraw`
   events (live and in its history); the two tokens it put back are a
   leak anywhere else in its frames;
+- resync history and live events checked against an independent replay through
+  the received frame's ply. The outbox may merge a pending resync with later
+  bot moves: its history is then a prefix and its live events supply the
+  suffix. A deterministic outbox regression checks this interleaving and
+  rejects missing, duplicated, reordered or corrupted history/events;
 - reconnecting mid-game (the socket drops, `hello` and `join` again, and
   resending the last `act` with the same `seq` does not apply it twice);
 - restarting the server on the same data directory mid-game and finishing

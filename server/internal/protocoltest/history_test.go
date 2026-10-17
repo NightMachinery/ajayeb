@@ -2,6 +2,8 @@ package protocoltest
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -74,7 +76,8 @@ func hiddenFor(t *testing.T, snap room.Snapshot, viewer *engine.Seat) secrets {
 }
 
 // resync asks for a fresh state and returns it: a frame with the history,
-// which must hold one entry per action of the game so far.
+// possibly merged with later live events by the outbox. Together the history
+// and events must exactly cover the actions through the received frame ply.
 func (c *tclient) resync() wire.State {
 	c.t.Helper()
 	c.send(wire.NewResync(c.code))
@@ -82,15 +85,89 @@ func (c *tclient) resync() wire.State {
 		st, ok := f.(wire.State)
 		return ok && st.Code == c.code && st.History != nil
 	}).(wire.State)
-	if len(*st.History) != st.View.Ply {
-		c.t.Fatalf("%s: a history of %d entries at ply %d", c.name, len(*st.History), st.View.Ply)
-	}
-	for i, e := range *st.History {
-		if e.Ply != i || (e.Seat != 0 && e.Seat != 1) || len(e.Events) == 0 {
-			c.t.Fatalf("%s: history entry %d: %+v", c.name, i, e)
-		}
+	want := replayHistory(c.t, c.srv.snapshot(c.code), st)
+	if err := resyncHistoryError(st, want); err != nil {
+		c.t.Fatalf("%s: %v", c.name, err)
 	}
 	return st
+}
+
+// replayHistory reconstructs the expected history at the received frame's ply,
+// even if a bot has already advanced the room snapshot further. It uses that
+// frame's viewer, including the hot-seat viewer at that position.
+func replayHistory(t *testing.T, snap room.Snapshot, st wire.State) []wire.HistoryEntry {
+	t.Helper()
+	if st.View.Ply < 0 || st.View.Ply > len(snap.Actions) {
+		t.Fatalf("frame at ply %d, snapshot has %d actions", st.View.Ply, len(snap.Actions))
+	}
+	s := engine.NewGame(snap.State.Seed, snap.State.Opts)
+	if snap.Scenario != "" {
+		var err error
+		s, err = engine.NewGameFromScenario(snap.State.Seed, snap.State.Opts, engine.NamedScenario(snap.Scenario))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	want := make([]wire.HistoryEntry, 0, st.View.Ply)
+	events := make([][]engine.Event, 0, st.View.Ply)
+	for _, key := range snap.Actions[:st.View.Ply] {
+		a, err := engine.ParseKey(key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		seat := s.ToMove
+		if a.Type == engine.ActResign {
+			seat = a.Starter
+		}
+		e := wire.HistoryEntry{Ply: int(s.Ply), Seat: int(seat)}
+		var ev []engine.Event
+		if err := engine.Apply(&s, a, &ev); err != nil {
+			t.Fatal(err)
+		}
+		want = append(want, e)
+		events = append(events, ev)
+	}
+	viewer := engine.Spectator
+	switch len(st.You.Seats) {
+	case 1:
+		viewer = engine.SeatViewer(engine.Seat(st.You.Seats[0]))
+	case 2:
+		viewer = engine.SeatViewer(s.ToMove)
+	}
+	for i := range want {
+		want[i].Events = engine.FilterEvents(events[i], viewer)
+	}
+	return want
+}
+
+// resyncHistoryError checks both halves of a history-bearing frame against
+// replay, rather than assuming its history prefix reaches the snapshot's ply.
+// A coalesced frame's live events must supply exactly the missing suffix.
+func resyncHistoryError(st wire.State, want []wire.HistoryEntry) error {
+	if st.History == nil {
+		return fmt.Errorf("resync has no history")
+	}
+	history := *st.History
+	if len(want) != st.View.Ply || len(history) > len(want) {
+		return fmt.Errorf("a history of %d entries at ply %d (replay has %d)", len(history), st.View.Ply, len(want))
+	}
+	for i, e := range history {
+		if e.Ply != i || (e.Seat != 0 && e.Seat != 1) || len(e.Events) == 0 || !reflect.DeepEqual(e, want[i]) {
+			return fmt.Errorf("history entry %d: %+v, want %+v", i, e, want[i])
+		}
+	}
+	events := make([]view.GameEvent, 0)
+	for _, e := range want[len(history):] {
+		events = append(events, e.Events...)
+	}
+	// The outbox bounds merged live events, keeping the newest ones.
+	if len(events) > room.MaxMergedEvents {
+		events = events[len(events)-room.MaxMergedEvents:]
+	}
+	if !reflect.DeepEqual(st.Events, events) {
+		return fmt.Errorf("live events after %d history entries at ply %d: %+v, want %+v", len(history), st.View.Ply, st.Events, events)
+	}
+	return nil
 }
 
 // resyncAll resyncs every connection.

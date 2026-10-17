@@ -87,6 +87,7 @@ func (c *rawCapture) since(n int) ([][]byte, int) {
 // connection module would.
 type tclient struct {
 	t        *testing.T
+	srv      *server
 	ws       *websocket.Conn
 	token    string
 	clientID string
@@ -122,6 +123,7 @@ func dial(t *testing.T, srv *server, name string) *tclient {
 	clientSerial++
 	c := &tclient{
 		t:        t,
+		srv:      srv,
 		ws:       conn,
 		token:    token,
 		clientID: fmt.Sprintf("tab-%d", clientSerial),
