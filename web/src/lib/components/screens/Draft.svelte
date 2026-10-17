@@ -16,6 +16,10 @@
   // and round, for display only. Whose pick it is now is the view's toMove.
   // With the server's own pick order (DraftView.order, draft-order, M10.HS4)
   // the chips follow it, and each chip's tooltip says the round's order.
+  //
+  // The bot's pick (`botPick`): while the Presenter previews a bot's draft
+  // answer, the wonder it is about to take carries data-bot-pick and a
+  // static ring in the bot's crest colour (--bot-ink, from the game screen).
   import { MediaQuery } from 'svelte/reactivity';
   import { wonderBySlug } from '$lib/catalog';
   import { formatNumber, fullStop, t } from '$lib/i18n';
@@ -49,6 +53,8 @@
     confirm?: boolean;
     /** The connection is up; while it is down Take says it waits for it. */
     connected?: boolean;
+    /** The wonder the bot is about to take (the Presenter's pre-roll). */
+    botPick?: string;
   }
 
   let {
@@ -57,7 +63,8 @@
     onact,
     names: namesProp,
     confirm = false,
-    connected = true
+    connected = true,
+    botPick
   }: Props = $props();
 
   const ctx = tryGameContext();
@@ -238,7 +245,11 @@
     {#each offer as item (item.wonder)}
       {@const key = keys.get(item.wonder)}
       {@const takenBy = item.takenBy === undefined ? undefined : names[asSeat(item.takenBy)]}
-      <li class="flex min-w-0 flex-col gap-2" data-wonder-offer={item.wonder}>
+      <li
+        class="offer flex min-w-0 flex-col gap-2"
+        data-wonder-offer={item.wonder}
+        data-bot-pick={botPick === item.wonder ? '' : undefined}
+      >
         {#if split.current}
           <WonderTile slug={item.wonder} size="draft" {takenBy} />
           {#if item.takenBy === undefined}
@@ -339,5 +350,15 @@
 <style>
   .tile:not(:disabled):hover {
     translate: 0 -2px;
+  }
+  /* The pre-roll: the wonder the bot is about to take, ringed in its crest
+     colour. A static ring, so it reads the same with Animation off. */
+  .offer[data-bot-pick] {
+    border-radius: var(--radius-panel, 0.75rem);
+    outline: 3px solid var(--bot-ink, var(--accent));
+    outline-offset: 3px;
+    box-shadow:
+      0 0 0 6px color-mix(in oklch, var(--bot-ink, var(--accent)) 28%, transparent),
+      var(--shadow);
   }
 </style>

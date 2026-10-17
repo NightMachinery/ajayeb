@@ -29,7 +29,8 @@
   // Against the bot (UX design section 5, "AI thinking"): the turn bar and
   // the bot's strip or panel say it is thinking; the Presenter holds its
   // answer for the thinking dwell, then previews it, and the slot it takes
-  // (or the wonder it drafts) carries data-bot-pick meanwhile. The military
+  // (or the wonder it drafts) is handed to CardStructure (or Draft) as its
+  // botPick prop meanwhile, which marks it with data-bot-pick. The military
   // track puts the bottom (or left) seat's capital at its left end, so a
   // player at the Moon sees it mirrored. The top bar's game menu leads Home;
   // a room stays on Home's Continue list until its game ends.
@@ -647,24 +648,6 @@
     if (seat !== null) openWonderList(seat);
   }
 
-  /**
-   * Marks the element the bot's answer takes, for the pre-roll: the slot of
-   * its card, or the draft offer of its wonder. DOM only (an attribute the
-   * stylesheet below draws); it never writes state.
-   */
-  function markBotPick(selector: string | undefined) {
-    return (el: HTMLElement) => {
-      if (!selector) return;
-      const target = el.querySelector(selector);
-      target?.setAttribute('data-bot-pick', '');
-      return () => target?.removeAttribute('data-bot-pick');
-    };
-  }
-  const pickSlot = $derived(pick?.slot !== undefined ? `[data-slot="${pick.slot}"]` : undefined);
-  const pickWonder = $derived(
-    pick?.wonder !== undefined ? `[data-wonder-offer="${CSS.escape(pick.wonder)}"]` : undefined
-  );
-
   /** Whether a key press belongs to a text field rather than the board. */
   function typing(target: EventTarget | null): boolean {
     return (
@@ -791,12 +774,16 @@
         </p>
       </div>
     {:else if view.phase === 'wonderDraft'}
-      <div
-        class="area-main relative min-h-0 overflow-y-auto"
-        dir={i18n.dir}
-        {@attach markBotPick(pickWonder)}
-      >
-        <Draft {view} canAct={inputOpen} onact={act} {names} {confirm} {connected} />
+      <div class="area-main relative min-h-0 overflow-y-auto" dir={i18n.dir}>
+        <Draft
+          {view}
+          canAct={inputOpen}
+          onact={act}
+          {names}
+          {confirm}
+          {connected}
+          botPick={pick?.wonder}
+        />
       </div>
     {:else}
       <!-- The panels scroll inside a positioned box, so nothing absolutely
@@ -811,11 +798,7 @@
         </div>
       {/if}
 
-      <div
-        class="area-structure relative min-h-0 min-w-0"
-        bind:this={structureEl}
-        {@attach markBotPick(pickSlot)}
-      >
+      <div class="area-structure relative min-h-0 min-w-0" bind:this={structureEl}>
         <CardStructure
           slots={view.structure}
           age={view.age}
@@ -824,6 +807,7 @@
           selected={ui.selected ?? undefined}
           pending={pendingIndex}
           {marked}
+          botPick={pick?.slot}
           onselect={selectSlot}
         />
       </div>
@@ -1094,19 +1078,8 @@
     grid-area: main;
   }
 
-  /* The pre-roll: the card (or draft wonder) the bot is about to take, ringed
-     in its crest colour while its thinking frame is still up. A static ring,
-     so it reads the same with Animation off. */
-  .game-screen :global([data-bot-pick]) {
-    outline: 3px solid var(--bot-ink, var(--accent));
-    outline-offset: 3px;
-    box-shadow:
-      0 0 0 6px color-mix(in oklch, var(--bot-ink, var(--accent)) 28%, transparent),
-      var(--shadow);
-  }
-  .game-screen :global(li[data-bot-pick]) {
-    border-radius: var(--radius-panel, 0.75rem);
-  }
+  /* The pre-roll ring's colour: the bot's crest (StructureSlot and Draft draw
+     the ring on what their botPick prop names). */
   .game-screen[data-bot='0'] {
     --bot-ink: var(--sun);
   }

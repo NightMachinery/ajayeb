@@ -34,6 +34,8 @@
     pending?: number;
     /** Wonder-first mode: the slots whose card can go under the chosen wonder. */
     marked?: ReadonlySet<number>;
+    /** The slot whose card the bot is about to take (the Presenter's pre-roll). */
+    botPick?: number;
     /** The gap between cards in px; by default 4, 6 or 8 by viewport class. */
     gap?: number;
     onselect?: (slot: SlotView) => void;
@@ -48,6 +50,7 @@
     selected,
     pending,
     marked,
+    botPick,
     gap,
     onselect,
     class: className = ''
@@ -114,6 +117,7 @@
           selected={selected === slot.index}
           pending={pending === slot.index}
           marked={marked?.has(slot.index) ?? false}
+          botPick={botPick === slot.index}
           {onselect}
         />
       {/each}

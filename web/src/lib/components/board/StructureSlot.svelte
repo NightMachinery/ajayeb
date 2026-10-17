@@ -33,6 +33,11 @@
   // its age or the guilds and, with the counting hints, the cards that may
   // lie under it (view/tips.ts backTip, from the server's unseen pool and
   // guild preview); the wonder-first mark says what it marks.
+  //
+  // The bot's pick (`botPick`, UX design section 5, "AI thinking"): while
+  // the Presenter previews a bot's answer, the card it is about to take
+  // carries data-bot-pick and a static ring in the bot's crest colour
+  // (--bot-ink, set by the game screen), the same with Animation off.
   import Icon from '$lib/icons/Icon.svelte';
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
@@ -68,6 +73,8 @@
     pending?: boolean;
     /** Wonder-first mode: this card can go under the chosen wonder. */
     marked?: boolean;
+    /** The bot is about to take this card (the Presenter's pre-roll). */
+    botPick?: boolean;
     /** The hint display of this screen; on a room page it comes from the game context. */
     hints?: HintScreen;
     /** The recap's board marks; on a room page they come from the game screen. */
@@ -91,6 +98,7 @@
     selected = false,
     pending = false,
     marked = false,
+    botPick = false,
     hints,
     recap,
     cost,
@@ -171,6 +179,7 @@
     data-card={slot.state === 'faceUp' ? slot.card : undefined}
     data-accessible={slot.accessible ? '' : undefined}
     data-marked={marked ? '' : undefined}
+    data-bot-pick={botPick ? '' : undefined}
     aria-label={pip ? `${label}. ${pipLabel(pip)}` : label}
     aria-disabled={takeable ? undefined : 'true'}
     aria-pressed={selected ? 'true' : undefined}
@@ -272,5 +281,15 @@
     box-shadow:
       0 0 0 3px var(--gold),
       0 4px 10px -3px var(--card-lift-shadow);
+  }
+  /* The pre-roll: the card the bot is about to take, ringed in its crest
+     colour while its thinking frame is still up. A static ring, so it reads
+     the same with Animation off. */
+  .slot[data-bot-pick] {
+    outline: 3px solid var(--bot-ink, var(--accent));
+    outline-offset: 3px;
+    box-shadow:
+      0 0 0 6px color-mix(in oklch, var(--bot-ink, var(--accent)) 28%, transparent),
+      var(--shadow);
   }
 </style>
