@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { CardHints, CostView, HintFamily, SlotView, View } from '$lib/wire';
+import type { CardHints, CostView, HintFamily, RoomInfo, SlotView, View } from '$lib/wire';
+import { tokenHint, tokenValueText } from './board-hints';
+import { outcomeContext, outcomeTerms } from './outcome';
 import { HINT_FAMILIES } from '$lib/hints/families';
 import {
   PIP_PRIORITY,
@@ -176,6 +178,40 @@ describe('families', () => {
         { families: [], boardMarks: false }
       )
     ).toBeUndefined();
+  });
+
+  it.each([
+    { kind: 'bot' as const, bot: 'easy' as const, name: '', nameNo: 0, display: 'Apprentice' },
+    { kind: 'bot' as const, bot: 'normal' as const, name: 'Bot', nameNo: 0, display: 'Scholar' },
+    { kind: 'human' as const, name: 'Alex', nameNo: 2, display: 'Alex 2' }
+  ])('uses $display in hint and outcome lines, like the player strip', (opponent) => {
+    const view = { viewer: 0, active: 0, age: 1, players: [{ coins: 7 }, { coins: 7 }] } as View;
+    const seats: RoomInfo['seats'] = [
+      { seat: 0, name: 'Alex', nameNo: 0, kind: 'human', connected: true, you: true },
+      { ...opponent, seat: 1, connected: true, you: false }
+    ];
+    const screen = sessionHintScreen(
+      { view, room: { mode: 'ai', seats }, hints: null },
+      { families: [], boardMarks: false }
+    )!;
+    expect(screen.names.names).toEqual(['Alex', opponent.display]);
+    expect(cardPip([hints(), WIN], SEAT0, ALL, screen.names)!.top.text).toBe(
+      `${opponent.display} wins by building this.`
+    );
+    const pawn = outcomeTerms(
+      { coins: [7, 7], score: [0, 0], pawn: { from: 0, to: 1, loot: [] } },
+      outcomeContext(view, ALL, screen.names)
+    ).find((term) => term.id === 'pawn');
+    expect(pawn?.text).toContain(opponent.display);
+    expect(pawn?.text).not.toContain('Moon');
+    const value = { token: 'economy', seat: 0, coins: 0, vp: 0, wins: false, savings: 2, count: 0 };
+    expect(tokenValueText(value, screen.names)).toContain(opponent.display);
+    const token = tokenHint(
+      { ...view, hints: { tokens: [{ ...value, seat: 1 }] } } as View,
+      'economy',
+      { ...screen, families: ALL }
+    );
+    expect(token?.lines.join(' ')).toContain(`For ${opponent.display}:`);
   });
 
   it('the perspective: a seat, a hot-seat device, a spectator', () => {

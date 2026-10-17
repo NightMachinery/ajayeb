@@ -82,6 +82,8 @@ export function findAnchor(
  * horizontally.
  */
 export function revealInScroller(el: HTMLElement): void {
+  // Leave room for the target's outline and shadow, including its entrance.
+  const margin = 12;
   let box = el.getBoundingClientRect();
   for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
     const overflow = getComputedStyle(p).overflowY;
@@ -89,8 +91,12 @@ export function revealInScroller(el: HTMLElement): void {
       continue;
     }
     const r = p.getBoundingClientRect();
-    if (box.top < r.top) p.scrollTop -= r.top - box.top;
-    else if (box.bottom > r.bottom) p.scrollTop += Math.min(box.bottom - r.bottom, box.top - r.top);
+    const top = r.top + margin;
+    const bottom = r.bottom - margin;
+    if (box.top < top) p.scrollTop -= top - box.top;
+    else if (box.bottom > bottom) {
+      p.scrollTop += Math.min(box.bottom - bottom, Math.max(0, box.top - top));
+    }
     box = el.getBoundingClientRect();
   }
 }

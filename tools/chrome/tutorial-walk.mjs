@@ -136,6 +136,20 @@ function snapshot() {
     const at = document.elementFromPoint(tb.x + tb.width / 2, tb.y + tb.height / 2);
     hit = !!at && (at === target || target.contains(at));
   }
+  // The outline and shadow extend six pixels beyond the button box.
+  let ringVisible = !!tb && tb.x >= 6 && tb.y >= 6 &&
+    tb.x + tb.width + 6 <= innerWidth && tb.y + tb.height + 6 <= innerHeight;
+  if (target && tb) {
+    for (let p = target.parentElement; p && p !== document.body; p = p.parentElement) {
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(getComputedStyle(p).overflowY)) {
+        const r = p.getBoundingClientRect();
+        const top = r.top + p.clientTop;
+        ringVisible &&= tb.y - 6 >= top && tb.y + tb.height + 6 <= top + p.clientHeight;
+      }
+      // A top-layer modal escapes clipping by ancestors outside the dialog.
+      if (p.matches('dialog[open]')) break;
+    }
+  }
   const buttons = bubble ? [...bubble.querySelectorAll('button')].map((b) => b.getBoundingClientRect().height) : [];
   const room = hook?.room();
   return {
@@ -158,7 +172,7 @@ function snapshot() {
       ? { step: notes[0].getAttribute('data-coach-step'), kind: notes[0].getAttribute('data-coach-kind') }
       : null,
     targets: targets.length,
-    target: tb ? { box: tb, region: target.hasAttribute('data-coach-region'), hit } : null,
+    target: tb ? { box: tb, region: target.hasAttribute('data-coach-region'), hit, ringVisible } : null,
     summary: !!document.querySelector('[data-move-summary]'),
     tip: document.querySelector('[data-first-tip]')?.getAttribute('data-first-tip') ?? null,
     done: visible(document.querySelector('[data-tutorial-done]')),
@@ -223,6 +237,7 @@ function check(s) {
     if (outside && !regionShown) fail.push('the target is not inside the viewport');
     if (!t.hit && !t.region) fail.push('the target is covered at its centre');
   }
+  if (s.note && t && !t.region && !t.ringVisible) fail.push('the sheet target ring is clipped');
   if (s.bubble) {
     const b = s.bubble.box;
     // Every bubble step points at something: a bubble with no ring showed

@@ -312,7 +312,9 @@
                   >{tutorialDone ? t('home.tutorialDone') : t('home.tutorial')}</span
                 >
                 {#if !tutorialDone}
-                  <span class="text-xs text-fg-muted">{t('home.tutorialHint')}</span>
+                  <span class="text-xs text-fg-muted"
+                    >{t('home.tutorialHint', { name: t('game.persona.easy') })}</span
+                  >
                 {/if}
               </span>
             </button>

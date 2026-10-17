@@ -99,7 +99,7 @@ export const tutorial = {
   // The tutorial on other screens.
   'home.mode.tutorial': 'Tutorial',
   'home.tutorial': 'Learn to play',
-  'home.tutorialHint': 'A guided first game against the Apprentice',
+  'home.tutorialHint': 'A guided first game against {name}',
   'home.tutorialDone': 'Tutorial done: play it again',
   'home.ai.tutorialLink': 'First game? Play the tutorial instead.',
   'hints.settings.tutorialReset': 'Show the tutorial offer again',

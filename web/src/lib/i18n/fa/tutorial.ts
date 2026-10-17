@@ -85,7 +85,7 @@ export const tutorial = {
 
   'home.mode.tutorial': 'آموزش',
   'home.tutorial': 'یادگیری بازی',
-  'home.tutorialHint': 'نخستین بازی راهنمایی‌شده در برابر شاگرد',
+  'home.tutorialHint': 'نخستین بازی راهنمایی‌شده در برابر {name}',
   'home.tutorialDone': 'آموزش تمام شد: دوباره بازی کنید',
   'home.ai.tutorialLink': 'بازی اول است؟ به جایش بازی آموزشی را انجام دهید.',
   'hints.settings.tutorialReset': 'پیشنهاد آموزش را دوباره نشان بده',

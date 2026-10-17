@@ -171,7 +171,8 @@ function infoTarget(lesson: TutorialLesson): { target: string[] | null; region: 
     case 'coins':
       return { target: ['[data-tut="home"] [data-tally="coins"]'], region: false };
     case 'wonders':
-      return { target: ['[data-tut="home"] [data-tut="wonders"]'], region: false };
+      // The desktop anchor is the whole wonder list, not a single button.
+      return { target: ['[data-tut="home"] [data-tut="wonders"]'], region: true };
     case 'tokens':
       return { target: ['[data-tut="tokens"]'], region: false };
     default:

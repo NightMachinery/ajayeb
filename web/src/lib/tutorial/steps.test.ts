@@ -185,6 +185,9 @@ describe('the coach step machine', () => {
     expect(at('military')).toEqual(['[data-tut="track"] [data-pawn]']);
     expect(at('coins')).toEqual(['[data-tut="home"] [data-tally="coins"]']);
     expect(at('wonders')).toEqual(['[data-tut="home"] [data-tut="wonders"]']);
+    expect(coachStep(input(tut({ status: 'free', lessons: [{ id: 'wonders' }] })))?.region).toBe(
+      true
+    );
     expect(at('tokens')).toEqual(['[data-tut="tokens"]']);
     expect(at('playOn')).toEqual(['[data-tut="turn-bar"]']);
     expect(at('leftPath')).toEqual(['[data-tut="turn-bar"]']);

@@ -109,5 +109,5 @@ export interface CoachNoteView {
   readonly step: string;
   readonly kind: 'info' | 'tap' | 'act' | 'note';
   readonly textId: string;
-  readonly onpause: () => void;
+  readonly onpause?: () => void;
 }

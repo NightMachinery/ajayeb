@@ -128,7 +128,12 @@ describe('the tutorial section (M10.tutorial-client)', () => {
           rooms: { ABC: 'paused', DEF: 'completed', bad: 'paused', GHI: 'other', JKL: 3 }
         }
       }).tutorial
-    ).toEqual({ offer: 'declined', done: false, rooms: { ABC: 'paused', DEF: 'completed' } });
+    ).toEqual({
+      offer: 'declined',
+      done: false,
+      rooms: { ABC: 'paused', DEF: 'completed' },
+      roomOrder: ['ABC', 'DEF']
+    });
     expect(parseTips({ tutorial: { offer: 'later', rooms: [] } }).tutorial).toEqual(NEW_TUTORIAL);
   });
 
@@ -165,6 +170,37 @@ describe('the tutorial section (M10.tutorial-client)', () => {
     expect(codes).toHaveLength(MAX_TUTORIAL_ROOMS);
     expect(codes[0]).toBe('R5');
     expect(codes.at(-1)).toBe(`R${MAX_TUTORIAL_ROOMS + 4}`);
+  });
+
+  it('keeps numeric room codes in recency order across reloads and evicts the oldest', () => {
+    const storage = memory();
+    let s = new TipsStore(storage);
+    s.pause('OLD');
+    for (let i = 100; i > 100 - MAX_TUTORIAL_ROOMS; i--) {
+      s.pause(String(i));
+      s = new TipsStore(storage);
+    }
+    expect(s.value.tutorial.rooms['OLD']).toBeUndefined();
+    expect(s.value.tutorial.roomOrder[0]).toBe('100');
+    s.markCompleted('100');
+    s.pause('NEW');
+    s = new TipsStore(storage);
+    expect(s.value.tutorial.rooms['99']).toBeUndefined();
+    expect(s.value.tutorial.rooms['100']).toBe('completed');
+    expect(s.value.tutorial.roomOrder.slice(-2)).toEqual(['100', 'NEW']);
+    s.resume('98');
+    expect(s.value.tutorial.roomOrder).not.toContain('98');
+    expect(Object.keys(s.value.tutorial.rooms)).toHaveLength(MAX_TUTORIAL_ROOMS - 1);
+  });
+
+  it('migrates old room maps and repairs malformed explicit orders', () => {
+    const rooms = { ABC: 'paused', '20': 'completed', DEF: 'paused' };
+    expect(parseTips({ tutorial: { rooms } }).tutorial.roomOrder).toEqual(['20', 'ABC', 'DEF']);
+    const migrated = parseTips({
+      tutorial: { rooms, roomOrder: ['DEF', '20', 'DEF', null, 'NOPE'] }
+    });
+    expect(migrated.tutorial.roomOrder).toEqual(['DEF', '20', 'ABC']);
+    expect(parseTips(JSON.parse(JSON.stringify(migrated)))).toEqual(migrated);
   });
 });
 

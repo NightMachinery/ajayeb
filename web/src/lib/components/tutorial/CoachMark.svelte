@@ -48,7 +48,7 @@
     /** Next, on an info step. */
     onnext?: () => void;
     /** Play on my own. */
-    onpause: () => void;
+    onpause?: () => void;
     /** The text's id, for the target's aria-describedby. */
     textId?: string;
     /** Next's element, for the container's quiet focus. */
@@ -205,14 +205,16 @@
             </p>
           {/if}
           <div class="flex flex-wrap items-center justify-end gap-2">
-            <button
-              type="button"
-              class="min-h-11 rounded-control px-3 text-sm font-semibold text-accent hover:bg-panel-sunken"
-              data-coach-pause
-              onclick={onpause}
-            >
-              {t('tutorial.coach.pause')}
-            </button>
+            {#if onpause}
+              <button
+                type="button"
+                class="min-h-11 rounded-control px-3 text-sm font-semibold text-accent hover:bg-panel-sunken"
+                data-coach-pause
+                onclick={onpause}
+              >
+                {t('tutorial.coach.pause')}
+              </button>
+            {/if}
             {#if kind === 'info' && onnext}
               <button
                 type="button"

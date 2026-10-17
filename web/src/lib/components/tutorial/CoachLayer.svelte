@@ -46,7 +46,7 @@
     /** Next, on an info step. */
     onnext: (step: CoachStep) => void;
     /** Play on my own. */
-    onpause: () => void;
+    onpause?: () => void;
   }
 
   let { step, text, active, onnext, onpause }: Props = $props();

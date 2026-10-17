@@ -488,7 +488,7 @@
       step: coach.id,
       kind: coach.kind,
       textId: COACH_TEXT_ID,
-      onpause: pauseTutorial
+      onpause: tutorial?.status === 'guided' ? pauseTutorial : undefined
     };
   }
   const cardNote = $derived(noteFor('card-sheet'));
@@ -1254,7 +1254,7 @@
   text={coachWords}
   active={coachActive}
   onnext={coachNext}
-  onpause={pauseTutorial}
+  onpause={tutorial?.status === 'guided' ? pauseTutorial : undefined}
 />
 
 <TutorialDone

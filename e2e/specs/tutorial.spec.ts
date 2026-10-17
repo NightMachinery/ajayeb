@@ -99,7 +99,18 @@ test.describe('the tutorial', { tag: '@mobile' }, () => {
     await pressOn(page, '[data-control="tutorial-start"]', isMobile);
     await page.waitForURL(/\/play\//);
 
-    const walk = await walkTutorial(page, { touch: isMobile }, sent);
+    const walk = await walkTutorial(
+      page,
+      {
+        touch: isMobile,
+        onStep: async (_seen, step) => {
+          if (step.step === 'playOn') {
+            await expect(page.locator('[data-coach-pause]').locator('visible=true')).toHaveCount(0);
+          }
+        }
+      },
+      sent
+    );
     expect(walk.done, 'the completion card').toBe(true);
     expect(walk.observed.slice(0, s.order.length)).toEqual(s.order);
     expect(sent.slice(0, s.guided.length), 'the guided keys sent').toEqual(s.guided);
@@ -230,6 +241,7 @@ test.describe('the tutorial', { tag: '@mobile' }, () => {
     await expect(offer).toBeVisible();
     await pressOn(page, '[data-control="tutorial-decline"]', isMobile);
     await expect(offer).toHaveCount(0);
+    await expect(page.locator('[data-control="home-tutorial"]')).toContainText('Apprentice');
     await page.reload();
     await expect(page.locator('[data-control="home-tutorial"]')).toBeVisible();
     await expect(offer).toHaveCount(0);

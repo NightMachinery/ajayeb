@@ -17,7 +17,7 @@
     /** The lesson id (data-coach-step). */
     step: string;
     kind: CoachKind;
-    onpause: () => void;
+    onpause?: () => void;
     /** The text's id, for the target's aria-describedby. */
     textId?: string;
     class?: string;
@@ -53,13 +53,15 @@
     <p id={textId} class="text-sm leading-snug" data-coach-text>{text}</p>
   {/if}
   <div class="flex justify-end">
-    <button
-      type="button"
-      class="-me-2 min-h-11 rounded-control px-3 text-sm font-semibold underline underline-offset-2 hover:bg-panel-sunken"
-      data-coach-pause
-      onclick={onpause}
-    >
-      {t('tutorial.coach.pause')}
-    </button>
+    {#if onpause}
+      <button
+        type="button"
+        class="-me-2 min-h-11 rounded-control px-3 text-sm font-semibold underline underline-offset-2 hover:bg-panel-sunken"
+        data-coach-pause
+        onclick={onpause}
+      >
+        {t('tutorial.coach.pause')}
+      </button>
+    {/if}
   </div>
 </div>

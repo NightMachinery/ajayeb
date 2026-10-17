@@ -6,8 +6,8 @@
 
 import { t } from '$lib/i18n';
 import { getGameContext, type GameContext } from '$lib/session/context';
-import { seatDisplayName } from '$lib/view/display-name';
-import type { Mode, RoomInfo } from '$lib/wire';
+export { seatNames } from '../game/names';
+import type { Mode } from '$lib/wire';
 
 export type Seat = 0 | 1;
 export type SeatNames = readonly [string, string];
@@ -27,17 +27,6 @@ export function tryGameContext(): GameContext | null {
 /** The crest name of a seat: seat 0 is the Sun, seat 1 the Moon. */
 export function crestName(seat: Seat): string {
   return seat === 0 ? t('board.crest.sun') : t('board.crest.moon');
-}
-
-/** The players' display names by seat, with the crest name for a blank one. */
-export function seatNames(room: RoomInfo | null | undefined): SeatNames {
-  // An equal name already in the game makes this one "Name 2".
-  const nameOf = (seat: Seat): string =>
-    seatDisplayName(
-      room?.seats.find((s) => s.seat === seat),
-      crestName(seat)
-    );
-  return [nameOf(0), nameOf(1)];
 }
 
 /** The other seat. */

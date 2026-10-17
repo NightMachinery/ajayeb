@@ -73,14 +73,16 @@ export interface TutorialData {
   /** The device finished the tutorial once (Home's entry says so). */
   readonly done: boolean;
   /** Tutorial rooms by code: paused, or completed (its card was shown).
-   *  At most MAX_TUTORIAL_ROOMS, the oldest dropped first (insertion order). */
+   *  At most MAX_TUTORIAL_ROOMS, the oldest dropped first (roomOrder). */
   readonly rooms: Readonly<Record<string, TutorialRoomState>>;
+  /** Room codes from oldest to newest, independent of object-key ordering. */
+  readonly roomOrder: readonly string[];
 }
 
 /** How many tutorial rooms the store remembers. */
 export const MAX_TUTORIAL_ROOMS = 20;
 
-export const NEW_TUTORIAL: TutorialData = { offer: 'new', done: false, rooms: {} };
+export const NEW_TUTORIAL: TutorialData = { offer: 'new', done: false, rooms: {}, roomOrder: [] };
 
 /** What the store keeps. */
 export interface TipsData {
@@ -111,16 +113,27 @@ export function parseTutorial(value: unknown): TutorialData {
   return {
     offer: r['offer'] === 'declined' ? 'declined' : 'new',
     done: r['done'] === true,
-    rooms: capRooms(rooms)
+    ...capRooms(rooms, r['roomOrder'])
   };
 }
 
-/** Keeps the newest MAX_TUTORIAL_ROOMS rooms (the last inserted). */
+/** Keeps explicit oldest-to-newest order; old data falls back to the saved
+ * object's enumeration order (its original numeric-key order is unknowable).
+ * Missing valid rooms are appended, and bad or repeated order entries ignored. */
 function capRooms(
-  rooms: Readonly<Record<string, TutorialRoomState>>
-): Record<string, TutorialRoomState> {
-  const entries = Object.entries(rooms);
-  return Object.fromEntries(entries.slice(Math.max(0, entries.length - MAX_TUTORIAL_ROOMS)));
+  rooms: Readonly<Record<string, TutorialRoomState>>,
+  rawOrder: unknown
+): Pick<TutorialData, 'rooms' | 'roomOrder'> {
+  const order: string[] = [];
+  const add = (code: unknown): void => {
+    if (typeof code === 'string' && Object.hasOwn(rooms, code) && !order.includes(code)) {
+      order.push(code);
+    }
+  };
+  if (Array.isArray(rawOrder)) rawOrder.forEach(add);
+  Object.keys(rooms).forEach(add);
+  const roomOrder = order.slice(-MAX_TUTORIAL_ROOMS);
+  return { rooms: Object.fromEntries(roomOrder.map((code) => [code, rooms[code]!])), roomOrder };
 }
 
 /** Reads stored tips data leniently. The old shape ({off, seen}) reads
@@ -358,7 +371,11 @@ export class TipsStore {
     if (this.value.tutorial.rooms[code] !== 'paused') return;
     const rooms = { ...this.value.tutorial.rooms };
     delete rooms[code];
-    this.#tutorial({ ...this.value.tutorial, rooms });
+    this.#tutorial({
+      ...this.value.tutorial,
+      rooms,
+      roomOrder: this.value.tutorial.roomOrder.filter((c) => c !== code)
+    });
   }
 
   isPaused(code: string | null | undefined): boolean {
@@ -370,7 +387,11 @@ export class TipsStore {
     const rooms = { ...this.value.tutorial.rooms };
     delete rooms[code];
     rooms[code] = 'completed';
-    this.#tutorial({ ...this.value.tutorial, done: true, rooms: capRooms(rooms) });
+    this.#tutorial({
+      ...this.value.tutorial,
+      done: true,
+      ...capRooms(rooms, [...this.value.tutorial.roomOrder.filter((c) => c !== code), code])
+    });
   }
 
   isCompleted(code: string | null | undefined): boolean {
@@ -380,10 +401,13 @@ export class TipsStore {
   #room(code: string, state: TutorialRoomState): void {
     if (this.value.tutorial.rooms[code] === state) return;
     const rooms = { ...this.value.tutorial.rooms };
-    // Re-inserted last, so the newest rooms are kept.
+    // Recency comes from the explicit list, even for all-digit room codes.
     delete rooms[code];
     rooms[code] = state;
-    this.#tutorial({ ...this.value.tutorial, rooms: capRooms(rooms) });
+    this.#tutorial({
+      ...this.value.tutorial,
+      ...capRooms(rooms, [...this.value.tutorial.roomOrder.filter((c) => c !== code), code])
+    });
   }
 
   #tutorial(next: TutorialData): void {
