@@ -223,3 +223,13 @@ e2e no longer sets Playwright's `reducedMotion` context option, which stopped do
 **Rejected.** Keeping the 5 MB total (it forbade sharper wonders for no user-visible gain). Hashed filenames instead of `?v=` (the query form needs no renaming and leaves no old files behind; every cache on our path keys on the query string). Prefetching everything at once (it would compete with the board's own first requests).
 
 This supersedes the "budget 5 MB" line in the M9 section of `docs/dev/roadmap.md`, which is corrected at the end of M10.
+
+## D25. The tutorial is a scripted room on a fixed seed
+
+**Decision (2026-10-17).** The guided first game (M10.tutorial-design, built as M10.tutorial-server and M10.tutorial-client) is an ordinary `ai` room against the Easy bot, created with `tutorial: true`, on the seed and options of a frozen script (`server/internal/tutorial`, script `first-game`). The room layer derives the current lesson from the script and the room's action log and sends it to the player as `State.tutorial`. The engine is unchanged. While the log follows the script, the bot plays the script's replies; once the player leaves it, the Easy bot plays. The client enables only the lesson's action key while the game is guided (the rails), with a "Play on my own" exit; the server still accepts any legal key, so the rails are a display rule.
+
+**Rationale.** A fixed seed makes every lesson's precondition (a free build, a trade, a chain, a wonder, a science symbol) a Go test, and scripted replies keep the tutorial stable when the bots are tuned. Deriving the lesson from the log means undo, reload and replay need no extra state, and the engine stays pure.
+
+**Tradeoff.** A new or shorter script needs a new name, a seed search (the harness runs with `AJAYEB_TUTORIAL_SEARCH=1`) and a new golden file. The lesson order follows what one seed can play: the chain lesson comes before science and the tokens lesson moved to the outro, because the design's order fits no seed's coin budget.
+
+**Rejected.** The Easy bot's own moves on the fixed seed (any change to the AI would silently change the tutorial). Rails enforced by the server (more code for no gain in a single-player room). Soft guidance with every move enabled (a beginner gets lost, and the "fresh agent completes it" acceptance test becomes unreliable).
