@@ -21,6 +21,16 @@
 // back of Age III (guildBack) and the laurel round Law while it would be a
 // sixth symbol (lawLaurel). The chain badge and the guild back are drawn
 // whatever the hint settings, so their tips need no family.
+//
+// Four concept tips (M10.tutorial-client) explain a game concept rather
+// than a mark, the first time it comes up on this device: the pawn off
+// centre (track), the seat's first science symbol (science), choosing who
+// starts the next age (starter) and a new age in play (newAge). They need
+// no family either. The tutorial's lessons mark the ones they teach seen.
+//
+// The same store keeps the tutorial's device state (TutorialData): Home's
+// first-launch offer, whether the device finished the tutorial once, and
+// the tutorial rooms the player paused or completed.
 
 import type { HintFamily, LootHint, View } from '$lib/wire';
 import type { RuleSectionId } from '$lib/components/rules/sections';
@@ -38,7 +48,11 @@ export const TIP_IDS = [
   'ghostLoot',
   'hourglass',
   'freeChain',
-  'guildBack'
+  'guildBack',
+  'track',
+  'science',
+  'starter',
+  'newAge'
 ] as const;
 export type TipId = (typeof TIP_IDS)[number];
 
@@ -46,24 +60,77 @@ export function isTipId(value: unknown): value is TipId {
   return (TIP_IDS as readonly unknown[]).includes(value);
 }
 
+/** A tutorial room's state on this device. */
+export type TutorialRoomState = 'paused' | 'completed';
+
+/** The tutorial's device state. */
+export interface TutorialData {
+  /** Home's first-launch offer: 'new' shows it (when there are no saved
+   *  rooms), 'declined' never again (until Settings resets it). */
+  readonly offer: 'new' | 'declined';
+  /** The device finished the tutorial once (Home's entry says so). */
+  readonly done: boolean;
+  /** Tutorial rooms by code: paused, or completed (its card was shown).
+   *  At most MAX_TUTORIAL_ROOMS, the oldest dropped first (insertion order). */
+  readonly rooms: Readonly<Record<string, TutorialRoomState>>;
+}
+
+/** How many tutorial rooms the store remembers. */
+export const MAX_TUTORIAL_ROOMS = 20;
+
+export const NEW_TUTORIAL: TutorialData = { offer: 'new', done: false, rooms: {} };
+
 /** What the store keeps. */
 export interface TipsData {
   /** The player turned first-time tips off (Settings). */
   readonly off: boolean;
   /** The tips already shown on this device. */
   readonly seen: readonly TipId[];
+  /** The tutorial's device state. */
+  readonly tutorial: TutorialData;
 }
 
-export const NO_TIPS_SEEN: TipsData = { off: false, seen: [] };
+export const NO_TIPS_SEEN: TipsData = { off: false, seen: [], tutorial: NEW_TUTORIAL };
 
-/** Reads stored tips data leniently. */
+/** Reads the tutorial section leniently: a field of the wrong shape takes
+ *  its default, a room of the wrong shape is dropped. */
+export function parseTutorial(value: unknown): TutorialData {
+  if (!value || typeof value !== 'object') return NEW_TUTORIAL;
+  const r = value as Record<string, unknown>;
+  const rooms: Record<string, TutorialRoomState> = {};
+  const raw = r['rooms'];
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    for (const [code, state] of Object.entries(raw as Record<string, unknown>)) {
+      if (/^[A-Z0-9]{1,32}$/.test(code) && (state === 'paused' || state === 'completed')) {
+        rooms[code] = state;
+      }
+    }
+  }
+  return {
+    offer: r['offer'] === 'declined' ? 'declined' : 'new',
+    done: r['done'] === true,
+    rooms: capRooms(rooms)
+  };
+}
+
+/** Keeps the newest MAX_TUTORIAL_ROOMS rooms (the last inserted). */
+function capRooms(
+  rooms: Readonly<Record<string, TutorialRoomState>>
+): Record<string, TutorialRoomState> {
+  const entries = Object.entries(rooms);
+  return Object.fromEntries(entries.slice(Math.max(0, entries.length - MAX_TUTORIAL_ROOMS)));
+}
+
+/** Reads stored tips data leniently. The old shape ({off, seen}) reads
+ *  with a new tutorial section. */
 export function parseTips(value: unknown): TipsData {
   if (!value || typeof value !== 'object') return NO_TIPS_SEEN;
   const r = value as Record<string, unknown>;
   const seen = Array.isArray(r['seen']) ? r['seen'].filter(isTipId) : [];
   return {
     off: typeof r['off'] === 'boolean' ? r['off'] : false,
-    seen: seen.filter((id, i) => seen.indexOf(id) === i)
+    seen: seen.filter((id, i) => seen.indexOf(id) === i),
+    tutorial: parseTutorial(r['tutorial'])
   };
 }
 
@@ -93,12 +160,18 @@ export const TIPS: Readonly<Record<TipId, TipSpec>> = {
   ghostLoot: { family: 'military', boardMark: true, rules: 'military' },
   hourglass: { family: 'wonders', boardMark: true, rules: 'wonders' },
   freeChain: { boardMark: false, rules: 'costs' },
-  guildBack: { boardMark: false, rules: 'guilds' }
+  guildBack: { boardMark: false, rules: 'guilds' },
+  track: { boardMark: false, rules: 'military' },
+  science: { boardMark: false, rules: 'science' },
+  starter: { boardMark: false, rules: 'age-end' },
+  newAge: { boardMark: false, rules: 'age-end' }
 };
 
 /** What the tips read of the view. */
 export type TipView = Pick<View, 'structure' | 'result'> &
-  Partial<Pick<View, 'players' | 'hints' | 'boardTokens'>>;
+  Partial<
+    Pick<View, 'players' | 'hints' | 'boardTokens' | 'military' | 'phase' | 'age' | 'toMove'>
+  >;
 
 /** The looting token a ghostLoot tip points at: within reach of a card in
  *  view, the other seat's first (the seat's own loot), else its own. */
@@ -137,6 +210,14 @@ export function tipSelector(id: TipId, view?: TipView, seat: 0 | 1 = 0): string 
       return '.card-structure [data-afford="chain"]';
     case 'guildBack':
       return '.card-structure [data-back="guild"]';
+    case 'track':
+      return '[data-tut="track"] [data-pawn]';
+    case 'science':
+      return '[data-tut="home"] [data-science]';
+    case 'starter':
+      return '[data-starter-choice]';
+    case 'newAge':
+      return '[data-tut="age"]';
     default:
       return '[data-first-tip-none]';
   }
@@ -163,6 +244,14 @@ function markInView(id: TipId, view: TipView, seat: 0 | 1): boolean {
       );
     case 'guildBack':
       return view.structure.some((s) => s.state === 'faceDown' && s.back === 'guild');
+    case 'track':
+      return (view.military?.position ?? 0) !== 0;
+    case 'science':
+      return (view.players?.[seat]?.science?.symbols?.length ?? 0) > 0;
+    case 'starter':
+      return view.phase === 'chooseStarter' && view.toMove === seat;
+    case 'newAge':
+      return (view.age === 2 || view.age === 3) && view.phase === 'play';
     default:
       return false;
   }
@@ -196,7 +285,10 @@ export function tipsInView(
 }
 
 /** The tip to show next: the first of `inView` not seen yet, or null (also when tips are off). */
-export function dueTip(inView: readonly TipId[], data: TipsData): TipId | null {
+export function dueTip(
+  inView: readonly TipId[],
+  data: Pick<TipsData, 'off' | 'seen'>
+): TipId | null {
   if (data.off) return null;
   return inView.find((id) => !data.seen.includes(id)) ?? null;
 }
@@ -245,6 +337,60 @@ export class TipsStore {
   /** Forgets every tip seen, so each shows once more. */
   resetSeen(): void {
     this.#save({ ...this.value, seen: [] });
+  }
+
+  /** Home's offer: No thanks (never again, until resetOffer). */
+  declineOffer(): void {
+    this.#tutorial({ ...this.value.tutorial, offer: 'declined' });
+  }
+
+  /** Settings' "Show the tutorial offer again": the offer is new, and the
+   *  device has not finished the tutorial. */
+  resetOffer(): void {
+    this.#tutorial({ ...this.value.tutorial, offer: 'new', done: false });
+  }
+
+  /** Play on my own: no coach marks and no rails in this room. */
+  pause(code: string): void {
+    if (this.value.tutorial.rooms[code] === 'completed') return;
+    this.#room(code, 'paused');
+  }
+
+  /** Resume tutorial (the game menu). */
+  resume(code: string): void {
+    if (this.value.tutorial.rooms[code] !== 'paused') return;
+    const rooms = { ...this.value.tutorial.rooms };
+    delete rooms[code];
+    this.#tutorial({ ...this.value.tutorial, rooms });
+  }
+
+  isPaused(code: string | null | undefined): boolean {
+    return !!code && this.value.tutorial.rooms[code] === 'paused';
+  }
+
+  /** The completion card was shown in this room: the device is done. */
+  markCompleted(code: string): void {
+    const rooms = { ...this.value.tutorial.rooms };
+    delete rooms[code];
+    rooms[code] = 'completed';
+    this.#tutorial({ ...this.value.tutorial, done: true, rooms: capRooms(rooms) });
+  }
+
+  isCompleted(code: string | null | undefined): boolean {
+    return !!code && this.value.tutorial.rooms[code] === 'completed';
+  }
+
+  #room(code: string, state: TutorialRoomState): void {
+    if (this.value.tutorial.rooms[code] === state) return;
+    const rooms = { ...this.value.tutorial.rooms };
+    // Re-inserted last, so the newest rooms are kept.
+    delete rooms[code];
+    rooms[code] = state;
+    this.#tutorial({ ...this.value.tutorial, rooms: capRooms(rooms) });
+  }
+
+  #tutorial(next: TutorialData): void {
+    this.#save({ ...this.value, tutorial: next });
   }
 
   #save(next: TipsData): void {

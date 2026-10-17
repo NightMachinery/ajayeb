@@ -1042,7 +1042,9 @@
   families={boardHints?.families ?? shownFamilies}
   boardMarks={!!boardHints?.boardMarks}
   {names}
-  canShow={(turn.kind === 'yourTurn' || turn.kind === 'hotseatTurn') &&
+  canShow={(turn.kind === 'yourTurn' ||
+    turn.kind === 'hotseatTurn' ||
+    (turn.kind === 'pendingChoice' && turn.pendingKind === 'chooseStarter')) &&
     !summaryOpen &&
     !showPass &&
     !selectedSlot &&

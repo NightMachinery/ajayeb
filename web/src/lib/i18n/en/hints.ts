@@ -532,6 +532,15 @@ export const hints = {
     'A chain badge: you own the card with this card’s chain symbol, so you build it for free.',
   'hints.tip.guildBack':
     'A purple back hides a guild. Guilds score at the end of the game for what both cities hold; 3 of the 7 are in each game.',
+  // The concept tips (M10.tutorial-client): a game concept, the first time it comes up.
+  'hints.tip.track':
+    'The pawn left the centre. Shields push it toward the other capital, and reaching a capital wins at once.',
+  'hints.tip.science':
+    'Your first science symbol. A pair of the same symbol takes a progress token, and six different ones win at once.',
+  'hints.tip.starter':
+    'The age is over, and you choose who begins the next one. Whoever begins takes the first card of the new structure.',
+  'hints.tip.newAge':
+    'A new age: a new structure of stronger cards. The age ends when its last card is taken.',
   'hints.tip.gotIt': 'Got it',
   'hints.tip.more': 'More in Rules',
 

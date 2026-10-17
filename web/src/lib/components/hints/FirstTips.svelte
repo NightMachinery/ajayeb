@@ -6,7 +6,9 @@
   // (the caller's `canShow`), so it never lands on the other player's turn
   // on a shared hot-seat device. A tip counts as seen once it is closed.
   // Besides the pips (M10.F3): the Law laurel, a looting token within
-  // reach, the wonder hourglass, the chain badge and the guild back.
+  // reach, the wonder hourglass, the chain badge and the guild back; and
+  // the concept tips (M10.tutorial-client): the pawn off centre, the first
+  // science symbol, choosing who starts the next age and a new age.
   import { t } from '$lib/i18n';
   import { openRules } from '../rules/rules-overlay.svelte';
   import { dueTip, TIPS, tips, tipSelector, tipsInView, type TipId } from '$lib/ui/tips.svelte';
@@ -59,6 +61,14 @@
         return t('hints.tip.freeChain');
       case 'guildBack':
         return t('hints.tip.guildBack');
+      case 'track':
+        return t('hints.tip.track');
+      case 'science':
+        return t('hints.tip.science');
+      case 'starter':
+        return t('hints.tip.starter');
+      case 'newAge':
+        return t('hints.tip.newAge');
     }
   }
 
