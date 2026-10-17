@@ -1,0 +1,828 @@
+[
+  {
+    "case": "on script at 0",
+    "ply": 0,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 1,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "draftIntro"
+        }
+      ],
+      "action": {
+        "id": "draftPick",
+        "key": "draft:temple-of-artemis",
+        "wonder": "temple-of-artemis"
+      }
+    }
+  },
+  {
+    "case": "on script at 1",
+    "ply": 1,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 2,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 2",
+    "ply": 2,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 2,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 3",
+    "ply": 3,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 2,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 4",
+    "ply": 4,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 2,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "draftRound2"
+        }
+      ],
+      "action": {
+        "id": "draftPick",
+        "key": "draft:great-lighthouse",
+        "wonder": "great-lighthouse"
+      }
+    }
+  },
+  {
+    "case": "on script at 5",
+    "ply": 5,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 3,
+      "turns": 10,
+      "lessons": [],
+      "action": {
+        "id": "draftPickAgain",
+        "key": "draft:appian-way",
+        "wonder": "appian-way"
+      }
+    }
+  },
+  {
+    "case": "on script at 6",
+    "ply": 6,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 4,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "ageOne"
+        },
+        {
+          "id": "turn"
+        }
+      ],
+      "action": {
+        "id": "buildFree",
+        "key": "construct:lumber-yard",
+        "card": "lumber-yard"
+      }
+    }
+  },
+  {
+    "case": "on script at 7",
+    "ply": 7,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 5,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 8",
+    "ply": 8,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 5,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "reveal",
+          "card": "baths"
+        }
+      ],
+      "action": {
+        "id": "buildOwn",
+        "key": "construct:stable",
+        "card": "stable"
+      }
+    }
+  },
+  {
+    "case": "on script at 9",
+    "ply": 9,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 6,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 10",
+    "ply": 10,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 6,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "military"
+        }
+      ],
+      "action": {
+        "id": "trade",
+        "key": "construct:baths",
+        "card": "baths"
+      }
+    }
+  },
+  {
+    "case": "on script at 11",
+    "ply": 11,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 7,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 12",
+    "ply": 12,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 7,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "coins"
+        }
+      ],
+      "action": {
+        "id": "discard",
+        "key": "discard:stone-pit",
+        "card": "stone-pit"
+      }
+    }
+  },
+  {
+    "case": "on script at 13",
+    "ply": 13,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 8,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 14",
+    "ply": 14,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 8,
+      "turns": 10,
+      "lessons": [
+        {
+          "id": "wonders"
+        }
+      ],
+      "action": {
+        "id": "buildWonder",
+        "key": "wonder:great-lighthouse:glassworks",
+        "card": "glassworks",
+        "wonder": "great-lighthouse"
+      }
+    }
+  },
+  {
+    "case": "on script at 15",
+    "ply": 15,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 9,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 16",
+    "ply": 16,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 9,
+      "turns": 10,
+      "lessons": [],
+      "action": {
+        "id": "chain",
+        "key": "construct:tavern",
+        "card": "tavern"
+      }
+    }
+  },
+  {
+    "case": "on script at 17",
+    "ply": 17,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 10,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 18",
+    "ply": 18,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 10,
+      "turns": 10,
+      "lessons": [],
+      "action": {
+        "id": "science",
+        "key": "construct:scriptorium",
+        "card": "scriptorium"
+      }
+    }
+  },
+  {
+    "case": "on script at 19",
+    "ply": 19,
+    "tutorial": {
+      "script": "first-game",
+      "status": "guided",
+      "left": false,
+      "turn": 10,
+      "turns": 10,
+      "lessons": []
+    }
+  },
+  {
+    "case": "on script at 20",
+    "ply": 20,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": false,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "tokens"
+        },
+        {
+          "id": "playOn"
+        }
+      ]
+    }
+  },
+  {
+    "case": "one past the script",
+    "ply": 21,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": false,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 0",
+    "ply": 1,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 0, next move",
+    "ply": 2,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 0, the player moved again",
+    "ply": 3,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 4",
+    "ply": 5,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 4, next move",
+    "ply": 6,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 4, the player moved again",
+    "ply": 7,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 5",
+    "ply": 6,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 5, next move",
+    "ply": 7,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 5, the player moved again",
+    "ply": 8,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 6",
+    "ply": 7,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 6, next move",
+    "ply": 8,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 6, the player moved again",
+    "ply": 9,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 8",
+    "ply": 9,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 8, next move",
+    "ply": 10,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 8, the player moved again",
+    "ply": 11,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 10",
+    "ply": 11,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 10, next move",
+    "ply": 12,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 10, the player moved again",
+    "ply": 13,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 12",
+    "ply": 13,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 12, next move",
+    "ply": 14,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 12, the player moved again",
+    "ply": 15,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 14",
+    "ply": 15,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 14, next move",
+    "ply": 16,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 14, the player moved again",
+    "ply": 17,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 16",
+    "ply": 17,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 16, next move",
+    "ply": 18,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 16, the player moved again",
+    "ply": 19,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "left at 18",
+    "ply": 19,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 18, next move",
+    "ply": 20,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": [
+        {
+          "id": "leftPath"
+        }
+      ]
+    }
+  },
+  {
+    "case": "left at 18, the player moved again",
+    "ply": 21,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "Age II starter choice",
+    "ply": 26,
+    "tutorial": {
+      "script": "first-game",
+      "status": "free",
+      "left": false,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "Age II in play",
+    "ply": 27,
+    "tutorial": {
+      "script": "first-game",
+      "status": "complete",
+      "left": false,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  },
+  {
+    "case": "forfeit",
+    "ply": 10,
+    "tutorial": {
+      "script": "first-game",
+      "status": "complete",
+      "left": true,
+      "turn": 0,
+      "turns": 0,
+      "lessons": []
+    }
+  }
+]
