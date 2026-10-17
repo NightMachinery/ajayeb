@@ -233,7 +233,11 @@ export async function clearFx(page: Page): Promise<void> {
 /**
  * Waits until every animation the runner started has ended and nothing it
  * drew is left: no clone, flip or float in the FX layer or its top part
- * (the one over dialogs), nothing hidden.
+ * (the one over dialogs), nothing hidden. Then two frames more: the last
+ * thing to end may have changed the layout (a counter's text written back,
+ * a sheet closed), and the structure refits to its box only in the next
+ * frame's ResizeObserver callback, so reading the DOM at once can catch the
+ * old fit.
  */
 export async function waitSettled(page: Page, timeout = 10_000): Promise<void> {
   await page.waitForFunction(
@@ -250,6 +254,12 @@ export async function waitSettled(page: Page, timeout = 10_000): Promise<void> {
     },
     null,
     { timeout, polling: 50 }
+  );
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      })
   );
 }
 
