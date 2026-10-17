@@ -35,6 +35,8 @@
     titleId?: string;
     /** The player's own seat, whose lines are marked; by default the room's. */
     selfSeat?: 0 | 1 | null;
+    /** Current age when a fixture has no ageStart event. */
+    age?: number;
     /** Replay last move: whether a move is on offer, whether Animation is
      *  off, and what replays it. Absent outside a game (the gallery). */
     replay?: { available: boolean; off: boolean; onreplay: () => void };
@@ -46,6 +48,7 @@
     names,
     titleId = 'log-sheet-title',
     selfSeat,
+    age = 0,
     replay
   }: Props = $props();
 
@@ -74,8 +77,10 @@
   const groups: GameLogGroup[] = $derived.by(() => {
     const history = ctx?.session.history ?? [];
     const roomLog = ctx?.session.roomLog ?? [];
-    if (history.length === 0 && roomLog.length === 0) return groupLogByAge(events, names);
-    return groupGameLog(history, roomLog, names, ctx?.presenter.view?.ply);
+    const currentAge = ctx?.presenter.view?.age ?? age;
+    if (history.length === 0 && roomLog.length === 0)
+      return groupLogByAge(events, names, currentAge);
+    return groupGameLog(history, roomLog, names, ctx?.presenter.view?.ply, currentAge);
   });
 </script>
 

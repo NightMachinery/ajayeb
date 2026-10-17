@@ -7,6 +7,7 @@
 import { t } from '$lib/i18n';
 import {
   formatLogEvent,
+  initialLogAge,
   type LogAgeGroup,
   type LogLine,
   type SeatNames
@@ -53,9 +54,19 @@ export function groupGameLog(
   history: readonly HistoryEntry[],
   roomLog: readonly RoomLogEntry[],
   names: SeatNames,
-  shownPly?: number
+  shownPly?: number,
+  currentAge = 0
 ): GameLogGroup[] {
-  const groups: { age: number; lines: GameLogLine[] }[] = [{ age: 0, lines: [] }];
+  const shown = history.filter((entry) => shownPly === undefined || entry.ply < shownPly);
+  const groups: { age: number; lines: GameLogLine[] }[] = [
+    {
+      age: initialLogAge(
+        shown.flatMap((entry) => entry.events),
+        currentAge
+      ),
+      lines: []
+    }
+  ];
   const pending = roomLog
     .filter((e) => shownPly === undefined || e.at <= shownPly)
     .map((e, i) => ({ e, i }))

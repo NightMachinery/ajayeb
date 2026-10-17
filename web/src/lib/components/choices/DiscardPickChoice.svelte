@@ -1,14 +1,4 @@
 <script lang="ts">
-  // Build from the discard pile (the Mausoleum): the pile, latest age first,
-  // with colour filter chips. Select a card, then "Build <card> for free"
-  // sends its revive key. Every card in the pile the view offers a key for
-  // is selectable; the rest are shown but not picked.
-  //
-  // Hints (M10.HS2, mausoleum-pool-hint): under the pile, what rebuilding
-  // each card would do for the player choosing (a pair it completes, the
-  // pawn, the prices it moves, its worth), from the server's
-  // view.hints.discard, with the pips' glyphs. The game context supplies
-  // the view and the families shown; the gallery passes them.
   import { t } from '$lib/i18n';
   import { hintHide } from '$lib/hints/local.svelte';
   import { discardSections, sessionHintScreen, type HintScreen } from '$lib/view/hints';

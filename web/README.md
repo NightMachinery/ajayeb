@@ -289,3 +289,10 @@ contains the review when the viewer's own move ended the game.
 The first-time tips also explain `ghostLoot` (military), `freeChain` (costs),
 `hourglass` (wonders), `guildBack` (guilds) and `lawLaurel` (science). They use
 the existing once-per-device `ajayeb:tips` seen-set and link to Rules.
+
+Home remembers each live room’s latest server-sent age and, for bot games,
+the bot level beside Continue. Saved-room changes synchronize between tabs,
+including removal when a game finishes. Older saved entries still open
+without summary details. Online presence sits beside the name in both the
+phone strip and the desktop city header. Logs opened from mid-game scenarios
+use the displayed age until an age boundary is recorded.

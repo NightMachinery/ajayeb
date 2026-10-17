@@ -261,8 +261,12 @@ function skippedText(event: GameEvent, names: SeatNames, name: string): string {
  * with nothing to show (every event in them formatted to null) are left
  * out.
  */
-export function groupLogByAge(events: readonly GameEvent[], names: SeatNames): LogAgeGroup[] {
-  const groups: LogAgeGroup[] = [{ age: 0, lines: [] }];
+export function groupLogByAge(
+  events: readonly GameEvent[],
+  names: SeatNames,
+  currentAge = 0
+): LogAgeGroup[] {
+  const groups: LogAgeGroup[] = [{ age: initialLogAge(events, currentAge), lines: [] }];
   for (const event of events) {
     if (event.kind === 'ageStart' && event.age !== undefined) {
       groups.push({ age: event.age, lines: [] });
@@ -271,4 +275,17 @@ export function groupLogByAge(events: readonly GameEvent[], names: SeatNames): L
     if (line) groups[groups.length - 1]!.lines.push(line);
   }
   return groups.filter((group) => group.lines.length > 0);
+}
+
+/** A scenario can start in any age without an ageStart event. Use the
+ * displayed age if no boundary is recorded, or the age preceding the
+ * first recorded boundary. Actual draft events always identify age zero. */
+export function initialLogAge(events: readonly GameEvent[], currentAge: number): number {
+  for (const event of events) {
+    if (event.kind === 'draft' || event.kind === 'draftRound') return 0;
+    if (event.kind === 'ageStart' && event.age !== undefined) {
+      return Math.max(0, event.age - 1);
+    }
+  }
+  return currentAge;
 }

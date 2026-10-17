@@ -155,6 +155,14 @@ describe('formatLogEvent: kinds with no recorded fixture', () => {
 });
 
 describe('groupLogByAge', () => {
+  it('starts a scenario in its displayed age and infers the age before a later boundary', () => {
+    const events: GameEvent[] = [
+      { kind: 'wonder', private: false, seat: 0, wonder: 'pyramids', card: 'rostrum' }
+    ];
+    expect(groupLogByAge(events, names, 2).map((g) => g.age)).toEqual([2]);
+    events.push({ kind: 'ageStart', private: false, age: 3 });
+    expect(groupLogByAge(events, names, 3).map((g) => g.age)).toEqual([2, 3]);
+  });
   it('puts pre-draft events in age 0 and starts a new group at each ageStart', () => {
     const events: GameEvent[] = [
       { kind: 'draft', private: false, seat: 0, wonder: 'pyramids' },

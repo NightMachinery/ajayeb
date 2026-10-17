@@ -39,6 +39,14 @@ describe('formatRoomLogEntry', () => {
 });
 
 describe('groupGameLog', () => {
+  it('keeps a mid-game scenario and its room changes out of the wonder draft', () => {
+    const scenario: HistoryEntry[] = [
+      { ply: 0, seat: 0, events: [ev({ kind: 'build', card: 'rostrum', seat: 0 })] }
+    ];
+    const groups = groupGameLog(scenario, [change(0, 0, [], ['prices'])], names, 1, 2);
+    expect(groups.map((g) => g.age)).toEqual([2]);
+    expect(groups[0]!.lines.map((line) => line.kind)).toEqual(['roomHints', 'build']);
+  });
   it('places each change before the action of its ply, in that ply’s age', () => {
     const groups = groupGameLog(
       history,
