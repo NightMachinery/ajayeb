@@ -1,48 +1,90 @@
 // The animation runner: plays a frame's timeline (plan.ts) on the page,
 // through the Presenter's hooks (session/presenter.svelte.ts):
 //
-//   capture  before the swap, reads the old DOM: the rectangle of the card
-//            each take starts from and a copy of it (its slot is gone after
-//            the swap), the face-down cards that will flip, where the pawn
-//            stood, and which city bands already existed;
+//   capture  before the swap, reads the old DOM: the rectangle and a copy of
+//            whatever a step starts from and the swap removes (the taken
+//            card's slot, a token on the board or in a choice, a draft tile,
+//            a card of the discard pile, the face-down cards that will flip,
+//            the looting tokens the pawn will take, the old structure of an
+//            age deal), where the pawn stood, and which city bands existed;
 //   play     after the swap and a tick, reads the new DOM's rectangles once,
 //            then starts every animation (FLIP: from the old rectangle to the
 //            new one, transform and opacity only, with WAAPI) and resolves
-//            when input may come back (the take's landing);
+//            when input may come back (the lead's landing);
 //   finish   ends everything at once, in its final state: a new frame (from
 //            capture), the Presenter's hurry() and clear().
 //
 // The state is instant and authoritative; animations are visual only. A
 // flying card is a clone in the FX layer (FxLayer.svelte, fixed, under
-// sheets and tooltips), stripped of data-card, data-act and ids so no test
-// or driver can click it; the element it lands on keeps data-fx-hidden
-// (visibility hidden, its box intact) until it lands. A counter tween writes
-// the old number into the counter's own text node, and writes the server's
-// number back the moment it ends or is finished. Nothing else on the page
-// is changed, so with every animation finished the DOM is the one the frame
-// renders with Animation off.
+// sheets and tooltips; its top-layer part over a dialog), stripped of
+// data-card, data-act and ids so no test or driver can click it; the
+// element it lands on keeps data-fx-hidden (visibility hidden, its box
+// intact, so it cannot be clicked either) until it lands. A counter tween
+// writes the old number into the counter's own text node, and writes the
+// server's number back the moment it ends or is finished (counter.ts).
+// Nothing else on the page is changed, so with every animation finished the
+// DOM is the one the frame renders with Animation off.
 //
 // Animation off (scaleMs gives 0) plans nothing and reads nothing: the
 // frame shows at once, exactly as it did before animations existed. So does
 // a frame with more frames queued behind it.
+//
+// Replay (replay.svelte.ts): the last frame that animated is kept, with
+// copies of what its capture read, and replay() plays it again on the
+// screen as it is now, without touching any state.
 
+import { mount, unmount } from 'svelte';
 import { cardBySlug } from '$lib/catalog';
-import { formatNumber, formatSigned } from '$lib/i18n';
+import { formatSigned } from '$lib/i18n';
+import { settings } from '$lib/ui/settings.svelte';
 import { scaleMs, type AnimationSpeed } from '$lib/ui/motion.svelte';
-import { fxLayer } from './layer';
-import { timelineFor } from './speed';
+import CardFace from '$lib/components/card/CardFace.svelte';
+import { planCues, type PlannedCue } from '../cues';
+import { play as playCue } from '../sfx';
+import { particleOffset, victoryBanner } from './banner';
+import { CounterTween } from './counter';
+import {
+  boxAround,
+  boxOf,
+  centreOf,
+  clampInto,
+  cssEscape,
+  drawn,
+  findShown,
+  inertClone,
+  makeInert,
+  place,
+  shown,
+  type Box
+} from './dom';
+import { fxLayer, fxTop } from './layer';
 import {
   EMPTY_TIMELINE,
+  planTimeline,
   type CoinStep,
+  type DealStep,
+  type DestroyStep,
+  type DraftStep,
+  type DrawStep,
   type FlipStep,
+  type GlowStep,
+  type LootStep,
   type PawnStep,
   type PlanFrame,
+  type RebuildStep,
   type Step,
+  type StepKind,
   type TakeStep,
-  type Timeline
+  type Timeline,
+  type TokenStep,
+  type VictoryStep
 } from './plan';
 import { recordFrame, setPlanned, type FrameRecord } from './records';
+import { replay } from './replay.svelte';
 import { Runs } from './runs';
+import { retimeCues, scaleTimeline } from './speed';
+
+export { inertClone } from './dom';
 
 /** The attribute that keeps a destination hidden until its card lands. */
 export const HIDDEN_ATTR = 'data-fx-hidden';
@@ -51,6 +93,12 @@ export const PULSE_MS = 180;
 
 const EASE_FLIGHT = 'cubic-bezier(0.45, 0, 0.2, 1)';
 const EASE_OUT = 'cubic-bezier(0.2, 0.7, 0.3, 1)';
+/** A card mounted for a flight that has no element to copy (a destroyed one). */
+const MOUNT_W = 56;
+const CARD_RATIO = 148 / 96;
+/** A Great Library back's size, in px. */
+const BACK_PX = 36;
+const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export interface AnimRunnerOptions {
   /** The effective animation speed, read once per frame. */
@@ -59,22 +107,17 @@ export interface AnimRunnerOptions {
   backlog?: () => number;
   /** The FX layer; FxLayer.svelte registers it by default. */
   layer?: () => HTMLElement | null;
+  /** The FX layer's top-layer part, for drawing over a dialog. */
+  top?: () => HTMLElement | null;
   /** The game screen the anchors are looked up in. */
   root?: () => ParentNode | null;
   now?: () => number;
 }
 
-interface Box {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-/** A clone of an old element, and where it stood. */
+/** A copy of an old element (or only its rectangle), and where it stood. */
 interface Snap {
   box: Box;
-  clone: HTMLElement;
+  clone: HTMLElement | null;
 }
 
 interface Captured {
@@ -82,93 +125,96 @@ interface Captured {
   speed: AnimationSpeed;
   timeline: Timeline;
   record: FrameRecord;
-  takes: Map<TakeStep, Snap>;
+  /** By step index: what a lead step starts from (a card, a token, a tile). */
+  sources: Map<number, Snap>;
+  /** By slot: the face-down card that will flip. */
   flips: Map<number, Snap>;
   pawns: { el: HTMLElement; box: Box }[];
+  /** By step index: the looting tokens (one per track on screen). */
+  loots: Map<number, Snap[]>;
+  /** The structure an age deal replaces. */
+  structure: Snap | null;
   /** The city bands on screen before the swap: `${seat}:${color}`. */
   bands: Set<string>;
+  /** The counters this frame tweens, by text node. */
+  counters: Map<Text, CounterTween>;
 }
 
-function boxOf(el: Element): Box {
-  const r = el.getBoundingClientRect();
-  return { x: r.left, y: r.top, w: r.width, h: r.height };
+/** The copies a capture made, which a replay copies again. */
+type Copies = Pick<Captured, 'sources' | 'flips' | 'pawns' | 'loots' | 'structure' | 'bands'>;
+
+/** What a replay needs of a frame that animated: its plan and its copies. */
+interface Kept {
+  version: number;
+  plan: Timeline;
+  cues: PlannedCue[];
+  copies: Copies;
 }
 
-function shown(box: Box): boolean {
-  return box.w > 0 && box.h > 0;
+interface Dest {
+  el: HTMLElement;
+  box: Box;
 }
 
-/** A copy of `el` that nothing can find, click or read aloud. */
-export function inertClone(el: Element): HTMLElement {
-  const clone = el.cloneNode(true) as HTMLElement;
-  const strip = (node: Element) => {
-    for (const name of [
-      'data-card',
-      'data-act',
-      'data-slot',
-      'id',
-      'tabindex',
-      'aria-describedby'
-    ]) {
-      node.removeAttribute(name);
-    }
-  };
-  strip(clone);
-  for (const node of clone.querySelectorAll('*')) strip(node);
-  // ArtImage shows its art from its own load handler, which a copy does not
-  // get: art not yet loaded when it was copied (a card just turned face up)
-  // would stay transparent through the whole flip, so the copy shows it.
-  for (const img of clone.querySelectorAll<HTMLImageElement>('img.art-image:not(.loaded)')) {
-    const show = () => img.classList.add('loaded');
-    img.loading = 'eager';
-    if (img.complete && img.naturalWidth > 0) show();
-    else img.addEventListener('load', show, { once: true });
-  }
-  clone.setAttribute('aria-hidden', 'true');
-  clone.setAttribute('inert', '');
-  clone.setAttribute('data-fx-clone', '');
-  return clone;
+interface FlightOpts {
+  kind: StepKind;
+  clone: HTMLElement;
+  from: Box;
+  dest: Dest;
+  at: number;
+  dur: number;
+  /** Keep the landing point inside this box (a panel scrolled away). */
+  clamp?: Box;
+  /** Hide `dest` until the flight lands. */
+  hide?: boolean;
+  /** Nudge `dest` when the flight lands. */
+  pulse?: boolean;
+  /** The end opacity; by default the clone fades into a small target. */
+  fade?: number;
+  layer: HTMLElement;
+  cleanup?: () => void;
 }
 
-/** Places a clone at the layer's origin, sized like its box; transforms move it. */
-function place(clone: HTMLElement, box: Box): void {
-  const s = clone.style;
-  s.position = 'absolute';
-  s.insetBlockStart = '0';
-  s.insetInlineStart = '0';
-  s.margin = '0';
-  s.width = `${box.w}px`;
-  s.height = `${box.h}px`;
-  s.setProperty('--cw', `${box.w}px`);
-  s.setProperty('--ch', `${box.h}px`);
-  s.transform = `translate(${box.x}px, ${box.y}px)`;
-  s.zIndex = '';
+function other(seat: number): number {
+  return seat === 0 ? 1 : 0;
 }
 
-function cssEscape(value: string): string {
-  return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(value) : value;
+function copySnap(s: Snap): Snap {
+  return { box: s.box, clone: s.clone ? (s.clone.cloneNode(true) as HTMLElement) : null };
 }
 
-/** Keeps a point inside a box (a destination scrolled out of its panel). */
-function clampInto(x: number, y: number, box: Box): { x: number; y: number } {
+function copyCopies(c: Copies): Copies {
   return {
-    x: Math.min(Math.max(x, box.x), box.x + box.w),
-    y: Math.min(Math.max(y, box.y), box.y + box.h)
+    sources: new Map([...c.sources].map(([i, s]) => [i, copySnap(s)] as const)),
+    flips: new Map([...c.flips].map(([i, s]) => [i, copySnap(s)] as const)),
+    loots: new Map([...c.loots].map(([i, l]) => [i, l.map(copySnap)] as const)),
+    structure: c.structure ? copySnap(c.structure) : null,
+    pawns: c.pawns.map((p) => ({ ...p })),
+    bands: new Set(c.bands)
   };
+}
+
+/** A shown element that is not inside a seat panel (a token on the board or in a choice). */
+function outsidePanels(el: HTMLElement): boolean {
+  return el.closest('.seat-panel') === null;
 }
 
 export class AnimRunner {
   #speed: () => AnimationSpeed;
   #backlog: () => number;
   #layer: () => HTMLElement | null;
+  #topLayer: () => HTMLElement | null;
   #root: () => ParentNode | null;
   #now: () => number;
   #runs: Runs;
+  #topUsers = 0;
+  #kept: Kept | null = null;
 
   constructor(opts: AnimRunnerOptions) {
     this.#speed = opts.speed;
     this.#backlog = opts.backlog ?? (() => 0);
     this.#layer = opts.layer ?? fxLayer;
+    this.#topLayer = opts.top ?? fxTop;
     this.#root =
       opts.root ??
       (() => (typeof document === 'undefined' ? null : document.querySelector('.game-screen')));
@@ -199,42 +245,198 @@ export class AnimRunner {
     const root = this.#root();
     const layer = this.#layer();
     setPlanned(next.version, EMPTY_TIMELINE);
-    if (speed === 'off' || !root || !layer || this.#backlog() > 0) return this.#none(record);
-    const timeline = timelineFor(next, prev, speed);
-    if (timeline.steps.length === 0) return this.#none(record);
+    // A move that plays nothing withdraws the replay; a frame with no
+    // events (a bot starting to think, a presence change) keeps it.
+    const moved = next.events.length > 0 || !prev;
+    if (speed === 'off' || !root || !layer || this.#backlog() > 0) {
+      if (moved) this.#withdraw();
+      return this.#none(record);
+    }
+    const plan = planTimeline(next, prev);
+    const timeline = scaleTimeline(plan, speed);
+    if (timeline.steps.length === 0) {
+      if (moved) this.#withdraw();
+      return this.#none(record);
+    }
     record.steps = timeline.steps.length;
     setPlanned(next.version, timeline);
+    const cap = this.#read(root, next.version, speed, timeline, record);
+    this.#kept = {
+      version: next.version,
+      plan,
+      cues: planCues(next, prev).cues,
+      copies: copyCopies(cap)
+    };
+    replay.offer(next.version, () => this.replay());
+    return cap;
+  }
 
-    const takes = new Map<TakeStep, Snap>();
-    const flips = new Map<number, Snap>();
-    let pawns: Captured['pawns'] = [];
-    const bands = new Set<string>();
-    for (const step of timeline.steps) {
-      if (step.kind === 'take') {
-        const el = root.querySelector(`.card-structure [data-card="${cssEscape(step.card)}"]`);
-        if (!el) continue;
-        const box = boxOf(el);
-        if (!shown(box)) continue;
-        const clone = inertClone(el);
-        // The flight shows the card itself, not the marks of the tap that sent it.
-        clone.classList.remove('selected', 'pending');
-        takes.set(step, { box, clone });
-      } else if (step.kind === 'flip') {
-        const el = root.querySelector(`.card-structure [data-slot="${step.slot}"]`);
-        if (!el) continue;
-        const box = boxOf(el);
-        if (shown(box)) flips.set(step.slot, { box, clone: inertClone(el) });
-      } else if (step.kind === 'pawn') {
-        pawns = [...root.querySelectorAll<HTMLElement>('[data-fx-pawn]')]
-          .map((el) => ({ el, box: boxOf(el) }))
-          .filter((p) => shown(p.box));
+  #read(
+    root: ParentNode,
+    version: number,
+    speed: AnimationSpeed,
+    timeline: Timeline,
+    record: FrameRecord
+  ): Captured {
+    const cap: Captured = {
+      version,
+      speed,
+      timeline,
+      record,
+      sources: new Map(),
+      flips: new Map(),
+      pawns: [],
+      loots: new Map(),
+      structure: null,
+      bands: new Set(),
+      counters: new Map()
+    };
+    const snap = (el: Element | null | undefined): Snap | null => {
+      if (!el) return null;
+      const box = boxOf(el);
+      return shown(box) ? { box, clone: inertClone(el) } : null;
+    };
+    const taken: string[] = [];
+    timeline.steps.forEach((step, i) => {
+      switch (step.kind) {
+        case 'take': {
+          const s = snap(
+            root.querySelector(`.card-structure [data-card="${cssEscape(step.card)}"]`)
+          );
+          // The flight shows the card itself, not the marks of the tap that sent it.
+          s?.clone?.classList.remove('selected', 'pending');
+          if (s) cap.sources.set(i, s);
+          taken.push(step.card);
+          break;
+        }
+        case 'rebuild': {
+          const card = cssEscape(step.card);
+          const s = snap(findShown(root, [`dialog[open] [data-fx-pile-card="${card}"]`])?.el);
+          if (s) cap.sources.set(i, s);
+          break;
+        }
+        case 'destroy': {
+          // The destroyer's own choice shows the card; everyone sees the band it leaves.
+          const card = cssEscape(step.card);
+          const inChoice = snap(
+            findShown(root, [`dialog[open] [data-fx-pile-card="${card}"]`])?.el
+          );
+          if (inChoice) {
+            cap.sources.set(i, inChoice);
+            break;
+          }
+          const panel = this.#panel(root, other(step.seat));
+          const color = cardBySlug(step.card)?.color;
+          const selectors = color
+            ? [`[data-fx-band="${color}"]`, '[data-fx-city]']
+            : ['[data-fx-city]'];
+          const band = panel ? findShown(panel, selectors) : null;
+          if (band) cap.sources.set(i, { box: band.box, clone: null });
+          break;
+        }
+        case 'token': {
+          const token = cssEscape(step.token);
+          const found = findShown(
+            root,
+            [`dialog[open] [data-fx-token="${token}"]`, `[data-fx-token="${token}"]`],
+            outsidePanels
+          );
+          const s = snap(found?.el);
+          if (s) cap.sources.set(i, s);
+          break;
+        }
+        case 'draft': {
+          const w = cssEscape(step.wonder);
+          const found = findShown(root, [
+            `[data-wonder-offer="${w}"] [data-wonder]`,
+            `[data-wonder-offer="${w}"]`
+          ]);
+          const s = snap(found?.el);
+          if (s) cap.sources.set(i, s);
+          break;
+        }
+        case 'flip': {
+          const s = snap(root.querySelector(`.card-structure [data-slot="${step.slot}"]`));
+          if (s) cap.flips.set(step.slot, s);
+          break;
+        }
+        case 'pawn':
+          cap.pawns = [...root.querySelectorAll<HTMLElement>('[data-fx-pawn]')]
+            .map((el) => ({ el, box: boxOf(el) }))
+            .filter((p) => shown(p.box));
+          break;
+        case 'loot': {
+          if (step.cell === undefined) break;
+          const tokens = [
+            ...root.querySelectorAll(`[data-loot-at="${step.cell}"] .loot-token[data-present]`)
+          ]
+            .map(snap)
+            .filter((s): s is Snap => s !== null);
+          if (tokens.length > 0) cap.loots.set(i, tokens);
+          break;
+        }
+        case 'deal': {
+          const inner = root.querySelector('.card-structure > div');
+          if (!inner) break;
+          const box = boxOf(inner);
+          if (!shown(box)) break;
+          const copy = inner.cloneNode(true) as HTMLElement;
+          // The age's last card leaves by its own flight.
+          for (const card of taken) {
+            for (const el of copy.querySelectorAll(`[data-card="${cssEscape(card)}"]`)) {
+              el.remove();
+            }
+          }
+          makeInert(copy);
+          cap.structure = { box, clone: copy };
+          break;
+        }
+        default:
+          break;
       }
-    }
+    });
     for (const el of root.querySelectorAll<HTMLElement>('.seat-panel [data-fx-band]')) {
       const seat = el.closest('.seat-panel')?.getAttribute('data-seat');
-      bands.add(`${seat}:${el.dataset['fxBand']}`);
+      cap.bands.add(`${seat}:${el.dataset['fxBand']}`);
     }
-    return { version: next.version, speed, timeline, record, takes, flips, pawns, bands };
+    return cap;
+  }
+
+  #withdraw(): void {
+    this.#kept = null;
+    replay.withdraw();
+  }
+
+  /**
+   * Plays the last animated move again on the screen as it is now: the
+   * same steps, the copies its capture made, the current speed, and its
+   * sounds when Sound is on. Changes no state and holds no input; a new
+   * frame finishes it like any other. False when there is nothing to replay
+   * or Animation is off.
+   */
+  replay(): boolean {
+    const kept = this.#kept;
+    const speed = this.#speed();
+    if (!kept || speed === 'off' || !this.#root() || !this.#layer()) return false;
+    this.finish();
+    const timeline = scaleTimeline(kept.plan, speed);
+    const cap: Captured = {
+      ...copyCopies(kept.copies),
+      version: kept.version,
+      speed,
+      timeline,
+      // Not in the frame records: a replay is no frame.
+      record: { version: kept.version, swapAt: this.#now(), releasedAt: null, steps: 0 },
+      counters: new Map()
+    };
+    void this.play(cap);
+    const { sound, soundVolume } = settings.value;
+    if (sound) {
+      for (const { cue, delayMs } of retimeCues(kept.cues, timeline)) {
+        playCue(cue, { delayMs, volume: soundVolume });
+      }
+    }
+    return true;
   }
 
   /** A frame with nothing to animate: input goes as soon as it shows. */
@@ -244,10 +446,13 @@ export class AnimRunner {
       speed: 'off',
       timeline: EMPTY_TIMELINE,
       record,
-      takes: new Map(),
+      sources: new Map(),
       flips: new Map(),
       pawns: [],
-      bands: new Set()
+      loots: new Map(),
+      structure: null,
+      bands: new Set(),
+      counters: new Map()
     };
   }
 
@@ -267,10 +472,10 @@ export class AnimRunner {
     }
     // Read every rectangle first, then write: one layout, not one per step.
     const starts: (() => void)[] = [];
-    for (const step of cap.timeline.steps) {
-      const start = this.#prepare(step, cap, root, layer);
+    cap.timeline.steps.forEach((step, i) => {
+      const start = this.#prepare(step, i, cap, root, layer);
       if (start) starts.push(start);
-    }
+    });
     for (const start of starts) start();
 
     // The hold counts from the swap, so a slow render does not add to it.
@@ -283,16 +488,40 @@ export class AnimRunner {
   }
 
   /** Reads what a step needs and returns the function that starts it. */
-  #prepare(step: Step, cap: Captured, root: ParentNode, layer: HTMLElement): (() => void) | null {
+  #prepare(
+    step: Step,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
     switch (step.kind) {
       case 'take':
-        return this.#prepareTake(step, cap, root, layer);
+        return this.#prepareTake(step, i, cap, root, layer);
+      case 'rebuild':
+        return this.#prepareRebuild(step, i, cap, root, layer);
+      case 'destroy':
+        return this.#prepareDestroy(step, i, cap, root, layer);
+      case 'token':
+        return this.#prepareToken(step, i, cap, root, layer);
+      case 'draft':
+        return this.#prepareDraft(step, i, cap, root, layer);
       case 'flip':
         return this.#prepareFlip(step, cap, root, layer);
       case 'coins':
         return this.#prepareCoins(step, cap, root, layer);
       case 'pawn':
         return this.#preparePawn(step, cap);
+      case 'loot':
+        return this.#prepareLoot(step, i, cap, root, layer);
+      case 'glow':
+        return this.#prepareGlow(step, cap, root, layer);
+      case 'draw':
+        return this.#prepareDraw(step, cap, root, layer);
+      case 'deal':
+        return this.#prepareDeal(step, cap, root, layer);
+      case 'victory':
+        return this.#prepareVictory(step, cap, root);
     }
   }
 
@@ -300,58 +529,50 @@ export class AnimRunner {
     return root.querySelector<HTMLElement>(`.seat-panel[data-seat="${seat}"]`);
   }
 
-  /** The first of the selectors that is on screen inside `scope`. */
-  #find(scope: ParentNode, selectors: string[]): { el: HTMLElement; box: Box } | null {
-    for (const sel of selectors) {
-      for (const el of scope.querySelectorAll<HTMLElement>(sel)) {
-        const box = boxOf(el);
-        if (shown(box)) return { el, box };
-      }
+  /** The top-layer part, shown above any open dialog until released. */
+  #useTop(): { layer: HTMLElement; release: () => void } | null {
+    const top = this.#topLayer();
+    if (!top || typeof top.showPopover !== 'function') return null;
+    try {
+      // Shown again, so it lands above any dialog opened since.
+      if (top.matches(':popover-open')) top.hidePopover();
+      top.showPopover();
+    } catch {
+      return null;
     }
-    return null;
+    this.#topUsers += 1;
+    let released = false;
+    return {
+      layer: top,
+      release: () => {
+        if (released) return;
+        released = true;
+        this.#topUsers -= 1;
+        if (this.#topUsers <= 0 && top.matches(':popover-open')) top.hidePopover();
+      }
+    };
   }
 
-  #prepareTake(
-    step: TakeStep,
-    cap: Captured,
-    root: ParentNode,
-    layer: HTMLElement
-  ): (() => void) | null {
-    const from = cap.takes.get(step);
-    const panel = this.#panel(root, step.seat);
-    if (!from || !panel) return null;
-    const panelBox = boxOf(panel);
-    let selectors: string[];
-    let hide = false;
-    if (step.dest === 'city') {
-      const color = cardBySlug(step.card)?.color;
-      selectors = color ? [`[data-fx-band="${color}"]`, '[data-fx-city]'] : ['[data-fx-city]'];
-      // A colour's first card makes its band: it shows when the card lands.
-      hide = !!color && !cap.bands.has(`${step.seat}:${color}`);
-    } else if (step.dest === 'discard') {
-      selectors = ['[data-tally="coins"]'];
-    } else {
-      const w = step.wonder ? cssEscape(step.wonder) : '';
-      selectors = [`[data-fx-wonder="${w}"]`, '[data-fx-wonders]'];
-    }
-    const dest =
-      this.#find(panel, selectors) ?? (shown(panelBox) ? { el: panel, box: panelBox } : null);
-    if (!dest) return null;
-    hide = hide && dest.el.matches('[data-fx-band]');
-
-    const src = from.box;
-    const centre = clampInto(dest.box.x + dest.box.w / 2, dest.box.y + dest.box.h / 2, panelBox);
+  /**
+   * A clone's flight from `from` to `dest`: lifted, then shrunk into it,
+   * fading into a small target. Returns the function that starts it.
+   */
+  #flight(cap: Captured, o: FlightOpts): () => void {
+    const src = o.from;
+    const centre = o.clamp
+      ? clampInto(o.dest.box.x + o.dest.box.w / 2, o.dest.box.y + o.dest.box.h / 2, o.clamp)
+      : centreOf(o.dest.box);
     // Small enough to sink into a chip, never so small it vanishes in flight.
-    const scale = Math.max(0.3, Math.min(dest.box.w / src.w, dest.box.h / src.h, 1));
+    const scale = Math.max(0.3, Math.min(o.dest.box.w / src.w, o.dest.box.h / src.h, 1));
     const endX = centre.x - (src.w * scale) / 2;
     const endY = centre.y - (src.h * scale) / 2;
     const liftX = src.x + (endX - src.x) * 0.12;
     const liftY = src.y + (endY - src.y) * 0.12 - Math.min(16, src.h * 0.12);
-    const clone = from.clone;
+    const clone = o.clone;
     place(clone, src);
     clone.classList.add('fx-flight');
     // Into a chip it fades out; onto a big target (a phone strip) it stays.
-    const fade = scale <= 0.5 ? 0 : 0.4;
+    const fade = o.fade ?? (scale <= 0.5 ? 0 : 0.4);
     const keyframes: Keyframe[] = [
       { transform: `translate(${src.x}px, ${src.y}px) scale(1)`, opacity: 1, offset: 0 },
       {
@@ -361,23 +582,24 @@ export class AnimRunner {
       },
       { transform: `translate(${endX}px, ${endY}px) scale(${scale})`, opacity: fade, offset: 1 }
     ];
-    const destEl = dest.el;
+    const destEl = o.dest.el;
     return () => {
-      layer.append(clone);
-      if (hide) destEl.setAttribute(HIDDEN_ATTR, '');
+      o.layer.append(clone);
+      if (o.hide) destEl.setAttribute(HIDDEN_ATTR, '');
       const anim = clone.animate(keyframes, {
-        duration: step.dur,
-        delay: step.at,
+        duration: o.dur,
+        delay: o.at,
         easing: EASE_FLIGHT,
         fill: 'backwards'
       });
       const run = this.#runs.track(
         cap.version,
-        'take',
+        o.kind,
         [anim],
         () => {
           clone.remove();
-          destEl.removeAttribute(HIDDEN_ATTR);
+          if (o.hide) destEl.removeAttribute(HIDDEN_ATTR);
+          o.cleanup?.();
         },
         false
       );
@@ -387,19 +609,252 @@ export class AnimRunner {
           this.#runs.end(run, false);
           // A landing nudge on what was already there (an existing band,
           // the coins, the wonder).
-          if (!hide && destEl !== panel && destEl.isConnected) this.#pulse(cap, destEl);
+          if (o.pulse && destEl.isConnected) this.#pulse(cap, destEl, o.kind);
         },
         () => this.#runs.end(run, true)
       );
     };
   }
 
-  #pulse(cap: Captured, el: HTMLElement): void {
+  #pulse(cap: Captured, el: HTMLElement, kind: StepKind): void {
     const anim = el.animate(
       [{ transform: 'scale(1)' }, { transform: 'scale(1.12)' }, { transform: 'scale(1)' }],
       { duration: scaleMs(PULSE_MS, cap.speed), easing: EASE_OUT }
     );
-    this.#runs.track(cap.version, 'take', [anim], () => {});
+    this.#runs.track(cap.version, kind, [anim], () => {});
+  }
+
+  /** A seat's city as a destination: the card colour's band, else the city. */
+  #cityDest(
+    cap: Captured,
+    panel: HTMLElement,
+    seat: number,
+    card: string
+  ): { dest: Dest; hide: boolean } | null {
+    const panelBox = boxOf(panel);
+    const color = cardBySlug(card)?.color;
+    const selectors = color ? [`[data-fx-band="${color}"]`, '[data-fx-city]'] : ['[data-fx-city]'];
+    const dest =
+      findShown(panel, selectors) ?? (shown(panelBox) ? { el: panel, box: panelBox } : null);
+    if (!dest) return null;
+    // A colour's first card makes its band: it shows when the card lands.
+    const hide = !!color && !cap.bands.has(`${seat}:${color}`) && dest.el.matches('[data-fx-band]');
+    return { dest, hide };
+  }
+
+  #prepareTake(
+    step: TakeStep,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const from = cap.sources.get(i);
+    const panel = this.#panel(root, step.seat);
+    if (!from?.clone || !panel) return null;
+    const panelBox = boxOf(panel);
+    let dest: Dest | null;
+    let hide = false;
+    if (step.dest === 'city') {
+      const city = this.#cityDest(cap, panel, step.seat, step.card);
+      dest = city?.dest ?? null;
+      hide = city?.hide ?? false;
+    } else {
+      const w = step.wonder ? cssEscape(step.wonder) : '';
+      const selectors =
+        step.dest === 'discard'
+          ? ['[data-tally="coins"]']
+          : [`[data-fx-wonder="${w}"]`, '[data-fx-wonders]'];
+      dest = findShown(panel, selectors) ?? (shown(panelBox) ? { el: panel, box: panelBox } : null);
+    }
+    if (!dest) return null;
+    return this.#flight(cap, {
+      kind: 'take',
+      clone: from.clone,
+      from: from.box,
+      dest,
+      clamp: panelBox,
+      hide,
+      pulse: !hide && dest.el !== panel,
+      at: step.at,
+      dur: step.dur,
+      layer
+    });
+  }
+
+  /** A card mounted in the FX layer, for a flight with no element to copy. */
+  #mountCard(card: string, w: number): { el: HTMLElement; box: Box; release: () => void } {
+    const h = Math.round(w * CARD_RATIO);
+    const el = drawn('div', 'fx-card');
+    const face = mount(CardFace, { target: el, props: { slug: card, tier: 'mini', width: w } });
+    makeInert(el);
+    return { el, box: { x: 0, y: 0, w, h }, release: () => void unmount(face) };
+  }
+
+  #prepareRebuild(
+    step: RebuildStep,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const panel = this.#panel(root, step.seat);
+    if (!panel) return null;
+    const city = this.#cityDest(cap, panel, step.seat, step.card);
+    if (!city) return null;
+    const from = cap.sources.get(i);
+    let clone = from?.clone ?? null;
+    let box = from?.box;
+    let release: (() => void) | undefined;
+    if (!clone || !box) {
+      // The pile was not on screen: the card drops in from above the city.
+      const card = this.#mountCard(step.card, MOUNT_W);
+      const c = centreOf(city.dest.box);
+      clone = card.el;
+      box = boxAround(c.x, Math.max(card.box.h / 2, c.y - 120), card.box.w, card.box.h);
+      release = card.release;
+    }
+    return this.#flight(cap, {
+      kind: 'rebuild',
+      clone,
+      from: box,
+      dest: city.dest,
+      clamp: boxOf(panel),
+      hide: city.hide,
+      pulse: !city.hide && city.dest.el !== panel,
+      at: step.at,
+      dur: step.dur,
+      layer,
+      ...(release ? { cleanup: release } : {})
+    });
+  }
+
+  #prepareDestroy(
+    step: DestroyStep,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const source = cap.sources.get(i);
+    if (!source) return null;
+    let clone = source.clone;
+    let box = source.box;
+    let release: (() => void) | undefined;
+    if (!clone) {
+      // From the band, which has no card to copy: the card itself, mounted.
+      const card = this.#mountCard(step.card, MOUNT_W);
+      const c = centreOf(source.box);
+      clone = card.el;
+      box = boxAround(c.x, c.y, card.box.w, card.box.h);
+      release = card.release;
+    }
+    // A discard pile on the board, if one is ever drawn, takes it in.
+    const pile = findShown(root, ['[data-fx-discard]']);
+    if (pile) {
+      return this.#flight(cap, {
+        kind: 'destroy',
+        clone,
+        from: box,
+        dest: pile,
+        pulse: true,
+        at: step.at,
+        dur: step.dur,
+        layer,
+        ...(release ? { cleanup: release } : {})
+      });
+    }
+    // Else it is thrown out: it rises off the city, tips and falls away.
+    place(clone, box);
+    clone.classList.add('fx-flight', 'fx-destroyed');
+    const where = (dx: number, dy: number, turn: number, s: number) =>
+      `translate(${box.x + dx}px, ${box.y + dy}px) rotate(${turn}deg) scale(${s})`;
+    const keyframes: Keyframe[] = [
+      { transform: where(0, 8, 0, 0.6), opacity: 0, offset: 0 },
+      { transform: where(0, -18, -3, 1.05), opacity: 1, offset: 0.3 },
+      { transform: where(4, -14, 2, 1), opacity: 1, offset: 0.5 },
+      { transform: where(22, 48, 16, 0.82), opacity: 0, offset: 1 }
+    ];
+    const el = clone;
+    return () => {
+      layer.append(el);
+      const anim = el.animate(keyframes, {
+        duration: step.dur,
+        delay: step.at,
+        easing: 'ease-in-out',
+        fill: 'backwards'
+      });
+      this.#runs.track(cap.version, 'destroy', [anim], () => {
+        el.remove();
+        release?.();
+      });
+    };
+  }
+
+  #prepareToken(
+    step: TokenStep,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const from = cap.sources.get(i);
+    const panel = this.#panel(root, step.seat);
+    if (!from?.clone || !panel) return null;
+    const token = cssEscape(step.token);
+    const panelBox = boxOf(panel);
+    const owned = findShown(panel, [`[data-fx-token="${token}"]`]);
+    const dest =
+      owned ??
+      findShown(panel, ['[data-fx-tokens]', '[data-fx-city]']) ??
+      (shown(panelBox) ? { el: panel, box: panelBox } : null);
+    if (!dest) return null;
+    return this.#flight(cap, {
+      kind: 'token',
+      clone: from.clone,
+      from: from.box,
+      dest,
+      clamp: panelBox,
+      hide: !!owned,
+      pulse: !owned && dest.el !== panel,
+      // Into the city's own medallion it stays whole: it becomes it.
+      ...(owned ? { fade: 1 } : {}),
+      at: step.at,
+      dur: step.dur,
+      layer
+    });
+  }
+
+  #prepareDraft(
+    step: DraftStep,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const from = cap.sources.get(i);
+    if (!from?.clone) return null;
+    const w = cssEscape(step.wonder);
+    const picked = findShown(root, [`[data-draft-picks="${step.seat}"] [data-picked="${w}"]`]);
+    const panel = this.#panel(root, step.seat);
+    // The last pick of the draft lands on the board that replaced it.
+    const dest =
+      picked ??
+      (panel
+        ? findShown(panel, [`[data-fx-wonder="${w}"]`, '[data-fx-wonders]', '[data-fx-city]'])
+        : null);
+    if (!dest) return null;
+    return this.#flight(cap, {
+      kind: 'draft',
+      clone: from.clone,
+      from: from.box,
+      dest,
+      hide: !!picked,
+      pulse: !picked,
+      at: step.at,
+      dur: step.dur,
+      layer
+    });
   }
 
   #prepareFlip(
@@ -410,20 +865,37 @@ export class AnimRunner {
   ): (() => void) | null {
     const back = cap.flips.get(step.slot);
     const slot = root.querySelector<HTMLElement>(`.card-structure [data-slot="${step.slot}"]`);
-    if (!back || !slot) return null;
+    if (!back?.clone || !slot) return null;
     const box = boxOf(slot);
     if (!shown(box)) return null;
-    const front = inertClone(slot);
+    const holder = this.#flipper(box, back.clone, inertClone(slot));
+    return () => {
+      layer.append(holder.el);
+      slot.setAttribute(HIDDEN_ATTR, '');
+      const anim = holder.spinner.animate(
+        [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }],
+        { duration: step.dur, delay: step.at, easing: EASE_OUT, fill: 'backwards' }
+      );
+      this.#runs.track(cap.version, 'flip', [anim], () => {
+        holder.el.remove();
+        slot.removeAttribute(HIDDEN_ATTR);
+      });
+    };
+  }
 
-    const holder = document.createElement('div');
-    holder.className = 'fx-flip';
-    holder.setAttribute('aria-hidden', 'true');
+  /** A two-faced card at `box`: `back` up, `front` on its other side. */
+  #flipper(
+    box: Box,
+    back: HTMLElement,
+    front: HTMLElement
+  ): { el: HTMLElement; spinner: HTMLElement } {
+    const holder = drawn('div', 'fx-flip');
     place(holder, box);
-    holder.style.perspective = `${Math.round(box.w * 6)}px`;
+    holder.style.perspective = `${Math.round(Math.max(box.w, 24) * 6)}px`;
     const spinner = document.createElement('div');
     spinner.className = 'fx-flip-inner';
     for (const [face, turn] of [
-      [back.clone, 'none'],
+      [back, 'none'],
       [front, 'rotateY(180deg)']
     ] as const) {
       place(face, { x: 0, y: 0, w: box.w, h: box.h });
@@ -433,17 +905,56 @@ export class AnimRunner {
       spinner.append(face);
     }
     holder.append(spinner);
+    return { el: holder, spinner };
+  }
+
+  /** The coin counter of a seat: its tally, and its tween for this frame. */
+  #counter(cap: Captured, panel: HTMLElement): { box: Box; tween: CounterTween | null } | null {
+    const tally = findShown(panel, ['[data-tally="coins"]']);
+    if (!tally) return null;
+    const count = tally.el.querySelector<HTMLElement>('[data-fx-count]');
+    const text = count?.firstChild instanceof Text ? count.firstChild : null;
+    if (!text || text.nodeValue === null) return { box: tally.box, tween: null };
+    const known = cap.counters.get(text);
+    if (known) return { box: tally.box, tween: known };
+    // The counter is a run of its own: it outlives one float when two steps
+    // move it (the coins of a build, then a looting).
+    const holder: { run: ReturnType<Runs['track']> | null } = { run: null };
+    const tween = new CounterTween(text, text.nodeValue, this.#now, () => {
+      if (holder.run) this.#runs.end(holder.run, false);
+    });
+    holder.run = this.#runs.track(cap.version, 'coins', [], () => tween.stop(), false);
+    cap.counters.set(text, tween);
+    return { box: tally.box, tween };
+  }
+
+  /** A "+3" or "−2" float rising off a tally. */
+  #float(
+    cap: Captured,
+    layer: HTMLElement,
+    kind: StepKind,
+    box: Box,
+    delta: number,
+    delay: number,
+    dur: number
+  ): () => void {
+    const float = drawn('span', `fx-float ${delta < 0 ? 'fx-float-loss' : 'fx-float-gain'}`);
+    float.textContent = formatSigned(delta, { signDisplay: 'exceptZero' });
+    const x = box.x + box.w / 2;
+    const y = box.y;
+    const at = (dy: number) => `translate(${x}px, ${y + dy}px) translate(-50%, -60%)`;
     return () => {
-      layer.append(holder);
-      slot.setAttribute(HIDDEN_ATTR, '');
-      const anim = spinner.animate(
-        [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }],
-        { duration: step.dur, delay: step.at, easing: EASE_OUT, fill: 'backwards' }
+      layer.append(float);
+      const anim = float.animate(
+        [
+          { transform: at(0), opacity: 0, offset: 0 },
+          { transform: at(-6), opacity: 1, offset: 0.15 },
+          { transform: at(-26), opacity: 1, offset: 0.65 },
+          { transform: at(-34), opacity: 0, offset: 1 }
+        ],
+        { duration: dur, delay, easing: 'linear', fill: 'backwards' }
       );
-      this.#runs.track(cap.version, 'flip', [anim], () => {
-        holder.remove();
-        slot.removeAttribute(HIDDEN_ATTR);
-      });
+      this.#runs.track(cap.version, kind, [anim], () => float.remove());
     };
   }
 
@@ -454,67 +965,22 @@ export class AnimRunner {
     layer: HTMLElement
   ): (() => void) | null {
     const panel = this.#panel(root, step.seat);
-    if (!panel) return null;
-    const tally = this.#find(panel, ['[data-tally="coins"]']);
-    if (!tally) return null;
-    const count = tally.el.querySelector<HTMLElement>('[data-fx-count]');
-    const text = count?.firstChild instanceof Text ? count.firstChild : null;
-    const delta = step.to - step.from;
-
-    const float = document.createElement('span');
-    float.className = `fx-float ${delta < 0 ? 'fx-float-loss' : 'fx-float-gain'}`;
-    float.setAttribute('aria-hidden', 'true');
-    float.textContent = formatSigned(delta, { signDisplay: 'exceptZero' });
-    const x = tally.box.x + tally.box.w / 2;
-    const y = tally.box.y;
-    const at = (dy: number) => `translate(${x}px, ${y + dy}px) translate(-50%, -60%)`;
-    const final = text?.nodeValue ?? null;
-    const tween = step.tween;
-    const delay = step.at;
-
+    const counter = panel ? this.#counter(cap, panel) : null;
+    if (!counter) return null;
+    const float = this.#float(
+      cap,
+      layer,
+      'coins',
+      counter.box,
+      step.to - step.from,
+      step.at,
+      step.dur
+    );
     return () => {
-      layer.append(float);
-      const anim = float.animate(
-        [
-          { transform: at(0), opacity: 0, offset: 0 },
-          { transform: at(-6), opacity: 1, offset: 0.15 },
-          { transform: at(-26), opacity: 1, offset: 0.65 },
-          { transform: at(-34), opacity: 0, offset: 1 }
-        ],
-        { duration: step.dur, delay, easing: 'linear', fill: 'backwards' }
-      );
-      let frame = 0;
-      const restore = () => {
-        if (frame) cancelAnimationFrame(frame);
-        frame = 0;
-        if (text && final !== null) text.nodeValue = final;
-      };
+      float();
       // The counter: the old number until the float starts, then a tween
       // to the new one, then the server's own text back.
-      if (text && final !== null && tween > 0) {
-        text.nodeValue = formatNumber(step.from);
-        const begin = this.#now() + delay;
-        let shownValue = step.from;
-        const tick = () => {
-          const t = Math.min(1, Math.max(0, (this.#now() - begin) / tween));
-          if (t >= 1) {
-            restore();
-            return;
-          }
-          const eased = 1 - (1 - t) * (1 - t);
-          const value = Math.round(step.from + delta * eased);
-          if (value !== shownValue) {
-            shownValue = value;
-            text.nodeValue = formatNumber(value);
-          }
-          frame = requestAnimationFrame(tick);
-        };
-        frame = requestAnimationFrame(tick);
-      }
-      this.#runs.track(cap.version, 'coins', [anim], () => {
-        float.remove();
-        restore();
-      });
+      if (step.tween > 0) counter.tween?.add(step.at, step.tween, step.from, step.to);
     };
   }
 
@@ -553,6 +1019,343 @@ export class AnimRunner {
         });
       });
       this.#runs.track(cap.version, 'pawn', anims, () => {});
+    };
+  }
+
+  #prepareLoot(
+    step: LootStep,
+    i: number,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const starts: (() => void)[] = [];
+    // The token flips (the coins it costs, then a blank coin), pops and fades.
+    for (const token of cap.loots.get(i) ?? []) {
+      if (!token.clone) continue;
+      const blank = token.clone.cloneNode(true) as HTMLElement;
+      blank.textContent = '';
+      const flipper = this.#flipper(token.box, token.clone, blank);
+      const holder = flipper.el;
+      holder.style.transformOrigin = '50% 50%';
+      const base = holder.style.transform;
+      const total = step.flip + step.fade;
+      const pop: Keyframe[] = [
+        { transform: `${base} scale(1)`, opacity: 1, offset: 0 },
+        { transform: `${base} scale(1.35)`, opacity: 1, offset: step.flip / total / 2 },
+        { transform: `${base} scale(1.15)`, opacity: 1, offset: step.flip / total },
+        { transform: `${base} translateY(-4px) scale(1.4)`, opacity: 0, offset: 1 }
+      ];
+      starts.push(() => {
+        layer.append(holder);
+        const spin = flipper.spinner.animate(
+          [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }],
+          { duration: step.flip, delay: step.at, easing: EASE_OUT, fill: 'backwards' }
+        );
+        const anim = holder.animate(pop, {
+          duration: total,
+          delay: step.at,
+          easing: 'ease-out',
+          fill: 'backwards'
+        });
+        this.#runs.track(cap.version, 'loot', [spin, anim], () => holder.remove());
+      });
+    }
+    // The victim's coins drop, with the loss float, as the token flips.
+    const panel = this.#panel(root, step.seat);
+    const counter = panel ? this.#counter(cap, panel) : null;
+    if (counter) {
+      const float = this.#float(cap, layer, 'loot', counter.box, -step.amount, step.at, step.dur);
+      starts.push(() => {
+        float();
+        if (step.tween > 0) counter.tween?.add(step.at, step.tween, step.from, step.to);
+      });
+    }
+    if (starts.length === 0) return null;
+    return () => {
+      for (const start of starts) start();
+    };
+  }
+
+  #prepareGlow(
+    step: GlowStep,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const panel = this.#panel(root, step.seat);
+    if (!panel) return null;
+    const symbol = cssEscape(step.symbol);
+    // The pair's symbol in the tracker (or the phone's pill), and the band
+    // its two green cards are in.
+    const targets = [
+      ...panel.querySelectorAll<HTMLElement>(
+        `[data-fx-science="${symbol}"], [data-fx-science-pill], [data-fx-band="green"]`
+      )
+    ]
+      .map(boxOf)
+      .filter(shown);
+    if (targets.length === 0) return null;
+    const pad = 4;
+    const glows = targets.map((box) => {
+      const el = drawn('span', 'fx-glow');
+      place(el, { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 });
+      el.style.transformOrigin = '50% 50%';
+      return { el, base: el.style.transform };
+    });
+    return () => {
+      const anims = glows.map(({ el, base }) => {
+        layer.append(el);
+        return el.animate(
+          [
+            { transform: `${base} scale(0.85)`, opacity: 0, offset: 0 },
+            { transform: `${base} scale(1.05)`, opacity: 1, offset: 0.3 },
+            { transform: `${base} scale(1.1)`, opacity: 0.85, offset: 0.6 },
+            { transform: `${base} scale(1.3)`, opacity: 0, offset: 1 }
+          ],
+          { duration: step.dur, delay: step.at, easing: 'ease-out', fill: 'backwards' }
+        );
+      });
+      this.#runs.track(cap.version, 'glow', anims, () => {
+        for (const { el } of glows) el.remove();
+      });
+    };
+  }
+
+  #prepareDraw(
+    step: DrawStep,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const panel = this.#panel(root, step.seat);
+    if (!panel) return null;
+    const panelBox = boxOf(panel);
+    const source =
+      findShown(panel, [
+        '[data-fx-wonder="great-library"]',
+        '[data-fx-wonders]',
+        '[data-fx-city]'
+      ]) ?? (shown(panelBox) ? { el: panel, box: panelBox } : null);
+    if (!source) return null;
+    const from = centreOf(source.box);
+
+    // The drawer sees the token itself land in its choice, over the dialog.
+    const face = step.token
+      ? findShown(root, [`dialog[open] [data-fx-token="${cssEscape(step.token)}"]`])
+      : null;
+    if (face) {
+      const clone = inertClone(face.el);
+      const start = boxAround(from.x, from.y, face.box.w, face.box.h);
+      return () => {
+        const top = this.#useTop();
+        this.#flight(cap, {
+          kind: 'draw',
+          clone,
+          from: start,
+          dest: face,
+          hide: true,
+          fade: 1,
+          at: step.at,
+          dur: step.each,
+          layer: top?.layer ?? layer,
+          ...(top ? { cleanup: top.release } : {})
+        })();
+      };
+    }
+
+    // Everyone else (and a drawer whose choice is not open): a back, dealt
+    // to a fan over the board, held a moment, then gone. Nothing in it
+    // names the token.
+    const area = findShown(root, ['.card-structure > div', '.card-structure']) ?? {
+      el: panel,
+      box: panelBox
+    };
+    const c = centreOf(area.box);
+    const fanX = c.x + (step.place - 1) * BACK_PX * 1.3;
+    const fanY = c.y;
+    const back = drawn('span', 'fx-token-back');
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    const use = document.createElementNS(SVG_NS, 'use');
+    use.setAttribute('href', '#i-token-frame');
+    svg.append(use);
+    back.append(svg);
+    place(back, { x: 0, y: 0, w: BACK_PX, h: BACK_PX });
+    const total = step.each + step.hold + step.fade;
+    const pos = (x: number, y: number, s: number, turn = 0) =>
+      `translate(${x - BACK_PX / 2}px, ${y - BACK_PX / 2}px) rotate(${turn}deg) scale(${s})`;
+    const keyframes: Keyframe[] = [
+      { transform: pos(from.x, from.y, 0.4, -40), opacity: 0, offset: 0 },
+      { transform: pos(from.x, from.y - 12, 0.7, -20), opacity: 1, offset: 0.08 },
+      { transform: pos(fanX, fanY, 1), opacity: 1, offset: step.each / total },
+      { transform: pos(fanX, fanY, 1), opacity: 1, offset: (step.each + step.hold) / total },
+      { transform: pos(fanX, fanY - 10, 0.9), opacity: 0, offset: 1 }
+    ];
+    return () => {
+      layer.append(back);
+      const anim = back.animate(keyframes, {
+        duration: total,
+        delay: step.at,
+        easing: EASE_FLIGHT,
+        fill: 'backwards'
+      });
+      this.#runs.track(cap.version, 'draw', [anim], () => back.remove());
+    };
+  }
+
+  #prepareDeal(
+    step: DealStep,
+    cap: Captured,
+    root: ParentNode,
+    layer: HTMLElement
+  ): (() => void) | null {
+    const structure = root.querySelector<HTMLElement>('.card-structure');
+    const old = cap.structure;
+    if (!structure && !old) return null;
+    let started = 0;
+
+    const fadeOld = () => {
+      if (!old?.clone) return;
+      const el = old.clone;
+      place(el, old.box);
+      el.classList.add('fx-old-structure');
+      layer.append(el);
+      const anim = el.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: step.fade,
+        delay: step.at,
+        easing: 'ease-out',
+        fill: 'backwards'
+      });
+      this.#runs.track(cap.version, 'deal', [anim], () => el.remove());
+    };
+
+    // Each card of the new structure, from a deck above it, top row first.
+    const deal = (slots: HTMLElement[]) => {
+      const cards = slots
+        .map((el) => ({ el, box: boxOf(el) }))
+        .filter((card) => shown(card.box))
+        .sort((a, b) => Math.round(a.box.y) - Math.round(b.box.y) || a.box.x - b.box.x);
+      const first = cards[0];
+      if (!first || !structure) return;
+      const area = boxOf(structure.firstElementChild ?? structure);
+      const deckX = area.x + area.w / 2 - first.box.w / 2;
+      const deckY = Math.max(0, area.y - first.box.h * 0.35);
+      const late = this.#now() - started;
+      cards.forEach(({ el, box }, n) => {
+        const clone = inertClone(el);
+        clone.classList.remove('selected', 'pending');
+        place(clone, box);
+        clone.classList.add('fx-flight', 'fx-dealt');
+        layer.append(clone);
+        el.setAttribute(HIDDEN_ATTR, '');
+        const anim = clone.animate(
+          [
+            {
+              transform: `translate(${deckX}px, ${deckY}px) rotate(-7deg) scale(0.7)`,
+              opacity: 0,
+              offset: 0
+            },
+            { opacity: 1, offset: 0.25 },
+            {
+              transform: `translate(${box.x}px, ${box.y}px) rotate(0deg) scale(1)`,
+              opacity: 1,
+              offset: 1
+            }
+          ],
+          {
+            duration: step.each,
+            delay: Math.max(0, step.at + step.lead + n * step.stagger - late),
+            easing: EASE_FLIGHT,
+            fill: 'backwards'
+          }
+        );
+        this.#runs.track(cap.version, 'deal', [anim], () => {
+          clone.remove();
+          el.removeAttribute(HIDDEN_ATTR);
+        });
+      });
+    };
+    const slotsOf = () =>
+      structure
+        ? [...structure.querySelectorAll<HTMLElement>('[data-slot]:not([data-state="empty"])')]
+        : [];
+
+    return () => {
+      started = this.#now();
+      fadeOld();
+      const slots = slotsOf();
+      if (slots.length > 0 || !structure) {
+        deal(slots);
+        return;
+      }
+      // A structure mounted with this frame lays out its cards a moment
+      // later (it measures its box first): deal them as they appear, in the
+      // same task that adds them, so none is ever painted before its turn.
+      const watch = new MutationObserver(() => {
+        const now = slotsOf();
+        if (now.length === 0) return;
+        watch.disconnect();
+        deal(now);
+      });
+      watch.observe(structure, { childList: true, subtree: true });
+      const run = this.#runs.track(cap.version, 'deal', [], () => watch.disconnect(), false);
+      setTimeout(() => this.#runs.end(run, false), Math.max(400, step.lead + step.each));
+    };
+  }
+
+  #prepareVictory(step: VictoryStep, cap: Captured, root: ParentNode): (() => void) | null {
+    if (typeof window === 'undefined') return null;
+    const banner = victoryBanner(step.victory, step.winner);
+    const dialog = findShown(root, ['[data-game-over] dialog[open]']);
+    const vw = window.innerWidth;
+    const y = dialog ? Math.max(56, dialog.box.y) : window.innerHeight * 0.3;
+    banner.el.style.transform = `translate(${vw / 2}px, ${y}px)`;
+    const reach = Math.min(vw, 480);
+    const d = step.dur;
+    const ribbon: Keyframe[] = [
+      { transform: 'translate(-50%, -50%) scale(0.6)', opacity: 0, offset: 0 },
+      { transform: 'translate(-50%, -50%) scale(1.08)', opacity: 1, offset: 0.12 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.2 },
+      { transform: 'translate(-50%, -50%) scale(1)', opacity: 1, offset: 0.8 },
+      { transform: 'translate(-50%, -62%) scale(0.98)', opacity: 0, offset: 1 }
+    ];
+    return () => {
+      const top = this.#useTop();
+      const layer = top?.layer ?? this.#layer();
+      if (!layer) return;
+      layer.append(banner.el);
+      const anims = [
+        banner.ribbon.animate(ribbon, {
+          duration: d,
+          delay: step.at,
+          easing: EASE_OUT,
+          fill: 'backwards'
+        }),
+        ...banner.particles.map((p, i) => {
+          const o = particleOffset(i, reach);
+          return p.animate(
+            [
+              { transform: 'translate(-50%, -50%) scale(0.3)', opacity: 0, offset: 0 },
+              { opacity: 1, offset: 0.2 },
+              {
+                transform: `translate(-50%, -50%) translate(${o.x}px, ${o.y}px) rotate(${o.turn}deg) scale(1)`,
+                opacity: 0,
+                offset: 1
+              }
+            ],
+            {
+              duration: Math.round(d * 0.55),
+              delay: step.at + Math.round(d * 0.06) + (i % 3) * Math.round(d * 0.02),
+              easing: 'cubic-bezier(0.1, 0.7, 0.3, 1)',
+              fill: 'backwards'
+            }
+          );
+        })
+      ];
+      this.#runs.track(cap.version, 'victory', anims, () => {
+        banner.el.remove();
+        top?.release();
+      });
     };
   }
 }
