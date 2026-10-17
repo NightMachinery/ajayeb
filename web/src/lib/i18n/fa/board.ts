@@ -88,7 +88,7 @@ export const board = {
   'board.player.points': { other: '{count} امتیاز' },
   'board.player.scorePreview': 'اگر بازی اکنون تمام شود: {total} امتیاز',
   'board.player.chains': 'ساخت رایگان: {count}',
-  'board.player.thinking': 'در حال فکر',
+  'board.player.thinking': 'در حال فکر کردن',
 
   // TurnBar.
   'board.turn.yourTurn': 'نوبت شما',

@@ -13,13 +13,13 @@ export const choices = {
   'choices.reopen': 'باز کردن',
   'choices.selectCard': 'اول یک کارت برگزینید',
   'choices.selectToken': 'اول یک نشان برگزینید',
-  'choices.waiting.destroyCard': 'در انتظار تا {name} کارتی را برای نابودی برگزیند…',
-  'choices.waiting.buildFromDiscard': 'در انتظار تا {name} کارتی از کارت‌های کنارگذاشته برگزیند…',
-  'choices.waiting.pickBoardToken': 'در انتظار تا {name} یک نشان پیشرفت برگزیند…',
+  'choices.waiting.destroyCard': 'منتظر بمانید تا {name} کارتی را برای نابودی برگزیند…',
+  'choices.waiting.buildFromDiscard': 'منتظر بمانید تا {name} کارتی از کارت‌های کنارگذاشته برگزیند…',
+  'choices.waiting.pickBoardToken': 'منتظر بمانید تا {name} یک نشان پیشرفت برگزیند…',
   'choices.waiting.pickLibraryToken': {
     other: '{name} از میان {count} نشان پنهان کتابخانه‌ی بزرگ انتخاب می‌کند…'
   },
-  'choices.waiting.chooseStarter': 'در انتظار تا {name} آغازکننده‌ی دوران {age} را برگزیند…',
+  'choices.waiting.chooseStarter': 'منتظر بمانید تا {name} آغازکننده‌ی دوران {age} را برگزیند…',
 
   // Destroy (the Statue of Zeus, Circus Maximus).
   'choices.destroy.title': 'نابود کردن یک کارت',
@@ -32,14 +32,14 @@ export const choices = {
   'choices.discard.intro': 'یک کارت کنارگذاشته را برگزینید تا رایگان ساخته شود.',
   'choices.discard.confirm': 'ساخت رایگان {card}',
   'choices.discard.sheetTitle': 'کارت‌های کنارگذاشته',
-  'choices.discard.order': 'قدیمی‌ترین در آغاز.',
+  'choices.discard.order': 'قدیمی‌ترین‌ها اول.',
   'choices.discard.filter': 'نمایش کارت‌ها بر پایه‌ی رنگ',
   'choices.discard.all': 'همه',
   'choices.discard.count': {
     '=0': 'کارتی نیست',
     other: '{count} کارت'
   },
-  'choices.discard.empty': 'هنوز کارتی کنار گذاشته نشده است.',
+  'choices.discard.empty': 'هیچ کارت کنارگذاشته‌ای نیست.',
 
   // Progress tokens: a science pair, and the Great Library.
   'choices.token.title': 'یک نشان پیشرفت برگزینید',
