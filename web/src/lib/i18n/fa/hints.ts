@@ -165,7 +165,8 @@ export const hints = {
   'hints.note.denyBuild': 'ساختنش آن را از {name} می‌گیرد.',
   'hints.note.denyTuck': 'اگر زیر شگفتی گذاشته شود، برای {name} از بازی بیرون است.',
   'hints.note.shortByDiscard': {
-    other: 'یک کنار گذاشتن (+{count} سکه) با قیمت‌های امروز هزینه‌اش را جور می‌کند.'
+    other:
+      'با کنار گذاشتن کارتی دیگر (+{count} سکه)، نوبت بعد می‌توانید این را بسازید، اگر هنوز اینجا باشد و قیمت‌ها عوض نشوند.'
   },
 
   'hints.discard.poolYou': 'آرامگاه شما می‌تواند دوباره بسازد',
@@ -188,8 +189,9 @@ export const hints = {
   'hints.outcome.endBlueNamed':
     'بازی تمام می‌شود: هر کدام {a} امتیاز، و {name} با امتیاز کارت‌های آبی می‌برد.',
   'hints.outcome.endShared': 'بازی با پیروزی مشترک تمام می‌شود، هر کدام {a} امتیاز.',
-  'hints.outcome.vp': '{delta} امتیاز',
-  'hints.outcome.vpNamed': '{name}: {delta} امتیاز',
+  'hints.outcome.vp': '{delta} امتیاز کل (با احتساب سکه‌ها)',
+  'hints.outcome.vpShort': '{delta} امتیاز کل',
+  'hints.outcome.vpNamed': '{name}: {delta} امتیاز کل (با احتساب سکه‌ها)',
   'hints.outcome.pawn': {
     other: 'مهره {count} خانه به سوی پایتخت {name}'
   },
@@ -393,10 +395,14 @@ export const hints = {
   'hints.token.wins': 'بازی را می‌برد',
   'hints.token.coins': { other: '+{count} سکه' },
   'hints.token.vp': '{delta} امتیاز',
-  'hints.token.saves': {
-    other: '{count} سکه صرفه‌جویی در کارت‌ها و شگفتی‌های نمایان'
+  'hints.token.savesMasonry': {
+    other: 'در کارت‌های آبی نمایان {count} سکه صرفه‌جویی می‌کند'
   },
-  'hints.token.savesNothing': 'هیچ صرفه‌جویی در آنچه اکنون نمایان است',
+  'hints.token.savesArchitecture': {
+    other: 'در شگفتی‌های نمایان {count} سکه صرفه‌جویی می‌کند'
+  },
+  'hints.token.savesNothingMasonry': 'اکنون در کارت‌های آبی نمایان صرفه‌جویی نمی‌کند',
+  'hints.token.savesNothingArchitecture': 'اکنون در شگفتی‌های نمایان صرفه‌جویی نمی‌کند',
   'hints.token.economy': {
     other: 'خرید {name} از بانک برای کارت‌هایی که می‌تواند بردارد: {count} سکه'
   },
@@ -487,7 +493,7 @@ export const hints = {
     'هر نماد علمی روی دو کارت است. هر دو را داشته باشید تا یک نشان پیشرفت بردارید. این نشانه کارتی را نشان می‌دهد که جفت شما را کامل می‌کند.',
   'hints.tip.denyPair':
     'این کارت جفت علمی {name} را کامل می‌کند و او یک نشان پیشرفت برمی‌دارد. برداشتنش آن را از او دور نگه می‌دارد.',
-  'hints.tip.win': 'تاج کارتی را نشان می‌دهد که اگر اکنون آن را بسازید، بازی را می‌برید.',
+  'hints.tip.win': 'تاج کارتی را نشان می‌دهد که اگر آن را بسازید، بازی را می‌برید.',
   'hints.tip.winOpp': 'تاج توخالی کارتی را نشان می‌دهد که برای {name} پیروزی می‌آورد.',
   'hints.tip.loot':
     'سپرهای این کارت مهره را روی یک نشان غارت می‌برند، و بازیکن دیگر سکه از دست می‌دهد.',

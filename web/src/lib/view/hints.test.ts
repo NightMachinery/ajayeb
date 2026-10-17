@@ -139,6 +139,36 @@ describe('solid and outlined by viewer', () => {
     ]);
   });
 
+  it('does not mark or describe looting when the treasury is empty', () => {
+    const empty = hints({
+      codes: ['loot'],
+      effect: { ...LOOT.effect!, military: { from: 2, to: 3, loot: [{ at: 3, lost: 0 }] } }
+    });
+    expect(cardPip([empty, hints()], SEAT0, ALL, NAMES)).toBeUndefined();
+    const lines = cardSections('garrison', [empty, hints()], SEAT0, ALL, NAMES)[0]!.lines;
+    expect(lines.some((line) => line.id === 'pawn')).toBe(true);
+    expect(lines.some((line) => line.id === 'loot')).toBe(false);
+  });
+
+  it('distinguishes Masonry and Architecture savings in view', () => {
+    const value = {
+      token: 'masonry',
+      seat: 0,
+      coins: 0,
+      vp: 0,
+      wins: false,
+      savings: 12,
+      count: 0
+    };
+    expect(tokenValueText(value, NAMES)).toBe('saves 12 coins on the blue cards in view');
+    expect(tokenValueText({ ...value, token: 'architecture', savings: 1 }, NAMES)).toBe(
+      'saves 1 coin on the wonders in view'
+    );
+    expect(tokenValueText({ ...value, savings: 0 }, NAMES)).toBe(
+      'saves nothing on the blue cards in view now'
+    );
+  });
+
   it('loot speaks to the loser on their own screen', () => {
     const pip = cardPip([hints(), LOOT], SEAT0, ALL, NAMES)!;
     expect(pip.top).toMatchObject({ code: 'loot', side: 'opp' });
@@ -332,7 +362,7 @@ describe('the sheet lines', () => {
 
   it('short by discard, only when a discard covers the gap', () => {
     expect(shortByDiscard(2, 3, ALL)).toBe(
-      'A discard (+3 coins) would cover it at today’s prices.'
+      'Discarding another card (+3 coins) would let you build this next turn, if it is still here and prices stay the same.'
     );
     expect(shortByDiscard(4, 3, ALL)).toBeUndefined();
     expect(shortByDiscard(2, 3, new Set())).toBeUndefined();

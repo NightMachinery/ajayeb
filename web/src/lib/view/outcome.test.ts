@@ -121,7 +121,8 @@ describe('outcomeTerms', () => {
   it('shows the coins after with their change, and points', () => {
     const terms = outcomeTerms(outcome({ coins: [4, 7], score: [3, 0] }), ctx());
     expect(terms.map((x) => x.id)).toEqual(['vp', 'coins']);
-    expect(terms[0]!.short).toBe('+3');
+    expect(terms[0]!.short).toBe('+3 total VP');
+    expect(terms[0]!.text).toBe('+3 total VP (coins included)');
     expect(terms[1]!.text).toBe('4 coins after (\u22123)');
   });
 
@@ -137,6 +138,20 @@ describe('outcomeTerms', () => {
     expect(terms[0]!.text).toBe('Pawn 2 spaces toward Moon’s capital');
     expect(terms[0]!.short).toBe('+2');
     expect(terms[1]!.text).toBe('Moon loses 2 coins to looting');
+  });
+
+  it('omits zero-coin looting while still showing the pawn move', () => {
+    const terms = outcomeTerms(
+      outcome({ pawn: { from: 2, to: 3, loot: [{ at: 3, lost: 0 }] } }),
+      ctx()
+    );
+    expect(terms.map((x) => x.id)).toEqual(['pawn']);
+  });
+
+  it('explains both players’ net score changes without inferring card points', () => {
+    const terms = outcomeTerms(outcome({ score: [-1, 2] }), ctx());
+    expect(terms.find((x) => x.id === 'vp')?.text).toBe('−1 total VP (coins included)');
+    expect(terms.find((x) => x.id === 'vpOpp')?.text).toBe('Moon: +2 total VP (coins included)');
   });
 
   it('speaks to seat 1 as the mover', () => {

@@ -50,7 +50,7 @@ describe('formatLogEvent: real recorded events', () => {
     expect(pawn.to).toBe(9);
     expect(formatLogEvent(pawn, names)).toEqual({
       kind: 'pawn',
-      text: 'The military pawn moves toward Moon.'
+      text: 'The military pawn moves toward Omid.'
     });
   });
 
@@ -108,6 +108,15 @@ describe('formatLogEvent: kinds with no recorded fixture', () => {
       names
     );
     expect(line?.text).toBe('Sara built the wonder Pyramids, using Baths.');
+  });
+
+  it('names either pawn destination and falls back to a crest for an unnamed seat', () => {
+    expect(formatLogEvent(event({ kind: 'pawn', from: 1, to: 0 }), names)?.text).toBe(
+      'The military pawn moves toward Sara.'
+    );
+    expect(formatLogEvent(event({ kind: 'pawn', from: 0, to: 1 }), ['', ''])?.text).toBe(
+      'The military pawn moves toward Moon.'
+    );
   });
 
   it('loot', () => {

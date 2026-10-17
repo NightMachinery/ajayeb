@@ -56,6 +56,23 @@ describe('t', () => {
     expect(t('coins.count', { count: 7 })).toBe('7 coins');
   });
 
+  it('pluralizes a resource chip by its purchase price, independently of production', () => {
+    expect(
+      t('board.resource.chip', {
+        resource: 'Clay',
+        count: 0,
+        coins: t('coins.count', { count: 1 })
+      })
+    ).toBe('Clay: produce 0, buy at 1 coin each');
+    expect(
+      t('board.resource.chip', {
+        resource: 'Clay',
+        count: 1,
+        coins: t('coins.count', { count: 2 })
+      })
+    ).toBe('Clay: produce 1, buy at 2 coins each');
+  });
+
   it('prefers an exact =n form over the plural category', () => {
     expect(t('cards.left', { count: 0 })).toBe('No cards left');
     expect(t('cards.left', { count: 1 })).toBe('1 card left');

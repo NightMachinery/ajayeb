@@ -82,7 +82,7 @@ export const board = {
   'board.resource.stone': 'Stone',
   'board.resource.glass': 'Glass',
   'board.resource.papyrus': 'Papyrus',
-  'board.resource.chip': '{resource}: produce {count}, buy at {price} coins each',
+  'board.resource.chip': '{resource}: produce {count}, buy at {coins} each',
   'board.resource.choiceHint': 'Also available from a choice producer',
 
   // A seat's wonders: the phone strip's wonder button (WonderButton.svelte)
@@ -154,7 +154,7 @@ export const board = {
   'board.log.draft': '{name} drafted {wonder}.',
   'board.log.draftRound2': 'The second round of wonders is revealed.',
   'board.log.ageStart': 'Age {age} begins.',
-  'board.log.pawn': 'The military pawn moves toward {crest}.',
+  'board.log.pawn': 'The military pawn moves toward {name}.',
   'board.log.build': '{name} built {card}.',
   'board.log.discard': '{name} discarded {card} for {amount} coins.',
   'board.log.wonder': '{name} built the wonder {wonder}, using {card}.',

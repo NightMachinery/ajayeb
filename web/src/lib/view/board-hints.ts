@@ -490,7 +490,16 @@ export function tokenValueText(v: TokenValueView, names: HintNames): string {
     case 'masonry':
     case 'architecture':
       parts.push(
-        v.savings > 0 ? t('hints.token.saves', { count: v.savings }) : t('hints.token.savesNothing')
+        v.savings > 0
+          ? t(
+              v.token === 'masonry' ? 'hints.token.savesMasonry' : 'hints.token.savesArchitecture',
+              { count: v.savings }
+            )
+          : t(
+              v.token === 'masonry'
+                ? 'hints.token.savesNothingMasonry'
+                : 'hints.token.savesNothingArchitecture'
+            )
       );
       break;
     case 'economy':

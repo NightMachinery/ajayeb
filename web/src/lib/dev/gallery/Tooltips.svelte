@@ -195,7 +195,7 @@
           text: t('board.resource.chip', {
             resource: t('card.resource.wood'),
             count: 2,
-            price: 3
+            coins: t('coins.count', { count: 3 })
           })
         })}
       >

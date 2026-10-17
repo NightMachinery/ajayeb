@@ -97,6 +97,8 @@ The pip vocabulary. Shape carries the meaning, fill the side, so colour is never
 - **Glows.** A strip or panel glows in four levels: none, calm (a faint hairline: close, but it can no longer happen), soft (the warning) and strong (a thicker ring: a win with one action exists now).
 - **The track.** A crown under each capital says that reaching it wins the game at once, apart from the zone tablets, whose tooltips say that only the player ahead scores them at the end. With the military hints, a capital shows the shields the opponent still needs at 5 or fewer, and its tooltip says whether the opponent can still gather them.
 
+Move outcome lines label the server's score change as total VP, with coin points included in the tooltip and screen-reader text. The phone form keeps the total VP label. Zero-coin looting contributes no pip or loss line. Progress-token savings distinguish Masonry's blue cards from Architecture's wonders. Pawn log lines use player display names, with a crest fallback for unnamed seats.
+
 Test hooks of the hints, besides `data-card` and `data-act`:
 
 - Pips: `data-hint` (the code: `win`, `pair`, `loot`, `hourglass`, `ready`, `law`), `data-hint-side` (`own` or `opp`), `data-hint-seat`, `data-style` (`solid`, `outline`, `tint`), `data-tone` (`gold`, `sun`, `moon`) and `data-hint-more` on a card's pip; `data-hint-line` (the code) and `data-hint-side` on the lines of a pip's tooltip.
@@ -112,7 +114,7 @@ Test hooks of the hints, besides `data-card` and `data-act`:
 Tooltips never use the native `title` attribute. Give an element one with the `tooltip` attachment from `src/lib/ui/tooltip.svelte.ts`:
 
 ```svelte
-<span {@attach tooltip({ text: t('board.resource.chip', { resource, count, price }) })}>
+<span {@attach tooltip({ text: t('board.resource.chip', { resource, count, coins: t('coins.count', { count: price }) }) })}>
 ```
 
 Pass `undefined` instead of the content for no tooltip (a conditional one). The content has `text` (already through `t()`, short), an optional `diagram` snippet (a small concept picture whose labels are translatable text beside the SVG, never baked into it), an optional `stack` of linked previews, optional `lines` (short status lines under the text, such as the hints a tooltip adds), an optional `rulesId` (a `RuleSectionId`: the rules reference section its "More in Rules" link opens), and an optional `actionable` override for the touch model.

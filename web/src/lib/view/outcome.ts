@@ -181,7 +181,7 @@ function pawnTerms(p: PawnMoveView, ctx: OutcomeContext): OutcomeTerm[] {
     out.push({ id: 'pawn', text, short: signed(toward), icon: 'shield' });
   }
   const lost = p.loot.reduce((n, l) => n + l.lost, 0);
-  if (p.loot.length > 0) {
+  if (lost > 0) {
     // A looting token on the mover's way is always the other seat's.
     const text = isYou(opp, ctx.names)
       ? t('hints.outcome.lootYou', { count: lost })
@@ -228,7 +228,7 @@ export function outcomeTerms(o: OutcomeView | undefined, ctx: OutcomeContext): O
       out.push({
         id: 'vp',
         text: t('hints.outcome.vp', { delta: signed(o.score[me]) }),
-        short: signed(o.score[me]),
+        short: t('hints.outcome.vpShort', { delta: signed(o.score[me]) }),
         icon: 'vp-laurel',
         tone: o.score[me] > 0 ? 'gain' : 'loss'
       });

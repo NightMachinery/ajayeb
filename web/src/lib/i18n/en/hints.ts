@@ -170,8 +170,9 @@ export const hints = {
   'hints.note.denyBuild': 'Building it takes it from {name}.',
   'hints.note.denyTuck': 'Tucked under a wonder, it is out of the game for {name}.',
   'hints.note.shortByDiscard': {
-    one: 'A discard (+{count} coin) would cover it at today’s prices.',
-    other: 'A discard (+{count} coins) would cover it at today’s prices.'
+    one: 'Discarding another card (+{count} coin) would let you build this next turn, if it is still here and prices stay the same.',
+    other:
+      'Discarding another card (+{count} coins) would let you build this next turn, if it is still here and prices stay the same.'
   },
 
   'hints.discard.poolYou': 'Your Mausoleum could rebuild',
@@ -192,8 +193,9 @@ export const hints = {
   'hints.outcome.endBlueYou': 'Ends the game: {a} points each, and you win on blue points.',
   'hints.outcome.endBlueNamed': 'Ends the game: {a} points each, and {name} wins on blue points.',
   'hints.outcome.endShared': 'Ends the game in a shared victory, {a} points each.',
-  'hints.outcome.vp': '{delta} VP',
-  'hints.outcome.vpNamed': '{name}: {delta} VP',
+  'hints.outcome.vp': '{delta} total VP (coins included)',
+  'hints.outcome.vpShort': '{delta} total VP',
+  'hints.outcome.vpNamed': '{name}: {delta} total VP (coins included)',
   'hints.outcome.pawn': {
     one: 'Pawn {count} space toward {name}’s capital',
     other: 'Pawn {count} spaces toward {name}’s capital'
@@ -419,11 +421,16 @@ export const hints = {
   'hints.token.wins': 'wins the game',
   'hints.token.coins': { one: '+{count} coin', other: '+{count} coins' },
   'hints.token.vp': '{delta} VP',
-  'hints.token.saves': {
-    one: 'saves {count} coin on the cards and wonders in view',
-    other: 'saves {count} coins on the cards and wonders in view'
+  'hints.token.savesMasonry': {
+    one: 'saves {count} coin on the blue cards in view',
+    other: 'saves {count} coins on the blue cards in view'
   },
-  'hints.token.savesNothing': 'saves nothing in view now',
+  'hints.token.savesArchitecture': {
+    one: 'saves {count} coin on the wonders in view',
+    other: 'saves {count} coins on the wonders in view'
+  },
+  'hints.token.savesNothingMasonry': 'saves nothing on the blue cards in view now',
+  'hints.token.savesNothingArchitecture': 'saves nothing on the wonders in view now',
   'hints.token.economy': {
     one: '{name}’s trade on the cards they can take: {count} coin',
     other: '{name}’s trade on the cards they can take: {count} coins'
@@ -518,7 +525,7 @@ export const hints = {
     'Each science symbol is on two cards. Own both and you pick a progress token. This mark shows a card that completes your pair.',
   'hints.tip.denyPair':
     'This card would complete {name}’s science pair, and they would pick a progress token. Taking it keeps it from them.',
-  'hints.tip.win': 'A crown marks a card that wins the game if you build it now.',
+  'hints.tip.win': 'A crown marks a card that wins the game if you build it.',
   'hints.tip.winOpp': 'An outlined crown marks a card that would win the game for {name}.',
   'hints.tip.loot':
     'This card’s shields would push the pawn onto a looting token, and the other player would lose coins.',

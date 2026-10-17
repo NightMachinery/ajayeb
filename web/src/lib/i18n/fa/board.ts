@@ -72,7 +72,7 @@ export const board = {
   'board.resource.stone': 'سنگ',
   'board.resource.glass': 'شیشه',
   'board.resource.papyrus': 'پاپیروس',
-  'board.resource.chip': '{resource}: تولید {count}، خرید هر واحد {price} سکه',
+  'board.resource.chip': '{resource}: تولید {count}، خرید هر واحد {coins}',
   'board.resource.choiceHint': 'از یک کارت تولید انتخابی هم به دست می‌آید',
 
   // A seat's wonders.
@@ -138,7 +138,7 @@ export const board = {
   'board.log.draft': '{name} شگفتی {wonder} را برداشت.',
   'board.log.draftRound2': 'دور دوم شگفتی‌ها رو شد.',
   'board.log.ageStart': 'دوران {age} آغاز شد.',
-  'board.log.pawn': 'مهره‌ی نظامی به سوی {crest} رفت.',
+  'board.log.pawn': 'مهره‌ی نظامی به سوی {name} رفت.',
   'board.log.build': '{name} {card} را ساخت.',
   'board.log.discard': '{name} {card} را برای {amount} سکه کنار گذاشت.',
   'board.log.wonder': '{name} شگفتی {wonder} را با {card} ساخت.',

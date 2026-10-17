@@ -138,7 +138,9 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       const towardMoon = event.to > (event.from ?? 0);
       return {
         kind: event.kind,
-        text: t('board.log.pawn', { crest: t(towardMoon ? 'board.crest.moon' : 'board.crest.sun') })
+        text: t('board.log.pawn', {
+          name: names[towardMoon ? 1 : 0] || t(towardMoon ? 'board.crest.moon' : 'board.crest.sun')
+        })
       };
     }
     case 'loot':

@@ -48,7 +48,7 @@ export const tutorial = {
   'tutorial.lesson.turn':
     'Each turn you take one card. You build it, sell it for coins, or tuck it under a wonder to build that wonder.',
   'tutorial.lesson.reveal':
-    'Taking a card uncovers the cards below it. {card} has just been uncovered, so it turned face up.',
+    'Taking a card uncovers the cards it was covering. {card} has just been uncovered, so it turned face up.',
   'tutorial.lesson.military':
     'Your shield moved the pawn one space toward the capital of the {name}. Reach a capital and you win at once.',
   'tutorial.lesson.coins':
@@ -70,7 +70,7 @@ export const tutorial = {
   'tutorial.action.buildOwn':
     '{card} costs {resource}, which you make, so it costs no coins. The cost line shows it.',
   'tutorial.action.trade':
-    'You make no {resource}, so you buy it from the bank. The cost line shows the price: 2 coins, plus 1 for each {resource} the {name} makes.',
+    'You make no {resource}, so buy it from the bank for 2 coins, plus 1 for each {resource} the {name} makes. The total VP preview includes coin points, so spending coins can lower it.',
   'tutorial.action.discard':
     'Sell {card} for coins: 2, plus 1 for each yellow card you own. It goes to the discard pile.',
   'tutorial.action.buildWonder':

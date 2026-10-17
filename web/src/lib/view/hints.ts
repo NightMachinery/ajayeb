@@ -185,6 +185,9 @@ export function cardPip(
     const ch = hints[seat];
     for (const code of ch.codes) {
       if (!families.has(CODE_FAMILY[code])) continue;
+      // Crossing a looting space with an empty treasury has no coin loss to show.
+      if (code === 'loot' && !(ch.effect?.military?.loot.some((l) => l.lost > 0) ?? false))
+        continue;
       const side = seat === p.seat ? 'own' : 'opp';
       entries.push({
         code,
@@ -325,7 +328,7 @@ export function seatLines(
           : t('hints.line.pawn', { name: names.names[otherSeat], count: spaces })
     });
     const lost = m.loot.reduce((n, l) => n + l.lost, 0);
-    if (m.loot.length > 0) {
+    if (lost > 0) {
       out.push({
         id: 'loot',
         code: 'loot',

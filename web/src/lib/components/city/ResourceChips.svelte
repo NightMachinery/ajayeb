@@ -104,13 +104,18 @@
     {@const count = production.fixed[resource]}
     {@const price = tradePrices[resource]}
     {@const resourceName = t(labelKey(resource))}
+    {@const label = t('board.resource.chip', {
+      resource: resourceName,
+      count,
+      coins: t('coins.count', { count: price })
+    })}
     {@const caret = carets?.get(resource)}
     <li
       class="relative flex items-center rounded-control border border-rule bg-panel {compact
         ? 'h-5 gap-0.5 px-1 text-[11px]'
         : 'gap-1 px-1.5 py-0.5 text-xs'}"
       {@attach tooltip({
-        text: t('board.resource.chip', { resource: resourceName, count, price })
+        text: label
       })}
       data-resource={resource}
     >
@@ -143,9 +148,7 @@
           <Icon name="choice" />
         </span>
       {/if}
-      <span class="sr-only"
-        >{t('board.resource.chip', { resource: resourceName, count, price })}</span
-      >
+      <span class="sr-only">{label}</span>
     </li>
   {/each}
 </ul>

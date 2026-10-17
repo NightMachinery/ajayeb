@@ -263,6 +263,17 @@ No key falls back to English. Within the Persian table:
 
 Everything else is translated, the `/dev/gallery` and demo strings included.
 
+## Player-facing wording
+
+- Pawn event lines use the destination player's display name in both locales (`board.log.pawn`). The Persian sentence is «مهره‌ی نظامی به سوی {name} رفت.»; the seat emblem is only a fallback when that seat has no name.
+- Outcome score changes are **total VP**, امتیاز کل, including coin points: «{delta} امتیاز کل (با احتساب سکه‌ها)». The phone form is «{delta} امتیاز کل». The named opponent form uses the same explanation after «{name}:». The trading lesson explains «پیش‌نمایش امتیاز کل، امتیاز سکه‌ها را هم حساب می‌کند، پس خرج کردن سکه می‌تواند آن را کم کند.» No card-versus-coin split is inferred by the client.
+- A crown means a win **if the card is built**, «اگر آن را بسازید، بازی را می‌برید», without اکنون: a covered card can carry the same mark.
+- A shortfall note says **another card**, کارتی دیگر, and makes the later build conditional on availability and unchanged prices: «با کنار گذاشتن کارتی دیگر (+{count} سکه)، نوبت بعد می‌توانید این را بسازید، اگر هنوز اینجا باشد و قیمت‌ها عوض نشوند.»
+- Masonry's savings name **blue cards in view**, کارت‌های آبی نمایان. Architecture's name **wonders in view**, شگفتی‌های نمایان. Both positive and zero-saving messages keep this scope. The card producer's broader savings message still covers cards and wonders.
+- Resource-chip prices reuse the pluralized coin message (سکه), separately from the production count: «{resource}: تولید {count}، خرید هر واحد {coins}». The English price is therefore “one coin” or “two coins” according to `Intl.PluralRules`.
+- The reveal lesson says **the cards it was covering**, «کارت‌هایی را که می‌پوشاند», rather than referring to a direction on screen.
+- A zero-coin looting result is omitted from card pips, card details and move outcome lines. The pawn movement remains visible.
+
 ## Open questions for the native check
 
 - **Copy**: رونوشت is formal; کپی is what most apps say.

@@ -17,6 +17,7 @@ import { expect } from '@playwright/test';
 import type { Choice, View } from '../../web/src/lib/wire';
 import { test } from '../fixtures/base';
 import { GameDriver } from '../fixtures/driver';
+import { currentView } from '../fixtures/scenario';
 import { watchHygiene } from '../fixtures/hygiene';
 import { createDevRoom, recordGame, recordPolicy } from '../fixtures/ws-game';
 
@@ -75,6 +76,33 @@ function racePolicy(view: View): Choice {
   }
   return recordPolicy(view);
 }
+
+test('a card’s score preview labels the total and explains coin points @mobile', async ({
+  page,
+  baseURL
+}) => {
+  if (!baseURL) throw new Error('no baseURL');
+  await page.addInitScript(() => {
+    localStorage.setItem('ajayeb:name', 'Hints');
+    const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+    localStorage.setItem(
+      'ajayeb:settings',
+      JSON.stringify({ ...settings, hotseatPassDevice: false })
+    );
+  });
+  const room = await createDevRoom(baseURL, { mode: 'hotseat', seed: '7', scenario: 'mausoleum' });
+  await page.goto(room.path);
+  const driver = new GameDriver(page);
+  await driver.waitReady();
+  const view = await currentView(page);
+  const seat = view.toMove === 1 ? 1 : 0;
+  const choice = view.choices.find((c) => c.kind === 'construct' && c.outcome?.score[seat]);
+  if (!choice?.card) throw new Error('mausoleum scenario has no build with a score change');
+  await driver.openCard(choice.card);
+  const line = page.locator(`dialog[open] [data-outcome="${choice.key}"]`);
+  await expect(line.locator('[data-outcome-term="vp"]')).toContainText('total VP');
+  await expect(line.locator('.sr-only')).toContainText('total VP (coins included)');
+});
 
 let recorded: Promise<WinPosition> | null = null;
 
