@@ -247,6 +247,13 @@ Creates a room and joins the sender to it.
   stored before the field existed allows undo. An online room has no undo,
   so a `create` for one that names `allowUndo` at all, `true` or `false`,
   is refused as `bad-request`.
+- `tutorial` is optional: `true` makes a tutorial room, the guided first
+  game. It must come with mode `ai` and bot `easy`, and the creator's `seat`
+  must be absent or 0 (`"random"` is refused). Anything else is refused as
+  `bad-request`. The server picks the game's seed and options from its
+  tutorial script; the creator's `hints`, `allowUndo` and names apply as
+  usual. A rematch of a tutorial room is an ordinary `ai` room, no longer a
+  tutorial. Absent or `false` means an ordinary room.
 
 The creator becomes the game's **admin**, the one user who may change its
 hint settings. The admin and the settings are stored with the room, so they
@@ -567,7 +574,8 @@ full game view described under "The view and its events" below.
   connection holds it (`you`); the number of `spectators`; the game's hint
   settings, `hints` (see the `hints` frame); and `allowUndo`, whether the
   game allows undo at all (fixed at creation; always `false` in an online
-  room). Every viewer sees the same value.
+  room); and `tutorial`, whether the room is a tutorial room (see `create`).
+  Every viewer sees the same value.
 - `nameNo` tells equal display names apart. It is 0 for a name that needs
   no number. When a human takes a seat, or renames it, under a name equal
   to the other human seat's (compared without case and outer spaces), the
@@ -593,6 +601,44 @@ full game view described under "The view and its events" below.
   undo. An available undo omits the reason. The client translates the code;
   local offline and pending-request explanations take precedence while the
   transport prevents sending.
+- `tutorial` is present only in a tutorial room's frames for its player
+  (seat 0), never for a spectator. It says where the guided first game stands
+  and what to teach now. The server derives it from the tutorial's script and
+  the room's action log, so undo and reload change it like any other part of
+  the frame. It carries ids, slugs and keys only, and the client words every
+  lesson.
+  - `script` is the script's name, such as `first-game`.
+  - `status` is `guided` while the log follows the script and a guided turn
+    is ahead, `free` once the guided part is over (the script is finished,
+    or the player left it), and `complete` once Age II is in play or the game
+    is over.
+  - `left` is true when the log left the script before its end. An undo back
+    onto the script clears it.
+  - `turn` and `turns` count the player's guided turns: `turn` is the turn
+    ahead, 1-based, and `turns` the number in the script. Both are 0 outside
+    the guided part.
+  - `lessons` are the info lessons to show now, in order, each
+    `{"id": ..., "card"?: ..., "wonder"?: ...}`, where `card` and `wonder`
+    are catalog slugs that the lesson names or points at. The list is never
+    null and is often empty. While guided, it holds the lessons of the
+    player's turn ahead, and nothing on the bot's turns. When the script is
+    finished, it holds the outro (`tokens`, then `playOn`), once, at the
+    first position after the script with the player to move. When the player
+    has left the script, it holds `leftPath` until the player moves again.
+  - `action` is present while guided and the player is to move:
+    `{"id": ..., "key": ..., "card"?: ..., "wonder"?: ...}`, the lesson that
+    explains the turn and the one action key it asks for, which is always one
+    of the view's `choices`. The server still accepts any legal key. A
+    different one simply leaves the script, and from then on the bot plays
+    its own moves.
+  - The lesson ids are `draftIntro`, `draftRound2`, `draftPick`,
+    `draftPickAgain`, `ageOne`, `turn`, `buildFree`, `reveal`, `buildOwn`,
+    `military`, `trade`, `coins`, `discard`, `wonders`, `buildWonder`,
+    `science`, `tokens`, `chain`, `playOn` and `leftPath`.
+
+  A guided move, one that the script asked for and the player made while on
+  the script, gets no move review. While the log follows the script, the bot
+  plays the script's replies.
 - `view.discard` is the current public pile in oldest-first arrival order.
   Discards and destroyed city cards append; rebuilding a card removes it.
   Undo and room reload reconstruct the same order from public action events.
@@ -1060,6 +1106,10 @@ so a page on another site cannot post it with a plain form.
   elsewhere.
 - `options` are the game's options, as in the game log below
   (`firstPlayer`, `centerPawn`, `hideAtEnd`); absent means the defaults.
+- `tutorial`, when `true`, makes a tutorial room, as `create` does. The mode
+  must be `ai`, `bot` absent or `easy`, `seat` absent or 0. `seed`, `options`
+  and `scenario` must be absent, because the script fixes the first two.
+  `actions` may follow the script or leave it.
 
 Unknown fields are refused. The room's seats are left open, except the bot's
 seat in an `ai` room: the first user to `join` claims them as the mode
@@ -1090,6 +1140,22 @@ is shortened):
 ```json
 {"ok": true, "scenarios": ["age-transition-chooser", "appian-economy", "circus-maximus"]}
 ```
+
+`GET /api/dev/tutorial` returns the current tutorial script, so tests can
+follow it without copying it (the `entries` list is shortened here):
+
+```json
+{"ok": true, "name": "first-game", "seed": "82",
+ "options": {"firstPlayer": "seat0", "centerPawn": "lastActiveChooses", "hideAtEnd": false},
+ "human": 0,
+ "entries": [{"seat": 0, "key": "draft:temple-of-artemis", "lessons": [{"id": "draftIntro"}],
+              "action": {"id": "draftPick", "key": "draft:temple-of-artemis", "wonder": "temple-of-artemis"}}],
+ "outro": [{"id": "tokens"}, {"id": "playOn"}]}
+```
+
+Each entry has the `seat` that plays it, its `key`, the `lessons` shown
+before it, and, on the player's entries, the `action`. A bot entry has empty
+`lessons` and no `action`.
 
 ## The view and its events
 
