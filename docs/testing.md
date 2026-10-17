@@ -544,46 +544,68 @@ played, final hash). Each test takes 2 to 4 s.
 
 ### `animation.spec.ts` (`@mobile`, one case `@perf`)
 
-The move animations' four acceptance checks (UX design section 12), on
-both projects. Each case writes its own Animation speed with
-`fixtures/anim.ts` `useSettings` (after the base fixture's motion-off
-override) and opens its own rooms through `POST /api/dev/rooms`: seed 11
-after its draft (played over the socket with the first offer each time),
-the first position of that game with an affordable build that trades and
-reveals a card (`findPosition`), and the `appian-economy` and
-`looting-double` scenarios.
+The move and event animations' four acceptance checks (UX design section
+12), and Replay last move, on both projects. Each case writes its own
+Animation speed with `fixtures/anim.ts` `useSettings` (after the base
+fixture's motion-off override) and opens its own rooms through `POST
+/api/dev/rooms`: seed 11 from its start or after its draft (played over the
+socket with the first offer each time), the first position of that game
+with an affordable build that trades and reveals a card (`findPosition`),
+and named scenarios.
+
+The scripted sequences, each one or more moves: that build, a discard, a
+wonder that moves coins (`appian-economy`), the Arsenal looting twice
+(`looting-double`), a bot's reply, a science pair and its token
+(`science-pair`), the Great Library and its token (`great-library`), the
+Statue of Zeus destroying a card (`zeus-destroy`), the Mausoleum
+rebuilding one (`mausoleum`), the last card of Age I and the starter's
+answer that deals Age II (`age-transition-chooser`), two draft picks, and a
+game's last card (`civilian-end`).
 
 - **a. Off is instant.** `recordMotion` wraps `Element.prototype.animate`
   and listens for `animationstart` and `transitionrun` before the app
-  loads. Five sequences (that build, a discard, a wonder that moves coins,
-  the Arsenal pushing the pawn, a bot's reply) are played with Animation
-  off: nothing may run longer than 10 ms, the runner plans and starts
-  nothing, and the moment the frame lands the coins, the pawn and the
-  face-up cards on screen are the view's, with nothing hidden.
-- **b. Purely visual.** The same five sequences, each once at normal speed
-  and once off, in fresh rooms; after the page is ready and every
-  animation has ended, the game screen's DOM is serialized (`screenDom`:
-  the room code, `data-fx-hidden`, ids, `aria-describedby` and transforms
-  in style attributes taken out) and the two must be identical.
+  loads. Every sequence is played with Animation off: nothing may run
+  longer than 10 ms, the runner plans and starts nothing, and the moment
+  each frame lands the coins (outside the draft), the pawn and the face-up
+  cards on screen are the view's, with nothing hidden and nothing in the
+  FX layer or its top part.
+- **b. Purely visual.** The same sequences, each once at normal speed and
+  once off, in fresh rooms; after the page is ready and every animation has
+  ended, the game screen's DOM is serialized one tag per line
+  (`screenDom`: the room code, `data-fx-hidden`, ids, `aria-describedby`,
+  transforms in style attributes and an art image's `loaded` class taken
+  out) and the two must be identical. A difference shows as the lines that
+  differ.
 - **c. Input back within 450 ms.** `recordInputBack` notes, at each
   animation frame, the first moment the test hook's `ready()` and
-  `you().canAct` are true for each version. For six hot-seat moves and
-  three bot answers that animated, that moment minus the frame's `swapAt`
-  (`__ajayebFx.frames()`) must be at most 450 ms. The bot's dwell and pick
-  come before the swap and are not counted. The failure message lists
-  every measurement. Like d it measures wall time, so it retries up to
-  twice on this often-loaded laptop.
+  `you().canAct` are true for each version. For six hot-seat moves, an age
+  change (its last card, the starter's answer whose frame deals the new
+  age, and the first move of that age, which waits only for its own card
+  to be dealt) and three bot answers that animated, that moment minus the
+  frame's `swapAt` (`__ajayebFx.frames()`) must be at most 450 ms. The
+  bot's dwell and pick come before the swap and are not counted. The
+  failure message lists every measurement. Like d it measures wall time,
+  so it retries up to twice on this often-loaded laptop.
 - **d. No long task during an animation (`@perf`).** A CDP session sets
   `Emulation.setCPUThrottlingRate` to 4, a buffered `PerformanceObserver`
   collects `longtask` entries, and ten hot-seat moves are played, each
-  after the last one's animations ended. No long task may overlap an
+  after the last one's animations ended, then an age change with the move
+  after it, then a game's last card. Each room is its own page load, so
+  its records are read before the next. No long task may overlap an
   animation's window (`__ajayebFx.anims()`: from its WAAPI `ready`, the
-  first frame it really moves, to its end). The annotation `perf` gives
-  the moves, animations, long tasks, how many overlap and the worst
-  overlapping and overall task in ms: read the worst overlapping one
-  against the 50 ms limit, and the overall one for how loaded the machine
-  was. This laptop is often busy, so the case retries up to twice; a pass
-  with the failed runs within 20 ms of the limit is acceptable.
+  first frame it really moves, to its end), and a deal and a victory banner
+  must have played. The annotation `perf` gives the moves, animations,
+  long tasks, how many overlap and the worst overlapping and overall task
+  in ms: read the worst overlapping one against the 50 ms limit, and the
+  overall one for how loaded the machine was. This laptop is often busy,
+  so the case retries up to twice; a pass with the failed runs within
+  20 ms of the limit is acceptable.
+- **e. Replay last move.** With Animation off the log sheet's control is
+  disabled and its tooltip (keyboard focus on desktop, a tap on the
+  phone) says to turn Animation on. At normal speed it is disabled before
+  any move, then after the Arsenal's looting it replays: new animations
+  are recorded, among them the looting, no move is sent (the version stays)
+  and the screen afterwards is the screen before.
 
 To film the animations for a visual check, slow them with CDP
 `Animation.setPlaybackRate` (0.2 shows a 320 ms flight over 1.6 s) rather
