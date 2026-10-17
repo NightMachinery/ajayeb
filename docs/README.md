@@ -23,6 +23,7 @@ These docs explain the current implementation, its rules and the tools used to b
 ## Package guides
 
 - [../web/README.md](../web/README.md): the web client: its layout, design tokens and Tailwind utilities, i18n, fonts and the `PUBLIC_DEV_ROUTES` flag.
+- [i18n/persian.md](i18n/persian.md): the Persian translation's glossary: the house terms, every card, wonder and token name with the reason for it, and the open questions for a native speaker's check.
 - [self-hosting.md](self-hosting.md): running Ajayeb locally for development and in production with `self_host.py`.
 - [../tools/chrome/README.md](../tools/chrome/README.md): the headless Chrome tools for screenshots, layout probes and SVG contact sheets.
 
