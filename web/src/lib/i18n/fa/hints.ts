@@ -528,7 +528,7 @@ export const hints = {
     'دورانی تازه: ساختاری تازه از کارت‌های قوی‌تر. بازیکنی که در مسیر نظامی عقب است انتخاب کرد چه کسی آن را آغاز کند، و دوران وقتی تمام می‌شود که آخرین کارتش برداشته شود.',
   'hints.tip.gotIt': 'فهمیدم',
   'hints.tip.more': 'بیشتر در قوانین',
-  'hints.tip.off': 'دیگر نکته‌ها را نشان نده',
+  'hints.tip.off': 'دیگر نکته‌ها را نشان ندهید',
   'hints.tip.offHint': 'از تنظیمات دوباره روشنشان کنید.',
 
   // The Settings screen's hint section (screens/Settings.svelte).

@@ -365,6 +365,7 @@ export function placeTip(opts: {
       Math.max(gap, vh - panelHeight - gap)
     );
   }
+  top = Math.min(Math.max(gap, top), Math.max(gap, vh - panelHeight - gap));
   const arrow = Math.min(Math.max(markCenterX - left, 12), width - 12) - 6;
   return { top, left, width, side, arrow };
 }

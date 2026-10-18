@@ -417,6 +417,10 @@ describe('the tips beyond the pips (M10.F3)', () => {
     const above = placeTip({ mark: lowMark, card: lowCard, panelHeight: 160, vw: 390, vh: 844 });
     expect(above.side).toBe('above');
     expect(above.top + 160).toBeLessThanOrEqual(lowCard.top - 8);
+    // Fallback when neither vertical nor horizontal space fits: top stays clamped to the viewport.
+    const cramped = placeTip({ mark, card, panelHeight: 220, vw: 320, vh: 260 });
+    expect(cramped.top).toBeGreaterThanOrEqual(8);
+    expect(cramped.top + 220).toBeLessThanOrEqual(260 - 8);
   });
 
   it('every tip names a rules section', () => {
