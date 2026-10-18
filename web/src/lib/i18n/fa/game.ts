@@ -167,6 +167,8 @@ export const game = {
 
   // The opponent move summary: one line per move, the player named in the title.
   'game.summary.title': 'حرکت {name}',
+  'game.summary.away': 'وقتی نبودید',
+  'game.undo.done': 'آخرین حرکت شما برگردانده شد.',
   'game.summary.open': 'نمایش آخرین حرکت حریف',
   'game.summary.close': 'برای بستن هر جا را بزنید',
   'game.summary.build': '{card} را ساخت',

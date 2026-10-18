@@ -229,22 +229,29 @@ export interface TriggerFrame {
  * must be the viewer's again (so a bot's reply, both moves of an extra turn
  * and the choices inside a turn make one popup), or the game must be over.
  * Never during the wonder draft, whose screen shows every pick. `history`
- * is the Session's history with this frame taken in.
+ * is the Session's history with this frame taken in. With `seenPly`, unseen
+ * history and a visibility wake may also trigger it; undo must be handled
+ * by the caller before this check.
  */
 export function summaryTrigger(
   prev: TriggerFrame | null,
   next: TriggerFrame,
-  history: readonly HistoryEntry[]
+  history: readonly HistoryEntry[],
+  seenPly?: number
 ): number | null {
-  if (!prev || prev.code !== next.code || next.version <= prev.version) return null;
-  if (next.history || next.events.length === 0) return null;
+  // A seen marker also permits history frames and waking without a new frame.
+  // The caller handles undo separately, clamping the marker to its new history.
+  if (seenPly === undefined) {
+    if (!prev || prev.code !== next.code || next.version <= prev.version) return null;
+    if (next.history || next.events.length === 0) return null;
+  }
   if (next.view.phase === 'wonderDraft') return null;
   const viewer = summaryViewer(next.room.mode, next.you.seats, next.view.toMove);
   if (viewer === null) return null;
   const over = next.view.phase === 'gameOver';
   if (!over && next.view.toMove !== viewer) return null;
   const last = history[history.length - 1];
-  if (!last || last.seat === viewer) return null;
+  if (!last || last.seat === viewer || (seenPly !== undefined && last.ply <= seenPly)) return null;
   return last.ply;
 }
 

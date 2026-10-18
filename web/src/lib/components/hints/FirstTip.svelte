@@ -2,8 +2,9 @@
   // One first-time tip (the hints design, "first-time-tips", M10.HS5): a
   // small callout beside the hint mark it explains, with "Got it" and "More
   // in Rules". It is a DismissLayer that keeps taps inside it, so its
-  // buttons work and any tap elsewhere closes it and is swallowed, like a
-  // tooltip; Escape closes it too.
+  // buttons work. On touch an enabled action outside closes the tip and
+  // keeps that action; other outside taps are swallowed. Tooltips keep
+  // their stricter any-tap-swallowed rule. Escape closes this tip too.
   //
   // A leaf with plain props: the container (FirstTips.svelte) decides which
   // tip is due; the gallery renders it standalone. `anchor` is a CSS
@@ -82,6 +83,8 @@
 <DismissLayer
   bind:open={() => open, (v) => !v && onclose()}
   keepInside
+  passTouchActions
+  role="note"
   label={t('hints.tip.label')}
   class="first-tip w-72 overflow-visible p-3"
 >

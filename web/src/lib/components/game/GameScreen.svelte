@@ -58,14 +58,12 @@
   // "Undo last move", the top bar's arrow, U or Ctrl+Z, and the pass-device
   // screen's "Undo X's move". A game without undo shows none of them.
   //
-  // The opponent move summary (MoveSummary, lib/view/move-summary.ts): when
-  // a live frame hands the turn back after the other side's moves, a popup
-  // lists them, once the Presenter shows that frame (and, in hot-seat, after
-  // the pass-device screen). Frames that replay history (a join, a resync,
-  // an undo) never open it. Settings can turn that off; the top bar's eye
-  // still opens the latest summary. Any tap or Escape closes it, and the tap
-  // is swallowed. It sits over the structure's top on a phone and over the
-  // viewer's own column on wide screens and in phone landscape.
+  // The opponent move summary opens when unseen opponent moves hand back
+  // the turn, including on reconnect, reload and waking a hidden page.
+  // The per-room/seat marker advances only after a visible presented frame.
+  // The pass-device screen already summarizes hot-seat moves, so it replaces
+  // the automatic popup there. The eye button always reopens the latest run.
+  // Any tap closes a summary and is swallowed, like a tooltip.
   //
   // The tutorial (M10.tutorial-client, the tutorial design): in a tutorial
   // room the presented frame carries the server's tutorial object. The step
@@ -77,7 +75,9 @@
   // menu resumes it. No first-time tip shows while a coach step is due or
   // the guided part runs.
   import { resolve } from '$app/paths';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
+  import type { Attachment } from 'svelte/attachments';
+  import { SeenMoves } from '$lib/ui/seen-moves';
   import ArtPrefetch from '$lib/art/ArtPrefetch.svelte';
   import { seatBotLevel } from '$lib/art/lookup';
   import { MediaQuery } from 'svelte/reactivity';
@@ -174,6 +174,10 @@
 
   const ui = new GameUi();
   const toasts = new Toasts();
+  const seenMoves = new SeenMoves();
+  let pageVisible = $state(
+    typeof document === 'undefined' || document.visibilityState !== 'hidden'
+  );
   const coarsePointer = new MediaQuery('(pointer: coarse)', false);
   // The draft's split layout (Draft.svelte): every tile shows its Take button.
   const draftSplit = new MediaQuery(
@@ -213,6 +217,7 @@
   // the top bar's button opened it.
   let summaryAuto = $state<number | null>(null);
   let summaryManual = $state(false);
+  let summaryAway = $state(false);
   // What changed since each seat's last move (lib/view/recap.ts), from the
   // frames in order: the summary's price lines.
   let recap = $state.raw(EMPTY_RECAP);
@@ -465,7 +470,8 @@
     summarySeat === null ? null : latestSummary(shownHistory, summarySeat)
   );
   const summaryOpen = $derived(
-    !!moveSummary &&
+    pageVisible &&
+      !!moveSummary &&
       (summaryManual ||
         (summaryAuto !== null &&
           settings.value.showOpponentMove &&
@@ -556,7 +562,76 @@
   function closeSummary(): void {
     summaryAuto = null;
     summaryManual = false;
+    summaryAway = false;
   }
+
+  function dismissSummary(): void {
+    // An explicit dismissal proves this summary was seen, even if the page
+    // hides again before the next animation frame can record the board.
+    const key = frame ? seenKey(frame) : null;
+    const ply = moveSummary ? lastPly(moveSummary) : undefined;
+    if (key && pageVisible && ply !== undefined) {
+      seenMoves.remember(key, Math.max(seenMoves.get(key), ply));
+    }
+    closeSummary();
+  }
+
+  function seenKey(f: State): string | null {
+    const seat = summaryViewer(f.room.mode, f.you.seats, f.view.toMove);
+    return seat === null ? null : `${f.code}:${f.room.mode}:${seat}`;
+  }
+
+  // This attachment reruns with the presented frame, after its DOM update.
+  // A hidden incoming frame is never counted as seen. Effects/attachments
+  // only schedule DOM work; the marker itself has no reactive state.
+  function rememberShown(
+    f: State | null,
+    idle: boolean,
+    visible: boolean,
+    ply: number
+  ): Attachment {
+    return () => {
+      if (!f || !idle || !visible) return;
+      const key = seenKey(f);
+      if (!key) return;
+      const raf = requestAnimationFrame(() => {
+        if (document.visibilityState !== 'hidden') seenMoves.remember(key, ply);
+      });
+      return () => cancelAnimationFrame(raf);
+    };
+  }
+
+  function openUnseen(f: State, prev: State | null, away: boolean): void {
+    const key = seenKey(f);
+    const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
+    const passing = passPending({
+      mode: f.room.mode,
+      enabled: passOn,
+      phase: f.view.phase,
+      toMove: f.view.toMove,
+      holder: ui.holder
+    });
+    const trigger =
+      key && settings.value.showOpponentMove && !passing
+        ? summaryTrigger(prev, f, session.history, seenMoves.get(key))
+        : null;
+    if (trigger !== null) {
+      // Presence can arrive before the visible-ply write. Keep the reason
+      // for this same summary instead of erasing its away label.
+      summaryAway = away || (summaryAuto === trigger && summaryAway);
+      summaryAuto = trigger;
+      summaryManual = false;
+    } else if (f.events.length > 0 || f.history) closeSummary();
+  }
+
+  onMount(() => {
+    const wake = (): void => {
+      pageVisible = document.visibilityState !== 'hidden';
+      if (pageVisible && lastFrame) openUnseen(lastFrame, lastFrame, true);
+    };
+    document.addEventListener('visibilitychange', wake);
+    return () => document.removeEventListener('visibilitychange', wake);
+  });
 
   // The wonder sheet's wonder, its owner and whether the view can build it now.
   const wonderOwner = $derived.by(() => {
@@ -579,6 +654,7 @@
     if (f.code !== roomCode) {
       roomCode = f.code;
       lastFrame = null;
+      closeSummary();
       ui.reset();
       tokenOpen = false;
       tokenSlug = null;
@@ -592,23 +668,30 @@
     const prevFrame = lastFrame;
     lastFrame = f;
     recap = nextRecap(recap, f);
-    // The move summary opens for a live frame that hands the turn back after
-    // the other side moved; any other frame with events, and every frame
-    // that replays history, closes it.
-    const trigger = summaryTrigger(prevFrame, f, session.history);
-    if (trigger !== null) {
-      summaryAuto = trigger;
-      summaryManual = false;
-    } else if (f.events.length > 0 || f.history) {
-      closeSummary();
-    }
     let acked: Acked = null;
     if (f.ack && f.ack.clientId === session.clientId && lastRequest?.seq === f.ack.seq) {
       acked = lastRequest.kind;
     }
+    const key = seenKey(f);
+    const rewound =
+      acked === 'undo' ||
+      (!!prevFrame && f.view.ply < prevFrame.view.ply) ||
+      (key !== null && seenMoves.get(key) >= f.view.ply);
+    if (rewound) {
+      // History entries are zero based; view.ply counts accepted moves.
+      seenMoves.rewind(f.code, f.view.ply - 1);
+      closeSummary();
+    } else if (pageVisible) {
+      openUnseen(f, prevFrame, !prevFrame || !!f.history);
+    }
     // A skipped-choice toast speaks of the latest move only: a newer move
     // or an undo replaces it. In a bot room the bot's reply keeps it.
     if (acked !== null || f.room.mode === 'hotseat') toasts.clear();
+    if (acked === 'undo' && f.room.mode === 'ai') {
+      // ToastList's polite live region announces the visible confirmation
+      // once, rather than repeating it in the board's event live region.
+      toasts.show(t('game.undo.done'), { kind: 'info', duration: 5000 });
+    }
     // An undo goes back to a guided turn: its lessons show again.
     if (acked === 'undo' && f.tutorial) coachAcks.forgetFrom(f.code, f.view.ply);
     const passOn = settings.value.hotseatPassDevice ?? coarsePointer.current;
@@ -920,6 +1003,7 @@
   <ToastList {toasts} placement="bottom" />
 {:else}
   <div
+    {@attach rememberShown(frame, presenter.idle, pageVisible, shownHistory.at(-1)?.ply ?? -1)}
     class="game-screen h-full w-full overflow-hidden"
     data-layout={layout}
     data-draft={view?.phase === 'wonderDraft' ? '' : undefined}
@@ -1231,10 +1315,11 @@
 <MoveSummary
   open={summaryOpen}
   summary={moveSummary}
+  away={!summaryManual && summaryAway}
   {names}
   prices={summaryPrices}
   anchor={summaryAnchor}
-  onclose={closeSummary}
+  onclose={dismissSummary}
 >
   {#snippet review()}
     {#if summaryReview}<MoveReview lines={summaryReview} />{/if}

@@ -8,7 +8,7 @@
 //   detail" off, the popup no longer opens by itself, but the top bar's
 //   button opens the latest summary.
 // - Hot-seat with the pass-device screen: the popup waits for the next
-//   player to take the device, then shows the previous player's move.
+//   player to take the device; the pass screen replaces its automatic popup.
 //
 // The base fixture turns the popup off for every other spec (its taps would
 // eat a driver's clicks), so this spec turns it back on for its pages.
@@ -161,7 +161,7 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     expect(problems).toEqual([]);
   });
 
-  test('hot-seat: after the pass-device screen, the previous player’s move', async ({
+  test('hot-seat: pass screen replaces the automatic popup, manual summary stays available', async ({
     page,
     isMobile
   }) => {
@@ -197,8 +197,10 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     const previous = next === 0 ? 1 : 0;
     await driver.passDevice();
 
-    // ...but once the next player has it: the previous player's move.
+    // The pass screen already showed the move. The board is ready at once.
     const popup = page.locator(POPUP);
+    await expect(popup).toHaveCount(0);
+    await press(page, isMobile, '[data-control="move-summary"]');
     await expect(popup).toBeVisible();
     await expect(popup).toHaveAttribute('data-move-summary', String(previous));
     await expect(popup).toHaveAttribute('data-plies', await pliesSince(page, next));

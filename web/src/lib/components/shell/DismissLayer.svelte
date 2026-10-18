@@ -31,6 +31,8 @@
     onclose?: (reason: 'tap' | 'escape') => void;
     /** Taps inside the panel act normally instead of closing it. */
     keepInside?: boolean;
+    /** First-time tips only: dismiss and preserve a touch action underneath. */
+    passTouchActions?: boolean;
     /** The panel's accessible name. */
     label?: string;
     labelledby?: string;
@@ -43,6 +45,7 @@
     open = $bindable(false),
     onclose,
     keepInside = false,
+    passTouchActions = false,
     label,
     labelledby,
     role = 'dialog',
@@ -77,7 +80,8 @@
         open = false;
         onclose?.(reason);
       },
-      keep: () => (keepInside ? [panelEl] : [])
+      keep: () => (keepInside ? [panelEl] : []),
+      passTouchActions
     });
   });
 </script>

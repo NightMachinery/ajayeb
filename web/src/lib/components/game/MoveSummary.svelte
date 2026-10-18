@@ -38,6 +38,8 @@
     /** Whether the popup shows (it needs a summary too). */
     open: boolean;
     summary: MoveSummary | null;
+    /** The moves arrived during a reload, reconnect or hidden page. */
+    away?: boolean;
     names: readonly [string, string];
     /** The box to place the popup over; centred in the viewport without one. */
     anchor?: HTMLElement | null;
@@ -49,7 +51,16 @@
     review?: Snippet;
   }
 
-  let { open, summary, names, prices = [], anchor = null, onclose, review }: Props = $props();
+  let {
+    open,
+    summary,
+    names,
+    away = false,
+    prices = [],
+    anchor = null,
+    onclose,
+    review
+  }: Props = $props();
 
   function priceText(p: PriceTick): string {
     const resource = resourceName(p.resource);
@@ -127,6 +138,9 @@
       {@attach placeOver(anchor)}
     >
       <h2 class="font-display text-base leading-tight font-semibold text-fg">{title}</h2>
+      {#if away}<p class="text-xs font-semibold text-fg-muted" data-summary-away>
+          {t('game.summary.away')}
+        </p>{/if}
       <ol class="flex flex-col gap-2">
         {#each summary.lines as line, i (`${line.ply}:${i}`)}
           <MoveSummaryLine {line} seat={summary.seat} {names} />

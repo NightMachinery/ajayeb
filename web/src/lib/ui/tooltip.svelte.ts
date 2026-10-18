@@ -232,6 +232,18 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   // Where the mouse last pressed: hovering shows nothing new until it has
   // moved away from there (HOVER_RESUME_PX).
   let clickedAt: { x: number; y: number } | null = null;
+  // Native dialogs restore focus during Escape's default action, before
+  // their close event. That return is as quiet as restoreFocus().
+  let closingDialog: HTMLDialogElement | null = null;
+  let dialogTimer: ReturnType<typeof setTimeout> | undefined;
+  const onDialogCancel = (e: Event): void => {
+    if (!(e.target instanceof HTMLDialogElement)) return;
+    closingDialog = e.target;
+    clearTimeout(dialogTimer);
+    dialogTimer = setTimeout(() => {
+      closingDialog = null;
+    }, 0);
+  };
 
   const clearHover = (): void => {
     clearTimeout(hoverTimer);
@@ -407,6 +419,12 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   };
 
   const onKey = (e: KeyboardEvent): void => {
+    // A new keyboard gesture is deliberate focus, even if it arrives
+    // before the native dialog's zero-delay cleanup timer.
+    if (e.key !== 'Escape') {
+      closingDialog = null;
+      clearTimeout(dialogTimer);
+    }
     if (e.key !== 'Escape' || !store.active) return;
     // Close the tooltip only, not the sheet beneath it.
     e.preventDefault();
@@ -419,7 +437,7 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
     const el = e.target;
     if (!(el instanceof Element)) return;
     // The focus given back to an opener (ui/dismiss.ts) opens no tooltip.
-    if (isQuietFocus(el)) {
+    if (isQuietFocus(el) || (closingDialog && !closingDialog.contains(el))) {
       if (store.active?.via === 'focus') store.hide();
       return;
     }
@@ -449,12 +467,15 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
   window.addEventListener('pointercancel', onCancel, opts);
   window.addEventListener('contextmenu', onContextMenu, opts);
   window.addEventListener('keydown', onKey, opts);
+  window.addEventListener('cancel', onDialogCancel, opts);
   window.addEventListener('focusin', onFocusIn, opts);
   window.addEventListener('focusout', onFocusOut, opts);
   window.addEventListener('resize', onMoveAway, passive);
   return () => {
     clearHover();
     endPress();
+    clearTimeout(dialogTimer);
+    window.removeEventListener('cancel', onDialogCancel, opts);
     window.removeEventListener('pointerover', onOver, passive);
     window.removeEventListener('pointerout', onOut, passive);
     window.removeEventListener('pointerdown', onDown, opts);

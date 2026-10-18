@@ -292,3 +292,15 @@ Everything else is translated, the `/dev/gallery` and demo strings included.
 - **Ezafe after a silent ه**: the tables write it ‌ی after a zero-width non-joiner (کتابخانه‌ی بزرگ, صفحه‌ی بازی), as many apps do. The Academy's style writes ـهٔ (کتابخانهٔ بزرگ) or leaves the ezafe unwritten. Which should the locale use?
 - **Waiting lines**: the lines shown while the other player chooses read «منتظر بمانید تا {name} ... برگزیند…». Is a shorter form («{name} در حال انتخاب است…») more natural on a small screen?
 - **Draft round**: `choices.draft.round` reads «دور {round} از دو», a Persian digit followed by a word, because no digit is typed by hand. Is «دور یکم» / «دور دوم» alone better there?
+
+## Player-flow messages (M11.player-flow)
+
+- “While you were away” is «وقتی نبودید», the short label above opponent moves
+  received while the page was away (`game.summary.away`). It describes the
+  missing interval without implying a network failure.
+- “Undid your last move.” is «آخرین حرکت شما برگردانده شد.» (`game.undo.done`).
+  The same toast provides the visible confirmation and polite announcement.
+- The Great Lighthouse lesson says «این شگفتی در هر نوبت، به انتخاب شما چوب،
+  خاک رس یا سنگ تولید می‌کند تا هزینه‌ی ساخت‌های بعدی را آسان‌تر بپردازید.»
+  (`tutorial.action.buildWonder`). It explains choosing one raw material for
+  each turn, following the house terms for production, wood, clay and stone.

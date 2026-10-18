@@ -1169,3 +1169,22 @@ is in the spatial FX layer, checking locale direction without adding an
 animation timing assertion. The spec also checks single-line lobby sharing labels, 44 px button
 heights and no horizontal overflow at the four review sizes. Longer card action
 phrases may wrap to preserve readable text and action spacing.
+
+## Returning-player flow regressions (M11.player-flow)
+
+`player-flow.spec.ts` (`@mobile`) checks an online opponent move received while
+offline, then the reconnect summary, a reload without replaying seen moves,
+hidden incoming frames followed by reload, and a visibility wake without a new
+frame. Hidden-but-connected reception uses the document visibility event so it
+can test that received frames do not advance the seen marker. The same spec
+checks that a first-time tip lets an intended touch card tap open its sheet,
+that the new-age tip is absent on an Age III resume (unit tests also cover late
+Age II), and that Escape returns native-sheet focus without a tooltip taking the
+next touch. A deliberate Tab
+focus still opens a keyboard tooltip.
+
+`move-summary.spec.ts` keeps the summary's tap-swallowing contract and checks
+that a hot-seat pass screen replaces the automatic popup while the eye button
+still opens it. `undo.spec.ts` checks the bot undo's visible confirmation in the
+toast's polite live region. Unit tests cover the bounded, lenient seen-marker
+storage, seat and room separation, blocked storage and undo rewinding markers.

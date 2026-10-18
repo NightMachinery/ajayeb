@@ -159,6 +159,9 @@ test.describe('undo', { tag: ['@mobile'] }, () => {
     // The undo takes back my last move together with the bot's reply.
     expect(after.ply).toBeLessThan(before.ply);
     expect(after.toMove).toBe(0);
+    const confirmation = page.locator('[data-toast][role="status"]');
+    await expect(confirmation).toContainText('Undid your last move.');
+    await expect(confirmation.locator('..')).toHaveAttribute('aria-live', 'polite');
     expect(problems).toEqual([]);
   });
 

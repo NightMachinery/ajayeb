@@ -316,6 +316,13 @@ describe('summaryTrigger', () => {
     expect(summaryTrigger(frame({ code: 'OTHER', version: 4 }), frame({}), h)).toBeNull();
     expect(summaryTrigger(frame({ version: 5 }), frame({}), h)).toBeNull();
   });
+  it('opens unseen history on reload, reconnect and wake, only once', () => {
+    expect(summaryTrigger(null, frame({ history: h }), h, 0)).toBe(1);
+    expect(summaryTrigger(prev, frame({ history: h }), h, 0)).toBe(1);
+    expect(summaryTrigger(prev, frame({ events: [] }), h, 0)).toBe(1);
+    expect(summaryTrigger(null, frame({ history: h }), h, 1)).toBeNull();
+    expect(summaryTrigger(null, frame({ history: h, toMove: 1 }), h, 0)).toBeNull();
+  });
   it('never opens on a frame without events (a presence change, a thinking frame)', () => {
     expect(summaryTrigger(prev, frame({ events: [] }), h)).toBeNull();
   });

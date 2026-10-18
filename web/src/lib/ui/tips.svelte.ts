@@ -261,7 +261,13 @@ function markInView(id: TipId, view: TipView, seat: 0 | 1): boolean {
     case 'science':
       return (view.players?.[seat]?.science?.symbols?.length ?? 0) > 0;
     case 'newAge':
-      return (view.age === 2 || view.age === 3) && view.phase === 'play';
+      // Still the start of Age II, including a bot's opening move. A late
+      // resume or competing tips must not replay this introduction.
+      return (
+        view.age === 2 &&
+        view.phase === 'play' &&
+        view.structure.filter((slot) => slot.state === 'empty').length <= 1
+      );
     default:
       return false;
   }

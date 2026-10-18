@@ -74,7 +74,7 @@ export const tutorial = {
   'tutorial.action.discard':
     'Sell {card} for coins: 2, plus 1 for each yellow card you own. It goes to the discard pile.',
   'tutorial.action.buildWonder':
-    'Build {wonder} with {card}. The card goes face down under the wonder, and its own effect is lost.',
+    'Build {wonder} with {card}; the card’s own effect is lost. This wonder supplies your choice of wood, clay or stone every turn, helping pay for later builds.',
   'tutorial.action.chain':
     '{card} shows a chain symbol, drawn on the card. In a later age, the card with the same symbol is free for you.',
   'tutorial.action.science':

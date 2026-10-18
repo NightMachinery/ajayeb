@@ -340,6 +340,15 @@ describe('the tips beyond the pips (M10.F3)', () => {
       'science'
     ]);
     expect(tipsInView({ ...base, age: 2 }, 0, none, false)).toEqual(['newAge']);
+    expect(tipsInView({ ...base, age: 3 }, 0, none, false)).not.toContain('newAge');
+    expect(
+      tipsInView(
+        { ...base, age: 2, structure: [{ state: 'empty' }, { state: 'empty' }] } as TipView,
+        0,
+        none,
+        false
+      )
+    ).not.toContain('newAge');
     expect(tipsInView({ ...base, age: 3, result: {} } as TipView, 0, none, false)).toEqual([]);
     expect(tipSelector('track')).toBe('[data-tut="track"] [data-pawn]');
     expect(tipSelector('science')).toBe('[data-tut="home"] [data-science]');

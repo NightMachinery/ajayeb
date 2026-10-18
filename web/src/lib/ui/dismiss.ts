@@ -72,6 +72,9 @@ export interface DismissOptions {
   keep?: () => readonly (Element | null | undefined)[];
   /** Escape dismisses too (default true). */
   escape?: boolean;
+  /** Educational tips may let a touch press on an enabled action continue.
+   * Tooltips and move summaries never opt in. */
+  passTouchActions?: boolean;
 }
 
 /**
@@ -88,6 +91,15 @@ export function installDismiss(opts: DismissOptions): () => void {
   };
   const onPress = (e: PointerEvent): void => {
     if (inside(e.target)) return;
+    if (
+      opts.passTouchActions &&
+      e.pointerType !== 'mouse' &&
+      e.target instanceof Element &&
+      e.target.closest('button:not(:disabled), a[href], [data-act]:not(:disabled)')
+    ) {
+      opts.onDismiss('tap');
+      return;
+    }
     e.stopPropagation();
     swallowClick(e);
     opts.onDismiss('tap');

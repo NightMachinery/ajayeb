@@ -188,6 +188,8 @@ export const game = {
   // did since the viewer last moved, one line per move. The player is named
   // in the title, so the lines leave them out.
   'game.summary.title': "{name}'s move",
+  'game.summary.away': 'While you were away',
+  'game.undo.done': 'Undid your last move.',
   'game.summary.open': "Show the opponent's last move",
   'game.summary.close': 'Tap anywhere to close',
   'game.summary.build': 'Built {card}',
