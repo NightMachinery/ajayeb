@@ -222,6 +222,11 @@ func (m Create) validate() error {
 			return errors.New("create: a tutorial player takes seat 0")
 		}
 	}
+	if m.Hints != nil {
+		if err := checkAdvisorStrength("create: hints", m.Hints.AdvisorStrength); err != nil {
+			return err
+		}
+	}
 	if len(m.Names) > 2 {
 		return fmt.Errorf("create: %d names, at most 2", len(m.Names))
 	}

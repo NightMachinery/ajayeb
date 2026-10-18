@@ -318,6 +318,9 @@ export interface GameEvent {
  * the families never depends on map iteration. A new family is a new
  * field: a room file written before it existed reads it as false, so the
  * field's arrival must also teach package room's loader its default.
+ * AdvisorStrength is the one setting that is not a switch: how hard the
+ * advisor family looks (AdvisorStrength). The room fills in its default,
+ * two-stage, when a file or a frame leaves it empty.
  */
 export interface HintSettings {
   prices: boolean;
@@ -335,7 +338,24 @@ export interface HintSettings {
    * Advisor is the post-move review, shown only to the player who moved.
    */
   advisor: boolean;
+  /**
+   * AdvisorStrength is how the advisor reviews a move. In a frame from a
+   * client it may be empty: a create then gets the default, and a hints
+   * frame keeps the game's current strength.
+   */
+  advisorStrength: AdvisorStrength;
 }
+/**
+ * AdvisorStrength is how hard the move review looks for a better move
+ * (the advisor family), from the cheapest to the most thorough.
+ */
+export const AdvisorStrengthQuick = "quick"; // Greedy's ranking alone: one ply and the opponent's best reply, a few milliseconds
+export const AdvisorStrengthTwoStage = "twoStage"; // Greedy proposes a better move, and a fixed-budget tree search must agree it is clearly better (the default)
+export const AdvisorStrengthDeep = "deep"; // the tree search picks the better move itself, and confirms it the same way
+/**
+ * The advisor strengths.
+ */
+export type AdvisorStrength = typeof AdvisorStrengthQuick | typeof AdvisorStrengthTwoStage | typeof AdvisorStrengthDeep;
 /**
  * HintsView holds a view's board-level hints: the facts the server
  * computes from public information for every viewer alike (the shared
@@ -773,7 +793,13 @@ export interface ReviewView {
   played: string; // that move's action key
   better?: string; // a clearly better action's key; absent when none was found
   reason: ReviewReason; // why it is better; none without better
-  gap: number /* int */; // how much better, in points (the bot's victory-point equivalents, rounded); 0 without better
+  gap: number /* int */; // how much better, in points (Greedy's victory-point equivalents, rounded); 0 without better, and 0 from the deep advisor, whose search gives no points
+  /**
+   * Strength is the advisor strength that made the review: quick reviews
+   * are Greedy's alone, two-stage ones Greedy's confirmed by the tree
+   * search, deep ones the tree search's.
+   */
+  strength: AdvisorStrength;
   /**
    * The reason's details, each only for its reason.
    */
@@ -791,7 +817,7 @@ export const ReviewReasonStopsWin = "stopsWin"; // the move left the opponent a 
 export const ReviewReasonPair = "pair"; // the better move completes a science pair of the mover's
 export const ReviewReasonDeniesPair = "deniesPair"; // the better move takes the card that completes the opponent's pair
 export const ReviewReasonLoot = "loot"; // the better move's pawn takes more coins from the opponent
-export const ReviewReasonPoints = "points"; // no single fact: the bot's evaluation rates it gap points higher
+export const ReviewReasonPoints = "points"; // no single fact: Greedy's evaluation rates it gap points higher (deep: the tree search rates it clearly higher, with no points)
 /**
  * The review reasons.
  */

@@ -38,6 +38,10 @@ const (
 	DefaultSeqClients = 32
 	// DefaultInboxSize is the capacity of a room's inbox channel.
 	DefaultInboxSize = 64
+	// DefaultReviewSearches is how many two-stage or deep move reviews run
+	// at once: one, since the production host has one vCPU and the bots
+	// need it too.
+	DefaultReviewSearches = 1
 )
 
 // Storage is what the rooms need from package store; *store.Store
@@ -86,6 +90,14 @@ type Config struct {
 	// BotDelay is the bot's minimum think time, used as given: zero means
 	// none. Production passes DefaultBotDelay.
 	BotDelay time.Duration
+
+	// ReviewSearches bounds the two-stage and deep move reviews that run at
+	// once across every room (review.go); the others wait for a slot.
+	// Default DefaultReviewSearches.
+	ReviewSearches int
+	// ReviewBudget is the tree search's budget in those reviews; a zero
+	// field takes DefaultReviewBudget's.
+	ReviewBudget ReviewBudget
 
 	// IdleTimeout is how long a room with no connection stays in memory.
 	// Default DefaultIdleTimeout.
@@ -141,6 +153,15 @@ func (cfg Config) withDefaults() Config {
 	}
 	if cfg.BotDelay < 0 {
 		cfg.BotDelay = 0
+	}
+	if cfg.ReviewSearches <= 0 {
+		cfg.ReviewSearches = DefaultReviewSearches
+	}
+	if cfg.ReviewBudget.Compare <= 0 {
+		cfg.ReviewBudget.Compare = DefaultReviewBudget.Compare
+	}
+	if cfg.ReviewBudget.Search <= 0 {
+		cfg.ReviewBudget.Search = DefaultReviewBudget.Search
 	}
 	if cfg.IdleTimeout <= 0 {
 		cfg.IdleTimeout = DefaultIdleTimeout

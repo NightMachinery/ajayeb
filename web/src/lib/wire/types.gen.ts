@@ -217,6 +217,7 @@ export interface Hints {
   seq: number /* int */;
   /**
    * Hints are the complete new settings: every family must be present.
+   * An empty advisorStrength keeps the game's.
    */
   hints: view.HintSettings;
 }

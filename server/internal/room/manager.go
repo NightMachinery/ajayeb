@@ -32,7 +32,12 @@ type Manager struct {
 	log    *slog.Logger
 	ctx    context.Context
 	cancel context.CancelFunc
-	wg     sync.WaitGroup // room actors and bot searches
+	wg     sync.WaitGroup // room actors, bot searches and review jobs
+
+	// reviewSlots bounds the two-stage and deep move reviews running at
+	// once (Config.ReviewSearches): a job sends to take a slot and
+	// receives to give it back.
+	reviewSlots chan struct{}
 
 	mu      sync.Mutex
 	rooms   map[string]*Room
@@ -48,11 +53,12 @@ func NewManager(cfg Config) (*Manager, error) {
 	cfg = cfg.withDefaults()
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Manager{
-		cfg:    cfg,
-		log:    cfg.Logger,
-		ctx:    ctx,
-		cancel: cancel,
-		rooms:  make(map[string]*Room),
+		cfg:         cfg,
+		log:         cfg.Logger,
+		ctx:         ctx,
+		cancel:      cancel,
+		rooms:       make(map[string]*Room),
+		reviewSlots: make(chan struct{}, cfg.ReviewSearches),
 	}, nil
 }
 

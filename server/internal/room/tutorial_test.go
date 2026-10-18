@@ -198,8 +198,8 @@ func TestTutorialFollowsTheScript(t *testing.T) {
 	ply := st.View.Ply
 	a.act(st.View.Choices[0].Key, st.Version, nil)
 	h.waitFor("the Easy bot's reply", func() bool { return len(h.snapshot(code).Actions) > n+1 })
+	awaitReview(t, h, a, "a free move", ply)
 	st = a.current()
-	checkReview(t, "a free move", st, ply)
 	if got := calls.get(); !slices.Equal(got, []store.BotLevel{store.BotEasy}) {
 		t.Fatalf("bots asked for after the script: %v, want one easy", got)
 	}

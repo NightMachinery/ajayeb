@@ -1,13 +1,15 @@
 <script lang="ts">
   // A game's hint settings (docs/dev/decisions.md D23): one switch per
   // family, each with its one-line description, and a note that both
-  // players play with the same hints. Read-only for everyone but the
+  // players play with the same hints. While the advisor is on, its row also
+  // holds the advisor's strength (AdvisorStrengthPicker). Read-only for everyone but the
   // game's admin, who sees the same rows as switches. A leaf: the caller
   // passes the settings and gets the next settings back on a change (a
   // new-game sheet keeps them as its draft; the game sends a hints frame).
   import { t } from '$lib/i18n';
-  import { hintRows, withFamily } from '$lib/hints/families';
+  import { hintRows, withFamily, withStrength } from '$lib/hints/families';
   import type { HintFamily, HintSettings } from '$lib/wire';
+  import AdvisorStrengthPicker from './AdvisorStrengthPicker.svelte';
 
   interface Props {
     hints: HintSettings;
@@ -85,6 +87,14 @@
               onchange={(e) => toggle(e.currentTarget, row.family, row.on)}
             />
           </label>
+        {/if}
+        {#if row.family === 'advisor' && row.on}
+          <AdvisorStrengthPicker
+            strength={hints.advisorStrength}
+            {readonly}
+            {busy}
+            onchange={(next) => onchange?.(withStrength(hints, next))}
+          />
         {/if}
       </li>
     {/each}

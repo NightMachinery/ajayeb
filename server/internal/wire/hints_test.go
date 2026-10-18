@@ -49,25 +49,42 @@ func TestDecodeHints(t *testing.T) {
 	if err != nil || c.(Create).Hints != nil {
 		t.Fatalf("create without hints: %+v, %v", c, err)
 	}
+
+	// The advisor's strength: one of the strengths, or left out (empty).
+	withStrength := strings.Replace(allHints(), `}`, `,"advisorStrength":"deep"}`, 1)
+	m, err = DecodeClient([]byte(`{"t":"hints","code":"K7QX2M","seq":4,"hints":` + withStrength + `}`))
+	if err != nil || m.(Hints).Hints.AdvisorStrength != view.AdvisorStrengthDeep {
+		t.Fatalf("hints with a strength: %+v, %v", m, err)
+	}
+	c, err = DecodeClient([]byte(`{"t":"create","mode":"hotseat","seat":0,"names":[],"hints":` + withStrength + `}`))
+	if err != nil || c.(Create).Hints.AdvisorStrength != view.AdvisorStrengthDeep {
+		t.Fatalf("create with a strength: %+v, %v", c, err)
+	}
+	if m.(Hints).Hints.AdvisorStrength != view.AdvisorStrengthDeep || h.Hints.AdvisorStrength != "" {
+		t.Fatalf("a frame without a strength decodes it as %q", h.Hints.AdvisorStrength)
+	}
 }
 
 func TestDecodeHintsRejects(t *testing.T) {
 	missing := strings.Replace(allHints(), `"advisor":true`, ``, 1)
 	missing = strings.Replace(missing, `,}`, `}`, 1)
 	cases := map[string]string{
-		"missing family":       `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + missing + `}`,
-		"null family":          `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `"recap":true`, `"recap":null`, 1) + `}`,
-		"unknown family":       `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `{`, `{"hints":true,`, 1) + `}`,
-		"no hints":             `{"t":"hints","code":"K7QX2M","seq":1}`,
-		"null hints":           `{"t":"hints","code":"K7QX2M","seq":1,"hints":null}`,
-		"not a bool":           `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `"recap":true`, `"recap":1`, 1) + `}`,
-		"negative seq":         `{"t":"hints","code":"K7QX2M","seq":-1,"hints":` + allHints() + `}`,
-		"no code":              `{"t":"hints","code":"","seq":1,"hints":` + allHints() + `}`,
-		"extra field":          `{"t":"hints","code":"K7QX2M","seq":1,"base":0,"hints":` + allHints() + `}`,
-		"create missing":       `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + missing + `}`,
-		"create wrong case":    `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + strings.Replace(allHints(), `"prices"`, `"Prices"`, 1) + `}`,
-		"create hints a list":  `{"t":"create","mode":"online","seat":0,"names":[],"hints":[]}`,
-		"create hints unknown": `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + strings.Replace(allHints(), `{`, `{"x":true,`, 1) + `}`,
+		"missing family":        `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + missing + `}`,
+		"null family":           `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `"recap":true`, `"recap":null`, 1) + `}`,
+		"unknown family":        `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `{`, `{"hints":true,`, 1) + `}`,
+		"no hints":              `{"t":"hints","code":"K7QX2M","seq":1}`,
+		"null hints":            `{"t":"hints","code":"K7QX2M","seq":1,"hints":null}`,
+		"not a bool":            `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `"recap":true`, `"recap":1`, 1) + `}`,
+		"negative seq":          `{"t":"hints","code":"K7QX2M","seq":-1,"hints":` + allHints() + `}`,
+		"no code":               `{"t":"hints","code":"","seq":1,"hints":` + allHints() + `}`,
+		"extra field":           `{"t":"hints","code":"K7QX2M","seq":1,"base":0,"hints":` + allHints() + `}`,
+		"create missing":        `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + missing + `}`,
+		"create wrong case":     `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + strings.Replace(allHints(), `"prices"`, `"Prices"`, 1) + `}`,
+		"create hints a list":   `{"t":"create","mode":"online","seat":0,"names":[],"hints":[]}`,
+		"create hints unknown":  `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + strings.Replace(allHints(), `{`, `{"x":true,`, 1) + `}`,
+		"unknown strength":      `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `}`, `,"advisorStrength":"slow"}`, 1) + `}`,
+		"strength not a string": `{"t":"hints","code":"K7QX2M","seq":1,"hints":` + strings.Replace(allHints(), `}`, `,"advisorStrength":2}`, 1) + `}`,
+		"create bad strength":   `{"t":"create","mode":"online","seat":0,"names":[],"hints":` + strings.Replace(allHints(), `}`, `,"advisorStrength":"Deep"}`, 1) + `}`,
 	}
 	for name, raw := range cases {
 		t.Run(name, func(t *testing.T) {

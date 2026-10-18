@@ -47,7 +47,7 @@ These are fixed. Every string in the locale uses them, and only them, for these 
 - **guild**: انجمن (the purple cards).
 - **player**: بازیکن. Opponent: حریف. Spectator: تماشاگر. The player who starts an age: آغازکننده.
 - **seat emblem** (Sun, Moon): نماد. Sun: خورشید. Moon: ماه.
-- **hint**: راهنما. A first-time tip: نکته. The advisor: مشاور.
+- **hint**: راهنما. A first-time tip: نکته. The advisor: مشاور. The advisor's strength ("how carefully it checks"): دقت بررسی, with the values quick سریع, two-stage دومرحله‌ای and deep عمیق. The advisor's tree search: جست‌وجو ("a deeper search": جست‌وجویی عمیق‌تر).
 - **undo**: برگرداندن. Forfeit: واگذاری (to forfeit: واگذار کردن). Replay (a game record): بازپخش. Log: گزارش.
 - **game code** (online): کد بازی. Invite link: پیوند دعوت.
 - **bot difficulty**: Apprentice شاگرد, Scholar دانشمند, Master استاد.

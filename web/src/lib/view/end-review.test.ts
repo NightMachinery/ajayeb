@@ -6,7 +6,8 @@ const REVIEW: ReviewView = {
   ply: 40,
   played: 'construct:arsenal',
   reason: 'none',
-  gap: 0
+  gap: 0,
+  strength: 'twoStage'
 };
 
 function entry(ply: number, seat: 0 | 1): HistoryEntry {

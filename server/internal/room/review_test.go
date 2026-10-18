@@ -13,7 +13,10 @@ import (
 // action, the room reviews it for that seat only. Only that seat's own
 // view carries it, until the seat's next play action, and only while the
 // room's advisor family is on: on by default against the bot, off in
-// hot-seat and online games, where the admin may turn it on.
+// hot-seat and online games, where the admin may turn it on. At the
+// default strength, two-stage, the review is computed off the room actor
+// and comes in a later frame than the move's; a quick review comes with
+// the move's own frame.
 
 // checkReview fails unless st's view carries a review of the move at ply.
 func checkReview(t *testing.T, who string, st wire.State, ply int) *view.ReviewView {
@@ -29,6 +32,19 @@ func checkReview(t *testing.T, who string, st wire.State, ply int) *view.ReviewV
 		t.Fatalf("%s: inconsistent review %+v", who, *rv)
 	}
 	return rv
+}
+
+// awaitReview waits until c's latest state frame carries a review of the
+// move at ply, and checks it: a two-stage or deep review comes in a later
+// frame than the move's.
+func awaitReview(t *testing.T, h *harness, c *tclient, who string, ply int) *view.ReviewView {
+	t.Helper()
+	h.waitFor(who+"'s review", func() bool {
+		h.snapshot(c.code)
+		rv := c.current().View.Review
+		return rv != nil && rv.Ply == ply
+	})
+	return checkReview(t, who, c.current(), ply)
 }
 
 // checkNoReview fails if st's view carries a review.
@@ -85,12 +101,13 @@ func TestReviewOnlyInMoversView(t *testing.T) {
 		mover.act(mover.last.View.Choices[0].Key, st.Version, nil)
 		h.snapshot(code)
 		for s, c := range byseat {
-			got := c.current()
 			if plies[s] < 0 {
-				checkNoReview(t, c.ClientID, got)
+				checkNoReview(t, c.ClientID, c.current())
 				continue
 			}
-			checkReview(t, c.ClientID, got, plies[s])
+			if rv := awaitReview(t, h, c, c.ClientID, plies[s]); rv.Strength != view.AdvisorStrengthTwoStage {
+				t.Fatalf("%s: a review of strength %q, want the default", c.ClientID, rv.Strength)
+			}
 		}
 		checkNoReview(t, "the spectator", sp.current())
 	}
@@ -142,7 +159,7 @@ func TestReviewFollowsAdvisor(t *testing.T) {
 	play()
 	st = a.current()
 	if *st.View.ToMove == firstSeat {
-		checkReview(t, "the first mover", st, first)
+		awaitReview(t, h, a, "the first mover", first)
 	}
 
 	a.sendHints(room.DefaultHints(store.ModeHotseat))
@@ -178,8 +195,8 @@ func TestReviewInBotRoom(t *testing.T) {
 		a.act(st.View.Choices[0].Key, v, nil)
 		st = a.waitState(func(s wire.State) bool { return s.Version > v })
 	}
-	st = a.waitState(func(s wire.State) bool { return s.View.Ply > ply })
-	checkReview(t, "after the move", st, ply)
+	a.waitState(func(s wire.State) bool { return s.View.Ply > ply })
+	awaitReview(t, h, a, "after the move", ply)
 	// Through the bot's reply.
 	h.waitFor("the bot's reply", func() bool { return len(h.snapshot(code).Actions) > ply+1 })
 	h.snapshot(code)
@@ -196,4 +213,80 @@ func TestReviewInBotRoom(t *testing.T) {
 		t.Fatalf("undo went back to ply %d, want %d", st.View.Ply, ply)
 	}
 	checkNoReview(t, "after the undo", st)
+}
+
+// firstPlayAction plays the human seat of a bot room (the bot answering)
+// until its first play action, and returns that action's ply.
+func firstPlayAction(t *testing.T, a *tclient, st wire.State) int {
+	t.Helper()
+	for {
+		for !st.You.CanAct {
+			v := st.Version
+			st = a.waitState(func(s wire.State) bool { return s.Version > v })
+		}
+		v := st.Version
+		a.act(st.View.Choices[0].Key, v, nil)
+		if st.View.Phase == view.PhasePlay {
+			return st.View.Ply
+		}
+		st = a.waitState(func(s wire.State) bool { return s.Version > v })
+	}
+}
+
+// TestReviewQuickInPlace checks a bot room created with the quick advisor:
+// the move's own frame carries its review, computed in place.
+func TestReviewQuickInPlace(t *testing.T) {
+	h := newHarness(t)
+	a := h.client("user-a", "tab-a", "Ann")
+	bot := wire.BotLevelEasy
+	req := wire.NewCreate(wire.ModeAI, &bot, wire.SeatNumber(0), nil)
+	hints := room.DefaultHints(store.ModeAI)
+	hints.AdvisorStrength = view.AdvisorStrengthQuick
+	req.Hints = &hints
+	_, st := a.create(req)
+	if st.Room.Hints.AdvisorStrength != view.AdvisorStrengthQuick {
+		t.Fatalf("the room's strength is %q", st.Room.Hints.AdvisorStrength)
+	}
+	ply := firstPlayAction(t, a, st)
+	st = a.waitState(func(s wire.State) bool { return s.View.Ply > ply })
+	if rv := checkReview(t, "the move's frame", st, ply); rv.Strength != view.AdvisorStrengthQuick {
+		t.Fatalf("a review of strength %q", rv.Strength)
+	}
+}
+
+// TestAdvisorStrengthSetting checks the strength in the game's hint
+// settings: two-stage by default, changed by the admin's hints frame
+// without a room log entry, kept by a frame that leaves it empty, and used
+// by the next review.
+func TestAdvisorStrengthSetting(t *testing.T) {
+	h := newHarness(t)
+	a := h.client("user-a", "tab-a", "Ann")
+	bot := wire.BotLevelEasy
+	code, st := a.create(wire.NewCreate(wire.ModeAI, &bot, wire.SeatNumber(0), nil))
+	if got := st.Room.Hints.AdvisorStrength; got != view.AdvisorStrengthTwoStage || room.DefaultAdvisorStrength != view.AdvisorStrengthTwoStage {
+		t.Fatalf("a new room's strength is %q", got)
+	}
+
+	deep := room.DefaultHints(store.ModeAI)
+	deep.AdvisorStrength = view.AdvisorStrengthDeep
+	seq := a.sendHints(deep)
+	st = a.waitState(func(s wire.State) bool { return s.Ack != nil && s.Ack.Seq == seq })
+	if st.Room.Hints != deep || len(st.RoomLog) != 0 || h.snapshot(code).Hints != deep {
+		t.Fatalf("after the change: hints %+v, log %+v", st.Room.Hints, st.RoomLog)
+	}
+
+	// A client that does not know the strength leaves it empty: the
+	// game keeps its own.
+	silent := withHint(room.DefaultHints(store.ModeAI), wire.HintFamilyTempo, false)
+	silent.AdvisorStrength = ""
+	seq = a.sendHints(silent)
+	st = a.waitState(func(s wire.State) bool { return s.Ack != nil && s.Ack.Seq == seq })
+	if st.Room.Hints.AdvisorStrength != view.AdvisorStrengthDeep || st.Room.Hints.Tempo {
+		t.Fatalf("after a change that left the strength out: %+v", st.Room.Hints)
+	}
+
+	ply := firstPlayAction(t, a, st)
+	if rv := awaitReview(t, h, a, "a deep review", ply); rv.Strength != view.AdvisorStrengthDeep || (rv.Better != nil && rv.Gap != 0) {
+		t.Fatalf("the review %+v, want a deep one without points", *rv)
+	}
 }

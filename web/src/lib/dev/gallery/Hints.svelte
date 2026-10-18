@@ -189,7 +189,14 @@
   // Rules panel's glyph legend.
   const REVIEW_NAMES = { names: ['Sun', 'Moon'] as const, seat: 0 as const }; // i18n-ok
   const reviewBetter = reviewLines(
-    { ply: 20, played: 'discard:walls', better: 'construct:walls', reason: 'wins', gap: 40 },
+    {
+      ply: 20,
+      played: 'discard:walls',
+      better: 'construct:walls',
+      reason: 'wins',
+      gap: 40,
+      strength: 'twoStage'
+    },
     REVIEW_NAMES
   );
   const reviewLoot = reviewLines(
@@ -199,12 +206,13 @@
       better: 'construct:garrison',
       reason: 'loot',
       gap: 4,
-      coins: 2
+      coins: 2,
+      strength: 'twoStage'
     },
     REVIEW_NAMES
   );
   const reviewNone = reviewLines(
-    { ply: 20, played: 'wonder:pyramids:baths', reason: 'none', gap: 0 },
+    { ply: 20, played: 'wonder:pyramids:baths', reason: 'none', gap: 0, strength: 'twoStage' },
     REVIEW_NAMES
   );
   const reviewSummary = summarize(

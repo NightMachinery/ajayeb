@@ -93,7 +93,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": true
+        "advisor": true,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": true,
       "tutorial": false
@@ -378,7 +379,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": false
+        "advisor": false,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": true,
       "tutorial": false
@@ -625,7 +627,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": false
+        "advisor": false,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": false,
       "tutorial": false
@@ -2479,7 +2482,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": true
+        "advisor": true,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": true,
       "tutorial": false
@@ -4601,7 +4605,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": true
+        "advisor": true,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": false,
       "tutorial": false
@@ -5058,7 +5063,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": false
+        "advisor": false,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": false,
       "tutorial": false
@@ -7959,7 +7965,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": false
+        "advisor": false,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": false,
       "tutorial": false
@@ -8193,7 +8200,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": false
+        "advisor": false,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": false,
       "tutorial": false
@@ -10057,7 +10065,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": false
+        "advisor": false,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": true,
       "tutorial": false
@@ -12630,7 +12639,8 @@ export const fixtures = [
         "scoring": true,
         "counting": true,
         "recap": true,
-        "advisor": true
+        "advisor": true,
+        "advisorStrength": "twoStage"
       },
       "allowUndo": true,
       "tutorial": true

@@ -68,8 +68,10 @@ type Room struct {
 	shownIdle  bool   // what the actor last published as idle (see publishIdle)
 
 	// reviews holds each seat's last play action and its move review
-	// (review.go).
-	reviews reviewState
+	// (review.go); reviewGen is the generation of the last review job
+	// started.
+	reviews   reviewState
+	reviewGen uint64
 
 	// Guarded by the Manager's mu: what the Manager knows about this room
 	// when it must evict one to make room for another (see Manager.reserve).
@@ -113,6 +115,12 @@ type (
 		version int
 		action  engine.Action
 		err     error
+	}
+	msgReviewResult struct {
+		seat   engine.Seat
+		gen    uint64 // the generation of the job that answers (reviewSlot.gen)
+		review view.ReviewView
+		ok     bool // false: the review has nothing to say
 	}
 	msgIdle     struct{}
 	msgEvict    struct{ reply chan bool }
@@ -178,6 +186,7 @@ func (r *Room) run() {
 // exit stops whatever the room still has running and marks it gone.
 func (r *Room) exit() {
 	r.cancelBot()
+	r.forgetReviews()
 	r.stopIdle()
 	if r.dirty {
 		r.persist()
@@ -208,6 +217,8 @@ func (r *Room) handle(msg any) bool {
 		msg.reply <- rematchResult{code: code, err: err}
 	case msgBotResult:
 		r.botResult(msg)
+	case msgReviewResult:
+		r.reviewResult(msg)
 	case msgIdle:
 		return r.idle()
 	case msgEvict:
@@ -609,6 +620,7 @@ func (r *Room) commit(a engine.Action, sender *Client, ack *wire.Ack) {
 	r.record(sender, ack)
 	r.persist()
 	r.maybeStartBot()
+	r.prefetchReviews()
 	r.broadcast(e.events, sender, ack, noHistory)
 }
 

@@ -4,8 +4,9 @@
 //
 //   - the local default (ajayeb:hints): the settings a game created on this
 //     device starts from. It is written when a game is created and when its
-//     admin changes the settings mid-game. The families are shared by every
-//     mode, except the advisor, which keeps one switch per mode because its
+//     admin changes the settings mid-game. The families (and the advisor's
+//     strength) are shared by every mode, except the advisor's switch,
+//     which keeps one value per mode because its
 //     default differs (on against the bot, off in hot-seat and online
 //     games), so a review turned on against the bot does not follow the
 //     player into an online game.

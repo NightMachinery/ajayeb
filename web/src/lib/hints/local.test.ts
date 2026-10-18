@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultHints, withFamily } from './families';
+import { defaultHints, withFamily, withStrength } from './families';
 import {
   HINT_DEFAULTS_KEY,
   HINT_HIDE_KEY,
@@ -58,6 +58,14 @@ describe('the local default (ajayeb:hints)', () => {
     const again = new HintDefaultsStore(storage);
     expect(again.for('online')).toEqual(withFamily(defaultHints('online'), 'advisor', true));
     expect(again.for('ai').advisor).toBe(true);
+  });
+
+  it('remembers the advisor strength for every mode', () => {
+    const store = new HintDefaultsStore(memory());
+    expect(store.for('ai').advisorStrength).toBe('twoStage');
+    store.save('ai', withStrength(defaultHints('ai'), 'deep'));
+    expect(store.for('online').advisorStrength).toBe('deep');
+    expect(store.for('ai').advisorStrength).toBe('deep');
   });
 
   it('reads a malformed or partial value leniently', () => {

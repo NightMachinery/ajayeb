@@ -153,6 +153,13 @@ function reasonSentence(review: ReviewView, move: string, opp: string): string {
     case 'points':
     case 'none':
     default:
+      // The points are Greedy's estimate. A two-stage review adds that the
+      // search agreed; a deep review has no points, only the search's
+      // verdict, so it names no number.
+      if (review.strength === 'deep') return t('hints.review.pointsSearch', { move });
+      if (review.strength === 'twoStage') {
+        return t('hints.review.pointsConfirmed', { move, count: Math.max(1, review.gap) });
+      }
       return t('hints.review.points', { move, count: Math.max(1, review.gap) });
   }
 }

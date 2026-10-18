@@ -36,7 +36,8 @@
       "scoring": true,
       "counting": true,
       "recap": true,
-      "advisor": false
+      "advisor": false,
+      "advisorStrength": "twoStage"
     },
     "allowUndo": true,
     "tutorial": false

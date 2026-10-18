@@ -11,7 +11,7 @@ afterEach(async () => {
 });
 
 function review(r: Partial<ReviewView>): ReviewView {
-  return { ply: 10, played: 'discard:walls', reason: 'none', gap: 0, ...r };
+  return { ply: 10, played: 'discard:walls', reason: 'none', gap: 0, strength: 'quick', ...r };
 }
 
 function entry(ply: number, seat: 0 | 1): HistoryEntry {
@@ -208,6 +208,32 @@ describe('the review wording', () => {
     expect(verdictText(review({ better, reason: 'points', gap: 5 }), names)).toBe(
       'Building Walls looked about 5 points better.'
     );
+  });
+
+  it('words the points by the strength that measured them', async () => {
+    const better = 'construct:walls';
+    expect(
+      verdictText(review({ better, reason: 'points', gap: 4, strength: 'twoStage' }), names)
+    ).toBe('Building Walls looked about 4 points better, and a deeper search agreed.');
+    // A deep review has no points: the search's verdict names no number.
+    expect(verdictText(review({ better, reason: 'points', gap: 0, strength: 'deep' }), names)).toBe(
+      'Building Walls looked clearly stronger to a deeper search.'
+    );
+    // A fact is a fact, whatever the strength.
+    expect(verdictText(review({ better, reason: 'wins', gap: 0, strength: 'deep' }), names)).toBe(
+      'Building Walls would have won the game.'
+    );
+    await i18n.set('fa');
+    expect(
+      stripBidiMarks(
+        verdictText(review({ better, reason: 'points', gap: 0, strength: 'deep' }), names)
+      )
+    ).not.toMatch(/[0-9۰-۹]/);
+    expect(
+      stripBidiMarks(
+        verdictText(review({ better, reason: 'points', gap: 4, strength: 'twoStage' }), names)
+      )
+    ).toContain('۴');
   });
 
   it('names the other seat for the second hot-seat player', () => {

@@ -16,27 +16,34 @@ import (
 
 // DefaultHints returns the hint settings a new room of mode starts with
 // when its create frame names none: every family on, except the advisor (a
-// review of the player's own move) outside games against the bot. It is
-// also what a room file written before hint settings existed loads with.
+// review of the player's own move) outside games against the bot, and the
+// advisor's strength two-stage. It is also what a room file written before
+// hint settings existed loads with.
 func DefaultHints(mode store.Mode) view.HintSettings {
 	return view.HintSettings{
-		Prices:   true,
-		Economy:  true,
-		Science:  true,
-		Military: true,
-		Threats:  true,
-		Tempo:    true,
-		Wonders:  true,
-		Tokens:   true,
-		Scoring:  true,
-		Counting: true,
-		Recap:    true,
-		Advisor:  mode == store.ModeAI,
+		Prices:          true,
+		Economy:         true,
+		Science:         true,
+		Military:        true,
+		Threats:         true,
+		Tempo:           true,
+		Wonders:         true,
+		Tokens:          true,
+		Scoring:         true,
+		Counting:        true,
+		Recap:           true,
+		Advisor:         mode == store.ModeAI,
+		AdvisorStrength: DefaultAdvisorStrength,
 	}
 }
 
+// DefaultAdvisorStrength is the advisor strength of a game whose creator
+// chose none, and of a room file written before the strength existed.
+const DefaultAdvisorStrength = view.AdvisorStrengthTwoStage
+
 // fillHintFields gives a room file the hint fields a file written before
-// they existed lacks: the defaults of its mode, and as its admin the user
+// they existed lacks: the defaults of its mode (and the default advisor
+// strength, for settings saved without one), and as its admin the user
 // of its first human seat in seat order. That is the creator in a hot-seat
 // or bot room and in an online lobby; for an old online room whose two
 // seats are taken it is the player of seat 0, the creator's seat unless
@@ -47,6 +54,9 @@ func fillHintFields(f *store.File) {
 	if f.Hints == nil {
 		h := DefaultHints(f.Mode)
 		f.Hints = &h
+	}
+	if !f.Hints.AdvisorStrength.Valid() {
+		f.Hints.AdvisorStrength = DefaultAdvisorStrength
 	}
 	if f.Admin == "" {
 		for _, s := range f.Seats {
@@ -71,10 +81,14 @@ func (m *Manager) Hints(ctx context.Context, c *Client, h wire.Hints) error {
 // attached; a spectator is never the admin; a seq not newer than the last
 // one applied for its client id only re-sends the state with an ack, as for
 // an act; the sender's user must be the game's admin; the game must not be
-// over. Then the settings are replaced, the change is logged for every
+// over. Then the settings are replaced (an empty advisor strength keeps
+// the game's), the families switched on or off are logged for every
 // viewer, and every connection receives a fresh state (the sender's with
 // the ack). The room's version does not change: no position changed, so a
-// move chosen before the change is still good.
+// move chosen before the change is still good. A change of the advisor's
+// strength is not logged: it changes no hint the opponent sees, only how
+// carefully each player's own moves are reviewed from then on, and a
+// review already made keeps the strength it was made with.
 func (r *Room) setHints(c *Client, m wire.Hints) {
 	mem, ok := r.clients[c]
 	if !ok {
@@ -100,6 +114,9 @@ func (r *Room) setHints(c *Client, m wire.Hints) {
 	}
 	prev := *r.file.Hints
 	next := m.Hints
+	if next.AdvisorStrength == "" {
+		next.AdvisorStrength = prev.AdvisorStrength
+	}
 	r.file.Hints = &next
 	r.logHints(mem, prev, next)
 	r.record(c, ack)

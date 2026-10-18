@@ -432,13 +432,13 @@ func TestRematchKeepsHints(t *testing.T) {
 }
 
 // TestHintFamiliesMatchSettings checks the family list against the fields of
-// view.HintSettings: every field is a family, in the same order, under its
-// json name.
+// view.HintSettings: every field but the last, the advisor's strength, is
+// a family, in the same order, under its json name.
 func TestHintFamiliesMatchSettings(t *testing.T) {
 	rt := reflect.TypeFor[view.HintSettings]()
 	fams := wire.HintFamilies()
-	if rt.NumField() != len(fams) {
-		t.Fatalf("%d fields, %d families", rt.NumField(), len(fams))
+	if rt.NumField() != len(fams)+1 || rt.Field(len(fams)).Name != "AdvisorStrength" {
+		t.Fatalf("%d fields, %d families and the strength", rt.NumField(), len(fams))
 	}
 	for i, f := range fams {
 		if tag := rt.Field(i).Tag.Get("json"); tag != string(f) {

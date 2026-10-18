@@ -34,6 +34,18 @@ export const hints = {
   'hints.family.advisor.hint':
     'After your move, whether a better one was there, and why. Only you see it.',
 
+  // The advisor's strength (AdvisorStrengthPicker.svelte), under its switch.
+  'hints.advisorStrength.title': 'How carefully it checks',
+  'hints.advisorStrength.quick': 'Quick',
+  'hints.advisorStrength.quick.tip':
+    'Looks one move ahead. Fastest, but it can misjudge longer plans.',
+  'hints.advisorStrength.twoStage': 'Two-stage',
+  'hints.advisorStrength.twoStage.tip':
+    'A quick look suggests a better move, and a deeper search must agree. A little slower.',
+  'hints.advisorStrength.deep': 'Deep',
+  'hints.advisorStrength.deep.tip':
+    'A deeper search looks for the better move itself. Slowest, and most thorough.',
+
   // The editor (HintSettingsEditor.svelte).
   'hints.title': 'Hints',
   'hints.sameForBoth': 'Both players play with the same hints.',
@@ -528,6 +540,11 @@ export const hints = {
     one: '{move} looked about {count} point better.',
     other: '{move} looked about {count} points better.'
   },
+  'hints.review.pointsConfirmed': {
+    one: '{move} looked about {count} point better, and a deeper search agreed.',
+    other: '{move} looked about {count} points better, and a deeper search agreed.'
+  },
+  'hints.review.pointsSearch': '{move} looked clearly stronger to a deeper search.',
 
   // What changed since the player's last move (lib/view/recap.ts): the
   // trade prices the other side's moves changed, shown in the move summary.
@@ -616,7 +633,7 @@ export const hints = {
   'rules.hints.more':
     'A small dot beside the mark: the card has more than one hint. Its tooltip lists them all.',
   'rules.hints.review':
-    'The advisor, when the game turns it on, reviews your own move after you play: the summary of the other player’s next move says whether a clearly better move was there, and why. Only you see it.',
+    'The advisor, when the game turns it on, reviews your own move after you play: the summary of the other player’s next move says whether a clearly better move was there, and why. Only you see it. The game’s hint settings choose how carefully it checks: quick, two-stage (the default) or deep.',
   'rules.hints.sampleCard': 'a card',
 
   // Board-level facts drawn in tooltips (M10.tooltip-coverage, view/tips.ts).

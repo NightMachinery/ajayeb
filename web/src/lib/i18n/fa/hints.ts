@@ -39,6 +39,18 @@ export const hints = {
   'hints.family.advisor.hint':
     'پس از حرکت شما، این‌که آیا حرکت بهتری در کار بود، و چرا. فقط شما آن را می‌بینید.',
 
+  // The advisor's strength (AdvisorStrengthPicker.svelte), under its switch.
+  'hints.advisorStrength.title': 'دقت بررسی',
+  'hints.advisorStrength.quick': 'سریع',
+  'hints.advisorStrength.quick.tip':
+    'یک حرکت جلوتر را می‌سنجد. سریع‌ترین است، اما ممکن است نقشه‌های بلندتر را اشتباه بسنجد.',
+  'hints.advisorStrength.twoStage': 'دومرحله‌ای',
+  'hints.advisorStrength.twoStage.tip':
+    'نگاهی سریع حرکت بهتری پیشنهاد می‌کند و جست‌وجویی عمیق‌تر باید آن را تأیید کند. کمی کندتر است.',
+  'hints.advisorStrength.deep': 'عمیق',
+  'hints.advisorStrength.deep.tip':
+    'جست‌وجویی عمیق‌تر خودش حرکت بهتر را پیدا می‌کند. کندترین و دقیق‌ترین است.',
+
   // The editor (HintSettingsEditor.svelte).
   'hints.title': 'راهنماها',
   'hints.sameForBoth': 'هر دو بازیکن با راهنماهای یکسان بازی می‌کنند.',
@@ -493,6 +505,10 @@ export const hints = {
   'hints.review.points': {
     other: '{move} حدود {count} امتیاز بهتر به نظر می‌رسید.'
   },
+  'hints.review.pointsConfirmed': {
+    other: '{move} حدود {count} امتیاز بهتر به نظر می‌رسید، و جست‌وجویی عمیق‌تر هم آن را تأیید کرد.'
+  },
+  'hints.review.pointsSearch': '{move} در جست‌وجویی عمیق‌تر آشکارا قوی‌تر به نظر رسید.',
 
   // What changed since the player's last move (lib/view/recap.ts): the
   // trade prices the other side's moves changed, shown in the move summary.
@@ -581,7 +597,7 @@ export const hints = {
   'rules.hints.more':
     'نقطه‌ای کوچک کنار نشانه: کارت بیش از یک راهنما دارد. توضیح شناورش همه را فهرست می‌کند.',
   'rules.hints.review':
-    'مشاور، اگر بازی روشنش کرده باشد، پس از بازی شما حرکت خودتان را بررسی می‌کند: خلاصه‌ی حرکت بعدی بازیکن دیگر می‌گوید آیا حرکت آشکارا بهتری در کار بود، و چرا. فقط شما آن را می‌بینید.',
+    'مشاور، اگر بازی روشنش کرده باشد، پس از بازی شما حرکت خودتان را بررسی می‌کند: خلاصه‌ی حرکت بعدی بازیکن دیگر می‌گوید آیا حرکت آشکارا بهتری در کار بود، و چرا. فقط شما آن را می‌بینید. تنظیمات راهنمای بازی تعیین می‌کند با چه دقتی بررسی کند: سریع، دومرحله‌ای (پیش‌فرض) یا عمیق.',
   'rules.hints.sampleCard': 'یک کارت',
 
   // Board-level facts drawn in tooltips (M10.tooltip-coverage, view/tips.ts).

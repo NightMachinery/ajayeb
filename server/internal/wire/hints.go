@@ -143,6 +143,7 @@ type Hints struct {
 	// acknowledged.
 	Seq int `json:"seq"`
 	// Hints are the complete new settings: every family must be present.
+	// An empty advisorStrength keeps the game's.
 	Hints view.HintSettings `json:"hints"`
 }
 
@@ -157,6 +158,17 @@ func (m Hints) validate() error {
 	}
 	if m.Seq < 0 {
 		return fmt.Errorf("hints: seq %d is negative", m.Seq)
+	}
+	return checkAdvisorStrength("hints: hints", m.Hints.AdvisorStrength)
+}
+
+// checkAdvisorStrength refuses an advisor strength that is not one of the
+// strengths. Empty is accepted: a client built before the strength existed
+// leaves it out, and the room then keeps the game's strength (a hints
+// frame) or gives it the default (a create).
+func checkAdvisorStrength(field string, s view.AdvisorStrength) error {
+	if s != "" && !s.Valid() {
+		return fmt.Errorf("%s: unknown advisor strength %q", field, s)
 	}
 	return nil
 }

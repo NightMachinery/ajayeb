@@ -64,6 +64,8 @@ func newHarness(t *testing.T, opts ...func(*room.Config)) *harness {
 		NewBot: func(store.BotLevel, uint64) room.Bot { return firstLegalBot{} },
 		Seed:   func() uint64 { return 1000 + seed.Add(1) },
 		Claims: secret,
+		// Small searches keep the two-stage reviews (the default) fast.
+		ReviewBudget: room.ReviewBudget{Compare: 200, Search: 400},
 	}
 	for _, opt := range opts {
 		opt(&cfg)

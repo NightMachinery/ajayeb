@@ -14,6 +14,10 @@ package view
 // the families never depends on map iteration. A new family is a new
 // field: a room file written before it existed reads it as false, so the
 // field's arrival must also teach package room's loader its default.
+//
+// AdvisorStrength is the one setting that is not a switch: how hard the
+// advisor family looks (AdvisorStrength). The room fills in its default,
+// two-stage, when a file or a frame leaves it empty.
 type HintSettings struct {
 	Prices   bool `json:"prices"`
 	Economy  bool `json:"economy"`
@@ -28,6 +32,30 @@ type HintSettings struct {
 	Recap    bool `json:"recap"`
 	// Advisor is the post-move review, shown only to the player who moved.
 	Advisor bool `json:"advisor"`
+	// AdvisorStrength is how the advisor reviews a move. In a frame from a
+	// client it may be empty: a create then gets the default, and a hints
+	// frame keeps the game's current strength.
+	AdvisorStrength AdvisorStrength `json:"advisorStrength"`
+}
+
+// AdvisorStrength is how hard the move review looks for a better move
+// (the advisor family), from the cheapest to the most thorough.
+type AdvisorStrength string
+
+// The advisor strengths.
+const (
+	AdvisorStrengthQuick    AdvisorStrength = "quick"    // Greedy's ranking alone: one ply and the opponent's best reply, a few milliseconds
+	AdvisorStrengthTwoStage AdvisorStrength = "twoStage" // Greedy proposes a better move, and a fixed-budget tree search must agree it is clearly better (the default)
+	AdvisorStrengthDeep     AdvisorStrength = "deep"     // the tree search picks the better move itself, and confirms it the same way
+)
+
+// Valid reports whether s is one of the advisor strengths.
+func (s AdvisorStrength) Valid() bool {
+	switch s {
+	case AdvisorStrengthQuick, AdvisorStrengthTwoStage, AdvisorStrengthDeep:
+		return true
+	}
+	return false
 }
 
 // HintsView holds a view's board-level hints: the facts the server
@@ -446,7 +474,11 @@ type ReviewView struct {
 	Played string       `json:"played"`           // that move's action key
 	Better *string      `json:"better,omitempty"` // a clearly better action's key; absent when none was found
 	Reason ReviewReason `json:"reason"`           // why it is better; none without better
-	Gap    int          `json:"gap"`              // how much better, in points (the bot's victory-point equivalents, rounded); 0 without better
+	Gap    int          `json:"gap"`              // how much better, in points (Greedy's victory-point equivalents, rounded); 0 without better, and 0 from the deep advisor, whose search gives no points
+	// Strength is the advisor strength that made the review: quick reviews
+	// are Greedy's alone, two-stage ones Greedy's confirmed by the tree
+	// search, deep ones the tree search's.
+	Strength AdvisorStrength `json:"strength"`
 	// The reason's details, each only for its reason.
 	Threat *ThreatView    `json:"threat,omitempty"` // stopsWin: the opponent's win the move left open (a card or a wonder in view before the move)
 	Symbol *ScienceSymbol `json:"symbol,omitempty"` // pair and deniesPair: the science symbol
@@ -465,5 +497,5 @@ const (
 	ReviewReasonPair       ReviewReason = "pair"       // the better move completes a science pair of the mover's
 	ReviewReasonDeniesPair ReviewReason = "deniesPair" // the better move takes the card that completes the opponent's pair
 	ReviewReasonLoot       ReviewReason = "loot"       // the better move's pawn takes more coins from the opponent
-	ReviewReasonPoints     ReviewReason = "points"     // no single fact: the bot's evaluation rates it gap points higher
+	ReviewReasonPoints     ReviewReason = "points"     // no single fact: Greedy's evaluation rates it gap points higher (deep: the tree search rates it clearly higher, with no points)
 )

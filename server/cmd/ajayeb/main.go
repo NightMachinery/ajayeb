@@ -77,6 +77,7 @@ type options struct {
 	botDelay     time.Duration
 	botSearches  int
 	botPerAddr   int
+	reviews      int
 	seedBase     uint64
 	showVersion  bool
 }
@@ -137,6 +138,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
 	fset.IntVar(&opts.botSearches, "bot-searches", defaultBotSearches, "how many bot searches may run at once across all rooms")
 	fset.IntVar(&opts.botPerAddr, "bot-searches-per-address", ai.DefaultPerKey, "how many of those one client address (an IPv4 address or IPv6 /64) may hold at once; its further bot turns wait without holding up other addresses")
+	fset.IntVar(&opts.reviews, "review-searches", room.DefaultReviewSearches, "how many two-stage or deep move reviews may run at once across all rooms")
 	fset.Uint64Var(&opts.seedBase, "seed-base", 0, "derive room seeds from this `base` for reproducible tests (requires -dev; 0 means random seeds)")
 	fset.BoolVar(&opts.showVersion, "version", false, "print the version and exit")
 	fset.Usage = func() {
@@ -169,6 +171,9 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	}
 	if opts.botPerAddr < 1 {
 		return options{}, errors.New("-bot-searches-per-address must be at least 1")
+	}
+	if opts.reviews < 1 {
+		return options{}, errors.New("-review-searches must be at least 1")
 	}
 	if opts.dataDir == "" {
 		return options{}, errors.New("-data must not be empty")
@@ -321,6 +326,8 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		BotDelay: opts.botDelay,
 		Seed:     seed,
 		Claims:   secret,
+
+		ReviewSearches: opts.reviews,
 	})
 	if err != nil {
 		return err
@@ -389,6 +396,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		"botDelay", opts.botDelay,
 		"botSearches", opts.botSearches,
 		"botSearchesPerAddress", opts.botPerAddr,
+		"reviewSearches", opts.reviews,
 		"seedBase", seedLabel,
 	)
 

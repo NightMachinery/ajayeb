@@ -11,7 +11,8 @@ import {
   sameHints,
   summarizeHints,
   visibleFamilies,
-  withFamily
+  withFamily,
+  withStrength
 } from './families';
 import { summaryText } from './text';
 
@@ -23,7 +24,10 @@ function recorded(name: string): State {
 
 describe('the families', () => {
   it('name every switch of the recorded settings, in the server order', () => {
-    expect(Object.keys(recorded('state-draft').room.hints)).toEqual([...HINT_FAMILIES]);
+    // The switches, then the advisor's strength, the one setting that is not a switch.
+    const hints = recorded('state-draft').room.hints;
+    expect(Object.keys(hints)).toEqual([...HINT_FAMILIES, 'advisorStrength']);
+    expect(hints.advisorStrength).toBe('twoStage');
     expect(isHintFamily('economy')).toBe(true);
     expect(isHintFamily('law')).toBe(false);
   });
@@ -45,6 +49,9 @@ describe('the families', () => {
     expect(off.prices).toBe(false);
     expect(sameHints(h, off)).toBe(false);
     expect(sameHints(off, withFamily(h, 'prices', false))).toBe(true);
+    expect(sameHints(h, withStrength(h, 'quick'))).toBe(false);
+    expect(withStrength(h, 'deep').advisorStrength).toBe('deep');
+    expect(h.advisorStrength).toBe('twoStage');
   });
 });
 
@@ -126,5 +133,13 @@ describe('parseHints', () => {
     );
     expect(parseHints(null, fallback)).toEqual(fallback);
     expect(parseHints('x', fallback)).toEqual(fallback);
+  });
+
+  it('keeps a known advisor strength, and takes the fallback for any other', () => {
+    const fallback = defaultHints('ai');
+    expect(fallback.advisorStrength).toBe('twoStage');
+    expect(parseHints({ advisorStrength: 'deep' }, fallback).advisorStrength).toBe('deep');
+    expect(parseHints({ advisorStrength: 'slow' }, fallback).advisorStrength).toBe('twoStage');
+    expect(parseHints({ prices: false }, fallback).advisorStrength).toBe('twoStage');
   });
 });

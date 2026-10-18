@@ -6,7 +6,7 @@
 // a hint applies is the server's business, which sends only the families
 // the game has on.
 
-import type { HintFamily, HintSettings, Mode } from '$lib/wire';
+import type { AdvisorStrength, HintFamily, HintSettings, Mode } from '$lib/wire';
 
 /** Every hint family, in the order the server lists them (wire.HintFamilies). */
 export const HINT_FAMILIES = [
@@ -24,10 +24,31 @@ export const HINT_FAMILIES = [
   'advisor'
 ] as const satisfies readonly HintFamily[];
 
-/** The family list must name every key of HintSettings, and nothing else. */
-type MissingFamily = Exclude<keyof HintSettings, (typeof HINT_FAMILIES)[number]>;
+/**
+ * The advisor's strengths (HintSettings.advisorStrength), from the
+ * cheapest to the most thorough, as the editor lists them.
+ */
+export const ADVISOR_STRENGTHS = [
+  'quick',
+  'twoStage',
+  'deep'
+] as const satisfies readonly AdvisorStrength[];
+
+/** The strength of a game whose creator chose none (room.DefaultAdvisorStrength). */
+export const DEFAULT_ADVISOR_STRENGTH: AdvisorStrength = 'twoStage';
+
+/** The family list must name every key of HintSettings but the strength, and nothing else. */
+type MissingFamily = Exclude<
+  keyof HintSettings,
+  (typeof HINT_FAMILIES)[number] | 'advisorStrength'
+>;
 const _everyFamily: MissingFamily extends never ? true : never = true;
 void _everyFamily;
+
+/** Whether a value is an advisor strength. */
+export function isAdvisorStrength(value: unknown): value is AdvisorStrength {
+  return (ADVISOR_STRENGTHS as readonly unknown[]).includes(value);
+}
 
 /** Whether a string is a hint family. */
 export function isHintFamily(value: unknown): value is HintFamily {
@@ -53,7 +74,8 @@ export function defaultHints(mode: Mode): HintSettings {
     scoring: true,
     counting: true,
     recap: true,
-    advisor: mode === 'ai'
+    advisor: mode === 'ai',
+    advisorStrength: DEFAULT_ADVISOR_STRENGTH
   };
 }
 
@@ -62,9 +84,14 @@ export function withFamily(h: HintSettings, family: HintFamily, on: boolean): Hi
   return { ...h, [family]: on };
 }
 
-/** Whether two settings switch every family the same way. */
+/** A copy of `h` with the advisor's strength set. */
+export function withStrength(h: HintSettings, strength: AdvisorStrength): HintSettings {
+  return { ...h, advisorStrength: strength };
+}
+
+/** Whether two settings switch every family the same way, with the same advisor strength. */
 export function sameHints(a: HintSettings, b: HintSettings): boolean {
-  return HINT_FAMILIES.every((f) => a[f] === b[f]);
+  return HINT_FAMILIES.every((f) => a[f] === b[f]) && a.advisorStrength === b.advisorStrength;
 }
 
 /** The families that are on, in family order. */
@@ -112,6 +139,22 @@ export function familyText(family: HintFamily): { name: FamilyNameKey; hint: Fam
   return { name: `hints.family.${family}`, hint: `hints.family.${family}.hint` };
 }
 
+/** The message key of an advisor strength's name (en/hints.ts). */
+export type StrengthNameKey = `hints.advisorStrength.${AdvisorStrength}`;
+/** The message key of an advisor strength's one-line description. */
+export type StrengthTipKey = `hints.advisorStrength.${AdvisorStrength}.tip`;
+
+/** The message keys of an advisor strength: its name and what it checks. */
+export function strengthText(strength: AdvisorStrength): {
+  name: StrengthNameKey;
+  tip: StrengthTipKey;
+} {
+  return {
+    name: `hints.advisorStrength.${strength}`,
+    tip: `hints.advisorStrength.${strength}.tip`
+  };
+}
+
 /** One row of the settings editor. */
 export interface HintRow {
   readonly family: HintFamily;
@@ -156,7 +199,8 @@ export function summarizeHints(h: HintSettings): HintSummary {
 /**
  * Reads a settings object that may come from an older or newer build (the
  * local default): a family it lacks, or holds as a non-boolean, takes the
- * fallback's value, and unknown keys are dropped.
+ * fallback's value, as does a missing or unknown advisor strength, and
+ * unknown keys are dropped.
  */
 export function parseHints(value: unknown, fallback: HintSettings): HintSettings {
   const out = { ...fallback };
@@ -166,5 +210,7 @@ export function parseHints(value: unknown, fallback: HintSettings): HintSettings
     const v = r[f];
     if (typeof v === 'boolean') out[f] = v;
   }
+  const strength = r['advisorStrength'];
+  if (isAdvisorStrength(strength)) out.advisorStrength = strength;
   return out;
 }

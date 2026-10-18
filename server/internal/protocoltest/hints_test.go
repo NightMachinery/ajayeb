@@ -9,16 +9,17 @@ import (
 
 // TestHintSettingsOverTheSocket drives the hint settings (docs/protocol.md,
 // the hints frame) through the real transport: a create with settings, the
-// joiner seeing them, the admin changing them for both players with a log
-// entry, the other player refused, and everything still there after a
-// server restart.
+// joiner seeing them, the admin changing them (a family and the advisor's
+// strength) for both players with a log entry, the other player refused,
+// and everything still there after a server restart.
 func TestHintSettingsOverTheSocket(t *testing.T) {
 	dir := t.TempDir()
 	srv1 := newServer(t, dir, 9_950_000_000_001)
 	a := dial(t, srv1, "Admin")
 	a.hello()
 	hints := view.HintSettings{Prices: true, Economy: true, Science: true, Military: true, Threats: true,
-		Tempo: true, Wonders: true, Tokens: true, Scoring: true, Counting: true, Recap: false, Advisor: true}
+		Tempo: true, Wonders: true, Tokens: true, Scoring: true, Counting: true, Recap: false, Advisor: true,
+		AdvisorStrength: view.AdvisorStrengthDeep}
 	req := wire.NewCreate(wire.ModeOnline, nil, wire.SeatNumber(1), []string{"Admin"})
 	req.Hints = &hints
 	a.send(req)
@@ -43,7 +44,7 @@ func TestHintSettingsOverTheSocket(t *testing.T) {
 	}
 
 	next := hints
-	next.Recap, next.Prices = true, false
+	next.Recap, next.Prices, next.AdvisorStrength = true, false, view.AdvisorStrengthQuick
 	seq := a.nextSeq()
 	a.send(wire.NewHints(a.code, seq, next))
 	ast := a.untilAck(seq)

@@ -318,6 +318,8 @@ func TestHintEnumsMatchView(t *testing.T) {
 		// The move review's reasons are the room's (room/review.go), which
 		// names them with the view's constants too.
 		"ReviewReason": {"none", "wins", "stopsWin", "pair", "deniesPair", "loot", "points"},
+		// The advisor's strengths are a room setting, not engine names.
+		"AdvisorStrength": {"quick", "twoStage", "deep"},
 	}
 	if len(got) != len(want) {
 		t.Errorf("view/hints.go has vocabularies %v; this test checks %d", reflect.ValueOf(got).MapKeys(), len(want))
