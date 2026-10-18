@@ -7,7 +7,7 @@ Ajayeb is developed on a laptop that is also in daily use and often runs under m
 `tools/heavy.py` is a Python standard-library script, tested by `tests/test_heavy.py` with injected readers and an injected clock.
 
 ```
-python3 tools/heavy.py run --kind test|build|check|lint|browser|codex|install|fuzz|bench|light [--wait 1800] [--priority normal|high] -- CMD...
+python3 tools/heavy.py run --kind test|build|check|lint|browser|codex|install|fuzz|bench|light [--wait 1800] [--priority normal|high] [--notify UUID|auto] -- CMD...
 python3 tools/heavy.py status     # pressure, free level, swap, mode, window, slot holders, ordered queue, recent peak RSS per kind
 python3 tools/heavy.py stop-all   # SIGTERM the process groups the guard started (recorded PIDs only)
 python3 tools/heavy.py mode continuous|nightshift|paused [--window 00:00-10:00]
@@ -133,6 +133,28 @@ checkout guard is not implemented.
 - Nested calls pass straight through: the child of a run that holds a slot gets `AJAYEB_HEAVY_HELD=1`, so a wrapped `make verify` that calls other guarded targets cannot deadlock on its own slot. A nested `browser` or `codex` run still takes its own lock unless an ancestor already holds it. A `light` run holds no slot, so it does not set `AJAYEB_HEAVY_HELD`.
 - Every run appends `{ts, kind, cmd, rc, secs, maxrss_kb}` to `logs/heavy.jsonl` in the run directory, with the peak RSS taken from `getrusage(RUSAGE_CHILDREN)`. The budgets below are corrected from these measurements over time.
 - With `CI=true` and no run directory, the guard runs in continuous mode with the Linux readers, so CI needs no setup.
+
+### Detached runs that notify their agent
+
+An agent waiting on `heavy.py run --wait 3600` keeps its turn open, and its harness checks on it with model turns that reread the whole context (Codex teams measured about one turn a minute at about 100k cached tokens each). A **detached run** costs no turns while it waits: the agent starts the job, ends its turn, and is woken by one Paseo message when the job ends.
+
+- Ask for it with `HEAVY_NOTIFY=<Paseo agent UUID>` in the environment or `--notify <UUID>`. The value `auto` reads `PASEO_AGENT_ID`, so `HEAVY_NOTIFY=auto` is all a Paseo agent needs. An unset or empty value (or `0`, `off`, `no`, `false`) keeps the blocking run; any other value that is not a UUID is a usage error (exit 2). Put it on the outermost command only, never in an exported environment: a script that runs several guarded steps would see each one detach and return 0 at once.
+- The guard first applies the mode gate, so a paused or out-of-window mode still refuses at once with exit 75. Otherwise it starts a copy of itself in a new session, with standard input from `/dev/null` and its output and the command's output in `logs/heavy-notify/<time>-<kind>-<id>.log` in the run directory. The caller waits only until that copy has published its queue ticket (a `light` run, which takes no ticket: until the copy is about to start the command), for at most a minute, prints the copy's pid, the ticket and its place in the queue, the log path and "end your turn; you will be messaged", and exits 0. The ticket is taken before the caller returns, so the job keeps its place in line.
+- The copy is an ordinary guard: same queue, same tickets, same `waiting` and `running` records, so `status` shows it and `stop-all` stops it. The queue semantics are unchanged.
+- When the job ends, whether it succeeded, failed, was refused (75), timed out in the queue or was stopped by a signal, the copy sends one message with `paseo send <UUID> "<text>" --no-wait --json` (`PASEO_BIN`, default `paseo`). The text gives the kind, a short form of the command, the outcome and exit code, the time spent queued and running, the log path and the last 12 lines of the log, with terminal colours removed.
+- If the copy is refused before it publishes a ticket (the mode changed in the moment between the caller's check and the copy's), the caller prints the refusal and exits 75 itself, and no message is sent. The caller acknowledges that report on a second pipe; if no acknowledgement arrives within 10 seconds (the caller has gone or stopped waiting), the copy messages the agent instead.
+- **Keep-warm pings.** While a job waits or runs, the copy sends a one-line ping asking for a one-word reply when the agent has heard nothing from it for the provider's interval: 25 minutes for a Codex agent (OpenAI keeps a GPT-6.1 cached prefix for 30 minutes after its last use) and 50 minutes for any other (Claude's prompt cache lasts about an hour). The provider is read once from the `Provider` field of `paseo inspect <UUID> --json`; when it cannot be read, the 50-minute interval applies and the guard asks again five minutes later. A ping that falls due while the agent's `Status` is `running` is skipped and counts as contact: the agent's cache is warm, and a message arriving mid-turn cuts off its current tool call. For the same reason the outcome waits for a busy agent to go idle, checking every 15 seconds for up to 5 minutes, and is then sent anyway. Pings stop 3.5 hours after the job was started, because past that point a cold reread costs less than further pings. A job that ends within its interval sends no ping at all. `HEAVY_WARM_CODEX`, `HEAVY_WARM_CLAUDE` and `HEAVY_WARM_MAX` override the seconds (1500, 3000, 12600). This is the policy of the integration lock bell.
+- **The outcome is never silently lost.** A failed send is retried three times, after 10, 30 and 90 seconds. If all four attempts fail, the copy writes `alerts/quota-<epoch>-heavy-notify-failed.md` in the run directory (the coordinator's waiter watches `quota-*.md`), naming the agent, the command, the outcome, the log and the text it tried to send. A failed ping is only logged, and retried five minutes later. No ping is sent once the outcome is being sent. While sending the outcome the copy ignores SIGINT, SIGTERM and SIGHUP (by then `stop-all` no longer lists it), so only a `SIGKILL` of the copy itself loses the message.
+- The `paseo` calls are children of the copy, so a job that ran long enough to be pinged can show the Paseo CLI's peak RSS in its `heavy.jsonl` line when that is larger than the job's own.
+- Nested runs (`AJAYEB_HEAVY_HELD=1`) ignore `HEAVY_NOTIFY` and run inline, because their ancestor holds the slot they run under. The command never sees `HEAVY_NOTIFY`, so the guarded steps inside a detached `make` block as usual.
+- **`make` targets.** Most targets run several guarded steps, and each step would detach on its own, so a `HEAVY_NOTIFY` that reaches the guard under `make` (`MAKELEVEL` set) is a usage error. Detach the whole target with one `light` run instead, which holds no slot while the steps inside queue one by one:
+
+```
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind light -- make verify-quick
+HEAVY_PRIORITY=high HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind light -- make verify-quick
+```
+
+  An explicit `--notify` is allowed under `make`, for a recipe that wraps a sub-make on purpose.
 
 ## Enforcement
 

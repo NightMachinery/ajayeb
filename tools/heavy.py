@@ -88,6 +88,27 @@ dir, the guard runs in continuous mode with the Linux readers and keeps its
 state in RUNNER_TEMP (or the system temp dir). AJAYEB_MAX_SLOTS caps the
 slot count.
 
+Detached runs (HEAVY_NOTIFY=<Paseo agent UUID> or --notify UUID; the value
+"auto" reads PASEO_AGENT_ID): instead of blocking, run starts a copy of
+itself in a new session with its output in RUN_DIR/logs/heavy-notify/, waits
+until that copy has published its queue ticket (or, for light, started the
+command), prints the ticket and the log path, and exits 0. The copy waits in
+the queue as usual, runs the command, and then sends the agent one message
+with `paseo send UUID TEXT --no-wait --json` (PASEO_BIN, default paseo): the
+kind, the command, the outcome and exit code, the durations, the log path and
+the last lines of the log. A failed send is retried 3 times with backoff and
+then written to RUN_DIR/alerts/quota-<epoch>-heavy-notify-failed.md. While it
+waits or runs, the copy sends keep-warm pings asking for a one-word reply,
+every 25 minutes to a Codex agent and every 50 minutes to any other (the
+provider comes from `paseo inspect UUID --json`), during the first 3.5 hours
+only (HEAVY_WARM_CODEX, HEAVY_WARM_CLAUDE and HEAVY_WARM_MAX override the
+seconds). A ping skips an agent whose Status is running, and the outcome waits
+up to 5 minutes for it to go idle. A mode refusal is still reported at once without detaching. Nested
+runs ignore HEAVY_NOTIFY and run inline, and the command never sees it. Under
+make (MAKELEVEL set) HEAVY_NOTIFY is refused, because each step would detach
+on its own; wrap the whole target instead:
+HEAVY_NOTIFY=auto heavy.py run --kind light -- make verify-quick.
+
 Exit codes: the command's own code; 75 when refused (EX_TEMPFAIL); 2 for
 usage errors; 126 or 127 when the command cannot be started; 128+N when the
 command (or this script, before the command started) died from signal N.
@@ -109,12 +130,14 @@ import os
 import random
 import re
 import resource
+import select
 import shlex
 import shutil
 import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from dataclasses import dataclass
@@ -156,6 +179,31 @@ PRIORITIES = ("normal", "high")
 OWNER_FILE = "owner.json"
 SLOT_RE = re.compile(r"^slot-(\d+)$")
 FORWARDED_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+
+# Detached runs that notify a Paseo agent (see the module docstring).
+NOTIFY_ENV = ("HEAVY_NOTIFY", "AJAYEB_HEAVY_NOTIFY_AGENT", "AJAYEB_HEAVY_NOTIFY_FD",
+              "AJAYEB_HEAVY_NOTIFY_ACK_FD", "AJAYEB_HEAVY_NOTIFY_LOG")
+NOTIFY_OFF = ("", "0", "off", "no", "false")
+AGENT_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+HANDSHAKE_TIMEOUT = 60.0
+ACK_TIMEOUT = 10.0
+PASEO_TIMEOUT = 60.0
+NOTIFY_BACKOFF = (10.0, 30.0, 90.0)
+NOTIFY_TAIL_LINES = 12
+NOTIFY_LINE_MAX = 200
+# Keep-warm pings. Claude's prompt cache lasts about an hour and OpenAI keeps a
+# GPT-6.1 prefix for 30 minutes after its last use. A ping rereads the context
+# at the cached price, which pays for itself only early in a wait.
+WARM_CLAUDE = 3000.0
+WARM_CODEX = 1500.0
+WARM_MAX = 12600.0
+PING_POLL = 5.0
+PING_RETRY = 300.0
+# An agent mid-turn would have its current tool call cut off by a message, so
+# a ping skips a busy agent and the outcome waits a while for it to go idle.
+BUSY_POLL = 15.0
+BUSY_MAX = 300.0
 
 
 # ----------------------------------------------------------------------------
@@ -770,6 +818,12 @@ class Guard:
         self._pending: Optional[int] = None
         self._done = False
         self._old_handlers: Dict[int, object] = {}
+        # Hooks and facts for a detached run's notifier.
+        self.on_queued: Optional[Callable[[str, int, int], None]] = None
+        self.last_refusal: Optional[str] = None
+        self.started_at: Optional[float] = None
+        self.token: Optional[str] = None
+        self.detached: Optional[subprocess.Popen] = None
         # Resolve settings and warn once before any admission critical section.
         # The getters used by eligibility/status must never write to a pipe.
         self._max_slots = self._read_max_slots()
@@ -1054,6 +1108,9 @@ class Guard:
                         write_json_atomic(path, ticket)
                         published = True
                         tickets = sorted(tickets + [(path, ticket)], key=lambda item: self._ticket_order(item[1]))
+                        if self.on_queued is not None:
+                            position = [p for p, _ in tickets].index(path) + 1
+                            self.on_queued(info["token"], position, len(tickets))
                     self._blocked = "gate"
                     held, reason, final = self._attempt(kind, nested, inherited, info, tickets if not nested else ())
                     if reason is None:
@@ -1221,10 +1278,12 @@ class Guard:
             env["AJAYEB_HEAVY_LOCKS"] = ",".join(sorted(locks))
         else:
             env.pop("AJAYEB_HEAVY_LOCKS", None)
+        for key in NOTIFY_ENV:  # inner runs must block, not detach again
+            env.pop(key, None)
         return env
 
     def run(self, kind: str, cmd: Sequence[str], wait: Optional[float] = None,
-            priority: Optional[str] = None) -> int:
+            priority: Optional[str] = None, notify: Optional[str] = None) -> int:
         if kind not in KINDS:
             self._warn(f"heavy: unknown kind {kind!r}; use one of {', '.join(KINDS)}")
             return EX_USAGE
@@ -1241,12 +1300,32 @@ class Guard:
         self._memory_sample = None
         nested = self.env.get("AJAYEB_HEAVY_HELD") == "1"
         inherited = {x for x in self.env.get("AJAYEB_HEAVY_LOCKS", "").split(",") if x}
+        self.last_refusal, self.started_at = None, None
+        if not nested:
+            try:
+                target = self.notify_target(notify)
+            except ValueError as exc:
+                self._warn(f"heavy: {exc}")
+                return EX_USAGE
+            if target:
+                if notify is None and self.env.get("MAKELEVEL"):
+                    self._warn("heavy: HEAVY_NOTIFY under make would detach every step on its own; "
+                               "wrap the whole target instead: HEAVY_NOTIFY=auto python3 tools/heavy.py "
+                               "run --kind light -- make <target>")
+                    return EX_USAGE
+                reason = gate_mode(kind, self.mode_state(), self.clock.now())
+                if reason:
+                    self._warn(f"heavy: refused --kind {kind}: {reason}")
+                    self._log(kind, cmd, EX_TEMPFAIL, 0.0, 0, refused=reason)
+                    return EX_TEMPFAIL
+                return self._detach(kind, cmd, wait, priority, target)
         info = {"pid": os.getpid(), "kind": kind, "cmd": display_cmd(cmd, 160),
                 "since": iso(self.clock.now()), "t0": time.time(), "token": uuid.uuid4().hex,
                 "cwd": os.getcwd(), "priority": priority, "protocol": PROTOCOL_VERSION}
         identity = self.proc_identity(os.getpid())
         if identity:
             info["identity"] = identity
+        self.token = info["token"]
         # Do not publish lstart in locks/tickets/waiting: old copies compare
         # that caller-local timestamp and may break our live lock across TZ.
         held: List[str] = []
@@ -1269,6 +1348,7 @@ class Guard:
                 except Refused as refusal:
                     # Acquisition and waiting-record cleanup are complete.
                     # Terminal output may block, so cancellation must now raise.
+                    self.last_refusal = refusal.reason
                     self._acquiring = False
                     self._raise_pending()
                     self._warn(f"heavy: refused --kind {kind}: {refusal.reason}")
@@ -1310,6 +1390,7 @@ class Guard:
             return rc
         self._child = child
         self._spawning = False
+        self.started_at = t0
         record_data = {
             "pid": child.pid, "pgid": child.pid, "guard": os.getpid(), "kind": kind,
             "cmd": info["cmd"], "argv0": cmd[0], "since": iso(started), "t0": time.time(),
@@ -1340,6 +1421,154 @@ class Guard:
         # it to pick a fake memory reader) and must not leak into this conversion.
         maxrss = normalize_maxrss(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss, sys.platform)
         self._log(kind, cmd, rc, secs, maxrss, when=started, nested=nested)
+        return rc
+
+    # -- detached runs that notify an agent ------------------------------------------
+
+    def notify_target(self, flag: Optional[str]) -> Optional[str]:
+        """The Paseo agent to notify, None for a blocking run; ValueError if unusable."""
+        raw = flag if flag is not None else self.env.get("HEAVY_NOTIFY", "")
+        source = "--notify" if flag is not None else "HEAVY_NOTIFY"
+        if raw.strip().lower() in NOTIFY_OFF:
+            return None
+        value = self.env.get("PASEO_AGENT_ID", "") if raw == "auto" else raw
+        if raw == "auto" and not value:
+            raise ValueError(f"{source}=auto needs PASEO_AGENT_ID, which is not set")
+        if not AGENT_RE.match(value):
+            raise ValueError(f"{source} needs a Paseo agent UUID or auto, not {value!r}")
+        return value.lower()
+
+    def _detach(self, kind: str, cmd: List[str], wait: float, priority: str, agent: str) -> int:
+        log_dir = os.path.join(self.run_dir, "logs", "heavy-notify")
+        stamp = self.clock.now().strftime("%Y%m%d-%H%M%S")
+        log_path = os.path.join(log_dir, f"{stamp}-{kind}-{uuid.uuid4().hex[:8]}.log")
+        # Two pipes: the copy reports how it started; when that report is a
+        # refusal or an early end, the caller acknowledges it on the second
+        # pipe, and an unacknowledged report is messaged to the agent instead.
+        read_fd, write_fd = os.pipe()
+        ack_read, ack_write = os.pipe()
+        env = {k: v for k, v in self.env.items() if k not in NOTIFY_ENV}
+        env.update(AJAYEB_HEAVY_NOTIFY_AGENT=agent, AJAYEB_HEAVY_NOTIFY_FD=str(write_fd),
+                   AJAYEB_HEAVY_NOTIFY_ACK_FD=str(ack_read), AJAYEB_HEAVY_NOTIFY_LOG=log_path)
+        argv = [sys.executable, os.path.abspath(__file__), "run", "--kind", kind,
+                "--wait", repr(float(wait)), "--priority", priority, "--"] + cmd
+        try:
+            try:
+                try:
+                    os.makedirs(log_dir, exist_ok=True)
+                    with open(log_path, "ab") as log:
+                        self.detached = subprocess.Popen(
+                            argv, env=env, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                            start_new_session=True, pass_fds=(write_fd, ack_read))
+                finally:
+                    os.close(write_fd)
+                    os.close(ack_read)
+                try:
+                    line = _read_line(read_fd, HANDSHAKE_TIMEOUT)
+                except OSError as exc:  # the copy is alive and will message the agent
+                    self._warn(f"heavy: cannot read the detached guard's report: {exc}")
+                    line = None
+            except OSError as exc:
+                self._warn(f"heavy: cannot detach: {exc}")
+                return 126
+            finally:
+                os.close(read_fd)
+            pid = self.detached.pid
+            where = f"heavy: log {self.tilde(log_path)}"
+            word, _, rest = (line or "").partition(" ")
+            if word in ("refused", "ended"):
+                if word == "refused":
+                    self._warn(f"heavy: refused --kind {kind}: {rest}")
+                    rc = EX_TEMPFAIL
+                else:
+                    self._warn(f"heavy: the detached {kind} job ended before it queued, exit {rest}; {where}")
+                    rc = int(rest) if rest.isdigit() else 1
+                with contextlib.suppress(OSError):
+                    os.write(ack_write, b"k")
+                return rc
+        finally:
+            os.close(ack_write)
+        if line is not None and word not in ("queued", "started"):
+            self._warn(f"heavy: the detached guard (pid {pid}) stopped before it queued; {where}")
+            return 1
+        if word == "queued":
+            token, position, total = (rest.split() + ["?", "?", "?"])[:3]
+            self._say(f"heavy: detached {kind} job as pid {pid}, ticket {token}, "
+                      f"number {position} of {total} in the queue")
+        elif word == "started":
+            self._say(f"heavy: detached {kind} job as pid {pid}; it is running")
+        else:
+            self._say(f"heavy: detached {kind} job as pid {pid}; no ticket after "
+                      f"{fmt_secs(HANDSHAKE_TIMEOUT)} (read the log)")
+        self._say(where)
+        self._say(f"heavy: end your turn; you will be messaged (agent {agent}) when the job ends")
+        return 0
+
+    def run_notified(self, kind: str, cmd: Sequence[str], wait: Optional[float],
+                     priority: Optional[str]) -> int:
+        """The detached copy: run the job, then message the agent once."""
+        agent = self.env["AJAYEB_HEAVY_NOTIFY_AGENT"]
+        log_path = self.env.get("AJAYEB_HEAVY_NOTIFY_LOG", "")
+        fds: Dict[str, Optional[int]] = {}
+        for name in ("FD", "ACK_FD"):
+            try:
+                fds[name] = int(self.env.get(f"AJAYEB_HEAVY_NOTIFY_{name}", ""))
+            except ValueError:
+                fds[name] = None
+
+        def tell(line: str, ack: bool = False) -> bool:
+            """Report to the caller once. With ack, True only if it acknowledged."""
+            fd, fds["FD"] = fds["FD"], None
+            if fd is None:
+                return False
+            try:
+                os.write(fd, (line.replace("\n", " ") + "\n").encode("utf-8"))
+            except OSError:
+                return False
+            finally:
+                with contextlib.suppress(OSError):
+                    os.close(fd)
+            ack_fd, fds["ACK_FD"] = fds["ACK_FD"], None
+            if not ack:
+                if ack_fd is not None:
+                    with contextlib.suppress(OSError):
+                        os.close(ack_fd)
+                return True
+            return ack_fd is not None and _read_byte(ack_fd, ACK_TIMEOUT) == b"k"
+
+        notifier = Notifier(self, agent, kind, list(cmd), log_path)
+        self.on_queued = lambda token, position, total: tell(f"queued {token} {position} {total}")
+        if kind == "light":
+            tell("started")
+        stop = threading.Event()
+        pinger = threading.Thread(target=notifier.ping_loop, args=(stop,), daemon=True)
+        pinger.start()
+        old = {}
+        try:
+            try:
+                rc = self.run(kind, cmd, wait, priority)
+            except Exception as exc:  # the outcome must still reach the agent
+                self._warn(f"heavy-notify: guard error: {exc!r}")
+                rc = 1
+            finally:
+                # run() has restored the default handlers. From here on a stray
+                # SIGINT, SIGTERM or SIGHUP must not lose the outcome (stop-all
+                # no longer lists us).
+                for sig in FORWARDED_SIGNALS:
+                    with contextlib.suppress(ValueError, OSError):
+                        old[sig] = signal.signal(sig, _ignore_signal)
+                stop.set()
+                pinger.join(PASEO_TIMEOUT + 5)
+            if rc == EX_TEMPFAIL and self.last_refusal and fds["FD"] is not None:
+                if tell(f"refused {self.last_refusal}", ack=True):
+                    return rc  # refused before queuing: the caller printed it
+            elif tell(f"ended {rc}", ack=True):
+                return rc  # ended before queuing: the caller printed it
+            notifier.finish(rc, self.last_refusal)
+        finally:
+            for sig, handler in old.items():
+                with contextlib.suppress(ValueError, OSError, TypeError):
+                    signal.signal(sig, handler)
         return rc
 
     # -- stop-all ----------------------------------------------------------------------
@@ -1603,6 +1832,236 @@ class Guard:
         return out
 
 
+def _read_line(fd: int, timeout: float) -> Optional[str]:
+    """One line from fd: None on timeout, "" when the writer closed without one."""
+    data = b""
+    deadline = time.monotonic() + timeout
+    while b"\n" not in data:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return None
+        try:
+            ready, _, _ = select.select([fd], [], [], remaining)
+        except InterruptedError:
+            continue
+        if not ready:
+            return None
+        chunk = os.read(fd, 4096)
+        if not chunk:
+            break
+        data += chunk
+    return data.decode("utf-8", "replace").split("\n", 1)[0]
+
+
+def _read_byte(fd: int, timeout: float) -> bytes:
+    try:
+        ready, _, _ = select.select([fd], [], [], timeout)
+        return os.read(fd, 1) if ready else b""
+    except OSError:
+        return b""
+    finally:
+        with contextlib.suppress(OSError):
+            os.close(fd)
+
+
+def _ignore_signal(signum, frame) -> None:
+    pass
+
+
+class Notifier:
+    """Messages one Paseo agent about one detached job: keep-warm pings, then the outcome."""
+
+    def __init__(self, guard: Guard, agent: str, kind: str, cmd: List[str], log_path: str):
+        self.guard = guard
+        self.agent = agent
+        self.kind = kind
+        self.cmd = cmd
+        self.short = display_cmd(cmd, 120)
+        self.log_path = log_path
+        self.t0 = guard.clock.monotonic()
+        self.last_contact = self.t0
+        self.next_try = self.t0
+        self.provider = ""
+        self.inspected_at: Optional[float] = None
+        # Held across each send, so no ping can follow or overlap the outcome.
+        self.lock = threading.Lock()
+        self.finished = False
+        self.warm_claude = guard._env_float("HEAVY_WARM_CLAUDE", WARM_CLAUDE)
+        self.warm_codex = guard._env_float("HEAVY_WARM_CODEX", WARM_CODEX)
+        self.warm_max = guard._env_float("HEAVY_WARM_MAX", WARM_MAX)
+
+    def note(self, msg: str) -> None:
+        self.guard._warn(f"heavy-notify: {msg}")
+
+    def paseo(self, *args: str) -> Tuple[bool, str, str]:
+        argv = [self.guard.env.get("PASEO_BIN") or "paseo", *args]
+        try:
+            res = subprocess.run(argv, env=self.guard.env, stdin=subprocess.DEVNULL,
+                                 capture_output=True, text=True, timeout=PASEO_TIMEOUT)
+        except (OSError, subprocess.SubprocessError) as exc:
+            return False, "", str(exc)
+        detail = (res.stderr or res.stdout or "").strip()[-500:]
+        return res.returncode == 0, res.stdout or "", detail or f"exit {res.returncode}"
+
+    def inspect(self) -> dict:
+        """The agent's paseo inspect record ({} if unreadable); remembers its provider."""
+        self.inspected_at = self.guard.clock.monotonic()
+        ok, out, _ = self.paseo("inspect", self.agent, "--json")
+        try:
+            data = json.loads(out) if ok else {}
+        except ValueError:
+            data = {}
+        data = data if isinstance(data, dict) else {}
+        if not self.provider:
+            self.provider = str(data.get("Provider") or "")
+        return data
+
+    def interval(self) -> float:
+        return self.warm_codex if "codex" in self.provider.lower() else self.warm_claude
+
+    def busy(self, data: Mapping) -> bool:
+        return str(data.get("Status") or "").lower() == "running"
+
+    def where(self) -> str:
+        if self.guard.started_at is not None:
+            return f"is still running ({fmt_secs(self.guard.clock.monotonic() - self.guard.started_at)} so far)"
+        tickets = sorted((rec for _, rec in self.guard._records("queue")), key=Guard._ticket_order)
+        tokens = [rec.get("token") for rec in tickets]
+        if self.guard.token in tokens:
+            return (f"is still waiting in the queue (number {tokens.index(self.guard.token) + 1}"
+                    f" of {len(tokens)})")
+        return "is still waiting in the queue"
+
+    def maybe_ping(self) -> bool:
+        now = self.guard.clock.monotonic()
+        if now - self.t0 >= self.warm_max or now < self.next_try:
+            return False
+        since = now - self.last_contact
+        if since < min(self.warm_codex, self.warm_claude):
+            return False
+        if self.provider and since < self.interval():
+            return False
+        if not self.provider and self.inspected_at is not None and now - self.inspected_at < PING_RETRY:
+            return False
+        data = self.inspect()
+        if since < self.interval():
+            return False
+        if self.busy(data):  # its cache is warm, and a message would cut its turn
+            self.last_contact = now
+            self.note("agent is busy; keep-warm ping skipped")
+            return False
+        text = (f"heavy.py keep-warm ping: your {self.kind} job ({self.short}) {self.where()}. "
+                "Reply with one word and end your turn. Check nothing; a message will wake you "
+                "when the job ends.")
+        with self.lock:
+            if self.finished:
+                return False
+            ok, _, detail = self.paseo("send", self.agent, text, "--no-wait", "--json")
+        if ok:
+            self.last_contact = now
+            self.note(f"keep-warm ping sent after {fmt_secs(since)}")
+            return True
+        self.next_try = now + PING_RETRY
+        self.note(f"keep-warm ping failed: {detail}")
+        return False
+
+    def ping_loop(self, stop: threading.Event) -> None:
+        while not stop.wait(PING_POLL):
+            try:
+                self.maybe_ping()
+            except Exception as exc:  # pings are best effort; the outcome is not
+                self.note(f"keep-warm ping error: {exc!r}")
+
+    def outcome(self, rc: int, refusal: Optional[str]) -> str:
+        if rc == 0:
+            return "ok (exit 0)"
+        if rc == EX_TEMPFAIL and refusal:
+            if "gave up after waiting" in refusal:
+                return f"timed out in the queue (exit {rc}): {refusal}"
+            return f"refused (exit {rc}): {refusal}"
+        if 128 < rc < 160:
+            return f"stopped by signal {rc - 128} (exit {rc})"
+        return f"failed (exit {rc})"
+
+    def tail(self) -> str:
+        try:
+            with open(self.log_path, "rb") as fh:
+                fh.seek(0, os.SEEK_END)
+                fh.seek(max(fh.tell() - 65536, 0))
+                data = fh.read()
+        except OSError:
+            return ""
+        lines = []
+        for raw in data.decode("utf-8", "replace").split("\n"):
+            line = ANSI_RE.sub("", raw.rsplit("\r", 1)[-1]).rstrip()
+            if not line.strip() or line.startswith("heavy-notify:"):
+                continue
+            if len(line) > NOTIFY_LINE_MAX:
+                line = line[:NOTIFY_LINE_MAX - 3] + "..."
+            lines.append(line)
+        return "\n".join(lines[-NOTIFY_TAIL_LINES:])
+
+    def message(self, rc: int, refusal: Optional[str]) -> str:
+        end = self.guard.clock.monotonic()
+        timing = f"after {fmt_secs(end - self.t0)}"
+        started = self.guard.started_at
+        if started is not None:
+            timing += f" (queued {fmt_secs(started - self.t0)}, ran {fmt_secs(end - started)})"
+        lines = [f"heavy.py: your detached {self.kind} job ended: {self.outcome(rc, refusal)}, {timing}.",
+                 f"Command: {self.short}",
+                 f"Log: {self.guard.tilde(self.log_path)}"]
+        tail = self.tail()
+        if tail:
+            lines += ["Last lines:", tail]
+        return "\n".join(lines)
+
+    def finish(self, rc: int, refusal: Optional[str]) -> bool:
+        with self.lock:
+            self.finished = True
+        text = self.message(rc, refusal)
+        waited = 0.0
+        while waited < BUSY_MAX and self.busy(self.inspect()):
+            self.guard.clock.sleep(BUSY_POLL)
+            waited += BUSY_POLL
+        if waited:
+            self.note(f"waited {fmt_secs(waited)} for the agent to go idle")
+        detail = ""
+        for attempt in range(len(NOTIFY_BACKOFF) + 1):
+            if attempt:
+                self.guard.clock.sleep(NOTIFY_BACKOFF[attempt - 1])
+            ok, _, detail = self.paseo("send", self.agent, text, "--no-wait", "--json")
+            if ok:
+                self.note(f"sent the outcome to {self.agent}")
+                return True
+            self.note(f"send {attempt + 1} failed: {detail}")
+        self.alert(rc, refusal, text, detail)
+        return False
+
+    def alert(self, rc: int, refusal: Optional[str], text: str, detail: str) -> None:
+        # The coordinator's waiter watches alerts/quota-*.md.
+        directory = os.path.join(self.guard.configured_run_dir, "alerts")
+        body = (f"# heavy.py could not notify its agent\n\n"
+                f"- Agent: {self.agent}\n- Kind: {self.kind}\n- Command: {self.short}\n"
+                f"- Outcome: {self.outcome(rc, refusal)}\n- Log: {self.guard.tilde(self.log_path)}\n"
+                f"- Last send error: {detail}\n\nThe message it tried to send:\n\n{text}\n")
+        try:
+            os.makedirs(directory, exist_ok=True)
+            stamp = int(time.time())
+            for n in range(100):
+                suffix = f"-{n}" if n else ""
+                path = os.path.join(directory, f"quota-{stamp}-heavy-notify-failed{suffix}.md")
+                try:
+                    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+                except FileExistsError:
+                    continue
+                with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                    fh.write(body)
+                self.note(f"wrote {self.guard.tilde(path)}")
+                return
+        except OSError as exc:
+            self.note(f"cannot write the alert: {exc}")
+
+
 def _nice10() -> None:
     try:
         os.nice(10)
@@ -1628,6 +2087,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     run.add_argument("--priority", choices=PRIORITIES, default=None,
                      help="queue priority (default normal or $HEAVY_PRIORITY); only the coordinator grants high")
+    run.add_argument("--notify", default=None, metavar="UUID|auto",
+                     help="detach and message this Paseo agent when the job ends (default $HEAVY_NOTIFY; "
+                          "auto reads $PASEO_AGENT_ID)")
 
     sub.add_parser("status", help="show mode, pressure, slots, locks, ordered queue and recent runs")
 
@@ -1656,7 +2118,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.command == "run":
         if cmd is None:
             parser.error("run needs -- before the command, e.g. heavy.py run --kind test -- go test ./...")
-        return guard.run(args.kind, cmd, args.wait, args.priority)
+        if guard.env.get("AJAYEB_HEAVY_NOTIFY_AGENT"):
+            return guard.run_notified(args.kind, cmd, args.wait, args.priority)
+        return guard.run(args.kind, cmd, args.wait, args.priority, args.notify)
     if args.command == "status":
         return guard.status()
     if args.command == "stop-all":

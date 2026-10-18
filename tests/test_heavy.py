@@ -54,7 +54,9 @@ DEFAULTED = tuple(key for key, _ in heavy.DEFAULT_CHILD_ENV)
 def clean_environ():
     """os.environ without the guard's own variables, CI markers or the defaulted ones."""
     return {k: v for k, v in os.environ.items()
-            if not k.startswith("AJAYEB_") and k not in ("CI", "RUNNER_TEMP", "HEAVY_PRIORITY") + DEFAULTED}
+            if not k.startswith("AJAYEB_") and k not in (
+                "CI", "RUNNER_TEMP", "HEAVY_PRIORITY", "HEAVY_NOTIFY", "PASEO_AGENT_ID", "PASEO_BIN",
+                "MAKELEVEL", "MAKEFLAGS", "MFLAGS") + DEFAULTED}
 
 
 class FakeClock:
@@ -1843,6 +1845,7 @@ class CLITests(GuardCase):
         self.assertEqual(res.returncode, 0)
         self.assertIn("HEAVY_PRIORITY", res.stdout)
         self.assertIn("coordinator", res.stdout)
+        self.assertIn("HEAVY_NOTIFY", res.stdout)
         res = self.cli("run", "--kind", "light", "--priority", "high", "--", PY, "-c", "pass")
         self.assertEqual(res.returncode, 0)
         self.assertEqual(self.cli("run", "--kind", "light", "--priority", "typo", "--", PY, "-c", "pass").returncode,
@@ -1854,6 +1857,430 @@ class CLITests(GuardCase):
         self.assertIn("window 22:00-06:00", res.stdout)
         res = self.cli("run", "--kind", "light", "--", PY, "-c", "print('ok')")
         self.assertEqual((res.returncode, res.stdout.strip()), (0, "ok"))
+
+
+AGENT = "6cf5fbab-bd04-46da-a560-84e3a910a07d"
+
+FAKE_PASEO = r"""#!/usr/bin/env python3
+import json, os, sys
+with open(os.environ["FAKE_PASEO_LOG"], "a") as fh:
+    fh.write(json.dumps(sys.argv[1:]) + "\n")
+if sys.argv[1:2] == ["inspect"]:
+    status = "idle"
+    flag = os.environ.get("FAKE_PASEO_BUSY_FILE")
+    if flag and os.path.exists(flag):
+        status = "running"
+    print(json.dumps({"Id": sys.argv[2], "Status": status,
+                      "Provider": os.environ.get("FAKE_PASEO_PROVIDER", "")}))
+    sys.exit(0)
+if os.environ.get("FAKE_PASEO_FAIL"):
+    print("paseo: daemon unreachable", file=sys.stderr)
+    sys.exit(1)
+print(json.dumps({"ok": True}))
+"""
+
+
+class NotifyCase(GuardCase):
+    """A fake paseo on PASEO_BIN that records every call as a JSON line."""
+
+    def setUp(self):
+        super().setUp()
+        self.paseo = os.path.join(self.tmp, "bin", "paseo")
+        os.makedirs(os.path.dirname(self.paseo))
+        with open(self.paseo, "w") as fh:
+            fh.write(FAKE_PASEO)
+        os.chmod(self.paseo, 0o755)
+        self.paseo_log = os.path.join(self.tmp, "paseo.jsonl")
+
+    def notify_env(self, **extra):
+        env = {"PASEO_BIN": self.paseo, "FAKE_PASEO_LOG": self.paseo_log}
+        env.update(extra)
+        return env
+
+    def paseo_calls(self):
+        if not os.path.exists(self.paseo_log):
+            return []
+        with open(self.paseo_log) as fh:
+            return [json.loads(line) for line in fh]
+
+    def sends(self):
+        return [c for c in self.paseo_calls() if c[:1] == ["send"]]
+
+    def notifier(self, g, kind="test", cmd=("make", "test-go"), log_lines=("building", "ok all")):
+        log = os.path.join(self.tmp, "job.log")
+        with open(log, "w") as fh:
+            fh.write("\n".join(log_lines) + "\n")
+        return heavy.Notifier(g, AGENT, kind, list(cmd), log)
+
+
+class NotifyResolveTests(NotifyCase):
+    def test_off_values_mean_a_blocking_run(self):
+        for value in ("", "0", "off", "no", "false"):
+            self.assertIsNone(self.guard(env=self.notify_env(HEAVY_NOTIFY=value)).notify_target(None), value)
+
+    def test_auto_reads_paseo_agent_id(self):
+        g = self.guard(env=self.notify_env(PASEO_AGENT_ID=AGENT))
+        self.assertEqual(g.notify_target("auto"), AGENT)
+        g = self.guard(env=self.notify_env(PASEO_AGENT_ID=AGENT, HEAVY_NOTIFY="auto"))
+        self.assertEqual(g.notify_target(None), AGENT)
+        self.assertIsNone(self.guard(env=self.notify_env()).notify_target(None))
+
+    def test_bad_targets_are_usage_errors_and_run_nothing(self):
+        for env, flag in (({}, "auto"), ({"HEAVY_NOTIFY": "nobody"}, None), ({}, "12345")):
+            g = self.guard(env=self.notify_env(**env))
+            path, cmd = self.sentinel_cmd()
+            self.assertEqual(g.run("light", cmd, notify=flag), heavy.EX_USAGE, (env, flag))
+            self.assertFalse(os.path.exists(path))
+            self.assertIn("notify", self.err.getvalue().lower())
+
+    def test_env_notify_under_make_is_refused_with_the_wrapper_hint(self):
+        g = self.guard(env=self.notify_env(HEAVY_NOTIFY=AGENT, MAKELEVEL="1"))
+        path, cmd = self.sentinel_cmd()
+        with patch.object(heavy.Guard, "_detach", side_effect=AssertionError("detached")):
+            self.assertEqual(g.run("test", cmd), heavy.EX_USAGE)
+        self.assertFalse(os.path.exists(path))
+        self.assertIn("--kind light", self.err.getvalue())
+        # An explicit --notify is a deliberate wrapper (for example a make recipe).
+        g = self.guard(env=self.notify_env(MAKELEVEL="1"))
+        with patch.object(heavy.Guard, "_detach", return_value=0) as detach:
+            self.assertEqual(g.run("test", cmd, notify=AGENT), 0)
+        self.assertEqual(detach.call_count, 1)
+
+    def test_nested_runs_ignore_notify_and_run_inline(self):
+        g = self.guard(env=self.notify_env(HEAVY_NOTIFY=AGENT, AJAYEB_HEAVY_HELD="1"))
+        path, cmd = self.sentinel_cmd()
+        with patch.object(heavy.Guard, "_detach", side_effect=AssertionError("detached")):
+            self.assertEqual(g.run("test", cmd), 0)
+        self.assertTrue(os.path.exists(path))
+        self.assertEqual(self.paseo_calls(), [])
+
+    def test_mode_refusal_stays_inline(self):
+        self.write_mode({"mode": "paused"})
+        g = self.guard(env=self.notify_env(HEAVY_NOTIFY=AGENT))
+        path, cmd = self.sentinel_cmd()
+        with patch.object(heavy.Guard, "_detach", side_effect=AssertionError("detached")):
+            self.assertEqual(g.run("test", cmd), heavy.EX_TEMPFAIL)
+        self.assertIn("paused", self.err.getvalue())
+        self.assertEqual(self.log_entries()[-1]["rc"], heavy.EX_TEMPFAIL)
+        self.assertEqual(self.paseo_calls(), [])
+
+    def test_job_env_drops_notify_variables(self):
+        g = self.guard(env=self.notify_env(HEAVY_NOTIFY=AGENT, AJAYEB_HEAVY_NOTIFY_AGENT=AGENT,
+                                           AJAYEB_HEAVY_NOTIFY_FD="9", AJAYEB_HEAVY_NOTIFY_LOG="/x"))
+        env = g.child_env("test", True, set())
+        for key in ("HEAVY_NOTIFY", "AJAYEB_HEAVY_NOTIFY_AGENT", "AJAYEB_HEAVY_NOTIFY_FD", "AJAYEB_HEAVY_NOTIFY_LOG"):
+            self.assertNotIn(key, env)
+        self.assertEqual(env["PASEO_BIN"], self.paseo)
+
+    def test_ticket_publication_reports_position(self):
+        self.hold("slot-1")
+        g = self.guard(level=2, env=self.notify_env())
+        seen = []
+        g.on_queued = lambda token, pos, total: seen.append((len(token), pos, total))
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(g.run("test", cmd, wait=2), heavy.EX_TEMPFAIL)
+        self.assertEqual(seen, [(32, 1, 1)])
+        self.assertIn("gave up after waiting", g.last_refusal)
+
+
+class NotifyFinishTests(NotifyCase):
+    def test_success_message_names_kind_command_exit_duration_log_and_tail(self):
+        g = self.guard(env=self.notify_env())
+        n = self.notifier(g, log_lines=["\x1b[32mPASS\x1b[0m engine", "heavy-notify: ping sent", "ok all 42"])
+        self.clock.mono += 30
+        g.started_at = self.clock.monotonic()
+        self.clock.mono += 95
+        self.assertTrue(n.finish(0, None))
+        (call,) = self.sends()
+        self.assertEqual(call[:2], ["send", AGENT])
+        self.assertEqual(call[3:], ["--no-wait", "--json"])
+        text = call[2]
+        for part in ("test job", "exit 0", "make test-go", "2m05s", "queued 30s", "ran 1m35s",
+                     "job.log", "PASS engine", "ok all 42"):
+            self.assertIn(part, text)
+        self.assertNotIn("\x1b", text)
+        self.assertNotIn("ping sent", text)
+        self.assertFalse(text.startswith("-"))
+
+    def test_outcome_words(self):
+        g = self.guard(env=self.notify_env())
+        n = self.notifier(g)
+        self.assertIn("ok", n.outcome(0, None))
+        self.assertIn("failed (exit 1)", n.outcome(1, None))
+        self.assertIn("refused (exit 75): the mode is paused", n.outcome(75, "the mode is paused"))
+        self.assertIn("timed out in the queue (exit 75)", n.outcome(75, "busy; gave up after waiting 1h00m"))
+        self.assertIn("stopped by signal 15 (exit 143)", n.outcome(143, None))
+
+    def test_tail_is_bounded(self):
+        g = self.guard(env=self.notify_env())
+        n = self.notifier(g, log_lines=[f"line {i} " + "x" * 500 for i in range(100)])
+        tail = n.tail()
+        self.assertLessEqual(len(tail.splitlines()), heavy.NOTIFY_TAIL_LINES)
+        self.assertIn("line 99", tail)
+        self.assertTrue(all(len(line) <= 200 for line in tail.splitlines()))
+
+    def test_failed_send_retries_then_writes_an_alert(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_FAIL="1"))
+        n = self.notifier(g)
+        self.assertFalse(n.finish(1, None))
+        self.assertEqual(len(self.sends()), len(heavy.NOTIFY_BACKOFF) + 1)
+        self.assertEqual(self.clock.sleeps, list(heavy.NOTIFY_BACKOFF))
+        alerts = os.listdir(os.path.join(self.run_dir, "alerts"))
+        self.assertEqual(len(alerts), 1)
+        self.assertRegex(alerts[0], r"^quota-\d+-heavy-notify-failed\.md$")
+        with open(os.path.join(self.run_dir, "alerts", alerts[0])) as fh:
+            body = fh.read()
+        for part in (AGENT, "job.log", "make test-go", "exit 1", "daemon unreachable"):
+            self.assertIn(part, body)
+
+    def test_outcome_waits_a_while_for_a_busy_agent_then_sends_anyway(self):
+        busy = os.path.join(self.tmp, "busy")
+        open(busy, "w").close()
+        g = self.guard(env=self.notify_env(FAKE_PASEO_BUSY_FILE=busy))
+        n = self.notifier(g)
+        self.clock.on_sleep = lambda count: count == 3 and os.unlink(busy)
+        self.assertTrue(n.finish(0, None))
+        self.assertEqual(self.clock.sleeps, [heavy.BUSY_POLL] * 3)
+        open(busy, "w").close()
+        self.clock.sleeps.clear()
+        self.clock.on_sleep = None
+        self.assertTrue(n.finish(0, None))
+        self.assertEqual(sum(self.clock.sleeps), heavy.BUSY_MAX)
+        self.assertEqual(len(self.sends()), 2)
+
+    def test_missing_paseo_binary_still_alerts(self):
+        g = self.guard(env=self.notify_env(PASEO_BIN=os.path.join(self.tmp, "no-such-paseo")))
+        n = self.notifier(g)
+        self.assertFalse(n.finish(0, None))
+        self.assertEqual(len(os.listdir(os.path.join(self.run_dir, "alerts"))), 1)
+
+
+class NotifyPingTests(NotifyCase):
+    def test_claude_pings_every_50_minutes_for_the_first_3_5_hours(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="handoff-claude-0cb917b39a28"))
+        n = self.notifier(g)
+        times = []
+        for _ in range(4 * 3600 // 60):
+            self.clock.mono += 60
+            if n.maybe_ping():
+                times.append(self.clock.mono)
+        self.assertEqual(times, [3000, 6000, 9000, 12000])
+        # One inspect learns the provider early; each due ping checks the agent is idle.
+        self.assertEqual(len([c for c in self.paseo_calls() if c[0] == "inspect"]), 1 + len(times))
+        text = self.sends()[0][2]
+        self.assertIn("one word", text)
+        self.assertIn("make test-go", text)
+        self.assertIn("queue", text)
+
+    def test_codex_pings_every_25_minutes(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="codex"))
+        n = self.notifier(g)
+        times = []
+        for _ in range(3600 // 60):
+            self.clock.mono += 60
+            if n.maybe_ping():
+                times.append(self.clock.mono)
+        self.assertEqual(times, [1500, 3000])
+
+    def test_a_running_job_says_so_and_a_short_one_never_pings(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="claude"))
+        n = self.notifier(g)
+        self.clock.mono += 600
+        g.started_at = self.clock.monotonic()
+        self.clock.mono += 2000
+        self.assertFalse(n.maybe_ping())
+        self.clock.mono += 400
+        self.assertTrue(n.maybe_ping())
+        self.assertIn("running", self.sends()[0][2])
+
+    def test_a_busy_agent_is_not_pinged_and_counts_as_contact(self):
+        busy = os.path.join(self.tmp, "busy")
+        open(busy, "w").close()
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="claude", FAKE_PASEO_BUSY_FILE=busy))
+        n = self.notifier(g)
+        self.clock.mono = 3000
+        self.assertFalse(n.maybe_ping())
+        os.unlink(busy)
+        self.clock.mono = 5940
+        self.assertFalse(n.maybe_ping())
+        self.clock.mono = 6000
+        self.assertTrue(n.maybe_ping())
+        self.assertEqual(len(self.sends()), 1)
+
+    def test_no_ping_after_the_outcome(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="claude"))
+        n = self.notifier(g)
+        self.assertTrue(n.finish(0, None))
+        self.clock.mono = 3000
+        self.assertFalse(n.maybe_ping())
+        self.assertEqual(len(self.sends()), 1)
+
+    def test_failed_ping_backs_off_without_counting_as_contact(self):
+        g = self.guard(env=self.notify_env(FAKE_PASEO_PROVIDER="claude", FAKE_PASEO_FAIL="1"))
+        n = self.notifier(g)
+        self.clock.mono = 3000
+        self.assertFalse(n.maybe_ping())
+        self.clock.mono += 60
+        self.assertFalse(n.maybe_ping())
+        self.assertEqual(len(self.sends()), 1)
+        self.clock.mono += heavy.PING_RETRY
+        n.maybe_ping()
+        self.assertEqual(len(self.sends()), 2)
+
+    def test_unknown_provider_uses_the_claude_interval_and_asks_again(self):
+        g = self.guard(env=self.notify_env())
+        n = self.notifier(g)
+        self.clock.mono = 1500
+        self.assertFalse(n.maybe_ping())
+        self.clock.mono = 3000
+        self.assertTrue(n.maybe_ping())
+        self.assertGreaterEqual(len([c for c in self.paseo_calls() if c[0] == "inspect"]), 2)
+
+
+class NotifyChildTests(NotifyCase):
+    """run_notified, the detached copy, driven in-process with a handshake pipe."""
+
+    def child(self, read_end_open=True, ack=True, **env):
+        """A copy whose caller reads the report (unless read_end_open is False) and acks it."""
+        r, w = os.pipe()
+        ack_r, ack_w = os.pipe()
+        if ack:
+            os.write(ack_w, b"k")
+        os.close(ack_w)
+        if not read_end_open:
+            os.close(r)
+            r = None
+        g = self.guard(env=self.notify_env(
+            AJAYEB_HEAVY_NOTIFY_AGENT=AGENT, AJAYEB_HEAVY_NOTIFY_FD=str(w), AJAYEB_HEAVY_NOTIFY_ACK_FD=str(ack_r),
+            AJAYEB_HEAVY_NOTIFY_LOG=os.path.join(self.tmp, "job.log"), **env))
+        return g, r
+
+    def read_all(self, r):
+        with os.fdopen(r, "rb") as fh:
+            return fh.read().decode()
+
+    def test_refusal_before_queuing_goes_to_the_caller_not_the_agent(self):
+        self.write_mode({"mode": "paused"})
+        g, r = self.child()
+        self.assertEqual(g.run_notified("test", [PY, "-c", "pass"], 1, None), heavy.EX_TEMPFAIL)
+        self.assertRegex(self.read_all(r), r"^refused .*paused")
+        self.assertEqual(self.sends(), [])
+
+    def test_an_unacknowledged_refusal_is_messaged(self):
+        # The caller gave up waiting (or died) just as the report landed in the pipe.
+        self.write_mode({"mode": "paused"})
+        g, r = self.child(ack=False)
+        self.assertEqual(g.run_notified("test", [PY, "-c", "pass"], 1, None), heavy.EX_TEMPFAIL)
+        self.assertRegex(self.read_all(r), r"^refused ")
+        (call,) = self.sends()
+        self.assertIn("refused (exit 75)", call[2])
+
+    def test_refusal_is_messaged_when_the_caller_is_gone(self):
+        self.write_mode({"mode": "paused"})
+        g, _ = self.child(read_end_open=False)
+        self.assertEqual(g.run_notified("test", [PY, "-c", "pass"], 1, None), heavy.EX_TEMPFAIL)
+        (call,) = self.sends()
+        self.assertIn("refused (exit 75)", call[2])
+
+    def test_queued_job_handshakes_its_ticket_then_messages(self):
+        g, r = self.child()
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(g.run_notified("test", cmd, 5, None), 0)
+        self.assertRegex(self.read_all(r), r"^queued [0-9a-f]{32} 1 1\n$")
+        self.assertTrue(os.path.exists(path))
+        (call,) = self.sends()
+        self.assertIn("ok (exit 0)", call[2])
+
+    def test_guard_error_reaches_the_caller_or_else_the_agent(self):
+        g, r = self.child()
+        with patch.object(heavy.Guard, "run", side_effect=RuntimeError("boom")):
+            self.assertEqual(g.run_notified("test", [PY, "-c", "pass"], 1, None), 1)
+        self.assertEqual(self.read_all(r), "ended 1\n")
+        self.assertEqual(self.sends(), [])
+        g, _ = self.child(read_end_open=False)
+        with patch.object(heavy.Guard, "run", side_effect=RuntimeError("boom")):
+            self.assertEqual(g.run_notified("test", [PY, "-c", "pass"], 1, None), 1)
+        (call,) = self.sends()
+        self.assertIn("failed (exit 1)", call[2])
+
+
+class NotifyProcessTests(NotifyCase):
+    """The real CLI: detach, handshake, job, message."""
+
+    def cli_env(self, **extra):
+        env = clean_environ()
+        env["AJAYEB_RUN_DIR"] = self.run_dir
+        env.update(self.notify_env(**extra))
+        return env
+
+    def wait_for_send(self, timeout=30.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            sends = self.sends()
+            if sends:
+                return sends
+            time.sleep(0.05)
+        self.fail("no paseo send arrived")
+
+    def detached_pid(self, stdout):
+        import re
+        match = re.search(r"pid (\d+)", stdout)
+        self.assertIsNotNone(match, stdout)
+        return int(match.group(1))
+
+    def test_light_job_detaches_and_messages_when_it_ends(self):
+        go = os.path.join(self.tmp, "go")
+        self.addCleanup(lambda: os.path.exists(self.tmp) and open(go, "w").close())
+        code = ("import os, time\n"
+                "deadline = time.monotonic() + 60\n"
+                f"while not os.path.exists({go!r}) and time.monotonic() < deadline: time.sleep(0.05)\n"
+                "print('job says hello', os.environ.get('HEAVY_NOTIFY'), os.environ.get('AJAYEB_HEAVY_NOTIFY_FD'))\n"
+                "raise SystemExit(3)\n")
+        res = subprocess.run([PY, HEAVY_PATH, "run", "--kind", "light", "--notify", AGENT, "--", PY, "-c", code],
+                             env=self.cli_env(HEAVY_NOTIFY=AGENT), capture_output=True, text=True, timeout=60)
+        # The job is still blocked on the go file, so the guard returned before it ended.
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn("end your turn", res.stdout)
+        self.assertIn("heavy-notify", res.stdout)
+        pid = self.detached_pid(res.stdout)
+        self.addCleanup(self.kill_if_alive, pid)
+        self.assertNotEqual(os.getsid(pid), os.getsid(0))
+        self.assertEqual(self.sends(), [])
+        open(go, "w").close()
+        (call,) = self.wait_for_send()
+        self.assertEqual(call[1], AGENT)
+        self.assertIn("exit 3", call[2])
+        self.assertIn("job says hello None None", call[2])
+        self.assert_exits(pid)
+        entry = self.log_entries()[-1]
+        self.assertEqual((entry["kind"], entry["rc"]), ("light", 3))
+
+    def test_queued_job_reports_its_ticket_and_refusal_is_messaged(self):
+        # Hold every slot with this live test process, so the job must queue.
+        for i in range(1, 4):
+            self.hold(f"slot-{i}", pid=os.getpid())
+        res = subprocess.run([PY, HEAVY_PATH, "run", "--kind", "test", "--wait", "1", "--", PY, "-c", "pass"],
+                             env=self.cli_env(HEAVY_NOTIFY="auto", PASEO_AGENT_ID=AGENT),
+                             capture_output=True, text=True, timeout=60)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.addCleanup(self.kill_if_alive, self.detached_pid(res.stdout))
+        self.assertRegex(res.stdout, r"ticket [0-9a-f]{32}, number 1 of 1 in the queue")
+        (call,) = self.wait_for_send()
+        self.assertIn("timed out in the queue (exit 75)", call[2])
+        self.assert_exits(self.detached_pid(res.stdout))
+        self.assertEqual(os.listdir(self.heavy_dir("queue")), [])
+
+    def kill_if_alive(self, pid):
+        if heavy.default_pid_alive(pid) and "heavy.py" in (heavy.default_proc_command(pid) or ""):
+            os.kill(pid, signal.SIGKILL)
+
+    def assert_exits(self, pid, timeout=15.0):
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if not heavy.default_pid_alive(pid):
+                return
+            time.sleep(0.05)
+        self.fail(f"detached guard {pid} is still alive")
 
 
 if __name__ == "__main__":
