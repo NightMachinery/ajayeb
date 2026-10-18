@@ -173,13 +173,16 @@ for (const locale of ['en', 'fa'] as const) {
       // Give the top bar its widest state: undo, summary, log and sound.
       await playKey(driver, 'construct:arsenal');
       await driver.nextTurn();
-      for (const viewport of [
-        { width: 360, height: 740 },
-        { width: 390, height: 844 },
-        { width: 740, height: 360 },
-        { width: 1280, height: 800 }
+      for (const { layout, ...viewport } of [
+        { width: 360, height: 740, layout: 'phone-portrait' },
+        { width: 390, height: 844, layout: 'phone-portrait' },
+        { width: 740, height: 360, layout: 'phone-landscape' },
+        { width: 1280, height: 800, layout: 'desktop' }
       ]) {
         await page.setViewportSize(viewport);
+        // CSS media queries switch before the script's MediaQuery runes do, so
+        // measure only once the game screen has taken the layout for this size.
+        await expect(page.locator('.game-screen')).toHaveAttribute('data-layout', layout);
         const toggle = page.locator('[data-control="sound"]');
         await expect(toggle).toBeVisible();
         await expect(toggle).toHaveAccessibleName(
@@ -198,12 +201,20 @@ for (const locale of ['en', 'fa'] as const) {
           );
         }
         for (const control of ['menu', 'undo', 'move-summary', 'log', 'sound']) {
-          expect(
-            await page.locator(`.top-bar [data-control="${control}"]`).evaluate((node) => {
+          const target = await page
+            .locator(`.top-bar [data-control="${control}"]`)
+            .evaluate((node) => {
               const r = node.getBoundingClientRect();
-              return r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth;
-            }),
-            `${control} keeps its 44px target inside the viewport`
+              return {
+                fits: r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth,
+                rect: { x: r.x, right: r.right, width: r.width, height: r.height },
+                innerWidth,
+                layout: document.querySelector('.game-screen')?.getAttribute('data-layout')
+              };
+            });
+          expect(
+            target.fits,
+            `${control} keeps its 44px target inside the viewport: ${JSON.stringify(target)}`
           ).toBe(true);
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
