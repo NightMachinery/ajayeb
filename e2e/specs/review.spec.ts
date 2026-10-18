@@ -224,7 +224,8 @@ test.describe('advisor strength', () => {
 
       // Walls wins at once; the player discards it instead. The deep
       // review comes after the move, and fills in the summary of the
-      // bot's reply.
+      // bot's reply. Its own search picks the winning move (Walls, or
+      // another card whose shields also reach the capital).
       await playKey(driver, 'discard:walls');
       await driver.nextTurn();
       const popup = page.locator(POPUP);
@@ -232,11 +233,13 @@ test.describe('advisor strength', () => {
       const review = popup.locator('[data-move-review]');
       await expect(review).toHaveAttribute('data-move-review', 'better');
       await expect(review.locator('[data-review-verdict]')).toHaveText(
-        'Building Walls would have won the game.'
+        /^Building .+ would have won the game\.$/
       );
       const view = await currentView(page);
       expect(view.review?.strength).toBe('deep');
-      expect(view.review?.better).toBe('construct:walls');
+      expect(view.review?.reason).toBe('wins');
+      expect(view.review?.gap, 'a deep review has no points').toBe(0);
+      expect(view.review?.better).toMatch(/^construct:/);
       await page.keyboard.press('Escape');
       await expect(popup).toHaveCount(0);
 

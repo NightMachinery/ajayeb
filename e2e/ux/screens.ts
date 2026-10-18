@@ -312,6 +312,9 @@ export async function reachScreen(page: Page, origin: string, screen: Screen): P
       await menu(page, 'menu-hints');
       const sheet = page.locator('dialog[open]').filter({ has: page.locator('[data-game-hints]') });
       await expect(sheet).toBeVisible();
+      // The advisor's row, with its strength picker, is the last family.
+      const picker = sheet.locator('[data-hint-family="advisor"] [data-advisor-strength]');
+      if ((await picker.count()) > 0) await picker.scrollIntoViewIfNeeded();
       return;
     }
   }
