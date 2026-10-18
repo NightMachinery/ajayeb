@@ -18,7 +18,26 @@
 import { cardBySlug } from '$lib/catalog';
 import type { GameEvent } from '$lib/wire';
 
-export const CUES = ['slide', 'coin', 'flip', 'drum', 'chime', 'fanfare', 'tick'] as const;
+// The player/gallery inventory. Event wiring stays in eventCues below.
+export const CUES = [
+  'slide',
+  'coin',
+  'flip',
+  'drum',
+  'chime',
+  'fanfare',
+  'tick',
+  'wonder',
+  'token',
+  'loot',
+  'ageStart',
+  'defeat',
+  'yourTurn',
+  'destroy',
+  'rebuild',
+  'libraryDraw',
+  'extraTurn'
+] as const;
 /**
  * slide: a card taken or built; coin: coins gained or paid; flip: a
  * face-down card revealed; drum: shields, the pawn, looting; chime: a

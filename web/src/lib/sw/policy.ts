@@ -15,11 +15,16 @@
 //     network; a new version precaches them again.
 //   - art: bitmap art requested with its ?v= content hash. Cache first from
 //     a bounded runtime cache that outlives versions, then the network.
+//   - sound: hashed AAC files, fetched only after audio unlock, in their own
+//     bounded runtime cache; never in the install precache.
 
 /** The prefix of the versioned shell cache; the version follows it. */
 export const SHELL_CACHE_PREFIX = 'ajayeb-shell-';
 /** The runtime art cache. It is not versioned: art URLs carry their hash. */
 export const ART_CACHE = 'ajayeb-art';
+/** Decoded-file fetches are cached lazily by content hash, never at install. */
+export const SOUND_CACHE = 'ajayeb-sound';
+export const SOUND_CACHE_MAX_ENTRIES = 24;
 /** At most this many art responses stay cached (the oldest-used go first). */
 export const ART_CACHE_MAX_ENTRIES = 150;
 /** How long a page load waits for the network before the cached shell. */
@@ -30,7 +35,7 @@ export const SHELL_KEY = '/shell.html';
 /** The message an old worker sends a waiting one to make it take over. */
 export const SKIP_WAITING = 'ajayeb:skip-waiting';
 
-export type Strategy = 'bypass' | 'navigate' | 'immutable' | 'precached' | 'art';
+export type Strategy = 'bypass' | 'navigate' | 'immutable' | 'precached' | 'art' | 'sound';
 
 export interface RequestFacts {
   method: string;
@@ -86,6 +91,7 @@ export function strategyFor(
   if (req.mode === 'navigate') return isAppRoute(path) ? 'navigate' : 'bypass';
   if (path.startsWith('/_app/immutable/')) return 'immutable';
   if (path.startsWith('/art/') && url.searchParams.get('v')) return 'art';
+  if (path.startsWith('/sfx/') && url.searchParams.get('v')) return 'sound';
   if (url.search === '' && precached.has(path)) return 'precached';
   return 'bypass';
 }

@@ -17,6 +17,8 @@
 // - Art is cached as it is shown, by its ?v= URL, in a bounded cache that
 //   outlives versions. It is never precached: the app's idle prefetch
 //   (lib/art/prefetch.ts) already warms it (D24).
+// - Sounds use their own bounded runtime cache by ?v= URL. Only an unlocked
+//   player fetches them, so installing the worker never downloads audio.
 // - /ws, /api/* (and /api/dev/*), /health and everything else are left to
 //   the browser untouched.
 // - Updates: a new version takes over on a full page load with no game open,
@@ -31,6 +33,8 @@ import { artCache } from '$lib/sw/art-cache';
 import {
   ART_CACHE,
   ART_CACHE_MAX_ENTRIES,
+  SOUND_CACHE,
+  SOUND_CACHE_MAX_ENTRIES,
   NAVIGATION_TIMEOUT_MS,
   SHELL_KEY,
   SKIP_WAITING,
@@ -122,7 +126,10 @@ sw.addEventListener('fetch', (event) => {
       event.respondWith(fromShellCache(request));
       break;
     case 'art':
-      event.respondWith(art(event));
+      event.respondWith(runtime(event, runtimeArt));
+      break;
+    case 'sound':
+      event.respondWith(runtime(event, runtimeSound));
       break;
     case 'bypass':
       break;
@@ -156,11 +163,13 @@ async function fromShellCache(request: Request): Promise<Response> {
 // cannot observe the temporary deletion used to move a hit to the end.
 const runtimeArt = artCache(() => caches.open(ART_CACHE), ART_CACHE_MAX_ENTRIES);
 
-async function art(event: FetchEvent): Promise<Response> {
+const runtimeSound = artCache(() => caches.open(SOUND_CACHE), SOUND_CACHE_MAX_ENTRIES);
+
+async function runtime(event: FetchEvent, cache: ReturnType<typeof artCache>): Promise<Response> {
   const request = event.request;
-  const hit = await runtimeArt.match(request);
+  const hit = await cache.match(request);
   if (hit) return hit;
   const response = await fetch(request);
-  if (response.status === 200) event.waitUntil(runtimeArt.remember(request, response.clone()));
+  if (response.status === 200) event.waitUntil(cache.remember(request, response.clone()));
   return response;
 }

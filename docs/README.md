@@ -30,7 +30,7 @@ These docs explain the current implementation, its rules and the tools used to b
 ## Project and legal
 
 - [legal.md](legal.md): code and art licenses, the trademark notice, and what we never copy.
-- [art/](art/README.md): the original art: the hand-drawn vector pipeline (icons, ornaments, logo) and the Codex bitmap pipeline ([art/bitmaps.md](art/bitmaps.md)).
+- [art/](art/README.md): the original art: the hand-drawn vector pipeline (icons, ornaments, logo) and the Codex bitmap pipeline ([art/bitmaps.md](art/bitmaps.md)), and the [CC0 sound pipeline](art/sound.md).
 
 ## Development process
 

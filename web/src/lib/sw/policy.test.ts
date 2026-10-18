@@ -75,6 +75,14 @@ describe('strategyFor', () => {
     expect(strategy('/favicon.svg?x=1')).toBe('bypass');
   });
 
+  it('caches sounds only on demand by content hash, leaving ranges and navigation alone', () => {
+    expect(strategy('/sfx/coin.m4a?v=0123abcd')).toBe('sound');
+    expect(strategy('/sfx/coin.m4a')).toBe('bypass');
+    expect(strategy('/sfx/coin.m4a?v=')).toBe('bypass');
+    expect(strategy('/sfx/coin.m4a?v=0123abcd', { range: true })).toBe('bypass');
+    expect(strategy('/sfx/coin.m4a?v=0123abcd', { mode: 'navigate' })).toBe('bypass');
+  });
+
   it('caches art only by its content-hashed URL', () => {
     expect(strategy('/art/cards/baths.avif?v=0123abcd')).toBe('art');
     expect(strategy('/art/cards/baths.avif')).toBe('bypass');

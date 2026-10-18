@@ -6,7 +6,8 @@ This license covers the original art in this repository:
 - `art/style.md`, `art/subjects.json` and `art/manifest.json` (the prompts
   and data that produce the art)
 - `art/refs/` (approved style anchors)
-- `art/originals/` (approved bitmap originals, as generated)
+- `art/originals/` (approved bitmap originals, as generated), excluding the
+  third-party CC0 audio in `art/originals/sound/` (see `docs/legal.md`)
 - `web/static/art/` (the shipped AVIF derivatives of those originals)
 - `web/src/lib/icons/svg/` (the hand-drawn SVG icon set)
 - `web/src/lib/ornaments/svg/` (the hand-drawn ornaments and military-track cells)

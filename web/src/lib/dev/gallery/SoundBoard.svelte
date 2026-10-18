@@ -1,5 +1,5 @@
 <script lang="ts">
-  // /dev/gallery, the sound board (M10.S04): one button per synthesized cue
+  // /dev/gallery, the sound board (M10.S04): one file and synth button per cue
   // (fx/sfx.ts) for auditioning, a volume step, and one button that plays a
   // busy frame's cues the way the Presenter does (each kind once, spaced).
   // Plays whether or not the Sound setting is on: this page is for listening.
@@ -7,6 +7,7 @@
   import Button from '$lib/components/shell/Button.svelte';
   import Segmented from '$lib/components/shell/Segmented.svelte';
   import { CUES, play, unlockAudio, type Cue } from '$lib/fx';
+  import { preloadAudio } from '$lib/fx/sfx';
   import { planCues } from '$lib/fx/cues';
   import { SOUND_VOLUMES, type SoundVolume } from '$lib/ui/settings.svelte';
   import type { GameEvent } from '$lib/wire';
@@ -18,7 +19,17 @@
     drum: 'dev.gallery.sound.cue.drum',
     chime: 'dev.gallery.sound.cue.chime',
     fanfare: 'dev.gallery.sound.cue.fanfare',
-    tick: 'dev.gallery.sound.cue.tick'
+    tick: 'dev.gallery.sound.cue.tick',
+    wonder: 'dev.gallery.sound.cue.wonder',
+    token: 'dev.gallery.sound.cue.token',
+    loot: 'dev.gallery.sound.cue.loot',
+    ageStart: 'dev.gallery.sound.cue.ageStart',
+    defeat: 'dev.gallery.sound.cue.defeat',
+    yourTurn: 'dev.gallery.sound.cue.yourTurn',
+    destroy: 'dev.gallery.sound.cue.destroy',
+    rebuild: 'dev.gallery.sound.cue.rebuild',
+    libraryDraw: 'dev.gallery.sound.cue.libraryDraw',
+    extraTurn: 'dev.gallery.sound.cue.extraTurn'
   } as const satisfies Record<Cue, MessageKey>;
   const VOLUME_LABEL = {
     quiet: 'home.settings.volumeQuiet',
@@ -31,9 +42,20 @@
     SOUND_VOLUMES.map((v) => ({ value: v, label: t(VOLUME_LABEL[v]) }))
   );
 
-  function audition(cue: Cue): void {
+  let loading = $state(false);
+  let unavailable = $state<Cue | null>(null);
+
+  async function audition(cue: Cue, synth = false): Promise<void> {
     unlockAudio();
-    play(cue, { volume });
+    if (!synth) {
+      loading = true;
+      try {
+        await preloadAudio();
+      } finally {
+        loading = false;
+      }
+    }
+    unavailable = play(cue, { volume, source: synth ? 'synth' : 'file' }) ? null : cue;
   }
 
   // The events of the looting-double scenario's Arsenal: a build that pays,
@@ -64,11 +86,35 @@
     options={volumeOptions}
     bind:value={() => volume, (v) => (volume = v as SoundVolume)}
   />
-  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+  <div class="grid gap-3 sm:grid-cols-2">
     {#each CUES as cue (cue)}
-      <Button variant="secondary" class="px-3!" data-cue={cue} onclick={() => audition(cue)}>
-        {t(CUE_LABEL[cue])}
-      </Button>
+      <div class="flex flex-col gap-1" data-sound-cue={cue}>
+        <span class="text-sm font-medium">{t(CUE_LABEL[cue])}</span>
+        <div class="grid grid-cols-2 gap-2">
+          <Button
+            variant="secondary"
+            data-cue={cue}
+            aria-label={t('dev.gallery.sound.fileFor', { cue: t(CUE_LABEL[cue]) })}
+            disabled={loading}
+            onclick={() => audition(cue)}
+          >
+            {t('dev.gallery.sound.file')}
+          </Button>
+          <Button
+            variant="secondary"
+            data-synth={cue}
+            aria-label={t('dev.gallery.sound.synthFor', { cue: t(CUE_LABEL[cue]) })}
+            onclick={() => audition(cue, true)}
+          >
+            {t('dev.gallery.sound.synth')}
+          </Button>
+        </div>
+        {#if unavailable === cue}
+          <span class="text-xs text-fg-muted" role="status">
+            {t('dev.gallery.sound.unavailable')}
+          </span>
+        {/if}
+      </div>
     {/each}
   </div>
   <div class="flex flex-col gap-1">

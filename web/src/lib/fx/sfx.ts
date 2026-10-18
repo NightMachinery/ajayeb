@@ -1,16 +1,8 @@
-// The sound cues, synthesized with WebAudio: no audio files, a few hundred
-// bytes of code each. Every cue is a short envelope over one or two
-// oscillators or a burst of noise, kept quiet (peaks well under full scale)
-// and pitched within one warm register, so several in a row sound like one
-// family.
-//
-// The AudioContext is created lazily and only inside a user gesture (a
-// browser refuses to start audio otherwise): unlockAudio() is called from
-// a pointerdown or keydown listener (fx/index.ts installs it) and from the
-// Settings switch that turns sound on. Before that, play() is a silent
-// no-op. Where WebAudio is missing (or in tests), everything is a no-op.
+// Decoded CC0 sound files, fetched only after a user gesture unlocks audio.
+// Each cue falls back immediately to its synth while loading or after failure.
+// Nothing waits for a network request in the game's presentation path.
 
-import type { Cue } from './cues';
+import { CUES, type Cue } from './cues';
 import type { SoundVolume } from '$lib/ui/settings.svelte';
 
 /** The master gain of each volume step. */
@@ -24,6 +16,51 @@ type Ctx = AudioContext;
 
 let ctx: Ctx | null = null;
 let noise: AudioBuffer | null = null;
+const buffers = new Map<Cue, AudioBuffer>();
+let loading: Promise<void> | null = null;
+let sounds: (typeof import('./sounds.gen'))['SOUND_FILES'] | null = null;
+const active: {
+  start: number;
+  end: number;
+  stopAt: (at: number) => void;
+  disconnect: () => void;
+}[] = [];
+
+/** Warm a small decoded cache once, after unlock. Two downloads at a time. */
+export async function preloadAudio(): Promise<void> {
+  const c = ctx;
+  if (!c) return;
+  if (c.state === 'suspended') {
+    try {
+      await c.resume();
+    } catch {
+      return;
+    }
+  }
+  if (c.state !== 'running') return;
+  if (!loading) {
+    loading = (async () => {
+      // Keep URL metadata out of the initial page payload too.
+      const files = (await import('./sounds.gen')).SOUND_FILES;
+      sounds = files;
+      const queue = [...CUES];
+      const worker = async () => {
+        for (let cue = queue.shift(); cue; cue = queue.shift()) {
+          try {
+            const response = await fetch(files[cue].url);
+            if (!response.ok) continue;
+            const buffer = await c.decodeAudioData(await response.arrayBuffer());
+            buffers.set(cue, buffer);
+          } catch {
+            // Failed files keep their synth; no rejected promise escapes.
+          }
+        }
+      };
+      await Promise.all([worker(), worker()]);
+    })().catch(() => undefined);
+  }
+  return loading;
+}
 
 function audioContextClass(): (new () => AudioContext) | null {
   const g = globalThis as unknown as {
@@ -44,7 +81,14 @@ export function unlockAudio(): void {
       if (!AC) return;
       ctx = new AC();
     }
-    if (ctx.state === 'suspended') void ctx.resume();
+    if (ctx.state === 'suspended') {
+      void ctx
+        .resume()
+        .then(() => preloadAudio())
+        .catch(() => undefined);
+    } else {
+      void preloadAudio();
+    }
   } catch {
     ctx = null; // a blocked or broken WebAudio stays silent
   }
@@ -162,28 +206,96 @@ const VOICES: Readonly<Record<Cue, (c: Ctx, out: AudioNode, t: number) => void>>
     });
   },
   // A tiny wooden tick.
-  tick: (c, out, t) => tone(c, out, t, 'sine', 1300, 0.12, 0.002, 0.03, 900)
+  tick: (c, out, t) => tone(c, out, t, 'sine', 1300, 0.12, 0.002, 0.03, 900),
+  wonder: (c, out, t) => {
+    tone(c, out, t, 'triangle', 196, 0.3, 0.008, 0.75);
+    tone(c, out, t, 'sine', 392, 0.12, 0.008, 0.65);
+  },
+  token: (c, out, t) => tone(c, out, t, 'triangle', 720, 0.2, 0.003, 0.12, 450),
+  loot: (c, out, t) => {
+    for (let i = 0; i < 3; i++)
+      tone(c, out, t + i * 0.09, 'triangle', 2100 - i * 300, 0.18, 0.003, 0.16);
+  },
+  ageStart: (c, out, t) => hiss(c, out, t, 'bandpass', 1800, 700, 1, 0.3, 0.04, 0.65),
+  defeat: (c, out, t) => {
+    [523.25, 440, 349.23].forEach((f, i) => tone(c, out, t + i * 0.18, 'sine', f, 0.2, 0.02, 0.6));
+  },
+  yourTurn: (c, out, t) => tone(c, out, t, 'sine', 880, 0.12, 0.005, 0.18),
+  destroy: (c, out, t) => hiss(c, out, t, 'highpass', 1900, 700, 0.7, 0.3, 0.01, 0.28),
+  rebuild: (c, out, t) => hiss(c, out, t, 'bandpass', 700, 2400, 1, 0.3, 0.04, 0.25),
+  libraryDraw: (c, out, t) => hiss(c, out, t, 'bandpass', 1200, 2200, 0.7, 0.3, 0.06, 0.6),
+  extraTurn: (c, out, t) => {
+    tone(c, out, t, 'sine', 880, 0.18, 0.005, 0.2);
+    tone(c, out, t + 0.12, 'sine', 1174.66, 0.15, 0.005, 0.25);
+  }
 };
 
 export interface PlayOptions {
   /** Start this many ms from now (the animation slice retimes cues with it). */
   delayMs?: number;
   volume?: SoundVolume;
+  /** Gallery comparison: require a file or force its synthesized fallback. */
+  source?: 'synth' | 'file';
 }
 
-/** Plays one cue, if audio is unlocked. Safe to call anywhere. */
-export function play(cue: Cue, opts: PlayOptions = {}): void {
-  if (!ctx || ctx.state !== 'running') return;
+/** Plays one cue if unlocked; returns whether playback started. Safe anywhere. */
+export function play(cue: Cue, opts: PlayOptions = {}): boolean {
+  if (!ctx || ctx.state !== 'running') return false;
   try {
     const c = ctx;
+    const buffer = opts.source === 'synth' ? undefined : buffers.get(cue);
+    if (opts.source === 'file' && !buffer) return false;
     const master = c.createGain();
     master.gain.value = VOLUME_GAIN[opts.volume ?? 'medium'];
     master.connect(c.destination);
     const t = c.currentTime + Math.max(0, opts.delayMs ?? 0) / 1000 + 0.005;
-    VOICES[cue](c, master, t);
-    // Disconnect the per-cue master once every voice has ended.
-    setTimeout(() => master.disconnect(), (opts.delayMs ?? 0) + 2000);
+    const duration = buffer?.duration ?? 1.5;
+    if (buffer && sounds) master.gain.value *= sounds[cue].gain;
+    // Keep at most three overlapping cues, including scheduled ones.
+    for (let i = active.length - 1; i >= 0; i--) {
+      if (active[i]!.end <= c.currentTime) active.splice(i, 1);
+    }
+    const end = t + duration;
+    const starts = [t, ...active.filter((v) => v.start > t && v.start < end).map((v) => v.start)];
+    for (const start of starts) {
+      const overlapping = active.filter((v) => v.start <= start && v.end > start);
+      while (overlapping.length >= 3) overlapping.shift()!.stopAt(start);
+    }
+    let source: AudioBufferSourceNode | undefined;
+    if (buffer) {
+      source = c.createBufferSource();
+      source.buffer = buffer;
+      source.connect(master);
+      source.start(t);
+    } else {
+      VOICES[cue](c, master, t);
+    }
+    const voice = {
+      start: t,
+      end,
+      stopAt: (at: number) => {
+        // Planning a later cue must not silence a voice that is still waiting
+        // to start. WebAudio applies this cut at the actual overlap time.
+        voice.end = Math.min(voice.end, at);
+        master.gain.setValueAtTime(0, voice.end);
+        source?.stop(voice.end);
+      },
+      disconnect: () => {
+        clearTimeout(timer);
+        source?.stop();
+        master.disconnect();
+        const i = active.indexOf(voice);
+        if (i >= 0) active.splice(i, 1);
+      }
+    };
+    active.push(voice);
+    const timer = setTimeout(
+      voice.disconnect,
+      Math.max(0, opts.delayMs ?? 0) + duration * 1000 + 100
+    );
+    return true;
   } catch {
     // A failing sound never breaks the game.
+    return false;
   }
 }
