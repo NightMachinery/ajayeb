@@ -16,6 +16,7 @@ const screens: readonly Screen[] = [
   'tutorial-card-sheet',
   'choice-starter',
   'choice-progress-token',
+  'choice-great-library',
   'choice-destroy'
 ];
 
@@ -31,7 +32,10 @@ for (const theme of ['light', 'dark'] as const) {
           isMobile: !desktop,
           hasTouch: !desktop
         });
-        test('keeps text readable on its painted surface', async ({ page, baseURL }) => {
+        test('keeps text readable on its painted surface @mobile', async ({
+          page,
+          baseURL
+        }, info) => {
           if (!baseURL) throw new Error('contrast requires local baseURL');
           await page.addInitScript((theme) => {
             localStorage.setItem('ajayeb:theme', theme);
@@ -63,13 +67,14 @@ for (const theme of ['light', 'dark'] as const) {
               'card-unaffordable',
               'tutorial-card-sheet',
               'choice-progress-token',
+              'choice-great-library',
               'choice-destroy'
             ].includes(screen)
           ) {
             // Axe exempts disabled controls. Their labels can be instructions,
             // so check the painted label/background pair too, including the
             // old whole-button opacity against the panel underneath it.
-            const ratios = await page
+            const disabledStyles = await page
               .locator(
                 screen === 'choice-destroy'
                   ? '[data-commit] button:disabled'
@@ -112,13 +117,36 @@ for (const theme of ['light', 'dark'] as const) {
                     luminance(over(fg, panel, opacity)),
                     luminance(over(bg, panel, opacity))
                   ];
-                  return (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05);
+                  const token = (name: string) => rgba(style.getPropertyValue(name));
+                  return {
+                    ratio: (Math.max(...values) + 0.05) / (Math.min(...values) + 0.05),
+                    neutralBackground:
+                      JSON.stringify(rgba(style.backgroundColor)) ===
+                      JSON.stringify(token('--panel-sunken')),
+                    neutralText:
+                      JSON.stringify(rgba(style.color)) === JSON.stringify(token('--fg-muted')),
+                    borderStyle: style.borderTopStyle,
+                    borderWidth: style.borderTopWidth,
+                    opacity
+                  };
                 });
               });
-            expect(ratios.length, 'the instructional disabled button is visible').toBeGreaterThan(
-              0
-            );
-            for (const ratio of ratios) expect(ratio).toBeGreaterThanOrEqual(4.5);
+            expect(
+              disabledStyles.length,
+              'the instructional disabled button is visible'
+            ).toBeGreaterThan(0);
+            await info.attach('disabled-button-styles', {
+              body: JSON.stringify({ theme, screen, disabledStyles }),
+              contentType: 'application/json'
+            });
+            for (const style of disabledStyles) {
+              expect(style.ratio).toBeGreaterThanOrEqual(4.5);
+              expect(style.neutralBackground).toBe(true);
+              expect(style.neutralText).toBe(true);
+              expect(style.borderStyle).toBe('dashed');
+              expect(style.borderWidth).toBe('1px');
+              expect(style.opacity).toBe(1);
+            }
           }
         });
       });

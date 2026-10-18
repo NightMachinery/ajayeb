@@ -1065,7 +1065,7 @@ python3 tools/heavy.py run --kind browser -- node tools/chrome/tutorial-walk.mjs
 
 ## Text contrast regressions
 
-`make e2e PW_ARGS='specs/contrast.spec.ts --project=desktop'` checks the
+`make e2e PW_ARGS='specs/contrast.spec.ts'` checks the
 warning and error text, discard filter counts, compact tutorial progress,
 and age-summary seat names with axe in both themes. It uses phone layouts
 for the compact text and desktop layouts for the danger chip and offline
@@ -1075,6 +1075,13 @@ adds all four sizes and the Persian captures. Disabled labels are exempt
 from axe's contrast rule, so the focused spec measures their painted text
 and background colours separately for primary, secondary and danger
 buttons. Those labels are also inspected in the captures.
+
+The disabled-button checks run on both browser projects in both themes. They
+cover the tutorial's locked Discard, an unaffordable Build, both progress-token
+pickers, Join and an offline destructive choice. Each disabled button must use
+the neutral sunken panel and muted ink, a dashed rule border and full opacity,
+with a measured text contrast of at least 4.5:1. Accent-soft remains the
+selection treatment, so unavailable actions do not look selected.
 
 ## UX screenshot matrix and probes
 
