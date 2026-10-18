@@ -42,19 +42,26 @@ priority then creation time (FIFO among equals). Unavailable slots or locks
 are checked every second for up to --wait seconds (default 1800, or
 AJAYEB_HEAVY_WAIT), then exit 75. Mode refusals remain immediate. A ticket
 blocked only by its own browser floor or mode reserves nothing; one blocked
-by a kind lock reserves only that lock, so unrelated work can pass it.
+by a kind lock reserves only that lock, so unrelated work can pass it. A slot
+waiter blocks later slot jobs even when multiple slots have just become free;
+they wait until the earlier ticket has acquired its slot.
 
 --priority high or HEAVY_PRIORITY=high moves ahead of normal tickets; only the
 coordinator grants high priority. Nested runs never take tickets, including
 when retrying a missing kind lock. status shows ordered tickets and flags legacy waiters without
-tickets. Older guard copies still share slot locks safely but can overtake.
-Memory samples are reused for at most one second; process identity checks
-use native APIs on macOS and procfs on Linux, with no ps subprocess per poll.
+tickets. Old/new pairs retain live locks across timezones, but two old copies
+with different timezones can break each other's locks. Update old worktrees;
+old admission/release can also disrupt FIFO order.
+Memory samples are reused only within one admission poll. Process identities
+use native birth seconds/microseconds on macOS and boot ID/start ticks on Linux,
+independent of timezone and wall-clock changes, with no ps subprocess per poll.
+Legacy records without this identity are retained while their PID is alive;
+new lock records omit legacy local timestamps so old guards also retain them.
 
 Each slot and kind lock is a directory under RUN_DIR/heavy/ made with mkdir,
 holding owner.json: the guard's pid, the command's process group and their
-start times. A lock whose owner is gone, or whose pid now belongs to another
-process, is stale and the next run clears it.
+immutable birth identities. A lock whose owner is gone, or whose strong
+identity proves PID reuse, is stale and the next run clears it.
 
 The command runs in its own session. SIGINT, SIGTERM and SIGHUP are forwarded
 to its process group, locks are released when it ends, and this script exits
@@ -68,7 +75,8 @@ and AJAYEB_HEAVY_LOCKS=<held kind locks>.
 Nested runs: when AJAYEB_HEAVY_HELD=1 is already set, an outer heavy.py holds
 a slot, so the inner run skips the mode gate and takes no slot (this keeps
 "heavy.py run -- make verify" from deadlocking). It still takes a browser or
-codex lock that no ancestor holds. fuzz and bench run under nice 10.
+codex lock that no ancestor holds, and a new browser still passes its memory
+and swap floors. fuzz and bench run under nice 10.
 
 Every run appends {ts, kind, cmd, rc, secs, maxrss_kb} to
 RUN_DIR/logs/heavy.jsonl. stop-all sends SIGTERM to the process groups this
@@ -140,7 +148,7 @@ LINUX_CRITICAL_PCT = 5.0
 FRESH_LOCK_GRACE = 30.0
 BREAK_GRACE = 30.0
 POLL_INTERVAL = 1.0
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 3
 PRIORITIES = ("normal", "high")
 OWNER_FILE = "owner.json"
 SLOT_RE = re.compile(r"^slot-(\d+)$")
@@ -267,10 +275,10 @@ def default_proc_command(pid: int) -> Optional[str]:
 
 
 def default_proc_start(pid: int) -> Optional[str]:
-    """ps-compatible start time, without spawning ps in admission polls.
+    """Legacy ps-compatible local time, kept only in running/ records.
 
-    Darwin exposes the birth time through libproc; Linux exposes boot time
-    and start ticks in procfs. Unknown platforms retain the ps fallback.
+    This display timestamp can change with TZ or Linux realtime adjustments;
+    it is never used to break a lock. Unknown platforms use the ps fallback.
     """
     try:
         if sys.platform == "darwin":
@@ -291,6 +299,28 @@ def default_proc_start(pid: int) -> Optional[str]:
         return " ".join(time.strftime("%a %b %e %H:%M:%S %Y", time.localtime(born)).split())
     except (OSError, ValueError, IndexError, StopIteration, AttributeError):
         return None
+
+
+def default_proc_identity(pid: int) -> Optional[str]:
+    """Immutable birth identity; never use wall-clock boot time on Linux."""
+    try:
+        if sys.platform == "darwin":
+            buf = ctypes.create_string_buffer(136)
+            size = _LIBPROC.proc_pidinfo(pid, 3, 0, buf, len(buf))
+            if size != len(buf):
+                return None
+            seconds = ctypes.c_uint64.from_buffer(buf, 120).value
+            micros = ctypes.c_uint64.from_buffer(buf, 128).value
+            return f"darwin:{seconds}:{micros}"
+        if sys.platform.startswith("linux"):
+            with open(f"/proc/{pid}/stat", encoding="utf-8") as fh:
+                ticks = int(fh.read().rsplit(")", 1)[1].split()[19])
+            with open("/proc/sys/kernel/random/boot_id", encoding="utf-8") as fh:
+                boot_id = fh.read().strip()
+            return f"linux:{boot_id}:{ticks}" if boot_id else None
+    except (OSError, ValueError, IndexError, AttributeError):
+        pass
+    return None
 
 
 _LIBPROC = ctypes.CDLL("/usr/lib/libproc.dylib") if sys.platform == "darwin" else None
@@ -540,20 +570,21 @@ class Locks:
     """Machine-wide locks: one directory each, created atomically with mkdir.
 
     The directory holds owner.json with the guard's pid and, once the command
-    has started, its process group, each with its start time (ps lstart) when
-    it could be read. A lock is stale when neither is alive. A pid that is
-    alive but started at a different time has been reused by an unrelated
-    process, so it does not keep the lock alive; an unreadable start time
-    does (when unsure, a lock is kept rather than broken).
+    has started, its process group, each with an immutable native birth
+    identity when readable. A lock is stale when neither identity is alive.
+    Unknown identities and legacy local timestamps are conservative: retain
+    a live PID because timezone or realtime changes cannot prove reuse.
     """
 
     def __init__(self, root: str, pid_alive: Callable[[object], bool],
                  group_alive: Callable[[object], bool],
-                 proc_start: Optional[Callable[[int], Optional[str]]] = None):
+                 proc_start: Optional[Callable[[int], Optional[str]]] = None,
+                 proc_identity: Optional[Callable[[int], Optional[str]]] = None):
         self.root = root
         self.pid_alive = pid_alive
         self.group_alive = group_alive
         self.proc_start = proc_start
+        self.proc_identity = proc_identity
 
     def path(self, name: str) -> str:
         return os.path.join(self.root, name)
@@ -567,13 +598,24 @@ class Locks:
         current = self.proc_start(pid)
         return current is None or current == recorded
 
+    def identity_matches(self, pid: int, recorded: object) -> Optional[bool]:
+        """None means identity is unavailable, never evidence of PID reuse."""
+        if not recorded or self.proc_identity is None:
+            return None
+        current = self.proc_identity(pid)
+        return None if current is None else current == recorded
+
+    def process_alive(self, pid: object, identity: object = None, group: bool = False) -> bool:
+        alive = self.group_alive(pid) if group else self.pid_alive(pid)
+        # Legacy lstart is caller-local and Linux btime may change. It cannot
+        # safely prove reuse, so retain legacy holders until their PID is gone.
+        return alive and self.identity_matches(pid, identity) is not False
+
     def info_alive(self, info: Mapping) -> bool:
-        pid = info.get("pid")
-        if self.pid_alive(pid) and self._not_reused(pid, info.get("lstart")):
+        if self.process_alive(info.get("pid"), info.get("identity")):
             return True
         pgid = info.get("pgid")
-        return (isinstance(pgid, int) and self.group_alive(pgid)
-                and self._not_reused(pgid, info.get("pgid_lstart")))
+        return isinstance(pgid, int) and self.process_alive(pgid, info.get("pgid_identity"), group=True)
 
     def state(self, name: str) -> str:
         """"free", "live" or "stale"."""
@@ -606,7 +648,11 @@ class Locks:
                 if attempt == 0 and self.state(name) == "stale" and self.break_stale(name):
                     continue
                 return False
-            write_json_atomic(os.path.join(path, OWNER_FILE), info)
+            try:
+                write_json_atomic(os.path.join(path, OWNER_FILE), info)
+            except BaseException:
+                shutil.rmtree(path, ignore_errors=True)
+                raise
             return True
         return False
 
@@ -681,6 +727,7 @@ class Guard:
                  group_alive: Optional[Callable[[object], bool]] = None,
                  proc_command: Optional[Callable[[int], Optional[str]]] = None,
                  proc_start: Optional[Callable[[int], Optional[str]]] = None,
+                 proc_identity: Optional[Callable[[int], Optional[str]]] = None,
                  rng: Optional[random.Random] = None, stdout=None, stderr=None):
         self.env: Dict[str, str] = dict(os.environ if env is None else env)
         self.platform = platform or sys.platform
@@ -689,6 +736,7 @@ class Guard:
         self.group_alive = group_alive or default_group_alive
         self.proc_command = proc_command or default_proc_command
         self.proc_start = proc_start or default_proc_start
+        self.proc_identity = proc_identity or default_proc_identity
         self.rng = rng or random.Random()
         self.out = stdout or sys.stdout
         self.err = stderr or sys.stderr
@@ -709,8 +757,10 @@ class Guard:
         self.heavy_dir = os.path.join(self.run_dir, "heavy")
         self.log_path = os.path.join(self.run_dir, "logs", "heavy.jsonl")
         self.mode_path = os.path.join(self.configured_run_dir, "mode.json")
-        self.locks = Locks(self.heavy_dir, self.pid_alive, self.group_alive, self.proc_start)
+        self.locks = Locks(self.heavy_dir, self.pid_alive, self.group_alive, self.proc_start, self.proc_identity)
 
+        self._admission_depth = 0
+        self._acquiring = False
         self._memory_sample: Optional[Tuple[float, Memory]] = None
         self._child: Optional[subprocess.Popen] = None
         self._spawning = False
@@ -802,22 +852,31 @@ class Guard:
         for index in range(1, cap + 1):
             name = f"slot-{index}"
             if self.locks.try_acquire(name, info):
-                if len(self._live_slots()) > cap:  # lost a race while capacity shrank
+                try:
+                    if len(self._live_slots()) > cap:  # lost a race while capacity shrank
+                        self.locks.release(name, info["token"])
+                        return None, busy
+                    return name, None
+                except BaseException:
                     self.locks.release(name, info["token"])
-                    return None, busy
-                return name, None
+                    raise
         return None, busy
 
     @contextlib.contextmanager
     def _admission(self, deadline: Optional[float] = None):
-        """Serialize ticket publication, eligibility checks and slot acquisition.
+        """Serialize publication, eligibility, acquisition, release and status.
 
         Keep this file permanently: unlinking a flock file lets two processes
         lock different inodes. Legacy guards still share the mkdir locks.
         """
+        if self._admission_depth:
+            yield
+            return
         os.makedirs(self.heavy_dir, exist_ok=True)
         with open(os.path.join(self.heavy_dir, "admission.lock"), "a") as fh:
             while True:
+                if self._acquiring and not self._done:
+                    self._raise_pending()
                 try:
                     fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
                     break
@@ -827,8 +886,10 @@ class Guard:
                         raise Refused("admission lock is busy; wait deadline reached")
                     self.clock.sleep(0.05 if remaining is None else min(0.05, remaining))
             try:
+                self._admission_depth += 1
                 yield
             finally:
+                self._admission_depth -= 1
                 fcntl.flock(fh, fcntl.LOCK_UN)
 
     def _poll_memory(self) -> Memory:
@@ -904,6 +965,8 @@ class Guard:
                 resource = other_kind
             if resource not in ("gate", "none"):
                 reserved.add(resource)
+                if resource == "slots" and other_kind in KIND_LOCKS:
+                    reserved.add(other_kind)
         conflict = None
         if needs_kind_lock and kind in reserved:
             conflict = kind
@@ -914,28 +977,38 @@ class Guard:
             return [], f"earlier queued job is waiting for {conflict}", False
         held: List[str] = []
         try:
-            if needs_kind_lock:
-                if not self.locks.try_acquire(kind, info):
-                    self._blocked = kind
-                    holder = self._describe(self.locks.owner(kind))
-                    return [], f"the {kind} lock is held by {holder}", False
-                held.append(kind)
+            # Observe the kind lock first, but do not take it until a slot is
+            # available. A waiting job must not pulse a lock an ancestor needs.
+            if needs_kind_lock and self.locks.state(kind) == "live":
+                self._blocked = kind
+                holder = self._describe(self.locks.owner(kind))
+                return [], f"the {kind} lock is held by {holder}", False
             if not nested:
                 slot, reason = self._try_slot(self.capacity(mem, state), mem, info)
                 if slot is None:
                     self._blocked = "slots"
-                    self._release(held, info["token"])
                     return [], reason, False
                 held.append(slot)
+            if needs_kind_lock:
+                if not self.locks.try_acquire(kind, info):
+                    self._blocked = kind
+                    holder = self._describe(self.locks.owner(kind))
+                    self._release(held, info["token"])
+                    return [], f"the {kind} lock is held by {holder}", False
+                held.append(kind)
             return held, None, False
         except BaseException:
-            self._release(held, info["token"])
+            self._release_owned(info["token"])
             raise
 
     def _acquire(self, kind: str, wait: float, nested: bool, inherited: Set[str],
                  info: Mapping) -> List[str]:
         deadline = self.clock.monotonic() + max(wait, 0.0)
         last_reason = None
+        if not nested:
+            reason = gate_mode(kind, self.mode_state(), self.clock.now())
+            if reason:
+                raise Refused(reason)
         # Nested runs never publish tickets or join the queue, including when
         # they need a missing kind lock. Waiting behind a top-level ticket
         # could deadlock it on our ancestor's held slot.
@@ -947,7 +1020,11 @@ class Guard:
         published = False
         try:
             while True:
+                self._raise_pending()
                 with self._admission(deadline):
+                    # Reuse memory only within this admission poll. A final
+                    # fractional wait must sample again before refusing.
+                    self._memory_sample = None
                     tickets = self._tickets()
                     if path is not None and not published:
                         ticket["created_ns"] = max(time.time_ns(), max(
@@ -961,8 +1038,12 @@ class Guard:
                         remove_file(path)
                         return held
                     if path is not None:
-                        ticket["blocked_on"] = self._blocked
-                        write_json_atomic(path, ticket)
+                        if final:
+                            remove_file(path)
+                        else:
+                            ticket["blocked_on"] = self._blocked
+                            write_json_atomic(path, ticket)
+                self._raise_pending()
                 if final:
                     raise Refused(reason)
                 remaining = deadline - self.clock.monotonic()
@@ -970,18 +1051,47 @@ class Guard:
                     if wait > 0:
                         reason = f"{reason}; gave up after waiting {fmt_secs(wait)}"
                     raise Refused(reason)
-                # Holder ages change every poll; report changes in the blocked
-                # resource or own gate instead of printing once per second.
-                if self._blocked != last_reason:
-                    self._warn(f"heavy: {kind} is waiting: {reason} (up to {fmt_secs(remaining)} more)")
-                    last_reason = self._blocked
-                self.clock.sleep(min(remaining, POLL_INTERVAL))
+                # A failed poll holds no resources. Let signals interrupt a
+                # blocked diagnostic pipe or sleep instead of deferring them.
+                deferred = self._acquiring
+                self._acquiring = False
+                try:
+                    # Holder ages change every poll; report resource changes.
+                    if self._blocked != last_reason:
+                        self._warn(f"heavy: {kind} is waiting: {reason} (up to {fmt_secs(remaining)} more)")
+                        last_reason = self._blocked
+                    self.clock.sleep(min(remaining, POLL_INTERVAL))
+                finally:
+                    self._acquiring = deferred
+        except BaseException:
+            self._release_owned(info["token"])
+            raise
         finally:
             remove_file(path)
 
     def _release(self, held: Iterable[str], token: str) -> None:
-        for name in reversed(list(held)):
-            self.locks.release(name, token)
+        # Serialize the full handover with eligibility checks, including a
+        # waiter that has already classified the exiting holder's kind lock.
+        names = list(held)
+        if not names:
+            return
+        with self._admission():
+            for name in [n for n in names if n in KIND_LOCKS] + [n for n in names if n not in KIND_LOCKS]:
+                self.locks.release(name, token)
+
+    def _release_owned(self, token: str) -> None:
+        # Disk ownership survives asynchronous exceptions between a callee's
+        # return and assignment to the caller's local held list.
+        names = self.locks.slot_names() + list(KIND_LOCKS)
+        owned = [name for name in names if (self.locks.owner(name) or {}).get("token") == token]
+        if owned:
+            with self._admission():
+                self._release(owned, token)
+
+    def _raise_pending(self) -> None:
+        if self._pending is not None:
+            self._done = True
+            raise _Interrupted(self._pending)
 
     # -- signals -----------------------------------------------------------------
 
@@ -991,9 +1101,11 @@ class Guard:
         if self._child is not None:
             self._forward(signum)
             return
-        if self._spawning:
-            self._pending = signum
+        if self._spawning or self._acquiring:
+            if self._pending is None:
+                self._pending = signum
             return
+        self._done = True
         raise _Interrupted(signum)
 
     def _forward(self, signum: int) -> None:
@@ -1110,19 +1222,23 @@ class Guard:
         info = {"pid": os.getpid(), "kind": kind, "cmd": display_cmd(cmd, 160),
                 "since": iso(self.clock.now()), "t0": time.time(), "token": uuid.uuid4().hex,
                 "cwd": os.getcwd(), "priority": priority, "protocol": PROTOCOL_VERSION}
-        if kind != "light" and (not nested or kind in KIND_LOCKS):
-            lstart = self.proc_start(os.getpid())  # this run may take a lock
-            if lstart:
-                info["lstart"] = lstart
+        identity = self.proc_identity(os.getpid())
+        if identity:
+            info["identity"] = identity
+        # Do not publish lstart in locks/tickets/waiting: old copies compare
+        # that caller-local timestamp and may break our live lock across TZ.
         held: List[str] = []
         self._child, self._spawning, self._pending, self._done = None, False, None, False
+        # Signals defer until ownership has reached run(), including mkdir,
+        # owner publication and every return/assignment boundary in admission.
+        self._acquiring = True
         self._install_signals()
         try:
             if kind != "light":
                 waiting = self._record("waiting", os.getpid(), {
                     "guard": os.getpid(), "kind": kind, "cmd": info["cmd"],
                     "since": info["since"], "t0": info["t0"], "protocol": PROTOCOL_VERSION,
-                    "lstart": info.get("lstart"), "nested": nested})
+                    "identity": info.get("identity"), "nested": nested})
                 try:
                     held = self._acquire(kind, wait, nested, inherited, info)
                 except Refused as refusal:
@@ -1131,6 +1247,8 @@ class Guard:
                     return EX_TEMPFAIL
                 finally:
                     remove_file(waiting)
+            self._raise_pending()
+            self._acquiring = False
             slot_held = nested or any(SLOT_RE.match(h) for h in held)
             locks = inherited | {h for h in held if h in KIND_LOCKS}
             env = self.child_env(kind, slot_held, locks)
@@ -1140,8 +1258,11 @@ class Guard:
             return 128 + exc.signum
         finally:
             self._done = True
-            self._release(held, info["token"])
-            self._restore_signals()
+            try:
+                self._release_owned(info["token"])
+            finally:
+                self._acquiring = False
+                self._restore_signals()
 
     def _spawn(self, kind: str, cmd: List[str], env: Dict[str, str], held: List[str],
                info: Mapping, nested: bool) -> int:
@@ -1162,18 +1283,18 @@ class Guard:
         record_data = {
             "pid": child.pid, "pgid": child.pid, "guard": os.getpid(), "kind": kind,
             "cmd": info["cmd"], "argv0": cmd[0], "since": iso(started), "t0": time.time(),
-            "nested": nested}
+            "guard_identity": info.get("identity"), "nested": nested}
         record = self._record("running", child.pid, record_data)
-        lstart = self.proc_start(child.pid)  # lets stop-all recognize the group if we die
-        if lstart and record:
+        identity = self.proc_identity(child.pid)
+        lstart = self.proc_start(child.pid)  # legacy stop-all keeps its strict fallback
+        record_data["identity"] = identity
+        if lstart:
             record_data["lstart"] = lstart
+        if record:
             record = self._record("running", child.pid, record_data)
         try:
             for name in held:
-                if lstart:
-                    self.locks.update(name, info["token"], pgid=child.pid, pgid_lstart=lstart)
-                else:
-                    self.locks.update(name, info["token"], pgid=child.pid)
+                self.locks.update(name, info["token"], pgid=child.pid, pgid_identity=identity)
             if self._pending is not None:
                 self._forward(self._pending)
                 self._pending = None
@@ -1198,16 +1319,43 @@ class Guard:
             return False
         return "heavy.py" in (self.proc_command(pid) or "")
 
+    def _record_identity_trusted(self, pid: int, rec: Mapping) -> bool:
+        if rec.get("identity"):
+            return self.locks.identity_matches(pid, rec["identity"]) is True
+        if rec.get("lstart"):
+            return self.proc_start(pid) == rec["lstart"]
+        return True  # legacy records without identity still require a guard command
+
+    def _running_identity_trusted(self, rec: Mapping) -> bool:
+        pgid = rec.get("pgid")
+        if rec.get("identity"):
+            # Strong child identity never falls back to guard or argv0.
+            return self.locks.identity_matches(pgid, rec["identity"]) is True
+        guard = rec.get("guard")
+        trusted = self._is_heavy_guard(guard)
+        if rec.get("guard_identity"):
+            trusted = trusted and self.locks.identity_matches(guard, rec["guard_identity"]) is True
+        if trusted:
+            return True
+        if rec.get("lstart"):
+            return self.proc_start(pgid) == rec["lstart"]
+        if rec.get("guard_identity"):
+            return False  # a reused/unreadable guard identity needs child proof
+        leader = self.proc_command(pgid) or ""
+        argv0 = os.path.basename(str(rec.get("argv0") or ""))
+        return bool(argv0) and argv0 in leader
+
     def stop_all(self, grace: float = DEFAULT_GRACE) -> int:
         my_pgid = os.getpgrp()
         guards: List[Tuple[int, str]] = []
-        groups: List[Tuple[int, str]] = []
+        groups: List[Tuple[int, str, dict]] = []
         # Waiting guards first, so they cannot grab a slot that is about to free up.
         for path, rec in self._records("waiting"):
             pid = rec.get("guard")
             if pid == os.getpid():
                 continue
-            if not self._is_heavy_guard(pid):
+            if (not self._is_heavy_guard(pid)
+                    or not self._record_identity_trusted(pid, rec)):
                 remove_file(path)
                 continue
             try:
@@ -1228,13 +1376,7 @@ class Guard:
             if not self.group_alive(pgid):
                 remove_file(path)
                 continue
-            trusted = self._is_heavy_guard(rec.get("guard"))
-            if not trusted and rec.get("lstart"):
-                trusted = self.proc_start(pgid) == rec.get("lstart")
-            elif not trusted:
-                leader = self.proc_command(pgid) or ""
-                argv0 = os.path.basename(str(rec.get("argv0") or ""))
-                trusted = bool(argv0) and argv0 in leader
+            trusted = self._running_identity_trusted(rec)
             if not trusted:
                 self._say(f"stop-all: skipping pgid {pgid}: its guard is gone and its leader "
                           "is not the process we started; check it by hand")
@@ -1246,18 +1388,18 @@ class Guard:
                 remove_file(path)
                 continue
             self._say(f"stop-all: SIGTERM process group {pgid} ({rec.get('kind')}: {rec.get('cmd')})")
-            groups.append((pgid, path))
+            groups.append((pgid, path, rec))
         if not guards and not groups:
             self._say("stop-all: nothing to stop")
             return 0
         deadline = self.clock.monotonic() + max(grace, 0.0)
         while self.clock.monotonic() < deadline:
             if not any(self.pid_alive(p) for p, _ in guards) and \
-                    not any(self.group_alive(g) for g, _ in groups):
+                    not any(self.group_alive(g) for g, _, _ in groups):
                 break
             self.clock.sleep(0.2)
-        for pgid, path in groups:
-            if self.group_alive(pgid):
+        for pgid, path, rec in groups:
+            if self.group_alive(pgid) and self._running_identity_trusted(rec):
                 try:
                     os.killpg(pgid, signal.SIGKILL)
                     self._say(f"stop-all: SIGKILL process group {pgid}: still alive after {fmt_secs(grace)}")
@@ -1348,39 +1490,47 @@ class Guard:
             why += ", nightshift window"
         if self.max_slots() is not None:
             why += f", AJAYEB_MAX_SLOTS={self.max_slots()}"
-        slots = self.locks.slot_names()
-        live = [n for n in slots if self.locks.state(n) == "live"]
-        say(f"slots:     capacity {cap} ({why}), {len(live)} held")
-        for name in slots:
-            lock_state = self.locks.state(name)
-            mark = "" if lock_state == "live" else " (stale, cleared on the next run)"
-            say(f"  {name:<8} {self._describe(self.locks.owner(name))}{mark}")
-
-        min_free, min_swap = self.browser_floors()
-        for kind in KIND_LOCKS:
-            lock_state = self.locks.state(kind)
-            if lock_state == "free":
-                line = "free"
-            else:
-                line = self._describe(self.locks.owner(kind))
-                if lock_state == "stale":
-                    line += " (stale, cleared on the next run)"
-            if kind == "browser":
-                block = browser_block_reason(mem, min_free, min_swap)
-                swap_need = "" if mem.swap_dynamic else f" and free swap >= {min_swap:g} MB"
-                line += (f"; launch needs free mem >= {min_free:g}%{swap_need}: "
-                         + ("ok" if block is None else f"blocked, {block}"))
-            say(f"{kind + ':':<10} {line}")
-
+        resource_lines = []
         with self._admission():
+            slots = self.locks.slot_names()
+            live = [n for n in slots if self.locks.state(n) == "live"]
+            resource_lines.append(f"slots:     capacity {cap} ({why}), {len(live)} held")
+            for name in slots:
+                lock_state = self.locks.state(name)
+                mark = "" if lock_state == "live" else " (stale, cleared on the next run)"
+                resource_lines.append(f"  {name:<8} {self._describe(self.locks.owner(name))}{mark}")
+
+            min_free, min_swap = self.browser_floors()
+            for kind in KIND_LOCKS:
+                lock_state = self.locks.state(kind)
+                if lock_state == "free":
+                    line = "free"
+                else:
+                    line = self._describe(self.locks.owner(kind))
+                    if lock_state == "stale":
+                        line += " (stale, cleared on the next run)"
+                if kind == "browser":
+                    block = browser_block_reason(mem, min_free, min_swap)
+                    swap_need = "" if mem.swap_dynamic else f" and free swap >= {min_swap:g} MB"
+                    line += (f"; launch needs free mem >= {min_free:g}%{swap_need}: "
+                             + ("ok" if block is None else f"blocked, {block}"))
+                resource_lines.append(f"{kind + ':':<10} {line}")
+
             tickets = self._tickets()
+            waiting = []
+            for path, rec in self._records("waiting"):
+                if self.locks.process_alive(rec.get("guard"), rec.get("identity")):
+                    waiting.append(rec)
+                else:
+                    remove_file(path)
+        for line in resource_lines:
+            say(line)
         say(f"queue:     {len(tickets)} (protocol {PROTOCOL_VERSION})")
         ticket_pids = {rec.get("pid") for _, rec in tickets}
         for position, (_, rec) in enumerate(tickets, 1):
             age = time.time() - float(rec.get("t0") or time.time())
             say(f"  {position}. {rec.get('priority', 'normal')} {rec.get('kind')} "
                 f"{fmt_secs(age)} pid {rec.get('pid')} blocked on {rec.get('blocked_on')}: {rec.get('cmd')}")
-        waiting = [rec for _, rec in self._records("waiting") if self.pid_alive(rec.get("guard"))]
         say(f"waiting:   {len(waiting)}")
         for rec in waiting:
             age = time.time() - float(rec.get("t0") or time.time())

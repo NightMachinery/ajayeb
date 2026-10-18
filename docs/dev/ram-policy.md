@@ -40,7 +40,7 @@ On top of the general slots there are two separate locks of capacity one. A `bro
 Jobs publish atomic tickets under `heavy/queue/` before attempting admission.
 Tickets are ordered by priority, then creation time, giving FIFO order among
 jobs with equal priority. A brief admission mutex serializes ticket creation,
-queue checks and acquisition. Jobs retry at a fixed one-second interval, so a
+queue checks, acquisition, release and the status resource snapshot. Jobs retry at a fixed one-second interval, so a
 freed resource normally passes to the next eligible job within one or two
 seconds. The mutex itself uses short, deadline-aware retries. `--wait` (or
 `AJAYEB_HEAVY_WAIT`, default 1800 seconds) bounds waiting; expiration exits 75.
@@ -48,23 +48,31 @@ Mode refusals remain immediate.
 
 The queue follows the resource that a job can actually use:
 
-- An earlier job waiting for a general slot blocks later jobs needing slots.
+- An earlier job waiting for a general slot blocks later jobs needing slots,
+  even if two or three slots have just become free. Later jobs wait for that
+  ticket to acquire its slot. This strict FIFO rule trades up to one polling
+  interval of spare capacity for predictable admission order.
 - An earlier browser waiting for the browser lock blocks later browsers, while
   tests and linters can pass. The same rule applies to the codex lock.
 - A browser held by its memory floor reserves nothing. A mode-blocked ticket
   also reserves nothing and is removed as soon as its guard observes refusal.
 - Nested runs never publish tickets or join the queue. A nested browser or
-  codex run retries only the physical kind lock it does not yet hold. This is
-  a fairness exception: it can pass top-level tickets, which may themselves
-  need its parent's held slot. Queuing behind them could deadlock.
+  codex run retries the physical kind lock it does not yet hold. A nested
+  browser must also pass the browser memory and swap floors before taking a
+  new browser lock; inheriting a browser lock skips that check. This safety
+  gate can keep the parent's slot occupied until memory recovers or the wait
+  expires. It is intentional. Bypassing the queue is a fairness exception:
+  it can pass top-level tickets, which may themselves need its parent's held slot. Queuing behind them could deadlock.
 
 Every ticket retains its browser floor settings. Every eligibility check
 recomputes the earlier tickets' own gates and resources,
 so a sleeping waiter's last recorded reason cannot cause head-of-line blocking.
-Memory samples are reused for at most one second. Process start times come
-from native libproc on macOS and procfs on Linux, avoiding a `ps` subprocess
-per ticket per poll. The existing conservative rule applies when identity
-cannot be read: retain the live process's ticket.
+Memory samples are reused within one admission poll; every retry, including
+its final fractional wait, reads memory again. Process identities come from
+native birth seconds and microseconds on macOS and boot ID plus process start
+ticks on Linux. They are independent of timezone and realtime clock changes,
+and avoid a `ps` subprocess per ticket per poll. If identity cannot be read,
+retain the live process's ticket.
 
 Only the coordinator grants high priority. It can use `--priority high` for
 one run or `HEAVY_PRIORITY=high` for a team's environment; explicit CLI priority
@@ -76,12 +84,23 @@ Use the queue instead of manually checking status and yielding to other
 teams. Do not build agent-side retry loops. `status` lists queue position,
 priority, kind, age and the last blocked resource or gate. Tickets disappear
 when jobs start, fail, time out, are refused or receive a handled signal.
-Any waiter or status check removes dead or PID-reused tickets.
+Any waiter or status check removes dead or strongly identified PID-reused
+tickets. Status also removes dead or strongly identified PID-reused waiting
+records. Legacy records without immutable identities are retained while their
+PID is alive, because their local start timestamp cannot distinguish PID
+reuse from a timezone or clock change.
 
 Worktrees with older guard copies still share the same atomic slot and kind
-locks, so the queue protocol does not double-allocate resources with them.
-They ignore tickets and can repeatedly overtake waiting jobs; FIFO applies
-only among updated guards. `status` marks their waiting records as
+locks. New lock, ticket and waiting records deliberately omit legacy local
+start timestamps: old readers then retain them while the PID is alive, rather
+than mistaking a different timezone for PID reuse. New readers also retain
+live legacy holders conservatively. This makes old/new pairs safe across
+timezones, at the cost of retaining a legacy record if its PID was reused by
+a live unrelated process. Rebase old worktrees to restore strong reuse checks;
+two old copies with different timezones can still break each other's locks.
+Old copies ignore tickets and do not serialize release with admission. They
+can repeatedly overtake waiters or disrupt handover order. Strict FIFO needs
+updated guards for both admission and release. `status` marks their waiting records as
 `NO TICKET: legacy guard, may overtake queue`. Updated guards temporarily
 without a ticket (starting or inheriting resources) are identified separately.
 Rebase old worktrees to gain fairness. Automatic delegation to a newer main
@@ -89,9 +108,10 @@ checkout guard is not implemented.
 
 ### Locks and processes
 
-- Each slot is a lock directory created atomically with `os.mkdir` (`heavy/slot-N/`, `heavy/browser/`, `heavy/codex/` in the run directory), holding `owner.json`: the guard's PID, the command's process group, and the start time of each. A lock is stale, and the next run clears it, when its owner no longer exists or when its PID now belongs to another process (the start time differs). A start time that cannot be read keeps the lock, so a live lock is never broken.
+- Each slot is a lock directory created atomically with `os.mkdir` (`heavy/slot-N/`, `heavy/browser/`, `heavy/codex/` in the run directory), holding `owner.json`: the guard's PID, the command's process group, and their immutable birth identities. A lock is stale when neither process is alive or when a strong identity proves PID reuse. An unreadable or legacy identity keeps a live PID's lock.
 - The lock directories are machine-wide, so agents in different worktrees share the same slots.
-- The child runs in its own session (process group). Signals are forwarded to the group, and the slot is released in a `finally` block, so a crash or an interrupt cannot leak a slot.
+- The child runs in its own session (process group). Signals are forwarded to the group. Before spawning, handled signals are deferred across acquisition and ownership handoff, then stop the run before its child starts. Cleanup ignores repeated handled signals and releases all locks carrying the run's ownership token, including locks acquired before a return was assigned. Release is serialized with admission and removes kind locks before slots. An unhandled kill can leave records for the next stale sweep.
+- `stop-all` requires a matching immutable identity when a running or waiting record carries one. An unreadable or mismatching strong identity never falls back to a command name. Legacy running records keep their local start timestamp for old `stop-all` readers; a mismatch after the guard dies skips the group, so a cross-timezone legacy stop request can require manual inspection.
 - These defaults are set for the child when unset or empty: `NODE_OPTIONS=--max-old-space-size=1536`, `GOMEMLIMIT=768MiB`, `GOFLAGS=-p=2`, `GOMAXPROCS=4`. A `NODE_OPTIONS` or `GOFLAGS` that is set but has no heap or `-p` flag gets ours appended.
 - Fuzzing and other long CPU-bound runs get `nice 10`.
 - Nested calls pass straight through: the child of a run that holds a slot gets `AJAYEB_HEAVY_HELD=1`, so a wrapped `make verify` that calls other guarded targets cannot deadlock on its own slot. A nested `browser` or `codex` run still takes its own lock unless an ancestor already holds it. A `light` run holds no slot, so it does not set `AJAYEB_HEAVY_HELD`.

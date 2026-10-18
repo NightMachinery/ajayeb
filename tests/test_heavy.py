@@ -9,6 +9,7 @@ Run: python3 -m unittest discover -s tests -v
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import importlib.util
 import io
@@ -18,8 +19,10 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
+from unittest.mock import patch
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HEAVY_PATH = os.path.join(ROOT, "tools", "heavy.py")
@@ -407,9 +410,9 @@ class QueueTests(GuardCase):
 
     def test_stale_dead_reused_and_unknown_identity_tickets(self):
         self.ticket("dead", pid=FAKE_DEAD)
-        self.ticket("reused", pid=FAKE_LIVE, lstart="old")
-        self.ticket("unknown", pid=FAKE_LIVE_2, lstart="old")
-        g = self.guard(proc_start=lambda pid: "new" if pid == FAKE_LIVE else None)
+        self.ticket("reused", pid=FAKE_LIVE, identity="old")
+        self.ticket("unknown", pid=FAKE_LIVE_2, identity="old")
+        g = self.guard(proc_identity=lambda pid: "new" if pid == FAKE_LIVE else None)
         with g._admission():
             self.assertEqual([r["token"] for _, r in g._tickets()], ["unknown"])
         self.assertEqual(os.listdir(self.heavy_dir("queue")), ["unknown.json"])
@@ -439,7 +442,7 @@ class QueueTests(GuardCase):
         g = self.guard(level=2)
         self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=1), heavy.EX_TEMPFAIL)
         self.assertEqual(seen[0]["blocked_on"], "slots")
-        for key in ("pid", "lstart", "kind", "cmd", "cwd", "created_ns", "priority"):
+        for key in ("pid", "identity", "kind", "cmd", "cwd", "created_ns", "priority"):
             self.assertIn(key, seen[0])
         self.assert_empty_queue()
 
@@ -503,8 +506,9 @@ class QueueTests(GuardCase):
         self.assertEqual(len(calls), 2)
 
     def test_admission_mutex_respects_wait_deadline(self):
+        other = self.guard()
         g = self.guard()
-        with g._admission():
+        with other._admission():
             self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0.12), heavy.EX_TEMPFAIL)
         self.assertAlmostEqual(sum(self.clock.sleeps), 0.12)
         self.assertIn("admission lock is busy", self.err.getvalue())
@@ -568,6 +572,430 @@ class QueueTests(GuardCase):
         self.assertIn("2. normal test", text)
         self.assertIn("blocked on slots", text)
         self.assertIn("NO TICKET: legacy guard, may overtake queue", text)
+
+
+class QueueReviewTests(GuardCase):
+    """Review reproductions, all state and sentinel children stay in scratch dirs."""
+
+    ticket = QueueTests.ticket
+    attempt = QueueTests.attempt
+    assert_empty_queue = QueueTests.assert_empty_queue
+
+    def assert_no_owned_resources(self, g):
+        self.assertFalse(g._live_slots())
+        for kind in heavy.KIND_LOCKS:
+            self.assertEqual(g.locks.state(kind), "free")
+        self.assert_empty_queue()
+        self.assertEqual(g._records("waiting"), [])
+
+    def test_release_never_exposes_slot_before_kind_to_later_ticket(self):
+        g = self.guard(level=2)
+        holder = dict(pid=FAKE_LIVE, token="holder", kind="browser")
+        held, reason, _ = g._attempt("browser", False, set(), holder)
+        self.assertIsNone(reason)
+        self.ticket("first", kind="browser", created=1)
+        later = self.ticket("later", kind="test", created=2)
+        release = g.locks.release
+        attempts = []
+        def observe(name, token):
+            release(name, token)
+            if not attempts:
+                acquired, blocked, _ = self.attempt(g, later)
+                attempts.append(blocked)
+                for lock in acquired:
+                    release(lock, later["token"])
+        with patch.object(g.locks, "release", side_effect=observe):
+            g._release(held, holder["token"])
+        self.assertIsNotNone(attempts[0], "later test overtook the earlier browser during release")
+
+    def test_strict_fifo_reserves_spare_capacity_for_sleeping_head(self):
+        g = self.guard(level=1)
+        first = self.ticket("first", created=1)
+        later = self.ticket("later", created=2)
+        self.assertEqual(g.capacity(g.read_memory()), 2)
+        self.assertEqual(g._live_slots(), [])
+        self.assertIn("earlier queued", self.attempt(g, later)[1])
+        held, reason, _ = self.attempt(g, first)
+        self.assertIsNone(reason)
+        heavy.remove_file(self.heavy_dir("queue", "first.json"))
+        held2, reason, _ = self.attempt(g, later)
+        self.assertIsNone(reason)
+        self.assertEqual(len(g._live_slots()), 2)
+        g._release(held, first["token"])
+        g._release(held2, later["token"])
+
+    def test_second_sleeping_browser_does_not_relax_strict_slot_fifo(self):
+        g = self.guard(level=1)
+        self.ticket("browser1", kind="browser", created=1)
+        second = self.ticket("browser2", kind="browser", created=2)
+        third = self.ticket("test", kind="test", created=3)
+        self.assertIn("earlier queued", self.attempt(g, second)[1])
+        self.assertIn("earlier queued", self.attempt(g, third)[1])
+        self.assertEqual(g._live_slots(), [])
+
+    def test_final_fractional_poll_rereads_memory(self):
+        calls = []
+        def memory():
+            calls.append(self.clock.mono)
+            return heavy.Memory(level=4 if self.clock.mono < 0.25 else 2, free_pct=50)
+        g = self.guard(reader=memory)
+        self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0.5), 0)
+        self.assertEqual(calls, [0, 0.5])
+
+    def test_slot_blocked_browser_does_not_touch_kind_lock(self):
+        self.hold("slot-1")
+        g = self.guard(level=2)
+        with patch.object(g.locks, "try_acquire", wraps=g.locks.try_acquire) as acquire:
+            self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=1), heavy.EX_TEMPFAIL)
+        self.assertNotIn("browser", [call.args[0] for call in acquire.call_args_list])
+
+    def test_status_sweeps_dead_and_reused_waiting_records(self):
+        g = self.guard(proc_identity=lambda _: "new")
+        g._record("waiting", FAKE_DEAD, dict(guard=FAKE_DEAD, kind="test"))
+        g._record("waiting", FAKE_LIVE, dict(guard=FAKE_LIVE, kind="test", identity="old"))
+        g.status()
+        self.assertEqual(g._records("waiting"), [])
+        self.assertIn("waiting:   0", self.out.getvalue())
+
+    def test_nested_browser_retains_floor_and_no_ticket(self):
+        g = self.guard(free=13, env={"AJAYEB_HEAVY_HELD": "1"})
+        self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        self.assertIn("browser floor", self.err.getvalue())
+        self.assert_empty_queue()
+        self.assertFalse(g._live_slots())
+
+    def test_already_paused_refuses_without_mutex_or_ticket(self):
+        self.write_mode({"mode": "paused"})
+        other = self.guard()
+        g = self.guard()
+        with other._admission():
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=1), heavy.EX_TEMPFAIL)
+        self.assertEqual(self.clock.sleeps, [])
+        self.assertIn("paused", self.err.getvalue())
+        self.assert_empty_queue()
+
+    def test_mode_changed_at_admission_removes_ticket_without_rewrite(self):
+        g = self.guard()
+        states = iter((heavy.ModeState("continuous", heavy.Window.parse(heavy.DEFAULT_WINDOW)),
+                       heavy.ModeState("paused", heavy.Window.parse(heavy.DEFAULT_WINDOW))))
+        write = heavy.write_json_atomic
+        tickets = []
+        def observe(path, rec):
+            if "/queue/" in path:
+                tickets.append(dict(rec))
+            return write(path, rec)
+        with patch.object(g, "mode_state", side_effect=lambda: next(states)), \
+             patch.object(heavy, "write_json_atomic", side_effect=observe):
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
+        self.assertEqual([r["blocked_on"] for r in tickets], ["checking"])
+        self.assert_empty_queue()
+
+    def test_repeated_signal_during_owned_lock_cleanup_is_ignored(self):
+        g = self.guard(level=2)
+        acquire = g._acquire
+        release = g.locks.release
+        def interrupt_acquire(*args):
+            result = acquire(*args)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return result
+        def interrupt_release(*args):
+            os.kill(os.getpid(), signal.SIGHUP)
+            return release(*args)
+        with patch.object(g, "_acquire", side_effect=interrupt_acquire), \
+             patch.object(g.locks, "release", side_effect=interrupt_release):
+            self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 143)
+        self.assert_no_owned_resources(g)
+
+    def test_signal_at_owner_publication_cleans_ownerless_directory(self):
+        g = self.guard(level=2)
+        write = heavy.write_json_atomic
+        fired = []
+        def interrupt(path, info):
+            if path.endswith("/slot-1/owner.json") and not fired:
+                fired.append(True)
+                os.kill(os.getpid(), signal.SIGTERM)
+            return write(path, info)
+        with patch.object(heavy, "write_json_atomic", side_effect=interrupt):
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 143)
+        self.assert_no_owned_resources(g)
+
+    def test_signal_after_mkdir_before_return_cleans_immediately(self):
+        g = self.guard(level=2)
+        mkdir = heavy.os.mkdir
+        fired = []
+        def interrupt(path, *args, **kwargs):
+            result = mkdir(path, *args, **kwargs)
+            if str(path).endswith("/slot-1") and not fired:
+                fired.append(True)
+                os.kill(os.getpid(), signal.SIGTERM)
+            return result
+        with patch.object(heavy.os, "mkdir", side_effect=interrupt):
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 143)
+        self.assert_no_owned_resources(g)
+
+    def test_signal_during_post_slot_capacity_check_cleans_immediately(self):
+        g = self.guard(level=2)
+        live = g._live_slots
+        fired = []
+        def interrupt():
+            result = live()
+            if result and not fired:
+                fired.append(True)
+                os.kill(os.getpid(), signal.SIGTERM)
+            return result
+        with patch.object(g, "_live_slots", side_effect=interrupt):
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 143)
+        self.assert_no_owned_resources(g)
+
+    def test_signal_at_acquire_handoff_and_second_during_cleanup(self):
+        for boundary in ("ticket", "return"):
+            with self.subTest(boundary=boundary):
+                g = self.guard(level=2)
+                remove = heavy.remove_file
+                acquire = g._acquire
+                fired = []
+                def interrupt_remove(path):
+                    if path and "/queue/" in path and not fired:
+                        fired.append(True)
+                        os.kill(os.getpid(), signal.SIGTERM)
+                    elif path and "/waiting/" in path and fired:
+                        os.kill(os.getpid(), signal.SIGHUP)
+                    return remove(path)
+                def interrupt_return(*args):
+                    result = acquire(*args)
+                    os.kill(os.getpid(), signal.SIGTERM)
+                    return result
+                with patch.object(heavy, "remove_file", side_effect=interrupt_remove if boundary == "ticket" else remove), \
+                     patch.object(g, "_acquire", side_effect=interrupt_return if boundary == "return" else acquire):
+                    self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 143)
+                self.assert_no_owned_resources(g)
+
+
+    def test_release_serializes_with_already_classified_ticket(self):
+        holder = self.guard(level=2)
+        holder.clock = heavy.Clock()
+        rec = dict(pid=FAKE_LIVE, token="holder", kind="browser")
+        held, _, _ = holder._attempt("browser", False, set(), rec)
+        self.ticket("browser", kind="browser", created=1)
+        later = self.ticket("test", created=2)
+        observer = self.guard(level=2)
+        attempted = threading.Event()
+        finished = threading.Event()
+        flock = heavy.fcntl.flock
+        def observe_flock(fd, operation):
+            if threading.current_thread() is worker and operation & heavy.fcntl.LOCK_EX:
+                attempted.set()
+            return flock(fd, operation)
+        def release():
+            try:
+                holder._release(held, rec["token"])
+            finally:
+                finished.set()
+        worker = threading.Thread(target=release)
+        with patch.object(heavy.fcntl, "flock", side_effect=observe_flock):
+            with observer._admission():
+                self.assertEqual(observer._resource("browser", False, set(), observer.read_memory(), observer.mode_state()), "browser")
+                worker.start()
+                self.assertTrue(attempted.wait(2))
+                self.assertFalse(finished.is_set(), "release ran through another guard's eligibility check")
+                self.assertIsNotNone(observer._attempt("test", False, set(), later, observer._tickets())[1])
+            worker.join(timeout=3)
+        self.assertFalse(worker.is_alive())
+        self.assertTrue(finished.is_set())
+        self.assertEqual(holder._live_slots(), [])
+
+    def test_status_reads_slots_kind_and_waiting_under_admission(self):
+        g = self.guard()
+        state = g.locks.state
+        records = g._records
+        def checked_state(name):
+            self.assertGreater(g._admission_depth, 0)
+            return state(name)
+        def checked_records(sub):
+            if sub in ("queue", "waiting"):
+                self.assertGreater(g._admission_depth, 0)
+            return records(sub)
+        with patch.object(g.locks, "state", side_effect=checked_state), patch.object(g, "_records", side_effect=checked_records):
+            self.assertEqual(g.status(), 0)
+
+    def test_status_never_prints_while_holding_admission(self):
+        g = self.guard()
+        say = g._say
+        def check(line):
+            self.assertEqual(g._admission_depth, 0, "stdout can block; never print under admission")
+            say(line)
+        with patch.object(g, "_say", side_effect=check):
+            self.assertEqual(g.status(), 0)
+
+    def test_publication_exception_removes_our_new_directory(self):
+        g = self.guard()
+        with patch.object(heavy, "write_json_atomic", side_effect=heavy._Interrupted(signal.SIGTERM)):
+            with self.assertRaises(heavy._Interrupted):
+                g.locks.try_acquire("slot-1", dict(pid=FAKE_LIVE, token="ours"))
+        self.assertFalse(os.path.exists(self.heavy_dir("slot-1")))
+
+    def test_pending_signal_during_admission_mutex_wait_stops_promptly(self):
+        g = self.guard(level=2)
+        other = self.guard(level=2)
+        self.clock.on_sleep = lambda _: os.kill(os.getpid(), signal.SIGTERM)
+        with other._admission():
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=10), 143)
+        self.assertLessEqual(sum(self.clock.sleeps), 0.05)
+        self.assert_no_owned_resources(g)
+
+    def test_signal_interrupts_wait_diagnostic_before_blocked_output(self):
+        self.hold("slot-1")
+        g = self.guard(level=2)
+        warn = g._warn
+        def output(message):
+            if " is waiting:" in message:
+                os.kill(os.getpid(), signal.SIGTERM)
+                self.fail("signal was deferred into potentially blocking output")
+            return warn(message)
+        with patch.object(g, "_warn", side_effect=output):
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=10), 143)
+        self.assert_empty_queue()
+        self.assertEqual(g._records("waiting"), [])
+
+    def test_second_browser_reason_propagates_kind_reservation(self):
+        g = self.guard(level=1)
+        self.ticket("first", kind="browser", created=1)
+        second = self.ticket("second", kind="browser", created=2)
+        self.assertIn("waiting for browser", self.attempt(g, second)[1])
+
+
+class IdentityReviewTests(GuardCase):
+    def test_native_identity_ignores_timezone_and_linux_realtime(self):
+        if not (sys.platform == "darwin" or sys.platform.startswith("linux")):
+            self.skipTest("native immutable process identity is macOS/Linux only")
+        identity = heavy.default_proc_identity(os.getpid())
+        self.assertTrue(identity)
+        with patch.object(heavy.time, "localtime", side_effect=AssertionError("used timezone")), \
+             patch.object(heavy.subprocess, "run", side_effect=AssertionError("spawned ps")):
+            self.assertEqual(heavy.default_proc_identity(os.getpid()), identity)
+        # Linux procfs fixture has a process name containing ')', and no btime
+        # is readable. Identity uses only immutable boot ID and start ticks.
+        reads = []
+        def procfs(path, *args, **kwargs):
+            reads.append(path)
+            if path == "/proc/42/stat":
+                return io.StringIO("42 (name with ) paren) " + " ".join(["0"] * 19 + ["12345"]))
+            if path == "/proc/sys/kernel/random/boot_id":
+                return io.StringIO("boot-token\n")
+            raise AssertionError(f"mutable clock source read: {path}")
+        with patch.object(heavy.sys, "platform", "linux"), patch("builtins.open", side_effect=procfs):
+            self.assertEqual(heavy.default_proc_identity(42), "linux:boot-token:12345")
+        self.assertNotIn("/proc/stat", reads)
+
+    def test_darwin_identity_includes_birth_microseconds(self):
+        micros = [1]
+        class Libproc:
+            @staticmethod
+            def proc_pidinfo(pid, flavor, argument, buf, length):
+                heavy.ctypes.c_uint64.from_buffer(buf, 120).value = 123456
+                heavy.ctypes.c_uint64.from_buffer(buf, 128).value = micros[0]
+                return length
+        with patch.object(heavy.sys, "platform", "darwin"), patch.object(heavy, "_LIBPROC", Libproc()):
+            first = heavy.default_proc_identity(42)
+            micros[0] = 2
+            second = heavy.default_proc_identity(42)
+        self.assertEqual(first, "darwin:123456:1")
+        self.assertEqual(second, "darwin:123456:2")
+
+    def test_strong_identity_detects_reuse_for_locks_tickets_and_waiting(self):
+        table = {FAKE_LIVE: "birth-new", FAKE_LIVE_2: None}
+        g = self.guard(proc_identity=lambda pid: table.get(pid))
+        path = self.hold("slot-1")
+        self.set_owner(path, identity="birth-old")
+        self.assertEqual(g.locks.state("slot-1"), "stale")
+        g._record("queue", FAKE_LIVE, dict(pid=FAKE_LIVE, identity="birth-old", token="reuse", kind="test"))
+        g._record("waiting", FAKE_LIVE, dict(guard=FAKE_LIVE, identity="birth-old", kind="test"))
+        g._record("waiting", FAKE_LIVE_2, dict(guard=FAKE_LIVE_2, identity="birth-unknown", kind="test"))
+        g.status()
+        self.assertEqual(g._records("queue"), [])
+        self.assertEqual([r["guard"] for _, r in g._records("waiting")], [FAKE_LIVE_2])
+
+    def test_legacy_cross_timezone_and_clock_changes_keep_capacity(self):
+        for recorded, current in (("Sun Oct 18 12:00:00 2026", "Sun Oct 18 07:00:00 2026"),
+                                  ("Sun Oct 18 12:00:00 2026", "Sun Oct 18 12:00:01 2026")):
+            with self.subTest(recorded=recorded, current=current):
+                g = self.guard(proc_start=lambda _: current, proc_identity=lambda _: "new-birth")
+                for name in ("slot-1", "browser", "codex"):
+                    path = self.hold(name)
+                    self.set_owner(path, lstart=recorded)
+                    self.assertEqual(g.locks.state(name), "live")
+                    g.locks.release(name, "other")
+                g._record("queue", FAKE_LIVE, dict(pid=FAKE_LIVE, lstart=recorded, token="old", kind="test"))
+                g._record("waiting", FAKE_LIVE, dict(guard=FAKE_LIVE, lstart=recorded, kind="test"))
+                with g._admission():
+                    self.assertEqual(len(g._tickets()), 1)
+                g.status()
+                self.assertEqual(len(g._records("waiting")), 1)
+
+    def test_new_lock_omits_legacy_timestamps_for_old_readers(self):
+        g = self.guard(level=2, proc_identity=lambda pid: f"birth:{pid}")
+        held_info = []
+        def inspect(kind, cmd, env, held, info, nested):
+            for name in held:
+                owner = g.locks.owner(name)
+                held_info.append(owner)
+                self.assertNotIn("lstart", owner)
+                self.assertNotIn("pgid_lstart", owner)
+                # This is exactly the pre-queue/v2 _not_reused rule. Across
+                # any TZ, an absent legacy timestamp conservatively keeps it.
+                legacy = heavy.Locks(g.heavy_dir, self.pid_alive, self.group_alive, lambda _: "different TZ")
+                self.assertTrue(legacy._not_reused(owner["pid"], owner.get("lstart")))
+            for _, ticket in g._records("queue"):
+                self.assertNotIn("lstart", ticket)
+            for _, waiting in g._records("waiting"):
+                self.assertNotIn("lstart", waiting)
+            return 0
+        with patch.object(g, "_spawn", side_effect=inspect):
+            self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 0)
+        self.assertEqual(len(held_info), 2)
+
+    def test_stop_all_rejects_strong_reuse_even_when_guard_and_argv_match(self):
+        g = self.guard(proc_identity=lambda _: "birth-new", proc_command=lambda _: "python heavy.py")
+        g._record("waiting", FAKE_LIVE, dict(guard=FAKE_LIVE, identity="birth-old", kind="test"))
+        g._record("running", FAKE_LIVE_2, dict(pid=FAKE_LIVE_2, pgid=FAKE_LIVE_2, guard=FAKE_LIVE,
+                                                   identity="birth-old", argv0="python", kind="test"))
+        with patch.object(heavy.os, "kill") as kill, patch.object(heavy.os, "killpg") as killpg:
+            g.stop_all(grace=0)
+        kill.assert_not_called()
+        killpg.assert_not_called()
+
+    def test_stop_all_legacy_timestamp_mismatch_does_not_fall_back_to_argv(self):
+        g = self.guard(proc_start=lambda _: "different TZ", proc_command=lambda _: "python")
+        g._record("waiting", FAKE_LIVE, dict(guard=FAKE_LIVE, lstart="old", kind="test"))
+        g._record("running", FAKE_LIVE_2, dict(pid=FAKE_LIVE_2, pgid=FAKE_LIVE_2, guard=FAKE_DEAD,
+                                                   lstart="old", argv0="python", kind="test"))
+        with patch.object(heavy.os, "kill") as kill, patch.object(heavy.os, "killpg") as killpg:
+            g.stop_all(grace=0)
+        kill.assert_not_called()
+        killpg.assert_not_called()
+
+
+
+    def test_stop_all_missing_child_identity_rejects_reused_guard_identity(self):
+        for current in ("birth-reused", None):
+            with self.subTest(current=current):
+                g = self.guard(proc_identity=lambda _: current, proc_command=lambda _: "python heavy.py")
+                g._record("running", FAKE_LIVE_2, dict(pid=FAKE_LIVE_2, pgid=FAKE_LIVE_2,
+                    guard=FAKE_LIVE, guard_identity="guard-original", argv0="python", kind="test"))
+                with patch.object(heavy.os, "killpg") as killpg:
+                    g.stop_all(grace=0)
+                killpg.assert_not_called()
+
+    def test_stop_all_rechecks_identity_before_escalating(self):
+        identity = ["birth-original"]
+        g = self.guard(proc_identity=lambda _: identity[0], proc_command=lambda _: "python heavy.py")
+        g._record("running", FAKE_LIVE, dict(pid=FAKE_LIVE, pgid=FAKE_LIVE, guard=FAKE_DEAD,
+                                              identity="birth-original", kind="test"))
+        self.clock.on_sleep = lambda _: identity.__setitem__(0, "birth-reused")
+        with patch.object(heavy.os, "killpg") as killpg:
+            g.stop_all(grace=0.2)
+        self.assertEqual(killpg.call_args_list, [unittest.mock.call(FAKE_LIVE, signal.SIGTERM)])
+
 
 
 class ReaderTests(unittest.TestCase):
@@ -772,8 +1200,8 @@ class RunTests(GuardCase):
     def test_lock_whose_pid_was_reused_is_stale(self):
         # The guard was killed and an unrelated long-lived process got its pid.
         path = self.hold("slot-1", pid=FAKE_LIVE)
-        self.set_owner(path, lstart="Thu Oct  1 01:00:00 2026")
-        g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: "Thu Oct  1 05:00:00 2026"}))
+        self.set_owner(path, identity="old-birth")
+        g = self.guard(level=2, proc_identity=lambda pid: "new-birth" if pid == FAKE_LIVE else heavy.default_proc_identity(pid))
         self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
         self.assertFalse(os.path.exists(path))
 
@@ -787,10 +1215,10 @@ class RunTests(GuardCase):
 
     def test_reused_process_group_does_not_keep_the_lock(self):
         path = self.hold("slot-1", pid=FAKE_DEAD)
-        self.set_owner(path, pgid=FAKE_LIVE, pgid_lstart="Thu Oct  1 01:00:00 2026")
-        g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: "Thu Oct  1 01:00:00 2026"}))
+        self.set_owner(path, pgid=FAKE_LIVE, pgid_identity="old-birth")
+        g = self.guard(level=2, proc_identity=lambda pid: "old-birth" if pid == FAKE_LIVE else heavy.default_proc_identity(pid))
         self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), heavy.EX_TEMPFAIL)
-        g = self.guard(level=2, proc_start=self.starts({FAKE_LIVE: "Thu Oct  1 05:00:00 2026"}))
+        g = self.guard(level=2, proc_identity=lambda pid: "new-birth" if pid == FAKE_LIVE else heavy.default_proc_identity(pid))
         self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 0)
         self.assertFalse(os.path.exists(path))
 
@@ -804,18 +1232,20 @@ class RunTests(GuardCase):
             "while True:\n"
             f"    with open({owner!r}) as fh:\n"
             "        info = json.load(fh)\n"
-            "    if 'pgid_lstart' in info or time.time() > deadline:\n"
+            "    if 'pgid_identity' in info or time.time() > deadline:\n"
             "        break\n"
             "    time.sleep(0.05)\n"
             f"with open({out!r}, 'w') as fh:\n"
             "    json.dump(info, fh)\n"
         )
-        g = self.guard(level=2, proc_start=lambda pid: f"start-{pid}")
+        g = self.guard(level=2, proc_identity=lambda pid: f"birth-{pid}")
         self.assertEqual(g.run("test", [PY, "-c", child], wait=0), 0)
         with open(out) as fh:
             info = json.load(fh)
-        self.assertEqual(info["lstart"], f"start-{os.getpid()}")
-        self.assertEqual(info["pgid_lstart"], f"start-{info['pgid']}")
+        self.assertEqual(info["identity"], f"birth-{os.getpid()}")
+        self.assertEqual(info["pgid_identity"], f"birth-{info['pgid']}")
+        self.assertNotIn("lstart", info)
+        self.assertNotIn("pgid_lstart", info)
 
     def test_lock_without_owner_file(self):
         fresh = self.heavy_dir("slot-1")
