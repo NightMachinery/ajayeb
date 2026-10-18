@@ -1859,6 +1859,91 @@ class CLITests(GuardCase):
         self.assertEqual((res.returncode, res.stdout.strip()), (0, "ok"))
 
 
+class ArgonReviewTests(GuardCase):
+    """Findings of an outside review of 7b3cf56, each checked against the code."""
+
+    def broken_stderr(self):
+        r, w = os.pipe()
+        os.close(r)  # every write now fails with EPIPE (Python ignores SIGPIPE)
+        err = os.fdopen(w, "w")
+        self.addCleanup(err.close)
+        return err
+
+    def test_closed_stderr_does_not_crash_a_refusal(self):
+        self.write_mode({"mode": "paused"})
+        g = self.guard(env={"AJAYEB_MAX_SLOTS": "many"})  # warns at creation too
+        g.err = self.broken_stderr()
+        g._warn("heavy: probe")
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(g.run("test", cmd), heavy.EX_TEMPFAIL)
+        self.assertEqual(self.log_entries()[-1]["rc"], heavy.EX_TEMPFAIL)
+
+    def test_closed_stderr_waiting_still_ends_in_75(self):
+        self.hold("slot-1")
+        g = self.guard(level=2)
+        g.err = self.broken_stderr()
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(g.run("test", cmd, wait=3), heavy.EX_TEMPFAIL)
+        self.assertGreater(len(self.clock.sleeps), 0)
+        self.assertIn("gave up after waiting", self.log_entries()[-1]["refused"])
+
+    def test_closed_stderr_does_not_orphan_a_started_child(self):
+        g = self.guard()
+        g.err = self.broken_stderr()
+        path, cmd = self.sentinel_cmd()
+        with patch.object(heavy, "write_json_atomic", side_effect=OSError("disk full")):
+            self.assertEqual(g.run("light", cmd), 0)
+        self.assertTrue(os.path.exists(path))
+
+    def test_signal_between_poll_check_and_sleep_is_not_stranded(self):
+        self.hold("slot-1")
+        g = self.guard(level=2)
+        calls = []
+        real = self.clock.monotonic
+
+        def monotonic():
+            if g._admission_depth == 0 and g._acquiring:
+                calls.append(1)
+                if len(calls) == 2:  # the remaining-time check after the first poll
+                    g._pending = signal.SIGTERM
+            return real()
+        self.clock.monotonic = monotonic
+        path, cmd = self.sentinel_cmd()
+        self.assertEqual(g.run("test", cmd, wait=30), 128 + signal.SIGTERM)
+        self.assertEqual(self.clock.sleeps, [])
+        self.assertNotIn("is waiting", self.err.getvalue())
+
+    def test_signal_during_a_failed_popen_is_honoured(self):
+        g = self.guard()
+
+        def popen(*args, **kwargs):
+            g._pending = signal.SIGTERM
+            raise FileNotFoundError(2, "No such file")
+        with patch.object(heavy.subprocess, "Popen", side_effect=popen):
+            self.assertEqual(g.run("light", ["no-such-command"]), 128 + signal.SIGTERM)
+        self.assertNotIn("cannot start", self.err.getvalue())
+
+    def test_failed_waiting_record_warning_is_interruptible(self):
+        self.hold("slot-1")
+        g = self.guard(level=2)
+
+        def warn(msg):
+            if "waiting record" in msg:
+                self.assertFalse(g._acquiring)
+                g._on_signal(signal.SIGTERM, None)  # raises now that deferral is off
+        g._warn = warn
+        real = heavy.write_json_atomic
+
+        def write(path, data):
+            if os.sep + "waiting" + os.sep in path:
+                raise OSError("disk full")
+            return real(path, data)
+        path, cmd = self.sentinel_cmd()
+        with patch.object(heavy, "write_json_atomic", side_effect=write):
+            self.assertEqual(g.run("test", cmd, wait=30), 128 + signal.SIGTERM)
+        self.assertFalse(os.path.exists(path))
+
+
 AGENT = "6cf5fbab-bd04-46da-a560-84e3a910a07d"
 
 FAKE_PASEO = r"""#!/usr/bin/env python3

@@ -120,7 +120,11 @@ checkout guard is not implemented.
   final pending-signal check, so a signal after that check also stops startup.
 - Waiting and refusal diagnostics are interruptible. Warnings write directly
   to a file descriptor when available, so an interrupted buffered write cannot
-  be retried at interpreter shutdown. Pre-start cancellation exits without a
+  be retried at interpreter shutdown. A warning that cannot be written (a
+  closed pipe, a full disk) is dropped, so it can never crash a run or orphan
+  a started child. A signal deferred during acquisition is raised before any
+  diagnostic or poll sleep, and one deferred during a failed `Popen` still
+  cancels the run. Pre-start cancellation exits without a
   final terminal diagnostic, because another write to a blocked stderr pipe
   could prevent shutdown.
 - Cleanup ignores repeated handled signals and releases all locks carrying

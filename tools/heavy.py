@@ -851,8 +851,14 @@ class Guard:
         # our handlers have been restored. Write directly so nothing is queued.
         data = (msg + "\n").encode(getattr(self.err, "encoding", None) or "utf-8",
                                     getattr(self.err, "errors", None) or "backslashreplace")
-        while data:
-            data = data[os.write(fd, data):]
+        # A lost diagnostic (closed pipe, full disk, non-blocking full pipe)
+        # must never stop a run; _Interrupted is a BaseException and still
+        # propagates.
+        try:
+            while data:
+                data = data[os.write(fd, data):]
+        except OSError:
+            pass
 
     def _env_float(self, name: str, default: float) -> float:
         raw = self.env.get(name)
@@ -1135,6 +1141,9 @@ class Guard:
                 deferred = self._acquiring
                 self._acquiring = False
                 try:
+                    # A signal deferred since the check above must not wait
+                    # behind the diagnostic and the poll sleep.
+                    self._raise_pending()
                     # Holder ages change every poll; report resource changes.
                     if self._blocked != last_reason:
                         self._warn(f"heavy: {kind} is waiting: {reason} (up to {fmt_secs(remaining)} more)")
@@ -1219,7 +1228,16 @@ class Guard:
         try:
             write_json_atomic(path, data)
         except OSError as exc:
-            self._warn(f"heavy: cannot write {sub} record: {exc}")
+            # Inside acquisition, signals are deferred; let one interrupt a
+            # blocked diagnostic write rather than wait behind it.
+            deferred = self._acquiring
+            self._acquiring = False
+            try:
+                if deferred:
+                    self._raise_pending()
+                self._warn(f"heavy: cannot write {sub} record: {exc}")
+            finally:
+                self._acquiring = deferred
             return None
         return path
 
@@ -1384,6 +1402,7 @@ class Guard:
             child = subprocess.Popen(cmd, env=env, start_new_session=True, preexec_fn=preexec)
         except OSError as exc:
             self._spawning = False
+            self._raise_pending()  # a signal deferred during Popen still cancels
             rc = 127 if isinstance(exc, FileNotFoundError) else 126
             self._warn(f"heavy: cannot start {cmd[0]!r}: {exc.strerror or exc}")
             self._log(kind, cmd, rc, 0.0, 0, when=started, nested=nested)
