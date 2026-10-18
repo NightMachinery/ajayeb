@@ -634,7 +634,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -656,7 +677,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -700,7 +742,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -743,7 +806,28 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "apothecary",
@@ -787,7 +871,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "removedKnown",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -873,7 +977,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "altar",
@@ -895,7 +1019,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "baths",
@@ -917,7 +1061,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "sawmill",
@@ -1003,7 +1168,11 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "barracks",
@@ -1025,7 +1194,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -1068,7 +1242,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "removedKnown",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "parade-ground",
@@ -1090,7 +1284,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "school",
@@ -1112,7 +1327,27 @@
       ],
       "place": "tucked",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -1134,7 +1369,27 @@
       ],
       "place": "tucked",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "dispensary",
@@ -1156,7 +1411,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "library",
@@ -1178,7 +1437,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "brewery",
@@ -1199,7 +1463,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "forum",
@@ -1263,7 +1547,33 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "statue",
@@ -1284,7 +1594,33 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "courthouse",
@@ -1328,7 +1664,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "rostrum",
@@ -1349,7 +1690,28 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "circus",
@@ -1371,7 +1733,12 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "arsenal",
@@ -1415,7 +1782,12 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "pretorium",
@@ -1479,7 +1851,12 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "tucked",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "study",
@@ -1522,7 +1899,12 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "tucked",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "arena",
@@ -1543,7 +1925,11 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "chamber-of-commerce",
@@ -1630,7 +2016,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "pantheon",
@@ -1652,7 +2042,11 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "town-hall",
@@ -1695,7 +2089,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "obelisk",
@@ -2570,7 +2968,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -2592,7 +3011,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -2636,7 +3076,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -2679,7 +3140,28 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "apothecary",
@@ -2723,7 +3205,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "removedKnown",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -2809,7 +3311,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "altar",
@@ -2831,7 +3353,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "baths",
@@ -2853,7 +3395,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "sawmill",
@@ -2939,7 +3502,11 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "barracks",
@@ -2961,7 +3528,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -3004,7 +3576,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "removedKnown",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "parade-ground",
@@ -3026,7 +3618,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "school",
@@ -3048,7 +3661,27 @@
       ],
       "place": "tucked",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -3070,7 +3703,27 @@
       ],
       "place": "tucked",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "dispensary",
@@ -3092,7 +3745,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "library",
@@ -3114,7 +3771,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "brewery",
@@ -3135,7 +3797,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "forum",
@@ -3199,7 +3881,33 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "statue",
@@ -3220,7 +3928,33 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "courthouse",
@@ -3264,7 +3998,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "rostrum",
@@ -3285,7 +4024,28 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "circus",
@@ -3307,7 +4067,12 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "arsenal",
@@ -3351,7 +4116,12 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "pretorium",
@@ -3415,7 +4185,12 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "tucked",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "study",
@@ -3458,7 +4233,12 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "tucked",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "arena",
@@ -3479,7 +4259,11 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "chamber-of-commerce",
@@ -3566,7 +4350,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "pantheon",
@@ -3588,7 +4376,11 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "town-hall",
@@ -3631,7 +4423,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "obelisk",
@@ -4505,7 +5301,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -4527,7 +5344,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -4571,7 +5409,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -4614,7 +5473,28 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "apothecary",
@@ -4658,7 +5538,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "removedKnown",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -4744,7 +5644,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "altar",
@@ -4766,7 +5686,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "baths",
@@ -4788,7 +5728,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "sawmill",
@@ -4874,7 +5835,11 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "barracks",
@@ -4896,7 +5861,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -4939,7 +5909,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "removedKnown",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "parade-ground",
@@ -4961,7 +5951,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "school",
@@ -4983,7 +5994,27 @@
       ],
       "place": "tucked",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -5005,7 +6036,27 @@
       ],
       "place": "tucked",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "dispensary",
@@ -5027,7 +6078,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "library",
@@ -5049,7 +6104,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "brewery",
@@ -5070,7 +6130,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "discard",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "forum",
@@ -5134,7 +6214,33 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "statue",
@@ -5155,7 +6261,33 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "courthouse",
@@ -5199,7 +6331,12 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "rostrum",
@@ -5220,7 +6357,28 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "circus",
@@ -5242,7 +6400,12 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "arsenal",
@@ -5286,7 +6449,12 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "pretorium",
@@ -5350,7 +6518,12 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "tucked",
+       "seat": 1,
+       "accessible": false
+      }
      },
      {
       "card": "study",
@@ -5393,7 +6566,12 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "tucked",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "arena",
@@ -5414,7 +6592,11 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "chamber-of-commerce",
@@ -5501,7 +6683,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "pantheon",
@@ -5523,7 +6709,11 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "town-hall",
@@ -5566,7 +6756,11 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "discard",
+       "accessible": false
+      }
      },
      {
       "card": "obelisk",

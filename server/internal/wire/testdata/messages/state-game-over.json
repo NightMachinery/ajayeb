@@ -1608,7 +1608,27 @@
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -1630,7 +1650,27 @@
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -1652,7 +1692,27 @@
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -1674,7 +1734,11 @@
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -1696,7 +1760,11 @@
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -1718,7 +1786,27 @@
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -1762,7 +1850,31 @@
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -1784,7 +1896,31 @@
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",

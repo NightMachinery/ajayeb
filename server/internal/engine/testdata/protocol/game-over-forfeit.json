@@ -1396,7 +1396,11 @@
       ],
       "place": "faceUp",
       "slot": 19,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -1440,7 +1444,27 @@
       ],
       "place": "faceUp",
       "slot": 14,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -1462,7 +1486,27 @@
       ],
       "place": "faceUp",
       "slot": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "dispensary",
@@ -1484,7 +1528,11 @@
       ],
       "place": "faceUp",
       "slot": 4,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "forum",
@@ -1572,7 +1620,31 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        }
+       ]
+      }
      },
      {
       "card": "rostrum",
@@ -1594,7 +1666,27 @@
       ],
       "place": "tucked",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [
@@ -3180,7 +3272,11 @@
       ],
       "place": "faceUp",
       "slot": 19,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -3224,7 +3320,27 @@
       ],
       "place": "faceUp",
       "slot": 14,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -3246,7 +3362,27 @@
       ],
       "place": "faceUp",
       "slot": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "dispensary",
@@ -3268,7 +3404,11 @@
       ],
       "place": "faceUp",
       "slot": 4,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "forum",
@@ -3356,7 +3496,31 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        }
+       ]
+      }
      },
      {
       "card": "rostrum",
@@ -3378,7 +3542,27 @@
       ],
       "place": "tucked",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [
@@ -4963,7 +5147,11 @@
       ],
       "place": "faceUp",
       "slot": 19,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -5007,7 +5195,27 @@
       ],
       "place": "faceUp",
       "slot": 14,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -5029,7 +5237,27 @@
       ],
       "place": "faceUp",
       "slot": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "dispensary",
@@ -5051,7 +5279,11 @@
       ],
       "place": "faceUp",
       "slot": 4,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "forum",
@@ -5139,7 +5371,31 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        }
+       ]
+      }
      },
      {
       "card": "rostrum",
@@ -5161,7 +5417,27 @@
       ],
       "place": "tucked",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [

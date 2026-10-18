@@ -15,12 +15,18 @@
   import CardFace from '../card/CardFace.svelte';
   import HintPip from '../card/HintPip.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import type { CardTooltipView } from '$lib/wire';
   import type { CardTipContext } from '$lib/view/tips';
 
   interface Props {
     cards: readonly string[];
     /** Owner name for city cards; absent for a discard pile. */
     owner?: string;
+    cardTooltips?: readonly CardTooltipView[];
+    names?: readonly [string, string];
+    you?: number;
+    linkSeat?: number;
+    costSeat?: number;
     /** Actual payments for the offered choices, never inferred from keys. */
     tipContexts?: ReadonlyMap<string, CardTipContext>;
     /** Card slug to its choice key; a card without one is shown, not picked. */
@@ -40,6 +46,11 @@
   let {
     cards,
     owner,
+    cardTooltips,
+    names,
+    you,
+    linkSeat,
+    costSeat,
     tipContexts,
     keys,
     selected = null,
@@ -87,7 +98,14 @@
             tier="medium"
             width={CARD_W}
             {owner}
-            tipContext={tipContexts?.get(slug)}
+            tipContext={{
+              info: cardTooltips?.find((row) => row.card === slug),
+              names,
+              you,
+              linkSeat,
+              costSeat,
+              ...tipContexts?.get(slug)
+            }}
           />
           {#if pips?.get(slug) && !isSelected}
             <HintPip pip={pips.get(slug)!} card={cardName(slug)} />
@@ -120,7 +138,14 @@
             tier="medium"
             width={CARD_W}
             {owner}
-            tipContext={tipContexts?.get(slug)}
+            tipContext={{
+              info: cardTooltips?.find((row) => row.card === slug),
+              names,
+              you,
+              linkSeat,
+              costSeat,
+              ...tipContexts?.get(slug)
+            }}
             focusable
           />
           {#if pips?.get(slug)}

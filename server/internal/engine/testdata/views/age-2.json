@@ -1530,7 +1530,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 1
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -1552,7 +1572,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -1596,7 +1636,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -1639,7 +1699,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "apothecary",
@@ -1683,7 +1763,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -1769,7 +1869,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 3,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "altar",
@@ -1791,7 +1912,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        }
+       ]
+      }
      },
      {
       "card": "baths",
@@ -1813,7 +1955,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 11,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "drying-room",
@@ -1857,7 +2020,11 @@
       ],
       "place": "faceUp",
       "slot": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -1901,7 +2068,27 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 9,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 7
+        }
+       ]
+      }
      },
      {
       "card": "parade-ground",
@@ -1923,7 +2110,27 @@
       ],
       "place": "faceUp",
       "slot": 12,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      },
      {
       "card": "school",
@@ -1945,7 +2152,27 @@
       ],
       "place": "faceUp",
       "slot": 4,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -1967,7 +2194,27 @@
       ],
       "place": "faceUp",
       "slot": 18,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "customs-house",
@@ -2011,7 +2258,32 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 9,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 7
+        }
+       ]
+      }
      },
      {
       "card": "statue",
@@ -2033,7 +2305,32 @@
       ],
       "place": "faceUp",
       "slot": 3,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 10,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 8
+        }
+       ]
+      }
      },
      {
       "card": "aqueduct",
@@ -2055,7 +2352,12 @@
       ],
       "place": "faceUp",
       "slot": 11,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "rostrum",
@@ -2077,7 +2379,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [
@@ -3685,7 +4007,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 1
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -3707,7 +4049,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -3751,7 +4113,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -3794,7 +4176,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "apothecary",
@@ -3838,7 +4240,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -3924,7 +4346,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 3,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "altar",
@@ -3946,7 +4389,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        }
+       ]
+      }
      },
      {
       "card": "baths",
@@ -3968,7 +4432,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 11,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "drying-room",
@@ -4012,7 +4497,11 @@
       ],
       "place": "faceUp",
       "slot": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -4056,7 +4545,27 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 9,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 7
+        }
+       ]
+      }
      },
      {
       "card": "parade-ground",
@@ -4078,7 +4587,27 @@
       ],
       "place": "faceUp",
       "slot": 12,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      },
      {
       "card": "school",
@@ -4100,7 +4629,27 @@
       ],
       "place": "faceUp",
       "slot": 4,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -4122,7 +4671,27 @@
       ],
       "place": "faceUp",
       "slot": 18,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "customs-house",
@@ -4166,7 +4735,32 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 9,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 7
+        }
+       ]
+      }
      },
      {
       "card": "statue",
@@ -4188,7 +4782,32 @@
       ],
       "place": "faceUp",
       "slot": 3,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 10,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 8
+        }
+       ]
+      }
      },
      {
       "card": "aqueduct",
@@ -4210,7 +4829,12 @@
       ],
       "place": "faceUp",
       "slot": 11,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "rostrum",
@@ -4232,7 +4856,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [
@@ -5828,7 +6472,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 1
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -5850,7 +6514,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -5894,7 +6578,27 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -5937,7 +6641,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenThisAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "apothecary",
@@ -5981,7 +6705,27 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -6067,7 +6811,28 @@
       ],
       "place": "city",
       "seat": 1,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 3,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 1,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "altar",
@@ -6089,7 +6854,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 1,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        }
+       ]
+      }
      },
      {
       "card": "baths",
@@ -6111,7 +6897,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 11,
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "drying-room",
@@ -6155,7 +6962,11 @@
       ],
       "place": "faceUp",
       "slot": 0,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "walls",
@@ -6199,7 +7010,27 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 9,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 7
+        }
+       ]
+      }
      },
      {
       "card": "parade-ground",
@@ -6221,7 +7052,27 @@
       ],
       "place": "faceUp",
       "slot": 12,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      },
      {
       "card": "school",
@@ -6243,7 +7094,27 @@
       ],
       "place": "faceUp",
       "slot": 4,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 5,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 1
+        },
+        {
+         "total": 4,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 2
+        }
+       ]
+      }
      },
      {
       "card": "laboratory",
@@ -6265,7 +7136,27 @@
       ],
       "place": "faceUp",
       "slot": 18,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 4
+        }
+       ]
+      }
      },
      {
       "card": "customs-house",
@@ -6309,7 +7200,32 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 9,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 7
+        }
+       ]
+      }
      },
      {
       "card": "statue",
@@ -6331,7 +7247,32 @@
       ],
       "place": "faceUp",
       "slot": 3,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 1,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 10,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 8
+        }
+       ]
+      }
      },
      {
       "card": "aqueduct",
@@ -6353,7 +7294,12 @@
       ],
       "place": "faceUp",
       "slot": 11,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      }
      },
      {
       "card": "rostrum",
@@ -6375,7 +7321,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 6
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [

@@ -972,6 +972,9 @@
       name={names[seat]}
       {seat}
       player={view.players[seat]}
+      cardTooltips={view.cardTooltips}
+      {names}
+      you={mode === 'hotseat' ? undefined : view.viewer}
       military={view.military}
       score={view.scorePreview[seat]}
       bot={seatBotLevel(frame?.room, seat)}
@@ -1262,6 +1265,8 @@
     bind:open={() => ui.isOpen('city'), (v) => !v && ui.close('city')}
     {names}
     players={view.players}
+    cardTooltips={view.cardTooltips}
+    you={mode === 'hotseat' ? undefined : view.viewer}
     military={view.military}
     scores={view.scorePreview}
     bots={[seatBotLevel(frame?.room, 0), seatBotLevel(frame?.room, 1)]}

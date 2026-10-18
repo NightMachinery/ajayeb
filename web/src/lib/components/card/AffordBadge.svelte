@@ -31,7 +31,9 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Afford } from '$lib/view/afford';
   import { affordTip } from '$lib/view/tips';
-  import type { CostView } from '$lib/wire';
+  import type { CardTipContext } from '$lib/view/tips';
+  import { chainTooltip } from '$lib/ui/chain-links';
+  import type { Chain, CostView } from '$lib/wire';
   import TradeDiagram from '../rules/TradeDiagram.svelte';
 
   interface Props {
@@ -50,6 +52,8 @@
     priceTip?: string;
     /** The server's cost breakdown behind the badge, for its tooltip. */
     cost?: CostView;
+    chain?: Chain;
+    chainContext?: CardTipContext;
     class?: string;
   }
 
@@ -62,14 +66,19 @@
     flowTo = '',
     priceTip,
     cost,
+    chain,
+    chainContext,
     class: className = ''
   }: Props = $props();
 
   const tip = $derived.by(() => {
     const words = affordTip(afford, cost);
+    const linked =
+      afford.state === 'chain' && chain ? chainTooltip(chain, 'in', [], chainContext) : undefined;
     return {
+      ...linked,
       ...words,
-      lines: [...(words.lines ?? []), ...(priceTip ? [priceTip] : [])],
+      lines: [...(linked?.lines ?? words.lines ?? []), ...(priceTip ? [priceTip] : [])],
       diagram: afford.state === 'trade' ? tradeDiagram : undefined
     };
   });

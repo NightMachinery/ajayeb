@@ -29,7 +29,15 @@
     strongerGlow,
     winsOf
   } from '$lib/view/threats';
-  import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import type {
+    CardTooltipView,
+    BotLevel,
+    Color,
+    MilitaryView,
+    PlayerView,
+    ScoreView,
+    WonderView
+  } from '$lib/wire';
   import PresenceDot from '../hud/PresenceDot.svelte';
   import ThinkingDots from '../hud/ThinkingDots.svelte';
   import { tryGameContext } from '../choices/room';
@@ -49,6 +57,10 @@
     seat: 0 | 1;
     player: PlayerView;
     military: MilitaryView;
+    /** Public tooltip data from the same displayed snapshot as these players. */
+    cardTooltips?: readonly CardTooltipView[];
+    names?: readonly [string, string];
+    you?: number;
     score?: ScoreView;
     /** When given, the wonders still to build are buttons (the wonder-first flow). */
     onwonder?: (wonder: WonderView) => void;
@@ -76,6 +88,9 @@
     seat,
     player,
     military,
+    cardTooltips,
+    names,
+    you,
     score,
     onwonder,
     buildable,
@@ -299,6 +314,10 @@
                 <CardPickGrid
                   cards={player.city.filter((slug) => cardBySlug(slug)?.color === color)}
                   owner={name}
+                  {cardTooltips}
+                  {names}
+                  {you}
+                  linkSeat={seat}
                   label={t('board.citySheet.city')}
                 />
               </div>

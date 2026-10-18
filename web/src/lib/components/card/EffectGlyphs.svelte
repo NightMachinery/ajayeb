@@ -8,6 +8,7 @@
   import type { CardSlug, CatalogEffect } from '$lib/catalog';
   import { t } from '$lib/i18n';
   import type { Chain } from '$lib/wire';
+  import type { CardTipContext } from '$lib/view/tips';
   import ChainChip from './ChainChip.svelte';
   import EffectGlyph from './EffectGlyph.svelte';
   import { cardName, chainName, effectSentence } from './effect-text';
@@ -17,6 +18,7 @@
     form?: 'mini' | 'full';
     /** The chain symbol this card shows, and the card it makes free. */
     chainOut?: Chain;
+    chainContext?: CardTipContext;
     chainTo?: CardSlug;
     /** Small-grid glyphs, for the mini tier. */
     small?: boolean;
@@ -27,6 +29,7 @@
     effects,
     form = 'mini',
     chainOut,
+    chainContext,
     chainTo,
     small = false,
     class: className = ''
@@ -70,7 +73,7 @@
       <EffectGlyph effect={item.effect} points={item.points} {small} />
     {/each}
     {#if chainOut}
-      <ChainChip chain={chainOut} direction="out" />
+      <ChainChip chain={chainOut} context={chainContext} direction="out" />
     {/if}
   </span>
 {:else}
@@ -86,7 +89,7 @@
     {#if chainOut}
       <li class="flex items-start gap-[0.5em]">
         <span class="inline-flex min-w-[2.2em] justify-center">
-          <ChainChip chain={chainOut} direction="out" />
+          <ChainChip chain={chainOut} context={chainContext} direction="out" />
         </span>
         <span class="leading-snug">
           {chainTo

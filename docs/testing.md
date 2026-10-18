@@ -1046,6 +1046,22 @@ the solver at all protocol positions and prove that swapping a hidden card
 with a removed card leaves the index identical. The ordinary redaction sweep
 also scans this field for hidden identities.
 
+### Linked chain tooltip checks
+
+The card tooltip server tests compare the complete public index after swapping
+an unseen linked target between a face-down slot and the age's removed cards.
+They also check accessible and covered public targets, named city ownership,
+discard, later/current unseen cards and absence after an ended age. Outgoing
+quotes bypass only the chain alternative, preserving production, flexible
+producers, fixed trade prices and Masonry. Reverse previews omit costs.
+
+The chain tooltip browser cases use public fixed-scenario data for outgoing
+city links and incoming structure links, including the chain affordability
+badge. They cover English and Persian, real touch long-press and desktop hover,
+with counting hints disabled, plus 360 px fit and card avoidance. The existing
+Age III UX DOM budget still applies while city disclosures are closed.
+
+
 ## The tutorial (M10.tutorial-client)
 
 Two specs walk the guided first game, both through the tutorial's DOM contract only (web/README.md, "The tutorial") and the test hook's `tutorial()` and `coach()`. They share one walk in `e2e/fixtures/tutorial.ts`, which reads the expected lesson order and guided keys from `GET /api/dev/tutorial`, so a changed script needs no change in the tests.

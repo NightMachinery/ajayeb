@@ -1769,7 +1769,11 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "fortifications",
@@ -1791,7 +1795,11 @@
       ],
       "place": "faceUp",
       "slot": 11,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "study",
@@ -1857,7 +1865,11 @@
       ],
       "place": "faceUp",
       "slot": 6,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "palace",
@@ -1901,7 +1913,11 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "pantheon",
@@ -1923,7 +1939,11 @@
       ],
       "place": "faceUp",
       "slot": 12,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "obelisk",
@@ -3861,7 +3881,11 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "fortifications",
@@ -3883,7 +3907,11 @@
       ],
       "place": "faceUp",
       "slot": 11,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "study",
@@ -3949,7 +3977,11 @@
       ],
       "place": "faceUp",
       "slot": 6,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "palace",
@@ -3993,7 +4025,11 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "pantheon",
@@ -4015,7 +4051,11 @@
       ],
       "place": "faceUp",
       "slot": 12,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "obelisk",
@@ -6471,7 +6511,11 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "fortifications",
@@ -6493,7 +6537,11 @@
       ],
       "place": "faceUp",
       "slot": 11,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "study",
@@ -6559,7 +6607,11 @@
       ],
       "place": "faceUp",
       "slot": 6,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "palace",
@@ -6603,7 +6655,11 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "pantheon",
@@ -6625,7 +6681,11 @@
       ],
       "place": "faceUp",
       "slot": 12,
-      "accessible": false
+      "accessible": false,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      },
      {
       "card": "obelisk",

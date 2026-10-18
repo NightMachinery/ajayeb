@@ -16,6 +16,7 @@
     sessionHintScreen,
     type HintScreen
   } from '$lib/view/hints';
+  import type { CardTipContext } from '$lib/view/tips';
   import type { View } from '$lib/wire';
   import HintLines from '../game/HintLines.svelte';
   import { tryGameContext } from '../choices/room';
@@ -26,6 +27,7 @@
     open?: boolean;
     /** The discard pile (view.discard). */
     cards: readonly string[];
+    tipContexts?: ReadonlyMap<string, CardTipContext>;
     titleId?: string;
     /** The view and hint display, when there is no game context (the gallery). */
     hintView?: Pick<View, 'hints'>;
@@ -35,6 +37,7 @@
   let {
     open = $bindable(false),
     cards,
+    tipContexts,
     titleId = 'discard-sheet-title',
     hintView,
     hints
@@ -61,7 +64,7 @@
     <h2 id={titleId} class="pt-1 font-display text-xl text-fg">
       {t('choices.discard.sheetTitle')}
     </h2>
-    <DiscardPile {cards} />
+    <DiscardPile {cards} {tipContexts} />
     {#each pools as pool (pool.seat)}
       <section class="flex flex-col gap-1.5" data-hint-pool={pool.seat}>
         <h3 class="font-display text-base text-fg">{pool.title}</h3>

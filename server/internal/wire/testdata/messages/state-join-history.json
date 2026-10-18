@@ -1536,7 +1536,27 @@
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 5,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -1558,7 +1578,27 @@
         ],
         "place": "faceUp",
         "slot": 17,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 9,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "pharmacist",
@@ -1580,7 +1620,27 @@
         ],
         "place": "faceUp",
         "slot": 16,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -1624,7 +1684,27 @@
         ],
         "place": "city",
         "seat": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "wood-reserve",
@@ -1668,7 +1748,27 @@
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "altar",
@@ -1690,7 +1790,27 @@
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [

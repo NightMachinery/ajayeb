@@ -237,6 +237,17 @@ export const card = {
   'card.tip.chainInStack': 'Gives the chain symbol',
   // Tooltips of a card's micro-elements (view/tips.ts). {resource} is a
   // resource name, {token} a token name, {back} 'Age I' and the like.
+  'card.tip.chainCostYou': 'Without the chain for you now: {cost}.',
+  'card.tip.chainCostNamed': 'Without the chain for {name} now: {cost}.',
+  'card.tip.chainTrade': 'Resource trading needed.',
+  'card.tip.chainNoTrade': 'No resource trading needed.',
+  'card.tip.chainAvailable': 'Face up in the structure, available now.',
+  'card.tip.chainCovered': 'Face up in the structure, still covered.',
+  'card.tip.chainTucked': 'Under a wonder built by {name}.',
+  'card.tip.chainDiscard': 'In the discard pile.',
+  'card.tip.chainUnseen': 'Not seen yet.',
+  'card.tip.chainAbsent': 'Not in this game.',
+
   'card.tip.card': '{card}: {category}, Age {age}.',
   'card.tip.quoteChain': 'free through a chain',
   'card.tip.quoteFree': 'free',

@@ -1351,7 +1351,27 @@
       ],
       "place": "faceUp",
       "slot": 9,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "garrison",
@@ -1373,7 +1393,27 @@
       ],
       "place": "faceUp",
       "slot": 16,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -1395,7 +1435,27 @@
       ],
       "place": "faceUp",
       "slot": 6,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -1437,7 +1497,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -1481,7 +1561,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -1525,7 +1625,27 @@
       ],
       "place": "faceUp",
       "slot": 8,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [
@@ -4137,7 +4257,27 @@
       ],
       "place": "faceUp",
       "slot": 9,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "garrison",
@@ -4159,7 +4299,27 @@
       ],
       "place": "faceUp",
       "slot": 16,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -4181,7 +4341,27 @@
       ],
       "place": "faceUp",
       "slot": 6,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -4223,7 +4403,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -4267,7 +4467,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -4311,7 +4531,27 @@
       ],
       "place": "faceUp",
       "slot": 8,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [
@@ -5719,7 +5959,27 @@
       ],
       "place": "faceUp",
       "slot": 9,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 4,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "garrison",
@@ -5741,7 +6001,27 @@
       ],
       "place": "faceUp",
       "slot": 16,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "palisade",
@@ -5763,7 +6043,27 @@
       ],
       "place": "faceUp",
       "slot": 6,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 8,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "guard-tower",
@@ -5805,7 +6105,27 @@
        }
       ],
       "place": "discard",
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "workshop",
@@ -5849,7 +6169,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "stone-reserve",
@@ -5893,7 +6233,27 @@
       ],
       "place": "faceUp",
       "slot": 8,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 6,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      }
     ],
     "boardTokens": [

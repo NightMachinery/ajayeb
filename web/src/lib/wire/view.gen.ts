@@ -16,6 +16,8 @@ export interface CardTooltipView {
   seat?: number /* int */;
   slot?: number /* int */;
   accessible: boolean;
+  chainIn?: CardChainTooltipView;
+  chainOut?: CardChainTooltipView;
 }
 /**
  * CardTooltipCostView is the server solver's compact payment summary. It
@@ -27,6 +29,18 @@ export interface CardTooltipCostView {
   chainFree: boolean;
   needsTrade: boolean;
   shortfall: number /* int */;
+}
+/**
+ * CardChainTooltipView describes the printed link's counterpart. Its identity
+ * comes from the public catalog, never a hidden-state card id. Costs are only
+ * supplied for an outgoing link, quoted without the chain for either seat.
+ */
+export interface CardChainTooltipView {
+  place: PublicPlace;
+  seat?: number /* int */;
+  slot?: number /* int */;
+  accessible: boolean;
+  costs?: Pair<CardTooltipCostView>;
 }
 
 //////////

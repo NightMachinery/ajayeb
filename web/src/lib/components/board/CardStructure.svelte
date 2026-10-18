@@ -127,6 +127,7 @@
             names,
             you,
             costSeat,
+            linkSeat: seat,
             actualCost: choices.find((c) => c.kind === 'construct' && c.card === slot.card)?.cost
           }}
           cost={seat === undefined ? undefined : slot.costs?.[seat]}

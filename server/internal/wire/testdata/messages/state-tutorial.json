@@ -1414,7 +1414,27 @@
         ],
         "place": "faceUp",
         "slot": 16,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -1458,7 +1478,27 @@
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 7,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -1502,7 +1542,27 @@
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "clay-reserve",
@@ -1546,7 +1606,27 @@
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "altar",
@@ -1568,7 +1648,27 @@
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 5,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "baths",
@@ -1590,7 +1690,27 @@
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 2
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [

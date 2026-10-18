@@ -105,7 +105,13 @@
           ? [
               [
                 choice.card,
-                { actualCost: choice.cost, costSeat: pending?.seat, names, you }
+                {
+                  actualCost: choice.cost,
+                  costSeat: pending?.seat,
+                  names,
+                  you,
+                  info: view.cardTooltips.find((row) => row.card === choice.card)
+                }
               ] as const
             ]
           : []

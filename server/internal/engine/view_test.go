@@ -1358,6 +1358,12 @@ var protoCases = []struct {
 	{"game-over-military-hidden", "the pawn reaches the capital in a game that keeps its secrets after the end",
 		protoNamedCase("military-supremacy", engine.Options{HideAtEnd: true}, -1)},
 	{"game-over-forfeit", "the seat waiting on the Great Library's choice resigns: the other seat wins by forfeit and the offer goes back to the box", protoForfeit},
+	{"chain-tooltips", "Age II with an owned Baths link, asymmetric unchained Aqueduct costs, and a rival link",
+		func(t *testing.T, seed uint64) (engine.State, []engine.Event) {
+			return enginetest.New(t, seed).Age(2).
+				City(0, "baths").City(1, "stone-pit", "scriptorium").
+				Coins(0, 7).Coins(1, 1).Accessible("aqueduct", "library").ToMove(0).State(), nil
+		}},
 }
 
 // protoForfeit opens the Great Library's choice and has the seat that is

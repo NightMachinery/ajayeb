@@ -18,7 +18,15 @@
   // view's choices can build now, marked on that button and on the rows.
   // `bot` shows the bot's avatar by its name, and `ended` turns off the
   // danger warnings once the game is over.
-  import type { BotLevel, Color, MilitaryView, PlayerView, ScoreView, WonderView } from '$lib/wire';
+  import type {
+    CardTooltipView,
+    BotLevel,
+    Color,
+    MilitaryView,
+    PlayerView,
+    ScoreView,
+    WonderView
+  } from '$lib/wire';
   import { cardBySlug } from '$lib/catalog';
   import { t } from '$lib/i18n';
   import type { Presence } from '$lib/ui/online';
@@ -32,6 +40,10 @@
     seat: 0 | 1;
     player: PlayerView;
     military: MilitaryView;
+    /** Public tooltip data from the same displayed snapshot as these players. */
+    cardTooltips?: readonly CardTooltipView[];
+    names?: readonly [string, string];
+    you?: number;
     score?: ScoreView;
     lit?: boolean;
     /** This seat's bot is thinking. */
@@ -59,6 +71,9 @@
     seat,
     player,
     military,
+    cardTooltips,
+    names,
+    you,
     score,
     lit = false,
     thinking = false,
@@ -116,6 +131,9 @@
       {seat}
       {player}
       {military}
+      {cardTooltips}
+      {names}
+      {you}
       {score}
       {onwonder}
       {buildable}

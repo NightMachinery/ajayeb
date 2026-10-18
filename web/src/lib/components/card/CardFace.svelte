@@ -133,7 +133,7 @@
         <EffectGlyphs effects={card.effects} small class="flex-nowrap! justify-start!" />
       </span>
       {#if card.chainOut}
-        <ChainChip chain={card.chainOut} direction="out" />
+        <ChainChip chain={card.chainOut} direction="out" context={tipContext} />
       {/if}
     </span>
   {:else}
@@ -159,6 +159,7 @@
         <CostPips
           cost={card.cost}
           chainIn={card.chainIn}
+          chainContext={tipContext}
           {small}
           dense={tier !== 'full'}
           room={costRoom}
@@ -179,6 +180,7 @@
           <EffectGlyphs
             effects={card.effects}
             chainOut={card.chainOut}
+            chainContext={tipContext}
             {small}
             class={small ? 'gap-x-[0.05em]!' : ''}
           />
@@ -217,6 +219,8 @@
               {flowTo}
               {priceTip}
               {cost}
+              chain={card.chainIn}
+              chainContext={tipContext}
             />
           </span>
         {/if}

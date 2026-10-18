@@ -15,6 +15,7 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { costMoreTip, costPipTip } from '$lib/view/tips';
   import type { Chain, CostView, Resource } from '$lib/wire';
+  import type { CardTipContext } from '$lib/view/tips';
   import ChainChip from './ChainChip.svelte';
   import Coin from './Coin.svelte';
   import ResourceTile from './ResourceTile.svelte';
@@ -23,6 +24,7 @@
   interface Props {
     cost: CatalogCost;
     chainIn?: Chain;
+    chainContext?: CardTipContext;
     /** The most pip groups to show before "+n" (the chain chip not counted). */
     max?: number;
     /** The width available, in em of this row's font size; groups that would
@@ -40,6 +42,7 @@
   let {
     cost,
     chainIn,
+    chainContext,
     max = 6,
     room = Infinity,
     small = false,
@@ -124,6 +127,6 @@
     >
   {/if}
   {#if chainIn}
-    <ChainChip chain={chainIn} direction="in" class="ms-auto" />
+    <ChainChip chain={chainIn} context={chainContext} direction="in" class="ms-auto" />
   {/if}
 </span>

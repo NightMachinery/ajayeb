@@ -1940,7 +1940,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 6,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 4
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         },
         {
           "card": "pharmacist",
@@ -1962,7 +1982,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 5,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 2
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "apothecary",
@@ -2006,7 +2046,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 16,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 2
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "clay-reserve",
@@ -2072,7 +2132,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 1,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "altar",
@@ -2094,7 +2174,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 17,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 3,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "baths",
@@ -2116,7 +2216,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 8,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 2
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         }
       ],
       "boardTokens": [
@@ -3930,7 +4050,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 3,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         },
         {
           "card": "parade-ground",
@@ -3952,7 +4092,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 0,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         },
         {
           "card": "laboratory",
@@ -3974,7 +4134,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 13,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "dispensary",
@@ -3996,7 +4176,11 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 11,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          }
         },
         {
           "card": "library",
@@ -4018,7 +4202,11 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 19,
-          "accessible": true
+          "accessible": true,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          }
         },
         {
           "card": "brewery",
@@ -4040,7 +4228,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 12,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "caravansery",
@@ -4084,7 +4292,31 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 5,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          },
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         },
         {
           "card": "statue",
@@ -4106,7 +4338,31 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 1,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          },
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         },
         {
           "card": "courthouse",
@@ -6302,7 +6558,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 0,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 2,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 5,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "palisade",
@@ -6324,7 +6600,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 17,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 9,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "pharmacist",
@@ -6346,7 +6642,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 16,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "apothecary",
@@ -6390,7 +6706,27 @@ export const fixtures = [
           ],
           "place": "city",
           "seat": 1,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "wood-reserve",
@@ -6434,7 +6770,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 19,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 2,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "altar",
@@ -6456,7 +6812,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 18,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         }
       ],
       "boardTokens": [
@@ -9200,7 +9576,28 @@ export const fixtures = [
           ],
           "place": "city",
           "seat": 0,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "city",
+            "seat": 0,
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "sawmill",
@@ -9288,7 +9685,11 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 0,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          }
         },
         {
           "card": "barracks",
@@ -9310,7 +9711,11 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 3,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          }
         },
         {
           "card": "walls",
@@ -9354,7 +9759,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 4,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "laboratory",
@@ -9376,7 +9801,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 5,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "library",
@@ -9398,7 +9843,12 @@ export const fixtures = [
           ],
           "place": "city",
           "seat": 0,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "city",
+            "seat": 0,
+            "accessible": false
+          }
         },
         {
           "card": "customs-house",
@@ -9442,7 +9892,11 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 14,
-          "accessible": false
+          "accessible": false,
+          "chainIn": {
+            "place": "removedKnown",
+            "accessible": false
+          }
         },
         {
           "card": "rostrum",
@@ -9464,7 +9918,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 11,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         }
       ],
       "boardTokens": [
@@ -10917,7 +11391,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 19,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 5,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 1,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "palisade",
@@ -10939,7 +11433,27 @@ export const fixtures = [
           ],
           "place": "city",
           "seat": 0,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 7,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 2
+              },
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 4
+              }
+            ]
+          }
         },
         {
           "card": "guard-tower",
@@ -11027,7 +11541,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 8,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 8,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 3
+              },
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "stone-reserve",
@@ -11093,7 +11627,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 18,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 3,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         }
       ],
       "boardTokens": [
@@ -13453,7 +14007,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 16,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 2,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "guard-tower",
@@ -13497,7 +14071,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 5,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 7,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 3
+              }
+            ]
+          }
         },
         {
           "card": "apothecary",
@@ -13541,7 +14135,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 6,
-          "accessible": false
+          "accessible": false,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "clay-reserve",
@@ -13585,7 +14199,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 19,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 4,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 2,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              }
+            ]
+          }
         },
         {
           "card": "altar",
@@ -13607,7 +14241,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 15,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 2,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 5,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 1
+              }
+            ]
+          }
         },
         {
           "card": "baths",
@@ -13629,7 +14283,27 @@ export const fixtures = [
           ],
           "place": "faceUp",
           "slot": 12,
-          "accessible": true
+          "accessible": true,
+          "chainOut": {
+            "place": "unseenLaterAge",
+            "accessible": false,
+            "costs": [
+              {
+                "total": 6,
+                "affordable": true,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 0
+              },
+              {
+                "total": 6,
+                "affordable": false,
+                "chainFree": false,
+                "needsTrade": true,
+                "shortfall": 2
+              }
+            ]
+          }
         }
       ],
       "boardTokens": [
@@ -16119,7 +16793,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 9,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "garrison",
@@ -16141,7 +16835,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 16,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -16163,7 +16877,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -16205,7 +16939,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -16249,7 +17003,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "stone-reserve",
@@ -16293,7 +17067,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -18887,7 +19681,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 9,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "garrison",
@@ -18909,7 +19723,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 16,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -18931,7 +19765,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -18973,7 +19827,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -19017,7 +19891,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "stone-reserve",
@@ -19061,7 +19955,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -20451,7 +21365,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 9,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "garrison",
@@ -20473,7 +21407,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 16,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -20495,7 +21449,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -20537,7 +21511,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -20581,7 +21575,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "stone-reserve",
@@ -20625,7 +21639,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -22039,7 +23073,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "garrison",
@@ -22061,7 +23115,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -22083,7 +23157,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -22127,7 +23221,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -22171,7 +23285,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -22215,7 +23349,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -24956,7 +26110,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "garrison",
@@ -24978,7 +26152,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -25000,7 +26194,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -25044,7 +26258,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -25088,7 +26322,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -25132,7 +26386,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -26542,7 +27816,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "garrison",
@@ -26564,7 +27858,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -26586,7 +27900,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -26630,7 +27964,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -26674,7 +28028,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -26718,7 +28092,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -28223,7 +29617,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -28245,7 +29643,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -28289,7 +29691,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -28311,7 +29733,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -28333,7 +29759,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -28399,7 +29829,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -30226,7 +31676,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -30248,7 +31702,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -30292,7 +31750,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -30314,7 +31792,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -30336,7 +31818,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -30402,7 +31888,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -31905,7 +33411,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -31927,7 +33437,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -31971,7 +33485,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -31993,7 +33527,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -32015,7 +33553,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -32081,7 +33623,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -33437,7 +34999,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "sawmill",
@@ -33547,7 +35129,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -33569,7 +35155,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -33591,7 +35197,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -33613,7 +35239,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -33657,7 +35287,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -33701,7 +35355,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -35095,7 +36769,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "sawmill",
@@ -35205,7 +36899,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -35227,7 +36925,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -35249,7 +36967,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -35271,7 +37009,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -35315,7 +37057,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -35359,7 +37125,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -36726,7 +38512,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "sawmill",
@@ -36836,7 +38642,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -36858,7 +38668,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -36880,7 +38710,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -36902,7 +38752,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -36946,7 +38800,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -36990,7 +38868,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -38549,7 +40447,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -38593,7 +40495,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -38615,7 +40537,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -38637,7 +40579,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -38659,7 +40605,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "temple",
@@ -38681,7 +40647,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -38703,7 +40693,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -38725,7 +40739,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -38747,7 +40765,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -40297,7 +42335,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -40341,7 +42383,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -40363,7 +42425,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -40385,7 +42467,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -40407,7 +42493,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "temple",
@@ -40429,7 +42535,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -40451,7 +42581,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -40473,7 +42627,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -40495,7 +42653,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -42521,7 +44699,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -42565,7 +44747,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -42587,7 +44789,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -42609,7 +44831,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -42631,7 +44857,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "temple",
@@ -42653,7 +44899,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -42675,7 +44945,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -42697,7 +44991,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -42719,7 +45017,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -44170,7 +46488,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brickyard",
@@ -44258,7 +46596,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -44280,7 +46622,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -44302,7 +46648,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -44324,7 +46690,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -44346,7 +46732,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -44368,7 +46774,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -44390,7 +46800,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -44434,7 +46864,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -44456,7 +46910,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -45905,7 +48379,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brickyard",
@@ -45993,7 +48487,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -46015,7 +48513,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -46037,7 +48539,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -46059,7 +48581,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -46081,7 +48623,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -46103,7 +48665,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -46125,7 +48691,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -46169,7 +48755,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -46191,7 +48801,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -48131,7 +50761,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brickyard",
@@ -48219,7 +50869,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -48241,7 +50895,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -48263,7 +50921,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -48285,7 +50963,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -48307,7 +51005,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -48329,7 +51047,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -48351,7 +51073,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -48395,7 +51137,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -48417,7 +51183,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -48455,6 +51241,6290 @@ export const protocolFixtures = [
         "coins": 2,
         "military": 0,
         "total": 2
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 0,
+    "viewer": 0,
+    "phase": "play",
+    "age": 2,
+    "toMove": 0,
+    "active": 0,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "playingAgain": false,
+    "structure": [
+      {
+        "index": 0,
+        "row": 1,
+        "col": 1,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "laboratory",
+        "accessible": false,
+        "coveredBy": [
+          6
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "glass",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "glass",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "row": 1,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "temple",
+        "accessible": false,
+        "coveredBy": [
+          6,
+          7
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 3,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "row": 1,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "sawmill",
+        "accessible": false,
+        "coveredBy": [
+          7,
+          8
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 5,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 1,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 3,
+        "row": 1,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "shelf-quarry",
+        "accessible": false,
+        "coveredBy": [
+          8,
+          9
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 5,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 1,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "row": 1,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "caravansery",
+        "accessible": false,
+        "coveredBy": [
+          9,
+          10
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 5,
+        "row": 1,
+        "col": 11,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "dispensary",
+        "accessible": false,
+        "coveredBy": [
+          10
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 0,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "stone",
+                "units": 1,
+                "unitPrice": 3,
+                "fixed": false,
+                "coins": 3
+              }
+            ],
+            "tradeTotal": 7,
+            "total": 7,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 1,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 6,
+        "row": 2,
+        "col": 2,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11
+        ]
+      },
+      {
+        "index": 7,
+        "row": 2,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11,
+          12
+        ]
+      },
+      {
+        "index": 8,
+        "row": 2,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          12,
+          13
+        ]
+      },
+      {
+        "index": 9,
+        "row": 2,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          13,
+          14
+        ]
+      },
+      {
+        "index": 10,
+        "row": 2,
+        "col": 10,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          14
+        ]
+      },
+      {
+        "index": 11,
+        "row": 3,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "drying-room",
+        "accessible": false,
+        "coveredBy": [
+          15
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 12,
+        "row": 3,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "horse-breeders",
+        "accessible": false,
+        "coveredBy": [
+          15,
+          16
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 3,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "clay",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "clay",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 13,
+        "row": 3,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "parade-ground",
+        "accessible": false,
+        "coveredBy": [
+          16,
+          17
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 14,
+        "row": 3,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "brewery",
+        "accessible": false,
+        "coveredBy": [
+          17
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 15,
+        "row": 4,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          18
+        ]
+      },
+      {
+        "index": 16,
+        "row": 4,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          18,
+          19
+        ]
+      },
+      {
+        "index": 17,
+        "row": 4,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          19
+        ]
+      },
+      {
+        "index": 18,
+        "row": 5,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "aqueduct",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": true,
+            "chainFrom": "baths",
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 1,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "stone",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 19,
+        "row": 5,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "library",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 0,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "stone",
+                "units": 1,
+                "unitPrice": 3,
+                "fixed": false,
+                "coins": 3
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 7,
+            "total": 7,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": true,
+            "chainFrom": "scriptorium",
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      }
+    ],
+    "players": [
+      {
+        "seat": 0,
+        "coins": 7,
+        "city": [
+          "baths"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "circus-maximus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 3,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "temple-of-artemis",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 2,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 1,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 3
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 9,
+              "total": 9,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "pyramids",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 4,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "stone",
+                  "units": 3,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 9
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 11,
+              "total": 11,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "appian-way",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 5,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 12,
+              "total": 12,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 3,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [
+          "drop"
+        ],
+        "discardValue": 2,
+        "shields": 0
+      },
+      {
+        "seat": 1,
+        "coins": 1,
+        "city": [
+          "stone-pit",
+          "scriptorium"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "sphinx",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 5,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 1,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                }
+              ],
+              "tradeTotal": 6,
+              "total": 6,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "mausoleum",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 9,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "hanging-gardens",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 7,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "great-library",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 9,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 3,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 1,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [
+            {
+              "symbol": "quill",
+              "count": 1
+            }
+          ],
+          "distinct": 1
+        },
+        "chains": [
+          "book"
+        ],
+        "discardValue": 2,
+        "shields": 0
+      }
+    ],
+    "military": {
+      "position": 0,
+      "looting": [
+        {
+          "at": -6,
+          "seat": 0,
+          "value": 5,
+          "present": true
+        },
+        {
+          "at": -3,
+          "seat": 0,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 3,
+          "seat": 1,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 6,
+          "seat": 1,
+          "value": 5,
+          "present": true
+        }
+      ]
+    },
+    "cardTooltips": [
+      {
+        "card": "stone-pit",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false
+      },
+      {
+        "card": "scriptorium",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 19,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "baths",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 0,
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 18,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 9,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 2
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "sawmill",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "faceUp",
+        "slot": 2,
+        "accessible": false
+      },
+      {
+        "card": "shelf-quarry",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "faceUp",
+        "slot": 3,
+        "accessible": false
+      },
+      {
+        "card": "drying-room",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 11,
+        "accessible": false
+      },
+      {
+        "card": "horse-breeders",
+        "costs": [
+          {
+            "total": 4,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 12,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
+      },
+      {
+        "card": "parade-ground",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 13,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 10,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 6,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 5
+            }
+          ]
+        }
+      },
+      {
+        "card": "laboratory",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 0,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "dispensary",
+        "costs": [
+          {
+            "total": 7,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 5,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
+      },
+      {
+        "card": "library",
+        "costs": [
+          {
+            "total": 7,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": true,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 19,
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 1,
+          "accessible": false
+        }
+      },
+      {
+        "card": "brewery",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 14,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "caravansery",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 4,
+        "accessible": false
+      },
+      {
+        "card": "temple",
+        "costs": [
+          {
+            "total": 4,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 1,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 7
+            }
+          ]
+        }
+      },
+      {
+        "card": "aqueduct",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": true,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 18,
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        }
+      }
+    ],
+    "boardTokens": [
+      "agriculture",
+      "architecture",
+      "law",
+      "mathematics",
+      "urbanism"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [],
+    "wondersBuilt": 0,
+    "choices": [
+      {
+        "key": "construct:aqueduct",
+        "kind": "construct",
+        "card": "aqueduct",
+        "cost": {
+          "affordable": true,
+          "coinsAfter": 7,
+          "shortfall": 0,
+          "chainFree": true,
+          "chainFrom": "baths",
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [],
+          "tradeTotal": 0,
+          "total": 0,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "discard:aqueduct",
+        "kind": "discard",
+        "card": "aqueduct",
+        "gain": 2
+      },
+      {
+        "key": "construct:library",
+        "kind": "construct",
+        "card": "library",
+        "cost": {
+          "affordable": true,
+          "coinsAfter": 0,
+          "shortfall": 0,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "wood",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "stone",
+              "units": 1,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 3
+            },
+            {
+              "resource": "glass",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 7,
+          "total": 7,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "discard:library",
+        "kind": "discard",
+        "card": "library",
+        "gain": 2
+      }
+    ],
+    "disabled": [
+      {
+        "key": "wonder:circus-maximus:aqueduct",
+        "kind": "wonder",
+        "card": "aqueduct",
+        "wonder": "circus-maximus",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 3,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "wood",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "stone",
+              "units": 2,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 6
+            },
+            {
+              "resource": "glass",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 10,
+          "total": 10,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:temple-of-artemis:aqueduct",
+        "kind": "wonder",
+        "card": "aqueduct",
+        "wonder": "temple-of-artemis",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 2,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "wood",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "stone",
+              "units": 1,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 3
+            },
+            {
+              "resource": "glass",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "papyrus",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 9,
+          "total": 9,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:pyramids:aqueduct",
+        "kind": "wonder",
+        "card": "aqueduct",
+        "wonder": "pyramids",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 4,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "stone",
+              "units": 3,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 9
+            },
+            {
+              "resource": "papyrus",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 11,
+          "total": 11,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:appian-way:aqueduct",
+        "kind": "wonder",
+        "card": "aqueduct",
+        "wonder": "appian-way",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 5,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "clay",
+              "units": 2,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 4
+            },
+            {
+              "resource": "stone",
+              "units": 2,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 6
+            },
+            {
+              "resource": "papyrus",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 12,
+          "total": 12,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:circus-maximus:library",
+        "kind": "wonder",
+        "card": "library",
+        "wonder": "circus-maximus",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 3,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "wood",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "stone",
+              "units": 2,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 6
+            },
+            {
+              "resource": "glass",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 10,
+          "total": 10,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:temple-of-artemis:library",
+        "kind": "wonder",
+        "card": "library",
+        "wonder": "temple-of-artemis",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 2,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "wood",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "stone",
+              "units": 1,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 3
+            },
+            {
+              "resource": "glass",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            },
+            {
+              "resource": "papyrus",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 9,
+          "total": 9,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:pyramids:library",
+        "kind": "wonder",
+        "card": "library",
+        "wonder": "pyramids",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 4,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "stone",
+              "units": 3,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 9
+            },
+            {
+              "resource": "papyrus",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 11,
+          "total": 11,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      },
+      {
+        "key": "wonder:appian-way:library",
+        "kind": "wonder",
+        "card": "library",
+        "wonder": "appian-way",
+        "reason": "unaffordable",
+        "cost": {
+          "affordable": false,
+          "shortfall": 5,
+          "chainFree": false,
+          "printedCoins": 0,
+          "own": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "trade": [
+            {
+              "resource": "clay",
+              "units": 2,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 4
+            },
+            {
+              "resource": "stone",
+              "units": 2,
+              "unitPrice": 3,
+              "fixed": false,
+              "coins": 6
+            },
+            {
+              "resource": "papyrus",
+              "units": 1,
+              "unitPrice": 2,
+              "fixed": false,
+              "coins": 2
+            }
+          ],
+          "tradeTotal": 12,
+          "total": 12,
+          "toOpponent": 0,
+          "urbanismBonus": 0
+        }
+      }
+    ],
+    "scorePreview": [
+      {
+        "blue": 3,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 5
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 0,
+        "military": 0,
+        "total": 0
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 0,
+    "viewer": 1,
+    "phase": "play",
+    "age": 2,
+    "toMove": 0,
+    "active": 0,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "playingAgain": false,
+    "structure": [
+      {
+        "index": 0,
+        "row": 1,
+        "col": 1,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "laboratory",
+        "accessible": false,
+        "coveredBy": [
+          6
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "glass",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "glass",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "row": 1,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "temple",
+        "accessible": false,
+        "coveredBy": [
+          6,
+          7
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 3,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "row": 1,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "sawmill",
+        "accessible": false,
+        "coveredBy": [
+          7,
+          8
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 5,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 1,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 3,
+        "row": 1,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "shelf-quarry",
+        "accessible": false,
+        "coveredBy": [
+          8,
+          9
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 5,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 1,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "row": 1,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "caravansery",
+        "accessible": false,
+        "coveredBy": [
+          9,
+          10
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 5,
+        "row": 1,
+        "col": 11,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "dispensary",
+        "accessible": false,
+        "coveredBy": [
+          10
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 0,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "stone",
+                "units": 1,
+                "unitPrice": 3,
+                "fixed": false,
+                "coins": 3
+              }
+            ],
+            "tradeTotal": 7,
+            "total": 7,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 1,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 6,
+        "row": 2,
+        "col": 2,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11
+        ]
+      },
+      {
+        "index": 7,
+        "row": 2,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11,
+          12
+        ]
+      },
+      {
+        "index": 8,
+        "row": 2,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          12,
+          13
+        ]
+      },
+      {
+        "index": 9,
+        "row": 2,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          13,
+          14
+        ]
+      },
+      {
+        "index": 10,
+        "row": 2,
+        "col": 10,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          14
+        ]
+      },
+      {
+        "index": 11,
+        "row": 3,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "drying-room",
+        "accessible": false,
+        "coveredBy": [
+          15
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 12,
+        "row": 3,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "horse-breeders",
+        "accessible": false,
+        "coveredBy": [
+          15,
+          16
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 3,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "clay",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "clay",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 13,
+        "row": 3,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "parade-ground",
+        "accessible": false,
+        "coveredBy": [
+          16,
+          17
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 14,
+        "row": 3,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "brewery",
+        "accessible": false,
+        "coveredBy": [
+          17
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 15,
+        "row": 4,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          18
+        ]
+      },
+      {
+        "index": 16,
+        "row": 4,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          18,
+          19
+        ]
+      },
+      {
+        "index": 17,
+        "row": 4,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          19
+        ]
+      },
+      {
+        "index": 18,
+        "row": 5,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "aqueduct",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": true,
+            "chainFrom": "baths",
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 1,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "stone",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 19,
+        "row": 5,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "library",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 0,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "stone",
+                "units": 1,
+                "unitPrice": 3,
+                "fixed": false,
+                "coins": 3
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 7,
+            "total": 7,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": true,
+            "chainFrom": "scriptorium",
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      }
+    ],
+    "players": [
+      {
+        "seat": 0,
+        "coins": 7,
+        "city": [
+          "baths"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "circus-maximus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 3,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "temple-of-artemis",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 2,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 1,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 3
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 9,
+              "total": 9,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "pyramids",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 4,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "stone",
+                  "units": 3,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 9
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 11,
+              "total": 11,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "appian-way",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 5,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 12,
+              "total": 12,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 3,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [
+          "drop"
+        ],
+        "discardValue": 2,
+        "shields": 0
+      },
+      {
+        "seat": 1,
+        "coins": 1,
+        "city": [
+          "stone-pit",
+          "scriptorium"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "sphinx",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 5,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 1,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                }
+              ],
+              "tradeTotal": 6,
+              "total": 6,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "mausoleum",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 9,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "hanging-gardens",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 7,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "great-library",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 9,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 3,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 1,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [
+            {
+              "symbol": "quill",
+              "count": 1
+            }
+          ],
+          "distinct": 1
+        },
+        "chains": [
+          "book"
+        ],
+        "discardValue": 2,
+        "shields": 0
+      }
+    ],
+    "military": {
+      "position": 0,
+      "looting": [
+        {
+          "at": -6,
+          "seat": 0,
+          "value": 5,
+          "present": true
+        },
+        {
+          "at": -3,
+          "seat": 0,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 3,
+          "seat": 1,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 6,
+          "seat": 1,
+          "value": 5,
+          "present": true
+        }
+      ]
+    },
+    "cardTooltips": [
+      {
+        "card": "stone-pit",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false
+      },
+      {
+        "card": "scriptorium",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 19,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "baths",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 0,
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 18,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 9,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 2
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "sawmill",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "faceUp",
+        "slot": 2,
+        "accessible": false
+      },
+      {
+        "card": "shelf-quarry",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "faceUp",
+        "slot": 3,
+        "accessible": false
+      },
+      {
+        "card": "drying-room",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 11,
+        "accessible": false
+      },
+      {
+        "card": "horse-breeders",
+        "costs": [
+          {
+            "total": 4,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 12,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
+      },
+      {
+        "card": "parade-ground",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 13,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 10,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 6,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 5
+            }
+          ]
+        }
+      },
+      {
+        "card": "laboratory",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 0,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "dispensary",
+        "costs": [
+          {
+            "total": 7,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 5,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
+      },
+      {
+        "card": "library",
+        "costs": [
+          {
+            "total": 7,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": true,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 19,
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 1,
+          "accessible": false
+        }
+      },
+      {
+        "card": "brewery",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 14,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "caravansery",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 4,
+        "accessible": false
+      },
+      {
+        "card": "temple",
+        "costs": [
+          {
+            "total": 4,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 1,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 7
+            }
+          ]
+        }
+      },
+      {
+        "card": "aqueduct",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": true,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 18,
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        }
+      }
+    ],
+    "boardTokens": [
+      "agriculture",
+      "architecture",
+      "law",
+      "mathematics",
+      "urbanism"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [],
+    "wondersBuilt": 0,
+    "choices": [],
+    "disabled": [],
+    "scorePreview": [
+      {
+        "blue": 3,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 5
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 0,
+        "military": 0,
+        "total": 0
+      }
+    ]
+  },
+  {
+    "schema": 1,
+    "catalogHash": "64943c7be6864ff4",
+    "ply": 0,
+    "phase": "play",
+    "age": 2,
+    "toMove": 0,
+    "active": 0,
+    "firstPlayer": 0,
+    "extraTurn": false,
+    "playingAgain": false,
+    "structure": [
+      {
+        "index": 0,
+        "row": 1,
+        "col": 1,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "laboratory",
+        "accessible": false,
+        "coveredBy": [
+          6
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "glass",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "glass",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 1,
+        "row": 1,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "temple",
+        "accessible": false,
+        "coveredBy": [
+          6,
+          7
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 3,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 2,
+        "row": 1,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "sawmill",
+        "accessible": false,
+        "coveredBy": [
+          7,
+          8
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 5,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 1,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 3,
+        "row": 1,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "shelf-quarry",
+        "accessible": false,
+        "coveredBy": [
+          8,
+          9
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 5,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 1,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 2,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 4,
+        "row": 1,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "caravansery",
+        "accessible": false,
+        "coveredBy": [
+          9,
+          10
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 2,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "papyrus",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 5,
+        "row": 1,
+        "col": 11,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "dispensary",
+        "accessible": false,
+        "coveredBy": [
+          10
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 0,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "stone",
+                "units": 1,
+                "unitPrice": 3,
+                "fixed": false,
+                "coins": 3
+              }
+            ],
+            "tradeTotal": 7,
+            "total": 7,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 1,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 6,
+        "row": 2,
+        "col": 2,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11
+        ]
+      },
+      {
+        "index": 7,
+        "row": 2,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          11,
+          12
+        ]
+      },
+      {
+        "index": 8,
+        "row": 2,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          12,
+          13
+        ]
+      },
+      {
+        "index": 9,
+        "row": 2,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          13,
+          14
+        ]
+      },
+      {
+        "index": 10,
+        "row": 2,
+        "col": 10,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          14
+        ]
+      },
+      {
+        "index": 11,
+        "row": 3,
+        "col": 3,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "drying-room",
+        "accessible": false,
+        "coveredBy": [
+          15
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 12,
+        "row": 3,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "horse-breeders",
+        "accessible": false,
+        "coveredBy": [
+          15,
+          16
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 3,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "clay",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "clay",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 13,
+        "row": 3,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "parade-ground",
+        "accessible": false,
+        "coveredBy": [
+          16,
+          17
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 5,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "clay",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 6,
+            "total": 6,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 14,
+        "row": 3,
+        "col": 9,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "brewery",
+        "accessible": false,
+        "coveredBy": [
+          17
+        ],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 15,
+        "row": 4,
+        "col": 4,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          18
+        ]
+      },
+      {
+        "index": 16,
+        "row": 4,
+        "col": 6,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          18,
+          19
+        ]
+      },
+      {
+        "index": 17,
+        "row": 4,
+        "col": 8,
+        "state": "faceDown",
+        "back": "age2",
+        "accessible": false,
+        "coveredBy": [
+          19
+        ]
+      },
+      {
+        "index": 18,
+        "row": 5,
+        "col": 5,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "aqueduct",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 7,
+            "shortfall": 0,
+            "chainFree": true,
+            "chainFrom": "baths",
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": false,
+            "shortfall": 3,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 1,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "stone",
+                "units": 2,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 4
+              }
+            ],
+            "tradeTotal": 4,
+            "total": 4,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      },
+      {
+        "index": 19,
+        "row": 5,
+        "col": 7,
+        "state": "faceUp",
+        "back": "age2",
+        "card": "library",
+        "accessible": true,
+        "coveredBy": [],
+        "costs": [
+          {
+            "affordable": true,
+            "coinsAfter": 0,
+            "shortfall": 0,
+            "chainFree": false,
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [
+              {
+                "resource": "wood",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              },
+              {
+                "resource": "stone",
+                "units": 1,
+                "unitPrice": 3,
+                "fixed": false,
+                "coins": 3
+              },
+              {
+                "resource": "glass",
+                "units": 1,
+                "unitPrice": 2,
+                "fixed": false,
+                "coins": 2
+              }
+            ],
+            "tradeTotal": 7,
+            "total": 7,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          },
+          {
+            "affordable": true,
+            "coinsAfter": 1,
+            "shortfall": 0,
+            "chainFree": true,
+            "chainFrom": "scriptorium",
+            "printedCoins": 0,
+            "own": {
+              "wood": 0,
+              "clay": 0,
+              "stone": 0,
+              "glass": 0,
+              "papyrus": 0
+            },
+            "producers": [],
+            "trade": [],
+            "tradeTotal": 0,
+            "total": 0,
+            "toOpponent": 0,
+            "urbanismBonus": 0
+          }
+        ]
+      }
+    ],
+    "players": [
+      {
+        "seat": 0,
+        "coins": 7,
+        "city": [
+          "baths"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "circus-maximus",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 3,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "temple-of-artemis",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 2,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "stone",
+                  "units": 1,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 3
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 9,
+              "total": 9,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "pyramids",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 4,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "stone",
+                  "units": 3,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 9
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 11,
+              "total": 11,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "appian-way",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 5,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "stone",
+                  "units": 2,
+                  "unitPrice": 3,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 12,
+              "total": 12,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 0,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 3,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [],
+          "distinct": 0
+        },
+        "chains": [
+          "drop"
+        ],
+        "discardValue": 2,
+        "shields": 0
+      },
+      {
+        "seat": 1,
+        "coins": 1,
+        "city": [
+          "stone-pit",
+          "scriptorium"
+        ],
+        "tokens": [],
+        "wonders": [
+          {
+            "wonder": "sphinx",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 5,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 1,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                }
+              ],
+              "tradeTotal": 6,
+              "total": 6,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "mausoleum",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 9,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "clay",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "hanging-gardens",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 7,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 2,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 4
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 8,
+              "total": 8,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          },
+          {
+            "wonder": "great-library",
+            "built": false,
+            "removed": false,
+            "cost": {
+              "affordable": false,
+              "shortfall": 9,
+              "chainFree": false,
+              "printedCoins": 0,
+              "own": {
+                "wood": 0,
+                "clay": 0,
+                "stone": 0,
+                "glass": 0,
+                "papyrus": 0
+              },
+              "producers": [],
+              "trade": [
+                {
+                  "resource": "wood",
+                  "units": 3,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 6
+                },
+                {
+                  "resource": "glass",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                },
+                {
+                  "resource": "papyrus",
+                  "units": 1,
+                  "unitPrice": 2,
+                  "fixed": false,
+                  "coins": 2
+                }
+              ],
+              "tradeTotal": 10,
+              "total": 10,
+              "toOpponent": 0,
+              "urbanismBonus": 0
+            }
+          }
+        ],
+        "production": {
+          "fixed": {
+            "wood": 0,
+            "clay": 0,
+            "stone": 1,
+            "glass": 0,
+            "papyrus": 0
+          },
+          "producers": [],
+          "tradeFix": []
+        },
+        "tradePrices": {
+          "wood": 2,
+          "clay": 2,
+          "stone": 2,
+          "glass": 2,
+          "papyrus": 2
+        },
+        "science": {
+          "symbols": [
+            {
+              "symbol": "quill",
+              "count": 1
+            }
+          ],
+          "distinct": 1
+        },
+        "chains": [
+          "book"
+        ],
+        "discardValue": 2,
+        "shields": 0
+      }
+    ],
+    "military": {
+      "position": 0,
+      "looting": [
+        {
+          "at": -6,
+          "seat": 0,
+          "value": 5,
+          "present": true
+        },
+        {
+          "at": -3,
+          "seat": 0,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 3,
+          "seat": 1,
+          "value": 2,
+          "present": true
+        },
+        {
+          "at": 6,
+          "seat": 1,
+          "value": 5,
+          "present": true
+        }
+      ]
+    },
+    "cardTooltips": [
+      {
+        "card": "stone-pit",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false
+      },
+      {
+        "card": "scriptorium",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 19,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "baths",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 0,
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 18,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 9,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 2
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "sawmill",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "faceUp",
+        "slot": 2,
+        "accessible": false
+      },
+      {
+        "card": "shelf-quarry",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 1
+          }
+        ],
+        "place": "faceUp",
+        "slot": 3,
+        "accessible": false
+      },
+      {
+        "card": "drying-room",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 11,
+        "accessible": false
+      },
+      {
+        "card": "horse-breeders",
+        "costs": [
+          {
+            "total": 4,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 12,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
+      },
+      {
+        "card": "parade-ground",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 13,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 10,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 6,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 5
+            }
+          ]
+        }
+      },
+      {
+        "card": "laboratory",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 0,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "dispensary",
+        "costs": [
+          {
+            "total": 7,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 5,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
+      },
+      {
+        "card": "library",
+        "costs": [
+          {
+            "total": 7,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": true,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 19,
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 1,
+          "accessible": false
+        }
+      },
+      {
+        "card": "brewery",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 14,
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            }
+          ]
+        }
+      },
+      {
+        "card": "caravansery",
+        "costs": [
+          {
+            "total": 6,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 6,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 5
+          }
+        ],
+        "place": "faceUp",
+        "slot": 4,
+        "accessible": false
+      },
+      {
+        "card": "temple",
+        "costs": [
+          {
+            "total": 4,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 1,
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 7
+            }
+          ]
+        }
+      },
+      {
+        "card": "aqueduct",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": true,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 4,
+            "affordable": false,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 3
+          }
+        ],
+        "place": "faceUp",
+        "slot": 18,
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        }
+      }
+    ],
+    "boardTokens": [
+      "agriculture",
+      "architecture",
+      "law",
+      "mathematics",
+      "urbanism"
+    ],
+    "boxTokenCount": 5,
+    "removedCount": 3,
+    "discard": [],
+    "wondersBuilt": 0,
+    "choices": [],
+    "disabled": [],
+    "scorePreview": [
+      {
+        "blue": 3,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 2,
+        "military": 0,
+        "total": 5
+      },
+      {
+        "blue": 0,
+        "green": 0,
+        "yellow": 0,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 0,
+        "military": 0,
+        "total": 0
       }
     ]
   },
@@ -49942,7 +59012,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "glass-blower",
@@ -50008,7 +59098,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -50030,7 +59140,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -50052,7 +59182,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -50074,7 +59224,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -50162,7 +59316,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -50206,7 +59384,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -51749,7 +60947,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "glass-blower",
@@ -51815,7 +61033,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -51837,7 +61075,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -51859,7 +61117,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -51881,7 +61159,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -51969,7 +61251,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -52013,7 +61319,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -53544,7 +62870,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "glass-blower",
@@ -53610,7 +62956,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -53632,7 +62998,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -53654,7 +63040,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -53676,7 +63082,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -53764,7 +63174,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -53808,7 +63242,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -54977,7 +64431,28 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 1,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 0,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 0,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brickyard",
@@ -55043,7 +64518,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 12,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "forum",
@@ -55109,7 +64604,32 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -55153,7 +64673,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -57499,7 +67023,28 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 1,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 0,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 0,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brickyard",
@@ -57565,7 +67110,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 12,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "forum",
@@ -57631,7 +67196,32 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -57675,7 +67265,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -58834,7 +68428,28 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "faceUp",
+          "slot": 1,
+          "accessible": true,
+          "costs": [
+            {
+              "total": 0,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            },
+            {
+              "total": 0,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": false,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brickyard",
@@ -58900,7 +68515,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 12,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "forum",
@@ -58966,7 +68601,32 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 2,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -59010,7 +68670,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -60506,7 +70170,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -60528,7 +70212,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 10,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -60550,7 +70254,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -60572,7 +70296,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -60616,7 +70344,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -60638,7 +70390,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -60660,7 +70436,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -60682,7 +70462,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 9,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -62196,7 +71996,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -62218,7 +72038,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 10,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -62240,7 +72080,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -62262,7 +72122,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -62306,7 +72170,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -62328,7 +72216,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -62350,7 +72262,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -62372,7 +72288,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 9,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -63879,7 +73815,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -63901,7 +73857,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 10,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -63923,7 +73899,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -63945,7 +73941,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "caravansery",
@@ -63989,7 +73989,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -64011,7 +74035,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -64033,7 +74081,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -64055,7 +74107,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 9,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -67356,7 +77428,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -67378,7 +77470,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -67400,7 +77512,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -67422,7 +77554,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -67444,7 +77580,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -67510,7 +77666,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -67554,7 +77734,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -69109,7 +79309,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -69131,7 +79351,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -69153,7 +79393,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -69175,7 +79435,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -69197,7 +79461,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -69263,7 +79547,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -69307,7 +79615,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -71323,7 +81651,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -71345,7 +81693,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -71367,7 +81735,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -71389,7 +81777,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -71411,7 +81803,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "caravansery",
@@ -71477,7 +81889,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -71521,7 +81957,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -75323,7 +85779,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -75367,7 +85827,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -75389,7 +85869,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -75411,7 +85911,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -75499,7 +86003,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -75521,7 +86049,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -77091,7 +87639,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -77135,7 +87687,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -77157,7 +87729,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -77179,7 +87771,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -77267,7 +87863,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -77289,7 +87909,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -78858,7 +89498,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -78902,7 +89546,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -78924,7 +89588,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -78946,7 +89630,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -79034,7 +89722,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -79056,7 +89768,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -80630,7 +91362,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -80652,7 +91388,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -80696,7 +91436,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -80718,7 +91478,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -80740,7 +91520,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brewery",
@@ -80762,7 +91562,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "customs-house",
@@ -80806,7 +91626,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -80828,7 +91672,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -82294,7 +93142,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -82316,7 +93168,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -82360,7 +93216,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -82382,7 +93258,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -82404,7 +93300,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brewery",
@@ -82426,7 +93342,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "customs-house",
@@ -82470,7 +93406,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -82492,7 +93452,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -83957,7 +94921,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -83979,7 +94947,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -84023,7 +94995,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -84045,7 +95037,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -84067,7 +95079,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brewery",
@@ -84089,7 +95121,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "customs-house",
@@ -84133,7 +95185,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "aqueduct",
@@ -84155,7 +95231,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -85909,7 +96989,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "removedKnown",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -85953,7 +97053,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "removedKnown",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -85997,7 +97117,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "fortifications",
@@ -86019,7 +97143,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "academy",
@@ -86063,7 +97191,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "study",
@@ -86107,7 +97239,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 7,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "chamber-of-commerce",
@@ -86195,7 +97331,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "obelisk",
@@ -88095,7 +99235,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "removedKnown",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -88139,7 +99299,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "removedKnown",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -88183,7 +99363,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "fortifications",
@@ -88205,7 +99389,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "academy",
@@ -88249,7 +99437,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "study",
@@ -88293,7 +99485,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 7,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "chamber-of-commerce",
@@ -88381,7 +99577,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "obelisk",
@@ -90280,7 +101480,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "removedKnown",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "workshop",
@@ -90324,7 +101544,27 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "removedKnown",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "apothecary",
@@ -90368,7 +101608,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "fortifications",
@@ -90390,7 +101634,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "academy",
@@ -90434,7 +101682,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "study",
@@ -90478,7 +101730,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 7,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "chamber-of-commerce",
@@ -90566,7 +101822,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "obelisk",
@@ -94647,7 +105907,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -94691,7 +105955,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -94713,7 +105997,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -94735,7 +106039,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "customs-house",
@@ -94779,7 +106087,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -94801,7 +106133,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -94845,7 +106201,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -94867,7 +106227,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -96395,7 +107775,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -96439,7 +107823,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -96461,7 +107865,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -96483,7 +107907,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "customs-house",
@@ -96527,7 +107955,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -96549,7 +108001,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -96593,7 +108069,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -96615,7 +108095,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -98627,7 +110127,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -98671,7 +110175,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 13,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -98693,7 +110217,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -98715,7 +110259,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "customs-house",
@@ -98759,7 +110307,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "statue",
@@ -98781,7 +110353,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -98825,7 +110421,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -98847,7 +110447,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -100653,7 +112273,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "fortifications",
@@ -100675,7 +112299,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "study",
@@ -100741,7 +112369,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "palace",
@@ -100785,7 +112417,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "pantheon",
@@ -100807,7 +112443,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "obelisk",
@@ -102700,7 +114340,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "fortifications",
@@ -102722,7 +114366,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "study",
@@ -102788,7 +114436,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "palace",
@@ -102832,7 +114484,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "pantheon",
@@ -102854,7 +114510,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "obelisk",
@@ -105265,7 +116925,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "fortifications",
@@ -105287,7 +116951,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "study",
@@ -105353,7 +117021,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 6,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "palace",
@@ -105397,7 +117069,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "pantheon",
@@ -105419,7 +117095,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "obelisk",
@@ -106922,7 +118602,28 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "glass-blower",
@@ -106988,7 +118689,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -107032,7 +118737,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -107054,7 +118779,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -107076,7 +118821,12 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -107098,7 +118848,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "customs-house",
@@ -107164,7 +118934,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -107186,7 +118960,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -108641,7 +120435,28 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "glass-blower",
@@ -108707,7 +120522,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -108751,7 +120570,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -108773,7 +120612,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -108795,7 +120654,12 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -108817,7 +120681,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "customs-house",
@@ -108883,7 +120767,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -108905,7 +120793,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -110333,7 +122241,28 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "glass-blower",
@@ -110399,7 +122328,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -110443,7 +122376,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -110465,7 +122418,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -110487,7 +122460,12 @@ export const protocolFixtures = [
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "city",
+          "seat": 0,
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -110509,7 +122487,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "customs-house",
@@ -110575,7 +122573,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -110597,7 +122599,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -112086,7 +124108,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -112108,7 +124134,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -112130,7 +124176,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -112152,7 +124218,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -112174,7 +124260,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -112196,7 +124286,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -112218,7 +124312,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -112262,7 +124376,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -112284,7 +124402,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -113787,7 +125925,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -113809,7 +125951,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -113831,7 +125993,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -113853,7 +126035,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -113875,7 +126077,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -113897,7 +126103,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -113919,7 +126129,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -113963,7 +126193,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -113985,7 +126219,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -115467,7 +127721,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "parade-ground",
@@ -115489,7 +127747,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "school",
@@ -115511,7 +127789,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 3,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -115533,7 +127831,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "dispensary",
@@ -115555,7 +127873,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "library",
@@ -115577,7 +127899,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 4,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "brewery",
@@ -115599,7 +127925,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "courthouse",
@@ -115643,7 +127989,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "rostrum",
@@ -115665,7 +128015,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -117062,7 +129432,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -117106,7 +129480,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -117128,7 +129522,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -117150,7 +129564,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -117238,7 +129656,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -117260,7 +129702,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -118739,7 +131201,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -118783,7 +131249,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -118805,7 +131291,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -118827,7 +131333,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -118915,7 +131425,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -118937,7 +131471,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -120326,7 +132880,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 14,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "walls",
@@ -120370,7 +132928,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 12,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -120392,7 +132970,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 15,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "library",
@@ -120414,7 +133012,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "forum",
@@ -120502,7 +133104,31 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        },
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "rostrum",
@@ -120524,7 +133150,27 @@ export const protocolFixtures = [
         ],
         "place": "tucked",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [
@@ -122042,7 +134688,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "sawmill",
@@ -122108,7 +134774,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -122130,7 +134800,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "archery-range",
@@ -122152,7 +134826,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -122174,7 +134868,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -122196,7 +134910,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brewery",
@@ -122218,7 +134952,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "forum",
@@ -122306,7 +135060,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -124297,7 +137055,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "sawmill",
@@ -124363,7 +137141,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -124385,7 +137167,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "archery-range",
@@ -124407,7 +137193,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -124429,7 +137235,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -124451,7 +137277,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brewery",
@@ -124473,7 +137319,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "forum",
@@ -124561,7 +137427,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -126080,7 +138950,27 @@ export const protocolFixtures = [
           }
         ],
         "place": "discard",
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenThisAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "sawmill",
@@ -126146,7 +139036,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 0,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "barracks",
@@ -126168,7 +139062,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 2,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       },
       {
         "card": "archery-range",
@@ -126190,7 +139088,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "parade-ground",
@@ -126212,7 +139130,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 1
+            }
+          ]
+        }
       },
       {
         "card": "laboratory",
@@ -126234,7 +139172,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 11,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "brewery",
@@ -126256,7 +139214,27 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 5,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 6,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "forum",
@@ -126344,7 +139322,11 @@ export const protocolFixtures = [
         ],
         "place": "faceUp",
         "slot": 1,
-        "accessible": false
+        "accessible": false,
+        "chainIn": {
+          "place": "removedKnown",
+          "accessible": false
+        }
       }
     ],
     "boardTokens": [
@@ -126432,6 +139414,9 @@ export const protocolFixtureNames = [
   "card-revived-seat0",
   "card-revived-seat1",
   "card-revived-spectator",
+  "chain-tooltips-seat0",
+  "chain-tooltips-seat1",
+  "chain-tooltips-spectator",
   "choose-starter-seat0",
   "choose-starter-seat1",
   "choose-starter-spectator",

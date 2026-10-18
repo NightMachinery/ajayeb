@@ -1244,6 +1244,28 @@ purse. The client reads that payment rather than inferring a free rebuild
 from the action key. Browsing the discard pile without that choice still
 shows the printed cost.
 
+A row with a printed chain has optional `chainIn` and `chainOut` details.
+Their counterpart identities come from the public catalog, so these objects
+contain no card id. Each has `place` and `accessible`, with `seat` for an
+owner and `slot` for a face-up target. A counterpart already in the public
+index keeps that public place. An absent card of the current age is
+`unseenThisAge`, one of a later age is `unseenLaterAge`, and one of an ended
+age is `removedKnown`. A visibly exhausted structure also finishes the current
+age, including Age III, so an absent current-age card then becomes
+`removedKnown`. An early victory or forfeit with cards left does not do so.
+The engine uses only the redacted index, visible structure occupancy and
+catalog age for this decision. Hidden slots, removed-card membership and
+scenario out-of-play flags cannot distinguish the current-age answers.
+
+Outgoing `chainOut.costs` is a pair of the same compact cost summaries,
+quoted without the chain alternative. Public production, flexible producers,
+discounts and trade prices still apply. The city tooltip selects the link
+holder's seat, even when the viewer is the other player; a structure card
+uses the viewer's planning seat. Incoming `chainIn` previews the source and
+omits costs. These fields are supplied independently of optional counting
+hints and never grant an action. `chain-tooltips.json` records asymmetric
+unchained Aqueduct quotes and a rival-owned Scriptorium link.
+
 The protocol fixtures in `server/internal/engine/testdata/protocol/` are
 golden JSON files, one per named position, each recording what all three
 viewers (`seat0`, `seat1`, `spectator`) receive there: the full view and the

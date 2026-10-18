@@ -5,35 +5,26 @@
   // chip. The two differ by fill as well as position, so they read in
   // greyscale. Decorative for assistive tech (the card's own description
   // names the chain); its tooltip names the linked card and stacks a
-  // preview of it (ui/chain-links.ts). With the counting hints, it adds the
-  // server's chainTargets as status lines: which city shows the symbol, the
-  // card it makes free there and where that card is (view/tips.ts
-  // chainLines), from the page's game context or `lines`.
+  // preview of it (ui/chain-links.ts). Public quotes and whereabouts come
+  // explicitly from the displayed view, independently of optional hints.
   import ChainDiagram from '../rules/ChainDiagram.svelte';
   import Icon from '$lib/icons/Icon.svelte';
-  import { hintHide } from '$lib/hints/local.svelte';
   import type { Chain } from '$lib/wire';
   import { chainTooltip } from '$lib/ui/chain-links';
   import { tooltip } from '$lib/ui/tooltip.svelte';
-  import { sessionHintScreen } from '$lib/view/hints';
-  import { chainLines } from '$lib/view/tips';
-  import { tryGameContext } from '../choices/room';
+  import type { CardTipContext } from '$lib/view/tips';
 
   interface Props {
     chain: Chain;
     direction: 'in' | 'out';
-    /** The status lines; else from the game context. */
+    /** Optional standalone status lines, superseded by public linked details. */
     lines?: readonly string[];
+    context?: CardTipContext;
     class?: string;
   }
 
-  let { chain, direction, lines, class: className = '' }: Props = $props();
-
-  const ctx = tryGameContext();
-  const shown = $derived(
-    lines ??
-      chainLines(chain, ctx?.session.view?.players, sessionHintScreen(ctx?.session, hintHide.value))
-  );
+  let { chain, direction, lines, context, class: className = '' }: Props = $props();
+  const details = $derived(direction === 'out' ? context?.info?.chainOut : context?.info?.chainIn);
 </script>
 
 {#snippet chainDiagram()}<ChainDiagram compact />{/snippet}
@@ -51,8 +42,8 @@
   data-chain={chain}
   data-chain-direction={direction}
   {@attach tooltip({
-    ...chainTooltip(chain, direction, shown),
-    diagram: chainDiagram,
+    ...chainTooltip(chain, direction, lines, context),
+    diagram: details ? undefined : chainDiagram,
     rulesId: 'costs'
   })}
 >

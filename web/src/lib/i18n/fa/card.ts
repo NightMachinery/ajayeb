@@ -211,6 +211,17 @@ export const card = {
   'card.tip.chainIn': 'رایگان است اگر {card} در شهرتان باشد، که نماد زنجیره‌ای {symbol} را دارد.',
   'card.tip.chainInStack': 'نماد زنجیره‌ای را می‌دهد',
   // Tooltips of a card's micro-elements (view/tips.ts).
+  'card.tip.chainCostYou': 'اکنون بدون زنجیره برای شما: {cost}.',
+  'card.tip.chainCostNamed': 'اکنون بدون زنجیره برای {name}: {cost}.',
+  'card.tip.chainTrade': 'به خرید منبع از بانک نیاز دارد.',
+  'card.tip.chainNoTrade': 'به خرید منبع از بانک نیاز ندارد.',
+  'card.tip.chainAvailable': 'در ساختار رو است و اکنون در دسترس است.',
+  'card.tip.chainCovered': 'در ساختار رو است، اما هنوز پوشیده است.',
+  'card.tip.chainTucked': 'زیر شگفتیِ ساخته‌ی {name}.',
+  'card.tip.chainDiscard': 'در کارت‌های کنارگذاشته است.',
+  'card.tip.chainUnseen': 'هنوز دیده نشده است.',
+  'card.tip.chainAbsent': 'در این بازی نیست.',
+
   'card.tip.card': '{card}: {category}، دوران {age}.',
   'card.tip.quoteChain': 'رایگان از راه زنجیره',
   'card.tip.quoteFree': 'رایگان',

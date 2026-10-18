@@ -568,6 +568,9 @@
             seat={0}
             player={scene.view.players[0]}
             military={scene.view.military}
+            cardTooltips={scene.view.cardTooltips}
+            names={[names[0], personaName('normal')]}
+            you={scene.view.viewer}
             score={scene.view.scorePreview[0]}
             ended={gameEnded(scene.view.phase)}
             buildable={buildableWonders(scene.view, 0)}
@@ -578,6 +581,9 @@
             bot="normal"
             player={scene.view.players[1]}
             military={scene.view.military}
+            cardTooltips={scene.view.cardTooltips}
+            names={[names[0], personaName('normal')]}
+            you={scene.view.viewer}
             score={scene.view.scorePreview[1]}
             ended={gameEnded(scene.view.phase)}
             buildable={buildableWonders(scene.view, 1)}
@@ -644,6 +650,8 @@
   bind:open={citySheetOpen}
   {names}
   players={midView.players}
+  cardTooltips={midView.cardTooltips}
+  you={midView.viewer}
   military={midView.military}
   scores={midView.scorePreview}
 />

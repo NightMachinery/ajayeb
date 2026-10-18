@@ -71,7 +71,10 @@
         ? { x: safe.x, y: safe.y, width: safe.width, height: safe.height }
         : { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
       // The anchor's box now: a scroll moves the tooltip with its anchor.
-      const r = tip.anchor.getBoundingClientRect();
+      const excluded = tip.content.avoidAnchor
+        ? (tip.anchor.closest('[data-tooltip-card]') ?? tip.anchor)
+        : tip.anchor;
+      const r = excluded.getBoundingClientRect();
       // A full-card summary may reflow into the free column beside a
       // phone card. Reset first so later resizes do not retain a narrow width.
       bubble.style.maxInlineSize = '';

@@ -1125,7 +1125,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 1,
+       "accessible": true,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "brickyard",
@@ -1191,7 +1212,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 12,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "forum",
@@ -1257,7 +1298,32 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "courthouse",
@@ -1301,7 +1367,11 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      }
     ],
     "boardTokens": [
@@ -3651,7 +3721,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 1,
+       "accessible": true,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "brickyard",
@@ -3717,7 +3808,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 12,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "forum",
@@ -3783,7 +3894,32 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "courthouse",
@@ -3827,7 +3963,11 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      }
     ],
     "boardTokens": [
@@ -4990,7 +5130,28 @@
       ],
       "place": "city",
       "seat": 0,
-      "accessible": false
+      "accessible": false,
+      "chainOut": {
+       "place": "faceUp",
+       "slot": 1,
+       "accessible": true,
+       "costs": [
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        },
+        {
+         "total": 0,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": false,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "brickyard",
@@ -5056,7 +5217,27 @@
       ],
       "place": "faceUp",
       "slot": 5,
-      "accessible": true
+      "accessible": true,
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 12,
+         "affordable": false,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 3
+        },
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "forum",
@@ -5122,7 +5303,32 @@
       ],
       "place": "faceUp",
       "slot": 1,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "city",
+       "seat": 0,
+       "accessible": false
+      },
+      "chainOut": {
+       "place": "unseenLaterAge",
+       "accessible": false,
+       "costs": [
+        {
+         "total": 2,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        },
+        {
+         "total": 3,
+         "affordable": true,
+         "chainFree": false,
+         "needsTrade": true,
+         "shortfall": 0
+        }
+       ]
+      }
      },
      {
       "card": "courthouse",
@@ -5166,7 +5372,11 @@
       ],
       "place": "faceUp",
       "slot": 2,
-      "accessible": true
+      "accessible": true,
+      "chainIn": {
+       "place": "removedKnown",
+       "accessible": false
+      }
      }
     ],
     "boardTokens": [

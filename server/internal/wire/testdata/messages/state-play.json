@@ -1370,7 +1370,27 @@
         ],
         "place": "faceUp",
         "slot": 19,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 5,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 1,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "palisade",
@@ -1392,7 +1412,27 @@
         ],
         "place": "city",
         "seat": 0,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 7,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 2
+            },
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 4
+            }
+          ]
+        }
       },
       {
         "card": "guard-tower",
@@ -1480,7 +1520,27 @@
         ],
         "place": "faceUp",
         "slot": 8,
-        "accessible": false
+        "accessible": false,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 8,
+              "affordable": false,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 3
+            },
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       },
       {
         "card": "stone-reserve",
@@ -1546,7 +1606,27 @@
         ],
         "place": "faceUp",
         "slot": 18,
-        "accessible": true
+        "accessible": true,
+        "chainOut": {
+          "place": "unseenLaterAge",
+          "accessible": false,
+          "costs": [
+            {
+              "total": 4,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            },
+            {
+              "total": 3,
+              "affordable": true,
+              "chainFree": false,
+              "needsTrade": true,
+              "shortfall": 0
+            }
+          ]
+        }
       }
     ],
     "boardTokens": [

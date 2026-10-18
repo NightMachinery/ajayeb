@@ -15,7 +15,14 @@
   import { sessionHintScreen } from '$lib/view/hints';
   import { threatLines, type ThreatLine } from '$lib/view/threats';
   import { tryGameContext } from '../choices/room';
-  import type { BotLevel, MilitaryView, Pair, PlayerView, ScoreView } from '$lib/wire';
+  import type {
+    CardTooltipView,
+    BotLevel,
+    MilitaryView,
+    Pair,
+    PlayerView,
+    ScoreView
+  } from '$lib/wire';
   import Sheet from '../shell/Sheet.svelte';
   import CityPanel from '../city/CityPanel.svelte';
 
@@ -24,6 +31,8 @@
     names: readonly [string, string];
     players: Pair<PlayerView>;
     military: MilitaryView;
+    cardTooltips?: readonly CardTooltipView[];
+    you?: number;
     scores?: Pair<ScoreView>;
     /** Each seat's bot level, when a bot plays it (its avatar shows). */
     bots?: readonly [BotLevel | undefined, BotLevel | undefined];
@@ -40,6 +49,8 @@
     names,
     players,
     military,
+    cardTooltips,
+    you,
     scores,
     bots,
     activeSeat = $bindable(0),
@@ -83,6 +94,9 @@
       seat={activeSeat}
       player={players[activeSeat]}
       {military}
+      {cardTooltips}
+      {names}
+      {you}
       score={scores?.[activeSeat]}
       bot={bots?.[activeSeat]}
       class="border-0 p-0"

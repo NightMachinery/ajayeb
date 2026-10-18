@@ -11,6 +11,8 @@ type CardTooltipView struct {
 	Seat       *int                   `json:"seat,omitempty"`
 	Slot       *int                   `json:"slot,omitempty"`
 	Accessible bool                   `json:"accessible"`
+	ChainIn    *CardChainTooltipView  `json:"chainIn,omitempty"`
+	ChainOut   *CardChainTooltipView  `json:"chainOut,omitempty"`
 }
 
 // CardTooltipCostView is the server solver's compact payment summary. It
@@ -21,4 +23,15 @@ type CardTooltipCostView struct {
 	ChainFree  bool `json:"chainFree"`
 	NeedsTrade bool `json:"needsTrade"`
 	Shortfall  int  `json:"shortfall"`
+}
+
+// CardChainTooltipView describes the printed link's counterpart. Its identity
+// comes from the public catalog, never a hidden-state card id. Costs are only
+// supplied for an outgoing link, quoted without the chain for either seat.
+type CardChainTooltipView struct {
+	Place      PublicPlace             `json:"place"`
+	Seat       *int                    `json:"seat,omitempty"`
+	Slot       *int                    `json:"slot,omitempty"`
+	Accessible bool                    `json:"accessible"`
+	Costs      *[2]CardTooltipCostView `json:"costs,omitempty" tstype:"Pair<CardTooltipCostView>"`
 }

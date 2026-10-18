@@ -297,6 +297,8 @@ export interface CardTipContext {
   names?: readonly [string, string];
   you?: number;
   owner?: string;
+  /** Seat whose city holds the link; structure cards use the planning seat. */
+  linkSeat?: number;
   /** Actual construct/revive payment, only when the server offers that choice. */
   actualCost?: CostView;
   costSeat?: number;
