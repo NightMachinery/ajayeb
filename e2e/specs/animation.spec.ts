@@ -16,6 +16,8 @@
 //      4 times, over at least ten moves, an age deal and a game end.
 //   e. Replay last move plays the move again and leaves the same screen; with
 //      Animation off it is disabled and its tooltip says why.
+//   f. @perf, information only: the gaps between animation frames while
+//      animations run, at full CPU speed (case d reports them at 4x).
 //
 // Every case turns the setting on for its own tab (fixtures/anim.ts
 // useSettings, after the base fixture's motion-off override) and opens its
@@ -27,19 +29,24 @@ import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { recordPolicy } from '../fixtures/ws-game';
 import {
+  animationFrameGaps,
+  describeFrameGaps,
   draftKeys,
   findPosition,
   fxRecords,
   fxCues,
+  frameTimes,
   inputAt,
   longTasks,
   motionLog,
   openPosition,
   playThrough,
+  recordFrames,
   recordInputBack,
   recordLongTasks,
   recordMotion,
   screenDom,
+  traceIfAsked,
   useSettings,
   viewOf,
   waitSettled,
@@ -205,6 +212,119 @@ async function expectStateShown(page: Page, what: string): Promise<void> {
   }
 }
 
+/** What one room of a performance run recorded. */
+interface PerfRoom {
+  name: string;
+  /** performance.now() at the room's perf-room mark. */
+  markAt: number;
+  anims: AnimRecord[];
+  tasks: LongTask[];
+  frames: number[];
+}
+
+/**
+ * The performance run of cases d and f, with the CPU slowed `rate` times:
+ * ten hot-seat moves, each after the last one's animations ended, then an
+ * age change with the move after it, then a game's last card. Each room is
+ * its own page load, so its records are read before the next.
+ */
+async function perfRun(
+  page: Page,
+  baseURL: string,
+  rate: number
+): Promise<{ moves: number; rooms: PerfRoom[] }> {
+  await recordLongTasks(page);
+  await recordFrames(page);
+  await useSettings(page, 'normal');
+  const draft = await draftKeys(baseURL, SEED);
+  const rooms: PerfRoom[] = [];
+  const collect = async (name: string) => {
+    // A mark that ties this page's clock to a trace's (traceIfAsked).
+    const markAt = await page.evaluate((room) => {
+      performance.mark(`perf-room:${room}`);
+      return performance.now();
+    }, name);
+    rooms.push({
+      name,
+      markAt,
+      anims: (await fxRecords(page)).anims,
+      tasks: await longTasks(page),
+      frames: await frameTimes(page)
+    });
+  };
+  // A deliberate player: the next tap comes after the move has played.
+  const play = async (driver: GameDriver, key: string) => {
+    await driver.dismissToasts();
+    await playThrough(driver, key);
+    await waitSettled(page, 20_000);
+  };
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate });
+  const stopTrace = await traceIfAsked(cdp, test.info());
+  let moves = 0;
+  try {
+    const driver = await openPosition(page, baseURL, { mode: 'hotseat', seed: SEED, keys: draft });
+    while (moves < 10) {
+      const snap = await driver.nextTurn();
+      if (snap.phase !== 'play') break;
+      const view = await viewOf(page);
+      await play(driver, snap.pending ? (view.choices[0]?.key ?? '') : recordPolicy(view).key);
+      moves += 1;
+    }
+    await collect('Age I');
+
+    // An age deal, and the first move after it.
+    const age = await openPosition(page, baseURL, {
+      mode: 'hotseat',
+      seed: SEED,
+      scenario: 'age-transition-chooser',
+      keys: []
+    });
+    for (const key of ['discard:theater', 'starter:0']) {
+      await age.nextTurn();
+      await play(age, key);
+    }
+    await age.nextTurn();
+    await play(age, recordPolicy(await viewOf(page)).key);
+    await collect('age change');
+
+    // A game end, with its victory banner.
+    const end = await openPosition(page, baseURL, {
+      mode: 'hotseat',
+      seed: SEED,
+      scenario: 'civilian-end',
+      keys: []
+    });
+    await end.nextTurn();
+    await play(end, 'discard:academy');
+    await collect('game end');
+  } finally {
+    await stopTrace();
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  }
+  if (process.env.AJAYEB_PERF_TRACE === '1') {
+    await test.info().attach('perf rooms', {
+      body: JSON.stringify({ rate, rooms }),
+      contentType: 'application/json'
+    });
+  }
+  return { moves, rooms };
+}
+
+/** That a performance run played what it should have. */
+function expectPerfRun(moves: number, anims: AnimRecord[]): void {
+  expect(moves).toBeGreaterThanOrEqual(10);
+  expect(anims.length).toBeGreaterThan(10);
+  expect(
+    anims.some((a) => a.kind === 'deal'),
+    'an age deal played'
+  ).toBe(true);
+  expect(
+    anims.some((a) => a.kind === 'victory'),
+    'the victory banner played'
+  ).toBe(true);
+}
+
 test.describe('animations', { tag: ['@mobile'] }, () => {
   test('a. with Animation off nothing animates and every change shows at once', async ({
     page,
@@ -365,69 +485,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         test.setTimeout(420_000);
         if (!baseURL) throw new Error('no baseURL');
         const problems = watchHygiene(page);
-        await recordLongTasks(page);
-        await useSettings(page, 'normal');
-        const draft = await draftKeys(baseURL, SEED);
-        // Each room is its own page load, so its records are read before the next.
-        const rooms: { name: string; anims: AnimRecord[]; tasks: LongTask[] }[] = [];
-        const collect = async (name: string) => {
-          rooms.push({ name, anims: (await fxRecords(page)).anims, tasks: await longTasks(page) });
-        };
-        // A deliberate player: the next tap comes after the move has played.
-        const play = async (driver: GameDriver, key: string) => {
-          await driver.dismissToasts();
-          await playThrough(driver, key);
-          await waitSettled(page, 20_000);
-        };
-        const cdp = await page.context().newCDPSession(page);
-        await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-        let moves = 0;
-        try {
-          const driver = await openPosition(page, baseURL, {
-            mode: 'hotseat',
-            seed: SEED,
-            keys: draft
-          });
-          while (moves < 10) {
-            const snap = await driver.nextTurn();
-            if (snap.phase !== 'play') break;
-            const view = await viewOf(page);
-            await play(
-              driver,
-              snap.pending ? (view.choices[0]?.key ?? '') : recordPolicy(view).key
-            );
-            moves += 1;
-          }
-          await collect('Age I');
-
-          // An age deal, and the first move after it.
-          const age = await openPosition(page, baseURL, {
-            mode: 'hotseat',
-            seed: SEED,
-            scenario: 'age-transition-chooser',
-            keys: []
-          });
-          for (const key of ['discard:theater', 'starter:0']) {
-            await age.nextTurn();
-            await play(age, key);
-          }
-          await age.nextTurn();
-          await play(age, recordPolicy(await viewOf(page)).key);
-          await collect('age change');
-
-          // A game end, with its victory banner.
-          const end = await openPosition(page, baseURL, {
-            mode: 'hotseat',
-            seed: SEED,
-            scenario: 'civilian-end',
-            keys: []
-          });
-          await end.nextTurn();
-          await play(end, 'discard:academy');
-          await collect('game end');
-        } finally {
-          await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-        }
+        const { moves, rooms } = await perfRun(page, baseURL, 4);
         const anims = rooms.flatMap((r) => r.anims);
         const tasks = rooms.flatMap((r) => r.tasks);
         const overlapping = rooms.flatMap((r) =>
@@ -445,23 +503,37 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
             `moves ${moves} (and an age change, a game end), animations ${anims.length}, ` +
             `long tasks ${tasks.length}, overlapping ${overlapping.length}, ` +
             `worst overlapping ${worst} ms, ` +
-            `worst overall ${Math.max(0, ...tasks.map((t) => Math.round(t.duration)))} ms`
+            `worst overall ${Math.max(0, ...tasks.map((t) => Math.round(t.duration)))} ms; ` +
+            `at 4x: ${describeFrameGaps(rooms.flatMap((r) => animationFrameGaps(r.frames, r.anims)))}`
         });
-        expect(moves).toBeGreaterThanOrEqual(10);
-        expect(anims.length).toBeGreaterThan(10);
-        expect(
-          anims.some((a) => a.kind === 'deal'),
-          'an age deal played'
-        ).toBe(true);
-        expect(
-          anims.some((a) => a.kind === 'victory'),
-          'the victory banner played'
-        ).toBe(true);
+        expectPerfRun(moves, anims);
         expect(overlapping, `long tasks during animations (worst ${worst} ms)`).toEqual([]);
         expect(problems, 'console errors, page errors or failed requests').toEqual([]);
       }
     );
   });
+
+  // f. Information only (no threshold): stutter at full speed is not the same
+  // as long tasks at 4x, so the same run at 1x reports its frame gaps.
+  test(
+    'f. frame gaps during animations at 1x CPU',
+    { tag: ['@perf'] },
+    async ({ page, baseURL }) => {
+      test.setTimeout(300_000);
+      if (!baseURL) throw new Error('no baseURL');
+      const problems = watchHygiene(page);
+      const { moves, rooms } = await perfRun(page, baseURL, 1);
+      test.info().annotations.push({
+        type: 'perf',
+        description: `at 1x: ${describeFrameGaps(rooms.flatMap((r) => animationFrameGaps(r.frames, r.anims)))}`
+      });
+      expectPerfRun(
+        moves,
+        rooms.flatMap((r) => r.anims)
+      );
+      expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+    }
+  );
 
   test('e. Replay last move plays the move again and changes nothing', async ({
     page,

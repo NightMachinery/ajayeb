@@ -579,7 +579,7 @@ cases. `TestGameLogFinished` decodes the downloaded record, calls
 test uses a clock in UTC+14 across a date boundary to check that the
 server uses UTC. See [the format and access rules](protocol.md#downloading-a-games-log).
 
-### `animation.spec.ts` (`@mobile`, one case `@perf`)
+### `animation.spec.ts` (`@mobile`, two cases `@perf`)
 
 The move and event animations' four acceptance checks (UX design section
 12), and Replay last move, on both projects. Each case writes its own
@@ -634,7 +634,8 @@ game's last card (`civilian-end`).
   must have played. The annotation `perf` gives the moves, animations,
   long tasks, how many overlap and the worst overlapping and overall task
   in ms: read the worst overlapping one against the 50 ms limit, and the
-  overall one for how loaded the machine was. This laptop is often busy,
+  overall one for how loaded the machine was. It ends with the frame
+  measure at 4x (see f). This laptop is often busy,
   so the case retries up to twice; a pass with the failed runs within
   20 ms of the limit is acceptable. On CI it runs in its own job,
   `e2e-perf`, once per project with no retries, and writes each run's
@@ -647,6 +648,21 @@ game's last card (`civilian-end`).
   any move, then after the Arsenal's looting it replays: new animations
   are recorded, among them the looting, no move is sent (the version stays)
   and the screen afterwards is the screen before.
+
+- **f. Frame gaps at full speed (`@perf`, information only).** Stutter at
+  normal CPU speed is not the same thing as long tasks at 4x, so the run of
+  d is played again unthrottled while `recordFrames` notes every
+  `requestAnimationFrame` time. Its `perf` annotation gives the gaps between
+  two frames that overlap an animation's window: how many, the share over
+  34 ms (at least one frame missed at 60 Hz) and the worst gap. Case d
+  reports the same at 4x. Neither has a threshold; CI's `e2e-perf` job
+  writes both to the run summary.
+
+With `AJAYEB_PERF_TRACE=1`, cases d and f also record a Chrome performance
+trace (the timeline and JavaScript samples) and attach it with the rooms'
+records, each room marked `perf-room:<name>` in the trace so its clock can
+be matched. It is a diagnostic for finding what runs during an animation;
+profiling slows the page, so a traced run's numbers are not a measurement.
 
 To film the animations for a visual check, slow them with CDP
 `Animation.setPlaybackRate` (0.2 shows a 320 ms flight over 1.6 s) rather

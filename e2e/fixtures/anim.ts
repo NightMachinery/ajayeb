@@ -13,7 +13,9 @@
 // (server/internal/engine/scenarios_named.go) give the rest. Nothing here
 // decides what is legal; every key comes from the view's choices.
 
-import { expect, type Page } from '@playwright/test';
+import { mkdir, open } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { expect, type CDPSession, type Page, type TestInfo } from '@playwright/test';
 import type { Choice, View } from '../../web/src/lib/wire';
 import { GameDriver } from './driver';
 import { defaultFlow } from './scenario';
@@ -424,4 +426,90 @@ export async function longTasks(page: Page): Promise<LongTask[]> {
       (window as unknown as { __longTasks?: { start: number; duration: number }[] }).__longTasks ??
       []
   );
+}
+
+/**
+ * Installs, before any app script, a recorder of every animation frame's
+ * timestamp (the requestAnimationFrame time) in window.__frames, so the gaps
+ * between frames can be read against the animation windows: a gap over one
+ * frame is a frame the page did not draw, which a player sees as stutter.
+ */
+export async function recordFrames(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const frames: number[] = [];
+    (window as unknown as { __frames: typeof frames }).__frames = frames;
+    const tick = (t: number) => {
+      frames.push(t);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
+export async function frameTimes(page: Page): Promise<number[]> {
+  return page.evaluate(() => (window as unknown as { __frames?: number[] }).__frames ?? []);
+}
+
+/** The gaps between frames that overlap an animation window. */
+export function animationFrameGaps(frames: number[], anims: AnimRecord[]): number[] {
+  const gaps: number[] = [];
+  for (let i = 1; i < frames.length; i++) {
+    const from = frames[i - 1]!;
+    const to = frames[i]!;
+    if (anims.some((a) => a.endAt !== null && from < a.endAt && to > a.startAt)) {
+      gaps.push(to - from);
+    }
+  }
+  return gaps;
+}
+
+/** A one-line summary of frame gaps: how many, the share over 34 ms, the worst. */
+export function describeFrameGaps(gaps: number[]): string {
+  const over = gaps.filter((g) => g > 34).length;
+  const share = gaps.length === 0 ? 0 : Math.round((over / gaps.length) * 1000) / 10;
+  return (
+    `frames during animations ${gaps.length}, over 34 ms ${over} (${share}%), ` +
+    `worst gap ${Math.round(Math.max(0, ...gaps))} ms`
+  );
+}
+
+/**
+ * With AJAYEB_PERF_TRACE=1, records a Chrome performance trace (timeline and
+ * CPU samples) until the returned function runs, and attaches it to the
+ * test as chrome-trace.json: a diagnostic for finding what runs during an
+ * animation, never an acceptance measure (profiling slows the page). Off,
+ * it does nothing.
+ */
+export async function traceIfAsked(cdp: CDPSession, info: TestInfo): Promise<() => Promise<void>> {
+  if (process.env.AJAYEB_PERF_TRACE !== '1') return async () => {};
+  await cdp.send('Tracing.start', {
+    categories:
+      'toplevel,devtools.timeline,disabled-by-default-devtools.timeline,' +
+      'disabled-by-default-devtools.timeline.frame,disabled-by-default-v8.cpu_profiler,' +
+      'v8,blink.user_timing',
+    options: 'sampling-frequency=1000',
+    transferMode: 'ReturnAsStream'
+  });
+  return async () => {
+    const completed = new Promise<{ stream?: string }>((resolve) =>
+      cdp.once('Tracing.tracingComplete', resolve)
+    );
+    await cdp.send('Tracing.end');
+    const { stream } = await completed;
+    if (!stream) throw new Error('Chrome returned no trace stream');
+    const path = info.outputPath('chrome-trace.json');
+    await mkdir(dirname(path), { recursive: true });
+    const file = await open(path, 'w');
+    try {
+      for (;;) {
+        const chunk = await cdp.send('IO.read', { handle: stream });
+        await file.writeFile(chunk.base64Encoded ? Buffer.from(chunk.data, 'base64') : chunk.data);
+        if (chunk.eof) break;
+      }
+    } finally {
+      await file.close();
+      await cdp.send('IO.close', { handle: stream });
+    }
+    await info.attach('chrome trace', { path, contentType: 'application/json' });
+  };
 }
