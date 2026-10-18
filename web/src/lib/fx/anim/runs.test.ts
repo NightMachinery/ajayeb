@@ -3,7 +3,7 @@ import { animRecords, clearRecords } from './records';
 import { Runs, type Playing } from './runs';
 
 /** A stand-in for a WAAPI Animation: it ends when finish() is called or `end` runs. */
-function fake(): Playing & { end: () => void; finishes: number } {
+function fake(): Playing & { end: () => void; finishes: number; plays: number } {
   let resolve!: () => void;
   const finished = new Promise<void>((r) => (resolve = r));
   const anim = {
@@ -11,6 +11,14 @@ function fake(): Playing & { end: () => void; finishes: number } {
     ready: Promise.resolve(),
     finished,
     finishes: 0,
+    plays: 0,
+    pause() {
+      anim.playState = 'paused';
+    },
+    play() {
+      anim.plays += 1;
+      anim.playState = 'running';
+    },
     finish() {
       anim.finishes += 1;
       anim.playState = 'finished';
@@ -111,5 +119,76 @@ describe('Runs', () => {
     runs.end(run, false);
     expect(runs.size).toBe(0);
     expect(run.record.interrupted).toBe(false);
+  });
+
+  it('a run with no animation of its own starts at the next frame, not in the task that tracks it', async () => {
+    const frames: (() => void)[] = [];
+    const runs = new Runs(
+      () => now,
+      (run) => frames.push(run)
+    );
+    now = 10;
+    const run = runs.track(5, 'coins', [], () => {}, false);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(run.record.startAt).toBe(10);
+    now = 26;
+    frames.shift()?.();
+    expect(run.record.startAt).toBe(26);
+    // Ended before its first frame: the record keeps its end, not a later start.
+    const early = runs.track(5, 'deal', [], () => {}, false);
+    now = 30;
+    runs.end(early, true);
+    now = 42;
+    frames.shift()?.();
+    expect(early.record.startAt).toBe(26);
+    expect(early.record.endAt).toBe(30);
+  });
+
+  it('a gate holds the runs tracked behind it, paused, until two frames after it opens', async () => {
+    const frames: (() => void)[] = [];
+    const runs = new Runs(
+      () => now,
+      (run) => frames.push(run)
+    );
+    const tick = () => {
+      const due = frames.splice(0);
+      for (const run of due) run();
+    };
+    const open = runs.gate();
+    const a = fake();
+    const run = runs.track(5, 'take', [a], () => {});
+    expect(a.playState).toBe('paused');
+    open();
+    // Tracked after the gate opened: not held.
+    const b = fake();
+    runs.track(5, 'flip', [b], () => {});
+    expect(b.playState).toBe('running');
+    now = 16;
+    tick();
+    expect(a.playState).toBe('paused');
+    now = 33;
+    tick();
+    expect(a.playState).toBe('running');
+    expect(a.plays).toBe(1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(run.record.startAt).toBe(33);
+  });
+
+  it('a run finished while held is never played', async () => {
+    const frames: (() => void)[] = [];
+    const runs = new Runs(
+      () => now,
+      (run) => frames.push(run)
+    );
+    const open = runs.gate();
+    const a = fake();
+    const cleanup = vi.fn();
+    runs.track(5, 'take', [a], cleanup);
+    open();
+    runs.finishAll();
+    expect(a.finishes).toBe(1);
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    for (let i = 0; i < 3; i++) for (const run of frames.splice(0)) run();
+    expect(a.plays).toBe(0);
   });
 });

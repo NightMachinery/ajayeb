@@ -8,9 +8,11 @@
 //            the looting tokens the pawn will take, the old structure of an
 //            age deal), where the pawn stood, and which city bands existed;
 //   play     after the swap and a tick, reads the new DOM's rectangles once,
-//            then starts every animation (FLIP: from the old rectangle to the
-//            new one, transform and opacity only, with WAAPI) and resolves
-//            when input may come back (the lead's landing);
+//            then sets up every animation (FLIP: from the old rectangle to the
+//            new one, transform and opacity only, with WAAPI), each paused in
+//            its first pose until the page has painted the new frame
+//            (Runs.gate), and resolves when input may come back (the lead's
+//            landing, counted from the swap);
 //   finish   ends everything at once, in its final state: a new frame (from
 //            capture), the Presenter's hurry() and clear().
 //
@@ -489,7 +491,14 @@ export class AnimRunner {
       const start = this.#prepare(step, i, cap, root, layer);
       if (start) starts.push(start);
     });
-    for (const start of starts) start();
+    // Everything is placed now, in its first pose, and moves once the page
+    // has painted the new frame (Runs.gate).
+    const open = this.#runs.gate();
+    try {
+      for (const start of starts) start();
+    } finally {
+      open();
+    }
 
     // The hold counts from the swap, so a slow render does not add to it.
     const block = cap.timeline.blockingMs - (this.#now() - cap.record.swapAt);
