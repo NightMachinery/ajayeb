@@ -60,4 +60,18 @@ describe('CounterTween', () => {
     c.add(0, 100, 1, 2);
     expect(node.nodeValue).toBe('9');
   });
+
+  it('hold() shows the old number until a segment is added, and only the first hold counts', () => {
+    const node = text('13');
+    const c = new CounterTween(node, '13', () => now);
+    c.hold(20);
+    expect(node.nodeValue).toBe('20');
+    c.hold(25);
+    expect(node.nodeValue).toBe('20');
+    c.add(0, 100, 20, 13);
+    at(100);
+    expect(node.nodeValue).toBe('13');
+    c.hold(30);
+    expect(node.nodeValue).toBe('13');
+  });
 });

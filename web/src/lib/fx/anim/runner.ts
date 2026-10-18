@@ -485,16 +485,16 @@ export class AnimRunner {
       cap.record.releasedAt = this.#now();
       return Promise.resolve();
     }
-    // Read every rectangle first, then write: one layout, not one per step.
-    const starts: (() => void)[] = [];
-    cap.timeline.steps.forEach((step, i) => {
-      const start = this.#prepare(step, i, cap, root, layer);
-      if (start) starts.push(start);
-    });
-    // Everything is placed now, in its first pose, and moves once the page
-    // has painted the new frame (Runs.gate).
+    // Every run tracked from here (a counter's, too) is placed in its first
+    // pose and moves once the page has painted the new frame (Runs.gate).
     const open = this.#runs.gate();
     try {
+      // Read every rectangle first, then write: one layout, not one per step.
+      const starts: (() => void)[] = [];
+      cap.timeline.steps.forEach((step, i) => {
+        const start = this.#prepare(step, i, cap, root, layer);
+        if (start) starts.push(start);
+      });
       for (const start of starts) start();
     } finally {
       open();
@@ -1011,7 +1011,10 @@ export class AnimRunner {
       float();
       // The counter: the old number until the float starts, then a tween
       // to the new one, then the server's own text back.
-      if (step.tween > 0) counter.tween?.add(step.at, step.tween, step.from, step.to);
+      if (step.tween > 0) {
+        counter.tween?.hold(step.from);
+        this.#runs.afterGate(() => counter.tween?.add(step.at, step.tween, step.from, step.to));
+      }
     };
   }
 
@@ -1108,7 +1111,10 @@ export class AnimRunner {
       const float = this.#float(cap, layer, 'loot', counter.box, -step.amount, step.at, step.dur);
       starts.push(() => {
         float();
-        if (step.tween > 0) counter.tween?.add(step.at, step.tween, step.from, step.to);
+        if (step.tween > 0) {
+          counter.tween?.hold(step.from);
+          this.#runs.afterGate(() => counter.tween?.add(step.at, step.tween, step.from, step.to));
+        }
       });
     }
     if (starts.length === 0) return null;

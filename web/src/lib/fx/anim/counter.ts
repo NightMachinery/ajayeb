@@ -37,6 +37,16 @@ export class CounterTween {
     this.#ended = ended ?? null;
   }
 
+  /**
+   * Shows `value` until the first segment is added, unless something is
+   * shown already: the old number, while the frame's animations wait to
+   * start (Runs.gate).
+   */
+  hold(value: number): void {
+    if (this.done || this.#shown !== null) return;
+    this.#show(value);
+  }
+
   /** Adds a tween from `from` to `to`, starting `delay` ms from now. */
   add(delay: number, dur: number, from: number, to: number): void {
     if (this.done) return;

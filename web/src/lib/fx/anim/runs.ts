@@ -135,6 +135,12 @@ export class Runs {
     };
   }
 
+  /** Runs `fn` when the gate opens (with the runs it holds), or now when it is open. */
+  afterGate(fn: () => void): void {
+    if (this.#held) this.#held.push(fn);
+    else fn();
+  }
+
   /** Ends a run, once: its animations finish and its cleanup runs. */
   end(run: Run, interrupted: boolean): void {
     if (run.done) return;
