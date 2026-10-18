@@ -32,7 +32,7 @@ On macOS the guard reads the kernel's memory pressure level, the free-memory lev
 
 On top of the general slots there are two separate locks of capacity one. A `browser` or `codex` run takes its own lock and a general slot as well:
 
-- `browser`: one headless Chrome on the machine at a time. A browser also needs the free-memory level to be at least 14% and at least 512 MB of swap free. Both thresholds can be tuned through environment variables.
+- `browser`: one headless Chrome on the machine at a time. A browser also needs the free-memory level to be at least 14%, and on Linux at least 512 MB of swap free. macOS adds swap files as it needs them, so its free swap is only the unused room in the files made so far and is not checked there. Both thresholds can be tuned through environment variables.
 - `codex`: one image-generation job at a time.
 
 A job that is refused waits with backoff for up to `--wait` seconds, then exits 75.

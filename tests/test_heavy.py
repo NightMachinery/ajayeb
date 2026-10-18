@@ -295,6 +295,15 @@ class BrowserThresholdTests(GuardCase):
         # Unknown readings do not block.
         self.assertIsNone(heavy.browser_block_reason(heavy.Memory(), 14, 512))
 
+    def test_swap_floor_skipped_where_swap_grows(self):
+        # macOS adds swap files on demand: low free swap is no reason to wait.
+        mem = heavy.Memory(level=1, free_pct=50.0, swap_total_mb=8192.0, swap_free_mb=100.0,
+                           swap_dynamic=True)
+        self.assertIsNone(heavy.browser_block_reason(mem, 14, 512))
+        # The free memory floor still applies.
+        mem.free_pct = 10.0
+        self.assertIn("free memory 10%", heavy.browser_block_reason(mem, 14, 512))
+
     def test_floors_are_env_tunable(self):
         g = self.guard(env={"AJAYEB_MIN_FREE_PCT_BROWSER": "30", "AJAYEB_MIN_SWAP_FREE_MB_BROWSER": "100"})
         self.assertEqual(g.browser_floors(), (30.0, 100.0))
@@ -334,6 +343,7 @@ class ReaderTests(unittest.TestCase):
                    "vm.swapusage": "total = 1024.00M  used = 512.00M  free = 512.00M  (encrypted)"}
         mem = heavy.read_darwin(answers.get)
         self.assertEqual((mem.level, mem.free_pct, mem.swap_free_mb), (2, 16.0, 512.0))
+        self.assertTrue(mem.swap_dynamic)
         mem = heavy.read_darwin(lambda key: None)
         self.assertEqual((mem.level, mem.free_pct, mem.swap_total_mb), (None, None, None))
 

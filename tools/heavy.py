@@ -32,7 +32,10 @@ Kind locks
   browser and codex also take their own machine-wide lock of capacity 1.
   A browser also needs free memory >= AJAYEB_MIN_FREE_PCT_BROWSER percent
   (default 14) and free swap >= AJAYEB_MIN_SWAP_FREE_MB_BROWSER MB
-  (default 512; skipped when no swap is allocated).
+  (default 512). The swap floor applies only where swap has a fixed size
+  (Linux): macOS adds swap files as it needs them, so its free swap is only
+  the unused room in the files made so far and says nothing about how much
+  memory is left. It is also skipped when no swap is allocated.
 
 When a slot, lock or threshold is unavailable the job waits with backoff for
 up to --wait seconds (default 1800, or AJAYEB_HEAVY_WAIT), then gives up.
@@ -368,6 +371,8 @@ class Memory:
     free_pct: Optional[float] = None
     swap_total_mb: Optional[float] = None
     swap_free_mb: Optional[float] = None
+    # True where the OS grows swap on demand (macOS), so free swap is no limit.
+    swap_dynamic: bool = False
     source: str = "unknown"
 
 
@@ -412,7 +417,8 @@ def read_darwin(sysctl: Callable[[str], Optional[str]] = default_sysctl) -> Memo
     free = _to_int(sysctl("kern.memorystatus_level"))
     swap_total, swap_free = parse_swapusage(sysctl("vm.swapusage") or "")
     return Memory(level=level, free_pct=None if free is None else float(free),
-                  swap_total_mb=swap_total, swap_free_mb=swap_free, source="darwin sysctl")
+                  swap_total_mb=swap_total, swap_free_mb=swap_free, swap_dynamic=True,
+                  source="darwin sysctl")
 
 
 def level_from_free_pct(free_pct: Optional[float]) -> Optional[int]:
@@ -476,7 +482,8 @@ def browser_block_reason(mem: Memory, min_free_pct: float, min_swap_mb: float) -
     """Why a browser may not launch now, or None. Unknown readings do not block."""
     if mem.free_pct is not None and mem.free_pct < min_free_pct:
         return f"free memory {mem.free_pct:.0f}% is below the browser floor of {min_free_pct:g}%"
-    if mem.swap_total_mb and mem.swap_free_mb is not None and mem.swap_free_mb < min_swap_mb:
+    if (not mem.swap_dynamic and mem.swap_total_mb and mem.swap_free_mb is not None
+            and mem.swap_free_mb < min_swap_mb):
         return f"free swap {mem.swap_free_mb:.0f} MB is below the browser floor of {min_swap_mb:g} MB"
     return None
 
@@ -1169,7 +1176,8 @@ class Guard:
         if mem.swap_total_mb is None:
             say("swap:      unknown")
         else:
-            say(f"swap:      {mem.swap_free_mb or 0:.0f} MB free of {mem.swap_total_mb:.0f} MB")
+            say(f"swap:      {mem.swap_free_mb or 0:.0f} MB free of {mem.swap_total_mb:.0f} MB"
+                + (" (grows on demand)" if mem.swap_dynamic else ""))
 
         cap = self.capacity(mem, state, now)
         why = f"{level_name(mem.level)} pressure"
@@ -1196,7 +1204,8 @@ class Guard:
                     line += " (stale, cleared on the next run)"
             if kind == "browser":
                 block = browser_block_reason(mem, min_free, min_swap)
-                line += (f"; launch needs free mem >= {min_free:g}% and free swap >= {min_swap:g} MB: "
+                swap_need = "" if mem.swap_dynamic else f" and free swap >= {min_swap:g} MB"
+                line += (f"; launch needs free mem >= {min_free:g}%{swap_need}: "
                          + ("ok" if block is None else f"blocked, {block}"))
             say(f"{kind + ':':<10} {line}")
 
