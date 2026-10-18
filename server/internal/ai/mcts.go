@@ -231,6 +231,13 @@ type mctsWorker struct {
 	limit int // iterations to run; 0: until stopped
 	done  int // iterations run
 
+	// forced, when set, makes the search a comparison (review.go): the
+	// root's action is forced[done % len(forced)] rather than chosen by
+	// UCB, and each round of len(forced) iterations shares one
+	// determinization, pair.
+	forced []actKey
+	pair   engine.State
+
 	legal [engine.MaxLegalActions]engine.Action
 	keys  [engine.MaxLegalActions]actKey
 	path  [maxTreeDepth]pathStep
@@ -249,6 +256,7 @@ type pathStep struct {
 // init prepares the worker for a search. The tree gets its root.
 func (w *mctsWorker) init(m *MCTSBot, obs *engine.Observation, rng engine.RNG, limit, nodes int, sr *searchRun) {
 	w.rng, w.obs, w.sr, w.c, w.limit, w.done = rng, obs, sr, m.c, limit, 0
+	w.forced = nil
 	w.roll.init(m.rollout, &m.w)
 	w.tree.init(nodes)
 	w.tree.alloc(0) // the root; its action is never read
@@ -262,11 +270,20 @@ func (w *mctsWorker) running() bool {
 // iterate runs one iteration: determinize, descend, expand, roll out, back
 // up (see the top of this file).
 func (w *mctsWorker) iterate() {
-	d := w.obs.Determinize(&w.rng)
+	var d engine.State
 	t := &w.tree
 	v := int32(0)
 	depth := 0
-	for !d.Over() && depth < maxTreeDepth {
+	descend := true
+	if w.forced != nil {
+		v, descend = w.forcedRoot(&d)
+		if v != 0 {
+			depth = 1
+		}
+	} else {
+		d = w.obs.Determinize(&w.rng)
+	}
+	for descend && !d.Over() && depth < maxTreeDepth {
 		legal := engine.LegalActions(&d, w.legal[:0])
 		keys := w.keys[:len(legal)]
 		for j, a := range legal {
@@ -330,6 +347,45 @@ func (w *mctsWorker) iterate() {
 		}
 	}
 	w.done++
+}
+
+// forcedRoot starts an iteration of a comparison (see forced): it puts
+// the round's determinization in d, plays the root action whose turn it
+// is, and records the root's child for it as the first step of the path.
+// The child is added on the action's first iteration, and the descent
+// then stops there, as after any expansion; the arena always has room for
+// it (a search of n iterations adds at most n nodes). It returns the child
+// (0 if it could not be stored) and whether the descent goes on below it.
+func (w *mctsWorker) forcedRoot(d *engine.State) (int32, bool) {
+	j := w.done % len(w.forced)
+	if j == 0 {
+		w.pair = w.obs.Determinize(&w.rng)
+	}
+	*d = w.pair
+	k := w.forced[j]
+	mover := d.ToMove
+	t := &w.tree
+	c := t.at(0).child
+	for c != 0 && t.at(c).key() != k {
+		c = t.at(c).sibling
+	}
+	engine.ApplyTrusted(d, k.action())
+	descend := c != 0
+	if c == 0 {
+		nk := k
+		if d.Over() && d.Result.Winner == int8(mover) {
+			nk |= keyWins
+		}
+		var ok bool
+		if c, ok = t.alloc(nk); !ok {
+			return 0, false
+		}
+		cn, rn := t.at(c), t.at(0)
+		cn.sibling, rn.child = rn.child, c
+	}
+	t.at(c).avail++
+	w.path[0] = pathStep{node: c, mover: mover}
+	return c, descend
 }
 
 // ucb is the child's UCB value for the player choosing it. A child always
