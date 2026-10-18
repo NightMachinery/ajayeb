@@ -15,6 +15,7 @@ import importlib.util
 import io
 import json
 import os
+import select
 import signal
 import subprocess
 import sys
@@ -827,6 +828,100 @@ class QueueReviewTests(GuardCase):
         with patch.object(g, "_say", side_effect=check):
             self.assertEqual(g.status(), 0)
 
+    def test_malformed_configuration_never_prints_under_admission(self):
+        keys = ("AJAYEB_MAX_SLOTS", "AJAYEB_MIN_FREE_PCT_BROWSER", "AJAYEB_MIN_SWAP_FREE_MB_BROWSER")
+        warn, say = heavy.Guard._warn, heavy.Guard._say
+        for operation in ("status", "run"):
+            for key in keys:
+                with self.subTest(operation=operation, setting=key):
+                    warnings, lines = [], []
+                    def checked_warn(g, message):
+                        self.assertEqual(g._admission_depth, 0, "stderr can block under admission")
+                        warnings.append(message)
+                        return warn(g, message)
+                    def checked_say(g, message):
+                        self.assertEqual(g._admission_depth, 0, "stdout can block under admission")
+                        lines.append(message)
+                        return say(g, message)
+                    with patch.object(heavy.Guard, "_warn", checked_warn), \
+                         patch.object(heavy.Guard, "_say", checked_say):
+                        g = self.guard(env={key: "invalid"})
+                        if operation == "status":
+                            self.assertEqual(g.status(), 0)
+                            self.assertTrue(lines)
+                        else:
+                            self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 0)
+                    self.assertEqual(sum(key in message for message in warnings), 1)
+                    self.assert_no_owned_resources(g)
+
+    def test_signal_after_final_pending_check_never_starts_child(self):
+        g = self.guard(level=2)
+        sentinel, cmd = self.sentinel_cmd()
+        check, popen = g._raise_pending, heavy.subprocess.Popen
+        fired = []
+        def interrupt_after_check():
+            check()
+            # Method boundary, independent of line numbers: admission has
+            # handed ownership back to run and its final check just returned.
+            if not g._admission_depth and g._live_slots() and not fired:
+                fired.append(True)
+                os.kill(os.getpid(), signal.SIGTERM)
+        def child_runs_first(*args, **kwargs):
+            child = popen(*args, **kwargs)
+            try:
+                child.wait(timeout=5)
+            finally:
+                if child.poll() is None:
+                    child.kill()
+                    child.wait(timeout=5)
+            return child
+        with patch.object(g, "_raise_pending", side_effect=interrupt_after_check), \
+             patch.object(heavy.subprocess, "Popen", side_effect=child_runs_first) as spawn:
+            rc = g.run("browser", cmd, wait=0)
+        self.assertTrue(fired)
+        self.assertEqual(rc, 143)
+        spawn.assert_not_called()
+        self.assertFalse(os.path.exists(sentinel))
+        self.assert_no_owned_resources(g)
+
+    def test_first_pending_signal_survives_end_of_acquisition_deferral(self):
+        g = self.guard(level=2)
+        acquire, check = g._acquire, g._raise_pending
+        fired = []
+        def first_signal(*args):
+            held = acquire(*args)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return held
+        def second_signal():
+            if g._pending is not None and not g._admission_depth and g._live_slots() and not fired:
+                fired.append(True)
+                os.kill(os.getpid(), signal.SIGHUP)
+            return check()
+        with patch.object(g, "_acquire", side_effect=first_signal), \
+             patch.object(g, "_raise_pending", side_effect=second_signal), \
+             patch.object(g, "_spawn") as spawn:
+            self.assertEqual(g.run("browser", [PY, "-c", "pass"], wait=0), 143)
+        self.assertTrue(fired)
+        spawn.assert_not_called()
+        self.assert_no_owned_resources(g)
+
+    def test_refusal_waiting_record_cleanup_finishes_before_deferral_ends(self):
+        self.write_mode({"mode": "paused"})
+        g = self.guard()
+        remove = heavy.remove_file
+        fired = []
+        def interrupt_remove(path):
+            if path and "/waiting/" in path and not fired:
+                fired.append(True)
+                os.kill(os.getpid(), signal.SIGTERM)
+            return remove(path)
+        with patch.object(heavy, "remove_file", side_effect=interrupt_remove), \
+             patch.object(g, "_spawn") as spawn:
+            self.assertEqual(g.run("test", [PY, "-c", "pass"], wait=0), 143)
+        self.assertTrue(fired)
+        spawn.assert_not_called()
+        self.assert_no_owned_resources(g)
+
     def test_publication_exception_removes_our_new_directory(self):
         g = self.guard()
         with patch.object(heavy, "write_json_atomic", side_effect=heavy._Interrupted(signal.SIGTERM)):
@@ -1519,6 +1614,69 @@ class ProcessTests(GuardCase):
                 if child.poll() is None:
                     child.terminate()
                     child.wait(timeout=10)
+
+    def test_full_stderr_pipe_cancellation_exits_without_draining(self):
+        code = r"""
+import importlib.util, os, sys
+source, sentinel = sys.argv[1:]
+spec = importlib.util.spec_from_file_location("pipe_heavy", source)
+h = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = h
+spec.loader.exec_module(h)
+g = h.Guard(reader=lambda: h.Memory(level=2, free_pct=50))
+warn = g._warn
+def output(message):
+    if "heavy: refused" in message or " is waiting:" in message:
+        print("writing", flush=True)
+    return warn(message)
+g._warn = output
+os.set_blocking(2, False)
+try:
+    for size in (4096, 1):
+        try:
+            while True:
+                os.write(2, b"x" * size)
+        except BlockingIOError:
+            pass
+finally:
+    os.set_blocking(2, True)
+sys.exit(g.run("test", [sys.executable, "-c", "open(" + repr(sentinel) + ", 'w').write('x')"], wait=30))
+"""
+        for case in ("refusal", "waiting"):
+            with self.subTest(case=case):
+                if case == "refusal":
+                    self.write_mode({"mode": "paused"})
+                else:
+                    self.write_mode({"mode": "continuous"})
+                    self.hold("slot-1", pid=os.getpid())
+                sentinel = os.path.join(self.tmp, "unexpected-child")
+                child = subprocess.Popen([PY, "-c", code, HEAVY_PATH, sentinel],
+                                         env=self.env(), stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                         text=True)
+                try:
+                    # Observe entry to the real warning with an already full
+                    # stderr pipe. Readiness uses a separate file descriptor.
+                    ready, _, _ = select.select([child.stdout], [], [], 10)
+                    self.assertTrue(ready, "guard did not reach its diagnostic")
+                    self.assertEqual(child.stdout.readline().strip(), "writing")
+                    child.send_signal(signal.SIGTERM)
+                    self.assertEqual(child.wait(timeout=5), 143)
+                    self.assertFalse(os.path.exists(sentinel))
+                    g = heavy.Guard(env=self.env())
+                    self.assertEqual(g._records("queue"), [])
+                    self.assertEqual(g._records("waiting"), [])
+                    self.assertEqual(g._records("running"), [])
+                    self.assertEqual(g._live_slots(), [] if case == "refusal" else ["slot-1"])
+                    for kind in heavy.KIND_LOCKS:
+                        self.assertEqual(g.locks.state(kind), "free")
+                finally:
+                    if child.poll() is None:
+                        child.kill()
+                    child.wait(timeout=5)
+                    child.stdout.close()
+                    child.stderr.close()
+                    if case == "waiting":
+                        heavy.Guard(env=self.env()).locks.release("slot-1", "other")
 
     def test_sigterm_is_forwarded_to_the_child(self):
         pidfile = os.path.join(self.tmp, "child.pid")

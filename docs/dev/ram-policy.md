@@ -44,7 +44,11 @@ queue checks, acquisition, release and the status resource snapshot. Jobs retry 
 freed resource normally passes to the next eligible job within one or two
 seconds. The mutex itself uses short, deadline-aware retries. `--wait` (or
 `AJAYEB_HEAVY_WAIT`, default 1800 seconds) bounds waiting; expiration exits 75.
-Mode refusals remain immediate.
+Mode refusals remain immediate. The slot cap and browser floors are resolved
+once when the guard is created, and malformed settings warn before any
+admission mutex is held.
+Eligibility checks and the status resource snapshot use silent configuration
+getters; all terminal output stays outside admission.
 
 The queue follows the resource that a job can actually use:
 
@@ -110,7 +114,19 @@ checkout guard is not implemented.
 
 - Each slot is a lock directory created atomically with `os.mkdir` (`heavy/slot-N/`, `heavy/browser/`, `heavy/codex/` in the run directory), holding `owner.json`: the guard's PID, the command's process group, and their immutable birth identities. A lock is stale when neither process is alive or when a strong identity proves PID reuse. An unreadable or legacy identity keeps a live PID's lock.
 - The lock directories are machine-wide, so agents in different worktrees share the same slots.
-- The child runs in its own session (process group). Signals are forwarded to the group. Before spawning, handled signals are deferred across acquisition and ownership handoff, then stop the run before its child starts. Cleanup ignores repeated handled signals and releases all locks carrying the run's ownership token, including locks acquired before a return was assigned. Release is serialized with admission and removes kind locks before slots. An unhandled kill can leave records for the next stale sweep.
+- The child runs in its own session (process group). Signals are forwarded to the group.
+- Before spawning, handled signals are deferred across acquisition and ownership
+  handoff, then stop the run before its child starts. Deferral ends before the
+  final pending-signal check, so a signal after that check also stops startup.
+- Waiting and refusal diagnostics are interruptible. Warnings write directly
+  to a file descriptor when available, so an interrupted buffered write cannot
+  be retried at interpreter shutdown. Pre-start cancellation exits without a
+  final terminal diagnostic, because another write to a blocked stderr pipe
+  could prevent shutdown.
+- Cleanup ignores repeated handled signals and releases all locks carrying
+  the run's ownership token, including locks acquired before a return was
+  assigned. Release is serialized with admission and removes kind locks before
+  slots. An unhandled kill can leave records for the next stale sweep.
 - `stop-all` requires a matching immutable identity when a running or waiting record carries one. An unreadable or mismatching strong identity never falls back to a command name. Legacy running records keep their local start timestamp for old `stop-all` readers; a mismatch after the guard dies skips the group, so a cross-timezone legacy stop request can require manual inspection.
 - These defaults are set for the child when unset or empty: `NODE_OPTIONS=--max-old-space-size=1536`, `GOMEMLIMIT=768MiB`, `GOFLAGS=-p=2`, `GOMAXPROCS=4`. A `NODE_OPTIONS` or `GOFLAGS` that is set but has no heap or `-p` flag gets ours appended.
 - Fuzzing and other long CPU-bound runs get `nice 10`.

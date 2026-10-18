@@ -91,6 +91,9 @@ slot count.
 Exit codes: the command's own code; 75 when refused (EX_TEMPFAIL); 2 for
 usage errors; 126 or 127 when the command cannot be started; 128+N when the
 command (or this script, before the command started) died from signal N.
+Pre-start cancellation exits without a final terminal diagnostic, so a blocked
+stderr consumer cannot prevent cleanup or exit. Slot-cap and browser-floor
+settings warn once at guard creation, before admission holds shared resources.
 """
 
 from __future__ import annotations
@@ -767,6 +770,12 @@ class Guard:
         self._pending: Optional[int] = None
         self._done = False
         self._old_handlers: Dict[int, object] = {}
+        # Resolve settings and warn once before any admission critical section.
+        # The getters used by eligibility/status must never write to a pipe.
+        self._max_slots = self._read_max_slots()
+        self._browser_floors = (
+            self._env_float("AJAYEB_MIN_FREE_PCT_BROWSER", DEFAULT_MIN_FREE_PCT_BROWSER),
+            self._env_float("AJAYEB_MIN_SWAP_FREE_MB_BROWSER", DEFAULT_MIN_SWAP_FREE_MB_BROWSER))
 
     # -- configuration -------------------------------------------------------
 
@@ -774,11 +783,22 @@ class Guard:
         print(msg, file=self.out)
 
     def _warn(self, msg: str) -> None:
-        print(msg, file=self.err)
         try:
-            self.err.flush()
-        except (OSError, ValueError):
-            pass
+            fd = self.err.fileno()
+        except (AttributeError, OSError, ValueError):
+            print(msg, file=self.err)
+            try:
+                self.err.flush()
+            except (OSError, ValueError):
+                pass
+            return
+        # A signal can interrupt a full pipe. TextIO buffering would retain
+        # the interrupted bytes and retry them at interpreter shutdown, after
+        # our handlers have been restored. Write directly so nothing is queued.
+        data = (msg + "\n").encode(getattr(self.err, "encoding", None) or "utf-8",
+                                    getattr(self.err, "errors", None) or "backslashreplace")
+        while data:
+            data = data[os.write(fd, data):]
 
     def _env_float(self, name: str, default: float) -> float:
         raw = self.env.get(name)
@@ -790,7 +810,7 @@ class Guard:
             self._warn(f"heavy: ignoring {name}={raw!r}: not a number")
             return default
 
-    def max_slots(self) -> Optional[int]:
+    def _read_max_slots(self) -> Optional[int]:
         raw = self.env.get("AJAYEB_MAX_SLOTS")
         if raw is None or raw == "":
             return None
@@ -800,9 +820,11 @@ class Guard:
             self._warn(f"heavy: ignoring AJAYEB_MAX_SLOTS={raw!r}: not an integer")
             return None
 
+    def max_slots(self) -> Optional[int]:
+        return self._max_slots
+
     def browser_floors(self) -> Tuple[float, float]:
-        return (self._env_float("AJAYEB_MIN_FREE_PCT_BROWSER", DEFAULT_MIN_FREE_PCT_BROWSER),
-                self._env_float("AJAYEB_MIN_SWAP_FREE_MB_BROWSER", DEFAULT_MIN_SWAP_FREE_MB_BROWSER))
+        return self._browser_floors
 
     def mode_state(self) -> ModeState:
         if self.ci_mode:
@@ -1106,7 +1128,7 @@ class Guard:
                 self._pending = signum
             return
         self._done = True
-        raise _Interrupted(signum)
+        raise _Interrupted(self._pending if self._pending is not None else signum)
 
     def _forward(self, signum: int) -> None:
         child = self._child
@@ -1240,21 +1262,29 @@ class Guard:
                     "since": info["since"], "t0": info["t0"], "protocol": PROTOCOL_VERSION,
                     "identity": info.get("identity"), "nested": nested})
                 try:
-                    held = self._acquire(kind, wait, nested, inherited, info)
+                    try:
+                        held = self._acquire(kind, wait, nested, inherited, info)
+                    finally:
+                        remove_file(waiting)
                 except Refused as refusal:
+                    # Acquisition and waiting-record cleanup are complete.
+                    # Terminal output may block, so cancellation must now raise.
+                    self._acquiring = False
+                    self._raise_pending()
                     self._warn(f"heavy: refused --kind {kind}: {refusal.reason}")
                     self._log(kind, cmd, EX_TEMPFAIL, 0.0, 0, refused=refusal.reason, nested=nested)
                     return EX_TEMPFAIL
-                finally:
-                    remove_file(waiting)
-            self._raise_pending()
+            # End deferral before the final check: a signal arriving after
+            # this check must raise immediately rather than become stranded.
             self._acquiring = False
+            self._raise_pending()
             slot_held = nested or any(SLOT_RE.match(h) for h in held)
             locks = inherited | {h for h in held if h in KIND_LOCKS}
             env = self.child_env(kind, slot_held, locks)
             return self._spawn(kind, cmd, env, held, info, nested)
         except _Interrupted as exc:
-            self._warn(f"heavy: stopped by signal {exc.signum} before the command started")
+            # The interrupted operation may be writing to a full stderr pipe.
+            # Do not start another blocking terminal write during shutdown.
             return 128 + exc.signum
         finally:
             self._done = True
