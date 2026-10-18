@@ -13,6 +13,7 @@
   import type { Attachment } from 'svelte/attachments';
   import Lightbulb from '@lucide/svelte/icons/lightbulb';
   import { t } from '$lib/i18n';
+  import { placeTip } from '$lib/ui/tips.svelte';
   import DismissLayer from '../shell/DismissLayer.svelte';
 
   interface Props {
@@ -25,11 +26,13 @@
     onclose: () => void;
     /** "More in Rules"; the link is left out without it. */
     onmore?: () => void;
+    /** Turns all first-time tips off on this device. */
+    onoff?: () => void;
     /** A stable id for tests (data-first-tip). */
     id?: string;
   }
 
-  let { open, text, anchor = null, onclose, onmore, id }: Props = $props();
+  let { open, text, anchor = null, onclose, onmore, onoff, id }: Props = $props();
 
   /** Places the panel next to the anchor's box, in viewport pixels. DOM only. */
   function placeNear(selector: string | null): Attachment<HTMLElement> {
@@ -41,30 +44,36 @@
         if (!panel) return;
         const box = selector ? document.querySelector<HTMLElement>(selector) : null;
         if (!box) return;
+        const card = box.closest<HTMLElement>('.card-structure [data-slot], [data-card]');
         const r = box.getBoundingClientRect();
+        const cr = (card ?? box).getBoundingClientRect();
         const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const gap = 0.5 * rem;
         const vw = document.documentElement.clientWidth;
         const vh = window.innerHeight;
-        const width = Math.min(18 * rem, vw - 2 * gap);
-        const height = panel.offsetHeight;
-        const left = Math.min(Math.max(gap, r.left + r.width / 2 - width / 2), vw - width - gap);
-        // Above the mark when it fits, so the card it sits on stays in view.
-        const below = r.top - gap - height < gap && r.bottom + gap + height <= vh - gap;
-        const top = below ? r.bottom + gap : Math.max(gap, r.top - gap - height);
+        const placed = placeTip({
+          mark: r,
+          card: cr,
+          panelHeight: panel.offsetHeight,
+          vw,
+          vh,
+          rem
+        });
         panel.style.inset = 'auto';
         panel.style.margin = '0';
-        panel.style.top = `${top}px`;
-        panel.style.left = `${left}px`; // physical-ok: viewport pixels from the anchor's box
-        panel.style.width = `${width}px`;
-        panel.dataset['side'] = below ? 'below' : 'above';
+        panel.style.top = `${placed.top}px`;
+        panel.style.left = `${placed.left}px`; // physical-ok: viewport pixels from the anchor's box
+        panel.style.width = `${placed.width}px`;
+        panel.dataset['side'] = placed.side;
         // The arrow points at the mark's centre.
-        const arrow = Math.min(Math.max(r.left + r.width / 2 - left, 12), width - 12);
-        panel.style.setProperty('--tip-arrow', `${arrow - 6}px`); // the arrow's start edge
+        panel.style.setProperty('--tip-arrow', `${placed.arrow}px`); // the arrow's start edge
       };
       layout();
+      const observer =
+        typeof ResizeObserver !== 'undefined' ? new ResizeObserver(layout) : undefined;
       // Again once the panel is shown and laid out (it has no height before).
       let frame = requestAnimationFrame(() => {
+        const panel = content.closest<HTMLElement>('[data-dismiss-layer]');
+        if (panel) observer?.observe(panel);
         layout();
         frame = requestAnimationFrame(layout);
       });
@@ -73,6 +82,7 @@
       window.addEventListener('scroll', layout, true);
       return () => {
         cancelAnimationFrame(frame);
+        observer?.disconnect();
         window.removeEventListener('resize', layout);
         window.removeEventListener('scroll', layout, true);
       };
@@ -117,13 +127,30 @@
         {t('hints.tip.gotIt')}
       </button>
     </div>
+    <div class="flex items-center justify-between gap-2 border-t border-rule pt-1.5">
+      <span class="text-xs leading-tight text-fg-muted" data-tip-off-hint>
+        {t('hints.tip.offHint')}
+      </span>
+      <button
+        type="button"
+        class="min-h-9 shrink-0 rounded-control px-2.5 text-xs font-semibold text-fg-muted underline decoration-rule-strong underline-offset-2 hover:bg-panel-sunken hover:text-fg"
+        data-tip-off
+        onclick={() => {
+          if (onoff) onoff();
+          else onclose();
+        }}
+      >
+        {t('hints.tip.off')}
+      </button>
+    </div>
   </div>
 </DismissLayer>
 
 <style>
   /* A small arrow on the side of the mark, its start edge at --tip-arrow
      (viewport pixels, so physical). */
-  :global(.first-tip[data-side])::before {
+  :global(.first-tip[data-side='above'])::before,
+  :global(.first-tip[data-side='below'])::before {
     content: '';
     position: absolute;
     left: var(--tip-arrow, 50%); /* physical-ok: matches the panel's viewport placement */

@@ -205,6 +205,56 @@ test.describe('touch flow', { tag: ['@mobile'] }, () => {
     await expect(page.locator('[data-first-tip="newAge"]')).toHaveCount(0);
   });
 
+  test('freeChain does not cover its card on touch, and concept tips do not replay late in a game', async ({
+    page
+  }) => {
+    await configure(page, false, true);
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        'ajayeb:tips',
+        JSON.stringify({ off: false, seen: ['pair'], tutorial: { offer: 'declined' } })
+      );
+    });
+    await page.goto('/dev/new?mode=hotseat&seed=7&scenario=science-pair');
+    await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+    const panel = page.locator('[data-dismiss-layer]').filter({
+      has: page.locator('[data-first-tip="freeChain"]')
+    });
+    const card = page.locator('.card-structure [data-card="library"]');
+    await expect(panel).toBeVisible();
+    await expect(card).toBeVisible();
+    const [panelBox, cardBox] = await Promise.all([panel.boundingBox(), card.boundingBox()]);
+    expect(panelBox).not.toBeNull();
+    expect(cardBox).not.toBeNull();
+    if (panelBox && cardBox) {
+      const disjointVertically =
+        panelBox.y >= cardBox.y + cardBox.height - 1 ||
+        panelBox.y + panelBox.height <= cardBox.y + 1;
+      expect(disjointVertically, 'freeChain bubble must not cover the card face').toBe(true);
+    }
+    await card.tap();
+    await expect(page.locator('[data-first-tip]')).toHaveCount(0);
+    await expect(page.locator('dialog[open] [data-card-sheet="library"]')).toBeVisible();
+
+    // At 5/6 science symbols in Age III, the first-science-symbol and pawn-left-centre
+    // concept tips do not replay out of context.
+    await page.evaluate(() => {
+      localStorage.setItem(
+        'ajayeb:tips',
+        JSON.stringify({
+          off: false,
+          seen: ['win', 'guildBack'],
+          tutorial: { offer: 'declined' }
+        })
+      );
+    });
+    await page.goto('/dev/new?mode=hotseat&seed=7&scenario=science-supremacy');
+    await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+    await page.waitForFunction(() => window.__ajayeb?.ready());
+    await expect(page.locator('[data-first-tip="science"]')).toHaveCount(0);
+    await expect(page.locator('[data-first-tip="track"]')).toHaveCount(0);
+  });
+
   test('Escape restores native-sheet focus quietly, the next touch acts and keyboard tips still work', async ({
     page
   }) => {

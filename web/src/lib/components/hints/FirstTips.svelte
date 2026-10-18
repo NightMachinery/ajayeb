@@ -32,10 +32,52 @@
 
   // The ply a tip was last closed at: one tip per turn.
   let closedAt = $state<number | null>(null);
+  // Incremented when a dialog opens or closes, so a tip turned back on in
+  // Settings waits until the sheet closes before mounting its dismiss layer.
+  let dialogTick = $state(0);
+
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    let raf = 0;
+    const sync = (): void => {
+      dialogTick += 1;
+      if (!raf && typeof requestAnimationFrame === 'function') {
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          dialogTick += 1;
+        });
+      }
+    };
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['open', 'aria-modal']
+    });
+    document.addEventListener('close', sync, true);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('close', sync, true);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  });
+
+  function dialogOpen(): boolean {
+    void dialogTick;
+    return (
+      typeof document !== 'undefined' &&
+      document.querySelector('dialog[open], [aria-modal="true"]') !== null
+    );
+  }
 
   const due = $derived.by((): TipId | null => {
-    if (!view || seat === null || !canShow || closedAt === view.ply) return null;
-    return dueTip(tipsInView(view, seat, families, boardMarks), tips.value);
+    const next =
+      !view || seat === null || !canShow || closedAt === view.ply
+        ? null
+        : dueTip(tipsInView(view, seat, families, boardMarks), tips.value);
+    if (!next || dialogOpen()) return null;
+    return next;
   });
 
   function text(id: TipId): string {
@@ -84,6 +126,7 @@
     text={text(id)}
     anchor={tipSelector(id, view ?? undefined, seat ?? 0)}
     onclose={() => close(id)}
+    onoff={() => tips.setOff(true)}
     onmore={() => void openRules(TIPS[id].rules)}
   />
 {/if}

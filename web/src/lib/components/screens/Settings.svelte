@@ -79,6 +79,7 @@
   const uid = $props.id();
   const hintsTitleId = `${uid}-hints`;
   function resetTips(): void {
+    tips.setOff(false);
     tips.resetSeen();
     tipsReset = true;
   }
@@ -266,21 +267,19 @@
         }}
       />
     </label>
-    {#if !tips.value.off}
-      <div class="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          class="min-h-9 rounded-control border border-rule bg-panel px-3 text-sm text-fg hover:bg-panel-sunken"
-          data-setting="tips-reset"
-          onclick={resetTips}
-        >
-          {t('hints.settings.tipsReset')}
-        </button>
-        <span class="text-xs text-fg-muted" role="status">
-          {tipsReset ? t('hints.settings.tipsResetDone') : ''}
-        </span>
-      </div>
-    {/if}
+    <div class="flex flex-wrap items-center gap-3">
+      <button
+        type="button"
+        class="min-h-9 rounded-control border border-rule bg-panel px-3 text-sm text-fg hover:bg-panel-sunken"
+        data-setting="tips-reset"
+        onclick={resetTips}
+      >
+        {t('hints.settings.tipsReset')}
+      </button>
+      <span class="text-xs text-fg-muted" role="status">
+        {tipsReset ? t('hints.settings.tipsResetDone') : ''}
+      </span>
+    </div>
     <div class="flex flex-wrap items-center gap-3">
       <button
         type="button"

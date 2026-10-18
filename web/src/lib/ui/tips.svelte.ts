@@ -256,10 +256,26 @@ function markInView(id: TipId, view: TipView, seat: 0 | 1): boolean {
       );
     case 'guildBack':
       return view.structure.some((s) => s.state === 'faceDown' && s.back === 'guild');
-    case 'track':
-      return (view.military?.position ?? 0) !== 0;
-    case 'science':
-      return (view.players?.[seat]?.science?.symbols?.length ?? 0) > 0;
+    case 'track': {
+      // Only when the pawn first leaves the centre in Age I, before a
+      // looting token is taken or a later military push moves it on.
+      const pos = Math.abs(view.military?.position ?? 0);
+      const shields = (view.players?.[0]?.shields ?? 0) + (view.players?.[1]?.shields ?? 0);
+      return (
+        (view.age ?? 1) === 1 &&
+        pos >= 1 &&
+        pos <= 2 &&
+        shields <= 2 &&
+        (view.military?.looting ?? []).every((l) => l.present)
+      );
+    }
+    case 'science': {
+      // Only while the seat still holds its first science symbol, before
+      // Age III, so a late resume at 3/6 or 5/6 symbols never replays it.
+      const symbols = view.players?.[seat]?.science?.symbols ?? [];
+      const total = symbols.reduce((sum, s) => sum + (s.count ?? 1), 0);
+      return (view.age ?? 1) < 3 && total === 1;
+    }
     case 'newAge':
       // Still the start of Age II, including a bot's opening move. A late
       // resume or competing tips must not replay this introduction.
@@ -271,6 +287,86 @@ function markInView(id: TipId, view: TipView, seat: 0 | 1): boolean {
     default:
       return false;
   }
+}
+
+export interface TipRect {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface TipPlacement {
+  readonly top: number;
+  readonly left: number;
+  readonly width: number;
+  readonly side: 'above' | 'below' | 'beside';
+  readonly arrow: number;
+}
+
+/**
+ * Places a first-time tip next to `mark` without covering `card` (the whole
+ * card when the mark sits on one, else `mark` itself). A mark in the lower
+ * half of a card (the chain badge) prefers `below`, then `above` the card's
+ * top edge, so the card stays clear to tap.
+ */
+export function placeTip(opts: {
+  mark: TipRect;
+  card?: TipRect;
+  panelHeight: number;
+  vw: number;
+  vh: number;
+  rem?: number;
+}): TipPlacement {
+  const { mark, card = mark, panelHeight, vw, vh, rem = 16 } = opts;
+  const gap = 0.5 * rem;
+  const width = Math.min(18 * rem, vw - 2 * gap);
+  const clearTop = Math.min(mark.top, card.top);
+  const clearBottom = Math.max(mark.bottom, card.bottom);
+  const clearLeft = Math.min(mark.left, card.left);
+  const clearRight = Math.max(mark.right, card.right);
+  const markCenterX = mark.left + mark.width / 2;
+  const markCenterY = mark.top + mark.height / 2;
+  const cardCenterY = card.top + card.height / 2;
+  const bottomMark = markCenterY > cardCenterY + 1;
+  const fitsAbove = clearTop - gap - panelHeight >= gap;
+  const fitsBelow = clearBottom + gap + panelHeight <= vh - gap;
+
+  let side: 'above' | 'below' | 'beside';
+  if (bottomMark) {
+    if (fitsBelow) side = 'below';
+    else if (fitsAbove) side = 'above';
+    else if (clearRight + gap + width <= vw - gap || clearLeft - gap - width >= gap)
+      side = 'beside';
+    else side = vh - clearBottom >= clearTop ? 'below' : 'above';
+  } else {
+    if (fitsAbove) side = 'above';
+    else if (fitsBelow) side = 'below';
+    else if (clearRight + gap + width <= vw - gap || clearLeft - gap - width >= gap)
+      side = 'beside';
+    else side = clearTop >= vh - clearBottom ? 'above' : 'below';
+  }
+
+  let left = Math.min(Math.max(gap, markCenterX - width / 2), vw - width - gap);
+  let top: number;
+  if (side === 'below') {
+    top = clearBottom + gap;
+  } else if (side === 'above') {
+    top = clearTop - gap - panelHeight;
+  } else {
+    left =
+      clearRight + gap + width <= vw - gap
+        ? clearRight + gap
+        : Math.max(gap, clearLeft - gap - width);
+    top = Math.min(
+      Math.max(gap, markCenterY - panelHeight / 2),
+      Math.max(gap, vh - panelHeight - gap)
+    );
+  }
+  const arrow = Math.min(Math.max(markCenterX - left, 12), width - 12) - 6;
+  return { top, left, width, side, arrow };
 }
 
 /**

@@ -563,10 +563,12 @@ export const hints = {
     'A new age: a new structure of stronger cards. The player behind on the pawn chose who begins it, and it ends when its last card is taken.',
   'hints.tip.gotIt': 'Got it',
   'hints.tip.more': 'More in Rules',
+  'hints.tip.off': 'Don’t show tips again',
+  'hints.tip.offHint': 'Turn them back on in Settings.',
 
   // The Settings screen's hint section (screens/Settings.svelte).
   'hints.settings.title': 'Hints',
-  'hints.settings.tips': 'First-time tips',
+  'hints.settings.tips': 'Show first-time tips',
   'hints.settings.tipsHint': 'Explain each hint mark the first time it appears on this device.',
   'hints.settings.tipsReset': 'Show the tips again',
   'hints.settings.tipsResetDone': 'The tips will show again.',

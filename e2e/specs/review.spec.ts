@@ -167,4 +167,50 @@ test.describe('first-time tips', () => {
     await expect(chain).toHaveCount(0);
     expect(problems).toEqual([]);
   });
+
+  test(
+    'the don’t-show-again button turns tips off across reloads until Settings turns them on',
+    { tag: ['@mobile'] },
+    async ({ page }) => {
+      test.setTimeout(90_000);
+      const problems = watchHygiene(page);
+      await tipsOn(page);
+      const driver = await openHotseatRoom(page, 'science-pair');
+      await driver.nextTurn();
+
+      const tip = page.locator('[data-dismiss-layer] [data-first-tip="pair"]');
+      await expect(tip).toBeVisible();
+      await expect(tip.locator('[data-tip-off-hint]')).toHaveText('Turn them back on in Settings.');
+      await expect(tip.locator('[data-tip-off]')).toHaveText('Don’t show tips again');
+      await tip.locator('[data-tip-off]').click();
+      await expect(page.locator('[data-first-tip]')).toHaveCount(0);
+      const storedOff = await page.evaluate(() => localStorage.getItem('ajayeb:tips'));
+      expect(JSON.parse(storedOff ?? '{}')).toMatchObject({ off: true });
+
+      // After a reload all tips stay off, including the next unseen tip (freeChain).
+      await page.reload();
+      await driver.waitReady();
+      await driver.nextTurn();
+      await page.waitForTimeout(400);
+      await expect(page.locator('[data-first-tip]')).toHaveCount(0);
+
+      // Settings offers "Show first-time tips" next to "Show the tips again", and turns tips back on.
+      await driver.dismissToasts();
+      await driver.visible('[data-control="menu"]').click();
+      await driver.visible('[data-control="menu-settings"]').click();
+      const sheet = page.locator('dialog[open]');
+      await expect(sheet).toBeVisible();
+      const toggle = sheet.locator('[data-setting="tips"]');
+      await expect(sheet.locator('[data-settings-hints]')).toContainText('Show first-time tips');
+      await expect(sheet.locator('[data-setting="tips-reset"]')).toBeVisible();
+      await expect(toggle).not.toBeChecked();
+      await toggle.click();
+      await expect(toggle).toBeChecked();
+      await page.keyboard.press('Escape');
+      await expect(sheet).toHaveCount(0);
+
+      await expect(page.locator('[data-dismiss-layer] [data-first-tip="pair"]')).toBeVisible();
+      expect(problems).toEqual([]);
+    }
+  );
 });

@@ -8,6 +8,7 @@ import {
   TipsStore,
   dueTip,
   parseTips,
+  placeTip,
   TIP_IDS,
   TIPS,
   tipSelector,
@@ -350,9 +351,72 @@ describe('the tips beyond the pips (M10.F3)', () => {
       )
     ).not.toContain('newAge');
     expect(tipsInView({ ...base, age: 3, result: {} } as TipView, 0, none, false)).toEqual([]);
+    // Late in a game (3/6 or 5/6 symbols, Age III, or after the pawn's opening move)
+    // the concept tips do not replay out of context.
+    expect(
+      tipsInView(
+        full({
+          ...base,
+          players: [
+            { wonders: [], science: { symbols: [], distinct: 0 } },
+            {
+              wonders: [],
+              science: {
+                symbols: [
+                  { symbol: 'globe', count: 1 },
+                  { symbol: 'wheel', count: 1 },
+                  { symbol: 'sundial', count: 1 }
+                ],
+                distinct: 3
+              }
+            }
+          ]
+        }),
+        1,
+        none,
+        false
+      )
+    ).not.toContain('science');
+    expect(tipsInView({ ...base, age: 3 }, 1, none, false)).not.toContain('science');
+    expect(
+      tipsInView({ ...base, age: 2, military: { position: -1, looting: [] } }, 0, none, false)
+    ).not.toContain('track');
+    expect(
+      tipsInView({ ...base, military: { position: -4, looting: [] } }, 0, none, false)
+    ).not.toContain('track');
+    expect(
+      tipsInView(
+        {
+          ...base,
+          military: {
+            position: -1,
+            looting: [{ at: -3, seat: 0, value: 2, present: false }]
+          }
+        },
+        0,
+        none,
+        false
+      )
+    ).not.toContain('track');
     expect(tipSelector('track')).toBe('[data-tut="track"] [data-pawn]');
     expect(tipSelector('science')).toBe('[data-tut="home"] [data-science]');
     expect(tipSelector('newAge')).toBe('[data-tut="age"]');
+  });
+
+  it('places a bottom-of-card tip (freeChain) outside the card face', () => {
+    const card = { left: 160, top: 520, right: 230, bottom: 615, width: 70, height: 95 };
+    const mark = { left: 175, top: 594, right: 215, bottom: 612, width: 40, height: 18 };
+    // Room below the card on 390x844: sits below the card.
+    const below = placeTip({ mark, card, panelHeight: 160, vw: 390, vh: 844 });
+    expect(below.side).toBe('below');
+    expect(below.top).toBeGreaterThanOrEqual(card.bottom + 8);
+    // Card near the bottom edge so below does not fit: sits above the card's top edge,
+    // never over the card face.
+    const lowCard = { left: 160, top: 610, right: 230, bottom: 705, width: 70, height: 95 };
+    const lowMark = { left: 175, top: 684, right: 215, bottom: 702, width: 40, height: 18 };
+    const above = placeTip({ mark: lowMark, card: lowCard, panelHeight: 160, vw: 390, vh: 844 });
+    expect(above.side).toBe('above');
+    expect(above.top + 160).toBeLessThanOrEqual(lowCard.top - 8);
   });
 
   it('every tip names a rules section', () => {
