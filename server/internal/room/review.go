@@ -30,7 +30,8 @@ import (
 //     (ai.CompareActions, SO-ISMCTS on one worker) plays the proposed move
 //     and the move played against each other. The review names the
 //     proposed move only when the search also rates it clearly better, by
-//     reviewSearchMinGap of its mean reward; otherwise it says no clearly
+//     reviewSearchMinGap of its mean reward, in a position it does not
+//     hold decided (reviewSearchDecided); otherwise it says no clearly
 //     better move was found.
 //   - deep: the tree search ranks every move (ai.SearchActions), and its
 //     most visited move, when it is not the move played, is checked the
@@ -96,6 +97,12 @@ const (
 	// times the comparison's sampling noise at the default budget
 	// (docs/ai.md).
 	reviewSearchMinGap = 0.04
+	// reviewSearchDecided is the mean reward past which the search holds a
+	// position decided: the move played keeps a won game won (a mean
+	// reward of at least this), or the better move still loses (at most
+	// 1 minus this). The search then confirms nothing, as Greedy's own
+	// guard says nothing in a decided position.
+	reviewSearchDecided = 0.9
 	// reviewSearchTimeout bounds the wall clock of one step of a two-stage
 	// or deep review, the wait for a review slot included. The iteration
 	// budget keeps a review well under a second; this only guards a
@@ -512,13 +519,19 @@ func buildReview(ctx context.Context, pre *engine.State, played engine.Action, s
 // searchConfirms reports whether the tree search, comparing better with
 // played on obs (ai.CompareActions, with the seed's comparison tag),
 // rates better clearly higher: by at least reviewSearchMinGap of mean
-// reward.
+// reward, in a position it does not hold decided (reviewSearchDecided).
 func searchConfirms(ctx context.Context, obs engine.Observation, seed uint64, better, played engine.Action, iterations int) (bool, error) {
 	cmp, err := ai.CompareActions(ctx, obs, ai.MixSeed(seed, reviewCompareTag), better, played, iterations)
 	if err != nil {
 		return false, err
 	}
-	return cmp.Values[0]-cmp.Values[1] >= reviewSearchMinGap, nil
+	return clearLead(cmp.Values[0], cmp.Values[1]), nil
+}
+
+// clearLead reports whether a better move's mean reward clearly leads the
+// played move's, in a position the search does not hold decided.
+func clearLead(better, played float64) bool {
+	return better-played >= reviewSearchMinGap && played < reviewSearchDecided && better > 1-reviewSearchDecided
 }
 
 // deepReview is the deep review of played in pre: the tree search's most

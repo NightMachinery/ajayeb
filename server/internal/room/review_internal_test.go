@@ -273,6 +273,49 @@ func TestReviewConfirmation(t *testing.T) {
 	}
 }
 
+// TestReviewSearchTurnsDownGreedy pins one position where Greedy and the
+// search disagree: after Piraeus is built with Pharmacist at ply 20 of a
+// seeded random game, Greedy names Theater about 5 points better, and the
+// two-stage comparison does not rate it clearly better, so the two-stage
+// review names no move.
+func TestReviewSearchTurnsDownGreedy(t *testing.T) {
+	states, acts := reviewPositions(t, 2)
+	s, played := &states[4], acts[4]
+	if s.Ply != 20 || played.Key() != "wonder:piraeus:pharmacist" {
+		t.Fatalf("the seeded games changed: ply %d, %s", s.Ply, played.Key())
+	}
+	seed := reviewSeed(29, s.Ply)
+	q, ok := buildReview(context.Background(), s, played, seed, quickReview)
+	if !ok || q.Better == nil || *q.Better != "construct:theater" || q.Reason != view.ReviewReasonPoints {
+		t.Fatalf("Greedy's review: %+v", q)
+	}
+	cfg := reviewConfig{strength: view.AdvisorStrengthTwoStage, rank: reviewRank, budget: DefaultReviewBudget}
+	ts, ok := buildReview(context.Background(), s, played, seed, cfg)
+	if !ok || ts.Better != nil || ts.Reason != view.ReviewReasonNone || ts.Gap != 0 {
+		t.Fatalf("the two-stage review: %+v", ts)
+	}
+}
+
+// TestClearLead checks the search's confirmation rule: a lead of at least
+// reviewSearchMinGap, and nothing in a decided position.
+func TestClearLead(t *testing.T) {
+	for _, c := range []struct {
+		better, played float64
+		want           bool
+	}{
+		{0.60, 0.50, true},
+		{0.55, 0.52, false}, // within the noise
+		{0.88, 0.80, true},
+		{0.98, 0.93, false}, // the move played keeps a won game won
+		{0.08, 0.02, false}, // every move loses
+		{0.16, 0.10, true},
+	} {
+		if got := clearLead(c.better, c.played); got != c.want {
+			t.Errorf("clearLead(%v, %v) = %v, want %v", c.better, c.played, got, c.want)
+		}
+	}
+}
+
 // TestReviewJobWaitsForSlot checks a review job against the Manager's
 // review slots: with every slot taken it waits, and a job whose deadline
 // passes first posts a review that says nothing; with a slot free it
