@@ -7,8 +7,8 @@ Ajayeb is developed on a laptop that is also in daily use and often runs under m
 `tools/heavy.py` is a Python standard-library script, tested by `tests/test_heavy.py` with injected readers and an injected clock.
 
 ```
-python3 tools/heavy.py run --kind test|build|check|lint|browser|codex|install|fuzz|bench|light [--wait 1800] -- CMD...
-python3 tools/heavy.py status     # pressure, free level, swap, mode, window, slot holders, recent peak RSS per kind
+python3 tools/heavy.py run --kind test|build|check|lint|browser|codex|install|fuzz|bench|light [--wait 1800] [--priority normal|high] -- CMD...
+python3 tools/heavy.py status     # pressure, free level, swap, mode, window, slot holders, ordered queue, recent peak RSS per kind
 python3 tools/heavy.py stop-all   # SIGTERM the process groups the guard started (recorded PIDs only)
 python3 tools/heavy.py mode continuous|nightshift|paused [--window 00:00-10:00]
 ```
@@ -35,7 +35,57 @@ On top of the general slots there are two separate locks of capacity one. A `bro
 - `browser`: one headless Chrome on the machine at a time. A browser also needs the free-memory level to be at least 14%, and on Linux at least 512 MB of swap free. macOS adds swap files as it needs them, so its free swap is only the unused room in the files made so far and is not checked there. Both thresholds can be tuned through environment variables.
 - `codex`: one image-generation job at a time.
 
-A job that is refused waits with backoff for up to `--wait` seconds, then exits 75.
+### The admission queue
+
+Jobs publish atomic tickets under `heavy/queue/` before attempting admission.
+Tickets are ordered by priority, then creation time, giving FIFO order among
+jobs with equal priority. A brief admission mutex serializes ticket creation,
+queue checks and acquisition. Jobs retry at a fixed one-second interval, so a
+freed resource normally passes to the next eligible job within one or two
+seconds. The mutex itself uses short, deadline-aware retries. `--wait` (or
+`AJAYEB_HEAVY_WAIT`, default 1800 seconds) bounds waiting; expiration exits 75.
+Mode refusals remain immediate.
+
+The queue follows the resource that a job can actually use:
+
+- An earlier job waiting for a general slot blocks later jobs needing slots.
+- An earlier browser waiting for the browser lock blocks later browsers, while
+  tests and linters can pass. The same rule applies to the codex lock.
+- A browser held by its memory floor reserves nothing. A mode-blocked ticket
+  also reserves nothing and is removed as soon as its guard observes refusal.
+- Nested runs never publish tickets or join the queue. A nested browser or
+  codex run retries only the physical kind lock it does not yet hold. This is
+  a fairness exception: it can pass top-level tickets, which may themselves
+  need its parent's held slot. Queuing behind them could deadlock.
+
+Every ticket retains its browser floor settings. Every eligibility check
+recomputes the earlier tickets' own gates and resources,
+so a sleeping waiter's last recorded reason cannot cause head-of-line blocking.
+Memory samples are reused for at most one second. Process start times come
+from native libproc on macOS and procfs on Linux, avoiding a `ps` subprocess
+per ticket per poll. The existing conservative rule applies when identity
+cannot be read: retain the live process's ticket.
+
+Only the coordinator grants high priority. It can use `--priority high` for
+one run or `HEAVY_PRIORITY=high` for a team's environment; explicit CLI priority
+overrides the environment. High-priority jobs go before normal jobs, FIFO
+among themselves. Sustained high-priority traffic can delay normal work, so
+priority is for coordinated exceptions.
+
+Use the queue instead of manually checking status and yielding to other
+teams. Do not build agent-side retry loops. `status` lists queue position,
+priority, kind, age and the last blocked resource or gate. Tickets disappear
+when jobs start, fail, time out, are refused or receive a handled signal.
+Any waiter or status check removes dead or PID-reused tickets.
+
+Worktrees with older guard copies still share the same atomic slot and kind
+locks, so the queue protocol does not double-allocate resources with them.
+They ignore tickets and can repeatedly overtake waiting jobs; FIFO applies
+only among updated guards. `status` marks their waiting records as
+`NO TICKET: legacy guard, may overtake queue`. Updated guards temporarily
+without a ticket (starting or inheriting resources) are identified separately.
+Rebase old worktrees to gain fairness. Automatic delegation to a newer main
+checkout guard is not implemented.
 
 ### Locks and processes
 

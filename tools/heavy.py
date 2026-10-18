@@ -37,8 +37,19 @@ Kind locks
   the unused room in the files made so far and says nothing about how much
   memory is left. It is also skipped when no swap is allocated.
 
-When a slot, lock or threshold is unavailable the job waits with backoff for
-up to --wait seconds (default 1800, or AJAYEB_HEAVY_WAIT), then gives up.
+Jobs publish tickets in heavy/queue/ before attempting admission, ordered by
+priority then creation time (FIFO among equals). Unavailable slots or locks
+are checked every second for up to --wait seconds (default 1800, or
+AJAYEB_HEAVY_WAIT), then exit 75. Mode refusals remain immediate. A ticket
+blocked only by its own browser floor or mode reserves nothing; one blocked
+by a kind lock reserves only that lock, so unrelated work can pass it.
+
+--priority high or HEAVY_PRIORITY=high moves ahead of normal tickets; only the
+coordinator grants high priority. Nested runs never take tickets, including
+when retrying a missing kind lock. status shows ordered tickets and flags legacy waiters without
+tickets. Older guard copies still share slot locks safely but can overtake.
+Memory samples are reused for at most one second; process identity checks
+use native APIs on macOS and procfs on Linux, with no ps subprocess per poll.
 
 Each slot and kind lock is a directory under RUN_DIR/heavy/ made with mkdir,
 holding owner.json: the guard's pid, the command's process group and their
@@ -78,7 +89,10 @@ from __future__ import annotations
 
 import argparse
 import collections
+import contextlib
+import ctypes
 import datetime as _dt
+import fcntl
 import json
 import os
 import random
@@ -125,8 +139,9 @@ LINUX_CRITICAL_PCT = 5.0
 # between mkdir and writing the file); after that it counts as stale.
 FRESH_LOCK_GRACE = 30.0
 BREAK_GRACE = 30.0
-BACKOFF_START = 2.0
-BACKOFF_MAX = 30.0
+POLL_INTERVAL = 1.0
+PROTOCOL_VERSION = 2
+PRIORITIES = ("normal", "high")
 OWNER_FILE = "owner.json"
 SLOT_RE = re.compile(r"^slot-(\d+)$")
 FORWARDED_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
@@ -252,8 +267,37 @@ def default_proc_command(pid: int) -> Optional[str]:
 
 
 def default_proc_start(pid: int) -> Optional[str]:
-    """When a process started (ps lstart), or None. It survives exec and changes on pid reuse."""
-    return _ps_field(pid, "lstart")
+    """ps-compatible start time, without spawning ps in admission polls.
+
+    Darwin exposes the birth time through libproc; Linux exposes boot time
+    and start ticks in procfs. Unknown platforms retain the ps fallback.
+    """
+    try:
+        if sys.platform == "darwin":
+            # proc_bsdinfo: 120 bytes precede the two uint64 birth fields.
+            buf = ctypes.create_string_buffer(136)
+            size = _LIBPROC.proc_pidinfo(pid, 3, 0, buf, len(buf))
+            if size != len(buf):
+                return None
+            born = ctypes.c_uint64.from_buffer(buf, 120).value
+        elif sys.platform.startswith("linux"):
+            with open(f"/proc/{pid}/stat", encoding="utf-8") as fh:
+                ticks = int(fh.read().rsplit(")", 1)[1].split()[19])
+            with open("/proc/stat", encoding="utf-8") as fh:
+                boot = next(int(line.split()[1]) for line in fh if line.startswith("btime "))
+            born = boot + ticks / os.sysconf("SC_CLK_TCK")
+        else:
+            return _ps_field(pid, "lstart")
+        return " ".join(time.strftime("%a %b %e %H:%M:%S %Y", time.localtime(born)).split())
+    except (OSError, ValueError, IndexError, StopIteration, AttributeError):
+        return None
+
+
+_LIBPROC = ctypes.CDLL("/usr/lib/libproc.dylib") if sys.platform == "darwin" else None
+if _LIBPROC is not None:
+    _LIBPROC.proc_pidinfo.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_uint64,
+                                    ctypes.c_void_p, ctypes.c_int)
+    _LIBPROC.proc_pidinfo.restype = ctypes.c_int
 
 
 class Clock:
@@ -667,6 +711,7 @@ class Guard:
         self.mode_path = os.path.join(self.configured_run_dir, "mode.json")
         self.locks = Locks(self.heavy_dir, self.pid_alive, self.group_alive, self.proc_start)
 
+        self._memory_sample: Optional[Tuple[float, Memory]] = None
         self._child: Optional[subprocess.Popen] = None
         self._spawning = False
         self._pending: Optional[int] = None
@@ -763,12 +808,72 @@ class Guard:
                 return name, None
         return None, busy
 
+    @contextlib.contextmanager
+    def _admission(self, deadline: Optional[float] = None):
+        """Serialize ticket publication, eligibility checks and slot acquisition.
+
+        Keep this file permanently: unlinking a flock file lets two processes
+        lock different inodes. Legacy guards still share the mkdir locks.
+        """
+        os.makedirs(self.heavy_dir, exist_ok=True)
+        with open(os.path.join(self.heavy_dir, "admission.lock"), "a") as fh:
+            while True:
+                try:
+                    fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    remaining = None if deadline is None else deadline - self.clock.monotonic()
+                    if remaining is not None and remaining <= 0:
+                        raise Refused("admission lock is busy; wait deadline reached")
+                    self.clock.sleep(0.05 if remaining is None else min(0.05, remaining))
+            try:
+                yield
+            finally:
+                fcntl.flock(fh, fcntl.LOCK_UN)
+
+    def _poll_memory(self) -> Memory:
+        now = self.clock.monotonic()
+        if self._memory_sample is None or now - self._memory_sample[0] >= POLL_INTERVAL:
+            self._memory_sample = (now, self.read_memory())
+        return self._memory_sample[1]
+
+    @staticmethod
+    def _ticket_order(info: Mapping) -> tuple:
+        return (0 if info.get("priority") == "high" else 1,
+                info.get("created_ns", 0), info.get("token", ""))
+
+    def _tickets(self) -> List[Tuple[str, dict]]:
+        """Caller holds admission lock. Reuse lock liveness rules, including PID reuse."""
+        tickets = []
+        for path, rec in self._records("queue"):
+            if self.locks.info_alive(rec):
+                tickets.append((path, rec))
+            else:
+                remove_file(path)
+        return sorted(tickets, key=lambda item: self._ticket_order(item[1]))
+
+    def _resource(self, kind: str, nested: bool, inherited: Set[str],
+                  mem: Memory, state: ModeState, floors: Optional[Sequence[float]] = None) -> str:
+        """Resource a pending job reserves, or gate if it cannot use resources.
+
+        Recompute rather than trusting another waiter's last blocked_on value:
+        its memory floor, mode or kind lock may have changed since that poll.
+        """
+        if not nested and gate_mode(kind, state, self.clock.now()):
+            return "gate"
+        needs_kind = kind in KIND_LOCKS and kind not in inherited
+        if needs_kind:
+            if kind == "browser" and browser_block_reason(mem, *(floors or self.browser_floors())):
+                return "gate"
+            if self.locks.state(kind) == "live":
+                return kind
+        return "slots" if not nested else kind if needs_kind else "none"
+
     def _attempt(self, kind: str, nested: bool, inherited: Set[str],
-                 info: Mapping) -> Tuple[List[str], Optional[str], bool]:
-        """Try every gate once. Returns (held lock names, reason, final)."""
-        state = None
+                 info: Mapping, tickets: Sequence[Tuple[str, dict]] = ()) -> Tuple[List[str], Optional[str], bool]:
+        """Try every gate once while holding admission lock."""
+        state = self.mode_state()
         if not nested:
-            state = self.mode_state()
             reason = gate_mode(kind, state, self.clock.now())
             if reason:
                 return [], reason, True
@@ -778,22 +883,47 @@ class Guard:
         if nested and not needs_kind_lock:
             return [], None, False
         self.locks.sweep()
-        mem = self.read_memory()
+        mem = self._poll_memory()
+        if needs_kind_lock and kind == "browser":
+            reason = browser_block_reason(mem, *self.browser_floors())
+            if reason:
+                self._blocked = "gate: " + reason
+                return [], reason, False
+        # A ticket blocked by its kind lock reserves that lock only. Otherwise
+        # it reserves a slot, even if one has just freed and it has not polled.
+        # Propagate kind reservations so a later browser cannot reserve slots
+        # while it is itself queued behind an earlier browser.
+        reserved: Set[str] = set()
+        for _, earlier in tickets:
+            if earlier.get("token") == info["token"]:
+                break
+            other_kind = earlier["kind"]
+            resource = self._resource(other_kind, bool(earlier.get("nested")),
+                                      set(earlier.get("inherited", [])), mem, state, earlier.get("browser_floors"))
+            if other_kind in reserved and resource == "slots":
+                resource = other_kind
+            if resource not in ("gate", "none"):
+                reserved.add(resource)
+        conflict = None
+        if needs_kind_lock and kind in reserved:
+            conflict = kind
+        elif not nested and "slots" in reserved:
+            conflict = "slots"
+        if conflict:
+            self._blocked = conflict
+            return [], f"earlier queued job is waiting for {conflict}", False
         held: List[str] = []
         try:
             if needs_kind_lock:
-                if kind == "browser":
-                    min_free, min_swap = self.browser_floors()
-                    reason = browser_block_reason(mem, min_free, min_swap)
-                    if reason:
-                        return [], reason, False
                 if not self.locks.try_acquire(kind, info):
+                    self._blocked = kind
                     holder = self._describe(self.locks.owner(kind))
                     return [], f"the {kind} lock is held by {holder}", False
                 held.append(kind)
             if not nested:
                 slot, reason = self._try_slot(self.capacity(mem, state), mem, info)
                 if slot is None:
+                    self._blocked = "slots"
                     self._release(held, info["token"])
                     return [], reason, False
                 held.append(slot)
@@ -805,24 +935,49 @@ class Guard:
     def _acquire(self, kind: str, wait: float, nested: bool, inherited: Set[str],
                  info: Mapping) -> List[str]:
         deadline = self.clock.monotonic() + max(wait, 0.0)
-        delay = BACKOFF_START
         last_reason = None
-        while True:
-            held, reason, final = self._attempt(kind, nested, inherited, info)
-            if reason is None:
-                return held
-            if final:
-                raise Refused(reason)
-            remaining = deadline - self.clock.monotonic()
-            if remaining <= 0:
-                if wait > 0:
-                    reason = f"{reason}; gave up after waiting {fmt_secs(wait)}"
-                raise Refused(reason)
-            if reason != last_reason:
-                self._warn(f"heavy: {kind} is waiting: {reason} (up to {fmt_secs(remaining)} more)")
-                last_reason = reason
-            self.clock.sleep(min(remaining, delay * self.rng.uniform(0.8, 1.2)))
-            delay = min(delay * 2, BACKOFF_MAX)
+        # Nested runs never publish tickets or join the queue, including when
+        # they need a missing kind lock. Waiting behind a top-level ticket
+        # could deadlock it on our ancestor's held slot.
+        if nested and (kind not in KIND_LOCKS or kind in inherited):
+            return []
+        path = None if nested else os.path.join(self.heavy_dir, "queue", f"{info['token']}.json")
+        ticket = dict(info, nested=nested, inherited=sorted(inherited), blocked_on="checking",
+                      browser_floors=list(self.browser_floors()) if kind == "browser" else [])
+        published = False
+        try:
+            while True:
+                with self._admission(deadline):
+                    tickets = self._tickets()
+                    if path is not None and not published:
+                        ticket["created_ns"] = max(time.time_ns(), max(
+                            (rec.get("created_ns", 0) + 1 for _, rec in tickets), default=0))
+                        write_json_atomic(path, ticket)
+                        published = True
+                        tickets = sorted(tickets + [(path, ticket)], key=lambda item: self._ticket_order(item[1]))
+                    self._blocked = "gate"
+                    held, reason, final = self._attempt(kind, nested, inherited, info, tickets if not nested else ())
+                    if reason is None:
+                        remove_file(path)
+                        return held
+                    if path is not None:
+                        ticket["blocked_on"] = self._blocked
+                        write_json_atomic(path, ticket)
+                if final:
+                    raise Refused(reason)
+                remaining = deadline - self.clock.monotonic()
+                if remaining <= 0:
+                    if wait > 0:
+                        reason = f"{reason}; gave up after waiting {fmt_secs(wait)}"
+                    raise Refused(reason)
+                # Holder ages change every poll; report changes in the blocked
+                # resource or own gate instead of printing once per second.
+                if self._blocked != last_reason:
+                    self._warn(f"heavy: {kind} is waiting: {reason} (up to {fmt_secs(remaining)} more)")
+                    last_reason = self._blocked
+                self.clock.sleep(min(remaining, POLL_INTERVAL))
+        finally:
+            remove_file(path)
 
     def _release(self, held: Iterable[str], token: str) -> None:
         for name in reversed(list(held)):
@@ -934,7 +1089,8 @@ class Guard:
             env.pop("AJAYEB_HEAVY_LOCKS", None)
         return env
 
-    def run(self, kind: str, cmd: Sequence[str], wait: Optional[float] = None) -> int:
+    def run(self, kind: str, cmd: Sequence[str], wait: Optional[float] = None,
+            priority: Optional[str] = None) -> int:
         if kind not in KINDS:
             self._warn(f"heavy: unknown kind {kind!r}; use one of {', '.join(KINDS)}")
             return EX_USAGE
@@ -944,10 +1100,16 @@ class Guard:
             return EX_USAGE
         if wait is None:
             wait = self._env_float("AJAYEB_HEAVY_WAIT", DEFAULT_WAIT)
+        priority = priority or self.env.get("HEAVY_PRIORITY") or "normal"
+        if priority not in PRIORITIES:
+            self._warn(f"heavy: invalid priority {priority!r}; use normal or high")
+            return EX_USAGE
+        self._memory_sample = None
         nested = self.env.get("AJAYEB_HEAVY_HELD") == "1"
         inherited = {x for x in self.env.get("AJAYEB_HEAVY_LOCKS", "").split(",") if x}
         info = {"pid": os.getpid(), "kind": kind, "cmd": display_cmd(cmd, 160),
-                "since": iso(self.clock.now()), "t0": time.time(), "token": uuid.uuid4().hex}
+                "since": iso(self.clock.now()), "t0": time.time(), "token": uuid.uuid4().hex,
+                "cwd": os.getcwd(), "priority": priority, "protocol": PROTOCOL_VERSION}
         if kind != "light" and (not nested or kind in KIND_LOCKS):
             lstart = self.proc_start(os.getpid())  # this run may take a lock
             if lstart:
@@ -959,7 +1121,8 @@ class Guard:
             if kind != "light":
                 waiting = self._record("waiting", os.getpid(), {
                     "guard": os.getpid(), "kind": kind, "cmd": info["cmd"],
-                    "since": info["since"], "t0": info["t0"]})
+                    "since": info["since"], "t0": info["t0"], "protocol": PROTOCOL_VERSION,
+                    "lstart": info.get("lstart"), "nested": nested})
                 try:
                     held = self._acquire(kind, wait, nested, inherited, info)
                 except Refused as refusal:
@@ -1209,11 +1372,23 @@ class Guard:
                          + ("ok" if block is None else f"blocked, {block}"))
             say(f"{kind + ':':<10} {line}")
 
+        with self._admission():
+            tickets = self._tickets()
+        say(f"queue:     {len(tickets)} (protocol {PROTOCOL_VERSION})")
+        ticket_pids = {rec.get("pid") for _, rec in tickets}
+        for position, (_, rec) in enumerate(tickets, 1):
+            age = time.time() - float(rec.get("t0") or time.time())
+            say(f"  {position}. {rec.get('priority', 'normal')} {rec.get('kind')} "
+                f"{fmt_secs(age)} pid {rec.get('pid')} blocked on {rec.get('blocked_on')}: {rec.get('cmd')}")
         waiting = [rec for _, rec in self._records("waiting") if self.pid_alive(rec.get("guard"))]
         say(f"waiting:   {len(waiting)}")
         for rec in waiting:
             age = time.time() - float(rec.get("t0") or time.time())
-            say(f"  pid {rec.get('guard')} {rec.get('kind')} {fmt_secs(age)}: {rec.get('cmd')}")
+            note = ""
+            if rec.get("guard") not in ticket_pids:
+                note = (" (NO TICKET: legacy guard, may overtake queue)" if not rec.get("protocol")
+                        else " (no ticket: starting or inherited resources)")
+            say(f"  pid {rec.get('guard')} {rec.get('kind')} {fmt_secs(age)}: {rec.get('cmd')}{note}")
         running = self._records("running")
         say(f"running:   {len(running)}")
         for _, rec in running:
@@ -1271,7 +1446,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--wait", type=float, default=None, metavar="SECONDS",
                      help="how long to wait for a slot or lock (default 1800 or $AJAYEB_HEAVY_WAIT)")
 
-    sub.add_parser("status", help="show mode, window, pressure, slots, locks and recent runs")
+    run.add_argument("--priority", choices=PRIORITIES, default=None,
+                     help="queue priority (default normal or $HEAVY_PRIORITY); only the coordinator grants high")
+
+    sub.add_parser("status", help="show mode, pressure, slots, locks, ordered queue and recent runs")
 
     stop = sub.add_parser("stop-all", help="stop every job this script started")
     stop.add_argument("--grace", type=float, default=DEFAULT_GRACE, metavar="SECONDS",
@@ -1298,7 +1476,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if args.command == "run":
         if cmd is None:
             parser.error("run needs -- before the command, e.g. heavy.py run --kind test -- go test ./...")
-        return guard.run(args.kind, cmd, args.wait)
+        return guard.run(args.kind, cmd, args.wait, args.priority)
     if args.command == "status":
         return guard.status()
     if args.command == "stop-all":
