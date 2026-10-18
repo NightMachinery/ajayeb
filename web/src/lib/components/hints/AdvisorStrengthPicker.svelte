@@ -67,7 +67,7 @@
     >
       {#each ADVISOR_STRENGTHS as s (s)}
         <label
-          class="flex min-h-10 items-center justify-center rounded-control px-1.5 text-center text-sm leading-tight font-semibold
+          class="flex min-h-11 items-center justify-center rounded-control px-1.5 text-center text-sm leading-tight font-semibold
             has-focus-visible:outline-2 has-focus-visible:outline-accent
             {s === strength ? 'bg-accent text-on-accent' : 'text-fg'}
             {busy ? 'cursor-wait' : 'cursor-pointer'}"

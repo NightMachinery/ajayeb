@@ -541,8 +541,8 @@ export const hints = {
     other: '{move} looked about {count} points better.'
   },
   'hints.review.pointsConfirmed': {
-    one: '{move} looked about {count} point better, and a deeper search agreed.',
-    other: '{move} looked about {count} points better, and a deeper search agreed.'
+    one: '{move} looked about {count} point better, and a deeper search also rated it better.',
+    other: '{move} looked about {count} points better, and a deeper search also rated it better.'
   },
   'hints.review.pointsSearch': '{move} looked clearly stronger to a deeper search.',
 

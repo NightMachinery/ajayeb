@@ -214,7 +214,9 @@ describe('the review wording', () => {
     const better = 'construct:walls';
     expect(
       verdictText(review({ better, reason: 'points', gap: 4, strength: 'twoStage' }), names)
-    ).toBe('Building Walls looked about 4 points better, and a deeper search agreed.');
+    ).toBe(
+      'Building Walls looked about 4 points better, and a deeper search also rated it better.'
+    );
     // A deep review has no points: the search's verdict names no number.
     expect(verdictText(review({ better, reason: 'points', gap: 0, strength: 'deep' }), names)).toBe(
       'Building Walls looked clearly stronger to a deeper search.'

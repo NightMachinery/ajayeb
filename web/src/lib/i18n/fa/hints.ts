@@ -506,7 +506,8 @@ export const hints = {
     other: '{move} حدود {count} امتیاز بهتر به نظر می‌رسید.'
   },
   'hints.review.pointsConfirmed': {
-    other: '{move} حدود {count} امتیاز بهتر به نظر می‌رسید، و جست‌وجویی عمیق‌تر هم آن را تأیید کرد.'
+    other:
+      '{move} حدود {count} امتیاز بهتر به نظر می‌رسید، و جست‌وجویی عمیق‌تر هم آن را بهتر ارزیابی کرد.'
   },
   'hints.review.pointsSearch': '{move} در جست‌وجویی عمیق‌تر آشکارا قوی‌تر به نظر رسید.',
 
