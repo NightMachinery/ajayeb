@@ -89,6 +89,7 @@
   import type { Notice, Session } from '$lib/session/session.svelte';
   import { inviteUrl, presenceChanges, seatPresence } from '$lib/ui/online';
   import { settings } from '$lib/ui/settings.svelte';
+  import { unlockAudio } from '$lib/fx';
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
   import {
@@ -1075,6 +1076,11 @@
         onOpenLog={() => ui.openLog()}
         onOpenSummary={moveSummary ? () => (summaryManual = true) : undefined}
         onOpenSettings={() => ui.openSettings()}
+        sound={settings.value.sound}
+        onToggleSound={() => {
+          settings.set('sound', !settings.value.sound);
+          if (settings.value.sound) unlockAudio();
+        }}
         onHome={onhome}
         homeHint={view?.phase !== 'gameOver'}
         replayCode={frame?.code}

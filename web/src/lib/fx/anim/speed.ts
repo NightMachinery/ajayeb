@@ -7,15 +7,9 @@
 // step (plan.ts TIME_FIELDS: a tween, a stagger); Off gives the empty timeline,
 // so the frame shows at once and nothing is read from the page.
 //
-// retimeCues: cues.ts spaces a frame's cues CUE_SPACING_MS apart; when the
-// frame animates, each cue kind with a step of its own sounds when that
-// step happens instead (plan.ts cueOffsets): a take's slide when the card
-// lands, a flip with the first flip, a coin with its float, the drum with a
-// looting flip or the pawn's first step, a chime with a pair's glow, the
-// fanfare with the victory banner, a tick when a draft tile lands. A cue
-// with no step of its own keeps its place in the order, one spacing after
-// the cue before it. A frame that does not
-// animate keeps cues.ts's spacing.
+// retimeCues aligns sounds with their visible steps, then sorts by the
+// anchors and preserves CUE_SPACING_MS even when steps happen together.
+// Animation off retains the original event order and spacing.
 
 import { scaleMs, type AnimationSpeed } from '$lib/ui/motion.svelte';
 import { CUE_SPACING_MS, type PlannedCue } from '../cues';
@@ -61,10 +55,16 @@ export function retimeCues(cues: readonly PlannedCue[], timeline: Timeline): Pla
   if (timeline.steps.length === 0) return cues.map((c) => ({ ...c }));
   const at = cueOffsets(timeline);
   let last = -CUE_SPACING_MS;
-  return cues.map(({ cue, delayMs }) => {
-    const anchor = at[cue];
-    const next = anchor ?? Math.max(delayMs, last + CUE_SPACING_MS);
-    last = next;
-    return { cue, delayMs: next };
-  });
+  let previous = -CUE_SPACING_MS;
+  return cues
+    .map(({ cue, delayMs }, order) => {
+      previous = at[cue] ?? Math.max(delayMs, previous + CUE_SPACING_MS);
+      return { cue, order, delayMs: previous };
+    })
+    .sort((a, b) => a.delayMs - b.delayMs || a.order - b.order)
+    .map(({ cue, delayMs }) => {
+      const next = Math.max(delayMs, last + CUE_SPACING_MS);
+      last = next;
+      return { cue, delayMs: next };
+    });
 }

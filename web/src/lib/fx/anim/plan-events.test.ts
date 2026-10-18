@@ -137,10 +137,11 @@ describe('looting', () => {
     ]);
   });
 
-  it('times the drum and the looting vibration by the first flip', () => {
+  it('times the drum by the pawn and looting by the first flip', () => {
     const t = planTimeline(frame(11, events, view([37, 13], { military: looting(false) })), prev);
     const first = only(t.steps, 'loot')[0]!;
-    expect(cueOffsets(t).drum).toBe(first.at);
+    expect(cueOffsets(t).drum).toBe(TAKE_MS);
+    expect(cueOffsets(t).loot).toBe(first.at);
     expect(hapticOffset(t, HAPTIC_LOOT)).toBe(first.at);
     expect(hapticOffset(t, HAPTIC_MILITARY)).toBe(TAKE_MS);
   });
@@ -169,7 +170,7 @@ describe('progress tokens', () => {
     });
     expect(only(t.steps, 'coins')).toMatchObject([{ seat: 0, at: TOKEN_MS, from: 7, to: 13 }]);
     expect(t.blockingMs).toBe(Math.min(TOKEN_MS - LAND_MS, HOLD_MS));
-    expect(cueOffsets(t).chime).toBe(TOKEN_MS);
+    expect(cueOffsets(t).token).toBe(TOKEN_MS);
   });
 
   it('a token from the Great Library says so', () => {
@@ -234,13 +235,13 @@ describe('destroy and rebuild', () => {
     const t = planTimeline(frame(11, [ev('destroy', { seat: 0, card: 'quarry' })]), before);
     expect(t.steps).toEqual([{ kind: 'destroy', seat: 0, card: 'quarry', at: 0, dur: DESTROY_MS }]);
     expect(t.blockingMs).toBe(HOLD_MS);
-    expect(cueOffsets(t).slide).toBe(0);
+    expect(cueOffsets(t).destroy).toBe(0);
   });
 
   it('a card rebuilt from the discard pile flies to the city, the slide as it lands', () => {
     const t = planTimeline(frame(11, [ev('rebuild', { seat: 0, card: 'baths' })]), before);
     expect(t.steps).toEqual([{ kind: 'rebuild', seat: 0, card: 'baths', at: 0, dur: REBUILD_MS }]);
-    expect(cueOffsets(t).slide).toBe(REBUILD_MS);
+    expect(cueOffsets(t).rebuild).toBe(REBUILD_MS);
     expect(hapticOffset(t, HAPTIC_TAKE)).toBe(REBUILD_MS);
   });
 });

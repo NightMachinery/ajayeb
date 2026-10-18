@@ -40,6 +40,7 @@ export const common = {
   'theme.dark': 'Dark',
 
   'turn.player': "{name}'s turn",
+  'cards.left.compact': '{count} left',
   'cards.left': {
     '=0': 'No cards left',
     one: '{count} card left',

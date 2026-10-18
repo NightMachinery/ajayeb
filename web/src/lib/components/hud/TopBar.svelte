@@ -1,6 +1,6 @@
 <script lang="ts">
   // The board's top bar (UX design sec. 3): the game menu, the age and how
-  // many cards are left in it, then the undo, log and settings controls. A
+  // many cards are left in it, then the undo, log and sound controls. A
   // plain leaf component -- it reads nothing from the session itself, the
   // caller passes the age, the count and whether undo is available right
   // now (view.canUndo) and gets a click back for each button.
@@ -18,8 +18,8 @@
   //
   // Next to the log, the eye opens the opponent move summary (M10.S03b);
   // the caller passes onOpenSummary only while there is a summary to show.
-  // Below 26rem the bar has no room for five buttons, the age and the cards
-  // left, so the settings gear leaves it there (Settings stays in the menu).
+  // A direct sound switch replaces the settings gear, keeping mute one tap
+  // away on phones too. Settings stays in the game menu.
   import StarterDiagram from '../rules/StarterDiagram.svelte';
   import type { Snippet } from 'svelte';
   import { ageLabel, t } from '$lib/i18n';
@@ -28,6 +28,8 @@
   import Menu from '@lucide/svelte/icons/menu';
   import Undo2 from '@lucide/svelte/icons/undo-2';
   import Settings from '@lucide/svelte/icons/settings';
+  import Volume2 from '@lucide/svelte/icons/volume-2';
+  import VolumeX from '@lucide/svelte/icons/volume-x';
   import ScrollText from '@lucide/svelte/icons/scroll-text';
   import Download from '@lucide/svelte/icons/download';
   import { downloadReplay } from '$lib/session/replay';
@@ -52,6 +54,9 @@
     /** Opens the opponent move summary; absent while there is none. */
     onOpenSummary?: () => void;
     onOpenSettings?: () => void;
+    /** A direct board switch, including narrow phones. */
+    sound?: boolean;
+    onToggleSound?: () => void;
     /** Leaves the room for Home; when given, the game menu shows. */
     onHome?: () => void;
     /** Under Home, say the game can be continued from there (not once it is over). */
@@ -87,6 +92,8 @@
     onOpenLog,
     onOpenSummary,
     onOpenSettings,
+    sound = true,
+    onToggleSound,
     onHome,
     homeHint = true,
     replayCode,
@@ -157,7 +164,8 @@
             : undefined
         )}
       >
-        {t('cards.left', { count: cardsLeft })}
+        <span class="min-[26rem]:hidden">{t('cards.left.compact', { count: cardsLeft })}</span>
+        <span class="max-[25.99rem]:hidden">{t('cards.left', { count: cardsLeft })}</span>
       </span>
     {/if}
   </div>
@@ -216,7 +224,19 @@
         <ScrollText class="size-5" />
       </button>
     {/if}
-    {#if onOpenSettings}
+    {#if onToggleSound}
+      <button
+        type="button"
+        onclick={onToggleSound}
+        data-control="sound"
+        aria-pressed={sound}
+        aria-label={t(sound ? 'game.sound.turnOff' : 'game.sound.turnOn')}
+        {@attach tooltip({ text: t(sound ? 'game.sound.turnOff' : 'game.sound.turnOn') })}
+        class={iconButton}
+      >
+        {#if sound}<Volume2 class="size-5" />{:else}<VolumeX class="size-5" />{/if}
+      </button>
+    {:else if onOpenSettings}
       <button
         type="button"
         onclick={onOpenSettings}

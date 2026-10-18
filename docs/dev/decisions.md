@@ -243,3 +243,14 @@ This supersedes the "budget 5 MB" line in the M9 section of `docs/dev/roadmap.md
 **Tradeoff.** A download of about 150 MB per Playwright version, and the browser is not byte-identical to the Chrome the owner uses, so screenshots can differ slightly from it.
 
 **Rejected.** chrome-headless-shell, the old headless mode (it renders less like real Chrome, and `tools/chrome` would need Playwright's internal registry to find it). Keeping the installed Chrome with more flags (it is the same app, so nothing can hide it).
+
+
+## D27. Sound is on by default
+
+**Decision (2026-10-18).** Sound defaults to on, with the existing Quiet, Medium and Loud volume steps. A fresh device hears cues only after its first audio-unlocking gesture. A stored `sound: false` stays off through the existing settings parser; there is no migration or extra choice marker. The board's top bar has a direct sound switch at every width, and full Settings remains in the game menu.
+
+**Rationale.** Sound makes a wonder, a token, looting, an extra turn and the game's end easier to notice. The owner wants that feedback on the first game. Distinct cues mark these events, with a maximum of three cue kinds per move so routine payments and reveals do not drown out the larger moments. Online turn alerts require a live rival turn handing the board back to the viewer, and defeat is personal to a losing player. Shared results and spectators use a neutral chime; hot-seat celebrates the winner.
+
+**Tradeoff.** The first gesture allows later game sounds without an opt-in step. A player who wants silence can mute directly on the board, and the choice persists. Browser autoplay restrictions still apply, so the page neither creates an AudioContext nor fetches sound files before a gesture.
+
+**Rejected.** Keeping Sound off by default (players can miss the feedback entirely). Migrating stored false values or adding an explicit-choice marker (there are no existing players to migrate, and stored test-device preferences may remain as they are).

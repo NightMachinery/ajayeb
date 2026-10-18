@@ -43,6 +43,7 @@ export const PRIMARY_CONTROLS = [
   '[data-control="undo"]',
   '[data-control="log"]',
   '[data-control="settings"]',
+  '[data-control="sound"]',
   '[data-control="wonder-step"]',
   '[data-control="wonder-build"]',
   '[data-control="wonder-pick-cancel"]',

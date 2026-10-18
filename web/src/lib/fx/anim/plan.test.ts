@@ -230,7 +230,9 @@ describe('cueOffsets', () => {
       slide: TAKE_MS,
       flip: TAKE_MS + FLIP_DELAY_MS,
       coin: TAKE_MS,
-      drum: TAKE_MS
+      drum: TAKE_MS,
+      extraTurn: t.totalMs,
+      yourTurn: t.blockingMs
     });
     expect(cueOffsets(EMPTY_TIMELINE)).toEqual({});
   });

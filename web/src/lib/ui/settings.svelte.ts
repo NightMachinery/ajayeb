@@ -9,6 +9,7 @@
 // crashes on the other's shape.
 
 import { cancelHaptic } from '$lib/fx/haptic-pending';
+import { cancelTurnCue } from '$lib/fx/turn-pending';
 import { i18n, isLocale, type Locale } from '$lib/i18n/locale.svelte';
 
 export const ANIMATION_SPEEDS = ['normal', 'fast', 'relaxed', 'off'] as const;
@@ -45,7 +46,7 @@ export interface Settings {
    *  the device default (on and 'face' for a coarse pointer or a phone). */
   hotseatPassDevice: boolean | null;
   hotseatOrientation: Orientation | null;
-  /** Synthesized sound cues (fx/), off by default. Its own switch: it does
+  /** Sound cues (fx/), on by default after an audio-unlocking gesture. Its own switch: it does
    *  not follow animationSpeed. */
   sound: boolean;
   soundVolume: SoundVolume;
@@ -69,7 +70,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cardText: 'normal',
   hotseatPassDevice: null,
   hotseatOrientation: null,
-  sound: false,
+  sound: true,
   soundVolume: 'medium',
   haptics: true,
   showOpponentMove: true,
@@ -192,6 +193,7 @@ export class SettingsStore {
 
   #save(next: Settings): void {
     if (!next.haptics) cancelHaptic();
+    if (!next.sound) cancelTurnCue();
     this.value = next;
     this.#applyLocale?.(next.locale);
     try {

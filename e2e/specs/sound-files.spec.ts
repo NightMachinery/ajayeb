@@ -5,7 +5,7 @@ import { SOUND_FILES } from '../../web/src/lib/fx/sounds.gen';
 test(
   'sound files: lazy after a gesture, all AAC files decode, gallery has both versions',
   { tag: ['@mobile'] },
-  async ({ page }) => {
+  async ({ page }, info) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const requests: string[] = [];
@@ -39,6 +39,11 @@ test(
         await context.close();
       }
     }, SOUND_FILES);
+    await info.attach('aac-decode', {
+      body: JSON.stringify(decoded),
+      contentType: 'application/json'
+    });
+    console.log('AAC decode:', JSON.stringify(decoded));
     expect(decoded.aac).not.toBe('');
     expect(decoded.results).toHaveLength(17);
     for (const result of decoded.results) {

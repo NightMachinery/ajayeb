@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GameEvent } from '$lib/wire';
 import { CUE_SPACING_MS, planCues } from '../cues';
-import { EMPTY_TIMELINE, FLIP_DELAY_MS, planTimeline, TAKE_MS, type PlanFrame } from './plan';
+import { EMPTY_TIMELINE, planTimeline, TAKE_MS, type PlanFrame } from './plan';
 import { retimeCues, scaleTimeline, timelineFor } from './speed';
 
 function ev(kind: GameEvent['kind'], fields: Partial<GameEvent> = {}): GameEvent {
@@ -106,13 +106,12 @@ describe('scaleTimeline and timelineFor', () => {
 describe('retimeCues', () => {
   it('moves each cue to its step: slide on landing, coin with the float, drum, flip', () => {
     const cues = planCues(move, before).cues;
-    expect(cues.map((c) => c.cue)).toEqual(['slide', 'coin', 'drum', 'flip']);
+    expect(cues.map((c) => c.cue)).toEqual(['slide', 'drum', 'flip']);
     const timed = retimeCues(cues, timelineFor(move, before, 'normal'));
     expect(timed).toEqual([
       { cue: 'slide', delayMs: TAKE_MS },
-      { cue: 'coin', delayMs: TAKE_MS },
-      { cue: 'drum', delayMs: TAKE_MS },
-      { cue: 'flip', delayMs: TAKE_MS + FLIP_DELAY_MS }
+      { cue: 'drum', delayMs: TAKE_MS + CUE_SPACING_MS },
+      { cue: 'flip', delayMs: TAKE_MS + 2 * CUE_SPACING_MS }
     ]);
   });
 
@@ -139,5 +138,68 @@ describe('retimeCues', () => {
   it('with Animation off, the cues keep their own spacing', () => {
     const cues = planCues(move, before).cues;
     expect(retimeCues(cues, timelineFor(move, before, 'off'))).toEqual(cues);
+  });
+});
+
+describe('new cue anchors', () => {
+  it('anchors wonder, library draw and extra turn without coincident cue starts', () => {
+    const next = {
+      ...before,
+      version: 11,
+      events: [
+        ev('wonder', { seat: 0, wonder: 'great-library', card: 'baths' }),
+        ev('libraryDraw', { seat: 0, place: 0 }),
+        ev('extraTurn', { seat: 0 })
+      ]
+    };
+    const timeline = timelineFor(next, before, 'normal');
+    expect(retimeCues(planCues(next, before).cues, timeline)).toEqual([
+      { cue: 'wonder', delayMs: TAKE_MS },
+      { cue: 'libraryDraw', delayMs: TAKE_MS + CUE_SPACING_MS },
+      { cue: 'extraTurn', delayMs: timeline.totalMs }
+    ]);
+  });
+
+  it('orders a new age deal before the last card landing, and spaces the sounds', () => {
+    const next = {
+      ...before,
+      version: 11,
+      events: [ev('build', { seat: 0, card: 'baths' }), ev('ageStart', { age: 2 })]
+    };
+    const timeline = timelineFor(next, before, 'normal');
+    const deal = timeline.steps.find((s) => s.kind === 'deal')!;
+    expect(retimeCues(planCues(next, before).cues, timeline)).toEqual([
+      { cue: 'ageStart', delayMs: deal.at + deal.lead },
+      { cue: 'slide', delayMs: TAKE_MS }
+    ]);
+    expect(retimeCues(planCues(next, before).cues, EMPTY_TIMELINE)).toEqual([
+      { cue: 'slide', delayMs: 0 },
+      { cue: 'ageStart', delayMs: CUE_SPACING_MS }
+    ]);
+  });
+
+  it('anchors token, rebuild, destroy and every result sound to their steps', () => {
+    for (const [kind, fields, cue] of [
+      ['token', { seat: 0, token: 'law' }, 'token'],
+      ['rebuild', { seat: 0, card: 'baths' }, 'rebuild'],
+      ['destroy', { seat: 0, card: 'baths' }, 'destroy']
+    ] as const) {
+      const next = { ...before, version: 11, events: [ev(kind, fields)] };
+      const timeline = timelineFor(next, before, 'normal');
+      const step = timeline.steps[0]!;
+      expect(retimeCues([{ cue, delayMs: 0 }], timeline)[0]?.delayMs).toBe(
+        kind === 'destroy' ? step.at : step.at + step.dur
+      );
+    }
+    const next = { ...before, version: 11, events: [ev('gameOver', { winner: 0 })] };
+    const timeline = timelineFor(next, before, 'normal');
+    for (const cue of ['fanfare', 'defeat', 'chime'] as const) {
+      expect(retimeCues([{ cue, delayMs: 0 }], timeline)[0]?.delayMs).toBe(
+        timeline.steps.find((s) => s.kind === 'victory')?.at
+      );
+    }
+    expect(retimeCues([{ cue: 'yourTurn', delayMs: 0 }], timeline)[0]?.delayMs).toBe(
+      timeline.blockingMs
+    );
   });
 });

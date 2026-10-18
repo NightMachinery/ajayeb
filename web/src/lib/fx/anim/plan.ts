@@ -605,28 +605,37 @@ function firstOf<K extends StepKind>(
   return timeline.steps.find((s): s is Extract<Step, { kind: K }> => s.kind === kind);
 }
 
-/**
- * The start of each cue kind's step, at normal speed, for fx/index.ts to
- * time its sound cues by: a take's slide when it lands, a coin with its
- * float, a flip with the first flip, the drum with the first looting flip
- * (else the pawn's first step), the chime with a pair's glow (else a
- * token's landing), the fanfare with the banner, the tick when a draft tile
- * lands. A cue kind with no step here keeps its own spacing.
- */
+/** Cue anchors, at the timeline's own speed. Coincident anchors are spaced by retimeCues. */
 export function cueOffsets(timeline: Timeline): Partial<Record<Cue, number>> {
   const out: Partial<Record<Cue, number>> = {};
   const set = (cue: Cue, at: number | undefined) => {
     if (out[cue] === undefined && at !== undefined) out[cue] = at;
   };
   for (const s of timeline.steps) {
-    if (s.kind === 'take' || s.kind === 'rebuild' || s.kind === 'destroy') set('slide', landing(s));
+    if (s.kind === 'take') {
+      set('slide', landing(s));
+      if (s.dest === 'wonder') set('wonder', landing(s));
+    }
+    if (s.kind === 'rebuild') set('rebuild', landing(s));
+    if (s.kind === 'destroy') set('destroy', s.at);
   }
   set('flip', firstOf(timeline, 'flip')?.at);
   set('coin', firstOf(timeline, 'coins')?.at);
-  set('drum', firstOf(timeline, 'loot')?.at ?? firstOf(timeline, 'pawn')?.at);
+  set('drum', firstOf(timeline, 'pawn')?.at);
+  set('loot', firstOf(timeline, 'loot')?.at);
   const token = firstOf(timeline, 'token');
-  set('chime', firstOf(timeline, 'glow')?.at ?? (token ? landing(token) : undefined));
-  set('fanfare', firstOf(timeline, 'victory')?.at);
+  set('token', token ? landing(token) : undefined);
+  const victory = firstOf(timeline, 'victory');
+  set('chime', victory?.at ?? firstOf(timeline, 'glow')?.at);
+  set('fanfare', victory?.at);
+  set('defeat', victory?.at);
+  set('libraryDraw', firstOf(timeline, 'draw')?.at);
+  const deal = firstOf(timeline, 'deal');
+  set('ageStart', deal ? deal.at + deal.lead : undefined);
+  if (timeline.steps.length > 0) {
+    set('extraTurn', timeline.totalMs);
+    set('yourTurn', timeline.blockingMs);
+  }
   const draft = firstOf(timeline, 'draft');
   set('tick', draft ? landing(draft) : undefined);
   return out;

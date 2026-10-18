@@ -128,6 +128,9 @@ export const game = {
   'game.persona.normal': 'Scholar',
   'game.persona.hard': 'Master',
 
+  'game.sound.turnOff': 'Turn sound off',
+  'game.sound.turnOn': 'Turn sound on',
+
   // The game menu in the top bar.
   'game.menu.open': 'Game menu',
   'game.menu.home': 'Home',

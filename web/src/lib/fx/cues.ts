@@ -9,11 +9,10 @@
 // undo, a resync): those events, if any, are history, not something that
 // just happened in front of the player.
 //
-// One frame may carry many events (a build that pays, moves the pawn and
-// loots twice). Each cue kind plays at most once per frame, in the order
-// its first event came, spaced CUE_SPACING_MS apart so they do not blur
-// into one sound. Every cue keeps a delay, so the animation slice can later
-// retime it to the animation it belongs to.
+// Each cue kind plays once per frame. Busy moves keep at most three cues,
+// favouring distinct milestones over routine card, coin and reveal sounds.
+// The retained cues keep event order and CUE_SPACING_MS between starts;
+// the animation planner later aligns them with their visible steps.
 
 import { cardBySlug } from '$lib/catalog';
 import type { GameEvent } from '$lib/wire';
@@ -38,12 +37,6 @@ export const CUES = [
   'libraryDraw',
   'extraTurn'
 ] as const;
-/**
- * slide: a card taken or built; coin: coins gained or paid; flip: a
- * face-down card revealed; drum: shields, the pawn, looting; chime: a
- * science symbol, a pair, a progress token; fanfare: the game's end; tick:
- * a draft pick.
- */
 export type Cue = (typeof CUES)[number];
 
 /** The gap between two cues of one frame. */
@@ -70,6 +63,18 @@ export interface CueFrame {
   code: string;
   version: number;
   events: readonly GameEvent[];
+  /** History snapshots are never live, even if their version increased. */
+  history?: readonly unknown[];
+  room?: { mode: string };
+  you?: { seats: readonly number[] };
+  view?: {
+    viewer?: number;
+    active?: number;
+    toMove?: number;
+    phase?: string;
+    age?: number;
+    playingAgain?: boolean;
+  };
 }
 
 function isScienceCard(slug: string | undefined): boolean {
@@ -77,29 +82,44 @@ function isScienceCard(slug: string | undefined): boolean {
 }
 
 /** The cues one event makes, in the order they should sound. */
-export function eventCues(e: GameEvent): Cue[] {
+export function eventCues(e: GameEvent, frame?: CueFrame): Cue[] {
   switch (e.kind) {
     case 'build':
-    case 'rebuild':
       return isScienceCard(e.card) ? ['slide', 'chime'] : ['slide'];
     case 'discard':
       return (e.amount ?? 0) > 0 ? ['slide', 'coin'] : ['slide'];
     case 'wonder':
+      return ['slide', 'wonder'];
+    case 'rebuild':
+      return ['rebuild'];
     case 'destroy':
-      return ['slide'];
+      return ['destroy'];
     case 'pay':
     case 'coins':
       return (e.amount ?? 0) !== 0 ? ['coin'] : [];
     case 'reveal':
+    case 'draftRound':
       return ['flip'];
     case 'pawn':
-    case 'loot':
       return ['drum'];
+    case 'loot':
+      return ['loot'];
     case 'pair':
-    case 'token':
       return ['chime'];
-    case 'gameOver':
-      return ['fanfare'];
+    case 'token':
+      return ['token'];
+    case 'libraryDraw':
+      return ['libraryDraw'];
+    case 'extraTurn':
+      return ['extraTurn'];
+    case 'ageStart':
+      return ['ageStart'];
+    case 'gameOver': {
+      if (e.winner === undefined) return ['chime'];
+      if (frame?.room?.mode === 'hotseat') return ['fanfare'];
+      const viewer = viewerSeat(frame);
+      return [viewer === undefined ? 'chime' : viewer === e.winner ? 'fanfare' : 'defeat'];
+    }
     case 'draft':
     case 'starterChosen':
       return ['tick'];
@@ -124,23 +144,115 @@ export function isLive(next: CueFrame, prev: CueFrame | null): boolean {
     prev !== null &&
     prev.code === next.code &&
     next.version > prev.version &&
+    next.history === undefined &&
     next.events.length > 0
   );
 }
 
 const NONE: CuePlan = { cues: [], haptic: null };
 
-/** The cues and vibration of the frame `next`, shown after `prev`. */
-export function planCues(next: CueFrame, prev: CueFrame | null): CuePlan {
-  if (!isLive(next, prev)) return NONE;
+/** A personal cue requires both a viewer seat and permission for that seat. */
+function viewerSeat(frame: CueFrame | undefined): number | undefined {
+  const viewer = frame?.view?.viewer;
+  return (viewer === 0 || viewer === 1) && frame?.you?.seats.includes(viewer) ? viewer : undefined;
+}
+
+/** A rival's completed turn hands an online player a normal board turn. */
+function isYourTurn(next: CueFrame, prev: CueFrame): boolean {
+  const viewer = viewerSeat(next);
+  return (
+    next.room?.mode === 'online' &&
+    prev.room?.mode === 'online' &&
+    viewer !== undefined &&
+    viewerSeat(prev) === viewer &&
+    next.view?.phase === 'play' &&
+    next.view.active === viewer &&
+    next.view.toMove === viewer &&
+    next.view.playingAgain === false &&
+    prev.view?.active === 1 - viewer &&
+    // A starter choice can temporarily give the other seat toMove without
+    // handing over a turn. Its answer is the age opening, not a rival move.
+    prev.view.phase !== 'chooseStarter' &&
+    prev.view.phase !== 'wonderDraft' &&
+    !next.events.some((e) => e.kind === 'starterChosen' || e.kind === 'ageStart')
+  );
+}
+
+// Higher-ranked moments survive a busy move. Ties keep first-event order.
+// Retained cues are played in that order, not in priority order.
+const PRIORITY: readonly Cue[] = [
+  'fanfare',
+  'defeat',
+  'yourTurn',
+  'extraTurn',
+  'ageStart',
+  'token',
+  'libraryDraw',
+  'loot',
+  'wonder',
+  'destroy',
+  'rebuild',
+  'drum',
+  'chime',
+  'slide',
+  'flip',
+  'coin',
+  'tick'
+];
+
+/** Cues for a shown frame. playedDeal, when supplied, is the runner's actual deal decision. */
+export function planCues(next: CueFrame, prev: CueFrame | null, playedDeal?: boolean): CuePlan {
+  const live = isLive(next, prev);
+  // A real carried deal may flush on an eventless, same-version thinking
+  // frame. The runner already proved it came from a live age opening.
+  const carried =
+    playedDeal === true &&
+    prev !== null &&
+    prev.code === next.code &&
+    next.version >= prev.version &&
+    next.history === undefined;
+  if ((!live && !carried) || !prev) return NONE;
   const seen = new Set<Cue>();
-  const cues: PlannedCue[] = [];
-  for (const e of next.events) {
-    for (const cue of eventCues(e)) {
-      if (seen.has(cue)) continue;
-      seen.add(cue);
-      cues.push({ cue, delayMs: cues.length * CUE_SPACING_MS });
+  // With animation, use the runner's actual recovered/carried deal. Off
+  // has no visual timeline: server events and phase/age transitions retain
+  // the age feedback, including a coalesced starter/draft answer.
+  const deal =
+    playedDeal ??
+    (live &&
+      ((next.events.some((e) => e.kind === 'ageStart') && next.view?.phase !== 'chooseStarter') ||
+        next.events.some((e) => e.kind === 'starterChosen') ||
+        (next.view?.phase === 'play' &&
+          (next.view.age ?? 0) > 0 &&
+          (prev.view?.phase === 'chooseStarter' ||
+            prev.view?.phase === 'wonderDraft' ||
+            (prev.view?.age !== undefined && next.view.age !== prev.view.age)))));
+  if (live)
+    for (const e of next.events) {
+      if (e.kind === 'ageStart') {
+        if (deal) seen.add('ageStart');
+        continue;
+      }
+      for (const cue of eventCues(e, next)) seen.add(cue);
     }
+  if (deal) seen.add('ageStart');
+  if (live && isYourTurn(next, prev)) seen.add('yourTurn');
+  // These routine sounds repeat information already carried by a richer cue.
+  if (seen.has('loot')) seen.delete('coin');
+  if (seen.has('ageStart')) {
+    seen.delete('flip');
+    seen.delete('tick');
   }
-  return { cues, haptic: eventsHaptic(next.events) };
+  const result = next.events.find((e) => e.kind === 'gameOver');
+  const priority: readonly Cue[] =
+    result && eventCues(result, next)[0] === 'chime' ? ['chime', ...PRIORITY] : PRIORITY;
+  const selected = new Set(
+    priority.filter((cue, i) => seen.has(cue) && priority.indexOf(cue) === i).slice(0, 3)
+  );
+  const cues = [...seen]
+    .filter((cue) => selected.has(cue))
+    .map((cue, i) => ({
+      cue,
+      delayMs: i * CUE_SPACING_MS
+    }));
+  return { cues, haptic: live ? eventsHaptic(next.events) : null };
 }

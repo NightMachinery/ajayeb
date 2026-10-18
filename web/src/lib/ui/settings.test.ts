@@ -84,6 +84,21 @@ describe('parseSettings', () => {
   });
 });
 
+describe('the sound setting', () => {
+  it('is on for a fresh device and when a partial settings object omits sound', () => {
+    expect(DEFAULT_SETTINGS.sound).toBe(true);
+    expect(parseSettings(null).sound).toBe(true);
+    expect(parseSettings('{"soundVolume":"quiet"}').sound).toBe(true);
+  });
+
+  it('persists an explicit off through a new store', () => {
+    const storage = memory();
+    new SettingsStore(storage).set('sound', false);
+    expect(new SettingsStore(storage).value.sound).toBe(false);
+    expect(parseSettings('{"sound":false}').sound).toBe(false);
+  });
+});
+
 describe('the opponent move summary setting', () => {
   it('is on by default, also for a value stored before it existed', () => {
     expect(DEFAULT_SETTINGS.showOpponentMove).toBe(true);
@@ -99,8 +114,8 @@ describe('the opponent move summary setting', () => {
 });
 
 describe('sound and haptics settings', () => {
-  it('default to sound off at the medium step, and haptics on', () => {
-    expect(DEFAULT_SETTINGS.sound).toBe(false);
+  it('default to sound on at the medium step, and haptics on', () => {
+    expect(DEFAULT_SETTINGS.sound).toBe(true);
     expect(DEFAULT_SETTINGS.soundVolume).toBe('medium');
     expect(DEFAULT_SETTINGS.haptics).toBe(true);
   });

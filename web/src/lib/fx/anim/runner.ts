@@ -42,6 +42,7 @@ import { formatSigned } from '$lib/i18n';
 import { scaleMs, type AnimationSpeed } from '$lib/ui/motion.svelte';
 import CardFace from '$lib/components/card/CardFace.svelte';
 import { planCues, type PlannedCue } from '../cues';
+import { cancelTurnCue } from '../turn-pending';
 import { playRecordedCues } from '../index';
 import { cancelHaptic } from '../haptics';
 import { DealCarry } from './backlog';
@@ -249,6 +250,7 @@ export class AnimRunner {
 
   #finishRuns(): void {
     cancelHaptic();
+    cancelTurnCue();
     this.#runs.finishAll();
   }
 
@@ -285,7 +287,11 @@ export class AnimRunner {
     this.#kept = {
       version: next.version,
       plan,
-      cues: planCues(next, prev).cues,
+      cues: planCues(
+        next,
+        prev,
+        timeline.steps.some((s) => s.kind === 'deal')
+      ).cues,
       copies: copyCopies(cap)
     };
     replay.offer(next.version, () => this.replay());

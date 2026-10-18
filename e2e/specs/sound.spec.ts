@@ -46,9 +46,7 @@ async function canVibrate(page: Page): Promise<boolean> {
 async function turnSoundOn(page: Page): Promise<void> {
   await page.goto('/settings');
   const sound = page.locator('input[data-setting="sound"]');
-  await expect(sound).not.toBeChecked();
-  await expect(page.locator('[data-setting="sound-volume"]')).toHaveCount(0);
-  await sound.check();
+  await expect(sound).toBeChecked();
   await expect(page.locator('[data-setting="sound-volume"]')).toBeVisible();
   await page.reload();
   await expect(page.locator('input[data-setting="sound"]')).toBeChecked();
@@ -70,12 +68,16 @@ async function openSilently(page: Page, scenario: string): Promise<GameDriver> {
 }
 
 test.describe('sound and haptics', { tag: ['@mobile'] }, () => {
-  test('Settings: sound off by default, haptics only on a touch device that vibrates', async ({
+  test('Settings: fresh sound is on, explicit off persists, haptics match the device', async ({
     page
   }, testInfo) => {
     const problems = watchHygiene(page);
     await page.goto('/settings');
+    await expect(page.locator('input[data-setting="sound"]')).toBeChecked();
+    await page.locator('input[data-setting="sound"]').uncheck();
+    await page.reload();
     await expect(page.locator('input[data-setting="sound"]')).not.toBeChecked();
+    await expect(page.locator('[data-setting="sound-volume"]')).toHaveCount(0);
     const haptics = page.locator('input[data-setting="haptics"]');
     const touch = await page.evaluate(() => navigator.maxTouchPoints > 0);
     if ((await canVibrate(page)) && touch) {
@@ -101,6 +103,13 @@ test.describe('sound and haptics', { tag: ['@mobile'] }, () => {
   test('with sound off, moves record no cues', async ({ page }) => {
     const problems = watchHygiene(page);
     const driver = await openSilently(page, 'looting-double');
+    const toggle = page.locator('[data-control="sound"]');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await page.reload();
+    await driver.waitReady();
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await playKey(driver, 'construct:arsenal');
     const { cues, haptics } = await recorded(page);
     expect(cues).toEqual([]);
@@ -120,9 +129,9 @@ test.describe('sound and haptics', { tag: ['@mobile'] }, () => {
     // face-down card up: one cue of each kind, in first-event order, spaced.
     let driver = await openSilently(page, 'looting-double');
     await playKey(driver, 'construct:arsenal');
-    expect(await cueNames(page)).toEqual(['slide', 'coin', 'drum', 'flip']);
+    expect(await cueNames(page)).toEqual(['slide', 'drum', 'loot']);
     const { cues, haptics } = await recorded(page);
-    expect(cues.map((c) => c.delayMs)).toEqual([0, 90, 180, 270]);
+    expect(cues.map((c) => c.delayMs)).toEqual([0, 90, 180]);
     if (vibrates) expect(haptics).toEqual([[24, 40, 24, 40, 36]]);
 
     // A science card that pairs a symbol, then the progress token it earns.
@@ -138,7 +147,7 @@ test.describe('sound and haptics', { tag: ['@mobile'] }, () => {
     const token = choose.choices.find((c) => c.kind === 'token');
     expect(token, 'the pair offers a progress token').toBeTruthy();
     await playKey(driver, token?.key ?? '');
-    expect(await cueNames(page)).toContain('chime');
+    expect(await cueNames(page)).toContain('token');
 
     // The walls win by military: the drum, then the fanfare.
     driver = await openSilently(page, 'military-supremacy');
@@ -149,3 +158,103 @@ test.describe('sound and haptics', { tag: ['@mobile'] }, () => {
     expect(problems, 'console errors, page errors or failed requests').toEqual([]);
   });
 });
+
+for (const locale of ['en', 'fa'] as const) {
+  test(
+    `board sound switch is one tap away at review widths (${locale})`,
+    { tag: ['@mobile'] },
+    async ({ page }, info) => {
+      const problems = watchHygiene(page);
+      await page.addInitScript((locale) => {
+        const current = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+        localStorage.setItem('ajayeb:settings', JSON.stringify({ ...current, locale }));
+      }, locale);
+      const driver = await openHotseatRoom(page, 'looting-double');
+      // Give the top bar its widest state: undo, summary, log and sound.
+      await playKey(driver, 'construct:arsenal');
+      await driver.nextTurn();
+      for (const viewport of [
+        { width: 360, height: 740 },
+        { width: 390, height: 844 },
+        { width: 740, height: 360 },
+        { width: 1280, height: 800 }
+      ]) {
+        await page.setViewportSize(viewport);
+        const toggle = page.locator('[data-control="sound"]');
+        await expect(toggle).toBeVisible();
+        await expect(toggle).toHaveAccessibleName(
+          locale === 'en' ? 'Turn sound off' : 'خاموش کردن صدا'
+        );
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true
+        );
+        expect(
+          await toggle.evaluate((node) => {
+            const r = node.getBoundingClientRect();
+            return r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth;
+          })
+        ).toBe(true);
+        const overlaps = await page.locator('.top-bar').evaluate((header) => {
+          const problems: string[] = [];
+          for (const label of header.querySelectorAll('[data-must-fit]')) {
+            const range = document.createRange();
+            range.selectNodeContents(label);
+            for (const r of range.getClientRects()) {
+              if (r.width < 1 || r.height < 1) continue;
+              for (const button of header.querySelectorAll('button')) {
+                const b = button.getBoundingClientRect();
+                if (
+                  Math.min(r.right, b.right) - Math.max(r.left, b.left) > 1 &&
+                  Math.min(r.bottom, b.bottom) - Math.max(r.top, b.top) > 1
+                )
+                  problems.push(button.getAttribute('data-control') ?? 'button');
+              }
+            }
+          }
+          return problems;
+        });
+        expect(overlaps, 'top-bar labels must stay clear of the controls').toEqual([]);
+        await info.attach(`board-sound-${locale}-${viewport.width}x${viewport.height}`, {
+          body: await page.screenshot({
+            path: info.outputPath(`board-sound-${locale}-${viewport.width}x${viewport.height}.png`)
+          }),
+          contentType: 'image/png'
+        });
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+        await expect(toggle).toHaveAccessibleName(
+          locale === 'en' ? 'Turn sound on' : 'روشن کردن صدا'
+        );
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+      }
+      expect(problems).toEqual([]);
+    }
+  );
+}
+
+test(
+  'rare sound cues follow wonder, library, destroy, rebuild and age deal events',
+  { tag: ['@mobile'] },
+  async ({ page }) => {
+    const problems = watchHygiene(page);
+    for (const [scenario, keys, expected] of [
+      ['appian-economy', ['wonder:appian-way:rostrum'], ['wonder', 'extraTurn']],
+      [
+        'great-library',
+        ['wonder:great-library:rostrum', 'token:law'],
+        ['wonder', 'libraryDraw', 'token']
+      ],
+      ['zeus-destroy', ['wonder:statue-of-zeus:rostrum', 'destroy:quarry'], ['wonder', 'destroy']],
+      ['mausoleum', ['wonder:mausoleum:rostrum', 'revive:baths'], ['wonder', 'rebuild']],
+      ['age-transition-chooser', ['discard:theater', 'starter:0'], ['ageStart']]
+    ] as const) {
+      const driver = await openSilently(page, scenario);
+      for (const key of keys) await playKey(driver, key);
+      const cues = await cueNames(page);
+      for (const cue of expected) expect(cues, scenario).toContain(cue);
+      expect(cues, scenario).not.toContain('yourTurn');
+    }
+    expect(problems).toEqual([]);
+  }
+);

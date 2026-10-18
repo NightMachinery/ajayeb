@@ -110,6 +110,8 @@ export const game = {
   'game.persona.hard': 'استاد',
 
   // The game menu in the top bar.
+  'game.sound.turnOff': 'خاموش کردن صدا',
+  'game.sound.turnOn': 'روشن کردن صدا',
   'game.menu.open': 'منوی بازی',
   'game.menu.home': 'خانه',
   'game.menu.homeHint': 'می‌توانید این بازی را از خانه ادامه دهید.',
