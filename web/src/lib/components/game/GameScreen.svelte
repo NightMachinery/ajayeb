@@ -1287,6 +1287,7 @@
     onback={() => ui.backToCard()}
     onclose={() => ui.close('card')}
     coach={cardNote}
+    tutorial={!!tutorial}
     {allow}
     lockedReason={locked}
   />

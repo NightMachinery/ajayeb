@@ -157,22 +157,23 @@ export const hints = {
   'hints.line.onlySource': '{name}’s only {resource}.',
   'hints.line.onlySourceYou': 'Your only {resource}.',
 
-  'hints.note.deniesChain': 'Also keeps it from {name} (free for them by chain).',
+  'hints.note.deniesChain':
+    'If you discard it, {name} cannot take it from the structure for free by chain.',
   'hints.note.deniesChainForNow':
-    'Keeps it from {name} for now (free for them by chain): their Mausoleum could still rebuild it.',
+    'If you discard it, {name} cannot take it from the structure for free by chain, but their Mausoleum could rebuild it.',
   'hints.note.deniesCheap': {
-    one: 'Also keeps it from {name}, who would pay only {count} coin.',
-    other: 'Also keeps it from {name}, who would pay only {count} coins.'
+    one: 'If you discard it, {name} cannot take it from the structure for only {count} coin.',
+    other: 'If you discard it, {name} cannot take it from the structure for only {count} coins.'
   },
   'hints.note.deniesCheapForNow': {
-    one: 'Keeps it from {name} for now ({count} coin for them): their Mausoleum could still rebuild it.',
+    one: 'If you discard it, {name} cannot take it from the structure for only {count} coin, but their Mausoleum could rebuild it.',
     other:
-      'Keeps it from {name} for now ({count} coins for them): their Mausoleum could still rebuild it.'
+      'If you discard it, {name} cannot take it from the structure for only {count} coins, but their Mausoleum could rebuild it.'
   },
   'hints.note.mausoleumOpp':
-    '{name}’s Mausoleum could rebuild it for free. Tucked under a wonder, it is out of reach.',
-  'hints.note.mausoleumYou': 'Your Mausoleum could rebuild it later.',
-  'hints.note.mausoleumNamed': '{name}’s Mausoleum could rebuild it later.',
+    'If you discard it, {name}’s Mausoleum could rebuild it for free. If you tuck it under a wonder, it is out of reach.',
+  'hints.note.mausoleumYou': 'If you discard it, your Mausoleum could rebuild it later.',
+  'hints.note.mausoleumNamed': 'If you discard it, {name}’s Mausoleum could rebuild it later.',
   'hints.note.denyBuild': 'Building it takes it from {name}.',
   'hints.note.denyTuck': 'Tucked under a wonder, it is out of the game for {name}.',
   'hints.note.shortByDiscard': {

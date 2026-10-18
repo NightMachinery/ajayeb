@@ -425,7 +425,7 @@ export function mausoleumOpen(view: Pick<View, 'players'>, seat: Seat): boolean 
 }
 
 /**
- * The muted notes under the discard button (discard-denies, mausoleum-feed):
+ * The conditional discard notes (discard-denies, mausoleum-feed):
  * what discarding the card keeps from the opponent, and who could rebuild it.
  */
 export function discardNotes(
@@ -433,12 +433,14 @@ export function discardNotes(
   view: Pick<View, 'players'>,
   seat: Seat,
   families: ReadonlySet<HintFamily>,
-  names: HintNames
+  names: HintNames,
+  context: { mausoleumKnown?: boolean } = {}
 ): HintLine[] {
   const out: HintLine[] = [];
   const opp = other(seat);
   const oppName = names.names[opp];
-  const oppMausoleum = families.has('wonders') && mausoleumOpen(view, opp);
+  const mausoleumKnown = context.mausoleumKnown ?? true;
+  const oppMausoleum = mausoleumKnown && families.has('wonders') && mausoleumOpen(view, opp);
   const mine = slot.costs?.[seat];
   const theirs = slot.costs?.[opp];
   if (families.has('prices') && theirs && mine) {
@@ -461,7 +463,7 @@ export function discardNotes(
   if (oppMausoleum && !out.some((l) => l.id === 'denies')) {
     out.push({ id: 'mausoleum', text: t('hints.note.mausoleumOpp', { name: oppName }) });
   }
-  if (families.has('wonders') && mausoleumOpen(view, seat)) {
+  if (mausoleumKnown && families.has('wonders') && mausoleumOpen(view, seat)) {
     out.push({
       id: 'mausoleumOwn',
       text:

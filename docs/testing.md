@@ -1351,3 +1351,13 @@ presentation, frozen totals and starter identity, dismissal across duplicate,
 presence and resync frames, undo within and across the boundary, room isolation,
 an unread age surviving game over and separate hot-seat holders. These checks exercise local
 presentation state; server legality and cost calculation remain unchanged.
+
+Card-sheet clarity checks cover English and Persian on both browser projects.
+At 740x360 the single cost breakdown and shortfall must fit beside the face
+above the action footer. Keyboard End and PageUp verify that the detail fade
+tracks remaining scroll content. At 1280x800 an expanded After this pick line
+must fit or have a scroll-edge cue. A real tutorial room advances past the final
+guided lesson into Age I free play, asserts that no coach is showing, and opens the
+Workshop to verify that an unbuilt Mausoleum does not introduce advice yet.
+Focused hint tests retain ordinary discard advice when Mausoleum explanations
+are hidden. Conditional sentences remain in each locale's message table.

@@ -17,6 +17,7 @@
   // real Svelte compiler parses the file fine.
   import type { Snippet } from 'svelte';
   import { attachSheetDrag, SPLIT_QUERY } from './sheet-drag';
+  import { attachSheetScroll } from './sheet-scroll';
 
   interface Props {
     /** Bindable: set true to open, false (or Esc, or a backdrop tap) to close. */
@@ -98,7 +99,14 @@
     {/if}
     {#if footer}
       <!-- svelte-ignore a11y_no_noninteractive_tabindex (This named scroll region must accept keyboard focus independently of its footer.) -->
-      <div class="sheet-body" data-sheet-body role="region" aria-labelledby={titleId} tabindex="0">
+      <div
+        class="sheet-body"
+        data-sheet-body
+        role="region"
+        aria-labelledby={titleId}
+        tabindex="0"
+        {@attach attachSheetScroll}
+      >
         {@render children()}
       </div>
       <div class="sheet-footer" data-sheet-footer>{@render footer()}</div>
@@ -115,7 +123,7 @@
     margin: 0;
     width: 100%;
     max-width: 100%;
-    max-height: 85dvh;
+    max-height: var(--sheet-max-height, 85dvh);
     border: 0;
     border-radius: var(--shape-panel) var(--shape-panel) 0 0;
     background: transparent;
@@ -154,7 +162,7 @@
 
   .sheet-panel {
     display: flex;
-    max-height: 85dvh;
+    max-height: var(--sheet-max-height, 85dvh);
     flex-direction: column;
     overflow-y: auto;
     background: var(--panel);
@@ -177,6 +185,9 @@
     overscroll-behavior: contain;
     /* Keep the keyboard ring inside the clipped scrolling body. */
     outline-offset: -2px;
+  }
+  .sheet-body[data-scroll-more] {
+    mask-image: linear-gradient(black calc(100% - 1.25rem), transparent);
   }
   .sheet-footer {
     flex-shrink: 0;
@@ -209,7 +220,7 @@
       inset: 0;
       margin: auto;
       width: min(480px, calc(100% - 2rem));
-      max-height: min(85dvh, 640px);
+      max-height: var(--sheet-max-height, min(85dvh, 640px));
       border-radius: var(--shape-panel);
       padding-bottom: 0;
       scale: 0.96;
@@ -228,7 +239,7 @@
       }
     }
     .sheet-panel {
-      max-height: min(85dvh, 640px);
+      max-height: var(--sheet-max-height, min(85dvh, 640px));
       --sheet-bottom-padding: 1rem;
     }
   }
@@ -238,7 +249,7 @@
     inset: 0;
     margin: auto;
     width: min(480px, calc(100% - 2rem));
-    max-height: min(calc(100dvh - 2rem), 640px);
+    max-height: var(--sheet-max-height, min(calc(100dvh - 2rem), 640px));
     border-radius: var(--shape-panel);
     padding-bottom: 0;
     scale: 1;
@@ -255,7 +266,7 @@
     }
   }
   .sheet.centered .sheet-panel {
-    max-height: min(calc(100dvh - 2rem), 640px);
+    max-height: var(--sheet-max-height, min(calc(100dvh - 2rem), 640px));
     --sheet-bottom-padding: 1rem;
   }
 </style>

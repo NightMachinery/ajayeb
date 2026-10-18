@@ -409,13 +409,13 @@ describe('the notes beside the actions', () => {
 
   it('discarding keeps a chain-free card from the opponent', () => {
     expect(discardNotes(slot, noMausoleum, 0, ALL, NAMES).map((n) => n.text)).toEqual([
-      'Also keeps it from Moon (free for them by chain).'
+      'If you discard it, Moon cannot take it from the structure for free by chain.'
     ]);
   });
 
   it('with the opponent’s Mausoleum open, only for now', () => {
     expect(discardNotes(slot, oppMausoleum, 0, ALL, NAMES).map((n) => n.text)).toEqual([
-      'Keeps it from Moon for now (free for them by chain): their Mausoleum could still rebuild it.'
+      'If you discard it, Moon cannot take it from the structure for free by chain, but their Mausoleum could rebuild it.'
     ]);
     const plain = { ...slot, costs: [cost({}), cost({})] } as unknown as SlotView;
     expect(discardNotes(plain, oppMausoleum, 0, ALL, NAMES).map((n) => n.id)).toEqual([
@@ -424,6 +424,18 @@ describe('the notes beside the actions', () => {
     expect(discardNotes(plain, oppMausoleum, 1, ALL, NAMES).map((n) => n.id)).toEqual([
       'mausoleumOwn'
     ]);
+  });
+
+  it('keeps basic discard advice without introducing the Mausoleum in a tutorial', () => {
+    expect(discardNotes(slot, oppMausoleum, 0, ALL, NAMES, { mausoleumKnown: false })).toEqual([
+      {
+        id: 'denies',
+        text: 'If you discard it, Moon cannot take it from the structure for free by chain.'
+      }
+    ]);
+    const plain = { ...slot, costs: [cost({}), cost({})] } as unknown as SlotView;
+    expect(discardNotes(plain, oppMausoleum, 0, ALL, NAMES, { mausoleumKnown: false })).toEqual([]);
+    expect(discardNotes(plain, oppMausoleum, 1, ALL, NAMES, { mausoleumKnown: false })).toEqual([]);
   });
 
   it('a deny target gets build and tuck notes', () => {

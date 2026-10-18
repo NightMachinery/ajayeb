@@ -119,6 +119,8 @@
     onclose: () => void;
     /** The tutorial's coach step in this sheet, as a note; null for none. */
     coach?: CoachNoteView | null;
+    /** A tutorial room, including free play when no coach step is visible. */
+    tutorial?: boolean;
     /** The tutorial's rails: whether a move key may be sent now. */
     allow?: Allow;
     /** Why a move the rails refuse is locked. */
@@ -145,6 +147,7 @@
     onback,
     onclose,
     coach = null,
+    tutorial = false,
     allow = ALLOW_ALL,
     lockedReason = ''
   }: Props = $props();
@@ -160,6 +163,13 @@
     actions?.build?.cost ??
       actions?.buildBlocked?.cost ??
       (seat === 0 || seat === 1 ? slot?.costs?.[seat] : undefined)
+  );
+  // CostBreakdown already states this shortfall when it has the paying seat's coins.
+  const shortfallShown = $derived(
+    actions?.buildBlocked?.reason === 'unaffordable' &&
+      myTurn &&
+      coins !== undefined &&
+      myCost?.affordable === false
   );
   const opponentCost = $derived(
     seat === 0 || seat === 1 ? slot?.costs?.[seat === 0 ? 1 : 0] : undefined
@@ -185,7 +195,11 @@
   );
   const sheetSeat = $derived(seat === 1 ? 1 : 0);
   const notes = $derived(
-    screen && slot && slug ? discardNotes(slot, view, sheetSeat, screen.families, screen.names) : []
+    screen && slot && slug
+      ? discardNotes(slot, view, sheetSeat, screen.families, screen.names, {
+          mausoleumKnown: !tutorial
+        })
+      : []
   );
   const deny = $derived(
     screen && slot
@@ -374,6 +388,7 @@
 <Sheet
   bind:open={() => open, (v) => !v && onclose()}
   {titleId}
+  class="card-sheet"
   panelData={{
     'data-card-sheet':
       slot && slot.state !== 'empty' && step !== 'wonders' ? (slug ?? 'face-down') : undefined
@@ -404,9 +419,9 @@
         {lockedReason}
       />
     {:else}
-      <div class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4">
-        <div class="flex gap-3">
-          <div class="h-[216px] w-[140px] shrink-0">
+      <div class="card-details flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4">
+        <div class="card-overview">
+          <div class="card-preview h-[216px] w-[140px] shrink-0">
             {#if slug}
               <CardFace
                 {slug}
@@ -426,7 +441,7 @@
               <CardBack focusable back={slot.back ?? 'age1'} class="h-full w-full" />
             {/if}
           </div>
-          <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+          <div class="card-heading flex min-w-0 flex-col gap-1.5">
             {#if card && slug}
               <h2 id={titleId} class="font-display text-xl leading-tight text-fg">
                 {cardName(slug)}
@@ -461,6 +476,23 @@
               <p class="text-sm text-fg-muted">{t('game.card.faceDown')}</p>
             {/if}
           </div>
+          {#if takeable && slug && actions && !(pickFor && pickChoice)}
+            {#if myCost}
+              <section
+                class="card-cost flex flex-col gap-1.5"
+                aria-labelledby="card-sheet-cost"
+                data-reason={shortfallShown ? actions?.buildBlocked?.reason : undefined}
+              >
+                <h3
+                  id="card-sheet-cost"
+                  class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
+                >
+                  {t('game.cost.title')}
+                </h3>
+                <CostBreakdown cost={myCost} coins={myTurn ? coins : undefined} />
+              </section>
+            {/if}
+          {/if}
         </div>
 
         {#if !takeable || !slug}
@@ -526,17 +558,6 @@
               </p>
             {/if}
 
-            {#if myCost}
-              <section class="flex flex-col gap-1.5" aria-labelledby="card-sheet-cost">
-                <h3
-                  id="card-sheet-cost"
-                  class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
-                >
-                  {t('game.cost.title')}
-                </h3>
-                <CostBreakdown cost={myCost} coins={myTurn ? coins : undefined} />
-              </section>
-            {/if}
             {#if opponentCost}
               <p class="text-sm text-fg-muted">
                 {opponentCost.affordable
@@ -573,12 +594,16 @@
                     <p class="text-xs text-fg-muted" data-hint-note="deny-build">{deny.build}</p>
                   {/if}
                 {:else if actions.buildBlocked}
-                  <p class="text-sm text-fg-muted" data-reason={actions.buildBlocked.reason}>
-                    {reasonText(actions.buildBlocked.reason, actions.buildBlocked.cost)}
-                    {#if shortNote}
-                      <span data-hint-note="short-by-discard">{shortNote}</span>
-                    {/if}
-                  </p>
+                  {#if !shortfallShown}
+                    <p class="text-sm text-fg-muted" data-reason={actions.buildBlocked.reason}>
+                      {reasonText(actions.buildBlocked.reason, actions.buildBlocked.cost)}
+                    </p>
+                  {/if}
+                  {#if shortNote}
+                    <p class="text-sm text-fg-muted" data-hint-note="short-by-discard">
+                      {shortNote}
+                    </p>
+                  {/if}
                   {#if shortWin}
                     <p class="text-sm font-semibold text-fg" data-hint-note="short-win">
                       {shortWin}
@@ -616,3 +641,52 @@
     {/if}
   {/if}
 </Sheet>
+
+<style>
+  .card-overview {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+  }
+  .card-cost {
+    grid-column: 1 / -1;
+  }
+  @media (min-width: 64rem) {
+    :global(.card-sheet) {
+      --sheet-max-height: min(calc(100dvh - 2rem), 760px);
+    }
+  }
+  @media (orientation: landscape) and (max-height: 32rem) {
+    :global(.sheet.card-sheet) {
+      --sheet-max-height: calc(100dvh - 1rem);
+      width: min(680px, calc(100% - 2rem));
+    }
+    .card-details {
+      padding-block-start: 0.25rem;
+    }
+    .card-cost :global([data-cost-breakdown]) {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    .card-overview {
+      column-gap: 0.75rem;
+      row-gap: 0.5rem;
+      grid-template-rows: min-content 1fr;
+    }
+    .card-preview {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+    }
+    .card-heading {
+      gap: 0.25rem;
+    }
+    .card-heading p {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    .card-cost {
+      grid-column: 2;
+    }
+  }
+</style>

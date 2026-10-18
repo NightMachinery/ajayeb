@@ -437,3 +437,10 @@ body's scroll position. Choice commit backgrounds extend through the panel's
 bottom padding, so list rows cannot show beneath them. Information coach lessons exclude
 the measured top bar; action prompts keep the full viewport to clear their
 target. Resource and wonder pips leave room for adjacent chip and strip borders.
+
+The card sheet uses one cost section: below the face in portrait and beside
+it in short landscape. Card panels can grow taller on desktop without changing
+other sheets. Footer detail bodies fade at the lower edge only while more
+content remains, including after a disclosure opens, and the cue disappears
+at the end. Discard notes name their conditional action independently. Tutorial
+rooms hide Mausoleum advice even during Age I free play without a coach step.
