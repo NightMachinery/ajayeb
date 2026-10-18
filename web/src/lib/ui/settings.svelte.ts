@@ -58,8 +58,7 @@ export interface Settings {
   showOpponentMove: boolean;
   /** The app's language (i18n/locale.svelte.ts LOCALES), chosen in Settings
    *  and never detected from the browser while only English is complete.
-   *  The inline bootstrap in src/app.html reads it too, to set lang and dir
-   *  on <html> before the first paint. */
+   *  Text and direction switch together once its messages have loaded. */
   locale: Locale;
 }
 

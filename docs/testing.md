@@ -1202,3 +1202,34 @@ scroll positions; the last option remains focusable and selectable. Phone
 checks compare coach bubbles with the measured top bar and hint pips with
 neighboring chip borders. A scrolled card detail body must scroll upward
 before a downward drag can dismiss its sheet.
+
+
+### Home loading and prerendered paint
+
+`home-loading.spec.ts` runs on both desktop and mobile. It checks Home with
+JavaScript disabled, including the visible priority hero and its responsive
+preload and paint-resource order before module preloads, enforces the normal
+Go CSP while a hero fails before hydration,
+and confirms game, Settings and Rules responses contain the generic
+shell rather than Home. With scripts enabled it checks that the cold English
+load contains no Persian message table and opens no WebSocket; lazy sheets
+retain their choices and restore focus; real AI, hot-seat, online, join and
+query-driven AI starts work; and Continue reuses the live session.
+
+A returning-device case combines stored Continue details, a completed and
+declined tutorial, Persian, dark theme and Animation off. It records hydration
+warnings and any appearance of the first-launch tutorial offer. Another case
+holds the Persian network import while switching back to English, then checks
+a successful switch and reload. Locale unit tests also cover shared pending
+loads and failures that preserve the working language. Image lifecycle unit
+tests cover cached successes, pre-hydration failures, ordinary lazy events
+and cancellation of listeners and queued work when a source changes. `rtl.spec.ts` requires
+the first RTL document to already contain translated text, rather than relying
+on a language bootstrap before the messages arrive.
+
+When changing rendering or fallback filenames, also run `shell.spec.ts` for
+worker installation and real offline Home and game deep links. The Go static
+handler tests keep prerendered Home separate from the generic shell, preserve
+legacy builds and retain missing-asset 404 behavior. Use the unchanged UX budget
+test for timing evidence: it reports measurements without asserting its limits,
+so inspect the three LCP samples, their median and the script-byte breakdown.

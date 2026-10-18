@@ -26,8 +26,7 @@ import { rules } from './en/rules';
 import { session } from './en/session';
 import { shell } from './en/shell';
 import { tutorial } from './en/tutorial';
-import { fa } from './fa';
-import { dirFor, i18n, type Locale } from './locale.svelte';
+import { dirFor, i18n } from './locale.svelte';
 import type { Message, PluralForms } from './types';
 
 export { i18n, dirFor, isLocale, LOCALES, type Dir, type Locale } from './locale.svelte';
@@ -61,7 +60,9 @@ export type LocaleTable = {
 /** Another locale's table: any subset of the keys (t() falls back to English). */
 export type PartialLocaleTable = Partial<LocaleTable>;
 
-const tables: Record<Locale, PartialLocaleTable> = { en, fa };
+function currentTable(): PartialLocaleTable {
+  return i18n.locale === 'en' ? en : (i18n.table ?? en);
+}
 
 // Compile-time parameter checking --------------------------------------------
 
@@ -203,7 +204,7 @@ const FALLBACK_END = '\u2069\u200e';
 export function t<K extends MessageKey>(key: K, ...args: ParamsArg<K>): string {
   const locale = i18n.locale;
   const params = args[0] as AnyParams | undefined;
-  const own: Message | undefined = tables[locale][key];
+  const own: Message | undefined = currentTable()[key];
   const message: Message | undefined = own ?? en[key];
   if (message === undefined) return key;
   const fallback = own === undefined && locale !== 'en';
@@ -230,7 +231,7 @@ export function fullStop(text: string): string {
   const core = fallbackEnd ? text.slice(0, -FALLBACK_END.length) : text;
   const pattern = fallbackEnd
     ? en['text.sentence']
-    : (tables[i18n.locale]['text.sentence'] ?? en['text.sentence']);
+    : (currentTable()['text.sentence'] ?? en['text.sentence']);
   const result = interpolate(pattern, { text: core }, 'en');
   return fallbackEnd ? result + FALLBACK_END : result;
 }
@@ -241,7 +242,7 @@ export function joinPhrases(
   parts: readonly string[],
   separator: 'text.join' | 'text.phrases' = 'text.phrases'
 ): string {
-  const pattern = tables[i18n.locale][separator] ?? en[separator];
+  const pattern = currentTable()[separator] ?? en[separator];
   return parts
     .filter(Boolean)
     .reduce(
@@ -252,7 +253,7 @@ export function joinPhrases(
 
 export function labelDetail(label: string, detail: string): string {
   return detail
-    ? interpolate(tables[i18n.locale]['text.detail'] ?? en['text.detail'], { label, detail }, 'en')
+    ? interpolate(currentTable()['text.detail'] ?? en['text.detail'], { label, detail }, 'en')
     : label;
 }
 

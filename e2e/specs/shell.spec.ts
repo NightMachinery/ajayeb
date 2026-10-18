@@ -102,7 +102,12 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     const shell = Object.entries(cachePaths).find(([name]) => name.startsWith('ajayeb-shell-'));
     expect(shell, 'a versioned shell cache').toBeDefined();
     const keys = shell?.[1] ?? [];
-    for (const path of ['/', '/favicon.svg', '/manifest.webmanifest', '/icons/icon-192.png']) {
+    for (const path of [
+      '/shell.html',
+      '/favicon.svg',
+      '/manifest.webmanifest',
+      '/icons/icon-192.png'
+    ]) {
       expect(keys).toContain(path);
     }
     expect(keys.filter((k) => HASHED_FONT.test(k))).toHaveLength(4);

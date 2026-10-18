@@ -18,6 +18,8 @@
   //   edge   a narrower even fade along the four edges (small thumbnails)
   //   none   no mask (art that is already shaped, such as tokens and backs)
   import type { Snippet } from 'svelte';
+  import type { Attachment } from 'svelte/attachments';
+  import { listenForImage } from './image-events';
   import { artSource, pickArt, type ArtIndex, type ArtSize } from './lookup';
 
   interface Props {
@@ -31,6 +33,8 @@
      *  the prefetch uses too. */
     sizes?: string;
     feather?: 'soft' | 'sky' | 'edge' | 'none';
+    /** Initial viewport art fetches eagerly and paints without a JS load gate. */
+    priority?: boolean;
     /** Where the cover crop is anchored (CSS object-position). */
     position?: string;
     /** An index other than the generated one (the dev gallery). */
@@ -45,6 +49,7 @@
     size = 'default',
     sizes,
     feather = 'soft',
+    priority = false,
     position = '50% 50%',
     index,
     class: className = '',
@@ -57,6 +62,21 @@
   let failedSrc = $state<string | null>(null);
   let loadedSrc = $state<string | null>(null);
   const failed = $derived(pick !== undefined && failedSrc === pick.src);
+
+  // DOM listeners avoid SSR inline event attributes, which the app's CSP
+  // forbids. Also settle an image that finished before hydration attached us.
+  const observeImage: Attachment<HTMLImageElement> = (image) => {
+    const src = pick?.src ?? null;
+    return listenForImage(
+      image,
+      () => {
+        loadedSrc = src;
+      },
+      () => {
+        failedSrc = src;
+      }
+    );
+  };
 </script>
 
 {#if pick && !failed}
@@ -68,15 +88,15 @@
     height={pick.height}
     alt=""
     aria-hidden="true"
-    loading="lazy"
+    loading={priority ? 'eager' : 'lazy'}
+    fetchpriority={priority ? 'high' : 'auto'}
     decoding="async"
     draggable="false"
     class="art-image feather-{feather} object-cover select-none {className}"
-    class:loaded={loadedSrc === pick.src}
+    class:loaded={priority || loadedSrc === pick.src}
     style:object-position={position}
     data-art={id}
-    onload={() => (loadedSrc = pick.src)}
-    onerror={() => (failedSrc = pick.src)}
+    {@attach observeImage}
   />
 {:else}
   {@render fallback?.()}

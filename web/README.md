@@ -1,6 +1,6 @@
 # web: the Ajayeb client
 
-The browser client: a SvelteKit 2 single-page app with Svelte 5 runes, Tailwind 4, Vite 8 and TypeScript 6.0. It is thin on purpose. The Go server holds the only rules engine; this app renders the views the server sends and sends back action keys. See [AGENTS.md](../AGENTS.md) for the conventions and [docs/architecture.md](../docs/architecture.md) for the data flow.
+The browser client: a static SvelteKit 2 app with Svelte 5 runes, Tailwind 4, Vite 8 and TypeScript 6.0. It is thin on purpose. The Go server holds the only rules engine; this app renders the views the server sends and sends back action keys. See [AGENTS.md](../AGENTS.md) for the conventions and [docs/architecture.md](../docs/architecture.md) for the data flow.
 
 ## Running it
 
@@ -15,6 +15,34 @@ Heavy commands go through the root `Makefile`, which wraps them in the memory gu
 The package scripts behind them are `dev`, `build`, `preview`, `check`, `lint`, `format` and `test`.
 
 Ports: Vite dev listens on 38952 and `vite preview` on 38953. Both forward `/ws`, `/api` and `/health` to the Go server at `http://127.0.0.1:38951`, or to `AJAYEB_SERVER` when that is set.
+
+## Home loading
+
+Home alone is prerendered at build time (`src/routes/+page.ts`), so its real
+hero, logotype and mode buttons paint before JavaScript. The generated
+`index.html` contains that Home view. `shell.html` is the separate generic
+client shell for game links and all other routes; the Go static handler
+prefers it for missing app paths, with `index.html` retained for older builds.
+The service worker caches the generic shell for offline navigation, so a
+room link never hydrates Home's markup. Deploy the entire build together.
+
+The Home build hook keeps CSS, font and hero discovery ahead of the existing
+module preloads. It moves those tags within the head without removing a
+resource or changing body and hydration markup; other routes and the generic
+shell keep their generated order.
+
+The hero is eager and high priority. Its preload and image share the
+responsive source set from the generated art index, including content hashes.
+Priority art paints without waiting for an image-load state update. Art load
+listeners attach through the DOM, avoiding inline event attributes under the
+server CSP and handling a cached success or failure before hydration. Dark Home
+frames the painting without a paper feather.
+
+Home loads each sheet on first open and retains it for subsequent opens.
+The live session loads on the first create; `saved-rooms.svelte.ts` owns the
+one saved-room store and storage listener shared by Home and the game.
+Saved rooms and the tutorial offer appear after mount, preserving hydration
+and preventing returning players from briefly seeing the first-launch offer.
 
 ## Layout
 
@@ -228,10 +256,11 @@ Every user-visible string goes through `t(key, params)` from `$lib/i18n`. The En
 
 ### Languages and direction
 
-- **Locales.** `LOCALES` in `src/lib/i18n/locale.svelte.ts` lists the languages with a table: English (`en`) and Persian (`fa`). English defines the keys; the Persian table translates every one of them, following the glossary in `docs/i18n/persian.md`. To add a locale, add its code to `LOCALES`, a folder `src/lib/i18n/<code>/` with one file per English area it translates (each typed `as const satisfies Translation<typeof en>`, so a misspelt or stale key fails to compile), an `index.ts` that merges them as a `PartialLocaleTable`, an entry in `tables` in `src/lib/i18n/index.ts`, a name for the Settings row (`home.settings.language*`, written in the language itself), and its direction in `RTL_LANGUAGES` if it is written right to left.
+- **Locales.** `LOCALES` in `src/lib/i18n/locale.svelte.ts` lists the languages with a table: English (`en`) and Persian (`fa`). English defines the keys; the Persian table translates every one of them, following the glossary in `docs/i18n/persian.md`. To add a locale, add its code to `LOCALES`, a folder `src/lib/i18n/<code>/` with one file per English area it translates (each typed `as const satisfies Translation<typeof en>`, so a misspelt or stale key fails to compile), an `index.ts` that merges them as a `PartialLocaleTable`, an on-demand loader in `src/lib/i18n/locale.svelte.ts`, a name for the Settings row (`home.settings.language*`, written in the language itself), and its direction in `RTL_LANGUAGES` if it is written right to left.
+- **On-demand messages.** English is the initial table. `i18n.set(locale)` returns a promise and loads Persian only when requested. Text, digits and direction keep the current language until the table is ready, including for a persisted choice. The table is cached, repeated requests share one load, a later English choice cancels an earlier pending switch, and failed loading keeps the working language. Tests that require Persian await the switch.
 - **Per-key fallback.** A key the table leaves out falls back to English. Its plural form is chosen by English rules (the forms are English ones) and its numbers keep the locale's digits. In a right-to-left locale the fallback is marked left to right (a left-to-right isolate between two left-to-right marks), so its punctuation stays at its end and English sentences joined into one string keep their order; `isFallbackText()` tells such text apart, and `joinList` joins a list of fallback words the English way. End a sentence built from such text with `fullStop()`, never a bare `.` after it, or the stop lands at the start of the English sentence; and count letters with `stripBidiMarks()` first (CardFace's name fit does). A string param (a player's name, a card name) is isolated in a right-to-left locale, so a Latin name never trades places with the words around it. The Persian table is complete, so in practice the fallback shows only for a key added to English and not yet to Persian (a test fails until it is).
-- **The language setting.** Settings has a Language row (English, فارسی), stored as `locale` in `ajayeb:settings` and applied at once: the settings store calls `i18n.set` when it loads and on every save, before anything renders. The browser's language is not read. The web manifest stays English.
-- **Before the first paint.** A second inline script in `src/app.html`, beside the theme one, sets `lang="fa"` and `dir="rtl"` on `<html>` from the same stored value, so a Persian page is never painted left to right first. The server's CSP hashes every inline script of the page it serves, so this script needs no other change.
+- **The language setting.** Settings has a Language row (English, فارسی), stored as `locale` in `ajayeb:settings`. The settings store requests it when it loads and on every save; text and direction change when its table is ready. The browser's language is not read. The web manifest stays English.
+- **First paint.** Prerendered Home starts in English. The theme bootstrap applies the stored colour theme before paint; the root layout changes language and direction together after the requested messages load. This keeps English fallback text left to right while Persian is loading.
 - **Fonts.** The self-hosted fonts are Latin subsets, so Arabic-script text falls through the font stack. For `lang="fa"`, `src/app.css` names Vazirmatn (where installed), Noto Naskh Arabic or Noto Sans Arabic, then the system fonts. No Persian font is shipped yet.
 - **Direction.** The app chrome follows `i18n.dir` (logical properties, `rtl:-scale-x-100` on back and undo arrows). The board region, the card structure and the military track are `dir="ltr"` in every locale, because their layout is spatial. Show numbers through `formatNumber`, never as a bare `{n}`, so they take the locale's digits. Translated text inherits the locale direction, including sentences beginning with a Latin player name. Use `dir="auto"` only on bare player names and name fields; interpolated names already have directional isolates. Card names, categories, age labels and textual badge labels explicitly use `i18n.dir` inside the left-to-right card geometry, as do translated labels inside spatial diagram rows. Numerical markers and operators keep their spatial direction.
 - **The fixture.** `e2e/specs/rtl.spec.ts` runs Home, Settings and a hot-seat game in Persian on both projects: no horizontal scroll, mirrored chrome measured against the same state in English, a left-to-right board, one move and the result screen. It also measures the visual order of Latin names in Persian pass-device logs and starter options, and checks that lobby sharing labels stay on one line at the four review sizes. The base fixture's `appLocale` option sets the language (`test.use({ appLocale: 'fa' })`).
@@ -280,8 +309,8 @@ A third rule lives in `src/lib/lint-ui.test.ts` itself, so `make test-web` enfor
 
 `src/service-worker.ts` is the app-shell service worker. SvelteKit builds it to `/service-worker.js`, a stable name, and registers it on every page load; the Go server revalidates that file on every load, so a new build reaches the browser at once. The app then opens without a network, and shows its own offline state: a game needs the server, so a room page shows the session's "Offline" state, and Home, the rules and Settings show the one-line notice `components/shell/OfflineNotice.svelte` (the layout passes it the browser's online state from `svelte/reactivity/window`, and never on a game page). The cache policy by URL is the pure module `src/lib/sw/policy.ts`, unit-tested in `policy.test.ts`.
 
-- **Precache.** On install it caches, in a cache named after the build's version (`ajayeb-shell-<version>`): every `/_app/immutable/` file of this build (code, CSS and the content-hashed fonts), the shell (`index.html`, under `/`), and the stable-named statics that `kit.serviceWorker.files` in `svelte.config.js` lets through: the favicon, the web manifest and the app icons. A new version deletes the older shell caches when it activates.
-- **Page loads** go network first. The cached shell answers only when the network fails or takes more than 4 seconds. Every network response, including an HTTP error, is returned unchanged. Any app route gets the same shell, and the client router renders the route.
+- **Precache.** On install it caches, in a cache named after the build's version (`ajayeb-shell-<version>`): every `/_app/immutable/` file of this build (code, CSS and the content-hashed fonts), the generic shell (`shell.html`, under `/shell.html`), and the stable-named statics that `kit.serviceWorker.files` in `svelte.config.js` lets through: the favicon, the web manifest and the app icons. A new version deletes the older shell caches when it activates.
+- **Page loads** go network first. The cached shell answers only when the network fails or takes more than 4 seconds. Every network response, including an HTTP error, is returned unchanged. Offline app routes get the generic shell and the client router renders the route; an online Home load receives its prerendered HTML.
 - **Build files and statics** come from the precache, then the network.
 - **Art** (`/art/...?v=<hash>`) is cached as it is shown, cache first, in `ajayeb-art`, which outlives versions because its URLs carry their hash, and keeps at most 150 entries, the least recently used going first. Art is never precached (D24): the idle prefetch in `lib/art/prefetch.ts` warms it. Cache lookup and LRU refresh run in one transaction queue, so concurrent offline requests cannot observe a hit while its entry is being reordered. Art without a `v` goes to the network.
 - **Never touched:** `/ws`, `/api` and everything under it (`/api/dev/*` included), `/health`, the worker script, `/_app/version.json`, other origins, non-GET requests and range requests. The worker never calls `respondWith` for them, so they behave as if there were no worker.

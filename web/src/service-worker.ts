@@ -11,7 +11,7 @@
 //
 // - Install precaches this version: every _app/immutable file (code, CSS,
 //   the content-hashed fonts), the stable-named statics svelte.config.js
-//   lets through (favicon, manifest, app icons) and the shell, index.html.
+//   lets through (favicon, manifest, app icons) and the generic shell, shell.html.
 // - Page loads go network first. The cached shell answers only when the
 //   network fails or takes longer than NAVIGATION_TIMEOUT_MS; a network response is never replaced by it.
 // - Art is cached as it is shown, by its ?v= URL, in a bounded cache that

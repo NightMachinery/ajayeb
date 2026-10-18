@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ART_CACHE,
+  SHELL_KEY,
   GAME_LOCK,
   gameClientIds,
   gameWindows,
@@ -162,5 +163,13 @@ describe('updates', () => {
     expect(updateHeldBack([{ game: false }, { game: true }])).toBe(true);
     expect(updateHeldBack([{ game: true }, { game: true }])).toBe(true);
     expect(updateHeldBack([])).toBe(false);
+  });
+});
+
+describe('offline shell identity', () => {
+  it('uses the generic client shell rather than prerendered Home', () => {
+    expect(SHELL_KEY).toBe('/shell.html');
+    expect(strategy(SHELL_KEY)).toBe('bypass');
+    expect(strategy('/play/ABCDEF', { mode: 'navigate' })).toBe('navigate');
   });
 });

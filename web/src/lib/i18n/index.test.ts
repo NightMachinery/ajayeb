@@ -181,14 +181,14 @@ describe('the Persian table', () => {
   const START = '\u200e\u2066';
   const END = '\u2069\u200e';
 
-  it('is right to left once chosen', () => {
-    i18n.set('fa');
+  it('is right to left once chosen', async () => {
+    await i18n.set('fa');
     expect(i18n.locale).toBe('fa');
     expect(i18n.dir).toBe('rtl');
   });
 
-  it('uses its own wording, with Persian digits', () => {
-    i18n.set('fa');
+  it('uses its own wording, with Persian digits', async () => {
+    await i18n.set('fa');
     expect(t('home.settings.title')).toBe('تنظیمات');
     // A string param is isolated (U+2068 ... U+2069) with its own direction.
     expect(t('turn.player', { name: 'Omid!' })).toBe('نوبت \u2068Omid!\u2069');
@@ -203,8 +203,8 @@ describe('the Persian table', () => {
     expect(missing).toEqual([]);
   });
 
-  it('falls back to English per key, marked left to right', () => {
-    i18n.set('fa');
+  it('falls back to English per key, marked left to right', async () => {
+    await i18n.set('fa');
     untranslated(['game.card.faceDown', 'debug.hiddenTokens'], () => {
       expect(t('game.card.faceDown')).toBe(START + en['game.card.faceDown'] + END);
       // A fallback's plural form follows English rules; its digits stay Persian.
@@ -214,8 +214,8 @@ describe('the Persian table', () => {
     expect(t('game.card.faceDown')).toBe(fa['game.card.faceDown']);
   });
 
-  it('joins words left in English the English way', () => {
-    i18n.set('fa');
+  it('joins words left in English the English way', async () => {
+    await i18n.set('fa');
     untranslated(['card.resource.glass', 'card.resource.papyrus'], () => {
       const words = [t('card.resource.glass'), t('card.resource.papyrus')];
       expect(words.every(isFallbackText)).toBe(true);
@@ -224,8 +224,8 @@ describe('the Persian table', () => {
     expect(isFallbackText(t('home.settings.title'))).toBe(false);
   });
 
-  it('ends an English fallback sentence inside its marks', () => {
-    i18n.set('fa');
+  it('ends an English fallback sentence inside its marks', async () => {
+    await i18n.set('fa');
     untranslated(['card.effect.buildFromDiscard'], () => {
       const english = t('card.effect.buildFromDiscard');
       expect(fullStop(english)).toBe(START + en['card.effect.buildFromDiscard'] + '.' + END);
@@ -234,8 +234,8 @@ describe('the Persian table', () => {
     });
   });
 
-  it('joins bilingual sentences without moving fallback punctuation or doubling stops', () => {
-    i18n.set('fa');
+  it('joins bilingual sentences without moving fallback punctuation or doubling stops', async () => {
+    await i18n.set('fa');
     untranslated(['card.effect.buildFromDiscard'], () => {
       const english = t('card.effect.buildFromDiscard');
       const ended = fullStop(english);

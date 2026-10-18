@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { i18n, type Locale } from '$lib/i18n';
 import {
   DEFAULT_SETTINGS,
@@ -188,12 +188,12 @@ describe('the language setting', () => {
     expect(applied).toEqual(['fa']);
   });
 
-  it('switches the language and its direction at once', () => {
+  it('switches text direction after the requested messages load', async () => {
     const storage = memory();
     const store = new SettingsStore(storage, (l) => i18n.set(l));
     expect(i18n.dir).toBe('ltr');
     store.set('locale', 'fa');
-    expect(i18n.locale).toBe('fa');
+    await vi.waitFor(() => expect(i18n.locale).toBe('fa'));
     expect(i18n.dir).toBe('rtl');
     expect(JSON.parse(storage.data.get(SETTINGS_KEY)!).locale).toBe('fa');
     store.set('locale', 'en');

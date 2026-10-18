@@ -137,3 +137,28 @@ func TestVersionMatches(t *testing.T) {
 		t.Error("versionMatches with no hash = true, want false")
 	}
 }
+
+// Prerendered Home and generic route hydration must never be interchanged.
+func TestHomeAndClientShellAreSeparate(t *testing.T) {
+	h := newSPA(fstest.MapFS{
+		"index.html": {Data: []byte("<!doctype html><h1>Home</h1>")},
+		"shell.html": {Data: []byte("<!doctype html><main>Client shell</main>")},
+	})
+	for _, target := range []string{"/", "/?play=ai", "/index.html"} {
+		rec := do(t, h, http.MethodGet, target, nil)
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "<h1>Home</h1>") {
+			t.Errorf("GET %s = %d %q, want prerendered Home", target, rec.Code, rec.Body.String())
+		}
+	}
+	for _, target := range []string{"/play/ABCDEF", "/play/ABCDEF/", "/settings", "/rules", "/shell.html"} {
+		rec := do(t, h, http.MethodGet, target, nil)
+		if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Client shell") {
+			t.Errorf("GET %s = %d %q, want generic client shell", target, rec.Code, rec.Body.String())
+		}
+	}
+	for _, target := range []string{"/missing.js", "/_app/missing", "/.well-known/missing"} {
+		if rec := do(t, h, http.MethodGet, target, nil); rec.Code != http.StatusNotFound {
+			t.Errorf("GET %s = %d, want 404", target, rec.Code)
+		}
+	}
+}

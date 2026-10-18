@@ -114,7 +114,7 @@
     <span class="text-sm font-medium text-fg-muted" aria-hidden="true">
       {t('home.settings.languageLegend')}
     </span>
-    <!-- Applied at once: the store sets the app's locale on every save. -->
+    <!-- Saved at once; text and direction switch when messages are ready. -->
     <Segmented
       name="settings-language"
       legend={t('home.settings.languageLegend')}

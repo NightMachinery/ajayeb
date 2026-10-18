@@ -7,7 +7,7 @@
 //     HTTP API (/api/*, /api/dev/* included), the health check, the worker
 //     script itself, other origins, non-GET requests and range requests.
 //   - navigate: an HTML page load. Network first; the cached shell
-//     (index.html) only when the network fails or times out.
+//     (shell.html) only when the network fails or times out.
 //   - immutable: a content-hashed build file under /_app/immutable/. Cache
 //     first from this version's precache, then the network.
 //   - precached: a stable-named static file the worker precached (the
@@ -24,9 +24,9 @@ export const ART_CACHE = 'ajayeb-art';
 export const ART_CACHE_MAX_ENTRIES = 150;
 /** How long a page load waits for the network before the cached shell. */
 export const NAVIGATION_TIMEOUT_MS = 4000;
-/** The key the shell (index.html) is cached under. The server answers every
- *  app path with the same index.html, so one copy serves them all. */
-export const SHELL_KEY = '/';
+/** The generic client shell, independent of prerendered Home. Offline game
+ *  deep links must not receive Home's HTML or hydration data. */
+export const SHELL_KEY = '/shell.html';
 /** The message an old worker sends a waiting one to make it take over. */
 export const SKIP_WAITING = 'ajayeb:skip-waiting';
 

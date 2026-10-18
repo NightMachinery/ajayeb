@@ -51,7 +51,7 @@ var contentTypes = map[string]string{
 //  1. P itself, if it is a regular file.
 //  2. If P has no extension: P.html, then P/index.html (prerendered pages).
 //  3. If P has no extension and is not under _app/ or .well-known/, the app
-//     shell index.html, so client-side routes such as /play/K7QX2M work on a
+//     shell.html (or index.html for legacy builds), so client-side routes such as /play/K7QX2M work on a
 //     reload or a shared link.
 //  4. Otherwise 404. A missing /missing.js must not turn into an HTML page,
 //     or the browser would report a confusing parse error instead of a 404.
@@ -109,8 +109,12 @@ func (s *spa) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if isAppRoute(name) && s.serveFile(w, r, "index.html") {
-		return
+	if isAppRoute(name) {
+		// index.html may be prerendered Home. Only the generic shell can
+		// hydrate another route, including a shared game link.
+		if s.serveFile(w, r, "shell.html") || s.serveFile(w, r, "index.html") {
+			return
+		}
 	}
 	notFound(w)
 }

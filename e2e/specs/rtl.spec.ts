@@ -213,16 +213,17 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
     expect(problems, 'console errors, page errors or failed requests').toEqual([]);
   });
 
-  test('Settings switches the language at once, and it holds across a reload', async ({ page }) => {
+  test('Settings switches text and direction together, and it holds across a reload', async ({
+    page
+  }) => {
     const problems = watchHygiene(page);
-    // When <html> first turns right to left: while the document is still
-    // being parsed means src/app.html's inline bootstrap did it, before the
-    // app's own scripts and the first paint.
+    // A persisted Persian choice stays English until its messages load.
+    // The first RTL document must already contain the Persian heading.
     await page.addInitScript(() => {
       const w = window as unknown as { __firstRtl?: string };
       new MutationObserver(() => {
         if (w.__firstRtl === undefined && document.documentElement?.dir === 'rtl') {
-          w.__firstRtl = document.readyState;
+          w.__firstRtl = document.querySelector('h1')?.textContent ?? '';
         }
       }).observe(document, {
         subtree: true,
@@ -236,11 +237,11 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
 
     await page.goto('/settings');
     await expect(language('fa')).toBeVisible();
+    await expect(page.locator('h1')).toHaveText('تنظیمات');
     expect(await documentDir(page)).toEqual({ dir: 'rtl', lang: 'fa' });
     expect(await page.evaluate(() => (window as { __firstRtl?: string }).__firstRtl)).toBe(
-      'loading'
+      'تنظیمات'
     );
-    await expect(page.locator('h1')).toHaveText('تنظیمات');
     expectNoHorizontalScroll(await probeLayout(page), 'Settings');
 
     await language('en').click();
@@ -252,6 +253,7 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
     await expect(page.locator('h1')).toHaveText('تنظیمات');
 
     await page.reload();
+    await expect(page.locator('h1')).toHaveText('تنظیمات');
     await expect(language('fa')).toBeVisible();
     expect(await documentDir(page)).toEqual({ dir: 'rtl', lang: 'fa' });
     const stored = await page.evaluate(() => localStorage.getItem('ajayeb:settings') ?? '{}');

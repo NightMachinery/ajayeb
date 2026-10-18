@@ -23,7 +23,7 @@
   // room continues as "Tutorial".
   import { resolve } from '$app/paths';
   import ArtImage from '$lib/art/ArtImage.svelte';
-  import { artId } from '$lib/art/lookup';
+  import { artId, artSource } from '$lib/art/lookup';
   import Bot from '@lucide/svelte/icons/bot';
   import Globe from '@lucide/svelte/icons/globe';
   import GraduationCap from '@lucide/svelte/icons/graduation-cap';
@@ -38,6 +38,9 @@
   import type { SavedRoom } from '$lib/session/rooms.svelte';
   import { theme, THEME_PREFS } from '$lib/ui/theme.svelte';
   import TutorialOffer from '../tutorial/TutorialOffer.svelte';
+
+  const heroSizes = '(min-width: 64rem) 28rem, 20rem';
+  const hero = artSource(artId('hero', 'hero'), 'default', heroSizes);
 
   const PUBLISHER_URL = 'https://www.rprod.com/en/games/7-wonders-duel';
   const SOURCE_URL = 'https://github.com/NightMachinery/ajayeb';
@@ -129,6 +132,19 @@
     'M50 36 L54.1 40.1 L59.9 40.1 L59.9 45.9 L64 50 L59.9 54.1 L59.9 59.9 L54.1 59.9 L50 64 L45.9 59.9 L40.1 59.9 L40.1 54.1 L36 50 L40.1 45.9 L40.1 40.1 L45.9 40.1 Z';
 </script>
 
+<svelte:head>
+  {#if hero}
+    <link
+      rel="preload"
+      as="image"
+      href={hero.src}
+      imagesrcset={hero.srcset}
+      imagesizes={hero.sizes}
+      fetchpriority="high"
+    />
+  {/if}
+</svelte:head>
+
 <main class="h-full overflow-y-auto">
   <div
     class="mx-auto flex min-h-full w-full max-w-md flex-col px-4 pt-3 pb-6 split:max-w-5xl split:px-6"
@@ -177,7 +193,8 @@
         >
           <ArtImage
             id={artId('hero', 'hero')}
-            sizes="(min-width: 64rem) 28rem, 20rem"
+            sizes={heroSizes}
+            priority
             feather="soft"
             class="absolute inset-0 h-full w-full"
           >
@@ -366,3 +383,18 @@
     </footer>
   </div>
 </main>
+
+<style>
+  /* Night uses a deliberate painting frame rather than fading cream into navy. */
+  :global([data-theme='dark']) .hero {
+    overflow: hidden;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--shape-panel);
+    background: var(--panel);
+    box-shadow: var(--shadow-panel);
+  }
+  :global([data-theme='dark']) .hero :global(.art-image) {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+</style>
