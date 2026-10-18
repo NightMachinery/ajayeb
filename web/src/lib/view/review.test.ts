@@ -35,7 +35,7 @@ describe('the review wording', () => {
   it('says what was played, naming the tucked card for wonders', () => {
     expect(playedText('construct:walls')).toBe('You built Walls.');
     expect(playedText('discard:clay-pit')).toBe('You discarded Clay Pit.');
-    expect(playedText('wonder:pyramids:walls')).toBe('You built the wonder Pyramids with Walls.');
+    expect(playedText('wonder:pyramids:walls')).toBe('You built the wonder Pyramids using Walls.');
     expect(playedText('wonder:pyramids')).toBe('You built the wonder Pyramids.');
     expect(playedText('token:law')).toBe('Your last move.');
     expect(moveText('construct:walls')).toBe('Building Walls');
@@ -108,10 +108,10 @@ describe('the review wording', () => {
 
   it('describes both moves of a play-again turn and identifies which move the advice is about', () => {
     expect(playedText('wonder:pyramids:baths construct:lumber-yard')).toBe(
-      'Your two moves: you built the wonder Pyramids with Baths, then built Lumber Yard.'
+      'Your two moves: you built the wonder Pyramids using Baths, then built Lumber Yard.'
     );
     expect(playedText('wonder:pyramids:baths wonder:colossus:press discard:lumber-yard')).toBe(
-      'Your 3 moves: you built the wonder Pyramids with Baths, then built the wonder Colossus with Press, then discarded Lumber Yard.'
+      'Your 3 moves: you built the wonder Pyramids using Baths, then built the wonder Colossus using Press, then discarded Lumber Yard.'
     );
 
     expect(
