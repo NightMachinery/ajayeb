@@ -7,6 +7,175 @@ import { watchHygiene } from '../fixtures/hygiene';
 import { joinByLink, newDeviceContext } from '../fixtures/online';
 
 test.describe('Home loading', { tag: '@mobile' }, () => {
+  for (const action of [
+    { name: 'Play vs AI', heading: 'Choose your rival' },
+    { name: 'Pass and play', heading: 'Pass and play' },
+    { name: 'Play online', heading: 'Play online' },
+    { name: 'Learn to play', tutorial: true },
+    { name: 'Join with a code', heading: 'Join a game' },
+    { name: 'Settings', heading: 'Settings' }
+  ]) {
+    test(`early Home activation: ${action.name}`, async ({ page, isMobile }, info) => {
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route('**/_app/immutable/**/*.js', async (route) => {
+        // Both the initial app and deferred sheets face the slow network.
+        await Promise.all([held, new Promise((resolve) => setTimeout(resolve, 1500))]);
+        await route.continue();
+      });
+      try {
+        await page.goto('/', { waitUntil: 'commit' });
+        await expect(page.getByRole('heading', { name: 'Ajayeb', exact: true })).toBeVisible();
+        const control = page.getByRole('button', { name: new RegExp(action.name) });
+        await expect(control).toBeDisabled();
+        await expect(control).toHaveCSS('cursor', 'wait');
+        await expect(page.getByRole('status')).toHaveText('Getting ready…');
+        await expect(page.getByRole('radio', { name: 'Dark', exact: true })).toBeDisabled();
+        await control.scrollIntoViewIfNeeded();
+        await page.screenshot({ path: info.outputPath('before-start.png') });
+        // A real pointer press is harmless while native disabled; it is never queued.
+        const bounds = await control.boundingBox();
+        if (!bounds) throw new Error('missing Home control');
+        if (isMobile)
+          await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+        else await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+        await expect(page.locator('dialog[open]')).toHaveCount(0);
+        release();
+        await expect(control).toBeEnabled();
+        await expect(page.getByRole('status')).toHaveCount(0);
+        if (action.name === 'Settings') {
+          await control.focus();
+          await page.keyboard.press('Enter');
+        } else if (isMobile) await control.tap();
+        else await control.click();
+        if (action.tutorial) {
+          await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+          await new GameDriver(page).waitReady();
+          expect(await page.evaluate(() => window.__ajayeb?.room()?.mode)).toBe('ai');
+        } else {
+          await expect(page.locator('dialog[open] h2')).toHaveText(action.heading!);
+          await expect(page.locator('dialog[open]')).toHaveCount(1);
+        }
+        await page.screenshot({ path: info.outputPath('after-start.png') });
+      } finally {
+        release();
+      }
+    });
+  }
+
+  test('an immediate online click survives delayed startup', async ({ page }) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route('**/_app/immutable/**/*.js', async (route) => {
+      await Promise.all([held, new Promise((resolve) => setTimeout(resolve, 1500))]);
+      await route.continue();
+    });
+    try {
+      await page.goto('/', { waitUntil: 'commit' });
+      await expect(page.getByRole('heading', { name: 'Ajayeb', exact: true })).toBeVisible();
+      // The production helper's immediate click: no startup or hydration wait.
+      const opening = page.getByRole('button', { name: /Play online/ }).click();
+      // Give that click a chance to land while all app scripts are still held.
+      // Native disabled controls keep it pending; the old Home loses it here.
+      await Promise.race([opening, page.waitForTimeout(1000)]);
+      release();
+      await opening;
+      await expect(page.locator('dialog[open] h2')).toHaveText('Play online');
+    } finally {
+      release();
+    }
+  });
+
+  test('early Home theme controls become available for pointer and keyboard', async ({
+    page,
+    isMobile
+  }) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route('**/_app/immutable/**/*.js', async (route) => {
+      await Promise.all([held, new Promise((resolve) => setTimeout(resolve, 1500))]);
+      await route.continue();
+    });
+    try {
+      await page.goto('/', { waitUntil: 'commit' });
+      await expect(page.locator('h1')).toBeVisible();
+      const dark = page.getByRole('radio', { name: 'Dark', exact: true });
+      await expect(dark).toBeDisabled();
+      await expect(page.getByRole('radio', { name: 'Light', exact: true })).toBeDisabled();
+      await expect(page.getByRole('radio', { name: 'System', exact: true })).toBeDisabled();
+      const label = page.locator('label:has(input[name="theme"][value="dark"])');
+      const initialTheme = await page.locator('html').getAttribute('data-theme');
+      const bounds = await label.boundingBox();
+      if (!bounds) throw new Error('missing theme label');
+      // Locator actions correctly wait for a label's disabled input. Use a
+      // physical press to exercise the unavailable native control itself.
+      if (isMobile)
+        await page.touchscreen.tap(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      else await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      await expect(dark).not.toBeChecked();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', initialTheme!);
+      release();
+      await expect(dark).toBeEnabled();
+      if (isMobile) await label.tap();
+      else await label.click();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await dark.focus();
+      await page.keyboard.press('ArrowLeft');
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    } finally {
+      release();
+    }
+  });
+
+  test('loading feedback leaves controls and links uncovered at review sizes', async ({
+    page
+  }, info) => {
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route('**/_app/immutable/**/*.js', async (route) => {
+      await Promise.all([held, new Promise((resolve) => setTimeout(resolve, 1500))]);
+      await route.continue();
+    });
+    try {
+      await page.goto('/', { waitUntil: 'commit' });
+      for (const viewport of [
+        { width: 360, height: 740 },
+        { width: 390, height: 844 },
+        { width: 740, height: 360 },
+        { width: 1280, height: 800 }
+      ]) {
+        await page.setViewportSize(viewport);
+        await page.locator('h1').scrollIntoViewIfNeeded();
+        await expect(page.getByRole('status')).toBeInViewport();
+        const overlap = await page.getByRole('status').evaluate((status) => {
+          const a = status.getBoundingClientRect();
+          return [...document.querySelectorAll('main button, main a, main input')]
+            .filter((control) => {
+              const b = control.getBoundingClientRect();
+              return a.top < b.bottom && a.bottom > b.top && a.left < b.right && a.right > b.left;
+            })
+            .map((control) => control.textContent?.trim() || control.getAttribute('aria-label'));
+        });
+        expect(overlap).toEqual([]);
+        await page.screenshot({
+          path: info.outputPath(`loading-${viewport.width}x${viewport.height}.png`)
+        });
+      }
+      release();
+      await expect(page.locator('[data-home-loading]')).toHaveCount(0);
+    } finally {
+      release();
+    }
+  });
+
   test('enforced CSP permits Home and a hero failure before hydration shows its fallback', async ({
     page,
     baseURL
@@ -98,6 +267,7 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce');
     await expect(page.getByRole('button', { name: /ABCDEF/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /ABCDEF/ })).toBeEnabled();
     await expect(page.locator('[data-continue-details]')).toContainText('۲');
     await expect(page.locator('[data-tutorial-replay]')).toBeVisible();
     await expect(page.locator('[data-tutorial-offer]')).toHaveCount(0);
@@ -126,6 +296,8 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
       await expect(page.locator('[data-hero] img')).toBeVisible();
       await expect(page.locator('[data-hero] img')).toHaveCSS('opacity', '1');
       await expect(page.getByRole('button', { name: /Play vs AI/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Play vs AI/ })).toBeDisabled();
+      await expect(page.getByRole('status')).toHaveText('Getting ready…');
       await expect(page.locator('link[rel="preload"][as="image"]')).toHaveCount(1);
     } finally {
       await context.close();

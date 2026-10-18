@@ -46,6 +46,8 @@
   const SOURCE_URL = 'https://github.com/NightMachinery/ajayeb';
 
   interface Props {
+    /** Native controls stay unavailable until the route has mounted. */
+    ready?: boolean;
     /** The saved rooms this browser has played, newest first. */
     rooms: readonly SavedRoom[];
     onContinue: (code: string) => void;
@@ -66,6 +68,7 @@
   }
 
   let {
+    ready = true,
     rooms,
     onContinue,
     onPlayAi,
@@ -145,12 +148,13 @@
   {/if}
 </svelte:head>
 
-<main class="h-full overflow-y-auto">
+<main class="h-full overflow-y-auto" data-home-loading={!ready ? '' : undefined}>
   <div
     class="mx-auto flex min-h-full w-full max-w-md flex-col px-4 pt-3 pb-6 split:max-w-5xl split:px-6"
   >
     <div class="flex items-center justify-end gap-2">
       <fieldset
+        disabled={!ready}
         class="inline-flex gap-0.5 rounded-full border border-rule bg-panel p-1 shadow-panel"
       >
         <legend class="sr-only">{t('theme.label')}</legend>
@@ -174,6 +178,7 @@
       </fieldset>
       <button
         type="button"
+        disabled={!ready}
         class="flex size-11 items-center justify-center rounded-full border border-rule bg-panel text-fg-muted transition-colors duration-150 hover:text-fg"
         onclick={onSettings}
         aria-label={t('home.settings')}
@@ -186,7 +191,7 @@
     <div
       class="flex flex-col short:pt-3 split:my-auto split:grid split:grid-cols-2 split:items-center split:gap-10"
     >
-      <header class="mt-3 flex flex-col items-center text-center short:mt-0 split:mt-0">
+      <header class="relative mt-3 flex flex-col items-center text-center short:mt-0 split:mt-0">
         <div
           class="hero relative grid aspect-video h-auto max-h-44 w-full max-w-xs place-items-center short:max-h-16! short:max-w-28! split:max-h-64 split:max-w-md"
           data-hero
@@ -233,6 +238,11 @@
         </p>
         <h1 class="mt-2 font-display text-5xl tracking-tight text-fg">{t('app.name')}</h1>
         <p class="mt-3 text-lg text-fg-muted">{t('app.tagline')}</p>
+        {#if !ready}
+          <p role="status" class="home-loading-status mx-auto w-fit text-sm font-semibold text-fg">
+            {t('home.loading')}
+          </p>
+        {/if}
       </header>
 
       <div class="mt-8 short:mt-4 split:mt-0 split:w-full split:max-w-md split:justify-self-end">
@@ -253,6 +263,7 @@
                 <li>
                   <button
                     type="button"
+                    disabled={!ready}
                     class="flex min-h-14 w-full items-center justify-between gap-3 rounded-control border border-rule-strong bg-accent-soft px-4 py-2 text-start text-accent-soft-fg"
                     onclick={() => onContinue(room.code)}
                   >
@@ -296,6 +307,7 @@
               <li>
                 <button
                   type="button"
+                  disabled={!ready}
                   onclick={mode.onclick}
                   class={[
                     'flex min-h-16 w-full items-center gap-3 rounded-control border px-4 py-3 text-start shadow-panel short:min-h-14 short:py-2',
@@ -318,6 +330,7 @@
           {#if onTutorial}
             <button
               type="button"
+              disabled={!ready}
               class="mt-3 flex min-h-12 w-full items-center gap-3 rounded-control border border-dashed border-rule-strong px-4 py-2 text-start text-fg hover:bg-panel-sunken short:mt-2"
               data-control="home-tutorial"
               data-tutorial-replay={tutorialDone ? '' : undefined}
@@ -339,6 +352,7 @@
           {#if onJoinCode}
             <button
               type="button"
+              disabled={!ready}
               class="mx-auto mt-2 flex min-h-11 items-center gap-2 rounded-control px-3 text-sm font-semibold text-fg underline decoration-gild underline-offset-2"
               data-control="home-join"
               onclick={onJoinCode}
@@ -385,6 +399,22 @@
 </main>
 
 <style>
+  .home-loading-status {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-start: 100%;
+    margin-block-start: 0.25rem;
+  }
+  /* Native disabled semantics cover touch, click, keyboard and radio arrows. */
+  [data-home-loading] button,
+  [data-home-loading] fieldset {
+    opacity: 0.55;
+  }
+  [data-home-loading] button,
+  [data-home-loading] label {
+    cursor: wait;
+  }
+
   /* Night uses a deliberate painting frame rather than fading cream into navy. */
   :global([data-theme='dark']) .hero {
     overflow: hidden;

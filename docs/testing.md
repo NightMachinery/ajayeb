@@ -1225,6 +1225,23 @@ load contains no Persian message table and opens no WebSocket; lazy sheets
 retain their choices and restore focus; real AI, hot-seat, online, join and
 query-driven AI starts work; and Continue reuses the live session.
 
+The early-activation cases hold every immutable JavaScript response for at
+least 1.5 seconds and until the pre-hydration assertions finish. They inspect
+Home immediately after its heading paints: all mode, tutorial, join and
+Settings buttons are natively disabled, the theme radios are disabled, and
+“Getting ready…” is visible. Pointer presses during this state cannot silently
+consume an enabled action. After release, each action opens its sheet or starts
+the tutorial; mobile uses touch, Settings uses Enter, and the theme case checks
+both pointer selection and arrow-key selection. A held-start layout case captures
+all four review sizes and checks that the status stays on screen without covering
+any button, radio or link. The deliberately chosen
+tradeoff is visible unavailability until mount rather than queued activation.
+No new inline script or CSP permission is needed. The no-script case keeps
+Home readable with the same unavailable state; regular links still work.
+A separate case starts the production-style online click immediately after the
+heading and releases scripts only after the click has had a chance to land.
+Production helpers retain their immediate heading-then-click behavior.
+
 A returning-device case combines stored Continue details, a completed and
 declined tutorial, Persian, dark theme and Animation off. It records hydration
 warnings and any appearance of the first-launch tutorial offer. Another case

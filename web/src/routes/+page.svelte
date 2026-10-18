@@ -147,6 +147,7 @@
 </svelte:head>
 
 <Home
+  ready={deviceReady}
   rooms={deviceReady ? rooms.list : []}
   onContinue={continueRoom}
   onPlayAi={openAi}

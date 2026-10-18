@@ -6,6 +6,7 @@ import type { Messages } from '../types';
 
 export const home = {
   // Home: the game modes.
+  'home.loading': 'Getting ready…',
   'home.modes': 'Game modes',
   'home.playAi': 'Play vs AI',
   'home.playAiHint': 'Against the computer',

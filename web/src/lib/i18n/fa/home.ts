@@ -9,6 +9,7 @@ import type { Translation } from '../types';
 
 export const home = {
   // Home: the game modes.
+  'home.loading': 'در حال آماده‌سازی…',
   'home.modes': 'حالت‌های بازی',
   'home.playAi': 'بازی با هوش مصنوعی',
   'home.playAiHint': 'در برابر رایانه',

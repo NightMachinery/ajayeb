@@ -42,6 +42,17 @@ listeners attach through the DOM, avoiding inline event attributes under the
 server CSP and handling a cached success or failure before hydration. Dark Home
 frames the painting without a paper feather.
 
+Before mount, Home's buttons and theme fieldset have native `disabled`
+semantics, dimmed styling and a visible translated “Getting ready…” status.
+This availability state covers pointer, touch and keyboard activation without
+an inline event queue or another CSP allowance. A player must wait until the
+controls become available, then activate once. The tradeoff is a short visible
+wait rather than accepting an early action and replaying it later. The no-script
+Home remains readable with explicitly unavailable controls and working links.
+Continue and the tutorial offer appear only after mount, when their actions
+are already available. Production smoke helpers still click immediately after
+the heading; native disabled semantics make their click wait safely.
+
 Home loads each sheet on first open and retains it for subsequent opens.
 The live session loads on the first create; `saved-rooms.svelte.ts` owns the
 one saved-room store and storage listener shared by Home and the game.
