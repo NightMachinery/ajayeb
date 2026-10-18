@@ -44,7 +44,8 @@ export const screenIds = [
   'spectator',
   'pass-device',
   'tooltip-board',
-  'tooltip-card'
+  'tooltip-card',
+  'advisor-strength'
 ] as const;
 export type Screen = (typeof screenIds)[number];
 const visible = (page: Page, selector: string) =>
@@ -297,6 +298,22 @@ export async function reachScreen(page: Page, origin: string, screen: Screen): P
       await fixture(page, 'age-1-start-seat0');
       await openTooltip(page, '[data-tut="track"] [data-capital-tip="0"]');
       return;
+    case 'advisor-strength': {
+      const room = await createDevRoom(origin, {
+        mode: 'ai',
+        bot: 'easy',
+        seed: '7',
+        scenario: 'mausoleum'
+      });
+      await page.goto(room.path);
+      const driver = new GameDriver(page);
+      await driver.nextTurn();
+      await driver.dismissToasts();
+      await menu(page, 'menu-hints');
+      const sheet = page.locator('dialog[open]').filter({ has: page.locator('[data-game-hints]') });
+      await expect(sheet).toBeVisible();
+      return;
+    }
   }
 }
 async function openTooltip(page: Page, selector: string): Promise<void> {
