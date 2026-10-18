@@ -152,7 +152,6 @@
     {#if age > 0}
       <span
         class="whitespace-nowrap text-fg-muted"
-        data-must-fit
         data-age-tip={ageTip ? '' : undefined}
         {@attach tooltip(
           ageTip || starterChoice
@@ -164,8 +163,13 @@
             : undefined
         )}
       >
-        <span class="min-[26rem]:hidden">{t('cards.left.compact', { count: cardsLeft })}</span>
-        <span class="max-[25.99rem]:hidden">{t('cards.left', { count: cardsLeft })}</span>
+        <span class="min-[26rem]:hidden">
+          <span aria-hidden="true" data-must-fit>{t('cards.left.compact', { count: cardsLeft })}</span>
+          <span class="sr-only">{t('cards.left', { count: cardsLeft })}</span>
+        </span>
+        <span class="max-[25.99rem]:hidden" data-must-fit>
+          {t('cards.left', { count: cardsLeft })}
+        </span>
       </span>
     {/if}
   </div>
@@ -174,7 +178,7 @@
     <div class="flex min-w-0 flex-1 items-center justify-center gap-2">{@render children()}</div>
   {/if}
 
-  <div class="flex items-center gap-1">
+  <div class="flex shrink-0 items-center gap-1">
     {#if onUndo}
       <!-- svelte-ignore a11y_no_noninteractive_tabindex (This named tooltip group explains its native disabled button to keyboard users.) -->
       <span

@@ -185,6 +185,27 @@ for (const locale of ['en', 'fa'] as const) {
         await expect(toggle).toHaveAccessibleName(
           locale === 'en' ? 'Turn sound off' : 'خاموش کردن صدا'
         );
+        // Keep the localized ordinal age and full spoken count even when
+        // the narrow header shows only the count's localized digits.
+        await expect(page.locator('[data-tut="age"]')).toContainText(
+          locale === 'en' ? 'III' : 'سوم'
+        );
+        if (viewport.width < 416) {
+          const count = page.locator('.top-bar [aria-hidden="true"][data-must-fit] + .sr-only');
+          await expect(count).toHaveText(locale === 'en' ? '19 cards left' : '۱۹ کارت مانده');
+          await expect(page.locator('.top-bar [aria-hidden="true"][data-must-fit]')).toHaveText(
+            locale === 'en' ? '19' : '۱۹'
+          );
+        }
+        for (const control of ['menu', 'undo', 'move-summary', 'log', 'sound']) {
+          expect(
+            await page.locator(`.top-bar [data-control="${control}"]`).evaluate((node) => {
+              const r = node.getBoundingClientRect();
+              return r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth;
+            }),
+            `${control} keeps its 44px target inside the viewport`
+          ).toBe(true);
+        }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true
         );

@@ -38,7 +38,7 @@ export const common = {
 
   'turn.player': 'نوبت {name}',
   // Persian keeps the noun singular after a number, so one form serves all.
-  'cards.left.compact': '{count} مانده',
+  'cards.left.compact': '{count}',
   'cards.left': { '=0': 'کارتی نمانده', other: '{count} کارت مانده' },
   'coins.count': { other: '{count} سکه' },
 
