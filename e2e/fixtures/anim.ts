@@ -463,13 +463,21 @@ export function animationFrameGaps(frames: number[], anims: AnimRecord[]): numbe
   return gaps;
 }
 
-/** A one-line summary of frame gaps: how many, the share over 34 ms, the worst. */
+/**
+ * A one-line summary of frame gaps: how many, the median and 90th
+ * percentile, the share over 34 ms and the worst.
+ */
 export function describeFrameGaps(gaps: number[]): string {
+  const sorted = [...gaps].sort((a, b) => a - b);
+  const at = (q: number) =>
+    sorted.length === 0
+      ? 0
+      : Math.round(sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))]!);
   const over = gaps.filter((g) => g > 34).length;
   const share = gaps.length === 0 ? 0 : Math.round((over / gaps.length) * 1000) / 10;
   return (
-    `frames during animations ${gaps.length}, over 34 ms ${over} (${share}%), ` +
-    `worst gap ${Math.round(Math.max(0, ...gaps))} ms`
+    `frames during animations ${gaps.length}, median gap ${at(0.5)} ms, p90 ${at(0.9)} ms, ` +
+    `over 34 ms ${over} (${share}%), worst gap ${Math.round(Math.max(0, ...gaps))} ms`
   );
 }
 

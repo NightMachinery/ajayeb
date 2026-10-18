@@ -484,7 +484,8 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
     // Both measure wall time, so a loaded machine can push one run over: up
     // to three runs, each one's numbers in the failure message or the
     // annotations (docs/testing.md says how to read them).
-    test.describe.configure({ retries: 2 });
+    // A traced run (AJAYEB_PERF_TRACE=1) is a diagnostic: one run only.
+    test.describe.configure({ retries: process.env.AJAYEB_PERF_TRACE === '1' ? 0 : 2 });
 
     test('c. input comes back within 450 ms of a frame at normal speed', async ({
       page,
