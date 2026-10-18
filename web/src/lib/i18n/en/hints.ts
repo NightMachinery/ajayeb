@@ -131,8 +131,14 @@ export const hints = {
     one: 'Looting: you lose {count} coin.',
     other: 'Looting: you lose {count} coins.'
   },
-  'hints.line.price.you': 'Your {resource}: {from} to {to} coins per unit.',
-  'hints.line.price.named': '{name}’s {resource}: {from} to {to} coins per unit.',
+  'hints.line.price.you': {
+    one: 'Your {resource}: {from} to {count} coin per unit.',
+    other: 'Your {resource}: {from} to {count} coins per unit.'
+  },
+  'hints.line.price.named': {
+    one: '{name}’s {resource}: {from} to {count} coin per unit.',
+    other: '{name}’s {resource}: {from} to {count} coins per unit.'
+  },
   'hints.line.saves': {
     one: 'Saves {count} coin on the cards and wonders in view, now.',
     other: 'Saves {count} coins on the cards and wonders in view, now.'
@@ -141,8 +147,8 @@ export const hints = {
   'hints.line.lastCertain': 'No other {resource} producer can still come.',
   'hints.line.lastVisible': 'The last {resource} producer in view; unseen cards may hold another.',
   'hints.line.worth': {
-    one: 'Worth now: {count} coin, {vp} VP.',
-    other: 'Worth now: {count} coins, {vp} VP.'
+    one: 'Worth now: {coins} coin, {vp} VP.',
+    other: 'Worth now: {coins} coins, {vp} VP.'
   },
   'hints.line.worthCoins': {
     one: 'Worth {count} coin to build today.',
@@ -170,9 +176,9 @@ export const hints = {
   'hints.note.denyBuild': 'Building it takes it from {name}.',
   'hints.note.denyTuck': 'Tucked under a wonder, it is out of the game for {name}.',
   'hints.note.shortByDiscard': {
-    one: 'Discarding another card (+{count} coin) would let you build this next turn, if it is still here and prices stay the same.',
+    one: 'Discarding another card ({gain} coin) would let you build this next turn, if it is still here and prices stay the same.',
     other:
-      'Discarding another card (+{count} coins) would let you build this next turn, if it is still here and prices stay the same.'
+      'Discarding another card ({gain} coins) would let you build this next turn, if it is still here and prices stay the same.'
   },
 
   'hints.discard.poolYou': 'Your Mausoleum could rebuild',
@@ -182,7 +188,7 @@ export const hints = {
   // The decider's hints (lib/view/outcome.ts, M10.HS3): the outcome line
   // under each move, the confirm step's warning, the card sheet's "After
   // this pick" panel and the starter choice. {delta} is a signed number
-  // ("+3"), {card} and {list} are names, {age} a number.
+  // ("+3"), {card} and {list} are names, {age} a localized age label.
   'hints.outcome.separator': '; ',
   'hints.outcome.win': 'Wins the game ({kind}).',
   'hints.outcome.winLaw': 'Wins: it completes a pair, and Law is the sixth symbol.',
@@ -299,7 +305,7 @@ export const hints = {
   // Board-level hints (lib/view/board-hints.ts, M10.HS4): where a card is,
   // the science tracker, the military track, the wonders, the progress
   // tokens, the age chip and the age interstitial. {place} is one of the
-  // hints.place.* phrases; {symbol} a symbol's name; {age} a number.
+  // hints.place.* phrases; {symbol} a symbol's name; {age} a localized age label.
   'hints.place.faceUp': 'face up on the board',
   'hints.place.tucked': 'tucked under a wonder, out of the game',
   'hints.place.cityYou': 'in your city',
@@ -338,6 +344,8 @@ export const hints = {
   'hints.science.lawNamed': 'Law would be {name}’s sixth symbol: a pair they complete now wins.',
 
   'hints.capital.win': 'Reaching this space wins the game at once.',
+  'hints.capital.winYou': 'If the conflict pawn reaches it, you win at once.',
+  'hints.capital.winNamed': 'If the conflict pawn reaches it, {name} wins at once.',
   'hints.capital.titleYou': 'Your capital.',
   'hints.capital.titleNamed': '{name}’s capital.',
   'hints.capital.yours': 'your capital',
@@ -507,8 +515,14 @@ export const hints = {
   // trade prices the other side's moves changed, shown in the move summary.
   'hints.recap.title': 'Your prices',
   'hints.recap.tip': 'Trade prices that changed since your last move.',
-  'hints.recap.price': 'Your {resource}: was {from}, now {to} coins.',
-  'hints.recap.priceBuilt': 'Your {resource}: was {from}, now {to} coins. {name} built {card}.',
+  'hints.recap.price': {
+    one: 'Your {resource}: was {from}, now {count} coin.',
+    other: 'Your {resource}: was {from}, now {count} coins.'
+  },
+  'hints.recap.priceBuilt': {
+    one: 'Your {resource}: was {from}, now {count} coin. {name} built {card}.',
+    other: 'Your {resource}: was {from}, now {count} coins. {name} built {card}.'
+  },
   // The board's marks of the same changes (M10.F3): the trade-price chip's
   // caret, a card's badge, the emptied slot and a card just turned face up.
   'hints.recap.chip': 'Since your last move: was {from}, now {to}.',

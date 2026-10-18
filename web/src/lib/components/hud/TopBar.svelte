@@ -22,7 +22,7 @@
   // left, so the settings gear leaves it there (Settings stays in the menu).
   import StarterDiagram from '../rules/StarterDiagram.svelte';
   import type { Snippet } from 'svelte';
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import HintsMenuItem from '../hints/HintsMenuItem.svelte';
   import House from '@lucide/svelte/icons/house';
   import Menu from '@lucide/svelte/icons/menu';
@@ -140,7 +140,7 @@
       </button>
     {/if}
     <span class="font-display font-semibold whitespace-nowrap" data-must-fit data-tut="age">
-      {age > 0 ? t('board.age', { age }) : t('board.age.draft')}
+      {age > 0 ? t('board.age', { age: ageLabel(age) }) : t('board.age.draft')}
     </span>
     {#if age > 0}
       <span

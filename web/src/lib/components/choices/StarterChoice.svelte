@@ -11,7 +11,7 @@
   // (starter-preview, the view's structure).
   import { cardName, joinList } from '$lib/components/card/effect-text';
   import { hintHide } from '$lib/hints/local.svelte';
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import { sessionHintScreen } from '$lib/view/hints';
   import { openingCards, starterThreatLines } from '$lib/view/outcome';
   import StarterDiagram from '../rules/StarterDiagram.svelte';
@@ -112,7 +112,9 @@
 
 <div class="flex flex-col gap-3" data-starter-choice={part !== 'actions' ? '' : undefined}>
   {#if part !== 'actions'}
-    <h3 class="text-center font-display text-lg text-fg">{t('choices.starter.title', { age })}</h3>
+    <h3 class="text-center font-display text-lg text-fg">
+      {t('choices.starter.title', { age: ageLabel(age) })}
+    </h3>
     <p
       class="text-center text-sm text-fg"
       {@attach tooltip({

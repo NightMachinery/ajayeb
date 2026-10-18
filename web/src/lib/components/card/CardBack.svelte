@@ -15,7 +15,7 @@
   // lattice shows.
   import ArtImage from '$lib/art/ArtImage.svelte';
   import { backArtId } from '$lib/art/lookup';
-  import { i18n, t } from '$lib/i18n';
+  import { ageLabel, i18n } from '$lib/i18n';
   import { tooltip, type TooltipContent } from '$lib/ui/tooltip.svelte';
   import { backTip, backText } from '$lib/view/tips';
   import type { Back } from '$lib/wire';
@@ -32,7 +32,7 @@
 
   let { back, tip, focusable = false, class: className = '' }: Props = $props();
 
-  const numeral = $derived(t(`card.ageNumeral.${backAge(back)}`));
+  const numeral = $derived(ageLabel(backAge(back)));
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive card back has one keyboard stop for its explanation.) -->

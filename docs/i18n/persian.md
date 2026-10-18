@@ -11,6 +11,7 @@ These are our own translations, made from our English text. Nothing was taken fr
 - **Register.** The polite plural, as in a modern Persian board game or app: "روی کارت بزنید", "شما برنده شدید". Second person throughout, never the familiar "تو". The one exception is the invite a player sends a friend (`online.lobby.shareText`), which is informal on purpose.
 - **Zero-width non-joiner (ZWNJ, U+200C).** Used where Persian needs it: the verb prefix می‌ (می‌سازید), the plural ‌ها (کارت‌ها), compound words (کنارگذاشته, پشت‌ورو), and the ezafe after a silent ه, written ‌ی (کتابخانه‌ی بزرگ, صفحه‌ی بازی). Never a plain space in those places.
 - **Numbers.** A number that varies is a `{count}` or `{n}` placeholder, so `Intl` writes it in Persian digits. A fixed number that is part of a rule's wording is written as a word: "دو سکه", "شش نماد علمی متفاوت". No digits are typed by hand, Persian or Latin.
+- **Signed changes.** Use `formatSigned()` for coin and point changes, preserving Persian digits and direction marks. Summary gains request a plus sign; losses use the typographic minus sign −. Price-change plurals follow the destination price.
 - **Plurals.** Persian keeps the noun singular after a number ("۳ سکه"), so a plural message usually has only the `other` form. A `=0` form is added where zero reads better as words ("کارتی نمانده").
 - **Quotation marks.** Guillemets: «ساخت یک شگفتی».
 - **Names.** Player names, card names and the like arrive as `{placeholders}`, and the i18n code isolates them, so a Latin player name never reorders the Persian around it.
@@ -35,7 +36,7 @@ These are fixed. Every string in the locale uses them, and only them, for these 
 - **the military track**: مسیر نظامی. The conflict pawn: مهره (in full مهره‌ی نظامی). A space on the track: خانه. A shield: سپر. A capital: پایتخت. Looting: غارت.
 - **science symbol**: نماد علمی. A pair of the same symbol: جفت. "Six different science symbols": شش نماد علمی متفاوت.
 - **chain**: زنجیره. A chain symbol: نماد زنجیره‌ای. "Free through a chain": رایگان از راه زنجیره.
-- **age**: دوران. "Age {age}" with a number: دوران {age} (دوران ۱). The age numeral on a card back and in the card sheet is an ordinal word: یکم, دوم, سوم ("دوران یکم"), in place of the English Roman numerals.
+- **age**: دوران. Every displayed age uses an ordinal word: یکم, دوم, سوم ("دوران یکم"), in place of the English Roman numerals I, II and III. The shared `ageLabel()` helper reads `card.ageNumeral.*` for bars, dialogs, summaries, logs, hints, card sheets and accessible labels. Server age values remain numeric.
 - **the card structure**: ساختار (the layout of an age's cards). Face up: رو. Face down: پشت‌ورو. To uncover: آزاد کردن. Covered: پوشیده.
 - **discard**: کنار گذاشتن (for coins). The discard pile: کارت‌های کنارگذاشته.
 - **tuck a card under a wonder**: زیر شگفتی گذاشتن.

@@ -59,9 +59,9 @@
   import LootingToken from './LootingToken.svelte';
   import MilitaryDiagram from '../rules/MilitaryDiagram.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
-  import { lootText, trackHints, type TrackHints } from '$lib/view/board-hints';
+  import { capitalText, lootText, trackHints, type TrackHints } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
-  import { tryGameContext } from '../choices/room';
+  import { isYou, seatNames, tryGameContext } from '../choices/room';
 
   interface Props {
     military: MilitaryView;
@@ -101,10 +101,21 @@
     return view && screen ? trackHints(view, screen.families, screen.names) : undefined;
   });
 
-  /** A seat's name for the zone tooltips: the hint names, else "you" or the crest. */
+  // Room identity stays available when military hints are hidden, and after the game.
+  const labelNames = $derived(
+    th?.names ?? {
+      names: seatNames(ctx?.session.room),
+      you:
+        viewerSeat !== undefined &&
+        isYou(viewerSeat, ctx?.session.view?.viewer ?? viewerSeat, ctx?.session.room?.mode)
+          ? viewerSeat
+          : null
+    }
+  );
+
+  /** A seat's display name and relation to this viewer. */
   function seatLabel(seat: Seat): { you: boolean; name: string } {
-    if (th) return { you: th.names.you === seat, name: th.names.names[seat] };
-    return { you: viewerSeat === seat, name: t(crestKey(seat)) };
+    return { you: labelNames.you === seat, name: labelNames.names[seat] };
   }
 
   /** The tooltip of a zone's points: they go to the player ahead, at the end. */
@@ -117,11 +128,9 @@
   }
 
   function capitalTip(seat: Seat): string {
-    const who = seatLabel(seat);
-    const base = who.you
-      ? t('hints.capital.titleYou')
-      : t('hints.capital.titleNamed', { name: who.name });
-    return [base, t('hints.capital.win'), th?.capitals[seat]?.text ?? ''].filter(Boolean).join(' ');
+    return [capitalText(seat, labelNames), th?.capitals[seat]?.text ?? '']
+      .filter(Boolean)
+      .join(' ');
   }
 
   const pawnTip = $derived.by(() => {

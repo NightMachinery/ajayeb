@@ -10,7 +10,7 @@
   //
   // A plain leaf component: it takes the view's slots and the display state
   // and reports taps on a slot; it decides nothing about the game.
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import { breakpoints } from '$lib/layout/breakpoints.svelte';
   import { fitStructure } from '$lib/layout/fit';
   import { badgesDimmed, slotAfford } from '$lib/view/afford';
@@ -76,7 +76,7 @@
   const ring = $derived(
     !dim && toMove !== undefined ? (toMove === 0 ? ('sun' as const) : ('moon' as const)) : undefined
   );
-  const ageNumeral = $derived(age >= 1 && age <= 3 ? t(`card.ageNumeral.${age as 1 | 2 | 3}`) : '');
+  const ageNumeral = $derived(ageLabel(age));
 
   /** Measures the container; the callback runs outside any effect. */
   function measure(el: HTMLElement) {

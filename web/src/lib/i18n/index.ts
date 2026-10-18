@@ -110,6 +110,11 @@ export function formatNumber(
   return numberFormat(locale, options).format(value);
 }
 
+/** The localized label of an age. Wire values stay numeric; the draft has no age label. */
+export function ageLabel(age: number): string {
+  return age === 1 || age === 2 || age === 3 ? t(`card.ageNumeral.${age}`) : '';
+}
+
 /** The typographic minus sign, U+2212. */
 export const MINUS_SIGN = '\u2212';
 

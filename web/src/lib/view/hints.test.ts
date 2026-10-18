@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { formatSigned, i18n, stripBidiMarks } from '$lib/i18n';
 import type { CardHints, CostView, HintFamily, RoomInfo, SlotView, View } from '$lib/wire';
 import { tokenHint, tokenValueText } from './board-hints';
 import { outcomeContext, outcomeTerms } from './outcome';
@@ -17,6 +18,7 @@ import {
   pipLook,
   pipTooltip,
   sessionHintScreen,
+  seatLines,
   shortByDiscard,
   type HintNames,
   type Perspective
@@ -487,5 +489,43 @@ describe('the Mausoleum pool and the destroy choice', () => {
       ['Your clay: 4 to 3 coins per unit.', 'Saves 2 coins on the cards and wonders in view, now.'],
       ['Saves nothing in view right now.', 'Moon’s only stone.']
     ]);
+  });
+});
+
+describe('hint number formatting', () => {
+  afterEach(() => i18n.set('en'));
+  it('pluralizes each seat’s destination price independently of the old price', () => {
+    const h = hints({
+      priceShift: [
+        { seat: 0, resource: 'clay', from: 2, to: 1 },
+        { seat: 1, resource: 'wood', from: 1, to: 2 }
+      ]
+    });
+    expect(seatLines('clay-reserve', 0, h, ALL, NAMES).map((l) => l.text)).toEqual([
+      'Your clay: 2 to 1 coin per unit.',
+      'Moon’s wood: 1 to 2 coins per unit.'
+    ]);
+    const named = { names: NAMES.names, you: null };
+    expect(seatLines('clay-reserve', 0, h, ALL, named)[0]?.text).toBe(
+      'Sun’s clay: 2 to 1 coin per unit.'
+    );
+  });
+  it('formats negative hint VP and coin changes with the typographic minus', () => {
+    const h = hints({ effect: { paid: true, coins: 0, scoreDelta: -1, oppScoreDelta: 0 } });
+    expect(seatLines('clay-reserve', 0, h, ALL, NAMES)[0]?.text).toBe('Worth now: 0 coins, −1 VP.');
+    h.effect!.coins = -1;
+    expect(seatLines('clay-reserve', 0, h, ALL, NAMES)[0]?.text).toBe('Worth now: −1 coin, −1 VP.');
+  });
+  it('keeps Persian digits and Intl sign direction marks', async () => {
+    await i18n.set('fa');
+    const h = hints({
+      effect: { paid: true, coins: 0, scoreDelta: -1, oppScoreDelta: 0 },
+      priceShift: [{ seat: 0, resource: 'clay', from: 2, to: 1 }]
+    });
+    const lines = seatLines('clay-reserve', 0, h, ALL, NAMES).map((l) => l.text);
+    expect(stripBidiMarks(lines[0]!)).toBe('خاک رس برای شما: هر واحد از ۲ به ۱ سکه.');
+    expect(lines[1]).toContain(formatSigned(-1));
+    expect(stripBidiMarks(lines[1]!)).toBe('ارزش کنونی: ۰ سکه، −۱ امتیاز.');
+    expect(shortByDiscard(1, 2, ALL)).toContain(formatSigned(2, { signDisplay: 'exceptZero' }));
   });
 });

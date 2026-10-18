@@ -129,8 +129,12 @@ export const hints = {
   'hints.line.lootYou': {
     other: 'غارت: {count} سکه از دست می‌دهید.'
   },
-  'hints.line.price.you': '{resource} برای شما: هر واحد از {from} به {to} سکه.',
-  'hints.line.price.named': '{resource} برای {name}: هر واحد از {from} به {to} سکه.',
+  'hints.line.price.you': {
+    other: '{resource} برای شما: هر واحد از {from} به {count} سکه.'
+  },
+  'hints.line.price.named': {
+    other: '{resource} برای {name}: هر واحد از {from} به {count} سکه.'
+  },
   'hints.line.saves': {
     other: 'اکنون در کارت‌ها و شگفتی‌های نمایان {count} سکه صرفه‌جویی می‌کند.'
   },
@@ -139,7 +143,7 @@ export const hints = {
   'hints.line.lastVisible':
     'آخرین تولیدکننده‌ی {resource} که نمایان است؛ کارت‌های ندیده شاید یکی دیگر داشته باشند.',
   'hints.line.worth': {
-    other: 'ارزش کنونی: {count} سکه، {vp} امتیاز.'
+    other: 'ارزش کنونی: {coins} سکه، {vp} امتیاز.'
   },
   'hints.line.worthCoins': {
     other: 'امروز ساختنش {count} سکه می‌ارزد.'
@@ -166,7 +170,7 @@ export const hints = {
   'hints.note.denyTuck': 'اگر زیر شگفتی گذاشته شود، برای {name} از بازی بیرون است.',
   'hints.note.shortByDiscard': {
     other:
-      'با کنار گذاشتن کارتی دیگر (+{count} سکه)، نوبت بعد می‌توانید این را بسازید، اگر هنوز اینجا باشد و قیمت‌ها عوض نشوند.'
+      'با کنار گذاشتن کارتی دیگر ({gain} سکه)، نوبت بعد می‌توانید این را بسازید، اگر هنوز اینجا باشد و قیمت‌ها عوض نشوند.'
   },
 
   'hints.discard.poolYou': 'آرامگاه شما می‌تواند دوباره بسازد',
@@ -176,7 +180,7 @@ export const hints = {
   // The decider's hints (lib/view/outcome.ts, M10.HS3): the outcome line
   // under each move, the confirm step's warning, the card sheet's "After
   // this pick" panel and the starter choice. {delta} is a signed number
-  // ("+3"), {card} and {list} are names, {age} a number.
+  // ("+3"), {card} and {list} are names, {age} a localized age label.
   'hints.outcome.separator': '؛ ',
   'hints.outcome.win': 'بازی را می‌برد ({kind}).',
   'hints.outcome.winLaw': 'پیروزی: جفتی را کامل می‌کند، و قانون ششمین نماد می‌شود.',
@@ -285,7 +289,7 @@ export const hints = {
   // Board-level hints (lib/view/board-hints.ts, M10.HS4): where a card is,
   // the science tracker, the military track, the wonders, the progress
   // tokens, the age chip and the age interstitial. {place} is one of the
-  // hints.place.* phrases; {symbol} a symbol's name; {age} a number.
+  // hints.place.* phrases; {symbol} a symbol's name; {age} a localized age label.
   'hints.place.faceUp': 'رو، در صفحه‌ی بازی',
   'hints.place.tucked': 'زیر یک شگفتی، بیرون از بازی',
   'hints.place.cityYou': 'در شهر شما',
@@ -322,6 +326,8 @@ export const hints = {
     'قانون ششمین نماد {name} می‌شود: جفتی که اکنون کامل کند، پیروزی می‌آورد.',
 
   'hints.capital.win': 'رسیدن به این خانه بی‌درنگ پیروزی می‌آورد.',
+  'hints.capital.winYou': 'اگر مهره‌ی نظامی به اینجا برسد، شما بی‌درنگ برنده می‌شوید.',
+  'hints.capital.winNamed': 'اگر مهره‌ی نظامی به اینجا برسد، {name} بی‌درنگ برنده می‌شود.',
   'hints.capital.titleYou': 'پایتخت شما.',
   'hints.capital.titleNamed': 'پایتخت {name}.',
   'hints.capital.yours': 'پایتخت شما',
@@ -473,9 +479,12 @@ export const hints = {
   // trade prices the other side's moves changed, shown in the move summary.
   'hints.recap.title': 'قیمت‌های شما',
   'hints.recap.tip': 'قیمت‌های خرید که از آخرین حرکت شما تغییر کرده‌اند.',
-  'hints.recap.price': '{resource} برای شما: پیش‌تر {from}، اکنون {to} سکه.',
-  'hints.recap.priceBuilt':
-    '{resource} برای شما: پیش‌تر {from}، اکنون {to} سکه. {name} کارت {card} را ساخت.',
+  'hints.recap.price': {
+    other: '{resource} برای شما: پیش‌تر {from}، اکنون {count} سکه.'
+  },
+  'hints.recap.priceBuilt': {
+    other: '{resource} برای شما: پیش‌تر {from}، اکنون {count} سکه. {name} کارت {card} را ساخت.'
+  },
   // The board's marks of the same changes (M10.F3): the trade-price chip's
   // caret, a card's badge, the emptied slot and a card just turned face up.
   'hints.recap.chip': 'از آخرین حرکت شما: پیش‌تر {from}، اکنون {to}.',

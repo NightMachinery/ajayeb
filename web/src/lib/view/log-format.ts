@@ -13,7 +13,7 @@
 // as data to interpolate, not as translated UI copy.
 
 import { cardName, wonderName } from '$lib/components/card/effect-text';
-import { t } from '$lib/i18n';
+import { ageLabel, t } from '$lib/i18n';
 import type { GameEvent, ScienceSymbol } from '$lib/wire';
 
 export type SeatNames = readonly [string, string];
@@ -98,7 +98,7 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       if (event.round !== 2) return null;
       return { kind: event.kind, text: t('board.log.draftRound2') };
     case 'ageStart':
-      return { kind: event.kind, text: t('board.log.ageStart', { age: event.age ?? 0 }) };
+      return { kind: event.kind, text: t('board.log.ageStart', { age: ageLabel(event.age ?? 0) }) };
     case 'build':
       if (!event.card) return null;
       return {

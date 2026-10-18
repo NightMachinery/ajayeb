@@ -43,7 +43,7 @@ import { cardBySlug, wonderBySlug } from '$lib/catalog';
 import { seatNames } from '$lib/components/choices/room';
 import { visibleFamilies, type LocalHide } from '$lib/hints/families';
 import { cardName, resourceName, scienceName } from '$lib/components/card/effect-text';
-import { joinPhrases, t } from '$lib/i18n';
+import { formatSigned, joinPhrases, t } from '$lib/i18n';
 
 export type Seat = 0 | 1;
 
@@ -255,12 +255,12 @@ function priceLine(ps: PriceShift, names: HintNames): HintLine {
   const seat = ps.seat === 1 ? 1 : 0;
   const text =
     names.you === seat
-      ? t('hints.line.price.you', { resource, from: ps.from, to: ps.to })
+      ? t('hints.line.price.you', { resource, from: ps.from, count: ps.to })
       : t('hints.line.price.named', {
           name: names.names[seat],
           resource,
           from: ps.from,
-          to: ps.to
+          count: ps.to
         });
   return { id: `price-${ps.seat}-${ps.resource}`, text };
 }
@@ -365,7 +365,14 @@ export function seatLines(
     }
   }
   if (families.has('scoring') && worthCard(slug) && (e.coins !== 0 || e.scoreDelta !== 0)) {
-    out.push({ id: 'worth', text: t('hints.line.worth', { count: e.coins, vp: e.scoreDelta }) });
+    out.push({
+      id: 'worth',
+      text: t('hints.line.worth', {
+        count: e.coins,
+        coins: formatSigned(e.coins),
+        vp: formatSigned(e.scoreDelta)
+      })
+    });
   }
   return out;
 }
@@ -496,7 +503,10 @@ export function shortByDiscard(
   families: ReadonlySet<HintFamily>
 ): string | undefined {
   if (!families.has('economy') || shortfall <= 0 || shortfall > discardValue) return undefined;
-  return t('hints.note.shortByDiscard', { count: discardValue });
+  return t('hints.note.shortByDiscard', {
+    count: discardValue,
+    gain: formatSigned(discardValue, { signDisplay: 'exceptZero' })
+  });
 }
 
 // --- The Mausoleum's pool and the destroy choice ---------------------------

@@ -20,7 +20,7 @@
   // It changes nothing. It is disabled, with a tooltip saying why, while
   // Animation is off or before any move has animated.
   import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { GameEvent } from '$lib/wire';
   import { groupLogByAge } from '$lib/view/log-format';
@@ -119,7 +119,7 @@
         <section class="flex flex-col gap-1.5">
           <h3 class="text-xs font-semibold tracking-wide text-fg-muted uppercase">
             {group.age > 0
-              ? t('board.logSheet.age', { age: group.age })
+              ? t('board.logSheet.age', { age: ageLabel(group.age) })
               : t('board.logSheet.draftAge')}
           </h3>
           <ol class="flex flex-col gap-1">

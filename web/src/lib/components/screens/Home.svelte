@@ -33,7 +33,7 @@
   import SettingsIcon from '@lucide/svelte/icons/settings';
   import Sun from '@lucide/svelte/icons/sun';
   import Users from '@lucide/svelte/icons/users';
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
   import { theme, THEME_PREFS } from '$lib/ui/theme.svelte';
@@ -280,7 +280,7 @@
                             ? ''
                             : room.age === 0
                               ? t('home.continueDraft')
-                              : t('home.continueAge', { age: room.age })}
+                              : t('home.continueAge', { age: ageLabel(room.age) })}
                         <span class="text-sm" data-continue-details>
                           {room.bot && stage
                             ? t('home.continueDetails', {

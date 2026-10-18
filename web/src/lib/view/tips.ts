@@ -24,7 +24,7 @@ import {
 } from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/game/names';
 import type { RuleSectionId } from '$lib/components/rules/sections';
-import { sentences, t } from '$lib/i18n';
+import { ageLabel, sentences, t } from '$lib/i18n';
 export { sentences } from '$lib/i18n';
 import type {
   Back,
@@ -345,7 +345,7 @@ export function cardTip(slug: string, context: CardTipContext = {}): TipText {
     text: t('card.tip.card', {
       card: cardName(slug),
       category: t(`card.category.${card.color}`),
-      age: t(`card.ageNumeral.${card.age}`)
+      age: ageLabel(card.age)
     }),
     lines
   };

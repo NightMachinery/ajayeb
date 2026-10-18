@@ -29,7 +29,7 @@ import type {
 import { cardBySlug } from '$lib/catalog';
 import { cardName, joinList, scienceName, wonderName } from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/game/names';
-import { t } from '$lib/i18n';
+import { ageLabel, sentences, t } from '$lib/i18n';
 import { CAPITAL_NUMERAL } from './threats';
 import {
   pipLook,
@@ -40,6 +40,19 @@ import {
   type Seat
 } from './hints';
 import { outcomeTerms, signed, type OutcomeTerm } from './outcome';
+
+/** Whose capital this is and who wins if the conflict pawn reaches it. */
+export function capitalText(seat: Seat, names: HintNames): string {
+  const winner = seat === 0 ? 1 : 0;
+  return sentences([
+    names.you === seat
+      ? t('hints.capital.titleYou')
+      : t('hints.capital.titleNamed', { name: names.names[seat] }),
+    names.you === winner
+      ? t('hints.capital.winYou')
+      : t('hints.capital.winNamed', { name: names.names[winner] })
+  ]);
+}
 
 function other(seat: Seat): Seat {
   return seat === 0 ? 1 : 0;
@@ -80,7 +93,7 @@ export function placeText(
         ? t('hints.place.unseenThisAgeOdds', { num: pc.inPlay.num, den: pc.inPlay.den })
         : t('hints.place.unseenThisAge');
     case 'unseenLaterAge': {
-      const age = cardBySlug(card)?.age ?? 0;
+      const age = ageLabel(cardBySlug(card)?.age ?? 0);
       return pc.inPlay
         ? t('hints.place.laterAgeOdds', { age, num: pc.inPlay.num, den: pc.inPlay.den })
         : t('hints.place.laterAge', { age });
@@ -581,7 +594,7 @@ export function ageTip(
   }
   const ns = view.hints.nextStarter;
   if (ns && view.age < 3) {
-    const age = view.age + 1;
+    const age = ageLabel(view.age + 1);
     if (ns.chooser !== undefined) {
       const seat = asSeat(ns.chooser);
       parts.push(

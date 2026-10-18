@@ -68,11 +68,11 @@
       ? t('hints.recap.priceBuilt', {
           resource,
           from: p.from,
-          to: p.to,
+          count: p.to,
           name: names[p.cause.seat],
           card: cardName(p.cause.card)
         })
-      : t('hints.recap.price', { resource, from: p.from, to: p.to });
+      : t('hints.recap.price', { resource, from: p.from, count: p.to });
   }
 
   function resourceIcon(p: PriceTick): IconName {

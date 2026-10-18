@@ -2,8 +2,8 @@
 // (M10.F1): the bot's avatar in the city sheet, signed coin amounts through
 // Intl, word-safe names in the score table, and the Allow undo switch rows.
 import { render } from 'svelte/server';
-import { describe, expect, it } from 'vitest';
-import { formatSigned } from '$lib/i18n';
+import { afterEach, describe, expect, it } from 'vitest';
+import { formatSigned, i18n } from '$lib/i18n';
 import { protocolFixtureNames, protocolFixtures } from '$lib/wire/fixtures.gen';
 import type { View } from '$lib/wire';
 import LootingToken from './board/LootingToken.svelte';
@@ -92,4 +92,33 @@ describe('the Allow undo switch rows', () => {
     expect(rowClass(ai)).toContain('cursor-pointer');
     expect(rowClass(hotseat)).toContain('cursor-pointer');
   });
+});
+
+describe('move-summary gains', () => {
+  afterEach(() => i18n.set('en'));
+  for (const locale of ['en', 'fa'] as const) {
+    it(`shows a gain plus and a loss minus in ${locale}`, async () => {
+      await i18n.set(locale);
+      const markup = render(MoveSummaryLine, {
+        props: {
+          seat: 0,
+          names: ['Sara', 'Omid'],
+          line: {
+            ply: 3,
+            kind: 'build',
+            seat: 0,
+            card: 'tavern',
+            paid: 0,
+            toOpponent: 0,
+            coins: [4, -2],
+            pawn: null,
+            loot: [],
+            pairs: []
+          }
+        }
+      }).body;
+      expect(markup).toContain(formatSigned(4, { signDisplay: 'exceptZero' }));
+      expect(markup).toContain(formatSigned(-2, { signDisplay: 'exceptZero' }));
+    });
+  }
 });

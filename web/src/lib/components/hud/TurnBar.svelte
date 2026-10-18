@@ -119,6 +119,14 @@
     }
   });
 
+  const shortText = $derived(
+    state.kind === 'pendingChoice'
+      ? t(`board.turn.short.${state.pendingKind}`)
+      : state.kind === 'offline'
+        ? t('board.turn.short.offline')
+        : text
+  );
+
   const spinning = $derived(
     state.kind === 'sent' || state.kind === 'reconnecting' || state.kind === 'connecting'
   );
@@ -141,7 +149,10 @@
   data-tut="turn-bar"
   data-away={state.kind === 'waitingOpponent' && state.away ? '' : undefined}
 >
-  <span class="flex min-w-0 items-center gap-2 text-sm font-semibold text-fg" data-must-fit>
+  <span
+    class="flex min-w-0 items-center gap-2 text-sm font-semibold text-fg short:gap-1 short:text-xs"
+    data-must-fit
+  >
     {#if spinning}
       <Loader2 class="size-4 shrink-0 animate-spin text-fg-muted" aria-hidden="true" />
     {:else if state.kind === 'playAgain'}
@@ -161,7 +172,8 @@
           : 'text-sun-ink'}"
       />
     {/if}
-    <span class="min-w-0">{text}</span>
+    <span class="min-w-0 short:sr-only">{text}</span>
+    <span class="hidden min-w-0 short:inline" aria-hidden="true" data-turn-short>{shortText}</span>
   </span>
   {#if hints}
     <span

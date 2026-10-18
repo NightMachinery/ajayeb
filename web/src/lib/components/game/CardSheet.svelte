@@ -49,7 +49,7 @@
     effectsText,
     wonderName
   } from '$lib/components/card/effect-text';
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import DiscardDiagram from '../rules/DiscardDiagram.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { hintHide } from '$lib/hints/local.svelte';
@@ -434,7 +434,7 @@
               <p class="text-sm text-fg-muted">
                 {t('game.card.meta', {
                   category: t(`card.category.${card.color}`),
-                  age: t(`card.ageNumeral.${card.age}`)
+                  age: ageLabel(card.age)
                 })}
               </p>
               <p class="text-sm text-fg">{effectsText(card.effects)}</p>

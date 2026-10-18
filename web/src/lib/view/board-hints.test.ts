@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { i18n, stripBidiMarks } from '$lib/i18n';
 import type {
   HintFamily,
   HintsView,
@@ -10,6 +11,7 @@ import type {
 import { HINT_FAMILIES } from '$lib/hints/families';
 import {
   ageTip,
+  capitalText,
   deadPairLines,
   effectOutcome,
   lootText,
@@ -315,7 +317,7 @@ describe('ageTip and deadPairLines', () => {
       ph()
     );
     expect(ageTip(v, 2, ALL, NAMES)).toBe(
-      'If nobody plays again, Moon takes the last card. An extra turn taken with the last card is lost. You are the weaker player and will choose who starts Age 3.'
+      'If nobody plays again, Moon takes the last card. An extra turn taken with the last card is lost. You are the weaker player and will choose who starts Age III.'
     );
     expect(ageTip(v, 2, new Set(), NAMES)).toBeUndefined();
   });
@@ -350,5 +352,38 @@ describe('seatGhost (the panels of a selection ghost)', () => {
     expect(seatGhost(g, 1)).toEqual({ coins: 7, score: 9 });
     expect(seatGhost({ pawn: { from: 0, to: 2, loot: [] } }, 0)).toBeUndefined();
     expect(seatGhost(undefined, 0)).toBeUndefined();
+  });
+});
+
+describe('capital winner wording', () => {
+  afterEach(() => i18n.set('en'));
+  it('names the opposite winner for both players and spectators, without optional hints', () => {
+    const names = ['Sara', 'Omid'] as const;
+    expect(capitalText(0, { names, you: 0 })).toBe(
+      'Your capital. If the conflict pawn reaches it, Omid wins at once.'
+    );
+    expect(capitalText(1, { names, you: 0 })).toBe(
+      'Omid’s capital. If the conflict pawn reaches it, you win at once.'
+    );
+    expect(capitalText(1, { names, you: 1 })).toBe(
+      'Your capital. If the conflict pawn reaches it, Sara wins at once.'
+    );
+    expect(capitalText(0, { names, you: 1 })).toBe(
+      'Sara’s capital. If the conflict pawn reaches it, you win at once.'
+    );
+    expect(capitalText(0, { names, you: null })).toBe(
+      'Sara’s capital. If the conflict pawn reaches it, Omid wins at once.'
+    );
+    expect(capitalText(1, { names, you: null })).toBe(
+      'Omid’s capital. If the conflict pawn reaches it, Sara wins at once.'
+    );
+  });
+  it('keeps Latin winner names isolated in Persian', async () => {
+    await i18n.set('fa');
+    const text = capitalText(0, { names: ['Sara', 'Omid'], you: 0 });
+    expect(text).toContain('\u2068Omid\u2069');
+    expect(stripBidiMarks(text)).toBe(
+      'پایتخت شما. اگر مهره‌ی نظامی به اینجا برسد، Omid بی‌درنگ برنده می‌شود.'
+    );
   });
 });

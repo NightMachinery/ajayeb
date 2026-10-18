@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { fa } from './fa';
 import {
+  ageLabel,
   dirFor,
   en,
   formatNumber,
@@ -267,5 +268,37 @@ describe('the Persian table', () => {
       const english = en[key as keyof typeof en];
       expect(new Set(names(message)), key).toEqual(new Set(names(english)));
     }
+  });
+});
+
+describe('localized age labels', () => {
+  afterEach(() => i18n.set('en'));
+  it('uses Roman numerals in English and keeps draft or invalid ages empty', () => {
+    expect([1, 2, 3].map(ageLabel)).toEqual(['I', 'II', 'III']);
+    expect([0, 4, -1].map(ageLabel)).toEqual(['', '', '']);
+  });
+  it('uses Persian ordinals rather than decimal digits', async () => {
+    await i18n.set('fa');
+    expect([1, 2, 3].map(ageLabel)).toEqual(['یکم', 'دوم', 'سوم']);
+  });
+});
+
+describe('destination-price recap plurals', () => {
+  it('chooses coin by the destination, including a build explanation', () => {
+    expect(t('hints.recap.price', { resource: 'clay', from: 2, count: 1 })).toBe(
+      'Your clay: was 2, now 1 coin.'
+    );
+    expect(t('hints.recap.price', { resource: 'clay', from: 1, count: 2 })).toBe(
+      'Your clay: was 1, now 2 coins.'
+    );
+    expect(
+      t('hints.recap.priceBuilt', {
+        resource: 'clay',
+        from: 2,
+        count: 1,
+        name: 'Moon',
+        card: 'Clay Reserve'
+      })
+    ).toBe('Your clay: was 2, now 1 coin. Moon built Clay Reserve.');
   });
 });

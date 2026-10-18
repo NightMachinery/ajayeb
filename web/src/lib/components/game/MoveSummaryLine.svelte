@@ -17,7 +17,7 @@
   import { artId } from '$lib/art/lookup';
   import { cardBySlug } from '$lib/catalog';
   import Icon from '$lib/icons/Icon.svelte';
-  import { formatSigned, t } from '$lib/i18n';
+  import { ageLabel, formatSigned, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { formatLogEvent } from '$lib/view/log-format';
   import type { SummaryLine } from '$lib/view/move-summary';
@@ -73,7 +73,7 @@
       case 'resign':
         return t('game.summary.resign');
       case 'ageStart':
-        return t('game.summary.ageStart', { age: line.age ?? 0 });
+        return t('game.summary.ageStart', { age: ageLabel(line.age ?? 0) });
       case 'extraTurn':
         return t('game.summary.extraTurn');
       case 'extraTurnLost':
@@ -123,7 +123,9 @@
 
 {#snippet coins(n: number, loss: boolean)}
   <Icon name="coin" class="text-sm text-gold [--i2:var(--gold-deep)]" />
-  <span class="font-semibold tabular-nums" aria-hidden="true">{formatSigned(loss ? -n : n)}</span>
+  <span class="font-semibold tabular-nums" aria-hidden="true"
+    >{formatSigned(loss ? -n : n, { signDisplay: 'exceptZero' })}</span
+  >
 {/snippet}
 
 <li class="flex items-start gap-2.5" data-summary-line={line.kind}>

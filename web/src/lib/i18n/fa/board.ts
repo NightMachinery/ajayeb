@@ -111,6 +111,14 @@ export const board = {
   'board.turn.pending.pickBoardToken': 'یک نشان پیشرفت انتخاب کنید',
   'board.turn.pending.pickLibraryToken': 'یک نشان از کتابخانه‌ی بزرگ انتخاب کنید',
 
+  // Compact prompts for the short landscape side column.
+  'board.turn.short.chooseStarter': 'آغازکننده را برگزینید',
+  'board.turn.short.destroyCard': 'کارتی را نابود کنید',
+  'board.turn.short.buildFromDiscard': 'کارتی را بازسازی کنید',
+  'board.turn.short.pickBoardToken': 'نشان پیشرفت را برگزینید',
+  'board.turn.short.pickLibraryToken': 'نشان کتابخانه را برگزینید',
+  'board.turn.short.offline': 'آفلاین. اتصال دوباره…',
+
   // TopBar.
   'board.age': 'دوران {age}',
   'board.age.draft': 'گزینش شگفتی‌ها',

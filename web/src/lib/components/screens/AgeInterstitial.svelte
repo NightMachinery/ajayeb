@@ -14,7 +14,7 @@
   import { deadPairLines } from '$lib/view/board-hints';
   import { sessionHintScreen } from '$lib/view/hints';
   import { tryGameContext } from '../choices/room';
-  import { formatNumber, t } from '$lib/i18n';
+  import { ageLabel, formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryLeader, militaryMargin } from '$lib/view/threats';
   import type { MilitaryView, Pair, PlayerView, ScoreView, View } from '$lib/wire';
@@ -72,10 +72,14 @@
 
 <section class="flex flex-col gap-4" data-age-interstitial={age} aria-labelledby={titleId}>
   <h2 id={titleId} class="text-center font-display text-2xl text-fg">
-    {t('choices.age.complete', { age })}
+    {t('choices.age.complete', { age: ageLabel(age) })}
   </h2>
 
-  <div class="grid grid-cols-2 gap-2" role="group" aria-label={t('choices.age.summary', { age })}>
+  <div
+    class="grid grid-cols-2 gap-2"
+    role="group"
+    aria-label={t('choices.age.summary', { age: ageLabel(age) })}
+  >
     {#each seats as seat (seat)}
       <div
         class="flex min-w-0 flex-col gap-1.5 rounded-control border-2 bg-panel-sunken px-3 py-2

@@ -21,7 +21,7 @@ test.describe('small UI follow-ups', { tag: '@mobile' }, () => {
       await driver.waitReady();
       const code = await other.evaluate(() => window.__ajayeb?.room()?.code);
       const entry = page.getByRole('button', { name: `Continue: vs AI · ${code}` });
-      await expect(entry.locator('[data-continue-details]')).toHaveText('Apprentice · Age 2');
+      await expect(entry.locator('[data-continue-details]')).toHaveText('Apprentice · Age II');
       // Home has never opened a socket. This update must come from storage.
       expect(await page.evaluate(() => window.__ajayeb?.room())).toBeUndefined();
       await playKey(driver, 'construct:walls');

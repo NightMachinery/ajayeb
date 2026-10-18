@@ -26,7 +26,7 @@ import type {
 import type { IconName } from '$lib/icons/names';
 import { cardName, joinList, wonderName } from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/game/names';
-import { formatNumber, formatSigned, t } from '$lib/i18n';
+import { ageLabel, formatNumber, formatSigned, t } from '$lib/i18n';
 import { freedSplit } from './freed';
 import type { HintNames, Seat } from './hints';
 
@@ -284,8 +284,11 @@ export function outcomeTerms(o: OutcomeView | undefined, ctx: OutcomeContext): O
     if (tp.starterChooser !== undefined) {
       const chooser: Seat = tp.starterChooser === 1 ? 1 : 0;
       const text = isYou(chooser, ctx.names)
-        ? t('hints.outcome.starterYou', { age: ctx.age + 1 })
-        : t('hints.outcome.starterNamed', { name: ctx.names.names[chooser], age: ctx.age + 1 });
+        ? t('hints.outcome.starterYou', { age: ageLabel(ctx.age + 1) })
+        : t('hints.outcome.starterNamed', {
+            name: ctx.names.names[chooser],
+            age: ageLabel(ctx.age + 1)
+          });
       out.push({ id: 'starter', text, short: text });
     }
   }

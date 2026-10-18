@@ -211,7 +211,7 @@ describe('outcomeTerms', () => {
       ctx()
     );
     expect(terms.map((x) => x.text)).toEqual([
-      'Moon chooses who starts Age 2',
+      'Moon chooses who starts Age II',
       'Then pick a progress token'
     ]);
     const again = outcomeTerms(

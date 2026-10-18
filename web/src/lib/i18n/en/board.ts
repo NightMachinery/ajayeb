@@ -125,6 +125,14 @@ export const board = {
   'board.turn.pending.pickBoardToken': 'Choose a progress token',
   'board.turn.pending.pickLibraryToken': 'Choose a token from the Great Library',
 
+  // Compact prompts for the short landscape side column.
+  'board.turn.short.chooseStarter': 'Choose next starter',
+  'board.turn.short.destroyCard': 'Destroy a card',
+  'board.turn.short.buildFromDiscard': 'Rebuild a discard',
+  'board.turn.short.pickBoardToken': 'Choose progress token',
+  'board.turn.short.pickLibraryToken': 'Choose Library token',
+  'board.turn.short.offline': 'Offline. Reconnecting…',
+
   // TopBar.svelte.
   'board.age': 'Age {age}',
   'board.age.draft': 'Wonder draft',
@@ -154,7 +162,7 @@ export const board = {
   'board.log.draft': '{name} drafted {wonder}.',
   'board.log.draftRound2': 'The second round of wonders is revealed.',
   'board.log.ageStart': 'Age {age} begins.',
-  'board.log.pawn': 'The military pawn moves toward {name}.',
+  'board.log.pawn': 'The conflict pawn moves toward {name}.',
   'board.log.build': '{name} built {card}.',
   'board.log.discard': '{name} discarded {card} for {amount} coins.',
   'board.log.wonder': '{name} built the wonder {wonder}, using {card}.',

@@ -333,7 +333,7 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     const choice = page.locator(`${host} [data-starter-choice]`);
     await expect(choice).toBeVisible();
     await expect(page.locator(`${host} [data-act]`)).toHaveCount(2);
-    await expect(choice).toContainText('Who starts Age 2?');
+    await expect(choice).toContainText('Who starts Age II?');
     await expect(choice).toContainText('Moon is behind on the military track, so Moon chooses.');
 
     await playKey(driver, 'starter:0');

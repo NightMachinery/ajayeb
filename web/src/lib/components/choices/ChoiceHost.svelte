@@ -17,7 +17,7 @@
   import { restoreFocus } from '$lib/ui/dismiss';
   import type { Attachment } from 'svelte/attachments';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
-  import { t } from '$lib/i18n';
+  import { ageLabel, t } from '$lib/i18n';
   import type { CardTipContext } from '$lib/view/tips';
   import { settings } from '$lib/ui/settings.svelte';
   import type { AgeSummary } from '$lib/ui/age-summary.svelte';
@@ -160,8 +160,8 @@
   const startingSeat = $derived(asSeat(ageSummary?.starterFor(ageViewer) ?? view.active));
   const startsText = $derived(
     you === startingSeat
-      ? t('choices.age.startsYou', { age: view.age })
-      : t('choices.age.starts', { name: names[startingSeat], age: view.age })
+      ? t('choices.age.startsYou', { age: ageLabel(view.age) })
+      : t('choices.age.starts', { name: names[startingSeat], age: ageLabel(view.age) })
   );
 
   function setAgeOpen(open: boolean): void {
@@ -222,7 +222,7 @@
       case 'pickLibraryToken':
         return t('choices.library.title');
       case 'chooseStarter':
-        return t('choices.starter.title', { age: view.age });
+        return t('choices.starter.title', { age: ageLabel(view.age) });
     }
   }
 
@@ -241,7 +241,7 @@
           count: pending?.hiddenTokens ?? 0
         });
       case 'chooseStarter':
-        return t('choices.waiting.chooseStarter', { name, age: view.age });
+        return t('choices.waiting.chooseStarter', { name, age: ageLabel(view.age) });
     }
   }
 
@@ -312,7 +312,7 @@
               ? t('choices.peek')
               : choosingStarter || view.phase === 'gameOver' || completed.age < view.age
                 ? t('choices.age.continue')
-                : t('choices.age.begin', { age: view.age })}
+                : t('choices.age.begin', { age: ageLabel(view.age) })}
           </button>
         </div>
       {/snippet}
