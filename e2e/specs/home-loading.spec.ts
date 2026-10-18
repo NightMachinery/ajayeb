@@ -130,16 +130,29 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
     } finally {
       await context.close();
     }
-    const home = await (await request.get(baseURL)).text();
+    const homeResponse = await request.get(baseURL);
+    const home = await homeResponse.text();
+    const criticalStyle = homeResponse.headers()['link'];
+    expect(criticalStyle).toMatch(
+      /^<\/_app\/immutable\/assets\/[^>]+\.css>; rel=preload; as=style$/
+    );
+    const criticalURL = criticalStyle!.slice(1, criticalStyle!.indexOf('>'));
+    expect(home).toContain(criticalURL.slice(1));
     const head = home.slice(0, home.indexOf('</head>'));
     const firstModule = head.indexOf('rel="modulepreload"');
     expect(firstModule).toBeGreaterThan(head.indexOf('imagesrcset='));
     expect(firstModule).toBeGreaterThan(head.lastIndexOf('rel="stylesheet"'));
     expect(firstModule).toBeGreaterThan(head.indexOf('as="font"'));
+    expect(head.lastIndexOf('rel="stylesheet"')).toBeLessThan(head.indexOf('as="font"'));
+    expect(head.lastIndexOf('rel="stylesheet"')).toBeLessThan(head.indexOf('imagesrcset='));
+    const modules = head.match(/<link\b[^>]*rel="modulepreload"[^>]*>/g) ?? [];
+    expect(modules.length).toBeGreaterThan(0);
+    for (const module of modules) expect(module).toContain('fetchpriority="low"');
     for (const route of ['/play/ABCDEF', '/settings', '/rules', '/shell.html']) {
       const response = await request.get(new URL(route, baseURL).href);
       expect(response.ok()).toBe(true);
       expect(await response.text()).not.toContain('data-hero');
+      expect(response.headers()['link']).toBeUndefined();
     }
   });
 

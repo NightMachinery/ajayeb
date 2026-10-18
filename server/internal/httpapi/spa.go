@@ -82,11 +82,12 @@ type spa struct {
 // modification time stay the same. Embedded files have a zero time and never
 // change; files under --static change their time when rewritten.
 type etagEntry struct {
-	size int64
-	mod  time.Time
-	tag  string
-	hash string // the SHA-256 in lowercase hex
-	csp  string // an HTML file's content security policy; "" for other files
+	size          int64
+	mod           time.Time
+	tag           string
+	hash          string // the SHA-256 in lowercase hex
+	homeStyleLink string // Home-only critical stylesheet preload, bound to the HTML digest
+	csp           string // an HTML file's content security policy; "" for other files
 }
 
 func newSPA(fsys fs.FS) *spa {
@@ -194,6 +195,9 @@ func (s *spa) serveFile(w http.ResponseWriter, r *http.Request, name string) boo
 		}
 		if html {
 			h.Set(s.policy.header(), sum.csp)
+			if sum.homeStyleLink != "" {
+				h.Add("Link", sum.homeStyleLink)
+			}
 		}
 	}
 	cc := webdist.CacheControl(name, versionMatches(r.URL.Query().Get("v"), sum.hash))
@@ -256,8 +260,12 @@ func (s *spa) digest(name string, info fs.FileInfo, content io.ReadSeeker, html 
 		// when the content digest itself matches.
 		if ok && cached.hash == entry.hash {
 			entry.csp = cached.csp
+			entry.homeStyleLink = cached.homeStyleLink
 		} else {
 			entry.csp = s.policy.documentCSP(doc.Bytes())
+			if name == "index.html" {
+				entry.homeStyleLink = homeStylePreload(doc.Bytes(), s.fsys)
+			}
 		}
 	}
 

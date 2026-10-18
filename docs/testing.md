@@ -1208,7 +1208,10 @@ before a downward drag can dismiss its sheet.
 
 `home-loading.spec.ts` runs on both desktop and mobile. It checks Home with
 JavaScript disabled, including the visible priority hero and its responsive
-preload and paint-resource order before module preloads, enforces the normal
+preload, stylesheet cascade order before fonts/hero, and low-priority eager
+module preloads, plus the Home-only critical stylesheet HTTP preload. Go tests
+cover its generated URL selection, content-bound invalidation and route isolation.
+The browser spec enforces the normal
 Go CSP while a hero fails before hydration,
 and confirms game, Settings and Rules responses contain the generic
 shell rather than Home. With scripts enabled it checks that the cold English

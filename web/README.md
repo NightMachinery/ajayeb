@@ -27,9 +27,13 @@ The service worker caches the generic shell for offline navigation, so a
 room link never hydrates Home's markup. Deploy the entire build together.
 
 The Home build hook keeps CSS, font and hero discovery ahead of the existing
-module preloads. It moves those tags within the head without removing a
+module preloads. Stylesheets keep their cascade order and precede font and
+hero preloads. Every module preload has `fetchpriority="low"` and still fetches
+eagerly. The hook moves those tags within the head without removing a
 resource or changing body and hydration markup; other routes and the generic
-shell keep their generated order.
+shell keep their generated order. The Go server derives a Home-only HTTP
+`Link` preload for its largest generated stylesheet from the same HTML digest,
+so it starts before the browser scans smaller CSS and module requests.
 
 The hero is eager and high priority. Its preload and image share the
 responsive source set from the generated art index, including content hashes.
