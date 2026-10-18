@@ -22,7 +22,7 @@
     diagram?: Snippet;
     /** Which side of the anchor the bubble is on; the arrow is on the other.
      *  The layer updates data-side itself once it has placed the bubble. */
-    side?: 'top' | 'bottom';
+    side?: 'top' | 'bottom' | 'start' | 'end';
     /** The arrow's centre, in px from the bubble's left edge. Hidden when
      *  undefined (a standalone specimen). */
     arrowX?: number;
@@ -72,7 +72,7 @@
       <path d="M0 0 L8 8 L16 0" fill="var(--panel)" stroke="var(--rule-strong)" />
     </svg>
   {/if}
-  <div dir={i18n.dir} class="text-start">
+  <div dir={i18n.dir} class="text-start wrap-anywhere">
     <p>{text}</p>
     {#if lines.length > 0}
       <ul class="mt-1 flex flex-col gap-0.5 text-[12px] text-fg-muted" data-tooltip-lines>
@@ -99,3 +99,10 @@
     {/if}
   </div>
 </div>
+
+<style>
+  .tooltip-bubble[data-side='start'] .arrow,
+  .tooltip-bubble[data-side='end'] .arrow {
+    display: none;
+  }
+</style>

@@ -174,31 +174,15 @@ describe('the affordability badge', () => {
 });
 
 describe('a face-down back', () => {
-  const hints = hv({
-    unseen: [
-      { back: 'age2', cards: ['brewery', 'library'], faceDown: 1, setAside: 1 },
-      { back: 'guild', cards: ['builders-guild', 'moneylenders-guild'], faceDown: 1, setAside: 1 }
-    ],
-    guildPreview: [{ guild: 'builders-guild', coins: [0, 0], vp: [4, 2] }]
-  });
-
-  it('names the back alone without the counting family', () => {
-    expect(backTip('age2', hints, screen(NONE))).toEqual({
+  it('says only which back and when it turns face up', () => {
+    expect(backTip('age2')).toEqual({
       text: 'A face-down Age II card.',
-      rulesId: 'turn'
+      lines: ['Turns face up when the cards covering it are taken.']
     });
-    expect(backTip('guild', undefined, screen()).text).toBe('A face-down guild card.');
-  });
-
-  it('lists the candidates, the cards set aside and a guild’s worth', () => {
-    const age = backTip('age2', hints, screen());
-    expect(age.lines).toEqual([
-      'One of 2: Brewery and Library.',
-      '1 of them is not in the structure.'
-    ]);
-    const guild = backTip('guild', hints, screen());
-    expect(guild.rulesId).toBe('guilds');
-    expect(guild.lines?.at(-1)).toBe('Builders Guild: 4 VP for you, 2 VP for Moon.');
+    expect(backTip('guild')).toEqual({
+      text: 'A face-down guild card.',
+      lines: ['Turns face up when the cards covering it are taken.']
+    });
   });
 });
 
@@ -264,6 +248,6 @@ describe('chains and guilds', () => {
   });
 
   it('names a mini card and its category', () => {
-    expect(cardTip('baths')).toBe('Baths. Civilian building.');
+    expect(cardTip('baths').text).toBe('Baths: Civilian building, Age I.');
   });
 });

@@ -1134,6 +1134,426 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "lumber-yard",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "clay-pool",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "logging-camp",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "quarry",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "clay-pit",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "glassworks",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "brickyard",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 5,
+      "accessible": false
+     },
+     {
+      "card": "glass-blower",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 13,
+      "accessible": false
+     },
+     {
+      "card": "drying-room",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 4,
+      "accessible": false
+     },
+     {
+      "card": "horse-breeders",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 14,
+      "accessible": false
+     },
+     {
+      "card": "walls",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 19,
+      "accessible": true
+     },
+     {
+      "card": "archery-range",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 12,
+      "accessible": false
+     },
+     {
+      "card": "laboratory",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 15,
+      "accessible": true
+     },
+     {
+      "card": "library",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 11,
+      "accessible": false
+     },
+     {
+      "card": "forum",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 5,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 0,
+      "accessible": false
+     },
+     {
+      "card": "caravansery",
+      "costs": [
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 2,
+      "accessible": false
+     },
+     {
+      "card": "customs-house",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 3,
+      "accessible": false
+     },
+     {
+      "card": "statue",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 1,
+      "accessible": false
+     },
+     {
+      "card": "rostrum",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "agriculture",
      "architecture",
@@ -2427,6 +2847,426 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "lumber-yard",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "clay-pool",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "logging-camp",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "quarry",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "clay-pit",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "glassworks",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "brickyard",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 5,
+      "accessible": false
+     },
+     {
+      "card": "glass-blower",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 13,
+      "accessible": false
+     },
+     {
+      "card": "drying-room",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 4,
+      "accessible": false
+     },
+     {
+      "card": "horse-breeders",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 14,
+      "accessible": false
+     },
+     {
+      "card": "walls",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 19,
+      "accessible": true
+     },
+     {
+      "card": "archery-range",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 12,
+      "accessible": false
+     },
+     {
+      "card": "laboratory",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 15,
+      "accessible": true
+     },
+     {
+      "card": "library",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 11,
+      "accessible": false
+     },
+     {
+      "card": "forum",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 5,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 0,
+      "accessible": false
+     },
+     {
+      "card": "caravansery",
+      "costs": [
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 2,
+      "accessible": false
+     },
+     {
+      "card": "customs-house",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 3,
+      "accessible": false
+     },
+     {
+      "card": "statue",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 1,
+      "accessible": false
+     },
+     {
+      "card": "rostrum",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "agriculture",
      "architecture",
@@ -3630,6 +4470,426 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "lumber-yard",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "clay-pool",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "logging-camp",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "quarry",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "clay-pit",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "glassworks",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "brickyard",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 5,
+      "accessible": false
+     },
+     {
+      "card": "glass-blower",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 13,
+      "accessible": false
+     },
+     {
+      "card": "drying-room",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 4,
+      "accessible": false
+     },
+     {
+      "card": "horse-breeders",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 14,
+      "accessible": false
+     },
+     {
+      "card": "walls",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 19,
+      "accessible": true
+     },
+     {
+      "card": "archery-range",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 12,
+      "accessible": false
+     },
+     {
+      "card": "laboratory",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 15,
+      "accessible": true
+     },
+     {
+      "card": "library",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 11,
+      "accessible": false
+     },
+     {
+      "card": "forum",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 5,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 0,
+      "accessible": false
+     },
+     {
+      "card": "caravansery",
+      "costs": [
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 2,
+      "accessible": false
+     },
+     {
+      "card": "customs-house",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 3,
+      "accessible": false
+     },
+     {
+      "card": "statue",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "faceUp",
+      "slot": 1,
+      "accessible": false
+     },
+     {
+      "card": "rostrum",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "agriculture",
      "architecture",

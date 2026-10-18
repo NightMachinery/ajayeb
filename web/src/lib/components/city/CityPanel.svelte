@@ -12,6 +12,7 @@
   // (SeatLink) follows the name where the room allows it.
   import type { Presence } from '$lib/ui/online';
   import BotAvatar from '$lib/art/BotAvatar.svelte';
+  import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { cardBySlug } from '$lib/catalog';
@@ -38,6 +39,7 @@
   import ProgressToken from '../token/ProgressToken.svelte';
   import WonderList from '../wonder/WonderList.svelte';
   import CityBand from './CityBand.svelte';
+  import CardPickGrid from '../choices/CardPickGrid.svelte';
   import ResourceChips from './ResourceChips.svelte';
   import ScienceTracker from './ScienceTracker.svelte';
   import Tally from './Tally.svelte';
@@ -106,6 +108,8 @@
     'red',
     'purple'
   ] as const satisfies readonly Color[];
+
+  let openColors: Partial<Record<Color, boolean>> = $state({});
 
   const cityCounts = $derived.by(() => {
     const counts: Record<Color, number> = {
@@ -265,11 +269,42 @@
     </h3>
     <div class="flex flex-wrap gap-1.5" role="group" aria-labelledby={cityId} data-fx-city>
       {#each COLORS as color (color)}
-        <CityBand
-          {color}
-          count={cityCounts[color]}
-          lines={color === 'purple' ? guildLines(player.hints?.guildPoints, hintScreen) : []}
-        />
+        {#if cityCounts[color] > 0}
+          <details
+            open={openColors[color] ?? false}
+            class="group/city max-w-full min-w-0"
+            data-city-cards={color}
+            ontoggle={(event) => {
+              openColors[color] = event.currentTarget.open;
+            }}
+          >
+            <summary
+              class="flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-control pointer-fine:min-h-7"
+              {@attach tooltip({
+                text: t('card.tip.cityCards', { color: t(`board.color.${color}`) })
+              })}
+            >
+              <CityBand
+                {color}
+                count={cityCounts[color]}
+                lines={color === 'purple' ? guildLines(player.hints?.guildPoints, hintScreen) : []}
+              />
+              <ChevronDown
+                class="size-3 shrink-0 text-fg-muted group-open/city:rotate-180"
+                aria-hidden="true"
+              />
+            </summary>
+            {#if openColors[color]}
+              <div class="py-2">
+                <CardPickGrid
+                  cards={player.city.filter((slug) => cardBySlug(slug)?.color === color)}
+                  owner={name}
+                  label={t('board.citySheet.city')}
+                />
+              </div>
+            {/if}
+          </details>
+        {/if}
       {/each}
     </div>
   </div>

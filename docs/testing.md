@@ -1016,7 +1016,9 @@ carry on interruption and resync.
 `rtl.spec.ts` checks the card sheet’s card layout and the progress-token
 row’s physical order as well as the board. `tooltip-coverage.spec.ts`
 accepts adjacent visible labels only when they accompany a single image
-branch; an unrelated glyph elsewhere in a labelled row cannot pass.
+branch; an unrelated glyph elsewhere in a labelled row cannot pass. A whole-card
+fallback cannot excuse a symbol without its own explanation, and the Age III
+position must stay below 2500 DOM elements.
 `tooltips.spec.ts` exercises the linked bubble’s narrow hit region alongside
 the existing touch, long-press, keyboard and rules-link paths. Its card-sheet
 regression uses real touchscreen and CDP touch events in English and Persian,
@@ -1026,6 +1028,23 @@ confirmation when enabled) to send exactly one discard and advance one version.
 The discard group explicitly follows its button's enabled state for touch
 classification because the tooltip anchor wraps the button rather than being
 its descendant. The shared gesture rules and diagram placement stay unchanged.
+
+`card-tooltip.spec.ts` checks full-card art hover and real touch long-press in
+English and Persian, inner-symbol precedence, keyboard descriptions, both
+server quote lines, explicit free Mausoleum rebuild payments, draft wonder
+art/effect precedence and lazy city-card disclosures. The rebuild regression
+covers the game fixture and the standalone gallery choice host. Gallery
+readiness waits for fonts and quiet paint; it has no game-ready hook.
+Real-touch covered-card art, an inner cost symbol and a face-down back retain
+their short-tap inspection action, while long-press release only shows the
+tooltip. A full back in a short phone sheet must fit without covering its card.
+Focused client tests cover printed versus current costs, asymmetric
+chain/free/shortfall wording, builder names and draft wonder summaries.
+Placement tests keep a phone card clear whenever a vertical or lateral
+placement fits. Engine tests compare the compact public quote index against
+the solver at all protocol positions and prove that swapping a hidden card
+with a removed card leaves the index identical. The ordinary redaction sweep
+also scans this field for hidden identities.
 
 ## The tutorial (M10.tutorial-client)
 

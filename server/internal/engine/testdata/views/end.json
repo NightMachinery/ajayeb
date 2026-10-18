@@ -483,6 +483,1307 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "lumber-yard",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "clay-pool",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "logging-camp",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "quarry",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "clay-pit",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "glassworks",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "garrison",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "palisade",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "guard-tower",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "scriptorium",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "workshop",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "pharmacist",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "apothecary",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "tavern",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "stone-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "clay-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "wood-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "theater",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "altar",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "baths",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "sawmill",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "brickyard",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "drying-room",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "horse-breeders",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "barracks",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "walls",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "archery-range",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "parade-ground",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "school",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "laboratory",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "dispensary",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "library",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "brewery",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "forum",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "customs-house",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 1
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "temple",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "statue",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "courthouse",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "aqueduct",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "rostrum",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "circus",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 1
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "arsenal",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "fortifications",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "pretorium",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 5
+       },
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "university",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "study",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "observatory",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "arena",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "chamber-of-commerce",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "port",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "palace",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 1
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "gardens",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "pantheon",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "town-hall",
+      "costs": [
+       {
+        "total": 6,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 3
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "senate",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "obelisk",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "builders-guild",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "scientists-guild",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "tacticians-guild",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "agriculture",
      "architecture",
@@ -1118,6 +2419,1307 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "lumber-yard",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "clay-pool",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "logging-camp",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "quarry",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "clay-pit",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "glassworks",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "garrison",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "palisade",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "guard-tower",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "scriptorium",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "workshop",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "pharmacist",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "apothecary",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "tavern",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "stone-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "clay-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "wood-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "theater",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "altar",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "baths",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "sawmill",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "brickyard",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "drying-room",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "horse-breeders",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "barracks",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "walls",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "archery-range",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "parade-ground",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "school",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "laboratory",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "dispensary",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "library",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "brewery",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "forum",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "customs-house",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 1
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "temple",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "statue",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "courthouse",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "aqueduct",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "rostrum",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "circus",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 1
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "arsenal",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "fortifications",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "pretorium",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 5
+       },
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "university",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "study",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "observatory",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "arena",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "chamber-of-commerce",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "port",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "palace",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 1
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "gardens",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "pantheon",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "town-hall",
+      "costs": [
+       {
+        "total": 6,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 3
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "senate",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "obelisk",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "builders-guild",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "scientists-guild",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "tacticians-guild",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "agriculture",
      "architecture",
@@ -1752,6 +4354,1307 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "lumber-yard",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "clay-pool",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "logging-camp",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "quarry",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "clay-pit",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "glassworks",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "garrison",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "palisade",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "guard-tower",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "scriptorium",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "workshop",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "pharmacist",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "apothecary",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "tavern",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "stone-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "clay-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "wood-reserve",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "theater",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "altar",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "baths",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "sawmill",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "brickyard",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "drying-room",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "horse-breeders",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "barracks",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "walls",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "archery-range",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "parade-ground",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "school",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "laboratory",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "dispensary",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "library",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "brewery",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "forum",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "customs-house",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 1
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "temple",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "statue",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "courthouse",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "aqueduct",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "rostrum",
+      "costs": [
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "circus",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 1
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "arsenal",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "fortifications",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": true,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "pretorium",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 5
+       },
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "university",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "study",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "observatory",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "arena",
+      "costs": [
+       {
+        "total": 1,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "chamber-of-commerce",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "tucked",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "port",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "palace",
+      "costs": [
+       {
+        "total": 4,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 1
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "gardens",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "pantheon",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 1,
+      "accessible": false
+     },
+     {
+      "card": "town-hall",
+      "costs": [
+       {
+        "total": 6,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 3
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "senate",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "obelisk",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "builders-guild",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 4,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "city",
+      "seat": 0,
+      "accessible": false
+     },
+     {
+      "card": "scientists-guild",
+      "costs": [
+       {
+        "total": 2,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 0,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": false,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     },
+     {
+      "card": "tacticians-guild",
+      "costs": [
+       {
+        "total": 3,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 6,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "agriculture",
      "architecture",

@@ -105,6 +105,7 @@ func ViewWithHints(s *State, v Viewer, h *Hints) view.View {
 	if h != nil && !s.Over() {
 		addHints(s, v, h, &out)
 	}
+	out.CardTooltips = viewCardTooltips(s, &out)
 	return out
 }
 
@@ -386,8 +387,15 @@ func viewChoices(s *State) []view.Choice {
 				}
 				c.Cost = wonderCost[a.Wonder]
 			}
-		case ActDestroyCard, ActBuildFromDiscard:
+		case ActDestroyCard:
 			c.Card = dtoCardPtr(a.Card)
+		case ActBuildFromDiscard:
+			c.Card = dtoCardPtr(a.Card)
+			// The Mausoleum's actual action is free, independent of the
+			// public hypothetical building quote in CardTooltips.
+			pay := Payment{Affordable: true}
+			cv := viewCost(s, seat, &pay)
+			c.Cost = &cv
 		case ActChooseProgressToken:
 			c.Token = dtoTokenPtr(a.Token)
 		case ActChooseStarter:

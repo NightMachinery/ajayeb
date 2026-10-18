@@ -22,10 +22,11 @@ type View struct {
 	// age's starter is chosen and once the game is over.
 	PlayingAgain bool `json:"playingAgain"`
 
-	Draft     *DraftView    `json:"draft,omitempty"`                   // only during the wonder draft
-	Structure []SlotView    `json:"structure"`                         // the current age's 20 slots in layout order; empty during the draft
-	Players   [2]PlayerView `json:"players" tstype:"Pair<PlayerView>"` // by seat
-	Military  MilitaryView  `json:"military"`
+	Draft        *DraftView        `json:"draft,omitempty"`                   // only during the wonder draft
+	Structure    []SlotView        `json:"structure"`                         // the current age's 20 slots in layout order; empty during the draft
+	Players      [2]PlayerView     `json:"players" tstype:"Pair<PlayerView>"` // by seat
+	Military     MilitaryView      `json:"military"`
+	CardTooltips []CardTooltipView `json:"cardTooltips"` // public quotes and locations of already visible cards
 
 	BoardTokens   []string `json:"boardTokens"`   // progress tokens still on the board
 	BoxTokenCount int      `json:"boxTokenCount"` // progress tokens in the box (never their names before the end)
@@ -84,9 +85,10 @@ type ResourceCounts struct {
 
 // CostView is the cheapest way for one seat to pay for a building or a
 // wonder now, with its breakdown. The engine always applies this payment;
-// the client only shows it.
+// the client only shows it. A revive choice instead carries its actual
+// free payment: zero total, no chain, and the unchanged payer purse.
 //
-// Unless the build is chain-free, every resource unit of the printed cost is
+// For an ordinary build, unless it is chain-free, every resource unit of the printed cost is
 // covered once: by own production, by a flexible producer, by a discount or
 // by trade.
 type CostView struct {
@@ -229,7 +231,7 @@ type Choice struct {
 	Wonder  *string    `json:"wonder,omitempty"`  // draft, wonder
 	Token   *string    `json:"token,omitempty"`   // token
 	Starter *int       `json:"starter,omitempty"` // starter: the seat that will start the age
-	Cost    *CostView  `json:"cost,omitempty"`    // construct and wonder: what the seat pays
+	Cost    *CostView  `json:"cost,omitempty"`    // construct, wonder and revive: what the seat pays
 	Gain    *int       `json:"gain,omitempty"`    // discard: coins received
 	// Outcome is what the action would do (hints.go), only in the
 	// decider's view, while a family that needs it is on.

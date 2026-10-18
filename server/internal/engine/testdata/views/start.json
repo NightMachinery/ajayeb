@@ -135,6 +135,7 @@
       }
      ]
     },
+    "cardTooltips": [],
     "boardTokens": [
      "agriculture",
      "architecture",
@@ -329,6 +330,7 @@
       }
      ]
     },
+    "cardTooltips": [],
     "boardTokens": [
      "agriculture",
      "architecture",
@@ -501,6 +503,7 @@
       }
      ]
     },
+    "cardTooltips": [],
     "boardTokens": [
      "agriculture",
      "architecture",

@@ -781,8 +781,15 @@ func vwCheckChoices(t *testing.T, s *engine.State, vw *view.View, decider bool) 
 			} else {
 				vwCheckWonderCost(t, s, seat, a.Wonder, c.Cost, where)
 			}
-		case engine.ActDestroyCard, engine.ActBuildFromDiscard:
+		case engine.ActDestroyCard:
 			want.Card = vwStr(a.Card.String())
+		case engine.ActBuildFromDiscard:
+			want.Card, want.Cost = vwStr(a.Card.String()), c.Cost
+			if c.Cost == nil {
+				t.Errorf("%s: missing actual free revive payment", where)
+			} else {
+				vwCheckCost(t, s, seat, c.Cost, engine.Quote{Affordable: true}, catalog.Cost{}, "", catalog.Chain(0), where)
+			}
 		case engine.ActChooseProgressToken:
 			want.Token = vwStr(a.Token.String())
 		case engine.ActChooseStarter:

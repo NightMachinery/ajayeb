@@ -90,6 +90,7 @@
         data-wonder-item={wonder.wonder}
       >
         <WonderTile
+          focusable
           slug={wonder.wonder}
           size="row"
           state={wonder}

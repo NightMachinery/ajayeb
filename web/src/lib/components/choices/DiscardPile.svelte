@@ -7,6 +7,7 @@
   // rebuild to some effect carries its pip, as on the board (view/hints.ts
   // discardPips over the server's View.hints.discard), from the page's game
   // context unless `pips` is given.
+  import type { CardTipContext } from '$lib/view/tips';
   import { cardBySlug } from '$lib/catalog';
   import { hintHide } from '$lib/hints/local.svelte';
   import { discardPips, sessionHintScreen, type CardPip } from '$lib/view/hints';
@@ -19,6 +20,7 @@
 
   interface Props {
     cards: readonly string[];
+    tipContexts?: ReadonlyMap<string, CardTipContext>;
     keys?: ReadonlyMap<string, string>;
     selected?: string | null;
     onselect?: (key: string) => void;
@@ -27,7 +29,15 @@
     pips?: ReadonlyMap<string, CardPip>;
   }
 
-  let { cards, keys, selected = null, onselect, disabled = false, pips }: Props = $props();
+  let {
+    cards,
+    tipContexts,
+    keys,
+    selected = null,
+    onselect,
+    disabled = false,
+    pips
+  }: Props = $props();
 
   const ctx = tryGameContext();
   const cardPips = $derived.by((): ReadonlyMap<string, CardPip> | undefined => {
@@ -102,6 +112,7 @@
     </p>
     <CardPickGrid
       cards={shown}
+      {tipContexts}
       {keys}
       {selected}
       {onselect}

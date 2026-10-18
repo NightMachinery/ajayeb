@@ -71,6 +71,8 @@ export interface TooltipContent {
    *  default looks for a button, a link, a data-act and the like on the
    *  anchor or an ancestor). */
   actionable?: boolean;
+  /** Keep the whole card clear, allowing a bubble beside it when needed. */
+  avoidAnchor?: boolean;
 }
 
 export type TooltipVia = 'hover' | 'focus' | 'touch' | 'api';
@@ -83,6 +85,8 @@ export interface ActiveTooltip {
   /** The anchor's box when it was shown. */
   rect: DOMRect;
   via: TooltipVia;
+  /** Keyboard focus can belong to the button that encloses this card. */
+  focusOwner?: Element;
 }
 
 /** The bubble's element id, for aria-describedby. */
@@ -157,31 +161,34 @@ class TooltipStore {
     );
   }
 
-  show(anchor: Element, via: TooltipVia): void {
+  show(anchor: Element, via: TooltipVia, focusOwner?: Element): void {
     const content = this.#registry.get(anchor);
     if (!content) return;
-    if (this.active && this.active.anchor !== anchor) this.#undescribe(this.active.anchor);
+    if (this.active && this.active.anchor !== anchor)
+      this.#undescribe(this.active.focusOwner ?? this.active.anchor);
     this.active = {
       id: ++this.#seq,
       anchor,
       content,
       rect: anchor.getBoundingClientRect(),
-      via
+      via,
+      focusOwner
     };
+    const described = focusOwner ?? anchor;
     // A focusable anchor points at the bubble while it shows. Micro-elements
     // inside a focusable card are not focusable themselves; the card's own
     // accessible description covers them.
-    if (anchor.matches(FOCUSABLE)) {
-      const ids = (anchor.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+    if (described.matches(FOCUSABLE)) {
+      const ids = (described.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
       if (!ids.includes(TOOLTIP_ID)) {
-        anchor.setAttribute('aria-describedby', [...ids, TOOLTIP_ID].join(' '));
+        described.setAttribute('aria-describedby', [...ids, TOOLTIP_ID].join(' '));
       }
     }
   }
 
   hide(): void {
     if (!this.active) return;
-    this.#undescribe(this.active.anchor);
+    this.#undescribe(this.active.focusOwner ?? this.active.anchor);
     this.active = null;
     this.#closedAt = performance.now();
   }
@@ -441,14 +448,22 @@ export function installTooltipGestures(store: TooltipStore = tooltips): () => vo
       if (store.active?.via === 'focus') store.hide();
       return;
     }
-    if (store.contentOf(el) && el.matches(':focus-visible')) {
+    const card = el.matches('button, [role="button"]')
+      ? el.querySelector('[data-tooltip-card], [data-tooltip-wonder], [data-back][data-tooltip]')
+      : null;
+    const anchor = card && store.contentOf(card) ? card : el;
+    if (store.contentOf(anchor) && el.matches(':focus-visible')) {
       clearHover();
-      store.show(el, 'focus');
+      store.show(anchor, 'focus', el);
     } else if (store.active?.via === 'focus') store.hide();
   };
 
   const onFocusOut = (e: FocusEvent): void => {
-    if (store.active?.via === 'focus' && store.active.anchor === e.target) store.hide();
+    if (
+      store.active?.via === 'focus' &&
+      (store.active.focusOwner ?? store.active.anchor) === e.target
+    )
+      store.hide();
   };
 
   // A resize (a rotation, the keyboard opening) closes it; a scroll moves

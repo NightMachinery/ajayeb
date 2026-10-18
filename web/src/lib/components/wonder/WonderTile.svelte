@@ -44,7 +44,8 @@
   import type { Afford } from '$lib/view/afford';
   import type { WonderHint } from '$lib/view/board-hints';
   import { tooltip } from '$lib/ui/tooltip.svelte';
-  import type { WonderView } from '$lib/wire';
+  import type { CostView, WonderView } from '$lib/wire';
+  import { wonderTip } from '$lib/view/tips';
   import OutcomeLine from '../game/OutcomeLine.svelte';
   import Hourglass from './Hourglass.svelte';
   import AffordBadge from '../card/AffordBadge.svelte';
@@ -58,6 +59,10 @@
     /** The owner's WonderView, for the built, removed and tucked state. */
     state?: WonderView;
     afford?: Afford;
+    /** Server quote for this wonder in a choice, when separate from its state. */
+    cost?: CostView;
+    /** One keyboard stop for a passive standalone tile. */
+    focusable?: boolean;
     /** Not your turn: dim the badge. */
     dim?: boolean;
     /** Draft: the name of the player who took it (user text). */
@@ -79,6 +84,8 @@
     size = 'draft',
     state,
     afford,
+    cost,
+    focusable = false,
     dim = false,
     takenBy,
     compactArt = false,
@@ -88,6 +95,7 @@
     class: className = ''
   }: Props = $props();
 
+  const tip = $derived({ ...wonderTip(slug, state, takenBy, cost), avoidAnchor: true });
   const wonder = $derived(wonderBySlug(slug));
   const crop = $derived(wonderArtCrop(slug));
   const built = $derived(state?.built ?? false);
@@ -148,12 +156,18 @@
 
 {#if wonder}
   {#if size === 'draft'}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive wonder has one keyboard stop for its summary.) -->
     <span
       class="wonder-tile relative flex w-full flex-col overflow-hidden rounded-[10px] border-[1.5px] border-(color:--gold-deep) bg-card-paper text-card-ink shadow-panel {className}"
       class:opacity-60={takenBy !== undefined}
       data-wonder={slug}
       data-size="draft"
-      aria-hidden="true"
+      aria-hidden={focusable ? undefined : 'true'}
+      role={focusable ? 'img' : undefined}
+      aria-label={focusable ? wonderName(slug) : undefined}
+      tabindex={focusable ? 0 : undefined}
+      data-tooltip-wonder={slug}
+      {@attach tooltip(tip)}
     >
       {@render art(
         `${compactArt ? 'aspect-[2/1]' : 'aspect-[3/2]'} w-full [container-type:size]`,
@@ -173,6 +187,7 @@
       </span>
     </span>
   {:else if size === 'row'}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive wonder has one keyboard stop for its summary.) -->
     <span
       class="wonder-tile relative flex w-full items-center gap-2.5 text-start text-fg {className}"
       class:removed
@@ -181,7 +196,12 @@
       data-size="row"
       data-built={built}
       data-buildable={buildable ? '' : undefined}
-      aria-hidden="true"
+      aria-hidden={focusable ? undefined : 'true'}
+      role={focusable ? 'img' : undefined}
+      aria-label={focusable ? wonderName(slug) : undefined}
+      tabindex={focusable ? 0 : undefined}
+      data-tooltip-wonder={slug}
+      {@attach tooltip(tip)}
     >
       {@render art(
         `aspect-[3/2] w-16 shrink-0 rounded-[6px] border [container-type:size] ${built ? 'border-(color:--gold-deep)' : 'border-rule'}`,
@@ -231,6 +251,7 @@
       </span>
     </span>
   {:else}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive wonder has one keyboard stop for its summary.) -->
     <span
       class="wonder-tile relative flex w-full items-stretch gap-2 overflow-hidden rounded-[8px] border bg-card-paper p-1 text-[12px] text-card-ink
         {built ? 'border-(color:--gold-deep)' : 'border-black/20'} {className}"
@@ -238,7 +259,12 @@
       data-wonder={slug}
       data-size="city"
       data-built={built}
-      aria-hidden="true"
+      aria-hidden={focusable ? undefined : 'true'}
+      role={focusable ? 'img' : undefined}
+      aria-label={focusable ? wonderName(slug) : undefined}
+      tabindex={focusable ? 0 : undefined}
+      data-tooltip-wonder={slug}
+      {@attach tooltip(tip)}
     >
       {@render art('aspect-[3/2] w-14 shrink-0 rounded-[5px] [container-type:size]', true)}
       <span class="flex min-w-0 flex-1 flex-col justify-center gap-[0.3em]">

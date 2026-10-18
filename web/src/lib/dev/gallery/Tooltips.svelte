@@ -8,7 +8,7 @@
   // section (M10.tooltip-coverage) draws the board's own components with
   // fixed data, each with the tooltip it has in a game: a cost pip with its
   // pay lines, an effect glyph, the trade badge with the trade diagram, a
-  // face-down back with its candidates, the coin tally with the next point,
+  // face-down back with its reveal rule, the coin tally with the next point,
   // a chain chip with its status lines, the compact track's zones, and a
   // bubble with its "More in Rules" link.
   //
@@ -42,7 +42,7 @@
   import { cardBySlug } from '$lib/catalog';
   import type { HintScreen } from '$lib/view/hints';
   import { backTip, chainLines, coinsLines } from '$lib/view/tips';
-  import type { CostView, HintFamily, HintsView, PlayerHintsView } from '$lib/wire';
+  import type { CostView, HintFamily, PlayerHintsView } from '$lib/wire';
   import { HINT_FAMILIES } from '$lib/hints/families';
 
   interface Props {
@@ -92,26 +92,6 @@
     toCapital: 9,
     capitalSafe: false,
     threats: []
-  };
-  const BOARD_HINTS: HintsView = {
-    discard: [],
-    wondersLeft: 7,
-    pairs: [],
-    looting: [],
-    tokens: [],
-    boxTokens: [],
-    guildPreview: [
-      { guild: 'builders-guild', coins: [0, 0], vp: [4, 2] },
-      { guild: 'moneylenders-guild', coins: [0, 0], vp: [3, 5] }
-    ],
-    unseen: [
-      {
-        back: 'guild',
-        cards: ['builders-guild', 'moneylenders-guild', 'scientists-guild'],
-        faceDown: 2,
-        setAside: 1
-      }
-    ]
   };
   const aqueduct = cardBySlug('aqueduct');
   const glyphEffect = cardBySlug('library')?.effects[0];
@@ -244,7 +224,6 @@
         data-card="baths"
         data-tip-demo="card"
         data-testid="tip-card"
-        {@attach tooltip({ text: describeCard('baths') })}
         onclick={() => {
           opened++;
           sheetOpen = true;
@@ -307,7 +286,7 @@
         <AffordBadge afford={{ state: 'trade', coins: 6, shortfall: 0 }} cost={PAY} />
       </span>
       <span class="block h-[74px] w-12" data-tip-demo="back">
-        <CardBack back="guild" tip={backTip('guild', BOARD_HINTS, SCREEN)} class="h-full w-full" />
+        <CardBack focusable back="guild" tip={backTip('guild')} class="h-full w-full" />
       </span>
       <span data-tip-demo="tally">
         <Tally

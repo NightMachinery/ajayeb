@@ -24,7 +24,7 @@ export interface Size {
   height: number;
 }
 
-export type Side = 'top' | 'bottom';
+export type Side = 'top' | 'bottom' | 'start' | 'end';
 export type StackMode = 'beside' | 'below';
 
 export interface PlaceInput {
@@ -46,6 +46,8 @@ export interface PlaceInput {
   /** Put the stack beside the bubble when both fit side by side. The layer
    *  passes true on wide screens only; a phone always stacks vertically. */
   allowBeside?: boolean;
+  /** For a whole-card summary, use either side of the card before overlapping it. */
+  avoidAnchor?: boolean;
   /** The bubble's arrow keeps this far from the bubble's corners. */
   arrowInset?: number;
 }
@@ -94,6 +96,21 @@ export function placeTooltip(input: PlaceInput): Placement {
 
   const roomAbove = anchor.y - gap - minY;
   const roomBelow = maxY - (anchor.y + anchor.height + gap);
+  if (input.avoidAnchor && !stack && bubble.height > Math.max(roomAbove, roomBelow)) {
+    const before = anchor.x - gap - minX;
+    const after = maxX - anchor.x - anchor.width - gap;
+    if (bubble.height <= maxY - minY && bubble.width <= Math.max(before, after)) {
+      const end = after >= before;
+      return {
+        side: end ? 'end' : 'start',
+        bubble: {
+          x: end ? anchor.x + anchor.width + gap : anchor.x - gap - bubble.width,
+          y: clamp(anchor.y + (anchor.height - bubble.height) / 2, minY, maxY - bubble.height)
+        },
+        arrowX: 0
+      };
+    }
+  }
 
   // Beside only when the bubble and the stack fit side by side: on a wide
   // screen, or wherever stacking them vertically would not fit on either

@@ -1239,6 +1239,316 @@
         }
       ]
     },
+    "cardTooltips": [
+      {
+        "card": "lumber-yard",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 0,
+        "accessible": false
+      },
+      {
+        "card": "stone-pit",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 17,
+        "accessible": true
+      },
+      {
+        "card": "clay-pool",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false
+      },
+      {
+        "card": "quarry",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 0,
+        "accessible": false
+      },
+      {
+        "card": "clay-pit",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 7,
+        "accessible": false
+      },
+      {
+        "card": "stable",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 19,
+        "accessible": true
+      },
+      {
+        "card": "palisade",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 0,
+        "accessible": false
+      },
+      {
+        "card": "guard-tower",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 1,
+        "accessible": false
+      },
+      {
+        "card": "workshop",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 6,
+        "accessible": false
+      },
+      {
+        "card": "apothecary",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 5,
+        "accessible": false
+      },
+      {
+        "card": "tavern",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 8,
+        "accessible": false
+      },
+      {
+        "card": "stone-reserve",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 10,
+        "accessible": true
+      },
+      {
+        "card": "wood-reserve",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 1,
+        "accessible": false
+      },
+      {
+        "card": "altar",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 18,
+        "accessible": true
+      }
+    ],
     "boardTokens": [
       "agriculture",
       "economy",

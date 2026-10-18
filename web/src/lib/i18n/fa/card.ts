@@ -211,7 +211,18 @@ export const card = {
   'card.tip.chainIn': 'رایگان است اگر {card} در شهرتان باشد، که نماد زنجیره‌ای {symbol} را دارد.',
   'card.tip.chainInStack': 'نماد زنجیره‌ای را می‌دهد',
   // Tooltips of a card's micro-elements (view/tips.ts).
-  'card.tip.card': '{card}. {category}.',
+  'card.tip.card': '{card}: {category}، دوران {age}.',
+  'card.tip.quoteChain': 'رایگان از راه زنجیره',
+  'card.tip.quoteFree': 'رایگان',
+  'card.tip.quoteShort': { other: '{cost} ({count} سکه کم است)' },
+  'card.tip.costYou': 'اکنون برای شما: {cost}.',
+  'card.tip.costNamed': 'اکنون برای {name}: {cost}.',
+  'card.tip.cityCards': 'کارت‌های {color} را ببینید.',
+  'card.tip.printedCost': 'هزینه‌ی چاپ‌شده: {cost}.',
+  'card.tip.laterFree': 'بعداً {card} را رایگان می‌سازد.',
+  'card.tip.freeWith': 'اگر {card} را دارید، رایگان است.',
+  'card.tip.builtBy': 'ساخته‌ی {name}.',
+  'card.tip.backReveal': 'وقتی کارت‌هایی که آن را می‌پوشانند گرفته شوند، رو می‌شود.',
   'card.tip.costCoins': { other: '{count} سکه هزینه دارد که به بانک پرداخت می‌شود.' },
   'card.tip.costUnits': '{n} {resource} لازم است.',
   'card.tip.costMore': '{items} هم لازم است.',
@@ -268,6 +279,8 @@ export const card = {
   'card.back.guild': 'انجمن',
 
   // Wonders.
+  'wonder.tip.heading': '{name}: شگفتی.',
+  'wonder.tip.currentCost': 'برای ساختن اکنون: {cost}.',
   'wonder.aria': '{name}، شگفتی. {effects}',
   'wonder.built': 'ساخته شده',
   'wonder.builtWith': 'ساخته شده با {card}',

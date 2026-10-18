@@ -657,6 +657,29 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "architecture",
      "law",
@@ -1444,6 +1467,29 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "architecture",
      "law",
@@ -2230,6 +2276,29 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "architecture",
      "law",

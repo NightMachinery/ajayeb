@@ -61,13 +61,13 @@
         data-has-art={hasApprovedArt(artId('card', slug))}
       >
         <div class="h-[83px] w-[54px]" {@attach tooltip({ text: describeCard(slug) })}>
-          <CardFace {slug} tier="mini" width={54} />
+          <CardFace focusable {slug} tier="mini" width={54} />
         </div>
         <div class="h-[156px] w-[101px]">
-          <CardFace {slug} tier="medium" width={101} />
+          <CardFace focusable {slug} tier="medium" width={101} />
         </div>
         <div class="h-[278px] w-[180px]">
-          <CardFace {slug} tier="full" width={180} />
+          <CardFace focusable {slug} tier="full" width={180} />
         </div>
       </figure>
     {/each}
@@ -84,8 +84,8 @@
         data-art-sample="wonder/{slug}"
         data-has-art={hasApprovedArt(artId('wonder', slug))}
       >
-        <WonderTile {slug} size="draft" />
-        <WonderTile {slug} size="city" />
+        <WonderTile focusable {slug} size="draft" />
+        <WonderTile focusable {slug} size="city" />
       </div>
     {/each}
   </div>
@@ -109,7 +109,7 @@
   <div class="flex flex-wrap items-end gap-3 rounded-panel border border-rule bg-panel p-3">
     {#each BACKS as back (back)}
       <div class="h-[156px] w-[101px]" {@attach tooltip({ text: t(`card.back.${back}`) })}>
-        <CardBack {back} class="h-full w-full" />
+        <CardBack focusable {back} class="h-full w-full" />
       </div>
     {/each}
     {#each LEVELS as level (level)}

@@ -148,7 +148,15 @@ async function uncovered(page: Page): Promise<Coverage> {
     const allowed = (el: Element): boolean =>
       allow.some(({ selector }) => el.closest(selector) !== null);
 
-    const anchored = (el: Element): boolean => el.closest('[data-tooltip]') !== null;
+    const anchored = (el: Element): boolean => {
+      const anchor = el.closest('[data-tooltip]');
+      // A whole-card fallback describes its art/frame, not an unexplained
+      // symbol. Keep the existing per-symbol coverage gate meaningful.
+      return (
+        anchor !== null &&
+        (anchor === el || !anchor.matches('[data-tooltip-card], [data-tooltip-wonder]'))
+      );
+    };
 
     const labelled = (el: Element): boolean => {
       let branch = el;
@@ -249,6 +257,21 @@ test.describe('tooltip coverage', { tag: '@mobile' }, () => {
     expect(result.offenders).toHaveLength(2);
   });
 
+  test('a whole-card fallback does not excuse a symbol without its own explanation', async ({
+    page
+  }) => {
+    await page.goto('/');
+    await page.setContent(`<main class="game-screen">
+      <div data-tooltip data-tooltip-card="baths">
+        <span data-card-art="baths"><svg width="24" height="24"></svg></span>
+        <svg width="24" height="24"></svg>
+        <span data-tooltip><svg width="24" height="24"></svg></span>
+      </div>
+    </main>`);
+    const result = await uncovered(page);
+    expect(result.offenders).toHaveLength(1);
+  });
+
   test('every image and icon-only button of the game screen has a tooltip', async ({
     page,
     baseURL
@@ -283,6 +306,9 @@ test.describe('tooltip coverage', { tag: '@mobile' }, () => {
         if (position === 'age3') {
           // Age III deals its guilds face down among the backs.
           await expect(page.locator('.card-structure [data-back="guild"]').first()).toBeVisible();
+          const nodes = await page.locator('*').count();
+          console.log(`${info.project.name} Age III DOM: ${nodes}`);
+          expect(nodes, 'Age III stays within the UX DOM budget').toBeLessThan(2500);
         }
         const { checked, offenders, byLabel } = await uncovered(page);
         console.log(

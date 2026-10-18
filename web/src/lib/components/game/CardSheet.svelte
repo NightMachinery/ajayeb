@@ -408,9 +408,22 @@
         <div class="flex gap-3">
           <div class="h-[216px] w-[140px] shrink-0">
             {#if slug}
-              <CardFace {slug} tier="full" width={140} />
+              <CardFace
+                {slug}
+                tier="full"
+                width={140}
+                cost={myCost}
+                tipContext={{
+                  actualCost: actions?.build?.cost,
+                  costSeat: seat,
+                  info: view.cardTooltips.find((c) => c.card === slug),
+                  names: seat === 1 ? [opponentName, ownName ?? ''] : [ownName ?? '', opponentName],
+                  you: ownName === undefined ? view.viewer : undefined
+                }}
+                focusable
+              />
             {:else}
-              <CardBack back={slot.back ?? 'age1'} class="h-full w-full" />
+              <CardBack focusable back={slot.back ?? 'age1'} class="h-full w-full" />
             {/if}
           </div>
           <div class="flex min-w-0 flex-1 flex-col gap-1.5">

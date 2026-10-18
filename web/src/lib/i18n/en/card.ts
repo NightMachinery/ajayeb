@@ -237,7 +237,21 @@ export const card = {
   'card.tip.chainInStack': 'Gives the chain symbol',
   // Tooltips of a card's micro-elements (view/tips.ts). {resource} is a
   // resource name, {token} a token name, {back} 'Age I' and the like.
-  'card.tip.card': '{card}. {category}.',
+  'card.tip.card': '{card}: {category}, Age {age}.',
+  'card.tip.quoteChain': 'free through a chain',
+  'card.tip.quoteFree': 'free',
+  'card.tip.quoteShort': {
+    one: '{cost} ({count} coin short)',
+    other: '{cost} ({count} coins short)'
+  },
+  'card.tip.costYou': 'You now: {cost}.',
+  'card.tip.costNamed': '{name} now: {cost}.',
+  'card.tip.cityCards': 'Inspect {color} cards.',
+  'card.tip.printedCost': 'Printed cost: {cost}.',
+  'card.tip.laterFree': 'Later builds {card} free.',
+  'card.tip.freeWith': 'Free if you own {card}.',
+  'card.tip.builtBy': 'Built by {name}.',
+  'card.tip.backReveal': 'Turns face up when the cards covering it are taken.',
   'card.tip.costCoins': {
     one: 'Costs {count} coin, paid to the bank.',
     other: 'Costs {count} coins, paid to the bank.'
@@ -319,6 +333,8 @@ export const card = {
   'card.back.guild': 'Guild',
 
   // Wonders.
+  'wonder.tip.heading': '{name}: wonder.',
+  'wonder.tip.currentCost': 'To build now: {cost}.',
   'wonder.aria': '{name}, wonder. {effects}',
   'wonder.built': 'Built',
   'wonder.builtWith': 'Built with {card}',

@@ -16,12 +16,17 @@
   import { badgesDimmed, slotAfford } from '$lib/view/afford';
   import { describeSlot } from '$lib/view/describe';
   import { slotPlace, structureLayout } from '$lib/view/geometry';
-  import type { SlotView } from '$lib/wire';
+  import type { CardTooltipView, Choice, SlotView } from '$lib/wire';
   import StructureSlot from './StructureSlot.svelte';
 
   interface Props {
     /** The view's structure (View.structure). */
     slots: readonly SlotView[];
+    cardTooltips?: readonly CardTooltipView[];
+    choices?: readonly Choice[];
+    costSeat?: number;
+    names?: readonly [string, string];
+    you?: number;
     /** The age, 1 to 3 (View.age). */
     age: number;
     /** The seat whose costs the badges show (afford.ts badgeSeat). */
@@ -44,6 +49,11 @@
 
   let {
     slots,
+    cardTooltips = [],
+    choices = [],
+    costSeat,
+    names,
+    you,
     age,
     seat,
     toMove,
@@ -112,6 +122,13 @@
           width={fit.w}
           label={describeSlot(slot, { seat, waiting: dim, selected: selected === slot.index })}
           {afford}
+          tipContext={{
+            info: cardTooltips.find((c) => c.card === slot.card),
+            names,
+            you,
+            costSeat,
+            actualCost: choices.find((c) => c.kind === 'construct' && c.card === slot.card)?.cost
+          }}
           cost={seat === undefined ? undefined : slot.costs?.[seat]}
           {dim}
           {ring}

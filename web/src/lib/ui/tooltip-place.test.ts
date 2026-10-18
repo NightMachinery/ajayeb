@@ -195,3 +195,27 @@ describe('placeTooltip: a stack on a phone in landscape', () => {
     }
   });
 });
+
+describe('whole-card exclusion', () => {
+  it('keeps above/below preference when either fits', () => {
+    const anchor = { x: 16, y: 400, width: 140, height: 216 };
+    const bubble = { width: 272, height: 180 };
+    const input = { anchor, bubble, bounds: PHONE, avoidAnchor: true };
+    const p = placeTooltip(input);
+    expect(p.side).toBe('top');
+    expect(overlaps({ ...p.bubble, ...bubble }, anchor)).toBe(false);
+    inside(p, input);
+  });
+
+  it('uses a free column before covering a phone card, on either side', () => {
+    for (const x of [16, 204]) {
+      const anchor = { x, y: 220, width: 140, height: 300 };
+      const bubble = { width: 174, height: 260 };
+      const input = { anchor, bubble, bounds: PHONE, avoidAnchor: true };
+      const p = placeTooltip(input);
+      expect(p.side).toBe(x === 16 ? 'end' : 'start');
+      expect(overlaps({ ...p.bubble, ...bubble }, anchor)).toBe(false);
+      inside(p, input);
+    }
+  });
+});

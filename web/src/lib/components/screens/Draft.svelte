@@ -283,7 +283,7 @@
         data-bot-pick={botPick === item.wonder ? '' : undefined}
       >
         {#if split.current}
-          <WonderTile slug={item.wonder} size="draft" {takenBy} />
+          <WonderTile slug={item.wonder} size="draft" {takenBy} focusable />
           {#if item.takenBy === undefined}
             {@render effects(item.wonder, 'text-[13px] leading-snug text-fg')}
             {#if keys.size > 0}
@@ -358,7 +358,7 @@
     {@const wonder = wonderBySlug(slug)}
     <div class="flex flex-col gap-3 px-5 pt-1 pb-2">
       <div class="mx-auto w-full max-w-[260px]">
-        <WonderTile {slug} size="draft" />
+        <WonderTile {slug} size="draft" focusable />
       </div>
       <h2 id="draft-wonder-title" class="font-display text-xl text-fg">{wonderName(slug)}</h2>
       {#if wonder}

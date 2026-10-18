@@ -89,6 +89,8 @@
       <div class="mx-auto w-full max-w-[280px]">
         <WonderTile
           {slug}
+          {state}
+          focusable
           size="draft"
           artSizes={WONDER_SHEET_ART_SIZES}
           afford={state?.cost && !state.built ? affordOf(state.cost) : undefined}

@@ -314,6 +314,7 @@
       }
      ]
     },
+    "cardTooltips": [],
     "boardTokens": [
      "architecture",
      "economy",
@@ -686,6 +687,7 @@
       }
      ]
     },
+    "cardTooltips": [],
     "boardTokens": [
      "architecture",
      "economy",
@@ -1078,6 +1080,7 @@
       }
      ]
     },
+    "cardTooltips": [],
     "boardTokens": [
      "architecture",
      "economy",

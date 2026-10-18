@@ -459,9 +459,10 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
         ? `${name} would build it for free.`
         : `${name} would pay ${coins} for it.`;
     };
-    // A covered card is aria-disabled (nothing can be done with it), yet a
-    // tap still opens its sheet, so Playwright's enabled check is skipped.
-    await driver.visible(`.card-structure [data-card="${slot.card}"]`).click({ force: true });
+    // Taking it is unavailable, but inspecting it is an enabled action.
+    const inspect = driver.visible(`.card-structure [data-card="${slot.card}"]`);
+    await expect(inspect).toBeEnabled();
+    await inspect.click({ position: { x: 4, y: 4 } });
     const sheet = page.locator('dialog[open]');
     await expect(sheet.locator(`[data-card-sheet="${slot.card}"]`)).toBeVisible();
     // Hot-seat: both lines name their player, the one to move first.

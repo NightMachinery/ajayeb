@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { joinPhrases } from '$lib/i18n';
+  import { joinPhrases, t } from '$lib/i18n';
   // A grid of medium cards, optionally selectable: the opponent's cards a
   // destroy choice may hit, or the discard pile. Selecting a card only
   // marks it (the caller's commit button sends the move), so a tile carries
@@ -14,9 +14,15 @@
   import { pipLabel, type CardPip } from '$lib/view/hints';
   import CardFace from '../card/CardFace.svelte';
   import HintPip from '../card/HintPip.svelte';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import type { CardTipContext } from '$lib/view/tips';
 
   interface Props {
     cards: readonly string[];
+    /** Owner name for city cards; absent for a discard pile. */
+    owner?: string;
+    /** Actual payments for the offered choices, never inferred from keys. */
+    tipContexts?: ReadonlyMap<string, CardTipContext>;
     /** Card slug to its choice key; a card without one is shown, not picked. */
     keys?: ReadonlyMap<string, string>;
     /** The selected choice key. */
@@ -33,6 +39,8 @@
 
   let {
     cards,
+    owner,
+    tipContexts,
     keys,
     selected = null,
     onselect,
@@ -74,7 +82,13 @@
           {disabled}
           onclick={() => onselect(key)}
         >
-          <CardFace {slug} tier="medium" width={CARD_W} />
+          <CardFace
+            {slug}
+            tier="medium"
+            width={CARD_W}
+            {owner}
+            tipContext={tipContexts?.get(slug)}
+          />
           {#if pips?.get(slug) && !isSelected}
             <HintPip pip={pips.get(slug)!} card={cardName(slug)} />
           {/if}
@@ -83,6 +97,7 @@
               class="absolute -end-1.5 -top-1.5 grid size-6 place-items-center rounded-full shadow-panel
                 {danger ? 'danger-badge' : 'bg-accent text-on-accent'}"
               aria-hidden="true"
+              {@attach tooltip({ text: t('card.aria.selected') })}
             >
               {#if danger}
                 <X class="size-4" strokeWidth={3} />
@@ -100,7 +115,14 @@
           role="img"
           aria-label={nameOf(slug)}
         >
-          <CardFace {slug} tier="medium" width={CARD_W} />
+          <CardFace
+            {slug}
+            tier="medium"
+            width={CARD_W}
+            {owner}
+            tipContext={tipContexts?.get(slug)}
+            focusable
+          />
           {#if pips?.get(slug)}
             <HintPip pip={pips.get(slug)!} card={cardName(slug)} />
           {/if}

@@ -8,13 +8,20 @@
 // bubble turns into a "More in Rules" link.
 //
 // The hint lines follow the families this screen shows (HintScreen): the
-// chain status lines and the face-down candidates are the counting family,
+// chain status lines are the counting family,
 // the next point from coins, the winner on points now and a guild's points
-// the scoring family.
+// the scoring family. Whole-card summaries are independent of hint settings.
 
 import type { CatalogEffect } from '$lib/catalog';
-import { cardBySlug } from '$lib/catalog';
-import { cardName, effectSentence, joinList, resourceName } from '$lib/components/card/effect-text';
+import { cardBySlug, wonderBySlug } from '$lib/catalog';
+import {
+  cardName,
+  costText,
+  effectSentence,
+  joinList,
+  resourceName,
+  wonderName
+} from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/game/names';
 import type { RuleSectionId } from '$lib/components/rules/sections';
 import { sentences, t } from '$lib/i18n';
@@ -22,12 +29,15 @@ export { sentences } from '$lib/i18n';
 import type {
   Back,
   Chain,
+  CardTooltipView,
+  CardTooltipCostView,
   CostView,
   GuildPointsView,
   HintsView,
   PlayerHintsView,
   PreviewWinnerView,
-  Resource
+  Resource,
+  WonderView
 } from '$lib/wire';
 import type { Afford } from './afford';
 import { placeText } from './board-hints';
@@ -192,42 +202,9 @@ export function backText(back: Back): string {
     : t('card.tip.backAge', { back: t(`card.back.${back}`) });
 }
 
-function guildValue(g: HintsView['guildPreview'][number], names: HintNames): string {
-  const part = (seat: Seat): string => {
-    const vp = g.vp[seat];
-    return names.you === seat
-      ? t('hints.unseen.guildYou', { count: vp })
-      : t('hints.unseen.guildNamed', { count: vp, name: names.names[seat] });
-  };
-  return t('hints.unseen.guild', { card: cardName(g.guild), first: part(0), second: part(1) });
-}
-
-/**
- * A face-down back's tooltip: which back it is, and with the counting
- * family the cards that may lie under it (the server's unseen pool) and, in
- * Age III, what each guild among them would be worth to each seat now.
- */
-export function backTip(back: Back, hints: HintsView | undefined, screen?: HintScreen): TipText {
-  const text = backText(back);
-  if (!hints || !screen?.families.has('counting'))
-    return { text, rulesId: back === 'guild' ? 'guilds' : 'turn' };
-  const pool = hints.unseen.find((u) => u.back === back);
-  const lines: string[] = [];
-  if (pool && pool.cards.length > 0) {
-    lines.push(
-      t('hints.unseen.pool', {
-        count: pool.cards.length,
-        list: joinList(pool.cards.map(cardName), 'conjunction')
-      })
-    );
-    if (pool.setAside > 0) lines.push(t('hints.unseen.setAside', { count: pool.setAside }));
-    if (back === 'guild') {
-      for (const g of hints.guildPreview) {
-        if (pool.cards.includes(g.guild)) lines.push(guildValue(g, screen.names));
-      }
-    }
-  }
-  return { text, lines, rulesId: back === 'guild' ? 'guilds' : 'turn' };
+/** A back reveals only its visible age/guild and the rule for turning over. */
+export function backTip(back: Back): TipText {
+  return { text: backText(back), lines: [t('card.tip.backReveal')] };
 }
 
 // --- The tallies -------------------------------------------------------------
@@ -312,9 +289,89 @@ export function guildLines(
 
 // --- Small words -------------------------------------------------------------
 
-/** A card's name and its category, for a card too small to print its name. */
-export function cardTip(slug: string): string {
+/** Plain display context for a whole card. Quotes are server data; only
+ *  a face-up structure row is a live build context. City/discard cards
+ *  retain their printed cost, even though the public index quotes them. */
+export interface CardTipContext {
+  info?: CardTooltipView;
+  names?: readonly [string, string];
+  you?: number;
+  owner?: string;
+  /** Actual construct/revive payment, only when the server offers that choice. */
+  actualCost?: CostView;
+  costSeat?: number;
+}
+
+function quoteText(
+  cost: Pick<CardTooltipCostView, 'total' | 'affordable' | 'chainFree' | 'shortfall'>
+): string {
+  if (cost.chainFree) return t('card.tip.quoteChain');
+  if (cost.total === 0) return t('card.tip.quoteFree');
+  const coins = t('coins.count', { count: cost.total });
+  return cost.affordable ? coins : t('card.tip.quoteShort', { cost: coins, count: cost.shortfall });
+}
+
+/** Name/kind/age, effects, costs, links, then builder. No breakdown table,
+ *  cost arithmetic or legality decisions. */
+export function cardTip(slug: string, context: CardTipContext = {}): TipText {
   const card = cardBySlug(slug);
-  if (!card) return slug;
-  return t('card.tip.card', { card: cardName(slug), category: t(`card.category.${card.color}`) });
+  if (!card) return { text: slug };
+  const { info, names, you, owner, actualCost, costSeat } = context;
+  const costLine = (seat: 0 | 1, cost: string): string =>
+    you === seat
+      ? t('card.tip.costYou', { cost })
+      : t('card.tip.costNamed', {
+          cost,
+          name: names?.[seat] ?? t(seat === 0 ? 'board.crest.sun' : 'board.crest.moon')
+        });
+  const lines = card.effects.map(effectSentence);
+  if (info?.card === slug && info.place === 'faceUp') {
+    const seats = you === 1 ? ([1, 0] as const) : ([0, 1] as const);
+    for (const seat of seats) {
+      const cost = actualCost && costSeat === seat ? actualCost : info.costs[seat];
+      lines.push(costLine(seat, quoteText(cost)));
+    }
+  } else if (actualCost && (costSeat === 0 || costSeat === 1)) {
+    lines.push(costLine(costSeat, quoteText(actualCost)));
+  } else {
+    lines.push(t('card.tip.printedCost', { cost: costText(card.cost) }));
+  }
+  if (card.chainTo) lines.push(t('card.tip.laterFree', { card: cardName(card.chainTo) }));
+  if (card.chainFrom) lines.push(t('card.tip.freeWith', { card: cardName(card.chainFrom) }));
+  if (owner !== undefined) lines.push(t('card.tip.builtBy', { name: owner }));
+  return {
+    text: t('card.tip.card', {
+      card: cardName(slug),
+      category: t(`card.category.${card.color}`),
+      age: t(`card.ageNumeral.${card.age}`)
+    }),
+    lines
+  };
+}
+
+/** The draft's cards are wonders. Use the same short effect/cost reading
+ *  order, their owner's quote when sent, and their visible taken/built state. */
+export function wonderTip(
+  slug: string,
+  state?: WonderView,
+  takenBy?: string,
+  cost?: CostView
+): TipText {
+  const wonder = wonderBySlug(slug);
+  if (!wonder) return { text: slug };
+  const lines = wonder.effects.map(effectSentence);
+  const quote = cost ?? state?.cost;
+  lines.push(
+    quote && !state?.built && !state?.removed
+      ? t('wonder.tip.currentCost', { cost: quoteText(quote) })
+      : t('card.tip.printedCost', { cost: costText(wonder.cost) })
+  );
+  if (takenBy !== undefined) lines.push(t('wonder.takenBy', { name: takenBy }));
+  if (state?.built)
+    lines.push(
+      state.tucked ? t('wonder.builtWith', { card: cardName(state.tucked) }) : t('wonder.built')
+    );
+  else if (state?.removed) lines.push(t('wonder.removed'));
+  else if (state) lines.push(t('wonder.notBuilt'));
+  return { text: t('wonder.tip.heading', { name: wonderName(slug) }), lines };
 }

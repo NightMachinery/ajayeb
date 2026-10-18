@@ -5,6 +5,7 @@
   import type { View } from '$lib/wire';
   import HintLines from '../game/HintLines.svelte';
   import { tryGameContext } from './room';
+  import type { CardTipContext } from '$lib/view/tips';
   import { cardName } from '../card/effect-text';
   import CommitButton from './CommitButton.svelte';
   import DiscardPile from './DiscardPile.svelte';
@@ -14,6 +15,8 @@
     cards: readonly string[];
     /** Card slug to its revive key, from the view's choices. */
     keys: ReadonlyMap<string, string>;
+    /** Display context from the same presented view as the choices. */
+    tipContexts?: ReadonlyMap<string, CardTipContext>;
     canAct: boolean;
     /** Ask for a second tap before sending (the act-button rule). */
     confirm?: boolean;
@@ -28,6 +31,7 @@
   let {
     cards,
     keys,
+    tipContexts,
     canAct,
     confirm = false,
     connected = true,
@@ -55,7 +59,14 @@
 
 <div class="flex flex-col gap-3" data-discard-choice>
   <p class="text-sm text-fg">{t('choices.discard.intro')}</p>
-  <DiscardPile {cards} {keys} {selected} onselect={(key) => (picked = key)} disabled={!canAct} />
+  <DiscardPile
+    {cards}
+    {tipContexts}
+    {keys}
+    {selected}
+    onselect={(key) => (picked = key)}
+    disabled={!canAct}
+  />
   <HintLines {sections} class="max-h-48 overflow-y-auto" />
   <CommitButton
     label={selectedCard

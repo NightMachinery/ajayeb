@@ -653,6 +653,29 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 8,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 8
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "architecture",
      "economy",
@@ -1438,6 +1461,29 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 8,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 8
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "architecture",
      "economy",
@@ -2222,6 +2268,29 @@
       }
      ]
     },
+    "cardTooltips": [
+     {
+      "card": "academy",
+      "costs": [
+       {
+        "total": 8,
+        "affordable": true,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 0
+       },
+       {
+        "total": 8,
+        "affordable": false,
+        "chainFree": false,
+        "needsTrade": true,
+        "shortfall": 8
+       }
+      ],
+      "place": "discard",
+      "accessible": false
+     }
+    ],
     "boardTokens": [
      "architecture",
      "economy",

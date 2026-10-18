@@ -69,6 +69,7 @@
   </p>
   <CardPickGrid
     {cards}
+    owner={opponentName}
     {keys}
     {selected}
     onselect={(key) => (picked = key)}

@@ -1210,6 +1210,40 @@ bytes before, 21255 after). A join or resync frame of a finished 71-action
 game, history included, is about 19.7 KB, against 7.9 KB for the same frame
 without its history.
 
+**Shared card tooltip data.** `view.cardTooltips` indexes building cards whose
+identities already appear in the redacted snapshot: face-up structure
+cards, city cards, public cards tucked under built wonders, and the discard
+pile. It is an empty list when none are visible. Rows follow catalog id
+order, and no row is added for a face-down, removed, undealt or scenario
+out-of-play card. End-of-game reveals do not add hidden identities to this
+index.
+
+Each row has `card`, `place`, `accessible`, and `costs`, a pair indexed by
+seat. `place` is `faceUp`, `city`, `tucked` or `discard`; `slot` identifies a
+face-up structure slot, and `seat` identifies a city or tucked card's
+owner. The engine derives membership and whereabouts from the already
+redacted snapshot. A hidden card swapped with a removed card leaves this
+index unchanged for both seats and spectators.
+
+Each compact cost contains `total`, `affordable`, `chainFree`, `needsTrade`
+and `shortfall`. The engine's payment solver computes both seats' quotes
+from their public production, discounts and trade prices, independent of
+whose turn it is. `needsTrade` means the payment buys resources; it does not
+mean those resources cannot be bought. `shortfall` is the missing coins,
+zero when affordable. These are hypothetical construction prices, not
+legal actions. The tooltip shows both seats' prices on face-up structure
+cards, naming the other player; city and discard summaries can retain the
+printed cost. Detailed sheets keep using the existing cost breakdowns,
+and actions still come exclusively from `choices`.
+
+An actual building or build-from-discard choice takes precedence over those
+hypothetical prices in the whole-card summary. Build-from-discard choices
+carry an explicit free `cost`: `total: 0`, `affordable: true`,
+`chainFree: false`, no trade, and `coinsAfter` equal to the builder's current
+purse. The client reads that payment rather than inferring a free rebuild
+from the action key. Browsing the discard pile without that choice still
+shows the printed cost.
+
 The protocol fixtures in `server/internal/engine/testdata/protocol/` are
 golden JSON files, one per named position, each recording what all three
 viewers (`seat0`, `seat1`, `spectator`) receive there: the full view and the

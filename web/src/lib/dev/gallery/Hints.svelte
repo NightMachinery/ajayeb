@@ -235,7 +235,7 @@
       {#each specimens as s, i (i)}
         <figure class="flex w-[88px] flex-col items-center gap-1">
           <div class="relative" style:width="56px" style:height="86px">
-            <CardFace slug={s.slug} tier="mini" width={56} />
+            <CardFace focusable slug={s.slug} tier="mini" width={56} />
             {#if s.pip}
               <HintPip pip={s.pip} card={cardName(s.slug)} size="sm" faint={s.faint} />
             {/if}
@@ -248,7 +248,7 @@
       {#each specimens.slice(0, 3) as s, i (i)}
         <figure class="flex w-[110px] flex-col items-center gap-1">
           <div class="relative" style:width="96px" style:height="148px">
-            <CardFace slug={s.slug} tier="medium" width={96} />
+            <CardFace focusable slug={s.slug} tier="medium" width={96} />
             {#if s.pip}<HintPip pip={s.pip} card={cardName(s.slug)} />{/if}
           </div>
           <figcaption class="text-center text-[11px] text-fg-muted">
@@ -266,6 +266,7 @@
     <div class="flex flex-wrap gap-4 rounded-panel border border-rule bg-table p-4">
       <div style:width="96px" style:height="148px">
         <CardFace
+          focusable
           slug="library"
           tier="medium"
           width={96}
@@ -275,6 +276,7 @@
       </div>
       <div style:width="56px" style:height="86px">
         <CardFace
+          focusable
           slug="library"
           tier="mini"
           width={56}
@@ -284,6 +286,7 @@
       </div>
       <div style:width="96px" style:height="148px">
         <CardFace
+          focusable
           slug="baths"
           tier="medium"
           width={96}

@@ -24,6 +24,7 @@
   // little rather than cover the takeable cards or this player's own strip.
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import { t } from '$lib/i18n';
+  import type { CardTipContext } from '$lib/view/tips';
   import { settings } from '$lib/ui/settings.svelte';
   import type { Choice, GameEvent, PendingKind, View } from '$lib/wire';
   import { needsConfirm } from '../game/card-actions';
@@ -94,6 +95,23 @@
   // The view only lists choices for the seat to move, so this client
   // decides exactly when the pending choice comes with options.
   const mine = $derived(options.length > 0);
+
+  // The actual free rebuild payment must belong to the frame being shown,
+  // including standalone gallery scenes, not a possibly newer Session view.
+  const cardTips = $derived(
+    new Map<string, CardTipContext>(
+      options.flatMap((choice) =>
+        choice.kind === 'revive' && choice.card && choice.cost
+          ? [
+              [
+                choice.card,
+                { actualCost: choice.cost, costSeat: pending?.seat, names, you }
+              ] as const
+            ]
+          : []
+      )
+    )
+  );
 
   // Slug to key, in the view's order.
   const cardKeys = $derived(
@@ -293,6 +311,7 @@
               <DiscardPickChoice
                 cards={pending.cards}
                 keys={cardKeys}
+                tipContexts={cardTips}
                 {canAct}
                 {confirm}
                 {connected}

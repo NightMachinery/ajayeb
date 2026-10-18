@@ -157,6 +157,8 @@
         <WonderTile
           slug={option.wonder}
           size="city"
+          cost={option.cost}
+          focusable
           afford={option.cost ? affordOf(option.cost) : undefined}
           hint={hintOf(option.wonder)}
         />

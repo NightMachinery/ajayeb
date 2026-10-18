@@ -192,6 +192,7 @@
         }
       ]
     },
+    "cardTooltips": [],
     "boardTokens": [
       "agriculture",
       "architecture",

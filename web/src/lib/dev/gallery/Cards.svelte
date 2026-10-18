@@ -100,10 +100,24 @@
             {#each data.badges as b (b.afford.state)}
               <div class="flex flex-col items-center gap-1" data-badge-state={b.afford.state}>
                 <div class="h-[83px] w-[54px]" {@attach tooltip({ text: describeCard(b.card) })}>
-                  <CardFace slug={b.card} tier="mini" width={54} afford={b.afford} {dim} />
+                  <CardFace
+                    slug={b.card}
+                    tier="mini"
+                    width={54}
+                    afford={b.afford}
+                    {dim}
+                    focusable
+                  />
                 </div>
                 <div class="h-[156px] w-[101px]">
-                  <CardFace slug={b.card} tier="medium" width={101} afford={b.afford} {dim} />
+                  <CardFace
+                    slug={b.card}
+                    tier="medium"
+                    width={101}
+                    afford={b.afford}
+                    {dim}
+                    focusable
+                  />
                 </div>
                 <AffordBadge afford={b.afford} {dim} class="text-[12px]" />
               </div>
@@ -119,12 +133,12 @@
       <div class="flex flex-wrap items-end gap-3 rounded-panel border border-rule bg-panel p-3">
         {#each BACKS as back (back)}
           <div class="h-[83px] w-[54px]" {@attach tooltip({ text: t(`card.back.${back}`) })}>
-            <CardBack {back} class="h-full w-full" />
+            <CardBack focusable {back} class="h-full w-full" />
           </div>
         {/each}
         {#each BACKS as back (back)}
           <div class="h-[156px] w-[101px]">
-            <CardBack {back} class="h-full w-full" />
+            <CardBack focusable {back} class="h-full w-full" />
           </div>
         {/each}
       </div>
@@ -137,7 +151,9 @@
         class="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2 rounded-panel border border-rule bg-panel p-3"
       >
         {#each cardSlugs as slug (slug)}
-          <div {@attach tooltip({ text: describeCard(slug) })}><CardFace {slug} tier="band" /></div>
+          <div {@attach tooltip({ text: describeCard(slug) })}>
+            <CardFace {slug} tier="band" focusable />
+          </div>
         {/each}
       </div>
     </section>
@@ -160,7 +176,7 @@
               style:height="{size.h}px"
               {@attach tooltip({ text: describeCard(slug) })}
             >
-              <CardFace {slug} tier={size.tier} width={size.w} />
+              <CardFace {slug} tier={size.tier} width={size.w} focusable />
             </div>
           {/each}
         </div>
@@ -176,7 +192,7 @@
         {#each wonderSlugs as slug (slug)}
           {@const rec = data.wonders[slug]}
           <div {@attach tooltip({ text: describeWonder(slug, rec?.state) })}>
-            <WonderTile {slug} size="draft" afford={rec?.afford} />
+            <WonderTile focusable {slug} size="draft" afford={rec?.afford} />
           </div>
         {/each}
       </div>
@@ -185,7 +201,7 @@
       >
         {#each wonderSlugs as slug (slug)}
           {@const rec = data.wonders[slug]}
-          <WonderTile {slug} size="city" state={rec?.state} afford={rec?.afford} />
+          <WonderTile focusable {slug} size="city" state={rec?.state} afford={rec?.afford} />
         {/each}
       </div>
     </section>
@@ -215,6 +231,10 @@
             >
               <CardStructure
                 slots={s.view.structure}
+                cardTooltips={s.view.cardTooltips}
+                choices={s.view.choices}
+                costSeat={s.view.toMove}
+                you={s.view.viewer}
                 age={s.view.age}
                 seat={badgeSeat(s.view)}
                 toMove={s.view.toMove}

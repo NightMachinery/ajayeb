@@ -6,8 +6,8 @@
   // over the numeral and a checker field, so it differs from Age III by
   // shape as well as colour. Fills its container; decorative unless the
   // parent labels it. Its tooltip says which back it is (view/tips.ts
-  // backText); the structure passes a fuller one (`tip`) with the cards
-  // that may lie under it.
+  // backTip), then says when it turns face up. Hidden candidates and costs
+  // never belong in this tooltip.
   //
   // Once a back's bitmap art is approved (back/age1 and so on in the
   // generated art index), it fills the card under the same gold frame and
@@ -17,7 +17,7 @@
   import { backArtId } from '$lib/art/lookup';
   import { i18n, t } from '$lib/i18n';
   import { tooltip, type TooltipContent } from '$lib/ui/tooltip.svelte';
-  import { backText } from '$lib/view/tips';
+  import { backTip, backText } from '$lib/view/tips';
   import type { Back } from '$lib/wire';
   import { backAge } from './card-style';
 
@@ -25,19 +25,25 @@
     back: Back;
     /** The tooltip; by default it names the back. */
     tip?: TooltipContent;
+    /** A passive standalone back gets one keyboard stop. */
+    focusable?: boolean;
     class?: string;
   }
 
-  let { back, tip, class: className = '' }: Props = $props();
+  let { back, tip, focusable = false, class: className = '' }: Props = $props();
 
   const numeral = $derived(t(`card.ageNumeral.${backAge(back)}`));
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive card back has one keyboard stop for its explanation.) -->
 <span
   class="card-back back-{back} relative flex items-center justify-center overflow-hidden rounded-[6%/4%] {className}"
   data-back={back}
-  aria-hidden="true"
-  {@attach tooltip(tip ?? { text: backText(back) })}
+  aria-hidden={focusable ? undefined : 'true'}
+  role={focusable ? 'img' : undefined}
+  aria-label={focusable ? backText(back) : undefined}
+  tabindex={focusable ? 0 : undefined}
+  {@attach tooltip({ ...(tip ?? backTip(back)), avoidAnchor: true })}
 >
   <ArtImage id={backArtId(back)} feather="none" class="absolute inset-0 h-full w-full" />
   <!-- The frame sits over the art (an inset shadow alone would sit under it). -->

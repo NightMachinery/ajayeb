@@ -72,12 +72,24 @@
         : { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
       // The anchor's box now: a scroll moves the tooltip with its anchor.
       const r = tip.anchor.getBoundingClientRect();
+      // A full-card summary may reflow into the free column beside a
+      // phone card. Reset first so later resizes do not retain a narrow width.
+      bubble.style.maxInlineSize = '';
+      if (tip.content.avoidAnchor && !stack) {
+        const above = r.y - 18 - bounds.y;
+        const below = bounds.y + bounds.height - r.bottom - 18;
+        if (bubble.offsetHeight > Math.max(above, below)) {
+          const sideRoom = Math.max(r.x - bounds.x - 18, bounds.x + bounds.width - r.right - 18);
+          if (sideRoom >= 144) bubble.style.maxInlineSize = `${Math.min(272, sideRoom)}px`;
+        }
+      }
       const p = placeTooltip({
         anchor: { x: r.x, y: r.y, width: r.width, height: r.height },
         bubble: { width: bubble.offsetWidth, height: bubble.offsetHeight },
         stack: stack ? { width: stack.offsetWidth, height: stack.offsetHeight } : undefined,
         bounds,
-        allowBeside: window.innerWidth >= BESIDE_MIN_WIDTH
+        allowBeside: window.innerWidth >= BESIDE_MIN_WIDTH,
+        avoidAnchor: tip.content.avoidAnchor
       });
       bubble.style.transform = `translate(${p.bubble.x}px, ${p.bubble.y}px)`;
       bubble.dataset['side'] = p.side;

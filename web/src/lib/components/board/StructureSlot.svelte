@@ -4,10 +4,9 @@
   // higher ones (z-index = row), and the CSS variables the structure sets
   // (--cw, --ch, --step, --gap) turn the slot's card units into px.
   //
-  //   face up    a <button data-card="<slug>"> with the CardFace; covered
-  //              cards are aria-disabled, takeable ones lift and carry the
-  //              affordability badge
-  //   face down  a <button>, aria-disabled, with the CardBack of its age
+  //   face up    an enabled inspection button with the CardFace; takeable
+  //              cards lift and carry the affordability badge
+  //   face down  an enabled inspection button with the CardBack of its age
   //   empty      a faint outline where the card was, not focusable
   //
   // The button only reports the tap (onselect); what a tap opens, and which
@@ -30,9 +29,8 @@
   //
   // Tooltips (M10.tooltip-coverage): the card's own micro-elements carry
   // theirs (CardFace, with `cost` for the pay lines); a face-down back names
-  // its age or the guilds and, with the counting hints, the cards that may
-  // lie under it (view/tips.ts backTip, from the server's unseen pool and
-  // guild preview); the wonder-first mark says what it marks.
+  // its age or the guild back and how it turns face up; the wonder-first
+  // mark says what it marks.
   //
   // The bot's pick (`botPick`, UX design section 5, "AI thinking"): while
   // the Presenter previews a bot's answer, the card it is about to take
@@ -42,8 +40,8 @@
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import type { SlotPlace } from '$lib/view/geometry';
-  import type { CostView, HintsView, SlotView } from '$lib/wire';
-  import { backTip } from '$lib/view/tips';
+  import type { CostView, SlotView } from '$lib/wire';
+  import { backTip, type CardTipContext } from '$lib/view/tips';
   import { hintHide } from '$lib/hints/local.svelte';
   import { denyPip, pipLabel, sessionHintScreen, slotPip, type HintScreen } from '$lib/view/hints';
   import { cardName } from '../card/effect-text';
@@ -81,8 +79,7 @@
     recap?: RecapBoard | null;
     /** The server's cost breakdown for the badge's seat (the tooltips). */
     cost?: CostView;
-    /** The board hints (View.hints) for a back's tooltip; else from the game context. */
-    boardHints?: HintsView;
+    tipContext?: CardTipContext;
     onselect?: (slot: SlotView) => void;
   }
 
@@ -102,7 +99,7 @@
     hints,
     recap,
     cost,
-    boardHints,
+    tipContext,
     onselect
   }: Props = $props();
 
@@ -127,11 +124,7 @@
   const shownPip = $derived(screen?.boardMarks ? (marked ? denyPip(pip) : pip) : undefined);
   const name = $derived(slot.state === 'faceUp' && slot.card ? cardName(slot.card) : '');
   const back = $derived(slot.back ?? 'age1');
-  const backTooltip = $derived(
-    slot.state === 'faceDown'
-      ? backTip(back, boardHints ?? ctx?.session.view?.hints, screen)
-      : undefined
-  );
+  const backTooltip = $derived(slot.state === 'faceDown' ? backTip(back) : undefined);
   // The badge's Urbanism bonus and Economy flow (the prices family).
   const badgeCost = $derived.by(() => {
     if (!afford || !screen?.families.has('prices') || !slot.costs) return undefined;
@@ -181,7 +174,6 @@
     data-marked={marked ? '' : undefined}
     data-bot-pick={botPick ? '' : undefined}
     aria-label={pip ? joinPhrases([label, pipLabel(pip)]) : label}
-    aria-disabled={takeable ? undefined : 'true'}
     aria-pressed={selected ? 'true' : undefined}
     onclick={() => onselect?.(slot)}
   >
@@ -197,6 +189,7 @@
         flowTo={screen ? screen.names.names[screen.perspective.seat === 0 ? 1 : 0] : ''}
         {priceTip}
         {cost}
+        {tipContext}
       />
     {:else}
       <CardBack {back} tip={backTooltip} class="h-full w-full" />

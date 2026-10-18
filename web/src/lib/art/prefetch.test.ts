@@ -277,7 +277,9 @@ describe('fullPrefetchPlan', () => {
       new URL('../components/game/CardSheet.svelte', import.meta.url),
       'utf8'
     );
-    const widths = [...cardSheet.matchAll(/tier="full" width=\{(\d+)\}/g)].map((m) => Number(m[1]));
+    const widths = [...cardSheet.matchAll(/tier="full"\s+width=\{(\d+)\}/g)].map((m) =>
+      Number(m[1])
+    );
     expect(widths.length).toBeGreaterThan(0);
     for (const w of widths) expect(w).toBe(FULL_CARD_WIDTH);
   });

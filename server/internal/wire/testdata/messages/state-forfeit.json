@@ -1264,6 +1264,272 @@
         }
       ]
     },
+    "cardTooltips": [
+      {
+        "card": "logging-camp",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 15,
+        "accessible": true
+      },
+      {
+        "card": "clay-pit",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 18,
+        "accessible": true
+      },
+      {
+        "card": "glassworks",
+        "costs": [
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 1,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 19,
+        "accessible": true
+      },
+      {
+        "card": "palisade",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 6,
+        "accessible": false
+      },
+      {
+        "card": "pharmacist",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 5,
+        "accessible": false
+      },
+      {
+        "card": "apothecary",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 0,
+        "accessible": false
+      },
+      {
+        "card": "tavern",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 16,
+        "accessible": true
+      },
+      {
+        "card": "clay-reserve",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 7,
+        "accessible": false
+      },
+      {
+        "card": "wood-reserve",
+        "costs": [
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 3,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "city",
+        "seat": 0,
+        "accessible": false
+      },
+      {
+        "card": "theater",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 1,
+        "accessible": false
+      },
+      {
+        "card": "altar",
+        "costs": [
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          },
+          {
+            "total": 0,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": false,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 17,
+        "accessible": true
+      },
+      {
+        "card": "baths",
+        "costs": [
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          },
+          {
+            "total": 2,
+            "affordable": true,
+            "chainFree": false,
+            "needsTrade": true,
+            "shortfall": 0
+          }
+        ],
+        "place": "faceUp",
+        "slot": 8,
+        "accessible": false
+      }
+    ],
     "boardTokens": [
       "economy",
       "masonry",

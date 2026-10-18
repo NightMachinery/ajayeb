@@ -1094,6 +1094,11 @@
       <div class="area-structure relative min-h-0 min-w-0" bind:this={structureEl}>
         <CardStructure
           slots={view.structure}
+          cardTooltips={view.cardTooltips}
+          choices={view.choices}
+          costSeat={view.toMove}
+          {names}
+          you={mode === 'hotseat' ? undefined : view.viewer}
           age={view.age}
           seat={badge}
           toMove={view.toMove}

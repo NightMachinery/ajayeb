@@ -28,8 +28,8 @@
   //
   // Tooltips (M10.tooltip-coverage): every pip of the cost, every effect
   // glyph, the chain chips and the badge carry their own; the colour band
-  // and the category glyph name the category; and a mini card, which prints
-  // no name, names itself (view/tips.ts cardTip). `cost`, the server's
+  // and the category glyph name the category. Every tier has a whole-card
+  // summary on the art, frame and name (view/tips.ts cardTip). `cost`, the server's
   // breakdown for the seat in view, lets the cost pips and the badge say how
   // the payment covers each resource.
   import { artId, hasApprovedArt } from '$lib/art/lookup';
@@ -39,7 +39,7 @@
   import type { CardTier } from '$lib/layout/fit';
   import type { Afford } from '$lib/view/afford';
   import { tooltip } from '$lib/ui/tooltip.svelte';
-  import { cardTip } from '$lib/view/tips';
+  import { cardTip, type CardTipContext } from '$lib/view/tips';
   import type { CostView } from '$lib/wire';
   import AffordBadge from './AffordBadge.svelte';
   import CardArt from './CardArt.svelte';
@@ -67,6 +67,12 @@
     priceTip?: string;
     /** The server's cost breakdown for the seat in view (the tooltips). */
     cost?: CostView;
+    /** Public live quotes and seat labels, already decided by the server/caller. */
+    tipContext?: CardTipContext;
+    /** City owner's display name (plain text). */
+    owner?: string;
+    /** Give a passive standalone card its own keyboard stop. */
+    focusable?: boolean;
     class?: string;
   }
 
@@ -81,10 +87,14 @@
     flowTo = '',
     priceTip,
     cost,
+    tipContext,
+    owner,
+    focusable = false,
     class: className = ''
   }: Props = $props();
 
   const card = $derived(cardBySlug(slug));
+  const tip = $derived({ ...cardTip(slug, { ...tipContext, owner }), avoidAnchor: true });
   const withArt = $derived(hasApprovedArt(artId('card', slug)));
   const name = $derived(card ? cardName(card.slug) : '');
   // The category glyph sits by the name on the full tier, and on the medium
@@ -105,14 +115,19 @@
 
 {#if card}
   {#if tier === 'band'}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive card has one keyboard stop for its summary.) -->
     <span
       class="flex h-6 w-full items-center gap-1 overflow-hidden rounded-[4px] border border-black/25 px-1 text-[12px] text-card-ink
         [--pat:color-mix(in_oklch,var(--card-ink)_18%,transparent)] {className}"
       style:background={bandBackground(card.color)}
       dir="ltr"
       data-tier="band"
-      aria-hidden="true"
-      {@attach tooltip({ text: cardTip(card.slug) })}
+      aria-hidden={focusable ? undefined : 'true'}
+      role={focusable ? 'img' : undefined}
+      aria-label={focusable ? name : undefined}
+      tabindex={focusable ? 0 : undefined}
+      data-tooltip-card={slug}
+      {@attach tooltip(tip)}
     >
       <span class="flex min-w-0 flex-1 justify-start rounded-[3px] bg-(--paper)/90 px-1 py-px">
         <EffectGlyphs effects={card.effects} small class="flex-nowrap! justify-start!" />
@@ -122,6 +137,7 @@
       {/if}
     </span>
   {:else}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (A passive card has one keyboard stop for its summary.) -->
     <span
       class="card-face relative flex h-full w-full flex-col overflow-hidden rounded-[7%/4.5%] bg-card-paper text-card-ink {className}"
       class:full={tier === 'full'}
@@ -131,8 +147,12 @@
       dir="ltr"
       data-tier={tier}
       data-color={card.color}
-      aria-hidden="true"
-      {@attach tooltip(tier === 'mini' ? { text: cardTip(card.slug) } : undefined)}
+      aria-hidden={focusable ? undefined : 'true'}
+      role={focusable ? 'img' : undefined}
+      aria-label={focusable ? name : undefined}
+      tabindex={focusable ? 0 : undefined}
+      data-tooltip-card={slug}
+      {@attach tooltip(tip)}
     >
       <!-- Top 40%: cost row, then the effect band. -->
       <span class="cost flex items-center {tier === 'full' ? 'px-[4%]' : 'px-[2.5%]'}">
