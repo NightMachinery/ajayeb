@@ -77,9 +77,10 @@ help: ## List the targets and the variables they read (the default target)
 	  'VERSION=...' 'version stamped into the release build (default: git describe)'
 	@printf '\nA step that fails with "Error 75" was refused by tools/heavy.py; run python3 tools/heavy.py status.\n'
 
-install: ## Download the Go modules, then pnpm install (--frozen-lockfile once pnpm-lock.yaml exists)
+install: ## Download the Go modules, pnpm install (--frozen-lockfile once pnpm-lock.yaml exists) and Playwright's Chromium
 	$(HEAVY) run --kind install -- go -C server mod download
 	$(HEAVY) run --kind install -- pnpm install $(PNPM_FROZEN)
+	$(HEAVY) run --kind install -- pnpm -C e2e exec playwright install chromium --no-shell
 
 install-offline: ## Install from the local caches only, for worktrees (GOPROXY=off, pnpm --offline)
 	GOPROXY=off $(HEAVY) run --kind install -- go -C server mod download

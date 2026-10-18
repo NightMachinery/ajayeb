@@ -1,6 +1,6 @@
 # tools/chrome: headless Chrome over the DevTools protocol
 
-Small, dependency-free Node 24 scripts (built-in `WebSocket` and `fetch`) for screenshots, layout probes and SVG contact sheets. They start their own headless Google Chrome with a throwaway profile and close it when they finish. They never touch an everyday browser profile. The Playwright e2e suite in `e2e/` is separate; use these scripts when a whole test run would be more than you need.
+Small, dependency-free Node 24 scripts (built-in `WebSocket` and `fetch`) for screenshots, layout probes and SVG contact sheets. They start their own headless Chromium, the one Playwright installs (Chrome for Testing, set up by `make install`), with a throwaway profile and close it when they finish. They never start the installed Google Chrome or touch an everyday browser profile (D26). `CHROME_BIN` points them at another Chromium. The Playwright e2e suite in `e2e/` is separate; use these scripts when a whole test run would be more than you need.
 
 Run every launching command inside the guard's browser lock, which keeps the machine to one Chrome at a time:
 

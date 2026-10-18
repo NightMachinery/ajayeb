@@ -4,9 +4,11 @@
 // `python3 tools/heavy.py run --kind browser -- pnpm -C e2e exec playwright test`.
 // The guard's browser lock keeps it to one Chrome on the machine.
 //
-// Locally the tests use the installed Google Chrome (channel 'chrome', no
-// browser download). On CI (CI=true) they use Playwright's bundled Chromium,
-// installed by `playwright install --with-deps chromium`.
+// Locally and on CI the tests use Playwright's own Chromium (channel
+// 'chromium': Chrome for Testing in Chrome's new headless mode), installed by
+// `make install` locally and `playwright install --with-deps chromium` on
+// CI. Never the installed Google Chrome: that is the owner's everyday
+// browser, and a headless run of its app still registers as it (D26).
 //
 // Paths are relative to this file's directory, which is also the webServer's
 // working directory. Runner diagnostics go under ../.cache/e2e/; the opt-in
@@ -95,7 +97,7 @@ export default defineConfig({
   ],
   use: {
     baseURL: ORIGIN,
-    channel: CI ? undefined : 'chrome',
+    channel: 'chromium',
     headless: true,
     // A click that cannot land (a covered control) fails here, with its
     // call log, instead of waiting out the whole test.

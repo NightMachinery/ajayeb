@@ -128,8 +128,8 @@ jobs:
       - name: Install Chromium
         run: pnpm -C e2e exec playwright install --with-deps chromium
       - name: Playwright
-        # CI=true makes playwright.config.ts use the bundled Chromium instead
-        # of the system Chrome, and turns on retries and forbidOnly.
+        # CI=true turns on retries and forbidOnly in playwright.config.ts; the
+        # browser is Playwright's Chromium, as it is locally (D26).
         env:
           CI: 'true'
         # The @perf case runs in e2e-perf below, which reports without gating.

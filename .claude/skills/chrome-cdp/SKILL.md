@@ -5,7 +5,7 @@ description: Screenshot, probe and inspect Ajayeb pages, and render SVG contact 
 
 # chrome-cdp: our own headless Chrome, driven over CDP
 
-`tools/chrome/` holds dependency-free Node 24 scripts that talk the Chrome DevTools Protocol (CDP) over Node's built-in WebSocket. They launch **their own** headless Google Chrome with a throwaway profile and kill it when they finish. `tools/chrome/README.md` has every flag; this file is the know-how.
+`tools/chrome/` holds dependency-free Node 24 scripts that talk the Chrome DevTools Protocol (CDP) over Node's built-in WebSocket. They launch **their own** headless Chromium, Playwright's Chrome for Testing (installed by `make install`), with a throwaway profile and kill it when they finish. They never start the installed Google Chrome (D26). `tools/chrome/README.md` has every flag; this file is the know-how.
 
 ## Rules
 

@@ -55,7 +55,7 @@ All entries below were accepted on 2026-10-01 unless they say otherwise.
 
 ## D06. Browser testing: Playwright with the system Chrome, plus dependency-free CDP tools
 
-**Decision.** End-to-end playthroughs use `@playwright/test` with the installed Google Chrome (`channel: 'chrome'`, headless); CI uses Playwright's bundled Chromium. Screenshots, probes, screenshot matrices and SVG renders use small dependency-free Node scripts in `tools/chrome/` that launch their own headless Chrome with a throwaway profile over the DevTools protocol. Only one Chrome runs at a time, and it is closed after every run.
+**Decision.** End-to-end playthroughs use `@playwright/test` with the installed Google Chrome (`channel: 'chrome'`, headless); CI uses Playwright's bundled Chromium. (Superseded in part by D26: both now use Playwright's Chromium.) Screenshots, probes, screenshot matrices and SVG renders use small dependency-free Node scripts in `tools/chrome/` that launch their own headless Chrome with a throwaway profile over the DevTools protocol. Only one Chrome runs at a time, and it is closed after every run.
 
 **Rationale.** Playwright is the reliable way to get isolated browser contexts (two online players in one browser), automatic waiting and WebSocket frame capture. Using the installed Chrome avoids a browser download. The CDP scripts cover the cases where Playwright is more than we need, at a fraction of the memory.
 
@@ -233,3 +233,13 @@ This supersedes the "budget 5 MB" line in the M9 section of `docs/dev/roadmap.md
 **Tradeoff.** A new or shorter script needs a new name, a seed search (the harness runs with `AJAYEB_TUTORIAL_SEARCH=1`) and a new golden file. The lesson order follows what one seed can play: the chain lesson comes before science and the tokens lesson moved to the outro, because the design's order fits no seed's coin budget.
 
 **Rejected.** The Easy bot's own moves on the fixed seed (any change to the AI would silently change the tutorial). Rails enforced by the server (more code for no gain in a single-player room). Soft guidance with every move enabled (a beginner gets lost, and the "fresh agent completes it" acceptance test becomes unreliable).
+
+## D26. Agents' browsers are Playwright's Chromium, never the installed Chrome
+
+**Decision (2026-10-18).** The e2e suite (locally and on CI) and the `tools/chrome` scripts run Playwright's own Chromium, Chrome for Testing (`channel: 'chromium'` in `e2e/playwright.config.ts`; `chromium.executablePath()` from the e2e package in `tools/chrome/launch.mjs`), in Chrome's new headless mode. `make install` downloads it with `playwright install chromium --no-shell`. This replaces D06's use of the installed Google Chrome.
+
+**Rationale.** The owner saw their everyday Chrome being launched. No agent had opened its profile, but every headless run started `/Applications/Google Chrome.app`, so macOS registered each run as the Google Chrome app (bundle id `com.google.Chrome`) and it shared that app's crash-report folder. Chrome for Testing is a separate app (`com.google.chrome.for.testing`), so the owner's browser is never involved. Local runs now use the same browser family as CI.
+
+**Tradeoff.** A download of about 150 MB per Playwright version, and the browser is not byte-identical to the Chrome the owner uses, so screenshots can differ slightly from it.
+
+**Rejected.** chrome-headless-shell, the old headless mode (it renders less like real Chrome, and `tools/chrome` would need Playwright's internal registry to find it). Keeping the installed Chrome with more flags (it is the same app, so nothing can hide it).

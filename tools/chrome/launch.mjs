@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// Launches our own headless Google Chrome for the CDP tools, or attaches to
-// one that is already running. Never touches the owner's everyday browser.
+// Launches our own headless Chromium for the CDP tools, or attaches to one
+// that is already running. Never touches the owner's everyday browser: the
+// binary is Playwright's Chromium (Chrome for Testing, its own app with its
+// own bundle id), not the installed Google Chrome (D26).
 //
 // Library:
 //   import { launch } from './launch.mjs';
@@ -27,11 +29,12 @@
 //   it attaches instead, and close() never kills that browser.
 //
 // Env: CHROME_PORT (default 38959; 0 lets Chrome pick a free port),
-// CHROME_BIN (the Chrome executable; needed on Linux if it is not on PATH as
-// google-chrome or chromium), CHROME_CDP (attach mode).
+// CHROME_BIN (another Chromium executable to use instead of Playwright's),
+// CHROME_CDP (attach mode).
 
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -40,8 +43,8 @@ import { parseArgs } from 'node:util';
 import { getJSON, sleep } from './cdp.mjs';
 
 export const DEFAULT_PORT = 38959;
-const MAC_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const PATH_NAMES = ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'];
+// The e2e package's Playwright knows where its Chromium is installed.
+const E2E_PACKAGE = fileURLToPath(new URL('../../e2e/package.json', import.meta.url));
 
 /** Thrown when a launch is refused because the guard's browser lock is not held. */
 export class LaunchRefused extends Error {}
@@ -91,14 +94,16 @@ export function findChrome() {
       throw new Error(`chrome: CHROME_BIN=${fromEnv} is not an executable`);
     return fromEnv;
   }
-  if (process.platform === 'darwin' && isExecutable(MAC_CHROME)) return MAC_CHROME;
-  for (const name of PATH_NAMES) {
-    for (const dir of (process.env.PATH ?? '').split(path.delimiter)) {
-      if (dir && isExecutable(path.join(dir, name))) return path.join(dir, name);
-    }
+  let bin = null;
+  try {
+    bin = createRequire(E2E_PACKAGE)('@playwright/test').chromium.executablePath();
+  } catch {
+    // No e2e dependencies installed yet: fall through to the hint below.
   }
+  if (bin && isExecutable(bin)) return bin;
   throw new Error(
-    'chrome: Google Chrome not found. Install it, or set CHROME_BIN to its executable.'
+    "chrome: Playwright's Chromium is not installed. Run `make install` (it runs " +
+      '`playwright install chromium --no-shell`), or set CHROME_BIN to a Chromium executable.'
   );
 }
 

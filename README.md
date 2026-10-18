@@ -23,7 +23,7 @@ Every mode is a room on the server. The browser shows the room and sends moves; 
 
 ## Quick start
 
-You need Go 1.26, Node 24 (see `.nvmrc`), pnpm 10, Python 3 and GNU Make. The end-to-end tests also need Google Chrome.
+You need Go 1.26, Node 24 (see `.nvmrc`), pnpm 10, Python 3 and GNU Make. `make install` also downloads Playwright's Chromium for the end-to-end tests and the screenshot tools.
 
 ```sh
 make install       # download the Go modules, then install the web and e2e dependencies

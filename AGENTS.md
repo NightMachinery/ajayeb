@@ -39,7 +39,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 **Browsers.**
 
 - At most **one headless Chrome** runs on the machine at a time. The guard's `browser` lock enforces this for Playwright and for `tools/chrome/*`.
-- Playwright uses the installed Chrome (`channel: 'chrome'`, headless). The `tools/chrome` scripts launch their own headless Chrome with a throwaway profile and kill it on exit. The `chrome-cdp` skill (`.claude/skills/chrome-cdp/SKILL.md`) explains how to use them for screenshots, layout probes and SVG contact sheets.
+- Playwright uses its own Chromium (`channel: 'chromium'`, Chrome for Testing, headless), installed by `make install`, locally and on CI. The `tools/chrome` scripts launch the same Chromium, headless, with a throwaway profile and kill it on exit. Nothing launches the installed Google Chrome: it is the owner's everyday browser, and even a headless run of its app registers as it (D26). The `chrome-cdp` skill (`.claude/skills/chrome-cdp/SKILL.md`) explains how to use them for screenshots, layout probes and SVG contact sheets.
 - Every browser is closed at the end of its run. Check with `/bin/ps -axo pid=,command= | grep -F -e ajayeb-chrome -e playwright_chromiumdev_profile | grep -v grep`, which prints nothing when no browser of ours is left. Do not use `pgrep -f` for this: it also matches the shell whose command line holds the pattern, and a `--headless` pattern matches other projects' browsers.
 - **Never automate the owner's Brave browser.** It shares the owner's profile and storage, steals focus and cannot emulate viewports. At most, open a URL in it for the owner to look at.
 
