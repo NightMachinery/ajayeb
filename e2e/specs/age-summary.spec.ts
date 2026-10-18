@@ -297,6 +297,12 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
       .toBe(over.version + 1);
     await expect(home).toBeFocused();
     await expect(page.locator('dialog[open]')).not.toHaveAttribute('data-unexpected-close', 'true');
+    // Native close can keep focus inside its closing detail body for a
+    // frame. It must return quietly once the result leaves the top layer.
+    await page.keyboard.press('Escape');
+    await expect(page.locator('dialog[open]')).toHaveCount(0);
+    await expect(page.locator('[data-control="menu"]').filter({ visible: true })).toBeFocused();
+    await expect(page.locator('[data-tooltip-open]')).toHaveCount(0);
     expect(problems).toEqual([]);
   });
 
@@ -585,6 +591,7 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
       await expect(page.locator('[data-act="starter:0"]')).toBeVisible();
       await page.keyboard.press('Escape');
       await expectNoAge(page);
+      await expect(page.locator('[data-control="menu"]').filter({ visible: true })).toBeFocused();
       await expect(page.locator('[data-tooltip-open]')).toHaveCount(0);
       await page.locator('[data-choice-host="chooseStarter"] [data-peek-bar] button').click();
       await expect(page.locator(AGE)).toBeVisible();

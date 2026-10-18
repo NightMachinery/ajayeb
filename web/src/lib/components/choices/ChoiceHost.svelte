@@ -178,7 +178,13 @@
     } else ageMinimized = !open;
     if (!open) {
       requestAnimationFrame(() => {
-        if (!document.querySelector('dialog:modal') && document.activeElement === document.body) {
+        // Native close may retain focus inside the closed dialog until
+        // its exit completes. That element is no longer a usable opener.
+        const focused = document.activeElement;
+        if (
+          !document.querySelector('dialog:modal') &&
+          (focused === document.body || focused?.closest('dialog:not([open])'))
+        ) {
           const menu = document.querySelector<HTMLButtonElement>(
             '.game-screen [data-control="menu"]'
           );

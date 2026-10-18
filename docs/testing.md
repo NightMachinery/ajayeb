@@ -1333,7 +1333,11 @@ releases the handoff. Its summary includes both the final card and starter choic
 from the existing opponent run. Opening and dismissal are scoped to each holder;
 returning the device does not reopen a summary that holder explicitly closed. Automatic handoffs do not reopen an older opponent run after undo. The cases also cover undo into the starter
 choice, Escape and backdrop dismissal, replacement-button focus, quiet focus
-return and room leave. The existing driver acknowledges completed recaps when advancing to the next playable turn or finished result; it never dismisses a pending starter choice.
+return and room leave. Native close can temporarily retain focus inside the
+closed dialog before dropping it to the page body. Age and result callbacks
+recognize that closed-dialog focus too, preserving a live opener and quietly
+falling back to the game menu otherwise. Explicit Escape assertions cover both
+the outstanding starter choice and the result dialog. The existing driver acknowledges completed recaps when advancing to the next playable turn or finished result; it never dismisses a pending starter choice.
 
 The footer cases cover 360x740, 390x844, 740x360 and 1280x800, both themes and
 English/Persian, for starter choice, completed age and civilian game over.
