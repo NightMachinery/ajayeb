@@ -131,8 +131,12 @@
   });
 
   // DOM-only: watch the page for modals opening and closing and for the
-  // target being redrawn, at most once a frame.
+  // target being redrawn, at most once a frame, while a step is due. With
+  // none (every game outside the tutorial) nothing watches: an observer of
+  // the whole page would see every move's DOM update and every animation.
+  const watching = $derived(due !== null);
   $effect(() => {
+    if (!watching) return;
     let frame = 0;
     const check = (): void => {
       frame = 0;
