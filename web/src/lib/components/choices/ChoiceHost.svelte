@@ -1,17 +1,9 @@
 <script lang="ts">
-  // The host for every pending choice a card, wonder or age end opens:
-  // destroying an opponent's card, building from the discard pile, taking a
-  // progress token from the board or the Great Library offer, and choosing
-  // who starts the next age (with the end-of-age summary).
-  //
-  // For the player who decides, the panel is a sheet (a centred dialog for
-  // the starter choice) that can be minimized to peek at the board; a small
-  // bar then brings it back. Everyone else gets a one-line bar saying what
-  // is being chosen, and for the starter choice the end-of-age summary with
-  // a waiting note. Once a new age has started from a choice this client
-  // watched someone else make (the bot or the online opponent), a small bar
-  // says who starts, with the summary one tap away, until it is dismissed
-  // or the first card is taken.
+  // Pending choices and the completed-age dialog. The parent retains the
+  // boundary snapshot independently of the starter choice, so every viewer
+  // keeps the same totals until explicitly closing it. The final opponent
+  // summary precedes the first opening. A starter decision starts the deal;
+  // an already-open summary stays stable while it finishes behind the modal.
   //
   // It decides nothing: the options are the view's choices, every action
   // button carries the choice's own key in data-act, and whether input is
@@ -22,10 +14,13 @@
   // Its bars sit in the flow, just above the turn bar (GameScreen mounts it
   // there), never floating over the board: they push the structure up a
   // little rather than cover the takeable cards or this player's own strip.
+  import { restoreFocus } from '$lib/ui/dismiss';
+  import type { Attachment } from 'svelte/attachments';
   import ChevronDown from '@lucide/svelte/icons/chevron-down';
   import { t } from '$lib/i18n';
   import type { CardTipContext } from '$lib/view/tips';
   import { settings } from '$lib/ui/settings.svelte';
+  import type { AgeSummary } from '$lib/ui/age-summary.svelte';
   import type { Choice, GameEvent, PendingKind, View } from '$lib/wire';
   import { needsConfirm } from '../game/card-actions';
   import Sheet from '../shell/Sheet.svelte';
@@ -39,6 +34,10 @@
 
   interface Props {
     view: View;
+    ageSummary?: AgeSummary;
+    /** Existing holder seat in pass-device hot-seat; otherwise shared device. */
+    ageViewer?: number | null;
+    showAge?: boolean;
     /** Whether this client may act now (presenter idle and session.canAct). */
     canAct: boolean;
     /** Sends one of the view's choice keys. */
@@ -56,6 +55,9 @@
 
   let {
     view,
+    ageSummary,
+    ageViewer = null,
+    showAge = true,
     canAct,
     onact,
     names: namesProp,
@@ -137,68 +139,70 @@
     minimizedFor = open ? null : pendingId;
   }
 
-  // The age that just ended: the view has already moved on to the next age
-  // when its starter is chosen.
-  const endedAge = $derived(Math.max(1, view.age - 1));
+  // Gallery callers without a session may still render a pending summary.
+  let ageMinimized = $state(false);
+  const completed = $derived(
+    ageSummary
+      ? ageSummary.viewFor(ageViewer)
+      : pending?.kind === 'chooseStarter' || events.some((event) => event.kind === 'starterChosen')
+        ? view
+        : null
+  );
+  const ageReady = $derived(!!completed && view.age >= completed.age && view.ply >= completed.ply);
+  const ageOpen = $derived(
+    ageReady &&
+      (ageSummary?.isShown(ageViewer) || showAge) &&
+      !(ageSummary?.isDismissed(ageViewer) ?? ageMinimized)
+  );
+  const choosingStarter = $derived(
+    pending?.kind === 'chooseStarter' && completed?.age === view.age
+  );
+  const startingSeat = $derived(asSeat(ageSummary?.starterFor(ageViewer) ?? view.active));
+  const startsText = $derived(
+    you === startingSeat
+      ? t('choices.age.startsYou', { age: view.age })
+      : t('choices.age.starts', { name: names[startingSeat], age: view.age })
+  );
 
-  // dismissedAge is the age whose start summary this client has closed, or
-  // whose starter it chose itself (so it does not see the summary twice).
-  let dismissedAge = $state(0);
-  let summaryOpen = $state(false);
+  function setAgeOpen(open: boolean): void {
+    if (ageSummary) {
+      if (open) ageSummary.reopen(ageViewer);
+      else {
+        const previous = ageSummary.viewFor(ageViewer);
+        ageSummary.close(ageViewer);
+        // Continue can reveal the next queued recap in the same dialog.
+        // With no intervening popup and visible/idle presentation, it is
+        // already on screen; keep it stable through later incoming frames.
+        if (previous !== ageSummary.viewFor(ageViewer) && showAge) ageSummary.markShown(ageViewer);
+      }
+    } else ageMinimized = !open;
+    if (!open) {
+      requestAnimationFrame(() => {
+        if (!document.querySelector('dialog:modal') && document.activeElement === document.body) {
+          const menu = document.querySelector<HTMLButtonElement>(
+            '.game-screen [data-control="menu"]'
+          );
+          if (menu) restoreFocus(menu);
+        }
+      });
+    }
+  }
+
+  // Replacing the chosen starter button must leave keyboard focus inside
+  // the same dialog, on its explicit way forward.
+  function continueFocus(choosing: boolean): Attachment<HTMLButtonElement> {
+    return (button) => {
+      if (choosing) return;
+      const frame = requestAnimationFrame(() => {
+        const dialog = button.closest('dialog');
+        if (dialog?.open && !dialog.contains(document.activeElement)) restoreFocus(button);
+      });
+      return () => cancelAnimationFrame(frame);
+    };
+  }
 
   function act(key: string): void {
-    if (pending?.kind === 'chooseStarter') dismissedAge = view.age;
     onact(key);
-  }
-
-  // Whether the action that produced this view was the other player (the
-  // bot, or the online opponent) choosing who starts. In a hot-seat room
-  // there is no "you": whoever chose sat at this device.
-  const starterChosenElsewhere = $derived(
-    you !== undefined && events.some((e) => e.kind === 'starterChosen' && e.seat !== you)
-  );
-
-  // The age whose starter this client saw chosen elsewhere, kept across the
-  // frames that may follow before the first card (a bot's thinking frame, a
-  // resync). A plain variable, not state: the frame that sets it already
-  // shows the bar through starterChosenElsewhere, and later frames re-read it.
-  // A waiting starter panel counts too, for a frame whose events were lost.
-  let watchedStarterAge = 0;
-  $effect(() => {
-    if (starterChosenElsewhere || (pending?.kind === 'chooseStarter' && !mine)) {
-      watchedStarterAge = view.age;
-    }
-  });
-
-  // A new age whose first card is not taken yet, after a starter chosen
-  // elsewhere: a small bar says who starts, with the summary one tap away.
-  const freshAge = $derived(
-    !pending &&
-      view.phase === 'play' &&
-      view.structure.length > 0 &&
-      view.structure.every((slot) => slot.state !== 'empty') &&
-      (starterChosenElsewhere || watchedStarterAge === view.age) &&
-      dismissedAge !== view.age
-  );
-
-  const startsText = $derived(
-    you === view.active
-      ? t('choices.age.startsYou', { age: view.age })
-      : t('choices.age.starts', { name: names[asSeat(view.active)], age: view.age })
-  );
-
-  function beginAge(): void {
-    dismissedAge = view.age;
-    summaryOpen = false;
-  }
-
-  // The who-starts bar has done its job once the player turns to the board:
-  // the first tap on the structure closes it, so on a short phone it gives
-  // the height it took back to the strips.
-  function onBoardTap(event: PointerEvent): void {
-    if (!freshAge) return;
-    const target = event.target;
-    if (target instanceof Element && target.closest('.card-structure')) beginAge();
   }
 
   function title(kind: PendingKind): string {
@@ -238,8 +242,6 @@
   const titleId = 'choice-panel-title';
 </script>
 
-<svelte:window onpointerdown={onBoardTap} />
-
 {#snippet peekButton()}
   <button
     type="button"
@@ -253,47 +255,109 @@
   </button>
 {/snippet}
 
-{#if pending && decider !== null}
-  <div data-choice-host={pending.kind} data-decider={decider} data-mine={mine}>
-    {#if pending.kind === 'chooseStarter'}
-      <!-- The end of an age: the summary for everyone, with the choice or a
-           waiting note, and always Peek as a way on. -->
-      <Sheet bind:open={() => sheetOpen, setOpen} centered {titleId}>
-        <div class="flex flex-col gap-2 px-5 pt-4 pb-1">
-          <AgeInterstitial
-            age={endedAge}
-            {names}
-            players={view.players}
-            scores={view.scorePreview}
-            military={view.military}
-            {you}
-            {titleId}
-          >
+{#if ageReady && completed && (choosingStarter || !(ageSummary?.isDismissed(ageViewer) ?? ageMinimized))}
+  <div
+    onfocusin={() => ageSummary?.markShown(ageViewer)}
+    data-age-start={!choosingStarter ? completed.age : undefined}
+    data-choice-host={choosingStarter ? 'chooseStarter' : undefined}
+    data-decider={choosingStarter ? decider : undefined}
+    data-mine={choosingStarter ? mine : undefined}
+  >
+    <Sheet
+      bind:open={
+        () => ageOpen,
+        (open) => {
+          if (ageOpen || open) setAgeOpen(open);
+        }
+      }
+      centered
+      titleId="age-start-title"
+    >
+      {#snippet footer()}
+        <div class="flex flex-col gap-1">
+          {#if choosingStarter && decider !== null && mine}
             <StarterChoice
+              part="actions"
               age={view.age}
               chooser={decider}
               {names}
               {you}
-              military={view.military}
-              showDiagram={view.military.position === 0}
+              military={completed.military}
               choices={options}
               {canAct}
               {confirm}
               {connected}
               onact={act}
             />
-          </AgeInterstitial>
-          <div class="flex justify-center">{@render peekButton()}</div>
+          {/if}
+          <button
+            type="button"
+            class="inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accent px-3 py-2 text-sm font-semibold text-on-accent hover:brightness-105 active:brightness-95"
+            data-begin-age={!choosingStarter &&
+            view.phase !== 'gameOver' &&
+            completed.age === view.age
+              ? view.age
+              : undefined}
+            data-age-continue
+            {@attach continueFocus(choosingStarter)}
+            onclick={() => setAgeOpen(false)}
+          >
+            {choosingStarter && mine
+              ? t('choices.peek')
+              : choosingStarter || view.phase === 'gameOver' || completed.age < view.age
+                ? t('choices.age.continue')
+                : t('choices.age.begin', { age: view.age })}
+          </button>
         </div>
-      </Sheet>
-      {#if !sheetOpen}
-        <PeekBar
-          inline
-          text={mine ? title(pending.kind) : waitingText(pending.kind, decider)}
-          onopen={() => setOpen(true)}
-        />
-      {/if}
-    {:else if mine}
+      {/snippet}
+      <div class="flex flex-col gap-3 px-5 pt-4 pb-4">
+        <AgeInterstitial
+          age={Math.max(1, completed.age - 1)}
+          {names}
+          players={completed.players}
+          scores={completed.scorePreview}
+          military={completed.military}
+          hintView={completed}
+          {you}
+          titleId="age-start-title"
+        >
+          {#if choosingStarter && decider !== null}
+            <StarterChoice
+              part="details"
+              age={view.age}
+              chooser={decider}
+              {names}
+              {you}
+              military={completed.military}
+              showDiagram={completed.military.position === 0}
+              choices={options}
+              {canAct}
+              {confirm}
+              {connected}
+              onact={act}
+            />
+          {:else if view.phase !== 'gameOver' && completed.age === view.age}
+            <p class="text-center text-sm font-semibold text-fg" role="status">{startsText}</p>
+          {/if}
+        </AgeInterstitial>
+      </div>
+    </Sheet>
+    {#if !ageOpen && showAge && (choosingStarter || !ageSummary?.isDismissed(ageViewer))}
+      <PeekBar
+        inline
+        text={choosingStarter && decider !== null
+          ? mine
+            ? title('chooseStarter')
+            : waitingText('chooseStarter', decider)
+          : startsText}
+        openLabel={t('choices.age.summaryOpen')}
+        onopen={() => setAgeOpen(true)}
+      />
+    {/if}
+  </div>
+{:else if pending && decider !== null}
+  <div data-choice-host={pending.kind} data-decider={decider} data-mine={mine}>
+    {#if mine}
       <Sheet bind:open={() => sheetOpen, setOpen} {titleId}>
         <div class="flex flex-col gap-3 px-4 pt-1">
           <header class="flex items-start justify-between gap-2">
@@ -342,41 +406,5 @@
     {:else}
       <PeekBar inline text={waitingText(pending.kind, decider)} />
     {/if}
-  </div>
-{:else if freshAge}
-  <div data-age-start={view.age}>
-    <PeekBar
-      inline
-      text={startsText}
-      openLabel={t('choices.age.summaryOpen')}
-      onopen={() => (summaryOpen = true)}
-      ondismiss={beginAge}
-    />
-    <Sheet bind:open={summaryOpen} centered titleId="age-start-title">
-      <div class="flex flex-col gap-3 px-5 pt-4 pb-1">
-        <AgeInterstitial
-          age={endedAge}
-          {names}
-          players={view.players}
-          scores={view.scorePreview}
-          military={view.military}
-          {you}
-          titleId="age-start-title"
-        >
-          <div class="flex flex-col gap-3">
-            <p class="text-center text-sm font-semibold text-fg">{startsText}</p>
-            <button
-              type="button"
-              class="inline-flex h-[48px] w-full items-center justify-center rounded-control bg-accent px-5 text-[15px]
-                font-semibold text-on-accent hover:brightness-105 active:brightness-95"
-              onclick={beginAge}
-              data-begin-age={view.age}
-            >
-              {t('choices.age.begin', { age: view.age })}
-            </button>
-          </div>
-        </AgeInterstitial>
-      </div>
-    </Sheet>
   </div>
 {/if}

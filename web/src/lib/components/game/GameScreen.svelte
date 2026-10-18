@@ -91,7 +91,13 @@
   import { settings } from '$lib/ui/settings.svelte';
   import { GameUi, type Acked, type Seat } from '$lib/ui/ui.svelte';
   import { badgeSeat } from '$lib/view/afford';
-  import { lastPly, latestSummary, summaryTrigger, summaryViewer } from '$lib/view/move-summary';
+  import {
+    lastPly,
+    latestSummary,
+    summarizeSince,
+    summaryTrigger,
+    summaryViewer
+  } from '$lib/view/move-summary';
   import { hintHide } from '$lib/hints/local.svelte';
   import { visibleFamilies } from '$lib/hints/families';
   import {
@@ -113,6 +119,7 @@
   import MilitaryTrack from '../board/MilitaryTrack.svelte';
   import CardStructure from '../board/CardStructure.svelte';
   import ChoiceHost from '../choices/ChoiceHost.svelte';
+  import { AgeSummary } from '$lib/ui/age-summary.svelte';
   import ConnectionPill from '../hud/ConnectionPill.svelte';
   import SpectatorCount from '../hud/SpectatorCount.svelte';
   import TopBar from '../hud/TopBar.svelte';
@@ -175,6 +182,7 @@
   const ui = new GameUi();
   const toasts = new Toasts();
   const seenMoves = new SeenMoves();
+  const ageSummary = new AgeSummary();
   let pageVisible = $state(
     typeof document === 'undefined' || document.visibilityState !== 'hidden'
   );
@@ -453,7 +461,7 @@
   // During the Presenter's pre-roll: what the bot's answer takes.
   const pick = $derived(botPick(view, presenter.preview, frame?.thinking));
 
-  const showPass = $derived(
+  const passRequested = $derived(
     !!view &&
       passPending({
         mode,
@@ -465,12 +473,46 @@
   );
   const lastLines = $derived(frame ? eventLines(frame.events, names) : []);
 
+  const ageViewer = $derived(mode === 'hotseat' && passDevice ? ui.holder : null);
+  const ageBoundary = $derived(ageSummary.viewFor(ageViewer));
+  const ageUnread = $derived(
+    !!ageBoundary && !!view && view.age >= ageBoundary.age && !ageSummary.isDismissed(ageViewer)
+  );
+  // Choosing the other starter must not unmount this holder's open age
+  // summary. Their explicit close releases the requested handoff.
+  const showPass = $derived(passRequested && !(ageSummary.isShown(ageViewer) && ageUnread));
+  // A chooser may take the final card and choose a starter before handing
+  // the device on. Give the next holder that whole existing opponent run
+  // before their unread age dialog, rather than only starterChosen.
+  const passLines = $derived.by(() => {
+    const next = view?.toMove;
+    const boundary = next === undefined ? null : ageSummary.viewFor(next);
+    if (
+      !showPass ||
+      next === undefined ||
+      !boundary ||
+      !view ||
+      view.age < boundary.age ||
+      ageSummary.isDismissed(next)
+    )
+      return lastLines;
+    const run = summarizeSince(shownHistory, next === 1 ? 1 : 0);
+    return run
+      ? eventLines(
+          shownHistory
+            .filter((entry) => run.plies.includes(entry.ply))
+            .flatMap((entry) => entry.events),
+          names
+        )
+      : lastLines;
+  });
   const summarySeat = $derived(view ? summaryViewer(mode, mySeats, view.toMove) : null);
   const moveSummary = $derived(
     summarySeat === null ? null : latestSummary(shownHistory, summarySeat)
   );
   const summaryOpen = $derived(
     pageVisible &&
+      !(ageSummary.isShown(ageViewer) && ageUnread) &&
       !!moveSummary &&
       (summaryManual ||
         (summaryAuto !== null &&
@@ -651,6 +693,7 @@
   // The Session's frames, in order: the log, undo bookkeeping, the hot-seat
   // device holder and the skipped-choice toast. Runs outside any effect.
   function onFrame(f: State): void {
+    ageSummary.record(f);
     if (f.code !== roomCode) {
       roomCode = f.code;
       lastFrame = null;
@@ -1168,6 +1211,8 @@
         <div class="contents" dir={i18n.dir}>
           <GameOver
             {view}
+            show={!summaryOpen && !ageUnread}
+            ready={pageVisible && presenter.idle}
             replayCode={frame?.code}
             {names}
             onrematch={rematchOffer ? () => session.rematch() : undefined}
@@ -1177,8 +1222,18 @@
           />
         </div>
       {/if}
-      {#if view && view.phase !== 'wonderDraft' && view.phase !== 'gameOver' && !showPass}
-        <ChoiceHost {view} canAct={inputOpen} onact={act} {names} {confirm} {connected} />
+      {#if view && view.phase !== 'wonderDraft' && (view.phase !== 'gameOver' || ageUnread) && !showPass}
+        <ChoiceHost
+          {view}
+          {ageSummary}
+          {ageViewer}
+          showAge={pageVisible && presenter.idle && !summaryOpen}
+          canAct={inputOpen}
+          onact={act}
+          {names}
+          {confirm}
+          {connected}
+        />
       {/if}
       {#if ui.pickFor}
         <div
@@ -1305,7 +1360,7 @@
     <PassDevice
       nextName={names[next]}
       nextSeat={next}
-      summary={lastLines}
+      summary={passLines}
       {canUndo}
       previousName={ui.holder !== null ? names[ui.holder] : undefined}
       onReady={() => ui.ready(view?.toMove)}

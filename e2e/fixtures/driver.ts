@@ -390,7 +390,18 @@ export class GameDriver {
     for (;;) {
       await this.waitTurn();
       const snap = await this.snapshot();
-      if (!snap.pass) return snap;
+      if (!snap.pass) {
+        // The completed age stays open until a player explicitly continues.
+        // Never dismiss the still-pending starter choice.
+        const begin = this.page.locator('[data-age-start] dialog[open] [data-age-continue]');
+        if (await begin.count()) {
+          await begin.click();
+          // Continuing may release a hot-seat handoff and the other
+          // holder's own unread summary. Advance those explicitly too.
+          continue;
+        }
+        return snap;
+      }
       await this.passDevice();
     }
   }

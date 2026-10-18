@@ -19,6 +19,7 @@
   // the viewer's own move ended the game, their review of it shows under
   // the score sheet (when the opponent's move ended it, that move's summary
   // carries the review instead).
+  import { restoreFocus } from '$lib/ui/dismiss';
   import Download from '@lucide/svelte/icons/download';
   import { downloadReplay } from '$lib/session/replay';
   import House from '@lucide/svelte/icons/house';
@@ -43,6 +44,10 @@
 
   interface Props {
     view: View;
+    /** Wait behind unread age and final move summaries. */
+    show?: boolean;
+    /** Wait for initial presentation, then keep focus stable across frames. */
+    ready?: boolean;
     /** The room whose finished, revealed log may be downloaded. */
     replayCode?: string;
     /** Asks the server for a rematch; absent when the room cannot offer one. */
@@ -63,6 +68,8 @@
 
   let {
     view,
+    show = true,
+    ready = true,
     replayCode,
     onrematch,
     rematchLabel,
@@ -89,6 +96,21 @@
   );
 
   let collapsed = $state(false);
+  let shown = $state(false);
+
+  function setOpen(open: boolean): void {
+    if (!show) return;
+    collapsed = !open;
+    if (!open)
+      requestAnimationFrame(() => {
+        if (!document.querySelector('dialog:modal') && document.activeElement === document.body) {
+          const menu = document.querySelector<HTMLButtonElement>(
+            '.game-screen [data-control="menu"]'
+          );
+          if (menu) restoreFocus(menu);
+        }
+      });
+  }
 
   const headline = $derived.by(() => {
     if (!outcome || outcome.kind === 'shared' || winner === null) return t('choices.over.bothWin');
@@ -144,16 +166,60 @@
 
 <div
   data-game-over
+  onfocusin={() => (shown = true)}
   data-winner={view.result?.winner}
   data-victory={outcome?.kind}
   data-collapsed={collapsed}
 >
   <Sheet
-    bind:open={() => !collapsed, (open) => (collapsed = !open)}
+    bind:open={() => show && !collapsed && (ready || shown), setOpen}
     centered
     {titleId}
     class="game-over"
   >
+    {#snippet footer()}
+      <div class="grid gap-2 {replayCode && view.revealed ? 'grid-cols-3' : 'grid-cols-2'}">
+        {#if onrematch}
+          <Button variant="primary" class="col-span-full" onclick={onrematch} data-rematch>
+            <RotateCw class="size-4" aria-hidden="true" />
+            {rematchLabel ?? t('choices.over.rematch')}
+          </Button>
+        {/if}
+        {#if replayCode && view.revealed}
+          <Button
+            variant="secondary"
+            class="h-auto! min-h-12 min-w-0 flex-col gap-0.5! px-1! py-1 text-xs! leading-tight"
+            onclick={() => replayCode && downloadReplay(replayCode)}
+            data-download-replay
+          >
+            <Download class="size-4" aria-hidden="true" />
+            {t('game.menu.replay')}
+          </Button>
+        {:else if replayCode}
+          <p class="col-span-full text-center text-sm text-fg-muted" data-replay-hidden>
+            {t('game.menu.replayHidden')}
+          </p>
+        {/if}
+        <Button
+          variant="secondary"
+          class="h-auto! min-h-12 min-w-0 flex-col gap-0.5! px-1! py-1 text-xs! leading-tight"
+          onclick={() => (collapsed = true)}
+          data-view-board
+        >
+          <Eye class="size-4 shrink-0" aria-hidden="true" />
+          {t('choices.over.viewBoard')}
+        </Button>
+        <Button
+          variant="secondary"
+          class="h-auto! min-h-12 min-w-0 flex-col gap-0.5! px-1! py-1 text-xs! leading-tight"
+          onclick={onhome}
+          data-home
+        >
+          <House class="size-4 shrink-0" aria-hidden="true" />
+          {t('choices.over.home')}
+        </Button>
+      </div>
+    {/snippet}
     <div class="flex flex-col gap-3 px-5 pt-4 pb-1">
       <header
         class={[
@@ -220,52 +286,11 @@
         </p>
       {/if}
 
-      <div class="grid grid-cols-2 gap-2 pb-2">
-        {#if onrematch}
-          {#if rematchNote}
-            <p class="col-span-2 text-center text-sm font-semibold text-fg" role="status">
-              {rematchNote}
-            </p>
-          {/if}
-          <Button variant="primary" class="col-span-2" onclick={onrematch} data-rematch>
-            <RotateCw class="size-4" aria-hidden="true" />
-            {rematchLabel ?? t('choices.over.rematch')}
-          </Button>
-        {/if}
-        {#if replayCode && view.revealed}
-          <Button
-            variant="secondary"
-            class="col-span-2"
-            onclick={() => replayCode && downloadReplay(replayCode)}
-            data-download-replay
-          >
-            <Download class="size-4" aria-hidden="true" />
-            {t('game.menu.replay')}
-          </Button>
-        {:else if replayCode}
-          <p class="col-span-2 text-center text-sm text-fg-muted" data-replay-hidden>
-            {t('game.menu.replayHidden')}
-          </p>
-        {/if}
-        <Button
-          variant="secondary"
-          class="px-1! text-[13px]! whitespace-nowrap sm:px-2! sm:text-[14px]!"
-          onclick={() => (collapsed = true)}
-          data-view-board
-        >
-          <Eye class="hidden size-4 shrink-0 sm:block" aria-hidden="true" />
-          {t('choices.over.viewBoard')}
-        </Button>
-        <Button
-          variant="secondary"
-          class="px-1! text-[13px]! whitespace-nowrap sm:px-2! sm:text-[14px]!"
-          onclick={onhome}
-          data-home
-        >
-          <House class="hidden size-4 shrink-0 sm:block" aria-hidden="true" />
-          {t('choices.over.home')}
-        </Button>
-      </div>
+      {#if rematchNote}
+        <p class="text-center text-sm font-semibold text-fg" role="status">
+          {rematchNote}
+        </p>
+      {/if}
     </div>
   </Sheet>
 

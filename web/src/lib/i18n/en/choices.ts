@@ -78,6 +78,7 @@ export const choices = {
   'choices.age.militaryEven': 'The military track is even.',
   'choices.age.starts': '{name} starts Age {age}.',
   'choices.age.startsYou': 'You start Age {age}.',
+  'choices.age.continue': 'Continue',
   'choices.age.begin': 'Begin Age {age}',
   'choices.age.summaryOpen': 'Summary',
 

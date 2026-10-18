@@ -109,6 +109,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const milestones: Record<string, unknown> = {};
       /** Moves the spectator watched arrive (each with no choices of its own). */
       let spectatorMoves = 0;
+      let spectatorAge: string[] | null = null;
 
       const others = (mover: GameDriver) =>
         [driverA, driverB, spectator?.driver].filter(
@@ -243,6 +244,14 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           // The spectator's view moved on with no choices of its own.
           expect(await hook(spectator.page, () => window.__ajayeb?.choices().length)).toBe(0);
           spectatorMoves += 1;
+          const view = await hook(spectator.page, () => window.__ajayeb?.view());
+          if (view && view.age >= 2) {
+            const age = spectator.page.locator('dialog[open] [data-age-interstitial]');
+            await expect(age).toHaveAttribute('data-age-interstitial', '1');
+            const totals = await age.locator('[data-seat-summary] dd').allTextContents();
+            if (spectatorAge === null) spectatorAge = totals;
+            else expect(totals).toEqual(spectatorAge);
+          }
         }
       }
 
@@ -279,6 +288,19 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
         [spectator.page, null]
       ];
       for (const [page, seat] of views) {
+        // Reading retained age summaries is an explicit local action,
+        // including for a spectator who never takes a turn.
+        const readAges: number[] = [];
+        const age = page.locator('dialog[open] [data-age-interstitial]');
+        while (await age.count()) {
+          const ended = Number(await age.getAttribute('data-age-interstitial'));
+          readAges.push(ended);
+          await page.locator('dialog[open] [data-age-continue]').click();
+          await expect(page.locator(`dialog[open] [data-age-interstitial="${ended}"]`)).toHaveCount(
+            0
+          );
+        }
+        if (seat === null) expect(readAges).toEqual([1, 2].slice(0, end.age - 1));
         const over = page.locator('[data-game-over]');
         await expect(over).toHaveAttribute(
           'data-victory',

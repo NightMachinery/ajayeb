@@ -1301,3 +1301,49 @@ handler tests keep prerendered Home separate from the generic shell, preserve
 legacy builds and retain missing-asset 404 behavior. Use the unchanged UX budget
 test for timing evidence: it reports measurements without asserting its limits,
 so inspect the three LCP samples, their median and the script-byte breakdown.
+
+
+## Completed ages and result actions
+
+`age-summary.spec.ts` runs on desktop and mobile. Real bot games with Animation
+normal and off prove that an opponent's starter decision cannot close the
+completed-age summary or replace its server-supplied totals. Two real online
+browsers cover closing before and after the opponent chooses, an opponent's
+first card, presence-only updates, reconnect/resync, and final move summary
+before game-over scores. Hidden boundaries and results wait for wake and the
+unseen opponent summary; a dialog already open stays open when hidden. Reconnect
+cases drop only the real server WebSocket while relaying its unchanged messages,
+so intentional disconnects do not interrupt unrelated idle art requests. Recorded-transport cases queue both ended ages, verify Continue-only older recaps, expose current starter controls only after their matching recap is reached, and keep each recap stable through result/presence frames. A focused transition also checks that
+game over leaves an unread age open with Continue and cannot stack its result
+dialog above it. The summary is retained across ordinary snapshots,
+not reconstructed from a historical score after a full page reload.
+
+The full online playthrough leaves the spectator's first recap unread while
+later ages advance, checks its frozen totals, then explicitly reads every
+reached age before the result. Recorded cases always reach both boundaries.
+Complete hot-seat/AI/online playthroughs exercise the driver's continuation
+loop, including a handoff released by Continue. The AI undo checks that the
+visible turn state is restored exactly, including an existing wonder replay.
+
+Hot-seat cases run with passing enabled and disabled. With passing enabled,
+opponent summaries are on: the pass screen shows the last move before the
+next holder's age dialog, without a duplicate popup. The chooser's original
+dialog stays mounted when choosing the other starter, until explicit continuation
+releases the handoff. Its summary includes both the final card and starter choice
+from the existing opponent run. Opening and dismissal are scoped to each holder;
+returning the device does not reopen a summary that holder explicitly closed. Automatic handoffs do not reopen an older opponent run after undo. The cases also cover undo into the starter
+choice, Escape and backdrop dismissal, replacement-button focus, quiet focus
+return and room leave. The existing driver acknowledges completed recaps when advancing to the next playable turn or finished result; it never dismisses a pending starter choice.
+
+The footer cases cover 360x740, 390x844, 740x360 and 1280x800, both themes and
+English/Persian, for starter choice, completed age and civilian game over.
+They require every reserved action to remain hit-testable at a minimum of
+44 by 44 CSS pixels before and after detail scrolling, with a usable separate
+detail body and no horizontal page overflow. The UX matrix's end-age-summary
+screen now captures the summary as it opens automatically.
+
+Unit tests for `ui/age-summary.svelte.ts` cover a burst of frames before
+presentation, frozen totals and starter identity, dismissal across duplicate,
+presence and resync frames, undo within and across the boundary, room isolation,
+an unread age surviving game over and separate hot-seat holders. These checks exercise local
+presentation state; server legality and cost calculation remain unchanged.

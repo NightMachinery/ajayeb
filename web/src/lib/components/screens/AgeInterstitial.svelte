@@ -17,7 +17,7 @@
   import { formatNumber, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { militaryLeader, militaryMargin } from '$lib/view/threats';
-  import type { MilitaryView, Pair, PlayerView, ScoreView } from '$lib/wire';
+  import type { MilitaryView, Pair, PlayerView, ScoreView, View } from '$lib/wire';
 
   interface Props {
     /** The age that just ended (1 or 2). */
@@ -34,6 +34,8 @@
     children?: Snippet;
     /** Hint lines about the ended age; else from the game context. */
     notes?: readonly string[];
+    /** Frozen age-boundary hints, when this summary outlives that frame. */
+    hintView?: View;
   }
 
   let {
@@ -45,13 +47,14 @@
     you,
     titleId = 'age-interstitial-title',
     children,
-    notes
+    notes,
+    hintView
   }: Props = $props();
 
   const ctx = tryGameContext();
   const lines = $derived.by((): readonly string[] => {
     if (notes) return notes;
-    const view = ctx?.session.view;
+    const view = hintView ?? ctx?.session.view;
     const screen = sessionHintScreen(ctx?.session, hintHide.value);
     return view && screen ? deadPairLines(view, age, screen.families, screen.names) : [];
   });

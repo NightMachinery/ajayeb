@@ -304,3 +304,14 @@ Everything else is translated, the `/dev/gallery` and demo strings included.
   خاک رس یا سنگ تولید می‌کند تا هزینه‌ی ساخت‌های بعدی را آسان‌تر بپردازید.»
   (`tutorial.action.buildWonder`). It explains choosing one raw material for
   each turn, following the house terms for production, wood, clay and stone.
+
+
+## Completed-age controls (M11.age-summary-stays)
+
+- Continue is «ادامه» (`choices.age.continue`), the local dismissal of the
+  completed-age summary while another player may still be choosing. It sends
+  no game action. Once the starter has been chosen, the existing Begin Age N
+  wording names the age explicitly in both locales.
+- Result actions retain their existing full Persian labels in the reserved
+  footer. They may wrap within their buttons on a short screen rather than
+  being shortened or moved below the score details.

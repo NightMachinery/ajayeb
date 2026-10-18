@@ -77,6 +77,7 @@ export const choices = {
   'choices.age.militaryEven': 'مسیر نظامی برابر است.',
   'choices.age.starts': '{name} دوران {age} را آغاز می‌کند.',
   'choices.age.startsYou': 'شما دوران {age} را آغاز می‌کنید.',
+  'choices.age.continue': 'ادامه',
   'choices.age.begin': 'آغاز دوران {age}',
   'choices.age.summaryOpen': 'خلاصه',
 

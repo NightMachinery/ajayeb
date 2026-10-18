@@ -299,7 +299,7 @@ test.describe('right to left (Persian)', { tag: ['@mobile'] }, () => {
     });
     await page.goto('/dev/fixture/choose-starter-seat0');
     await expect(page.locator('html')).toHaveAttribute('data-ready', '1');
-    const option = page.locator('[data-starter-choice] [data-act="starter:1"] span');
+    const option = page.locator('[data-choice-host="chooseStarter"] [data-act="starter:1"] span');
     await expectLatinNameFirstInRtl(option, 'Omid');
     const rawName = page
       .locator('[data-age-interstitial] [dir="auto"]')

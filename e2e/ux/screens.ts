@@ -180,7 +180,8 @@ export async function reachScreen(page: Page, origin: string, screen: Screen): P
       return pending(page, 'choose-starter-seat0', 'chooseStarter');
     case 'end-age-summary':
       await fixture(page, 'online-age-start-seat0');
-      await visible(page, '[data-age-start] [data-peek-bar] button').first().click();
+      // A received starter choice now opens the retained summary itself.
+      await expect(visible(page, 'dialog[open] [data-age-interstitial]')).toBeVisible();
       await expect(visible(page, '#age-start-title')).toBeVisible();
       return;
     case 'opponent-summary':

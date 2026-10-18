@@ -332,7 +332,7 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     await expectPanel(page, 'chooseStarter', 1);
     const choice = page.locator(`${host} [data-starter-choice]`);
     await expect(choice).toBeVisible();
-    await expect(choice.locator('[data-act]')).toHaveCount(2);
+    await expect(page.locator(`${host} [data-act]`)).toHaveCount(2);
     await expect(choice).toContainText('Who starts Age 2?');
     await expect(choice).toContainText('Moon is behind on the military track, so Moon chooses.');
 

@@ -171,6 +171,7 @@ export interface CoachSnapshot {
   tip: string | null;
   done: boolean;
   starter: boolean;
+  beginAge: boolean;
   vw: number;
   vh: number;
   hscroll: boolean;
@@ -264,7 +265,10 @@ export function snapshot(page: Page): Promise<CoachSnapshot> {
       summary: !!document.querySelector('[data-move-summary]'),
       tip: document.querySelector('[data-first-tip]')?.getAttribute('data-first-tip') ?? null,
       done: visible(document.querySelector('[data-tutorial-done]')),
-      starter: !!document.querySelector('[data-act="starter:0"]:not(:disabled)'),
+      starter: visible(
+        document.querySelector('dialog[open] [data-act="starter:0"]:not(:disabled)')
+      ),
+      beginAge: visible(document.querySelector('dialog[open] [data-begin-age]')),
       vw: document.documentElement.clientWidth,
       vh: innerHeight,
       hscroll: document.documentElement.scrollWidth > innerWidth
@@ -497,6 +501,10 @@ export async function walkTutorial(
     if (moves > maxMoves) throw new Error(`no completion card after ${moves} moves`);
     if (s.summary) {
       await tapTopBar(page, opts.touch);
+      continue;
+    }
+    if (s.beginAge) {
+      await pressOn(page, 'dialog[open] [data-begin-age]', opts.touch);
       continue;
     }
     if (s.tip) {

@@ -119,6 +119,7 @@ for (const locale of ['en', 'fa'] as const) {
         await page.screenshot({ path: info.outputPath(`starter-${locale}-${viewport.width}.png`) });
         await page.keyboard.press('Escape');
         await playKey(driver, 'starter:0');
+        await page.locator('dialog[open] [data-begin-age]').click();
         await settle(page);
         const row = page.locator('.progress-token-row').filter({ visible: true }).first();
         expect(await row.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');

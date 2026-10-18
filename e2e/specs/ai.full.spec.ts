@@ -136,6 +136,9 @@ test.describe('vs AI', { tag: ['@mobile', '@full'] }, () => {
 
       // The undo: play, let the bot answer, then take both back.
       const before = await structure(page);
+      const turnBar = page.locator('[data-turn]').filter({ visible: true }).first();
+      const beforeTurn = await turnBar.getAttribute('data-turn');
+      expect(['yourTurn', 'playAgain']).toContain(beforeTurn);
       await driver.play(snap);
       const replied = await driver.nextTurn();
       const afterReply = await structure(page);
@@ -155,10 +158,7 @@ test.describe('vs AI', { tag: ['@mobile', '@full'] }, () => {
       expect(keys(back)).toEqual(keys(snap));
       expect(await structure(page)).toEqual(before);
       expect(await page.evaluate(() => window.__ajayeb?.you()?.canAct)).toBe(true);
-      await expect(page.locator('[data-turn]').filter({ visible: true }).first()).toHaveAttribute(
-        'data-turn',
-        'yourTurn'
-      );
+      await expect(turnBar).toHaveAttribute('data-turn', beforeTurn!);
       undo = {
         ply: snap.ply,
         replyPly: replied.ply,
