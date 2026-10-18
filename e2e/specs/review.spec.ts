@@ -153,7 +153,7 @@ test.describe('move review', () => {
       const review = popup.locator('[data-move-review]');
       await expect(review).toBeVisible();
       await expect(review.locator('[data-review-played]')).toHaveText(
-        'Your two moves: you built the wonder Pyramids with Rostrum, then built Statue.'
+        'Your two moves: you built the wonder Pyramids using Rostrum, then built Statue.'
       );
       const view = await currentView(page);
       expect(view.review?.played).toBe('wonder:pyramids:rostrum construct:statue');
