@@ -25,9 +25,9 @@ export interface ReviewNames {
 export interface ReviewLines {
   /** "You discarded Walls." */
   readonly played: string;
-  /** "Building Walls would have won the game.", or the quiet "no better move" line. */
+  /** "Building Walls would have won the game.", or empty when no better move was found. */
   readonly verdict: string;
-  /** Whether a better move was found (the verdict is a lesson, not the quiet line). */
+  /** Whether a better move was found (the verdict is a lesson). */
   readonly better: boolean;
 }
 
@@ -38,41 +38,94 @@ function parseKey(key: string): { kind: string; card?: string; wonder?: string }
   return { kind, card: a };
 }
 
-/** "You built Baths." for the move a review is about. */
-export function playedText(key: string): string {
+/** One step of a multi-action turn, as a clause inside "Your two moves: ...". */
+function stepText(key: string): string {
   const k = parseKey(key);
+  switch (k.kind) {
+    case 'construct':
+      return t('hints.review.played.step.build', { card: cardName(k.card ?? '') });
+    case 'discard':
+      return t('hints.review.played.step.discard', { card: cardName(k.card ?? '') });
+    case 'wonder': {
+      const wonder = wonderName(k.wonder ?? '');
+      return k.card
+        ? t('hints.review.played.step.wonderWith', { wonder, card: cardName(k.card) })
+        : t('hints.review.played.step.wonder', { wonder });
+    }
+    default:
+      return t('hints.review.played.step.other');
+  }
+}
+
+/** "You built Baths." (or "Your two moves: ...") for the move or turn a review is about. */
+export function playedText(key: string): string {
+  const parts = key.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 2) {
+    return t('hints.review.played.twoMoves', {
+      first: stepText(parts[0] ?? ''),
+      second: stepText(parts[1] ?? '')
+    });
+  }
+  if (parts.length > 2) {
+    return t('hints.review.played.manyMoves', {
+      count: parts.length,
+      steps: parts.map(stepText).join(t('hints.review.played.stepSeparator'))
+    });
+  }
+  const k = parseKey(parts[0] ?? key);
   switch (k.kind) {
     case 'construct':
       return t('hints.review.played.build', { card: cardName(k.card ?? '') });
     case 'discard':
       return t('hints.review.played.discard', { card: cardName(k.card ?? '') });
-    case 'wonder':
-      return t('hints.review.played.wonder', { wonder: wonderName(k.wonder ?? '') });
+    case 'wonder': {
+      const wonder = wonderName(k.wonder ?? '');
+      return k.card
+        ? t('hints.review.played.wonderWith', { wonder, card: cardName(k.card) })
+        : t('hints.review.played.wonder', { wonder });
+    }
     default:
       return t('hints.review.played.other');
   }
 }
 
-/** "Building Walls" for the better move, as the subject of a sentence. */
-export function moveText(key: string): string {
+/**
+ * "Building Walls" for the better move, as the subject of a sentence. When
+ * `playedKey` is given, same-wonder/different-card and same-card/different-wonder
+ * comparisons are phrased so the distinction is explicit.
+ */
+export function moveText(key: string, playedKey?: string): string {
   const k = parseKey(key);
+  const p = playedKey ? parseKey(playedKey) : undefined;
   switch (k.kind) {
     case 'construct':
       return t('hints.review.move.build', { card: cardName(k.card ?? '') });
     case 'discard':
       return t('hints.review.move.discard', { card: cardName(k.card ?? '') });
-    case 'wonder':
-      return t('hints.review.move.wonder', { wonder: wonderName(k.wonder ?? '') });
+    case 'wonder': {
+      const wonder = wonderName(k.wonder ?? '');
+      if (!k.card) return t('hints.review.move.wonder', { wonder });
+      const card = cardName(k.card);
+      if (p?.kind === 'wonder' && p.wonder === k.wonder && p.card && p.card !== k.card) {
+        return t('hints.review.move.wonderCardInstead', { wonder, card });
+      }
+      if (
+        p?.kind === 'wonder' &&
+        p.card &&
+        p.card === k.card &&
+        p.wonder &&
+        p.wonder !== k.wonder
+      ) {
+        return t('hints.review.move.otherWonderWithCard', { wonder, card });
+      }
+      return t('hints.review.move.wonderWith', { wonder, card });
+    }
     default:
       return t('hints.review.move.other');
   }
 }
 
-/** The verdict: why the better move was better, or the quiet line. */
-export function verdictText(review: ReviewView, names: ReviewNames): string {
-  if (!review.better) return t('hints.review.none');
-  const move = moveText(review.better);
-  const opp = names.names[names.seat === 0 ? 1 : 0];
+function reasonSentence(review: ReviewView, move: string, opp: string): string {
   switch (review.reason) {
     case 'wins':
       return t('hints.review.wins', { move });
@@ -104,7 +157,37 @@ export function verdictText(review: ReviewView, names: ReviewNames): string {
   }
 }
 
-/** The review's two lines. */
+/** The verdict: why the better move was better, or empty when no better move was found. */
+export function verdictText(review: ReviewView, names: ReviewNames): string {
+  if (!review.better) return '';
+  const playedParts = review.played.trim().split(/\s+/).filter(Boolean);
+  const betterParts = review.better.trim().split(/\s+/).filter(Boolean);
+  let stepIdx = 0;
+  let playedKey = playedParts[0] ?? review.played;
+  let betterKey = betterParts[0] ?? review.better;
+  if (playedParts.length > 1 && betterParts.length > 1) {
+    stepIdx = betterParts.length - 1;
+    for (let i = 0; i < Math.min(playedParts.length, betterParts.length); i++) {
+      if (betterParts[i] !== playedParts[i]) {
+        stepIdx = i;
+        break;
+      }
+    }
+    playedKey = playedParts[stepIdx] ?? playedKey;
+    betterKey = betterParts[stepIdx] ?? betterKey;
+  }
+  const move = moveText(betterKey, playedKey);
+  const opp = names.names[names.seat === 0 ? 1 : 0];
+  const verdict = reasonSentence(review, move, opp);
+  if (playedParts.length > 1) {
+    return stepIdx === 0
+      ? t('hints.review.turn.first', { verdict })
+      : t('hints.review.turn.extra', { verdict });
+  }
+  return verdict;
+}
+
+/** The review's lines. */
 export function reviewLines(review: ReviewView, names: ReviewNames): ReviewLines {
   return {
     played: playedText(review.played),

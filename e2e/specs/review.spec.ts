@@ -122,6 +122,51 @@ test.describe('move review', () => {
     await page.keyboard.press('Escape');
     expect(problems).toEqual([]);
   });
+
+  test(
+    'against the bot: a play-again wonder turn names the tucked card and both moves',
+    { tag: ['@mobile'] },
+    async ({ page }) => {
+      test.setTimeout(90_000);
+      const problems = watchHygiene(page);
+      await summaryOn(page);
+      const params = new URLSearchParams({
+        mode: 'ai',
+        level: 'easy',
+        seat: '0',
+        seed: String(SCENARIO_SEED),
+        scenario: 'theology-chain'
+      });
+      await page.goto(`/dev/new?${params.toString()}`);
+      await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+      const driver = new GameDriver(page);
+      await driver.waitReady();
+
+      // Theology grants an extra turn when Pyramids is built with Rostrum;
+      // the extra turn builds Statue, handing the turn to the bot.
+      await playKey(driver, 'wonder:pyramids:rostrum');
+      await playKey(driver, 'construct:statue');
+
+      await driver.nextTurn();
+      const popup = page.locator(POPUP);
+      await expect(popup).toBeVisible();
+      const review = popup.locator('[data-move-review]');
+      await expect(review).toBeVisible();
+      await expect(review.locator('[data-review-played]')).toHaveText(
+        'Your two moves: you built the wonder Pyramids with Rostrum, then built Statue.'
+      );
+      const view = await currentView(page);
+      expect(view.review?.played).toBe('wonder:pyramids:rostrum construct:statue');
+      if (!view.review?.better) {
+        await expect(review).toHaveAttribute('data-move-review', 'none');
+        await expect(review.locator('[data-review-verdict]')).toHaveCount(0);
+      }
+
+      await page.keyboard.press('Escape');
+      await expect(page.locator(POPUP)).toHaveCount(0);
+      expect(problems).toEqual([]);
+    }
+  );
 });
 
 test.describe('first-time tips', () => {

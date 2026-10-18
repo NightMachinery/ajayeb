@@ -27,6 +27,8 @@ export const screenIds = [
   'choice-starter',
   'end-age-summary',
   'opponent-summary',
+  'review-advice',
+  'review-none',
   'log',
   'game-menu',
   'ending-military',
@@ -200,6 +202,25 @@ export async function reachScreen(page: Page, origin: string, screen: Screen): P
         await expect(page.locator('[data-game-menu]')).toBeVisible();
       }
       return;
+    case 'review-advice':
+    case 'review-none': {
+      const room = await createDevRoom(origin, {
+        mode: 'ai',
+        bot: 'easy',
+        seed: '7',
+        scenario: screen === 'review-advice' ? 'military-supremacy' : 'looting-double',
+        actions: [screen === 'review-advice' ? 'discard:walls' : 'construct:arsenal']
+      });
+      await page.goto(room.path);
+      const driver = new GameDriver(page);
+      await driver.nextTurn();
+      await visible(page, '[data-control="move-summary"]').click();
+      await expect(visible(page, '[data-move-summary]')).toBeVisible();
+      await expect(
+        visible(page, `[data-move-review="${screen === 'review-advice' ? 'better' : 'none'}"]`)
+      ).toBeVisible();
+      return;
+    }
     case 'ending-military':
     case 'ending-science':
     case 'ending-civilian':

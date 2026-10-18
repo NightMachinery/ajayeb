@@ -49,7 +49,13 @@ export function newToken(): string {
 /** POST /api/dev/rooms (needs a server started with --dev --dev-endpoints). */
 export async function createDevRoom(
   origin: string,
-  body: { mode: 'hotseat' | 'ai' | 'online'; seed?: string; scenario?: string; actions?: string[] }
+  body: {
+    mode: 'hotseat' | 'ai' | 'online';
+    bot?: 'easy' | 'normal' | 'hard';
+    seed?: string;
+    scenario?: string;
+    actions?: string[];
+  }
 ): Promise<DevRoom> {
   const res = await fetch(`${origin}/api/dev/rooms`, {
     method: 'POST',

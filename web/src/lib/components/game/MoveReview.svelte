@@ -3,8 +3,9 @@
   // the opponent move summary (MoveSummary's review slot), telling the
   // player, and only them, what they played and whether a clearly better
   // move was there, and why. The server decides both (View.review); the
-  // words come from lib/view/review.ts. A lesson stands out a little; the
-  // quiet "no better move" line stays muted.
+  // words come from lib/view/review.ts. A lesson stands out as an advice
+  // card; when no better move was found, the block collapses to a quiet,
+  // compact line showing only what the player played.
   //
   // A leaf with plain props, so the gallery can render it standalone.
   import Lightbulb from '@lucide/svelte/icons/lightbulb';
@@ -19,26 +20,39 @@
   let { lines }: Props = $props();
 </script>
 
-<section
-  class="flex flex-col gap-1 rounded-control border px-2.5 py-2
-    {lines.better ? 'border-accent bg-accent-soft' : 'border-rule bg-panel-sunken'}"
-  aria-label={t('hints.review.title')}
-  data-move-review={lines.better ? 'better' : 'none'}
->
-  <p
-    class="flex items-center gap-1.5 text-xs font-semibold tracking-wide uppercase
-      {lines.better ? 'text-accent-soft-fg' : 'text-fg-muted'}"
+{#if lines.better}
+  <section
+    class="flex flex-col gap-1 rounded-control border border-accent bg-accent-soft px-2.5 py-2"
+    aria-label={t('hints.review.title')}
+    data-move-review="better"
   >
-    <span class="inline-flex" {@attach tooltip({ text: t('hints.review.tip') })}>
-      <Lightbulb class="size-4 shrink-0" aria-hidden="true" />
+    <p
+      class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-accent-soft-fg uppercase"
+    >
+      <span class="inline-flex" {@attach tooltip({ text: t('hints.review.tip') })}>
+        <Lightbulb class="size-4 shrink-0" aria-hidden="true" />
+      </span>
+      {t('hints.review.title')}
+    </p>
+    <p class="text-sm leading-snug text-fg" data-review-played>{lines.played}</p>
+    {#if lines.verdict}
+      <p class="text-sm leading-snug font-semibold text-fg" data-review-verdict>
+        {lines.verdict}
+      </p>
+    {/if}
+  </section>
+{:else}
+  <section
+    class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 rounded-control border border-rule bg-panel-sunken px-2.5 py-1.5 text-xs leading-snug text-fg-muted"
+    aria-label={t('hints.review.title')}
+    data-move-review="none"
+  >
+    <span
+      class="font-semibold tracking-wide uppercase"
+      {@attach tooltip({ text: t('hints.review.tip') })}
+    >
+      {t('hints.review.title')}
     </span>
-    {t('hints.review.title')}
-  </p>
-  <p class="text-sm leading-snug text-fg" data-review-played>{lines.played}</p>
-  <p
-    class="text-sm leading-snug {lines.better ? 'font-semibold text-fg' : 'text-fg-muted'}"
-    data-review-verdict
-  >
-    {lines.verdict}
-  </p>
-</section>
+    <span class="text-fg" data-review-played>{lines.played}</span>
+  </section>
+{/if}

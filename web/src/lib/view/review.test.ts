@@ -1,9 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { i18n, stripBidiMarks } from '$lib/i18n';
 import type { HistoryEntry, ReviewView } from '$lib/wire';
 import type { MoveSummary } from './move-summary';
 import { moveText, playedText, reviewForSummary, reviewLines, verdictText } from './review';
 
 const names = { names: ['Sun', 'Moon'] as const, seat: 0 as const };
+
+afterEach(async () => {
+  await i18n.set('en');
+});
 
 function review(r: Partial<ReviewView>): ReviewView {
   return { ply: 10, played: 'discard:walls', reason: 'none', gap: 0, ...r };
@@ -27,21 +32,130 @@ function summary(seat: 0 | 1, plies: number[]): MoveSummary {
 }
 
 describe('the review wording', () => {
-  it('says what was played, for each kind of move', () => {
+  it('says what was played, naming the tucked card for wonders', () => {
     expect(playedText('construct:walls')).toBe('You built Walls.');
     expect(playedText('discard:clay-pit')).toBe('You discarded Clay Pit.');
-    expect(playedText('wonder:pyramids:walls')).toBe('You built the wonder Pyramids.');
+    expect(playedText('wonder:pyramids:walls')).toBe('You built the wonder Pyramids with Walls.');
+    expect(playedText('wonder:pyramids')).toBe('You built the wonder Pyramids.');
     expect(playedText('token:law')).toBe('Your last move.');
     expect(moveText('construct:walls')).toBe('Building Walls');
     expect(moveText('discard:walls')).toBe('Discarding Walls');
-    expect(moveText('wonder:pyramids:walls')).toBe('Building Pyramids');
+    expect(moveText('wonder:pyramids:walls')).toBe('Building Pyramids with Walls');
+    expect(moveText('wonder:pyramids')).toBe('Building Pyramids');
   });
 
-  it('is the quiet line when no better move was found', () => {
+  it('disambiguates same-wonder/different-card, same-card/different-wonder, and build/discard comparisons', () => {
+    expect(
+      verdictText(
+        review({
+          played: 'wonder:pyramids:press',
+          better: 'wonder:pyramids:baths',
+          reason: 'points',
+          gap: 5
+        }),
+        names
+      )
+    ).toBe('Building Pyramids with Baths instead looked about 5 points better.');
+
+    expect(
+      verdictText(
+        review({
+          played: 'wonder:pyramids:baths',
+          better: 'wonder:colossus:baths',
+          reason: 'points',
+          gap: 4
+        }),
+        names
+      )
+    ).toBe('Using Baths for Colossus instead looked about 4 points better.');
+
+    expect(
+      verdictText(
+        review({
+          played: 'wonder:pyramids:press',
+          better: 'wonder:colossus:baths',
+          reason: 'points',
+          gap: 4
+        }),
+        names
+      )
+    ).toBe('Building Colossus with Baths looked about 4 points better.');
+
+    expect(
+      verdictText(
+        review({
+          played: 'discard:walls',
+          better: 'construct:walls',
+          reason: 'wins',
+          gap: 30
+        }),
+        names
+      )
+    ).toBe('Building Walls would have won the game.');
+
+    expect(
+      verdictText(
+        review({
+          played: 'construct:baths',
+          better: 'discard:baths',
+          reason: 'points',
+          gap: 3
+        }),
+        names
+      )
+    ).toBe('Discarding Baths looked about 3 points better.');
+  });
+
+  it('describes both moves of a play-again turn and identifies which move the advice is about', () => {
+    expect(playedText('wonder:pyramids:baths construct:lumber-yard')).toBe(
+      'Your two moves: you built the wonder Pyramids with Baths, then built Lumber Yard.'
+    );
+    expect(playedText('wonder:pyramids:baths wonder:colossus:press discard:lumber-yard')).toBe(
+      'Your 3 moves: you built the wonder Pyramids with Baths, then built the wonder Colossus with Press, then discarded Lumber Yard.'
+    );
+
+    expect(
+      verdictText(
+        review({
+          played: 'wonder:appian-way:walls construct:rostrum',
+          better: 'construct:walls',
+          reason: 'wins',
+          gap: 30
+        }),
+        names
+      )
+    ).toBe('First move: Building Walls would have won the game.');
+
+    expect(
+      verdictText(
+        review({
+          played: 'wonder:appian-way:rostrum discard:walls',
+          better: 'wonder:appian-way:rostrum construct:walls',
+          reason: 'wins',
+          gap: 30
+        }),
+        names
+      )
+    ).toBe('Extra turn: Building Walls would have won the game.');
+
+    expect(
+      verdictText(
+        review({
+          played: 'wonder:appian-way:rostrum wonder:pyramids:press',
+          better: 'wonder:appian-way:rostrum wonder:pyramids:baths',
+          reason: 'points',
+          gap: 5
+        }),
+        names
+      )
+    ).toBe('Extra turn: Building Pyramids with Baths instead looked about 5 points better.');
+  });
+
+  it('omits the verdict line when no better move was found', () => {
     const lines = reviewLines(review({ played: 'construct:walls' }), names);
     expect(lines).toEqual({
       played: 'You built Walls.',
-      verdict: 'No clearly better move was found.',
+      verdict: '',
       better: false
     });
   });
@@ -101,6 +215,55 @@ describe('the review wording', () => {
     expect(verdictText(r, { names: ['Sun', 'Moon'], seat: 1 })).toBe(
       'Discarding Walls would have looted 1 coin from Sun.'
     );
+  });
+
+  it('formats wonder, comparison, and play-again phrases in Persian', async () => {
+    await i18n.set('fa');
+    expect(stripBidiMarks(playedText('wonder:pyramids:baths'))).toBe(
+      'شما شگفتی هرم‌های بزرگ را با گرمابه ساختید.'
+    );
+    expect(
+      stripBidiMarks(
+        verdictText(
+          review({
+            played: 'wonder:pyramids:press',
+            better: 'wonder:pyramids:baths',
+            reason: 'points',
+            gap: 5
+          }),
+          names
+        )
+      )
+    ).toBe('ساختن هرم‌های بزرگ با گرمابه به جای آن حدود ۵ امتیاز بهتر به نظر می‌رسید.');
+    expect(
+      stripBidiMarks(
+        verdictText(
+          review({
+            played: 'wonder:pyramids:baths',
+            better: 'wonder:colossus:baths',
+            reason: 'points',
+            gap: 4
+          }),
+          names
+        )
+      )
+    ).toBe('استفاده از گرمابه برای ساختن غول‌پیکر رودس حدود ۴ امتیاز بهتر به نظر می‌رسید.');
+    expect(stripBidiMarks(playedText('wonder:pyramids:baths construct:lumber-yard'))).toBe(
+      'دو حرکت شما: نخست شگفتی هرم‌های بزرگ را با گرمابه ساختید، سپس انبار الوار را ساختید.'
+    );
+    expect(
+      stripBidiMarks(
+        verdictText(
+          review({
+            played: 'wonder:appian-way:rostrum discard:walls',
+            better: 'wonder:appian-way:rostrum construct:walls',
+            reason: 'wins',
+            gap: 30
+          }),
+          names
+        )
+      )
+    ).toBe('در نوبت دوباره: با ساختن بارو بازی را می‌بردید.');
   });
 });
 

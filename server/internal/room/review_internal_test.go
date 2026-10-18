@@ -113,6 +113,82 @@ func TestReviewReasons(t *testing.T) {
 	}
 }
 
+// TestReviewPlayAgainTurn checks that a play-again wonder turn keeps every
+// step of the turn rather than letting the extra action overwrite the wonder,
+// and identifies which step of the turn had a clearly better move.
+func TestReviewPlayAgainTurn(t *testing.T) {
+	wonders := [2][engine.WondersPerPlayer]string{
+		{"appian-way", "pyramids", "great-library", "mausoleum"},
+		{"hanging-gardens", "sphinx", "great-lighthouse", "piraeus"},
+	}
+	coins := 40
+	pawn := 7
+	toMove := engine.Seat(0)
+	sc := &engine.Scenario{
+		Name:     "review-play-again",
+		Age:      2,
+		Wonders:  &wonders,
+		Players:  [2]engine.ScenarioPlayer{{Coins: &coins}},
+		OnlyLeft: []string{"walls", "rostrum", "statue"},
+		Pawn:     &pawn,
+		ToMove:   &toMove,
+	}
+
+	playTurn := func(keys ...string) view.ReviewView {
+		t.Helper()
+		s, err := engine.NewGameFromScenario(3, engine.Options{}, sc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		rs := reviewState{loaded: true}
+		for _, k := range keys {
+			a := mustKey(t, &s, k)
+			rs.recordMove(&s, a)
+			if err := engine.Apply(&s, a, nil); err != nil {
+				t.Fatalf("apply %s: %v", k, err)
+			}
+		}
+		steps := rs.seats[0].steps
+		if len(steps) != len(keys) {
+			t.Fatalf("recorded %d steps, want %d", len(steps), len(keys))
+		}
+		rv, ok := buildTurnReview(context.Background(), steps, 9, reviewRank)
+		if !ok {
+			t.Fatalf("no review of %v", keys)
+		}
+		return rv
+	}
+
+	// First move tucks Walls (which would have won at once) under Appian
+	// Way, then the extra turn builds Rostrum: the review keeps the wonder
+	// in Played and still flags the missed win on the first move.
+	rv := playTurn("wonder:appian-way:walls", "construct:rostrum")
+	if rv.Played != "wonder:appian-way:walls construct:rostrum" {
+		t.Fatalf("played = %q, want both moves", rv.Played)
+	}
+	if rv.Reason != view.ReviewReasonWins || rv.Better == nil || *rv.Better != "construct:walls" {
+		t.Fatalf("missed win on first move of play-again turn: %+v", rv)
+	}
+
+	// First move builds Appian Way with Rostrum, keeping Walls available,
+	// and the extra turn discards Walls instead of winning with it: Better
+	// prefixes the first move so the advice points to the extra turn.
+	rv = playTurn("wonder:appian-way:rostrum", "discard:walls")
+	if rv.Played != "wonder:appian-way:rostrum discard:walls" {
+		t.Fatalf("played = %q, want both moves", rv.Played)
+	}
+	if rv.Reason != view.ReviewReasonWins || rv.Better == nil || *rv.Better != "wonder:appian-way:rostrum construct:walls" {
+		t.Fatalf("missed win on extra turn: %+v", rv)
+	}
+
+	// First move builds Appian Way with Rostrum and the extra turn builds
+	// Walls to win the game: no better move.
+	rv = playTurn("wonder:appian-way:rostrum", "construct:walls")
+	if rv.Played != "wonder:appian-way:rostrum construct:walls" || rv.Better != nil || rv.Reason != view.ReviewReasonNone {
+		t.Fatalf("winning play-again turn: %+v", rv)
+	}
+}
+
 // TestReviewDeterministic checks that the same position and move give the
 // same review, and that a review is a pure function of the seed: a second
 // room built the same way says the same.
