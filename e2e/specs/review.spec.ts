@@ -7,6 +7,9 @@
 //   won the game.
 // - Hot-seat (the advisor is off by default): the same weak move gets no
 //   review, in the view or on the screen.
+// - The advisor's strength: the game's admin picks Deep in the game menu's
+//   Hints sheet (two-stage is the default); the room keeps it, this device
+//   remembers it, and the review of the next weak move is a deep one.
 // - First-time tips: at the science-pair scenario the Library's pair pip
 //   is on the board; its tip shows once, "Got it" closes it, and after a
 //   reload it does not show again.
@@ -21,6 +24,22 @@ import { watchHygiene } from '../fixtures/hygiene';
 import { currentView, openHotseatRoom, playKey, SCENARIO_SEED } from '../fixtures/scenario';
 
 const POPUP = '[data-dismiss-layer] [data-move-summary]';
+
+/** Opens a bot game at the military-supremacy scenario, where building Walls wins at once. */
+async function openBotGame(page: Page): Promise<GameDriver> {
+  const params = new URLSearchParams({
+    mode: 'ai',
+    level: 'easy',
+    seat: '0',
+    seed: String(SCENARIO_SEED),
+    scenario: 'military-supremacy'
+  });
+  await page.goto(`/dev/new?${params.toString()}`);
+  await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+  const driver = new GameDriver(page);
+  await driver.waitReady();
+  return driver;
+}
 
 /** Turns the opponent move summary popup back on for every page load. */
 async function summaryOn(page: Page): Promise<void> {
@@ -164,6 +183,69 @@ test.describe('move review', () => {
 
       await page.keyboard.press('Escape');
       await expect(page.locator(POPUP)).toHaveCount(0);
+      expect(problems).toEqual([]);
+    }
+  );
+});
+
+test.describe('advisor strength', () => {
+  test(
+    'the admin picks Deep in the Hints sheet, and the next review is a deep one',
+    { tag: ['@mobile'] },
+    async ({ page }) => {
+      test.setTimeout(90_000);
+      const problems = watchHygiene(page);
+      await summaryOn(page);
+      const driver = await openBotGame(page);
+      const room = await page.evaluate(() => window.__ajayeb?.room() ?? null);
+      expect(room?.hints.advisorStrength, 'two-stage is the default').toBe('twoStage');
+
+      await driver.dismissToasts();
+      await driver.visible('[data-control="menu"]').click();
+      await driver.visible('[data-control="menu-hints"]').click();
+      const sheet = page.locator('dialog[open]').filter({ has: page.locator('[data-game-hints]') });
+      await expect(sheet).toBeVisible();
+      const picker = sheet.locator('[data-hint-family="advisor"] [data-advisor-strength]');
+      await expect(picker).toHaveAttribute('data-advisor-strength', 'twoStage');
+      await expect(picker.locator('[data-strength="twoStage"]')).toHaveAttribute('data-on', '');
+      await picker.locator('[data-strength="deep"]').click();
+      await page.waitForFunction(() => window.__ajayeb?.room()?.hints.advisorStrength === 'deep');
+      await expect(picker).toHaveAttribute('data-advisor-strength', 'deep');
+      await expect(picker.locator('[data-strength-hint]')).toHaveText(
+        'A deeper search looks for the better move itself. Slowest, and most thorough.'
+      );
+      // This device starts its next game from it.
+      const saved = await page.evaluate(() => localStorage.getItem('ajayeb:hints'));
+      expect(JSON.parse(saved ?? 'null')).toMatchObject({ hints: { advisorStrength: 'deep' } });
+      await expect(async () => {
+        if ((await sheet.count()) > 0) await page.keyboard.press('Escape');
+        await expect(sheet).toHaveCount(0, { timeout: 1_500 });
+      }).toPass({ timeout: 8_000 });
+
+      // Walls wins at once; the player discards it instead. The deep
+      // review comes after the move, and fills in the summary of the
+      // bot's reply.
+      await playKey(driver, 'discard:walls');
+      await driver.nextTurn();
+      const popup = page.locator(POPUP);
+      await expect(popup).toBeVisible();
+      const review = popup.locator('[data-move-review]');
+      await expect(review).toHaveAttribute('data-move-review', 'better');
+      await expect(review.locator('[data-review-verdict]')).toHaveText(
+        'Building Walls would have won the game.'
+      );
+      const view = await currentView(page);
+      expect(view.review?.strength).toBe('deep');
+      expect(view.review?.better).toBe('construct:walls');
+      await page.keyboard.press('Escape');
+      await expect(popup).toHaveCount(0);
+
+      // The room keeps it.
+      await page.reload();
+      await driver.waitReady();
+      expect(await page.evaluate(() => window.__ajayeb?.room()?.hints.advisorStrength)).toBe(
+        'deep'
+      );
       expect(problems).toEqual([]);
     }
   );
