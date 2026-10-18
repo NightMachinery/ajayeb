@@ -164,7 +164,9 @@
         )}
       >
         <span class="min-[26rem]:hidden">
-          <span aria-hidden="true" data-must-fit>{t('cards.left.compact', { count: cardsLeft })}</span>
+          <span aria-hidden="true" data-must-fit
+            >{t('cards.left.compact', { count: cardsLeft })}</span
+          >
           <span class="sr-only">{t('cards.left', { count: cardsLeft })}</span>
         </span>
         <span class="max-[25.99rem]:hidden" data-must-fit>
