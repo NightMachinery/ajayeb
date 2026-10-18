@@ -149,6 +149,12 @@ test.describe('the tutorial', { tag: '@mobile' }, () => {
     });
     const room = (await res.json()) as { code: string; path: string };
     await page.goto(room.path);
+    // The age-start sheet comes first. No tip opens over a modal dialog,
+    // where its dismissal would swallow the player's first tap in it.
+    const begin = page.locator('[data-age-start] dialog[open] [data-age-continue]');
+    await expect(begin).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-first-tip]')).toHaveCount(0);
+    await begin.click();
     await expect(page.locator('[data-first-tip="newAge"]')).toBeVisible({ timeout: 15_000 });
   });
 
