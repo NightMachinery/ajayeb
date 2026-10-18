@@ -1944,7 +1944,7 @@ class ArgonReviewTests(GuardCase):
         self.assertFalse(os.path.exists(path))
 
 
-AGENT = "6cf5fbab-bd04-46da-a560-84e3a910a07d"
+AGENT = "00000000-0000-4000-8000-000000000001"  # placeholder Paseo agent id
 
 FAKE_PASEO = r"""#!/usr/bin/env python3
 import json, os, sys
