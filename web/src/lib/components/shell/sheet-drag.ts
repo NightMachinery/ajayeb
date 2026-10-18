@@ -60,7 +60,11 @@ export function attachSheetDrag(
     if (!dragging) {
       if (dy <= -DRAG_START_PX) tracking = false; // an upward scroll
       if (dy < DRAG_START_PX) return;
-      if (!fromHandle && panel.scrollTop > 0) {
+      const body =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>('[data-sheet-body]')
+          : null;
+      if (!fromHandle && (body ?? panel).scrollTop > 0) {
         tracking = false; // the panel scrolls back up first
         return;
       }

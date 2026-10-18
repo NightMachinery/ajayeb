@@ -97,7 +97,7 @@
 </script>
 
 <ul
-  class="resource-chips flex flex-wrap {compact ? 'gap-1' : 'gap-1.5'} {className}"
+  class="resource-chips flex flex-wrap {compact ? 'gap-1.5' : 'gap-2'} {className}"
   aria-label={t('board.citySheet.resources')}
 >
   {#each RESOURCES as resource (resource)}
@@ -141,7 +141,8 @@
       {/if}
       {#if hasChoice(resource)}
         <span
-          class="absolute -end-1 -top-1 grid size-3 place-items-center rounded-full bg-gild text-[8px] text-on-accent"
+          data-resource-choice
+          class="absolute -end-0.5 -top-1 grid size-3 place-items-center rounded-full bg-gild text-[8px] text-on-accent"
           {@attach tooltip({ text: t('board.resource.choiceHint') })}
           aria-hidden="true"
         >

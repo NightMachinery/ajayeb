@@ -16,7 +16,7 @@
   // it were uncovered now (SlotView.costs): the sheet says what each player
   // would pay, with the server's totals only.
   //
-  // Hints (M10.HS2): under the actions, the card's hint sections ("For you",
+  // Hints (M10.HS2): in the scrolling details, the card's sections ("For you",
   // then the opponent's, outlined), and muted notes beside the actions: what
   // discarding it keeps from the opponent and whether a Mausoleum could
   // rebuild it, what building or tucking a deny target does, and a short
@@ -35,8 +35,8 @@
   // the panel carry it alone (owner Q3, A).
   //
   // The tutorial (M10.tutorial-client): a coach step that belongs to this
-  // sheet (`coach`, from the game screen) shows as a note right above the
-  // actions, or above the wonder step's list; the game screen's coach layer
+  // sheet (`coach`, from the game screen) shows as a note in the details
+  // above the action area, or above the wonder step's list; the game screen's coach layer
   // rings its target. The rails (`allow`, lib/tutorial/gate.ts): a move
   // button whose key the guided turn does not ask for is disabled, its
   // action group carries data-tutorial-locked, and `lockedReason` says why,
@@ -268,7 +268,124 @@
   {/if}
 {/snippet}
 
-<Sheet bind:open={() => open, (v) => !v && onclose()} {titleId}>
+{#snippet footer()}
+  {#if takeable && slug && actions && step === 'card'}
+    {#if pickFor && pickChoice}
+      <div
+        class="flex flex-col gap-1"
+        data-act-group
+        data-wonder-pick-action={pickFor}
+        data-tutorial-locked={allow(pickChoice.key) ? undefined : ''}
+      >
+        <ActionButton
+          key={pickChoice.key}
+          label={t('game.action.buildWonder', {
+            wonder: wonderName(pickFor),
+            count: pickChoice.cost?.total ?? 0
+          })}
+          {confirm}
+          {connected}
+          disabled={!canAct || !allow(pickChoice.key)}
+          {onact}
+        />
+        {@render locked(pickChoice.key)}
+        <OutcomeLine
+          terms={termsOf(pickChoice)}
+          actKey={pickChoice.key}
+          blunder={blunderOf(pickChoice)}
+        />
+      </div>
+    {:else if myTurn && !spectator}
+      <div
+        class="flex flex-col gap-2 short:grid short:grid-cols-3 short:items-start"
+        data-card-actions
+      >
+        {#if actions.build}
+          <div
+            class="flex flex-col gap-1"
+            data-act-group
+            data-tutorial-locked={allow(actions.build.key) ? undefined : ''}
+          >
+            <ActionButton
+              key={actions.build.key}
+              label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
+              {confirm}
+              {connected}
+              disabled={!canAct || !allow(actions.build.key)}
+              {onact}
+            />
+            <OutcomeLine
+              terms={termsOf(actions.build)}
+              actKey={actions.build.key}
+              blunder={blunderOf(actions.build)}
+            />
+          </div>
+        {:else if actions.buildBlocked}
+          <Button variant="primary" full disabled>
+            {t('game.action.build', { count: actions.buildBlocked.cost?.total ?? 0 })}
+          </Button>
+        {/if}
+        <div class="grid grid-cols-2 items-start gap-2 short:contents">
+          {#if actions.discard}
+            <div
+              class="flex flex-col gap-1"
+              data-act-group
+              data-tutorial-locked={allow(actions.discard.key) ? undefined : ''}
+              {@attach tooltip({
+                text: t('game.action.discard', { count: actions.discard.gain ?? 0 }),
+                rulesId: 'turn',
+                diagram: discardDiagram,
+                actionable: canAct && connected && allow(actions.discard.key)
+              })}
+            >
+              <ActionButton
+                key={actions.discard.key}
+                label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}
+                variant="secondary"
+                {confirm}
+                {connected}
+                disabled={!canAct || !allow(actions.discard.key)}
+                {onact}
+              />
+              <OutcomeLine
+                terms={termsOf(actions.discard)}
+                actKey={actions.discard.key}
+                blunder={blunderOf(actions.discard)}
+              />
+            </div>
+          {/if}
+          {#if actions.wonders.length > 0}
+            <Button
+              variant="secondary"
+              full
+              class="h-auto! min-h-12 py-2 leading-tight"
+              data-control="wonder-step"
+              onclick={onwonders}
+            >
+              {t('game.action.wonder')}
+            </Button>
+          {/if}
+        </div>
+      </div>
+    {/if}
+  {/if}
+{/snippet}
+
+<Sheet
+  bind:open={() => open, (v) => !v && onclose()}
+  {titleId}
+  panelData={{
+    'data-card-sheet':
+      slot && slot.state !== 'empty' && step !== 'wonders' ? (slug ?? 'face-down') : undefined
+  }}
+  footer={takeable &&
+  slug &&
+  actions &&
+  step === 'card' &&
+  ((pickFor && pickChoice) || (myTurn && !spectator))
+    ? footer
+    : undefined}
+>
   {#if slot && slot.state !== 'empty'}
     {#if step === 'wonders' && slug && actions}
       <WonderStep
@@ -287,10 +404,7 @@
         {lockedReason}
       />
     {:else}
-      <div
-        class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4"
-        data-card-sheet={slug ?? 'face-down'}
-      >
+      <div class="flex flex-col gap-3 px-4 pt-1 pb-2 split:pt-4">
         <div class="flex gap-3">
           <div class="h-[216px] w-[140px] shrink-0">
             {#if slug}
@@ -391,29 +505,6 @@
               {#if pickChoice.cost}
                 <CostBreakdown cost={pickChoice.cost} {coins} />
               {/if}
-              <div
-                class="flex flex-col gap-1"
-                data-act-group
-                data-tutorial-locked={allow(pickChoice.key) ? undefined : ''}
-              >
-                <ActionButton
-                  key={pickChoice.key}
-                  label={t('game.action.buildWonder', {
-                    wonder: wonderName(pickFor),
-                    count: pickChoice.cost?.total ?? 0
-                  })}
-                  {confirm}
-                  {connected}
-                  disabled={!canAct || !allow(pickChoice.key)}
-                  {onact}
-                />
-                {@render locked(pickChoice.key)}
-                <OutcomeLine
-                  terms={termsOf(pickChoice)}
-                  actKey={pickChoice.key}
-                  blunder={blunderOf(pickChoice)}
-                />
-              </div>
             </section>
           {:else}
             {#if pickFor}
@@ -455,44 +546,20 @@
             {:else}
               <div class="flex flex-col gap-2">
                 {#if actions.build}
-                  <div
-                    class="flex flex-col gap-1"
-                    data-act-group
-                    data-tutorial-locked={allow(actions.build.key) ? undefined : ''}
-                  >
-                    <ActionButton
-                      key={actions.build.key}
-                      label={t('game.action.build', { count: actions.build.cost?.total ?? 0 })}
-                      {confirm}
-                      {connected}
-                      disabled={!canAct || !allow(actions.build.key)}
-                      {onact}
+                  {#if pawnGhost}
+                    <MilitaryTrack
+                      military={view.military}
+                      ghost={pawnGhost}
+                      leftSeat={screen?.names.you ?? sheetSeat}
+                      viewerSeat={screen?.names.you ?? undefined}
+                      compact
+                      class="mt-0.5"
                     />
-                    <OutcomeLine
-                      terms={termsOf(actions.build)}
-                      actKey={actions.build.key}
-                      blunder={blunderOf(actions.build)}
-                    />
-                    {#if pawnGhost}
-                      <MilitaryTrack
-                        military={view.military}
-                        ghost={pawnGhost}
-                        leftSeat={screen?.names.you ?? sheetSeat}
-                        viewerSeat={screen?.names.you ?? undefined}
-                        compact
-                        class="mt-0.5"
-                      />
-                    {/if}
-                  </div>
+                  {/if}
                   {#if deny.build}
-                    <p class="text-xs text-fg-muted" data-hint-note="deny-build">
-                      {deny.build}
-                    </p>
+                    <p class="text-xs text-fg-muted" data-hint-note="deny-build">{deny.build}</p>
                   {/if}
                 {:else if actions.buildBlocked}
-                  <Button variant="primary" full disabled>
-                    {t('game.action.build', { count: actions.buildBlocked.cost?.total ?? 0 })}
-                  </Button>
                   <p class="text-sm text-fg-muted" data-reason={actions.buildBlocked.reason}>
                     {reasonText(actions.buildBlocked.reason, actions.buildBlocked.cost)}
                     {#if shortNote}
@@ -505,48 +572,6 @@
                     </p>
                   {/if}
                 {/if}
-                <div class="grid grid-cols-2 items-start gap-2">
-                  {#if actions.discard}
-                    <div
-                      class="flex flex-col gap-1"
-                      data-act-group
-                      data-tutorial-locked={allow(actions.discard.key) ? undefined : ''}
-                      {@attach tooltip({
-                        text: t('game.action.discard', { count: actions.discard.gain ?? 0 }),
-                        rulesId: 'turn',
-                        diagram: discardDiagram,
-                        // This anchor wraps ActionButton, outside the ancestor lookup.
-                        actionable: canAct && connected && allow(actions.discard.key)
-                      })}
-                    >
-                      <ActionButton
-                        key={actions.discard.key}
-                        label={t('game.action.discard', { count: actions.discard.gain ?? 0 })}
-                        variant="secondary"
-                        {confirm}
-                        {connected}
-                        disabled={!canAct || !allow(actions.discard.key)}
-                        {onact}
-                      />
-                      <OutcomeLine
-                        terms={termsOf(actions.discard)}
-                        actKey={actions.discard.key}
-                        blunder={blunderOf(actions.discard)}
-                      />
-                    </div>
-                  {/if}
-                  {#if actions.wonders.length > 0}
-                    <Button
-                      variant="secondary"
-                      full
-                      class="h-auto! min-h-12 py-2 leading-tight"
-                      data-control="wonder-step"
-                      onclick={onwonders}
-                    >
-                      {t('game.action.wonder')}
-                    </Button>
-                  {/if}
-                </div>
                 {#if notes.length > 0 && actions.discard}
                   <ul class="flex flex-col gap-0.5" data-hint-notes="discard">
                     {#each notes as note (note.id)}

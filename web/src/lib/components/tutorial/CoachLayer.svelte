@@ -86,16 +86,25 @@
     if (el !== anchorEl) anchorEl = el;
     if (el && !revealed.has(el)) {
       revealed.set(el, performance.now());
-      revealInScroller(el);
+      reveal(el);
     }
   }
 
-  /** A load just after the first scroll: scroll the target in again. */
+  /** A pinned action can already be visible while its note is scrolled
+   *  out of the detail body. Reveal both once, so the lesson stays readable. */
+  function reveal(el: HTMLElement): void {
+    revealInScroller(el);
+    if (!el.closest('[data-sheet-footer]')) return;
+    const note = el.closest('dialog')?.querySelector<HTMLElement>('[data-coach-note]');
+    if (note) revealInScroller(note);
+  }
+
+  /** A load just after the first scroll: scroll the target and note in again. */
   function revealAgain(): void {
     const el = anchorEl;
     const at = el ? revealed.get(el) : undefined;
     if (el && at !== undefined && performance.now() - at < REVEAL_SETTLE_MS) {
-      revealInScroller(el);
+      reveal(el);
     }
   }
 

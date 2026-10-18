@@ -73,6 +73,16 @@ export function placeCoach(input: CoachPlaceInput): CoachPlace {
   const x = p.bubble.x;
   if (ok(x, far)) return { placement: 'pinned', x, y: far };
   if (ok(x, near)) return { placement: 'pinned', x, y: near };
+  // A wide region may leave room beside it, even when both centred edge
+  // positions cover too much. Keep the same vertical bounds and no arrow.
+  if (region) {
+    const sides = [bounds.x + margin, bounds.x + bounds.width - margin - bubble.width];
+    for (const y of [far, near]) {
+      for (const sideX of sides) {
+        if (ok(sideX, y)) return { placement: 'pinned', x: sideX, y };
+      }
+    }
+  }
   // Neither edge keeps clear (a target taller than the screen): the edge
   // where the bubble covers the least of it.
   const y = cover(anchor, bubble, x, near) < cover(anchor, bubble, x, far) ? near : far;

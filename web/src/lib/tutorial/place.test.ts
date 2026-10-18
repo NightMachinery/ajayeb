@@ -51,4 +51,18 @@ describe('the coach mark placement', () => {
     const box = { x: p.x, y: p.y, width: bubble.width, height: bubble.height };
     expect(overlapArea(anchor, box) / (anchor.width * anchor.height)).toBeLessThanOrEqual(0.4);
   });
+
+  it('keeps title-bounded landscape lessons within the region cover limit', () => {
+    const bounds = { x: 0, y: 45, width: 740, height: 315 };
+    const anchor = { x: 188, y: 51, width: 364, height: 307 };
+    const bubble = { width: 448, height: 127 };
+    const p = placeCoach({ anchor, bubble, bounds, region: true });
+    const box = { x: p.x, y: p.y, ...bubble };
+    expect(p.placement).toBe('pinned');
+    expect(p.arrowX).toBeUndefined();
+    expect(p.y).toBeGreaterThanOrEqual(bounds.y + 8);
+    expect(p.x).toBeGreaterThanOrEqual(bounds.x + 8);
+    expect(p.x + bubble.width).toBeLessThanOrEqual(bounds.x + bounds.width - 8);
+    expect(overlapArea(anchor, box) / (anchor.width * anchor.height)).toBeLessThanOrEqual(0.4);
+  });
 });

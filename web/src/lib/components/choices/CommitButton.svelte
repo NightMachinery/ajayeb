@@ -47,7 +47,7 @@
 </script>
 
 <div
-  class="sticky bottom-0 -mx-4 mt-1 border-t border-rule bg-panel px-4 pt-3"
+  class="commit-footer sticky -mx-4 mt-1 border-t border-rule bg-panel px-4 pt-3"
   class:danger
   data-commit
 >
@@ -70,6 +70,15 @@
 </div>
 
 <style>
+  /* Cover the scrolling panel's bottom padding instead of exposing a row
+     below the action. The matching negative margin preserves scroll reach. */
+  .commit-footer {
+    bottom: calc(-1 * var(--sheet-bottom-padding, 1rem));
+    margin-block-end: calc(-1 * var(--sheet-bottom-padding, 1rem));
+    padding-block-end: var(--sheet-bottom-padding, 1rem);
+    z-index: 1;
+  }
+
   /* A deep cinnabar (--danger), dark enough for white text in both themes.
      Unlayered, so it wins over the button's accent utilities. */
   .danger :global(.commit) {

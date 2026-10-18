@@ -1188,3 +1188,17 @@ that a hot-seat pass screen replaces the automatic popup while the eye button
 still opens it. `undo.spec.ts` checks the bot undo's visible confirmation in the
 toast's polite live region. Unit tests cover the bounded, lenient seen-marker
 storage, seat and room separation, blocked storage and undo rewinding markers.
+
+## Sheet layout regressions
+
+`sheet-layout.spec.ts` checks card actions before and after keyboard scrolling
+in short landscape, armed confirmation labels, and entering and leaving the
+wonder step. The existing `hint-outcome.spec.ts` also checks the action row
+and usable detail height with an armed blunder warning in landscape.
+The pinned tutorial action also keeps its coach note visible in the scrolling
+detail body.
+Choice footer hit tests sample the panel's bottom strip at three
+scroll positions; the last option remains focusable and selectable. Phone
+checks compare coach bubbles with the measured top bar and hint pips with
+neighboring chip borders. A scrolled card detail body must scroll upward
+before a downward drag can dismiss its sheet.

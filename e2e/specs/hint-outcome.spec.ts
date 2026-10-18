@@ -166,6 +166,8 @@ test.describe('decider hints', { tag: ['@mobile'] }, () => {
     await driver.waitReady();
     expect(await page.evaluate(() => window.__ajayeb?.view()?.toMove)).toBe(at.seat);
 
+    await page.setViewportSize({ width: 740, height: 360 });
+
     // The board pip says the build wins.
     const card = page.locator(`.card-structure [data-card="${at.card}"]`);
     await expect(card.locator('[data-hint]')).toHaveAttribute('data-hint', 'win');
@@ -192,6 +194,29 @@ test.describe('decider hints', { tag: ['@mobile'] }, () => {
     );
     await expect(warning).toBeVisible();
     await expect(warning).toContainText('could win this turn instead');
+    // A warning can grow after arming. It must not push the action row
+    // out of a short landscape sheet or consume its scrolling details.
+    const geometry = await sheet.evaluate((el) => {
+      const panel = el.closest('.sheet-panel') ?? el.querySelector('.sheet-panel') ?? el;
+      const bounds = panel.getBoundingClientRect();
+      return [
+        ...el.querySelectorAll<HTMLElement>('button[data-act], [data-control="wonder-step"]')
+      ].every((button) => {
+        const r = button.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return (
+          r.height >= 44 &&
+          r.top >= bounds.top &&
+          r.bottom <= bounds.bottom &&
+          !!hit &&
+          button.contains(hit)
+        );
+      });
+    });
+    expect(geometry).toBe(true);
+    expect(
+      (await page.locator('dialog[open] [data-sheet-body]').boundingBox())!.height
+    ).toBeGreaterThanOrEqual(44);
     // Nothing was sent: the seat is still to move.
     expect(await page.evaluate(() => window.__ajayeb?.view()?.toMove)).toBe(at.seat);
 

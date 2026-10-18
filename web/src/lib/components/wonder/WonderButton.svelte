@@ -97,14 +97,14 @@
   {/if}
   {#if bh && bh.ready > 0 && !buildable}
     <span
-      class="absolute -end-1 -top-1 size-2.5 rounded-full border-2 border-fg-muted bg-panel"
+      class="absolute end-0.5 top-0.5 size-2.5 rounded-full border-2 border-fg-muted bg-panel"
       aria-hidden="true"
       data-ready-dot
     ></span>
   {/if}
   {#if buildable}
     <span
-      class="absolute -end-1 -top-1 size-2.5 rounded-full border border-panel bg-accent"
+      class="absolute end-0.5 top-0.5 size-2.5 rounded-full border border-panel bg-accent"
       aria-hidden="true"
     ></span>
   {/if}

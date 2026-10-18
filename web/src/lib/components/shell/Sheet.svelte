@@ -29,6 +29,10 @@
     centered?: boolean;
     class?: string;
     children: Snippet;
+    /** Actions kept outside the scrolling detail body. */
+    footer?: Snippet;
+    /** Stable caller hooks encompass both the details and the footer. */
+    panelData?: Record<`data-${string}`, string | undefined>;
   }
 
   let {
@@ -37,7 +41,9 @@
     showHandle = true,
     centered = false,
     class: className = '',
-    children
+    children,
+    footer,
+    panelData = {}
   }: Props = $props();
 
   let dialogEl: HTMLDialogElement | undefined = $state();
@@ -86,11 +92,19 @@
   class="sheet {className}"
   class:centered
 >
-  <div class="sheet-panel" bind:this={panelEl}>
+  <div {...panelData} class="sheet-panel" class:has-footer={!!footer} bind:this={panelEl}>
     {#if showHandle && !centered}
       <div class="sheet-handle split:hidden" data-sheet-handle aria-hidden="true"></div>
     {/if}
-    {@render children()}
+    {#if footer}
+      <!-- svelte-ignore a11y_no_noninteractive_tabindex (This named scroll region must accept keyboard focus independently of its footer.) -->
+      <div class="sheet-body" data-sheet-body role="region" aria-labelledby={titleId} tabindex="0">
+        {@render children()}
+      </div>
+      <div class="sheet-footer" data-sheet-footer>{@render footer()}</div>
+    {:else}
+      {@render children()}
+    {/if}
   </div>
 </dialog>
 
@@ -144,13 +158,31 @@
     flex-direction: column;
     overflow-y: auto;
     background: var(--panel);
-    padding-bottom: max(1rem, var(--safe-b));
+    --sheet-bottom-padding: max(1rem, var(--safe-b));
+    padding-block-end: var(--sheet-bottom-padding);
     /* A pull past the top must not chain to the page, where the browser
        would overscroll it or pull to refresh. */
     overscroll-behavior: contain;
     /* A scrolling panel can take focus when the dialog opens; its ring
        would frame the whole sheet. Its buttons keep their own rings. */
     outline: none;
+  }
+  .sheet-panel.has-footer {
+    overflow: hidden;
+    padding-block-end: 0;
+  }
+  .sheet-body {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* Keep the keyboard ring inside the clipped scrolling body. */
+    outline-offset: -2px;
+  }
+  .sheet-footer {
+    flex-shrink: 0;
+    border-block-start: 1px solid var(--rule);
+    padding: 0.5rem 1rem var(--sheet-bottom-padding);
+    background: var(--panel);
   }
   .sheet-handle {
     position: relative;
@@ -197,7 +229,7 @@
     }
     .sheet-panel {
       max-height: min(85dvh, 640px);
-      padding-bottom: 1rem;
+      --sheet-bottom-padding: 1rem;
     }
   }
 
@@ -224,6 +256,6 @@
   }
   .sheet.centered .sheet-panel {
     max-height: min(calc(100dvh - 2rem), 640px);
-    padding-bottom: 1rem;
+    --sheet-bottom-padding: 1rem;
   }
 </style>

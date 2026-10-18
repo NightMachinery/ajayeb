@@ -96,6 +96,13 @@
         const bounds = safe
           ? { x: safe.x, y: safe.y, width: safe.width, height: safe.height }
           : { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+        // Information lessons keep the game title visible. Action prompts
+        // need the full viewport to keep their target clear on short screens.
+        const topBar = document.querySelector('.top-bar');
+        const barBottom = topBar?.getBoundingClientRect().bottom ?? bounds.y;
+        const top = kind === 'info' ? Math.max(bounds.y, barBottom) : bounds.y;
+        bounds.height = Math.max(0, bounds.height - (top - bounds.y));
+        bounds.y = top;
         const size = { width: bubble.offsetWidth, height: bubble.offsetHeight };
         const r = target?.getBoundingClientRect();
         const p = r
@@ -126,6 +133,8 @@
       const observer = new ResizeObserver(layout);
       observer.observe(bubble);
       if (target) observer.observe(target);
+      const topBar = document.querySelector('.top-bar');
+      if (topBar) observer.observe(topBar);
       let frame = requestAnimationFrame(() => {
         layout();
         frame = requestAnimationFrame(layout);
