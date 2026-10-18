@@ -60,8 +60,12 @@ for (const viewport of [
   test(`small UI layouts at ${viewport.width}x${viewport.height}`, async ({ page }, info) => {
     const problems = watchHygiene(page);
     await page.setViewportSize(viewport);
-    await page.goto('/dev/fixture/online-age-start-seat0');
+    await page.goto('/dev/fixture/choose-starter-seat0');
     await settle(page);
+    await expect(page.locator('dialog[open] [data-age-interstitial]')).toBeVisible();
+    const peek = page.locator('dialog[open] [data-age-continue]');
+    await expect(peek).toHaveText('Peek at the board');
+    await peek.click();
     await expect(page.locator('[data-peek-bar="inline"]')).toBeVisible();
     const overlaps = await page.locator('[data-peek-bar]').evaluate((bar) => {
       const b = bar.getBoundingClientRect();
