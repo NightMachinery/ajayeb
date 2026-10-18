@@ -9,6 +9,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
 
@@ -315,7 +316,9 @@ func (r *Room) turnOver(seat engine.Seat) bool {
 // turn is over and whose review is not started yet, while the advisor is
 // on, so that it is usually ready by the time that seat's view needs it.
 // In a hot-seat room that view comes only after the other seat's move; in
-// the other rooms the mover's own frame would start it anyway.
+// the other rooms the mover's own frame would start it anyway. A bot's
+// seat is skipped: no viewer ever sees its review, and its search would
+// take a review slot from the humans' reviews and CPU from the bots.
 func (r *Room) prefetchReviews() {
 	if !r.reviews.loaded || !r.file.Hints.Advisor {
 		return
@@ -326,7 +329,7 @@ func (r *Room) prefetchReviews() {
 	}
 	for seat := range engine.Seat(2) {
 		sl := &r.reviews.seats[seat]
-		if sl.set && !sl.done && !sl.pending && r.turnOver(seat) && !r.guidedLastMove(seat) {
+		if r.file.Seats[seat].Kind != store.SeatKindBot && sl.set && !sl.done && !sl.pending && r.turnOver(seat) && !r.guidedLastMove(seat) {
 			r.startReview(seat, cfg)
 		}
 	}

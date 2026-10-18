@@ -9,6 +9,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/engine/enginetest"
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
 
@@ -306,6 +307,42 @@ func TestReviewJobWaitsForSlot(t *testing.T) {
 	}
 	if len(slots) != 0 {
 		t.Fatal("the job kept its slot")
+	}
+}
+
+// TestPrefetchSkipsBotSeat checks that a bot's move starts no review
+// search: nobody ever sees a bot seat's review. The same move by a human
+// seat starts one.
+func TestPrefetchSkipsBotSeat(t *testing.T) {
+	s := namedBefore(t, "military-supremacy")
+	a := mustKey(t, &s, "discard:walls")
+	mover := s.ToMove
+	post := s
+	if err := engine.Apply(&post, a, nil); err != nil || post.ToMove == mover {
+		t.Fatalf("discard:walls: %v, %v to move", err, post.ToMove)
+	}
+	for _, kind := range []store.SeatKind{store.SeatKindBot, store.SeatKindHuman} {
+		hints := view.HintSettings{Advisor: true, AdvisorStrength: view.AdvisorStrengthDeep}
+		f := &store.File{Mode: store.ModeAI, Hints: &hints}
+		f.Seats[mover].Kind = kind
+		f.Seats[1-mover].Kind = store.SeatKindHuman
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // a job that starts posts at once, without searching
+		m := &Manager{reviewSlots: make(chan struct{}, 1)}
+		r := &Room{m: m, ctx: ctx, inbox: make(chan any, 1), done: make(chan struct{}), file: f, state: post}
+		r.reviews.loaded = true
+		r.reviews.seats[mover] = reviewSlot{set: true, pre: s, action: a, steps: []reviewStep{{pre: s, action: a}}}
+		r.prefetchReviews()
+		started := r.reviews.seats[mover].pending
+		if started != (kind == store.SeatKindHuman) {
+			t.Fatalf("a %s seat's move: review search started %v", kind, started)
+		}
+		if started {
+			if msg := (<-r.inbox).(msgReviewResult); msg.ok {
+				t.Fatalf("a cancelled job posted %+v", msg)
+			}
+			m.wg.Wait()
+		}
 	}
 }
 
