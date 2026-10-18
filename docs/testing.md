@@ -287,7 +287,8 @@ on port 38954, with a fresh data directory under `.cache/e2e/`), in the
 installed Chrome locally and in Playwright's Chromium on CI. CI splits the
 suite into two shards (`--shard=1/2` and `--shard=2/2`), each a job with its
 own server, and keeps each shard's report and traces when it fails or runs
-out of time. There are two projects: `desktop` (Desktop Chrome, a mouse) runs every spec, and `mobile`
+out of time. The shards leave out the `@perf` case, which runs in its own
+job, `e2e-perf`, described under `animation.spec.ts` below. There are two projects: `desktop` (Desktop Chrome, a mouse) runs every spec, and `mobile`
 (Pixel 7, touch) runs the specs tagged `@mobile`.
 
 Run them through the guard, which holds the machine's one browser lock:
@@ -634,7 +635,11 @@ game's last card (`civilian-end`).
   in ms: read the worst overlapping one against the 50 ms limit, and the
   overall one for how loaded the machine was. This laptop is often busy,
   so the case retries up to twice; a pass with the failed runs within
-  20 ms of the limit is acceptable.
+  20 ms of the limit is acceptable. On CI it runs in its own job,
+  `e2e-perf`, once per project with no retries, and writes each run's
+  `perf` annotation to the run summary. That job does not fail the
+  workflow: GitHub's runners do not meet the 50 ms limit yet, which M10
+  closed as an open criterion carried into M11 (see the roadmap).
 - **e. Replay last move.** With Animation off the log sheet's control is
   disabled and its tooltip (keyboard focus on desktop, a tap on the
   phone) says to turn Animation on. At normal speed it is disabled before
