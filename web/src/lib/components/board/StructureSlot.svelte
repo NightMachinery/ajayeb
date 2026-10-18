@@ -223,9 +223,13 @@
       calc(var(--x) * (var(--cw) + var(--gap))),
       calc(var(--y) * var(--step) * var(--ch))
     );
-    transition:
-      transform var(--dur-fast) var(--curve-out),
-      box-shadow var(--dur-fast) var(--curve-out);
+    /* No transition here: a card that turns takeable with a move, and
+       every slot when the structure refits or a new age lays it out, takes
+       its place at once. A transition there would run on dozens of cards
+       while the move's own animations play, each one promoted to a layer
+       of its own and repainted into the board when it ends (and a
+       box-shadow transition repaints every frame). Only the hover lift
+       eases in (below). */
     -webkit-touch-callout: none;
   }
   .covered {
@@ -254,6 +258,7 @@
   }
   @media (hover: hover) {
     .takeable:hover {
+      transition: transform var(--dur-fast) var(--curve-out);
       transform: translate(
         calc(var(--x) * (var(--cw) + var(--gap))),
         calc(var(--y) * var(--step) * var(--ch) - 4px)
