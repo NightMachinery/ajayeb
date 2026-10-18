@@ -1061,6 +1061,7 @@
     dir="ltr"
     aria-label={t('game.board')}
     role="region"
+    tabindex="-1"
   >
     <div class="area-top" dir={i18n.dir}>
       <TopBar

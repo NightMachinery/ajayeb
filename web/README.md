@@ -446,3 +446,9 @@ at the end. Discard notes name their conditional action independently. Tutorial
 rooms hide Mausoleum advice even during Age I free play without a coach step.
 
 Room screenshot readiness (`data-ready` on the root) waits for the current idle presented frame, font readiness and a requestAnimationFrame stamp. The font promise is reused only while the locale and registered faces match and every face has loaded or failed. Pending or newly registered fonts recheck the native barrier; later loading clears the stamp. Effect cleanup cancels its pending stamp and removes the attribute.
+
+Before a server snapshot removes the focused structure card, the presenter moves
+focus to the persistent, labelled game region. This runs against the old DOM
+before the swap, avoiding focus fixup during removal. Dialog cancellation and
+rejected actions keep native opener restoration; the region stays outside the
+normal Tab order, and Tab from it reaches the board controls.

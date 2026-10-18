@@ -326,6 +326,99 @@ function expectPerfRun(moves: number, anims: AnimRecord[]): void {
 }
 
 test.describe('animations', { tag: ['@mobile'] }, () => {
+  test('focus follows confirmed card removal; dismissal and rejection keep the opener', async ({
+    page,
+    baseURL
+  }, info) => {
+    if (!baseURL) throw new Error('no baseURL');
+    for (const speed of ['normal', 'off'] as const) {
+      await useSettings(page, speed);
+      const driver = await openPosition(page, baseURL, {
+        mode: 'hotseat',
+        seed: SEED,
+        keys: await draftKeys(baseURL, SEED)
+      });
+      await driver.waitTurn();
+      const view = await viewOf(page);
+      const choice = view.choices.find((c) => c.kind === 'discard');
+      if (!choice?.card) throw new Error('no discard');
+      const card = page.locator(`.card-structure button[data-card="${choice.card}"]`);
+      const sheet = page.locator('dialog[open]').filter({ has: page.locator('[data-card-sheet]') });
+      // Real keyboard opening and Escape restore the opener on repeated use.
+      await card.focus();
+      await page.keyboard.press('Enter');
+      await expect(sheet).toBeVisible();
+      await sheet.evaluate((dialog) => {
+        document.documentElement.dataset.focusClosed = '0';
+        dialog.addEventListener('close', () => {
+          const root = document.documentElement;
+          root.dataset.focusClosed = String(Number(root.dataset.focusClosed) + 1);
+        });
+      });
+      await page.keyboard.press('Escape');
+      await expect(page.locator('html')).toHaveAttribute('data-focus-closed', '1');
+      await expect(sheet).toHaveCount(0);
+      await expect(card).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(sheet).toBeVisible();
+      await page.mouse.click(2, 2);
+      await expect(page.locator('html')).toHaveAttribute('data-focus-closed', '2');
+      await expect(sheet).toHaveCount(0);
+      await expect(card).toBeFocused();
+      // A rejected action must leave focus on the still-existing card.
+      await card.press('Enter');
+      await expect(sheet).toBeVisible();
+      await page.evaluate(() => {
+        const send = WebSocket.prototype.send;
+        WebSocket.prototype.send = function (data) {
+          if (typeof data === 'string') {
+            const message = JSON.parse(data) as { t?: string; key?: string };
+            if (message.t === 'act') {
+              WebSocket.prototype.send = send;
+              message.key = 'invalid:focus-test';
+              this.addEventListener('message', (event) => {
+                const response = JSON.parse(String(event.data)) as { t?: string; code?: string };
+                if (response.t === 'reject' && response.code === 'illegal')
+                  document.documentElement.dataset.focusRejection = '';
+              });
+              return send.call(this, JSON.stringify(message));
+            }
+          }
+          return send.call(this, data);
+        };
+      });
+      await page.locator(`dialog[open] [data-act="${choice.key}"]`).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('html')).toHaveAttribute('data-focus-rejection', '');
+      await driver.waitReady();
+      await expect(page.locator('html')).toHaveAttribute('data-focus-closed', '3');
+      await expect(card).toBeFocused();
+      expect((await viewOf(page)).ply).toBe(view.ply);
+      await driver.dismissToasts();
+      // Confirmed removal targets a persistent named region, with usable Tab order.
+      await card.focus();
+      await page.keyboard.press('Enter');
+      await expect(sheet).toBeVisible();
+      const action = page.locator(`dialog[open] [data-act="${choice.key}"]`);
+      await action.focus();
+      const before = await driver.snapshot();
+      await page.keyboard.press('Enter');
+      await driver.waitAdvance(before.version);
+      await waitSettled(page);
+      const board = page.locator('.game-screen[role="region"]');
+      await expect(board).toBeFocused();
+      await expect(board).toHaveAccessibleName('Game board');
+      await page.screenshot({ path: info.outputPath(`focus-${speed}.png`) });
+      await page.keyboard.press('Tab');
+      expect(
+        await board.evaluate(
+          (el) => el.contains(document.activeElement) && document.activeElement !== el
+        )
+      ).toBe(true);
+      expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('BUTTON');
+    }
+  });
+
   test('a. with Animation off nothing animates and every change shows at once', async ({
     page,
     baseURL

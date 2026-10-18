@@ -5,6 +5,7 @@
 import { AnimRunner } from '$lib/fx/anim/runner';
 import { hintDefaults } from '$lib/hints/local.svelte';
 import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
+import { moveRemovedCardFocus } from '$lib/ui/removed-card-focus';
 import { loadIdentity } from './identity';
 import { detached, savedRooms } from './saved-rooms.svelte';
 import { cuePrev, Presenter } from './presenter.svelte';
@@ -44,7 +45,10 @@ export function liveGame(): { session: Session; presenter: Presenter } {
         minThinkingMs: () => botDwellMs(motion.effective),
         preRollMs: () => botPickMs(motion.effective),
         hooks: {
-          capture: (next, prev) => anim.capture(next, cuePrev(prev, next)),
+          capture: (next, prev) => {
+            moveRemovedCardFocus(next, prev);
+            return anim.capture(next, cuePrev(prev, next));
+          },
           play: (_next, _prev, captured) => anim.play(captured),
           finish: () => anim.finish()
         }

@@ -1379,3 +1379,11 @@ Focused hint tests retain ordinary discard advice when Mausoleum explanations
 are hidden. Conditional sentences remain in each locale's message table.
 
 The room screenshot barrier retains its font-ready promise only after all registered font faces settle. New faces, pending loads and locale changes recheck font readiness. A later load clears the current stamp, and a stale presented-frame effect cancels its pending animation frame. This barrier is separate from the input-ready hook and the animation performance windows.
+
+The animation suite also checks focus after confirmed card removal at normal
+speed and with Animation off. It opens and reopens the card sheet with Enter,
+checks Escape and backdrop dismissal restore its opener, injects a rejected
+action at the transport boundary, and checks that only a confirmed removal
+moves focus to the named game region. Tab must still reach a board control.
+Native focus/removal probes are diagnostic evidence, separate from unprofiled
+performance acceptance.
