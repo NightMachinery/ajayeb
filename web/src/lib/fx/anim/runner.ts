@@ -12,7 +12,8 @@
 //            new one, transform and opacity only, with WAAPI), each paused in
 //            its first pose until the page has painted the new frame
 //            (Runs.gate), and resolves when input may come back (the lead's
-//            landing, counted from the swap);
+//            landing, counted from the swap, so a frame or two before the
+//            gated lead lands; its destination stays hidden until then);
 //   finish   ends everything at once, in its final state: a new frame (from
 //            capture), the Presenter's hurry() and clear().
 //
