@@ -138,6 +138,22 @@ What a clock budget buys depends on the machine and its load. The calibration ab
 
 The fixed budgets cost more time than the clock budgets on a loaded machine: in the tournaments, with two games at a time on four threads and other jobs running, Medium's 40,000 iterations took 0.85 seconds per move on average and the old Hard's 500,000 took 4.9 seconds (11.8 seconds at most). On the 60 calibration positions, on a busier laptop, the old Hard's 500,000 took 4.6 seconds on average and the new Hard's 200,000 took 3.3 seconds.
 
+## The move review's search
+
+The advisor (the hint family that reviews a player's own move, `server/internal/room/review.go`) has three strengths, set per game in the hint settings. `quick` is Greedy's ranking (`ai.RankActions`): a few milliseconds in the room actor. `twoStage`, the default, and `deep` add the Scholar's tree search (Medium's rollouts, UCB constant and evaluation) on the mover's observation of the position before the move, on one worker, for a fixed number of iterations and with no clock, so a review is a pure function of the room's seed, the log and the ply (`server/internal/ai/review.go`):
+
+- `ai.CompareActions` plays two moves against each other: the root takes the proposed better move and the move played in turn, each pair of iterations on one shared determinization, so each gets half the iterations and the same hidden cards. A proposal stands when its mean reward beats the played move's by at least 0.04 (`reviewSearchMinGap`). Two-stage runs it on Greedy's proposal; deep runs it on the search's own choice.
+- `ai.SearchActions` is the usual search over every move; deep takes its most visited move.
+- A reason that is a sure fact (the better move wins, or the move played left the opponent a win) skips the comparison: the rewards of a move that wins now and of one that leaves the pawn a step from the capital are both near 1, so the search cannot separate them, and the fact needs no estimate.
+
+**Budget** (`room.DefaultReviewBudget`): 6,000 iterations for the comparison and 20,000 for deep's search. They run off the room actor, in at most `-review-searches` reviews at once across the server (default 1, since the production host has one vCPU), and a review whose search a 10-second safety clock cuts short is never shown.
+
+**Measurements** (2026-10-18, an Apple M2 with a load average of about 4.5, `go test -run 'TestReviewSearchCost|TestReviewCalibration' -v ./internal/room`; the calibration test was a one-off and is not committed):
+
+- Cost per review over 20 positions of seeded random games: two-stage a mean of 15 ms and at most 85 ms (most positions need no search, since Greedy proposes nothing); deep a mean of 206 ms and at most 310 ms. A comparison alone takes 10 to 85 ms, about 10 microseconds an iteration, and its tree is at most 6,001 nodes (144 KiB); deep's search tree is at most 20,001 nodes (480 KiB). It has not been measured on the production host (one vCPU). If its core is two to three times slower than the laptop's, a two-stage review stays well under half a second there and a deep one is about a second at worst; `go test -run TestReviewSearchCost -v ./internal/room` on the host would check it.
+- Noise: the same comparison under three seeds varied by about 0.01 at 6,000 iterations and about 0.02 at 2,000, so the 0.04 threshold is about four standard deviations at the chosen budget.
+- Agreement: of the 27 moves Greedy proposed on the calibration's positions (four seeded random games), the comparison confirmed 21 (leads of 0.04 to 0.99) and turned down 6 (leads of 0.00 to 0.04; two of them exactly 0, late in Age III, where both moves led to the same result in every rollout). `TestReviewConfirmation` keeps that rule honest: a two-stage review only ever names Greedy's own proposal, and on its fixed positions the search accepts some and turns others down.
+
 ## Rerunning the measurements
 
 The tournaments and the calibration are subcommands of `ajayeb-sim`. Run them from `server/`; on the laptop, wrap every run in the memory guard (`python3 ../tools/heavy.py run --kind bench -- ...`) and keep `-p` at 2 or less. Build the command once with `python3 ../tools/heavy.py run --kind build -- go build -o bin/ajayeb-sim ./cmd/ajayeb-sim`. The commands below also need the `bench` wrapper when run locally.

@@ -237,10 +237,12 @@ Creates a room and joins the sender to it.
   hot-seat room both. An absent or empty entry falls back to the `hello`
   name (or a default for a hot-seat room's second seat).
 - `hints` is optional: the game's hint settings (see `hints` below), an
-  object with all twelve families as booleans. Absent means the defaults
-  of the mode: every family on, except `advisor`, which is on only in an
-  `ai` room. A `hints` object that lacks a family, or holds `null` for one,
-  is refused as `bad-request`.
+  object with all twelve families as booleans and, optionally, the
+  advisor's strength. Absent means the defaults of the mode: every family
+  on, except `advisor`, which is on only in an `ai` room, and the strength
+  `twoStage`. A `hints` object that lacks a family, or holds `null` for
+  one, is refused as `bad-request`; one that leaves out the strength (or
+  sends `""`) gets `twoStage`.
 - `allowUndo` is optional, for a hot-seat or `ai` room: `false` makes a
   game without undo. Absent means `true`. It is fixed when the room is
   created: nothing changes it afterwards, a rematch keeps it, and a room
@@ -422,7 +424,7 @@ identity holds no seat there.
 Replaces the game's hint settings. Only the game's admin may send it.
 
 ```json
-{"t": "hints", "code": "K7QX2M", "seq": 19, "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": false, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false}}
+{"t": "hints", "code": "K7QX2M", "seq": 19, "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": false, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": true, "advisorStrength": "twoStage"}}
 ```
 
 - `seq` is the client's request counter, shared with `act` and `undo` (see
@@ -435,6 +437,21 @@ Replaces the game's hint settings. Only the game's admin may send it.
   hints may show, and each client draws its hints from them. A player may
   hide more on their own screen; that choice stays on the device and never
   reaches the server.
+- `advisorStrength` is how carefully the advisor reviews a move:
+  - `quick`: Greedy's ranking alone (one ply and the opponent's best
+    reply), a few milliseconds;
+  - `twoStage`, the default: Greedy proposes a better move, and a
+    fixed-budget tree search must also rate it clearly better than the
+    move played, or the review says no clearly better move was found;
+  - `deep`: the tree search picks the better move itself and checks it
+    the same way; its reviews carry no points.
+
+  An empty or absent strength keeps the game's own, so a client built
+  before the strength existed cannot reset it; any other value is refused
+  as `bad-request`. A change of strength only affects reviews computed
+  after it, and adds nothing to the room log (it changes no hint the
+  opponent sees). Rooms stored before the strength existed load with
+  `twoStage`.
 
 The room checks, in order: the connection has joined (else `bad-request`)
 and is not a spectator (else `not-admin`); the `seq` is new (a repeated one
@@ -540,7 +557,7 @@ full game view described under "The view and its events" below.
       {"seat": 1, "name": "Omid", "nameNo": 0, "kind": "human", "connected": true, "you": true}
     ],
     "spectators": 0,
-    "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": true, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false},
+    "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": true, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": false, "advisorStrength": "twoStage"},
     "allowUndo": true
   },
   "you": {"seats": [0, 1], "canAct": true, "admin": true},
@@ -698,13 +715,22 @@ full game view described under "The view and its events" below.
   (`played`), and, when a clearly better action existed, its key
   (`better`), a `reason` code (`wins`, `stopsWin`, `pair`, `deniesPair`,
   `loot` or `points`; `none` without `better`), the rounded `gap` in
-  points, and the reason's detail (`threat`, `symbol` or `coins`). The
-  server ranks the actions on that seat's own observation of the position
-  before the move, under a fixed evaluation budget, so the review is the
-  same for every hidden deal the seat could not tell apart and never names
-  a card the move turned over. It stays until the seat's next play action,
-  goes with an undo, and is absent from the opponent's and a spectator's
-  view. The client shows it inside the summary of the opponent's next move.
+  points, and the reason's detail (`threat`, `symbol` or `coins`), and the
+  `strength` that made it (`quick`, `twoStage` or `deep`, as in the
+  `hints` frame). The `gap` is always Greedy's estimate in points: a
+  `twoStage` review keeps Greedy's gap once the search has agreed, and a
+  `deep` review has `gap` 0, since its search gives no points. The
+  server ranks and searches on that seat's own observation of the
+  position before the move, under fixed evaluation and iteration budgets,
+  so the review is the same for every hidden deal the seat could not tell
+  apart and never names a card the move turned over. A `quick` review is
+  in the move's own frames; a `twoStage` or `deep` one is computed off the
+  room actor, and the seat's connections get a later `state` (same
+  version, no events, no `ack`) that carries it, usually well within a
+  second. A review whose search did not finish (a crowded server) is
+  never sent. It stays until the seat's next play action, goes with an
+  undo, and is absent from the opponent's and a spectator's view. The
+  client shows it inside the summary of the opponent's next move.
 
 ### reject
 
