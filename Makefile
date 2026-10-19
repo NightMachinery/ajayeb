@@ -44,10 +44,10 @@ RACE_DIRS := internal/room internal/ws
 PNPM_FROZEN := $(if $(wildcard pnpm-lock.yaml),--frozen-lockfile)
 E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 
-.PHONY: help install install-offline dev gen gen-check gen-check-if-ready \
+.PHONY: help install install-offline install-webkit dev gen gen-check gen-check-if-ready \
         fmt-check vet test-go test-race lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
-        e2e e2e-smoke e2e-prod shots vec-lint vec-shot vec-blind vec-family \
+        e2e e2e-smoke e2e-webkit e2e-prod shots vec-lint vec-shot vec-blind vec-family \
         test-py test-tools verify-quick verify verify-full clean
 
 ##@ Getting started
@@ -85,6 +85,9 @@ install: ## Download the Go modules, pnpm install (--frozen-lockfile once pnpm-l
 install-offline: ## Install from the local caches only, for worktrees (GOPROXY=off, pnpm --offline)
 	GOPROXY=off $(HEAVY) run --kind install -- go -C server mod download
 	$(HEAVY) run --kind install -- pnpm install --offline --frozen-lockfile
+
+install-webkit: ## Opt-in local download of Playwright WebKit only (not part of install)
+	$(HEAVY) run --kind install -- pnpm -C e2e exec playwright install webkit --no-remove
 
 dev: ## Explain how to run the dev servers with self_host.py dev-start (starts nothing itself)
 	@printf '%s\n' \
@@ -184,13 +187,16 @@ build: build-web ## Release binary with the web build embedded (-tags embedweb),
 	$(HEAVY) run --kind build -- go -C server build -tags embedweb -trimpath \
 	  -ldflags "-s -w -X main.version=$(VERSION)" -o bin/ajayeb ./cmd/ajayeb
 
-##@ Browser runs (one headless Chrome on the machine at a time)
+##@ Browser runs (one headless browser on the machine at a time)
 
 e2e: $(E2E_PREREQS) ## Playwright specs (GREP filters, PW_ARGS adds flags); builds first unless E2E_BUILD=0
 	$(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test $(if $(GREP),--grep '$(GREP)') $(PW_ARGS)
 
 e2e-smoke: ## The @smoke e2e specs
 	$(MAKE) --no-print-directory e2e GREP=@smoke
+
+e2e-webkit: $(E2E_PREREQS) ## Opt-in local WebKit smoke, layout, RTL and audio; first run make install-webkit
+	AJAYEB_WEBKIT_PROJECT=1 $(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test --project webkit $(if $(GREP),--grep '$(GREP)') $(PW_ARGS)
 
 e2e-prod: ## The production smoke (@prod specs) against PROD_URL; no local build or server (docs/testing.md)
 	E2E_BASE_URL=$(PROD_URL) $(HEAVY) run --kind browser -- pnpm -C e2e exec playwright test $(PW_ARGS)

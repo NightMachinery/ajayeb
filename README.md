@@ -18,7 +18,7 @@ Every mode is a room on the server. The browser shows the room and sends moves; 
 
 - **Server:** Go 1.26, one small binary. It holds the only rules engine, the bots, the room actors and the WebSocket endpoint (`github.com/coder/websocket`). Rooms are saved as JSON files (seed plus action log). In production the same binary serves the built web app.
 - **Web:** SvelteKit 2 with Svelte 5 runes, Tailwind CSS 4, Vite 8 and TypeScript 6.0, built as a static single-page app (adapter-static). Wire types are generated from the Go structs with `tygo`.
-- **Tests:** Go unit, property, fuzz, golden-replay and protocol tests (including resync history and merged live events); Vitest for client logic; Playwright full playthroughs in headless Chrome.
+- **Tests:** Go unit, property, fuzz, golden-replay and protocol tests (including resync history and merged live events); Vitest for client logic; Playwright full playthroughs in headless Chromium, plus opt-in WebKit smoke and audio checks.
 - **Tooling:** a pnpm 10 workspace (`web`, `e2e`) on Node 24, a root `Makefile`, and Python 3 standard-library scripts (`tools/heavy.py`, `self_host.py`).
 
 ## Quick start
@@ -31,6 +31,12 @@ make verify-quick  # fast checks: gofmt, Go vet and tests, web lint, svelte-chec
 make e2e           # Playwright playthroughs against a test build, in headless Chrome
 make dev           # explains how to start the dev servers (python3 self_host.py dev-start)
 ```
+
+For an opt-in macOS WebKit check, run `make install-webkit` then
+`make e2e-webkit`. This uses headless Playwright WebKit, keeps the default
+install unchanged and never opens Safari. A separate Ubuntu CI job runs the
+same WebKit matrix. See [coverage and deferred
+device checks](docs/testing.md#opt-in-webkit-smoke-on-macos).
 
 `make dev` starts nothing itself. `python3 self_host.py dev-start` runs the Go server on 127.0.0.1:38951 and the Vite dev server on port 38952 in tmux; then open <http://localhost:38952>.
 

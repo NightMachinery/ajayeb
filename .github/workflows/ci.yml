@@ -2,8 +2,9 @@
 #
 # The heavy suites run here rather than on the laptop: the race detector,
 # golangci-lint, the web checks and build, and Playwright with the bundled
-# Chromium. Nightly jobs run the long playout sweep, every fuzz target (one
-# runner each), and the full AI tournaments (sharded over ten runners, then
+# Chromium, plus a separate curated WebKit job on Ubuntu. Nightly jobs run
+# the long playout sweep, every fuzz target (one runner each), and the full
+# AI tournaments (sharded over ten runners, then
 # tallied against the targets in docs/ai.md). Read results with
 # `gh run list` and `gh run view --log-failed`.
 #
@@ -31,7 +32,7 @@ concurrency:
 env:
   GO_VERSION: '1.26'
   GOLANGCI_LINT_VERSION: v2.12
-  # Playwright browsers are installed only by the e2e job, explicitly.
+  # Playwright browsers are installed explicitly by their respective e2e jobs.
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
 jobs:
@@ -142,6 +143,62 @@ jobs:
           path: |
             .cache/e2e/report/
             .cache/e2e/results/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 14
+
+  e2e-webkit:
+    name: e2e WebKit (smoke, layout, RTL, native audio)
+    if: github.event_name != 'schedule'
+    needs: [go, web]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: server/go.sum
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build the server
+        run: go -C server build -o bin/ajayeb ./cmd/ajayeb
+      - name: Build the web client (test mode)
+        run: pnpm -C web build --mode test
+      - name: Install WebKit and Linux media dependencies
+        run: pnpm -C e2e exec playwright install --with-deps webkit
+      - name: Playwright (WebKit only)
+        env:
+          CI: 'true'
+          AJAYEB_WEBKIT_PROJECT: '1'
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ../.cache/e2e/webkit.json
+        run: pnpm -C e2e exec playwright test --project webkit --reporter=list,json
+      - name: Record AAC or synthesized audio paths
+        if: always()
+        run: |
+          {
+            echo '### WebKit native audio paths'
+            if [ -f .cache/e2e/webkit.json ]; then
+              jq -r '[.. | objects | .annotations? // empty | .[]
+                | select(.type == "audio-path") | .description]
+                | unique[] | "- " + .' \
+                .cache/e2e/webkit.json
+            else
+              echo 'No WebKit test report was produced; see the failed setup step.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep WebKit results and traces
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-webkit
+          path: |
+            .cache/e2e/results/
+            .cache/e2e/webkit.json
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 14

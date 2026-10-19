@@ -60,3 +60,19 @@ The gallery sound board has separate file and synth buttons for every cue,
 plus the existing busy-move sequence and volume steps. A file-only audition reports
 when its file is unavailable, rather than silently playing the synth. `sound-files.spec.ts`
 checks lazy loading and decodes every shipped file in the test browser.
+
+
+## macOS WebKit coverage
+
+`make install-webkit` and `make e2e-webkit` add opt-in headless WebKit coverage
+for gesture unlock, lazy metadata/AAC loading and native decoding/playback,
+explicit missing-file synth fallback, simulated hide/show with real context
+suspension and gesture recovery, and the Sound/Animation controls. The report
+records whether AAC buffers or synthesized sources actually started. It does
+not claim physical speaker audibility or an iOS interruption test. The same
+native audio assertions can run in Chromium; that verifies test behavior but
+does not replace a blocked WebKit run.
+
+The manual Safari/device check is **deferred-do-no-ask-user-again**. iOS silent
+switch behavior, call interruptions and home-screen app mode remain untested
+here. See [the WebKit scope and commands](../testing.md#opt-in-webkit-smoke-on-macos).

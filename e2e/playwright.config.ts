@@ -2,13 +2,15 @@
 //
 // Run through the guard, never bare: `make e2e`, `make e2e-smoke`, or
 // `python3 tools/heavy.py run --kind browser -- pnpm -C e2e exec playwright test`.
-// The guard's browser lock keeps it to one Chrome on the machine.
+// The guard's browser lock keeps it to one headless browser on the machine.
 //
 // Locally and on CI the tests use Playwright's own Chromium (channel
 // 'chromium': Chrome for Testing in Chrome's new headless mode), installed by
 // `make install` locally and `playwright install --with-deps chromium` on
 // CI. Never the installed Google Chrome: that is the owner's everyday
 // browser, and a headless run of its app still registers as it (D26).
+// The opt-in webkit project uses headless Playwright WebKit only, never the
+// installed Safari or safaridriver. make install-webkit downloads it separately.
 //
 // Paths are relative to this file's directory, which is also the webServer's
 // working directory. Runner diagnostics go under ../.cache/e2e/; the opt-in
@@ -46,9 +48,28 @@ const uxRequested =
 // explicit selection to them, rather than changing the project set midway.
 if (uxRequested) process.env.AJAYEB_UX_PROJECT = '1';
 
+const webkitRequested =
+  process.env.AJAYEB_WEBKIT_PROJECT === '1' ||
+  process.argv.some(
+    (arg, i, args) =>
+      arg === '--project=webkit' || (arg === '--project' && args[i + 1] === 'webkit')
+  );
+if (webkitRequested) process.env.AJAYEB_WEBKIT_PROJECT = '1';
+
+// Chromium's channel and switches must not reach WebKit. UX uses Chromium too.
+const chromiumUse = {
+  channel: 'chromium',
+  launchOptions: {
+    args: ['--disable-extensions', '--disable-background-networking', '--mute-audio']
+  }
+};
+
 const CI = !!process.env.CI;
 const PORT = 38954;
 const PROD_BASE_URL = process.env.E2E_BASE_URL;
+if (webkitRequested && PROD_BASE_URL) {
+  throw new Error('WebKit smoke requires the local test server; unset E2E_BASE_URL.');
+}
 const ORIGIN = PROD_BASE_URL ?? `http://127.0.0.1:${PORT}`;
 
 // Local HTTP must never go through a proxy. Extend whatever is already set
@@ -97,17 +118,13 @@ export default defineConfig({
   ],
   use: {
     baseURL: ORIGIN,
-    channel: 'chromium',
     headless: true,
     // A click that cannot land (a covered control) fails here, with its
     // call log, instead of waiting out the whole test.
     actionTimeout: PROD_BASE_URL ? 40_000 : 20_000,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'off',
-    launchOptions: {
-      args: ['--disable-extensions', '--disable-background-networking', '--mute-audio']
-    }
+    video: 'off'
   },
   // No webServer in production-smoke mode: the site named by E2E_BASE_URL is
   // already running, and nothing here may start a local one in its place.
@@ -131,13 +148,20 @@ export default defineConfig({
             name: 'ux',
             testDir: './ux',
             timeout: 120_000,
-            use: { viewport: { width: 1280, height: 800 }, serviceWorkers: 'block' as const }
+            use: {
+              ...chromiumUse,
+              viewport: { width: 1280, height: 800 },
+              serviceWorkers: 'block' as const
+            }
           }
         ]
       : []),
     // Unset, this project's grep falls back to the top-level config.grep
     // above, so the @prod forcing already reaches it with no extra code.
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'desktop',
+      use: { ...chromiumUse, ...devices['Desktop Chrome'] }
+    },
     // This project sets its own grep, so production-smoke mode must repeat
     // the @prod forcing here too: see the header comment above. It is ANDed
     // with the project's normal @mobile filter (both lookaheads must match),
@@ -148,8 +172,22 @@ export default defineConfig({
     // let it run here as well.
     {
       name: 'mobile',
-      use: { ...devices['Pixel 7'] },
+      use: { ...chromiumUse, ...devices['Pixel 7'] },
       grep: PROD_BASE_URL ? /(?=.*@prod)(?=.*@mobile)/ : /@mobile/
-    }
+    },
+    ...(webkitRequested
+      ? [
+          {
+            name: 'webkit',
+            testMatch: [
+              '**/smoke.spec.ts',
+              '**/layout.spec.ts',
+              '**/rtl.spec.ts',
+              '**/audio-engine.spec.ts'
+            ],
+            use: { ...devices['Desktop Safari'], browserName: 'webkit' as const }
+          }
+        ]
+      : [])
   ]
 });

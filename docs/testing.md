@@ -288,13 +288,13 @@ token, and `tools/chrome/shot.mjs --token` refuses one.
 `e2e/` holds the Playwright specs. They run against the real server binary
 and the test-mode web build, which the Playwright config starts itself
 (`server/bin/ajayeb --dev --dev-endpoints --bot-delay 0 --seed-base 1000`
-on port 38954, with a fresh data directory under `.cache/e2e/`), in the
+on port 38954, with a fresh data directory under `.cache/e2e/`), in
 Playwright's own Chromium (Chrome for Testing, `channel: 'chromium'`) both
 locally and on CI, never the installed Google Chrome (D26). CI splits the
 suite into two shards (`--shard=1/2` and `--shard=2/2`), each a job with its
 own server, and keeps each shard's report and traces when it fails or runs
 out of time. The shards leave out the `@perf` case, which runs in its own
-job, `e2e-perf`, described under `animation.spec.ts` below. There are two projects: `desktop` (Desktop Chrome, a mouse) runs every spec, and `mobile`
+job, `e2e-perf`, described under `animation.spec.ts` below. There are two projects: `desktop` (Desktop Chrome, a mouse) runs the standard specs, and `mobile`
 (Pixel 7, touch) runs the specs tagged `@mobile`.
 
 Run them through the guard, which holds the machine's one browser lock:
@@ -311,6 +311,85 @@ git). The config stops the server and the browser at the end of a run. A
 click or other action gives up after 20 s (`actionTimeout`), so a control
 that something covers fails with its call log instead of waiting out the
 whole test.
+
+### Opt-in WebKit smoke on macOS
+
+The manual Safari/device check is **deferred-do-no-ask-user-again** by the
+owner's decision. Do not request another Safari run. The local WebKit suite
+adds engine coverage that the standard Chromium projects cannot provide.
+
+```sh
+make install-webkit  # explicit Playwright WebKit download, separate from install
+make e2e-webkit      # build, then run the curated headless WebKit project
+```
+
+Use the usual detached guard wrapper when working unattended:
+
+```sh
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind light -- make e2e-webkit
+```
+
+`E2E_BUILD=0` reuses a current test build. `GREP` and `PW_ARGS` can narrow the
+curated run, for example `PW_ARGS=audio-engine.spec.ts`. The project is enabled
+only by that target, `AJAYEB_WEBKIT_PROJECT=1` or an explicit `--project webkit`
+(`--project=webkit` also works). It is absent from default project selection and
+production smoke; explicit use with `E2E_BASE_URL` is refused. The local
+browser download does not alter default `make install` and retains other
+cached browser versions. No package script change is needed.
+
+WebKit runs headless under the same `heavy.py --kind browser` lock as Chromium.
+Its launch options contain no Chromium channel or switches. It never launches
+the installed Safari app or `safaridriver`. The existing smoke, viewport layout
+and Persian RTL specs run in WebKit, alongside `audio-engine.spec.ts`.
+
+The audio spec observes native AudioContext creation, decode results and source
+starts without replacing WebAudio behavior. It verifies no audio context,
+sound metadata or file request before a gesture; a real first tap unlocks the
+context and loads the hashed metadata and AAC files. Each run attaches the
+observed path, AAC buffer playback or synthesized fallback, and decode results.
+Forced missing-file and native decode-rejection cases prove fallback separately. Sound off prevents new
+sources and loading, whereas Animation off removes animation without muting
+sound. Both Animation settings are exercised through the real game controls.
+
+The visibility case explicitly simulates `hidden`/`visible` page events and
+suspends a real AudioContext, then checks that a subsequent tap resumes game
+audio. This tests the app's recovery path, not real OS backgrounding: headless
+Playwright pages behave as active pages. Source starts demonstrate a functioning
+audio graph, not sound measured at the speakers.
+
+[Playwright's WebKit](https://playwright.dev/docs/browsers#webkit) is a patched
+upstream build, not the installed Safari version; macOS provides relevant codec
+coverage, but other platforms can differ. This suite cannot stand in for iOS's
+silent switch, call interruptions, device speaker routing or home-screen app
+mode. Those manual checks remain deferred. See [Playwright's page model](https://playwright.dev/docs/pages#multiple-pages)
+for the headless visibility limit.
+
+The native audio spec also runs in Chromium, so its observer and assertions can
+be verified when WebKit cannot launch. This does not count as a WebKit pass.
+On macOS 14, Playwright can select frozen WebKit revision 2251 rather than
+its current engine. The local macOS 14.3 run crashed with SIGBUS in the
+Objective-C loader before any page or audio test could run; no WebKit app
+behavior was validated there. Older host versions can fail in the loader before opening a
+page ([upstream startup report](https://github.com/microsoft/playwright/issues/35896));
+recent clients also have a documented mismatch with that frozen build
+([upstream compatibility report](https://github.com/microsoft/playwright/issues/42964)).
+Keep such a run failed and report the installed revision and host version in
+private results. Do not mask it by skipping browser tests or substituting
+Chromium for the WebKit target. It is not evidence of an app regression, and
+it does not trigger another manual Safari request.
+
+The separate Ubuntu `e2e-webkit` CI job installs the workspace, builds the
+same test server and bundle, then installs WebKit with `--with-deps` and runs
+only that project. It runs after Go/web checks on master pushes, pull requests
+and manual dispatch, separately from Chromium, with a 20-minute job limit.
+It uploads its JSON report, native audio attachments and failure traces even
+on successful runs, and lists observed audio paths in the job summary.
+Linux AAC decoding depends on the runner's GStreamer plugins. A decoder-less
+run must prove actual synthesized sources start and report fallback coverage;
+it is not counted as AAC decode coverage. Successful decoding must produce
+native file-buffer playback. CI is configured here but cannot be run on this
+macOS host without a container runtime; the first coordinator-pushed master
+run supplies that Linux WebKit evidence.
 
 ### The shared helpers (`e2e/fixtures/`)
 
