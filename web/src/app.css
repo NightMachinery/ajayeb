@@ -14,7 +14,9 @@
 /* Self-hosted OFL fonts, subsets built by web/font-sources/subset.sh:
    Fraunces and Inter for Latin, Vazirmatn for Persian. Each unicode-range
    matches its subset, so a page downloads a face only when it shows a
-   character from that range: an English page never fetches Vazirmatn. */
+   character from that range: an English page never fetches Vazirmatn.
+   Vazirmatn's range leaves out the direction marks (U+200E, U+200F), which
+   the English strings carry and no font needs to draw. */
 @font-face {
   font-family: 'Fraunces';
   font-style: normal;
@@ -62,7 +64,7 @@
   font-weight: 400;
   font-display: swap;
   src: url('./lib/fonts/vazirmatn-400.woff2') format('woff2');
-  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFC;
+  unicode-range: U+0600-06FF, U+200C-200D, U+FB50-FDFF, U+FE70-FEFC;
 }
 
 @font-face {
@@ -71,7 +73,7 @@
   font-weight: 600;
   font-display: swap;
   src: url('./lib/fonts/vazirmatn-600.woff2') format('woff2');
-  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFC;
+  unicode-range: U+0600-06FF, U+200C-200D, U+FB50-FDFF, U+FE70-FEFC;
 }
 
 @font-face {
@@ -80,7 +82,7 @@
   font-weight: 700;
   font-display: swap;
   src: url('./lib/fonts/vazirmatn-700.woff2') format('woff2');
-  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFC;
+  unicode-range: U+0600-06FF, U+200C-200D, U+FB50-FDFF, U+FE70-FEFC;
 }
 
 /* Persian: Vazirmatn follows Inter and Fraunces in every stack (tokens.css),

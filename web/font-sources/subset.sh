@@ -13,8 +13,11 @@
 #
 # Vazirmatn (Persian): the Arabic block (letters, harakat, Persian and
 # Arabic-Indic digits, the Arabic comma, semicolon, question mark, percent
-# and decimal and thousands separators), ZWNJ, ZWJ and the direction marks,
-# and the presentation forms, nothing Latin, so Latin text keeps Inter. It
+# and decimal and thousands separators), ZWNJ and ZWJ, and the presentation
+# forms, nothing Latin, so Latin text keeps Inter. Not the direction marks
+# (U+200E, U+200F): the English interface wraps strings in them, Inter has
+# no glyph for them, and a range that claimed them would make every English
+# page fetch Vazirmatn for an invisible character. It
 # keeps pyftsubset's default layout features, which include the Arabic
 # joining forms (init, medi, fina, isol), rlig, ccmp, calt, mark, mkmk and
 # kern, plus tabular figures.
@@ -32,7 +35,7 @@ out="$here/../src/lib/fonts"
 unicodes='U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2190-2199,U+2212,U+2215,U+FEFF,U+FFFD'
 
 # Keep in sync with the unicode-range of the Vazirmatn @font-face rules.
-persian='U+0600-06FF,U+200C-200F,U+FB50-FDFF,U+FE70-FEFC'
+persian='U+0600-06FF,U+200C-200D,U+FB50-FDFF,U+FE70-FEFC'
 
 command mkdir -p "$out"
 for name in fraunces-600 inter-400 inter-600 inter-700; do
