@@ -1,197 +1,110 @@
-// Unit tests for the wonder draft screen (Draft.svelte): Take buttons use
-// actButtonState consistently across connection state, sent state, canAct,
-// confirmation, and tutorial readiness. A locked tutorial action key remains
-// non-actionable.
+// The wonder draft's Take button (M11.board-layout-fixes) is the move button
+// every other move uses (game/ActionButton.svelte), so it follows the one
+// act-button rule in a local room and with the confirm step alike: disabled
+// while input is closed or the connection is down, and locked, with a
+// reason, by the tutorial's rails. Rendered on the server, where the split
+// layout's media query is false, so this is the phone's wonder sheet; the
+// split layout renders the same snippet, and the e2e driver takes wonders
+// through both.
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 import { t } from '$lib/i18n';
-import { protocolFixtures } from '$lib/wire/fixtures.gen';
+import { protocolFixtureNames, protocolFixtures } from '$lib/wire/fixtures.gen';
 import type { View } from '$lib/wire';
+import { wonderName } from '../card/effect-text';
 import Draft from './Draft.svelte';
 
-const draftFixture = protocolFixtures.find((view) => view.phase === 'wonderDraft');
-if (!draftFixture) throw new Error('expected a recorded wonder draft fixture');
+const view: View = (() => {
+  const v = protocolFixtures[protocolFixtureNames.indexOf('draft-round-1-seat1')];
+  if (!v) throw new Error('no fixture draft-round-1-seat1');
+  return v;
+})();
+const keyOf = (wonder: string) => `draft:${wonder}`;
+const [guided, other] = view.choices.flatMap((c) => (c.kind === 'draft' ? [c.wonder!] : []));
 
-const viewBase: View = {
-  ...draftFixture,
-  viewer: 0,
-  toMove: 0,
-  choices: [
-    { key: 'draft:pyramids', kind: 'draft', wonder: 'pyramids' },
-    { key: 'draft:mausoleum', kind: 'draft', wonder: 'mausoleum' }
-  ],
-  draft: {
-    round: 1,
-    order: [0, 1, 1, 0],
-    offer: [{ wonder: 'pyramids' }, { wonder: 'mausoleum' }]
-  }
-};
-
-function getActionTag(html: string, key: string): string {
-  const match = html.match(new RegExp(`<button\\b[^>]*\\bdata-act="${key}"[^>]*>`, 'i'));
-  if (!match) throw new Error(`expected button with data-act="${key}"`);
-  return match[0];
+interface Shown {
+  /** The sheet's markup, from its title on. */
+  html: string;
+  /** The sheet's one button tag. */
+  tag: string;
+  disabled: boolean;
+  /** The data-act-group wrapper's tag, when there is a move to send. */
+  group: string | null;
 }
 
-function isTagDisabled(tag: string): boolean {
-  return /(?:^|\s)disabled(?:\s|=|>)/i.test(tag);
+const isDisabled = (tag: string) => /\sdisabled(?=[\s>=])/.test(tag);
+
+/** The phone's wonder sheet for `wonder`, and its Take button. */
+function sheet(wonder: string, props: Record<string, unknown> = {}): Shown {
+  const body = render(Draft, {
+    props: {
+      view,
+      canAct: true,
+      onact: () => {},
+      names: ['Ana', 'Bob'] as const,
+      ...props,
+      detail: wonder
+    }
+  }).body;
+  const html = body.slice(body.indexOf('id="draft-wonder-title"'));
+  const buttons = html.match(/<button[^>]*>/g) ?? [];
+  expect(buttons).toHaveLength(1);
+  const tag = buttons[0]!;
+  return {
+    html,
+    tag,
+    disabled: isDisabled(tag),
+    group: html.match(/<div[^>]*data-act-group[^>]*>/)?.[0] ?? null
+  };
 }
 
-describe('Draft screen Take button states', () => {
-  describe('component layout and confirmation branches', () => {
-    it('renders standard Button in compact path with confirm: false', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          split: false,
-          detail: 'pyramids',
-          confirm: false,
-          canAct: true,
-          connected: true,
-          onact: () => {}
-        }
-      });
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(false);
-      expect(tag).not.toContain('isolate overflow-hidden');
-    });
-
-    it('renders ConfirmButton in compact path with confirm: true', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          split: false,
-          detail: 'pyramids',
-          confirm: true,
-          canAct: true,
-          connected: true,
-          onact: () => {}
-        }
-      });
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(false);
-      expect(tag).toContain('isolate overflow-hidden');
-    });
-
-    it('renders standard Button in split path with confirm: false', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          split: true,
-          confirm: false,
-          canAct: true,
-          connected: true,
-          onact: () => {}
-        }
-      });
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(false);
-      expect(tag).not.toContain('isolate overflow-hidden');
-    });
-
-    it('renders ConfirmButton in split path with confirm: true', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          split: true,
-          confirm: true,
-          canAct: true,
-          connected: true,
-          onact: () => {}
-        }
-      });
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(false);
-      expect(tag).toContain('isolate overflow-hidden');
-    });
+describe('the draft Take button', () => {
+  it('has two offered wonders to take', () => {
+    expect(guided).toBeDefined();
+    expect(other).toBeDefined();
   });
 
-  describe('action button states across paths', () => {
-    it('renders Take buttons enabled when canAct and connected', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          detail: 'pyramids',
-          canAct: true,
-          connected: true,
-          onact: () => {}
-        }
+  for (const confirm of [false, true]) {
+    describe(confirm ? 'with the confirm step' : 'in a local room', () => {
+      it('is enabled while input is open and the connection is up', () => {
+        const s = sheet(guided!, { confirm });
+        expect(s.tag).toContain(`data-act="${keyOf(guided!)}"`);
+        expect(s.disabled).toBe(false);
+        expect(s.group).not.toBeNull();
+        expect(s.group).not.toContain('data-tutorial-locked');
+        expect(s.html).toContain(t('choices.draft.take', { wonder: wonderName(guided!) }));
       });
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(false);
-    });
 
-    it('disables Take buttons and shows connection waiting text when disconnected', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          detail: 'pyramids',
-          canAct: true,
-          connected: false,
-          onact: () => {}
-        }
+      it('is disabled and waits for the connection while it is down', () => {
+        const s = sheet(guided!, { confirm, connected: false });
+        expect(s.disabled).toBe(true);
+        expect(s.html).toContain(t('online.waitingConnection'));
       });
-      expect(body).toContain(t('online.waitingConnection'));
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(true);
-    });
 
-    it('disables Take buttons when canAct is false (sent state)', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          detail: 'pyramids',
-          canAct: false,
-          connected: true,
-          onact: () => {}
-        }
+      it('is disabled once a move is sent (input closed)', () => {
+        expect(sheet(guided!, { confirm, canAct: false }).disabled).toBe(true);
       });
-      const tag = getActionTag(body, 'draft:pyramids');
-      expect(isTagDisabled(tag)).toBe(true);
-    });
 
-    it('locks non-allowed actions in tutorial readiness and marks them with data-tutorial-locked (compact)', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          split: false,
-          detail: 'mausoleum',
-          canAct: true,
-          connected: true,
-          allow: (key: string) => key === 'draft:pyramids',
-          lockedReason: 'Take the Pyramids first.',
-          onact: () => {}
-        }
+      it('is locked by the rails, with a reason, on every wonder but the guided one', () => {
+        const allow = (key: string) => key === keyOf(guided!);
+        const rails = { confirm, allow, lockedReason: 'Take the guided wonder.' };
+        const locked = sheet(other!, rails);
+        expect(locked.disabled).toBe(true);
+        expect(locked.group).toContain('data-tutorial-locked');
+        expect(locked.html).toContain('data-tutorial-reason');
+        expect(locked.html).toContain('Take the guided wonder.');
+        const open = sheet(guided!, rails);
+        expect(open.disabled).toBe(false);
+        expect(open.group).not.toContain('data-tutorial-locked');
+        expect(open.html).not.toContain('data-tutorial-reason');
       });
-      const tag = getActionTag(body, 'draft:mausoleum');
-      expect(tag).toContain('data-tutorial-locked');
-      expect(isTagDisabled(tag)).toBe(true);
-      expect(body).toContain('data-tutorial-reason');
-      expect(body).toContain('Take the Pyramids first.');
     });
+  }
 
-    it('locks non-allowed actions in tutorial readiness and shows prompt lock banner (split)', () => {
-      const { body } = render(Draft, {
-        props: {
-          view: viewBase,
-          split: true,
-          canAct: true,
-          connected: true,
-          allow: (key: string) => key === 'draft:pyramids',
-          lockedReason: 'Take the Pyramids first.',
-          onact: () => {}
-        }
-      });
-      const lockedTag = getActionTag(body, 'draft:mausoleum');
-      expect(lockedTag).toContain('data-tutorial-locked');
-      expect(isTagDisabled(lockedTag)).toBe(true);
-
-      const allowedTag = getActionTag(body, 'draft:pyramids');
-      expect(allowedTag).not.toContain('data-tutorial-locked');
-      expect(isTagDisabled(allowedTag)).toBe(false);
-
-      expect(body).toContain('data-tutorial-reason');
-      expect(body).toContain('Take the Pyramids first.');
-    });
+  it('shows a disabled button with no move key on a wonder this client cannot take now', () => {
+    const s = sheet(guided!, { view: { ...view, choices: [] } });
+    expect(s.disabled).toBe(true);
+    expect(s.tag).not.toContain('data-act');
+    expect(s.group).toBeNull();
   });
 });

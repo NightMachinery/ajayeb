@@ -35,9 +35,8 @@
   import { describeWonder } from '$lib/view/describe';
   import type { View } from '$lib/wire';
   import { costText, effectSentence, wonderName } from '../card/effect-text';
+  import ActionButton from '../game/ActionButton.svelte';
   import Button from '../shell/Button.svelte';
-  import ConfirmButton from '../shell/ConfirmButton.svelte';
-  import { actButtonState } from '../game/act-button';
   import Sheet from '../shell/Sheet.svelte';
   import WonderTile from '../wonder/WonderTile.svelte';
   import CoachNote from '../tutorial/CoachNote.svelte';
@@ -74,8 +73,6 @@
     allow?: Allow;
     /** Why a move the rails refuse is locked. */
     lockedReason?: string;
-    /** Explicit split layout override (tests/stories). */
-    split?: boolean;
   }
 
   let {
@@ -89,8 +86,7 @@
     detail = $bindable(null),
     coach = null,
     allow = ALLOW_ALL,
-    lockedReason = '',
-    split: splitProp
+    lockedReason = ''
   }: Props = $props();
 
   const ctx = tryGameContext();
@@ -102,7 +98,6 @@
   const split = new MediaQuery(
     '(min-width: 64rem), (orientation: landscape) and (max-height: 32rem)'
   );
-  const isSplit = $derived(splitProp ?? split.current);
 
   const round = $derived(view.draft?.round ?? 1);
   const offer = $derived(view.draft?.offer ?? []);
@@ -152,7 +147,6 @@
   }
 
   function take(key: string): void {
-    if (!canAct || !connected || !allow(key)) return;
     detail = null;
     onact(key);
   }
@@ -170,43 +164,40 @@
 </script>
 
 {#snippet takeButton(slug: string, key: string | undefined, reason: boolean)}
-  {@const allowed = key !== undefined ? allow(key) : true}
-  {@const ready = key !== undefined && allowed}
-  {@const rule = actButtonState({
-    label: t('choices.draft.take', { wonder: wonderName(slug) }),
-    canAct,
-    connected,
-    confirm,
-    ready
-  })}
-  <!-- The act-button rule (game/act-button.ts), as on the card sheet's
-       actions: disabled and "Waiting for connection" while the connection
-       is down, and the confirm step when the room asks for it. -->
-  {#if rule.confirm && key !== undefined}
-    <ConfirmButton
-      label={rule.label}
-      class="h-auto! min-h-12 w-full px-4 py-2 leading-tight"
-      data-act={key}
-      data-tutorial-locked={!allowed ? '' : undefined}
-      disabled={rule.disabled}
-      onConfirm={() => take(key)}
-    />
+  {@const label = t('choices.draft.take', { wonder: wonderName(slug) })}
+  {#if key !== undefined}
+    <!-- The move button every move uses (game/ActionButton.svelte), grouped
+         as on the card sheet: disabled and "Waiting for connection" while
+         the connection is down, the confirm step when the room asks for it,
+         and locked by the tutorial's rails like any other move. -->
+    <div
+      class="flex flex-col gap-1"
+      data-act-group
+      data-tutorial-locked={allow(key) ? undefined : ''}
+    >
+      <ActionButton
+        {key}
+        {label}
+        {confirm}
+        {connected}
+        disabled={!canAct || !allow(key)}
+        onact={take}
+      />
+      {#if reason && !allow(key)}
+        <p class="text-center text-xs text-fg-muted" data-tutorial-reason>{lockedReason}</p>
+      {/if}
+    </div>
   {:else}
+    <!-- Not this client's pick: the same button, disabled, as the card sheet
+         shows a move that cannot be made now. -->
     <Button
       variant="primary"
-      class="h-auto! min-h-12 w-full px-4 py-2 leading-tight"
-      data-act={key}
-      data-tutorial-locked={!allowed ? '' : undefined}
-      disabled={rule.disabled}
-      onclick={() => key !== undefined && take(key)}
+      full
+      disabled
+      class="h-auto! min-h-[52px] py-2 text-center leading-tight"
     >
-      {rule.label}
+      {connected ? label : t('online.waitingConnection')}
     </Button>
-  {/if}
-  {#if !allowed && reason}
-    <p class="mt-1 text-center text-xs text-fg-muted" data-tutorial-reason>
-      {lockedReason}
-    </p>
   {/if}
 {/snippet}
 
@@ -272,7 +263,7 @@
     {/if}
     <span>{prompt}</span>
   </p>
-  {#if isSplit && canAct && [...keys.values()].some((k) => !allow(k))}
+  {#if split.current && canAct && [...keys.values()].some((k) => !allow(k))}
     <!-- Once for the page's Take buttons; the phone sheet says it under its own. -->
     <p class="-mt-1 text-xs text-fg-muted" data-tutorial-reason>{lockedReason}</p>
   {/if}
@@ -290,7 +281,7 @@
         data-wonder-offer={item.wonder}
         data-bot-pick={botPick === item.wonder ? '' : undefined}
       >
-        {#if isSplit}
+        {#if split.current}
           <WonderTile slug={item.wonder} size="draft" {takenBy} focusable />
           {#if item.takenBy === undefined}
             {@render effects(item.wonder, 'text-[13px] leading-snug text-fg')}
