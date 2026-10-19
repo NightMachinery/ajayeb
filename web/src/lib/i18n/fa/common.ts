@@ -2,10 +2,11 @@
 // developer pages). Complete: every key of ../en/common.ts. Kept in Latin
 // script on purpose: 'app.name' (the wordmark, under the Persian name that
 // 'app.nameNative' shows as decoration) and the proper nouns in 'app.legal'
-// (7 Wonders Duel, Repos Production, Asmodee), 'app.foss' (MIT) and
-// 'app.source' (GitHub). The game's name sits in a left-to-right isolate
-// (U+2066 ... U+2069) in 'app.legal': without it, the bidi algorithm shows
-// its leading 7 after "Wonders Duel" in a right-to-left line. See ./index.ts.
+// (7 Wonders Duel, Repos Production, Asmodee), 'app.foss' (MIT),
+// 'app.source' (GitHub) and 'app.wordmarkTip' (the wordmark's Latin line).
+// The game's name sits in a left-to-right isolate (U+2066 ... U+2069) in
+// 'app.legal': without it, the bidi algorithm shows its leading 7 after
+// "Wonders Duel" in a right-to-left line. See ./index.ts.
 
 import type { common as en } from '../en/common';
 import type { Translation } from '../types';
@@ -20,6 +21,7 @@ export const common = {
   // The Persian name, shown as decoration next to the Latin one in every locale.
   'app.nameNative': 'عجایب',
   'app.tagline': 'نبرد عجایب برای دو نفر',
+  'app.wordmarkTip': 'عجایب (Ajayeb): شگفتی‌ها',
   'app.legal':
     'عجایب پیاده‌سازی غیررسمی و غیرتجاری قوانین بازی \u20667 Wonders Duel\u2069، اثر آنتوان بوزا و برونو کاتالا (Repos Production)، به دست علاقه‌مندان آن است. این برنامه وابسته به Repos Production یا Asmodee نیست و تأیید آن‌ها را ندارد؛ \u20667 Wonders Duel\u2069 علامت تجاری آن‌هاست.',
   'app.getGame': 'نسخه‌ی اصلی بازی را از ناشرش تهیه کنید',

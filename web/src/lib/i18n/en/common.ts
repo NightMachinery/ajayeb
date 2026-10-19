@@ -23,6 +23,9 @@ export const common = {
   // The Persian name, shown as decoration next to the Latin one in every locale.
   'app.nameNative': 'عجایب',
   'app.tagline': 'A duel of wonders for two',
+  // The wordmark's tooltip: what the Persian name means. The Persian word
+  // sits in a right-to-left isolate (U+2067 ... U+2069).
+  'app.wordmarkTip': 'Ajayeb, from the Persian \u2067عجایب\u2069: “wonders”',
   'app.legal':
     'Ajayeb is an unofficial, non-commercial fan implementation of the rules of 7 Wonders Duel by Antoine Bauza and Bruno Cathala (Repos Production). It is not affiliated with or endorsed by Repos Production or Asmodee; 7 Wonders Duel is their trademark.',
   'app.getGame': 'Get the original game from its publisher',

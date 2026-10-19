@@ -5,8 +5,11 @@
   // accent. Sized by its width in the caller's class; the height follows.
   //
   // Decorative by default, beside a visible title; pass `label` (through
-  // t()) where it stands for the name itself.
+  // t()) where it stands for the name itself. Either way its tooltip says
+  // what the Persian name means (AGENTS.md: every image has one).
+  import { t } from '$lib/i18n';
   import { WORDMARK } from '$lib/ornaments/art';
+  import { tooltip } from '$lib/ui/tooltip.svelte';
 
   let { label, class: className = '' }: { label?: string; class?: string } = $props();
 </script>
@@ -18,6 +21,7 @@
   aria-label={label}
   aria-hidden={label ? undefined : 'true'}
   data-wordmark
+  {@attach tooltip({ text: t('app.wordmarkTip') })}
 >
   <!-- Our own wordmark file, imported at build time (ornaments/art.ts). -->
   <!-- eslint-disable-next-line svelte/no-at-html-tags -->
