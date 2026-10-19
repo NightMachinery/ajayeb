@@ -35,6 +35,7 @@
   import { describeWonder } from '$lib/view/describe';
   import type { View } from '$lib/wire';
   import { costText, effectSentence, wonderName } from '../card/effect-text';
+  import Button from '../shell/Button.svelte';
   import ConfirmButton from '../shell/ConfirmButton.svelte';
   import { actButtonState } from '../game/act-button';
   import Sheet from '../shell/Sheet.svelte';
@@ -147,6 +148,7 @@
   }
 
   function take(key: string): void {
+    if (!canAct || !connected || !allow(key)) return;
     detail = null;
     onact(key);
   }
@@ -164,13 +166,14 @@
 </script>
 
 {#snippet takeButton(slug: string, key: string | undefined, reason: boolean)}
-  {@const open = key === undefined || allow(key)}
+  {@const allowed = key !== undefined ? allow(key) : true}
+  {@const ready = key !== undefined && allowed}
   {@const rule = actButtonState({
     label: t('choices.draft.take', { wonder: wonderName(slug) }),
-    canAct: canAct && open,
+    canAct,
     connected,
     confirm,
-    ready: key !== undefined
+    ready
   })}
   <!-- The act-button rule (game/act-button.ts), as on the card sheet's
        actions: disabled and "Waiting for connection" while the connection
@@ -180,22 +183,23 @@
       label={rule.label}
       class="h-auto! min-h-12 w-full px-4 py-2 leading-tight"
       data-act={key}
+      data-tutorial-locked={!allowed ? '' : undefined}
       disabled={rule.disabled}
-      onConfirm={() => take(key)}
+      onConfirm={() => !rule.disabled && take(key)}
     />
   {:else}
-    <button
-      type="button"
-      class="inline-flex h-12 w-full items-center justify-center rounded-control bg-accent px-4 text-[15px] font-semibold
-        text-on-accent hover:brightness-105 active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+    <Button
+      variant="primary"
+      class="h-auto! min-h-12 w-full px-4 py-2 leading-tight"
       data-act={key}
+      data-tutorial-locked={!allowed ? '' : undefined}
       disabled={rule.disabled}
-      onclick={() => key !== undefined && take(key)}
+      onclick={() => key !== undefined && !rule.disabled && take(key)}
     >
       {rule.label}
-    </button>
+    </Button>
   {/if}
-  {#if !open && reason}
+  {#if !allowed && reason}
     <p class="mt-1 text-center text-xs text-fg-muted" data-tutorial-reason>
       {lockedReason}
     </p>

@@ -38,13 +38,13 @@
 <div
   class="flex justify-center {inline
     ? '@container border-t border-rule px-1.5 py-1'
-    : 'pointer-events-none fixed inset-x-0 bottom-[calc(var(--safe-b)+3.75rem)] z-30 px-3'} {className}"
+    : 'pointer-events-none fixed inset-x-0 bottom-[calc(var(--safe-b)+3.75rem)] z-30 px-3 short:bottom-[calc(var(--safe-b)+0.75rem)]'} {className}"
   data-peek-bar={inline ? 'inline' : 'float'}
 >
   <!-- In a narrow column (a phone in landscape) the buttons wrap under the
        text rather than squeezing it away. -->
   <div
-    class="pointer-events-auto flex max-w-full min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[1.5rem]
+    class="@container pointer-events-auto flex max-w-full min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[1.5rem]
       border border-rule-strong bg-panel py-1 ps-4 text-sm text-fg shadow-panel @max-3xs:ps-3 {onopen ||
     ondismiss
       ? 'pe-1'

@@ -150,7 +150,7 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     }
   });
 
-  test('the viewer ending the game sees their own review and an inline final-board bar', async ({
+  test('the viewer ending the game sees their own review and a floating final-board bar', async ({
     page
   }, info) => {
     await page.goto('/dev/new?mode=ai&level=easy&seat=0&seed=7&scenario=military-supremacy');
@@ -176,7 +176,7 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     await button.click();
     await expect(page.locator('[data-game-over] [data-peek-bar]')).toHaveAttribute(
       'data-peek-bar',
-      'inline'
+      'float'
     );
     await expect(page.locator('.card-structure')).toBeVisible();
     await photograph(page, info, 'final-board');
@@ -229,24 +229,32 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     await photograph(page, info, 'own-strip');
   });
 
-  test('a phone-landscape skipped-choice toast stays below the own strip', async ({
+  test('a phone-landscape skipped-choice toast stays clear of the own strip and turn controls', async ({
     page
   }, info) => {
-    await page.setViewportSize({ width: 844, height: 390 });
-    const driver = await openHotseatRoom(page, 'mausoleum-empty');
-    await driver.nextTurn();
-    await playKey(driver, 'wonder:mausoleum:rostrum', 'wonderFirst');
-    const toast = page.locator('[data-toast]');
-    await expect(toast).toBeVisible();
-    await photograph(page, info, 'landscape-toast');
-    const overlap = await toast.evaluate((el) => {
-      const t = el.getBoundingClientRect();
-      const strip = document.querySelector('.area-home .player-strip')!.getBoundingClientRect();
-      return (
-        t.top < strip.bottom && t.bottom > strip.top && t.left < strip.right && t.right > strip.left
-      );
-    });
-    expect(overlap).toBe(false);
+    for (const size of [
+      { width: 844, height: 390 },
+      { width: 740, height: 360 }
+    ]) {
+      await page.setViewportSize(size);
+      const driver = await openHotseatRoom(page, 'mausoleum-empty');
+      await driver.nextTurn();
+      await playKey(driver, 'wonder:mausoleum:rostrum', 'wonderFirst');
+      const toast = page.locator('[data-toast]');
+      await expect(toast).toBeVisible();
+      if (size.width === 844) await photograph(page, info, 'landscape-toast');
+      const overlap = await toast.evaluate((el) => {
+        const t = el.getBoundingClientRect();
+        const strip = document.querySelector('.area-home .player-strip')!.getBoundingClientRect();
+        const turn = document.querySelector('.area-turn')!.getBoundingClientRect();
+        const stripOverlap =
+          t.top < strip.bottom && t.bottom > strip.top && t.left < strip.right && t.right > strip.left;
+        const turnOverlap =
+          t.top < turn.bottom && t.bottom > turn.top && t.left < turn.right && t.right > turn.left;
+        return stripOverlap || turnOverlap;
+      });
+      expect(overlap).toBe(false);
+    }
   });
 
   test('every 48 px mini card keeps its cost and effect band inside one row', async ({

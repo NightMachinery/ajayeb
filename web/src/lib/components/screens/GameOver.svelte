@@ -316,7 +316,6 @@
 
   {#if collapsed}
     <PeekBar
-      inline
       text="{t('choices.over.bar')} · {headline}"
       openLabel={t('choices.over.results')}
       onopen={() => (collapsed = false)}

@@ -294,17 +294,17 @@
 
   const layout = $derived(breakpoints.viewport);
   // Where the toasts sit in play. Above the turn bar by default (on a phone
-  // that covers only this player's own strip). On a desktop the turn bar is
-  // under the structure, whose bottom row holds the cards a player can take,
-  // and in phone landscape the structure fills the middle down to the foot
-  // of the screen, so in both they sit at the foot of this player's own
-  // column instead, clear of the takeable cards, the track and the opponent.
+  // that covers only this player's own strip). On a desktop they sit at the
+  // foot of this player's own column. In phone landscape they sit at the foot
+  // of the center structure column, clear of the player's own strip and turn controls.
   const toastSpot = $derived(
     !view || view.phase === 'wonderDraft'
       ? ('turn' as const)
-      : layout === 'desktop' || layout === 'phone-landscape'
+      : layout === 'desktop'
         ? ('home' as const)
-        : ('turn' as const)
+        : layout === 'phone-landscape'
+          ? ('structure' as const)
+          : ('turn' as const)
   );
   const variant = $derived(
     layout === 'desktop'
@@ -557,14 +557,11 @@
       (!!frame && doneRoom === frame.code)
   );
 
-  // On wide screens, the viewer's own column (in a fixed hot-seat board the
-  // player to move may sit on the far side), so the mover's city stays in view.
+  // On desktop, the viewer's own column (in a fixed hot-seat board the
+  // player to move may sit on the far side), so the mover's city stays in view;
+  // on phones (portrait and landscape), over the structure in the center.
   const summaryAnchor = $derived(
-    layout === 'desktop' || layout === 'phone-landscape'
-      ? summarySeat === away
-        ? awayEl
-        : homeEl
-      : structureEl
+    layout === 'desktop' ? (summarySeat === away ? awayEl : homeEl) : structureEl
   );
 
   // The summary's move review (the advisor) and the viewer's trade prices
@@ -1154,6 +1151,11 @@
           botPick={pick?.slot}
           onselect={selectSlot}
         />
+        {#if toastSpot === 'structure'}
+          <!-- Phone landscape: bottom of the center structure column,
+             clear of the player's own strip and turn controls. -->
+          <ToastList {toasts} placement="inside" />
+        {/if}
       </div>
 
       <div
@@ -1207,7 +1209,7 @@
          because its panels are modal dialogs that would cover that screen and
          make it inert. -->
       {#if view?.phase === 'gameOver'}
-        <!-- Its modal stays in the top layer; its inline peek bar shares the choice bars' row. -->
+        <!-- Its modal stays in the top layer; its peek bar floats over the board in its fixed shell. -->
         <div class="contents" dir={i18n.dir}>
           <GameOver
             {view}
@@ -1507,16 +1509,16 @@
   .game-screen[data-layout='phone-landscape'] .area-away {
     padding-inline: 0.25rem max(0.25rem, var(--safe-r));
   }
-  /* A toast shares the narrow strip's column. Compact its spacing so a
-     long skipped-choice sentence fits below the strip, while the dismiss
-     button keeps its 44 px hit target. */
-  .game-screen[data-layout='phone-landscape'] .area-home :global([data-toast]) {
-    gap: 0.25rem;
-    padding: 0.5rem;
+  /* In phone landscape, toasts sit in the center structure column,
+     clear of the player's strip and turn controls. */
+  .game-screen[data-layout='phone-landscape'] .area-structure :global([data-toast]) {
+    gap: 0.5rem;
+    padding-inline: 0.75rem 0.5rem;
+    padding-block: 0.375rem;
   }
-  .game-screen[data-layout='phone-landscape'] .area-home :global([data-toast] p) {
-    font-size: 0.75rem;
-    line-height: 1.25;
+  .game-screen[data-layout='phone-landscape'] .area-structure :global([data-toast] p) {
+    font-size: 0.8125rem;
+    line-height: 1.3;
   }
   .game-screen[data-layout='phone-landscape'] .area-structure {
     padding-inline: 0.25rem;
