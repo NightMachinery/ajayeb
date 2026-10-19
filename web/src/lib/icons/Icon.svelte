@@ -1,13 +1,8 @@
 <script lang="ts">
-  // One icon from the inline sprite (see sprite.ts, inlined once by
-  // IconSprite.svelte in +layout.svelte). Decorative by default
-  // (aria-hidden); pass `label` (already translated, through t()) to make it
-  // a named image instead. Sized in em, so the surrounding font-size controls
-  // it; override with a `class` that sets width/height or font-size.
-  //
-  //   <Icon name="resource-wood" />
-  //   <Icon name="shield" label={t('icons.shield')} class="text-cinnabar-ink" />
-
+  // Render the original shapes directly. A sprite and SVG use shadow trees
+  // made every native modal restyle hundreds of unnecessary elements.
+  // Decorative by default; label, when supplied, is already translated.
+  import { iconMarkup, iconSources } from './sources';
   import type { IconName } from './names';
 
   interface Props {
@@ -17,13 +12,20 @@
   }
 
   let { name, label, class: className = '' }: Props = $props();
+  const uid = $props.id();
+  const source = $derived(iconSources[name]);
+  const markup = $derived(iconMarkup(name, uid));
 </script>
 
 <svg
+  viewBox={source.viewBox}
+  data-icon={name}
   class="inline-block size-[1em] shrink-0 align-[-0.125em] {className}"
   aria-hidden={label ? undefined : 'true'}
   role={label ? 'img' : undefined}
   aria-label={label}
 >
-  <use href="#i-{name}" />
+  <!-- Only our build-time vector sources enter markup (sources.ts). -->
+  <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+  {@html markup}
 </svg>

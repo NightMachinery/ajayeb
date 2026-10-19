@@ -36,6 +36,18 @@ Their previous local override retried twice even when the command requested
 attribution. Diagnostic profiling and first-attempt acceptance remain
 separate, and the 50 ms threshold and animation windows are unchanged.
 
+The reproduced diagnostic task is the native age-summary `showModal()` call
+while age-end coins are still moving. Most of its cost is style recalculation,
+also present at the game-over modal. CSS and HTML inert icon experiments did
+not reduce it. Hiding the sprite broke five clipped icons, so that change was
+rejected. The client now renders the same original shapes directly, with local
+clipping ids, removing the sprite and SVG use shadow trees. The age-summary
+diagnostic restyles 1,870 elements instead of 2,632 on desktop, and 1,183
+instead of 1,747 on mobile. The fixed-scale pixel comparison checks all
+81 icons in both themes and with inherited two-tone paints. Native modal focus,
+Escape, stacking, background inertness and timing remain browser-managed.
+Visual parity and repeated first-attempt checks are required before acceptance.
+
 ## CI prerequisite
 
 The `1369875` CI run skipped e2e because `golangci-lint` rejected the

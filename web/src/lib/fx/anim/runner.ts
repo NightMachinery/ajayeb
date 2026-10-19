@@ -38,6 +38,7 @@
 
 import { mount, unmount } from 'svelte';
 import { cardBySlug } from '$lib/catalog';
+import { drawIcon } from '$lib/icons/draw';
 import { formatSigned } from '$lib/i18n';
 import { scaleMs, type AnimationSpeed } from '$lib/ui/motion.svelte';
 import CardFace from '$lib/components/card/CardFace.svelte';
@@ -1240,9 +1241,7 @@ export class AnimRunner {
     const fanY = c.y;
     const back = drawn('span', 'fx-token-back');
     const svg = document.createElementNS(SVG_NS, 'svg');
-    const use = document.createElementNS(SVG_NS, 'use');
-    use.setAttribute('href', '#i-token-frame');
-    svg.append(use);
+    drawIcon(svg, 'token-frame');
     back.append(svg);
     place(back, { x: 0, y: 0, w: BACK_PX, h: BACK_PX });
     const total = step.each + step.hold + step.fade;

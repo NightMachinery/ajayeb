@@ -8,6 +8,8 @@
 // victory, neutral for a shared one or a forfeit.
 
 import { i18n, t } from '$lib/i18n';
+import { drawIcon } from '$lib/icons/draw';
+import type { IconName } from '$lib/icons/names';
 import { drawn } from './dom';
 
 export const PARTICLES = 12;
@@ -32,14 +34,12 @@ function kindOf(victory: string | undefined, winner: number | undefined): Banner
   }
 }
 
-function icon(name: string, className: string): SVGSVGElement {
+function icon(name: IconName, className: string): SVGSVGElement {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('class', className);
   svg.setAttribute('aria-hidden', 'true');
-  const use = document.createElementNS(ns, 'use');
-  use.setAttribute('href', `#i-${name}`);
-  svg.append(use);
+  drawIcon(svg, name);
   return svg;
 }
 

@@ -8,7 +8,6 @@
   import { holdGameLock } from '$lib/sw/game-lock';
   import { isGamePath } from '$lib/sw/policy';
   import TooltipLayer from '$lib/components/shell/TooltipLayer.svelte';
-  import IconSprite from '$lib/icons/IconSprite.svelte';
   import { i18n, t } from '$lib/i18n';
   import { motion } from '$lib/ui/motion.svelte';
   import { applySafeInsets, parseSafeParam } from '$lib/ui/safe-area';
@@ -60,8 +59,6 @@
   <link rel="preload" href={interRegular} as="font" type="font/woff2" crossorigin="anonymous" />
   <link rel="preload" href={frauncesHeading} as="font" type="font/woff2" crossorigin="anonymous" />
 </svelte:head>
-
-<IconSprite />
 
 <div
   class="app-shell"

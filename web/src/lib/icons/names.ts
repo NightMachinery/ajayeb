@@ -1,5 +1,5 @@
 // The typed list of icon names, one per source file in ./svg/*.svg. Keep this
-// in step with that directory; sprite.ts checks at build time that every name
+// in step with that directory; sources.ts checks at build time that every name
 // here has a source file, and that every source file is named here.
 //
 // Placeholder set for M5 (see docs/dev/roadmap.md and AGENTS.md "Assets"):

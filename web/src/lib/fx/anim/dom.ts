@@ -2,6 +2,8 @@
 // copies of elements, and placing a copy in the FX layer. Reads and copies
 // only; nothing here changes an element of the page.
 
+import { restoreIconPaint } from '$lib/icons/draw';
+
 export interface Box {
   x: number;
   y: number;
@@ -34,7 +36,7 @@ export function inertClone(el: Element): HTMLElement {
   return clone;
 }
 
-/** Strips what tests, drivers and assistive technology find an element by. */
+/** Strips interaction ids and hooks; local SVG paint ids remain private to the copy. */
 export function makeInert(clone: HTMLElement): void {
   const strip = (node: Element) => {
     for (const name of [
@@ -51,6 +53,7 @@ export function makeInert(clone: HTMLElement): void {
   };
   strip(clone);
   for (const node of clone.querySelectorAll('*')) strip(node);
+  restoreIconPaint(clone);
   // ArtImage shows its art from its own load handler, which a copy does not
   // get: art not yet loaded when it was copied (a card just turned face up)
   // would stay transparent through the whole flip, so the copy shows it.
