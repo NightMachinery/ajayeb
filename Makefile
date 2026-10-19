@@ -235,9 +235,9 @@ test-py: ## Python unit tests for tools/heavy.py and self_host.py (guard kind li
 test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
 	$(HEAVY) run --kind light -- node --test tools/chrome/cli.test.mjs
 
-verify-quick: fmt-check vet gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go vet, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
+verify-quick: fmt-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
 
-verify: verify-quick lint-go test-race build e2e-smoke ## verify-quick, then golangci-lint, -race on room and ws, the release build and the e2e smoke
+verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room and ws, the release build and the e2e smoke
 
 verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, every e2e spec and the screenshot matrix
 	$(MAKE) --no-print-directory test-go AJAYEB_SWEEP=5000 TEST_TIMEOUT=90m
