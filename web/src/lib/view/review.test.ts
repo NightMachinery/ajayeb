@@ -162,8 +162,6 @@ describe('the review wording', () => {
   it('omits the verdict line when no better move was found', () => {
     const lines = reviewLines(review({ played: 'construct:walls' }), names);
     expect(lines).toEqual({
-      played: 'You built Walls.',
-      verdict: '',
       better: false,
       entries: [{ ply: 10, played: 'You built Walls.', verdict: '', better: false }]
     });

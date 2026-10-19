@@ -224,6 +224,22 @@
     },
     REVIEW_NAMES
   );
+  const reviewTurn = reviewLines(
+    {
+      entries: [
+        { ply: 20, played: 'wonder:great-library:rostrum', reason: 'none', gap: 0 },
+        { ply: 21, played: 'token:strategy', better: 'token:philosophy', reason: 'points', gap: 4 },
+        { ply: 22, played: 'construct:statue', reason: 'none', gap: 0 }
+      ],
+      ply: 22,
+      played: 'wonder:great-library:rostrum token:strategy construct:statue',
+      better: 'wonder:great-library:rostrum token:philosophy',
+      reason: 'points',
+      gap: 4,
+      strength: 'twoStage'
+    },
+    REVIEW_NAMES
+  );
   const reviewSummary = summarize(
     [
       {
@@ -400,6 +416,7 @@
       <MoveReview lines={reviewBetter} />
       <MoveReview lines={reviewLoot} />
       <MoveReview lines={reviewNone} />
+      <MoveReview lines={reviewTurn} />
       <div class="flex flex-wrap gap-2">
         <Button variant="secondary" onclick={() => (summaryShown = true)}>
           Open a summary with a review <!-- i18n-ok -->

@@ -24,10 +24,6 @@ export interface ReviewNames {
 
 /** A review as the summary shows it: what was played, and what was better. */
 export interface ReviewLines {
-  /** "You discarded Walls." */
-  readonly played: string;
-  /** "Building Walls would have won the game.", or empty when no better move was found. */
-  readonly verdict: string;
   /** Whether a better move was found (the verdict is a lesson). */
   readonly better: boolean;
   readonly entries: readonly ReviewDecisionLines[];
@@ -250,11 +246,6 @@ export function reviewLines(review: ReviewView, names: ReviewNames): ReviewLines
         }
       ];
   return {
-    played: playedText(review.played, names),
-    verdict: entries
-      .map((entry) => entry.verdict)
-      .filter(Boolean)
-      .join(' '),
     better: entries.some((entry) => entry.better),
     entries
   };
