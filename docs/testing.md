@@ -1000,8 +1000,12 @@ another tab ends the game and this tab starts a rematch, the viewer's winning mo
 its review on the result screen, and a fixed seed's producer leaving a
 trade-price caret and an emptied-slot trace until the next player's move.
 It also checks a short own name beside the YOU mark, device link and owned
-token, the inline final-board bar, a long skipped-choice toast in phone
-landscape without strip overlap, and every mini card at 48 by 74 px.
+token, the floating final-board bar with geometry assertions (visible status
+headline with positive width, minimum 44 px open-button height, and non-overlap
+with the own strip at 390 by 844 px), a long skipped-choice toast in phone
+landscape staying clear of the own strip, turn controls and any takeable card in
+the structure at 844 by 390 and 740 by 360 px, wonder draft compact sheet vs
+split direct actions and move confirmation, and every mini card at 48 by 74 px.
 Each scene saves phone and desktop screenshots in light and dark.
 
 `layout.spec.ts` probes the actual hit span of compact strip controls,

@@ -295,8 +295,9 @@
   const layout = $derived(breakpoints.viewport);
   // Where the toasts sit in play. Above the turn bar by default (on a phone
   // that covers only this player's own strip). On a desktop they sit at the
-  // foot of this player's own column. In phone landscape they sit at the foot
-  // of the center structure column, clear of the player's own strip and turn controls.
+  // foot of this player's own column. In phone landscape they sit at the top
+  // of the center structure column under the track, clear of currently takeable
+  // cards, the player's own strip, and turn controls.
   const toastSpot = $derived(
     !view || view.phase === 'wonderDraft'
       ? ('turn' as const)
@@ -1152,8 +1153,8 @@
           onselect={selectSlot}
         />
         {#if toastSpot === 'structure'}
-          <!-- Phone landscape: bottom of the center structure column,
-             clear of the player's own strip and turn controls. -->
+          <!-- Phone landscape: top of the center structure column under the track,
+             clear of currently takeable cards, the player's own strip, and turn controls. -->
           <ToastList {toasts} placement="inside" />
         {/if}
       </div>
@@ -1509,8 +1510,16 @@
   .game-screen[data-layout='phone-landscape'] .area-away {
     padding-inline: 0.25rem max(0.25rem, var(--safe-r));
   }
-  /* In phone landscape, toasts sit in the center structure column,
-     clear of the player's strip and turn controls. */
+  /* In phone landscape, toasts sit at the top of the center structure column
+     under the track, clear of the player's own strip, turn controls, and any
+     currently takeable cards. */
+  .game-screen[data-layout='phone-landscape'] .area-structure :global([aria-live]),
+  .game-screen[data-layout='phone-landscape'] .area-structure :global(.bottom-1) {
+    top: 0.25rem !important; /* physical-ok */
+    bottom: auto !important; /* physical-ok */
+    inset-block-start: 0.25rem !important;
+    inset-block-end: auto !important;
+  }
   .game-screen[data-layout='phone-landscape'] .area-structure :global([data-toast]) {
     gap: 0.5rem;
     padding-inline: 0.75rem 0.5rem;

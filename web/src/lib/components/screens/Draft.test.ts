@@ -27,66 +27,171 @@ const viewBase: View = {
   }
 };
 
+function getActionTag(html: string, key: string): string {
+  const match = html.match(new RegExp(`<button\\b[^>]*\\bdata-act="${key}"[^>]*>`, 'i'));
+  if (!match) throw new Error(`expected button with data-act="${key}"`);
+  return match[0];
+}
+
+function isTagDisabled(tag: string): boolean {
+  return /(?:^|\s)disabled(?:\s|=|>)/i.test(tag);
+}
+
 describe('Draft screen Take button states', () => {
-  it('renders Take buttons enabled when canAct and connected', () => {
-    const { body } = render(Draft, {
-      props: {
-        view: viewBase,
-        detail: 'pyramids',
-        canAct: true,
-        connected: true,
-        onact: () => {}
-      }
+  describe('component layout and confirmation branches', () => {
+    it('renders standard Button in compact path with confirm: false', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          split: false,
+          detail: 'pyramids',
+          confirm: false,
+          canAct: true,
+          connected: true,
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(false);
+      expect(tag).not.toContain('isolate overflow-hidden');
     });
-    expect(body).toContain('data-act="draft:pyramids"');
-    expect(body).not.toMatch(/data-act="draft:pyramids"[^>]*disabled/);
+
+    it('renders ConfirmButton in compact path with confirm: true', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          split: false,
+          detail: 'pyramids',
+          confirm: true,
+          canAct: true,
+          connected: true,
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(false);
+      expect(tag).toContain('isolate overflow-hidden');
+    });
+
+    it('renders standard Button in split path with confirm: false', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          split: true,
+          confirm: false,
+          canAct: true,
+          connected: true,
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(false);
+      expect(tag).not.toContain('isolate overflow-hidden');
+    });
+
+    it('renders ConfirmButton in split path with confirm: true', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          split: true,
+          confirm: true,
+          canAct: true,
+          connected: true,
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(false);
+      expect(tag).toContain('isolate overflow-hidden');
+    });
   });
 
-  it('disables Take buttons and shows connection waiting text when disconnected', () => {
-    const { body } = render(Draft, {
-      props: {
-        view: viewBase,
-        detail: 'pyramids',
-        canAct: true,
-        connected: false,
-        onact: () => {}
-      }
+  describe('action button states across paths', () => {
+    it('renders Take buttons enabled when canAct and connected', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          detail: 'pyramids',
+          canAct: true,
+          connected: true,
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(false);
     });
-    expect(body).toContain(t('online.waitingConnection'));
-    expect(body).toMatch(/data-act="draft:pyramids"[^>]*disabled/);
-  });
 
-  it('disables Take buttons when canAct is false (sent state)', () => {
-    const { body } = render(Draft, {
-      props: {
-        view: viewBase,
-        detail: 'pyramids',
-        canAct: false,
-        connected: true,
-        onact: () => {}
-      }
+    it('disables Take buttons and shows connection waiting text when disconnected', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          detail: 'pyramids',
+          canAct: true,
+          connected: false,
+          onact: () => {}
+        }
+      });
+      expect(body).toContain(t('online.waitingConnection'));
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(true);
     });
-    expect(body).toContain('data-act="draft:pyramids"');
-    expect(body).toMatch(/data-act="draft:pyramids"[^>]*disabled/);
-  });
 
-  it('locks non-allowed actions in tutorial readiness and marks them with data-tutorial-locked', () => {
-    const { body } = render(Draft, {
-      props: {
-        view: viewBase,
-        detail: 'mausoleum',
-        canAct: true,
-        connected: true,
-        allow: (key: string) => key === 'draft:pyramids',
-        lockedReason: 'Take the Pyramids first.',
-        onact: () => {}
-      }
+    it('disables Take buttons when canAct is false (sent state)', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          detail: 'pyramids',
+          canAct: false,
+          connected: true,
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:pyramids');
+      expect(isTagDisabled(tag)).toBe(true);
     });
-    // mausoleum is locked
-    expect(body).toContain('data-act="draft:mausoleum"');
-    expect(body).toContain('data-tutorial-locked');
-    expect(body).toContain('data-tutorial-reason');
-    expect(body).toContain('Take the Pyramids first.');
-    expect(body).toMatch(/data-act="draft:mausoleum"[^>]*disabled/);
+
+    it('locks non-allowed actions in tutorial readiness and marks them with data-tutorial-locked (compact)', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          split: false,
+          detail: 'mausoleum',
+          canAct: true,
+          connected: true,
+          allow: (key: string) => key === 'draft:pyramids',
+          lockedReason: 'Take the Pyramids first.',
+          onact: () => {}
+        }
+      });
+      const tag = getActionTag(body, 'draft:mausoleum');
+      expect(tag).toContain('data-tutorial-locked');
+      expect(isTagDisabled(tag)).toBe(true);
+      expect(body).toContain('data-tutorial-reason');
+      expect(body).toContain('Take the Pyramids first.');
+    });
+
+    it('locks non-allowed actions in tutorial readiness and shows prompt lock banner (split)', () => {
+      const { body } = render(Draft, {
+        props: {
+          view: viewBase,
+          split: true,
+          canAct: true,
+          connected: true,
+          allow: (key: string) => key === 'draft:pyramids',
+          lockedReason: 'Take the Pyramids first.',
+          onact: () => {}
+        }
+      });
+      const lockedTag = getActionTag(body, 'draft:mausoleum');
+      expect(lockedTag).toContain('data-tutorial-locked');
+      expect(isTagDisabled(lockedTag)).toBe(true);
+
+      const allowedTag = getActionTag(body, 'draft:pyramids');
+      expect(allowedTag).not.toContain('data-tutorial-locked');
+      expect(isTagDisabled(allowedTag)).toBe(false);
+
+      expect(body).toContain('data-tutorial-reason');
+      expect(body).toContain('Take the Pyramids first.');
+    });
   });
 });

@@ -170,12 +170,45 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
       await page.setViewportSize({ width: 360, height: 740 });
     }
     await button.click();
-    await expect(page.locator('[data-game-over] [data-peek-bar]')).toHaveAttribute(
-      'data-peek-bar',
-      'float'
-    );
+    const peekBar = page.locator('[data-game-over] [data-peek-bar="float"]');
+    await expect(peekBar).toBeVisible();
+
+    const headline = peekBar.locator('[role="status"] span');
+    await expect(headline).toBeVisible();
+    await expect(headline).not.toBeEmpty();
+    const headlineBox = await headline.boundingBox();
+    expect(headlineBox).not.toBeNull();
+    expect(headlineBox!.width).toBeGreaterThan(0);
+
+    const openButton = peekBar.locator('[data-peek-action="open"]');
+    await expect(openButton).toBeVisible();
+    const buttonBox = await openButton.boundingBox();
+    expect(buttonBox).not.toBeNull();
+    expect(buttonBox!.height).toBeGreaterThanOrEqual(44);
+
     await expect(page.locator('.card-structure')).toBeVisible();
     await photograph(page, info, 'final-board');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(headline).toBeVisible();
+    const headlineBox390 = await headline.boundingBox();
+    expect(headlineBox390).not.toBeNull();
+    expect(headlineBox390!.width).toBeGreaterThan(0);
+
+    const overlap = await page.evaluate(() => {
+      const bar = document
+        .querySelector('[data-game-over] [data-peek-bar="float"] [role="status"]')
+        ?.getBoundingClientRect();
+      const strip = document.querySelector('.area-home .player-strip')?.getBoundingClientRect();
+      if (!bar || !strip) return false;
+      return (
+        bar.top < strip.bottom &&
+        bar.bottom > strip.top &&
+        bar.left < strip.right &&
+        bar.right > strip.left
+      );
+    });
+    expect(overlap).toBe(false);
   });
 
   test('a producer raises the next seat’s trade chip and leaves a slot trace until that seat moves', async ({
@@ -239,21 +272,107 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
       const toast = page.locator('[data-toast]');
       await expect(toast).toBeVisible();
       if (size.width === 844) await photograph(page, info, 'landscape-toast');
-      const overlap = await toast.evaluate((el) => {
+
+      const view = await currentView(page);
+      const choiceCardIds = view.choices
+        .map((c) => c.card)
+        .filter((c): c is string => typeof c === 'string');
+
+      const overlaps = await toast.evaluate((el, cardIds) => {
         const t = el.getBoundingClientRect();
-        const strip = document.querySelector('.area-home .player-strip')!.getBoundingClientRect();
-        const turn = document.querySelector('.area-turn')!.getBoundingClientRect();
-        const stripOverlap =
+        const strip = document.querySelector('.area-home .player-strip')?.getBoundingClientRect();
+        const turn = document.querySelector('.area-turn')?.getBoundingClientRect();
+        const problems: string[] = [];
+        if (
+          strip &&
           t.top < strip.bottom &&
           t.bottom > strip.top &&
           t.left < strip.right &&
-          t.right > strip.left;
-        const turnOverlap =
-          t.top < turn.bottom && t.bottom > turn.top && t.left < turn.right && t.right > turn.left;
-        return stripOverlap || turnOverlap;
-      });
-      expect(overlap).toBe(false);
+          t.right > strip.left
+        ) {
+          problems.push(
+            `overlap with .player-strip: toast=[top:${t.top.toFixed(1)}, bottom:${t.bottom.toFixed(1)}, left:${t.left.toFixed(1)}, right:${t.right.toFixed(1)}] strip=[top:${strip.top.toFixed(1)}, bottom:${strip.bottom.toFixed(1)}, left:${strip.left.toFixed(1)}, right:${strip.right.toFixed(1)}]`
+          );
+        }
+        if (
+          turn &&
+          t.top < turn.bottom &&
+          t.bottom > turn.top &&
+          t.left < turn.right &&
+          t.right > turn.left
+        ) {
+          problems.push(
+            `overlap with .area-turn: toast=[top:${t.top.toFixed(1)}, bottom:${t.bottom.toFixed(1)}, left:${t.left.toFixed(1)}, right:${t.right.toFixed(1)}] turn=[top:${turn.top.toFixed(1)}, bottom:${turn.bottom.toFixed(1)}, left:${turn.left.toFixed(1)}, right:${turn.right.toFixed(1)}]`
+          );
+        }
+        for (const id of cardIds) {
+          const cardEl = document.querySelector(`.card-structure [data-card="${id}"]`);
+          if (cardEl) {
+            const c = cardEl.getBoundingClientRect();
+            if (t.top < c.bottom && t.bottom > c.top && t.left < c.right && t.right > c.left) {
+              problems.push(
+                `overlap with takeable card ${id}: toast=[top:${t.top.toFixed(1)}, bottom:${t.bottom.toFixed(1)}, left:${t.left.toFixed(1)}, right:${t.right.toFixed(1)}] card=[top:${c.top.toFixed(1)}, bottom:${c.bottom.toFixed(1)}, left:${c.left.toFixed(1)}, right:${c.right.toFixed(1)}]`
+              );
+            }
+          }
+        }
+        return problems;
+      }, choiceCardIds);
+      expect(overlaps).toEqual([]);
     }
+  });
+
+  test('wonder draft renders sheet in compact layout and direct action buttons in split layout with confirmation', async ({
+    page
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const driver = await openHotseatRoom(page, null);
+    const view = await currentView(page);
+    expect(view.phase).toBe('wonderDraft');
+    const firstOffer = view.draft?.offer[0]?.wonder;
+    if (!firstOffer) throw new Error('expected wonder in draft offer');
+
+    const offerTile = page.locator(`[data-wonder-offer="${firstOffer}"] button.tile`);
+    await expect(offerTile).toBeVisible();
+    await offerTile.click();
+
+    const sheet = page.locator('dialog[open]');
+    await expect(sheet).toBeVisible();
+    const sheetTake = sheet.locator(`[data-act="draft:${firstOffer}"]`);
+    await expect(sheetTake).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const directTake = page.locator(
+      `[data-wonder-offer="${firstOffer}"] [data-act="draft:${firstOffer}"]`
+    );
+    await expect(directTake).toBeVisible();
+
+    await page.evaluate(() => {
+      const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+      localStorage.setItem(
+        'ajayeb:settings',
+        JSON.stringify({ ...settings, confirmMoves: 'always' })
+      );
+    });
+    await page.reload();
+    await driver.waitReady();
+
+    const armedTake = page.locator(
+      `[data-wonder-offer="${firstOffer}"] [data-act="draft:${firstOffer}"]`
+    );
+    await expect(armedTake).toBeVisible();
+    await armedTake.click();
+    await expect(armedTake).toHaveAttribute('data-armed', '');
+
+    await page.waitForTimeout(400);
+    await armedTake.click();
+    await driver.nextTurn();
+    const nextView = await currentView(page);
+    const taken = nextView.draft?.offer.find((o) => o.wonder === firstOffer)?.takenBy;
+    expect(taken).toBeDefined();
   });
 
   test('every 48 px mini card keeps its cost and effect band inside one row', async ({

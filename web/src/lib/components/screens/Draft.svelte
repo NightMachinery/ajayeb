@@ -74,6 +74,8 @@
     allow?: Allow;
     /** Why a move the rails refuse is locked. */
     lockedReason?: string;
+    /** Explicit split layout override (tests/stories). */
+    split?: boolean;
   }
 
   let {
@@ -87,7 +89,8 @@
     detail = $bindable(null),
     coach = null,
     allow = ALLOW_ALL,
-    lockedReason = ''
+    lockedReason = '',
+    split: splitProp
   }: Props = $props();
 
   const ctx = tryGameContext();
@@ -99,6 +102,7 @@
   const split = new MediaQuery(
     '(min-width: 64rem), (orientation: landscape) and (max-height: 32rem)'
   );
+  const isSplit = $derived(splitProp ?? split.current);
 
   const round = $derived(view.draft?.round ?? 1);
   const offer = $derived(view.draft?.offer ?? []);
@@ -185,7 +189,7 @@
       data-act={key}
       data-tutorial-locked={!allowed ? '' : undefined}
       disabled={rule.disabled}
-      onConfirm={() => !rule.disabled && take(key)}
+      onConfirm={() => take(key)}
     />
   {:else}
     <Button
@@ -194,7 +198,7 @@
       data-act={key}
       data-tutorial-locked={!allowed ? '' : undefined}
       disabled={rule.disabled}
-      onclick={() => key !== undefined && !rule.disabled && take(key)}
+      onclick={() => key !== undefined && take(key)}
     >
       {rule.label}
     </Button>
@@ -268,7 +272,7 @@
     {/if}
     <span>{prompt}</span>
   </p>
-  {#if split.current && canAct && [...keys.values()].some((k) => !allow(k))}
+  {#if isSplit && canAct && [...keys.values()].some((k) => !allow(k))}
     <!-- Once for the page's Take buttons; the phone sheet says it under its own. -->
     <p class="-mt-1 text-xs text-fg-muted" data-tutorial-reason>{lockedReason}</p>
   {/if}
@@ -286,7 +290,7 @@
         data-wonder-offer={item.wonder}
         data-bot-pick={botPick === item.wonder ? '' : undefined}
       >
-        {#if split.current}
+        {#if isSplit}
           <WonderTile slug={item.wonder} size="draft" {takenBy} focusable />
           {#if item.takenBy === undefined}
             {@render effects(item.wonder, 'text-[13px] leading-snug text-fg')}

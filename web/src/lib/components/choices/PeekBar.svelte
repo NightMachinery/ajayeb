@@ -36,32 +36,36 @@
 </script>
 
 <div
-  class="flex justify-center {inline
-    ? '@container border-t border-rule px-1.5 py-1'
-    : 'pointer-events-none fixed inset-x-0 bottom-[calc(var(--safe-b)+3.75rem)] z-30 px-3 short:bottom-[calc(var(--safe-b)+0.75rem)]'} {className}"
+  class="@container flex justify-center {inline
+    ? 'border-t border-rule px-1.5 py-1'
+    : 'pointer-events-none fixed inset-x-0 bottom-[calc(var(--safe-b)+11rem)] z-30 px-3 short:bottom-[calc(var(--safe-b)+0.75rem)] split:bottom-[calc(var(--safe-b)+3.75rem)]'} {className}"
   data-peek-bar={inline ? 'inline' : 'float'}
 >
-  <!-- In a narrow column (a phone in landscape) the buttons wrap under the
-       text rather than squeezing it away. -->
+  <!-- In a narrow column (a phone in landscape) the inline bar wraps under the
+       text; the floating bar hugs a single row so the headline never collapses. -->
   <div
-    class="@container pointer-events-auto flex max-w-full min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-[1.5rem]
-      border border-rule-strong bg-panel py-1 ps-4 text-sm text-fg shadow-panel @max-3xs:ps-3 {onopen ||
-    ondismiss
-      ? 'pe-1'
-      : 'min-h-11 pe-4'}"
+    class="pointer-events-auto flex items-center rounded-[1.5rem] border border-rule-strong bg-panel py-1 ps-4 text-sm text-fg shadow-panel {inline
+      ? 'max-w-full min-w-0 flex-wrap justify-center gap-x-2 gap-y-1 @max-3xs:ps-3'
+      : 'w-full max-w-md justify-between gap-3'} {onopen || ondismiss ? 'pe-1' : 'min-h-11 pe-4'}"
     role="status"
   >
-    <span class="line-clamp-2 min-w-0 flex-auto leading-snug font-semibold">{text}</span>
+    <span
+      class="min-w-0 flex-1 font-semibold leading-snug {inline
+        ? 'line-clamp-2 flex-auto text-center'
+        : 'truncate'}"
+    >
+      {text}
+    </span>
     {#if onopen}
       <button
         type="button"
         class="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-accent px-3.5 font-semibold text-on-accent
           hover:brightness-105 active:brightness-95"
         onclick={onopen}
+        data-peek-action="open"
       >
-        <!-- Dropped in a narrow column, so the button fits beside the close. -->
-        <ChevronUp class="size-4 @max-3xs:hidden" aria-hidden="true" />
-        {openLabel ?? t('choices.reopen')}
+        <ChevronUp class="size-4 shrink-0 {inline ? '@max-3xs:hidden' : ''}" aria-hidden="true" />
+        <span>{openLabel ?? t('choices.reopen')}</span>
       </button>
     {/if}
     {#if ondismiss}
