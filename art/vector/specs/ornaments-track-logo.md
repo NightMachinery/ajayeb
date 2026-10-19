@@ -71,7 +71,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Files (correction, M9.V5): one file per zone, because one SVG cannot switch its marks without CSS: `track-cell` (centre), `track-cell-2`, `track-cell-5` and `track-cell-10`, all in `web/src/lib/ornaments/svg/` and listed in `sets.json`.
 - Sizes: at 360 px wide the track has 19 cells in about 340 px, so a cell is 16 to 18 px wide.
 - Acceptance: at 360 px the cells are countable and the zone boundaries visible.
-- Contexts: MilitaryTrack's full bar, one cell per space between the capitals, drawn as seven masked strips (each zone on each side, and the centre; `cellRuns` in track-cells.ts) over `--fg` at 30%, so the frame shows and the zone shading shows through the transparent field. The compact landscape bar leaves them out: its spaces are too narrow for a niche.
+- Contexts: MilitaryTrack's full bar, one cell per space between the capitals, drawn as seven masked strips (each zone on each side, and the centre; `cellRuns` in track-cells.ts) over `--fg` at 30%, so the frame shows and the zone shading shows through the transparent field. The four looting spaces (3 and 6 on each side) draw no niche: a patch of the zone's own surface (the panel and the zone's shade again) covers it, so the gold token, and the dashed ring it leaves once taken, never cut an arch (M11.track-and-log-polish). The compact landscape bar leaves them out: its spaces are too narrow for a niche.
 
 ## capital-sun and capital-moon
 

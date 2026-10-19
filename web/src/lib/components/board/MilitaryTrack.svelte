@@ -47,7 +47,9 @@
   // logo.md): on the full bar each of the 17 spaces is a niche of the
   // track-cell art, its lozenges counting the zone (none in the centre, one,
   // two or three toward the capitals), drawn as a mask over the zone shading,
-  // one element per zone (ornaments/art.ts trackCellUrl); each
+  // one element per zone (ornaments/art.ts trackCellUrl), except on the
+  // four looting spaces, which keep their zone's plain surface so a token
+  // never cuts an arch (M11.track-and-log-polish); each
   // capital is its city gate (capital-sun, capital-moon) in the seat's ink,
   // haloed in the capital's own surface. The compact bar is too small for
   // the niches and keeps the crests' -sm files at 11 px. All of it is
@@ -157,6 +159,15 @@
 
   function crestKey(seat: Seat) {
     return seat === 0 ? ('board.crest.sun' as const) : ('board.crest.moon' as const);
+  }
+
+  /** The index in TRACK_ZONES of the zone a space lies in (a looting space). */
+  function zoneIndex(position: number): number {
+    const m = Math.abs(position);
+    return Math.max(
+      0,
+      TRACK_ZONES.findIndex((z) => m >= z.first && m <= z.last)
+    );
   }
 
   /** A capital's position: seat 0's is at -9, seat 1's at +9. */
@@ -301,6 +312,19 @@
             data-cells={run.points}
           ></div>
         {/each}
+        <!-- A looting space shows its zone's plain surface: the niche yields
+             to the token (and to its dashed ring once taken), so the token's
+             rim never cuts an arch. The panel and the zone's shade again,
+             so the colour is exactly the surface around it. -->
+        {#each military.looting as loot (loot.at)}
+          <div
+            class="cell-clear absolute inset-y-0 bg-panel"
+            style:--pos="{cellCenter(loot.at, leftSeat)}%"
+            data-cell-clear={loot.at}
+          >
+            <div class="absolute inset-0 {ZONE_SHADE[zoneIndex(loot.at)]}"></div>
+          </div>
+        {/each}
       {/if}
       {@render capital(ends[0])}
       {@render capital(ends[1])}
@@ -441,7 +465,8 @@
   .zone-value,
   .boundary,
   .capital,
-  .capital-crown {
+  .capital-crown,
+  .cell-clear {
     left: var(--pos); /* physical-ok: see the note above */
     translate: -50% 0;
   }
@@ -450,7 +475,8 @@
     left: var(--from); /* physical-ok: see the note above */
     width: calc(var(--to) - var(--from));
   }
-  .capital {
+  .capital,
+  .cell-clear {
     width: calc(100% / 19);
   }
   /* A run of niches: the cell file as a mask, one tile per space. A tile
