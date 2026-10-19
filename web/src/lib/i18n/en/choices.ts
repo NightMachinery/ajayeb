@@ -119,6 +119,8 @@ export const choices = {
   'choices.over.home': 'Home',
   'choices.over.results': 'Results',
   'choices.over.bar': 'Game over',
+  'choices.over.lastMove': "{name}'s final move",
+  'choices.over.lastMoveYou': 'Your final move',
 
   // The score table.
   'choices.score.caption': 'Final score',

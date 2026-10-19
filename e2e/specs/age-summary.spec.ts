@@ -487,8 +487,9 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
         await expectNoAge(pageA);
 
         if (!closeBeforeChoice) {
-          // A fresh room clears the old cache. At game over, final move
-          // summary and result dialog are sequential rather than stacked.
+          // A fresh room clears the old cache. At game over no summary
+          // popup opens: the result dialog alone carries the final move
+          // (M11.gameover-last-move), once the page is visible again.
           const room = await createDevRoom(baseURL, {
             mode: 'online',
             seed: '7',
@@ -506,10 +507,11 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
           await expect(pageB.locator('dialog[open]')).toHaveCount(0);
           await expect(pageB.locator(POPUP)).toHaveCount(0);
           await visible(pageB, true);
-          await expect(pageB.locator(POPUP)).toBeVisible();
-          await expect(pageB.locator('dialog[open]')).toHaveCount(0);
-          await pageB.keyboard.press('Escape');
           await expect(pageB.locator('dialog[open] #game-over-title')).toBeVisible();
+          await expect(pageB.locator(POPUP)).toHaveCount(0);
+          await expect(
+            pageB.locator('dialog[open] [data-last-move="0"] [data-summary-line="discard"]')
+          ).toBeVisible();
           await footerFits(pageB);
         }
         expect(problemsA).toEqual([]);

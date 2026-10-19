@@ -15,6 +15,8 @@
 // brought, and the age changes, extra turns and skipped choices between
 // them. latestSummary() is what its top bar button reopens: the other
 // side's last run of moves, even after the viewer has moved since.
+// finalTurn() is the turn that ended the game, which the result screen
+// shows in place of a popup (M11.gameover-last-move).
 
 import type {
   GameEvent,
@@ -227,8 +229,10 @@ export interface TriggerFrame {
  * after an undo carry: those replay the game, nothing happened just now).
  * It must bring events, the other side must have moved last, and the turn
  * must be the viewer's again (so a bot's reply, both moves of an extra turn
- * and the choices inside a turn make one popup), or the game must be over.
- * Never during the wonder draft, whose screen shows every pick. `history`
+ * and the choices inside a turn make one popup). Never during the wonder
+ * draft, whose screen shows every pick, and never once the game is over:
+ * the result screen shows the final turn itself (finalTurn), because two
+ * modal layers at once would fight for taps and focus on a phone. `history`
  * is the Session's history with this frame taken in. With `seenPly`, unseen
  * history and a visibility wake may also trigger it; undo must be handled
  * by the caller before this check.
@@ -245,14 +249,26 @@ export function summaryTrigger(
     if (!prev || prev.code !== next.code || next.version <= prev.version) return null;
     if (next.history || next.events.length === 0) return null;
   }
-  if (next.view.phase === 'wonderDraft') return null;
+  if (next.view.phase === 'wonderDraft' || next.view.phase === 'gameOver') return null;
   const viewer = summaryViewer(next.room.mode, next.you.seats, next.view.toMove);
-  if (viewer === null) return null;
-  const over = next.view.phase === 'gameOver';
-  if (!over && next.view.toMove !== viewer) return null;
+  if (viewer === null || next.view.toMove !== viewer) return null;
   const last = history[history.length - 1];
   if (!last || last.seat === viewer || (seenPly !== undefined && last.ply <= seenPly)) return null;
   return last.ply;
+}
+
+/**
+ * The turn that ended the game, for the result screen: the last run of
+ * entries by the seat that made the final one, so a wonder's extra turn and
+ * the choices inside the turn (a token, a card to destroy) come with it.
+ * Null for an empty history.
+ */
+export function finalTurn(history: readonly HistoryEntry[]): MoveSummary | null {
+  const seat = asSeat(history[history.length - 1]?.seat);
+  if (seat === null) return null;
+  let start = history.length - 1;
+  while (start > 0 && history[start - 1]!.seat === seat) start--;
+  return summarize(history.slice(start), seat);
 }
 
 /** The ply of a summary's last entry. */

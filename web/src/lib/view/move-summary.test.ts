@@ -4,6 +4,7 @@ import type { GameEvent, HistoryEntry, State } from '$lib/wire';
 import {
   entriesSinceViewer,
   entryLines,
+  finalTurn,
   lastPly,
   latestSummary,
   summarize,
@@ -329,10 +330,13 @@ describe('summaryTrigger', () => {
   it('never opens during the wonder draft', () => {
     expect(summaryTrigger(prev, frame({ phase: 'wonderDraft' }), h)).toBeNull();
   });
-  it("opens at the end of the game for the other side's final move only", () => {
+  it('never opens at the end of the game: the result screen shows the final turn', () => {
     const over = frame({ toMove: undefined, phase: 'gameOver' });
-    expect(summaryTrigger(prev, over, h)).toBe(1);
+    expect(summaryTrigger(prev, over, h)).toBeNull();
     expect(summaryTrigger(prev, over, h.slice(0, 1))).toBeNull();
+    expect(
+      summaryTrigger(null, frame({ history: h, toMove: undefined, phase: 'gameOver' }), h, 0)
+    ).toBeNull();
   });
   it('opens in hot-seat for the player now to move, about the one who moved before', () => {
     const hot = { room: { mode: 'hotseat' as const }, you: { seats: [0, 1] } };
@@ -348,5 +352,50 @@ describe('summaryTrigger', () => {
     expect(
       summaryTrigger(prev, frame({ room: { mode: 'online' }, you: { seats: [] } }), h)
     ).toBeNull();
+  });
+});
+
+describe('finalTurn', () => {
+  it("takes the last seat's whole run: a wonder's extra turn and the choices in it", () => {
+    const s = finalTurn([
+      entry(30, 0, [ev({ kind: 'build', seat: 0, card: 'a' })]),
+      entry(31, 1, [
+        ev({ kind: 'wonder', seat: 1, wonder: 'piraeus', card: 'b' }),
+        ev({ kind: 'extraTurn', seat: 1 })
+      ]),
+      entry(32, 1, [
+        ev({ kind: 'build', seat: 1, card: 'library' }),
+        ev({ kind: 'pair', seat: 1, symbol: 'wheel' })
+      ]),
+      entry(33, 1, [
+        ev({ kind: 'token', seat: 1, token: 'law', fromLibrary: false }),
+        ev({ kind: 'gameOver', victory: 'science', winner: 1 })
+      ])
+    ])!;
+    expect(s.seat).toBe(1);
+    expect(s.plies).toEqual([31, 32, 33]);
+    expect(s.actions.map((a) => a.kind)).toEqual(['wonder', 'build', 'token']);
+    expect(s.gameOver).toEqual({ victory: 'science', winner: 1 });
+    expect(s.lines.map((l) => l.kind)).toContain('gameOver');
+  });
+  it('is one move when the other side moved just before', () => {
+    const s = finalTurn([
+      entry(0, 0, [ev({ kind: 'build', seat: 0, card: 'a' })]),
+      entry(1, 1, [ev({ kind: 'build', seat: 1, card: 'b' })]),
+      entry(2, 0, [
+        ev({ kind: 'discard', seat: 0, card: 'c', amount: 3 }),
+        ev({ kind: 'gameOver', victory: 'civilian', winner: 1 })
+      ])
+    ])!;
+    expect(s.seat).toBe(0);
+    expect(s.plies).toEqual([2]);
+  });
+  it('takes the whole history when one seat made all of it', () => {
+    expect(finalTurn([entry(0, 1, [ev({ kind: 'build', seat: 1, card: 'a' })])])!.plies).toEqual([
+      0
+    ]);
+  });
+  it('is null for an empty history', () => {
+    expect(finalTurn([])).toBeNull();
   });
 });

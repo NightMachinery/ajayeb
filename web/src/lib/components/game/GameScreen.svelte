@@ -1211,7 +1211,12 @@
          because its panels are modal dialogs that would cover that screen and
          make it inert. -->
       {#if view?.phase === 'gameOver'}
-        <!-- Its modal stays in the top layer; its peek bar floats over the turn bar. -->
+        <!-- Its modal stays in the top layer; its peek bar floats over the turn bar.
+             It opens once the final move has played out on the board (the
+             presenter is idle) and shows that move itself: the summary popup
+             never opens at game over (M11.gameover-last-move), so it waits
+             only behind an unread age summary or a summary opened from the
+             top bar. -->
         <div class="contents" dir={i18n.dir}>
           <GameOver
             {view}

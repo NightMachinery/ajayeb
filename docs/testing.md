@@ -1096,6 +1096,14 @@ a token pick showing both seats' values, an open token sheet closing when
 another tab ends the game and this tab starts a rematch, the viewer's winning move showing
 its review on the result screen, and a fixed seed's producer leaving a
 trade-price caret and an emptied-slot trace until the next player's move.
+`gameover-last-move.spec.ts` (both projects) checks the result screen's final
+move section (M11.gameover-last-move): with Animation normal every animation of
+the final frame ends before the dialog opens and no move summary popup ever
+shows; the viewer's own military win shows "Your final move" with the Walls row,
+its pawn chip and the review, through a reload, View final board and a rematch;
+the bot's civilian win (the viewer in seat 1) and a hot-seat one name the mover;
+and on a phone held upright (above) and the desktop at 1280x720 (beside) the
+section comes before a score sheet that shows without scrolling.
 It also checks a short own name beside the YOU mark, device link and owned
 token, and every mini card at 48 by 74 px. Two checks are geometric, with one
 helper that lists what an element covers by bounding box:
@@ -1442,8 +1450,8 @@ so inspect the three LCP samples, their median and the script-byte breakdown.
 normal and off prove that an opponent's starter decision cannot close the
 completed-age summary or replace its server-supplied totals. Two real online
 browsers cover closing before and after the opponent chooses, an opponent's
-first card, presence-only updates, reconnect/resync, and final move summary
-before game-over scores. Hidden boundaries and results wait for wake and the
+first card, presence-only updates, reconnect/resync, and the final move shown in
+the result dialog itself, with no summary popup. Hidden boundaries and results wait for wake and the
 unseen opponent summary; a dialog already open stays open when hidden. Reconnect
 cases drop only the real server WebSocket while relaying its unchanged messages,
 so intentional disconnects do not interrupt unrelated idle art requests. Recorded-transport cases queue both ended ages, verify Continue-only older recaps, expose current starter controls only after their matching recap is reached, and keep each recap stable through result/presence frames. A focused transition also checks that

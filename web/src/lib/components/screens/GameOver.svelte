@@ -15,10 +15,15 @@
   // winner's crest on its lower edge. It replaces the crest row and sits
   // beside the headline, so the score table and the buttons keep their room.
   //
-  // The move review (the advisor family, M10.F3, view/end-review.ts): when
-  // the viewer's own move ended the game, their review of it shows under
-  // the score sheet (when the opponent's move ended it, that move's summary
-  // carries the review instead).
+  // Above the score sheet on a phone, beside it in a wider dialog where
+  // two columns fit, the turn that ended the game (M11.gameover-last-move): the move summary's own rows (MoveSummaryLine)
+  // for the final move, with a wonder's extra turn and the choices inside
+  // the turn, so the result needs no popup of its own over it (the summary
+  // popup never opens at game over). Under them, the viewer's move review
+  // (the advisor family, M10.F3): of that final move when it was theirs
+  // (view/end-review.ts), else of their move before it, as the popup
+  // carried it (view/review.ts reviewForSummary). A forfeit, which no move
+  // ended, has no section.
   //
   // The wordmark (M11.ornament-integration), small and decorative, never
   // costs the score sheet its room: on a phone it heads the dialog, where
@@ -40,7 +45,8 @@
   import { t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
   import { endReview } from '$lib/view/end-review';
-  import { reviewLines, type ReviewLines } from '$lib/view/review';
+  import { finalTurn, type MoveSummary } from '$lib/view/move-summary';
+  import { reviewForSummary, reviewLines, type ReviewLines } from '$lib/view/review';
   import { finalScores, outcomeOf, scoreRows, type Outcome } from '$lib/view/score';
   import type { View } from '$lib/wire';
   import Button from '../shell/Button.svelte';
@@ -49,10 +55,11 @@
   import { asSeat, isYou, seatNames, tryGameContext, type SeatNames } from '../choices/room';
   import ScoreTable from './ScoreTable.svelte';
   import MoveReview from '../game/MoveReview.svelte';
+  import MoveSummaryLine from '../game/MoveSummaryLine.svelte';
 
   interface Props {
     view: View;
-    /** Wait behind unread age and final move summaries. */
+    /** Wait behind an unread age summary or an open move summary. */
     show?: boolean;
     /** Wait for initial presentation, then keep focus stable across frames. */
     ready?: boolean;
@@ -69,9 +76,11 @@
     onhome: () => void;
     /** Display names by seat; read from the room when not given. */
     names?: SeatNames;
-    /** The viewer's review of the move that ended the game; else from the
-     *  view and the page's game context. */
+    /** The viewer's move review the final move's section carries; else
+     *  from the view and the page's game context. */
     review?: ReviewLines;
+    /** The turn that ended the game; else from the page's game context. */
+    lastMove?: MoveSummary | null;
   }
 
   let {
@@ -84,7 +93,8 @@
     rematchNote,
     onhome,
     names: namesProp,
-    review: reviewProp
+    review: reviewProp,
+    lastMove: lastMoveProp
   }: Props = $props();
 
   const ctx = tryGameContext();
@@ -154,15 +164,36 @@
     }
   });
 
+  const lastMove = $derived.by((): MoveSummary | null => {
+    if (outcome?.kind === 'forfeit') return null;
+    if (lastMoveProp !== undefined) return lastMoveProp;
+    const history = ctx?.session.history;
+    return history ? finalTurn(history) : null;
+  });
+  // The end of the game is the dialog's own headline, not a row.
+  const lastLines = $derived(lastMove?.lines.filter((l) => l.kind !== 'gameOver') ?? []);
+  const lastTitle = $derived(
+    !lastMove
+      ? ''
+      : youSeat === lastMove.seat
+        ? t('choices.over.lastMoveYou')
+        : t('choices.over.lastMove', { name: names[lastMove.seat] })
+  );
+
   const review = $derived.by((): ReviewLines | null => {
     if (reviewProp) return reviewProp;
     const session = ctx?.session;
     if (!session || !visibleFamilies(session.hints, hintHide.value).has('advisor')) return null;
-    const own = endReview(view.review, view.viewer, session.history, outcome?.kind);
-    return own && view.viewer !== undefined
-      ? reviewLines(own, { names, seat: asSeat(view.viewer) })
-      : null;
+    if (view.viewer === undefined) return null;
+    const own =
+      endReview(view.review, view.viewer, session.history, outcome?.kind) ??
+      (lastMove && lastMove.seat !== view.viewer
+        ? reviewForSummary(view.review, lastMove, session.history)
+        : null);
+    return own ? reviewLines(own, { names, seat: asSeat(view.viewer) }) : null;
   });
+
+  const hasLastMove = $derived(lastLines.length > 0 || review !== null);
 
   const crest = $derived(winner === 1 ? 'crest-moon' : 'crest-sun');
   const scene = $derived(outcome ? victoryArtId(outcome.kind) : null);
@@ -189,7 +220,7 @@
     bind:open={() => show && !collapsed && (ready || shown), setOpen}
     centered
     {titleId}
-    class="game-over"
+    class="game-over {hasLastMove ? 'has-last-move' : ''}"
   >
     {#snippet footer()}
       <div class="grid gap-2 {replayCode && view.revealed ? 'grid-cols-3' : 'grid-cols-2'}">
@@ -248,7 +279,7 @@
           <!-- The scene takes the crest row's place, beside the headline,
                so the dialog grows by no more than a wrapped line: the score
                table and the buttons keep their room in the sheet's height
-               (640 px at most) on a phone as on a desktop. The crests sit on
+               on a phone as on a desktop. The crests sit on
                its lower edge, like a seal. -->
           <div class="relative mb-3.5 shrink-0">
             <div
@@ -290,11 +321,44 @@
         {/if}
       </header>
 
-      <ScoreTable {rows} {names} {winner} you={youSeat} />
+      <!-- Phone held upright: the final move above the score sheet. With room
+           for two columns (split: a desktop or a short landscape screen),
+           the dialog widens and puts it beside the sheet, first in reading
+           order, so the dialog is no taller than without it and the totals
+           stay in view on a laptop's short window. -->
+      <div
+        class={hasLastMove
+          ? 'flex flex-col gap-3 split:grid split:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] split:items-start split:gap-x-4'
+          : 'contents'}
+      >
+        {#if hasLastMove}
+          <section
+            class="flex flex-col gap-2 rounded-control border border-rule bg-panel-sunken px-3 py-2"
+            aria-labelledby={lastLines.length > 0 ? 'game-over-last-move' : undefined}
+            data-last-move={lastMove?.seat}
+            data-plies={lastMove?.plies.join(' ')}
+          >
+            {#if lastMove && lastLines.length > 0}
+              <h3
+                id="game-over-last-move"
+                class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
+              >
+                {lastTitle}
+              </h3>
+              <ol class="flex flex-col gap-2">
+                {#each lastLines as line, i (`${line.ply}:${i}`)}
+                  <MoveSummaryLine {line} seat={lastMove.seat} {names} />
+                {/each}
+              </ol>
+            {/if}
+            {#if review}
+              <div data-end-review><MoveReview lines={review} /></div>
+            {/if}
+          </section>
+        {/if}
 
-      {#if review}
-        <div data-end-review><MoveReview lines={review} /></div>
-      {/if}
+        <ScoreTable {rows} {names} {winner} you={youSeat} />
+      </div>
 
       {#if outcome?.tieBreak}
         <p
@@ -324,6 +388,21 @@
 </div>
 
 <style>
+  /* Taller than the other centred sheets (640 px at most): on a phone held
+     upright the final move sits above the score sheet, and the whole sheet
+     still shows without scrolling, as it did before the section came. A
+     short screen gets its height less the margin, as before, and scrolls. */
+  :global(.sheet.centered.game-over) {
+    --sheet-max-height: min(calc(100dvh - 2rem), 52rem);
+  }
+  /* With room for two columns (the split variant's query), wide enough for
+     the final move beside the score sheet. */
+  @media (min-width: 64rem), (orientation: landscape) and (max-height: 32rem) {
+    :global(.sheet.centered.game-over.has-last-move) {
+      width: min(46rem, calc(100% - 2rem));
+    }
+  }
+
   /* The placeholder: the paper with a faint gold dot grid, like the wonder
      placeholder's sky, until the scene is approved. */
   .victory-placeholder {

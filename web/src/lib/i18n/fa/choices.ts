@@ -118,6 +118,8 @@ export const choices = {
   'choices.over.home': 'خانه',
   'choices.over.results': 'نتیجه‌ها',
   'choices.over.bar': 'پایان بازی',
+  'choices.over.lastMove': 'حرکت پایانی {name}',
+  'choices.over.lastMoveYou': 'حرکت پایانی شما',
 
   // The score table.
   'choices.score.caption': 'امتیاز نهایی',

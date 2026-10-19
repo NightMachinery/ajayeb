@@ -1,9 +1,10 @@
 // The move review on the result screen (the advisor hint family, M10.F3).
-// When the opponent's move ends the game, the viewer's review of their own
-// last move shows in that move's summary (view/review.ts
-// reviewForSummary). When the viewer's own move ends it, no summary
-// follows, so the result screen shows View.review itself: this decides
-// when. Display only: the review is the server's.
+// The result screen's final-move section carries the viewer's review
+// (M11.gameover-last-move). When the opponent's move ended the game, it is
+// the review of the viewer's move before it, found as for a move summary
+// (view/review.ts reviewForSummary). When the viewer's own move ended it,
+// it is View.review itself: this decides when. Display only: the review is
+// the server's.
 
 import type { HistoryEntry, ReviewView } from '$lib/wire';
 
