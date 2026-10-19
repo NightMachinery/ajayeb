@@ -5,26 +5,17 @@
 import { render } from 'svelte/server';
 import { describe, expect, it } from 'vitest';
 import { t } from '$lib/i18n';
+import { protocolFixtures } from '$lib/wire/fixtures.gen';
 import type { View } from '$lib/wire';
 import Draft from './Draft.svelte';
 
+const draftFixture = protocolFixtures.find((view) => view.phase === 'wonderDraft');
+if (!draftFixture) throw new Error('expected a recorded wonder draft fixture');
+
 const viewBase: View = {
-  phase: 'wonderDraft',
-  age: 0,
-  turn: 1,
-  toMove: 0,
+  ...draftFixture,
   viewer: 0,
-  firstPlayer: 0,
-  revealed: true,
-  catalogHash: 'hash',
-  military: { pawn: 0, tokens: [] },
-  progressTokens: [],
-  structure: [],
-  discard: [],
-  players: [
-    { seat: 0, coins: 7, wonders: [], city: [] },
-    { seat: 1, coins: 7, wonders: [], city: [] }
-  ],
+  toMove: 0,
   choices: [
     { key: 'draft:pyramids', kind: 'draft', wonder: 'pyramids' },
     { key: 'draft:mausoleum', kind: 'draft', wonder: 'mausoleum' }
