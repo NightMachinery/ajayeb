@@ -2,7 +2,9 @@ package store
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -47,27 +49,29 @@ func NewReaper(st *Store, now Clock) *Reaper {
 // by ArchivedAt (Updated for legacy records), oldest first until both caps
 // hold. Repeated reads do not extend retention. Malformed/unknown-schema
 // records and unrelated files are preserved, outside the managed caps.
-// It reads headers only and never replays a game.
+// It reads headers only and never replays a game. Failures are logged and
+// joined in the returned error; one bad file never stops other cleanup.
 func (r *Reaper) Sweep() ([]string, error) {
 	r.st.sweepMu.Lock()
 	defer r.st.sweepMu.Unlock()
 	codes, err := r.st.Codes()
+	var failures error
 	if err != nil {
-		return nil, err
+		failures = reapError("", "list live rooms", err)
 	}
 	now := r.now()
 	var removed []string
 	for _, code := range codes {
 		deleted, err := r.sweepLive(code, now)
 		if err != nil {
-			return removed, err
+			failures = errors.Join(failures, reapError(code, "expire or migrate live room", err))
 		}
 		if deleted {
 			removed = append(removed, code)
 		}
 	}
 	archived, err := r.pruneArchives(now)
-	return append(removed, archived...), err
+	return append(removed, archived...), errors.Join(failures, err)
 }
 
 func (r *Reaper) sweepLive(code string, now time.Time) (bool, error) {
@@ -75,8 +79,17 @@ func (r *Reaper) sweepLive(code string, now time.Time) (bool, error) {
 	defer unlock()
 	path := filepath.Join(r.st.dir, code+".json")
 	f, err := readFile(path)
-	if err != nil || checkSchema(f) != nil || f.Code != code {
+	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if err := checkSchema(f); err != nil {
+		return false, err
+	}
+	if f.Code != code {
+		return false, fmt.Errorf("store: mismatched room header for %s", code)
 	}
 	if f.Status == StatusArchived {
 		return false, r.st.moveArchive(path, code)
@@ -99,20 +112,29 @@ type archiveEntry struct {
 func (r *Reaper) pruneArchives(now time.Time) ([]string, error) {
 	codes, err := roomCodes(r.st.ArchiveDir())
 	if err != nil {
-		return nil, err
+		return nil, reapError("", "list archived rooms", err)
 	}
+	var failures error
 	var entries []archiveEntry
 	var total int64
 	for _, code := range codes {
 		entry, ok, err := r.archiveEntry(code)
 		if err != nil {
-			return nil, err
+			failures = errors.Join(failures, reapError(code, "read archived room", err))
+			continue
 		}
 		if ok {
 			entries = append(entries, entry)
 			total += entry.size
 		}
 	}
+	removed, err := r.pruneEntries(now, entries, total, removeRoomFile)
+	return removed, errors.Join(failures, err)
+}
+
+// Keep scanning oldest-first after a failed removal, counting that file's
+// bytes until an actual deletion (or confirmed absence) releases the space.
+func (r *Reaper) pruneEntries(now time.Time, entries []archiveEntry, total int64, remove func(string) (bool, error)) ([]string, error) {
 	sort.Slice(entries, func(i, j int) bool {
 		if entries[i].at.Equal(entries[j].at) {
 			return entries[i].code < entries[j].code
@@ -120,16 +142,18 @@ func (r *Reaper) pruneArchives(now time.Time) ([]string, error) {
 		return entries[i].at.Before(entries[j].at)
 	})
 	count := len(entries)
+	var failures error
 	var removed []string
 	for _, entry := range entries {
 		if now.Sub(entry.at) <= r.ArchiveAfter && count <= r.ArchiveMaxFiles && total <= r.ArchiveMaxBytes {
 			break
 		}
 		unlock := r.st.lockRoom(entry.code)
-		deleted, err := removeRoomFile(r.st.archivePath(entry.code))
+		deleted, err := remove(r.st.archivePath(entry.code))
 		unlock()
 		if err != nil {
-			return removed, err
+			failures = errors.Join(failures, reapError(entry.code, "remove archived room", err))
+			continue
 		}
 		count--
 		total -= entry.size
@@ -137,26 +161,36 @@ func (r *Reaper) pruneArchives(now time.Time) ([]string, error) {
 			removed = append(removed, entry.code)
 		}
 	}
-	return removed, nil
+	return removed, failures
 }
 
 func (r *Reaper) archiveEntry(code string) (archiveEntry, bool, error) {
 	unlock := r.st.lockRoom(code)
 	defer unlock()
 	path := r.st.archivePath(code)
-	f, err := readFile(path)
-	if err != nil || checkSchema(f) != nil || f.Code != code || f.Status != StatusArchived {
+	f, data, err := readFileData(path)
+	if errors.Is(err, fs.ErrNotExist) {
 		return archiveEntry{}, false, nil
 	}
-	info, err := os.Stat(path)
 	if err != nil {
 		return archiveEntry{}, false, err
+	}
+	if err := checkSchema(f); err != nil {
+		return archiveEntry{}, false, err
+	}
+	if f.Code != code || f.Status != StatusArchived {
+		return archiveEntry{}, false, fmt.Errorf("store: invalid archive header for %s", code)
 	}
 	at := f.Updated
 	if f.ArchivedAt != nil {
 		at = *f.ArchivedAt
 	}
-	return archiveEntry{code: code, at: at, size: info.Size()}, true, nil
+	return archiveEntry{code: code, at: at, size: int64(len(data))}, true, nil
+}
+
+func reapError(code, operation string, err error) error {
+	slog.Warn("room cleanup failed", "room", code, "operation", operation, "err", err)
+	return fmt.Errorf("store: reaper %s %s: %w", operation, code, err)
 }
 
 func removeRoomFile(path string) (bool, error) {

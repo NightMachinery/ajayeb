@@ -38,6 +38,9 @@
 //     (Updated for legacy files), with caps of 1000 files or 64 MiB,
 //     oldest first. Caps can be exceeded between sweeps. Malformed and
 //     unknown-schema records are preserved outside the managed caps.
+//     Each failed file is logged and skipped, with errors joined for the
+//     caller. Other expiry and cap pruning still run; failed deletions keep
+//     consuming their count/byte budget.
 //     The store and reaper take injected clocks so expiry is testable.
 //   - Only this package reads or writes the room directories. Files never
 //     contain tokens; seats are identified by derived user ids.

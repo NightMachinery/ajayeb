@@ -479,15 +479,15 @@ func TestSweepSkipsUnreadableHeader(t *testing.T) {
 		t.Fatalf("Save: %v", err)
 	}
 	// A file that looks like a room (valid code, .json suffix) but holds
-	// garbage: Sweep must skip it rather than fail the whole pass, and must
+	// garbage: Sweep reports it but must continue the pass, and must
 	// still remove the genuinely eligible room alongside it.
 	if err := os.WriteFile(filepath.Join(st.Dir(), "GARBD2.json"), []byte("not json"), 0o600); err != nil {
 		t.Fatalf("WriteFile: %v", err)
 	}
 	reaper := store.NewReaper(st, time.Now)
 	removed, err := reaper.Sweep()
-	if err != nil {
-		t.Fatalf("Sweep: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "GARBD2") {
+		t.Fatalf("Sweep did not report the skipped header: %v", err)
 	}
 	found := false
 	for _, c := range removed {
@@ -675,7 +675,7 @@ func TestLoadRefusesUnknownSchema(t *testing.T) {
 		if _, err := st.PeekHeader("SCHEMA"); !errors.Is(err, store.ErrSchema) {
 			t.Fatalf("schema %v: PeekHeader error %v, want ErrSchema", schema, err)
 		}
-		if removed, err := store.NewReaper(st, nil).Sweep(); err != nil || len(removed) != 0 {
+		if removed, err := store.NewReaper(st, nil).Sweep(); !errors.Is(err, store.ErrSchema) || len(removed) != 0 {
 			t.Fatalf("schema %v: Sweep removed %v, %v", schema, removed, err)
 		}
 		after, err := os.ReadFile(path)

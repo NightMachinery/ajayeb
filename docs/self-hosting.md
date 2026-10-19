@@ -397,6 +397,9 @@ a backup can change that age. If `rooms` is missing or empty, it skips
 creating a backup but still prunes existing copies. Unrelated files and
 directories are ignored. These snapshots contain live/finished `rooms/`
 records only; they do not duplicate `rooms-archive/` on every deployment.
+A backup deleted concurrently during enumeration is skipped. Other pruning
+errors produce a warning and allow the binary swap and restart to continue;
+the next deployment retries cleanup.
 
 The replay download reads the same room files, so a finished game's log can
 be downloaded, unless `hideAtEnd` is set, until the reaper deletes the
@@ -422,6 +425,22 @@ unknown-schema or misplaced nonarchived records are left for operator repair
 outside those managed limits; preflight still refuses them. Copy a needed
 record outside these folders before expiry if an investigation needs longer.
 See [D29](dev/decisions.md#d29-keep-bounded-diagnostic-archives-outside-the-live-room-directory).
+
+A failed file is logged with its room code and skipped. Cleanup still handles
+other live rooms and always attempts archive expiry and the caps; a failed
+deletion keeps consuming its budget. The sweep reports the combined errors
+alongside the codes it did remove. This can leave the folder above its limits
+until the operator resolves the failing records.
+
+For an archive collision (for example after restoring an older `rooms/`
+backup), stop room writers and copy both `<code>.json` records elsewhere
+before comparing them. Keep the intended diagnostic record in
+`rooms-archive/` and remove the redundant closed record from `rooms/` only
+after checking its status, reason, timestamp and action history. Never replace
+one merely because the codes match or remove the archive marker to force a
+game open. A direct store load cannot complete the move until the collision
+is resolved. Restart the server after repair; its startup sweep retries the
+remaining work. Other rooms continue to expire even while one code is stuck.
 
 ## Deploying from another machine
 

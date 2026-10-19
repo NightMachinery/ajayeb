@@ -21,6 +21,7 @@ import select
 import shlex
 import shutil
 import socket
+import stat
 import subprocess
 import sys
 import tarfile
@@ -1173,15 +1174,24 @@ def archive_rooms() -> Path | None:
     """
     rooms_dir = DATA_DIR / "rooms"
     if not rooms_dir.exists() or not any(rooms_dir.iterdir()):
-        prune_room_backups()
+        prune_room_backups_safely()
         return None
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
     ts = time.strftime("%Y%m%dT%H%M%S")
     archive_path = BACKUPS_DIR / f"rooms-{ts}.tar.gz"
     with tarfile.open(archive_path, "w:gz") as tar:
         tar.add(rooms_dir, arcname="rooms")
-    prune_room_backups()
+    prune_room_backups_safely()
     return archive_path
+
+
+def prune_room_backups_safely() -> None:
+    # Retention is maintenance: a pruning error must not strand a stopped
+    # redeploy before the binary swap and restart. The next deploy retries it.
+    try:
+        prune_room_backups()
+    except Exception as exc:
+        print(f"warning: room backup pruning failed; continuing deployment: {exc}", file=sys.stderr)
 
 
 def prune_room_backups(
@@ -1192,10 +1202,15 @@ def prune_room_backups(
     if not BACKUPS_DIR.exists():
         return
     now = time.time() if now is None else now
-    archives = sorted(
-        ((p.stat().st_mtime, p) for p in BACKUPS_DIR.glob("rooms-*.tar.gz") if p.is_file()),
-        key=lambda item: (item[0], item[1].name),
-    )
+    archives = []
+    for path in BACKUPS_DIR.glob("rooms-*.tar.gz"):
+        try:
+            info = path.stat()
+        except FileNotFoundError:
+            continue  # another cleanup removed it after directory enumeration
+        if stat.S_ISREG(info.st_mode):
+            archives.append((info.st_mtime, path))
+    archives.sort(key=lambda item: (item[0], item[1].name))
     survivors = []
     for modified, archive in archives:
         if now - modified > max_age:

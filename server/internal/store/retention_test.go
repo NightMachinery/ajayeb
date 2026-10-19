@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -220,8 +222,8 @@ func TestReaperPreservesForeignArchiveFiles(t *testing.T) {
 	}
 	reaper := store.NewReaper(st, time.Now)
 	reaper.ArchiveMaxFiles, reaper.ArchiveMaxBytes = 0, 0
-	if removed, err := reaper.Sweep(); err != nil || len(removed) != 0 {
-		t.Fatalf("foreign removal: %v, %v", removed, err)
+	if removed, err := reaper.Sweep(); !errors.Is(err, store.ErrSchema) || len(removed) != 0 {
+		t.Fatalf("foreign preservation/report: %v, %v", removed, err)
 	}
 	for name, before := range files {
 		if after, err := os.ReadFile(filepath.Join(st.ArchiveDir(), name)); err != nil || !bytes.Equal(before, after) {
@@ -290,5 +292,128 @@ func TestArchiveInterruptedMoveReconcilesDuplicateLinks(t *testing.T) {
 	}
 	if after, err := os.ReadFile(archive); err != nil || !bytes.Equal(before, after) {
 		t.Fatal("interrupted move changed diagnostic record")
+	}
+}
+
+// Promote the reviewer's collision probe to an assertion-based regression.
+func TestSweepContinuesPastStuckArchive(t *testing.T) {
+	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	clock := now.Add(-40 * 24 * time.Hour)
+	st, err := store.OpenWithClock(t.TempDir(), func() time.Time { return clock })
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := store.New("BBBARC", store.ModeOnline, engine.Options{}, 2, clock)
+	if err := st.Save(old); err != nil {
+		t.Fatal(err)
+	}
+	rewriteField(t, st, old.Code, func(raw map[string]any) { raw["rules"] = engine.RulesVersion + 1 })
+	if _, _, err := st.Load(old.Code); !errors.Is(err, store.ErrArchived) {
+		t.Fatal(err)
+	}
+	idle := store.New("ZZZDDD", store.ModeOnline, engine.Options{}, 3, now.Add(-20*24*time.Hour))
+	idle.Status = store.StatusPlaying
+	if err := st.Save(idle); err != nil {
+		t.Fatal(err)
+	}
+	stuck := store.New("AAACXX", store.ModeOnline, engine.Options{}, 4, now)
+	if err := st.Save(stuck); err != nil {
+		t.Fatal(err)
+	}
+	rewriteField(t, st, stuck.Code, func(raw map[string]any) { raw["status"] = store.StatusArchived })
+	livePath := filepath.Join(st.Dir(), stuck.Code+".json")
+	before, err := os.ReadFile(livePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	foreign := []byte(`{"schema":1}`)
+	foreignPath := filepath.Join(st.ArchiveDir(), stuck.Code+".json")
+	if err := os.WriteFile(foreignPath, foreign, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var logs bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&logs, nil)))
+	defer slog.SetDefault(previous)
+	clock = now
+	reaper := store.NewReaper(st, func() time.Time { return clock })
+	removed, err := reaper.Sweep()
+	if err == nil || !strings.Contains(err.Error(), stuck.Code) {
+		t.Fatalf("missing collision error: %v", err)
+	}
+	if !reflect.DeepEqual(removed, []string{idle.Code, old.Code}) {
+		t.Fatalf("skipped healthy cleanup: %v", removed)
+	}
+	for _, path := range []string{filepath.Join(st.Dir(), idle.Code+".json"), filepath.Join(st.ArchiveDir(), old.Code+".json")} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("did not expire %s: %v", path, err)
+		}
+	}
+	if !strings.Contains(logs.String(), "room=AAACXX") || !strings.Contains(logs.String(), "archive already exists") {
+		t.Fatalf("missing actionable collision log: %s", &logs)
+	}
+	if after, err := os.ReadFile(livePath); err != nil || !bytes.Equal(before, after) {
+		t.Fatal("changed stuck live record")
+	}
+	if after, err := os.ReadFile(foreignPath); err != nil || !bytes.Equal(foreign, after) {
+		t.Fatal("changed foreign archive")
+	}
+	clock = clock.Add(time.Hour)
+	if removed, err := reaper.Sweep(); err == nil || len(removed) != 0 {
+		t.Fatalf("repeat sweep: %v, %v", removed, err)
+	}
+}
+
+func TestSweepArchiveCapsContinueAfterReadFailure(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("permission failure requires unprivileged user")
+	}
+	st := newStore(t)
+	for _, code := range []string{"AAABAD", "BBBARC", "CCCARC"} {
+		f := store.New(code, store.ModeOnline, engine.Options{}, 2, time.Now())
+		f.Status = store.StatusArchived
+		if err := st.Save(f); err != nil {
+			t.Fatal(err)
+		}
+	}
+	badPath := filepath.Join(st.ArchiveDir(), "AAABAD.json")
+	before, err := os.ReadFile(badPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(badPath, 0); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chmod(badPath, 0o600) }()
+	reaper := store.NewReaper(st, time.Now)
+	reaper.ArchiveMaxFiles = 0
+	removed, err := reaper.Sweep()
+	if !errors.Is(err, os.ErrPermission) || !strings.Contains(err.Error(), "AAABAD") || !reflect.DeepEqual(removed, []string{"BBBARC", "CCCARC"}) {
+		t.Fatalf("read failure blocked cap: %v, %v", removed, err)
+	}
+	if err := os.Chmod(badPath, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if after, err := os.ReadFile(badPath); err != nil || !bytes.Equal(before, after) {
+		t.Fatal("modified unreadable archive")
+	}
+}
+
+func TestSweepLiveListingFailureStillExpiresArchives(t *testing.T) {
+	st := newStore(t)
+	f := store.New("BBBARC", store.ModeOnline, engine.Options{}, 2, time.Now().Add(-40*24*time.Hour))
+	f.Status = store.StatusArchived
+	if err := st.Save(f); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(st.Dir()); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(st.Dir(), []byte("blocked directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	removed, err := store.NewReaper(st, time.Now).Sweep()
+	if err == nil || !strings.Contains(err.Error(), "list live rooms") || !reflect.DeepEqual(removed, []string{f.Code}) {
+		t.Fatalf("listing failure blocked archive expiry: %v, %v", removed, err)
 	}
 }

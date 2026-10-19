@@ -500,6 +500,28 @@ class SelfHostTests(unittest.TestCase):
                 self.assertFalse(middle.exists())
                 self.assertFalse(fresh.exists())
 
+    def test_room_backup_vanishing_during_stat_does_not_block_pruning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            backups = Path(tmp)
+            vanished = backups / "rooms-aa-vanished.tar.gz"
+            stale = backups / "rooms-bb-stale.tar.gz"
+            fresh = backups / "rooms-cc-fresh.tar.gz"
+            now = 2_000_000_000.0
+            for path, age in ((vanished, 0), (stale, 31*24*60*60), (fresh, 0)):
+                path.write_bytes(b"backup")
+                os.utime(path, (now-age, now-age))
+            original_stat = Path.stat
+            def stat_with_disappearing_file(path, *args, **kwargs):
+                if path == vanished:
+                    path.unlink(missing_ok=True)
+                    raise FileNotFoundError("concurrent backup deletion")
+                return original_stat(path, *args, **kwargs)
+            with mock.patch.object(self_host, "BACKUPS_DIR", backups), mock.patch.object(Path, "stat", new=stat_with_disappearing_file):
+                self_host.prune_room_backups(now=now)
+            self.assertFalse(vanished.exists())
+            self.assertFalse(stale.exists())
+            self.assertTrue(fresh.exists())
+
     def test_room_backup_age_pruning_runs_without_live_rooms(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1825,6 +1847,24 @@ class ProductionCaddyFailureTests(unittest.TestCase):
             code = self_host.main(args)
         patches["order"] = order
         return code, stdout.getvalue(), stderr.getvalue(), patches
+
+    def test_redeploy_restarts_even_when_backup_pruning_fails(self):
+        for has_rooms in (False, True):
+            for failure in (PermissionError("pruning denied"), RuntimeError("pruner failed")):
+                with self.subTest(has_rooms=has_rooms, failure=failure):
+                    data = self.root / ("data-live" if has_rooms else "data-empty")
+                    if has_rooms:
+                        rooms = data / "rooms"
+                        rooms.mkdir(parents=True, exist_ok=True)
+                        (rooms / "ABCDEF.json").write_text("{}")
+                    with mock.patch.object(self_host, "DATA_DIR", data), mock.patch.object(self_host, "BACKUPS_DIR", self.root / "backups"), mock.patch.object(self_host, "prune_room_backups", side_effect=failure):
+                        code, stdout, stderr, mocks = self._run("redeploy", archive_rooms=self_host.archive_rooms)
+                    self.assertEqual(code, 0)
+                    mocks["command_stop"].assert_called_once()
+                    mocks["swap_in_binary"].assert_called_once()
+                    mocks["start_server_prod"].assert_called_once()
+                    mocks["poll_health"].assert_called_once()
+                    self.assertIn("room backup pruning failed; continuing deployment", stderr)
 
     def _assert_unpublished(self, result):
         code, stdout, stderr, mocks = result
