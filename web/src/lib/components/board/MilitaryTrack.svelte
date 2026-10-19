@@ -250,6 +250,7 @@
        the crown 2 px or more clear of the border on every side. -->
   <span
     class="grid size-4 place-items-center rounded-[4px] border border-(color:--gold-deep) bg-gold text-card-ink"
+    aria-hidden="true"
   >
     <Icon name="hint-crown" class="text-[12px]" />
   </span>
@@ -446,7 +447,7 @@
         {t('board.military.legendPoints')}
       </span>
       <span class="flex items-center gap-1.5" data-legend-capital>
-        <span class="flex" aria-hidden="true">{@render crownTile()}</span>
+        {@render crownTile()}
         {t('hints.capital.win')}
       </span>
     </p>
