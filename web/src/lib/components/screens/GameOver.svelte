@@ -19,6 +19,10 @@
   // the viewer's own move ended the game, their review of it shows under
   // the score sheet (when the opponent's move ended it, that move's summary
   // carries the review instead).
+  //
+  // The wordmark (M11.ornament-integration) heads the dialog like a
+  // colophon, small and decorative; a short screen (a phone in landscape),
+  // whose dialog already scrolls, leaves it out.
   import { restoreFocus } from '$lib/ui/dismiss';
   import Download from '@lucide/svelte/icons/download';
   import { downloadReplay } from '$lib/session/replay';
@@ -26,6 +30,7 @@
   import RotateCw from '@lucide/svelte/icons/rotate-cw';
   import Eye from '@lucide/svelte/icons/eye';
   import ArtImage from '$lib/art/ArtImage.svelte';
+  import Wordmark from '$lib/brand/Wordmark.svelte';
   import { victoryArtId } from '$lib/art/lookup';
   import { visibleFamilies } from '$lib/hints/families';
   import { hintHide } from '$lib/hints/local.svelte';
@@ -227,6 +232,7 @@
       </div>
     {/snippet}
     <div class="flex flex-col gap-3 px-5 pt-4 pb-1">
+      <Wordmark class="mx-auto -mb-1 w-20 text-fg sm:w-24 short:hidden" />
       <header
         class={[
           'flex',

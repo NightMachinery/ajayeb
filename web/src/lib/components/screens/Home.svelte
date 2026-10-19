@@ -4,9 +4,10 @@
   // already does this), but every action it cannot decide for itself
   // (continuing a room, opening a sheet) comes back through callback props,
   // so the gallery can render it with a few fake saved rooms and no live
-  // connection. The text logotype stands in for the Nastaliq wordmark until
-  // M9's vector pipeline draws it; the theme switcher and the publisher
-  // footer link carry over unchanged from the M1 placeholder this replaces.
+  // connection. The hero keeps its text logotype (live text, painted first);
+  // the drawn Nastaliq wordmark heads the footer, the app's about block
+  // (M11.ornament-integration). The theme switcher and the publisher footer
+  // link carry over unchanged from the M1 placeholder this replaces.
   //
   // The hero painting (hero/hero) sits above the logotype in a 16:9 frame
   // whose size never depends on the art, so the page does not move when it
@@ -23,6 +24,7 @@
   // room continues as "Tutorial".
   import { resolve } from '$app/paths';
   import ArtImage from '$lib/art/ArtImage.svelte';
+  import Wordmark from '$lib/brand/Wordmark.svelte';
   import { artId, artSource } from '$lib/art/lookup';
   import Bot from '@lucide/svelte/icons/bot';
   import Globe from '@lucide/svelte/icons/globe';
@@ -366,6 +368,8 @@
     </div>
 
     <footer class="mt-auto pt-10 text-center text-xs leading-relaxed text-fg-muted">
+      <!-- The about block: the wordmark over what Ajayeb is and where it comes from. -->
+      <Wordmark class="mx-auto mb-3 w-[120px] text-fg" />
       <p>{t('app.legal')}</p>
       <p class="mt-1">{t('app.foss')}</p>
       <p class="mt-1 flex flex-wrap items-center justify-center gap-x-5">
