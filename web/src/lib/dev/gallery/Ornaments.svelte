@@ -2,9 +2,9 @@
   // /dev/gallery, ornaments, track and logo (M9.V5): every file of the
   // ornaments-track-logo vector set in the way a later component is meant to
   // use it, so the set can be checked in the app in both themes (flip the
-  // gallery's theme switch). Wiring them into CardFace, MilitaryTrack, the
-  // home hero and the sheets is M10 and M11 work; this section only shows
-  // the art.
+  // gallery's theme switch). The girih, the track cells, the capitals and
+  // the wordmark are wired into the app (M11.ornament-integration); the
+  // rosette, cartouche, divider and border are shown only here.
   //
   // How each piece is meant to be used (see art/vector/log/ornaments-track-logo.md):
   // - rosette, track cells, wordmark: inline SVG, two-tone through color and --i2;

@@ -13,6 +13,8 @@ Ornaments are larger and more detailed than icons, and most are used as backgrou
 
 Wiring each piece into its component is later work (M10 and M11). M9.V5 created the two directories and added `capital-sun` and `capital-moon` to `names.ts`.
 
+Wired in M11.ornament-integration: the girih (CardStructure, through TableGirih.svelte), the four track cells and both capitals (MilitaryTrack's full bar), and the wordmark (Home's about footer and the GameOver dialog, through brand/Wordmark.svelte). The rosette, cartouche, divider and border stay in `/dev/gallery` only.
+
 Paint: every file uses the two-tone convention, `var(--i1, currentColor)` for the main tone and `var(--i2, transparent)` for the detail, and the caller picks the colours (the `ink` of each entry in `sets.json`). The only token named directly is the wordmark's gild accent (its Latin line, `var(--gild, currentColor)`). So the same file works inline, as a CSS mask, or as an image with its colours substituted. How each piece is meant to be used:
 
 - Inline SVG (raw import), two-tone: the rosette, the track cells, the capitals (sprite) and the wordmark.
@@ -59,7 +61,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Metaphor: a girih tile (the interlaced star and polygon geometry of Persian tilework).
 - Shape: a seamless square tile, lines only, drawn in `var(--rule)`, so that at 6 to 10% opacity it gives the table a texture in both themes. It must tile without seams (check a 3x3 repeat).
 - Sizes: a tile of 96 to 160 px.
-- Contexts: the board's table surface, the home screen.
+- Contexts: the board's table surface: a mask over `--rule-strong` at 28% opacity behind the card structure, 112 px per tile, intersected with an oval that fades it out toward the edges (TableGirih.svelte). The home screen does not carry it.
 
 ## track-cell
 
@@ -69,7 +71,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Files (correction, M9.V5): one file per zone, because one SVG cannot switch its marks without CSS: `track-cell` (centre), `track-cell-2`, `track-cell-5` and `track-cell-10`, all in `web/src/lib/ornaments/svg/` and listed in `sets.json`.
 - Sizes: at 360 px wide the track has 19 cells in about 340 px, so a cell is 16 to 18 px wide.
 - Acceptance: at 360 px the cells are countable and the zone boundaries visible.
-- Contexts: MilitaryTrack.
+- Contexts: MilitaryTrack's full bar, one cell per space between the capitals, the frame in `--fg` at 30% with `--i2` left transparent so the zone shading shows through. The compact landscape bar leaves them out: its spaces are too narrow for a niche.
 
 ## capital-sun and capital-moon
 
@@ -78,7 +80,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Shape: sprite icons on the 24 grid, following every icon rule. The gate is shared; the crest figure on top differs, so each reads as "this player's city".
 - Must differ from: wonder (the wonder has no crest figure, and the capital has no minarets), crest-sun and crest-moon (the capital is a building), chain-tower.
 - Sizes: 16 to 24 px at the track ends.
-- Contexts: MilitaryTrack ends. New ids: `capital-sun` and `capital-moon` must be added to `names.ts`.
+- Contexts: MilitaryTrack ends on the full bar, at 18 px in `--sun-ink` and `--moon-ink`, with `--i-halo` set to the capital's own tinted surface; the compact bar keeps `crest-sun-sm` and `crest-moon-sm` at 11 px. The rules' MilitaryDiagram also draws `capital-moon`.
 
 ## logo-wordmark
 
@@ -87,7 +89,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Making the outlines: `hb-view --font-file=NotoNastaliq.ttc --face-index=0 --font-size=200 --output-format=svg --output-file=wordmark-fa.svg "عجایب"` writes each glyph outline once as a path inside `<defs>` and places it with `<use>`; resolve the uses into plain paths at their positions, crop the viewBox to the ink, and round coordinates to 0.1 in a viewBox about 200 units wide. A probe render on 2026-10-10 joined the letters correctly. The Latin "Ajayeb" is set the same way from `web/font-sources/fraunces-600.ttf` (OFL), then outlined.
 - Design: the Nastaliq word is the hero; it may be redrawn by hand from the outlines (kashida length, dot shapes) as long as the letters stay correct and readable. The Latin line is smaller and centred under it. Paint with `var(--i1, currentColor)`, with an optional gild accent through `var(--gild)`.
 - Never use the typeface or lettering of the official game's logo.
-- Sizes: 120 to 240 px wide on the home screen and the about page.
+- Sizes: 120 to 240 px wide on the home screen and the about page. In the app: 120 px above Home's footer (the about block: what Ajayeb is, its licence and links; there is no separate about page) and 80 px (96 from the `sm` width) at the head of the GameOver dialog, left out on a short screen. The Home hero keeps its live-text logotype.
 - Acceptance: elegant at 200 px in both themes, letters correct (a Persian reader should read عجایب without hesitation).
 
 ## favicon

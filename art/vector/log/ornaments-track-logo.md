@@ -146,8 +146,18 @@ Each is written into specs/ornaments-track-logo.md:
 - The favicon's letter is the Bold ع thickened by half a unit and left unsnapped (`"snap": false` in sets.json).
 - Paint and use: every file uses the two-tone convention instead of naming tokens (only the wordmark's gild accent names `--gild`), and the spec now says how each piece is meant to be used (inline, three slices, or a CSS mask).
 
+## Integration in the app (M11.ornament-integration, 2026-10-19)
+
+Shots in the run directory under shots/ornament-integration/: before/ and after/, each the Age III looting fixture, the civilian game-over fixture and Home's footer at 390x844 (DPR 2), 844x390 (DPR 2) and 1280x800 (DPR 1), English and Persian, light and dark, plus the track alone in normal, greyscale and deuteranopia; girih-tune/ for the girih's opacity and fade. No file of this set changed; only where they are drawn.
+
+- girih: drawn as a mask behind the card structure (TableGirih.svelte). At 16% over `--rule-strong` it showed only after a contrast boost; at 40% on night it started to compete with the card edges. Kept 28%, with the tile at 112 px and an oval fade (`farthest-side`, solid to 60%) so the inlay ends before the table's edges. Seen: a quiet star lattice in the gaps of the structure in phone landscape and on the desktop, both themes; in phone portrait the cards cover nearly all of it. It is one static layer and paints once.
+- track cells: one niche per space on the full bar, the frame `--fg` at 30%, `--i2` unset so the zone shading shows. Seen: at 390 the 17 niches are countable and the 1, 2 and 3 lozenges change at the zone boundaries; at 1280 DPR 1 the lozenges are dots of a pixel or two, still countable, and the arches give the bar the arcade the spec meant. The compact landscape bar (16 px tall) leaves them out.
+- capitals: capital-sun and capital-moon at 18 px (20 px from the `md` width) in `--sun-ink` and `--moon-ink`, `--i-halo` the capital's own tint mixed over the panel. Seen: a gate under a disc and a gate under a crescent at both ends, in greyscale and under deuteranopia as in colour. The compact bar keeps the crests at 11 px, with crest-moon-sm redrawn as a plain crescent (log: tt2-glyphs.md).
+- wordmark: 120 px over Home's footer, the about block (there is no separate about page; the hero keeps its live-text logotype, which paints first), and 80 px (96 from the `sm` width) at the head of the GameOver dialog, left out on a short screen whose dialog already scrolls. Seen: the Nastaliq word in the text colour over the gild Latin line, in both themes and both languages.
+- Not touched: the border's fractional seams and the stretched divider's banding (neither piece is used outside the gallery yet).
+
 ## Open points
 
 - ornament-border at 16 px with `border-image-repeat: round`: each edge tile is scaled to a fractional pixel width, and the browser antialiases each tile's ends, so faint hairline seams cross the rules where tiles meet. They are not in the art (the 3 by 3 repeat of the tile is exact). The component can avoid them by sizing the panel's edges to whole multiples of the border width, or by using `repeat` with a fixed panel size.
-- A light-theme sun capital drawn in `--sun` on a paper panel is low in contrast (turquoise on ivory); the gallery uses `--sun-ink` and `--moon-ink`, and MilitaryTrack should do the same.
+- Closed in M11.ornament-integration: MilitaryTrack draws the capitals in `--sun-ink` and `--moon-ink`, not `--sun`.
 - A Persian reader has not yet confirmed the wordmark, and a fresh agent has not yet taken the blind test.
