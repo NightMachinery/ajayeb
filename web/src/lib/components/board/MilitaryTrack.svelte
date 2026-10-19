@@ -232,14 +232,26 @@
   </div>
 {/snippet}
 
+{#snippet crownTile()}
+  <!-- The gold tile of an instant win. The glyph is sized by its font size,
+       because Icon's own size-[1em] wins over a size-* class: a 12 px box
+       in the tile's 14 px inside, whose live area (2 to 22 of 24) keeps
+       the crown 2 px or more clear of the border on every side. -->
+  <span
+    class="grid size-4 place-items-center rounded-[4px] border border-(color:--gold-deep) bg-gold text-card-ink"
+  >
+    <Icon name="hint-crown" class="text-[12px]" />
+  </span>
+{/snippet}
+
 {#snippet crown(seat: Seat)}
   <span
-    class="capital-crown absolute top-0 grid h-4 w-4 place-items-center rounded-[4px] border border-(color:--gold-deep) bg-gold text-card-ink"
+    class="capital-crown absolute top-0 flex"
     style:--pos="{cellCenter(capitalAt(seat), leftSeat)}%"
     data-capital-crown={seat}
     {@attach tooltip({ text: capitalTip(seat), rulesId: 'military' })}
   >
-    <Icon name="hint-crown" class="size-3" />
+    {@render crownTile()}
   </span>
 {/snippet}
 
@@ -410,21 +422,7 @@
         {t('board.military.legendPoints')}
       </span>
       <span class="flex items-center gap-1.5" data-legend-capital>
-        <span class="relative flex h-4 w-4" aria-hidden="true">
-          <svg
-            class="size-4 rounded-[4px] border border-(color:--gold-deep) bg-gold p-px text-card-ink"
-            viewBox="0 0 24 24"
-          >
-            <path
-              d="M3 8 L7.5 12 L12 5 L16.5 12 L21 8 L19 18 H5 Z"
-              fill="currentColor"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linejoin="round"
-            />
-            <rect x="5" y="19.5" width="14" height="2" rx="1" fill="currentColor" />
-          </svg>
-        </span>
+        <span class="flex" aria-hidden="true">{@render crownTile()}</span>
         {t('hints.capital.win')}
       </span>
     </p>
