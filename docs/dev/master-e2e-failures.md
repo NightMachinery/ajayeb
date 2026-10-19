@@ -28,6 +28,14 @@ still reset effects, and real move backlog still catches up. Unit tests
 cover both paths; case c requires a timed animation sample for every bot
 reply it exercises, in addition to its existing 450 ms limit.
 
+## Long-task acceptance investigation
+
+The animation performance tests now respect the configured retry policy.
+Their previous local override retried twice even when the command requested
+`--retries=0`. Unprofiled runs retain their room/task/animation records for
+attribution. Diagnostic profiling and first-attempt acceptance remain
+separate, and the 50 ms threshold and animation windows are unchanged.
+
 ## CI prerequisite
 
 The `1369875` CI run skipped e2e because `golangci-lint` rejected the

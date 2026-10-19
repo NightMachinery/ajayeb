@@ -302,12 +302,10 @@ async function perfRun(
     await stopTrace();
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
   }
-  if (process.env.AJAYEB_PERF_TRACE === '1') {
-    await test.info().attach('perf rooms', {
-      body: JSON.stringify({ rate, rooms }),
-      contentType: 'application/json'
-    });
-  }
+  await test.info().attach('perf rooms', {
+    body: JSON.stringify({ rate, rooms }),
+    contentType: 'application/json'
+  });
   return { moves, rooms };
 }
 
@@ -481,11 +479,8 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
   });
 
   test.describe(() => {
-    // Both measure wall time, so a loaded machine can push one run over: up
-    // to three runs, each one's numbers in the failure message or the
-    // annotations (docs/testing.md says how to read them).
-    // A traced run (AJAYEB_PERF_TRACE=1) is a diagnostic: one run only.
-    test.describe.configure({ retries: process.env.AJAYEB_PERF_TRACE === '1' ? 0 : 2 });
+    // Use the configured/CLI retry policy, including --retries=0 for the
+    // first-attempt performance acceptance and diagnostic runs.
 
     test('c. input comes back within 450 ms of a frame at normal speed', async ({
       page,

@@ -723,8 +723,9 @@ game's last card (`civilian-end`).
   to be dealt) and three bot answers that animated, that moment minus the
   frame's `swapAt` (`__ajayebFx.frames()`) must be at most 450 ms. The
   bot's dwell and pick come before the swap and are not counted. The
-  failure message lists every measurement. Like d it measures wall time,
-  so it retries up to twice on this often-loaded laptop.
+  failure message lists every measurement. Every exercised bot reply must
+  supply a timed animation sample. The case uses the configured retry policy;
+  use `--retries=0` when measuring first-attempt acceptance.
 - **d. No long task during an animation (`@perf`).** A CDP session sets
   `Emulation.setCPUThrottlingRate` to 4, a buffered `PerformanceObserver`
   collects `longtask` entries, and ten hot-seat moves are played, each
@@ -737,9 +738,10 @@ game's last card (`civilian-end`).
   long tasks, how many overlap and the worst overlapping and overall task
   in ms: read the worst overlapping one against the 50 ms limit, and the
   overall one for how loaded the machine was. It ends with the frame
-  measure at 4x (see f). This laptop is often busy,
-  so the case retries up to twice; a pass with the failed runs within
-  20 ms of the limit is acceptable. On CI it runs in its own job,
+  measure at 4x (see f). Every run also attaches `perf rooms`, with the
+  room-specific task and animation records, including unprofiled failures.
+  The case uses the configured retry policy. Repeated acceptance runs use
+  `--retries=0 --repeat-each=10`; every first attempt must pass. On CI it runs in its own job,
   `e2e-perf`, once per project with no retries, and writes each run's
   `perf` annotation to the run summary. That job does not fail the
   workflow: GitHub's runners do not meet the 50 ms limit yet, which M10
