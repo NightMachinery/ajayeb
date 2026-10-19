@@ -10,6 +10,9 @@
   //
   // A plain leaf component: it takes the view's slots and the display state
   // and reports taps on a slot; it decides nothing about the game.
+  //
+  // Behind the cards lies the table's girih inlay (TableGirih), a faint
+  // static layer before the slots, so every card paints over it.
   import { ageLabel, t } from '$lib/i18n';
   import { breakpoints } from '$lib/layout/breakpoints.svelte';
   import { fitStructure } from '$lib/layout/fit';
@@ -18,6 +21,7 @@
   import { slotPlace, structureLayout } from '$lib/view/geometry';
   import type { CardTooltipView, Choice, SlotView } from '$lib/wire';
   import StructureSlot from './StructureSlot.svelte';
+  import TableGirih from './TableGirih.svelte';
 
   interface Props {
     /** The view's structure (View.structure). */
@@ -103,6 +107,7 @@
   data-tier={fit.tier}
   {@attach measure}
 >
+  <TableGirih />
   {#if fit.w > 0}
     <div
       class="relative shrink-0"
