@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isQuietFocus, restoreFocus, shouldRestoreFocus, tabTarget } from './dismiss';
+import { holdAction, isQuietFocus, restoreFocus, shouldRestoreFocus, tabTarget } from './dismiss';
 
 describe('tabTarget: Tab stays inside an open panel', () => {
   it('wraps from the last element to the first, and back with Shift+Tab', () => {
@@ -51,5 +51,24 @@ describe('restoreFocus: the opener gets the focus back quietly', () => {
     restoreFocus(el);
     expect(during).toBe(true);
     expect(isQuietFocus(el)).toBe(false);
+  });
+});
+
+describe('holdAction: long-pressable tooltips in an overlay (the move summary)', () => {
+  const press = { mouse: false, swallowed: false, onBubble: false, onAnchor: false };
+
+  it('holds a touch on a tooltip anchor in the panel until its release', () => {
+    expect(holdAction({ ...press, onAnchor: true })).toBe('hold');
+  });
+
+  it('dismisses at once on any other press, and on a mouse press on an anchor', () => {
+    expect(holdAction(press)).toBe('dismiss');
+    expect(holdAction({ ...press, mouse: true, onAnchor: true })).toBe('dismiss');
+  });
+
+  it('leaves the overlay to a press that closed a tooltip or landed on it', () => {
+    expect(holdAction({ ...press, swallowed: true, onAnchor: true })).toBe('ignore');
+    expect(holdAction({ ...press, onBubble: true })).toBe('ignore');
+    expect(holdAction({ ...press, mouse: true, onBubble: true })).toBe('ignore');
   });
 });

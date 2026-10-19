@@ -9,7 +9,8 @@
   //
   // It is the shell's DismissLayer: any tap anywhere closes it and is
   // swallowed, exactly like a tooltip, so it never acts on the board
-  // beneath; Escape closes it too. It sits where it hides the least: given
+  // beneath; Escape closes it too. On touch, a long-press on a picture or a
+  // chip shows its tooltip instead and keeps the popup (longPressTips). It sits where it hides the least: given
   // an `anchor` (the structure on a phone, the player's own column on wide
   // screens), it is placed over the top of that box, below the strips;
   // without one (the gallery) it is centred.
@@ -129,6 +130,7 @@
   <DismissLayer
     bind:open={() => open, (v) => !v && onclose()}
     label={title}
+    longPressTips
     class="move-summary w-80 overflow-y-auto overscroll-contain p-3"
   >
     <div

@@ -75,7 +75,39 @@ export interface DismissOptions {
   /** Educational tips may let a touch press on an enabled action continue.
    * Tooltips and move summaries never opt in. */
   passTouchActions?: boolean;
+  /** The overlay's panel, when its tooltips can be long-pressed (the move
+   *  summary): a touch on a tooltip anchor inside it waits for the release,
+   *  and dismisses only when no long-press showed the tooltip. A press that
+   *  closes an open tooltip, or lands on its bubble, leaves the overlay
+   *  open. */
+  longPressTips?: () => Element | null | undefined;
 }
+
+/** What a press does to an overlay with long-pressable tooltips. */
+export type HoldAction =
+  /** It belongs to a tooltip (it closed one, or is on its bubble): leave the overlay. */
+  | 'ignore'
+  /** A touch on a tooltip anchor inside the panel: decide at the release. */
+  | 'hold'
+  /** Anything else: dismiss now, as any overlay does. */
+  | 'dismiss';
+
+/** The press rule for DismissOptions.longPressTips. */
+export function holdAction(p: {
+  mouse: boolean;
+  /** The tooltip layer already swallowed this press to close its tooltip. */
+  swallowed: boolean;
+  /** The press is on the open tooltip (its bubble or its stack). */
+  onBubble: boolean;
+  /** The press is on a tooltip anchor inside the overlay's panel. */
+  onAnchor: boolean;
+}): HoldAction {
+  if (p.swallowed || p.onBubble) return 'ignore';
+  return !p.mouse && p.onAnchor ? 'hold' : 'dismiss';
+}
+
+/** The open tooltip, its bubble and its stack (components/shell/TooltipLayer.svelte). */
+const TOOLTIP_OPEN = '[data-tooltip-layer] [data-tooltip-open]';
 
 /**
  * Makes any press outside the kept elements dismiss the overlay and be
@@ -89,8 +121,33 @@ export function installDismiss(opts: DismissOptions): () => void {
     if (!(target instanceof Node)) return false;
     return (opts.keep?.() ?? []).some((el) => el?.contains(target));
   };
+  // A held touch (longPressTips): released with no tooltip open, it was a tap.
+  let held: number | null = null;
+  const onRelease = (e: PointerEvent): void => {
+    if (e.pointerId !== held) return;
+    held = null;
+    if (e.type === 'pointerup' && document.querySelector(TOOLTIP_OPEN)) return;
+    swallowClick();
+    opts.onDismiss('tap');
+  };
   const onPress = (e: PointerEvent): void => {
     if (inside(e.target)) return;
+    const panel = opts.longPressTips?.();
+    if (panel) {
+      const el = e.target instanceof Element ? e.target : null;
+      const action = holdAction({
+        mouse: e.pointerType === 'mouse',
+        swallowed: armed && armedBy === e,
+        onBubble: el?.closest(TOOLTIP_OPEN) != null,
+        onAnchor: el !== null && panel.contains(el) && el.closest('[data-tooltip]') !== null
+      });
+      if (action === 'ignore') return;
+      if (action === 'hold') {
+        e.stopPropagation();
+        held = e.pointerId;
+        return;
+      }
+    }
     if (
       opts.passTouchActions &&
       e.pointerType !== 'mouse' &&
@@ -111,9 +168,13 @@ export function installDismiss(opts: DismissOptions): () => void {
     opts.onDismiss('escape');
   };
   window.addEventListener('pointerdown', onPress, true);
+  window.addEventListener('pointerup', onRelease, true);
+  window.addEventListener('pointercancel', onRelease, true);
   window.addEventListener('keydown', onKey, true);
   return () => {
     window.removeEventListener('pointerdown', onPress, true);
+    window.removeEventListener('pointerup', onRelease, true);
+    window.removeEventListener('pointercancel', onRelease, true);
     window.removeEventListener('keydown', onKey, true);
   };
 }

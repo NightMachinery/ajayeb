@@ -9,16 +9,35 @@
 //   button opens the latest summary.
 // - Hot-seat with the pass-device screen: the popup waits for the next
 //   player to take the device; the pass screen replaces its automatic popup.
+// - A card picture's tooltip (M11.track-and-log-polish) has the board's card
+//   detail: a fine pointer hovers it; on touch a long-press shows it and
+//   keeps the popup, the next tap closes only the tooltip, and a tap then
+//   closes the popup.
 //
 // The base fixture turns the popup off for every other spec (its taps would
 // eat a driver's clicks), so this spec turns it back on for its pages.
 
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { GameDriver, type Snapshot } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 
 const POPUP = '[data-dismiss-layer] [data-move-summary]';
+
+/** A finger resting on the element's centre for `ms`, then lifting. */
+async function longPress(page: Page, target: Locator, ms = 800): Promise<void> {
+  const box = await target.boundingBox();
+  if (!box) throw new Error('element has no box');
+  const touchPoints = [{ x: box.x + box.width / 2, y: box.y + box.height / 2 }];
+  const cdp = await page.context().newCDPSession(page);
+  try {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints });
+    await page.waitForTimeout(ms);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await cdp.detach();
+  }
+}
 
 /** Turns the popup back on (its default) for every page load of this test. */
 async function summaryOn(page: Page): Promise<void> {
@@ -214,6 +233,42 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     await expect(page.locator(POPUP)).toHaveCount(0);
     await expect(page.locator('dialog[open]')).toHaveCount(0);
     expect((await driver.snapshot()).version).toBe(version);
+    expect(problems).toEqual([]);
+  });
+});
+
+test.describe('opponent move summary: card tooltips', { tag: ['@mobile'] }, () => {
+  test('a card picture shows the card detail on hover, or on a long-press that keeps the popup', async ({
+    page,
+    isMobile
+  }) => {
+    const problems = watchHygiene(page);
+    await page.goto('/dev/fixture/state-join-history');
+    await press(page, isMobile, '[data-control="move-summary"]');
+    const popup = page.locator(POPUP);
+    await expect(popup).toBeVisible();
+    const thumb = popup.locator('[data-summary-line] [data-card]').first();
+    const slug = await thumb.getAttribute('data-card');
+    if (isMobile) await longPress(page, thumb);
+    else await thumb.hover();
+
+    // The board's card tooltip: the effects, the printed cost, the chains,
+    // with the card's face beside it.
+    const open = page.locator('[data-tooltip-layer] [data-tooltip-open]');
+    await expect(open).toBeVisible();
+    await expect(open.locator('[data-tooltip-lines]')).toContainText('Printed cost');
+    await expect(open.locator(`[data-card-preview="${slug}"]`)).toBeVisible();
+    await expect(popup).toBeVisible();
+
+    if (isMobile) {
+      // The next tap closes only the tooltip; a tap then closes the popup.
+      await page.touchscreen.tap(5, 5);
+      await expect(open).toHaveCount(0);
+      await expect(popup).toBeVisible();
+      await press(page, isMobile, `${POPUP} [data-summary-line] [data-card]`);
+      await expect(page.locator(POPUP)).toHaveCount(0);
+      await expect(open).toHaveCount(0);
+    }
     expect(problems).toEqual([]);
   });
 });

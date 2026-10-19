@@ -1362,7 +1362,10 @@ focus still opens a keyboard tooltip.
 
 `move-summary.spec.ts` keeps the summary's tap-swallowing contract and checks
 that a hot-seat pass screen replaces the automatic popup while the eye button
-still opens it. `undo.spec.ts` checks the bot undo's visible confirmation in the
+still opens it. On a fixture page it also checks a card picture's tooltip: the
+board's card detail (the printed cost line and the card's face in the stack) on
+a hover, and on touch after a long-press that keeps the popup, whose next tap
+closes only the tooltip. `undo.spec.ts` checks the bot undo's visible confirmation in the
 toast's polite live region. Unit tests cover the bounded, lenient seen-marker
 storage, seat and room separation, blocked storage and undo rewinding markers.
 

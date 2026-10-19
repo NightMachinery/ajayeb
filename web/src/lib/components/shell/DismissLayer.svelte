@@ -13,7 +13,10 @@
   // it a width); pass position classes, such as "top-16 bottom-auto", to
   // place it elsewhere. With `keepInside`, a tap inside the panel reaches its
   // target as usual (a coach mark's Next button) and only taps outside
-  // close it.
+  // close it. With `longPressTips` (the move summary), the tooltips inside
+  // the panel follow the touch model of an actionable element: a tap still
+  // closes the panel, a long-press shows the tooltip and leaves the panel
+  // open, and the next tap closes only the tooltip (ui/dismiss.ts).
   //
   // As a dialog (the default role) it manages the keyboard focus: the panel
   // takes the focus when it opens, Tab and Shift+Tab stay inside it while it
@@ -33,6 +36,8 @@
     keepInside?: boolean;
     /** First-time tips only: dismiss and preserve a touch action underneath. */
     passTouchActions?: boolean;
+    /** A long-press on a tooltip inside the panel shows it, keeping the panel. */
+    longPressTips?: boolean;
     /** The panel's accessible name. */
     label?: string;
     labelledby?: string;
@@ -46,6 +51,7 @@
     onclose,
     keepInside = false,
     passTouchActions = false,
+    longPressTips = false,
     label,
     labelledby,
     role = 'dialog',
@@ -81,7 +87,8 @@
         onclose?.(reason);
       },
       keep: () => (keepInside ? [panelEl] : []),
-      passTouchActions
+      passTouchActions,
+      longPressTips: longPressTips ? () => panelEl : undefined
     });
   });
 </script>
@@ -96,6 +103,7 @@
     aria-labelledby={labelledby}
     class="dismiss-layer fixed inset-0 m-auto h-fit max-w-[calc(100vw-2rem)] rounded-panel border border-rule-strong bg-panel p-4 text-fg shadow-panel {className}"
     data-dismiss-layer
+    data-tooltip-actionable={longPressTips ? '' : undefined}
   >
     {@render children()}
   </div>

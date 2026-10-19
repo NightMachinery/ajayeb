@@ -4,8 +4,12 @@
   // wonder's art, the token's medallion, an age's card back), its text, and
   // a row of chips for what it brought: coins paid (and the trade part that
   // went to the other player), other coin changes, the conflict pawn's move,
-  // looting and a science pair. Every chip and picture has its own tooltip
-  // (fine pointers; on touch any tap closes the popup instead).
+  // looting and a science pair. Every chip and picture has its own tooltip:
+  // a card or wonder picture the same detail as the board's (view/tips.ts
+  // cardTip and wonderTip: the effects, the printed cost and the chains),
+  // the card with its face beside it. A fine pointer hovers; on touch a
+  // long-press shows it and keeps the popup, and a tap closes the popup
+  // (DismissLayer's longPressTips).
   //
   // A plain leaf: it shows the line it is given (lib/view/move-summary.ts,
   // numbers from the server's events) and the seat names, and decides
@@ -20,6 +24,7 @@
   import { ageLabel, formatSigned, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { formatLogEvent } from '$lib/view/log-format';
+  import { cardTip, wonderTip } from '$lib/view/tips';
   import type { SummaryLine } from '$lib/view/move-summary';
   import type { Back } from '$lib/wire';
   import CardArt from '../card/CardArt.svelte';
@@ -135,7 +140,7 @@
         class="{thumb} {line.kind === 'destroy' ? 'opacity-60 grayscale' : ''}"
         data-card={card.slug}
         {@attach tooltip({
-          text: cardName(card.slug),
+          ...cardTip(card.slug, { names }),
           stack: [{ kind: 'card', slug: card.slug, caption: cardName(card.slug) }]
         })}
       >
@@ -150,10 +155,8 @@
         class="{thumb} bg-card-paper {line.kind === 'wonderRemoved' ? 'opacity-60 grayscale' : ''}"
         data-wonder={line.wonder}
         {@attach tooltip({
-          text:
-            line.kind === 'wonderRemoved'
-              ? t('game.summary.wonderRemovedTip')
-              : wonderName(line.wonder)
+          ...wonderTip(line.wonder),
+          ...(line.kind === 'wonderRemoved' ? { text: t('game.summary.wonderRemovedTip') } : {})
         })}
       >
         <ArtImage
