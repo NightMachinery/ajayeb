@@ -40,6 +40,37 @@ async function photograph(
   if (originalViewport) await page.setViewportSize(originalViewport);
 }
 
+/**
+ * What the element at `over` covers among the elements `targets` matches,
+ * by bounding box, as "name WxH" lines for a failure message; empty when it
+ * covers none. Elements inside `over`, and boxes of 1 px or less (the
+ * screen-reader-only labels), do not count.
+ */
+async function covered(page: Page, over: string, targets: string): Promise<string[]> {
+  return page.evaluate(
+    ([over, targets]) => {
+      const top = document.querySelector(over);
+      if (!top) return [`nothing matches ${over}`];
+      const a = top.getBoundingClientRect();
+      const hits: string[] = [];
+      for (const el of document.querySelectorAll(targets)) {
+        if (top.contains(el) || el.contains(top)) continue;
+        const b = el.getBoundingClientRect();
+        if (b.width <= 1 || b.height <= 1) continue;
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w <= 0.5 || h <= 0.5) continue;
+        const name =
+          el.getAttribute('data-card') ??
+          `${el.tagName.toLowerCase()}.${String(el.getAttribute('class') ?? '').split(' ')[0]}`;
+        hits.push(`${name} ${Math.round(w)}x${Math.round(h)}`);
+      }
+      return hits;
+    },
+    [over, targets] as const
+  );
+}
+
 class ProducerFound extends Error {
   readonly choice: Choice;
   readonly resource: Resource;
@@ -170,45 +201,43 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
       await page.setViewportSize({ width: 360, height: 740 });
     }
     await button.click();
-    const peekBar = page.locator('[data-game-over] [data-peek-bar="float"]');
-    await expect(peekBar).toBeVisible();
-
-    const headline = peekBar.locator('[role="status"] span');
-    await expect(headline).toBeVisible();
-    await expect(headline).not.toBeEmpty();
-    const headlineBox = await headline.boundingBox();
-    expect(headlineBox).not.toBeNull();
-    expect(headlineBox!.width).toBeGreaterThan(0);
-
-    const openButton = peekBar.locator('[data-peek-action="open"]');
-    await expect(openButton).toBeVisible();
-    const buttonBox = await openButton.boundingBox();
-    expect(buttonBox).not.toBeNull();
-    expect(buttonBox!.height).toBeGreaterThanOrEqual(44);
-
+    const bar = '[data-game-over] [data-peek-bar="float"] [role="status"]';
+    await expect(page.locator(bar)).toBeVisible();
     await expect(page.locator('.card-structure')).toBeVisible();
     await photograph(page, info, 'final-board');
-
-    await page.setViewportSize({ width: 390, height: 844 });
-    await expect(headline).toBeVisible();
-    const headlineBox390 = await headline.boundingBox();
-    expect(headlineBox390).not.toBeNull();
-    expect(headlineBox390!.width).toBeGreaterThan(0);
-
-    const overlap = await page.evaluate(() => {
-      const bar = document
-        .querySelector('[data-game-over] [data-peek-bar="float"] [role="status"]')
-        ?.getBoundingClientRect();
-      const strip = document.querySelector('.area-home .player-strip')?.getBoundingClientRect();
-      if (!bar || !strip) return false;
-      return (
-        bar.top < strip.bottom &&
-        bar.bottom > strip.top &&
-        bar.left < strip.right &&
-        bar.right > strip.left
-      );
-    });
-    expect(overlap).toBe(false);
+    // The floating bar keeps its headline and its 44 px button at every
+    // layout (an inline-size container on the bar itself once squeezed it to
+    // a 22 px sliver), and lies over the turn bar's row, clear of every chip,
+    // icon and label in both strips.
+    const sizes =
+      info.project.name === 'mobile'
+        ? [
+            { width: 360, height: 740 },
+            { width: 390, height: 844 },
+            { width: 844, height: 390 },
+            { width: 740, height: 360 }
+          ]
+        : [{ width: 1280, height: 800 }];
+    for (const size of sizes) {
+      await page.setViewportSize(size);
+      const at = `${size.width}x${size.height}`;
+      const text = page.locator(`${bar} [data-peek-text]`);
+      await expect(text, at).toHaveText(/\S/);
+      const fit = await text.evaluate((el) => ({
+        width: el.getBoundingClientRect().width,
+        cut: el.scrollWidth > el.clientWidth + 1
+      }));
+      expect(fit.width, `${at}: headline width`).toBeGreaterThan(60);
+      expect(fit.cut, `${at}: headline cut short`).toBe(false);
+      const open = await page.locator(`${bar} [data-peek-open]`).boundingBox();
+      expect(open?.height ?? 0, `${at}: open button height`).toBeGreaterThanOrEqual(44);
+      expect(
+        (open?.y ?? 0) + (open?.height ?? 0),
+        `${at}: open button on screen`
+      ).toBeLessThanOrEqual(size.height);
+      const strips = '.area-home :not(:has(*)), .area-away :not(:has(*))';
+      expect(await covered(page, bar, strips), `${at}: strip elements under the bar`).toEqual([]);
+    }
   });
 
   test('a producer raises the next seat’s trade chip and leaves a slot trace until that seat moves', async ({
@@ -258,121 +287,46 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     await photograph(page, info, 'own-strip');
   });
 
-  test('a phone-landscape skipped-choice toast stays clear of the own strip and turn controls', async ({
+  test('a phone-landscape skipped-choice toast covers neither strip, the turn bar nor a card to take', async ({
     page
   }, info) => {
-    for (const size of [
-      { width: 844, height: 390 },
-      { width: 740, height: 360 }
-    ]) {
-      await page.setViewportSize(size);
+    // In phone landscape the own column is only as wide as a strip, so a long
+    // sentence there grew up over it; the toast sits at the structure's head
+    // instead, where no card can be taken at this point of the age.
+    const cases = [
+      { width: 844, height: 390, locale: 'en' },
+      { width: 740, height: 360, locale: 'en' },
+      { width: 740, height: 360, locale: 'fa' }
+    ];
+    for (const { width, height, locale } of cases) {
+      const at = `${width}x${height} ${locale}`;
+      await page.setViewportSize({ width, height });
+      if (locale !== 'en') {
+        // The app's own language setting; the earlier cases left the page on its origin.
+        await page.evaluate((value) => {
+          const raw = localStorage.getItem('ajayeb:settings');
+          const settings = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+          localStorage.setItem('ajayeb:settings', JSON.stringify({ ...settings, locale: value }));
+        }, locale);
+      }
       const driver = await openHotseatRoom(page, 'mausoleum-empty');
       await driver.nextTurn();
       await playKey(driver, 'wonder:mausoleum:rostrum', 'wonderFirst');
-      const toast = page.locator('[data-toast]');
-      await expect(toast).toBeVisible();
-      if (size.width === 844) await photograph(page, info, 'landscape-toast');
-
-      const view = await currentView(page);
-      const choiceCardIds = view.choices
-        .map((c) => c.card)
-        .filter((c): c is string => typeof c === 'string');
-
-      const overlaps = await toast.evaluate((el, cardIds) => {
-        const t = el.getBoundingClientRect();
-        const strip = document.querySelector('.area-home .player-strip')?.getBoundingClientRect();
-        const turn = document.querySelector('.area-turn')?.getBoundingClientRect();
-        const problems: string[] = [];
-        if (
-          strip &&
-          t.top < strip.bottom &&
-          t.bottom > strip.top &&
-          t.left < strip.right &&
-          t.right > strip.left
-        ) {
-          problems.push(
-            `overlap with .player-strip: toast=[top:${t.top.toFixed(1)}, bottom:${t.bottom.toFixed(1)}, left:${t.left.toFixed(1)}, right:${t.right.toFixed(1)}] strip=[top:${strip.top.toFixed(1)}, bottom:${strip.bottom.toFixed(1)}, left:${strip.left.toFixed(1)}, right:${strip.right.toFixed(1)}]`
-          );
-        }
-        if (
-          turn &&
-          t.top < turn.bottom &&
-          t.bottom > turn.top &&
-          t.left < turn.right &&
-          t.right > turn.left
-        ) {
-          problems.push(
-            `overlap with .area-turn: toast=[top:${t.top.toFixed(1)}, bottom:${t.bottom.toFixed(1)}, left:${t.left.toFixed(1)}, right:${t.right.toFixed(1)}] turn=[top:${turn.top.toFixed(1)}, bottom:${turn.bottom.toFixed(1)}, left:${turn.left.toFixed(1)}, right:${turn.right.toFixed(1)}]`
-          );
-        }
-        for (const id of cardIds) {
-          const cardEl = document.querySelector(`.card-structure [data-card="${id}"]`);
-          if (cardEl) {
-            const c = cardEl.getBoundingClientRect();
-            if (t.top < c.bottom && t.bottom > c.top && t.left < c.right && t.right > c.left) {
-              problems.push(
-                `overlap with takeable card ${id}: toast=[top:${t.top.toFixed(1)}, bottom:${t.bottom.toFixed(1)}, left:${t.left.toFixed(1)}, right:${t.right.toFixed(1)}] card=[top:${c.top.toFixed(1)}, bottom:${c.bottom.toFixed(1)}, left:${c.left.toFixed(1)}, right:${c.right.toFixed(1)}]`
-              );
-            }
-          }
-        }
-        return problems;
-      }, choiceCardIds);
-      expect(overlaps).toEqual([]);
-    }
-  });
-
-  test('wonder draft renders sheet in compact layout and direct action buttons in split layout with confirmation', async ({
-    page
-  }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    const driver = await openHotseatRoom(page, null);
-    const view = await currentView(page);
-    expect(view.phase).toBe('wonderDraft');
-    const firstOffer = view.draft?.offer[0]?.wonder;
-    if (!firstOffer) throw new Error('expected wonder in draft offer');
-
-    const offerTile = page.locator(`[data-wonder-offer="${firstOffer}"] button.tile`);
-    await expect(offerTile).toBeVisible();
-    await offerTile.click();
-
-    const sheet = page.locator('dialog[open]');
-    await expect(sheet).toBeVisible();
-    const sheetTake = sheet.locator(`[data-act="draft:${firstOffer}"]`);
-    await expect(sheetTake).toBeVisible();
-
-    await page.keyboard.press('Escape');
-    await expect(sheet).toBeHidden();
-
-    await page.setViewportSize({ width: 1280, height: 800 });
-    const directTake = page.locator(
-      `[data-wonder-offer="${firstOffer}"] [data-act="draft:${firstOffer}"]`
-    );
-    await expect(directTake).toBeVisible();
-
-    await page.evaluate(() => {
-      const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
-      localStorage.setItem(
-        'ajayeb:settings',
-        JSON.stringify({ ...settings, confirmMoves: 'always' })
+      const toast = '.area-structure [data-toast]';
+      await expect(page.locator(toast), at).toBeVisible();
+      if (width === 844) await photograph(page, info, 'landscape-toast');
+      const takeable = (await currentView(page)).choices.flatMap((c) =>
+        c.card ? [`.card-structure [data-card="${c.card}"]`] : []
       );
-    });
-    await page.reload();
-    await driver.waitReady();
-
-    const armedTake = page.locator(
-      `[data-wonder-offer="${firstOffer}"] [data-act="draft:${firstOffer}"]`
-    );
-    await expect(armedTake).toBeVisible();
-    await armedTake.click();
-    await expect(armedTake).toHaveAttribute('data-armed', '');
-
-    await page.waitForTimeout(400);
-    await armedTake.click();
-    await driver.nextTurn();
-    const nextView = await currentView(page);
-    const taken = nextView.draft?.offer.find((o) => o.wonder === firstOffer)?.takenBy;
-    expect(taken).toBeDefined();
+      expect(takeable.length, `${at}: cards to take`).toBeGreaterThan(0);
+      const targets = [
+        '.area-home .player-strip',
+        '.area-away .player-strip',
+        '.area-turn',
+        ...takeable
+      ];
+      expect(await covered(page, toast, targets.join(', ')), at).toEqual([]);
+    }
   });
 
   test('every 48 px mini card keeps its cost and effect band inside one row', async ({

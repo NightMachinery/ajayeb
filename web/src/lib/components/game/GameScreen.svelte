@@ -295,9 +295,12 @@
   const layout = $derived(breakpoints.viewport);
   // Where the toasts sit in play. Above the turn bar by default (on a phone
   // that covers only this player's own strip). On a desktop they sit at the
-  // foot of this player's own column. In phone landscape they sit at the top
-  // of the center structure column under the track, clear of currently takeable
-  // cards, the player's own strip, and turn controls.
+  // foot of this player's own column, clear of the structure's takeable
+  // bottom row, the track and the opponent. In phone landscape that column
+  // is a narrow strip with little room under it, so a long sentence would
+  // grow up over the strip; there they sit at the head of the structure
+  // instead, under the top bar's track. The structure's foot holds the cards
+  // that can be taken for most of an age, its head only near the end.
   const toastSpot = $derived(
     !view || view.phase === 'wonderDraft'
       ? ('turn' as const)
@@ -558,9 +561,10 @@
       (!!frame && doneRoom === frame.code)
   );
 
-  // On desktop, the viewer's own column (in a fixed hot-seat board the
-  // player to move may sit on the far side), so the mover's city stays in view;
-  // on phones (portrait and landscape), over the structure in the center.
+  // On a desktop, the viewer's own column (in a fixed hot-seat board the
+  // player to move may sit on the far side), so the mover's city stays in
+  // view. On a phone, over the structure: in landscape the side columns are
+  // only as wide as a strip, so the summary would cover a whole strip.
   const summaryAnchor = $derived(
     layout === 'desktop' ? (summarySeat === away ? awayEl : homeEl) : structureEl
   );
@@ -1153,9 +1157,8 @@
           onselect={selectSlot}
         />
         {#if toastSpot === 'structure'}
-          <!-- Phone landscape: top of the center structure column under the track,
-             clear of currently takeable cards, the player's own strip, and turn controls. -->
-          <ToastList {toasts} placement="inside" />
+          <!-- Phone landscape: the head of the structure (see toastSpot). -->
+          <ToastList {toasts} placement="inside-top" />
         {/if}
       </div>
 
@@ -1167,9 +1170,7 @@
       >
         {@render seatPanel(home, 'relative max-h-full overflow-y-auto')}
         {#if toastSpot === 'home'}
-          <!-- Desktop and phone landscape: the foot of this player's own
-             column, clear of the structure's takeable bottom row, the track
-             and the opponent. -->
+          <!-- Desktop: the foot of this player's own column (see toastSpot). -->
           <ToastList {toasts} placement="inside" />
         {/if}
       </div>
@@ -1210,7 +1211,7 @@
          because its panels are modal dialogs that would cover that screen and
          make it inert. -->
       {#if view?.phase === 'gameOver'}
-        <!-- Its modal stays in the top layer; its peek bar floats over the board in its fixed shell. -->
+        <!-- Its modal stays in the top layer; its peek bar floats over the turn bar. -->
         <div class="contents" dir={i18n.dir}>
           <GameOver
             {view}
@@ -1510,16 +1511,9 @@
   .game-screen[data-layout='phone-landscape'] .area-away {
     padding-inline: 0.25rem max(0.25rem, var(--safe-r));
   }
-  /* In phone landscape, toasts sit at the top of the center structure column
-     under the track, clear of the player's own strip, turn controls, and any
-     currently takeable cards. */
-  .game-screen[data-layout='phone-landscape'] .area-structure :global([aria-live]),
-  .game-screen[data-layout='phone-landscape'] .area-structure :global(.bottom-1) {
-    top: 0.25rem !important; /* physical-ok */
-    bottom: auto !important; /* physical-ok */
-    inset-block-start: 0.25rem !important;
-    inset-block-end: auto !important;
-  }
+  /* A toast over the structure's head: compact, so a long skipped-choice
+     sentence covers as few cards as it can, while the dismiss button keeps
+     its 44 px hit target. */
   .game-screen[data-layout='phone-landscape'] .area-structure :global([data-toast]) {
     gap: 0.5rem;
     padding-inline: 0.75rem 0.5rem;
