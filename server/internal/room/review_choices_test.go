@@ -103,8 +103,8 @@ func TestReviewDraftAndStarterBoundaries(t *testing.T) {
 	}
 	seat := s.ToMove
 	recordReviewChoice(t, &rs, &s, engine.LegalActions(&s, nil)[0].Key())
-	if len(rs.seats[seat].steps) != 1 {
-		t.Fatal("first card action retained the draft")
+	if len(rs.seats[seat].steps) != 4 {
+		t.Fatal("opening card action lost a draft decision")
 	}
 
 	sc := engine.NamedScenario("science-pair")
@@ -130,6 +130,50 @@ func TestReviewDraftAndStarterBoundaries(t *testing.T) {
 	steps := rs.seats[seat].steps
 	if len(steps) < 2 || steps[len(steps)-2].action.Type != engine.ActChooseStarter {
 		t.Fatal("choosing yourself to start lost the starter decision")
+	}
+}
+
+func TestReviewDraftWaitsForOpeningCard(t *testing.T) {
+	s := engine.NewGame(3, engine.Options{})
+	r := &Room{state: s, reviews: reviewState{loaded: true}}
+	for s.Phase == engine.PhaseWonderDraft {
+		recordReviewChoice(t, &r.reviews, &s, engine.LegalActions(&s, nil)[0].Key())
+		r.state = s
+		if s.Phase == engine.PhaseWonderDraft {
+			for seat := range engine.Seat(2) {
+				if r.turnOver(seat) {
+					t.Fatalf("seat %d's draft review was ready before the draft ended", seat)
+				}
+			}
+		}
+	}
+	if r.turnOver(s.ToMove) {
+		t.Fatal("opening player's draft review started before their first card")
+	}
+	if !r.turnOver(s.ToMove.Opp()) {
+		t.Fatal("other player's completed draft review is not ready")
+	}
+}
+
+func TestReviewSingleOptionSkipsSearch(t *testing.T) {
+	sc := engine.NamedScenario("zeus-destroy")
+	sc.Players[1].City = []string{"quarry"}
+	s, err := engine.NewGameFromScenario(3, engine.Options{}, sc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	engine.ApplyTrusted(&s, mustKey(t, &s, "wonder:statue-of-zeus:rostrum"))
+	legal := engine.LegalActions(&s, nil)
+	if len(legal) != 1 {
+		t.Fatalf("want one destroy option, got %v", legal)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // any ranking or search would fail, proving this path skips it
+	for _, strength := range []view.AdvisorStrength{view.AdvisorStrengthQuick, view.AdvisorStrengthTwoStage, view.AdvisorStrengthDeep} {
+		rv, ok := buildReview(ctx, &s, legal[0], 9, strengthReview(strength))
+		if !ok || rv.Played != legal[0].Key() || rv.Strength != strength || rv.Reason != view.ReviewReasonNone || rv.Better != nil || rv.Gap != 0 || rv.Entries == nil {
+			t.Fatalf("%s: forced decision should need no search: %+v, ok %v", strength, rv, ok)
+		}
 	}
 }
 

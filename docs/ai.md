@@ -161,6 +161,14 @@ scale with the number of decisions, while the global review slot remains
 held for one turn at a time. The protocol retains the old aggregate fields
 for older clients, and the UI renders the ordered `entries` array.
 
+Each seat's draft picks form one sequence across the other seat's picks.
+Reviews wait until the draft ends. The opening player's first Age I card
+action retains their whole draft, and its review waits until that action
+and its choices are complete, so the opponent's reply can show it. The
+other seat's draft is ready for the summary of that opening card action.
+A decision with only one legal option needs no comparison and returns a
+quiet entry immediately, without using the advisor's search budget.
+
 **Contention with the bots.** In a bot room the room starts the bot's reply and the human's review search at the same moment. On a one-vCPU host the two share the core, so while a player uses `deep` the Medium bot's clock-budgeted search completes fewer iterations and plays a little weaker; `twoStage` searches only when Greedy proposes a move, and for tens of milliseconds. Two remedies remain open: start the review after the bot's move commits (the review would then arrive in a later frame), or have bot searches and review searches share one semaphore.
 
 **Measurements** (2026-10-18, an Apple M2 with a load average of about 4.5, `go test -run 'TestReviewSearchCost|TestReviewCalibration' -v ./internal/room`; the calibration test was a one-off and is not committed):

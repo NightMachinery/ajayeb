@@ -734,11 +734,17 @@ full game view described under "The view and its events" below.
   version, no events, no `ack`) that carries it, usually well within a
   second. A review whose search did not finish (a crowded server) is
   never sent. Pending choices and extra turns remain part of the same
-  turn, as do adjacent picks by the same drafter and an immediately
+  turn, as do all of a seat's wonder draft picks and an immediately
   following starter choice made by the same seat. When the chooser starts
   the age themselves, their first card action also stays in that sequence,
   so it does not overwrite the starter decision. A starter choice after an
-  opponent's action starts its own sequence. Every entry is evaluated
+  opponent's action starts its own sequence.
+  The opening player's first Age I card action retains their whole draft,
+  so its review can show after the opponent's first reply. The other seat's
+  whole draft can show after the opening player's first card. No review
+  search starts during the draft, or for the opening player's draft before
+  their first card action. A decision with one legal option gets a quiet
+  entry without running a ranking or search. Every entry is evaluated
   separately at the selected strength and budget, from the observation
   immediately before that decision. No advice is added when no clearly
   better choice is found or the position is held decided. A turn containing

@@ -172,6 +172,19 @@ type reviewSlot struct {
 	cancel  context.CancelFunc
 }
 
+// draftOnly identifies a seat's draft sequence before its first card.
+func (sl *reviewSlot) draftOnly() bool {
+	if len(sl.steps) == 0 {
+		return false
+	}
+	for _, step := range sl.steps {
+		if step.action.Type != engine.ActDraftWonder {
+			return false
+		}
+	}
+	return true
+}
+
 // stop cancels the slot's review job, if one is running; its result, if
 // it still comes, no longer matches the slot.
 func (sl *reviewSlot) stop() {
@@ -213,13 +226,15 @@ func (rs *reviewState) recordMove(pre *engine.State, a engine.Action) {
 	}
 	sl := &rs.seats[pre.ToMove]
 	sl.stop()
-	// Pending choices, adjacent draft picks and a starter choice continue
-	// the same seat's uninterrupted sequence. A card action starts a new
-	// turn except after choosing oneself to start or gaining an extra turn.
-	// Adjacency also
-	// prevents a starter choice from absorbing a turn before an opponent's.
-	appendStep := sl.set && sl.pre.Ply+1 == pre.Ply &&
-		(pre.Phase != engine.PhasePlay || sl.action.Type == engine.ActChooseStarter || pre.PlayingAgain && sl.pre.Age == pre.Age)
+	// All of a seat's draft picks belong together even when the other
+	// seat picks between them. The opening player's first card follows
+	// their final draft pick immediately, and retains that draft until
+	// the opponent's reply makes its review visible for the first time.
+	draft := sl.draftOnly()
+	appendStep := draft && pre.Phase == engine.PhaseWonderDraft ||
+		sl.set && sl.pre.Ply+1 == pre.Ply &&
+			(pre.Phase != engine.PhasePlay || sl.action.Type == engine.ActChooseStarter ||
+				draft && pre.Age == 1 || pre.PlayingAgain && sl.pre.Age == pre.Age)
 	if appendStep {
 		sl.pre = *pre
 		sl.action = a
@@ -325,12 +340,20 @@ func (r *Room) review(seat engine.Seat) *view.ReviewView {
 // other seat is to move, or seat is to move in a turn of its own that no
 // extra turn granted (the other seat has moved since, or a new age began).
 func (r *Room) turnOver(seat engine.Seat) bool {
+	// No summary can show a review during the draft. Starting one here
+	// would spend the search budget only to replace it with later picks.
+	if r.state.Phase == engine.PhaseWonderDraft {
+		return false
+	}
 	if r.state.Over() || r.state.ToMove != seat {
 		return true
 	}
-	// Choosing oneself to start is followed by one's first card action.
-	// Do not search an incomplete sequence only to cancel it on that card.
-	if sl := &r.reviews.seats[seat]; sl.set && sl.action.Type == engine.ActChooseStarter {
+	// The opening player's final draft pick immediately precedes their
+	// first card. The other seat's draft can already be shown after that
+	// card, including when the advisor was only just enabled. Choosing
+	// oneself to start also waits for one's first card action.
+	sl := &r.reviews.seats[seat]
+	if sl.draftOnly() && sl.pre.Ply+1 == r.state.Ply || sl.set && sl.action.Type == engine.ActChooseStarter {
 		return false
 	}
 	return r.state.Phase == engine.PhasePlay && !r.state.PlayingAgain
@@ -505,6 +528,18 @@ func buildTurnReview(ctx context.Context, steps []reviewStep, roomSeed uint64, c
 func buildReview(ctx context.Context, pre *engine.State, played engine.Action, seed uint64, cfg reviewConfig) (view.ReviewView, bool) {
 	if !reviewable(pre, played) {
 		return view.ReviewView{}, false
+	}
+	obs := engine.Observe(pre, pre.ToMove)
+	var legalBuf [engine.MaxLegalActions]engine.Action
+	if legal := engine.LegalActions(obs.Public(), legalBuf[:0]); len(legal) == 1 && legal[0] == played {
+		strength := cfg.strength
+		if strength == "" {
+			strength = view.AdvisorStrengthQuick
+		}
+		return view.ReviewView{
+			Entries: []view.ReviewEntryView{}, Ply: int(pre.Ply),
+			Played: played.Key(), Reason: view.ReviewReasonNone, Strength: strength,
+		}, true
 	}
 	var rv view.ReviewView
 	ok := false

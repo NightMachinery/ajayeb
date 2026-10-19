@@ -50,6 +50,52 @@ func reviewPositions(tb testing.TB, games int) ([]engine.State, []engine.Action)
 	return states, acts
 }
 
+// reviewGuardPositions adds a bounded set of every non-play phase to the
+// random play positions. Each phase is checked at every strength rather
+// than relying on rare pending choices in random games. Draft samples
+// cover both rounds; pending samples use the first and last legal option.
+func reviewGuardPositions(t *testing.T, games int) ([]engine.State, []engine.Action) {
+	t.Helper()
+	states, acts := reviewPositions(t, games)
+	add := func(s engine.State) {
+		legal := engine.LegalActions(&s, nil)
+		for _, i := range []int{0, len(legal) - 1} {
+			states = append(states, s)
+			acts = append(acts, legal[i])
+		}
+	}
+	for seed := range 2 {
+		s := engine.NewGame(uint64(700+seed), engine.Options{})
+		add(s)
+		for range 3 {
+			engine.ApplyTrusted(&s, engine.LegalActions(&s, nil)[0])
+		}
+		add(s)
+		for _, name := range []string{"age-transition-chooser", "zeus-destroy", "mausoleum", "science-pair", "great-library"} {
+			sc := engine.NamedScenario(name)
+			s, err := engine.NewGameFromScenario(uint64(700+seed), engine.Options{}, sc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			a := mustKey(t, &s, sc.Trigger[0])
+			if err := engine.Apply(&s, a, nil); err != nil {
+				t.Fatal(err)
+			}
+			add(s)
+		}
+	}
+	covered := map[engine.Phase]bool{}
+	for _, s := range states {
+		covered[s.Phase] = true
+	}
+	for _, phase := range []engine.Phase{engine.PhaseWonderDraft, engine.PhaseChooseStarter, engine.PhaseDestroyCard, engine.PhaseBuildFromDiscard, engine.PhasePickBoardToken, engine.PhasePickLibraryToken} {
+		if !covered[phase] {
+			t.Fatalf("review guard has no position in %s", phase)
+		}
+	}
+	return states, acts
+}
+
 // namedBefore returns the named scenario's position before its trigger.
 func namedBefore(t *testing.T, name string) engine.State {
 	t.Helper()
@@ -422,12 +468,12 @@ func TestReviewDeterministic(t *testing.T) {
 // search strengths on every third, with the test budget (the search sees
 // only the observation whatever its budget).
 func TestReviewLeakGuard(t *testing.T) {
-	states, acts := reviewPositions(t, 3)
+	states, acts := reviewGuardPositions(t, 3)
 	for _, cfg := range []reviewConfig{quickReview, strengthReview(view.AdvisorStrengthTwoStage), strengthReview(view.AdvisorStrengthDeep)} {
 		said, checked := 0, 0
 		reasons := map[view.ReviewReason]int{}
 		for i := range states {
-			if cfg.strength != view.AdvisorStrengthQuick && i%3 != 0 {
+			if states[i].Phase == engine.PhasePlay && cfg.strength != view.AdvisorStrengthQuick && i%3 != 0 {
 				continue
 			}
 			checked++
@@ -463,10 +509,10 @@ func TestReviewLeakGuard(t *testing.T) {
 // cards it could take, and a threat names a face-up card or a wonder,
 // never a card the move turned over.
 func TestReviewNamesOnlySeenCards(t *testing.T) {
-	states, acts := reviewPositions(t, 4)
-	for _, cfg := range []reviewConfig{quickReview, strengthReview(view.AdvisorStrengthDeep)} {
+	states, acts := reviewGuardPositions(t, 4)
+	for _, cfg := range []reviewConfig{quickReview, strengthReview(view.AdvisorStrengthTwoStage), strengthReview(view.AdvisorStrengthDeep)} {
 		for i := range states {
-			if cfg.strength != view.AdvisorStrengthQuick && i%3 != 0 {
+			if states[i].Phase == engine.PhasePlay && cfg.strength != view.AdvisorStrengthQuick && i%3 != 0 {
 				continue
 			}
 			checkSeenOnly(t, cfg, i, &states[i], acts[i])

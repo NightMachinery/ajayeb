@@ -1,6 +1,8 @@
 package room_test
 
 import (
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/room"
@@ -8,6 +10,83 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/view"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
+
+// Both seats retain all their actual draft picks until the first opponent
+// summary that can show them: after the opening card for the second seat,
+// and after the reply for the opening seat. Automatic awards are excluded.
+func TestReviewDraftPicksReachFirstSummary(t *testing.T) {
+	for first := range 2 {
+		t.Run(string(rune('0'+first)), func(t *testing.T) {
+			h := newHarness(t)
+			a := h.client("user-a", "tab-a", "Sun")
+			req := wire.NewCreate(wire.ModeOnline, nil, wire.SeatNumber(first), nil)
+			hints := room.DefaultHints(store.ModeOnline)
+			hints.Advisor = true
+			hints.AdvisorStrength = view.AdvisorStrengthQuick
+			req.Hints = &hints
+			code, _ := a.create(req)
+			b := h.client("user-b", "tab-b", "Moon")
+			b.join(code)
+			// Requested seat controls the creator's seat, not the draft's
+			// first player. Read both assignments from the actual views.
+			byseat := [2]*tclient{}
+			h.snapshot(code)
+			for _, c := range []*tclient{a, b} {
+				byseat[c.current().You.Seats[0]] = c
+			}
+			drafts := [2][]string{{}, {}}
+			lastDraft := [2]int{-1, -1}
+			for {
+				h.snapshot(code)
+				st := a.current()
+				if st.View.Phase != view.PhaseWonderDraft {
+					break
+				}
+				seat := *st.View.ToMove
+				mover := byseat[seat]
+				key := mover.current().View.Choices[0].Key
+				drafts[seat] = append(drafts[seat], key)
+				lastDraft[seat] = st.View.Ply
+				mover.act(key, st.Version, nil)
+			}
+			h.snapshot(code)
+			opening := *a.current().View.ToMove
+			other := 1 - opening
+			checkNoReview(t, "opening seat before its card", byseat[opening].current())
+			playCard := func(seat int) int {
+				t.Helper()
+				h.snapshot(code)
+				st := byseat[seat].current()
+				for _, choice := range st.View.Choices {
+					if strings.HasPrefix(choice.Key, "discard:") {
+						byseat[seat].act(choice.Key, st.Version, nil)
+						h.snapshot(code)
+						return st.View.Ply
+					}
+				}
+				t.Fatal("no discard choice for the opening turn")
+				return -1
+			}
+			checkDrafts := func(seat, ply, count int) {
+				t.Helper()
+				rv := awaitReview(t, h, byseat[seat], "draft seat", ply)
+				got := []string{}
+				for _, entry := range rv.Entries {
+					if strings.HasPrefix(entry.Played, "draft:") {
+						got = append(got, entry.Played)
+					}
+				}
+				if !reflect.DeepEqual(got, drafts[seat]) || len(rv.Entries) != count {
+					t.Fatalf("seat %d: entries %+v, want every draft pick %v and %d entries", seat, rv.Entries, drafts[seat], count)
+				}
+			}
+			openingPly := playCard(opening)
+			checkDrafts(other, lastDraft[other], len(drafts[other]))
+			playCard(other)
+			checkDrafts(opening, openingPly, len(drafts[opening])+1)
+		})
+	}
+}
 
 // The move review (the advisor family, review.go): after a seat's play
 // action, the room reviews it for that seat only. Only that seat's own
@@ -73,22 +152,26 @@ func TestReviewOnlyInMoversView(t *testing.T) {
 	a.sendHints(withHint(room.DefaultHints(store.ModeOnline), wire.HintFamilyAdvisor, true))
 
 	// Draft decisions are reviewed for their own seats too.
+	lastDraft := [2]int{-1, -1}
 	for {
 		h.snapshot(code)
-		if a.current().View.Phase != view.PhaseWonderDraft {
+		st := a.current()
+		if st.View.Phase != view.PhaseWonderDraft {
 			break
 		}
+		lastDraft[*st.View.ToMove] = st.View.Ply
 		playOnline(t, h, a, b, 1)
 	}
 	h.snapshot(code)
 	byseat := [2]*tclient{a, b}
 	plies := [2]int{-1, -1}
 	for seat, c := range byseat {
-		h.waitFor("draft review", func() bool {
-			h.snapshot(code)
-			return c.current().View.Review != nil
-		})
-		plies[seat] = c.current().View.Review.Ply
+		if seat == *a.current().View.ToMove {
+			checkNoReview(t, "opening seat before its card", c.current())
+			continue
+		}
+		plies[seat] = lastDraft[seat]
+		awaitReview(t, h, c, "completed draft", plies[seat])
 	}
 	checkNoReview(t, "spectator after draft", sp.current())
 	for range 4 {
