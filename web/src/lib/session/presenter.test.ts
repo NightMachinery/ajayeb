@@ -89,8 +89,9 @@ describe('Presenter', () => {
     const p = new Presenter(null, {
       afterSwap: async () => {},
       hooks: {
-        capture: (next) =>
-          seen.push({ version: next.version, events: next.events, queued: p.queued }),
+        capture: (next): void => {
+          seen.push({ version: next.version, events: next.events, queued: p.queued });
+        },
         play: (next) => (next.version === 1 ? new Promise<void>((r) => (release = r)) : undefined)
       }
     });
