@@ -18,7 +18,7 @@ Ajayeb's art is original and comes from two independent pipelines. Both follow t
 
 The five original sets are `resources-economy-military`, `science`, `chain`, `ui-category` and `ornaments-track-logo`. They were drawn in that order: the most frequent and most critical glyphs first. Two small sets followed in M10: `hints` (the hint pip glyphs) and `tt2-glyphs` (`play-again`, `build-from-discard` and `destroy-card`, which replaced the last Lucide outlines on cards; spec in `art/vector/specs/tt2-glyphs-diagrams.md`). `crest-moon-sm`, drawn with them, belongs to `ui-category` as the `-sm` of `crest-moon`.
 
-The ornaments reached the app in M11 (slice `M11.ornament-integration`): the girih as a faint inlay behind the card structure, the track cells and the city gates on the military track's full bar, and the wordmark above Home's about footer and at the head of the GameOver dialog. `web/README.md` (section Ornaments) says how each is drawn. In the same slice `crest-moon-sm` was redrawn as a plain tilted crescent, because at the 11 px of the compact track the crescent face read as the same round blob as `crest-sun-sm` without colour (log: `art/vector/log/tt2-glyphs.md`).
+The ornaments reached the app in M11 (slice `M11.ornament-integration`): the girih as a faint inlay behind the card structure, the track cells and the city gates on the military track's full bar, and the wordmark above Home's about footer and in the GameOver dialog. `web/README.md` (section Ornaments) says how each is drawn. In the same slice `crest-moon-sm` was redrawn as a plain tilted crescent, because at the 11 px of the compact track the crescent face read as the same round blob as `crest-sun-sm` without colour (log: `art/vector/log/tt2-glyphs.md`).
 
 ### How one set is drawn
 
