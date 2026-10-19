@@ -73,19 +73,25 @@ describe('zoneBoundaries', () => {
 });
 
 describe('cellRuns', () => {
-  it('draws the 17 spaces between the capitals as seven runs, left to right', () => {
-    const runs = cellRuns(0);
-    expect(runs.map((r) => r.points)).toEqual([10, 5, 2, 0, 2, 5, 10]);
-    expect(runs.map((r) => r.count)).toEqual([3, 3, 2, 1, 2, 3, 3]);
-    expect(runs[0]!.start).toBeCloseTo(cell);
-    expect(runs.at(-1)!.end).toBeCloseTo(100 - cell);
-    for (let i = 1; i < runs.length; i++) expect(runs[i]!.start).toBeCloseTo(runs[i - 1]!.end);
-    for (const r of runs) expect(r.end - r.start).toBeCloseTo(r.count * cell);
-  });
+  it.each([0, 1] as const)(
+    'draws the 17 spaces between the capitals as seven runs, left to right (left seat %i)',
+    (left) => {
+      const runs = cellRuns(left);
+      expect(runs.map((r) => r.points)).toEqual([10, 5, 2, 0, 2, 5, 10]);
+      expect(runs.map((r) => r.count)).toEqual([3, 3, 2, 1, 2, 3, 3]);
+      expect(runs[0]!.start).toBeCloseTo(cell);
+      expect(runs.at(-1)!.end).toBeCloseTo(100 - cell);
+      for (let i = 1; i < runs.length; i++) expect(runs[i]!.start).toBeCloseTo(runs[i - 1]!.end);
+      for (const r of runs) expect(r.end - r.start).toBeCloseTo(r.count * cell);
+      // MilitaryTrack keys its runs by start, so no two may share one.
+      expect(new Set(runs.map((r) => r.start)).size).toBe(runs.length);
+    }
+  );
 
   it('is symmetric, so the mirrored track draws the same runs', () => {
     const a = cellRuns(0);
     const b = cellRuns(1);
     expect(b.map((r) => [r.points, r.count])).toEqual(a.map((r) => [r.points, r.count]));
+    b.forEach((r, i) => expect(r.start).toBeCloseTo(a[i]!.start));
   });
 });

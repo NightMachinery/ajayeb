@@ -94,8 +94,12 @@ export interface CellRun extends Span {
  * look (the same niche art), so one element can draw them all.
  */
 export function cellRuns(left: Seat): CellRun[] {
+  // The centre's two edges swap places when the Moon is at the left, so
+  // order them as zoneSpan does.
+  const a = cellCenter(-0.5, left);
+  const b = cellCenter(0.5, left);
   const runs: CellRun[] = [
-    { points: 0, count: 1, start: cellCenter(-0.5, left), end: cellCenter(0.5, left) }
+    { points: 0, count: 1, start: Math.min(a, b), end: Math.max(a, b) }
   ];
   for (const side of [-1, 1] as const) {
     for (const zone of TRACK_ZONES) {
