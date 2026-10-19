@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   CAPITAL_SPACE,
   TRACK_CELLS,
+  TRACK_SPACES,
   TRACK_ZONES,
   cellCenter,
+  spacePoints,
   zoneBoundaries,
   zoneMiddle,
   zoneSpan
@@ -68,5 +70,19 @@ describe('zoneBoundaries', () => {
     const a = zoneBoundaries(0);
     const b = zoneBoundaries(1);
     a.forEach((x, i) => expect(b[i]).toBeCloseTo(x));
+  });
+});
+
+describe('TRACK_SPACES and spacePoints', () => {
+  it('lists the 17 spaces between the capitals', () => {
+    expect(TRACK_SPACES).toHaveLength(TRACK_CELLS - 2);
+    expect(TRACK_SPACES[0]).toBe(-(CAPITAL_SPACE - 1));
+    expect(TRACK_SPACES.at(-1)).toBe(CAPITAL_SPACE - 1);
+  });
+
+  it('gives each space the value of its printed zone, the same on both sides', () => {
+    expect(TRACK_SPACES.map(spacePoints)).toEqual([
+      10, 10, 10, 5, 5, 5, 2, 2, 0, 2, 2, 5, 5, 5, 10, 10, 10
+    ]);
   });
 });

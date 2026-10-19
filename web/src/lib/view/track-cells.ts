@@ -79,3 +79,15 @@ export function zoneBoundaries(left: Seat): number[] {
   }
   return out.sort((a, b) => a - b);
 }
+
+/** The spaces between the capitals, -8 to 8, left to right for the Sun on the left. */
+export const TRACK_SPACES: readonly number[] = Array.from(
+  { length: 2 * CAPITAL_SPACE - 1 },
+  (_, k) => k - (CAPITAL_SPACE - 1)
+);
+
+/** The value of the zone a space lies in: 0 for the centre, else 2, 5 or 10. */
+export function spacePoints(position: number): number {
+  const distance = Math.abs(position);
+  return TRACK_ZONES.find((z) => distance >= z.first && distance <= z.last)?.points ?? 0;
+}

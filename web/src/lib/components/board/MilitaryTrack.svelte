@@ -42,15 +42,27 @@
   // leads and the next looting, and the zone, looting and capital tooltips
   // show the rules' military diagram (compact) and link the rules' military
   // section.
+  //
+  // Ornaments (M11.ornament-integration, art/vector/specs/ornaments-track-
+  // logo.md): on the full bar each of the 17 spaces is a niche of the
+  // track-cell art, its lozenges counting the zone (none in the centre, one,
+  // two or three toward the capitals), under the zone shading's colour; each
+  // capital is its city gate (capital-sun, capital-moon) in the seat's ink,
+  // haloed in the capital's own surface. The compact bar is too small for
+  // the niches and keeps the crests' -sm files at 11 px. All of it is
+  // decoration under the same hit areas and tooltips.
   import { hintHide } from '$lib/hints/local.svelte';
   import { formatNumber, i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
+  import { trackCellArt } from '$lib/ornaments/art';
   import { trackEnds, trackMirrored, type Seat } from '$lib/ui/track';
   import { militaryLeader, militaryMargin, nextLooting } from '$lib/view/threats';
   import {
     CAPITAL_SPACE,
+    TRACK_SPACES,
     TRACK_ZONES,
     cellCenter,
+    spacePoints,
     zoneBoundaries,
     zoneMiddle,
     zoneSpan
@@ -208,9 +220,14 @@
         data-min-font="10"
         data-to-capital={th.capitals[seat]?.toCapital}>{th.capitals[seat]?.toCapital}</span
       >
-    {:else}
+    {:else if compact}
       <!-- About 11 px, where the crests' -sm files read. -->
       <Icon name={seat === 0 ? 'crest-sun-sm' : 'crest-moon-sm'} class="text-[11px]" />
+    {:else}
+      <Icon
+        name={seat === 0 ? 'capital-sun' : 'capital-moon'}
+        class="capital-gate text-[18px] md:text-[20px]"
+      />
     {/if}
   </div>
 {/snippet}
@@ -261,6 +278,21 @@
           ></div>
         {/each}
       {/each}
+      {#if !compact}
+        {#each TRACK_SPACES as pos (pos)}
+          {@const art = trackCellArt(spacePoints(pos))}
+          <svg
+            class="cell absolute top-px h-[calc(100%-2px)] text-fg/30"
+            style:--pos="{cellCenter(pos, leftSeat)}%"
+            viewBox={art.viewBox}
+            data-cell={pos}
+          >
+            <!-- Our own track-cell file, imported at build time (ornaments/art.ts). -->
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html art.inner}
+          </svg>
+        {/each}
+      {/if}
       {@render capital(ends[0])}
       {@render capital(ends[1])}
     </div>
@@ -413,6 +445,7 @@
   }
   .zone-value,
   .boundary,
+  .cell,
   .capital,
   .capital-crown {
     left: var(--pos); /* physical-ok: see the note above */
@@ -422,8 +455,16 @@
     left: var(--from); /* physical-ok: see the note above */
     width: calc(var(--to) - var(--from));
   }
-  .capital {
+  .capital,
+  .cell {
     width: calc(100% / 19);
+  }
+  /* The gate's halo is the capital's own surface: its tint over the panel. */
+  .capital[data-capital='0'] {
+    --i-halo: color-mix(in oklab, var(--sun) 30%, var(--panel));
+  }
+  .capital[data-capital='1'] {
+    --i-halo: color-mix(in oklab, var(--moon) 25%, var(--panel));
   }
   /* The ghost pawn stays readable over a capital or a token. */
   .pawn-ghost {
