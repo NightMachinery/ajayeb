@@ -490,6 +490,80 @@ describe('Session: rooms', () => {
     expect(rooms.list).toEqual([]);
   });
 
+  // Promoted from the independent review probe: a visible board must not
+  // survive a reconnect into an archived room, nor keep resending its requests.
+  it.each(['room-archived', 'room-not-found'] as const)(
+    'ends an on-screen room after reconnect returns %s',
+    async (code) => {
+      const rooms = new SavedRooms(memoryStorage());
+      const { session, transport } = joined({ rooms });
+      expect(session.frame).not.toBeNull();
+      session.act('construct:stone-reserve');
+      transport.receive({ t: 'reject', seq: session.seq, code: 'rate', msg: '' });
+      session.rematch();
+      expect(session.rematchAsked).toBe(true);
+      transport.setState('reconnecting', { attempt: 1 });
+      connect(transport);
+      const link = session.requestLink(0);
+      const refusedLink = expect(link).rejects.toMatchObject({ code });
+      transport.receive({ t: 'error', code, msg: 'rules-version' });
+      await refusedLink;
+      expect(session.roomError).toBe(code);
+      expect(session.notice?.message).toBe(
+        code === 'room-archived' ? 'session.error.roomArchived' : 'session.error.roomNotFound'
+      );
+      expect(session.code).toBe('H8TQ4R');
+      expect(session.frame).toBeNull();
+      expect(session.view).toBeNull();
+      expect(session.pending).toBeNull();
+      expect(session.slow).toBe(false);
+      expect(session.rematchAsked).toBe(false);
+      expect(session.rematchCode).toBeNull();
+      expect(session.rematchClaim).toBeNull();
+      expect(rooms.list).toEqual([]);
+      const requests = transport.sent.filter((frame) => frame.t !== 'hello');
+      vi.runAllTimers();
+      transport.setState('reconnecting', { attempt: 2 });
+      connect(transport);
+      // Late room replies cannot bring the stale board or rematch back.
+      transport.receive(playFrame('H8TQ4R', 11));
+      transport.receive({ t: 'created', code: 'NEXT22' });
+      transport.receive({ t: 'linked', code: 'H8TQ4R', seat: 0, claim: 'late' });
+      session.resync();
+      session.rematch();
+      expect(session.retry()).toBe(false);
+      expect(session.act('construct:stone-reserve')).toBe(false);
+      expect(session.undo()).toBe(false);
+      expect(transport.sent.filter((frame) => frame.t !== 'hello')).toEqual(requests);
+      expect(session.roomError).toBe(code);
+      expect(session.frame).toBeNull();
+      expect(session.rematchCode).toBeNull();
+      expect(rooms.list).toEqual([]);
+    }
+  );
+
+  it.each([false, true])(
+    'keeps a temporarily unavailable room and retries after reconnect (frame=%s)',
+    (hasFrame) => {
+      const rooms = new SavedRooms(memoryStorage());
+      rooms.remember('H8TQ4R', 'hotseat', 1);
+      const { session, transport } = setup({ rooms });
+      connect(transport);
+      session.join('H8TQ4R');
+      if (hasFrame) transport.receive(playFrame());
+      transport.receive({ t: 'error', code: 'busy', msg: 'the room could not be saved' });
+      expect(session.notice?.message).toBe('session.error.busy');
+      expect(rooms.list.map((room) => room.code)).toEqual(['H8TQ4R']);
+      const joins = transport.sentOf('join').length;
+      transport.setState('reconnecting');
+      connect(transport);
+      expect(transport.sentOf('join')).toHaveLength(joins + 1);
+      transport.receive(playFrame());
+      expect(session.roomError).toBeNull();
+      expect(session.canAct).toBe(true);
+    }
+  );
+
   it('reports a join that finds no room, and forgets that room', () => {
     const rooms = new SavedRooms(memoryStorage());
     rooms.remember('GONE42', 'online', 1);

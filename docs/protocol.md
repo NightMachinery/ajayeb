@@ -792,13 +792,16 @@ it again with the same `seq`.
 
 ## Error codes
 
-- `room-not-found`: no room has that code, or it could not be read/loaded.
+- `room-not-found`: no room has that code (or its code is malformed). Stored-room read/write failures use temporary `busy` instead, so the client keeps the Home entry.
 - `room-archived`: the room was durably archived after a rules-version mismatch
   or failed legal replay, or was already archived. `msg` contains only one safe
   bounded reason: `rules-version`, `replay-failed` or `unavailable` (legacy or
   unknown reason). Raw keys, hashes and diagnostic errors are never sent.
-  The client uses a localized update-ended message with Home/recovery guidance,
+  The client uses a neutral localized unavailable-game message with Home/recovery guidance,
   ignores `msg` as display text and removes the room from its saved Home list.
+  On either a cold join or a reconnect over a visible board, archived and missing
+  rooms clear pending moves, link requests and rematch state, show the room error
+  screen, and stop rejoining automatically. Late room replies cannot revive it.
 - `room-full`: the room takes no more connections of this kind: a new
   spectator once the room has 32 connections, or one more connection of a
   user who already has 32 there. Spectators can never lock a player out.
@@ -811,7 +814,9 @@ it again with the same `seq`.
   speak. The connection closes (1008).
 - `busy`: the server holds as many rooms in memory as it can, and every one
   of them has a connection (a `create`, a `rematch`, or a `join` that must
-  load a room). Try again later.
+  load a room), or the room could not be read or saved during restoration.
+  This is temporary: the client keeps the Home entry and can join again after
+  a later reconnect or reload. Try again later.
 - `bad-claim`: a `join` carried a claim that is not one of this room's
   (malformed, made for another room, or revoked by a `relink`); or, sent on
   its own, the device link this connection joined with was just reset, and
@@ -1482,9 +1487,9 @@ error instead of producing a broken state.
 ```
 
 - `format` identifies this check contract; `rules` is the candidate's explicit `engine.RulesVersion`.
-- `rooms` counts JSON room entries examined. `lobby`, `playing`, `finished` and `archived` count recognized statuses in readable, current-schema files. Existing archives are never replayed.
+- `rooms` counts examined files named by valid room codes, matching the server's `Codes()` listing. Directories and non-room-code JSON files are ignored. `lobby`, `playing`, `finished` and `archived` count recognized statuses in readable, current-schema files. Existing archives are never replayed.
 - `playable` counts unarchived rooms whose complete legal replay succeeds under the same rules version, including finished games. `refreshableHashes` is the subset whose stored hashes differ; the check never refreshes them.
 - `wouldArchive` counts unarchived rules mismatches or failed replays. `liveWouldArchive` is the subset in `lobby` or `playing` status.
-- `schemaErrors` counts unknown schema files. `errors` includes those and operational, unreadable, malformed JSON, invalid file-name/header and unknown-status failures. These counts are independent of replay incompatibility. Listing failures count as errors, never as an empty directory. A missing directory is the fresh-install case.
+- `schemaErrors` counts unknown schema files. `errors` includes those and operational, unreadable, malformed JSON in room files, mismatched headers and unknown-status failures. These counts are independent of replay incompatibility. Listing failures count as errors, never as an empty directory. A missing directory is the fresh-install case.
 
 Exit 1 means `errors > 0` (or report output failed), exit 3 means `liveWouldArchive > 0` without other errors, and exit 0 otherwise. Deployment must validate the format, counts and exit status before stopping the old binary. `--force-room-archive` belongs to `self_host.py setup/redeploy/ship/ship-all`, not to this read-only server command; it permits exit 3 only. See [the deployment sequence and stop-boundary recovery](self-hosting.md#room-compatibility-preflight).

@@ -18,9 +18,9 @@ import (
 )
 
 // A room whose file has grown past the store's read cap (planted, or
-// corrupted) is not found: the join is refused cleanly, the room is not
-// loaded, and the file is left for a look.
-func TestOversizedRoomFileIsNotFound(t *testing.T) {
+// corrupted) is a storage failure: refuse without loading it or dropping the
+// client's saved room, and leave the file intact for repair.
+func TestOversizedRoomFileIsRetryable(t *testing.T) {
 	h := newHarness(t)
 	a := h.client("user-a", "tab-a", "Ann")
 	code, _ := a.create(wire.NewCreate(wire.ModeHotseat, nil, wire.SeatNumber(0), nil))
@@ -37,7 +37,7 @@ func TestOversizedRoomFileIsNotFound(t *testing.T) {
 	}
 
 	again := h.client("user-a", "tab-a2", "Ann")
-	if e, err := again.joinErr(code); e.Code != wire.ErrorCodeRoomNotFound || !errors.Is(err, room.ErrRoomNotFound) {
+	if e, err := again.joinErr(code); e.Code != wire.ErrorCodeBusy || !errors.Is(err, room.ErrStorage) {
 		t.Fatalf("joining the oversized room: %v, %v", e, err)
 	}
 	if h.m.Loaded(code) {
@@ -46,6 +46,14 @@ func TestOversizedRoomFileIsNotFound(t *testing.T) {
 	if after, err := os.ReadFile(path); err != nil || !bytes.Equal(after, padded) {
 		t.Fatalf("the oversized file changed: %v", err)
 	}
+	// Once the file is repaired, the same saved room can be opened again.
+	if err := os.WriteFile(path, valid, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if state := again.join(code); state.Code != code {
+		t.Fatal("repaired room did not reopen")
+	}
+
 }
 
 // seedGateBot reports its seed on started when a search starts, then waits

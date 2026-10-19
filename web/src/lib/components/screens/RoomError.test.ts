@@ -25,6 +25,7 @@ describe('the room error screen', () => {
     expect(body).toContain(t('online.error.archivedHint'));
     expect(body).toContain('data-control="error-home"');
     expect(body).not.toContain(t('online.error.retryHint'));
+    expect(body).not.toContain('server update');
   });
 
   it('renders the archived message and recovery guidance in Persian', async () => {
@@ -33,7 +34,7 @@ describe('the room error screen', () => {
       const body = screen('room-archived');
       expect(body).toContain(t('session.error.roomArchived'));
       expect(body).toContain(t('online.error.archivedHint'));
-      expect(body).not.toContain('A server update ended');
+      expect(body).not.toContain('به‌روزرسانی');
     } finally {
       await i18n.set('en');
     }

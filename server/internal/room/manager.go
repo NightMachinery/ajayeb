@@ -462,10 +462,11 @@ func (m *Manager) get(code string, check func(*store.File) error) (*Room, error)
 	if check != nil {
 		hdr, err := m.cfg.Store.PeekHeader(code)
 		if err != nil {
-			if !errors.Is(err, fs.ErrNotExist) {
-				m.log.Warn("reading a room's header failed", "room", code, "err", err)
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil, ErrRoomNotFound
 			}
-			return nil, ErrRoomNotFound
+			m.log.Warn("reading a room's header failed", "room", code, "err", err)
+			return nil, ErrStorage
 		}
 		if hdr.Status == store.StatusArchived {
 			return nil, &archivedRoomError{reason: hdr.ArchiveReason}
@@ -485,20 +486,21 @@ func (m *Manager) get(code string, check func(*store.File) error) (*Room, error)
 	defer m.unreserve()
 	f, s, err := m.cfg.Store.Load(code)
 	if err != nil {
-		if !errors.Is(err, fs.ErrNotExist) {
-			m.log.Warn("loading a room failed", "room", code, "err", err)
+		if errors.Is(err, fs.ErrNotExist) && !errors.Is(err, store.ErrRestoreWrite) {
+			return nil, ErrRoomNotFound
 		}
+		m.log.Warn("loading a room failed", "room", code, "err", err)
 		if errors.Is(err, store.ErrArchived) && f != nil {
 			return nil, &archivedRoomError{reason: f.ArchiveReason}
 		}
-		return nil, ErrRoomNotFound
+		return nil, ErrStorage
 	}
 	// The store checked every key by membership and refreshed the hash. The
 	// room also needs each action's seat and events, for undo and history.
 	_, hist, err := replayKeys(f, f.Actions)
 	if err != nil {
 		m.log.Error("a stored room does not replay through the legal actions", "room", code, "err", err)
-		return nil, ErrRoomNotFound
+		return nil, ErrStorage
 	}
 	r := newRoom(m, f, s, hist)
 	actions := len(f.Actions) // f belongs to the actor once it starts

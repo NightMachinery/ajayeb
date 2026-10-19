@@ -126,7 +126,7 @@ down.
 .self-host/bin/ajayeb.upload --check-rooms --data .self-host/data
 ```
 
-The candidate emits one JSON report with format `ajayeb-room-check/1` and counts for room statuses, playable rooms, hashes it could refresh, rooms it would archive and read/schema failures. It opens no socket, initializes no identity, makes no directories and changes no room bytes. A missing data/rooms directory is an empty fresh installation; permission, decoding and schema errors fail closed. Unknown newer schemas are preserved. Exit 0 means the check permits deployment; exit 3 means in-progress rooms (lobby or playing) would archive; exit 1 means an operational/read/schema failure. A finished room that would archive is counted but does not require the live-room override.
+The candidate emits one JSON report with format `ajayeb-room-check/1` and counts for room statuses, playable rooms, hashes it could refresh, rooms it would archive and read/schema failures. It opens no socket, initializes no identity, makes no directories and changes no room bytes. A missing data/rooms directory is an empty fresh installation. Directories and JSON files without valid room-code names are ignored, matching the server's room listing; permission, decoding and schema errors in room files fail closed. Unknown newer schemas are preserved. Exit 0 means the check permits deployment; exit 3 means in-progress rooms (lobby or playing) would archive; exit 1 means an operational/read/schema failure. A finished room that would archive is counted but does not require the live-room override.
 
 A clean replay in the same `engine.RulesVersion` can refresh an old state hash without ending the game or resetting its idle clock. Incompatible setup/RNG/catalog/rules changes must bump that version. Invalid action logs or a different rules version archive on ordinary load with a durable reason and timestamp; an archive never reopens automatically. See [D28](dev/decisions.md#d28-saved-rooms-are-canonical-within-an-explicit-rules-version) for the integrity tradeoff and [the CLI contract](protocol.md#read-only-room-check-cli) for the report fields.
 
@@ -134,7 +134,7 @@ Live-room loss refuses before the stop. To deliberately accept it for this invoc
 
 The first scan can race active moves and the reaper. After stopping, the script waits for the old port to be released and repeats the candidate scan before any data backup, configuration save or binary swap. If this second check fails, the old binary and data stay in place and the script attempts to restart that binary on its prior port/configuration, checking health and reporting any restart failure. It retains the candidate for inspection. This assumes stopping the service has quiesced room writers; it does not lock out an unrelated process that edits files afterward. The normal `.prev` binary and room-backup policy remain unchanged, and later startup/publication failures still need the existing operator recovery procedure.
 
-An archived join shows a distinct English/Persian message and a Home action to start a new game. Recovering an old record requires the operator to retain a backup and use a compatible old binary against a separate copy of its data. Do not point an old binary at newer-schema production data or reset an archive marker merely to force it open.
+An archived join, including a reconnect over a board already on screen, shows a neutral English/Persian unavailable-game message and a Home action to start a new game. It clears pending requests and forgets the unavailable Home entry. Temporary restoration storage failures keep that entry and allow a later retry. Recovering an old record requires the operator to retain a backup and use a compatible old binary against a separate copy of its data. Do not point an old binary at newer-schema production data or reset an archive marker merely to force it open.
 
 ## Production run
 
@@ -612,3 +612,5 @@ when `E2E_BASE_URL` is set by hand instead of through this target.
 A failure here after a `redeploy` is the signal to roll back: stop the
 server, restore `.self-host/bin/ajayeb.prev` to `.self-host/bin/ajayeb`, and
 `start` it again.
+
+A rollback to a pre-D28 binary still checks stored hashes strictly: rooms whose hashes the new binary refreshed or saved may archive on load. Preserve a copy of current data and pair that old binary with a matching pre-upgrade rooms backup when recovering; restoring that backup also gives up moves made afterward.

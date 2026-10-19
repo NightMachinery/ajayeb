@@ -23,8 +23,7 @@ export const session = {
   'session.reject.gameOver': 'The game is over, so its hints no longer change.',
   'session.reject.undoOff': 'Undo is off in this game.',
 
-  'session.error.roomArchived':
-    'A server update ended this saved game. It can no longer be continued.',
+  'session.error.roomArchived': 'This saved game is no longer available to continue.',
   'session.error.roomNotFound': 'No game has that code.',
   'session.error.roomFull': 'This game takes no more connections.',
   'session.error.forbidden': 'You cannot do that in this game.',

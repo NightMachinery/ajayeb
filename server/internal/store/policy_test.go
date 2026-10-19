@@ -132,7 +132,7 @@ func TestRefreshAndArchiveWriteFailuresAreNotSuccess(t *testing.T) {
 			defer func() { _ = os.Chmod(st.Dir(), 0o700) }()
 			got, _, err := st.Load(f.Code)
 			after, _ := os.ReadFile(filepath.Join(st.Dir(), f.Code+".json"))
-			if err == nil || got != nil || errors.Is(err, store.ErrArchived) || !bytes.Equal(before, after) {
+			if !errors.Is(err, store.ErrRestoreWrite) || got != nil || errors.Is(err, store.ErrArchived) || !bytes.Equal(before, after) {
 				t.Fatalf("write failure: %+v %v", got, err)
 			}
 		})
@@ -247,5 +247,31 @@ func TestCanonicalResignationRemainsReplayable(t *testing.T) {
 	}
 	if _, s, err := st.Load(f.Code); err != nil || !s.Over() {
 		t.Fatalf("canonical resignation replay: %v", err)
+	}
+}
+
+func TestCheckIgnoresNonRoomEntriesLikeCodes(t *testing.T) {
+	st := newStore(t)
+	for _, name := range []string{"notes.json", "invalid-code.json", "README.txt"} {
+		if err := os.WriteFile(filepath.Join(st.Dir(), name), []byte("not JSON"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, name := range []string{"ABCDEF.json", "notes-dir.json"} {
+		if err := os.Mkdir(filepath.Join(st.Dir(), name), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	f := store.New("RDMXXX", store.ModeOnline, engine.Options{}, 1, time.Now())
+	if err := st.Save(f); err != nil {
+		t.Fatal(err)
+	}
+	codes, err := st.Codes()
+	if err != nil || len(codes) != 1 || codes[0] != f.Code {
+		t.Fatalf("Codes: %v %v", codes, err)
+	}
+	r := store.CheckDataDir(filepath.Dir(st.Dir()))
+	if r.Errors != 0 || r.Rooms != len(codes) || r.Playable != 1 {
+		t.Fatalf("stray entries blocked check: %+v", r)
 	}
 }

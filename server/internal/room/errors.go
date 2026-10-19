@@ -50,7 +50,7 @@ var (
 	// reset), or the Manager has no Claims. Frame: error bad-claim.
 	ErrBadClaim = errors.New("room: not a device link of this room")
 	// ErrStorage: the room could not be read or written. Frame: error
-	// room-not-found for a load, nothing else (the room keeps running in
+	// busy for a load, nothing else (the room keeps running in
 	// memory and retries).
 	ErrStorage = errors.New("room: storage failure")
 )
@@ -63,7 +63,7 @@ func errorCode(err error) wire.ErrorCode {
 		return wire.ErrorCodeRoomArchived
 	case errors.Is(err, ErrRoomFull):
 		return wire.ErrorCodeRoomFull
-	case errors.Is(err, ErrTooManyRooms):
+	case errors.Is(err, ErrTooManyRooms), errors.Is(err, ErrStorage):
 		return wire.ErrorCodeBusy
 	case errors.Is(err, ErrForbidden), errors.Is(err, ErrInvalidSpec):
 		return wire.ErrorCodeForbidden
@@ -86,6 +86,8 @@ func errorMsg(err error) string {
 		return "the room takes no more connections"
 	case errors.Is(err, ErrTooManyRooms):
 		return "the server has too many rooms open; try again later"
+	case errors.Is(err, ErrStorage):
+		return "the room could not be read or saved; try again later"
 	case errors.Is(err, ErrForbidden):
 		return "this user may not do that in this room"
 	case errors.Is(err, ErrInvalidSpec):

@@ -503,7 +503,8 @@ export class Session {
 
   /** Asks for a fresh state of the room. */
   resync(): void {
-    if (this.code && this.#welcomed) this.#send({ t: 'resync', code: this.code });
+    if (this.code && this.#welcomed && !this.roomError)
+      this.#send({ t: 'resync', code: this.code });
   }
 
   /**
@@ -513,7 +514,7 @@ export class Session {
    * the players already made.
    */
   rematch(): void {
-    if (!this.code) return;
+    if (!this.code || this.roomError) return;
     const spectator = this.frame !== null && this.frame.you.seats.length === 0;
     if (spectator && !this.rematchCode) return;
     this.rematchAsked = true;
@@ -622,6 +623,20 @@ export class Session {
     this.#settle();
   }
 
+  // A missing or archived room cannot resume. Keep its code for the error
+  // screen, while dropping the stale board and every request that could retry.
+  #endRoomJoin(code: string, error: string): void {
+    this.#rooms?.forget(code);
+    this.#failLinks(error, errorMessage(error));
+    // Clear the old room before restoring the terminal error fields below.
+    this.#leaveRoom();
+    this.#intent = null;
+    this.#remembered = null;
+    this.code = code;
+    this.roomError = error;
+    this.notice = { kind: 'error', code: error, message: errorMessage(error) };
+  }
+
   #onStatus(status: TransportStatus): void {
     switch (status.state) {
       case 'connecting':
@@ -687,7 +702,7 @@ export class Session {
           // knows this browser made it and asks for no name first.
           this.#rooms?.remember(msg.code, frame.mode);
           resolve(msg.code);
-        } else {
+        } else if (this.#intent?.kind === 'join') {
           // A rematch room: the client joins it by its code. It is this
           // browser's room too, of the same mode as the one on screen. A
           // device on a claim plays it with the claim the server sent.
@@ -743,14 +758,19 @@ export class Session {
           this.#failLinks(msg.code, errorMessage(msg.code));
           break;
         }
+        if (
+          this.#intent?.kind === 'join' &&
+          (msg.code === 'room-archived' || msg.code === 'room-not-found')
+        ) {
+          this.#endRoomJoin(this.#intent.code, msg.code);
+          break;
+        }
         if (this.#intent?.kind === 'create') {
           this.#intent.reject(new SessionError(msg.code, errorMessage(msg.code)));
           this.#intent = null;
         } else if (this.#intent?.kind === 'join' && !this.frame) {
           // The join failed: there is no room to show.
           this.roomError = msg.code;
-          if (msg.code === 'room-not-found' || msg.code === 'room-archived')
-            this.#rooms?.forget(this.#intent.code);
         }
         break;
     }
@@ -768,7 +788,7 @@ export class Session {
 
   #onState(frame: State): void {
     // The outbox may still deliver a state of a room this client has left.
-    if (frame.code !== this.code) return;
+    if (frame.code !== this.code || this.#intent?.kind !== 'join') return;
     this.#takeHistory(frame, this.frame);
     this.frame = frame;
     this.view = frame.view;
@@ -810,7 +830,7 @@ export class Session {
   // resolve. A device on a claim that has just reset its own seat's link
   // plays on under the new claim (the server moved it there).
   #onLinked(msg: Linked): void {
-    if (msg.code !== this.code) return;
+    if (msg.code !== this.code || this.#intent?.kind !== 'join') return;
     const done = this.#links.filter((w) => w.seat === msg.seat);
     this.#links = this.#links.filter((w) => w.seat !== msg.seat);
     const reset = done.some((w) => w.reset);

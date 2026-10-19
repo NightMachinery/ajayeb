@@ -1,6 +1,7 @@
 package room_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -166,5 +167,83 @@ func TestConcurrentRestoreRefreshesOnlyOnceBeforeActorStarts(t *testing.T) {
 	}
 	if n := gate.loads.Load(); n != 1 {
 		t.Fatalf("disk loaded %d times; late refresh could overwrite newer actions", n)
+	}
+}
+
+func TestRestoreWriteFailuresAreRetryableAndKeepRoomFile(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("write permission failure requires unprivileged user")
+	}
+	for _, field := range []string{"hash", "rules"} {
+		t.Run(field, func(t *testing.T) {
+			h := newHarness(t)
+			f := store.New("RETRYX", store.ModeOnline, engine.Options{}, 1, roomEpoch)
+			f.Seats = [2]store.Seat{{Kind: store.SeatKindHuman, UserID: "owner"}, {Kind: store.SeatKindOpen}}
+			if err := h.st.Save(f); err != nil {
+				t.Fatal(err)
+			}
+			rewritePolicyRoom(t, h.st, f.Code, func(raw map[string]any) {
+				if field == "hash" {
+					raw[field] = "old-layout"
+				} else {
+					raw[field] = engine.RulesVersion + 1
+				}
+			})
+			path := filepath.Join(h.st.Dir(), f.Code+".json")
+			before, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(h.st.Dir(), 0o500); err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = os.Chmod(h.st.Dir(), 0o700) }()
+			c := h.client("owner", "tab", "Player")
+			frame, err := c.joinErr(f.Code)
+			if !errors.Is(err, room.ErrStorage) || frame.Code != wire.ErrorCodeBusy {
+				t.Fatalf("storage refusal: %+v %v", frame, err)
+			}
+			after, err := os.ReadFile(path)
+			if err != nil || !bytes.Equal(before, after) {
+				t.Fatal("failed write changed room file")
+			}
+			if h.m.Loaded(f.Code) {
+				t.Fatal("failed write loaded room")
+			}
+			if err := os.Chmod(h.st.Dir(), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if field == "hash" {
+				restored := c.join(f.Code)
+				if restored.Room.Status != wire.RoomStatusLobby {
+					t.Fatalf("restored status %s", restored.Room.Status)
+				}
+			} else {
+				frame, err := c.joinErr(f.Code)
+				if !errors.Is(err, room.ErrRoomArchived) || frame.Code != wire.ErrorCodeRoomArchived {
+					t.Fatalf("durable archive after retry: %+v %v", frame, err)
+				}
+			}
+		})
+	}
+}
+
+// A rewrite can report not-exist after its file was read (for example, when
+// the parent directory disappears). That remains a temporary write failure.
+type restoreWriteFailure struct{ room.Storage }
+
+func (s restoreWriteFailure) Load(string) (*store.File, engine.State, error) {
+	return nil, engine.State{}, errors.Join(store.ErrRestoreWrite, os.ErrNotExist)
+}
+func TestRestoreWriteMissingDirectoryIsNotMissingRoom(t *testing.T) {
+	h := newHarness(t, func(cfg *room.Config) { cfg.Store = restoreWriteFailure{cfg.Store} })
+	f := store.New("RETRYX", store.ModeOnline, engine.Options{}, 1, roomEpoch)
+	if err := h.st.Save(f); err != nil {
+		t.Fatal(err)
+	}
+	c := h.client("owner", "tab", "Player")
+	frame, err := c.joinErr(f.Code)
+	if !errors.Is(err, room.ErrStorage) || frame.Code != wire.ErrorCodeBusy {
+		t.Fatalf("restore-write not-exist: %+v %v", frame, err)
 	}
 }

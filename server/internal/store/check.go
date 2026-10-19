@@ -54,11 +54,11 @@ func CheckDataDir(dataDir string) CheckReport {
 		if !ok {
 			continue
 		}
-		r.Rooms++
+		// Match Codes(): unrelated JSON files and directories are not rooms.
 		if entry.IsDir() || ValidateCode(code) != nil {
-			r.Errors++
 			continue
 		}
+		r.Rooms++
 		f, err := readFile(filepath.Join(dataDir, "rooms", entry.Name()))
 		if err != nil {
 			r.Errors++

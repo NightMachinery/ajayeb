@@ -13,6 +13,10 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 )
 
+// ErrRestoreWrite distinguishes a failed restore rewrite from a missing room,
+// even when the filesystem reports not-exist for a vanished parent directory.
+var ErrRestoreWrite = errors.New("store: restore write failed")
+
 // Store is a handle on one <data>/rooms directory. The zero value is not
 // valid; use Open or OpenWithClock.
 type Store struct {
@@ -113,7 +117,7 @@ func (st *Store) Load(code string) (*File, engine.State, error) {
 		refreshed := *f
 		refreshed.Hash = got
 		if err := rewriteFields(path, data, map[string]any{"hash": got}); err != nil {
-			return nil, engine.State{}, fmt.Errorf("store: refresh hash for %s: %w", code, err)
+			return nil, engine.State{}, fmt.Errorf("%w: refresh hash for %s: %w", ErrRestoreWrite, code, err)
 		}
 		slog.Warn("refreshed room replay hash", "room", code, "oldHash", old, "newHash", got)
 		f = &refreshed
@@ -129,7 +133,7 @@ func (st *Store) archive(path string, f *File, data []byte, reason ArchiveReason
 	archived.ArchiveReason = reason
 	if err := rewriteFields(path, data, map[string]any{"status": archived.Status, "updated": archived.Updated,
 		"archiveReason": reason, "archivedAt": archived.ArchivedAt}); err != nil {
-		return nil, engine.State{}, fmt.Errorf("store: archiving failed: %w (replay: %v)", err, cause)
+		return nil, engine.State{}, fmt.Errorf("%w: archiving failed: %w (replay: %v)", ErrRestoreWrite, err, cause)
 	}
 	return &archived, engine.State{}, &ArchivedError{Reason: reason, Cause: cause}
 }
