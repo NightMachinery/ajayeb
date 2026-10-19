@@ -4,8 +4,6 @@
   // follows the card's font size. Decorative: the card's ARIA name says the
   // amount in words. `tip` gives it a tooltip of its own; inside a cost row
   // or an effect glyph the surrounding group carries the tooltip instead.
-  // Persian numerals in Vazirmatn bold are wider than Inter's, so they are
-  // set a little tighter there, which keeps ۱۲ inside the disc.
   import { formatSigned } from '$lib/i18n';
   import { tooltip, type TooltipContent } from '$lib/ui/tooltip.svelte';
 
@@ -23,7 +21,7 @@
 
 <span
   class="inline-grid size-[1.25em] shrink-0 place-items-center rounded-full border border-(color:--gold-deep) bg-gold
-    leading-none font-bold text-card-ink tabular-nums [&:lang(fa)]:tracking-[-0.08em] {className}"
+    leading-none font-bold text-card-ink tabular-nums {className}"
   data-min-font="10"
   aria-hidden="true"
   {@attach tooltip(tip)}>{formatSigned(loss ? -n : n)}</span
