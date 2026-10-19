@@ -471,6 +471,54 @@ class SelfHostTests(unittest.TestCase):
                 self_host.DATA_DIR = orig_data_dir
                 self_host.BACKUPS_DIR = orig_backups_dir
 
+    def test_room_backups_prune_by_age_and_count_with_clock(self):
+        now = 2_000_000_000.0
+        day = 24 * 60 * 60
+        with tempfile.TemporaryDirectory() as tmp:
+            backups = Path(tmp)
+            old = backups / "rooms-old.tar.gz"
+            boundary = backups / "rooms-boundary.tar.gz"
+            middle = backups / "rooms-middle.tar.gz"
+            fresh = backups / "rooms-fresh.tar.gz"
+            unrelated = backups / "unrelated.tar.gz"
+            directory = backups / "rooms-directory.tar.gz"
+            directory.mkdir()
+            for path, age in ((old, 31*day), (boundary, 30*day), (middle, day), (fresh, 0), (unrelated, 50*day)):
+                path.write_bytes(b"backup")
+                os.utime(path, (now-age, now-age))
+            with mock.patch.object(self_host, "BACKUPS_DIR", backups):
+                self_host.prune_room_backups(now=now)
+                self.assertFalse(old.exists())
+                self.assertTrue(boundary.exists())
+                self_host.prune_room_backups(keep=2, now=now)
+                self.assertFalse(boundary.exists())
+                self.assertTrue(middle.exists())
+                self.assertTrue(fresh.exists())
+                self.assertTrue(unrelated.exists())
+                self.assertTrue(directory.is_dir())
+                self_host.prune_room_backups(now=now+31*day)
+                self.assertFalse(middle.exists())
+                self.assertFalse(fresh.exists())
+
+    def test_room_backup_age_pruning_runs_without_live_rooms(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            backups = root / "backups"
+            backups.mkdir()
+            stale = backups / "rooms-stale.tar.gz"
+            stale.write_bytes(b"old backup")
+            os.utime(stale, (1, 1))
+            # Only diagnostic archives remain. Do not duplicate these into a
+            # deployment backup, but still expire the existing backups.
+            archive = root / "data" / "rooms-archive"
+            archive.mkdir(parents=True)
+            record = archive / "ARCHVD.json"
+            record.write_bytes(b"diagnostic record")
+            with mock.patch.object(self_host, "BACKUPS_DIR", backups), mock.patch.object(self_host, "DATA_DIR", root / "data"):
+                self.assertIsNone(self_host.archive_rooms())
+            self.assertFalse(stale.exists())
+            self.assertEqual(record.read_bytes(), b"diagnostic record")
+
     def test_archive_rooms_skips_when_no_rooms(self):
         import tempfile
 
@@ -2929,6 +2977,13 @@ class CandidateRoomCheckTests(unittest.TestCase):
             run = self.check(self.report())
         self.assertIn("refreshableHashes=1", out.getvalue())
         self.assertEqual(run.call_args.args[0], [str(Path("/tmp/candidate").resolve()), "--check-rooms", "--data", str(self_host.DATA_DIR)])
+
+    def test_preflight_allows_archived_folder_counts_without_force(self):
+        # The real candidate's folder scan is covered by the Go CLI test;
+        # deployment must accept its archive-only report without force.
+        with redirect_stdout(io.StringIO()) as out:
+            self.check(self.report(rooms=4, playing=0, archived=4, playable=0, refreshableHashes=0))
+        self.assertIn("archived=4", out.getvalue())
 
     def test_live_loss_refuses_and_force_is_explicit_in_output(self):
         report = self.report(playable=1, wouldArchive=1, liveWouldArchive=1)

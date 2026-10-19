@@ -29,8 +29,8 @@ type CheckReport struct {
 }
 
 // CheckDataDir reads without initializing a Store, identity or listener. Missing
-// data/rooms means a fresh installation; every other read/format failure counts
-// as an error. No file is refreshed, archived, created or removed.
+// room directories are empty; every other read/format failure counts as an
+// error. No file is refreshed, archived, created or removed.
 func CheckDataDir(dataDir string) CheckReport {
 	r := CheckReport{Format: "ajayeb-room-check/1", Rules: engine.RulesVersion}
 	info, err := os.Stat(dataDir)
@@ -41,13 +41,20 @@ func CheckDataDir(dataDir string) CheckReport {
 		r.Errors++
 		return r
 	}
-	entries, err := os.ReadDir(filepath.Join(dataDir, "rooms"))
+	for _, folder := range []string{"rooms", "rooms-archive"} {
+		r.checkFolder(filepath.Join(dataDir, folder), folder == "rooms-archive")
+	}
+	return r
+}
+
+func (r *CheckReport) checkFolder(dir string, archive bool) {
+	entries, err := os.ReadDir(dir)
 	if errors.Is(err, fs.ErrNotExist) {
-		return r
+		return
 	}
 	if err != nil {
 		r.Errors++
-		return r
+		return
 	}
 	for _, entry := range entries {
 		code, ok := strings.CutSuffix(entry.Name(), ".json")
@@ -59,7 +66,7 @@ func CheckDataDir(dataDir string) CheckReport {
 			continue
 		}
 		r.Rooms++
-		f, err := readFile(filepath.Join(dataDir, "rooms", entry.Name()))
+		f, err := readFile(filepath.Join(dir, entry.Name()))
 		if err != nil {
 			r.Errors++
 			continue
@@ -70,6 +77,10 @@ func CheckDataDir(dataDir string) CheckReport {
 			continue
 		}
 		if f.Code != code {
+			r.Errors++
+			continue
+		}
+		if archive && f.Status != StatusArchived {
 			r.Errors++
 			continue
 		}
@@ -100,5 +111,4 @@ func CheckDataDir(dataDir string) CheckReport {
 			r.RefreshableHashes++
 		}
 	}
-	return r
 }

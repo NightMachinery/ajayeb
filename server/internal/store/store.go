@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
@@ -17,11 +18,14 @@ import (
 // even when the filesystem reports not-exist for a vanished parent directory.
 var ErrRestoreWrite = errors.New("store: restore write failed")
 
-// Store is a handle on one <data>/rooms directory. The zero value is not
-// valid; use Open or OpenWithClock.
+// Store handles the live and archived room directories under <data>.
+// The zero value is not valid; use Open or OpenWithClock.
 type Store struct {
-	dir string
-	now Clock // stamps archive time when Load archives a room
+	dir     string
+	now     Clock // stamps archive time when Load archives a room
+	locksMu sync.Mutex
+	locks   map[string]*roomLock
+	sweepMu sync.Mutex // serialize cleanup plans, not ordinary room operations
 }
 
 // Open prepares <dataDir>/rooms, creating it (and dataDir) if neither exists
@@ -40,12 +44,15 @@ func OpenWithClock(dataDir string, now Clock) (*Store, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("store: creating %s: %w", dir, err)
 	}
-	return &Store{dir: dir, now: now}, nil
+	return &Store{dir: dir, now: now, locks: make(map[string]*roomLock)}, nil
 }
 
 // Dir returns the rooms directory this Store reads and writes, mainly for
 // logging and for tests that want to inspect the filesystem directly.
 func (st *Store) Dir() string { return st.dir }
+
+// ArchiveDir returns the diagnostic archive directory, created on first archive.
+func (st *Store) ArchiveDir() string { return filepath.Join(filepath.Dir(st.dir), "rooms-archive") }
 
 // path turns a room code into the room file's path, after validating the
 // code (ValidateCode): the one checkpoint that keeps an untrusted code from
@@ -73,12 +80,28 @@ func (st *Store) Save(f *File) error {
 	if err != nil {
 		return err
 	}
+	unlock := st.lockRoom(f.Code)
+	defer unlock()
+	if _, err := os.Stat(st.archivePath(f.Code)); err == nil {
+		return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return err
+	}
+	if existing, err := readFile(path); err == nil && existing.Status == StatusArchived {
+		return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
+	}
 	s, err := replay(f)
 	if err != nil {
 		return fmt.Errorf("store: save %s: %w", f.Code, err)
 	}
 	f.Hash = engine.HashString(&s)
-	return writeFile(path, f)
+	if err := writeFile(path, f); err != nil {
+		return err
+	}
+	if f.Status == StatusArchived {
+		return st.moveArchive(path, f.Code)
+	}
+	return nil
 }
 
 // Load reads the room at code, replays it and returns both the header and
@@ -93,19 +116,21 @@ func (st *Store) Save(f *File) error {
 // failed replay is archived durably with a bounded reason and timestamp. Already
 // archived rooms stay archived. A failed write is an error, never a successful load.
 func (st *Store) Load(code string) (*File, engine.State, error) {
-	path, err := st.path(code)
-	if err != nil {
+	if err := ValidateCode(code); err != nil {
 		return nil, engine.State{}, err
 	}
-	f, data, err := readFileData(path)
+	unlock := st.lockRoom(code)
+	defer unlock()
+	f, data, path, err := st.readRoom(code)
 	if err != nil {
 		return nil, engine.State{}, fmt.Errorf("store: load %s: %w", code, err)
 	}
-	if err := checkSchema(f); err != nil {
-		return nil, engine.State{}, fmt.Errorf("store: load %s: %w", code, err)
-	}
-
 	if f.Status == StatusArchived {
+		if path != st.archivePath(code) {
+			if err := st.moveArchive(path, code); err != nil {
+				return nil, engine.State{}, fmt.Errorf("%w: moving archive %s: %w", ErrRestoreWrite, code, err)
+			}
+		}
 		return f, engine.State{}, &ArchivedError{Reason: SafeArchiveReason(f.ArchiveReason)}
 	}
 	s, reason, err := assess(f)
@@ -135,6 +160,9 @@ func (st *Store) archive(path string, f *File, data []byte, reason ArchiveReason
 		"archiveReason": reason, "archivedAt": archived.ArchivedAt}); err != nil {
 		return nil, engine.State{}, fmt.Errorf("%w: archiving failed: %w (replay: %v)", ErrRestoreWrite, err, cause)
 	}
+	if err := st.moveArchive(path, f.Code); err != nil {
+		return nil, engine.State{}, fmt.Errorf("%w: moving archive %s: %w", ErrRestoreWrite, f.Code, err)
+	}
 	return &archived, engine.State{}, &ArchivedError{Reason: reason, Cause: cause}
 }
 
@@ -152,14 +180,16 @@ func (st *Store) Exists(code string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	_, err = os.Stat(path)
-	if err == nil {
-		return true, nil
+	unlock := st.lockRoom(code)
+	defer unlock()
+	for _, candidate := range []string{path, st.archivePath(code)} {
+		if _, err := os.Stat(candidate); err == nil {
+			return true, nil
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return false, fmt.Errorf("store: checking %s: %w", code, err)
+		}
 	}
-	if errors.Is(err, fs.ErrNotExist) {
-		return false, nil
-	}
-	return false, fmt.Errorf("store: checking %s: %w", code, err)
+	return false, nil
 }
 
 // NewCode returns a fresh room code with no existing file, retrying
@@ -192,25 +222,25 @@ func (st *Store) NewCode() (string, error) {
 // Schema is refused (ErrSchema), as Load refuses it, because its header
 // fields may not mean what this build thinks.
 func (st *Store) PeekHeader(code string) (*File, error) {
-	path, err := st.path(code)
-	if err != nil {
+	if err := ValidateCode(code); err != nil {
 		return nil, err
 	}
-	f, err := readFile(path)
-	if err == nil {
-		err = checkSchema(f)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("store: peek %s: %w", code, err)
-	}
-	return f, nil
+	unlock := st.lockRoom(code)
+	defer unlock()
+	f, _, _, err := st.readRoom(code)
+	return f, err
 }
 
-// Codes lists every room code with a file on disk, in no particular order.
-func (st *Store) Codes() ([]string, error) {
-	entries, err := os.ReadDir(st.dir)
+// Codes lists live-directory codes only; diagnostic archives do not join the scan.
+func (st *Store) Codes() ([]string, error) { return roomCodes(st.dir) }
+
+func roomCodes(dir string) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return []string{}, nil
+	}
 	if err != nil {
-		return nil, fmt.Errorf("store: listing %s: %w", st.dir, err)
+		return nil, fmt.Errorf("store: listing %s: %w", dir, err)
 	}
 	codes := make([]string, 0, len(entries))
 	for _, e := range entries {
@@ -236,8 +266,12 @@ func (st *Store) Delete(code string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return fmt.Errorf("store: deleting %s: %w", code, err)
+	unlock := st.lockRoom(code)
+	defer unlock()
+	for _, candidate := range []string{path, st.archivePath(code)} {
+		if err := os.Remove(candidate); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("store: deleting %s: %w", code, err)
+		}
 	}
 	return nil
 }

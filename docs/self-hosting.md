@@ -126,13 +126,13 @@ down.
 .self-host/bin/ajayeb.upload --check-rooms --data .self-host/data
 ```
 
-The candidate emits one JSON report with format `ajayeb-room-check/1` and counts for room statuses, playable rooms, hashes it could refresh, rooms it would archive and read/schema failures. It opens no socket, initializes no identity, makes no directories and changes no room bytes. A missing data/rooms directory is an empty fresh installation. Directories and JSON files without valid room-code names are ignored, matching the server's room listing; permission, decoding and schema errors in room files fail closed. Unknown newer schemas are preserved. Exit 0 means the check permits deployment; exit 3 means in-progress rooms (lobby or playing) would archive; exit 1 means an operational/read/schema failure. A finished room that would archive is counted but does not require the live-room override.
+The candidate emits one JSON report with format `ajayeb-room-check/1` and counts for room statuses, playable rooms, hashes it could refresh, rooms it would archive and read/schema failures. It opens no socket, initializes no identity, makes no directories and changes no room bytes. The check scans both `data/rooms` and `data/rooms-archive`; either missing folder is empty. Records in the archive folder must have archived status and never count as live rooms at risk. Directories and JSON files without valid room-code names are ignored, matching the server's room listing; permission, decoding and schema errors in room files fail closed. Unknown newer schemas are preserved. Exit 0 means the check permits deployment; exit 3 means in-progress rooms (lobby or playing) would archive; exit 1 means an operational/read/schema failure. A finished room that would archive is counted but does not require the live-room override.
 
 A clean replay in the same `engine.RulesVersion` can refresh an old state hash without ending the game or resetting its idle clock. Incompatible setup/RNG/catalog/rules changes must bump that version. Invalid action logs or a different rules version archive on ordinary load with a durable reason and timestamp; an archive never reopens automatically. See [D28](dev/decisions.md#d28-saved-rooms-are-canonical-within-an-explicit-rules-version) for the integrity tradeoff and [the CLI contract](protocol.md#read-only-room-check-cli) for the report fields.
 
 Live-room loss refuses before the stop. To deliberately accept it for this invocation, pass `--force-room-archive` to `setup`, `redeploy`, `ship` or `ship-all`. Shipping forwards the flag to the target; `ship-all` applies it to every target in that invocation. It is never remembered in configuration. Force does not bypass schema, read or operational failures. The check prints the affected count and an explicit force warning; raw action keys, hashes and engine errors are absent from the report.
 
-The first scan can race active moves and the reaper. After stopping, the script waits for the old port to be released and repeats the candidate scan before any data backup, configuration save or binary swap. If this second check fails, the old binary and data stay in place and the script attempts to restart that binary on its prior port/configuration, checking health and reporting any restart failure. It retains the candidate for inspection. This assumes stopping the service has quiesced room writers; it does not lock out an unrelated process that edits files afterward. The normal `.prev` binary and room-backup policy remain unchanged, and later startup/publication failures still need the existing operator recovery procedure.
+The first scan can race active moves and the reaper. After stopping, the script waits for the old port to be released and repeats the candidate scan before any data backup, configuration save or binary swap. If this second check fails, the old binary and data stay in place and the script attempts to restart that binary on its prior port/configuration, checking health and reporting any restart failure. It retains the candidate for inspection. This assumes stopping the service has quiesced room writers; it does not lock out an unrelated process that edits files afterward. The normal `.prev` binary recovery remains unchanged, and later startup/publication failures still need the existing operator recovery procedure.
 
 An archived join, including a reconnect over a board already on screen, shows a neutral English/Persian unavailable-game message and a Home action to start a new game. It clears pending requests and forgets the unavailable Home entry. Temporary restoration storage failures keep that entry and allow a later retry. Recovering an old record requires the operator to retain a backup and use a compatible old binary against a separate copy of its data. Do not point an old binary at newer-schema production data or reset an archive marker merely to force it open.
 
@@ -391,15 +391,37 @@ output to a log so a failed boot can be read afterward.
 `redeploy` archives `.self-host/data/rooms` to
 `.self-host/backups/rooms-<timestamp>.tar.gz` once the server has stopped,
 right before installing the new binary, so the archive never captures a
-file mid-write; it keeps only the 10 most recent archives. If there is no
-`rooms` directory yet (a fresh install), it skips the archive step.
+file mid-write. It keeps at most 10 backups and removes backups older than
+30 days, by filesystem modification time, oldest first. Copying or touching
+a backup can change that age. If `rooms` is missing or empty, it skips
+creating a backup but still prunes existing copies. Unrelated files and
+directories are ignored. These snapshots contain live/finished `rooms/`
+records only; they do not duplicate `rooms-archive/` on every deployment.
 
 The replay download reads the same room files, so a finished game's log can
 be downloaded, unless `hideAtEnd` is set, until the reaper deletes the
-room. Finished and archived rooms become eligible after 7 days without an
-update; unfinished rooms expire after 14 days. The menu shows the download
+room. Finished rooms become eligible after 7 days without an update;
+unfinished rooms expire after 14 days. The menu shows the download
 as disabled during play and for a hidden record; eligible finished games
 also offer it on the result screen. See [the download contract](protocol.md#downloading-a-games-log).
+
+Archived records live separately at `.self-host/data/rooms-archive/<code>.json`,
+with the archive reason and original archive time for bug reports. New
+archives move there after the closed status is durably saved. Legacy archives
+still under `rooms/` migrate on load or the next sweep without resetting their
+clock. The directories must be on the same filesystem; a move failure is
+reported and retried without overwriting another diagnostic record. Code
+lookups still report an archived room, and its code stays reserved while the
+record is retained.
+
+The reaper runs at startup and hourly. It removes archives more than 30 days
+after `archivedAt` (`updated` for legacy archives), then evicts the oldest
+until at most 1000 files and 64 MiB remain. Limits can be exceeded between
+sweeps, and a burst can shorten the 30-day window. Malformed, unreadable,
+unknown-schema or misplaced nonarchived records are left for operator repair
+outside those managed limits; preflight still refuses them. Copy a needed
+record outside these folders before expiry if an investigation needs longer.
+See [D29](dev/decisions.md#d29-keep-bounded-diagnostic-archives-outside-the-live-room-directory).
 
 ## Deploying from another machine
 

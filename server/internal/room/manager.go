@@ -588,7 +588,8 @@ func (m *Manager) join(ctx context.Context, c *Client, code string, claim *strin
 		}
 		return res
 	}
-	return ErrRoomNotFound
+	// Exhausted eviction retries do not prove the persisted room is missing.
+	return ErrStorage
 }
 
 // Leave detaches c from the room it joined; the seats stay with their

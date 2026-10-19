@@ -1480,14 +1480,14 @@ error instead of producing a broken state.
 
 ## Read-only room check CLI
 
-`ajayeb --check-rooms --data DIR` exits before identity initialization, directory creation or listening. It reads `DIR/rooms` without rewriting hashes, archiving, deleting or creating files. It emits one JSON object on stdout:
+`ajayeb --check-rooms --data DIR` exits before identity initialization, directory creation or listening. It reads `DIR/rooms` and `DIR/rooms-archive` without rewriting hashes, archiving, deleting or creating files. It emits one JSON object on stdout:
 
 ```
 {"format":"ajayeb-room-check/1","rules":1,"rooms":2,"lobby":0,"playing":2,"finished":0,"archived":0,"playable":2,"wouldArchive":0,"liveWouldArchive":0,"refreshableHashes":1,"schemaErrors":0,"errors":0}
 ```
 
 - `format` identifies this check contract; `rules` is the candidate's explicit `engine.RulesVersion`.
-- `rooms` counts examined files named by valid room codes, matching the server's `Codes()` listing. Directories and non-room-code JSON files are ignored. `lobby`, `playing`, `finished` and `archived` count recognized statuses in readable, current-schema files. Existing archives are never replayed.
+- `rooms` counts examined files named by valid room codes across both folders, using the same filename filter as the server's live `Codes()` listing. Directories and non-room-code JSON files are ignored. `lobby`, `playing`, `finished` and `archived` count recognized statuses in readable, current-schema files. Existing archives are never replayed. A record in `rooms-archive/` must have archived status; it only counts as `archived`, never `playable` or `liveWouldArchive`.
 - `playable` counts unarchived rooms whose complete legal replay succeeds under the same rules version, including finished games. `refreshableHashes` is the subset whose stored hashes differ; the check never refreshes them.
 - `wouldArchive` counts unarchived rules mismatches or failed replays. `liveWouldArchive` is the subset in `lobby` or `playing` status.
 - `schemaErrors` counts unknown schema files. `errors` includes those and operational, unreadable, malformed JSON in room files, mismatched headers and unknown-status failures. These counts are independent of replay incompatibility. Listing failures count as errors, never as an empty directory. A missing directory is the fresh-install case.

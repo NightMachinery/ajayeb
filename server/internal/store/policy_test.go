@@ -77,7 +77,7 @@ func TestArchiveReasonDurableAndBounded(t *testing.T) {
 			if !errors.Is(err, store.ErrArchived) || !errors.As(err, &archived) || archived.Reason != store.ArchiveReplayFailed || got.ArchivedAt == nil {
 				t.Fatalf("archive: %+v %v", got, err)
 			}
-			path := filepath.Join(st.Dir(), f.Code+".json")
+			path := filepath.Join(st.ArchiveDir(), f.Code+".json")
 			before, _ := os.ReadFile(path)
 			again, _, err := st.Load(f.Code)
 			after, _ := os.ReadFile(path)
@@ -98,7 +98,7 @@ func TestExistingArchivedRoomNeverReopens(t *testing.T) {
 	if err := st.Save(f); err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(st.Dir(), f.Code+".json")
+	path := filepath.Join(st.ArchiveDir(), f.Code+".json")
 	before, _ := os.ReadFile(path)
 	got, _, err := st.Load(f.Code)
 	after, _ := os.ReadFile(path)

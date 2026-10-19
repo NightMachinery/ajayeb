@@ -49,6 +49,7 @@ DATA_DIR = CONFIG_DIR / "data"
 BACKUPS_DIR = CONFIG_DIR / "backups"
 DIST_DIR = CONFIG_DIR / "dist"
 ROOMS_BACKUP_KEEP = 10
+ROOMS_BACKUP_MAX_AGE = 30 * 24 * 60 * 60
 DEFAULT_CADDYFILE = Path.home() / "Caddyfile"
 # The Caddyfile this run edits and reloads: DEFAULT_CADDYFILE unless the
 # config names another one (use_caddyfile sets both at the start of a command).
@@ -1168,10 +1169,11 @@ def ports_after_stop(config: Config) -> Config:
 def archive_rooms() -> Path | None:
     """Archive .self-host/data/rooms to .self-host/backups/rooms-<ts>.tar.gz.
 
-    Keeps only the 10 most recent archives.
+    Keeps at most 10 backups, each at most 30 days old.
     """
     rooms_dir = DATA_DIR / "rooms"
     if not rooms_dir.exists() or not any(rooms_dir.iterdir()):
+        prune_room_backups()
         return None
     BACKUPS_DIR.mkdir(parents=True, exist_ok=True)
     ts = time.strftime("%Y%m%dT%H%M%S")
@@ -1182,11 +1184,25 @@ def archive_rooms() -> Path | None:
     return archive_path
 
 
-def prune_room_backups(*, keep: int = ROOMS_BACKUP_KEEP) -> None:
+def prune_room_backups(
+    *, keep: int = ROOMS_BACKUP_KEEP, max_age: float = ROOMS_BACKUP_MAX_AGE,
+    now: float | None = None,
+) -> None:
+    """Prune by modification age, then count, oldest first (name breaks ties)."""
     if not BACKUPS_DIR.exists():
         return
-    archives = sorted(BACKUPS_DIR.glob("rooms-*.tar.gz"), key=lambda p: p.name)
-    for stale in archives[:-keep] if keep > 0 else archives:
+    now = time.time() if now is None else now
+    archives = sorted(
+        ((p.stat().st_mtime, p) for p in BACKUPS_DIR.glob("rooms-*.tar.gz") if p.is_file()),
+        key=lambda item: (item[0], item[1].name),
+    )
+    survivors = []
+    for modified, archive in archives:
+        if now - modified > max_age:
+            archive.unlink(missing_ok=True)
+        else:
+            survivors.append(archive)
+    for stale in survivors[:-keep] if keep > 0 else survivors:
         stale.unlink(missing_ok=True)
 
 

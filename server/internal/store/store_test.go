@@ -347,7 +347,7 @@ func TestReaperSweep(t *testing.T) {
 		{"CASEB2", store.StatusPlaying, 10 * 24 * time.Hour, false}, // under IdleAfter
 		{"CASEC2", store.StatusFinished, 8 * 24 * time.Hour, true},
 		{"CASED2", store.StatusFinished, 3 * 24 * time.Hour, false}, // under FinishedAfter
-		{"CASEE2", store.StatusArchived, 10 * 24 * time.Hour, true},
+		{"CASEE2", store.StatusArchived, 10 * 24 * time.Hour, false},
 	}
 	for _, c := range cases {
 		// store.New stamps Created and Updated from the time it is given,
@@ -639,7 +639,7 @@ func TestArchiveStampsUpdated(t *testing.T) {
 	if removed, err := reaper.Sweep(); err != nil || len(removed) != 0 {
 		t.Fatalf("Sweep three days after archiving: removed %v, %v", removed, err)
 	}
-	clock = now.Add(reaper.FinishedAfter + time.Hour)
+	clock = now.Add(reaper.ArchiveAfter + time.Hour)
 	if removed, err := reaper.Sweep(); err != nil || len(removed) != 1 || removed[0] != "ARCHVD" {
 		t.Fatalf("Sweep after the retention: removed %v, %v", removed, err)
 	}

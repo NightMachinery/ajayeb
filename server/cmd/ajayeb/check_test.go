@@ -63,3 +63,59 @@ func TestCheckRoomsExitCodesAndReadOnlyBytes(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckRoomsArchiveFolderIsReadOnlyAndNeverLiveRisk(t *testing.T) {
+	for _, liveFolder := range []bool{false, true} {
+		t.Run(map[bool]string{false: "archive-only", true: "both-folders"}[liveFolder], func(t *testing.T) {
+			data := t.TempDir()
+			archive := filepath.Join(data, "rooms-archive")
+			if err := os.Mkdir(archive, 0o700); err != nil {
+				t.Fatal(err)
+			}
+			f := store.New("ARCHVD", store.ModeOnline, engine.Options{}, 1, time.Now())
+			f.Status, f.Rules, f.ArchiveReason = store.StatusArchived, engine.RulesVersion+1, store.ArchiveRulesVersion
+			f.Actions = []string{"not-a-replayable-key"}
+			raw, err := json.Marshal(f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(archive, f.Code+".json")
+			if err := os.WriteFile(path, raw, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if liveFolder {
+				if err := os.Mkdir(filepath.Join(data, "rooms"), 0o700); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := os.WriteFile(filepath.Join(archive, "stray.json"), []byte("{"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Mkdir(filepath.Join(archive, "FDERXX.json"), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			var out, stderr bytes.Buffer
+			if code := run([]string{"--check-rooms", "--data", data}, &out, &stderr); code != 0 {
+				t.Fatalf("exit %d: %s", code, &stderr)
+			}
+			var r store.CheckReport
+			if err := json.Unmarshal(out.Bytes(), &r); err != nil {
+				t.Fatal(err)
+			}
+			if r.Rooms != 1 || r.Archived != 1 || r.Playable != 0 || r.WouldArchive != 0 || r.LiveWouldArchive != 0 || r.Errors != 0 {
+				t.Fatalf("archive report: %+v", r)
+			}
+			if after, err := os.ReadFile(path); err != nil || !bytes.Equal(raw, after) {
+				t.Fatal("check changed archive bytes")
+			}
+			entries, err := os.ReadDir(data)
+			want := 1
+			if liveFolder {
+				want++
+			}
+			if err != nil || len(entries) != want {
+				t.Fatal("check initialized data")
+			}
+		})
+	}
+}
