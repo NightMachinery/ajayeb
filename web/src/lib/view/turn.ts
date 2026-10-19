@@ -34,7 +34,7 @@ export interface PlayAgain {
  * whole history's events (State.history, which a join, a reload or a
  * resync brings in full), so a page reloaded during the extra turn still
  * finds the grant. Only a log that lacks it (a fixture room seen from a
- * late join) gets undefined; the caller then falls back on the view's
+ * late join) gets undefined; playAgainFor then falls back on the view's
  * playingAgain flag.
  */
 export function playAgainFrom(log: readonly GameEvent[]): PlayAgain | undefined {
@@ -71,6 +71,20 @@ export function playAgainFrom(log: readonly GameEvent[]): PlayAgain | undefined 
   return undefined;
 }
 
+/** Resolve the current extra turn from history, preserving its wonder name,
+ *  or from the server snapshot when no granting event is available. */
+export function playAgainFor(
+  view: Pick<View, 'playingAgain' | 'toMove'> | null,
+  log: readonly GameEvent[]
+): PlayAgain | undefined {
+  return (
+    playAgainFrom(log) ??
+    (view?.playingAgain && (view.toMove === 0 || view.toMove === 1)
+      ? { seat: view.toMove }
+      : undefined)
+  );
+}
+
 /** What the session layer knows beyond the view itself. A later slice wires
  *  this from Session/Presenter; it is a plain, narrow interface here so this
  *  file (and its tests) depend on nothing but data. */
@@ -93,8 +107,8 @@ export interface TurnContext {
   /** Whether each seat's player is connected (the room's seats, online
    *  rooms only): false for a player who dropped. */
   connected?: readonly [boolean | undefined, boolean | undefined];
-  /** The seat taking an extra turn now, if any (playAgainFrom over the
-   *  whole history's events, up to the frame on screen). */
+  /** The seat taking an extra turn now, resolved by playAgainFor from the
+   *  shown view and its history. */
   playAgain?: PlayAgain;
 }
 

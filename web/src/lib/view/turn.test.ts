@@ -7,7 +7,7 @@ import {
 } from '$lib/wire/fixtures.gen';
 import type { State } from '$lib/wire';
 import type { GameEvent, View } from '$lib/wire';
-import { playAgainFrom, turnState, type TurnContext } from './turn';
+import { playAgainFor, playAgainFrom, turnState, type TurnContext } from './turn';
 
 function state(name: (typeof fixtureNames)[number]): State {
   const frame = fixtures[fixtureNames.indexOf(name)];
@@ -410,5 +410,58 @@ describe('playAgainFrom: the extra turn, from the events seen', () => {
 
   it('an extra turn whose wonder event was not seen is still an extra turn', () => {
     expect(playAgainFrom([{ kind: 'extraTurn', private: false, seat: 1 }])).toEqual({ seat: 1 });
+  });
+});
+
+describe('playAgainFor: history and server-view fallback', () => {
+  const appian = view('appian-economy-seat0');
+  const grant: GameEvent[] = [
+    { kind: 'wonder', private: false, seat: 0, card: 'rostrum', wonder: 'appian-way' },
+    { kind: 'extraTurn', private: false, seat: 0 }
+  ];
+
+  it('a reload without history still displays the extra turn from the server view', () => {
+    expect(appian.playingAgain).toBe(true);
+    expect(appian.extraTurn).toBe(false);
+    expect(playAgainFor(appian, [])).toEqual({ seat: 0 });
+    expect(
+      turnState({
+        view: appian,
+        mode: 'hotseat',
+        mySeats: [0, 1],
+        ...baseConn,
+        playAgain: playAgainFor(appian, [])
+      })
+    ).toEqual({ kind: 'playAgain', seat: 0, hotseat: true });
+  });
+
+  it('a normal reload prefers the granting wonder from history', () => {
+    expect(playAgainFor(appian, grant)).toEqual({ seat: 0, wonder: 'appian-way' });
+    expect(
+      turnState({
+        view: appian,
+        mode: 'hotseat',
+        mySeats: [0, 1],
+        ...baseConn,
+        playAgain: playAgainFor(appian, grant)
+      })
+    ).toEqual({ kind: 'playAgain', seat: 0, wonder: 'appian-way', hotseat: true });
+  });
+
+  it('the following ordinary move clears the extra turn', () => {
+    const after = { ...appian, playingAgain: false, toMove: 1 };
+    expect(
+      playAgainFor(after, [...grant, { kind: 'discard', private: false, seat: 0, card: 'stable' }])
+    ).toBeUndefined();
+    expect(playAgainFor(after, [])).toBeUndefined();
+  });
+
+  it('requires the current-turn flag and a valid seat for the fallback', () => {
+    expect(playAgainFor({ ...appian, toMove: 1 }, [])).toEqual({ seat: 1 });
+    const futureExtraTurn = { ...appian, extraTurn: true, playingAgain: false };
+    expect(playAgainFor(futureExtraTurn, [])).toBeUndefined();
+    expect(playAgainFor({ playingAgain: true }, [])).toBeUndefined();
+    expect(playAgainFor({ playingAgain: true, toMove: 2 }, [])).toBeUndefined();
+    expect(playAgainFor(null, [])).toBeUndefined();
   });
 });

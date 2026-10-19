@@ -1,10 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GameEvent, HistoryEntry, State } from '$lib/wire';
-import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
+import {
+  fixtureNames,
+  fixtures,
+  protocolFixtureNames,
+  protocolFixtures
+} from '$lib/wire/fixtures.gen';
 import { ProtocolVersion } from '$lib/wire/types.gen';
 import type { Identity } from './identity';
 import { SavedRooms } from './rooms.svelte';
 import { ScriptedTransport } from './scripted-transport';
+import { stateFrameFromView } from './fixture-transport';
 import { Session, SessionError } from './session.svelte';
 
 const identity: Identity = { token: 'AAAAAAAAAAAAAAAAAAAAAA', clientId: 'tab-1', name: 'Sara' };
@@ -389,6 +395,41 @@ describe('Session: undo', () => {
 });
 
 describe('Session: reconnecting', () => {
+  it('a fresh session restores a wonder extra turn from its server view without history', () => {
+    // This engine recording is the position after Appian Way grants a turn.
+    const i = protocolFixtureNames.indexOf('appian-economy-seat0');
+    const view = structuredClone(protocolFixtures[i]!);
+    expect(view.playingAgain).toBe(true);
+    expect(view.extraTurn).toBe(false);
+    const frame = stateFrameFromView(view, { code: 'H8TQ4R' });
+    const beforeReload = setup();
+    connect(beforeReload.transport);
+    beforeReload.session.join(frame.code);
+    beforeReload.transport.receive(frame);
+    beforeReload.session.close();
+
+    // A page reload creates a new Session with no prior events or log.
+    const { session, transport } = setup();
+    session.join(frame.code);
+    connect(transport);
+    expect(transport.sentOf('join')).toEqual([{ t: 'join', code: frame.code }]);
+    transport.receive(structuredClone(frame));
+    expect(session.view?.playingAgain).toBe(true);
+    expect(session.view?.toMove).toBe(0);
+    expect(session.log).toEqual([]);
+    expect(session.canAct).toBe(true);
+
+    const next = structuredClone(frame);
+    next.version++;
+    next.view.ply++;
+    next.view.playingAgain = false;
+    next.view.toMove = 1;
+    next.you.canAct = false;
+    transport.receive(next);
+    expect(session.view?.playingAgain).toBe(false);
+    session.close();
+  });
+
   it('says hello, joins again and re-sends the pending request unchanged', () => {
     const { session, transport } = joined();
     session.act('construct:stone-reserve');

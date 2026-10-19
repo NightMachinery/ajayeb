@@ -7,6 +7,7 @@
 // server's next view (window.__ajayeb) shows the scenario's Expect.
 
 import { expect, type Page } from '@playwright/test';
+import type { ServerMessage } from '../../web/src/lib/wire';
 import { test } from '../fixtures/base';
 import type { GameDriver } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
@@ -406,13 +407,14 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     const snap = await driver.nextTurn();
     const view = await currentView(page);
     // Seat 0 plays again: the move is seat 0's once more, with no choice in
-    // between, and the log says why. (The view's extraTurn flag is already
-    // spent by now: it marks a turn that will be followed by another, so it
-    // is not checked here.)
+    // between. playingAgain marks this turn, while extraTurn is already
+    // spent: it marks a turn that will be followed by another.
     expect(view.players[0].wonders.find((w) => w.wonder === 'appian-way')?.built).toBe(true);
     expect(snap.toMove).toBe(0);
     expect(snap.pending).toBeNull();
     expect(view.active).toBe(0);
+    expect(view.playingAgain).toBe(true);
+    expect(view.extraTurn).toBe(false);
     // The opponent's Economy took the 10 trade coins before the Appian Way's
     // loss of 3 (the scenario's Expect).
     expect(view.players[1].coins).toBe(7);
@@ -423,11 +425,35 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     await expect(bar).toContainText('Sun plays again (Appian Way)');
     expect(await logLines(driver)).toContain('Sun plays again.');
     await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'playAgain');
-    // And after a reload, which rebuilds it from the game's history.
+    // A normal reload restores the granting wonder from the full history.
     await page.reload();
     await driver.waitReady();
     await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'playAgain');
     await expect(driver.visible('[data-turn]')).toContainText('Sun plays again (Appian Way)');
+    expect(await logLines(driver)).toContain('Sun plays again.');
+
+    // A reload must also work with no event history to infer the grant
+    // from. Forward the real server view, stripping only its event lists.
+    let sawReloadView = false;
+    await page.routeWebSocket('**/ws', (socket) => {
+      const server = socket.connectToServer();
+      server.onMessage((raw) => {
+        const frame = JSON.parse(String(raw)) as ServerMessage;
+        if (frame.t === 'state') {
+          sawReloadView ||= frame.view.playingAgain;
+          frame.history = [];
+          frame.events = [];
+          socket.send(JSON.stringify(frame));
+        } else socket.send(raw);
+      });
+    });
+    await page.reload();
+    await driver.waitReady();
+    expect(sawReloadView).toBe(true);
+    expect((await currentView(page)).playingAgain).toBe(true);
+    expect(await logLines(driver)).toEqual([]);
+    await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'playAgain');
+    await expect(driver.visible('[data-turn]')).toContainText('Sun plays again');
 
     // The extra turn is an ordinary move; after it the turn passes.
     const discard = snap.choices.find((c) => c.kind === 'discard');
@@ -435,6 +461,7 @@ test.describe('flows', { tag: ['@mobile'] }, () => {
     await playKey(driver, discard.key);
     const after = await currentView(page);
     expect(after.extraTurn).toBe(false);
+    expect(after.playingAgain).toBe(false);
     await expectTurnPassedTo(driver, 1);
     await expect(driver.visible('[data-turn]')).toHaveAttribute('data-turn', 'hotseatTurn');
     expect(problems).toEqual([]);

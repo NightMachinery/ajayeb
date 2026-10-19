@@ -47,7 +47,7 @@
   // every move takes the confirm step the settings ask for.
   //
   // A wonder's extra turn reads "Play again" in the turn bar for the whole
-  // turn (playAgainFrom over the game's history up to the frame on screen,
+  // turn (playAgainFor over the shown view and its history,
   // so it survives a reload). A player's own move gets no
   // toast (they just made it); the one exception is a choice the server
   // skipped (nothing to destroy, an empty discard pile), which the player
@@ -114,7 +114,7 @@
   import { sessionHintScreen } from '$lib/view/hints';
   import { seatGhost, selectionGhost } from '$lib/view/outcome';
   import { gameEnded } from '$lib/view/threats';
-  import { playAgainFrom, turnState } from '$lib/view/turn';
+  import { playAgainFor, turnState } from '$lib/view/turn';
   import { buildableWonders } from '$lib/view/wonders';
   import type { SlotView, State, WonderView } from '$lib/wire';
   import MilitaryTrack from '../board/MilitaryTrack.svelte';
@@ -448,14 +448,7 @@
         presence[0] === undefined ? undefined : presence[0] === 'connected',
         presence[1] === undefined ? undefined : presence[1] === 'connected'
       ],
-      // When the events on hand hold no grant (a fixture room seen from a
-      // late join), the view's playingAgain flag still says the turn is an
-      // extra one.
-      playAgain:
-        playAgainFrom(shownLog) ??
-        (view?.playingAgain && (view.toMove === 0 || view.toMove === 1)
-          ? { seat: view.toMove }
-          : undefined)
+      playAgain: playAgainFor(view, shownLog)
     })
   );
   const thinkingSeat = $derived(turn.kind === 'aiThinking' ? turn.seat : undefined);

@@ -1401,3 +1401,14 @@ print a short message and exit non-zero. `AJAYEB_STACK=1` enables diagnostic
 stacks. `make test-tools` runs these checks, and `make verify-quick` includes
 them. The mini card specimen lives in `tools/art/vector/specimen.mjs`;
 its chain chips are at least 14 px, with 17% cost and 23% effect bands.
+
+## Extra-turn reload
+
+The Appian Way flow in `e2e/specs/flows.spec.ts` first reloads during an extra
+turn with its full history, preserving the wonder name in the turn bar. It
+then reloads with reconnect event history stripped. Its real server view must
+still show `playingAgain`, and the turn bar must still say Play again.
+The session unit test separately checks that a new session keeps that
+field even when it has never received the granting event. The pure turn
+mapper also tests the server-view fallback directly and prefers the named
+wonder from history when that history is available.
