@@ -130,6 +130,9 @@ export class Presenter {
   fastForwardAfter: number;
 
   #queue: State[] = [];
+  // The effect source keeps a queued live move's events while its latest
+  // authoritative snapshot remains unchanged (Session uses that identity).
+  #effectSources = new WeakMap<State, State>();
   #running = false;
   #thinkingSince: number | null = null;
   #now: () => number;
@@ -163,6 +166,22 @@ export class Presenter {
   /** Queues a frame to present. */
   enqueue(frame: State): void {
     if (this.#destroyed) return;
+    const last = this.#queue.at(-1);
+    // An asynchronous advisor/presence update is the same game position.
+    // Keep the queued move's events with its freshest view, so a cosmetic
+    // follow-up neither counts as catch-up backlog nor erases the move.
+    if (
+      last &&
+      last.code === frame.code &&
+      last.version === frame.version &&
+      last.history === undefined &&
+      frame.history === undefined &&
+      frame.events.length === 0
+    ) {
+      this.#effectSources.set(frame, this.#effectSources.get(last) ?? last);
+      this.#queue[this.#queue.length - 1] = frame;
+      return;
+    }
     this.#queue.push(frame);
     if (this.#queue.length > this.fastForwardAfter) this.#queue.splice(0, this.#queue.length - 1);
     this.idle = false;
@@ -227,16 +246,25 @@ export class Presenter {
         const head = this.#queue[0];
         // A bot's answer waits until its thinking frame has had its dwell,
         // unless more frames are already queued behind it.
-        if (head && this.#queue.length === 1 && isBotAnswer(prev, head)) {
+        if (
+          head &&
+          this.#queue.length === 1 &&
+          isBotAnswer(prev, this.#effectSources.get(head) ?? head)
+        ) {
           if (this.#thinkingSince !== null) {
             await this.#wait(this.#thinkingSince + millis(this.minThinkingMs) - this.#now());
           }
           // Then what it takes is previewed while the old frame stays up.
           const still = this.#queue[0];
-          if (live() && still && this.#queue.length === 1 && isBotTake(prev, still)) {
+          if (
+            live() &&
+            still &&
+            this.#queue.length === 1 &&
+            isBotTake(prev, this.#effectSources.get(still) ?? still)
+          ) {
             const ms = millis(this.preRollMs);
             if (ms > 0 && !this.#hurried) {
-              this.preview = still;
+              this.preview = this.#effectSources.get(still) ?? still;
               await this.#wait(ms);
               if (live()) this.preview = null;
             }
@@ -248,7 +276,16 @@ export class Presenter {
         if (!next) break;
         if (this.#queue.length === 0) this.#hurried = false;
         this.preview = null;
-        const captured = this.hooks.capture?.(next, prev);
+        // A cosmetic refresh of the position already on screen must not
+        // capture/finish the animation's tail or repeat its sound cues.
+        // Explicit history frames remain resyncs and still reset effects.
+        const cosmetic =
+          prev?.code === next.code &&
+          prev.version === next.version &&
+          next.history === undefined &&
+          next.events.length === 0;
+        const effects = this.#effectSources.get(next) ?? next;
+        const captured = cosmetic ? undefined : this.hooks.capture?.(effects, prev);
         this.frame = next;
         // The bot's thinking starts when a thinking frame first shows, and
         // again after each answer that leaves it thinking (a second turn).
@@ -257,16 +294,16 @@ export class Presenter {
         } else if (
           prev?.thinking === undefined ||
           prev.code !== next.code ||
-          next.events.length > 0 ||
+          effects.events.length > 0 ||
           this.#thinkingSince === null
         ) {
           this.#thinkingSince = this.#now();
         }
         await this.#afterSwap();
-        playFrameFx(next, cuePrev(prev, next));
-        if (this.hooks.play) {
+        if (!cosmetic) playFrameFx(effects, cuePrev(prev, effects));
+        if (!cosmetic && this.hooks.play) {
           try {
-            await this.hooks.play(next, prev, captured);
+            await this.hooks.play(effects, prev, captured);
           } catch (err) {
             // An animation that fails must never stall the game.
             console.error(err);

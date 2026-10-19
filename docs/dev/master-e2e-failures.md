@@ -9,3 +9,21 @@ test was stale. It now checks the actual localized age wording while
 retaining its hydration, theme, tutorial-offer and saved-room assertions.
 The comparison ignores invisible bidi isolation marks, as the wording
 consistency tests already do.
+
+## Live bot moves followed by advisor snapshots
+
+`f32187d` (M11.advisor-strength) moved the default move review off the room
+actor and added later state frames containing the result. The server sends
+those frames at the same game version with no new events. Animation case c
+exposed a presenter bug: a queued advisor frame counted as move backlog,
+so the live bot move just before it lost its animation. A later cosmetic
+frame could also finish the tail of a move already playing.
+
+The presenter now coalesces queued same-version cosmetic data with the
+live move's events. A cosmetic update to the displayed position updates
+the view without capturing or replaying effects. The newest authoritative
+frame keeps its identity; a separate effect source preserves the live
+move's events for animation and sound. Frames carrying history
+still reset effects, and real move backlog still catches up. Unit tests
+cover both paths; case c requires a timed animation sample for every bot
+reply it exercises, in addition to its existing 450 ms limit.

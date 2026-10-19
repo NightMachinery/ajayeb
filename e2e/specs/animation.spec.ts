@@ -545,16 +545,55 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       expect(dealt.length, 'the age change dealt its cards').toBeGreaterThan(0);
 
       // Against a bot: its answers are the frames that hand input back.
+      const aiDecisions: unknown[] = [];
+      const aiFrames: unknown[] = [];
+      page.on('websocket', (socket) => {
+        socket.on('framereceived', ({ payload }) => {
+          const f = JSON.parse(String(payload)) as {
+            t: string;
+            version?: number;
+            view?: View;
+            events?: { kind: string }[];
+            history?: unknown[];
+            thinking?: number;
+          };
+          if (f.t === 'state')
+            aiFrames.push({
+              version: f.version,
+              ply: f.view?.ply,
+              toMove: f.view?.toMove,
+              thinking: f.thinking,
+              events: f.events?.map((e) => e.kind),
+              history: f.history?.length
+            });
+        });
+      });
       const ai = await openPosition(page, baseURL, { mode: 'ai', seed: SEED, keys: draft });
       for (let i = 0; i < 3; i++) {
         const snap = await ai.nextTurn();
+        aiDecisions.push(snap);
         if (snap.phase !== 'play' || snap.pending) break;
         await ai.dismissToasts();
         await playThrough(ai, recordPolicy(await viewOf(page)).key);
         await ai.waitTurn();
         await measure('ai');
+        const returned = await ai.snapshot();
+        expect(
+          waits.some((w) => w.room === 'ai' && w.version === returned.version),
+          `bot reply ${returned.version} animated and returned input`
+        ).toBe(true);
       }
 
+      await test.info().attach('input samples', {
+        body: JSON.stringify({
+          waits,
+          aiDecisions,
+          aiFrames,
+          frames: (await fxRecords(page)).frames,
+          inputAt: await inputAt(page)
+        }),
+        contentType: 'application/json'
+      });
       test.info().annotations.push({
         type: 'input back (ms)',
         description: waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ')

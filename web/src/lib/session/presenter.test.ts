@@ -83,6 +83,60 @@ describe('Presenter', () => {
     expect(order).toEqual(['capture ->1', 'tick', 'play 1 1', 'capture 1>2', 'tick', 'play 2 2']);
   });
 
+  it('coalesces queued cosmetic updates without losing a live move or treating it as backlog', async () => {
+    let release!: () => void;
+    const seen: { version: number; events: GameEvent[]; queued: number }[] = [];
+    const p = new Presenter(null, {
+      afterSwap: async () => {},
+      hooks: {
+        capture: (next) =>
+          seen.push({ version: next.version, events: next.events, queued: p.queued }),
+        play: (next) => (next.version === 1 ? new Promise<void>((r) => (release = r)) : undefined)
+      }
+    });
+    p.enqueue(frame(1, 1));
+    await settle();
+    const move = botMove(2, 'build');
+    p.enqueue(move);
+    const review = frame(2);
+    review.room = { ...review.room, spectators: 3 };
+    p.enqueue(review);
+    const latest = { ...review, room: { ...review.room, spectators: 4 } };
+    p.enqueue(latest);
+    expect(p.queued).toBe(1);
+    release();
+    await settle();
+    expect(seen.find((f) => f.version === 2)).toEqual({
+      version: 2,
+      events: move.events,
+      queued: 0
+    });
+    expect(p.frame?.room.spectators).toBe(4);
+    expect(p.frame).toBe(latest); // preserves Presenter/Session ready() identity
+    expect(p.frame?.events).toEqual([]); // server snapshot remains unchanged
+    p.destroy();
+  });
+
+  it('updates cosmetic data without capturing or playing again; history still resets effects', async () => {
+    const capture = vi.fn();
+    const play = vi.fn();
+    const p = new Presenter(null, { afterSwap: async () => {}, hooks: { capture, play } });
+    p.enqueue(botMove(2, 'build'));
+    await settle();
+    const cosmetic = frame(2);
+    cosmetic.room = { ...cosmetic.room, spectators: 3 };
+    p.enqueue(cosmetic);
+    await settle();
+    expect(p.frame).toBe(cosmetic);
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(play).toHaveBeenCalledTimes(1);
+    p.enqueue({ ...cosmetic, history: [] });
+    await settle();
+    expect(capture).toHaveBeenCalledTimes(2);
+    expect(play).toHaveBeenCalledTimes(2);
+    p.destroy();
+  });
+
   it('waits for a slow animation before the next frame', async () => {
     const source = new Source();
     let release!: () => void;
