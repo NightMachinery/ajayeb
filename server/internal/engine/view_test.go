@@ -1621,11 +1621,12 @@ func vwProtocolJSON(v any) ([]byte, error) {
 	for _, c := range raw {
 		if quoted {
 			out.WriteByte(c)
-			if escaped {
+			switch {
+			case escaped:
 				escaped = false
-			} else if c == '\\' {
+			case c == '\\':
 				escaped = true
-			} else if c == '"' {
+			case c == '"':
 				quoted = false
 			}
 			continue
