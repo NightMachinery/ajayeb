@@ -1392,3 +1392,12 @@ action at the transport boundary, and checks that only a confirmed removal
 moves focus to the named game region. Tab must still reach a board control.
 Native focus/removal probes are diagnostic evidence, separate from unprofiled
 performance acceptance.
+
+## Screenshot tool argument checks
+
+`python3 tools/heavy.py run --kind light -- node --test tools/chrome/cli.test.mjs`
+checks that invalid `shot.mjs` arguments fail before launching Chromium,
+print a short message and exit non-zero. `AJAYEB_STACK=1` enables diagnostic
+stacks. `make test-tools` runs these checks, and `make verify-quick` includes
+them. The mini card specimen lives in `tools/art/vector/specimen.mjs`;
+its chain chips are at least 14 px, with 17% cost and 23% effect bands.

@@ -48,7 +48,7 @@ E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
         fmt-check vet test-go test-race lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
         e2e e2e-smoke e2e-prod shots vec-lint vec-shot vec-blind vec-family \
-        test-py verify-quick verify verify-full clean
+        test-py test-tools verify-quick verify verify-full clean
 
 ##@ Getting started
 
@@ -226,7 +226,10 @@ vec-family: ## Every drawn icon of every set at 16 and 24 px, on paper and night
 test-py: ## Python unit tests for tools/heavy.py and self_host.py (guard kind light)
 	$(HEAVY) run --kind light -- python3 -m unittest discover -s tests
 
-verify-quick: fmt-check vet gen-check-if-ready test-go lint-web check-web test-web test-py vec-lint ## gofmt, go vet, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, icon lint
+test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
+	$(HEAVY) run --kind light -- node --test tools/chrome/cli.test.mjs
+
+verify-quick: fmt-check vet gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go vet, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
 
 verify: verify-quick lint-go test-race build e2e-smoke ## verify-quick, then golangci-lint, -race on room and ws, the release build and the e2e smoke
 
