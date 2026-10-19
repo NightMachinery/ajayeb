@@ -7,7 +7,7 @@ The effect glyphs that replace the Lucide outlines in EffectGlyph.svelte, and `c
 - play-again: done (iteration 3)
 - build-from-discard: done (iteration 4); still the weakest of the four at 12 px, see below
 - destroy-card: done (iteration 4)
-- crest-moon-sm: done (iteration 3)
+- crest-moon-sm: done (iteration 3); redrawn in M11.ornament-integration as a plain tilted crescent (round m11-3)
 - Blind check, browser check and family check: run on 2026-10-16, see the last three sections.
 
 ## Iteration 1 (2026-10-15)
@@ -81,3 +81,23 @@ Sheet: art-work/vector/tt2-glyphs/browser/sheet@2x.png (tools/chrome/svg-render.
 Sheet: art-work/vector/tt2-glyphs/family/family@1x.png and @2x (tools/art/vector/family.mjs, every set at 16 and 24 px on paper and night).
 
 - The tt2 glyphs are solid fills like the chain and ui-category sets, with the same stroke weight in the loop of play-again as in the chain set's horseshoe. No outline icon is left among the effect glyphs.
+
+## M11.ornament-integration: crest-moon-sm redrawn (2026-10-19)
+
+Finding S1-11 of the M11 screens review: on the compact track (phone landscape) the two capital caps were told apart only by colour. In greyscale and under deuteranopia the 11 px crests were two dark blobs of the same mass, because the crescent face's nose and eye filled its bite. Renders: art-work/vector/ornament-integration/iter-1/ to iter-3/ (render-fast.sh at 11 px on paper, on the moon tint and on navy, an 800% point-filtered peep, a greyscale row, and 96 px), each row beside crest-sun-sm and the old file.
+
+### Round m11-1
+
+- Seen: the old file at 11 px is a bitten disc with a speck; beside the sun's stub-rayed disc only the colour tells them apart.
+- Tried: a fat crescent opening up and right (inner arc 4 or 4.5, back about 6.8 units), the same with an eye knocked out, and a thinner one. The fat ones still read as a coin with a bite at 11 px; the eye is noise. A plain C-shaped crescent (outer half circle of radius 5, inner arc 7.5, back 3 units) was clearly a moon in every row.
+
+### Round m11-2
+
+- Tried: the C crescent upright and tilted by 20 and 30 degrees, with inner arcs of 8, 10 and 14. Tilted reads more like a moon and less like a bracket; the inner arc of 14 gives a back of about 4 units, so its mass at 11 px sits close to the sun's.
+- Seen: the tilted top horn crossed the live area at y 0.45.
+
+### Round m11-3
+
+- Changed: the crescent shifted by (-0.5, 0.5) before the rotation, so it sits inside the live area (lint clean, 0 warnings) and centred on the disc of the sun.
+- Seen: at 11 px a crescent of 3 to 4 pixels' thickness with two clear horns, on paper, on the moon tint and on navy; in greyscale the sun is a round bumpy disc and the moon an open crescent. Done.
+- In the app (shots/ornament-integration/after/, trackgrey-* and trackdeut-*): on the compact track the two ends now differ by shape in greyscale and under deuteranopia. The full bar now draws the city gates (capital-sun, capital-moon) at 18 px instead of the crests.

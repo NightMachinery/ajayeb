@@ -34,11 +34,11 @@ Sizes for all three: 1 to 1.1 em of the effect band's font, so about 10 to 12 px
 
 ## crest-moon-sm
 
-- Meaning: the Moon player, at 14 px and below; chiefly the moon capital at the end of the military track (11 px), beside `crest-sun-sm`.
-- Metaphor: the same man-in-the-moon as `crest-moon`, redrawn on the 12 grid: a fat crescent opening to the right, whose inner edge carries one nose bump, with the eye kept only if it stays open.
-- Silhouette: a crescent of radius 5, its body 4 to 5 units thick at the back so it does not thin to a hairline at 11 px. Fewer parts than the md file: no lips or chin steps.
-- Must differ from: crest-sun-sm (a round radiant figure; the pair must separate by shape in greyscale), chain-moon (a thin plain crescent, never shown at this size beside the crests).
-- Contexts: MilitaryTrack capital at 11 px on the track's moon-tinted end cell.
+- Meaning: the Moon player, at 14 px and below; chiefly the moon capital at the end of the compact military track (11 px), beside `crest-sun-sm`.
+- Metaphor (corrected in M11.ornament-integration): a plain crescent moon, tilted so its horns lean up and to the right. The man-in-the-moon face of `crest-moon` is left out at this size: at 11 px its nose and eye filled the bite and the figure read as a round blob, the same mass as the sun (review finding S1-11).
+- Silhouette: the outer arc a half circle of radius 5, the inner arc of radius 14, so the back is about 4 units thick and the horns taper to points; the whole crescent rotated 20 degrees. The bite is the open half of the disc, so even without colour the Moon is a crescent and the Sun a round radiant disc.
+- Must differ from: crest-sun-sm (a round radiant figure; the pair must separate by shape in greyscale), chain-moon (a thin plain crescent, never shown at this size beside the crests; ours is twice as thick and tilted).
+- Contexts: the compact MilitaryTrack capital at 11 px on the track's moon-tinted end cell; the rules diagrams (StarterDiagram, GuildDiagram, SeventhWonderDiagram) at 1 em.
 
 ## Concept diagrams (5)
 
