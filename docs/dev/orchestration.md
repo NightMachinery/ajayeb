@@ -100,6 +100,14 @@ Every brief also says that the agent runs unattended (the brief settles the desi
 
 **The reviewer** is a fresh agent. It re-runs verification, checks the diff against the brief and source, and either approves it or reports findings for another implementation round. The assigned integrator rebases an approved branch onto current `master`, verifies it again and fast-forwards a clean main checkout. The brief names who owns integration; workers never merge their own work unless explicitly assigned that role.
 
+**Review by risk.** How much review a slice gets depends on what it could break. The coordinator picks the tier when the slice reports done and says which tier it chose.
+
+- **Full:** stored games, the engine or rules, the protocol, deploy scripts, security, and anything written by a weaker model. One independent reviewer from the other model family. Only the fix of a real blocker is reviewed again.
+- **Light:** ordinary UI. One cheaper reviewer, with no second round; the integration checks confirm that its findings were fixed.
+- **None:** tests, tooling, docs and chores. The coordinator reads the diff (checking that no test was weakened) and relies on the automated checks.
+
+The tiers came from a day on which three of eight reviews found blockers, all in a first round on a risky slice, and all three second rounds found nothing new while each cost about an hour. The rounds of the UX review loop are sized the same way: one player reviewer plus the scripted probes.
+
 **One commit per successful slice,** with an explicit pathspec:
 
 ```sh
