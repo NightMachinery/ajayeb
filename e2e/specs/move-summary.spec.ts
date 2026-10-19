@@ -254,8 +254,9 @@ test.describe('opponent move summary: card tooltips', { tag: ['@mobile'] }, () =
 
     // The board's card tooltip: the effects, the printed cost, the chains,
     // with the card's face beside it.
+    // The group has no box of its own (its parts are placed absolutely).
     const open = page.locator('[data-tooltip-layer] [data-tooltip-open]');
-    await expect(open).toBeVisible();
+    await expect(open.locator('[data-tooltip-bubble]')).toBeVisible();
     await expect(open.locator('[data-tooltip-lines]')).toContainText('Printed cost');
     await expect(open.locator(`[data-card-preview="${slug}"]`)).toBeVisible();
     await expect(popup).toBeVisible();
