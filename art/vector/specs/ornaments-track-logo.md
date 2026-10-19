@@ -17,9 +17,9 @@ Wired in M11.ornament-integration: the girih (CardStructure, through TableGirih.
 
 Paint: every file uses the two-tone convention, `var(--i1, currentColor)` for the main tone and `var(--i2, transparent)` for the detail, and the caller picks the colours (the `ink` of each entry in `sets.json`). The only token named directly is the wordmark's gild accent (its Latin line, `var(--gild, currentColor)`). So the same file works inline, as a CSS mask, or as an image with its colours substituted. How each piece is meant to be used:
 
-- Inline SVG (raw import), two-tone: the rosette, the track cells, the capitals (sprite) and the wordmark.
+- Inline SVG (raw import), two-tone: the rosette, the capitals (sprite) and the wordmark.
 - Three slices of one file (fixed parts at their natural aspect, the rest stretched with `preserveAspectRatio="none"`): the cartouche (fixed ends `0..20` and `76..96`, stretched middle) and the divider (stretched arms `0..80` and `112..192`, fixed medallion `80..112`).
-- CSS masks over a background colour, so the theme colour never has to be baked into a URL: the border (`mask-border` and `-webkit-mask-box-image`, slice 16, `round`) over `var(--gild)`, and the girih (`mask` repeating at the tile size) over `var(--rule)` at 6 to 10% opacity. The cartouche, the border and the girih carry `width` and `height` attributes so their slices resolve as CSS images.
+- CSS masks over a background colour, so the theme colour never has to be baked into a URL: the border (`mask-border` and `-webkit-mask-box-image`, slice 16, `round`) over `var(--gild)`; the girih (`mask` repeating at the tile size) over `var(--rule-strong)` at 28% opacity, with an oval fade; and the track cells, one masked strip per run of equal spaces (each zone on each side, and the centre) with the cell repeated once per space, over `fg` at 30%. As a mask a cell shows only its frame and lozenges, because its field paints `var(--i2, transparent)`. The cartouche, the border and the girih carry `width` and `height` attributes so their slices resolve as CSS images.
 
 Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradient allowed, and token paints such as `var(--gold)` allowed. The capitals follow the icon rules. The wordmark may have unsnapped outlines and 8 KB. The favicon may use raw colours (it is served without the stylesheet), on a 32 grid, in 2 KB.
 
@@ -59,7 +59,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 
 - Meaning: none; the faint background pattern of the table.
 - Metaphor: a girih tile (the interlaced star and polygon geometry of Persian tilework).
-- Shape: a seamless square tile, lines only, drawn in `var(--rule)`, so that at 6 to 10% opacity it gives the table a texture in both themes. It must tile without seams (check a 3x3 repeat).
+- Shape: a seamless square tile, lines only, drawn in `var(--rule)`. The original target was a texture at 6 to 10% opacity; in the app it is a mask over `--rule-strong` at 28% (see Contexts), because the lower values did not show on the table in either theme. It must tile without seams (check a 3x3 repeat).
 - Sizes: a tile of 96 to 160 px.
 - Contexts: the board's table surface: a mask over `--rule-strong` at 28% opacity behind the card structure, 112 px per tile, intersected with an oval that fades it out toward the edges (TableGirih.svelte). The home screen does not carry it.
 
@@ -71,7 +71,7 @@ Lint rules for the set (in `sets.json`): any viewBox, 4 KB per file, one gradien
 - Files (correction, M9.V5): one file per zone, because one SVG cannot switch its marks without CSS: `track-cell` (centre), `track-cell-2`, `track-cell-5` and `track-cell-10`, all in `web/src/lib/ornaments/svg/` and listed in `sets.json`.
 - Sizes: at 360 px wide the track has 19 cells in about 340 px, so a cell is 16 to 18 px wide.
 - Acceptance: at 360 px the cells are countable and the zone boundaries visible.
-- Contexts: MilitaryTrack's full bar, one cell per space between the capitals, the frame in `--fg` at 30% with `--i2` left transparent so the zone shading shows through. The compact landscape bar leaves them out: its spaces are too narrow for a niche.
+- Contexts: MilitaryTrack's full bar, one cell per space between the capitals, drawn as seven masked strips (each zone on each side, and the centre; `cellRuns` in track-cells.ts) over `--fg` at 30%, so the frame shows and the zone shading shows through the transparent field. The compact landscape bar leaves them out: its spaces are too narrow for a niche.
 
 ## capital-sun and capital-moon
 
