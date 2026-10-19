@@ -171,9 +171,10 @@ test.describe('move review', () => {
       await expect(popup).toBeVisible();
       const review = popup.locator('[data-move-review]');
       await expect(review).toBeVisible();
-      await expect(review.locator('[data-review-played]')).toHaveText(
-        'Your two moves: you built the wonder Pyramids using Rostrum, then built Statue.'
-      );
+      await expect(review.locator('[data-review-played]')).toHaveText([
+        'You built the wonder Pyramids using Rostrum.',
+        'You built Statue.'
+      ]);
       const view = await currentView(page);
       expect(view.review?.played).toBe('wonder:pyramids:rostrum construct:statue');
       if (!view.review?.better) {
@@ -187,6 +188,90 @@ test.describe('move review', () => {
     }
   );
 });
+
+for (const locale of ['en', 'fa'] as const) {
+  test.describe(`every decision review ${locale}`, () => {
+    test.use({ appLocale: locale });
+
+    test(
+      'a missed winning progress token has its own advice',
+      { tag: ['@mobile'] },
+      async ({ page }) => {
+        test.setTimeout(90_000);
+        const problems = watchHygiene(page);
+        await summaryOn(page);
+        const params = new URLSearchParams({
+          mode: 'ai',
+          level: 'easy',
+          seat: '0',
+          seed: String(SCENARIO_SEED),
+          scenario: 'law-supremacy'
+        });
+        await page.goto(`/dev/new?${params.toString()}`);
+        await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+        const driver = new GameDriver(page);
+        await driver.waitReady();
+        await playKey(driver, 'construct:academy');
+        expect((await currentView(page)).review).toBeUndefined();
+        await playKey(driver, 'token:agriculture');
+        await driver.nextTurn();
+        const review = page.locator('[data-move-review]');
+        await expect(review).toBeVisible();
+        await expect(review.locator('[data-review-played]')).toHaveCount(2);
+        await expect
+          .poll(async () =>
+            ((await review.locator('[data-review-verdict]').textContent()) ?? '').replace(
+              /[\u200e\u200f\u2066-\u2069]/gu,
+              ''
+            )
+          )
+          .toBe(
+            locale === 'en'
+              ? 'Taking Law would have won the game.'
+              : 'با گرفتن قانون بازی را می‌بردید.'
+          );
+        await expect
+          .poll(async () => (await currentView(page)).review?.entries.map((entry) => entry.played))
+          .toEqual(['construct:academy', 'token:agriculture']);
+        const entries = (await currentView(page)).review?.entries ?? [];
+        expect(entries[0]?.better).toBeUndefined();
+        expect(entries[1]).toMatchObject({ better: 'token:law', reason: 'wins' });
+        const width = await review.evaluate((el) => ({
+          content: el.scrollWidth,
+          box: el.clientWidth
+        }));
+        expect(width.content).toBeLessThanOrEqual(width.box + 1);
+        await page.keyboard.press('Escape');
+        expect(problems).toEqual([]);
+      }
+    );
+
+    test(
+      'taking the winning token lists both decisions without advice',
+      { tag: ['@mobile'] },
+      async ({ page }) => {
+        await summaryOn(page);
+        const params = new URLSearchParams({
+          mode: 'ai',
+          level: 'easy',
+          seat: '0',
+          seed: String(SCENARIO_SEED),
+          scenario: 'law-supremacy'
+        });
+        await page.goto(`/dev/new?${params.toString()}`);
+        await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+        const driver = new GameDriver(page);
+        await driver.waitReady();
+        await playKey(driver, 'construct:academy');
+        await playKey(driver, 'token:law');
+        const review = page.locator('[data-move-review]');
+        await expect(review).toHaveAttribute('data-move-review', 'none');
+        await expect(review.locator('[data-review-played]')).toHaveCount(2);
+        await expect(review.locator('[data-review-verdict]')).toHaveCount(0);
+      }
+    );
+  });
+}
 
 test.describe('advisor strength', () => {
   test(

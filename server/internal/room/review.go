@@ -14,7 +14,7 @@ import (
 )
 
 // This file is the move review (the advisor hint family; the hints design,
-// owner answer Q2): after a seat's play action, whether a clearly better
+// owner answer Q2): after a seat's decision, whether a clearly better
 // one existed in that position, and why, for that seat only. There is no
 // way to ask before moving: the review speaks only of a move already made,
 // and the client shows it inside the summary of the opponent's next move.
@@ -69,7 +69,7 @@ import (
 // its result comes back through the inbox. The room then sends the
 // mover's connections a fresh state frame that carries it.
 //
-// The room keeps, for each seat, the play actions of its last turn and the
+// The room keeps, for each seat, the decisions of its last turn and the
 // position before each one (reviewSlot), from the commit or, after a load
 // or an undo, from a replay of the log. When a wonder grants an extra turn,
 // the follow-up play action is appended to the same turn rather than
@@ -148,15 +148,14 @@ func reviewSeed(roomSeed uint64, ply uint16) uint64 {
 	return ai.MixSeed(roomSeed^0x7265766965770000, uint64(ply))
 }
 
-// reviewStep is one play action of a seat's turn and the position it was
-// made in. A normal turn has one step; a play-again wonder turn has two
-// (or more, when chained).
+// reviewStep is one decision and the position immediately before it.
+// Pending choices and extra turns add steps to the same turn.
 type reviewStep struct {
 	pre    engine.State
 	action engine.Action
 }
 
-// reviewSlot is one seat's last turn of play actions: its latest position
+// reviewSlot is one seat's last turn of decisions: its latest position
 // and action, every step of the turn, and its review once computed (nil
 // when there is none to show: no ranking, or a budget that ran out). While
 // a review job runs for it, pending is set, gen names the job and cancel
@@ -190,32 +189,38 @@ type reviewState struct {
 	seats  [2]reviewSlot
 }
 
-// reviewable reports whether a, taken in s, is a move the review speaks
-// of: a play action (build, discard or wonder) of the seat to move.
+// reviewable includes every engine decision except resigning, which is
+// outside the legal move list and is never advice about playing the game.
 func reviewable(s *engine.State, a engine.Action) bool {
-	if s.Over() || s.Phase != engine.PhasePlay {
+	if s.Over() {
 		return false
 	}
 	switch a.Type {
-	case engine.ActConstructBuilding, engine.ActDiscardBuilding, engine.ActConstructWonder:
+	case engine.ActConstructBuilding, engine.ActDiscardBuilding, engine.ActConstructWonder,
+		engine.ActDraftWonder, engine.ActDestroyCard, engine.ActBuildFromDiscard,
+		engine.ActChooseProgressToken, engine.ActChooseStarter:
 		return true
 	}
 	return false
 }
 
-// recordMove records action a, about to be applied in pre, in its seat's
-// review slot when it is a play action. When pre is an extra turn of the
-// same seat in the same age, the step is appended to the seat's current
-// turn so the wonder that granted the extra turn is not overwritten;
-// otherwise a starts a new turn. Either way a review job still running
-// for the slot is stopped.
+// recordMove records a decision and its pre-state. Follow-up choices,
+// extra turns and a card action after choosing oneself to start remain
+// in order in the same slot. A new turn stops any older review job.
 func (rs *reviewState) recordMove(pre *engine.State, a engine.Action) {
 	if !reviewable(pre, a) {
 		return
 	}
 	sl := &rs.seats[pre.ToMove]
 	sl.stop()
-	if pre.PlayingAgain && len(sl.steps) > 0 && sl.steps[len(sl.steps)-1].pre.Age == pre.Age {
+	// Pending choices, adjacent draft picks and a starter choice continue
+	// the same seat's uninterrupted sequence. A card action starts a new
+	// turn except after choosing oneself to start or gaining an extra turn.
+	// Adjacency also
+	// prevents a starter choice from absorbing a turn before an opponent's.
+	appendStep := sl.set && sl.pre.Ply+1 == pre.Ply &&
+		(pre.Phase != engine.PhasePlay || sl.action.Type == engine.ActChooseStarter || pre.PlayingAgain && sl.pre.Age == pre.Age)
+	if appendStep {
 		sl.pre = *pre
 		sl.action = a
 		sl.steps = append(sl.steps, reviewStep{pre: *pre, action: a})
@@ -232,7 +237,7 @@ func (rs *reviewState) recordMove(pre *engine.State, a engine.Action) {
 }
 
 // noteMove records action a, about to be applied in pre, as part of its
-// seat's last turn when it is a play action. It is a no-op while the
+// seat's last turn. It is a no-op while the
 // reviews are not loaded: the replay that loads them will see the move in
 // the log.
 func (r *Room) noteMove(pre *engine.State, a engine.Action) {
@@ -251,7 +256,7 @@ func (r *Room) forgetReviews() {
 	r.reviews = reviewState{}
 }
 
-// loadReviews finds each seat's last turn of play actions by replaying the log.
+// loadReviews finds each seat's last turn of decisions by replaying the log.
 func (r *Room) loadReviews() {
 	r.reviews = reviewState{loaded: true}
 	s, err := startState(r.file)
@@ -280,12 +285,15 @@ func (r *Room) reviewConfig() reviewConfig {
 	return reviewConfig{strength: st, rank: reviewRank, budget: r.m.cfg.ReviewBudget}
 }
 
-// review returns the review of seat's last turn of play actions, or nil
+// review returns the review of seat's last turn of decisions, or nil
 // when there is none, or none yet. The first call computes a quick review
 // in place, and starts a two-stage or deep one off the actor (startReview)
 // once the seat's turn is over: a search started while a wonder's extra
 // turn is still to come would only be cancelled by it.
 func (r *Room) review(seat engine.Seat) *view.ReviewView {
+	if r.file.Seats[seat].Kind == store.SeatKindBot {
+		return nil
+	}
 	if !r.reviews.loaded {
 		r.loadReviews()
 	}
@@ -294,11 +302,12 @@ func (r *Room) review(seat engine.Seat) *view.ReviewView {
 		return nil
 	}
 	if !sl.done && !sl.pending {
+		if !r.turnOver(seat) {
+			return nil
+		}
 		cfg := r.reviewConfig()
 		if cfg.strength != view.AdvisorStrengthQuick {
-			if r.turnOver(seat) {
-				r.startReview(seat, cfg)
-			}
+			r.startReview(seat, cfg)
 			return nil
 		}
 		sl.done = true
@@ -316,7 +325,15 @@ func (r *Room) review(seat engine.Seat) *view.ReviewView {
 // other seat is to move, or seat is to move in a turn of its own that no
 // extra turn granted (the other seat has moved since, or a new age began).
 func (r *Room) turnOver(seat engine.Seat) bool {
-	return r.state.Over() || r.state.ToMove != seat || !r.state.PlayingAgain
+	if r.state.Over() || r.state.ToMove != seat {
+		return true
+	}
+	// Choosing oneself to start is followed by one's first card action.
+	// Do not search an incomplete sequence only to cancel it on that card.
+	if sl := &r.reviews.seats[seat]; sl.set && sl.action.Type == engine.ActChooseStarter {
+		return false
+	}
+	return r.state.Phase == engine.PhasePlay && !r.state.PlayingAgain
 }
 
 // prefetchReviews starts the two-stage or deep review of every seat whose
@@ -429,22 +446,20 @@ func (r *Room) reviewResult(m msgReviewResult) {
 	}
 }
 
-// buildTurnReview reviews the play actions of one turn in order, each from
+// buildTurnReview reviews every decision of one turn in order, each from
 // the mover's observation before that step. Played lists every step's
 // action key (space-separated when an extra turn gave more than one move).
-// When any step had a clearly better move, the step with the strongest
-// reason (and largest gap on ties) is reported; for a later step in a
+// Entries preserves every decision's verdict. For older clients, the
+// aggregate fields retain the step with the strongest reason (and largest
+// gap on ties); for a later step in a
 // multi-step turn, Better prefixes the earlier steps' played keys so the
 // client can tell which step of the turn the advice is about.
 func buildTurnReview(ctx context.Context, steps []reviewStep, roomSeed uint64, cfg reviewConfig) (view.ReviewView, bool) {
 	if len(steps) == 0 {
 		return view.ReviewView{}, false
 	}
-	if len(steps) == 1 {
-		s := &steps[0]
-		return buildReview(ctx, &s.pre, s.action, reviewSeed(roomSeed, s.pre.Ply), cfg)
-	}
 	keys := make([]string, len(steps))
+	entries := make([]view.ReviewEntryView, 0, len(steps))
 	var pick view.ReviewView
 	pickStep := -1
 	for i := range steps {
@@ -454,6 +469,11 @@ func buildTurnReview(ctx context.Context, steps []reviewStep, roomSeed uint64, c
 		if !ok {
 			return view.ReviewView{}, false
 		}
+		entries = append(entries, view.ReviewEntryView{
+			Ply: rv.Ply, Played: rv.Played, Better: rv.Better,
+			Reason: rv.Reason, Gap: rv.Gap, Threat: rv.Threat,
+			Symbol: rv.Symbol, Coins: rv.Coins,
+		})
 		if rv.Better == nil {
 			continue
 		}
@@ -466,8 +486,9 @@ func buildTurnReview(ctx context.Context, steps []reviewStep, roomSeed uint64, c
 	lastPly := int(last.pre.Ply)
 	played := strings.Join(keys, " ")
 	if _, wins := engine.WinsNow(&last.pre, last.action, engine.FaceUpSlots(&last.pre)); wins || pickStep < 0 {
-		return view.ReviewView{Ply: lastPly, Played: played, Reason: view.ReviewReasonNone, Strength: cfg.strength}, true
+		return view.ReviewView{Entries: entries, Ply: lastPly, Played: played, Reason: view.ReviewReasonNone, Strength: cfg.strength}, true
 	}
+	pick.Entries = entries
 	pick.Ply = lastPly
 	pick.Played = played
 	if pickStep > 0 {
@@ -477,7 +498,7 @@ func buildTurnReview(ctx context.Context, steps []reviewStep, roomSeed uint64, c
 	return pick, true
 }
 
-// buildReview reviews action played, a play action of the seat to move in
+// buildReview reviews action played, a decision of the seat to move in
 // pre, from that seat's observation of pre only, at cfg's strength. It
 // reports false when it has nothing to say: a ranking or search failed or
 // ran out of time.
@@ -510,6 +531,7 @@ func buildReview(ctx context.Context, pre *engine.State, played engine.Action, s
 		return view.ReviewView{}, false
 	}
 	rv.Strength = cfg.strength
+	rv.Entries = []view.ReviewEntryView{}
 	if rv.Strength == "" {
 		rv.Strength = view.AdvisorStrengthQuick
 	}

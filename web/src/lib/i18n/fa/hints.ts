@@ -473,6 +473,12 @@ export const hints = {
   'hints.review.played.wonder': 'شما شگفتی {wonder} را ساختید.',
   'hints.review.played.wonderWith': 'شما شگفتی {wonder} را با {card} ساختید.',
   'hints.review.played.other': 'آخرین حرکت شما.',
+  'hints.review.played.token': 'شما نشان پیشرفت {token} را گرفتید.',
+  'hints.review.played.destroy': 'شما {card} را نابود کردید.',
+  'hints.review.played.revive': 'شما {card} را از میان کارت‌های کنارگذاشته‌شده ساختید.',
+  'hints.review.played.draft': 'شما {wonder} را در گزینش شگفتی‌ها برداشتید.',
+  'hints.review.played.starter': 'شما {name} را برای آغاز عصر بعد انتخاب کردید.',
+  'hints.review.starter.player': 'بازیکن {count}',
   'hints.review.played.step.build': '{card} را ساختید',
   'hints.review.played.step.discard': '{card} را کنار گذاشتید',
   'hints.review.played.step.wonder': 'شگفتی {wonder} را ساختید',
@@ -490,6 +496,11 @@ export const hints = {
   'hints.review.move.wonderCardInstead': 'ساختن {wonder} با {card} به جای آن',
   'hints.review.move.otherWonderWithCard': 'استفاده از {card} برای ساختن {wonder}',
   'hints.review.move.other': 'حرکتی دیگر',
+  'hints.review.move.token': 'گرفتن {token}',
+  'hints.review.move.destroy': 'نابود کردن {card}',
+  'hints.review.move.revive': 'ساختن {card} از میان کارت‌های کنارگذاشته‌شده',
+  'hints.review.move.draft': 'برداشتن {wonder}',
+  'hints.review.move.starter': 'انتخاب {name} برای آغاز عصر بعد',
   'hints.review.turn.first': 'در حرکت اول: {verdict}',
   'hints.review.turn.extra': 'در نوبت دوباره: {verdict}',
   'hints.review.none': 'حرکت آشکارا بهتری پیدا نشد.',
@@ -598,7 +609,7 @@ export const hints = {
   'rules.hints.more':
     'نقطه‌ای کوچک کنار نشانه: کارت بیش از یک راهنما دارد. توضیح شناورش همه را فهرست می‌کند.',
   'rules.hints.review':
-    'مشاور، اگر بازی روشنش کرده باشد، پس از بازی شما حرکت خودتان را بررسی می‌کند: خلاصه‌ی حرکت بعدی بازیکن دیگر می‌گوید آیا حرکت آشکارا بهتری در کار بود، و چرا. فقط شما آن را می‌بینید. تنظیمات راهنمای بازی تعیین می‌کند با چه دقتی بررسی کند: سریع، دومرحله‌ای (پیش‌فرض) یا عمیق.',
+    'مشاور، اگر بازی روشنش کرده باشد، همه‌ی تصمیم‌های نوبت شما را به ترتیب فهرست می‌کند، از گرفتن نشان و گزینش شگفتی تا انتخاب آغازکننده‌ی عصر بعد. در خلاصه‌ی حرکت بعدی بازیکن دیگر، برای هر تصمیم می‌گوید آیا انتخاب آشکارا بهتری در کار بود، و چرا. فقط شما آن را می‌بینید. تنظیمات راهنمای بازی تعیین می‌کند با چه دقتی بررسی کند: سریع، دومرحله‌ای (پیش‌فرض) یا عمیق.',
   'rules.hints.sampleCard': 'یک کارت',
 
   // Board-level facts drawn in tooltips (M10.tooltip-coverage, view/tips.ts).

@@ -11,7 +11,15 @@ afterEach(async () => {
 });
 
 function review(r: Partial<ReviewView>): ReviewView {
-  return { ply: 10, played: 'discard:walls', reason: 'none', gap: 0, strength: 'quick', ...r };
+  return {
+    entries: [],
+    ply: 10,
+    played: 'discard:walls',
+    reason: 'none',
+    gap: 0,
+    strength: 'quick',
+    ...r
+  };
 }
 
 function entry(ply: number, seat: 0 | 1): HistoryEntry {
@@ -37,7 +45,7 @@ describe('the review wording', () => {
     expect(playedText('discard:clay-pit')).toBe('You discarded Clay Pit.');
     expect(playedText('wonder:pyramids:walls')).toBe('You built the wonder Pyramids using Walls.');
     expect(playedText('wonder:pyramids')).toBe('You built the wonder Pyramids.');
-    expect(playedText('token:law')).toBe('Your last move.');
+    expect(playedText('token:law')).toBe('You took the progress token Law.');
     expect(moveText('construct:walls')).toBe('Building Walls');
     expect(moveText('discard:walls')).toBe('Discarding Walls');
     expect(moveText('wonder:pyramids:walls')).toBe('Building Pyramids with Walls');
@@ -156,7 +164,8 @@ describe('the review wording', () => {
     expect(lines).toEqual({
       played: 'You built Walls.',
       verdict: '',
-      better: false
+      better: false,
+      entries: [{ ply: 10, played: 'You built Walls.', verdict: '', better: false }]
     });
   });
 
@@ -292,6 +301,77 @@ describe('the review wording', () => {
         )
       )
     ).toBe('در نوبت دوباره: با ساختن بارو بازی را می‌بردید.');
+  });
+});
+
+describe('every decision in a turn', () => {
+  it('keeps every decision and its own verdict in server order', () => {
+    const lines = reviewLines(
+      review({
+        strength: 'deep',
+        entries: [
+          { ply: 8, played: 'wonder:great-library:rostrum', reason: 'none', gap: 0 },
+          {
+            ply: 9,
+            played: 'token:strategy',
+            better: 'token:philosophy',
+            reason: 'points',
+            gap: 0
+          },
+          { ply: 10, played: 'discard:walls', better: 'construct:walls', reason: 'wins', gap: 0 }
+        ]
+      }),
+      names
+    );
+    expect(lines.better).toBe(true);
+    expect(lines.entries).toEqual([
+      {
+        ply: 8,
+        played: 'You built the wonder Great Library using Rostrum.',
+        verdict: '',
+        better: false
+      },
+      {
+        ply: 9,
+        played: 'You took the progress token Strategy.',
+        verdict: 'Taking Philosophy looked clearly stronger to a deeper search.',
+        better: true
+      },
+      {
+        ply: 10,
+        played: 'You discarded Walls.',
+        verdict: 'Building Walls would have won the game.',
+        better: true
+      }
+    ]);
+  });
+
+  it('names destroy, revive, draft and starter decisions and alternatives in both languages', async () => {
+    expect(playedText('destroy:quarry')).toBe('You destroyed Quarry.');
+    expect(playedText('revive:baths')).toBe('You built Baths from the discard pile.');
+    expect(playedText('draft:pyramids')).toBe('You picked Pyramids in the wonder draft.');
+    expect(moveText('destroy:quarry')).toBe('Destroying Quarry');
+    expect(moveText('revive:baths')).toBe('Building Baths from the discard pile');
+    expect(moveText('draft:pyramids')).toBe('Picking Pyramids');
+    const r = review({
+      played: 'starter:1',
+      better: 'starter:0',
+      reason: 'points',
+      gap: 0,
+      strength: 'deep'
+    });
+    expect(reviewLines(r, names).entries[0]).toMatchObject({
+      played: 'You chose Moon to start the next age.',
+      verdict: 'Choosing Sun to start the next age looked clearly stronger to a deeper search.'
+    });
+    await i18n.set('fa');
+    for (const key of ['token:law', 'destroy:quarry', 'revive:baths', 'draft:pyramids']) {
+      expect(stripBidiMarks(playedText(key))).toMatch(/[\u0600-\u06ff]/);
+      expect(stripBidiMarks(moveText(key))).toMatch(/[\u0600-\u06ff]/);
+    }
+    expect(stripBidiMarks(reviewLines(r, names).entries[0]?.played ?? '')).toBe(
+      'شما Moon را برای آغاز عصر بعد انتخاب کردید.'
+    );
   });
 });
 

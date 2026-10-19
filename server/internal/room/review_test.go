@@ -72,7 +72,7 @@ func TestReviewOnlyInMoversView(t *testing.T) {
 	}
 	a.sendHints(withHint(room.DefaultHints(store.ModeOnline), wire.HintFamilyAdvisor, true))
 
-	// The draft is not reviewed.
+	// Draft decisions are reviewed for their own seats too.
 	for {
 		h.snapshot(code)
 		if a.current().View.Phase != view.PhaseWonderDraft {
@@ -81,12 +81,16 @@ func TestReviewOnlyInMoversView(t *testing.T) {
 		playOnline(t, h, a, b, 1)
 	}
 	h.snapshot(code)
-	for _, c := range []*tclient{a, b, sp} {
-		checkNoReview(t, c.ClientID+" after the draft", c.current())
-	}
-
 	byseat := [2]*tclient{a, b}
 	plies := [2]int{-1, -1}
+	for seat, c := range byseat {
+		h.waitFor("draft review", func() bool {
+			h.snapshot(code)
+			return c.current().View.Review != nil
+		})
+		plies[seat] = c.current().View.Review.Ply
+	}
+	checkNoReview(t, "spectator after draft", sp.current())
 	for range 4 {
 		h.snapshot(code)
 		st := a.current()
@@ -151,8 +155,14 @@ func TestReviewFollowsAdvisor(t *testing.T) {
 	if *st.View.ToMove == firstSeat {
 		t.Skip("the first play action kept the turn")
 	}
-	// The view is the other seat's, which has not played yet.
-	checkNoReview(t, "the other seat", st)
+	// The other seat has only draft decisions to review so far.
+	h.waitFor("other seat's draft review", func() bool {
+		h.snapshot(code)
+		return a.current().View.Review != nil
+	})
+	if a.current().View.Review.Ply >= first {
+		t.Fatal("other seat received the first mover's review")
+	}
 
 	// The other seat moves: the view is now the first mover's, with its
 	// review.
@@ -185,7 +195,6 @@ func TestReviewInBotRoom(t *testing.T) {
 			v := st.Version
 			st = a.waitState(func(s wire.State) bool { return s.Version > v })
 		}
-		checkNoReview(t, "before the first play action", st)
 		if st.View.Phase == view.PhasePlay {
 			ply = st.View.Ply
 			a.act(st.View.Choices[0].Key, st.Version, nil)
@@ -212,7 +221,9 @@ func TestReviewInBotRoom(t *testing.T) {
 	if st.View.Ply != ply {
 		t.Fatalf("undo went back to ply %d, want %d", st.View.Ply, ply)
 	}
-	checkNoReview(t, "after the undo", st)
+	if st.View.Review != nil && st.View.Review.Ply >= ply {
+		t.Fatal("undo kept the undone move's review")
+	}
 }
 
 // firstPlayAction plays the human seat of a bot room (the bot answering)

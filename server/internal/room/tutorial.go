@@ -44,8 +44,8 @@ func (r *Room) tutorialState(mem member) *wire.TutorialState {
 	return &ts
 }
 
-// guidedLastMove reports whether seat's last play action, the one its move
-// review would speak of, was a move of the tutorial script.
+// guidedLastMove reports whether any decision in the reviewed turn was
+// requested by the tutorial script.
 func (r *Room) guidedLastMove(seat engine.Seat) bool {
 	sc := r.script()
 	if sc == nil {
@@ -58,9 +58,11 @@ func (r *Room) guidedLastMove(seat engine.Seat) bool {
 	if !sl.set {
 		return false
 	}
-	for i := len(r.hist) - 1; i >= 0; i-- {
-		if r.hist[i].ply == sl.pre.Ply {
-			return tutorial.GuidedMove(sc, r.file.Actions, i)
+	for _, step := range sl.steps {
+		for i := len(r.hist) - 1; i >= 0; i-- {
+			if r.hist[i].ply == step.pre.Ply && tutorial.GuidedMove(sc, r.file.Actions, i) {
+				return true
+			}
 		}
 	}
 	return false

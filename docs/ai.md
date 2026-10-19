@@ -148,6 +148,19 @@ The advisor (the hint family that reviews a player's own move, `server/internal/
 
 **Budget** (`room.DefaultReviewBudget`): 6,000 iterations for the comparison and 20,000 for deep's search. They run off the room actor, in at most `-review-searches` reviews at once across the server (default 1, since the production host has one vCPU), and a review whose search a 10-second safety clock cuts short is never shown. Only a human seat's moves are searched: a bot's move would never be reviewed on anyone's screen.
 
+The budget applies separately to every decision in a turn, including a
+progress token, a destroyed or revived card, a wonder draft pick and the
+next age's starter. The room records each pre-decision state, groups pending
+choices and extra turns in order, and begins reviewing only once they are
+resolved. Each entry uses that decision's own observation and seed, so a
+Great Library choice can use the chooser's visible offer without making the
+preceding wonder review depend on its hidden draw. Each decision can carry
+its own advice; equal choices and decided positions stay quiet. A turn with
+a tutorial-scripted decision is suppressed. Runtime and the safety timeout
+scale with the number of decisions, while the global review slot remains
+held for one turn at a time. The protocol retains the old aggregate fields
+for older clients, and the UI renders the ordered `entries` array.
+
 **Contention with the bots.** In a bot room the room starts the bot's reply and the human's review search at the same moment. On a one-vCPU host the two share the core, so while a player uses `deep` the Medium bot's clock-budgeted search completes fewer iterations and plays a little weaker; `twoStage` searches only when Greedy proposes a move, and for tens of milliseconds. Two remedies remain open: start the review after the bot's move commits (the review would then arrive in a later frame), or have bot searches and review searches share one semaphore.
 
 **Measurements** (2026-10-18, an Apple M2 with a load average of about 4.5, `go test -run 'TestReviewSearchCost|TestReviewCalibration' -v ./internal/room`; the calibration test was a one-off and is not committed):

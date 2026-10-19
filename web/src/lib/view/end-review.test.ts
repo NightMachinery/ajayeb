@@ -3,6 +3,7 @@ import type { HistoryEntry, ReviewView } from '$lib/wire';
 import { endReview } from './end-review';
 
 const REVIEW: ReviewView = {
+  entries: [],
   ply: 40,
   played: 'construct:arsenal',
   reason: 'none',

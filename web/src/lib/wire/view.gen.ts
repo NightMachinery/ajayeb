@@ -789,7 +789,13 @@ export type LastProducer = typeof LastProducerCertain | typeof LastProducerVisib
  * the end of the game, for the final summary.
  */
 export interface ReviewView {
-  ply: number /* int */; // the ply of the reviewed move: the seat's last play action (build, discard or wonder)
+  /**
+   * Entries lists every decision in the turn, in order, including choices
+   * opened by a card or wonder. Each has its own verdict. Empty only in
+   * older fixtures; live reviews always contain at least one entry.
+   */
+  entries: ReviewEntryView[];
+  ply: number /* int */; // the ply of the turn's last decision
   played: string; // that move's action key
   better?: string; // a clearly better action's key; absent when none was found
   reason: ReviewReason; // why it is better; none without better
@@ -806,6 +812,21 @@ export interface ReviewView {
   threat?: ThreatView; // stopsWin: the opponent's win the move left open (a card or a wonder in view before the move)
   symbol?: ScienceSymbol; // pair and deniesPair: the science symbol
   coins?: number /* int */; // loot: the coins the better move's looting would have taken
+}
+/**
+ * ReviewEntryView is the review of one decision, from the observation
+ * immediately before it. Keys name a single action, never a sequence.
+ * Strength is inherited from the containing ReviewView.
+ */
+export interface ReviewEntryView {
+  ply: number /* int */;
+  played: string;
+  better?: string;
+  reason: ReviewReason;
+  gap: number /* int */;
+  threat?: ThreatView;
+  symbol?: ScienceSymbol;
+  coins?: number /* int */;
 }
 /**
  * ReviewReason is why a move review's better move is better, from the

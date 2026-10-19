@@ -437,7 +437,7 @@ Replaces the game's hint settings. Only the game's admin may send it.
   hints may show, and each client draws its hints from them. A player may
   hide more on their own screen; that choice stays on the device and never
   reaches the server.
-- `advisorStrength` is how carefully the advisor reviews a move:
+- `advisorStrength` is how carefully the advisor reviews each decision in a turn:
   - `quick`: Greedy's ranking alone (one ply and the opponent's best
     reply), a few milliseconds;
   - `twoStage`, the default: Greedy proposes a better move, and a
@@ -710,13 +710,18 @@ full game view described under "The view and its events" below.
   Link entries never fold together.
 - `view` is the game as this viewer may see it, including its `choices`.
 - `view.review`, present only while the game's `advisor` family is on and
-  only in a seat's own view, is the move review of that seat's last play
-  action (a build, a discard or a wonder): the action's `ply` and key
-  (`played`), and, when a clearly better action existed, its key
+  only in a human seat's own view, reviews that seat's last turn. `entries`
+  is an ordered, non-null array with one entry per decision: a card build,
+  discard or wonder, a progress token from the board or Great Library,
+  a destroyed card, a card built from the discard pile, a wonder draft pick,
+  or the next age's starter. Automatic effects and automatic draft awards
+  are not decisions. A resignation is not reviewed.
+  Each entry contains its decision's `ply` and action key (`played`),
+  and, when a clearly better action existed, its single action key
   (`better`), a `reason` code (`wins`, `stopsWin`, `pair`, `deniesPair`,
   `loot` or `points`; `none` without `better`), the rounded `gap` in
   points, and the reason's detail (`threat`, `symbol` or `coins`), and the
-  `strength` that made it (`quick`, `twoStage` or `deep`, as in the
+  turn-level `strength` that made it (`quick`, `twoStage` or `deep`, as in the
   `hints` frame). The `gap` is always Greedy's estimate in points: a
   `twoStage` review keeps Greedy's gap once the search has agreed, and a
   `deep` review has `gap` 0, since its search gives no points. The
@@ -724,13 +729,28 @@ full game view described under "The view and its events" below.
   position before the move, under fixed evaluation and iteration budgets,
   so the review is the same for every hidden deal the seat could not tell
   apart and never names a card the move turned over. A `quick` review is
-  in the move's own frames; a `twoStage` or `deep` one is computed off the
+  in the completed turn's own frames; a `twoStage` or `deep` one is computed off the
   room actor, and the seat's connections get a later `state` (same
   version, no events, no `ack`) that carries it, usually well within a
   second. A review whose search did not finish (a crowded server) is
-  never sent. It stays until the seat's next play action, goes with an
+  never sent. Pending choices and extra turns remain part of the same
+  turn, as do adjacent picks by the same drafter and an immediately
+  following starter choice made by the same seat. When the chooser starts
+  the age themselves, their first card action also stays in that sequence,
+  so it does not overwrite the starter decision. A starter choice after an
+  opponent's action starts its own sequence. Every entry is evaluated
+  separately at the selected strength and budget, from the observation
+  immediately before that decision. No advice is added when no clearly
+  better choice is found or the position is held decided. A turn containing
+  a tutorial-scripted decision gets no review.
+  It stays until the seat's next turn begins, goes with an
   undo, and is absent from the opponent's and a spectator's view. The
   client shows it inside the summary of the opponent's next move.
+  The top-level `ply` is the last entry's ply. For older clients, the
+  top-level `played` still joins all played keys with spaces, and the
+  top-level verdict fields retain the strongest reason, prefixing `better`
+  with earlier played keys when needed. New clients render `entries`, so
+  several decisions may each have advice rather than one replacing another.
 
 ### reject
 

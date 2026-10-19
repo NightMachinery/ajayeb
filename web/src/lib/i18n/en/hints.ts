@@ -505,6 +505,12 @@ export const hints = {
   'hints.review.played.wonder': 'You built the wonder {wonder}.',
   'hints.review.played.wonderWith': 'You built the wonder {wonder} using {card}.',
   'hints.review.played.other': 'Your last move.',
+  'hints.review.played.token': 'You took the progress token {token}.',
+  'hints.review.played.destroy': 'You destroyed {card}.',
+  'hints.review.played.revive': 'You built {card} from the discard pile.',
+  'hints.review.played.draft': 'You picked {wonder} in the wonder draft.',
+  'hints.review.played.starter': 'You chose {name} to start the next age.',
+  'hints.review.starter.player': 'Player {count}',
   'hints.review.played.step.build': 'built {card}',
   'hints.review.played.step.discard': 'discarded {card}',
   'hints.review.played.step.wonder': 'built the wonder {wonder}',
@@ -523,6 +529,11 @@ export const hints = {
   'hints.review.move.wonderCardInstead': 'Building {wonder} with {card} instead',
   'hints.review.move.otherWonderWithCard': 'Using {card} for {wonder} instead',
   'hints.review.move.other': 'Another move',
+  'hints.review.move.token': 'Taking {token}',
+  'hints.review.move.destroy': 'Destroying {card}',
+  'hints.review.move.revive': 'Building {card} from the discard pile',
+  'hints.review.move.draft': 'Picking {wonder}',
+  'hints.review.move.starter': 'Choosing {name} to start the next age',
   'hints.review.turn.first': 'First move: {verdict}',
   'hints.review.turn.extra': 'Extra turn: {verdict}',
   'hints.review.none': 'No clearly better move was found.',
@@ -633,7 +644,7 @@ export const hints = {
   'rules.hints.more':
     'A small dot beside the mark: the card has more than one hint. Its tooltip lists them all.',
   'rules.hints.review':
-    'The advisor, when the game turns it on, reviews your own move after you play: the summary of the other player’s next move says whether a clearly better move was there, and why. Only you see it. The game’s hint settings choose how carefully it checks: quick, two-stage (the default) or deep.',
+    'The advisor, when the game turns it on, lists every decision in your turn, including token picks, wonder drafts and who starts the next age. Each decision says whether a clearly better choice was there, and why, in the summary of the other player’s next move. Only you see it. The game’s hint settings choose how carefully it checks: quick, two-stage (the default) or deep.',
   'rules.hints.sampleCard': 'a card',
 
   // Board-level facts drawn in tooltips (M10.tooltip-coverage, view/tips.ts).

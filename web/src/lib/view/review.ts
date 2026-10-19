@@ -10,6 +10,7 @@
 // the rules.
 
 import { cardName, scienceName, wonderName } from '$lib/components/card/effect-text';
+import { tokenName } from '$lib/components/choices/token-text';
 import { t } from '$lib/i18n';
 import type { HistoryEntry, ReviewView } from '$lib/wire';
 import type { MoveSummary, Seat } from './move-summary';
@@ -29,12 +30,20 @@ export interface ReviewLines {
   readonly verdict: string;
   /** Whether a better move was found (the verdict is a lesson). */
   readonly better: boolean;
+  readonly entries: readonly ReviewDecisionLines[];
+}
+
+export interface ReviewDecisionLines {
+  readonly ply: number;
+  readonly played: string;
+  readonly verdict: string;
+  readonly better: boolean;
 }
 
 /** The parts of an action key: construct:<card>, discard:<card>, wonder:<wonder>:<card>. */
 function parseKey(key: string): { kind: string; card?: string; wonder?: string } {
   const [kind = '', a, b] = key.split(':');
-  if (kind === 'wonder') return { kind, wonder: a, card: b };
+  if (kind === 'wonder' || kind === 'draft') return { kind, wonder: a, card: b };
   return { kind, card: a };
 }
 
@@ -58,7 +67,7 @@ function stepText(key: string): string {
 }
 
 /** "You built Baths." (or "Your two moves: ...") for the move or turn a review is about. */
-export function playedText(key: string): string {
+export function playedText(key: string, names?: ReviewNames): string {
   const parts = key.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 2) {
     return t('hints.review.played.twoMoves', {
@@ -74,6 +83,16 @@ export function playedText(key: string): string {
   }
   const k = parseKey(parts[0] ?? key);
   switch (k.kind) {
+    case 'token':
+      return t('hints.review.played.token', { token: tokenName(k.card ?? '') });
+    case 'destroy':
+      return t('hints.review.played.destroy', { card: cardName(k.card ?? '') });
+    case 'revive':
+      return t('hints.review.played.revive', { card: cardName(k.card ?? '') });
+    case 'draft':
+      return t('hints.review.played.draft', { wonder: wonderName(k.wonder ?? '') });
+    case 'starter':
+      return t('hints.review.played.starter', { name: starterName(k.card, names) });
     case 'construct':
       return t('hints.review.played.build', { card: cardName(k.card ?? '') });
     case 'discard':
@@ -94,10 +113,20 @@ export function playedText(key: string): string {
  * `playedKey` is given, same-wonder/different-card and same-card/different-wonder
  * comparisons are phrased so the distinction is explicit.
  */
-export function moveText(key: string, playedKey?: string): string {
+export function moveText(key: string, playedKey?: string, names?: ReviewNames): string {
   const k = parseKey(key);
   const p = playedKey ? parseKey(playedKey) : undefined;
   switch (k.kind) {
+    case 'token':
+      return t('hints.review.move.token', { token: tokenName(k.card ?? '') });
+    case 'destroy':
+      return t('hints.review.move.destroy', { card: cardName(k.card ?? '') });
+    case 'revive':
+      return t('hints.review.move.revive', { card: cardName(k.card ?? '') });
+    case 'draft':
+      return t('hints.review.move.draft', { wonder: wonderName(k.wonder ?? '') });
+    case 'starter':
+      return t('hints.review.move.starter', { name: starterName(k.card, names) });
     case 'construct':
       return t('hints.review.move.build', { card: cardName(k.card ?? '') });
     case 'discard':
@@ -123,6 +152,12 @@ export function moveText(key: string, playedKey?: string): string {
     default:
       return t('hints.review.move.other');
   }
+}
+
+function starterName(seat: string | undefined, names?: ReviewNames): string {
+  return names
+    ? names.names[seat === '1' ? 1 : 0]
+    : t('hints.review.starter.player', { count: seat === '1' ? 2 : 1 });
 }
 
 function reasonSentence(review: ReviewView, move: string, opp: string): string {
@@ -184,7 +219,7 @@ export function verdictText(review: ReviewView, names: ReviewNames): string {
     playedKey = playedParts[stepIdx] ?? playedKey;
     betterKey = betterParts[stepIdx] ?? betterKey;
   }
-  const move = moveText(betterKey, playedKey);
+  const move = moveText(betterKey, playedKey, names);
   const opp = names.names[names.seat === 0 ? 1 : 0];
   const verdict = reasonSentence(review, move, opp);
   if (playedParts.length > 1) {
@@ -197,10 +232,31 @@ export function verdictText(review: ReviewView, names: ReviewNames): string {
 
 /** The review's lines. */
 export function reviewLines(review: ReviewView, names: ReviewNames): ReviewLines {
+  // The fallback supports an older server or a recorded fixture. Live
+  // reviews carry single-action entries, each explained independently.
+  const entries = review.entries?.length
+    ? review.entries.map((entry) => ({
+        ply: entry.ply,
+        played: playedText(entry.played, names),
+        verdict: verdictText({ ...entry, entries: [], strength: review.strength }, names),
+        better: !!entry.better
+      }))
+    : [
+        {
+          ply: review.ply,
+          played: playedText(review.played, names),
+          verdict: verdictText(review, names),
+          better: !!review.better
+        }
+      ];
   return {
-    played: playedText(review.played),
-    verdict: verdictText(review, names),
-    better: !!review.better
+    played: playedText(review.played, names),
+    verdict: entries
+      .map((entry) => entry.verdict)
+      .filter(Boolean)
+      .join(' '),
+    better: entries.some((entry) => entry.better),
+    entries
   };
 }
 

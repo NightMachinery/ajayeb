@@ -34,12 +34,16 @@
       </span>
       {t('hints.review.title')}
     </p>
-    <p class="text-sm leading-snug text-fg" data-review-played>{lines.played}</p>
-    {#if lines.verdict}
-      <p class="text-sm leading-snug font-semibold text-fg" data-review-verdict>
-        {lines.verdict}
-      </p>
-    {/if}
+    {#each lines.entries as entry (entry.ply)}
+      <div class="flex flex-col gap-0.5" data-review-entry={entry.ply}>
+        <p dir="auto" class="text-sm leading-snug text-fg" data-review-played>{entry.played}</p>
+        {#if entry.verdict}
+          <p dir="auto" class="text-sm leading-snug font-semibold text-fg" data-review-verdict>
+            {entry.verdict}
+          </p>
+        {/if}
+      </div>
+    {/each}
   </section>
 {:else}
   <section
@@ -53,6 +57,10 @@
     >
       {t('hints.review.title')}
     </span>
-    <span class="text-fg" data-review-played>{lines.played}</span>
+    {#each lines.entries as entry (entry.ply)}
+      <span dir="auto" class="text-fg" data-review-entry={entry.ply} data-review-played
+        >{entry.played}</span
+      >
+    {/each}
   </section>
 {/if}

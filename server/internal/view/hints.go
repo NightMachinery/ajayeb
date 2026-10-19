@@ -470,11 +470,15 @@ const (
 // spectators and the opponent never get it. It also stays in the view at
 // the end of the game, for the final summary.
 type ReviewView struct {
-	Ply    int          `json:"ply"`              // the ply of the reviewed move: the seat's last play action (build, discard or wonder)
-	Played string       `json:"played"`           // that move's action key
-	Better *string      `json:"better,omitempty"` // a clearly better action's key; absent when none was found
-	Reason ReviewReason `json:"reason"`           // why it is better; none without better
-	Gap    int          `json:"gap"`              // how much better, in points (Greedy's victory-point equivalents, rounded); 0 without better, and 0 from the deep advisor, whose search gives no points
+	// Entries lists every decision in the turn, in order, including choices
+	// opened by a card or wonder. Each has its own verdict. Empty only in
+	// older fixtures; live reviews always contain at least one entry.
+	Entries []ReviewEntryView `json:"entries"`
+	Ply     int               `json:"ply"`              // the ply of the turn's last decision
+	Played  string            `json:"played"`           // that move's action key
+	Better  *string           `json:"better,omitempty"` // a clearly better action's key; absent when none was found
+	Reason  ReviewReason      `json:"reason"`           // why it is better; none without better
+	Gap     int               `json:"gap"`              // how much better, in points (Greedy's victory-point equivalents, rounded); 0 without better, and 0 from the deep advisor, whose search gives no points
 	// Strength is the advisor strength that made the review: quick reviews
 	// are Greedy's alone, two-stage ones Greedy's confirmed by the tree
 	// search, deep ones the tree search's.
@@ -483,6 +487,20 @@ type ReviewView struct {
 	Threat *ThreatView    `json:"threat,omitempty"` // stopsWin: the opponent's win the move left open (a card or a wonder in view before the move)
 	Symbol *ScienceSymbol `json:"symbol,omitempty"` // pair and deniesPair: the science symbol
 	Coins  *int           `json:"coins,omitempty"`  // loot: the coins the better move's looting would have taken
+}
+
+// ReviewEntryView is the review of one decision, from the observation
+// immediately before it. Keys name a single action, never a sequence.
+// Strength is inherited from the containing ReviewView.
+type ReviewEntryView struct {
+	Ply    int            `json:"ply"`
+	Played string         `json:"played"`
+	Better *string        `json:"better,omitempty"`
+	Reason ReviewReason   `json:"reason"`
+	Gap    int            `json:"gap"`
+	Threat *ThreatView    `json:"threat,omitempty"`
+	Symbol *ScienceSymbol `json:"symbol,omitempty"`
+	Coins  *int           `json:"coins,omitempty"`
 }
 
 // ReviewReason is why a move review's better move is better, from the

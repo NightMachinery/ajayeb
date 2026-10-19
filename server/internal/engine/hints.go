@@ -1201,7 +1201,7 @@ func destroyHints(s *State) []view.PendingCardHint {
 	return out
 }
 
-// MoveFacts are the public facts about one play action of the seat to move
+// MoveFacts are the public facts about one decision of the seat to move
 // that the move review compares (the advisor family: package room ranks
 // the mover's actions with package ai and explains the gap with these).
 // Like the decider's hints, they are read from copies of the state that
@@ -1229,8 +1229,8 @@ type MoveFacts struct {
 	OppKnown bool
 }
 
-// ReviewFacts returns the MoveFacts of action a, a legal play action of the
-// seat to move in s (PhasePlay). The simulations spend one hintApplyBudget
+// ReviewFacts returns the MoveFacts of action a, a legal decision of the
+// seat to move in s. The simulations spend one hintApplyBudget
 // at most.
 func ReviewFacts(s *State, a Action) MoveFacts {
 	return reviewFacts(s, a, &simCtx{budget: hintApplyBudget})
@@ -1240,7 +1240,7 @@ func ReviewFacts(s *State, a Action) MoveFacts {
 // tests may trace.
 func reviewFacts(s *State, a Action, c *simCtx) MoveFacts {
 	var f MoveFacts
-	if s.Over() || s.Phase != PhasePlay {
+	if s.Over() || a.Type == ActResign || a.Type == ActNone {
 		return f
 	}
 	mover := s.ToMove

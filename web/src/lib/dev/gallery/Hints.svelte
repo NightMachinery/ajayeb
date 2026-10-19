@@ -190,6 +190,7 @@
   const REVIEW_NAMES = { names: ['Sun', 'Moon'] as const, seat: 0 as const }; // i18n-ok
   const reviewBetter = reviewLines(
     {
+      entries: [],
       ply: 20,
       played: 'discard:walls',
       better: 'construct:walls',
@@ -201,6 +202,7 @@
   );
   const reviewLoot = reviewLines(
     {
+      entries: [],
       ply: 20,
       played: 'construct:clay-pool',
       better: 'construct:garrison',
@@ -212,7 +214,14 @@
     REVIEW_NAMES
   );
   const reviewNone = reviewLines(
-    { ply: 20, played: 'wonder:pyramids:baths', reason: 'none', gap: 0, strength: 'twoStage' },
+    {
+      entries: [],
+      ply: 20,
+      played: 'wonder:pyramids:baths',
+      reason: 'none',
+      gap: 0,
+      strength: 'twoStage'
+    },
     REVIEW_NAMES
   );
   const reviewSummary = summarize(
