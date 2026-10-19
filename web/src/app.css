@@ -11,8 +11,10 @@
 @import 'tailwindcss';
 @import './lib/styles/tokens.css';
 
-/* Self-hosted OFL fonts, Latin subsets built by web/font-sources/subset.sh.
-   The unicode-range matches the subset. */
+/* Self-hosted OFL fonts, subsets built by web/font-sources/subset.sh:
+   Fraunces and Inter for Latin, Vazirmatn for Persian. Each unicode-range
+   matches its subset, so a page downloads a face only when it shows a
+   character from that range: an English page never fetches Vazirmatn. */
 @font-face {
   font-family: 'Fraunces';
   font-style: normal;
@@ -54,11 +56,38 @@
     U+2122, U+2190-2199, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* Persian: the self-hosted fonts are Latin subsets, so Arabic-script text
-   falls through to the next family. For lang="fa" the stacks name the
-   device's Persian-capable fonts first (Vazirmatn where installed, then
-   Noto, which Android ships), so a Persian page does not land on whatever
-   the generic family happens to pick. No Persian font is self-hosted yet. */
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./lib/fonts/vazirmatn-400.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFC;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./lib/fonts/vazirmatn-600.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFC;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./lib/fonts/vazirmatn-700.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+200C-200F, U+FB50-FDFF, U+FE70-FEFC;
+}
+
+/* Persian: Vazirmatn follows Inter and Fraunces in every stack (tokens.css),
+   so Latin keeps them and Arabic-script text, which they lack, takes
+   Vazirmatn. For lang="fa" the stacks also name the device's own Persian
+   fonts (Noto, which Android ships, then Geeza Pro and Tahoma), which draw
+   the text until Vazirmatn arrives (font-display: swap). */
 :root:lang(fa) {
   --type-display:
     'Fraunces', 'Vazirmatn', 'Noto Naskh Arabic', 'Geeza Pro', ui-serif, Georgia, Tahoma, serif;

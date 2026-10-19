@@ -157,9 +157,10 @@
   --on-danger: oklch(1 0 0);
 
   /* Type. Fraunces 600 for headings and card names; Inter for the UI, with
-     tabular figures. Vazirmatn is reserved for a future Persian locale. */
-  --type-display: 'Fraunces', ui-serif, Georgia, serif;
-  --type-ui: 'Inter', ui-sans-serif, system-ui, sans-serif;
+     tabular figures. Vazirmatn draws Persian (and any Arabic-script text,
+     such as a player's name) in both: its subset holds no Latin. */
+  --type-display: 'Fraunces', 'Vazirmatn', ui-serif, Georgia, serif;
+  --type-ui: 'Inter', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
   --text-floor: 12px;
 
   /* Motion. Every duration scales with --anim-scale, which Animation off
