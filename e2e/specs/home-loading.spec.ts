@@ -268,7 +268,14 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
     await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce');
     await expect(page.getByRole('button', { name: /ABCDEF/ })).toBeVisible();
     await expect(page.getByRole('button', { name: /ABCDEF/ })).toBeEnabled();
-    await expect(page.locator('[data-continue-details]')).toContainText('۲');
+    await expect
+      .poll(async () =>
+        ((await page.locator('[data-continue-details]').textContent()) ?? '').replace(
+          /[\u200e\u200f\u2066-\u2069]/gu,
+          ''
+        )
+      )
+      .toContain('دوران دوم');
     await expect(page.locator('[data-tutorial-replay]')).toBeVisible();
     await expect(page.locator('[data-tutorial-offer]')).toHaveCount(0);
     expect(
