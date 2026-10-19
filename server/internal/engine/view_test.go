@@ -1564,11 +1564,18 @@ func TestViewGoldens(t *testing.T) {
 	vwNoStrayFiles(t, filepath.Join("testdata", "views"), names)
 }
 
-// vwGolden compares v, marshaled with indentation, with the file at path,
-// or writes it there with -update.
+// vwGolden compares v with the file at path. Protocol snapshots put each
+// top-level view field on a line; ordinary game goldens stay fully indented.
+// The -update flag writes the new value instead.
 func vwGolden(t *testing.T, path string, v any) {
 	t.Helper()
-	data, err := json.MarshalIndent(v, "", " ")
+	var data []byte
+	var err error
+	if filepath.Base(filepath.Dir(path)) == "protocol" {
+		data, err = vwProtocolJSON(v)
+	} else {
+		data, err = json.MarshalIndent(v, "", " ")
+	}
 	if err != nil {
 		t.Fatalf("marshal %s: %v", path, err)
 	}
@@ -1592,22 +1599,137 @@ func vwGolden(t *testing.T, path string, v any) {
 	}
 }
 
-// vwFirstDiff describes the first differing line of two files.
-func vwFirstDiff(got, want []byte) string {
-	g, w := strings.Split(string(got), "\n"), strings.Split(string(want), "\n")
-	for i := range max(len(g), len(w)) {
-		var a, b string
-		if i < len(g) {
-			a = g[i]
+// vwProtocolJSON keeps complete View field values compact, with line breaks
+// around the file, each viewer and each top-level View field. Formatting the
+// marshaled bytes preserves field order, values and any future fixture fields.
+func vwProtocolJSON(v any) ([]byte, error) {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	var out bytes.Buffer
+	var stack []byte
+	quoted, escaped := false, false
+	expanded := func() bool {
+		depth := len(stack)
+		return depth <= 3 || (depth == 4 && stack[depth-1] == '{')
+	}
+	newline := func(depth int) {
+		out.WriteByte('\n')
+		out.WriteString(strings.Repeat(" ", depth))
+	}
+	for _, c := range raw {
+		if quoted {
+			out.WriteByte(c)
+			if escaped {
+				escaped = false
+			} else if c == '\\' {
+				escaped = true
+			} else if c == '"' {
+				quoted = false
+			}
+			continue
 		}
-		if i < len(w) {
-			b = w[i]
-		}
-		if a != b {
-			return "line " + strconv.Itoa(i+1) + ":\n  got  " + a + "\n  file " + b
+		switch c {
+		case '"':
+			quoted = true
+			out.WriteByte(c)
+		case '{', '[':
+			out.WriteByte(c)
+			stack = append(stack, c)
+			if expanded() {
+				newline(len(stack))
+			}
+		case '}', ']':
+			if expanded() {
+				newline(len(stack) - 1)
+			}
+			out.WriteByte(c)
+			stack = stack[:len(stack)-1]
+		case ',':
+			out.WriteByte(c)
+			if expanded() {
+				newline(len(stack))
+			}
+		default:
+			out.WriteByte(c)
 		}
 	}
-	return "(no line differs)"
+	return out.Bytes(), nil
+}
+
+// vwFirstDiff bounds diagnostics even when a complete nested field is large.
+// Offsets are zero-based bytes, with at most 120 bytes on either side.
+func vwFirstDiff(got, want []byte) string {
+	offset := 0
+	for offset < min(len(got), len(want)) && got[offset] == want[offset] {
+		offset++
+	}
+	if offset == len(got) && offset == len(want) {
+		return "(no byte differs)"
+	}
+	context := func(data []byte) string {
+		start, end := max(0, offset-120), min(len(data), offset+121)
+		text := strconv.Quote(string(data[start:end]))
+		if start > 0 {
+			text = "..." + text
+		}
+		if end < len(data) {
+			text += "..."
+		}
+		return "[" + strconv.Itoa(start) + ":" + strconv.Itoa(end) + "] " + text
+	}
+	return "byte offset " + strconv.Itoa(offset) + " (zero-based):\n  got  " + context(got) + "\n  file " + context(want)
+}
+
+func TestVWFirstDiff(t *testing.T) {
+	for _, tc := range []struct {
+		name, got, want, offset string
+	}{
+		{"start", "abc", "xbc", "0"},
+		{"end", "abc", "abx", "2"},
+		{"missing", "abc", "ab", "2"},
+		{"empty", "", "a", "0"},
+		{"long line", strings.Repeat("a", 20_000) + "1" + strings.Repeat("b", 20_000), strings.Repeat("a", 20_000) + "2" + strings.Repeat("b", 20_000), "20000"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := vwFirstDiff([]byte(tc.got), []byte(tc.want))
+			if !strings.Contains(got, "byte offset "+tc.offset+" (zero-based)") || len(got) > 650 {
+				t.Fatalf("diagnostic is wrong or too long (%d bytes): %.650s", len(got), got)
+			}
+			if tc.name == "long line" && (!strings.Contains(got, "[19880:20121]") || !strings.Contains(got, "1") || !strings.Contains(got, "2")) {
+				t.Fatalf("missing bounded context: %s", got)
+			}
+		})
+	}
+	if got := vwFirstDiff([]byte("same"), []byte("same")); got != "(no byte differs)" {
+		t.Fatalf("equal files: %s", got)
+	}
+}
+
+func TestVWProtocolJSON(t *testing.T) {
+	fixtures := protoFixtures(t)
+	f := protoFileOf("punctuation", `braces {[]}, quotes " and backslash \`, &fixtures[2].state, nil)
+	got, err := vwProtocolJSON(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, got); err != nil {
+		t.Fatal(err)
+	}
+	want, err := json.Marshal(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(compact.Bytes(), want) {
+		t.Fatal("formatting changed the recorded JSON")
+	}
+	// Each viewer has one structure field on its own line, with the nested
+	// slot objects left compact. A changed slot affects one local diff line.
+	if n := strings.Count(string(got), "\n    \"structure\":["); n != 3 {
+		t.Fatalf("%d separate structure lines, want 3", n)
+	}
 }
 
 // vwNoStrayFiles fails when dir holds a file the test did not write, such

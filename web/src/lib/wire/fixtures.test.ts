@@ -1,5 +1,6 @@
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { fixtures, protocolFixtures } from './fixtures.gen';
+import { fixtures, fixtureNames, protocolFixtures, protocolFixtureNames } from './fixtures.gen';
 import type { ServerMessage } from './index';
 import type { View } from './view.gen';
 
@@ -57,5 +58,51 @@ describe('protocolFixtures', () => {
       const found = findNull(view, '');
       expect(found, `protocolFixtures[${i}] has a null at ${found}`).toBeUndefined();
     });
+  });
+});
+
+// Check the generated module after TypeScript evaluation, including pooled
+// fields, against every source value. A dropped field or viewer must fail.
+describe('generated fixtures preserve the complete recordings', () => {
+  const root = new URL('../../../../server/internal/', import.meta.url);
+
+  it('keeps every wire frame and its name', () => {
+    const dir = new URL('wire/testdata/messages/', root);
+    const names = readdirSync(dir)
+      .filter((n) => n.endsWith('.json'))
+      .sort();
+    expect(fixtureNames).toEqual(names.map((n) => n.slice(0, -5)));
+    expect(fixtures).toEqual(names.map((n) => JSON.parse(readFileSync(new URL(n, dir), 'utf8'))));
+  });
+
+  it('keeps every scenario, viewer, optional field and nested value', () => {
+    const dir = new URL('engine/testdata/protocol/', root);
+    const names: string[] = [];
+    const views: unknown[] = [];
+    for (const name of readdirSync(dir)
+      .filter((n) => n.endsWith('.json'))
+      .sort()) {
+      const file = JSON.parse(readFileSync(new URL(name, dir), 'utf8')) as {
+        viewers: { viewer: string; view: unknown }[];
+      };
+      for (const viewer of file.viewers) {
+        names.push(`${name.slice(0, -5)}-${viewer.viewer}`);
+        views.push(viewer.view);
+      }
+    }
+    expect(protocolFixtureNames).toEqual(names);
+    expect(protocolFixtures).toEqual(views);
+  });
+
+  it('keeps snapshots independent when a consumer changes one', () => {
+    const seen = new Set<object>();
+    function visit(value: unknown): void {
+      if (value === null || typeof value !== 'object') return;
+      expect(seen.has(value), 'two fixture paths share a mutable object').toBe(false);
+      seen.add(value);
+      for (const child of Object.values(value)) visit(child);
+    }
+    visit(fixtures);
+    visit(protocolFixtures);
   });
 });

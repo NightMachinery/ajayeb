@@ -9,7 +9,7 @@
 //     room part is changed; the views are the recorded ones. The age-start
 //     scene also carries the recorded starterChosen event.
 //
-// The generated file is large (about 1.4 MB of JSON), so pages import this
+// The generated snapshots share repeated fields, and pages import this
 // module dynamically and it never reaches the bundle of a normal page.
 
 import type { State } from '$lib/wire';

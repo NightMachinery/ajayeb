@@ -152,9 +152,10 @@ frame actually fits them. `ajayeb-gen fixtures` closes that gap:
 
 - it reads every recorded frame in
   `server/internal/wire/testdata/messages/` and every viewer's view from
-  `server/internal/engine/testdata/protocol/`, and splices them, almost
-  verbatim, into `web/src/lib/wire/fixtures.gen.ts` as two `satisfies`
-  assertions: `fixtures satisfies ServerMessage[]` and `protocolFixtures
+  `server/internal/engine/testdata/protocol/`. It preserves every JSON value
+  in `web/src/lib/wire/fixtures.gen.ts`, pooling repeated view fields with
+  their own type assertions and cloning each use. The complete arrays retain
+  their `satisfies` assertions: `fixtures satisfies ServerMessage[]` and `protocolFixtures
   satisfies View[]`;
 - `pnpm -C web check` (`svelte-check`, part of `make check-web`) then fails
   the moment a real recorded shape no longer fits the generated types,
@@ -164,7 +165,11 @@ frame actually fits them. `ajayeb-gen fixtures` closes that gap:
   nothing in a real frame or view is a JSON `null` (the engine's own
   convention is an empty array or an absent key, never `null`; a nil Go
   slice marshaled without this convention is exactly the kind of mistake
-  this check exists to catch).
+  this check exists to catch). It also compares every generated frame and
+  view to its JSON source and checks that snapshots share no mutable objects.
+
+See [dev/protocol-fixtures.md](dev/protocol-fixtures.md) for compact storage
+and regeneration instructions.
 
 `ajayeb-gen` with no subcommand writes both the fixtures and the presentation catalog, so
 `make gen` and `make gen-check` regenerate and check this file along with

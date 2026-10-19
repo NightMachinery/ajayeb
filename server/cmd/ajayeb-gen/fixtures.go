@@ -27,12 +27,12 @@ import (
 //     the View objects are used here; the scenario's name and prose
 //     description are not wire data.
 //
-// Both are read as already-valid JSON text and spliced into the output
-// almost verbatim (re-indented, for the protocol fixtures, since their own
-// pretty-printing is not this package's concern), rather than decoded into
-// Go structs and re-marshaled: that would risk silently reshaping a field
-// this generator does not know about, defeating the point of validating
-// real server output.
+// Both sources remain raw JSON: no decoding into wire structs that could
+// silently drop an unknown field. Repeated top-level View fields are emitted
+// once with their own satisfies assertion, then cloned into each snapshot.
+// This preserves every recorded value and type check without repeating large
+// public arrays for all three viewers. Cloning preserves independent objects
+// for fixture consumers that modify a snapshot.
 //
 // defaultMessagesDir, defaultProtocolDir and defaultFixturesOut are
 // relative to server/, the working directory make gen runs this command
@@ -76,12 +76,22 @@ func generateFixtures(out, messagesDir, protocolDir string) error {
 	b.WriteString("import type { ServerMessage } from './index';\n")
 	b.WriteString("import type { View } from './view.gen';\n\n")
 
+	pool, err := newViewPool(messages, views)
+	if err != nil {
+		return err
+	}
+	pool.writeDeclarations(&b)
+
 	b.WriteString("export const fixtures = [\n")
 	for i, m := range messages {
 		if i > 0 {
 			b.WriteString(",\n")
 		}
-		b.WriteString(indentBlock(m, "  "))
+		rendered, err := pool.message(m)
+		if err != nil {
+			return err
+		}
+		b.WriteString(indentBlock(rendered, "  "))
 	}
 	b.WriteString("\n] satisfies ServerMessage[];\n\n")
 
@@ -90,7 +100,11 @@ func generateFixtures(out, messagesDir, protocolDir string) error {
 		if i > 0 {
 			b.WriteString(",\n")
 		}
-		b.WriteString(indentBlock(v, "  "))
+		rendered, err := pool.view(v)
+		if err != nil {
+			return err
+		}
+		b.WriteString(indentBlock(rendered, "  "))
 	}
 	b.WriteString("\n] satisfies View[];\n\n")
 
@@ -105,6 +119,122 @@ func generateFixtures(out, messagesDir, protocolDir string) error {
 		}
 	}
 	return os.WriteFile(out, []byte(b.String()), 0o644)
+}
+
+// viewPool interns repeated top-level fields by both field name and raw JSON
+// value. A field is shared only when the declaration saves more than it costs.
+// Ordered traversal and monotonically numbered names keep output deterministic.
+type viewPool struct {
+	counts map[string]int
+	names  map[string]string
+	fields []pooledViewField
+}
+
+type pooledViewField struct {
+	field, value, name string
+}
+
+func compactJSON(raw []byte) string {
+	var b bytes.Buffer
+	// All callers read validated JSON (or a RawMessage from it).
+	if err := json.Compact(&b, raw); err != nil {
+		panic(err)
+	}
+	return b.String()
+}
+
+func jsonFields(raw string) (map[string]json.RawMessage, []string, error) {
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &fields); err != nil {
+		return nil, nil, err
+	}
+	if fields == nil {
+		return nil, nil, fmt.Errorf("expected a JSON object, got %s", raw)
+	}
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return fields, keys, nil
+}
+
+func newViewPool(messages, views []string) (*viewPool, error) {
+	p := &viewPool{counts: map[string]int{}, names: map[string]string{}}
+	all := append([]string{}, views...)
+	for _, m := range messages {
+		fields, _, err := jsonFields(m)
+		if err != nil {
+			return nil, err
+		}
+		if v, ok := fields["view"]; ok {
+			all = append(all, string(v))
+		}
+	}
+	for _, v := range all {
+		fields, keys, err := jsonFields(v)
+		if err != nil {
+			return nil, err
+		}
+		for _, field := range keys {
+			value := compactJSON(fields[field])
+			key := field + ":" + value
+			p.counts[key]++
+			if p.counts[key] == 2 && len(value) > 160 {
+				name := fmt.Sprintf("viewField%d", len(p.fields))
+				p.names[key] = name
+				p.fields = append(p.fields, pooledViewField{field, value, name})
+			}
+		}
+	}
+	return p, nil
+}
+
+func (p *viewPool) writeDeclarations(b *strings.Builder) {
+	b.WriteString("// Shared fields stay type-checked; each use clones its data.\n")
+	for _, f := range p.fields {
+		fmt.Fprintf(b, "const %s = %s satisfies View[%q];\n", f.name, f.value, f.field)
+	}
+	b.WriteByte('\n')
+}
+
+func (p *viewPool) view(raw string) (string, error) {
+	fields, keys, err := jsonFields(raw)
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	b.WriteString("{\n")
+	for _, field := range keys {
+		value := compactJSON(fields[field])
+		if name := p.names[field+":"+value]; name != "" {
+			value = "structuredClone(" + name + ")"
+		}
+		fmt.Fprintf(&b, "  %q: %s,\n", field, value)
+	}
+	b.WriteString("}")
+	return b.String(), nil
+}
+
+func (p *viewPool) message(raw string) (string, error) {
+	fields, keys, err := jsonFields(raw)
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	b.WriteString("{\n")
+	for _, field := range keys {
+		value := compactJSON(fields[field])
+		if field == "view" {
+			value, err = p.view(value)
+			if err != nil {
+				return "", err
+			}
+		}
+		fmt.Fprintf(&b, "  %q: %s,\n", field, value)
+	}
+	b.WriteString("}")
+	return b.String(), nil
 }
 
 // writeNameList writes a readonly tuple of fixture names, one per line.

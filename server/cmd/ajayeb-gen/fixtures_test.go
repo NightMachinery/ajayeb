@@ -152,3 +152,37 @@ func TestFixturesHelp(t *testing.T) {
 		t.Errorf("stderr = %q", stderr.String())
 	}
 }
+
+// Only large repeated fields are pooled. Their raw JSON is still checked
+// against the corresponding View field, and cloned at each use.
+func TestViewPool(t *testing.T) {
+	value := `[{"card":"` + strings.Repeat("a", 200) + `"}]`
+	v := `{"schema":1,"structure":` + value + `,"unknown":true}`
+	p, err := newViewPool(nil, []string{v, v})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var b strings.Builder
+	p.writeDeclarations(&b)
+	if !strings.Contains(b.String(), value+` satisfies View["structure"]`) {
+		t.Fatalf("shared field lost its data or type check: %s", b.String())
+	}
+	got, err := p.view(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"structure": structuredClone(viewField0)`, `"unknown": true`, `"schema": 1`} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered view lacks %s: %s", want, got)
+		}
+	}
+	message, err := p.message(`{"t":"state","view":` + v + `,"extra":[1,2]}`)
+	if err != nil || !strings.Contains(message, `"extra": [1,2]`) || !strings.Contains(message, got) {
+		t.Fatalf("message changed a raw field: %s (%v)", message, err)
+	}
+	for _, invalid := range []string{`null`, `[]`, `invalid`} {
+		if _, err := p.view(invalid); err == nil {
+			t.Errorf("accepted non-object %s", invalid)
+		}
+	}
+}
