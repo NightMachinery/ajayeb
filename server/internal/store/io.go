@@ -56,6 +56,32 @@ func writeFile(path string, f *File) error {
 	}
 	data = append(data, '\n')
 
+	return writeBytes(path, data)
+}
+
+// rewriteFields preserves every other field, including additive metadata this
+// build does not know. Restore updates hashes/archive markers, never room data.
+func rewriteFields(path string, data []byte, changes map[string]any) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	for key, value := range changes {
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		raw[key] = encoded
+	}
+	encoded, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		return err
+	}
+	return writeBytes(path, append(encoded, '\n'))
+}
+
+func writeBytes(path string, data []byte) error {
+
 	dir := filepath.Dir(path)
 	tmp, err := os.CreateTemp(dir, ".room-*.tmp")
 	if err != nil {
@@ -94,18 +120,22 @@ func writeFile(path string, f *File) error {
 // A file larger than MaxFileBytes is refused with an error wrapping
 // ErrTooLarge, before any of it is read.
 func readFile(path string) (*File, error) {
+	f, _, err := readFileData(path)
+	return f, err
+}
+
+func readFileData(path string) (*File, []byte, error) {
 	data, err := readCapped(path)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var f File
 	if err := json.Unmarshal(data, &f); err != nil {
-		return nil, fmt.Errorf("store: decoding %s: %w", path, err)
+		return nil, nil, fmt.Errorf("store: decoding %s: %w", path, err)
 	}
-	// Every action bumped the version once, so a file written before
-	// Version was stored (or with a smaller one) reads as the action count.
+	// Old files did not store Version; the room must not reuse prior versions.
 	f.Version = max(f.Version, len(f.Actions))
-	return &f, nil
+	return &f, data, nil
 }
 
 // readCapped reads the file at path, refusing one larger than MaxFileBytes

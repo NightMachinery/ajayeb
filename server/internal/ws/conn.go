@@ -256,7 +256,7 @@ func (c *conn) handle(data []byte) bool {
 		}
 		err = rooms.JoinClaim(c.ctx, c.client, m.Code, m.Claim)
 		// A bad claim counts like an unknown room: both are guesses.
-		if errors.Is(err, room.ErrRoomNotFound) || errors.Is(err, room.ErrBadClaim) {
+		if errors.Is(err, room.ErrRoomNotFound) || errors.Is(err, room.ErrRoomArchived) || errors.Is(err, room.ErrBadClaim) {
 			c.s.joinMissed(c.key)
 		}
 	case wire.Act:

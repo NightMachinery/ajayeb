@@ -536,6 +536,67 @@ def check_prebuilt_binary(path: Path) -> None:
         raise RuntimeError(f"--prebuilt {path} --version did not print a version: {detail}")
 
 
+def check_candidate_rooms(candidate: Path, force_room_archive: bool = False) -> None:
+    """Read-only candidate check. Force permits live archive risk, never read errors."""
+    try:
+        result = subprocess.run(
+            [str(candidate.resolve()), "--check-rooms", "--data", str(DATA_DIR)],
+            capture_output=True, text=True, check=False, timeout=120,
+        )
+        report = json.loads(result.stdout)
+        counts = ("rooms", "lobby", "playing", "finished", "archived", "playable", "wouldArchive",
+                  "liveWouldArchive", "refreshableHashes", "schemaErrors", "errors")
+        if (not isinstance(report, dict) or report.get("format") != "ajayeb-room-check/1"
+            or type(report.get("rules")) is not int or report["rules"] < 1
+            or any(type(report.get(k)) is not int or report[k] < 0 for k in counts)
+            or report["liveWouldArchive"] > report["wouldArchive"]
+            or report["wouldArchive"] + report["playable"] + report["archived"] > report["rooms"]
+            or report["refreshableHashes"] > report["playable"]
+            or report["schemaErrors"] > report["errors"]
+            or report["liveWouldArchive"] > report["lobby"] + report["playing"]
+            or (report["errors"] == 0 and
+                report["wouldArchive"] + report["playable"] + report["archived"] != report["rooms"])):
+            raise ValueError("invalid report")
+    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError(f"candidate room check failed ({type(exc).__name__}); existing server and data preserved") from None
+    print("room check: " + ", ".join(f"{k}={report[k]}" for k in counts))
+    if report["errors"] or result.returncode not in (0, 3):
+        raise RuntimeError("candidate room check has read/schema/operational errors; refusing deployment even with --force-room-archive")
+    live = report["liveWouldArchive"]
+    if (result.returncode == 3) != (live > 0):
+        raise RuntimeError("candidate room check returned inconsistent status; refusing deployment")
+    if live and not force_room_archive:
+        raise RuntimeError(f"candidate would archive {live} in-progress room(s); refused before binary replacement. "
+                           "Use --force-room-archive only to explicitly accept ending those games")
+    if live:
+        print(f"warning: --force-room-archive accepts archiving {live} in-progress room(s)", file=sys.stderr)
+
+
+def stop_for_candidate(config: Config, candidate: Path, force_room_archive: bool) -> None:
+    """Check before stopping, then again before any backup, config write or swap.
+
+    The first scan may race active moves. If the stopped scan fails, keep the
+    candidate and data untouched and restart the previous binary on its old port.
+    """
+    check_candidate_rooms(candidate, force_room_archive)
+    previous_binary = BIN_PATH.is_file()
+    command_stop()
+    try:
+        if not wait_for_port_free(config.ports.server):
+            raise RuntimeError("previous server did not release its port; candidate not installed")
+        check_candidate_rooms(candidate, force_room_archive)
+    except BaseException:
+        if previous_binary:
+            try:
+                start_server_prod(config.ports, config.site)
+                if not poll_health(config.ports.server):
+                    raise RuntimeError("previous server health check failed")
+                print("previous binary restarted after stopped room check failed", file=sys.stderr)
+            except Exception as exc:
+                print(f"warning: previous binary restart failed ({type(exc).__name__}); binary and data preserved", file=sys.stderr)
+        raise
+
+
 def swap_in_binary(source: Path, *, move: bool = False) -> None:
     """Back up the current binary to .prev, then atomically replace it with source.
 
@@ -1287,6 +1348,7 @@ def remote_deploy_command(
     url: str | None,
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
+    force_room_archive: bool = False,
 ) -> list[str]:
     parts = [
         "cd",
@@ -1302,6 +1364,8 @@ def remote_deploy_command(
         parts.append("--both-schemes" if both_schemes else "--no-both-schemes")
     if caddyfile is not None:
         parts.extend(["--caddyfile", shlex.quote(caddyfile)])
+    if force_room_archive:
+        parts.append("--force-room-archive")
     if url:
         parts.append(shlex.quote(url))
     return ssh_command(target, " ".join(parts))
@@ -1314,8 +1378,10 @@ def deploy_remote(
     url: str | None,
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
+    force_room_archive: bool = False,
 ) -> None:
-    run(remote_deploy_command(target, remote_dir, deploy_command, url, both_schemes, caddyfile))
+    run(remote_deploy_command(target, remote_dir, deploy_command, url, both_schemes, caddyfile,
+                              **({"force_room_archive": True} if force_room_archive else {})))
 
 
 def poll_remote_version(
@@ -1386,6 +1452,7 @@ def command_ship(
     remote_dir: str | None,
     both_schemes: bool | None = None,
     caddyfile: str | None = None,
+    force_room_archive: bool = False,
 ) -> None:
     if target is not None and looks_like_url(target):
         # `ship URL` with a remembered target: argparse puts URL in the
@@ -1413,7 +1480,8 @@ def command_ship(
 
     deploy_command = determine_deploy_command(target, remote_dir)
     print(f"remote command: {deploy_command}")
-    deploy_remote(target, remote_dir, deploy_command, url, both_schemes, caddyfile)
+    deploy_remote(target, remote_dir, deploy_command, url, both_schemes, caddyfile,
+                  **({"force_room_archive": True} if force_room_archive else {}))
 
     remember_ship_target(target, remote_dir)
 
@@ -1607,7 +1675,7 @@ def poll_public_version(
     raise failure
 
 
-def command_ship_all() -> int:
+def command_ship_all(force_room_archive: bool = False) -> int:
     targets = load_deploy_targets()
     platforms: list[tuple[str, str] | None] = []
     platform_errors: list[str | None] = []
@@ -1649,7 +1717,8 @@ def command_ship_all() -> int:
             deploy_command = determine_deploy_command(target, remote_dir)
             # No flag overrides: each host retains its own both_schemes,
             # caddyfile and ports from its remembered config.
-            deploy_remote(target, remote_dir, deploy_command, entry.site.origin)
+            deploy_remote(target, remote_dir, deploy_command, entry.site.origin,
+                          **({"force_room_archive": True} if force_room_archive else {}))
         except Exception as exc:
             deployment = f"failed ({type(exc).__name__})"
 
@@ -1725,7 +1794,8 @@ def start_prod_with_caddy(config: Config, caddy_error: Exception | None) -> None
 
 
 def command_setup(
-    url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None
+    url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None,
+    force_room_archive: bool = False,
 ) -> None:
     config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
     use_caddyfile(config)
@@ -1745,7 +1815,7 @@ def command_setup(
     # so a failing build or a bad --prebuilt path never takes a running
     # server down. The swap below is the first thing that touches it.
     caddy_error = prepare_prod_caddy(config)
-    command_stop()
+    stop_for_candidate(config, new_binary, force_room_archive)
     config = ports_after_stop(config)
     save_config(config)
     swap_in_binary(new_binary, move=prebuilt_path is not None)
@@ -1753,7 +1823,8 @@ def command_setup(
 
 
 def command_redeploy(
-    url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None
+    url: str | None, prebuilt: str | None = None, both_schemes: bool | None = None, caddyfile: str | None = None,
+    force_room_archive: bool = False,
 ) -> None:
     config = resolve_config(url, Mode.PROD, both_schemes, caddyfile)
     use_caddyfile(config)
@@ -1774,7 +1845,7 @@ def command_redeploy(
     # The rooms archive still runs with the server already stopped (so it
     # never captures a file mid-write), and still before the swap.
     caddy_error = prepare_prod_caddy(config)
-    command_stop()
+    stop_for_candidate(config, new_binary, force_room_archive)
     config = ports_after_stop(config)
     save_config(config)
     archived = archive_rooms()
@@ -1923,15 +1994,21 @@ def build_parser() -> argparse.ArgumentParser:
             help="use this already-built binary instead of installing, building and syncing here",
         )
 
+    def add_force_room_archive(p: argparse.ArgumentParser) -> None:
+        p.add_argument("--force-room-archive", action="store_true",
+                       help="explicitly accept candidate ending in-progress rooms; read/schema errors still refuse")
+
     setup_p = sub.add_parser("setup", help="first-time install")
     add_url(setup_p)
     add_prebuilt(setup_p)
+    add_force_room_archive(setup_p)
     add_both_schemes(setup_p)
     add_caddyfile(setup_p)
 
     redeploy_p = sub.add_parser("redeploy", help="rebuild and restart for a new version")
     add_url(redeploy_p)
     add_prebuilt(redeploy_p)
+    add_force_room_archive(redeploy_p)
     add_both_schemes(redeploy_p)
     add_caddyfile(redeploy_p)
 
@@ -1958,10 +2035,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help=f"Remote directory, relative to the remote home (default {DEFAULT_REMOTE_DIR})",
     )
+    add_force_room_archive(ship_p)
     add_both_schemes(ship_p)
     add_caddyfile(ship_p)
 
-    sub.add_parser("ship-all", help="build once and deploy every target in the private deploy-targets.json config")
+    ship_all_p = sub.add_parser("ship-all", help="build once and deploy every target in the private deploy-targets.json config")
+    add_force_room_archive(ship_all_p)
 
     return parser
 
@@ -1972,9 +2051,9 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "setup":
-            command_setup(args.url, args.prebuilt, args.both_schemes, args.caddyfile)
+            command_setup(args.url, args.prebuilt, args.both_schemes, args.caddyfile, args.force_room_archive)
         elif args.command == "redeploy":
-            command_redeploy(args.url, args.prebuilt, args.both_schemes, args.caddyfile)
+            command_redeploy(args.url, args.prebuilt, args.both_schemes, args.caddyfile, args.force_room_archive)
         elif args.command == "start":
             command_start(args.url, args.both_schemes, args.caddyfile)
         elif args.command == "dev-start":
@@ -1984,9 +2063,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "status":
             command_status()
         elif args.command == "ship-all":
-            return command_ship_all()
+            return command_ship_all(args.force_room_archive)
         elif args.command == "ship":
-            command_ship(args.target, args.url, args.remote_dir, args.both_schemes, args.caddyfile)
+            command_ship(args.target, args.url, args.remote_dir, args.both_schemes, args.caddyfile, args.force_room_archive)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

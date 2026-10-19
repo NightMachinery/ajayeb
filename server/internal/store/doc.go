@@ -10,10 +10,20 @@
 //   - Writes are atomic: a temporary file in the same directory is written,
 //     synced and renamed over the old file. A crash leaves either the old or
 //     the new version, never a torn file.
-//   - Rooms are restored by replaying the seed and the actions through the
-//     engine and checking the state hash. A rules-version mismatch or a
-//     failed replay marks the room archived and stamps its Updated time; its
-//     file is kept for bug reports rather than deleted.
+//   - Within the same explicit RulesVersion, seed/options/canonical keys
+//     are authoritative. Replay selects engine-generated legal actions,
+//     with the room's explicit legal resignation exception. A differing hash
+//     is atomically refreshed and logged without changing Updated or metadata.
+//     A rules-version mismatch or failed replay archives durably with a safe
+//     reason and timestamp and stamps Updated for archive retention. Existing
+//     archives stay archived. Failed writes are errors, never successful loads.
+//   - Incompatible setup, RNG, catalog and rules changes require a RulesVersion
+//     bump. Representation/derived-field changes alone do not (decision D28).
+//     Replay downloads keep strict hash validation; hashes do not authenticate
+//     data and cannot replace version discipline or backups.
+//   - CheckDataDir is read-only: no mkdir, identity initialization, hash
+//     refresh, archive or listener. It reports live archive risk separately
+//     from schema/read failures so deployment can refuse before stopping.
 //   - A file of another schema is refused and never rewritten, so a file
 //     from a newer server survives a rollback intact.
 //   - The reaper deletes finished and archived rooms 7 days after their

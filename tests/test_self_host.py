@@ -916,6 +916,8 @@ class CaddyLoadTests(unittest.TestCase):
                 refuse_to_create_caddyfile=mock.DEFAULT,
                 ensure_tools=mock.DEFAULT,
                 check_prebuilt_binary=mock.DEFAULT,
+            check_candidate_rooms=mock.DEFAULT,
+            wait_for_port_free=mock.Mock(return_value=True),
                 preflight_caddyfile=mock.Mock(side_effect=preflight),
                 command_stop=mock.Mock(side_effect=lambda: order.append("stop")),
                 ports_after_stop=mock.Mock(return_value=config),
@@ -1536,6 +1538,12 @@ class SetupRedeployOrderingTests(unittest.TestCase):
     """setup/redeploy: --prebuilt skips every build step, and stop only runs
     right before the swap, after every build and check."""
 
+    def setUp(self):
+        for name, value in (("check_candidate_rooms", None), ("wait_for_port_free", True)):
+            patcher = mock.patch.object(self_host, name, return_value=value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
     def _config(self):
         return self_host.Config(
             site=self_host.parse_site_url("https://game.example.test"),
@@ -1550,6 +1558,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             ports_after_stop=mock.DEFAULT,
             ensure_tools=mock.DEFAULT,
             check_prebuilt_binary=mock.DEFAULT,
+            check_candidate_rooms=mock.DEFAULT,
+            wait_for_port_free=mock.Mock(return_value=True),
             find_go=mock.DEFAULT,
             install_web=mock.DEFAULT,
             build_web=mock.DEFAULT,
@@ -1639,6 +1649,8 @@ class SetupRedeployOrderingTests(unittest.TestCase):
             ports_after_stop=mock.DEFAULT,
             ensure_tools=mock.DEFAULT,
             check_prebuilt_binary=mock.DEFAULT,
+            check_candidate_rooms=mock.DEFAULT,
+            wait_for_port_free=mock.Mock(return_value=True),
             find_go=mock.DEFAULT,
             archive_rooms=mock.DEFAULT,
             install_web=mock.DEFAULT,
@@ -1736,6 +1748,8 @@ class ProductionCaddyFailureTests(unittest.TestCase):
             "resolve_config": mock.Mock(return_value=self.config),
             "ensure_tools": mock.Mock(),
             "check_prebuilt_binary": mock.Mock(),
+            "check_candidate_rooms": mock.Mock(),
+            "wait_for_port_free": mock.Mock(return_value=True),
             "command_stop": mock.Mock(),
             "ports_after_stop": mock.Mock(return_value=replace(self.config, ports=replace(self.config.ports, server=38953))),
             "save_config": mock.Mock(),
@@ -2087,6 +2101,8 @@ class PortsAfterStopTests(unittest.TestCase):
             resolve_config=mock.DEFAULT,
             ports_after_stop=mock.DEFAULT,
             check_prebuilt_binary=mock.DEFAULT,
+            check_candidate_rooms=mock.DEFAULT,
+            wait_for_port_free=mock.Mock(return_value=True),
             swap_in_binary=mock.DEFAULT,
             archive_rooms=mock.DEFAULT,
             start_server_prod=mock.DEFAULT,
@@ -2892,6 +2908,129 @@ class PollHostVersionTests(unittest.TestCase):
              mock.patch.object(self_host.time, "sleep"):
             self.assertEqual(self_host.poll_host_version("example.host", self_host.Site("http", "game.example.host"), timeout=1), "v-test")
         self.assertEqual(run.call_count, 2)
+
+
+class CandidateRoomCheckTests(unittest.TestCase):
+    def report(self, **updates):
+        report = dict(format="ajayeb-room-check/1", rules=1, rooms=2, lobby=0,
+                      playing=2, finished=0, archived=0, playable=2, wouldArchive=0,
+                      liveWouldArchive=0, refreshableHashes=1, schemaErrors=0, errors=0)
+        report.update(updates)
+        return report
+
+    def check(self, report, code=0, force=False):
+        result = subprocess.CompletedProcess([], code, stdout=json.dumps(report), stderr="private diagnostic")
+        with mock.patch.object(self_host.subprocess, "run", return_value=result) as run:
+            self_host.check_candidate_rooms(Path("/tmp/candidate"), force)
+        return run
+
+    def test_check_runs_read_only_candidate_mode_and_reports_refreshable_rooms(self):
+        with redirect_stdout(io.StringIO()) as out:
+            run = self.check(self.report())
+        self.assertIn("refreshableHashes=1", out.getvalue())
+        self.assertEqual(run.call_args.args[0], [str(Path("/tmp/candidate").resolve()), "--check-rooms", "--data", str(self_host.DATA_DIR)])
+
+    def test_live_loss_refuses_and_force_is_explicit_in_output(self):
+        report = self.report(playable=1, wouldArchive=1, liveWouldArchive=1)
+        with self.assertRaisesRegex(RuntimeError, "--force-room-archive"):
+            self.check(report, 3)
+        with redirect_stderr(io.StringIO()) as out:
+            self.check(report, 3, force=True)
+        self.assertIn("accepts archiving 1", out.getvalue())
+
+    def test_operational_schema_and_malformed_reports_never_force(self):
+        for report, code in ((self.report(errors=1, schemaErrors=1), 1),
+                             (self.report(), 1), ({}, 0), (self.report(errors=False), 0),
+                             (self.report(liveWouldArchive=1), 0)):
+            with self.subTest(report=report), self.assertRaises(RuntimeError):
+                self.check(report, code, force=True)
+        for exc in (PermissionError("private detail"), subprocess.TimeoutExpired("candidate", 120)):
+            with mock.patch.object(self_host.subprocess, "run", side_effect=exc):
+                with self.assertRaisesRegex(RuntimeError, "candidate room check failed") as ctx:
+                    self_host.check_candidate_rooms(Path("/tmp/candidate"), True)
+                self.assertNotIn("private detail", str(ctx.exception))
+
+    def test_preflight_refusal_never_stops_or_swaps(self):
+        for command in (self_host.command_setup, self_host.command_redeploy):
+            with mock.patch.multiple(self_host, resolve_config=mock.DEFAULT, use_caddyfile=mock.DEFAULT,
+                                     ensure_tools=mock.DEFAULT, check_prebuilt_binary=mock.DEFAULT,
+                                     prepare_prod_caddy=mock.DEFAULT, command_stop=mock.DEFAULT,
+                                     swap_in_binary=mock.DEFAULT, archive_rooms=mock.DEFAULT,
+                                     check_candidate_rooms=mock.Mock(side_effect=RuntimeError("room risk"))) as mocks:
+                with self.assertRaisesRegex(RuntimeError, "room risk"):
+                    command(None, "/tmp/candidate")
+                mocks["command_stop"].assert_not_called()
+                mocks["swap_in_binary"].assert_not_called()
+                mocks["archive_rooms"].assert_not_called()
+
+    def test_second_scan_happens_after_stop_and_restarts_previous_on_failure(self):
+        config = self_host.Config(site=self_host.parse_site_url("https://game.example.test"), mode=self_host.Mode.PROD)
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "old-binary"
+            binary.write_bytes(b"old")
+            calls = []
+            def check(*args):
+                calls.append("check")
+                if len(calls) > 1:
+                    raise RuntimeError("new move makes candidate incompatible")
+            with mock.patch.object(self_host, "BIN_PATH", binary), mock.patch.multiple(
+                self_host, check_candidate_rooms=mock.Mock(side_effect=check),
+                command_stop=mock.Mock(side_effect=lambda: calls.append("stop")),
+                wait_for_port_free=mock.Mock(return_value=True),
+                start_server_prod=mock.Mock(side_effect=lambda *args: calls.append("restart")),
+                poll_health=mock.Mock(return_value=True),
+            ) as mocks:
+                with self.assertRaisesRegex(RuntimeError, "new move"):
+                    self_host.stop_for_candidate(config, Path("/tmp/candidate"), False)
+                self.assertEqual(calls, ["check", "stop", "check", "restart"])
+                self_host.start_server_prod.assert_called_once_with(config.ports, config.site)
+                self.assertEqual(binary.read_bytes(), b"old")
+
+    def test_success_checks_both_sides_of_stop_and_passes_force(self):
+        config = self_host.Config(site=self_host.parse_site_url("https://game.example.test"), mode=self_host.Mode.PROD)
+        events = mock.Mock()
+        with mock.patch.multiple(self_host, check_candidate_rooms=mock.DEFAULT, command_stop=mock.DEFAULT,
+                                 wait_for_port_free=mock.Mock(return_value=True)) as mocks:
+            events.attach_mock(mocks["check_candidate_rooms"], "check")
+            events.attach_mock(mocks["command_stop"], "stop")
+            self_host.stop_for_candidate(config, Path("candidate"), True)
+        self.assertEqual(events.mock_calls, [mock.call.check(Path("candidate"), True), mock.call.stop(),
+                                            mock.call.check(Path("candidate"), True)])
+
+    def test_override_routed_through_every_cli_and_remote_command(self):
+        cases = (("setup", "command_setup"), ("redeploy", "command_redeploy"),
+                 ("ship", "command_ship"), ("ship-all", "command_ship_all"))
+        for command, function in cases:
+            with mock.patch.object(self_host, function, return_value=0) as mocked:
+                self.assertEqual(self_host.main([command, "--force-room-archive"]), 0)
+                self.assertIs(mocked.call_args.args[-1], True)
+        remote = self_host.remote_deploy_command("deploy@example.host", "game", "redeploy", None,
+                                               force_room_archive=True)
+        self.assertIn("--force-room-archive", remote[-1])
+        self.assertNotIn("--force-room-archive", self_host.remote_deploy_command("deploy@example.host", "game", "setup", None)[-1])
+
+    def test_ship_forwards_override(self):
+        with CommandShipTests()._patched() as mocks:
+            mocks["resolve_ship_target"].return_value = self_host.ShipTarget("deploy@example.host", "game")
+            mocks["detect_remote_platform"].return_value = ("linux", "amd64")
+            mocks["git_version"].return_value = "v-test"
+            self_host.command_ship(None, None, None, force_room_archive=True)
+            self.assertIs(mocks["deploy_remote"].call_args.kwargs["force_room_archive"], True)
+
+
+    def test_ship_all_forwards_override_to_every_target(self):
+        targets = [self_host.DeployTarget(self_host.ShipTarget("deploy@example.host", "game"),
+                                         self_host.parse_site_url("https://game.example.test"))]
+        with mock.patch.multiple(self_host, load_deploy_targets=mock.Mock(return_value=targets),
+                                 detect_remote_platform=mock.Mock(return_value=("linux", "amd64")),
+                                 git_version=mock.Mock(return_value="v-test"), cross_build=mock.DEFAULT,
+                                 upload_to_remote=mock.DEFAULT,
+                                 determine_deploy_command=mock.Mock(return_value="redeploy"),
+                                 deploy_remote=mock.DEFAULT,
+                                 poll_host_version=mock.Mock(return_value="v-test"),
+                                 poll_public_version=mock.Mock(return_value="v-test")) as mocks:
+            self.assertEqual(self_host.command_ship_all(True), 0)
+            self.assertIs(mocks["deploy_remote"].call_args.kwargs["force_room_archive"], True)
 
 
 if __name__ == "__main__":

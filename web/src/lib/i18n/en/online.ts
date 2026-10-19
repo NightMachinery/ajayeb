@@ -81,6 +81,8 @@ export const online = {
 
   // A room that cannot be opened.
   'online.error.title': 'This game cannot be opened',
+  'online.error.archivedHint':
+    'Go Home to start a new game. If you need this record, ask the server operator about recovering a backup.',
   'online.error.notFoundHint':
     'Check the code or the link. A game also closes some time after it ends.',
   'online.error.retryHint': 'Try again in a moment, or start a game of your own.',

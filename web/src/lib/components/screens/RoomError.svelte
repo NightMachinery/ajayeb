@@ -28,11 +28,13 @@
         : errorMessage(error)
   );
   const hint = $derived(
-    error === 'room-not-found'
-      ? t('online.error.notFoundHint')
-      : error === 'forbidden'
-        ? t('online.error.forbiddenHint')
-        : t('online.error.retryHint')
+    error === 'room-archived'
+      ? t('online.error.archivedHint')
+      : error === 'room-not-found'
+        ? t('online.error.notFoundHint')
+        : error === 'forbidden'
+          ? t('online.error.forbiddenHint')
+          : t('online.error.retryHint')
   );
 </script>
 

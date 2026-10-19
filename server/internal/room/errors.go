@@ -3,6 +3,7 @@ package room
 import (
 	"errors"
 
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -11,8 +12,10 @@ import (
 // them; the transport only decides whether to keep the connection.
 var (
 	// ErrRoomNotFound: no room has that code, its code is malformed, or its
-	// file is archived. Frame: error room-not-found.
+	// file is missing. Frame: error room-not-found.
 	ErrRoomNotFound = errors.New("room: no such room")
+	// ErrRoomArchived is a durable archive, distinct from a missing room.
+	ErrRoomArchived = errors.New("room: room archived")
 	// ErrRoomFull: the room takes no more connections of this kind: a new
 	// spectator once the room has MaxClients connections, or one more
 	// connection of a user who already has MaxClients there. Frame: error
@@ -56,6 +59,8 @@ var (
 // client receives.
 func errorCode(err error) wire.ErrorCode {
 	switch {
+	case errors.Is(err, ErrRoomArchived):
+		return wire.ErrorCodeRoomArchived
 	case errors.Is(err, ErrRoomFull):
 		return wire.ErrorCodeRoomFull
 	case errors.Is(err, ErrTooManyRooms):
@@ -72,6 +77,10 @@ func errorCode(err error) wire.ErrorCode {
 // errorMsg is the developer hint sent with an error frame (never shown to a
 // player).
 func errorMsg(err error) string {
+	var archived *archivedRoomError
+	if errors.As(err, &archived) {
+		return string(store.SafeArchiveReason(archived.reason))
+	}
 	switch {
 	case errors.Is(err, ErrRoomFull):
 		return "the room takes no more connections"
@@ -87,3 +96,9 @@ func errorMsg(err error) string {
 		return "no room with that code"
 	}
 }
+
+// archivedRoomError carries only a bounded reason; raw store errors stay in logs.
+type archivedRoomError struct{ reason store.ArchiveReason }
+
+func (e *archivedRoomError) Error() string { return ErrRoomArchived.Error() }
+func (e *archivedRoomError) Unwrap() error { return ErrRoomArchived }

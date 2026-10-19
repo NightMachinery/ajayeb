@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,7 +17,7 @@ import (
 // valid; use Open or OpenWithClock.
 type Store struct {
 	dir string
-	now Clock // stamps Updated when Load archives a room
+	now Clock // stamps archive time when Load archives a room
 }
 
 // Open prepares <dataDir>/rooms, creating it (and dataDir) if neither exists
@@ -83,22 +84,16 @@ func (st *Store) Save(f *File) error {
 // left exactly as it is: this build cannot read it faithfully, so it must
 // not rewrite it either (a newer server's fields would be lost).
 //
-// On a rules-version mismatch, a replay failure or a hash mismatch, Load
-// does not return the state: it instead flips the file's Status to
-// StatusArchived, stamps Updated with the store's clock (so the reaper's
-// retention counts from the archiving, not from the last move), writes that
-// back (best effort; a write failure here is folded into the returned error
-// but does not change the fact that the room is no longer trusted), and
-// returns the archived header alongside a descriptive error wrapping
-// ErrRulesVersion or ErrHashMismatch. A file that is already archived is
-// returned as it is, without a second stamp. The file on disk is never
-// deleted by Load, so it stays available for a bug report.
+// Within the same RulesVersion, a complete legal replay is canonical. A differing
+// hash is refreshed atomically without changing Updated. A version mismatch or
+// failed replay is archived durably with a bounded reason and timestamp. Already
+// archived rooms stay archived. A failed write is an error, never a successful load.
 func (st *Store) Load(code string) (*File, engine.State, error) {
 	path, err := st.path(code)
 	if err != nil {
 		return nil, engine.State{}, err
 	}
-	f, err := readFile(path)
+	f, data, err := readFileData(path)
 	if err != nil {
 		return nil, engine.State{}, fmt.Errorf("store: load %s: %w", code, err)
 	}
@@ -106,37 +101,37 @@ func (st *Store) Load(code string) (*File, engine.State, error) {
 		return nil, engine.State{}, fmt.Errorf("store: load %s: %w", code, err)
 	}
 
-	if f.Rules != engine.RulesVersion {
-		loadErr := fmt.Errorf("store: load %s: %w: file plays rules %d, this engine plays %d",
-			code, ErrRulesVersion, f.Rules, engine.RulesVersion)
-		return st.archive(path, f, loadErr)
+	if f.Status == StatusArchived {
+		return f, engine.State{}, &ArchivedError{Reason: SafeArchiveReason(f.ArchiveReason)}
 	}
-
-	s, err := replay(f)
+	s, reason, err := assess(f)
 	if err != nil {
-		return st.archive(path, f, fmt.Errorf("store: load %s: %w", code, err))
+		return st.archive(path, f, data, reason, err)
 	}
 	if got := engine.HashString(&s); got != f.Hash {
-		loadErr := fmt.Errorf("store: load %s: %w: replay hash %s, file says %s", code, ErrHashMismatch, got, f.Hash)
-		return st.archive(path, f, loadErr)
+		old := f.Hash
+		refreshed := *f
+		refreshed.Hash = got
+		if err := rewriteFields(path, data, map[string]any{"hash": got}); err != nil {
+			return nil, engine.State{}, fmt.Errorf("store: refresh hash for %s: %w", code, err)
+		}
+		slog.Warn("refreshed room replay hash", "room", code, "oldHash", old, "newHash", got)
+		f = &refreshed
 	}
 	return f, s, nil
 }
 
-// archive flips f to StatusArchived, stamps Updated, writes it back (best
-// effort) and returns it alongside loadErr, as Load's failure paths do. A
-// file that is already archived is returned unchanged and not rewritten.
-func (st *Store) archive(path string, f *File, loadErr error) (*File, engine.State, error) {
-	if f.Status == StatusArchived {
-		return f, engine.State{}, loadErr
-	}
+func (st *Store) archive(path string, f *File, data []byte, reason ArchiveReason, cause error) (*File, engine.State, error) {
 	archived := *f
 	archived.Status = StatusArchived
 	archived.Updated = st.now()
-	if err := writeFile(path, &archived); err != nil {
-		loadErr = fmt.Errorf("%w (and archiving it failed: %v)", loadErr, err)
+	archived.ArchivedAt = &archived.Updated
+	archived.ArchiveReason = reason
+	if err := rewriteFields(path, data, map[string]any{"status": archived.Status, "updated": archived.Updated,
+		"archiveReason": reason, "archivedAt": archived.ArchivedAt}); err != nil {
+		return nil, engine.State{}, fmt.Errorf("store: archiving failed: %w (replay: %v)", err, cause)
 	}
-	return &archived, engine.State{}, loadErr
+	return &archived, engine.State{}, &ArchivedError{Reason: reason, Cause: cause}
 }
 
 // checkSchema refuses a file whose Schema is not the one this build writes.

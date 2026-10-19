@@ -228,28 +228,29 @@ func TestLoadArchivesBrokenReplay(t *testing.T) {
 	}
 }
 
-func TestLoadArchivesHashMismatch(t *testing.T) {
+func TestLoadRefreshesHashMismatch(t *testing.T) {
 	st := newStore(t)
-	f := store.New("TAMPER", store.ModeAI, engine.Options{}, 1, time.Now())
+	f := store.New("TAMPER", store.ModeAI, engine.Options{}, 1, time.Now().Add(-48*time.Hour))
 	f.Status = store.StatusPlaying
+	f.Actions, _ = playActions(t, f.Seed, f.Options, 8)
 	if err := st.Save(f); err != nil {
-		t.Fatalf("Save: %v", err)
+		t.Fatal(err)
 	}
-
-	rewriteField(t, st, "TAMPER", func(raw map[string]any) {
-		raw["hash"] = "0000000000000000"
-	})
-
-	_, _, err := st.Load("TAMPER")
-	if err == nil {
-		t.Fatalf("Load with a tampered hash: want error, got nil")
-	}
-	again, err := st.PeekHeader("TAMPER")
+	want := *f
+	rewriteField(t, st, f.Code, func(raw map[string]any) { raw["hash"] = "old-layout-hash" })
+	got, state, err := st.Load(f.Code)
 	if err != nil {
-		t.Fatalf("PeekHeader: %v", err)
+		t.Fatal(err)
 	}
-	if again.Status != store.StatusArchived {
-		t.Fatalf("status %q, want archived", again.Status)
+	if got.Status != store.StatusPlaying || got.Hash != want.Hash || !got.Updated.Equal(want.Updated) {
+		t.Fatalf("refresh changed lifecycle or failed: %+v", got)
+	}
+	if got.Hash != engine.HashString(&state) {
+		t.Fatal("state/hash mismatch")
+	}
+	again, err := st.PeekHeader(f.Code)
+	if err != nil || again.Hash != want.Hash || !again.Updated.Equal(want.Updated) {
+		t.Fatalf("disk: %+v %v", again, err)
 	}
 }
 
@@ -616,7 +617,7 @@ func TestArchiveStampsUpdated(t *testing.T) {
 	if err := st.Save(f); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
-	rewriteField(t, st, "ARCHVD", func(raw map[string]any) { raw["hash"] = "0000000000000000" })
+	rewriteField(t, st, "ARCHVD", func(raw map[string]any) { raw["rules"] = engine.RulesVersion + 1 })
 	got, _, err := st.Load("ARCHVD")
 	if err == nil || got == nil || got.Status != store.StatusArchived || !got.Updated.Equal(now) {
 		t.Fatalf("Load: %+v, %v; want archived and updated at %v", got, err, now)

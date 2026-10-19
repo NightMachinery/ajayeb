@@ -25,6 +25,8 @@ export const session = {
   'session.reject.gameOver': 'بازی تمام شده است، پس راهنماهایش دیگر تغییر نمی‌کنند.',
   'session.reject.undoOff': 'برگرداندن در این بازی خاموش است.',
 
+  'session.error.roomArchived':
+    'این بازی ذخیره‌شده پس از به‌روزرسانی سرور پایان یافته است و دیگر نمی‌توان آن را ادامه داد.',
   'session.error.roomNotFound': 'هیچ بازی‌ای با این کد نیست.',
   'session.error.roomFull': 'این بازی اتصال دیگری نمی‌پذیرد.',
   'session.error.forbidden': 'نمی‌توانید این کار را در این بازی انجام دهید.',

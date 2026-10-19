@@ -304,7 +304,7 @@ malformed, made for another room, or revoked by a `relink` is refused with
 like a code that names no room. A join without `claim` behaves as before.
 
 The answer is a `state`, and every other connection of the room receives a
-`state` with the new presence. The refusals are `error room-not-found`,
+`state` with the new presence. The refusals are `error room-not-found`, `error room-archived`,
 `error room-full`, `error forbidden` (another user's hot-seat or `ai` room;
 the server tells this from the room file's header, without loading the
 room) and `error busy` (the room must be loaded and every room in memory has
@@ -792,8 +792,13 @@ it again with the same `seq`.
 
 ## Error codes
 
-- `room-not-found`: no room has that code, the room is archived, or it could
-  not be loaded.
+- `room-not-found`: no room has that code, or it could not be read/loaded.
+- `room-archived`: the room was durably archived after a rules-version mismatch
+  or failed legal replay, or was already archived. `msg` contains only one safe
+  bounded reason: `rules-version`, `replay-failed` or `unavailable` (legacy or
+  unknown reason). Raw keys, hashes and diagnostic errors are never sent.
+  The client uses a localized update-ended message with Home/recovery guidance,
+  ignores `msg` as display text and removes the room from its saved Home list.
 - `room-full`: the room takes no more connections of this kind: a new
   spectator once the room has 32 connections, or one more connection of a
   user who already has 32 there. Spectators can never lock a player out.
@@ -1466,3 +1471,20 @@ rearranging exactly what the scenario names. The result always satisfies
 `CheckInvariants`; a scenario that asks for an impossible position (a card
 named twice, a wonder a seat was not dealt, and so on) is rejected with an
 error instead of producing a broken state.
+
+
+## Read-only room check CLI
+
+`ajayeb --check-rooms --data DIR` exits before identity initialization, directory creation or listening. It reads `DIR/rooms` without rewriting hashes, archiving, deleting or creating files. It emits one JSON object on stdout:
+
+```
+{"format":"ajayeb-room-check/1","rules":1,"rooms":2,"lobby":0,"playing":2,"finished":0,"archived":0,"playable":2,"wouldArchive":0,"liveWouldArchive":0,"refreshableHashes":1,"schemaErrors":0,"errors":0}
+```
+
+- `format` identifies this check contract; `rules` is the candidate's explicit `engine.RulesVersion`.
+- `rooms` counts JSON room entries examined. `lobby`, `playing`, `finished` and `archived` count recognized statuses in readable, current-schema files. Existing archives are never replayed.
+- `playable` counts unarchived rooms whose complete legal replay succeeds under the same rules version, including finished games. `refreshableHashes` is the subset whose stored hashes differ; the check never refreshes them.
+- `wouldArchive` counts unarchived rules mismatches or failed replays. `liveWouldArchive` is the subset in `lobby` or `playing` status.
+- `schemaErrors` counts unknown schema files. `errors` includes those and operational, unreadable, malformed JSON, invalid file-name/header and unknown-status failures. These counts are independent of replay incompatibility. Listing failures count as errors, never as an empty directory. A missing directory is the fresh-install case.
+
+Exit 1 means `errors > 0` (or report output failed), exit 3 means `liveWouldArchive > 0` without other errors, and exit 0 otherwise. Deployment must validate the format, counts and exit status before stopping the old binary. `--force-room-archive` belongs to `self_host.py setup/redeploy/ship/ship-all`, not to this read-only server command; it permits exit 3 only. See [the deployment sequence and stop-boundary recovery](self-hosting.md#room-compatibility-preflight).

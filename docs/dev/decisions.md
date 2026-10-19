@@ -105,6 +105,8 @@ All entries below were accepted on 2026-10-01 unless they say otherwise.
 
 **Rejected.** Drawing random numbers during play (replays become fragile and determinization harder). Storing full state snapshots (larger, and they hide rule changes).
 
+D28 clarifies the persistence hash rule: within the same explicit rules version, a complete legal replay is canonical and a differing stored hash is refreshed. Downloaded game logs still validate their final hash strictly. The historical rationale above records the original policy.
+
 ## D12. Guild cards have their own public back
 
 **Decision.** Face-down cards expose only their back: `age1`, `age2`, `age3`, or `guild` for the guilds in Age III.
@@ -120,6 +122,8 @@ All entries below were accepted on 2026-10-01 unless they say otherwise.
 **Rationale.** The data is small and per room. Files need no database process, are easy to inspect and attach to bug reports, and survive a restart.
 
 **Rejected.** SQLite or a database server (more moving parts for data this small).
+
+D28 adds the room compatibility policy and deployment preflight to this file-based design; the retention periods above are unchanged by that decision.
 
 ## D14. Identity is an HMAC of a browser token; there are no accounts
 
@@ -254,3 +258,20 @@ This supersedes the "budget 5 MB" line in the M9 section of `docs/dev/roadmap.md
 **Tradeoff.** The first gesture allows later game sounds without an opt-in step. A player who wants silence can mute directly on the board, and the choice persists. Browser autoplay restrictions still apply, so the page neither creates an AudioContext nor fetches sound files before a gesture.
 
 **Rejected.** Keeping Sound off by default (players can miss the feedback entirely). Migrating stored false values or adding an explicit-choice marker (there are no existing players to migrate, and stored test-device preferences may remain as they are).
+
+
+## D28. Saved rooms are canonical within an explicit rules version
+
+**Decision (2026-10-19).** A saved room is its seed, options, optional scenario and canonical action keys within the same `engine.RulesVersion`. Restoration selects each ordinary key by membership in the engine's legal actions, then applies the engine's own action. It uses the room's existing exception for resignation: either engine-generated `ResignAction` is accepted only while legal, because bots must never find resignation in their action list.
+
+A complete replay under the same rules version restores a playable room even when the stored state hash differs. The store atomically refreshes only that hash and logs a warning with the old and new values. It preserves `Updated`, identity, seat/link epochs, settings, action history and other metadata, including unknown additive fields. A failed refresh is a load failure. An explicit rules-version mismatch or an unreplayable key archives the room durably with `rules-version` or `replay-failed` and an archive timestamp. Archiving keeps the existing retention clock behavior: `Updated` becomes the archive time. Existing archives stay archived without a rewrite, including legacy archives without a reason. Unknown file schemas are refused and left byte-for-byte intact.
+
+An incompatible change to setup, the RNG, catalog ordering or meaning, action semantics or rules must bump `engine.RulesVersion`, even when every old key remains legal. A layout change or a new derived state field alone does not require a bump. Replay downloads and engine log validation retain their strict final-hash check.
+
+Before replacing a production binary, setup/redeploy run the candidate's read-only room check against the target data while the old server still runs. They refuse in-progress rooms that would archive, unless the operator explicitly passes `--force-room-archive`. Shipping forwards that one-shot override. Read, schema and operational errors always refuse, including with force. A second check after stopping and releasing the old port catches moves made during the first scan; a failed second check preserves the old binary and data and attempts to restart that binary on its prior configuration. Neither check initializes identity, creates directories, archives files or listens on a socket.
+
+**Rationale.** Raw state hashes can change with representation and derived fields even when the saved decisions still describe a valid game. Keeping those games playable avoids ending live rooms for an internal representation change. An explicit semantic version is the compatibility boundary. A preflight exposes deliberate incompatibility before avoidable downtime, while the stopped check narrows the race with active players.
+
+**Tradeoff.** Accepting a changed hash loses detection of some accidental corruption or tampering: a changed seed, options or sequence that still replays legally can pass. FNV hashes never authenticated the data or protected it against a writer who could replace the hash too. Strict membership validation catches malformed, noncanonical and illegal keys, but cannot prove that an old seed still means the same deal. Compatibility therefore depends on deliberate version discipline and backups. The running preflight is a changing-directory scan, not a transaction; the stopped check still assumes the service stop has quiesced writers and cannot protect against another process editing data afterward. Restart recovery can fail and is reported without claiming success.
+
+**Rejected.** Archiving every hash difference (needlessly ends compatible games). Ignoring rules-version mismatches or replay errors (can silently change a game). Relaxing downloaded-log validation (would weaken its separate verification contract). Automatically rewriting newer schemas (loses fields on rollback). Silently accepting a failed check as an empty directory, or persisting the force flag (hides operational failures or turns future data loss into an unattended default).

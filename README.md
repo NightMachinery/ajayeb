@@ -12,7 +12,7 @@ Every mode is a room on the server. The browser shows the room and sends moves; 
 
 - **Versus the computer.** Play against a bot at one of three levels (Easy, Medium, Hard). The stronger levels use information-set Monte Carlo tree search, and every bot sees only what a human in its seat would see. You can undo your last move.
 - **Hot-seat.** Two people share one device and pass it between turns. A short pass screen tells the next player what just happened. Undo works until the other player acts.
-- **Online.** Create a room, send the invite link (`/play/<code>`) to a friend, and play from two devices. Reconnects and server restarts restore the persisted game. Finished rooms expire after 7 days and unfinished rooms after 14 days without an update.
+- **Online.** Create a room, send the invite link (`/play/<code>`) to a friend, and play from two devices. Reconnects and server restarts restore the persisted game within the same rules version. Deployment checks saved-room compatibility before stopping the server; see [self-hosting](docs/self-hosting.md#room-compatibility-preflight). Finished rooms expire after 7 days and unfinished rooms after 14 days without an update.
 
 ## Stack
 

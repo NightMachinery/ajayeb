@@ -552,7 +552,8 @@ export interface Reject {
  * ErrorCode says why the connection itself is being refused or closed, as
  * opposed to one request (RejectCode).
  */
-export const ErrorCodeRoomNotFound = "room-not-found"; // no such code (or it is archived)
+export const ErrorCodeRoomArchived = "room-archived"; // ended by an incompatible update or invalid stored replay
+export const ErrorCodeRoomNotFound = "room-not-found"; // no such code
 export const ErrorCodeRoomFull = "room-full"; // the room takes no more connections (spectators, or one user's tabs)
 export const ErrorCodeForbidden = "forbidden"; // this user may not do that in this room
 export const ErrorCodeBadHello = "bad-hello"; // the hello frame itself was invalid
@@ -562,7 +563,7 @@ export const ErrorCodeBadClaim = "bad-claim"; // the join's claim is not a curre
 /**
  * The error codes.
  */
-export type ErrorCode = typeof ErrorCodeRoomNotFound | typeof ErrorCodeRoomFull | typeof ErrorCodeForbidden | typeof ErrorCodeBadHello | typeof ErrorCodeProtocol | typeof ErrorCodeBusy | typeof ErrorCodeBadClaim;
+export type ErrorCode = typeof ErrorCodeRoomArchived | typeof ErrorCodeRoomNotFound | typeof ErrorCodeRoomFull | typeof ErrorCodeForbidden | typeof ErrorCodeBadHello | typeof ErrorCodeProtocol | typeof ErrorCodeBusy | typeof ErrorCodeBadClaim;
 /**
  * Error reports a connection-level problem.
  */

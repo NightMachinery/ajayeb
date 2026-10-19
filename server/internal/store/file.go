@@ -51,11 +51,8 @@ const (
 	StatusLobby    Status = "lobby"    // online room, waiting for its second seat
 	StatusPlaying  Status = "playing"  // the game is running
 	StatusFinished Status = "finished" // the game ended normally
-	// StatusArchived marks a room whose file Load could not trust: a rules
-	// version this engine no longer plays, or an action log that fails to
-	// replay, or a replay whose hash does not match Hash. Load sets it and
-	// keeps the file (see Load), so a corrupt room never silently vanishes;
-	// it stops being playable instead.
+	// StatusArchived marks a version mismatch or failed legal replay. Hash
+	// differences within the same rules version are refreshed instead (D28).
 	StatusArchived Status = "archived"
 )
 
@@ -91,7 +88,7 @@ type Seat struct {
 //
 // Load and Save are the only supported ways to read or write one: Save
 // recomputes Hash from a fresh replay before writing, and Load replays and
-// checks Hash before trusting the file, so a *File that came from either of
+// refreshes Hash after a legal replay, so a *File that came from either of
 // them is always known to replay to the state it claims. A File built by
 // hand (New, or a literal) carries no such guarantee until it has been
 // through Save.
@@ -121,7 +118,7 @@ type File struct {
 	Actions []string `json:"actions"`
 	// Hash is engine.HashString of the state reached by replaying Seed (and
 	// Scenario, and Options) plus every entry of Actions, in order. Save
-	// computes it; Load checks it.
+	// computes it; Load refreshes it after a complete legal replay (D28).
 	Hash string `json:"hash,omitempty"`
 	// Version is the room's version (see package room): it goes up with
 	// every accepted action and every undo, and never goes down, so it is
@@ -138,6 +135,10 @@ type File struct {
 	LastSeq map[string]int `json:"lastSeq"`
 
 	Status Status `json:"status"`
+	// ArchiveReason and ArchivedAt describe a durable archive. Legacy archives
+	// may have neither; they still stay archived.
+	ArchiveReason ArchiveReason `json:"archiveReason,omitempty"`
+	ArchivedAt    *time.Time    `json:"archivedAt,omitempty"`
 	// Result is the final score sheet, set once Status is StatusFinished
 	// (or an StatusArchived room that had finished before it was archived).
 	Result *engine.Result `json:"result,omitempty"`

@@ -39,10 +39,14 @@ type Manager struct {
 	// receives to give it back.
 	reviewSlots chan struct{}
 
-	mu      sync.Mutex
-	rooms   map[string]*Room
-	pending int // rooms being created or loaded, counted against MaxRooms
-	closed  bool
+	// A restore can rewrite its old hash. Serialize disk restores through actor
+	// registration so a second restore cannot overwrite an actor's newer save.
+	// In-memory requests bypass this lock.
+	restoreMu sync.Mutex
+	mu        sync.Mutex
+	rooms     map[string]*Room
+	pending   int // rooms being created or loaded, counted against MaxRooms
+	closed    bool
 }
 
 // NewManager returns a Manager. cfg.Store is required.
@@ -464,11 +468,16 @@ func (m *Manager) get(code string, check func(*store.File) error) (*Room, error)
 			return nil, ErrRoomNotFound
 		}
 		if hdr.Status == store.StatusArchived {
-			return nil, ErrRoomNotFound
+			return nil, &archivedRoomError{reason: hdr.ArchiveReason}
 		}
 		if err := check(hdr); err != nil {
 			return nil, err
 		}
+	}
+	m.restoreMu.Lock()
+	defer m.restoreMu.Unlock()
+	if r, err := m.lookup(code); r != nil || err != nil {
+		return r, err
 	}
 	if err := m.reserve(); err != nil {
 		return nil, err
@@ -479,13 +488,13 @@ func (m *Manager) get(code string, check func(*store.File) error) (*Room, error)
 		if !errors.Is(err, fs.ErrNotExist) {
 			m.log.Warn("loading a room failed", "room", code, "err", err)
 		}
+		if errors.Is(err, store.ErrArchived) && f != nil {
+			return nil, &archivedRoomError{reason: f.ArchiveReason}
+		}
 		return nil, ErrRoomNotFound
 	}
-	if f.Status == store.StatusArchived {
-		return nil, ErrRoomNotFound
-	}
-	// The store has checked that the log replays to its hash; the room also
-	// needs each action's seat and events, for undo and the history.
+	// The store checked every key by membership and refreshed the hash. The
+	// room also needs each action's seat and events, for undo and history.
 	_, hist, err := replayKeys(f, f.Actions)
 	if err != nil {
 		m.log.Error("a stored room does not replay through the legal actions", "room", code, "err", err)

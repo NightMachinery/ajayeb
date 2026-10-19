@@ -80,6 +80,7 @@ type options struct {
 	reviews      int
 	seedBase     uint64
 	showVersion  bool
+	checkRooms   bool
 }
 
 // errBadFlags reports a flag syntax error that the flag package has already
@@ -101,6 +102,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if opts.showVersion {
 		fmt.Fprintln(stdout, version)
 		return 0
+	}
+
+	if opts.checkRooms {
+		return checkRooms(opts.dataDir, stdout, stderr)
 	}
 
 	level := slog.LevelInfo
@@ -140,6 +145,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.IntVar(&opts.botPerAddr, "bot-searches-per-address", ai.DefaultPerKey, "how many of those one client address (an IPv4 address or IPv6 /64) may hold at once; its further bot turns wait without holding up other addresses")
 	fset.IntVar(&opts.reviews, "review-searches", room.DefaultReviewSearches, "how many two-stage or deep move reviews may run at once across all rooms")
 	fset.Uint64Var(&opts.seedBase, "seed-base", 0, "derive room seeds from this `base` for reproducible tests (requires -dev; 0 means random seeds)")
+	fset.BoolVar(&opts.checkRooms, "check-rooms", false, "read-only room compatibility report as JSON; exit 3 if live rooms would archive, 1 on errors")
 	fset.BoolVar(&opts.showVersion, "version", false, "print the version and exit")
 	fset.Usage = func() {
 		fmt.Fprintf(fset.Output(), "Usage: ajayeb [flags]\n\nThe Ajayeb game server.\n\nFlags:\n")

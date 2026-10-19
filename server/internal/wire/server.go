@@ -278,7 +278,8 @@ type ErrorCode string
 
 // The error codes.
 const (
-	ErrorCodeRoomNotFound ErrorCode = "room-not-found" // no such code (or it is archived)
+	ErrorCodeRoomArchived ErrorCode = "room-archived"  // ended by an incompatible update or invalid stored replay
+	ErrorCodeRoomNotFound ErrorCode = "room-not-found" // no such code
 	ErrorCodeRoomFull     ErrorCode = "room-full"      // the room takes no more connections (spectators, or one user's tabs)
 	ErrorCodeForbidden    ErrorCode = "forbidden"      // this user may not do that in this room
 	ErrorCodeBadHello     ErrorCode = "bad-hello"      // the hello frame itself was invalid

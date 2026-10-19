@@ -16,6 +16,7 @@ const REJECTS = {
 } as const satisfies Readonly<Record<string, MessageKey>>;
 
 const ERRORS = {
+  'room-archived': 'session.error.roomArchived',
   'room-not-found': 'session.error.roomNotFound',
   'room-full': 'session.error.roomFull',
   forbidden: 'session.error.forbidden',

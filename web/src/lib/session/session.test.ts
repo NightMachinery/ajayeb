@@ -478,6 +478,18 @@ describe('Session: rooms', () => {
     await expect(rate).rejects.toMatchObject({ code: 'rate', messageKey: 'session.reject.rate' });
   });
 
+  it('reports an archived room distinctly, ignores private diagnostics and forgets it', () => {
+    const rooms = new SavedRooms(memoryStorage());
+    rooms.remember('OLDGAM', 'online', 1);
+    const { session, transport } = setup({ rooms });
+    connect(transport);
+    session.join('OLDGAM');
+    transport.receive({ t: 'error', code: 'room-archived', msg: 'private details' });
+    expect(session.roomError).toBe('room-archived');
+    expect(session.notice?.message).toBe('session.error.roomArchived');
+    expect(rooms.list).toEqual([]);
+  });
+
   it('reports a join that finds no room, and forgets that room', () => {
     const rooms = new SavedRooms(memoryStorage());
     rooms.remember('GONE42', 'online', 1);

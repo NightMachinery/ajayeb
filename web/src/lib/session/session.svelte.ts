@@ -749,7 +749,8 @@ export class Session {
         } else if (this.#intent?.kind === 'join' && !this.frame) {
           // The join failed: there is no room to show.
           this.roomError = msg.code;
-          if (msg.code === 'room-not-found') this.#rooms?.forget(this.#intent.code);
+          if (msg.code === 'room-not-found' || msg.code === 'room-archived')
+            this.#rooms?.forget(this.#intent.code);
         }
         break;
     }

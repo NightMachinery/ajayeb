@@ -111,11 +111,30 @@ from another machine"):
    `/usr/local/go/bin/go` or the Homebrew path.
 
 Once the new binary is built (or, with `--prebuilt`, checked), the script
-stops the running server, backs up the current `.self-host/bin/ajayeb` to
+runs the candidate room preflight, stops the running server, repeats the check,
+backs up the current `.self-host/bin/ajayeb` to
 `.self-host/bin/ajayeb.prev`, and atomically installs the new one in its
 place. Stopping happens only at this point, after every build and check, so
 a failing build or a bad `--prebuilt` path never takes a running server
 down.
+
+## Room compatibility preflight
+
+`setup` and `redeploy`, including the remote commands used by `ship` and `ship-all`, run the candidate binary on the target data before stopping the old server:
+
+```
+.self-host/bin/ajayeb.upload --check-rooms --data .self-host/data
+```
+
+The candidate emits one JSON report with format `ajayeb-room-check/1` and counts for room statuses, playable rooms, hashes it could refresh, rooms it would archive and read/schema failures. It opens no socket, initializes no identity, makes no directories and changes no room bytes. A missing data/rooms directory is an empty fresh installation; permission, decoding and schema errors fail closed. Unknown newer schemas are preserved. Exit 0 means the check permits deployment; exit 3 means in-progress rooms (lobby or playing) would archive; exit 1 means an operational/read/schema failure. A finished room that would archive is counted but does not require the live-room override.
+
+A clean replay in the same `engine.RulesVersion` can refresh an old state hash without ending the game or resetting its idle clock. Incompatible setup/RNG/catalog/rules changes must bump that version. Invalid action logs or a different rules version archive on ordinary load with a durable reason and timestamp; an archive never reopens automatically. See [D28](dev/decisions.md#d28-saved-rooms-are-canonical-within-an-explicit-rules-version) for the integrity tradeoff and [the CLI contract](protocol.md#read-only-room-check-cli) for the report fields.
+
+Live-room loss refuses before the stop. To deliberately accept it for this invocation, pass `--force-room-archive` to `setup`, `redeploy`, `ship` or `ship-all`. Shipping forwards the flag to the target; `ship-all` applies it to every target in that invocation. It is never remembered in configuration. Force does not bypass schema, read or operational failures. The check prints the affected count and an explicit force warning; raw action keys, hashes and engine errors are absent from the report.
+
+The first scan can race active moves and the reaper. After stopping, the script waits for the old port to be released and repeats the candidate scan before any data backup, configuration save or binary swap. If this second check fails, the old binary and data stay in place and the script attempts to restart that binary on its prior port/configuration, checking health and reporting any restart failure. It retains the candidate for inspection. This assumes stopping the service has quiesced room writers; it does not lock out an unrelated process that edits files afterward. The normal `.prev` binary and room-backup policy remain unchanged, and later startup/publication failures still need the existing operator recovery procedure.
+
+An archived join shows a distinct English/Persian message and a Home action to start a new game. Recovering an old record requires the operator to retain a backup and use a compatible old binary against a separate copy of its data. Do not point an old binary at newer-schema production data or reset an archive marker merely to force it open.
 
 ## Production run
 
@@ -436,7 +455,9 @@ remote differently from ssh.
 `--prebuilt PATH` can also be used directly, without `ship`, by anyone who
 builds the binary some other way: `setup`/`redeploy --prebuilt PATH` check
 that `PATH` is a regular, executable file and that `PATH --version` prints a
-version, before anything is stopped. `PATH` is then consumed: it is moved
+version, before anything is stopped. The candidate must also pass the room compatibility
+preflight above; a binary without `--check-rooms` support refuses safely.
+`PATH` is then consumed: it is moved
 into place (or copied and removed, across filesystems), so pass a path you
 do not need to keep afterward.
 
@@ -473,8 +494,9 @@ keeps the command's build-once guarantee and prevents an incompatible binary
 from reaching a host. Use separate target files for different architectures.
 
 After preflight, it reuses `ship`'s build, upload and setup/redeploy steps.
-There are no batch flag overrides: each remote keeps its own remembered
-ports, `both_schemes` and Caddyfile path. The local remembered single-target
+Each remote keeps its own remembered ports, `both_schemes` and Caddyfile path.
+The one batch safety override, `--force-room-archive`, explicitly accepts
+live-room archiving on every target for that invocation only. The local remembered single-target
 `ship` destination is left alone. A new host uses the normal setup defaults;
 configure host-specific options with single-target `ship` first if needed.
 
