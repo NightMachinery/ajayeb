@@ -27,3 +27,10 @@ move's events for animation and sound. Frames carrying history
 still reset effects, and real move backlog still catches up. Unit tests
 cover both paths; case c requires a timed animation sample for every bot
 reply it exercises, in addition to its existing 450 ms limit.
+
+## CI prerequisite
+
+The `1369875` CI run skipped e2e because `golangci-lint` rejected the
+protocol formatter's quote-state `if` chain (`gocritic`'s `ifElseChain`).
+The formatter now uses a switch with the same branches. Its existing JSON
+preservation tests cover the behavior; lint is checked alongside this slice.
