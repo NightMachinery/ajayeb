@@ -80,14 +80,31 @@ export function zoneBoundaries(left: Seat): number[] {
   return out.sort((a, b) => a - b);
 }
 
-/** The spaces between the capitals, -8 to 8, left to right for the Sun on the left. */
-export const TRACK_SPACES: readonly number[] = Array.from(
-  { length: 2 * CAPITAL_SPACE - 1 },
-  (_, k) => k - (CAPITAL_SPACE - 1)
-);
+/** A run of equal spaces drawn as one strip of niches: a zone on one side, or the centre. */
+export interface CellRun extends Span {
+  /** The zone's value, 0 for the centre. */
+  points: number;
+  /** How many spaces the run holds. */
+  count: number;
+}
 
-/** The value of the zone a space lies in: 0 for the centre, else 2, 5 or 10. */
-export function spacePoints(position: number): number {
-  const distance = Math.abs(position);
-  return TRACK_ZONES.find((z) => distance >= z.first && distance <= z.last)?.points ?? 0;
+/**
+ * The 17 spaces between the capitals as seven runs, left to right: each
+ * zone on each side, and the centre space alone. A run's spaces share one
+ * look (the same niche art), so one element can draw them all.
+ */
+export function cellRuns(left: Seat): CellRun[] {
+  const runs: CellRun[] = [
+    { points: 0, count: 1, start: cellCenter(-0.5, left), end: cellCenter(0.5, left) }
+  ];
+  for (const side of [-1, 1] as const) {
+    for (const zone of TRACK_ZONES) {
+      runs.push({
+        points: zone.points,
+        count: zone.last - zone.first + 1,
+        ...zoneSpan(zone, side, left)
+      });
+    }
+  }
+  return runs.sort((a, b) => a.start - b.start);
 }

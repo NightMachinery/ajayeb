@@ -46,7 +46,8 @@
   // Ornaments (M11.ornament-integration, art/vector/specs/ornaments-track-
   // logo.md): on the full bar each of the 17 spaces is a niche of the
   // track-cell art, its lozenges counting the zone (none in the centre, one,
-  // two or three toward the capitals), under the zone shading's colour; each
+  // two or three toward the capitals), drawn as a mask over the zone shading,
+  // one element per zone (ornaments/art.ts trackCellUrl); each
   // capital is its city gate (capital-sun, capital-moon) in the seat's ink,
   // haloed in the capital's own surface. The compact bar is too small for
   // the niches and keeps the crests' -sm files at 11 px. All of it is
@@ -54,15 +55,14 @@
   import { hintHide } from '$lib/hints/local.svelte';
   import { formatNumber, i18n, t } from '$lib/i18n';
   import Icon from '$lib/icons/Icon.svelte';
-  import { trackCellArt } from '$lib/ornaments/art';
+  import { trackCellUrl } from '$lib/ornaments/art';
   import { trackEnds, trackMirrored, type Seat } from '$lib/ui/track';
   import { militaryLeader, militaryMargin, nextLooting } from '$lib/view/threats';
   import {
     CAPITAL_SPACE,
-    TRACK_SPACES,
     TRACK_ZONES,
     cellCenter,
-    spacePoints,
+    cellRuns,
     zoneBoundaries,
     zoneMiddle,
     zoneSpan
@@ -279,18 +279,15 @@
         {/each}
       {/each}
       {#if !compact}
-        {#each TRACK_SPACES as pos (pos)}
-          {@const art = trackCellArt(spacePoints(pos))}
-          <svg
-            class="cell absolute top-px h-[calc(100%-2px)] text-fg/30"
-            style:--pos="{cellCenter(pos, leftSeat)}%"
-            viewBox={art.viewBox}
-            data-cell={pos}
-          >
-            <!-- Our own track-cell file, imported at build time (ornaments/art.ts). -->
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-            {@html art.inner}
-          </svg>
+        {#each cellRuns(leftSeat) as run (run.start)}
+          <div
+            class="cells absolute top-px h-[calc(100%-2px)] bg-fg/30"
+            style:--from="{run.start}%"
+            style:--to="{run.end}%"
+            style:--n={run.count}
+            style:--cell-url={`url("${trackCellUrl(run.points)}")`}
+            data-cells={run.points}
+          ></div>
         {/each}
       {/if}
       {@render capital(ends[0])}
@@ -445,19 +442,25 @@
   }
   .zone-value,
   .boundary,
-  .cell,
   .capital,
   .capital-crown {
     left: var(--pos); /* physical-ok: see the note above */
     translate: -50% 0;
   }
-  .zone {
+  .zone,
+  .cells {
     left: var(--from); /* physical-ok: see the note above */
     width: calc(var(--to) - var(--from));
   }
-  .capital,
-  .cell {
+  .capital {
     width: calc(100% / 19);
+  }
+  /* A run of niches: the cell file as a mask, one tile per space. A tile
+     wider than the art letterboxes it (the file keeps its own aspect), so
+     each niche stands centred in its space. */
+  .cells {
+    -webkit-mask: var(--cell-url) 0 0 / calc(100% / var(--n)) 100% repeat-x;
+    mask: var(--cell-url) 0 0 / calc(100% / var(--n)) 100% repeat-x;
   }
   /* The gate's halo is the capital's own surface: its tint over the panel. */
   .capital[data-capital='0'] {

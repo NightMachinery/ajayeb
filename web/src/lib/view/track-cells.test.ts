@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   CAPITAL_SPACE,
   TRACK_CELLS,
-  TRACK_SPACES,
   TRACK_ZONES,
   cellCenter,
-  spacePoints,
+  cellRuns,
   zoneBoundaries,
   zoneMiddle,
   zoneSpan
@@ -73,16 +72,20 @@ describe('zoneBoundaries', () => {
   });
 });
 
-describe('TRACK_SPACES and spacePoints', () => {
-  it('lists the 17 spaces between the capitals', () => {
-    expect(TRACK_SPACES).toHaveLength(TRACK_CELLS - 2);
-    expect(TRACK_SPACES[0]).toBe(-(CAPITAL_SPACE - 1));
-    expect(TRACK_SPACES.at(-1)).toBe(CAPITAL_SPACE - 1);
+describe('cellRuns', () => {
+  it('draws the 17 spaces between the capitals as seven runs, left to right', () => {
+    const runs = cellRuns(0);
+    expect(runs.map((r) => r.points)).toEqual([10, 5, 2, 0, 2, 5, 10]);
+    expect(runs.map((r) => r.count)).toEqual([3, 3, 2, 1, 2, 3, 3]);
+    expect(runs[0]!.start).toBeCloseTo(cell);
+    expect(runs.at(-1)!.end).toBeCloseTo(100 - cell);
+    for (let i = 1; i < runs.length; i++) expect(runs[i]!.start).toBeCloseTo(runs[i - 1]!.end);
+    for (const r of runs) expect(r.end - r.start).toBeCloseTo(r.count * cell);
   });
 
-  it('gives each space the value of its printed zone, the same on both sides', () => {
-    expect(TRACK_SPACES.map(spacePoints)).toEqual([
-      10, 10, 10, 5, 5, 5, 2, 2, 0, 2, 2, 5, 5, 5, 10, 10, 10
-    ]);
+  it('is symmetric, so the mirrored track draws the same runs', () => {
+    const a = cellRuns(0);
+    const b = cellRuns(1);
+    expect(b.map((r) => [r.points, r.count])).toEqual(a.map((r) => [r.points, r.count]));
   });
 });
