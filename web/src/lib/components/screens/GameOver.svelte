@@ -20,8 +20,11 @@
   // the score sheet (when the opponent's move ended it, that move's summary
   // carries the review instead).
   //
-  // The wordmark (M11.ornament-integration) heads the dialog like a
-  // colophon, small and decorative; a short screen (a phone in landscape),
+  // The wordmark (M11.ornament-integration), small and decorative, never
+  // costs the score sheet its room: on a phone it heads the dialog, where
+  // the sheet has height to spare; from the sm width (a dialog capped at
+  // 640 px) it stands at the end of the header row, beside the scene, which
+  // is taller than the headline; a short screen (a phone in landscape),
   // whose dialog already scrolls, leaves it out.
   import { restoreFocus } from '$lib/ui/dismiss';
   import Download from '@lucide/svelte/icons/download';
@@ -232,7 +235,7 @@
       </div>
     {/snippet}
     <div class="flex flex-col gap-3 px-5 pt-4 pb-1">
-      <Wordmark class="mx-auto -mb-1 w-20 text-fg sm:w-24 short:hidden" />
+      <Wordmark class="mx-auto -mb-1 block w-20 text-fg short:hidden {scene ? 'sm:hidden' : ''}" />
       <header
         class={[
           'flex',
@@ -280,6 +283,11 @@
             <p class="text-sm text-fg-muted">{reason}</p>
           {/if}
         </div>
+        {#if scene}
+          <Wordmark
+            class="ms-auto hidden w-20 shrink-0 self-start text-fg sm:block short:hidden!"
+          />
+        {/if}
       </header>
 
       <ScoreTable {rows} {names} {winner} you={youSeat} />

@@ -369,7 +369,7 @@
 
     <footer class="mt-auto pt-10 text-center text-xs leading-relaxed text-fg-muted">
       <!-- The about block: the wordmark over what Ajayeb is and where it comes from. -->
-      <Wordmark class="mx-auto mb-3 w-[120px] text-fg" />
+      <Wordmark class="mx-auto mb-3 block w-[120px] text-fg" />
       <p>{t('app.legal')}</p>
       <p class="mt-1">{t('app.foss')}</p>
       <p class="mt-1 flex flex-wrap items-center justify-center gap-x-5">

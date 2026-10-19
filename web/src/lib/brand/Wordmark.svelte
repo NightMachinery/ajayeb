@@ -2,7 +2,7 @@
   // The Ajayeb wordmark (logo-wordmark.svg): the Nastaliq عجایب over the
   // Latin "Ajayeb", inline so it follows the theme. The Persian word takes
   // the text colour (--i1, currentColor) and the Latin line the gild
-  // accent. Sized by its width in the caller's class; the height follows.
+  // accent. The caller sets its display and width; the height follows.
   //
   // Decorative by default, beside a visible title; pass `label` (through
   // t()) where it stands for the name itself. Either way its tooltip says
@@ -15,7 +15,7 @@
 </script>
 
 <svg
-  class="block h-auto {className}"
+  class="h-auto {className}"
   viewBox={WORDMARK.viewBox}
   role={label ? 'img' : undefined}
   aria-label={label}
