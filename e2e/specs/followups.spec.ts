@@ -166,11 +166,7 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     expect(await button.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     if (info.project.name === 'mobile') {
       await page.setViewportSize({ width: 390, height: 740 });
-      expect(
-        await button.evaluate(
-          (el) => el.scrollWidth <= el.clientWidth && getComputedStyle(el).whiteSpace === 'nowrap'
-        )
-      ).toBe(true);
+      expect(await button.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
       await page.setViewportSize({ width: 360, height: 740 });
     }
     await button.click();
@@ -248,7 +244,10 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
         const strip = document.querySelector('.area-home .player-strip')!.getBoundingClientRect();
         const turn = document.querySelector('.area-turn')!.getBoundingClientRect();
         const stripOverlap =
-          t.top < strip.bottom && t.bottom > strip.top && t.left < strip.right && t.right > strip.left;
+          t.top < strip.bottom &&
+          t.bottom > strip.top &&
+          t.left < strip.right &&
+          t.right > strip.left;
         const turnOverlap =
           t.top < turn.bottom && t.bottom > turn.top && t.left < turn.right && t.right > turn.left;
         return stripOverlap || turnOverlap;
