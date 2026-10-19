@@ -98,9 +98,7 @@ export function cellRuns(left: Seat): CellRun[] {
   // order them as zoneSpan does.
   const a = cellCenter(-0.5, left);
   const b = cellCenter(0.5, left);
-  const runs: CellRun[] = [
-    { points: 0, count: 1, start: Math.min(a, b), end: Math.max(a, b) }
-  ];
+  const runs: CellRun[] = [{ points: 0, count: 1, start: Math.min(a, b), end: Math.max(a, b) }];
   for (const side of [-1, 1] as const) {
     for (const zone of TRACK_ZONES) {
       runs.push({
