@@ -17,12 +17,19 @@
   }
 
   let { n, loss = false, tip, class: className = '' }: Props = $props();
+
+  const label = $derived(formatSigned(loss ? -n : n));
+  // Two or more visible characters (۱۲, −۳) get a little inline room: the
+  // disc stretches into a short pill instead of the numerals crossing its
+  // rim, which Persian digits in Vazirmatn bold would. One stays a circle.
+  const wide = $derived(label.replace(/[\u200e\u200f\u2066-\u2069]/g, '').length > 1);
+  const pad = $derived(wide ? 'px-[0.15em]' : '');
 </script>
 
 <span
-  class="inline-grid size-[1.25em] shrink-0 place-items-center rounded-full border border-(color:--gold-deep) bg-gold
-    leading-none font-bold text-card-ink tabular-nums {className}"
+  class="inline-grid h-[1.25em] min-w-[1.25em] shrink-0 place-items-center rounded-full border border-(color:--gold-deep)
+    bg-gold leading-none font-bold text-card-ink tabular-nums {pad} {className}"
   data-min-font="10"
   aria-hidden="true"
-  {@attach tooltip(tip)}>{formatSigned(loss ? -n : n)}</span
+  {@attach tooltip(tip)}>{label}</span
 >
