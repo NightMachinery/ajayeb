@@ -258,18 +258,12 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
       );
       // The build-time Home carries the offer, hidden before the first paint
       // on a device that will not keep it; it must never become visible.
+      // Checked once per frame, since a frame is what paints: a mutation
+      // while the parser runs can precede the stylesheet that hides it.
       const state = window as unknown as { __offerPainted?: boolean };
-      const check = () => {
+      const frame = () => {
         if (document.querySelector('[data-tutorial-offer]')?.checkVisibility())
           state.__offerPainted = true;
-      };
-      new MutationObserver(check).observe(document, {
-        attributes: true,
-        childList: true,
-        subtree: true
-      });
-      const frame = () => {
-        check();
         requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
