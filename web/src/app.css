@@ -335,6 +335,24 @@
   }
 }
 
+/* Icon.svelte's defaults: 1em square, inline with the text, a little below
+   the baseline. Here in the components layer, above preflight's
+   `svg { display: block; vertical-align: middle }` and below every utility,
+   so a caller's class (size-3, size-full, block) always wins. Only this
+   stylesheet names cascade layers: a layer named first in a component's
+   CSS chunk, which can be linked before this one, would reorder them all.
+   The FX layer's drawn icons (icons/draw.ts) carry data-icon but not the
+   class, so they keep their own styles. */
+@layer components {
+  svg.icon[data-icon] {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    vertical-align: -0.125em;
+  }
+}
+
 /* The app shell: exactly one viewport tall and never scrolling itself. Only
    sheets, drawers and full-page screens such as Home scroll inside it. The
    padding is physical on purpose (physical-ok): safe-area insets belong to
