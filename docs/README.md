@@ -36,6 +36,7 @@ These docs explain the current implementation, its rules and the tools used to b
 
 - [dev/roadmap.md](dev/roadmap.md): milestones M0 to M11 with their acceptance criteria.
 - [dev/orchestration.md](dev/orchestration.md): how the long-running, agent-driven work is organized: run modes, scheduled procedures, bounded slices with independent review.
+- [dev/master-e2e-failures.md](dev/master-e2e-failures.md): bot-frame animation, modal restyling, localized age labels and reload connection-count attribution.
 - [dev/protocol-fixtures.md](dev/protocol-fixtures.md): fixture coverage, compact storage and regeneration.
 - [dev/scenarios.md](dev/scenarios.md): named engine positions and the development-only room endpoint used by tests.
 - [dev/ram-policy.md](dev/ram-policy.md): the memory budget and the `tools/heavy.py` guard that every heavy job goes through.

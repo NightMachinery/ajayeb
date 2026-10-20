@@ -41,9 +41,9 @@ while age-end coins are still moving. Most of its cost is style recalculation,
 also present at the game-over modal. CSS and HTML inert icon experiments did
 not reduce it. Hiding the sprite broke five clipped icons, so that change was
 rejected. The client now renders the same original shapes directly, with local
-clipping ids, removing the sprite and SVG use shadow trees. The age-summary
+clipping ids, removing the sprite and SVG use shadow trees. The first direct-rendering
 diagnostic restyles 1,870 elements instead of 2,632 on desktop, and 1,183
-instead of 1,747 on mobile. The fixed-scale pixel comparison checks all
+instead of 1,747 on mobile, before the later wrapper reductions. The fixed-scale pixel comparison checks all
 81 icons in both themes and with inherited two-tone paints. Native modal focus,
 Escape, stacking, background inertness and timing remain browser-managed.
 Visual parity and repeated first-attempt checks are required before acceptance.

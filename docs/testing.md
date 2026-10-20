@@ -1544,3 +1544,20 @@ The session unit test separately checks that a new session keeps that
 field even when it has never received the granting event. The pure turn
 mapper also tests the server-view fallback directly and prefers the named
 wonder from history when that history is available.
+
+## Original icon paint and modal cost
+
+`icons.spec.ts` compares every shipped icon with its original sprite rendering
+in light and dark themes, using inherited ink and explicit two-tone paints.
+It uses 48 CSS pixels (a multiple of the source grids), fixed cells and a pixel
+scale of one for exact image equality. Ordinary tooltip and animation specs
+retain each project's device scale and input settings. Local clipping references
+and unique ids are checked too. The source unit tests cover the raw budget,
+paint id scoping, and the limits of fill-only group removal.
+
+The client draws original icon shapes directly, avoiding a shared sprite and
+SVG use shadow trees during native modal style recalculation. FX copies restore
+their own clipping definitions after interaction ids are stripped. The existing
+Age III DOM limit remains below 2,500 elements; neither the long-task threshold
+nor the measured animation windows change. See
+[the attribution](dev/master-e2e-failures.md) for the rejected alternatives.
