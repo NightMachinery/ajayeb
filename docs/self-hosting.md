@@ -486,9 +486,19 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
    so the upload does not also linger on disk as a second ~8.5 MB copy once
    it is installed (falling back to copying and then removing it only when
    the two paths are on different filesystems).
-5. Polls `<url>/health` from the dev machine for up to 90 seconds, every second, and
-   prints the version it reports, with a warning if it differs from the one
-   just built, or if it never answers.
+5. Polls `<url>/health` from the dev machine with curl for up to 90 seconds,
+   every second, and prints the version it reports, with a warning if it differs
+   from the one just built, or if it never answers. Curl must be installed on
+   the dev machine; a URL-bearing ship checks for it before building or uploading.
+
+This public check runs on the shipping machine after the remote command returns,
+not on the deployment host. It uses the same bounded curl probe as `ship-all`,
+with TLS verification enabled and curl's CA store. It does not use Python's TLS
+CA bundle, which some installations leave unconfigured even when curl and the
+browser trust the site. Curl configuration files are ignored; proxy environment
+variables still apply. Each attempt is limited to five seconds and 16 KiB, within
+the total polling deadline. A missing answer remains a warning for single-target
+`ship`. The remote server's separate 90-second loopback startup check is unchanged.
 
 `ship` remembers the last `TARGET` and `DIR` it used in the local, gitignored
 `.self-host/config.json`, so a later `ship` can omit them and reuse what was
@@ -557,7 +567,7 @@ first health check failed:
   come from the configured URL, defaulting to 443 for HTTPS or 80 for HTTP.
   SSH is noninteractive; both SSH and curl have time limits. Curl must be
   installed on each host.
-- On the dev machine, a separate batch poll checks the public URL using
+- On the dev machine, a separate poll checks the public URL using
   local curl, which must also be installed. Each attempt has a total curl
   timeout of at most five seconds. An independent pipe reader enforces the
   same absolute deadline across DNS, connection, headers and body transfer,

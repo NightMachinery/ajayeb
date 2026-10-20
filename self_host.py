@@ -1434,20 +1434,15 @@ def deploy_remote(
 def poll_remote_version(
     url: str, *, timeout: float = SHIP_HEALTH_POLL_TIMEOUT, interval: float = SHIP_HEALTH_POLL_INTERVAL
 ) -> str | None:
-    """Poll <url>/health and return its reported version, or None on timeout."""
-    deadline = time.monotonic() + timeout
-    health_url = url.rstrip("/") + "/health"
-    while time.monotonic() < deadline:
-        try:
-            with urllib.request.urlopen(health_url, timeout=2.0) as resp:
-                if resp.status == 200:
-                    payload = json.loads(resp.read().decode("utf-8"))
-                    version = payload.get("version")
-                    return str(version) if version else None
-        except (urllib.error.URLError, OSError, TimeoutError, ValueError):
-            pass
-        time.sleep(interval)
-    return None
+    """Check from the shipping machine using curl's verified TLS and CA store.
+
+    Some Python installations lack a CA bundle even when curl trusts the site.
+    Share the bounded batch probe, retaining single-ship's warning-only result.
+    """
+    try:
+        return poll_public_version(url, timeout=timeout, interval=interval)
+    except (OSError, RuntimeError):
+        return None
 
 
 def remember_ship_target(target: str, remote_dir: str) -> None:
@@ -1515,6 +1510,8 @@ def command_ship(
 
     resolved = resolve_ship_target(target, remote_dir)
     target, remote_dir = resolved.target, resolved.remote_dir
+    if url:
+        ensure_tools(["curl"])
 
     goos, goarch = detect_remote_platform(target)
     print(f"remote platform: {goos}/{goarch}")
@@ -1710,7 +1707,7 @@ def public_health_version(url: str, deadline: float) -> str:
 def poll_public_version(
     url: str, *, timeout: float = SHIP_HEALTH_POLL_TIMEOUT, interval: float = SHIP_HEALTH_POLL_INTERVAL
 ) -> str:
-    """Batch-only public poll with one total deadline across every attempt."""
+    """Public URL poll with one total deadline across every attempt."""
     deadline = time.monotonic() + timeout
     failure: Exception = TimeoutError("public health deadline expired")
     while (remaining := deadline - time.monotonic()) > 0:

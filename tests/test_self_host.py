@@ -4,6 +4,7 @@ import json
 import os
 import shlex
 import socket
+import ssl
 import subprocess
 import tempfile
 import threading
@@ -2448,10 +2449,19 @@ class PollRemoteVersionTests(unittest.TestCase):
         port = self_host.find_free_port(45100)
         self.assertIsNone(self_host.poll_remote_version(f"http://127.0.0.1:{port}", timeout=0.3, interval=0.05))
 
+    def test_failed_public_probe_preserves_single_ship_warning_result(self):
+        for error in (TimeoutError("private"), self_host.InvalidHealthResponse("private"),
+                      self_host.HealthResponseTooLarge("private"), FileNotFoundError("curl")):
+            with self.subTest(error=type(error).__name__), \
+                 mock.patch.object(self_host, "poll_public_version", side_effect=error) as poll:
+                self.assertIsNone(self_host.poll_remote_version("https://game.example.test", timeout=7, interval=0.2))
+                poll.assert_called_once_with("https://game.example.test", timeout=7, interval=0.2)
+
 
 class CommandShipTests(unittest.TestCase):
     def _patched(self, **overrides):
         base = dict(
+            ensure_tools=mock.DEFAULT,
             resolve_ship_target=mock.DEFAULT,
             detect_remote_platform=mock.DEFAULT,
             git_version=mock.DEFAULT,
@@ -2463,6 +2473,16 @@ class CommandShipTests(unittest.TestCase):
             poll_remote_version=mock.DEFAULT,
         )
         return mock.patch.multiple(self_host, **base)
+
+    def test_missing_curl_refuses_before_build_or_remote_changes(self):
+        with self._patched() as mocks:
+            mocks["resolve_ship_target"].return_value = self_host.ShipTarget("user@example.host", "ajayeb")
+            mocks["ensure_tools"].side_effect = RuntimeError("Missing required command(s): curl")
+            with self.assertRaisesRegex(RuntimeError, "curl"):
+                self_host.command_ship(None, "https://game.example.test", None)
+            mocks["ensure_tools"].assert_called_once_with(["curl"])
+            for name in ("detect_remote_platform", "cross_build", "upload_to_remote", "deploy_remote"):
+                mocks[name].assert_not_called()
 
     def test_command_ship_warns_on_a_version_mismatch(self):
         with self._patched() as mocks:
@@ -2507,6 +2527,7 @@ class CommandShipTests(unittest.TestCase):
 
             self_host.command_ship(None, None, None)
             mocks["poll_remote_version"].assert_not_called()
+            mocks["ensure_tools"].assert_not_called()
 
     def test_command_ship_treats_url_like_first_argument_as_the_url(self):
         """`ship URL` with a remembered target: argparse puts URL in the
@@ -2838,6 +2859,20 @@ class PublicHealthVersionTests(unittest.TestCase):
         self.assertTrue(all(call.args[1] <= 4096 for call in self.read.call_args_list))
         self.process.wait.assert_any_call(timeout=1)
         self.process.kill.assert_not_called()
+
+    def test_single_ship_succeeds_with_curl_when_python_has_no_trusted_ca_bundle(self):
+        failure = urllib.error.URLError(ssl.SSLCertVerificationError("no local issuer certificate"))
+        with mock.patch.object(self_host.urllib.request, "urlopen", side_effect=failure) as urlopen, \
+             mock.patch.object(self_host.time, "sleep", side_effect=AssertionError("must not retry broken Python TLS")):
+            self.assertEqual(self_host.poll_remote_version("https://game.example.host"), "v-test")
+        urlopen.assert_not_called()
+        cmd = self.popen.call_args.args[0]
+        self.assertEqual(cmd[:2], ["curl", "--disable"])
+        self.assertNotIn("--insecure", cmd)
+        self.assertNotIn("-k", cmd)
+        self.assertEqual(cmd[-1], "https://game.example.host/health")
+        self.assertLessEqual(float(cmd[cmd.index("--max-time") + 1]), 5)
+        self.process.wait.assert_called()
 
     def test_stalled_body_times_out_and_curl_is_killed_and_reaped(self):
         self.select.side_effect = None
