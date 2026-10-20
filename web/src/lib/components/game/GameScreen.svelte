@@ -472,7 +472,7 @@
         holder: ui.holder
       })
   );
-  const lastLines = $derived(frame ? eventLines(frame.events, names) : []);
+  const lastLines = $derived(frame ? eventLines(presenter.shownEvents, names) : []);
 
   const ageViewer = $derived(mode === 'hotseat' && passDevice ? ui.holder : null);
   const ageBoundary = $derived(ageSummary.viewFor(ageViewer));

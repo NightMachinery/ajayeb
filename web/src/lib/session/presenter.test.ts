@@ -118,6 +118,80 @@ describe('Presenter', () => {
     p.destroy();
   });
 
+  it('keeps the displayed move events for announcements through queued and shown cosmetic frames', async () => {
+    let release!: () => void;
+    const p = new Presenter(null, {
+      afterSwap: async () => {},
+      hooks: {
+        play: (next) =>
+          next.version === 1
+            ? new Promise<void>((resolve) => {
+                release = resolve;
+              })
+            : undefined
+      }
+    });
+    p.enqueue(frame(1, 1));
+    await settle();
+    const move = botMove(2, 'build');
+    p.enqueue(move);
+    const queuedReview = frame(2);
+    p.enqueue(queuedReview);
+    release();
+    await settle();
+    expect(p.frame).toBe(queuedReview);
+    expect(p.frame?.events).toEqual([]);
+    expect(p.shownEvents).toBe(move.events);
+    const shownReview = frame(2);
+    p.enqueue(shownReview);
+    await settle();
+    expect(p.frame).toBe(shownReview);
+    expect(p.shownEvents).toBe(move.events);
+    const next = botMove(3, 'discard');
+    p.enqueue(next);
+    await settle();
+    expect(p.shownEvents).toBe(next.events);
+    const history = { ...frame(3), history: [] };
+    p.enqueue(history);
+    await settle();
+    expect(p.shownEvents).toEqual([]);
+    p.enqueue(botMove(4, 'build'));
+    await settle();
+    expect(p.shownEvents).not.toEqual([]);
+    p.clear();
+    expect(p.shownEvents).toEqual([]);
+    p.destroy();
+  });
+
+  it('forgets an old effect source when the same frame object is pushed again', async () => {
+    let release!: () => void;
+    const p = new Presenter(null, {
+      afterSwap: async () => {},
+      hooks: {
+        play: (next) =>
+          next.version === 1
+            ? new Promise<void>((resolve) => {
+                release = resolve;
+              })
+            : undefined
+      }
+    });
+    p.enqueue(frame(1, 1));
+    await settle();
+    p.enqueue(botMove(2, 'build'));
+    const reused = frame(2);
+    p.enqueue(reused);
+    release();
+    await settle();
+    expect(p.shownEvents).not.toEqual([]);
+    p.clear();
+    p.enqueue(reused);
+    await settle();
+    expect(p.frame).toBe(reused);
+    expect(p.shownEvents).toEqual([]);
+    p.destroy();
+  });
+
   it('updates cosmetic data without capturing or playing again; history still resets effects', async () => {
     const capture = vi.fn();
     const play = vi.fn();
@@ -328,6 +402,31 @@ describe('Presenter: pacing a bot move (fake timers)', () => {
     expect(p.preview).toBeNull();
     expect(p.idle).toBe(true);
   });
+
+  it.each([200, 800])(
+    'retains the effect-source preview when a cosmetic frame coalesces at %i ms',
+    async (coalesceAt) => {
+      const p = paced({ dwell: 700, preRoll: 300 });
+      p.enqueue(frame(1, 1));
+      await vi.advanceTimersByTimeAsync(0);
+      const move = botMove(2, 'build');
+      p.enqueue(move);
+      await vi.advanceTimersByTimeAsync(coalesceAt);
+      const cosmetic = frame(2);
+      p.enqueue(cosmetic);
+      if (coalesceAt < 700) await vi.advanceTimersByTimeAsync(700 - coalesceAt);
+      expect(p.frame?.version).toBe(1);
+      expect(p.preview).toBe(move);
+      expect(p.preview?.events).toBe(move.events);
+      await vi.advanceTimersByTimeAsync(1000 - Math.max(700, coalesceAt));
+      expect(p.frame).toBe(cosmetic);
+      expect(p.frame?.events).toEqual([]);
+      expect(p.shownEvents).toBe(move.events);
+      expect(p.preview).toBeNull();
+      expect(p.idle).toBe(true);
+      p.destroy();
+    }
+  );
 
   it('previews at once when the bot answered after the dwell', async () => {
     const p = paced();

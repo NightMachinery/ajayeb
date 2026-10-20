@@ -20,7 +20,9 @@ so the live bot move just before it lost its animation. A later cosmetic
 frame could also finish the tail of a move already playing.
 
 The presenter now coalesces queued same-version cosmetic data with the
-live move's events. A cosmetic update to the displayed position updates
+live move's events. `shownEvents` retains the displayed move for live-region
+announcements through cosmetic refreshes and resets on clear or a new
+non-cosmetic position. A cosmetic update to the displayed position updates
 the view without capturing or replaying effects. The newest authoritative
 frame keeps its identity; a separate effect source preserves the live
 move's events for animation and sound. Frames carrying history
@@ -59,14 +61,16 @@ preservation tests cover the behavior; lint is checked alongside this slice.
 
 The supplied `40e5ec2` trace shows both players reconnecting before B reloads:
 B has two previous WebSockets, then creates its third during reload. The
-transport's reconnect behavior is expected; `FrameLog.sockets` counts every
+transport supports recovery from a dropped connection, but the spontaneous
+drop in that trace remains unexplained; `FrameLog.sockets` counts every
 connection ever created and never decreases when one closes. Waiting for an
 old close cannot make that counter return to two.
 
 The reload assertion now polls for exactly one connection above the count
 immediately before reload, with a five-second bound. A focused case introduces
 a prior offline/reconnect cycle, then checks the replacement count and the
-same room version, seat and choices. Lifecycle attachments retain connection
+same room version, seat and choices. A report annotation flags more than one connection before the intentional
+reload without failing the test. Lifecycle attachments retain connection
 opening/closing times and whether hello had a name, without identity tokens.
 The transport behavior dates to `d0e08f8` (October 10); no networking code changes.
 
@@ -77,3 +81,14 @@ stay unchanged; original-paint parity and the existing DOM budget cover it.
 One-unit resource costs put their existing tooltip and cost-pip marker on the
 resource tile itself. Costs with a visible quantity keep their group and count.
 This removes redundant HTML wrappers while retaining the hit target and labels.
+
+## Runner performance remains open
+
+The candidate's 10 first-attempt 4x runs per project pass locally, but CI run
+39358029208 fails nine desktop and two mobile repetitions, with overlapping
+tasks of 50 to 65 ms. Every failing task is in the `game end` room according
+to the attached room records. Those records identify animation overlap, not
+the native call within each task; a CI native trace would be needed for that.
+This slice reduces style work and fixes bot presentation, but does not close
+the M11 runner performance criterion. The follow-up ordering work must measure
+both age transitions and game-end presentation.

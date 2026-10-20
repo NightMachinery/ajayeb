@@ -69,7 +69,7 @@
   const ctx = tryGameContext();
   const names = $derived(namesProp ?? seatNames(ctx?.presenter.frame?.room));
   const mode = $derived(ctx?.presenter.frame?.room.mode);
-  const events = $derived(eventsProp ?? ctx?.presenter.frame?.events ?? []);
+  const events = $derived(eventsProp ?? ctx?.presenter.shownEvents ?? []);
   const confirm = $derived(
     confirmProp ?? (mode ? needsConfirm(mode, settings.value.confirmMoves) : false)
   );

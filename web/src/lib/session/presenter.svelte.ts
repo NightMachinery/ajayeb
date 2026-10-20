@@ -38,7 +38,7 @@
 
 import { tick } from 'svelte';
 import { playFrameFx } from '$lib/fx';
-import type { State, View } from '$lib/wire';
+import type { GameEvent, State, View } from '$lib/wire';
 import type { Unsubscribe } from './transport';
 
 export interface PresenterHooks {
@@ -114,6 +114,8 @@ function millis(value: Millis): number {
 export class Presenter {
   /** The frame on screen. */
   frame = $state.raw<State | null>(null);
+  /** The live move displayed on screen, retained through cosmetic refreshes. */
+  shownEvents = $state.raw<GameEvent[]>([]);
   /** The view on screen. */
   view: View | null = $derived(this.frame?.view ?? null);
   /** No frame is waiting and nothing is playing. */
@@ -182,6 +184,7 @@ export class Presenter {
       this.#queue[this.#queue.length - 1] = frame;
       return;
     }
+    this.#effectSources.delete(frame);
     this.#queue.push(frame);
     if (this.#queue.length > this.fastForwardAfter) this.#queue.splice(0, this.#queue.length - 1);
     this.idle = false;
@@ -215,6 +218,7 @@ export class Presenter {
     this.#wake?.();
     this.hooks.finish?.();
     this.frame = null;
+    this.shownEvents = [];
     this.preview = null;
     this.idle = true;
   }
@@ -287,6 +291,7 @@ export class Presenter {
         const effects = this.#effectSources.get(next) ?? next;
         const captured = cosmetic ? undefined : this.hooks.capture?.(effects, prev);
         this.frame = next;
+        if (!cosmetic) this.shownEvents = effects.events;
         // The bot's thinking starts when a thinking frame first shows, and
         // again after each answer that leaves it thinking (a second turn).
         if (next.thinking === undefined) {
