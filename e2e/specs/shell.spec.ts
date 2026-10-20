@@ -52,7 +52,7 @@ async function cachedPaths(page: Page): Promise<Record<string, string[]>> {
   });
 }
 
-const HASHED_FONT = /\/_app\/immutable\/assets\/(inter|fraunces)-\d00\.[\w-]+\.woff2$/;
+const HASHED_FONT = /\/_app\/immutable\/assets\/(inter|fraunces|vazirmatn)-\d00\.[\w-]+\.woff2$/;
 
 test.describe('app shell', { tag: '@mobile' }, () => {
   test('the worker installs, controls the page after one reload and serves the fonts by hashed URL', async ({
@@ -110,7 +110,8 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     ]) {
       expect(keys).toContain(path);
     }
-    expect(keys.filter((k) => HASHED_FONT.test(k))).toHaveLength(4);
+    // Inter and Fraunces (four files) plus Vazirmatn 400, 600 and 700.
+    expect(keys.filter((k) => HASHED_FONT.test(k))).toHaveLength(7);
     expect(keys.some((k) => k.startsWith('/_app/immutable/entry/'))).toBe(true);
     expect(keys.filter((k) => k.startsWith('/art/') || k.startsWith('/fonts/'))).toEqual([]);
 
