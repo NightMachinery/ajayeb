@@ -189,7 +189,7 @@
       class="rounded-control bg-panel-sunken px-3 py-2 text-center text-sm text-fg-muted"
       role="status"
     >
-      {t('choices.waiting.chooseStarter', { name: names[chooser], age })}
+      {t('choices.waiting.chooseStarter', { name: names[chooser], age: ageLabel(age) })}
     </p>
   {/if}
   {#if opening && part !== 'actions'}
