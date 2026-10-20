@@ -25,10 +25,13 @@
 // whatever lay there, so it covered a card the viewer's own move had just
 // uncovered. Unlike a toast it must stay on screen (the player asked to see
 // it), so it takes the first lane where it fits whole, else the lane with
-// the most clear height (at least MIN_PANEL; it scrolls inside), else the
-// structure's head as before, marked data-summary-lane="none". It stays
-// where it is while the board moves and is placed again once it holds
-// still.
+// the most clear height, where it scrolls inside, else the structure's head
+// as before, marked data-summary-lane="none". A short lane is still better
+// than one over the cards (M11.recheck-polish: after a wonder and "Plays
+// again" the panel was 259 px, the clearest lane 105 px, and it covered
+// both cards to take), so the least height it takes is only what shows its
+// title and one line of text under it, capped at MIN_PANEL. It stays where it is while the
+// board moves and is placed again once it holds still.
 //
 // clear() and fitPanel() are the geometry alone; toastLane and summaryLane
 // are the attachments. DOM only, no reactive state.
@@ -79,7 +82,7 @@ const GAP = 4;
 const MAX_WIDTH = 384;
 /** The narrowest lane the move summary takes, in px. */
 const MIN_PANEL_WIDTH = 224;
-/** The least clear height the move summary takes, scrolling inside, in px. */
+/** The most the move summary asks for as its least clear height (scrolling inside), in px. */
 export const MIN_PANEL = 112;
 /** Frames the geometry must hold still before the list comes back. */
 const STILL_FRAMES = 2;
@@ -141,14 +144,15 @@ export interface PanelFit {
 /**
  * Where the move summary goes among `lanes` (in order): the first lane where
  * it fits whole, else the lane with the most clear height of at least
- * `min`, else null (the caller keeps its old place). `natural` is the
- * panel's height at a width.
+ * `least` (capped at MIN_PANEL), else null (the caller falls back).
+ * `natural` is the panel's height at a width, and `least` the height it
+ * cannot do without there (its title and one line under it).
  */
 export function fitPanel(
   lanes: readonly Lane[],
   obstacles: readonly Box[],
   natural: (width: number) => number,
-  min = MIN_PANEL
+  least: number | ((width: number) => number) = MIN_PANEL
 ): PanelFit | null {
   let best: PanelFit | null = null;
   for (const lane of lanes) {
@@ -161,6 +165,7 @@ export function fitPanel(
     const height = Math.min(want, room);
     const top = lane.edge === 'top' ? span.top : span.bottom - height;
     if (room >= want) return { lane: lane.name, top, left, width, height };
+    const min = Math.min(MIN_PANEL, typeof least === 'number' ? least : least(width));
     if (room >= min && (!best || height > best.height)) {
       best = { lane: lane.name, top, left, width, height };
     }
@@ -378,8 +383,9 @@ export function toastLane(targets: () => LaneTargets): Attachment<HTMLElement> {
 /**
  * Places the move summary's panel (the DismissLayer around the attached
  * content) in the first lane where it covers no card to take, neither strip
- * nor the turn bar (fitPanel), in phone landscape. Without a clear lane it
- * sits over the structure's head, data-summary-lane="none". DOM only.
+ * nor the turn bar (fitPanel), in phone landscape, short and scrolling if it
+ * must. Only when no lane has room even for its title and one line does
+ * it sit over the structure's head, data-summary-lane="none". DOM only.
  */
 export function summaryLane(targets: () => LaneTargets): Attachment<HTMLElement> {
   return (content) => {
@@ -394,10 +400,31 @@ export function summaryLane(targets: () => LaneTargets): Attachment<HTMLElement>
       return panel.offsetHeight;
     };
 
+    /**
+     * The panel's height at `width` for its title and one line of text under
+     * it, taken as tall as the title (a whole first entry, a wonder with its
+     * chips, can be taller than any lane).
+     */
+    const least = (width: number): number => {
+      natural(width);
+      const title = content.firstElementChild;
+      if (!title) return MIN_PANEL;
+      const box = title.getBoundingClientRect();
+      const style = getComputedStyle(panel);
+      return (
+        box.bottom -
+        panel.getBoundingClientRect().top +
+        (parseFloat(getComputedStyle(content).rowGap) || 0) +
+        box.height +
+        (parseFloat(style.paddingBottom) || 0) +
+        (parseFloat(style.borderBottomWidth) || 0)
+      );
+    };
+
     const layout = (): void => {
       const m = measure(t, panel);
       if (!m) return;
-      let fit = fitPanel(m.lanes, m.obstacles, natural);
+      let fit = fitPanel(m.lanes, m.obstacles, natural, least);
       if (!fit) {
         // Nothing is clear: the structure's head, as on a portrait phone.
         const head = m.lanes[0]!;

@@ -15,7 +15,9 @@
   // screens), it is placed over the top of that box, below the strips;
   // given `lanes` (phone landscape), in the first lane clear of the cards to
   // take, the strips and the turn bar (ui/toast-lane.ts, summaryLane);
-  // without either (the gallery) it is centred.
+  // without either (the gallery) it is centred. When it is too short for
+  // its lines it scrolls inside, and a fade at its foot shows that more lies
+  // below, the card sheet's cue (shell/sheet-scroll.ts).
   //
   // After the moves come the viewer's own trade prices that those moves
   // changed (`prices`, the recap family: lib/view/recap.ts), and last the
@@ -36,6 +38,7 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { summaryLane, type LaneTargets } from '$lib/ui/toast-lane';
   import DismissLayer from '../shell/DismissLayer.svelte';
+  import { attachSheetScroll } from '../shell/sheet-scroll';
   import MoveSummaryLine from './MoveSummaryLine.svelte';
 
   interface Props {
@@ -85,6 +88,12 @@
   function resourceIcon(p: PriceTick): IconName {
     return `resource-${p.resource}-sm` as IconName;
   }
+
+  /** Marks the panel (the scroller) data-scroll-more while lines lie below its foot. */
+  const scrollCue: Attachment<HTMLElement> = (fade) => {
+    const panel = fade.closest<HTMLElement>('[data-dismiss-layer]');
+    return panel ? attachSheetScroll(panel) : undefined;
+  };
 
   const title = $derived(summary ? t('game.summary.title', { name: names[summary.seat] }) : '');
 
@@ -184,5 +193,24 @@
       <div class="empty:hidden" data-summary-review>{@render review?.()}</div>
       <p class="text-xs text-fg-muted">{t('game.summary.close')}</p>
     </div>
+    <div class="summary-more" aria-hidden="true" {@attach scrollCue}></div>
   </DismissLayer>
 {/if}
+
+<style>
+  /* The fade over the last visible lines while the panel has more below
+     (data-scroll-more, set by attachSheetScroll), like the card sheet's.
+     Sticky at the scroller's foot, it takes no room of its own. */
+  .summary-more {
+    position: sticky;
+    inset-block-end: 0;
+    height: 1.5rem;
+    margin-block-start: -1.5rem;
+    pointer-events: none;
+    background: linear-gradient(transparent, var(--panel));
+    opacity: 0;
+  }
+  :global([data-scroll-more]) > .summary-more {
+    opacity: 1;
+  }
+</style>

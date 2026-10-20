@@ -16,7 +16,8 @@
 //
 // - Phone landscape: the popup takes the first lane clear of the cards to
 //   take (those the viewer's move uncovered included), both strips and the
-//   turn bar.
+//   turn bar. A popup too tall for any lane scrolls in the roomiest clear
+//   one, with a fade at its foot while more lies below.
 //
 // The base fixture turns the popup off for every other spec (its taps would
 // eat a driver's clicks), so this spec turns it back on for its pages.
@@ -25,6 +26,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { GameDriver, type Snapshot } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
+import { playKey } from '../fixtures/scenario';
 
 const POPUP = '[data-dismiss-layer] [data-move-summary]';
 
@@ -302,6 +304,115 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
         before = takeable;
         await driver.play(snap);
       }
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test('phone landscape: a popup too tall for any lane scrolls in a short clear one, with a fade, never over the cards', async ({
+    page,
+    baseURL
+  }) => {
+    // M11.recheck-polish (R3C-01): after Palisade in this game the easy bot
+    // builds Hanging Gardens, plays again and discards Press. Its popup is
+    // about 259 px tall, the clearest lane about 105 px, under the old
+    // 112 px floor, so it fell back over the structure's head and hid both
+    // cards to take. A lane that shows the title and one line under it now
+    // wins over covering the cards.
+    test.setTimeout(240_000);
+    if (!baseURL) throw new Error('no baseURL');
+    const problems = watchHygiene(page);
+    await summaryOn(page);
+    // A room made through the API is a stranger's room until named.
+    await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Ana'));
+    // Round 3's Apprentice game (seed 2001): the wonder draft and seven moves.
+    const actions = [
+      'draft:great-lighthouse',
+      'draft:temple-of-artemis',
+      'draft:statue-of-zeus',
+      'draft:appian-way',
+      'draft:piraeus',
+      'draft:mausoleum',
+      'construct:glassworks',
+      'construct:quarry',
+      'construct:clay-pit',
+      'construct:logging-camp',
+      'construct:stable',
+      'construct:theater',
+      'discard:workshop'
+    ];
+    for (const { width, height } of [
+      { width: 844, height: 390 },
+      { width: 740, height: 360 }
+    ]) {
+      const at = `${width}x${height}`;
+      await page.setViewportSize({ width, height });
+      const response = await page.request.post(`${baseURL}/api/dev/rooms`, {
+        data: {
+          mode: 'ai',
+          bot: 'easy',
+          seat: 0,
+          seed: '2001',
+          options: { firstPlayer: 'random', centerPawn: 'lastActiveChooses', hideAtEnd: false },
+          actions
+        }
+      });
+      expect(response.ok()).toBe(true);
+      await page.goto(((await response.json()) as { path: string }).path);
+      const driver = new GameDriver(page);
+      await driver.waitReady();
+      const popup = page.locator(POPUP);
+      const panel = page.locator('[data-dismiss-layer]:has([data-move-summary])');
+      let scrolled = 0;
+
+      /** The open popup covers nothing, shows its title, and fades while it scrolls. */
+      const check = async (label: string, snap: Snapshot): Promise<void> => {
+        await expect(popup, label).toBeVisible();
+        const takeable = snap.choices.flatMap((c) =>
+          (c.kind === 'construct' || c.kind === 'discard') && c.card ? [c.card] : []
+        );
+        const targets = [
+          '.area-home .player-strip',
+          '.area-away .player-strip',
+          '.area-turn',
+          ...takeable.map((card) => `.card-structure [data-card="${card}"]`)
+        ].join(', ');
+        await expect
+          .poll(() => coveredBy(page, '[data-dismiss-layer]:has([data-move-summary])', targets), {
+            message: `${label}: covered`,
+            timeout: 3000
+          })
+          .toEqual([]);
+        await expect(panel, label).not.toHaveAttribute('data-summary-lane', 'none');
+        // Its title shows whole, and its first line starts in view.
+        expect(
+          await panel.evaluate((el) => {
+            const bottom = el.getBoundingClientRect().bottom;
+            const title = el.querySelector('h2')!.getBoundingClientRect();
+            const line = el.querySelector('[data-summary-line]')!.getBoundingClientRect();
+            return title.bottom <= bottom && line.top + 12 <= bottom;
+          }),
+          `${label}: title and first line in view`
+        ).toBe(true);
+        if (await panel.evaluate((el) => el.scrollHeight - el.clientHeight > 1)) {
+          scrolled++;
+          // The fade says more lies below, and goes once the foot is reached.
+          await expect(panel, label).toHaveAttribute('data-scroll-more', '');
+          await panel.evaluate((el) => el.scrollTo({ top: el.scrollHeight }));
+          await expect(panel, label).not.toHaveAttribute('data-scroll-more');
+        } else {
+          await expect(panel, label).not.toHaveAttribute('data-scroll-more');
+        }
+        await page.keyboard.press('Escape');
+        await expect(popup, label).toHaveCount(0);
+      };
+
+      // A fresh device has not seen the bot's moves so far: "While you were away".
+      await check(`${at}, on opening`, await driver.nextTurn());
+      for (const key of ['construct:baths', 'construct:clay-reserve', 'construct:palisade']) {
+        await playKey(driver, key);
+        await check(`${at}, after ${key}`, await driver.nextTurn());
+      }
+      expect(scrolled, `${at}: the tall popup after Palisade scrolled`).toBeGreaterThan(0);
     }
     expect(problems).toEqual([]);
   });

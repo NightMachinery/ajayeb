@@ -1455,7 +1455,12 @@ Piraeus picture's tooltip has the wonder's effect and printed cost. In phone
 landscape (844x390 and 740x360, a real bot game) it plays until two popups have
 followed a move that made a new card takeable, and checks that every popup on
 the way covers no card to take, neither strip and not the turn bar, in a lane
-other than `none` (M11.round3-board-fixes). `undo.spec.ts` checks the bot undo's visible confirmation in the
+other than `none` (M11.round3-board-fixes). It also replays round 3's
+Apprentice game (seed 2001, its first 13 actions) at both sizes and builds
+Baths, Clay Reserve and Palisade, after which the bot's popup is too tall for
+any lane: each popup covers nothing, shows its title whole and its first line begun,
+and, when it scrolls inside, carries `data-scroll-more` (the fade) until its
+foot is reached (M11.recheck-polish). `undo.spec.ts` checks the bot undo's visible confirmation in the
 toast's polite live region. Unit tests cover the bounded, lenient seen-marker
 storage, seat and room separation, blocked storage and undo rewinding markers.
 

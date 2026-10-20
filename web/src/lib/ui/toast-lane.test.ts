@@ -73,6 +73,21 @@ describe('summary lanes', () => {
     expect(fit?.height).toBe(386 - 203);
     expect(fitPanel(lanes, [box(0, 49, 844, 300), ...foot], () => 400)).toBeNull();
   });
+  it('takes a lane shorter than MIN_PANEL that still shows the title and a line', () => {
+    const two = [lanes[0]!, lanes[1]!];
+    // The head has 104 px above Press; the foot has none.
+    expect(fitPanel(two, [press, ...foot], () => 259)).toBeNull();
+    const fit = fitPanel(
+      two,
+      [press, ...foot],
+      () => 259,
+      () => 86
+    );
+    expect(fit).toMatchObject({ lane: 'head', top: 53, height: 104 });
+    expect(fitPanel(two, [press, ...foot], () => 259, 105)).toBeNull();
+    // A title that wraps tall asks for no more than MIN_PANEL.
+    expect(fitPanel(lanes, [press, ...foot, awayStrip], () => 400, 300)?.lane).toBe('away');
+  });
   it('skips a lane too narrow for the panel', () => {
     const narrow = [lane('away', box(700, 49, 140, 341), 'bottom')];
     expect(fitPanel(narrow, [], () => 100)).toBeNull();
