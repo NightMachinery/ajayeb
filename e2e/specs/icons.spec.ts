@@ -101,3 +101,48 @@ test('original icons retain their pixels and local clipping @mobile', async ({ p
     expect(valid, `${name} paint references are local`).toBe(true);
   }
 });
+
+// Icon's defaults sit in app.css's components layer (M11.icon-size-override):
+// above preflight's `svg { display: block; vertical-align: middle }`, below
+// the utilities. Copies of a real Icon in plain text flow (a flex or grid
+// parent would blockify display) read the cascade the page really loads.
+test('an icon sits inline with text by default, and a caller size class wins @mobile', async ({
+  page
+}) => {
+  await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Tester'));
+  await page.goto('/dev/gallery');
+  const icon = page.locator('main svg.icon[data-icon]').first();
+  await expect(icon).toBeAttached();
+  const styles = await icon.evaluate((svg) => {
+    const p = document.createElement('p');
+    p.style.fontSize = '16px';
+    const plain = svg.cloneNode(true) as SVGSVGElement;
+    const sized = svg.cloneNode(true) as SVGSVGElement;
+    plain.setAttribute('class', 'icon');
+    sized.setAttribute('class', 'icon size-3');
+    p.append('Text ', plain, ' and ', sized);
+    document.querySelector('main')!.append(p);
+    const read = (el: Element) => {
+      const cs = getComputedStyle(el);
+      return {
+        display: cs.display,
+        verticalAlign: cs.verticalAlign,
+        width: cs.width,
+        height: cs.height
+      };
+    };
+    return { plain: read(plain), sized: read(sized) };
+  });
+  expect(styles.plain).toEqual({
+    display: 'inline-block',
+    verticalAlign: '-2px',
+    width: '16px',
+    height: '16px'
+  });
+  expect(styles.sized).toEqual({
+    display: 'inline-block',
+    verticalAlign: '-2px',
+    width: '12px',
+    height: '12px'
+  });
+});

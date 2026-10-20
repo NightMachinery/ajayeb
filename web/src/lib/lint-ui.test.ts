@@ -263,3 +263,65 @@ describe('no native title attribute in the app', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/**
+ * Every `@layer` inside a .svelte file's <style> blocks, with its line.
+ * Cascade layers are ordered by the first stylesheet in the document that
+ * names them, and a component's CSS chunk can be linked before app.css's.
+ * A component naming `components` that way put it ahead of Tailwind's
+ * `base`, so preflight beat Icon's defaults (M11.icon-size-override). Only
+ * app.css names layers.
+ */
+function findStyleLayers(src: string): { line: number; match: string }[] {
+  const out: { line: number; match: string }[] = [];
+  for (const block of src.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g)) {
+    const start = block.index + block[0].indexOf('>') + 1;
+    for (const m of block[1]!.matchAll(/@layer\b[^{;]*/g)) {
+      const at = start + m.index;
+      out.push({ line: src.slice(0, at).split('\n').length, match: m[0].trim() });
+    }
+  }
+  return out;
+}
+
+describe('findStyleLayers', () => {
+  it('finds @layer blocks and statements in a style block', () => {
+    const src =
+      '<p>a</p>\n<style>\n  @layer components {\n    .a { color: red; }\n  }\n  @layer base;\n</style>';
+    expect(findStyleLayers(src)).toEqual([
+      { line: 3, match: '@layer components' },
+      { line: 6, match: '@layer base' }
+    ]);
+  });
+
+  it('ignores @layer outside style blocks', () => {
+    expect(
+      findStyleLayers('<p>We use @layer in prose</p>\n<style>.a { color: red; }</style>')
+    ).toEqual([]);
+  });
+});
+
+describe('no cascade layer named in a component style block', () => {
+  it('finds none under src/ (only app.css names layers)', () => {
+    const root = fileURLToPath(new URL('..', import.meta.url));
+    const files: string[] = [];
+    const walk = (dir: string): void => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (entry.name.endsWith('.svelte')) files.push(path);
+      }
+    };
+    walk(root);
+    expect(files.length).toBeGreaterThan(50);
+    const offenders = files.flatMap((file) =>
+      findStyleLayers(readFileSync(file, 'utf8')).map(
+        ({ line, match }) => `${relative(root, file)}:${line}: ${match}`
+      )
+    );
+    expect(
+      offenders,
+      "A .svelte <style> block names a cascade layer. The first stylesheet that names a layer fixes the order of all layers, and a component chunk can load before app.css, which would put that layer ahead of Tailwind's base (preflight would then override it). Put the rule in app.css inside its @layer block instead."
+    ).toEqual([]);
+  });
+});
