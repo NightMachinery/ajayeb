@@ -96,6 +96,14 @@ export interface TipsData {
 
 export const NO_TIPS_SEEN: TipsData = { off: false, seen: [], tutorial: NEW_TUTORIAL };
 
+/** Home's first-launch tutorial offer shows on a device with no saved
+ *  rooms whose offer is new and whose tutorial is not done. src/app.html's
+ *  bootstrap repeats this test before the first paint; app-bootstrap.test.ts
+ *  keeps the two in step. */
+export function offersTutorial(tutorial: TutorialData, savedRooms: number): boolean {
+  return savedRooms === 0 && tutorial.offer === 'new' && !tutorial.done;
+}
+
 /** Reads the tutorial section leniently: a field of the wrong shape takes
  *  its default, a room of the wrong shape is dropped. */
 export function parseTutorial(value: unknown): TutorialData {

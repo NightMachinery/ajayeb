@@ -77,6 +77,13 @@ state before the first paint and marks the root:
   layout space. A timer in the bootstrap shows the text anyway after six
   seconds if the app never starts.
 
+The bootstrap cannot import the app's code, so it repeats the offer test
+(`offersTutorial` in `src/lib/ui/tips.svelte.ts`) over raw storage.
+`src/app-bootstrap.test.ts` runs the real inline script against the stores'
+own parsing to keep the two in step. They differ only for a stored rooms list
+whose entries are all malformed: the bootstrap hides the offer and the app
+inserts it after mount, the old shift.
+
 Without scripts the bootstrap does not run, so Home shows no offer and hides
 nothing. Saved rooms still appear after mount, so a returning player's
 Continue list can push the content below it down once; the fix covers first

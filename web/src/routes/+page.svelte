@@ -12,7 +12,7 @@
   import { savedRooms } from '$lib/session/saved-rooms.svelte';
   import { loadName, saveName } from '$lib/session/identity';
   import { suggestName } from '$lib/ui/online';
-  import { tips } from '$lib/ui/tips.svelte';
+  import { offersTutorial, tips } from '$lib/ui/tips.svelte';
   import { page } from '$app/state';
   import { onMount } from 'svelte';
   import type { BotLevel, SeatChoice } from '$lib/wire';
@@ -157,8 +157,7 @@
   onPlayOnline={openOnline}
   onJoinCode={openJoin}
   onSettings={openSettings}
-  tutorialOffer={!deviceReady ||
-    (rooms.list.length === 0 && tips.value.tutorial.offer === 'new' && !tips.value.tutorial.done)}
+  tutorialOffer={!deviceReady || offersTutorial(tips.value.tutorial, rooms.list.length)}
   tutorialDone={deviceReady && tips.value.tutorial.done}
   onTutorial={tutorialFromHome}
   onDeclineTutorial={() => tips.declineOffer()}

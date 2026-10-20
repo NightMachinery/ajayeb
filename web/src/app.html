@@ -58,8 +58,9 @@
         // build-time Home does not move when it hydrates (M11.home-cold-cls):
         // - data-boot-offer: the first-launch tutorial offer will show (no
         //   saved rooms, offer not declined, tutorial not done; the same
-        //   test as src/routes/+page.svelte with tips.svelte.ts and
-        //   rooms.svelte.ts), so Home shows its build-time offer at once.
+        //   test as offersTutorial in src/lib/ui/tips.svelte.ts, kept in
+        //   step by src/app-bootstrap.test.ts), so Home shows its build-time
+        //   offer at once.
         // - data-locale-pending: a stored locale other than English, whose
         //   messages load after the app starts. Home keeps its text hidden
         //   (not its hero) until the root layout has switched to it, and

@@ -1485,7 +1485,9 @@ of the three must stay under 0.1. The visits must also show the tutorial offer,
 so the case keeps covering the element that once moved the page. A Persian case
 holds the Persian messages and checks that a “Getting ready…” status stays
 readable while Home's text waits hidden, including after the app has started,
-and goes once the language switches.
+and goes once the language switches. The unit test `web/src/app-bootstrap.test.ts`
+runs `app.html`'s inline bootstrap against the app's own storage parsing, so its
+copy of the tutorial offer test cannot drift.
 
 When changing rendering or fallback filenames, also run `shell.spec.ts` for
 worker installation and real offline Home and game deep links. The Go static
