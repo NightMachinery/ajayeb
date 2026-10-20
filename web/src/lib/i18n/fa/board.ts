@@ -153,7 +153,7 @@ export const board = {
   'board.log.loot': '{name} در غارت {amount} سکه از دست داد.',
   'board.log.pair': '{name} یک جفت نماد {symbol} کامل کرد.',
   'board.log.token': '{name} نشان {token} را برداشت.',
-  'board.log.libraryDraw': '{name} از کتابخانه‌ی بزرگ نشان کشید.',
+  'board.log.libraryDraw': '{name} از {wonder} نشان کشید.',
   'board.log.destroy': '{name} {card} را نابود کرد.',
   'board.log.rebuild': '{name} {card} را از کارت‌های کنارگذاشته ساخت.',
   'board.log.wonderRemoved': 'شگفتی ساخته‌نشده‌ی {name}، {wonder}، از بازی بیرون رفت.',

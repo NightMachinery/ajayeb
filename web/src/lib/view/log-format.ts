@@ -203,37 +203,34 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        ...named((item) => t('board.log.token', { name, token: item(0) }), [token(event.token)])
+        ...named('board.log.token', { name }, { token: token(event.token) })
       };
     case 'libraryDraw':
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.libraryDraw', { name })
+        ...named('board.log.libraryDraw', { name }, { wonder: wonder('great-library') })
       };
     case 'destroy':
       if (!event.card) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        ...named((item) => t('board.log.destroy', { name, card: item(0) }), [card(event.card)])
+        ...named('board.log.destroy', { name }, { card: card(event.card) })
       };
     case 'rebuild':
       if (!event.card) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        ...named((item) => t('board.log.rebuild', { name, card: item(0) }), [card(event.card)])
+        ...named('board.log.rebuild', { name }, { card: card(event.card) })
       };
     case 'wonderRemoved':
       if (!event.wonder) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        ...named(
-          (item) => t('board.log.wonderRemoved', { name, wonder: item(0) }),
-          [wonder(event.wonder)]
-        )
+        ...named('board.log.wonderRemoved', { name }, { wonder: wonder(event.wonder) })
       };
     case 'effectSkipped':
       return {

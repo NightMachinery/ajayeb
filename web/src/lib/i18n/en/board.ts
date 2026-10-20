@@ -169,7 +169,7 @@ export const board = {
   'board.log.loot': '{name} loses {amount} coins to looting.',
   'board.log.pair': '{name} completes a pair of {symbol} symbols.',
   'board.log.token': '{name} takes the {token} token.',
-  'board.log.libraryDraw': '{name} draws from the Great Library.',
+  'board.log.libraryDraw': '{name} draws from the {wonder}.',
   'board.log.destroy': '{name} destroys {card}.',
   'board.log.rebuild': '{name} builds {card} from the discard pile.',
   'board.log.wonderRemoved': "{name}'s unbuilt wonder {wonder} leaves the game.",

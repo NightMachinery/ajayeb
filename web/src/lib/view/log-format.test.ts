@@ -342,6 +342,7 @@ describe('formatLogEvent: a player name is only ever text', () => {
       event({ kind: 'wonder', seat: 1, wonder: 'pyramids', card: 'baths' }),
       event({ kind: 'draft', seat: 0, wonder: 'piraeus' }),
       event({ kind: 'token', seat: 1, token: 'law' }),
+      event({ kind: 'libraryDraw', seat: 0, place: 1 }),
       event({ kind: 'wonderRemoved', seat: 1, wonder: 'colossus' }),
       event({ kind: 'effectSkipped', seat: 0, wonder: 'statue-of-zeus', skipped: 'destroyCard' })
     ].map((e) => formatLogEvent(e, names));
@@ -397,3 +398,34 @@ describe('formatLogEvent: a player name is only ever text', () => {
       ': Statue of Zeus has no card of that colour.'
     ]);
   });
+});
+
+describe('formatLogEvent: a Great Library draw', () => {
+  afterEach(() => i18n.set('en'));
+  // The drawing seat's own view carries the token drawn; the line never
+  // says which one.
+  const draw: GameEvent = { kind: 'libraryDraw', private: true, seat: 1, place: 0, token: 'law' };
+
+  it('names the wonder, and never the token drawn', () => {
+    const line = formatLogEvent(draw, names);
+    expect(line?.text).toBe('Omid draws from the Great Library.');
+    expect(line?.parts).toEqual([
+      'Omid draws from the ',
+      { kind: 'wonder', slug: 'great-library', text: 'Great Library' },
+      '.'
+    ]);
+  });
+
+  it('keeps the Persian sentence', async () => {
+    await i18n.set('fa');
+    const line = formatLogEvent(draw, names);
+    expect(line?.text).toBe('\u2068Omid\u2069 از \u2068کتابخانه‌ی بزرگ\u2069 نشان کشید.');
+    expect(line?.parts?.[1]).toEqual({
+      kind: 'wonder',
+      slug: 'great-library',
+      text: 'کتابخانه‌ی بزرگ'
+    });
+    expect(JSON.stringify(line)).not.toContain('law');
+    expect(line?.text).not.toContain('قانون');
+  });
+});
