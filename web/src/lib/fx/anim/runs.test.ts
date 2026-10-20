@@ -120,6 +120,19 @@ describe('Runs', () => {
     expect(done).toBe(true);
   });
 
+  it('a drain with no time left still waits for a deal that is only starting', async () => {
+    const runs = new Runs(() => now);
+    const card = fake();
+    runs.track(5, 'deal', [card], () => {});
+    let done = false;
+    void runs.hold(0, () => {}, 'deal').then(() => (done = true));
+    await vi.advanceTimersByTimeAsync(50);
+    expect(done).toBe(false);
+    card.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(done).toBe(true);
+  });
+
   it('an interrupt lets input go at once', async () => {
     const runs = new Runs(() => now);
     runs.track(5, 'take', [fake()], () => {});

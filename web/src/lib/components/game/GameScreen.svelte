@@ -135,6 +135,7 @@
   import WonderListSheet from '../sheets/WonderListSheet.svelte';
   import WonderSheet from '../sheets/WonderSheet.svelte';
   import FxLayer from '../shell/FxLayer.svelte';
+  import { ageHold } from '$lib/fx/anim/age-hold.svelte';
   import { replay as moveReplay } from '$lib/fx/anim/replay.svelte';
   import { motion } from '$lib/ui/motion.svelte';
   import LiveRegion from '../shell/LiveRegion.svelte';
@@ -479,11 +480,14 @@
   const ageUnread = $derived(
     !!ageBoundary && !!view && view.age >= ageBoundary.age && !ageSummary.isDismissed(ageViewer)
   );
-  // Ages II and III open on the starter choice, and the Presenter holds that
-  // frame while its deal plays (fx/anim/plan.ts dealHold). The age dialog
-  // waits for the Presenter anyway; the pass-device screen and the move
-  // summary wait too, so nothing covers the deal (M11.age-start-order).
-  const dealing = $derived(!presenter.idle && view?.phase === 'chooseStarter');
+  // An Age II or III deal holds the Presenter until its last card lands
+  // (fx/anim/age-hold.svelte.ts), also when it is carried past a skipped
+  // opening frame onto a play frame. The age dialog waits for the Presenter
+  // anyway; the pass-device screen and the move summary wait too, so
+  // nothing covers the deal, and open once it ends (M11.age-start-order).
+  // An opening frame shown with frames queued behind it plans no deal yet
+  // (its deal is carried), so it counts while the Presenter is busy.
+  const dealing = $derived(ageHold.active || (!presenter.idle && view?.phase === 'chooseStarter'));
   // Choosing the other starter must not unmount this holder's open age
   // summary. Their explicit close releases the requested handoff.
   const showPass = $derived(

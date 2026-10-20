@@ -88,6 +88,7 @@ import {
   type VictoryStep
 } from './plan';
 import { recordFrame, setPlanned, type FrameRecord } from './records';
+import { ageHold } from './age-hold.svelte';
 import { replay } from './replay.svelte';
 import { Runs } from './runs';
 import { retimeCues, scaleTimeline } from './speed';
@@ -210,6 +211,11 @@ function copyCopies(c: Copies): Copies {
   };
 }
 
+/** Whether a timeline's age deal holds input to its end (Ages II and III). */
+function heldDeal(timeline: Timeline): boolean {
+  return timeline.steps.some((s) => s.kind === 'deal' && dealHold(s) > 0);
+}
+
 /** A shown element that is not inside a seat panel (a token on the board or in a choice). */
 function outsidePanels(el: HTMLElement): boolean {
   return el.closest('.seat-panel') === null;
@@ -254,6 +260,7 @@ export class AnimRunner {
     cancelHaptic();
     cancelTurnCue();
     this.#runs.finishAll();
+    ageHold.active = false;
   }
 
   /** The Presenter's capture hook: finishes what runs, then reads the old DOM. */
@@ -279,6 +286,8 @@ export class AnimRunner {
     }
     const plan = this.#deal.plan(next, prev, planTimeline(next, prev), this.#backlog());
     const timeline = scaleTimeline(plan, speed);
+    // Before the swap, so nothing the new frame opens covers its deal.
+    ageHold.active = heldDeal(timeline);
     if (timeline.steps.length === 0) {
       if (moved) this.#withdraw();
       return this.#none(record);
@@ -492,6 +501,7 @@ export class AnimRunner {
     const layer = this.#layer();
     if (cap.timeline.steps.length === 0 || !root || !layer) {
       cap.record.releasedAt = this.#now();
+      ageHold.active = false;
       return Promise.resolve();
     }
     // Every run tracked from here (a counter's, too) is placed in its first
@@ -509,17 +519,21 @@ export class AnimRunner {
       open();
     }
 
-    // The hold counts from the swap, so a slow render does not add to it.
+    // An age deal that holds input does so until its last card has landed.
+    const drain = heldDeal(cap.timeline) ? 'deal' : undefined;
+    // The hold counts from the swap, so a slow render does not add to it,
+    // but a render that consumed the whole time must still drain the deal:
+    // its runs were tracked just above and start only after the gate.
     const block = cap.timeline.blockingMs - (this.#now() - cap.record.swapAt);
-    if (block <= 0 || this.#runs.size === 0) {
+    const release = () => {
       cap.record.releasedAt = this.#now();
+      ageHold.active = false;
+    };
+    if ((block <= 0 && !drain) || this.#runs.size === 0) {
+      release();
       return Promise.resolve();
     }
-    // An age deal that holds input does so until its last card has landed.
-    const drain = cap.timeline.steps.some((s) => s.kind === 'deal' && dealHold(s) > 0)
-      ? 'deal'
-      : undefined;
-    return this.#runs.hold(block, () => (cap.record.releasedAt = this.#now()), drain);
+    return this.#runs.hold(Math.max(0, block), release, drain);
   }
 
   /** Reads what a step needs and returns the function that starts it. */
