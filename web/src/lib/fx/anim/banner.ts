@@ -1,8 +1,9 @@
 // The victory banner (runner.ts, the `victory` step): a ribbon naming how
 // the game ended, with the winner's crest, and a burst of PARTICLES small
-// diamonds and dots, drawn in the FX layer's top-layer part over the result
-// screen. Transform and opacity only; never clickable, so it never blocks
-// the result's buttons. Its words are the result screen's own victory kinds
+// diamonds and dots, drawn before the first result screen, or over it in
+// the FX layer's top-layer part during a replay. Transform and opacity
+// only; never clickable, so it never blocks the result's buttons. Its
+// words are the result screen's own victory kinds
 // (choices.over.kind.*), its tint the victory kind's: cinnabar for a
 // military supremacy, green for a scientific one, gold for a civilian
 // victory, neutral for a shared one or a forfeit.

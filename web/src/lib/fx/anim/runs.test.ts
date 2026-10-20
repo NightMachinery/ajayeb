@@ -42,6 +42,7 @@ beforeEach(() => {
   clearRecords();
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
@@ -214,6 +215,77 @@ describe('Runs', () => {
     expect(released).toHaveBeenCalledOnce();
     expect(pawn.finishes).toBe(1);
     expect(animRecords()[0]?.interrupted).toBe(true);
+  });
+
+  it('bounds a never-ending run after the paint gate opens, not while a tab is hidden', async () => {
+    const frames: (() => void)[] = [];
+    const runs = new Runs(
+      () => now,
+      (frame) => frames.push(frame)
+    );
+    const open = runs.gate();
+    const cleanup = vi.fn();
+    const stuck = runs.track(5, 'coins', [], cleanup, false);
+    const released = vi.fn();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    void runs.hold(0, released, 'all', 2000);
+    open();
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(released, 'no motion started while the paint gate waited').not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+    for (let i = 0; i < 2; i++) for (const frame of frames.splice(0)) frame();
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(released).not.toHaveBeenCalled();
+    now = 22_000;
+    await vi.advanceTimersByTimeAsync(1);
+    expect(released).toHaveBeenCalledOnce();
+    expect(cleanup).toHaveBeenCalledOnce();
+    expect(stuck.record).toMatchObject({ endAt: 22_000, interrupted: true });
+    expect(runs.size).toBe(0);
+    expect(warn).toHaveBeenCalledExactlyOnceWith(
+      'Animation completion drain timed out; finishing remaining effects'
+    );
+  });
+
+  it('natural completion cancels the all-kind safety limit', async () => {
+    const runs = new Runs(() => now);
+    const pawn = fake();
+    runs.track(5, 'pawn', [pawn], () => {});
+    const released = vi.fn();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    void runs.hold(0, released, 'all', 2000);
+    await vi.advanceTimersByTimeAsync(0);
+    pawn.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(released).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(warn).not.toHaveBeenCalled();
+    expect(animRecords()[0]?.interrupted).toBe(false);
+    expect(released).toHaveBeenCalledOnce();
+  });
+
+  it('an interrupted gate cannot arm an old limit against a later hold', async () => {
+    const frames: (() => void)[] = [];
+    const runs = new Runs(
+      () => now,
+      (frame) => frames.push(frame)
+    );
+    const open = runs.gate();
+    runs.track(5, 'coins', [], () => {}, false);
+    const first = vi.fn();
+    const next = vi.fn();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    void runs.hold(0, first, 'all', 2000);
+    open();
+    runs.finishAll();
+    void runs.hold(50_000, next);
+    for (let i = 0; i < 2; i++) for (const frame of frames.splice(0)) frame();
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(first).toHaveBeenCalledOnce();
+    expect(next).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+    runs.finishAll();
+    expect(next).toHaveBeenCalledOnce();
   });
 
   it('an interrupt lets input go at once', async () => {

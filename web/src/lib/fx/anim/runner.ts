@@ -516,25 +516,31 @@ export class AnimRunner {
         if (start) starts.push(start);
       });
       for (const start of starts) start();
+
+      // The final frame drains every kind; an age deal drains its cards.
+      // The swap-based input timer alone cannot prove visual completion.
+      const drain = waitForAll ? 'all' : heldDeal(cap.timeline) ? 'deal' : undefined;
+      const block = cap.timeline.blockingMs - (this.#now() - cap.record.swapAt);
+      const release = () => {
+        cap.record.releasedAt = this.#now();
+        ageHold.active = false;
+      };
+      // Even a render that consumed the whole timer must still drain its runs.
+      if ((block <= 0 && !drain) || this.#runs.size === 0) {
+        release();
+        return Promise.resolve();
+      }
+      // Register before open(): the safety clock starts with actual motion,
+      // not while a hidden tab is still waiting for the paint gate.
+      return this.#runs.hold(
+        Math.max(0, block),
+        release,
+        drain,
+        cap.timeline.totalMs + 2_000
+      );
     } finally {
       open();
     }
-
-    // The final frame drains every kind; an age deal drains its cards.
-    const drain = waitForAll ? 'all' : heldDeal(cap.timeline) ? 'deal' : undefined;
-    // The hold counts from the swap, so a slow render does not add to it,
-    // but a render that consumed the whole time must still drain the deal:
-    // its runs were tracked just above and start only after the gate.
-    const block = cap.timeline.blockingMs - (this.#now() - cap.record.swapAt);
-    const release = () => {
-      cap.record.releasedAt = this.#now();
-      ageHold.active = false;
-    };
-    if ((block <= 0 && !drain) || this.#runs.size === 0) {
-      release();
-      return Promise.resolve();
-    }
-    return this.#runs.hold(Math.max(0, block), release, drain);
   }
 
   /** Reads what a step needs and returns the function that starts it. */

@@ -1137,9 +1137,12 @@ the FX records immediately before native `showModal`, checks natural completion
 (including the victory banner and landing pulses), and still compares every
 end timestamp with the open timestamp. Polling for a visible dialog cannot
 hide an early open. Its JSON attachment and `final-move-order` annotation
-report the evidence. The remaining cases check that the viewer's own military
-win shows "Your final move" with the Walls row,
-its pawn chip and the review, through a reload, View final board and a rematch;
+report the evidence. Unit tests also cover a never-ending manual run: the
+all-kind safety limit finishes it with a warning after the paint gate opens,
+while natural completion and interruption cancel that limit. The remaining
+cases check that the viewer's own military win shows "Your final move" with
+the Walls row, its pawn chip and the review, through a reload, View final board
+and a rematch;
 the bot's civilian win (the viewer in seat 1) and a hot-seat one name the mover;
 and the section comes before the score sheet, above it on a phone held upright
 and beside it where the `split` query matches. The mobile project's phone,

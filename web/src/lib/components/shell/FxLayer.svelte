@@ -9,11 +9,11 @@
   // the top layer) and the tooltips. It is empty whenever nothing is
   // animating, and with Animation off it is never used.
   //
-  // Beside it, its top part (`fx-top`): a manual popover the runner shows
-  // only while it draws over a dialog (the Great Library's tokens dealt into
-  // the drawer's choice, the victory banner over the result screen), hidden
-  // again when that ends. It is just as unclickable, so the dialog under it
-  // keeps every tap.
+  // Beside it, its top part (`fx-top`): a manual popover for the victory
+  // banner and effects over dialogs (the Great Library's tokens dealt into
+  // the drawer's choice, the banner over the result during a replay). The
+  // first live banner plays before the result opens. Hidden again when the
+  // effects end, it is just as unclickable, so a dialog keeps every tap.
   //
   // Its stylesheet is also where data-fx-hidden lives: the runner sets it on
   // an element a flying card is about to land on, which keeps its box (so

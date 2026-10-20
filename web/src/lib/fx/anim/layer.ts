@@ -3,10 +3,11 @@
 // A module-level slot rather than a context, because the runner lives in
 // the app's one Presenter, outside every component.
 //
-// Beside it, the top part: a manual popover the runner shows only while it
-// draws over a dialog (the Great Library's tokens dealt into the drawer's
-// choice, the victory banner over the result screen), because a dialog
-// sits in the top layer, above everything else on the page.
+// Beside it, the top part: a manual popover for the victory banner and
+// effects drawn over a dialog (the Great Library's tokens dealt into the
+// drawer's choice, the banner over the result screen during a replay).
+// The first live banner plays before the result opens. A dialog sits in
+// the top layer, above everything else on the page.
 
 let current: HTMLElement | null = null;
 let top: HTMLElement | null = null;

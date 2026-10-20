@@ -19,9 +19,10 @@
 //   end     ends one run once: finishes its animations, runs its cleanup,
 //           and stamps its record (endAt, and whether it was cut short);
 //   hold    the play hook's promise: it resolves after `ms`, or at once on
-//           finishAll(); given a kind to drain (an age deal that holds
-//           input to its end), not before every run of that kind ended,
-//           since the gate starts them a frame or two after the swap;
+//           finishAll(); it can drain one kind (an age deal) or 'all'
+//           (the final board effects), waiting for actual completion after
+//           the paint gate; an all-kind drain has a safety limit counted
+//           from when that gate opens, finishing stalled runs with a warning;
 //   finishAll  ends every run, cut short, and lets input go. A new frame,
 //           hurry() and clear() call it, so the screen never shows two
 //           frames at once.
@@ -56,6 +57,7 @@ export class Runs {
   #running = new Set<Run>();
   #release: (() => void) | null = null;
   #timer: ReturnType<typeof setTimeout> | null = null;
+  #safetyTimer: ReturnType<typeof setTimeout> | null = null;
   /** Which runs the waiting hold also waits for. */
   #drain: Drain | null = null;
   /** While a gate is shut: what starts each held run when it opens. */
@@ -168,9 +170,11 @@ export class Runs {
 
   /**
    * Resolves after `ms` and once no selected run remains (`all` selects
-   * every kind), or as soon as finishAll() runs.
+   * every kind), or as soon as finishAll() runs. All-kind drains finish
+   * stalled runs after maxDrainMs from the paint gate opening. Call while
+   * the gate is shut so background time before its first paint is excluded.
    */
-  hold(ms: number, released: () => void, drain?: Drain): Promise<void> {
+  hold(ms: number, released: () => void, drain?: Drain, maxDrainMs = 10_000): Promise<void> {
     this.letGo();
     return new Promise<void>((resolve) => {
       this.#release = () => {
@@ -182,6 +186,21 @@ export class Runs {
         this.#timer = null;
         this.#drained();
       }, ms);
+      if (drain === 'all') {
+        const release = this.#release;
+        this.afterGate(() => {
+          // An interrupt may have released this hold before its gate opened.
+          if (this.#release !== release) return;
+          this.#safetyTimer = setTimeout(
+            () => {
+              this.#safetyTimer = null;
+              console.warn('Animation completion drain timed out; finishing remaining effects');
+              this.finishAll();
+            },
+            Math.max(ms, maxDrainMs)
+          );
+        });
+      }
     });
   }
 
@@ -197,7 +216,9 @@ export class Runs {
   /** Lets input go now, if a hold is waiting. */
   letGo(): void {
     if (this.#timer !== null) clearTimeout(this.#timer);
+    if (this.#safetyTimer !== null) clearTimeout(this.#safetyTimer);
     this.#timer = null;
+    this.#safetyTimer = null;
     this.#drain = null;
     const release = this.#release;
     this.#release = null;
