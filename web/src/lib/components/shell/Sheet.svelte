@@ -55,9 +55,28 @@
   $effect(() => {
     const dialog = dialogEl;
     if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    else if (!open && dialog.open) dialog.close();
+    if (open && !dialog.open) {
+      dialog.showModal();
+      focusTitle(dialog);
+    } else if (!open && dialog.open) dialog.close();
   });
+
+  // The dialog opens with the focus on its title, the WAI-ARIA dialog
+  // pattern for long content. showModal() alone focuses the first focusable
+  // descendant, which in a sheet with a footer is the scrolling body, and
+  // with no pointer input since the load (a reload into a finished game)
+  // Chrome's :focus-visible then rings the whole body. The title takes
+  // focus from script only (tabindex -1, so it is no Tab stop) and draws no
+  // ring, since it is not a control; Tab moves on to the next control,
+  // which does. A child marked autofocus keeps the focus showModal() gave it.
+  function focusTitle(dialog: HTMLDialogElement): void {
+    if (!titleId || dialog.querySelector('[autofocus]')) return;
+    const title = document.getElementById(titleId);
+    if (!title || !dialog.contains(title)) return;
+    if (!title.hasAttribute('tabindex')) title.tabIndex = -1;
+    title.setAttribute('data-sheet-title', '');
+    title.focus({ preventScroll: true });
+  }
 
   // Swipe down to dismiss (sheet-drag.ts), only while this is a bottom
   // sheet: never for a centred panel. DOM listeners only, no $state writes.
@@ -185,6 +204,10 @@
     overscroll-behavior: contain;
     /* Keep the keyboard ring inside the clipped scrolling body. */
     outline-offset: -2px;
+  }
+  /* The title holds the focus on open (focusTitle) but is not a control. */
+  .sheet :global([data-sheet-title]) {
+    outline: none;
   }
   .sheet-body[data-scroll-more] {
     mask-image: linear-gradient(black calc(100% - 1.25rem), transparent);

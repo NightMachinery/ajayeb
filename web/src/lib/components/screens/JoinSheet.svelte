@@ -47,7 +47,11 @@
 
     <div class="flex flex-col gap-1.5">
       <label for={inputId} class="text-sm font-semibold text-fg">{t('online.join.label')}</label>
+      <!-- Typing the code is the sheet's whole job, so it opens on the
+           field, not on its title (Sheet's focusTitle). -->
+      <!-- svelte-ignore a11y_autofocus -->
       <input
+        autofocus
         class="min-h-14 rounded-control border bg-panel-sunken px-3 text-center font-display text-3xl tracking-[0.3em] text-fg uppercase
           {wrong ? 'border-cinnabar' : 'border-rule-strong'}"
         type="text"
