@@ -204,12 +204,10 @@ test.describe('the final move on the result screen @mobile', () => {
           seen.opened!,
           'every animation ended before the result opened'
         ).toBeGreaterThanOrEqual(lastEnd);
-        test
-          .info()
-          .annotations.push({
-            type: 'final-move-order',
-            description: `${cpu}x CPU: ${anims.length} naturally finished effects; result opened ${Math.round(seen.opened! - lastEnd)} ms after the last end`
-          });
+        test.info().annotations.push({
+          type: 'final-move-order',
+          description: `${cpu}x CPU: ${anims.length} naturally finished effects; result opened ${Math.round(seen.opened! - lastEnd)} ms after the last end`
+        });
         expect(seen.popup, 'no move summary popup at the end of the game').toBe(false);
         await expect(page.locator(POPUP)).toHaveCount(0);
         expect(problems).toEqual([]);
