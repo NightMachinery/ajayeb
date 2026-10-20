@@ -1147,8 +1147,10 @@ the bot's civilian win (the viewer in seat 1) and a hot-seat one name the mover;
 and the section comes before the score sheet, above it on a phone held upright
 and beside it where the `split` query matches. The mobile project's phone,
 390x844 and the desktop at 1280x720 show everything without scrolling; at
-360x740 and 740x360 scrolling the body reaches the totals with the footer's
-buttons in view. After a viewport change the helper re-measures the same
+360x740, 740x360 and 844x390 scrolling the body reaches the totals with the
+footer's buttons in view. In phone landscape (740x360 and 844x390) the score
+sheet stands beside the headline and the final move, and its totals show as
+the dialog opens, with no scroll (M11.round3-layout-nits). After a viewport change the helper re-measures the same
 scroll, visibility and 44 px button bounds until responsive transitions
 settle, including the nominal 0.01 ms transitions with Animation off. The
 native result-open ordering case still takes its snapshot immediately and

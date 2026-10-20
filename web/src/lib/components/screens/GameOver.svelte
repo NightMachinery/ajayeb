@@ -31,6 +31,13 @@
   // 640 px) it stands at the end of the header row, beside the scene, which
   // is taller than the headline; a short screen (a phone in landscape),
   // whose dialog already scrolls, leaves it out.
+  //
+  // A short landscape screen (a phone on its side) has the height of about
+  // nine score rows under its footer, so there the body is two columns: the
+  // scene, the headline and the final move on one side, and the score sheet
+  // on the other, from the top and held there while the first column
+  // scrolls, so the totals show at once. Its footer is one row, and the
+  // score rows are tighter (the style block's short-landscape query).
   import { restoreFocus } from '$lib/ui/dismiss';
   import Download from '@lucide/svelte/icons/download';
   import { downloadReplay } from '$lib/session/replay';
@@ -195,6 +202,9 @@
 
   const hasLastMove = $derived(lastLines.length > 0 || review !== null);
 
+  // The footer's buttons, which a short landscape screen puts in one row.
+  const actionCount = $derived((onrematch ? 1 : 0) + (replayCode && view.revealed ? 1 : 0) + 2);
+
   const crest = $derived(winner === 1 ? 'crest-moon' : 'crest-sun');
   const scene = $derived(outcome ? victoryArtId(outcome.kind) : null);
   const titleId = 'game-over-title';
@@ -223,9 +233,19 @@
     class="game-over {hasLastMove ? 'has-last-move' : ''}"
   >
     {#snippet footer()}
-      <div class="grid gap-2 {replayCode && view.revealed ? 'grid-cols-3' : 'grid-cols-2'}">
+      <div
+        class="over-actions grid gap-2 {replayCode && view.revealed
+          ? 'grid-cols-3'
+          : 'grid-cols-2'}"
+        style:--over-actions={actionCount}
+      >
         {#if onrematch}
-          <Button variant="primary" class="col-span-full" onclick={onrematch} data-rematch>
+          <Button
+            variant="primary"
+            class="over-rematch col-span-full"
+            onclick={onrematch}
+            data-rematch
+          >
             <RotateCw class="size-4" aria-hidden="true" />
             {rematchLabel ?? t('choices.over.rematch')}
           </Button>
@@ -241,7 +261,7 @@
             {t('game.menu.replay')}
           </Button>
         {:else if replayCode}
-          <p class="col-span-full text-center text-sm text-fg-muted" data-replay-hidden>
+          <p class="over-note col-span-full text-center text-sm text-fg-muted" data-replay-hidden>
             {t('game.menu.replayHidden')}
           </p>
         {/if}
@@ -265,11 +285,11 @@
         </Button>
       </div>
     {/snippet}
-    <div class="flex flex-col gap-3 px-5 pt-4 pb-1">
+    <div class="over-body flex flex-col gap-3 px-5 pt-4 pb-1">
       <Wordmark class="mx-auto -mb-1 block w-20 text-fg short:hidden {scene ? 'sm:hidden' : ''}" />
       <header
         class={[
-          'flex',
+          'over-start flex',
           scene
             ? 'flex-row items-center gap-4 text-start'
             : 'flex-col items-center gap-1 text-center'
@@ -307,7 +327,7 @@
         {/if}
         <div class="flex min-w-0 flex-col gap-1">
           <p class="text-xs font-semibold tracking-wider text-fg-muted uppercase">{kindText}</p>
-          <h2 id={titleId} class="font-display text-2xl leading-tight text-fg">
+          <h2 id={titleId} class="over-headline font-display text-2xl leading-tight text-fg">
             {headline}
           </h2>
           {#if reason}
@@ -328,12 +348,12 @@
            stay in view on a laptop's short window. -->
       <div
         class={hasLastMove
-          ? 'flex flex-col gap-3 split:grid split:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] split:items-start split:gap-x-4'
+          ? 'over-pair flex flex-col gap-3 split:grid split:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] split:items-start split:gap-x-4'
           : 'contents'}
       >
         {#if hasLastMove}
           <section
-            class="flex flex-col gap-2 rounded-control border border-rule bg-panel-sunken px-3 py-2"
+            class="over-start flex flex-col gap-2 rounded-control border border-rule bg-panel-sunken px-3 py-2"
             aria-labelledby={lastLines.length > 0 ? 'game-over-last-move' : undefined}
             data-last-move={lastMove?.seat}
             data-plies={lastMove?.plies.join(' ')}
@@ -357,12 +377,14 @@
           </section>
         {/if}
 
-        <ScoreTable {rows} {names} {winner} you={youSeat} />
+        <div class="over-scores">
+          <ScoreTable {rows} {names} {winner} you={youSeat} />
+        </div>
       </div>
 
       {#if outcome?.tieBreak}
         <p
-          class="rounded-control border border-rule bg-panel-sunken px-3 py-2 text-sm text-fg"
+          class="over-start rounded-control border border-rule bg-panel-sunken px-3 py-2 text-sm text-fg"
           data-tie-break
         >
           <Icon name="category-blue" class="me-1 text-card-blue-ink" />
@@ -371,7 +393,7 @@
       {/if}
 
       {#if rematchNote}
-        <p class="text-center text-sm font-semibold text-fg" role="status">
+        <p class="over-start text-center text-sm font-semibold text-fg" role="status">
           {rematchNote}
         </p>
       {/if}
@@ -400,6 +422,66 @@
   @media (min-width: 64rem), (orientation: landscape) and (max-height: 32rem) {
     :global(.sheet.centered.game-over.has-last-move) {
       width: min(46rem, calc(100% - 2rem));
+    }
+  }
+
+  /* A short landscape screen (the short variant, landscape): two columns,
+     the scene, headline, final move and notes first, the score sheet beside
+     them from the top, held in view while the first column scrolls (an
+     auto row per item there, and a last one that takes the slack, so the
+     sheet's height never spreads them apart). The footer is one row, with a
+     smaller bottom margin. */
+  @media (max-height: 32rem) and (orientation: landscape) {
+    :global(.sheet.centered.game-over) {
+      width: min(46rem, calc(100% - 2rem));
+    }
+    :global(.sheet.centered.game-over .sheet-panel) {
+      --sheet-bottom-padding: 0.5rem;
+    }
+    .over-body {
+      display: grid;
+      grid-template-columns: minmax(0, 17rem) minmax(0, 1fr);
+      grid-template-rows: repeat(4, auto) 1fr;
+      align-items: start;
+      column-gap: 1rem;
+      row-gap: 0.75rem;
+      padding-block-start: 0.75rem;
+    }
+    .over-pair {
+      display: contents;
+    }
+    .over-start {
+      grid-column: 1;
+    }
+    /* The first column is narrow: a smaller scene and headline. */
+    header.over-start {
+      gap: 0.75rem;
+    }
+    .victory-scene {
+      width: 6rem;
+    }
+    .over-headline {
+      font-size: 1.25rem;
+      overflow-wrap: break-word;
+    }
+    .over-scores {
+      position: sticky;
+      inset-block-start: 0;
+      grid-column: 2;
+      grid-row: 1 / -1;
+    }
+    .over-actions {
+      grid-template-columns: repeat(var(--over-actions), minmax(0, 1fr));
+    }
+    .over-actions :global(.over-rematch) {
+      grid-column: auto;
+    }
+    .over-actions :global(button) {
+      height: auto;
+      min-height: 2.75rem;
+    }
+    .over-note {
+      order: 1;
     }
   }
 

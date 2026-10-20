@@ -2,7 +2,9 @@
   // The final score sheet as a table: one row per category, each with its
   // glyph and its name (never colour alone), a column per player, and the
   // total. A plain leaf: the rows come from lib/view/score.ts, which only
-  // re-shapes the server's numbers.
+  // re-shapes the server's numbers. On a short screen (a phone on its side)
+  // the rows are tighter, so the whole sheet fits beside the result's
+  // headline.
   import Trophy from '@lucide/svelte/icons/trophy';
   import { formatNumber, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -84,13 +86,13 @@
   <caption class="sr-only">{t('choices.score.caption')}</caption>
   <thead>
     <tr>
-      <th scope="col" class="pb-1.5 text-start text-xs font-semibold text-fg-muted">
+      <th scope="col" class="pb-1.5 text-start text-xs font-semibold text-fg-muted short:pb-1">
         <span class="sr-only">{t('choices.score.category')}</span>
       </th>
       {#each seats as seat (seat)}
         <th
           scope="col"
-          class="w-[5.5rem] max-w-[5.5rem] px-1 pb-1.5 text-end text-xs font-semibold
+          class="w-[5.5rem] max-w-[5.5rem] px-1 pb-1.5 text-end text-xs font-semibold short:pb-1
             {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
         >
           <!-- A long name (a bot's persona, "Apprentice") goes under its
@@ -117,8 +119,8 @@
       <tr data-score-row={row.category}>
         <th
           scope="row"
-          class="py-1 pe-2 text-start font-normal whitespace-nowrap {total
-            ? 'border-t-2 border-rule-strong pt-2 font-semibold'
+          class="py-1 pe-2 text-start font-normal whitespace-nowrap short:py-0 {total
+            ? 'border-t-2 border-rule-strong pt-2 font-semibold short:pt-1'
             : 'border-t border-rule'}"
         >
           <span class="flex items-center gap-2">
@@ -128,8 +130,8 @@
         </th>
         {#each seats as seat (seat)}
           <td
-            class="px-1 py-1 text-end tabular-nums {total
-              ? 'border-t-2 border-rule-strong pt-2 text-base font-bold'
+            class="px-1 py-1 text-end tabular-nums short:py-0 {total
+              ? 'border-t-2 border-rule-strong pt-2 text-base font-bold short:pt-1'
               : 'border-t border-rule'} {row.ahead === seat && !total ? 'font-semibold' : ''}"
             data-must-fit
           >

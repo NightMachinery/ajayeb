@@ -18,8 +18,9 @@
 // it where two columns fit (the split query: a desktop, or a short
 // landscape screen). The mobile project's phone (412x839), 390x844 and the
 // desktop (1280x720) show it all without scrolling; a small phone (360x740)
-// and phone landscape (740x360) scroll the body to the totals, the footer
-// in view.
+// scrolls the body to the totals, the footer in view. In phone landscape
+// (740x360, 844x390) the score sheet stands beside the headline and the final
+// move, from the top, so its totals show at once (M11.round3-layout-nits).
 
 import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
@@ -65,6 +66,8 @@ async function openBotRoom(page: Page, scenario: string, seat: 0 | 1): Promise<G
 
 /** The client's `split` variant (web/src/app.css): room for two columns. */
 const SPLIT = '(min-width: 64rem), (orientation: landscape) and (max-height: 32rem)';
+/** A short landscape screen (GameOver.svelte's two-column body). */
+const SHORT_LANDSCAPE = '(orientation: landscape) and (max-height: 32rem)';
 
 /**
  * The section comes before the score sheet: beside it where two columns
@@ -104,6 +107,26 @@ async function expectLayout(page: Page): Promise<void> {
             return !!body && body.scrollHeight <= body.clientHeight + 1;
           }),
         { message: `${at}: the dialog shows everything without scrolling` }
+      )
+      .toBe(true);
+  }
+  if (await page.evaluate((q) => matchMedia(q).matches, SHORT_LANDSCAPE)) {
+    // The totals in view as the dialog opens, with no scroll.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const body = document.querySelector<HTMLElement>('dialog[open] [data-sheet-body]')!;
+            const table = document.querySelector<HTMLTableElement>(
+              'dialog[open] [data-score-table]'
+            )!;
+            const b = body.getBoundingClientRect();
+            const total = table.rows[table.rows.length - 1]!.getBoundingClientRect();
+            return (
+              body.scrollTop === 0 && total.top >= b.top - 0.5 && total.bottom <= b.bottom + 0.5
+            );
+          }),
+        { message: `${at}: the totals show without scrolling` }
       )
       .toBe(true);
   }
@@ -277,7 +300,7 @@ test.describe('the final move on the result screen @mobile', () => {
     expect(problems).toEqual([]);
   });
 
-  test('on a small phone and in phone landscape the totals are a scroll away, the footer in view', async ({
+  test('on a small phone the totals are a scroll away and in phone landscape in view, the footer in view', async ({
     page
   }) => {
     const problems = watchHygiene(page);
@@ -288,6 +311,7 @@ test.describe('the final move on the result screen @mobile', () => {
     for (const size of [
       { width: 360, height: 740 },
       { width: 740, height: 360 },
+      { width: 844, height: 390 },
       { width: 390, height: 844 }
     ]) {
       await page.setViewportSize(size);
