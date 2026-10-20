@@ -77,7 +77,8 @@ export interface DismissOptions {
   passTouchActions?: boolean;
   /** The overlay's panel, when its tooltips can be long-pressed (the move
    *  summary): a touch on a tooltip anchor inside it waits for the release,
-   *  and dismisses only when no long-press showed the tooltip. A press that
+   *  and dismisses only when it was a tap: not a long-press that showed the
+   *  tooltip, nor a press the browser took over (a scroll). A press that
    *  closes an open tooltip, or lands on its bubble, leaves the overlay
    *  open. */
   longPressTips?: () => Element | null | undefined;
@@ -106,6 +107,19 @@ export function holdAction(p: {
   return !p.mouse && p.onAnchor ? 'hold' : 'dismiss';
 }
 
+/** Whether a held press (holdAction 'hold') dismisses the overlay at its
+ *  end: only a tap does. A long-press that showed its tooltip keeps the
+ *  overlay, and so does a press the browser took over (a scroll), which is
+ *  no tap at all. */
+export function releaseDismisses(p: {
+  /** The press ended in a pointercancel rather than a pointerup. */
+  cancelled: boolean;
+  /** A tooltip is open when the finger lifts. */
+  tipOpen: boolean;
+}): boolean {
+  return !p.cancelled && !p.tipOpen;
+}
+
 /** The open tooltip, its bubble and its stack (components/shell/TooltipLayer.svelte). */
 const TOOLTIP_OPEN = '[data-tooltip-layer] [data-tooltip-open]';
 
@@ -121,12 +135,14 @@ export function installDismiss(opts: DismissOptions): () => void {
     if (!(target instanceof Node)) return false;
     return (opts.keep?.() ?? []).some((el) => el?.contains(target));
   };
-  // A held touch (longPressTips): released with no tooltip open, it was a tap.
+  // A held touch (longPressTips): lifted with no tooltip open, it was a tap.
   let held: number | null = null;
   const onRelease = (e: PointerEvent): void => {
     if (e.pointerId !== held) return;
     held = null;
-    if (e.type === 'pointerup' && document.querySelector(TOOLTIP_OPEN)) return;
+    const cancelled = e.type === 'pointercancel';
+    const tipOpen = !cancelled && document.querySelector(TOOLTIP_OPEN) !== null;
+    if (!releaseDismisses({ cancelled, tipOpen })) return;
     swallowClick();
     opts.onDismiss('tap');
   };

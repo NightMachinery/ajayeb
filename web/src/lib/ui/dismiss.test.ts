@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { holdAction, isQuietFocus, restoreFocus, shouldRestoreFocus, tabTarget } from './dismiss';
+import {
+  holdAction,
+  isQuietFocus,
+  releaseDismisses,
+  restoreFocus,
+  shouldRestoreFocus,
+  tabTarget
+} from './dismiss';
 
 describe('tabTarget: Tab stays inside an open panel', () => {
   it('wraps from the last element to the first, and back with Shift+Tab', () => {
@@ -70,5 +77,20 @@ describe('holdAction: long-pressable tooltips in an overlay (the move summary)',
     expect(holdAction({ ...press, swallowed: true, onAnchor: true })).toBe('ignore');
     expect(holdAction({ ...press, onBubble: true })).toBe('ignore');
     expect(holdAction({ ...press, mouse: true, onBubble: true })).toBe('ignore');
+  });
+});
+
+describe('releaseDismisses: the end of a held press', () => {
+  it('dismisses after a tap: lifted with no tooltip open', () => {
+    expect(releaseDismisses({ cancelled: false, tipOpen: false })).toBe(true);
+  });
+
+  it('keeps the overlay after a long-press that showed its tooltip', () => {
+    expect(releaseDismisses({ cancelled: false, tipOpen: true })).toBe(false);
+  });
+
+  it('keeps the overlay when the browser took the press over (a scroll)', () => {
+    expect(releaseDismisses({ cancelled: true, tipOpen: false })).toBe(false);
+    expect(releaseDismisses({ cancelled: true, tipOpen: true })).toBe(false);
   });
 });
