@@ -107,28 +107,39 @@ async function expectLayout(page: Page): Promise<void> {
       )
       .toBe(true);
   }
-  // The totals are reachable, with the footer in view.
-  const reach = await page.evaluate(() => {
-    const body = document.querySelector<HTMLElement>('dialog[open] [data-sheet-body]')!;
-    const table = document.querySelector<HTMLTableElement>('dialog[open] [data-score-table]')!;
-    const from = body.scrollTop;
-    body.scrollTop = body.scrollHeight;
-    const b = body.getBoundingClientRect();
-    const total = table.rows[table.rows.length - 1]!.getBoundingClientRect();
-    const buttons = [...document.querySelectorAll('dialog[open] [data-sheet-footer] button')].map(
-      (el) => el.getBoundingClientRect()
-    );
-    const result = {
-      totalInView: total.top >= b.top - 0.5 && total.bottom <= b.bottom + 0.5,
-      footerInView:
-        buttons.length > 0 &&
-        buttons.every((r) => r.top >= 0 && r.bottom <= innerHeight && r.height >= 44)
-    };
-    body.scrollTop = from;
-    return result;
-  });
-  expect(reach.totalInView, `${at}: scrolling reaches the totals`).toBe(true);
-  expect(reach.footerInView, `${at}: the footer's buttons stay in view`).toBe(true);
+  // A resize can leave the previous box for the first paint, even with
+  // Animation off (its CSS transitions still last 0.01 ms). Re-measure the
+  // same bounds until they settle; persistent clipping still fails.
+  const reach = () =>
+    page.evaluate(() => {
+      const body = document.querySelector<HTMLElement>('dialog[open] [data-sheet-body]')!;
+      const table = document.querySelector<HTMLTableElement>('dialog[open] [data-score-table]')!;
+      const from = body.scrollTop;
+      body.scrollTop = body.scrollHeight;
+      const b = body.getBoundingClientRect();
+      const total = table.rows[table.rows.length - 1]!.getBoundingClientRect();
+      const buttons = [...document.querySelectorAll('dialog[open] [data-sheet-footer] button')].map(
+        (el) => el.getBoundingClientRect()
+      );
+      const result = {
+        totalInView: total.top >= b.top - 0.5 && total.bottom <= b.bottom + 0.5,
+        footerInView:
+          buttons.length > 0 &&
+          buttons.every((r) => r.top >= 0 && r.bottom <= innerHeight && r.height >= 44)
+      };
+      body.scrollTop = from;
+      return result;
+    });
+  await expect
+    .poll(async () => (await reach()).totalInView, {
+      message: `${at}: scrolling reaches the totals`
+    })
+    .toBe(true);
+  await expect
+    .poll(async () => (await reach()).footerInView, {
+      message: `${at}: the footer's buttons stay in view`
+    })
+    .toBe(true);
 }
 
 test.describe('the final move on the result screen @mobile', () => {

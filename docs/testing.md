@@ -1148,7 +1148,12 @@ and the section comes before the score sheet, above it on a phone held upright
 and beside it where the `split` query matches. The mobile project's phone,
 390x844 and the desktop at 1280x720 show everything without scrolling; at
 360x740 and 740x360 scrolling the body reaches the totals with the footer's
-buttons in view. The describe is tagged `@mobile`, so it runs on both projects.
+buttons in view. After a viewport change the helper re-measures the same
+scroll, visibility and 44 px button bounds until responsive transitions
+settle, including the nominal 0.01 ms transitions with Animation off. The
+native result-open ordering case still takes its snapshot immediately and
+never polls to hide an early open. The describe is tagged `@mobile`, so it
+runs on both projects.
 It also checks a short own name beside the YOU mark, device link and owned
 token, and every mini card at 48 by 74 px. Two checks are geometric, with one
 helper that lists what an element covers by bounding box:
