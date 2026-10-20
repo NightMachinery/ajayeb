@@ -722,9 +722,12 @@ game's last card (`civilian-end`).
   change (its last card, whose frame deals the new age before the starter
   choice, and the first move of that age) and three bot answers that
   animated, that moment minus the frame's `swapAt` (`__ajayebFx.frames()`)
-  must be at most 450 ms. A frame that opens Age II or III holds input
-  until its deal ends, so that the starter choice's dialog opens over a
-  dealt board (M11.age-start-order): it is measured from the deal's end. The
+  must be at most 450 ms. The frame that opens Age II holds input until its
+  deal ends, so that the starter choice's dialog opens over a dealt board
+  (M11.age-start-order): that frame alone is measured from the end of its
+  deal, every dealt card must have landed uncut, and input may not come
+  back before it. Every other frame, Age I's deal included, counts from its
+  swap. The
   bot's dwell and pick come before the swap and are not counted. The
   failure message lists every measurement. Every exercised bot reply must
   supply a timed animation sample. The case uses the configured retry policy;
@@ -1199,7 +1202,12 @@ When the hot-seat player chooses, with Animation normal and off, the
 dialog opens on the choice, the age sounds once on the frame that opened
 it, and the answer deals and sounds nothing. When the bot chooses, the
 dialog opens on its outcome. A reload during the choice replays nothing,
-and its answer deals nothing.
+and its answer deals nothing. Two harder paths: a swap whose render blocks
+the main thread for 1.4 s when the starter host mounts (the whole nominal
+hold) still opens the dialog only after the deal; and online, with the move
+summary on, the viewer's opening frame dropped at the socket (its request's
+ack handed to the next frame) recovers the deal on the first play frame,
+and the summary opens only after it, then the age dialog.
 
 `rtl.spec.ts` checks the card sheet’s card layout and the progress-token
 row’s physical order as well as the board. `tooltip-coverage.spec.ts`

@@ -11,9 +11,9 @@
 //      normal speed and once with Animation off leave the same game screen.
 //   c. Input is back within 450 ms of a frame's swap at normal speed (the
 //      bot's dwell and pick, before the swap, are deliberate pacing),
-//      including an age deal and the first move after it. A frame that
-//      opens Age II or III is measured from its deal's end, which holds
-//      input by design (the starter choice comes after the deal).
+//      including an age deal and the first move after it. The frame that
+//      opens Age II is measured from its deal's end, which holds input by
+//      design (the starter choice comes after the deal).
 //   d. @perf: no long task over 50 ms overlaps an animation on a CPU slowed
 //      4 times, over at least ten moves, an age deal and a game end.
 //   e. Replay last move plays the move again and leaves the same screen; with
@@ -496,9 +496,12 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       const draft = await draftKeys(baseURL, SEED);
       const waits: { room: string; version: number; ms: number; steps: number }[] = [];
 
-      // A frame that opens Age II or III holds input until its deal ends,
-      // so the starter choice's dialog opens over a dealt board
-      // (M11.age-start-order): it is measured from the deal's end.
+      // The frame that opens Age II holds input until its deal ends, so the
+      // starter choice's dialog opens over a dealt board
+      // (M11.age-start-order): that frame alone is measured from the end of
+      // its deal, which must have landed uncut, with input back no earlier.
+      // Every other frame, Age I's deal included, counts from its swap.
+      const openings = new Set<number>();
       const measure = async (room: string) => {
         const { frames, anims } = await fxRecords(page);
         const at = await inputAt(page);
@@ -506,10 +509,20 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
           const back = at[f.version];
           if (back === undefined || f.steps === 0) continue;
           if (waits.some((w) => w.room === room && w.version === f.version)) continue;
-          const dealt = anims
-            .filter((a) => a.kind === 'deal' && a.version === f.version && a.endAt !== null)
-            .map((a) => a.endAt!);
-          const from = Math.max(f.swapAt, ...dealt);
+          let from = f.swapAt;
+          if (openings.has(f.version)) {
+            const deals = anims.filter((a) => a.kind === 'deal' && a.version === f.version);
+            expect(deals.length, `age opening ${f.version}: a deal`).toBeGreaterThan(0);
+            for (const deal of deals) {
+              expect(deal.endAt, `age opening ${f.version}: every card landed`).not.toBeNull();
+              expect(deal.interrupted, `age opening ${f.version}: no card cut short`).toBe(false);
+            }
+            from = Math.max(...deals.map((d) => d.endAt!));
+            expect(
+              back,
+              `age opening ${f.version}: input waits for the deal`
+            ).toBeGreaterThanOrEqual(from);
+          }
           waits.push({ room, version: f.version, ms: Math.round(back - from), steps: f.steps });
         }
       };
@@ -542,10 +555,13 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         await age.nextTurn();
         await age.dismissToasts();
         await playThrough(age, pick(await viewOf(page)));
+        const shown = await age.snapshot();
+        if (shown.phase === 'chooseStarter' && shown.age === 2) openings.add(shown.version);
         await measure('age');
       }
       const dealt = (await fxRecords(page)).anims.filter((a) => a.kind === 'deal');
       expect(dealt.length, 'the age change dealt its cards').toBeGreaterThan(0);
+      expect(openings.size, 'the Age II opening was measured').toBe(1);
 
       // Against a bot: its answers are the frames that hand input back.
       const aiDecisions: unknown[] = [];
