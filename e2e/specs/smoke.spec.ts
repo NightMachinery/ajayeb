@@ -3,7 +3,8 @@
 // it (and `verify` does, through that target).
 
 import AxeBuilder from '@axe-core/playwright';
-import { expect } from '@playwright/test';
+import { EventEmitter } from 'node:events';
+import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 
@@ -11,6 +12,37 @@ import { watchHygiene } from '../fixtures/hygiene';
 const AXE_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 test.describe('smoke', { tag: ['@smoke', '@mobile'] }, () => {
+  test('hygiene ignores only the two WebKit notices and still rejects unrelated errors', () => {
+    const notices = [
+      "The Content Security Policy 'default-src 'self'; script-src 'self' 'sha256-test'; object-src 'none'' was delivered in report-only mode, but does not specify a 'report-to'; the policy will have no effect. Please either add a 'report-to' directive, or deliver the policy via the 'Content-Security-Policy' header.",
+      'Viewport argument key "interactive-widget" not recognized and ignored.'
+    ];
+    const errors = [
+      'unrelated WebKit application error',
+      "The Content Security Policy 'default-src 'self'; script-src 'self'' blocked a script.",
+      'Viewport argument key "another-key" not recognized and ignored.'
+    ];
+    // Browser-free event sources exercise the real collector even on a host
+    // where WebKit cannot launch. Chromium must retain the notices as errors.
+    for (const browser of ['webkit', 'chromium', undefined]) {
+      const events = new EventEmitter();
+      const page = Object.assign(events, {
+        context: () => ({
+          browser: () => (browser ? { browserType: () => ({ name: () => browser }) } : null)
+        })
+      }) as unknown as Page;
+      const problems = watchHygiene(page);
+      for (const text of [...notices, ...errors]) {
+        events.emit('console', { type: () => 'error', text: () => text });
+      }
+      const expected = browser === 'webkit' ? errors : [...notices, ...errors];
+      expect(problems).toEqual(expected.map((text) => `console error: ${text}`));
+      expect(() => expect(problems).toEqual([])).toThrow();
+      events.emit('pageerror', new Error(notices[0]));
+      expect(problems.at(-1)).toBe(`uncaught: ${notices[0]}`);
+    }
+  });
+
   test('GET /health reports ok', async ({ request }) => {
     const res = await request.get('/health');
     expect(res.ok()).toBe(true);

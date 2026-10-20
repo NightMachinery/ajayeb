@@ -342,6 +342,14 @@ Its launch options contain no Chromium channel or switches. It never launches
 the installed Safari app or `safaridriver`. The existing smoke, viewport layout
 and Persian RTL specs run in WebKit, alongside `audio-engine.spec.ts`.
 
+The shared console check ignores two specific browser notices only in WebKit:
+the development server's report-only CSP missing a `report-to` directive, and
+the unsupported `interactive-widget` viewport key. Fixed message prefixes and
+the CSP notice's exact report-only explanation keep actual violations failing.
+Every other console error, page exception, failed request and HTTP error stays
+fatal. The smoke spec exercises the collector with browser-free event sources
+to prove an unrelated WebKit error still fails and Chromium keeps both notices.
+
 The audio spec observes native AudioContext creation, decode results and source
 starts without replacing WebAudio behavior. It verifies no audio context,
 sound metadata or file request before a gesture; a real first tap unlocks the
@@ -387,9 +395,11 @@ on successful runs, and lists observed audio paths in the job summary.
 Linux AAC decoding depends on the runner's GStreamer plugins. A decoder-less
 run must prove actual synthesized sources start and report fallback coverage;
 it is not counted as AAC decode coverage. Successful decoding must produce
-native file-buffer playback. CI is configured here but cannot be run on this
-macOS host without a container runtime; the first coordinator-pushed master
-run supplies that Linux WebKit evidence.
+native file-buffer playback. The initial Linux WebKit run passed all six native
+audio cases: normal loads decoded all 17 shipped AAC cues and started native
+file buffers; forced missing-file and invalid-AAC cases started synthesized
+fallback sources. This validates Linux WebKit's audio graph, alongside the
+separate macOS startup limitation and deferred iPhone checks described above.
 
 ### The shared helpers (`e2e/fixtures/`)
 
