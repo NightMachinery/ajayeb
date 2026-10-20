@@ -443,13 +443,13 @@ separate macOS startup limitation and deferred iPhone checks described above.
   It counts every flow, every pending kind, every pass screen, every undo
   and every confirmed move in `driver.stats`.
 
-  The move-summary dismissal spec sends its first tap at a card's position
-  even when the popup covers it (`force: true`). This exercises the popup's
-  real pointer handling and requires the tap to close it without opening
-  the card sheet or sending a move. The following tap uses normal
-  actionability checks and must open the sheet. A taller draft review can
-  therefore cover the target without preventing the test from sending the
-  dismissal tap at all.
+  The move-summary dismissal spec compares the popup's box with every
+  takeable card's box and chooses a card outside the popup for its first
+  tap. This proves that a tap intended for the board closes the popup
+  without opening the card sheet or sending a move. Only when every
+  takeable card overlaps the popup does it use `force: true`; that fallback
+  may tap the popup itself and checks dismissal without a move. The next
+  tap always uses normal actionability checks and must open the sheet.
 
   Against the bot, `waitTurn` is what waits out the bot's turn: after the
   player's move the page shows the bot's thinking frame, the Presenter

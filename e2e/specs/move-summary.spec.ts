@@ -87,6 +87,42 @@ async function press(
   else await target.click({ force });
 }
 
+/** Prefer a takeable card outside the popup for the swallowed board tap. */
+async function dismissalCard(
+  page: Page,
+  snap: Snapshot
+): Promise<{ card: string; force: boolean }> {
+  const popup = await page
+    .locator('[data-dismiss-layer]')
+    .filter({ has: page.locator('[data-move-summary]') })
+    .boundingBox();
+  if (!popup) throw new Error('no move summary box');
+  const cards = new Set(
+    snap.choices.filter((c) => c.kind === 'construct' || c.kind === 'discard').map((c) => c.card)
+  );
+  let fallback: string | undefined;
+  for (const card of cards) {
+    if (!card) continue;
+    const box = await page
+      .locator(`.card-structure [data-card="${card}"]`)
+      .filter({ visible: true })
+      .first()
+      .boundingBox();
+    if (!box) throw new Error(`no takeable card box for ${card}`);
+    fallback ??= card;
+    const covered =
+      box.x < popup.x + popup.width &&
+      box.x + box.width > popup.x &&
+      box.y < popup.y + popup.height &&
+      box.y + box.height > popup.y;
+    if (!covered) return { card, force: false };
+  }
+  if (!fallback) throw new Error('no card to take');
+  // Every takeable card overlaps the popup. Only this fallback is forced;
+  // it may land on the popup itself instead of exercising a board tap.
+  return { card: fallback, force: true };
+}
+
 /** Plays this client's moves until the bot has just moved in play; returns the turn then. */
 async function untilBotMoved(driver: GameDriver, bot: number): Promise<Snapshot> {
   for (let guard = 0; guard < 30; guard++) {
@@ -134,13 +170,9 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     await expect(popup.locator('h2')).toContainText("'s move");
 
     // A tap on a takeable card closes it, and the card's sheet does not open.
-    const card = snap.choices.find((c) => c.kind === 'construct' || c.kind === 'discard')?.card;
-    if (!card) throw new Error('no card to take');
+    const { card, force } = await dismissalCard(page, snap);
     const cardSelector = `.card-structure [data-card="${card}"]`;
-    // The complete draft review can cover this card. Send the actual tap
-    // at its position even then, so the popup must swallow it. The next
-    // press retains normal actionability checks once the popup is closed.
-    await press(page, isMobile, cardSelector, true);
+    await press(page, isMobile, cardSelector, force);
     await expect(page.locator(POPUP)).toHaveCount(0);
     await expect(page.locator('dialog[open] [data-card-sheet]')).toHaveCount(0);
     expect((await driver.snapshot()).version).toBe(snap.version);
