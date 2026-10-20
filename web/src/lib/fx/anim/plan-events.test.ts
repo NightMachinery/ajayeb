@@ -269,10 +269,12 @@ describe('the age deal', () => {
       each: DEAL_EACH_MS,
       stagger: DEAL_STAGGER_MS
     });
-    // About 20 cards at 30 to 40 ms each, and input back with the take.
+    // About 20 cards at 30 to 40 ms each. A later age's dialog waits for
+    // the Presenter, so its deal holds input to the end, past the take.
     expect(DEAL_STAGGER_MS).toBeGreaterThanOrEqual(30);
     expect(DEAL_STAGGER_MS).toBeLessThanOrEqual(40);
-    expect(t.blockingMs).toBe(HOLD_MS);
+    expect(t.blockingMs).toBe(deal.at + deal.dur);
+    expect(t.blockingMs).toBeGreaterThan(HOLD_MS);
   });
 
   it('the first age, after the draft, deals with no take and holds no input', () => {
@@ -284,7 +286,7 @@ describe('the age deal', () => {
     expect(t.blockingMs).toBe(0);
   });
 
-  it('an age that opens on the starter choice deals as the choice is answered, with no fade', () => {
+  it('an age that opens on the starter choice deals before the choice, and its answer deals nothing', () => {
     const opened = planTimeline(
       frame(
         11,
@@ -293,8 +295,12 @@ describe('the age deal', () => {
       ),
       before
     );
-    // The dialog covers the board: the discard's take and coins, no deal.
-    expect(opened.steps.map((s) => s.kind)).toEqual(['take', 'coins']);
+    // The take, its coins and the deal; the dialog waits for all of it.
+    expect(opened.steps.map((s) => s.kind)).toEqual(['take', 'coins', 'deal']);
+    const deal = only(opened.steps, 'deal')[0]!;
+    expect(deal).toMatchObject({ kind: 'deal', age: 2, at: 0, fade: DEAL_FADE_MS });
+    expect(opened.blockingMs).toBe(deal.at + deal.dur);
+    expect(cueOffsets(opened).ageStart).toBe(DEAL_LEAD_MS);
     const answered = planTimeline(
       frame(
         12,
@@ -303,9 +309,23 @@ describe('the age deal', () => {
       ),
       frame(11, [], view([9, 7], { structure: structure(20), phase: 'chooseStarter', age: 2 }))
     );
-    const deal = only(answered.steps, 'deal')[0]!;
-    expect(deal).toMatchObject({ kind: 'deal', age: 2, at: 0, fade: 0, lead: DEAL_LEAD_MS });
-    expect(answered.blockingMs).toBe(0);
+    expect(answered).toEqual(EMPTY_TIMELINE);
+  });
+
+  it('the starter answer deals only when the frame that opened the age was never shown', () => {
+    const answer = frame(
+      12,
+      [ev('starterChosen', { seat: 1, starter: 0 })],
+      view([9, 7], { structure: structure(20), phase: 'play', age: 2 })
+    );
+    // The last card of Age I was on screen: the old structure fades.
+    const skipped = planTimeline(
+      answer,
+      frame(10, [], view([9, 7], { structure: structure(3), phase: 'play', age: 1 }))
+    );
+    const deal = only(skipped.steps, 'deal')[0]!;
+    expect(deal).toMatchObject({ age: 2, fade: DEAL_FADE_MS });
+    expect(skipped.blockingMs).toBe(deal.at + deal.dur);
   });
 });
 

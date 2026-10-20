@@ -2,8 +2,9 @@
   // Pending choices and the completed-age dialog. The parent retains the
   // boundary snapshot independently of the starter choice, so every viewer
   // keeps the same totals until explicitly closing it. The final opponent
-  // summary precedes the first opening. A starter decision starts the deal;
-  // an already-open summary stays stable while it finishes behind the modal.
+  // summary precedes the first opening. The new age is dealt before the
+  // dialog opens (the Presenter holds that frame until its deal ends), and
+  // a starter decision keeps the open summary as it is.
   //
   // It decides nothing: the options are the view's choices, every action
   // button carries the choice's own key in data-act, and whether input is

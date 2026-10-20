@@ -29,17 +29,34 @@ describe('live age deals during catch-up', () => {
     }
   );
 
-  it.each(['wonderDraft', 'chooseStarter'])(
-    'deals when the Presenter coalesced the last %s frame before capture',
-    (phase) => {
-      const before = frame(1, [], phase === 'wonderDraft' ? 0 : 2);
-      before.view!.phase = phase;
-      const answer = frame(4, ['build'], phase === 'wonderDraft' ? 1 : 2);
-      const timeline = planTimeline(answer, before);
-      expect(timeline.steps.filter((s) => s.kind === 'deal')).toHaveLength(1);
-      expect(planTimeline(answer, null)).toEqual(EMPTY_TIMELINE);
-    }
-  );
+  it('deals when the Presenter coalesced the last wonderDraft frame before capture', () => {
+    const before = frame(1, [], 0);
+    before.view!.phase = 'wonderDraft';
+    const answer = frame(4, ['build'], 1);
+    const timeline = planTimeline(answer, before);
+    expect(timeline.steps.filter((s) => s.kind === 'deal')).toHaveLength(1);
+    expect(planTimeline(answer, null)).toEqual(EMPTY_TIMELINE);
+  });
+
+  it('never deals again after a starter choice on screen: its age was dealt when it opened', () => {
+    const before = frame(1, [], 2);
+    before.view!.phase = 'chooseStarter';
+    const answer = frame(4, ['build'], 2);
+    expect(planTimeline(answer, before).steps.filter((s) => s.kind === 'deal')).toHaveLength(0);
+  });
+
+  it('carries an opening deal into the starter choice frame, holding input to its end', () => {
+    const carry = new DealCarry();
+    const before = frame(1);
+    const start = frame(2, ['ageStart'], 2);
+    start.view!.phase = 'chooseStarter';
+    expect(carry.plan(start, before, planTimeline(start, before), 1)).toEqual(EMPTY_TIMELINE);
+    const shown = frame(3, [], 2);
+    shown.view!.phase = 'chooseStarter';
+    const caught = carry.plan(shown, start, EMPTY_TIMELINE, 0);
+    const deal = caught.steps.find((s) => s.kind === 'deal')!;
+    expect(caught.blockingMs).toBe(deal.at + deal.dur);
+  });
 
   it('still skips ordinary catch-up moves and drops the deal on resync/undo or a different age', () => {
     const carry = new DealCarry();

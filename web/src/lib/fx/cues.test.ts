@@ -206,13 +206,13 @@ describe('distinct event cues', () => {
     ).toEqual(['slide', 'chime', 'token']);
   });
 
-  it('waits for the starter answer to sound the new age deal', () => {
+  it('sounds the new age as it opens on the starter choice, not again for its answer', () => {
     const pending = {
       ...online(11, 1, [ev('ageStart')]),
       view: { ...online(11, 1).view, phase: 'chooseStarter', toMove: 0 }
     };
-    expect(names(pending)).toEqual([]);
-    expect(names(online(12, 0, [ev('starterChosen')]), pending)).toEqual(['ageStart']);
+    expect(names(pending)).toEqual(['ageStart']);
+    expect(names(online(12, 0, [ev('starterChosen')]), pending)).toEqual(['tick']);
     expect(names(frame(11, [ev('ageStart'), ev('draftRound'), ev('starterChosen')]))).toEqual([
       'ageStart'
     ]);

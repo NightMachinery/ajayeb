@@ -192,11 +192,12 @@ describe('actual delayed personal notification delivery', () => {
 });
 
 describe('age cue follows the played deal', () => {
+  // The last frame of Age I; the frame that opened Age II was skipped.
   const before: PlanFrame = {
     code: 'AGE',
     version: 1,
     events: [],
-    view: { phase: 'chooseStarter', age: 2, players: [] }
+    view: { phase: 'play', age: 1, players: [] }
   };
   const answer: PlanFrame = {
     code: 'AGE',
@@ -232,7 +233,7 @@ describe('age cue follows the played deal', () => {
       version: 2,
       events: [{ kind: 'starterChosen' as const, private: false }]
     };
-    start.view = { ...before.view!, phase: 'play' };
+    start.view = { ...before.view!, phase: 'play', age: 2 };
     const queued = carry.plan(start, before, planTimeline(start, before), 1);
     setPlanned(2, queued);
     vi.mocked(play).mockClear();

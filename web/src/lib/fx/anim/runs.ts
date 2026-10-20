@@ -19,7 +19,9 @@
 //   end     ends one run once: finishes its animations, runs its cleanup,
 //           and stamps its record (endAt, and whether it was cut short);
 //   hold    the play hook's promise: it resolves after `ms`, or at once on
-//           finishAll();
+//           finishAll(); given a kind to drain (an age deal that holds
+//           input to its end), not before every run of that kind ended,
+//           since the gate starts them a frame or two after the swap;
 //   finishAll  ends every run, cut short, and lets input go. A new frame,
 //           hurry() and clear() call it, so the screen never shows two
 //           frames at once.
@@ -51,6 +53,8 @@ export class Runs {
   #running = new Set<Run>();
   #release: (() => void) | null = null;
   #timer: ReturnType<typeof setTimeout> | null = null;
+  /** The kind whose runs the waiting hold also waits for. */
+  #drain: StepKind | null = null;
   /** While a gate is shut: what starts each held run when it opens. */
   #held: (() => void)[] | null = null;
 
@@ -156,24 +160,41 @@ export class Runs {
     run.cleanup();
     run.record.endAt = this.#now();
     run.record.interrupted = interrupted;
+    if (this.#drain === run.record.kind) this.#drained();
   }
 
-  /** Resolves after `ms`, or as soon as finishAll() runs. */
-  hold(ms: number, released: () => void): Promise<void> {
+  /**
+   * Resolves after `ms`, and once no run of `drain` (if given) is left, or
+   * as soon as finishAll() runs.
+   */
+  hold(ms: number, released: () => void, drain?: StepKind): Promise<void> {
     this.letGo();
     return new Promise<void>((resolve) => {
       this.#release = () => {
         released();
         resolve();
       };
-      this.#timer = setTimeout(() => this.letGo(), ms);
+      this.#drain = drain ?? null;
+      this.#timer = setTimeout(() => {
+        this.#timer = null;
+        this.#drained();
+      }, ms);
     });
+  }
+
+  /** Lets the hold go once its time is up and nothing it drains still runs. */
+  #drained(): void {
+    if (this.#timer !== null || !this.#release) return;
+    const kind = this.#drain;
+    if (kind && [...this.#running].some((run) => run.record.kind === kind)) return;
+    this.letGo();
   }
 
   /** Lets input go now, if a hold is waiting. */
   letGo(): void {
     if (this.#timer !== null) clearTimeout(this.#timer);
     this.#timer = null;
+    this.#drain = null;
     const release = this.#release;
     this.#release = null;
     release?.();

@@ -11,7 +11,9 @@
 //      normal speed and once with Animation off leave the same game screen.
 //   c. Input is back within 450 ms of a frame's swap at normal speed (the
 //      bot's dwell and pick, before the swap, are deliberate pacing),
-//      including an age deal and the first move after it.
+//      including an age deal and the first move after it. A frame that
+//      opens Age II or III is measured from its deal's end, which holds
+//      input by design (the starter choice comes after the deal).
 //   d. @perf: no long task over 50 ms overlaps an animation on a CPU slowed
 //      4 times, over at least ten moves, an age deal and a game end.
 //   e. Replay last move plays the move again and leaves the same screen; with
@@ -494,14 +496,21 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       const draft = await draftKeys(baseURL, SEED);
       const waits: { room: string; version: number; ms: number; steps: number }[] = [];
 
+      // A frame that opens Age II or III holds input until its deal ends,
+      // so the starter choice's dialog opens over a dealt board
+      // (M11.age-start-order): it is measured from the deal's end.
       const measure = async (room: string) => {
-        const { frames } = await fxRecords(page);
+        const { frames, anims } = await fxRecords(page);
         const at = await inputAt(page);
         for (const f of frames) {
           const back = at[f.version];
           if (back === undefined || f.steps === 0) continue;
           if (waits.some((w) => w.room === room && w.version === f.version)) continue;
-          waits.push({ room, version: f.version, ms: Math.round(back - f.swapAt), steps: f.steps });
+          const dealt = anims
+            .filter((a) => a.kind === 'deal' && a.version === f.version && a.endAt !== null)
+            .map((a) => a.endAt!);
+          const from = Math.max(f.swapAt, ...dealt);
+          waits.push({ room, version: f.version, ms: Math.round(back - from), steps: f.steps });
         }
       };
 
@@ -516,10 +525,9 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         await measure('hotseat');
       }
 
-      // An age change: the age's last card, the starter's answer (the deal
-      // plays then, as the dialog closes), and the first move of the age,
-      // which waits only for its own card to be dealt (a hidden card cannot
-      // be clicked).
+      // An age change: the age's last card (its frame deals the new age,
+      // before the starter choice), the starter's answer (which animates
+      // nothing) and the first move of the age.
       const age = await openPosition(page, baseURL, {
         mode: 'hotseat',
         seed: SEED,
@@ -594,7 +602,7 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         description: waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ')
       });
       expect(waits.filter((w) => w.room === 'hotseat').length).toBeGreaterThanOrEqual(4);
-      expect(waits.filter((w) => w.room === 'age').length).toBeGreaterThanOrEqual(3);
+      expect(waits.filter((w) => w.room === 'age').length).toBeGreaterThanOrEqual(2);
       expect(waits.filter((w) => w.room === 'ai').length).toBeGreaterThanOrEqual(2);
       const all = waits.map((w) => `${w.room} v${w.version}: ${w.ms}`).join(', ');
       for (const w of waits) {

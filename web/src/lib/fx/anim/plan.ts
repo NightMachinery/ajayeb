@@ -36,11 +36,11 @@
 //            everyone else;
 //   deal     a new age: the old structure fades out and the new one is
 //            dealt card by card (it starts with the frame, beside the take
-//            of the age's last card). When the age opens on the starter
-//            choice (Ages II and III), whose dialog covers the board, the
-//            deal waits for the frame that answers it (starterChosen), as
-//            the dialog closes; the old structure is gone by then, so that
-//            deal has no fade;
+//            of the age's last card). Ages II and III open on the starter
+//            choice, whose dialog waits for the Presenter: their deal holds
+//            input to its end, so the dialog, and a bot's or opponent's
+//            answer, come after it (M11.age-start-order). The answer deals
+//            nothing (fx/cues.ts opensAge);
 //   victory  the end of the game: a banner over the result screen, after
 //            everything else of the frame has played.
 //
@@ -56,7 +56,7 @@
 // hidden, so unclickable, until it lands.
 
 import type { GameEvent } from '$lib/wire';
-import { HAPTIC_LOOT, HAPTIC_MILITARY, HAPTIC_TAKE, isLive, type Cue } from '../cues';
+import { HAPTIC_LOOT, HAPTIC_MILITARY, HAPTIC_TAKE, isLive, opensAge, type Cue } from '../cues';
 
 /** A card's flight from its slot to where it goes. */
 export const TAKE_MS = 320;
@@ -530,23 +530,19 @@ export function planTimeline(next: PlanFrame, prev: PlanFrame | null): Timeline 
     draws += 1;
   }
 
-  // The starter choice's dialog covers the board: its answer deals instead.
-  const opened = events.find((e) => e.kind === 'ageStart');
+  // The frame that opens an age deals it (opensAge); the old structure
+  // fades out when one was on screen.
+  const opened = opensAge(next, prev);
   const age =
-    opened && next.view?.phase !== 'chooseStarter'
-      ? { age: opened.age ?? 0, fade: DEAL_FADE_MS }
-      : events.some((e) => e.kind === 'starterChosen')
-        ? { age: next.view?.age ?? 0, fade: 0 }
-        : // The Presenter may coalesce a zero-delay burst before capture.
-          // Its final live snapshot still visibly enters this age, even if
-          // the final draft/starter event was in a dropped frame.
-          next.view?.phase === 'play' &&
-            (next.view.age ?? 0) > 0 &&
-            (prev.view?.phase === 'wonderDraft' ||
-              prev.view?.phase === 'chooseStarter' ||
-              (prev.view?.age !== undefined && next.view.age !== prev.view.age))
-          ? { age: next.view.age ?? 0, fade: prev.view?.phase === 'play' ? DEAL_FADE_MS : 0 }
-          : null;
+    opened === null
+      ? null
+      : {
+          age: opened,
+          fade:
+            events.some((e) => e.kind === 'ageStart') || prev.view?.phase === 'play'
+              ? DEAL_FADE_MS
+              : 0
+        };
   if (age) {
     const cards = next.view?.structure?.filter((s) => s.state !== 'empty').length ?? DEAL_CARDS;
     steps.push({
@@ -579,8 +575,19 @@ export function planTimeline(next: PlanFrame, prev: PlanFrame | null): Timeline 
 
   if (steps.length === 0) return EMPTY_TIMELINE;
   const totalMs = Math.max(...steps.map((s) => s.at + s.dur));
-  const blockingMs = lead ? Math.min(lead.dur - LAND_MS, HOLD_MS) : 0;
+  const lifted = lead ? Math.min(lead.dur - LAND_MS, HOLD_MS) : 0;
+  const deal = steps.find((s): s is DealStep => s.kind === 'deal');
+  const blockingMs = Math.max(lifted, deal ? dealHold(deal) : 0);
   return { steps, blockingMs, totalMs };
+}
+
+/**
+ * How long a deal holds input: to its end for Ages II and III, whose dialog
+ * (the completed age and the starter choice) waits for the Presenter, so it
+ * opens over a dealt board; none for Age I, which opens on the board.
+ */
+export function dealHold(step: DealStep): number {
+  return step.age > 1 ? step.at + step.dur : 0;
 }
 
 /** When a lead step lands: a flight's end; a destroyed card leaves at once. */

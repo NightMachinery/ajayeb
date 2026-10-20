@@ -479,9 +479,16 @@
   const ageUnread = $derived(
     !!ageBoundary && !!view && view.age >= ageBoundary.age && !ageSummary.isDismissed(ageViewer)
   );
+  // Ages II and III open on the starter choice, and the Presenter holds that
+  // frame while its deal plays (fx/anim/plan.ts dealHold). The age dialog
+  // waits for the Presenter anyway; the pass-device screen and the move
+  // summary wait too, so nothing covers the deal (M11.age-start-order).
+  const dealing = $derived(!presenter.idle && view?.phase === 'chooseStarter');
   // Choosing the other starter must not unmount this holder's open age
   // summary. Their explicit close releases the requested handoff.
-  const showPass = $derived(passRequested && !(ageSummary.isShown(ageViewer) && ageUnread));
+  const showPass = $derived(
+    passRequested && !dealing && !(ageSummary.isShown(ageViewer) && ageUnread)
+  );
   // A chooser may take the final card and choose a starter before handing
   // the device on. Give the next holder that whole existing opponent run
   // before their unread age dialog, rather than only starterChosen.
@@ -513,6 +520,7 @@
   );
   const summaryOpen = $derived(
     pageVisible &&
+      !dealing &&
       !(ageSummary.isShown(ageViewer) && ageUnread) &&
       !!moveSummary &&
       (summaryManual ||

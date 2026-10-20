@@ -149,6 +149,31 @@ export function isLive(next: CueFrame, prev: CueFrame | null): boolean {
   );
 }
 
+/** The part of a frame that tells whether it opens an age. */
+export interface AgeFrame {
+  events: readonly GameEvent[];
+  view?: { phase?: string; age?: number };
+}
+
+/**
+ * The age whose deal (and age-start sound) a live frame shows, or null.
+ * It is the frame with the server's ageStart, also when the age opens on
+ * the starter choice (Ages II and III): the deal plays before that choice's
+ * dialog, which waits for it (M11.age-start-order). When the Presenter
+ * skipped or coalesced that frame, the first one shown in the new age's
+ * play deals instead. The answer to a starter choice already on screen
+ * never deals: its age was dealt when it opened, or it came with a history
+ * (a reload), which is never dealt again.
+ */
+export function opensAge(next: AgeFrame, prev: AgeFrame): number | null {
+  const opened = next.events.find((e) => e.kind === 'ageStart');
+  if (opened) return opened.age ?? next.view?.age ?? 0;
+  const age = next.view?.age ?? 0;
+  if (next.view?.phase !== 'play' || age <= 0) return null;
+  if (prev.view?.phase === 'wonderDraft') return age;
+  return prev.view?.age !== undefined && prev.view.age !== age ? age : null;
+}
+
 const NONE: CuePlan = { cues: [], haptic: null };
 
 /** A personal cue requires both a viewer seat and permission for that seat. */
@@ -214,18 +239,9 @@ export function planCues(next: CueFrame, prev: CueFrame | null, playedDeal?: boo
   if ((!live && !carried) || !prev) return NONE;
   const seen = new Set<Cue>();
   // With animation, use the runner's actual recovered/carried deal. Off
-  // has no visual timeline: server events and phase/age transitions retain
-  // the age feedback, including a coalesced starter/draft answer.
-  const deal =
-    playedDeal ??
-    (live &&
-      ((next.events.some((e) => e.kind === 'ageStart') && next.view?.phase !== 'chooseStarter') ||
-        next.events.some((e) => e.kind === 'starterChosen') ||
-        (next.view?.phase === 'play' &&
-          (next.view.age ?? 0) > 0 &&
-          (prev.view?.phase === 'chooseStarter' ||
-            prev.view?.phase === 'wonderDraft' ||
-            (prev.view?.age !== undefined && next.view.age !== prev.view.age)))));
+  // has no visual timeline: the frame that opens the age (opensAge) has
+  // the age feedback, including a coalesced draft answer.
+  const deal = playedDeal ?? (live && opensAge(next, prev) !== null);
   if (live)
     for (const e of next.events) {
       if (e.kind === 'ageStart') {

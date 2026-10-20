@@ -156,7 +156,7 @@ frame actually fits them. `ajayeb-gen fixtures` closes that gap:
   in `web/src/lib/wire/fixtures.gen.ts`, pooling repeated view fields with
   their own type assertions and cloning each use. The complete arrays retain
   their `satisfies` assertions: `fixtures satisfies ServerMessage[]` and `protocolFixtures
-  satisfies View[]`;
+satisfies View[]`;
 - `pnpm -C web check` (`svelte-check`, part of `make check-web`) then fails
   the moment a real recorded shape no longer fits the generated types,
   rather than at runtime in a browser;
@@ -463,6 +463,7 @@ separate macOS startup limitation and deferred iPhone checks described above.
   appeared: the turn bar's thinking state (`data-turn="aiThinking"`) and
   a seat panel's thinking dots (`.seat-panel[data-thinking]`), each on
   the change from absent to shown.
+
 - `hotseatPolicy` in `driver.ts`: deterministic, and chosen to walk every
   flow rather than to play well. The draft takes the first wonder on offer;
   a pending choice takes its first option; in play a wonder is built
@@ -697,8 +698,8 @@ wonder that moves coins (`appian-economy`), the Arsenal looting twice
 (`looting-double`), a bot's reply, a science pair and its token
 (`science-pair`), the Great Library and its token (`great-library`), the
 Statue of Zeus destroying a card (`zeus-destroy`), the Mausoleum
-rebuilding one (`mausoleum`), the last card of Age I and the starter's
-answer that deals Age II (`age-transition-chooser`), two draft picks, and a
+rebuilding one (`mausoleum`), the last card of Age I, which deals Age II,
+and the starter's answer (`age-transition-chooser`), two draft picks, and a
 game's last card (`civilian-end`).
 
 - **a. Off is instant.** `recordMotion` wraps `Element.prototype.animate`
@@ -718,10 +719,12 @@ game's last card (`civilian-end`).
 - **c. Input back within 450 ms.** `recordInputBack` notes, at each
   animation frame, the first moment the test hook's `ready()` and
   `you().canAct` are true for each version. For six hot-seat moves, an age
-  change (its last card, the starter's answer whose frame deals the new
-  age, and the first move of that age, which waits only for its own card
-  to be dealt) and three bot answers that animated, that moment minus the
-  frame's `swapAt` (`__ajayebFx.frames()`) must be at most 450 ms. The
+  change (its last card, whose frame deals the new age before the starter
+  choice, and the first move of that age) and three bot answers that
+  animated, that moment minus the frame's `swapAt` (`__ajayebFx.frames()`)
+  must be at most 450 ms. A frame that opens Age II or III holds input
+  until its deal ends, so that the starter choice's dialog opens over a
+  dealt board (M11.age-start-order): it is measured from the deal's end. The
   bot's dwell and pick come before the swap and are not counted. The
   failure message lists every measurement. Every exercised bot reply must
   supply a timed animation sample. The case uses the configured retry policy;
@@ -968,8 +971,7 @@ created, so a narrower `GREP` deals another game):
   ply 18, A was offline about 4 s at ply 28 (the page read `offline`,
   opened 5 sockets in all, and caught up about 0.1 s after the network
   came back); seat 1 drew strategy, philosophy and urbanism from the Great
-  Library; a military win for seat 1. Frames: A 80, B 78, the spectator
-  67. The leak check made 730 face-down checks against 60 learned slots
+  Library; a military win for seat 1. Frames: A 80, B 78, the spectator 67. The leak check made 730 face-down checks against 60 learned slots
   and covered 9 removed cards, 4 box guilds, 4 box wonders, 4 box tokens,
   the 4 second-round wonders and 20 cards per age. About 63 s.
 - mobile (A at the Moon): 70 plies, 38 moves by A and 32 by B; spectator
@@ -1027,7 +1029,7 @@ bare `playwright test` run with `E2E_BASE_URL` set, the way a human might
 run it directly, passes no `--grep` at all.) So `playwright.config.ts` gives
 the `mobile` project a conditional `grep` too: in production-smoke mode it
 requires both `@prod` and `@mobile` (a single regex with two lookaheads,
-since Playwright treats an *array* of patterns as OR, not AND). Since
+since Playwright treats an _array_ of patterns as OR, not AND). Since
 `prod.smoke.spec.ts` carries only `@prod`, the `mobile` project matches none
 of it by default, so a plain `make e2e-prod` runs the desktop project only;
 tagging a test `@mobile` as well, once it is confirmed to also pass that
@@ -1236,7 +1238,6 @@ badge. They cover English and Persian, real touch long-press and desktop hover,
 with counting hints disabled, plus 360 px fit and card avoidance. The existing
 Age III UX DOM budget still applies while city disclosures are closed.
 
-
 ## The tutorial (M10.tutorial-client)
 
 Two specs walk the guided first game, both through the tutorial's DOM contract only (web/README.md, "The tutorial") and the test hook's `tutorial()` and `coach()`. They share one walk in `e2e/fixtures/tutorial.ts`, which reads the expected lesson order and guided keys from `GET /api/dev/tutorial`, so a changed script needs no change in the tests.
@@ -1252,7 +1253,6 @@ Two specs walk the guided first game, both through the tutorial's DOM contract o
 python3 tools/heavy.py run --kind browser -- node tools/chrome/tutorial-walk.mjs \
   --origin http://127.0.0.1:38951 --vp 360x740@2 --out /tmp/walk
 ```
-
 
 ## Text contrast regressions
 
@@ -1430,7 +1430,6 @@ checks compare coach bubbles with the measured top bar and hint pips with
 neighboring chip borders. A scrolled card detail body must scroll upward
 before a downward drag can dismiss its sheet.
 
-
 ### Home loading and prerendered paint
 
 `home-loading.spec.ts` runs on both desktop and mobile. It checks Home with
@@ -1495,7 +1494,6 @@ handler tests keep prerendered Home separate from the generic shell, preserve
 legacy builds and retain missing-asset 404 behavior. Use the unchanged UX budget
 test for timing evidence: it reports measurements without asserting its limits,
 so inspect the three LCP samples, their median and the script-byte breakdown.
-
 
 ## Completed ages and result actions
 

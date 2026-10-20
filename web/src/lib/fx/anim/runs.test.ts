@@ -99,6 +99,27 @@ describe('Runs', () => {
     expect(released).toHaveBeenCalledTimes(1);
   });
 
+  it('a hold that drains the deal waits for its last card as well as its time', async () => {
+    const runs = new Runs(() => now);
+    const card = fake();
+    runs.track(5, 'deal', [card], () => {});
+    runs.track(5, 'take', [fake()], () => {});
+    let done = false;
+    void runs.hold(320, () => {}, 'deal').then(() => (done = true));
+    await vi.advanceTimersByTimeAsync(400);
+    expect(done, 'the card started late and still flies').toBe(false);
+    card.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(done, 'other kinds do not hold it').toBe(true);
+    // Drained before its time: the time still holds.
+    done = false;
+    void runs.hold(320, () => {}, 'deal').then(() => (done = true));
+    await vi.advanceTimersByTimeAsync(319);
+    expect(done).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(done).toBe(true);
+  });
+
   it('an interrupt lets input go at once', async () => {
     const runs = new Runs(() => now);
     runs.track(5, 'take', [fake()], () => {});

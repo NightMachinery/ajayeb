@@ -66,6 +66,7 @@ import {
 } from './dom';
 import { fxLayer, fxTop } from './layer';
 import {
+  dealHold,
   EMPTY_TIMELINE,
   planTimeline,
   type CoinStep,
@@ -514,7 +515,11 @@ export class AnimRunner {
       cap.record.releasedAt = this.#now();
       return Promise.resolve();
     }
-    return this.#runs.hold(block, () => (cap.record.releasedAt = this.#now()));
+    // An age deal that holds input does so until its last card has landed.
+    const drain = cap.timeline.steps.some((s) => s.kind === 'deal' && dealHold(s) > 0)
+      ? 'deal'
+      : undefined;
+    return this.#runs.hold(block, () => (cap.record.releasedAt = this.#now()), drain);
   }
 
   /** Reads what a step needs and returns the function that starts it. */
