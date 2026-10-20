@@ -70,7 +70,7 @@ and preventing returning players from briefly seeing the first-launch offer.
 - `src/routes/` holds the pages. `/` is Home, `/play/<code>` is a room, `/rules` is the rules reference, and `/dev/*` holds the developer pages.
 - `static/` is served as is under stable names: the font licenses, the favicon, the web manifest and app icons, and the approved bitmap art under `static/art/` (see Bitmap art).
 - `src/lib/fonts/` holds the shipped WOFF2 fonts and their licenses. `src/app.css` names them, so the build emits them under content-hashed URLs in `/_app/immutable/assets/`.
-- `font-sources/` keeps the original TTF fonts and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `src/lib/fonts/`.
+- `font-sources/` keeps the original TTF fonts with their OFL license texts, and `subset.sh`, which rebuilds the shipped WOFF2 subsets in `src/lib/fonts/`.
 
 ## Session: talking to the server
 
