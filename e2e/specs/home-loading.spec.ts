@@ -262,7 +262,8 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
       // while the parser runs can precede the stylesheet that hides it.
       const state = window as unknown as { __offerPainted?: boolean };
       const frame = () => {
-        if (document.querySelector('[data-tutorial-offer]')?.checkVisibility())
+        const offer = document.querySelector('[data-tutorial-offer]');
+        if (offer?.checkVisibility({ visibilityProperty: true, opacityProperty: true }))
           state.__offerPainted = true;
         requestAnimationFrame(frame);
       };
