@@ -27,7 +27,7 @@ import { session } from './en/session';
 import { shell } from './en/shell';
 import { tutorial } from './en/tutorial';
 import { dirFor, i18n } from './locale.svelte';
-import type { Message, PluralForms } from './types';
+import type { Message, Messages, PluralForms } from './types';
 
 export { i18n, dirFor, isLocale, LOCALES, type Dir, type Locale } from './locale.svelte';
 export type { Message, Messages, PluralForms } from './types';
@@ -207,18 +207,75 @@ const FALLBACK_END = '\u2069\u200e';
  * a cast) returns the key itself.
  */
 export function t<K extends MessageKey>(key: K, ...args: ParamsArg<K>): string {
+  const chosen = chooseMessage(key, args[0] as AnyParams | undefined);
+  if (!chosen) return key;
+  const filled = interpolate(chosen.text, chosen.params, chosen.locale);
+  return chosen.rtlFallback ? FALLBACK_START + filled + FALLBACK_END : filled;
+}
+
+/** The text t() fills in for a key: the locale's own, else the English
+ *  one (its plural form chosen by English rules); undefined for an unknown
+ *  key. */
+function chooseMessage(
+  key: string,
+  params: AnyParams | undefined
+):
+  | { text: string; params: AnyParams | undefined; locale: string; rtlFallback: boolean }
+  | undefined {
   const locale = i18n.locale;
-  const params = args[0] as AnyParams | undefined;
-  const own: Message | undefined = currentTable()[key];
-  const message: Message | undefined = own ?? en[key];
-  if (message === undefined) return key;
+  const own: Message | undefined = (currentTable() as Messages)[key];
+  const message: Message | undefined = own ?? (en as Messages)[key];
+  if (message === undefined) return undefined;
   const fallback = own === undefined && locale !== 'en';
   const text =
     typeof message === 'string'
       ? message
       : selectPlural(message, Number(params?.['count'] ?? Number.NaN), fallback ? 'en' : locale);
-  const filled = interpolate(text, params, locale);
-  return fallback && dirFor(locale) === 'rtl' ? FALLBACK_START + filled + FALLBACK_END : filled;
+  return { text, params, locale, rtlFallback: fallback && dirFor(locale) === 'rtl' };
+}
+
+/** A piece of a message cut at its slots: a run of text, or a slot. */
+export type MessagePiece = string | { readonly slot: string };
+
+/**
+ * A message as t() gives it, and the same message cut at the placeholders
+ * named in `slots` (the parts of a sentence a caller draws itself, such as
+ * a card name with its tooltip). The cut is made in the message before any
+ * value is filled in, so no value (a player's name is the player's own
+ * text) can ever be taken for a slot. Each run has the other params filled
+ * in as t() fills them; a slot's value is the caller's to draw, without the
+ * right-to-left isolate t() puts around a value (the caller's element
+ * isolates itself). Empty runs are left out. Joined back, with each slot's
+ * value in that isolate, the pieces are the text.
+ */
+export function tSlots<K extends MessageKey>(
+  key: K,
+  params: MessageParams<K>,
+  slots: readonly (keyof MessageParams<K> & string)[]
+): { text: string; pieces: MessagePiece[] } {
+  const values = params as unknown as AnyParams;
+  const chosen = chooseMessage(key, values);
+  if (!chosen) return { text: key, pieces: [key] };
+  const fill = (run: string): string => interpolate(run, values, chosen.locale);
+  const pieces: MessagePiece[] = [];
+  let at = 0;
+  for (const match of chosen.text.matchAll(/\{(\w+)\}/g)) {
+    const name = match[1]!;
+    if (!(slots as readonly string[]).includes(name)) continue;
+    pieces.push(fill(chosen.text.slice(at, match.index)), { slot: name });
+    at = match.index + match[0].length;
+  }
+  pieces.push(fill(chosen.text.slice(at)));
+  // The first and last pieces are always runs (perhaps empty ones).
+  if (chosen.rtlFallback) {
+    pieces[0] = FALLBACK_START + (pieces[0] as string);
+    pieces[pieces.length - 1] = (pieces[pieces.length - 1] as string) + FALLBACK_END;
+  }
+  const text = fill(chosen.text);
+  return {
+    text: chosen.rtlFallback ? FALLBACK_START + text + FALLBACK_END : text,
+    pieces: pieces.filter((piece) => piece !== '')
+  };
 }
 
 /** Whether t() returned this text as an English fallback in a right-to-left

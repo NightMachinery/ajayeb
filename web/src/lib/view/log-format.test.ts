@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { i18n } from '$lib/i18n';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
 import type { GameEvent, State } from '$lib/wire';
-import { formatLogEvent, groupLogByAge } from './log-format';
+import { formatLogEvent, groupLogByAge, type LogLine } from './log-format';
 
 const names = ['Sara', 'Omid'] as const;
 
@@ -317,3 +317,83 @@ describe('formatLogEvent: the items a line names', () => {
     expect(text).toBe(line?.text);
   });
 });
+
+describe('formatLogEvent: a player name is only ever text', () => {
+  afterEach(() => i18n.set('en'));
+  const event = (partial: Partial<GameEvent> & { kind: GameEvent['kind'] }): GameEvent => ({
+    private: false,
+    ...partial
+  });
+  // Names a player may choose that look like markers or placeholders: an
+  // out-of-range and an in-range private-use marker, and the item
+  // placeholders themselves.
+  const outOfRange = '\ue00099\ue000';
+  const inRange = '\ue0000\ue000';
+  const shaped = [outOfRange, inRange, '{card}', '{wonder}', '{source}'];
+  const isolate = (s: string, rtl: boolean) => (rtl ? `\u2068${s}\u2069` : s);
+  /** The parts joined back as t() fills a value in: each item's name in
+   *  the right-to-left isolate. */
+  const joined = (line: LogLine | null, rtl: boolean) =>
+    line?.parts?.map((p) => (typeof p === 'string' ? p : isolate(p.text, rtl))).join('');
+  const lines = (names: readonly [string, string]) =>
+    [
+      event({ kind: 'build', seat: 0, card: 'baths' }),
+      event({ kind: 'discard', seat: 1, card: 'quarry', amount: 3 }),
+      event({ kind: 'wonder', seat: 1, wonder: 'pyramids', card: 'baths' }),
+      event({ kind: 'draft', seat: 0, wonder: 'piraeus' }),
+      event({ kind: 'token', seat: 1, token: 'law' }),
+      event({ kind: 'wonderRemoved', seat: 1, wonder: 'colossus' }),
+      event({ kind: 'effectSkipped', seat: 0, wonder: 'statue-of-zeus', skipped: 'destroyCard' })
+    ].map((e) => formatLogEvent(e, names));
+
+  for (const locale of ['en', 'fa'] as const) {
+    it(`keeps marker- and placeholder-shaped names whole, in ${locale}`, async () => {
+      await i18n.set(locale);
+      const rtl = locale === 'fa';
+      for (const name of shaped) {
+        for (const line of lines([name, name])) {
+          expect(line?.parts, line?.text).toBeDefined();
+          // Every item is one the event names, never undefined or a name.
+          for (const part of line!.parts!) {
+            if (typeof part !== 'string') expect(part.text).not.toContain(name);
+          }
+          // The name is in a plain run, as the player wrote it.
+          const runs = line!.parts!.filter((p) => typeof p === 'string').join('');
+          expect(runs).toContain(isolate(name, rtl));
+          // The parts are the text.
+          expect(joined(line, rtl)).toBe(line!.text);
+        }
+      }
+    });
+
+    it(`round-trips every named line to its text, in ${locale}`, async () => {
+      await i18n.set(locale);
+      for (const line of lines(names)) expect(joined(line, locale === 'fa')).toBe(line!.text);
+    });
+  }
+
+  it('an in-range marker name stays the name, not the wonder', () => {
+    const line = formatLogEvent(
+      event({ kind: 'wonder', seat: 0, wonder: 'pyramids', card: 'baths' }),
+      [inRange, outOfRange]
+    );
+    expect(line?.parts).toEqual([
+      `${inRange} built the wonder `,
+      { kind: 'wonder', slug: 'pyramids', text: 'Pyramids' },
+      ', using ',
+      { kind: 'card', slug: 'baths', text: 'Baths' },
+      '.'
+    ]);
+  });
+
+  it('an opponent named like the wonder is mentioned as text beside the wonder', () => {
+    const line = formatLogEvent(
+      event({ kind: 'effectSkipped', seat: 0, wonder: 'statue-of-zeus', skipped: 'destroyCard' }),
+      ['Statue of Zeus', 'Statue of Zeus']
+    );
+    expect(line?.parts).toEqual([
+      'Nothing to destroy for ',
+      { kind: 'wonder', slug: 'statue-of-zeus', text: 'Statue of Zeus' },
+      ': Statue of Zeus has no card of that colour.'
+    ]);
+  });

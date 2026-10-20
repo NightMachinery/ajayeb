@@ -10,18 +10,17 @@
 //
 // A line that names a card, wonder or progress token also carries `parts`:
 // the same sentence cut into plain runs and the named items, in reading
-// order, so the LogSheet can give each name its detail tooltip. The cut
-// comes from the translated message itself (the items are filled in as
-// markers, then split out), so it follows each locale's word order; the
-// right-to-left isolate interpolate() puts around a value is dropped with
-// its marker, since the LogSheet's item element isolates the name itself.
+// order, so the LogSheet can give each name its detail tooltip. The cut is
+// made in the translated message at the items' placeholders, before any
+// value is filled in (i18n tSlots), so it follows each locale's word order
+// and a player's name, whatever it contains, is never taken for an item.
 //
 // Player names are not in the view (PlayerView has no `name`; that is
 // RoomInfo.seats[].name, a different message), so callers pass them in
 // as data to interpolate, not as translated UI copy.
 
 import { cardName, wonderName } from '$lib/components/card/effect-text';
-import { ageLabel, t } from '$lib/i18n';
+import { ageLabel, t, tSlots, type MessageKey, type MessageParams } from '$lib/i18n';
 import type { GameEvent, ScienceSymbol } from '$lib/wire';
 
 export type SeatNames = readonly [string, string];
@@ -104,29 +103,23 @@ const card = (slug: string): LogItem => ({ kind: 'card', slug, text: cardName(sl
 const wonder = (slug: string): LogItem => ({ kind: 'wonder', slug, text: wonderName(slug) });
 const token = (slug: string): LogItem => ({ kind: 'token', slug, text: tokenName(slug) });
 
-/** A placeholder's marker, from the Unicode private use area. */
-const MARK = '\ue000';
-/** A marker with the isolate interpolate() may put around it. */
-const MARKED = /\u2068?\ue000(\d+)\ue000\u2069?/u;
-
 /**
- * A message that names items: its text with their names, and the same text
- * cut into plain runs and the items. `render` fills the message, taking
- * each item's value from `item(i)`.
+ * A message that names items: its text with their names filled in, and the
+ * same text cut into plain runs and the items. `items` gives the item for
+ * each of the message's item placeholders, `params` the rest.
  */
-function named(
-  render: (item: (i: number) => string) => string,
-  items: readonly LogItem[]
+function named<K extends MessageKey, S extends keyof MessageParams<K> & string>(
+  key: K,
+  params: Omit<MessageParams<K>, S>,
+  items: Readonly<Record<S, LogItem>>
 ): { text: string; parts: LogPart[] } {
-  const text = render((i) => items[i]!.text);
-  const parts: LogPart[] = [];
-  render((i) => `${MARK}${i}${MARK}`)
-    .split(MARKED)
-    .forEach((piece, j) => {
-      if (j % 2 === 1) parts.push(items[Number(piece)]!);
-      else if (piece) parts.push(piece);
-    });
-  return { text, parts };
+  const slots = Object.keys(items) as S[];
+  const names = Object.fromEntries(slots.map((slot) => [slot, items[slot].text]));
+  const { text, pieces } = tSlots(key, { ...params, ...names } as MessageParams<K>, slots);
+  return {
+    text,
+    parts: pieces.map((piece) => (typeof piece === 'string' ? piece : items[piece.slot as S]))
+  };
 }
 
 /**
@@ -141,7 +134,7 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        ...named((item) => t('board.log.draft', { name, wonder: item(0) }), [wonder(event.wonder)])
+        ...named('board.log.draft', { name }, { wonder: wonder(event.wonder) })
       };
     case 'draftRound':
       if (event.round !== 2) return null;
@@ -153,7 +146,7 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        ...named((item) => t('board.log.build', { name, card: item(0) }), [card(event.card)])
+        ...named('board.log.build', { name }, { card: card(event.card) })
       };
     case 'discard':
       if (!event.card) return null;
@@ -161,8 +154,9 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
         ...named(
-          (item) => t('board.log.discard', { name, card: item(0), amount: event.amount ?? 0 }),
-          [card(event.card)]
+          'board.log.discard',
+          { name, amount: event.amount ?? 0 },
+          { card: card(event.card) }
         )
       };
     case 'wonder':
@@ -171,8 +165,9 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
         ...named(
-          (item) => t('board.log.wonder', { name, wonder: item(0), card: item(1) }),
-          [wonder(event.wonder), card(event.card)]
+          'board.log.wonder',
+          { name },
+          { wonder: wonder(event.wonder), card: card(event.card) }
         )
       };
     case 'pay':
@@ -291,26 +286,15 @@ function skipped(
   switch (event.skipped) {
     case 'destroyCard':
       if (source && opponent)
-        return named(
-          (item) => t('board.log.skipped.destroyCard', { source: item(0), opponent }),
-          [source]
-        );
+        return named('board.log.skipped.destroyCard', { opponent }, { source });
       break;
     case 'buildFromDiscard':
-      if (source)
-        return named(
-          (item) => t('board.log.skipped.buildFromDiscard', { source: item(0) }),
-          [source]
-        );
+      if (source) return named('board.log.skipped.buildFromDiscard', {}, { source });
       break;
     case 'pickBoardToken':
       return { text: t('board.log.skipped.pickBoardToken') };
     case 'pickLibraryToken':
-      if (source)
-        return named(
-          (item) => t('board.log.skipped.pickLibraryToken', { source: item(0) }),
-          [source]
-        );
+      if (source) return named('board.log.skipped.pickLibraryToken', {}, { source });
       break;
     default:
       break;
