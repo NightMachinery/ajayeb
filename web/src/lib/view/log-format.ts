@@ -8,6 +8,14 @@
 // up in the line for the move that caused them (a build, a discard, a
 // wonder, a token), or, for gameOver, in the GameOver screen itself.
 //
+// A line that names a card, wonder or progress token also carries `parts`:
+// the same sentence cut into plain runs and the named items, in reading
+// order, so the LogSheet can give each name its detail tooltip. The cut
+// comes from the translated message itself (the items are filled in as
+// markers, then split out), so it follows each locale's word order; the
+// right-to-left isolate interpolate() puts around a value is dropped with
+// its marker, since the LogSheet's item element isolates the name itself.
+//
 // Player names are not in the view (PlayerView has no `name`; that is
 // RoomInfo.seats[].name, a different message), so callers pass them in
 // as data to interpolate, not as translated UI copy.
@@ -18,10 +26,22 @@ import type { GameEvent, ScienceSymbol } from '$lib/wire';
 
 export type SeatNames = readonly [string, string];
 
+/** A card, wonder or progress token a log line names, with its name. */
+export interface LogItem {
+  readonly kind: 'card' | 'wonder' | 'token';
+  readonly slug: string;
+  readonly text: string;
+}
+
+/** A piece of a log line: a plain run of text, or a named item. */
+export type LogPart = string | LogItem;
+
 export interface LogLine {
   readonly kind: GameEvent['kind'];
   readonly text: string;
   readonly seat?: 0 | 1;
+  /** The text cut around the items it names; absent when it names none. */
+  readonly parts?: readonly LogPart[];
 }
 
 export interface LogAgeGroup {
@@ -80,6 +100,35 @@ function scienceSymbolName(symbol: ScienceSymbol): string {
   }
 }
 
+const card = (slug: string): LogItem => ({ kind: 'card', slug, text: cardName(slug) });
+const wonder = (slug: string): LogItem => ({ kind: 'wonder', slug, text: wonderName(slug) });
+const token = (slug: string): LogItem => ({ kind: 'token', slug, text: tokenName(slug) });
+
+/** A placeholder's marker, from the Unicode private use area. */
+const MARK = '\ue000';
+/** A marker with the isolate interpolate() may put around it. */
+const MARKED = /\u2068?\ue000(\d+)\ue000\u2069?/u;
+
+/**
+ * A message that names items: its text with their names, and the same text
+ * cut into plain runs and the items. `render` fills the message, taking
+ * each item's value from `item(i)`.
+ */
+function named(
+  render: (item: (i: number) => string) => string,
+  items: readonly LogItem[]
+): { text: string; parts: LogPart[] } {
+  const text = render((i) => items[i]!.text);
+  const parts: LogPart[] = [];
+  render((i) => `${MARK}${i}${MARK}`)
+    .split(MARKED)
+    .forEach((piece, j) => {
+      if (j % 2 === 1) parts.push(items[Number(piece)]!);
+      else if (piece) parts.push(piece);
+    });
+  return { text, parts };
+}
+
 /**
  * One event, translated to one log line, or null for a kind this log does
  * not show on its own (see the file comment).
@@ -92,7 +141,7 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.draft', { name, wonder: wonderName(event.wonder) })
+        ...named((item) => t('board.log.draft', { name, wonder: item(0) }), [wonder(event.wonder)])
       };
     case 'draftRound':
       if (event.round !== 2) return null;
@@ -104,29 +153,27 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.build', { name, card: cardName(event.card) })
+        ...named((item) => t('board.log.build', { name, card: item(0) }), [card(event.card)])
       };
     case 'discard':
       if (!event.card) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.discard', {
-          name,
-          card: cardName(event.card),
-          amount: event.amount ?? 0
-        })
+        ...named(
+          (item) => t('board.log.discard', { name, card: item(0), amount: event.amount ?? 0 }),
+          [card(event.card)]
+        )
       };
     case 'wonder':
       if (!event.wonder || !event.card) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.wonder', {
-          name,
-          wonder: wonderName(event.wonder),
-          card: cardName(event.card)
-        })
+        ...named(
+          (item) => t('board.log.wonder', { name, wonder: item(0), card: item(1) }),
+          [wonder(event.wonder), card(event.card)]
+        )
       };
     case 'pay':
     case 'reveal':
@@ -161,7 +208,7 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.token', { name, token: tokenName(event.token) })
+        ...named((item) => t('board.log.token', { name, token: item(0) }), [token(event.token)])
       };
     case 'libraryDraw':
       return {
@@ -174,27 +221,30 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.destroy', { name, card: cardName(event.card) })
+        ...named((item) => t('board.log.destroy', { name, card: item(0) }), [card(event.card)])
       };
     case 'rebuild':
       if (!event.card) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.rebuild', { name, card: cardName(event.card) })
+        ...named((item) => t('board.log.rebuild', { name, card: item(0) }), [card(event.card)])
       };
     case 'wonderRemoved':
       if (!event.wonder) return null;
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: t('board.log.wonderRemoved', { name, wonder: wonderName(event.wonder) })
+        ...named(
+          (item) => t('board.log.wonderRemoved', { name, wonder: item(0) }),
+          [wonder(event.wonder)]
+        )
       };
     case 'effectSkipped':
       return {
         kind: event.kind,
         seat: event.seat as 0 | 1 | undefined,
-        text: skippedText(event, names, name)
+        ...skipped(event, names, name)
       };
     case 'extraTurn':
       return {
@@ -228,32 +278,44 @@ export function formatLogEvent(event: GameEvent, names: SeatNames): LogLine | nu
 
 /**
  * Why a choice was skipped, from the choice it would have opened and the
- * wonder (or card) that opened it. Falls back to the plain line when the
- * event names neither.
+ * wonder (or card) that opened it, which the line names. Falls back to the
+ * plain line when the event names neither.
  */
-function skippedText(event: GameEvent, names: SeatNames, name: string): string {
-  const source = event.wonder
-    ? wonderName(event.wonder)
-    : event.card
-      ? cardName(event.card)
-      : undefined;
+function skipped(
+  event: GameEvent,
+  names: SeatNames,
+  name: string
+): { text: string; parts?: LogPart[] } {
+  const source = event.wonder ? wonder(event.wonder) : event.card ? card(event.card) : undefined;
   const opponent = seatName(names, event.seat === 0 ? 1 : event.seat === 1 ? 0 : undefined);
   switch (event.skipped) {
     case 'destroyCard':
-      if (source && opponent) return t('board.log.skipped.destroyCard', { source, opponent });
+      if (source && opponent)
+        return named(
+          (item) => t('board.log.skipped.destroyCard', { source: item(0), opponent }),
+          [source]
+        );
       break;
     case 'buildFromDiscard':
-      if (source) return t('board.log.skipped.buildFromDiscard', { source });
+      if (source)
+        return named(
+          (item) => t('board.log.skipped.buildFromDiscard', { source: item(0) }),
+          [source]
+        );
       break;
     case 'pickBoardToken':
-      return t('board.log.skipped.pickBoardToken');
+      return { text: t('board.log.skipped.pickBoardToken') };
     case 'pickLibraryToken':
-      if (source) return t('board.log.skipped.pickLibraryToken', { source });
+      if (source)
+        return named(
+          (item) => t('board.log.skipped.pickLibraryToken', { source: item(0) }),
+          [source]
+        );
       break;
     default:
       break;
   }
-  return t('board.log.effectSkipped', { name });
+  return { text: t('board.log.effectSkipped', { name }) };
 }
 
 /**

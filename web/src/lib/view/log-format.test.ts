@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+import { i18n } from '$lib/i18n';
 import { fixtureNames, fixtures } from '$lib/wire/fixtures.gen';
 import type { GameEvent, State } from '$lib/wire';
 import { formatLogEvent, groupLogByAge } from './log-format';
@@ -40,7 +41,8 @@ describe('formatLogEvent: real recorded events', () => {
     expect(formatLogEvent(build, names)).toEqual({
       kind: 'build',
       seat: 0,
-      text: 'Sara built Walls.'
+      text: 'Sara built Walls.',
+      parts: ['Sara built ', { kind: 'card', slug: 'walls', text: 'Walls' }, '.']
     });
     // Mechanical kinds that another line already covers are left out.
     expect(formatLogEvent(pay, names)).toBeNull();
@@ -61,7 +63,8 @@ describe('formatLogEvent: real recorded events', () => {
     expect(formatLogEvent(build, names)).toEqual({
       kind: 'build',
       seat: 0,
-      text: 'Sara built Library.'
+      text: 'Sara built Library.',
+      parts: ['Sara built ', { kind: 'card', slug: 'library', text: 'Library' }, '.']
     });
     expect(pair.symbol).toBe('quill');
     expect(formatLogEvent(pair, names)).toEqual({
@@ -78,7 +81,8 @@ describe('formatLogEvent: real recorded events', () => {
     expect(formatLogEvent(build, names)).toEqual({
       kind: 'build',
       seat: 1,
-      text: 'Omid built Clay Pool.'
+      text: 'Omid built Clay Pool.',
+      parts: ['Omid built ', { kind: 'card', slug: 'clay-pool', text: 'Clay Pool' }, '.']
     });
     expect(formatLogEvent(reveal, names)).toBeNull();
   });
@@ -241,5 +245,75 @@ describe('formatLogEvent: a skipped choice says why', () => {
         names
       )?.text
     ).toBe('Sara has no option for that choice.');
+  });
+});
+
+describe('formatLogEvent: the items a line names', () => {
+  afterEach(() => i18n.set('en'));
+  const event = (partial: Partial<GameEvent> & { kind: GameEvent['kind'] }): GameEvent => ({
+    private: false,
+    ...partial
+  });
+
+  it('cuts a wonder line around its wonder and its card, in reading order', () => {
+    const line = formatLogEvent(
+      event({ kind: 'wonder', seat: 0, wonder: 'pyramids', card: 'baths' }),
+      names
+    );
+    expect(line?.parts).toEqual([
+      'Sara built the wonder ',
+      { kind: 'wonder', slug: 'pyramids', text: 'Pyramids' },
+      ', using ',
+      { kind: 'card', slug: 'baths', text: 'Baths' },
+      '.'
+    ]);
+  });
+
+  it('names a drafted wonder, a token and a skipped choice’s source', () => {
+    expect(
+      formatLogEvent(event({ kind: 'draft', seat: 1, wonder: 'piraeus' }), names)?.parts
+    ).toEqual(['Omid drafted ', { kind: 'wonder', slug: 'piraeus', text: 'Piraeus' }, '.']);
+    expect(formatLogEvent(event({ kind: 'token', seat: 0, token: 'law' }), names)?.parts).toEqual([
+      'Sara takes the ',
+      { kind: 'token', slug: 'law', text: 'Law' },
+      ' token.'
+    ]);
+    const zeus = event({
+      kind: 'effectSkipped',
+      seat: 0,
+      wonder: 'statue-of-zeus',
+      skipped: 'destroyCard'
+    });
+    expect(formatLogEvent(zeus, names)?.parts?.[1]).toEqual({
+      kind: 'wonder',
+      slug: 'statue-of-zeus',
+      text: 'Statue of Zeus'
+    });
+  });
+
+  it('a line that names nothing has no parts', () => {
+    for (const e of [
+      event({ kind: 'pawn', from: 0, to: 1 }),
+      event({ kind: 'loot', seat: 1, amount: 2, value: 2 }),
+      event({ kind: 'ageStart', age: 2 }),
+      event({ kind: 'effectSkipped', seat: 0, skipped: 'pickBoardToken' })
+    ]) {
+      expect(formatLogEvent(e, names)?.parts).toBeUndefined();
+    }
+  });
+
+  it('follows the Persian word order, isolating the player name but not the item', async () => {
+    await i18n.set('fa');
+    const line = formatLogEvent(event({ kind: 'build', seat: 0, card: 'baths' }), names);
+    const item = line?.parts?.[1];
+    expect(line?.parts).toHaveLength(3);
+    expect(line?.parts?.[0]).toBe('\u2068Sara\u2069 ');
+    expect(item).toMatchObject({ kind: 'card', slug: 'baths' });
+    expect(line?.parts?.[2]).toBe(' را ساخت.');
+    // The text is the parts joined, with the item's name back in its isolate.
+    const text = line?.parts
+      ?.map((p) => (typeof p === 'string' ? p : `\u2068${p.text}\u2069`))
+      .join('');
+    expect(text).toBe(line?.text);
   });
 });
