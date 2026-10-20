@@ -246,11 +246,19 @@ func TestBadClaimRefused(t *testing.T) {
 	otherClaim := d.link(0, false).Claim
 	a.current()
 
+	// A forged claim differs from the real one in its first character. A
+	// fixed replacement would equal the original whenever the random room
+	// code gives a claim that already starts with it.
+	genuine := h.secret.Claim(code, "user-a", 0)
+	forged := "x" + genuine[1:]
+	if genuine[0] == 'x' {
+		forged = "y" + genuine[1:]
+	}
 	bad := map[string]string{
 		"garbage":      "not a claim",
 		"right shape":  "AAAAAAAAAAAAAAAAAAAAAA",
 		"other room":   otherClaim,
-		"other secret": "x" + h.secret.Claim(code, "user-a", 0)[1:],
+		"other secret": forged,
 		"next epoch":   h.secret.Claim(code, "user-a", 1),
 	}
 	for name, claim := range bad {
