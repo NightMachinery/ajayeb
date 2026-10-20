@@ -1116,7 +1116,10 @@ helper that lists what an element covers by bounding box:
   that only the screenshots showed.
 - A long skipped-choice toast in phone landscape covers neither strip, the
   turn bar nor any card the view offers to take, at 844 by 390 px and at 740
-  by 360 px in English and in Persian.
+  by 360 px in English and in Persian: early in an age at the structure's
+  head, and late in an age, when both players have discarded the lowest card
+  until one near the head is offered and the Statue of Zeus then skips its
+  destroy choice (`zeus-no-target`), in another lane.
 
 Each scene saves phone and desktop screenshots in light and dark.
 

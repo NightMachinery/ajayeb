@@ -140,6 +140,7 @@
   import LiveRegion from '../shell/LiveRegion.svelte';
   import Sheet from '../shell/Sheet.svelte';
   import ToastList from '../shell/Toasts.svelte';
+  import { toastLane } from '$lib/ui/toast-lane';
   import { Toasts } from '../shell/toast-queue.svelte';
   import ProgressTokenRow from '../token/ProgressTokenRow.svelte';
   import TokenSheet from '../sheets/TokenSheet.svelte';
@@ -234,6 +235,7 @@
   let structureEl = $state<HTMLElement | undefined>();
   let homeEl = $state<HTMLElement | undefined>();
   let awayEl = $state<HTMLElement | undefined>();
+  let turnEl = $state<HTMLElement | undefined>();
 
   // Settings, with the device defaults of the hot-seat sheet.
   const passDevice = $derived(settings.value.hotseatPassDevice ?? coarsePointer.current);
@@ -298,16 +300,17 @@
   // foot of this player's own column, clear of the structure's takeable
   // bottom row, the track and the opponent. In phone landscape that column
   // is a narrow strip with little room under it, so a long sentence would
-  // grow up over the strip; there they sit at the head of the structure
-  // instead, under the top bar's track. The structure's foot holds the cards
-  // that can be taken for most of an age, its head only near the end.
+  // grow up over the strip, and the structure fills the height, its foot
+  // holding the cards to take for most of an age and its head near the end;
+  // there they take the first lane clear of every card that can be taken
+  // and both strips (ui/toast-lane.ts).
   const toastSpot = $derived(
     !view || view.phase === 'wonderDraft'
       ? ('turn' as const)
       : layout === 'desktop'
         ? ('home' as const)
         : layout === 'phone-landscape'
-          ? ('structure' as const)
+          ? ('lane' as const)
           : ('turn' as const)
   );
   const variant = $derived(
@@ -1156,11 +1159,24 @@
           botPick={pick?.slot}
           onselect={selectSlot}
         />
-        {#if toastSpot === 'structure'}
-          <!-- Phone landscape: the head of the structure (see toastSpot). -->
-          <ToastList {toasts} placement="inside-top" />
-        {/if}
       </div>
+      {#if toastSpot === 'lane'}
+        <!-- Phone landscape: the first lane clear of the cards to take, both
+             strips and the turn bar (see toastSpot). -->
+        <div
+          class="toast-lane pointer-events-none fixed z-50"
+          dir={i18n.dir}
+          {@attach toastLane(() => ({
+            structure: structureEl ?? null,
+            home: homeEl ?? null,
+            away: awayEl ?? null,
+            turn: turnEl ?? null,
+            version: frame?.version ?? 0
+          }))}
+        >
+          <ToastList {toasts} placement="flow" />
+        </div>
+      {/if}
 
       <div
         class="area-home relative min-h-0 min-w-0"
@@ -1176,7 +1192,7 @@
       </div>
     {/if}
 
-    <div class="area-turn relative flex min-w-0 flex-col" dir={i18n.dir}>
+    <div class="area-turn relative flex min-w-0 flex-col" dir={i18n.dir} bind:this={turnEl}>
       <!-- Toasts sit just above the turn bar: on a phone they cover only this
          player's own strip, never the opponent's strip or the track, which
          matter while the other side moves. -->
@@ -1516,15 +1532,15 @@
   .game-screen[data-layout='phone-landscape'] .area-away {
     padding-inline: 0.25rem max(0.25rem, var(--safe-r));
   }
-  /* A toast over the structure's head: compact, so a long skipped-choice
-     sentence covers as few cards as it can, while the dismiss button keeps
-     its 44 px hit target. */
-  .game-screen[data-layout='phone-landscape'] .area-structure :global([data-toast]) {
+  /* A toast in its lane: compact, so a long skipped-choice sentence fits a
+     lane beside the cards, while the dismiss button keeps its 44 px hit
+     target. */
+  .game-screen[data-layout='phone-landscape'] .toast-lane :global([data-toast]) {
     gap: 0.5rem;
     padding-inline: 0.75rem 0.5rem;
     padding-block: 0.375rem;
   }
-  .game-screen[data-layout='phone-landscape'] .area-structure :global([data-toast] p) {
+  .game-screen[data-layout='phone-landscape'] .toast-lane :global([data-toast] p) {
     font-size: 0.8125rem;
     line-height: 1.3;
   }

@@ -2,9 +2,10 @@
   // The visible toast list for a Toasts queue (toast-queue.svelte.ts). By
   // default it is fixed at the bottom of the viewport, above the safe-area
   // inset; the game screen anchors it to a box of its own instead (just
-  // above the turn bar, at the foot of this player's column, or at the head
-  // of the structure), so it covers neither the opponent's strip nor the
-  // military track. A polite live region, so a screen reader announces a new
+  // above the turn bar, or at the foot of this player's column), so it
+  // covers neither the opponent's strip nor the military track; in phone
+  // landscape a lane it measures places the list ('flow',
+  // lib/ui/toast-lane.ts). A polite live region, so a screen reader announces a new
   // toast without stealing focus.
   //
   // The queue class lives in its own toast-queue.svelte.ts file, not
@@ -22,10 +23,11 @@
     toasts: Toasts;
     /**
      * Where the list sits: fixed above the bottom edge (default) or below
-     * the top bar; or anchored to its positioned parent, just above it
-     * ('above'), at its foot ('inside') or at its head ('inside-top').
+     * the top bar; anchored to its positioned parent, just above it
+     * ('above') or at its foot ('inside'); or in the flow of a box its
+     * parent places ('flow').
      */
-    placement?: 'bottom' | 'top' | 'above' | 'inside' | 'inside-top';
+    placement?: 'bottom' | 'top' | 'above' | 'inside' | 'flow';
   }
 
   let { toasts, placement = 'bottom' }: Props = $props();
@@ -35,7 +37,7 @@
     top: 'fixed inset-x-0 top-[calc(var(--safe-t)+3.25rem)] px-4',
     above: 'absolute inset-x-0 bottom-full mb-1.5 px-2',
     inside: 'absolute inset-x-0 bottom-1 px-2',
-    'inside-top': 'absolute inset-x-0 top-1 px-2'
+    flow: 'relative'
   };
 
   const KIND_CLASS: Record<ToastKind, string> = {

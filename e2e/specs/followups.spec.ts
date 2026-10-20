@@ -291,8 +291,9 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     page
   }, info) => {
     // In phone landscape the own column is only as wide as a strip, so a long
-    // sentence there grew up over it; the toast sits at the structure's head
-    // instead, where no card can be taken at this point of the age.
+    // sentence there grew up over it; the toast takes the first lane clear of
+    // the cards to take and both strips: here the structure's head, where no
+    // card can be taken at this point of the age.
     const cases = [
       { width: 844, height: 390, locale: 'en' },
       { width: 740, height: 360, locale: 'en' },
@@ -312,8 +313,9 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
       const driver = await openHotseatRoom(page, 'mausoleum-empty');
       await driver.nextTurn();
       await playKey(driver, 'wonder:mausoleum:rostrum', 'wonderFirst');
-      const toast = '.area-structure [data-toast]';
+      const toast = '.toast-lane [data-toast]';
       await expect(page.locator(toast), at).toBeVisible();
+      await expect(page.locator('.toast-lane'), at).toHaveAttribute('data-toast-lane', 'head');
       if (width === 844) await photograph(page, info, 'landscape-toast');
       const takeable = (await currentView(page)).choices.flatMap((c) =>
         c.card ? [`.card-structure [data-card="${c.card}"]`] : []
@@ -326,6 +328,93 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
         ...takeable
       ];
       expect(await covered(page, toast, targets.join(', ')), at).toEqual([]);
+    }
+  });
+
+  test('late in an age a phone-landscape toast leaves the upper-row cards to take uncovered', async ({
+    page
+  }, info) => {
+    test.setTimeout(120_000);
+    // Late in an age the cards to take are near the structure's head, where
+    // the toast sat. Seat 0 keeps the Statue of Zeus unbuilt while both
+    // players discard the lowest card offered, until a card near the head is
+    // offered; then Zeus is built and its destroy choice is skipped (the
+    // opponent owns no brown card), which raises the toast.
+    const cases = [
+      { width: 844, height: 390, locale: 'en' },
+      { width: 740, height: 360, locale: 'fa' }
+    ];
+    for (const { width, height, locale } of cases) {
+      const at = `${width}x${height} ${locale}`;
+      await page.setViewportSize({ width, height });
+      if (locale !== 'en') {
+        await page.evaluate((value) => {
+          const raw = localStorage.getItem('ajayeb:settings');
+          const settings = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+          localStorage.setItem('ajayeb:settings', JSON.stringify({ ...settings, locale: value }));
+        }, locale);
+      }
+      const driver = await openHotseatRoom(page, 'zeus-no-target');
+      /** How far below the structure's top the highest card to take starts, and the lowest one's key. */
+      const offered = async (): Promise<{
+        headGap: number;
+        lowest: string | null;
+        toMove: number;
+      }> => {
+        const view = await currentView(page);
+        const cards = view.choices.flatMap((c) =>
+          c.kind === 'discard' && c.card ? [{ card: c.card, key: c.key }] : []
+        );
+        const boxes = await page.evaluate(
+          (ids) => {
+            const top = document.querySelector('.area-structure')!.getBoundingClientRect().top;
+            return ids.map((id) => {
+              const r = document
+                .querySelector(`.card-structure [data-card="${id}"]`)!
+                .getBoundingClientRect();
+              return { top: r.top - top, bottom: r.bottom - top };
+            });
+          },
+          cards.map((c) => c.card)
+        );
+        let lowest: string | null = null;
+        let bottom = -Infinity;
+        boxes.forEach((b, i) => {
+          if (b.bottom > bottom) [bottom, lowest] = [b.bottom, cards[i]!.key];
+        });
+        return {
+          headGap: Math.min(...boxes.map((b) => b.top)),
+          lowest,
+          toMove: view.toMove ?? -1
+        };
+      };
+      let state = await offered();
+      for (let moves = 0; state.headGap > 40 || state.toMove !== 0; moves++) {
+        expect(moves, `${at}: a card near the head is offered within an age`).toBeLessThan(20);
+        expect(state.lowest, at).not.toBeNull();
+        await playKey(driver, state.lowest!);
+        state = await offered();
+      }
+      const zeus = (await currentView(page)).choices.find((c) =>
+        c.key.startsWith('wonder:statue-of-zeus:')
+      );
+      expect(zeus, `${at}: Zeus can still be built`).toBeTruthy();
+      await playKey(driver, zeus!.key, 'wonderFirst');
+      const toast = '.toast-lane [data-toast]';
+      await expect(page.locator(toast), at).toBeVisible();
+      const takeable = (await currentView(page)).choices.flatMap((c) =>
+        c.card ? [`.card-structure [data-card="${c.card}"]`] : []
+      );
+      expect(takeable.length, `${at}: cards to take`).toBeGreaterThan(0);
+      const targets = [
+        '.area-home .player-strip',
+        '.area-away .player-strip',
+        '.area-turn',
+        ...takeable
+      ];
+      expect(await covered(page, toast, targets.join(', ')), at).toEqual([]);
+      await expect(page.locator('.toast-lane'), at).not.toHaveAttribute('data-toast-lane', 'head');
+      if (width === 844) await photograph(page, info, 'landscape-toast-late');
     }
   });
 
