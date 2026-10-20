@@ -1119,7 +1119,11 @@ helper that lists what an element covers by bounding box:
   by 360 px in English and in Persian: early in an age at the structure's
   head, and late in an age, when both players have discarded the lowest card
   until one near the head is offered and the Statue of Zeus then skips its
-  destroy choice (`zeus-no-target`), in another lane.
+  destroy choice (`zeus-no-target`), in another lane. With that toast on
+  screen the viewport then goes through 740x360, 844x390, 700x320, 740x360,
+  360x740 (portrait) and back, and a per-frame sampler finds no landscape
+  frame where it covers an accessible card, a strip or the turn bar, and the
+  settled toast is back on screen in a clear lane.
 
 Each scene saves phone and desktop screenshots in light and dark.
 

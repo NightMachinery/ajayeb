@@ -415,6 +415,61 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
       expect(await covered(page, toast, targets.join(', ')), at).toEqual([]);
       await expect(page.locator('.toast-lane'), at).not.toHaveAttribute('data-toast-lane', 'head');
       if (width === 844) await photograph(page, info, 'landscape-toast-late');
+
+      // The same toast through resizes and a turn to portrait and back, while
+      // the structure refits its cards a frame or more after its box: every
+      // frame on screen in landscape, it covers no offered card, no strip and
+      // not the turn bar (in portrait the list sits above the turn bar, by
+      // design, and is not sampled).
+      await page.evaluate(() => {
+        const w = window as unknown as { __toastBad: string[]; __toastSampling: boolean };
+        w.__toastBad = [];
+        w.__toastSampling = true;
+        const tick = (): void => {
+          const toast = document.querySelector('.toast-lane [data-toast]');
+          if (toast) {
+            const a = toast.getBoundingClientRect();
+            for (const el of document.querySelectorAll(
+              '.card-structure [data-accessible], .player-strip, .area-turn'
+            )) {
+              const b = el.getBoundingClientRect();
+              const x = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+              const y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+              if (x > 0.5 && y > 0.5) {
+                const name = el.getAttribute('data-card') ?? String(el.className).split(' ')[0];
+                w.__toastBad.push(
+                  `${innerWidth}x${innerHeight} ${name} ${Math.round(x)}x${Math.round(y)}`
+                );
+              }
+            }
+          }
+          if (w.__toastSampling) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      for (const size of [
+        { width: 740, height: 360 },
+        { width: 844, height: 390 },
+        { width: 700, height: 320 },
+        { width: 740, height: 360 },
+        { width: 360, height: 740 },
+        { width, height }
+      ]) {
+        await page.setViewportSize(size);
+        await page.waitForTimeout(400);
+      }
+      await page.waitForTimeout(600);
+      const sampled = await page.evaluate(() => {
+        const w = window as unknown as { __toastBad: string[]; __toastSampling: boolean };
+        w.__toastSampling = false;
+        return w.__toastBad;
+      });
+      expect(sampled, `${at}: covered during the resizes`).toEqual([]);
+      // Settled again after the return from portrait: on screen, in a clear lane.
+      await expect(page.locator(toast), `${at} after the resizes`).toHaveCount(1);
+      await expect(page.locator('.toast-lane'), at).not.toHaveAttribute('data-toast-settling');
+      await expect(page.locator('.toast-lane'), at).not.toHaveAttribute('data-toast-lane', 'none');
+      expect(await covered(page, toast, targets.join(', ')), `${at} after the resizes`).toEqual([]);
     }
   });
 
