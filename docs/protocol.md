@@ -731,8 +731,11 @@ full game view described under "The view and its events" below.
   position before the move, under fixed evaluation and iteration budgets,
   so the review is the same for every hidden deal the seat could not tell
   apart and never names a card the move turned over. A `quick` review is
-  in the completed turn's own frames; a `twoStage` or `deep` one is computed off the
-  room actor, and the seat's connections get a later `state` (same
+  in the completed turn's own frames if its ranking finishes within the
+  safety deadline (50 ms per decision, scaled to the whole turn). A quick
+  ranking cut short by that deadline is omitted and is not retried in a
+  later frame. A `twoStage` or `deep` review is computed off the room actor;
+  the seat's connections get a later `state` (same
   version, no events, no `ack`) that carries it, usually well within a
   second. A review whose search did not finish (a crowded server) is
   never sent. Pending choices and extra turns remain part of the same

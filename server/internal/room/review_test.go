@@ -327,9 +327,10 @@ func firstPlayAction(t *testing.T, a *tclient, st wire.State) int {
 	}
 }
 
-// TestReviewQuickInPlace checks a bot room created with the quick advisor:
-// the move's own frame carries its review, computed in place.
-func TestReviewQuickInPlace(t *testing.T) {
+// TestReviewQuickSetting checks the quick strength through the create
+// protocol. Frame timing and the deadline exception are tested separately
+// without depending on how fast Greedy runs on the host.
+func TestReviewQuickSetting(t *testing.T) {
 	h := newHarness(t)
 	a := h.client("user-a", "tab-a", "Ann")
 	bot := wire.BotLevelEasy
@@ -340,11 +341,6 @@ func TestReviewQuickInPlace(t *testing.T) {
 	_, st := a.create(req)
 	if st.Room.Hints.AdvisorStrength != view.AdvisorStrengthQuick {
 		t.Fatalf("the room's strength is %q", st.Room.Hints.AdvisorStrength)
-	}
-	ply := firstPlayAction(t, a, st)
-	st = a.waitState(func(s wire.State) bool { return s.View.Ply > ply })
-	if rv := checkReview(t, "the move's frame", st, ply); rv.Strength != view.AdvisorStrengthQuick {
-		t.Fatalf("a review of strength %q", rv.Strength)
 	}
 }
 

@@ -169,6 +169,14 @@ other seat's draft is ready for the summary of that opening card action.
 A decision with only one legal option needs no comparison and returns a
 quiet entry immediately, without using the advisor's search budget.
 
+Quick reviews run synchronously with a 50 ms safety allowance per decision,
+scaled to the turn's decision count. The evaluation budget determines the
+work; the wall clock protects the room actor on a starved host. If it cuts
+the ranking short, the entire turn's review is omitted and is not retried.
+Tests of frame timing therefore use a forced decision with no ranking and
+an already expired deadline for the omission case, rather than requiring a
+full ranking to finish on a slow race-test runner.
+
 **Contention with the bots.** In a bot room the room starts the bot's reply and the human's review search at the same moment. On a one-vCPU host the two share the core, so while a player uses `deep` the Medium bot's clock-budgeted search completes fewer iterations and plays a little weaker; `twoStage` searches only when Greedy proposes a move, and for tens of milliseconds. Two remedies remain open: start the review after the bot's move commits (the review would then arrive in a later frame), or have bot searches and review searches share one semaphore.
 
 **Measurements** (2026-10-18, an Apple M2 with a load average of about 4.5, `go test -run 'TestReviewSearchCost|TestReviewCalibration' -v ./internal/room`; the calibration test was a one-off and is not committed):
