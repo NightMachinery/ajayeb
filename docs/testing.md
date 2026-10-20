@@ -1482,7 +1482,10 @@ blocked, the cache disabled, 4x CPU slowdown and a 1.6 Mbps down, 750 Kbps up,
 dark theme. Each visit sums the layout-shift entries until Home is ready, the
 language has switched and the fonts have loaded, plus 1.5 seconds; the median
 of the three must stay under 0.1. The visits must also show the tutorial offer,
-so the case keeps covering the element that once moved the page.
+so the case keeps covering the element that once moved the page. A Persian case
+holds the Persian messages and checks that a “Getting ready…” status stays
+readable while Home's text waits hidden, including after the app has started,
+and goes once the language switches.
 
 When changing rendering or fallback filenames, also run `shell.spec.ts` for
 worker installation and real offline Home and game deep links. The Go static

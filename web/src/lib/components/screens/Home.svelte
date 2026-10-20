@@ -150,6 +150,11 @@
   {/if}
 </svelte:head>
 
+<!-- Shown only while a stored Persian locale keeps main hidden (see the
+     style below), so the page is never empty to a screen reader. -->
+<p role="status" class="home-pending-status text-sm font-semibold text-fg">
+  {t('home.loading')}
+</p>
 <main class="h-full overflow-y-auto" data-home-loading={!ready ? '' : undefined}>
   <div
     class="mx-auto flex min-h-full w-full max-w-md flex-col px-4 pt-3 pb-6 split:max-w-5xl split:px-6"
@@ -436,6 +441,20 @@
   }
   :global(:root[data-locale-pending]) .hero {
     visibility: visible;
+  }
+  /* Meanwhile this status stands in for main's, outside the hidden content
+     and out of the flow, so it adds no layout space and its removal moves
+     nothing. The pending mark lasts until the app has started and the
+     initial locale request has settled (or the bootstrap's timer ends). */
+  .home-pending-status {
+    display: none;
+  }
+  :global(:root[data-locale-pending]) .home-pending-status {
+    display: block;
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: calc(var(--safe-b) + 2rem);
+    text-align: center;
   }
 
   /* Night uses a deliberate painting frame rather than fading cream into navy. */

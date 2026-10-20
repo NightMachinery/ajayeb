@@ -523,6 +523,42 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
     expect(problems).toEqual([]);
   });
 
+  test.describe('with Persian stored', () => {
+    test.use({ appLocale: 'fa' });
+
+    // While the Persian messages load, Home's text waits hidden
+    // (M11.home-cold-cls); a status outside it keeps the page readable.
+    test('a held Persian import keeps a loading status until it settles', async ({ page }) => {
+      let release!: () => void;
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await page.route('**/_app/immutable/chunks/*.js', async (route) => {
+        const response = await route.fetch();
+        if ((await response.text()).includes('کارتی نمانده')) await held;
+        await route.fulfill({ response });
+      });
+      try {
+        await page.goto('/');
+        const status = page.getByRole('status');
+        await expect(status).toHaveText('Getting ready…');
+        await expect(status).toBeInViewport();
+        await expect(page.getByRole('heading', { name: 'Ajayeb', exact: true })).toBeHidden();
+        // The app starts while the import is still held: the status stays.
+        await expect(page.locator('main')).not.toHaveAttribute('data-home-loading');
+        await expect(page.locator('html')).toHaveAttribute('data-locale-pending', 'fa');
+        await expect(status).toHaveText('Getting ready…');
+        release();
+        await expect(page.locator('html')).toHaveAttribute('lang', 'fa');
+        await expect(page.locator('html')).not.toHaveAttribute('data-locale-pending');
+        await expect(page.getByRole('status')).toHaveCount(0);
+        await expect(page.getByRole('heading', { name: 'Ajayeb', exact: true })).toBeVisible();
+      } finally {
+        release();
+      }
+    });
+  });
+
   test('a pending Persian import cannot override a later English choice', async ({ page }) => {
     let release!: () => void;
     const held = new Promise<void>((resolve) => {

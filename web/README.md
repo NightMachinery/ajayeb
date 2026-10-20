@@ -72,7 +72,9 @@ state before the first paint and marks the root:
 - `data-locale-pending="fa"` when Persian is stored. Home keeps its text
   hidden, already laid out right to left, until the root layout switches the
   language (or the load fails), and the hero stays visible as the page's
-  largest paint. A timer in the bootstrap shows the text anyway after six
+  largest paint. Meanwhile a “Getting ready…” status, fixed outside the
+  hidden content, keeps the page readable to a screen reader and adds no
+  layout space. A timer in the bootstrap shows the text anyway after six
   seconds if the app never starts.
 
 Without scripts the bootstrap does not run, so Home shows no offer and hides
