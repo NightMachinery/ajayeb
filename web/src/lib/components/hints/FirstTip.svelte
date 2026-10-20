@@ -10,6 +10,8 @@
   // tip is due; the gallery renders it standalone. `anchor` is a CSS
   // selector of the mark: the panel sits above it (below when there is no
   // room), with a small arrow pointing at it, or centred when it is absent.
+  // It keeps clear of the cards to take and the strips where it can
+  // (placeTip's obstacles).
   import type { Attachment } from 'svelte/attachments';
   import Lightbulb from '@lucide/svelte/icons/lightbulb';
   import { t } from '$lib/i18n';
@@ -50,13 +52,21 @@
         const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
         const vw = document.documentElement.clientWidth;
         const vh = window.innerHeight;
+        // Kept clear where it can: the cards to take and both strips, but
+        // not the strip the mark itself sits in.
+        const obstacles = [
+          ...document.querySelectorAll('.card-structure [data-accessible], .player-strip')
+        ]
+          .filter((el) => !el.contains(box))
+          .map((el) => el.getBoundingClientRect());
         const placed = placeTip({
           mark: r,
           card: cr,
           panelHeight: panel.offsetHeight,
           vw,
           vh,
-          rem
+          rem,
+          obstacles
         });
         panel.style.inset = 'auto';
         panel.style.margin = '0';

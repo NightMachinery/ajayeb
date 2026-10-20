@@ -415,6 +415,15 @@ The first-time tips also explain `ghostLoot` (military), `freeChain` (costs),
 `hourglass` (wonders), `guildBack` (guilds) and `lawLaurel` (science). They use
 the existing once-per-device `ajayeb:tips` seen-set and link to Rules.
 
+A tip's bubble sits beside its mark without covering the mark's card
+(`placeTip` in `ui/tips.svelte.ts`). It also keeps clear of the cards that
+can be taken and both strips where it can (M11.round3-board-fixes): a place
+that covers one moves along its side while the arrow still points at the
+mark, then to the other sides, taking the first place that covers nothing,
+else the one that covers least. The strip the mark itself sits in does not
+count. In phone landscape a bubble is about as tall as the free height, so
+it may still cover part of something.
+
 Home remembers each live room’s latest server-sent age and, for bot games,
 the bot level beside Continue. Saved-room changes synchronize between tabs,
 including removal when a game finishes. Older saved entries still open

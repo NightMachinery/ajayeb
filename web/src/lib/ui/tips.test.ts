@@ -423,6 +423,43 @@ describe('the tips beyond the pips (M10.F3)', () => {
     expect(cramped.top + 220).toBeLessThanOrEqual(260 - 8);
   });
 
+  it('moves a tip off the cards to take and the strips, keeping its arrow on the mark', () => {
+    // 740x360 landscape: a pair mark on Sawmill in the structure, the
+    // opponent's strip to the right, another card to take above.
+    const card = { left: 400, top: 200, right: 460, bottom: 280, width: 60, height: 80 };
+    const mark = { left: 420, top: 205, right: 440, bottom: 221, width: 20, height: 16 };
+    const strip = { left: 560, top: 40, right: 740, bottom: 160 };
+    const other = { left: 330, top: 40, right: 390, bottom: 120 };
+    const plain = placeTip({ mark, card, panelHeight: 150, vw: 740, vh: 360 });
+    const overlap = (p: { left: number; top: number; width: number }, o: typeof strip) =>
+      Math.min(p.left + p.width, o.right) > Math.max(p.left, o.left) && // physical-ok
+      Math.min(p.top + 150, o.bottom) > Math.max(p.top, o.top);
+    expect(overlap(plain, strip) || overlap(plain, other)).toBe(true);
+    const moved = placeTip({
+      mark,
+      card,
+      panelHeight: 150,
+      vw: 740,
+      vh: 360,
+      obstacles: [strip, other]
+    });
+    expect(overlap(moved, strip)).toBe(false);
+    expect(overlap(moved, other)).toBe(false);
+    expect(overlap(moved, card)).toBe(false);
+    if (moved.side !== 'beside') {
+      expect(moved.left + moved.arrow + 6).toBeCloseTo(mark.left + mark.width / 2, 0);
+    }
+  });
+
+  it('keeps the usual place when it covers no obstacle', () => {
+    const card = { left: 160, top: 520, right: 230, bottom: 615, width: 70, height: 95 };
+    const mark = { left: 175, top: 524, right: 215, bottom: 540, width: 40, height: 16 };
+    const opts = { mark, card, panelHeight: 160, vw: 390, vh: 844 };
+    expect(
+      placeTip({ ...opts, obstacles: [{ left: 0, top: 700, right: 390, bottom: 844 }] })
+    ).toEqual(placeTip(opts));
+  });
+
   it('every tip names a rules section', () => {
     for (const id of TIP_IDS) expect(TIPS[id].rules).toBeTruthy();
   });

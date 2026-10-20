@@ -314,20 +314,102 @@ export interface TipPlacement {
   readonly arrow: number;
 }
 
-/**
- * Places a first-time tip next to `mark` without covering `card` (the whole
- * card when the mark sits on one, else `mark` itself). A mark in the lower
- * half of a card (the chain badge) prefers `below`, then `above` the card's
- * top edge, so the card stays clear to tap.
- */
-export function placeTip(opts: {
+/** A box a tip should not cover, in viewport pixels. */
+export type TipObstacle = Pick<TipRect, 'left' | 'top' | 'right' | 'bottom'>;
+
+interface TipOptions {
   mark: TipRect;
   card?: TipRect;
   panelHeight: number;
   vw: number;
   vh: number;
   rem?: number;
-}): TipPlacement {
+  /** Boxes to keep clear where it can: the cards to take and both strips. */
+  obstacles?: readonly TipObstacle[];
+}
+
+/**
+ * Places a first-time tip next to `mark` without covering `card` (the whole
+ * card when the mark sits on one, else `mark` itself). A mark in the lower
+ * half of a card (the chain badge) prefers `below`, then `above` the card's
+ * top edge, so the card stays clear to tap.
+ *
+ * With `obstacles` (M11.round3-board-fixes), a place that covers one is
+ * moved: along its side while the arrow still points at the mark, then to
+ * the other sides, taking the first place that covers none, else the one
+ * that covers the least. In phone landscape a bubble may cover something
+ * whatever it does (it is about as tall as the screen's free height).
+ */
+export function placeTip(opts: TipOptions): TipPlacement {
+  const base = defaultTip(opts);
+  const obstacles = opts.obstacles ?? [];
+  if (obstacles.length === 0) return base;
+  const { mark, card = mark, panelHeight: h, vw, vh, rem = 16 } = opts;
+  const gap = 0.5 * rem;
+  const { width } = base;
+  const covered = (left: number, top: number): number =>
+    obstacles.reduce(
+      (sum, o) =>
+        sum +
+        Math.max(0, Math.min(left + width, o.right) - Math.max(left, o.left)) * // physical-ok
+          Math.max(0, Math.min(top + h, o.bottom) - Math.max(top, o.top)),
+      0
+    );
+  if (covered(base.left, base.top) <= 1) return base;
+
+  const clearTop = Math.min(mark.top, card.top);
+  const clearBottom = Math.max(mark.bottom, card.bottom);
+  const clearLeft = Math.min(mark.left, card.left);
+  const clearRight = Math.max(mark.right, card.right);
+  const markCenterX = mark.left + mark.width / 2;
+  const markCenterY = mark.top + mark.height / 2;
+  const bottomMark = markCenterY > card.top + card.height / 2 + 1;
+  /** Values from `from` to `to` in a few steps, nearest `start` first. */
+  const steps = (from: number, to: number, start: number): number[] => {
+    if (to < from) return [];
+    const n = 8;
+    const all = Array.from({ length: n + 1 }, (_, i) => from + ((to - from) * i) / n);
+    return [Math.min(Math.max(start, from), to), ...all].sort(
+      (x, y) => Math.abs(x - start) - Math.abs(y - start)
+    );
+  };
+  const candidates: { side: TipPlacement['side']; left: number; top: number }[] = [];
+  const vertical = (side: 'above' | 'below'): void => {
+    const top = side === 'above' ? clearTop - gap - h : clearBottom + gap;
+    if (top < gap || top + h > vh - gap) return;
+    // The arrow (12 px, 12 px in from either end) must still reach the mark.
+    const from = Math.max(gap, markCenterX - width + 18);
+    const to = Math.min(vw - width - gap, markCenterX - 18);
+    for (const left of steps(from, to, markCenterX - width / 2))
+      candidates.push({ side, left, top });
+  };
+  const beside = (): void => {
+    const lefts = [clearRight + gap, clearLeft - gap - width].filter(
+      (left) => left >= gap && left + width <= vw - gap
+    );
+    for (const left of lefts)
+      for (const top of steps(gap, vh - h - gap, markCenterY - h / 2))
+        candidates.push({ side: 'beside', left, top });
+  };
+  for (const side of bottomMark ? (['below', 'above'] as const) : (['above', 'below'] as const))
+    vertical(side);
+  beside();
+
+  let best: TipPlacement = base;
+  let least = covered(base.left, base.top);
+  for (const c of candidates) {
+    const cover = covered(c.left, c.top);
+    if (cover + 1 < least) {
+      const arrow = Math.min(Math.max(markCenterX - c.left, 12), width - 12) - 6;
+      best = { ...c, width, arrow };
+      least = cover;
+      if (cover <= 1) break;
+    }
+  }
+  return best;
+}
+
+function defaultTip(opts: TipOptions): TipPlacement {
   const { mark, card = mark, panelHeight, vw, vh, rem = 16 } = opts;
   const gap = 0.5 * rem;
   const width = Math.min(18 * rem, vw - 2 * gap);
