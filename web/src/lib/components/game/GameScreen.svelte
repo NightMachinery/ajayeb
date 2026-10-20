@@ -583,6 +583,20 @@
   const summaryAnchor = $derived(
     layout === 'desktop' ? (summarySeat === away ? awayEl : homeEl) : structureEl
   );
+  // In phone landscape the structure's head may hold a card to take (one
+  // the viewer's own move uncovered), so the summary takes the toasts'
+  // lanes instead (M11.round3-board-fixes).
+  const summaryLanes = $derived(
+    layout === 'phone-landscape'
+      ? {
+          structure: structureEl ?? null,
+          home: homeEl ?? null,
+          away: awayEl ?? null,
+          turn: turnEl ?? null,
+          version: frame?.version ?? 0
+        }
+      : null
+  );
 
   // The summary's move review (the advisor) and the viewer's trade prices
   // the other side changed (the recap), each while its family shows here.
@@ -1422,6 +1436,7 @@
   {names}
   prices={summaryPrices}
   anchor={summaryAnchor}
+  lanes={summaryLanes}
   onclose={dismissSummary}
 >
   {#snippet review()}

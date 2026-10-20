@@ -13,7 +13,9 @@
   // chip shows its tooltip instead and keeps the popup (longPressTips). It sits where it hides the least: given
   // an `anchor` (the structure on a phone, the player's own column on wide
   // screens), it is placed over the top of that box, below the strips;
-  // without one (the gallery) it is centred.
+  // given `lanes` (phone landscape), in the first lane clear of the cards to
+  // take, the strips and the turn bar (ui/toast-lane.ts, summaryLane);
+  // without either (the gallery) it is centred.
   //
   // After the moves come the viewer's own trade prices that those moves
   // changed (`prices`, the recap family: lib/view/recap.ts), and last the
@@ -32,6 +34,7 @@
   import type { IconName } from '$lib/icons/names';
   import { cardName, resourceName } from '../card/effect-text';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import { summaryLane, type LaneTargets } from '$lib/ui/toast-lane';
   import DismissLayer from '../shell/DismissLayer.svelte';
   import MoveSummaryLine from './MoveSummaryLine.svelte';
 
@@ -44,6 +47,8 @@
     names: readonly [string, string];
     /** The box to place the popup over; centred in the viewport without one. */
     anchor?: HTMLElement | null;
+    /** The board to find a clear lane in (phone landscape); takes precedence over `anchor`. */
+    lanes?: LaneTargets | null;
     /** A tap or Escape closed it. */
     onclose: () => void;
     /** The viewer's trade prices these moves changed (the recap family). */
@@ -59,6 +64,7 @@
     away = false,
     prices = [],
     anchor = null,
+    lanes = null,
     onclose,
     review
   }: Props = $props();
@@ -137,7 +143,7 @@
       class="flex flex-col gap-2"
       data-move-summary={summary.seat}
       data-plies={summary.plies.join(' ')}
-      {@attach placeOver(anchor)}
+      {@attach lanes ? summaryLane(() => lanes) : placeOver(anchor)}
     >
       <h2 class="font-display text-base leading-tight font-semibold text-fg">{title}</h2>
       {#if away}<p class="text-xs font-semibold text-fg-muted" data-summary-away>

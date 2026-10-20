@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clear, overlaps, type Box } from './toast-lane';
+import { clear, clearSpan, fitPanel, overlaps, type Box, type Lane } from './toast-lane';
 
 const box = (left: number, top: number, w: number, h: number): Box => ({
   left,
@@ -21,5 +21,60 @@ describe('toast lanes', () => {
   });
   it('lets an empty list sit anywhere', () => {
     expect(clear(box(0, 60, 90, 0), [box(0, 50, 40, 60)])).toBe(true);
+  });
+});
+
+const lane = (
+  name: Lane['name'],
+  b: Box,
+  edge: Lane['edge'],
+  width = b.right - b.left // physical-ok: viewport coordinates
+): Lane => ({ name, box: { ...b, width: b.right - b.left }, edge, width }); // physical-ok
+
+describe('summary lanes', () => {
+  // A board like the finding's at 844x390: the structure from 49 down,
+  // with Press takeable in its middle and cards to take along its foot,
+  // and the opponent's column beside it, its strip at the top.
+  const structure = box(230, 49, 344, 341);
+  const press = box(424, 161, 74, 114);
+  const foot = [box(240, 300, 74, 90), box(330, 300, 74, 90), box(480, 300, 74, 90)];
+  const away = box(574, 49, 270, 341);
+  const awayStrip = box(574, 49, 270, 150);
+  const lanes = [
+    lane('head', structure, 'top', 384),
+    lane('foot', structure, 'bottom', 384),
+    lane('away', away, 'bottom')
+  ];
+
+  it('measures the clear height from the edge to the nearest card in its span', () => {
+    expect(clearSpan(lanes[0]!, 234, 570, [press])).toEqual({ top: 53, bottom: 157 });
+    expect(clearSpan(lanes[0]!, 234, 400, [press])).toEqual({ top: 53, bottom: 386 });
+    expect(clearSpan(lanes[1]!, 234, 570, foot)).toEqual({ top: 394, bottom: 386 });
+  });
+  it('never takes the head when a card to take lies there, but the free column foot', () => {
+    const fit = fitPanel(lanes, [press, ...foot, awayStrip], () => 157);
+    expect(fit?.lane).toBe('away');
+    expect(fit && fit.top).toBe(386 - 157);
+    expect(
+      fit &&
+        clear({ ...fit, right: fit.left + fit.width, bottom: fit.top + fit.height }, [
+          press,
+          ...foot,
+          awayStrip
+        ])
+    ).toBe(true); // physical-ok
+  });
+  it('takes the first lane where it fits whole', () => {
+    expect(fitPanel(lanes, [press, ...foot], () => 100)?.lane).toBe('head');
+  });
+  it('scrolls in the roomiest lane when none fits whole, and gives up below the minimum', () => {
+    const fit = fitPanel(lanes, [press, ...foot, awayStrip], () => 400);
+    expect(fit?.lane).toBe('away');
+    expect(fit?.height).toBe(386 - 203);
+    expect(fitPanel(lanes, [box(0, 49, 844, 300), ...foot], () => 400)).toBeNull();
+  });
+  it('skips a lane too narrow for the panel', () => {
+    const narrow = [lane('away', box(700, 49, 140, 341), 'bottom')];
+    expect(fitPanel(narrow, [], () => 100)).toBeNull();
   });
 });

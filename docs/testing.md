@@ -1451,7 +1451,11 @@ still opens it. On a fixture page it also checks a card picture's tooltip: the
 board's card detail (the printed cost line and the card's face in the stack) on
 a hover, and on touch after a long-press that keeps the popup, whose next tap
 closes only the tooltip. On the gallery's extra-turn scene it checks that the
-Piraeus picture's tooltip has the wonder's effect and printed cost. `undo.spec.ts` checks the bot undo's visible confirmation in the
+Piraeus picture's tooltip has the wonder's effect and printed cost. In phone
+landscape (844x390 and 740x360, a real bot game) it plays until two popups have
+followed a move that made a new card takeable, and checks that every popup on
+the way covers no card to take, neither strip and not the turn bar, in a lane
+other than `none` (M11.round3-board-fixes). `undo.spec.ts` checks the bot undo's visible confirmation in the
 toast's polite live region. Unit tests cover the bounded, lenient seen-marker
 storage, seat and room separation, blocked storage and undo rewinding markers.
 

@@ -14,6 +14,10 @@
 //   keeps the popup, the next tap closes only the tooltip, and a tap then
 //   closes the popup.
 //
+// - Phone landscape: the popup takes the first lane clear of the cards to
+//   take (those the viewer's move uncovered included), both strips and the
+//   turn bar.
+//
 // The base fixture turns the popup off for every other spec (its taps would
 // eat a driver's clicks), so this spec turns it back on for its pages.
 
@@ -73,6 +77,32 @@ async function lastMover(page: Page): Promise<number | null> {
     const history = window.__ajayeb?.history() ?? [];
     return history[history.length - 1]?.seat ?? null;
   });
+}
+
+/**
+ * What the element at `over` covers among the elements `targets` matches, by
+ * bounding box, as "name WxH" lines; empty when it covers none.
+ */
+async function coveredBy(page: Page, over: string, targets: string): Promise<string[]> {
+  return page.evaluate(
+    ([over, targets]) => {
+      const top = document.querySelector(over);
+      if (!top) return [`nothing matches ${over}`];
+      const a = top.getBoundingClientRect();
+      const hits: string[] = [];
+      for (const el of document.querySelectorAll(targets)) {
+        const b = el.getBoundingClientRect();
+        if (b.width <= 1 || b.height <= 1) continue;
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w <= 0.5 || h <= 0.5) continue;
+        const name = el.getAttribute('data-card') ?? String(el.className).split(' ')[0];
+        hits.push(`${name} ${Math.round(w)}x${Math.round(h)}`);
+      }
+      return hits;
+    },
+    [over, targets] as const
+  );
 }
 
 /** Taps (on touch) or clicks a locator; `force` presses even a covered, inert card. */
@@ -212,6 +242,67 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     await expect(page.locator(POPUP)).toHaveAttribute('data-plies', await pliesSince(page, 0));
     await page.keyboard.press('Escape');
     await expect(page.locator(POPUP)).toHaveCount(0);
+    expect(problems).toEqual([]);
+  });
+
+  test('phone landscape: the popup keeps clear of the cards to take, those the move uncovered included, and of both strips', async ({
+    page
+  }) => {
+    // M11.round3-board-fixes: at 844x390 the popup sat over the structure's
+    // head and hid a card the viewer's own move had just uncovered. It now
+    // takes the first lane clear of every card to take, both strips and the
+    // turn bar (ui/toast-lane.ts, summaryLane).
+    test.setTimeout(240_000);
+    const problems = watchHygiene(page);
+    await summaryOn(page);
+    for (const { width, height } of [
+      { width: 844, height: 390 },
+      { width: 740, height: 360 }
+    ]) {
+      const at = `${width}x${height}`;
+      await page.setViewportSize({ width, height });
+      await page.goto('/dev/new?mode=ai&level=easy&seat=0&seed=7');
+      await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+      const driver = new GameDriver(page);
+      await driver.waitReady();
+      let uncovered = 0;
+      let before = new Set<string>();
+      for (let guard = 0; uncovered < 2; guard++) {
+        expect(guard, `${at}: two popups after a move that uncovered a card`).toBeLessThan(24);
+        const snap = await driver.nextTurn();
+        const takeable = new Set(
+          snap.choices.flatMap((c) =>
+            (c.kind === 'construct' || c.kind === 'discard') && c.card ? [c.card] : []
+          )
+        );
+        if (snap.phase === 'play' && (await lastMover(page)) === 1) {
+          const popup = page.locator(POPUP);
+          await expect(popup, at).toBeVisible();
+          const fresh = [...takeable].filter((card) => !before.has(card));
+          if (fresh.length > 0) uncovered++;
+          const targets = [
+            '.area-home .player-strip',
+            '.area-away .player-strip',
+            '.area-turn',
+            ...[...takeable].map((card) => `.card-structure [data-card="${card}"]`)
+          ].join(', ');
+          await expect
+            .poll(() => coveredBy(page, '[data-dismiss-layer]:has([data-move-summary])', targets), {
+              message: `${at}: covered (newly takeable: ${fresh.join(' ')})`,
+              timeout: 3000
+            })
+            .toEqual([]);
+          await expect(page.locator('[data-summary-lane]'), at).not.toHaveAttribute(
+            'data-summary-lane',
+            'none'
+          );
+          await page.keyboard.press('Escape');
+          await expect(popup, at).toHaveCount(0);
+        }
+        before = takeable;
+        await driver.play(snap);
+      }
+    }
     expect(problems).toEqual([]);
   });
 
