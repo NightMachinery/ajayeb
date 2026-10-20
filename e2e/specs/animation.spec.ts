@@ -496,10 +496,10 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
       const draft = await draftKeys(baseURL, SEED);
       const waits: { room: string; version: number; ms: number; steps: number }[] = [];
 
-      // The frame that opens Age II holds input until its deal ends, so the
-      // starter choice's dialog opens over a dealt board
-      // (M11.age-start-order): that frame alone is measured from the end of
-      // its deal, which must have landed uncut, with input back no earlier.
+      // The frame that opens Age II holds input until all its visual runs
+      // end, so the starter choice opens over a settled board. Measure that
+      // frame from its last run's end, keeping animation time outside the
+      // input-latency budget. Every run must finish uncut before input returns.
       // Every other frame, Age I's deal included, counts from its swap.
       const openings = new Set<number>();
       const measure = async (room: string) => {
@@ -511,16 +511,19 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
           if (waits.some((w) => w.room === room && w.version === f.version)) continue;
           let from = f.swapAt;
           if (openings.has(f.version)) {
-            const deals = anims.filter((a) => a.kind === 'deal' && a.version === f.version);
-            expect(deals.length, `age opening ${f.version}: a deal`).toBeGreaterThan(0);
-            for (const deal of deals) {
-              expect(deal.endAt, `age opening ${f.version}: every card landed`).not.toBeNull();
-              expect(deal.interrupted, `age opening ${f.version}: no card cut short`).toBe(false);
+            const runs = anims.filter((a) => a.version === f.version);
+            expect(
+              runs.some((a) => a.kind === 'deal'),
+              `age opening ${f.version}: a deal`
+            ).toBe(true);
+            for (const run of runs) {
+              expect(run.endAt, `age opening ${f.version}: every run ended`).not.toBeNull();
+              expect(run.interrupted, `age opening ${f.version}: no run cut short`).toBe(false);
             }
-            from = Math.max(...deals.map((d) => d.endAt!));
+            from = Math.max(...runs.map((run) => run.endAt!));
             expect(
               back,
-              `age opening ${f.version}: input waits for the deal`
+              `age opening ${f.version}: input waits for every run`
             ).toBeGreaterThanOrEqual(from);
           }
           waits.push({ room, version: f.version, ms: Math.round(back - from), steps: f.steps });
