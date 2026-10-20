@@ -100,8 +100,9 @@ After the result barrier landed, runner CI still found an age-change task of
 139 ms on desktop and 91 ms on mobile. The age opening drained only its deal:
 coin counters continued for about 240 ms after its last card landed. The age
 modal's native style recalculation could therefore block moving counters.
-Age II/III opening frames now reuse the existing all-kind drain and its safety
-limit, as final frames already do. Ordinary turns retain their short input hold.
+Age II/III opening frames and play frames carrying a skipped opening's deal
+now reuse the existing all-kind drain and its safety limit, as final frames
+already do. Other play frames retain their short input hold.
 
 A second boundary matters at game over. A source-mapped 6x trace captured a
 55 ms task that ended victory 1.2 ms after entering, then spent about 40 ms in

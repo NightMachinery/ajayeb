@@ -517,8 +517,9 @@ export class AnimRunner {
       });
       for (const start of starts) start();
 
-      // Final frames and Age II/III openings drain every visual tail.
-      // The swap-based input timer alone cannot prove visual completion.
+      // Final frames, Age II/III openings and play frames carrying a skipped
+      // opening's deal drain every visual tail. The swap-based input timer
+      // alone cannot prove visual completion.
       const drain = waitForAll || heldDeal(cap.timeline) ? 'all' : undefined;
       const block = cap.timeline.blockingMs - (this.#now() - cap.record.swapAt);
       const release = () => {
