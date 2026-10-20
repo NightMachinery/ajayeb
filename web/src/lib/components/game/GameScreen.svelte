@@ -545,6 +545,20 @@
           !showPass &&
           lastPly(moveSummary) === summaryAuto))
   );
+  // What this screen has shown, for the seen-moves marker: the presented
+  // history, except an automatic summary still waiting behind the age
+  // recap. It stays unseen until it opens (or is dismissed), so a reload
+  // while the recap is up still opens it.
+  const seenPly = $derived.by(() => {
+    const latest = shownHistory.at(-1)?.ply ?? -1;
+    const waiting =
+      !!moveSummary &&
+      !summaryOpen &&
+      summaryAuto !== null &&
+      lastPly(moveSummary) === summaryAuto &&
+      ageUnread;
+    return waiting ? Math.min(latest, moveSummary.plies[0]! - 1) : latest;
+  });
   const coachWords = $derived(coach ? coachText(coach, names[bot === 0 ? 0 : 1]) : null);
   // A coach step shows on the player's own turn of the frame on screen,
   // with the Presenter idle and the move summary closed.
@@ -1086,7 +1100,7 @@
   <ToastList {toasts} placement="bottom" />
 {:else}
   <div
-    {@attach rememberShown(frame, presenter.idle, pageVisible, shownHistory.at(-1)?.ply ?? -1)}
+    {@attach rememberShown(frame, presenter.idle, pageVisible, seenPly)}
     class="game-screen h-full w-full overflow-hidden"
     data-layout={layout}
     data-draft={view?.phase === 'wonderDraft' ? '' : undefined}

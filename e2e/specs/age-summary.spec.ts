@@ -265,6 +265,54 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
       await expect(popup.locator('[data-summary-line="starterChosen"]')).toHaveCount(1);
       expect(problems).toEqual([]);
     });
+
+    test(`summaries on: a reload while the recap holds back a summary still opens that summary (${speed})`, async ({
+      page
+    }) => {
+      // M11.round3-board-fixes review: the summary waiting behind the recap
+      // was marked seen before it ever opened, so a reload lost it. The
+      // recap itself cannot come back (its ended-age totals are not in the
+      // history), but the summary must, and the age must not deal again.
+      const problems = watchHygiene(page);
+      await configure(page, true);
+      await useSettings(page, speed);
+      await page.goto('/dev/new?mode=ai&seat=0&seed=7&scenario=age-transition-chooser');
+      await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+      const driver = new GameDriver(page);
+      await driver.waitReady();
+      await playKey(driver, 'discard:theater');
+      await expect
+        .poll(async () => {
+          const view = await currentView(page);
+          return view.age === 2 && !view.pending && view.toMove === 0;
+        })
+        .toBe(true);
+      await driver.waitTurn();
+      await expect(page.locator(AGE)).toBeVisible();
+      await expect(page.locator(POPUP)).toHaveCount(0);
+      await page.waitForTimeout(300);
+      const seen = await page.evaluate(() => localStorage.getItem('ajayeb:seen-moves') ?? '[]');
+      expect(
+        (JSON.parse(seen) as [string, number][]).every(([, ply]) => ply < 1),
+        `the starter choice (ply 1) is not seen yet: ${seen}`
+      ).toBe(true);
+      await page.reload();
+      await driver.waitReady();
+      const popup = page.locator(POPUP);
+      await expect(popup).toBeVisible();
+      await expect(popup).toHaveAttribute('data-plies', '1');
+      await expect(popup.locator('[data-summary-line="starterChosen"]')).toHaveCount(1);
+      const deals = await page.evaluate(
+        () =>
+          (window as unknown as { __ajayebFx?: { anims(): { kind: string }[] } }).__ajayebFx
+            ?.anims()
+            .filter((a) => a.kind === 'deal').length ?? 0
+      );
+      expect(deals, 'the reload deals nothing').toBe(0);
+      await page.keyboard.press('Escape');
+      await expect(popup).toHaveCount(0);
+      expect(problems).toEqual([]);
+    });
   }
 
   test('game over cannot replace an unread completed age, and Continue opens the result', async ({
