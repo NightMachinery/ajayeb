@@ -304,9 +304,15 @@
               onact={act}
             />
           {/if}
+          <!-- While this side chooses a starter, the starter buttons are the
+             primary actions and Peek is secondary (outlined); otherwise
+             Continue or Begin is the one way forward. -->
           <button
             type="button"
-            class="inline-flex min-h-12 w-full items-center justify-center rounded-control bg-accent px-3 py-2 text-sm font-semibold text-on-accent hover:brightness-105 active:brightness-95"
+            class="inline-flex min-h-12 w-full items-center justify-center rounded-control px-3 py-2 text-sm font-semibold
+            {choosingStarter && mine
+              ? 'border border-rule-strong bg-panel text-fg hover:bg-panel-sunken'
+              : 'bg-accent text-on-accent hover:brightness-105 active:brightness-95'}"
             data-begin-age={!choosingStarter &&
             view.phase !== 'gameOver' &&
             completed.age === view.age

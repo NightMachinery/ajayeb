@@ -1,6 +1,8 @@
 <script lang="ts">
   // Who starts the next age: why this player chooses, and one button per
-  // seat, each carrying the server's own starter key. When this client is
+  // seat, each carrying the server's own starter key. The buttons are the
+  // dialog's primary actions, filled in the seat's crest colour as on the
+  // pass-device screen (the host's Peek is secondary). When this client is
   // not the chooser it shows a waiting note instead. Display only: the
   // reason line reads the pawn's position from the view, the options are
   // the view's choices.
@@ -138,13 +140,13 @@
             confirm
           })}
           {#if rule.confirm}
-            <!-- The confirm step (online rooms): the crest colour stays on the
-               border; the button's label names the player. -->
+            <!-- The confirm step (online rooms): filled in the seat's crest
+               colour like the plain button; the label names the player. -->
             <ConfirmButton
               label={rule.label}
-              variant="secondary"
+              variant="primary"
               class="h-auto! min-h-14 min-w-0 border-2! px-3 py-2 leading-tight
-              {seat === 0 ? 'border-sun!' : 'border-moon!'}"
+              {seat === 0 ? 'border-sun! bg-sun! text-ink!' : 'border-moon! bg-moon! text-white!'}"
               data-act={choice.key}
               disabled={rule.disabled}
               onConfirm={() => onact(choice.key)}
@@ -152,18 +154,15 @@
           {:else}
             <button
               type="button"
-              class="flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-control border-2 bg-panel px-3 py-2
-              font-semibold text-fg transition-colors duration-(--dur-fast) hover:bg-panel-sunken
+              class="flex min-h-14 min-w-0 items-center justify-center gap-2 rounded-control border-2 px-3 py-2
+              font-semibold transition-[filter] duration-(--dur-fast) hover:brightness-105 active:brightness-95
               disabled:cursor-not-allowed disabled:opacity-50
-              {seat === 0 ? 'border-sun' : 'border-moon'}"
+              {seat === 0 ? 'border-sun bg-sun text-ink' : 'border-moon bg-moon text-white'}"
               data-act={choice.key}
               disabled={rule.disabled}
               onclick={() => onact(choice.key)}
             >
-              <Icon
-                name={seat === 0 ? 'crest-sun' : 'crest-moon'}
-                class="shrink-0 text-xl {seat === 0 ? 'text-sun-ink' : 'text-moon-ink'}"
-              />
+              <Icon name={seat === 0 ? 'crest-sun' : 'crest-moon'} class="shrink-0 text-xl" />
               <span class="min-w-0 truncate">{rule.label}</span>
             </button>
           {/if}
