@@ -20,8 +20,14 @@
 // Elements inside the tooltip layer are skipped, and so is anything in
 // ALLOW below, each with its reason. The test prints every offender with a
 // selector path.
+//
+// The log sheet's lines (M11.log-row-tooltips) are text, not images, so a
+// second test opens the log at Age I and on the result screen, in English
+// and Persian: every card, wonder and token a line names is a tooltip
+// anchor ([data-log-item]) inside its sentence, and its tooltip has the
+// board's detail (the printed cost) on hover, keyboard focus or a tap.
 
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { settle } from '../fixtures/layout-probes';
@@ -323,4 +329,124 @@ test.describe('tooltip coverage', { tag: '@mobile' }, () => {
     expect(report, 'images and icon-only buttons with no tooltip and no label').toEqual([]);
     expect(problems, 'console errors, page errors or failed requests').toEqual([]);
   });
+
+  for (const locale of ['en', 'fa'] as const) {
+    test.describe(`in ${locale}`, () => {
+      test.use({ appLocale: locale });
+
+      test('the log names its cards, wonders and tokens with their detail tooltips', async ({
+        page,
+        baseURL
+      }, info) => {
+        test.setTimeout(150_000);
+        if (!baseURL) throw new Error('no baseURL');
+        await page.addInitScript(() => {
+          try {
+            // Merged into the stored settings, which hold appLocale's language.
+            const stored = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+            localStorage.setItem(
+              'ajayeb:settings',
+              JSON.stringify({ ...stored, hotseatPassDevice: false, animationSpeed: 'off' })
+            );
+            localStorage.setItem('ajayeb:name', 'Coverage');
+          } catch {
+            // Storage may be blocked.
+          }
+        });
+        const touch = info.project.name === 'mobile';
+        if (!touch) await page.setViewportSize({ width: 1280, height: 800 });
+        const recording = await game(page, baseURL);
+        const problems = watchHygiene(page);
+        const bubble = page.locator('[data-tooltip-layer] [data-tooltip-bubble]');
+        const printedCost = locale === 'en' ? 'Printed cost:' : 'هزینه‌ی چاپ‌شده:';
+
+        const show = async (item: Locator): Promise<void> => {
+          await item.scrollIntoViewIfNeeded();
+          if (touch) await item.tap();
+          else await item.hover();
+        };
+
+        for (const position of ['age1', 'gameOver'] as const) {
+          await test.step(position, async () => {
+            await open(page, baseURL, recording, position);
+            if (position === 'gameOver') {
+              await page.locator('dialog[open] [data-view-board]').click();
+            }
+            await page.locator('[data-control="log"]').filter({ visible: true }).click();
+            const sheet = page
+              .locator('dialog[open]')
+              .filter({ has: page.locator('#log-sheet-title') });
+            await expect(sheet).toBeVisible();
+            const items = sheet.locator('[data-log-item]');
+            expect(await items.count(), 'the log names items').toBeGreaterThan(1);
+            const kinds = await items.evaluateAll((els) =>
+              els.map((el) => ({
+                kind: el.getAttribute('data-log-item'),
+                tooltip: el.hasAttribute('data-tooltip'),
+                text: el.textContent?.trim() ?? '',
+                slug: el.getAttribute('data-log-slug') ?? ''
+              }))
+            );
+            for (const k of kinds) {
+              expect(k.tooltip, `${k.kind} ${k.slug} has a tooltip`).toBe(true);
+              expect(k.text, `${k.kind} ${k.slug} shows its name`).not.toBe('');
+              expect(['card', 'wonder', 'token']).toContain(k.kind);
+            }
+            // A fresh Age I has only the drafted wonders; the result has
+            // cards, and the wonders built with them.
+            expect(kinds.map((k) => k.kind)).toContain('wonder');
+            if (position === 'gameOver') expect(kinds.map((k) => k.kind)).toContain('card');
+            if (locale === 'en') {
+              // Each line naming a card or wonder marks it, and the sentence
+              // keeps its spacing around the names.
+              for (const row of await sheet.locator('li').all()) {
+                const text = (await row.textContent())?.trim() ?? '';
+                expect(text, 'no space before punctuation').not.toMatch(/\s[.,:]/);
+                const marked = await row.locator('[data-log-item]').count();
+                if (/\bbuilt the wonder\b/.test(text)) expect(marked, text).toBe(2);
+                else if (/\b(built|drafted|discarded|destroys|builds|takes the)\b/.test(text))
+                  expect(marked, text).toBeGreaterThan(0);
+              }
+            }
+
+            // Two different items, so the second hover is a new one.
+            const wonder = sheet.locator('[data-log-item="wonder"]').last();
+            const first =
+              position === 'gameOver'
+                ? sheet.locator('[data-log-item="card"]').last()
+                : sheet.locator('[data-log-item="wonder"]').first();
+            await show(first);
+            await expect(bubble).toContainText((await first.textContent())!.trim());
+            await expect(bubble).toContainText(printedCost);
+            await expect(sheet, 'a tooltip leaves the log open').toBeVisible();
+            if (touch) {
+              // Any tap closes it, and is swallowed.
+              await sheet.locator('#log-sheet-title').tap();
+              await expect(bubble).toHaveCount(0);
+            } else {
+              await page.keyboard.press('Escape');
+              await expect(bubble).toHaveCount(0);
+              await expect(sheet, 'Escape closed the tooltip, not the log').toBeVisible();
+            }
+            await show(wonder);
+            await expect(bubble).toContainText((await wonder.textContent())!.trim());
+            await expect(bubble).toContainText(printedCost);
+            if (!touch) {
+              // Keyboard focus shows it at once.
+              await page.keyboard.press('Escape');
+              await expect(bubble).toHaveCount(0);
+              await page.mouse.move(0, 0);
+              await items.nth(1).focus();
+              await page.keyboard.press('Shift+Tab');
+              await expect(items.first()).toBeFocused();
+              await expect(bubble).toContainText((await items.first().textContent())!.trim());
+              await page.keyboard.press('Escape');
+              await expect(bubble).toHaveCount(0);
+            }
+          });
+        }
+        expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+      });
+    });
+  }
 });

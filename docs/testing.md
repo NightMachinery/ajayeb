@@ -1234,7 +1234,12 @@ row’s physical order as well as the board. `tooltip-coverage.spec.ts`
 accepts adjacent visible labels only when they accompany a single image
 branch; an unrelated glyph elsewhere in a labelled row cannot pass. A whole-card
 fallback cannot excuse a symbol without its own explanation, and the Age III
-position must stay below 2500 DOM elements.
+position must stay below 2500 DOM elements (the closed log sheet renders no
+lines, so a long log does not count). Its log test opens the log at Age I and
+on the result screen, in English and Persian: every card, wonder and progress
+token a line names (`[data-log-item]`) is a tooltip anchor inside its
+sentence, and its tooltip has the board's detail (the printed cost) on hover,
+on keyboard focus and on a tap, which leaves the log open.
 `tooltips.spec.ts` exercises the linked bubble’s narrow hit region alongside
 the existing touch, long-press, keyboard and rules-link paths. Its card-sheet
 regression uses real touchscreen and CDP touch events in English and Persian,
