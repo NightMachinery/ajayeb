@@ -1182,6 +1182,10 @@ including their transparent extended tap areas. It moves the pointer away
 and waits for a delayed tooltip to close before testing Escape on a card
 sheet: an open tooltip intentionally takes the first Escape itself. The
 1024 by 768 regression also runs on the mobile project with touch.
+On the desktop project it also opens a bot room at 1280x800 with a long
+player name and checks that neither seat panel truncates its name, at rest
+and with the selection's ghost tallies (M11.round3-layout-nits): the tallies
+wrap to their own line instead.
 `tooltips.spec.ts` checks the DismissLayer focus trap, Tab cycling and focus
 restoration to the opener after Escape.
 

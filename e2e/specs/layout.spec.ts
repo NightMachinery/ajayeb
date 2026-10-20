@@ -27,7 +27,8 @@ import { expect } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { probeLayout, quiet, settle, type LayoutReport } from '../fixtures/layout-probes';
-import { openHotseatRoom } from '../fixtures/scenario';
+import { GameDriver } from '../fixtures/driver';
+import { openHotseatRoom, SCENARIO_SEED } from '../fixtures/scenario';
 import { createDevRoom, recordGame, type GameMarks, type RecordedGame } from '../fixtures/ws-game';
 
 const VIEWPORTS = [
@@ -233,6 +234,45 @@ test('the phone strip takes taps over 44 px on its compact controls', async ({ p
     if (!span.what.startsWith('open-city')) {
       expect.soft(span.w, `${span.what}: tap width`).toBeGreaterThanOrEqual(MIN_TAP - 1);
     }
+  }
+  expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+});
+
+// A desktop seat panel's name is not squeezed by what sits beside it
+// (M11.round3-layout-nits): with a long name, the tallies wrap to their own
+// line and the whole name shows, at rest and with the selection's ghost
+// tallies. (The bot's thinking dots sit on its avatar and take no room.)
+test('a desktop seat panel keeps the whole name beside ghost tallies', async ({ page }) => {
+  const problems = watchHygiene(page);
+  await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Bartholomew'));
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const params = new URLSearchParams({
+    mode: 'ai',
+    level: 'easy',
+    seat: '0',
+    seed: String(SCENARIO_SEED),
+    scenario: 'military-supremacy'
+  });
+  await page.goto(`/dev/new?${params.toString()}`);
+  await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+  await new GameDriver(page).waitReady();
+  await settle(page);
+  const names = () =>
+    page
+      .locator('.city-panel [data-seat-name]')
+      .evaluateAll((els) =>
+        els
+          .filter((el) => el.getClientRects().length > 0)
+          .map((el) => ({ name: el.textContent, cut: el.scrollWidth > el.clientWidth + 0.5 }))
+      );
+  for (const when of ['at rest', 'with the ghost tallies']) {
+    if (when !== 'at rest') {
+      await page.locator('.card-structure [data-card="walls"]').click();
+      await expect(page.locator('.city-panel [data-ghost-tally]').first()).toBeVisible();
+    }
+    const shown = await names();
+    expect(shown.map((n) => n.name).sort()).toEqual(['Apprentice', 'Bartholomew']);
+    for (const n of shown) expect(n.cut, `${n.name} ${when}: the whole name shows`).toBe(false);
   }
   expect(problems, 'console errors, page errors or failed requests').toEqual([]);
 });

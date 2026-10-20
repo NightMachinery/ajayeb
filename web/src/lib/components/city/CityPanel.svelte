@@ -201,6 +201,20 @@
   </span>
 {/snippet}
 
+<!-- The thinking dots alone, so the name keeps its room in a narrow column:
+     on the bot's avatar, like a speech bubble, else after the name. The turn
+     bar says it in words, and so does the tooltip. -->
+{#snippet thinkingDots(place: string)}
+  <span
+    class="flex h-2.5 shrink-0 items-center {place}"
+    data-thinking={seat}
+    {@attach tooltip({ text: t('board.turn.aiThinking', { name }) })}
+  >
+    <ThinkingDots class={crestTextClass} />
+    <span class="sr-only">{t('board.player.thinking')}</span>
+  </span>
+{/snippet}
+
 <div
   class="city-panel flex w-full flex-col gap-2.5 rounded-panel border p-3
     {glow === 'strong'
@@ -214,22 +228,27 @@
   data-glow={glow}
 >
   <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-    <div class="flex min-w-[7rem] flex-1 items-center gap-1.5">
+    <!-- No minimum width of its own: this group's minimum is its content's,
+         the whole name included, so the tallies wrap to their own line
+         before the name would shrink (to a letter, beside a ghost tally).
+         The name truncates only when it is longer than the whole row. -->
+    <div class="flex flex-1 items-center gap-1.5">
       <SelfCrest {seat} self={isSelf} class="text-xl" />
-      {#if bot}<BotAvatar level={bot} class="size-7" />{/if}
-      <span class="min-w-0 truncate font-display text-base text-fg" dir="auto">{name}</span>
+      {#if bot}
+        <span class="relative flex shrink-0">
+          <BotAvatar level={bot} class="size-7" />
+          {#if thinking}{@render thinkingDots(
+              'absolute -end-1.5 -bottom-1 rounded-full bg-panel px-0.5 ring-1 ring-rule'
+            )}{/if}
+        </span>
+      {/if}
+      <span class="min-w-0 truncate font-display text-base text-fg" dir="auto" data-seat-name
+        >{name}</span
+      >
       {#if isSelf}<SelfMark />{/if}
       {#if presence}<PresenceDot {presence} {name} />{/if}
       <SeatLink {seat} {name} class="-ms-1" />
-      {#if thinking}
-        <span
-          class="flex shrink-0 items-center gap-1 text-xs font-semibold text-fg-muted"
-          data-thinking={seat}
-        >
-          <ThinkingDots class={crestTextClass} />
-          {t('board.player.thinking')}
-        </span>
-      {/if}
+      {#if thinking && !bot}{@render thinkingDots('')}{/if}
     </div>
     <div class="ms-auto flex shrink-0 items-center gap-1.5">
       <Tally
