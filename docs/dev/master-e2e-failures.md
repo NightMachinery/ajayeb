@@ -128,3 +128,22 @@ responsible; they contain no native CPU/GC profile. Treat these remaining
 unattributed stalls as runner noise for v1, without claiming a proven cause
 or a green runner repeat. Local 4x proof passed 80/80 first attempts; the
 runner perf job remains non-gating and the 50 ms assertion stays unchanged.
+
+## Profiled runner attribution
+
+A CI-only branch (never merged) repeated case d ten times per project at 4x
+with zero retries and the 50 ms assertion unchanged, and captured native
+Chrome traces (CPU samples, GC, style, layout, paint and compositor events)
+with source maps for every failing attempt. Profiling adds overhead, so its
+pass rate (7 of 10 on each project, run 39464446758) is not an unprofiled
+estimate. The six failing attempts held seven overlapping tasks of 50 to
+82 ms; the earlier 306 to 456 ms pauses did not recur and stay unattributed.
+All seven are native work: three are dominated by a major GC (35 to 51 ms
+finalizing incremental marking), two by compositor commit waits (48 and
+62 ms of wall time with about half of it off the CPU), and two are mixed
+renderer frame work (layout, layerization, hit testing and incremental GC
+under the frame pipeline). The application callbacks inside them took under
+1 ms each, and no layout was forced by application code. No client change
+follows from this evidence. Case d passes as a single attempt per project on
+push CI, the `e2e-perf` job stays non-gating, and the 50 ms limit, the 4x
+throttle and zero retries are unchanged.
