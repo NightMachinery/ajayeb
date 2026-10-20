@@ -244,15 +244,14 @@
 {/snippet}
 
 {#snippet crownTile()}
-  <!-- The gold tile of an instant win. The glyph is sized by its font size,
-       because Icon's own size-[1em] wins over a size-* class: a 12 px box
-       in the tile's 14 px inside, whose live area (2 to 22 of 24) keeps
-       the crown 2 px or more clear of the border on every side. -->
+  <!-- The gold tile of an instant win: a 12 px glyph box in the tile's
+       14 px inside, whose live area (2 to 22 of 24) keeps the crown 2 px
+       or more clear of the border on every side. -->
   <span
     class="grid size-4 place-items-center rounded-[4px] border border-(color:--gold-deep) bg-gold text-card-ink"
     aria-hidden="true"
   >
-    <Icon name="hint-crown" class="text-[12px]" />
+    <Icon name="hint-crown" class="size-3" />
   </span>
 {/snippet}
 
