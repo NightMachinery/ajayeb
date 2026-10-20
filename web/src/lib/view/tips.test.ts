@@ -13,10 +13,12 @@ import {
   effectRules,
   effectTip,
   guildLines,
+  namedTip,
   payLines,
   previewText,
   scoreLines,
-  sentences
+  sentences,
+  wonderTip
 } from './tips';
 
 const ALL: ReadonlySet<HintFamily> = new Set(HINT_FAMILIES);
@@ -249,5 +251,27 @@ describe('chains and guilds', () => {
 
   it('names a mini card and its category', () => {
     expect(cardTip('baths').text).toBe('Baths: Civilian building, Age I.');
+  });
+});
+
+describe('namedTip', () => {
+  const names = ['Sara', 'Omid'] as const;
+
+  it('a card has the board’s card tip and its face beside it', () => {
+    expect(namedTip('card', 'baths', names)).toEqual({
+      ...cardTip('baths', { names }),
+      stack: [{ kind: 'card', slug: 'baths', caption: 'Baths' }]
+    });
+  });
+
+  it('a wonder has the board’s wonder tip', () => {
+    expect(namedTip('wonder', 'pyramids')).toEqual(wonderTip('pyramids'));
+  });
+
+  it('a token says what it does and links the rules’ tokens section', () => {
+    const tip = namedTip('token', 'law');
+    expect(tip.text).toMatch(/^Law\b/);
+    expect(tip.text.length).toBeGreaterThan('Law'.length + 5);
+    expect(tip.rulesId).toBe('tokens');
   });
 });

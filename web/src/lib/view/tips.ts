@@ -22,9 +22,11 @@ import {
   resourceName,
   wonderName
 } from '$lib/components/card/effect-text';
+import { tokenEffect } from '$lib/components/choices/token-text';
 import { tokenName } from '$lib/components/game/names';
 import type { RuleSectionId } from '$lib/components/rules/sections';
-import { ageLabel, sentences, t } from '$lib/i18n';
+import { ageLabel, labelDetail, sentences, t } from '$lib/i18n';
+import type { TooltipContent } from '$lib/ui/tooltip.svelte';
 export { sentences } from '$lib/i18n';
 import type {
   Back,
@@ -376,4 +378,28 @@ export function wonderTip(
   else if (state?.removed) lines.push(t('wonder.removed'));
   else if (state) lines.push(t('wonder.notBuilt'));
   return { text: t('wonder.tip.heading', { name: wonderName(slug) }), lines };
+}
+
+// --- A name in a line of text ------------------------------------------------
+
+/** The detail tooltip of a card, wonder or progress token a line of text
+ *  names (the move summary's pictures, the log's names): the board's card
+ *  tip with the card's face beside it, the board's wonder tip, or what the
+ *  token does, as its medallion says. */
+export function namedTip(
+  kind: 'card' | 'wonder' | 'token',
+  slug: string,
+  names?: readonly [string, string]
+): TooltipContent {
+  switch (kind) {
+    case 'card':
+      return {
+        ...cardTip(slug, { names }),
+        stack: [{ kind: 'card', slug, caption: cardName(slug) }]
+      };
+    case 'wonder':
+      return wonderTip(slug);
+    case 'token':
+      return { text: labelDetail(tokenName(slug), tokenEffect(slug)), rulesId: 'tokens' };
+  }
 }

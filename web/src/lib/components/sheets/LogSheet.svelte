@@ -14,6 +14,13 @@
   // SelfMark element, so a line's text stays the log entry alone, the same
   // for every player; it still has text, so it is not colour alone.
   //
+  // Each card, wonder and progress token a line names (LogLine.parts) has
+  // the detail tooltip the move summary's pictures have (view/tips.ts
+  // namedTip): a dotted underline marks it, a fine pointer hovers or
+  // focuses it, and a tap shows it on touch (a line has no action). It
+  // stays a span inside the sentence, never a button; a line that names
+  // nothing is plain text.
+  //
   // Replay last move (UX design section 5, "Log"; `replay`, from the game
   // screen): a control that plays the last move's animations again on the
   // board as it is now (fx/anim/replay.svelte.ts), closing the sheet first.
@@ -23,7 +30,8 @@
   import { ageLabel, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { GameEvent } from '$lib/wire';
-  import { groupLogByAge } from '$lib/view/log-format';
+  import { groupLogByAge, type LogPart } from '$lib/view/log-format';
+  import { namedTip } from '$lib/view/tips';
   import { groupGameLog, type GameLogGroup } from '$lib/hints/log';
   import { tryGameContext } from '../choices/room';
   import Sheet from '../shell/Sheet.svelte';
@@ -84,6 +92,22 @@
   });
 </script>
 
+{#snippet piece(part: LogPart)}
+  {#if typeof part === 'string'}
+    {part}
+  {:else}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex (Keyboard users reach a named item's tooltip by focus; the line has no action, so it is not a button.) -->
+    <span
+      class="cursor-help rounded-sm underline decoration-fg-muted decoration-dotted decoration-1 underline-offset-[0.25em] hover:decoration-fg hover:decoration-solid"
+      dir="auto"
+      tabindex="0"
+      data-log-item={part.kind}
+      data-log-slug={part.slug}
+      {@attach tooltip(namedTip(part.kind, part.slug, names))}>{part.text}</span
+    >
+  {/if}
+{/snippet}
+
 <Sheet bind:open {titleId}>
   <div class="flex flex-col gap-3 px-4 pt-1 pb-5">
     <div class="flex flex-wrap items-center justify-between gap-2">
@@ -112,7 +136,10 @@
         </span>
       {/if}
     </div>
-    {#if groups.length === 0}
+    {#if !open}
+      <!-- The lines exist only while the log is open: a long game's log
+           would otherwise weigh on every frame of the board. -->
+    {:else if groups.length === 0}
       <p class="text-sm text-fg-muted">{t('board.logSheet.empty')}</p>
     {:else}
       {#each groups as group (group.age)}
@@ -125,6 +152,7 @@
           <ol class="flex flex-col gap-1">
             {#each group.lines as line, i (i)}
               {@const self = mine !== null && line.seat === mine}
+              {@const parts = 'parts' in line ? line.parts : undefined}
               <li
                 class="rounded-control border border-rule bg-panel px-2.5 py-1.5 text-sm text-fg
                   {self
@@ -133,7 +161,11 @@
                 data-self-line={self ? '' : undefined}
                 data-you={self ? t('online.identity.you') : undefined}
               >
-                {line.text}
+                {#if parts}
+                  {#each parts as part, j (j)}{@render piece(part)}{/each}
+                {:else}
+                  {line.text}
+                {/if}
               </li>
             {/each}
           </ol>

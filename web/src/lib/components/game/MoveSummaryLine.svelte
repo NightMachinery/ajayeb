@@ -6,7 +6,8 @@
   // went to the other player), other coin changes, the conflict pawn's move,
   // looting and a science pair. Every chip and picture has its own tooltip:
   // a card or wonder picture the same detail as the board's (view/tips.ts
-  // cardTip and wonderTip: the effects, the printed cost and the chains),
+  // namedTip, which the log's names share: the effects, the printed cost
+  // and the chains),
   // the card with its face beside it. A fine pointer hovers; on touch a
   // long-press shows it and keeps the popup, and a tap closes the popup
   // (DismissLayer's longPressTips).
@@ -24,7 +25,7 @@
   import { ageLabel, formatSigned, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { formatLogEvent } from '$lib/view/log-format';
-  import { cardTip, wonderTip } from '$lib/view/tips';
+  import { namedTip } from '$lib/view/tips';
   import type { SummaryLine } from '$lib/view/move-summary';
   import type { Back } from '$lib/wire';
   import CardArt from '../card/CardArt.svelte';
@@ -139,10 +140,7 @@
       <span
         class="{thumb} {line.kind === 'destroy' ? 'opacity-60 grayscale' : ''}"
         data-card={card.slug}
-        {@attach tooltip({
-          ...cardTip(card.slug, { names }),
-          stack: [{ kind: 'card', slug: card.slug, caption: cardName(card.slug) }]
-        })}
+        {@attach tooltip(namedTip('card', card.slug, names))}
       >
         <span
           class="absolute inset-x-0 top-0 z-10 h-1.5"
@@ -155,7 +153,7 @@
         class="{thumb} bg-card-paper {line.kind === 'wonderRemoved' ? 'opacity-60 grayscale' : ''}"
         data-wonder={line.wonder}
         {@attach tooltip({
-          ...wonderTip(line.wonder),
+          ...namedTip('wonder', line.wonder),
           ...(line.kind === 'wonderRemoved' ? { text: t('game.summary.wonderRemovedTip') } : {})
         })}
       >
