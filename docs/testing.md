@@ -1235,11 +1235,16 @@ accepts adjacent visible labels only when they accompany a single image
 branch; an unrelated glyph elsewhere in a labelled row cannot pass. A whole-card
 fallback cannot excuse a symbol without its own explanation, and the Age III
 position must stay below 2500 DOM elements (the closed log sheet renders no
-lines, so a long log does not count). Its log test opens the log at Age I and
-on the result screen, in English and Persian: every card, wonder and progress
-token a line names (`[data-log-item]`) is a tooltip anchor inside its
-sentence, and its tooltip has the board's detail (the printed cost) on hover,
-on keyboard focus and on a tap, which leaves the log open.
+lines, so a long log does not count). Its log test opens the log at Age I,
+on the result screen and after a Great Library's draws, in English and
+Persian: every card, wonder and progress token a line names
+(`[data-log-item]`) is a tooltip anchor inside its sentence, and its tooltip
+has the board's detail (the printed cost) on hover, on keyboard focus and on
+a tap, which leaves the log open. With Animation on, a closing log keeps its
+height and its lines in every frame of the exit, keeps them when reopened
+mid-exit, and holds none once closed. The formatter's unit tests
+(`log-format.test.ts`) check that a player name shaped like a placeholder
+or a private-use marker is only ever text, in both locales.
 `tooltips.spec.ts` exercises the linked bubble’s narrow hit region alongside
 the existing touch, long-press, keyboard and rules-link paths. Its card-sheet
 regression uses real touchscreen and CDP touch events in English and Persian,

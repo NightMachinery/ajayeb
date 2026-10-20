@@ -25,7 +25,10 @@
 // second test opens the log at Age I and on the result screen, in English
 // and Persian: every card, wonder and token a line names is a tooltip
 // anchor ([data-log-item]) inside its sentence, and its tooltip has the
-// board's detail (the printed cost) on hover, keyboard focus or a tap.
+// board's detail (the printed cost) on hover, keyboard focus or a tap. The
+// Great Library's draws name it too. With Animation on, a closing log keeps
+// its height and lines through the exit (and on a reopen mid-exit), and the
+// closed log holds none.
 
 import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
@@ -443,10 +446,146 @@ test.describe('tooltip coverage', { tag: '@mobile' }, () => {
               await page.keyboard.press('Escape');
               await expect(bubble).toHaveCount(0);
             }
+            // Closed (with Animation off, at once), the log holds no lines.
+            if (touch) await sheet.locator('#log-sheet-title').tap();
+            await expect(bubble).toHaveCount(0);
+            await page.keyboard.press('Escape');
+            await expect(sheet).toHaveCount(0);
+            await expect(page.locator('dialog:has(#log-sheet-title) li')).toHaveCount(0);
           });
         }
+
+        await test.step('Great Library draws', async () => {
+          // The drawer's three draws name the wonder, never the token drawn.
+          const room = await createDevRoom(baseURL, {
+            mode: 'hotseat',
+            scenario: 'great-library',
+            actions: ['wonder:great-library:rostrum', 'token:law']
+          });
+          await page.goto(room.path);
+          await settle(page);
+          await page.locator('[data-control="log"]').filter({ visible: true }).click();
+          const sheet = page
+            .locator('dialog[open]')
+            .filter({ has: page.locator('#log-sheet-title') });
+          const library = sheet
+            .locator('li')
+            .filter({ has: page.locator('[data-log-slug="great-library"]') });
+          // The build that used the wonder, then its three draws.
+          await expect(library).toHaveCount(4);
+          for (const row of (await library.all()).slice(1)) {
+            await expect(row.locator('[data-log-item]')).toHaveCount(1);
+            await expect(row.locator('[data-log-item="wonder"]')).toHaveAttribute('data-tooltip');
+          }
+          const draw = library.last().locator('[data-log-item]');
+          await show(draw);
+          await expect(bubble).toContainText((await draw.textContent())!.trim());
+          await expect(bubble).toContainText(printedCost);
+        });
         expect(problems, 'console errors, page errors or failed requests').toEqual([]);
       });
     });
   }
+
+  test('the closing log keeps its lines while it slides away, then drops them', async ({
+    page,
+    baseURL
+  }, info) => {
+    test.setTimeout(150_000);
+    if (!baseURL) throw new Error('no baseURL');
+    // Animation on, so the sheet has an exit to watch.
+    await page.addInitScript(() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+        localStorage.setItem(
+          'ajayeb:settings',
+          JSON.stringify({
+            ...stored,
+            hotseatPassDevice: false,
+            animationSpeed: 'normal',
+            showOpponentMove: false
+          })
+        );
+        localStorage.setItem('ajayeb:name', 'Coverage');
+      } catch {
+        // Storage may be blocked.
+      }
+    });
+    if (info.project.name === 'desktop') await page.setViewportSize({ width: 1280, height: 800 });
+    const recording = await game(page, baseURL);
+    const problems = watchHygiene(page);
+    await open(page, baseURL, recording, 'age3');
+    const control = page.locator('[data-control="log"]').filter({ visible: true });
+    const lines = page.locator('dialog:has(#log-sheet-title) li');
+    await control.click();
+    const sheet = page.locator('dialog[open]').filter({ has: page.locator('#log-sheet-title') });
+    await expect(sheet).toBeVisible();
+    await page.waitForTimeout(600);
+    const rows = await lines.count();
+    expect(rows, 'a populated log').toBeGreaterThan(10);
+
+    // Every frame from now until the dialog is gone: the panel's height,
+    // the lines in it and the dialog's opacity.
+    const frames = page.evaluate(
+      () =>
+        new Promise<{ h: number; rows: number; opacity: number }[]>((resolve) => {
+          const dialog = [...document.querySelectorAll('dialog')].find((d) =>
+            d.querySelector('#log-sheet-title')
+          )!;
+          // Its layout height: the centred sheet's exit also scales it.
+          const panel = dialog.querySelector<HTMLElement>('.sheet-panel')!;
+          const out: { h: number; rows: number; opacity: number }[] = [];
+          const tick = (): void => {
+            const cs = getComputedStyle(dialog);
+            if (cs.display === 'none' || out.length > 600) return resolve(out);
+            out.push({
+              h: panel.offsetHeight,
+              rows: dialog.querySelectorAll('li').length,
+              opacity: Number(cs.opacity)
+            });
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        })
+    );
+    await page.waitForTimeout(100);
+    await page.keyboard.press('Escape');
+    const seen = await frames;
+    const openHeight = seen[0]!.h;
+    const exit = seen.filter((f) => f.opacity < 0.999);
+    expect(exit.length, 'the exit took some frames').toBeGreaterThan(2);
+    for (const f of seen) {
+      expect(f.h, 'the panel keeps its height through the exit').toBeGreaterThan(openHeight - 1);
+      expect(f.rows, 'and its lines').toBe(rows);
+    }
+    // Fully closed, the lines go.
+    await expect(lines).toHaveCount(0);
+
+    // Reopened in the middle of its exit, it keeps them.
+    await control.click();
+    await expect(sheet).toBeVisible();
+    await page.waitForTimeout(600);
+    // The close event (which turns `open` off) and one frame of the exit,
+    // then a DOM click: a pointer click would wait for the backdrop to go.
+    const closed = page.evaluate(
+      () =>
+        new Promise<boolean>((resolve) => {
+          const dialog = [...document.querySelectorAll('dialog')].find((d) =>
+            d.querySelector('#log-sheet-title')
+          )!;
+          dialog.addEventListener(
+            'close',
+            () => requestAnimationFrame(() => resolve(getComputedStyle(dialog).display !== 'none')),
+            { once: true }
+          );
+        })
+    );
+    await page.keyboard.press('Escape');
+    expect(await closed, 'still sliding away').toBe(true);
+    await control.evaluate((el: HTMLElement) => el.click());
+    await expect(sheet).toBeVisible();
+    await page.waitForTimeout(800);
+    await expect(lines).toHaveCount(rows);
+    expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
 });
