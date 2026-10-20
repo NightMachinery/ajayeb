@@ -24,6 +24,68 @@ import type { CapturedFrame, ViewerStream } from './leak-check';
 /** The e2e server's origin (playwright.config.ts). */
 export const ORIGIN = 'http://127.0.0.1:38954';
 
+export interface BrowserNetworkEvent {
+  kind: 'document' | 'online' | 'offline' | 'pagehide';
+  at: number;
+  online: boolean;
+  /** false for a test's dispatchEvent, true for a browser-generated event. */
+  trusted: boolean | null;
+}
+
+declare global {
+  interface Window {
+    __ajayebReportNetwork(event: BrowserNetworkEvent): Promise<void>;
+  }
+}
+
+const networkEvents = new WeakMap<Page, BrowserNetworkEvent[]>();
+function eventsFor(page: Page): BrowserNetworkEvent[] {
+  let events = networkEvents.get(page);
+  if (!events) {
+    events = [];
+    networkEvents.set(page, events);
+  }
+  return events;
+}
+
+/** Test-only evidence, retained in Node across navigation, without URLs or identity data. */
+async function recordNetworkEvents(context: BrowserContext): Promise<void> {
+  await context.exposeBinding('__ajayebReportNetwork', ({ page, frame }, value: unknown) => {
+    if (frame !== page.mainFrame() || !value || typeof value !== 'object') return;
+    const event = value as BrowserNetworkEvent;
+    if (
+      !['document', 'online', 'offline', 'pagehide'].includes(event.kind) ||
+      !Number.isFinite(event.at) ||
+      typeof event.online !== 'boolean' ||
+      (event.trusted !== null && typeof event.trusted !== 'boolean')
+    )
+      return;
+    const events = eventsFor(page);
+    // Select fields explicitly: even an extra payload field cannot enter a report.
+    events.push({ kind: event.kind, at: event.at, online: event.online, trusted: event.trusted });
+    if (events.length > 64) events.shift();
+  });
+  await context.addInitScript(() => {
+    if (window.top !== window) return;
+    const note = (kind: BrowserNetworkEvent['kind'], event?: Event) => {
+      void window
+        .__ajayebReportNetwork({
+          kind,
+          at: Date.now(),
+          online: navigator.onLine,
+          trusted: event?.isTrusted ?? null
+        })
+        .catch(() => {
+          /* Navigation can destroy this reporting context. */
+        });
+    };
+    note('document');
+    window.addEventListener('online', (event) => note('online', event));
+    window.addEventListener('offline', (event) => note('offline', event));
+    window.addEventListener('pagehide', (event) => note('pagehide', event));
+  });
+}
+
 /**
  * A new context with the project's device (viewport, touch, user agent), as
  * the test's own `context` fixture would have (`browser.newContext` does not
@@ -47,6 +109,7 @@ export async function newDeviceContext(
     hasTouch: use.hasTouch
   });
   await installMotionOff(context);
+  await recordNetworkEvents(context);
   if (opts.clipboard) {
     // The permission must be scoped to the origin the context actually
     // navigates to (use.baseURL, the same one passed to newContext above),
@@ -81,10 +144,12 @@ export class FrameLog implements ViewerStream {
   readonly frames: CapturedFrame[] = [];
   sockets = 0;
   readonly connections: LoggedConnection[] = [];
+  readonly networkEvents: BrowserNetworkEvent[];
   readonly #started = Date.now();
 
   constructor(page: Page, name: string) {
     this.name = name;
+    this.networkEvents = eventsFor(page);
     page.on('websocket', (ws) => {
       if (!new URL(ws.url()).pathname.endsWith('/ws')) return;
       this.sockets += 1;

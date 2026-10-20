@@ -75,6 +75,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const driver = new GameDriver(pageB);
       const before = await driver.snapshot();
       const initial = log.sockets;
+      const documentsBefore = log.networkEvents.filter((event) => event.kind === 'document').length;
       // A controlled browser network notification exercises the real transport
       // reconnect path without depending on how long an offline retry waits.
       const interrupted = await pageB.evaluate(() => {
@@ -84,6 +85,19 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
         return state;
       });
       expect(interrupted).not.toBe('open');
+      await expect
+        .poll(() =>
+          log.networkEvents
+            .filter(
+              (event) =>
+                event.trusted === false && (event.kind === 'offline' || event.kind === 'online')
+            )
+            .map((event) => ({ kind: event.kind, trusted: event.trusted }))
+        )
+        .toEqual([
+          { kind: 'offline', trusted: false },
+          { kind: 'online', trusted: false }
+        ]);
       await driver.waitReady();
       await expect.poll(() => log.sockets, { timeout: 5_000 }).toBe(initial + 1);
       const socketsBeforeReload = log.sockets;
@@ -96,12 +110,19 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
         before.choices.map((choice) => choice.key)
       );
       await expect.poll(() => log.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 1);
+      await expect
+        .poll(() => log.networkEvents.filter((event) => event.kind === 'document').length)
+        .toBeGreaterThan(documentsBefore);
+      expect(
+        log.networkEvents.filter((event) => event.kind === 'offline' && event.trusted === false)
+      ).toHaveLength(1);
       await info.attach('reload after reconnect sockets', {
         body: JSON.stringify({
           initial,
           socketsBeforeReload,
           after: log.sockets,
-          connections: log.connections
+          connections: log.connections,
+          networkEvents: log.networkEvents
         }),
         contentType: 'application/json'
       });
@@ -117,6 +138,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
     test.setTimeout(600_000);
     const started = Date.now();
     const contexts: BrowserContext[] = [];
+    const connectionLogs: FrameLog[] = [];
     try {
       // A creates the game from Home and reads the invite in the lobby.
       const ctxA = await newDeviceContext(browser, testInfo, { clipboard: true });
@@ -124,6 +146,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const pageA = await ctxA.newPage();
       const problemsA = watchHygiene(pageA);
       const logA = new FrameLog(pageA, 'A');
+      connectionLogs.push(logA);
       const crest: Crest = isMobile ? 'Moon' : 'Sun';
       const seatA = crest === 'Sun' ? 0 : 1;
       const seatB = 1 - seatA;
@@ -138,6 +161,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const pageB = await ctxB.newPage();
       const problemsB = watchHygiene(pageB);
       const logB = new FrameLog(pageB, 'B');
+      connectionLogs.push(logB);
       await joinByLink(pageB, invite.link, 'Babak');
 
       // The lobby gives way to the draft on both sides.
@@ -198,6 +222,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           const page = await ctxS.newPage();
           const problems = watchHygiene(page);
           const log = new FrameLog(page, 'spectator');
+          connectionLogs.push(log);
           await joinByLink(page, invite.link, 'Mitra');
           const driver = new GameDriver(page);
           spectator = { page, driver, log, problems };
@@ -225,10 +250,10 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           const historyBefore = await pageB.evaluate(() => window.__ajayeb?.history() ?? []);
           expect(historyBefore.map((e) => e.ply)).toEqual([...Array(before.ply).keys()]);
           const socketsBeforeReload = logB.sockets;
-          if (socketsBeforeReload > 1) {
+          if (logA.sockets > 1 || socketsBeforeReload > 1) {
             testInfo.annotations.push({
               type: 'unexpected-reconnect',
-              description: `B opened ${socketsBeforeReload} connections before its intentional reload; inspect reload socket lifetimes.`
+              description: `Before the intentional reload A opened ${logA.sockets} connections and B opened ${socketsBeforeReload}; inspect socket lifetimes and browser network events.`
             });
           }
           await pageB.reload();
@@ -244,7 +269,13 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
             body: JSON.stringify({
               socketsBeforeReload,
               socketsAfterReload: logB.sockets,
-              connections: logB.connections
+              connections: logB.connections,
+              networkEvents: logB.networkEvents,
+              otherPlayer: {
+                sockets: logA.sockets,
+                connections: logA.connections,
+                networkEvents: logA.networkEvents
+              }
             }),
             contentType: 'application/json'
           });
@@ -443,7 +474,21 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       expect(problemsB).toEqual([]);
       expect(spectator.problems).toEqual([]);
     } finally {
-      for (const ctx of contexts) await ctx.close();
+      try {
+        await testInfo.attach('connection diagnostics', {
+          body: JSON.stringify(
+            connectionLogs.map((log) => ({
+              name: log.name,
+              sockets: log.sockets,
+              connections: log.connections,
+              networkEvents: log.networkEvents
+            }))
+          ),
+          contentType: 'application/json'
+        });
+      } finally {
+        for (const ctx of contexts) await ctx.close();
+      }
     }
   });
 

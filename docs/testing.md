@@ -919,6 +919,32 @@ token and name) and their own network switch.
 - No console error, page error or failed request on any page, except A's
   failed reconnects while it is offline.
 
+The existing `unexpected-reconnect` annotation records either player opening
+more than one connection before B's intentional reload. Its socket-lifetime
+attachment includes both players' bounded browser network events, and a
+`connection diagnostics` attachment is written even when the full game fails
+before that checkpoint. `newDeviceContext` captures the last 64 main-page
+`document`, `online`, `offline` and `pagehide` events in Node across reloads.
+Each record contains only its kind, epoch milliseconds, `navigator.onLine`
+and `isTrusted` (`false` for `dispatchEvent`; browser-generated events,
+including `context.setOffline`, are trusted). A document being destroyed may
+lose its last report, so a missing `pagehide` does not prove it stayed open.
+No URL, identity token, claim or outgoing frame enters this diagnostic record. The focused reload
+test checks that event evidence survives reload and the strict baseline+1
+socket assertion remains intact.
+
+A paired reconnect does not by itself establish a server timeout. The client
+has no post-open liveness timer: its 10-second watchdog skips an already-open
+socket even if the main thread delayed its open callback. A browser `offline`
+event deliberately closes an open socket with 1000, then retries after the
+first 250 to 500 ms jitter, including on loopback where the socket may still
+work. By comparison the server's hello and per-frame write deadlines are
+10 seconds, and unanswered pings take about 75 seconds. Match the diagnostic
+browser events and peer-close log lines before changing any timeout. A
+`socket closed` status alone is incomplete evidence: the read-loop cleanup
+can record normal closure after a read error, so inspect the preceding
+`peer closed`, `reading failed` and `writing failed` lines too.
+
 A second test opens an online room at the `great-library` scenario through
 `/dev/new` (seed 7), with seat 1 and a spectator joining through its link.
 Seat 0 builds the Great Library wonder first and keeps Law; meanwhile seat

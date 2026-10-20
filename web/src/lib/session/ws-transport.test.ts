@@ -69,9 +69,9 @@ class FakeNetwork implements NetworkLike {
   }
 }
 
-function setup(opts: { random?: () => number; offlineAfter?: number } = {}) {
+function setup(opts: { random?: () => number; offlineAfter?: number; network?: FakeNetwork } = {}) {
   const sockets: FakeSocket[] = [];
-  const network = new FakeNetwork();
+  const network = opts.network ?? new FakeNetwork();
   const transport = new WsTransport({
     url: 'ws://example.test/ws',
     createSocket: (url) => {
@@ -323,6 +323,47 @@ describe('WsTransport', () => {
     // The abandoned socket's late events change nothing.
     first.drop(1006);
     expect(sockets).toHaveLength(2);
+  });
+
+  it('keeps an already-open socket when its open callback is delayed past the watchdog', () => {
+    const { transport, sockets, current } = setup();
+    const first = current();
+    // The browser's network thread opened it while the page's JS was busy.
+    first.readyState = 1;
+    vi.advanceTimersByTime(10_001);
+    expect(first.closedWith).toBeUndefined();
+    expect(sockets).toHaveLength(1);
+    first.open();
+    vi.advanceTimersByTime(75_000);
+    expect(first.closedWith).toBeUndefined();
+    expect(sockets).toHaveLength(1);
+    transport.close();
+  });
+
+  it('a shared browser offline signal closes two healthy sockets normally, then retries with jitter', () => {
+    const network = new FakeNetwork();
+    const a = setup({ network, random: () => 0 });
+    const b = setup({ network, random: () => 1 });
+    for (const client of [a, b]) {
+      client.current().open();
+      client.current().message(WELCOME);
+    }
+    vi.advanceTimersByTime(4_700);
+    network.fire('offline');
+    for (const client of [a, b]) {
+      expect(client.sockets[0]?.closedWith).toBe(1000);
+      expect(client.states.at(-1)).toEqual({ state: 'offline', attempt: 1 });
+    }
+    vi.advanceTimersByTime(249);
+    expect(a.sockets).toHaveLength(1);
+    expect(b.sockets).toHaveLength(1);
+    vi.advanceTimersByTime(1);
+    expect(a.sockets).toHaveLength(2);
+    expect(b.sockets).toHaveLength(1);
+    vi.advanceTimersByTime(250);
+    expect(b.sockets).toHaveLength(2);
+    a.transport.close();
+    b.transport.close();
   });
 
   it('drops an open socket when the browser goes offline', () => {
