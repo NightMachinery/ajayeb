@@ -532,12 +532,7 @@ export class AnimRunner {
       }
       // Register before open(): the safety clock starts with actual motion,
       // not while a hidden tab is still waiting for the paint gate.
-      return this.#runs.hold(
-        Math.max(0, block),
-        release,
-        drain,
-        cap.timeline.totalMs + 2_000
-      );
+      return this.#runs.hold(Math.max(0, block), release, drain, cap.timeline.totalMs + 2_000);
     } finally {
       open();
     }
