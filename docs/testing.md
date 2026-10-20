@@ -1127,7 +1127,7 @@ playwright_chromiumdev_profile`).
 `followups.spec.ts` checks board tokens opening TokenSheet with hint values,
 a token pick showing both seats' values, an open token sheet closing when
 another tab ends the game and this tab starts a rematch, the viewer's winning move showing
-its review on the result screen, and a fixed seed's producer leaving a
+once on the result screen (its row, and no review repeating it), and a fixed seed's producer leaving a
 trade-price caret and an emptied-slot trace until the next player's move.
 `gameover-last-move.spec.ts` (both projects) checks the result screen's final
 move section (M11.gameover-last-move): with Animation normal every animation of

@@ -247,7 +247,7 @@ for (const locale of ['en', 'fa'] as const) {
     );
 
     test(
-      'taking the winning token lists both decisions without advice',
+      'taking the winning token lists both decisions in the final move, without a review',
       { tag: ['@mobile'] },
       async ({ page }) => {
         await summaryOn(page);
@@ -264,10 +264,23 @@ for (const locale of ['en', 'fa'] as const) {
         await driver.waitReady();
         await playKey(driver, 'construct:academy');
         await playKey(driver, 'token:law');
-        const review = page.locator('[data-move-review]');
-        await expect(review).toHaveAttribute('data-move-review', 'none');
-        await expect(review.locator('[data-review-played]')).toHaveCount(2);
-        await expect(review.locator('[data-review-verdict]')).toHaveCount(0);
+        // The result's final move has both decisions as rows. With no better
+        // move, a review would only repeat them, so none is shown
+        // (M11.recheck-polish).
+        const section = page.locator('dialog[open] [data-last-move]');
+        await expect(section).toHaveAttribute('data-last-move', '0');
+        await expect(
+          section.locator('[data-summary-line="build"] [data-card="academy"]')
+        ).toBeVisible();
+        const token = section.locator('[data-summary-line="token"]');
+        await expect(token).toHaveCount(1);
+        await expect(token).toContainText(locale === 'en' ? 'Law' : 'قانون');
+        await expect(section.locator('[data-end-review]')).toHaveCount(0);
+        await expect(page.locator('[data-move-review]')).toHaveCount(0);
+        expect((await currentView(page)).review?.entries.map((entry) => entry.played)).toEqual([
+          'construct:academy',
+          'token:law'
+        ]);
       }
     );
   });
