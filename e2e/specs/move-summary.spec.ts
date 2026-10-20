@@ -9,8 +9,8 @@
 //   button opens the latest summary.
 // - Hot-seat with the pass-device screen: the popup waits for the next
 //   player to take the device; the pass screen replaces its automatic popup.
-// - A card picture's tooltip (M11.track-and-log-polish) has the board's card
-//   detail: a fine pointer hovers it; on touch a long-press shows it and
+// - A card or wonder picture's tooltip (M11.track-and-log-polish) has the
+//   board's detail: a fine pointer hovers it; on touch a long-press shows it and
 //   keeps the popup, the next tap closes only the tooltip, and a tap then
 //   closes the popup.
 //
@@ -270,6 +270,30 @@ test.describe('opponent move summary: card tooltips', { tag: ['@mobile'] }, () =
       await expect(page.locator(POPUP)).toHaveCount(0);
       await expect(open).toHaveCount(0);
     }
+    expect(problems).toEqual([]);
+  });
+
+  test('a wonder picture shows the wonder detail, not just its name', async ({
+    page,
+    isMobile
+  }) => {
+    const problems = watchHygiene(page);
+    // The gallery's extra-turn scene opens with Piraeus.
+    await page.goto('/dev/gallery');
+    await press(page, isMobile, '[data-summary-scene="game.gallery.summary.extra"]');
+    const popup = page.locator(POPUP);
+    await expect(popup).toBeVisible();
+    const thumb = popup.locator('[data-summary-line] [data-wonder="piraeus"]');
+    if (isMobile) await longPress(page, thumb);
+    else await thumb.hover();
+
+    // The board's wonder tooltip: the effects and the printed cost.
+    const open = page.locator('[data-tooltip-layer] [data-tooltip-open]');
+    await expect(open.locator('[data-tooltip-bubble]')).toContainText('Piraeus');
+    const lines = open.locator('[data-tooltip-lines]');
+    await expect(lines).toContainText('glass');
+    await expect(lines).toContainText('Printed cost');
+    await expect(popup).toBeVisible();
     expect(problems).toEqual([]);
   });
 });
