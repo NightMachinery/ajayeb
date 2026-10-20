@@ -69,3 +69,11 @@ a prior offline/reconnect cycle, then checks the replacement count and the
 same room version, seat and choices. Lifecycle attachments retain connection
 opening/closing times and whether hello had a name, without identity tokens.
 The transport behavior dates to `d0e08f8` (October 10); no networking code changes.
+
+The direct icon renderer also omits groups that only apply an inherited fill
+to leaf shapes, moving that fill onto each shape. Groups with transforms,
+clipping, opacity or nesting remain. The art sources and shape coordinates
+stay unchanged; original-paint parity and the existing DOM budget cover it.
+One-unit resource costs put their existing tooltip and cost-pip marker on the
+resource tile itself. Costs with a visible quantity keep their group and count.
+This removes redundant HTML wrappers while retaining the hit target and labels.

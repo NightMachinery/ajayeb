@@ -97,6 +97,14 @@
   {#each shown as g (g.kind === 'coins' ? 'coins' : g.resource)}
     {#if g.kind === 'coins'}
       <Coin n={g.n} tip={costPipTip(g)} />
+    {:else if g.n === 1}
+      <ResourceTile
+        resource={g.resource}
+        {small}
+        costPip
+        tip={costPipTip(g, pay)}
+        class={dense && !small ? 'size-[1.05em]!' : ''}
+      />
     {:else}
       <span
         class="inline-flex items-center gap-[0.04em]"
@@ -108,11 +116,9 @@
           {small}
           class={dense && !small ? 'size-[1.05em]!' : ''}
         />
-        {#if g.n > 1}
-          <span class="font-bold tabular-nums" data-min-font="10" aria-hidden="true"
-            >{formatNumber(g.n)}</span
-          >
-        {/if}
+        <span class="font-bold tabular-nums" data-min-font="10" aria-hidden="true"
+          >{formatNumber(g.n)}</span
+        >
       </span>
     {/if}
   {/each}

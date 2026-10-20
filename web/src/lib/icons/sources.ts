@@ -24,7 +24,22 @@ function parseSource(path: string, raw: string): { viewBox: string; inner: strin
   const viewBox = /viewBox="([^"]+)"/.exec(open[0])?.[1];
   if (!viewBox) throw new Error(`icons/sources: "${path}" has no viewBox`);
   const inner = raw.slice(open.index + open[0].length, closeAt).trim();
-  return { viewBox, inner };
+  return { viewBox, inner: flattenFillGroups(inner) };
+}
+
+/** A fill-only group has no geometry, compositing or hit target of its own.
+ *  Put that inherited fill on its direct leaf shapes and omit the wrapper.
+ *  Keep groups with transforms, clipping, opacity, nesting or other attributes. */
+export function flattenFillGroups(markup: string): string {
+  return markup.replace(
+    /<g fill="([^"]+)">((?:<(?:path|rect|circle|ellipse|line|polyline|polygon)\b[^>]*\/>|\s)*)<\/g>/g,
+    (_, fill: string, children: string) =>
+      children.replace(
+        /<(path|rect|circle|ellipse|line|polyline|polygon)\b([^>]*)\/>/g,
+        (shape: string, tag: string, attributes: string) =>
+          /\bfill=/.test(attributes) ? shape : `<${tag}${attributes} fill="${fill}"/>`
+      )
+  );
 }
 
 const bySource = new Map<string, string>();

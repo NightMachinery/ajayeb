@@ -15,10 +15,12 @@
     small?: boolean;
     /** Its own tooltip, when no surrounding element has one. */
     tip?: TooltipContent;
+    /** A one-unit printed cost needs no separate tooltip/marker wrapper. */
+    costPip?: boolean;
     class?: string;
   }
 
-  let { resource, small = false, tip, class: className = '' }: Props = $props();
+  let { resource, small = false, tip, costPip = false, class: className = '' }: Props = $props();
 
   const tile = $derived(resourceTile(resource));
 </script>
@@ -30,6 +32,7 @@
   style:background={tile.bg}
   style:color={tile.ink}
   style:--i2="color-mix(in oklch, {tile.ink} 55%, {tile.bg})"
+  data-cost-pip={costPip ? resource : undefined}
   aria-hidden="true"
   {@attach tooltip(tip)}
 >

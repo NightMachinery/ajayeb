@@ -156,7 +156,7 @@ describe('card frames', () => {
     }).body;
     expect(imgs(markup)).toEqual([]);
     expect(markup).toContain('data-card-art="stone-pit"');
-    expect(markup).toContain('i-category-brown');
+    expect(markup).toContain('data-icon="category-brown"');
   });
 
   it('puts approved back art under the frame and the numeral, else the lattice', () => {
@@ -212,12 +212,12 @@ describe('wonder, token and avatar frames', () => {
     const law = render(ProgressToken, { props: { slug: 'law' } }).body;
     expect(imgs(law)).toHaveLength(1);
     expect(imgs(law)[0]).toContain('/art/tokens/law@thumb.avif');
-    expect(law).not.toContain('i-token-frame');
+    expect(law).not.toContain('data-icon="token-frame"');
     const urbanism = render(ProgressToken, {
       props: { slug: 'urbanism', actionKey: 'token:urbanism' }
     }).body;
     expect(imgs(urbanism)).toEqual([]);
-    expect(urbanism).toContain('i-token-frame');
+    expect(urbanism).toContain('data-icon="token-frame"');
     expect(urbanism).toContain('data-act="token:urbanism"');
   });
 

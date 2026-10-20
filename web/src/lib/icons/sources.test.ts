@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ICON_NAMES, iconMarkup, iconSourceByteLength, iconSources } from './sources';
+import {
+  ICON_NAMES,
+  flattenFillGroups,
+  iconMarkup,
+  iconSourceByteLength,
+  iconSources
+} from './sources';
 
 describe('original icon sources', () => {
   it('keeps the complete source set within the 40 KB raw budget', () => {
@@ -33,5 +39,28 @@ describe('original icon sources', () => {
         for (const reference of references) expect(ids(markup)).toContain(reference);
       }
     }
+  });
+});
+
+describe('fill-only wrapper removal', () => {
+  it('preserves leaf geometry and explicit paint overrides', () => {
+    expect(
+      flattenFillGroups(
+        '<g fill="var(--i1, currentColor)"><rect x="1" y="2" width="3" height="4" rx="0.5"/><path d="M1 2h3v4z" fill="red" fill-rule="evenodd"/></g>'
+      )
+    ).toBe(
+      '<rect x="1" y="2" width="3" height="4" rx="0.5" fill="var(--i1, currentColor)"/><path d="M1 2h3v4z" fill="red" fill-rule="evenodd"/>'
+    );
+  });
+
+  it('retains structural and compositing groups', () => {
+    for (const markup of [
+      '<g fill="red" opacity="0.5"><path d="M0 0h2v2z"/></g>',
+      '<g fill="red" transform="rotate(45)"><path d="M0 0h2v2z"/></g>',
+      '<g fill="red" clip-path="url(#a)"><path d="M0 0h2v2z"/></g>',
+      '<g fill="red"><g transform="rotate(45)"><path d="M0 0h2v2z"/></g></g>',
+      '<g fill="red"><text>label</text></g>'
+    ])
+      expect(flattenFillGroups(markup)).toBe(markup);
   });
 });
