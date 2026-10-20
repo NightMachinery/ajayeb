@@ -298,6 +298,83 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
     expect(problems).toEqual([]);
   });
 
+  // A first visit on a slow phone must not move Home (M11.home-cold-cls).
+  // It once shifted twice: the tutorial offer appeared above the modes after
+  // the app started, and a stored Persian locale mirrored the page when its
+  // messages arrived. The throttling is the Home review profile; the median
+  // of three fresh visits keeps a single slow run from deciding the result.
+  for (const cold of [
+    { locale: 'en', theme: 'light' },
+    { locale: 'fa', theme: 'dark' }
+  ] as const) {
+    test(`a cold, throttled first visit keeps Home still: ${cold.locale}`, async ({
+      browser
+    }, info) => {
+      test.setTimeout(150_000);
+      const use = info.project.use;
+      const scores: number[] = [];
+      for (let run = 0; run < 3; run++) {
+        // By hand, not through the fixture, so the device is truly new and
+        // keeps its tutorial offer.
+        const context = await browser.newContext({
+          baseURL: use.baseURL,
+          viewport: use.viewport,
+          userAgent: use.userAgent,
+          deviceScaleFactor: use.deviceScaleFactor,
+          isMobile: use.isMobile,
+          hasTouch: use.hasTouch,
+          serviceWorkers: 'block'
+        });
+        try {
+          const page = await context.newPage();
+          const cdp = await context.newCDPSession(page);
+          await cdp.send('Network.enable');
+          await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+          await cdp.send('Network.emulateNetworkConditions', {
+            offline: false,
+            latency: 150,
+            downloadThroughput: 1_600_000 / 8,
+            uploadThroughput: 750_000 / 8
+          });
+          await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+          await page.addInitScript(({ locale, theme }) => {
+            localStorage.setItem('ajayeb:theme', theme);
+            if (locale !== 'en')
+              localStorage.setItem('ajayeb:settings', JSON.stringify({ locale }));
+            const state = window as unknown as { __cls: number };
+            state.__cls = 0;
+            new PerformanceObserver((list) => {
+              for (const entry of list.getEntries() as unknown as {
+                value: number;
+                hadRecentInput: boolean;
+              }[]) {
+                if (!entry.hadRecentInput) state.__cls += entry.value;
+              }
+            }).observe({ type: 'layout-shift', buffered: true });
+          }, cold);
+          await page.goto('/', { timeout: 60_000 });
+          await expect(page.locator('main[data-home-loading]')).toHaveCount(0, { timeout: 60_000 });
+          await expect(page.locator('html')).toHaveAttribute('lang', cold.locale, {
+            timeout: 30_000
+          });
+          await expect(page.locator('[data-tutorial-offer]')).toBeVisible();
+          expect(
+            await page.evaluate(() => document.documentElement.hasAttribute('data-locale-pending'))
+          ).toBe(false);
+          await page.evaluate(() => document.fonts.ready);
+          // Late shifts (fonts, art, deferred messages) land within this.
+          await page.waitForTimeout(1500);
+          scores.push(await page.evaluate(() => (window as unknown as { __cls: number }).__cls));
+        } finally {
+          await context.close();
+        }
+      }
+      await info.attach('cls', { body: JSON.stringify(scores), contentType: 'application/json' });
+      const median = scores.toSorted((a, b) => a - b)[1]!;
+      expect(median, `CLS of three cold visits: ${scores.join(', ')}`).toBeLessThan(0.1);
+    });
+  }
+
   test('the real Home paints without scripts, while deep links receive the generic shell', async ({
     browser,
     baseURL,

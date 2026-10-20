@@ -1475,6 +1475,15 @@ and cancellation of listeners and queued work when a source changes. `rtl.spec.t
 the first RTL document to already contain translated text, rather than relying
 on a language bootstrap before the messages arrive.
 
+Two cold-load cases guard Home against layout shift (M11.home-cold-cls). Each
+makes three visits from a new device, in fresh contexts with the service worker
+blocked, the cache disabled, 4x CPU slowdown and a 1.6 Mbps down, 750 Kbps up,
+150 ms network, one in English with the light theme and one in Persian with the
+dark theme. Each visit sums the layout-shift entries until Home is ready, the
+language has switched and the fonts have loaded, plus 1.5 seconds; the median
+of the three must stay under 0.1. The visits must also show the tutorial offer,
+so the case keeps covering the element that once moved the page.
+
 When changing rendering or fallback filenames, also run `shell.spec.ts` for
 worker installation and real offline Home and game deep links. The Go static
 handler tests keep prerendered Home separate from the generic shell, preserve
