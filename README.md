@@ -4,7 +4,7 @@ Ajayeb (Persian عجایب, "wonders") is a browser version of a two-player card
 
 If you like it, please buy the real game from its publisher: <https://www.rprod.com/en/games/7-wonders-duel>.
 
-All three game modes are implemented, with original art, a guided tutorial, in-game rules, hints and replay downloads. The remaining review work is tracked in [docs/dev/roadmap.md](docs/dev/roadmap.md). The public instance is <https://ajayeb.lilf.ir>.
+All three game modes are implemented, with original art, a guided tutorial, in-game rules, hints and replay downloads. It reached v1 on 2026-10-20, when the last review round found no serious problem; [docs/dev/roadmap.md](docs/dev/roadmap.md) has the milestones and what is left after v1. The public instance is <https://ajayeb.lilf.ir>.
 
 ## Modes
 
