@@ -70,16 +70,19 @@ func TestForbiddenJoinLoadsNothing(t *testing.T) {
 func TestFullManagerEvictsIdleRooms(t *testing.T) {
 	h := newHarness(t, func(c *room.Config) { c.MaxRooms = 3 })
 	a := h.client("user-a", "tab-a", "Ann")
+	// A room records when it went idle as its actor handles the detach, so
+	// each snapshot waits for that before the clock moves on. Otherwise two
+	// rooms can share an idle time and the tie-break picks the wrong one.
 	first, _ := a.create(abuseHotseat())
 	h.clock.Advance(time.Second)
 	second, _ := a.create(abuseHotseat()) // a leaves first, which goes idle
+	h.snapshot(first)
 	h.clock.Advance(time.Second)
 	third, _ := a.create(abuseHotseat()) // and then second
+	h.snapshot(second)
 	h.clock.Advance(time.Second)
 	h.m.Leave(a.Client, third)
-	for _, code := range []string{first, second, third} {
-		h.snapshot(code)
-	}
+	h.snapshot(third)
 
 	// Full: the next create evicts the room idle longest, first.
 	b := h.client("user-b", "tab-b", "Bob")
