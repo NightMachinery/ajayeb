@@ -242,7 +242,7 @@ func TestReviewStarterCarriesAge(t *testing.T) {
 		if s.Phase != engine.PhaseChooseStarter {
 			t.Fatal("missing starter decision")
 		}
-		age := int(s.Age)
+		age := oldAge + 1
 		for seat := range engine.Seat(2) {
 			rv, ok := buildTurnReview(context.Background(), []reviewStep{{pre: s, action: engine.StarterAction(seat)}}, 7, quickReview)
 			if !ok || len(rv.Entries) != 1 {

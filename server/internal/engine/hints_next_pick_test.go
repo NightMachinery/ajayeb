@@ -2,42 +2,53 @@ package engine
 
 import (
 	"fmt"
+	"math/bits"
+	"slices"
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
 
-// A normal reply consumes the penultimate card; Play again instead gives
-// the mover the next pick immediately (rules/turn.md).
-func TestHintsNextPickInAge(t *testing.T) {
-	cards := [3][]string{{"theater", "baths", "altar"}, {"brewery", "school", "library"}, {"town-hall", "palace", "academy"}}
+// Exercise served outcomes, including Play again wins, rather than an
+// eligibility helper branch that ordinary next-turn threats never use.
+func TestHintsEndAgeOutcomes(t *testing.T) {
+	cards := [3][]string{{"theater", "palisade", "baths"}, {"brewery", "horse-breeders", "school"}, {"town-hall", "arsenal", "palace"}}
 	for age := 1; age <= 3; age++ {
 		for _, n := range []int{1, 2, 3} {
 			for _, wonder := range []string{"pyramids", "sphinx"} {
 				t.Run(fmt.Sprintf("age%d/left%d/%s", age, n, wonder), func(t *testing.T) {
-					s := hnNew(t, Scenario{Age: age, OnlyLeft: cards[age-1][:n], Wonders: wonderFill([]string{wonder}, nil), Players: [2]ScenarioPlayer{{Coins: intPtr(40)}}, ToMove: seatPtr(0)})
-					var a Action
-					for _, c := range LegalActions(&s, nil) {
-						if c.Type == ActConstructWonder {
-							a = c
-							break
+					left := cards[age-1][:n]
+					if n == 3 && age != 2 {
+						// The bottom sacrifice covers the face-up military
+						// card; taking it frees a known extra-turn win.
+						left = []string{cards[age-1][1], cards[age-1][2], cards[age-1][0]}
+					}
+					s := hnNew(t, Scenario{Age: age, OnlyLeft: left, Wonders: wonderFill([]string{wonder}, nil), Players: [2]ScenarioPlayer{{Coins: intPtr(40)}}, Pawn: intPtr(8), ToMove: seatPtr(0)})
+					key := "wonder:" + wonder + ":" + cards[age-1][0]
+					o := hoOutcome(t, &s, key)
+					win := o.Wins != nil && o.Wins.Kind == view.VictoryKindMilitary && o.Wins.Steps == 2
+					wantWin := wonder == "sphinx" && n >= 2
+					if win != wantWin {
+						t.Fatalf("extra-turn win %+v, want %v", o.Wins, wantWin)
+					}
+					if wonder == "sphinx" {
+						want := view.ExtraTurnStateGain
+						if n == 1 {
+							want = view.ExtraTurnStateLost
+						}
+						if o.Tempo == nil || o.Tempo.ExtraTurn != want {
+							t.Fatalf("extra-turn outcome %+v, want %v", o.Tempo, want)
 						}
 					}
-					if a.Type != ActConstructWonder {
-						t.Fatal("missing wonder action")
-					}
-					want := n >= 3 || (n >= 2 && wonder == "sphinx")
-					if got := nextPickInAge(&s, a); got != want {
-						t.Fatalf("next pick %v, want %v", got, want)
-					}
 					x := s
-					ApplyTrusted(&x, a)
+					hnDo(t, &x, key)
 					if !x.Over() && x.Age == s.Age && x.ToMove != s.ToMove {
 						ApplyTrusted(&x, LegalActions(&x, nil)[0])
 					}
-					got := !x.Over() && x.Age == s.Age && x.Phase == PhasePlay && x.ToMove == s.ToMove
-					if got != want {
-						t.Fatalf("actual next pick %v, want %v", got, want)
+					gotPick := !x.Over() && x.Age == s.Age && x.Phase == PhasePlay && x.ToMove == s.ToMove
+					wantPick := n >= 3 || (n >= 2 && wonder == "sphinx")
+					if gotPick != wantPick {
+						t.Fatalf("actual next pick %v, want %v", gotPick, wantPick)
 					}
 				})
 			}
@@ -52,14 +63,11 @@ func TestHintsNextTurnThreatEndsWithAge(t *testing.T) {
 	for age := 1; age <= 3; age++ {
 		for _, n := range []int{2, 3} {
 			t.Run(fmt.Sprintf("age%d/left%d", age, n), func(t *testing.T) {
-				s := hnNew(t, Scenario{Age: age, OnlyLeft: cards[age-1][:n], Pawn: intPtr(8), ToMove: seatPtr(0)})
-				// Keep the small endgame fixture's remaining cards face up
-				// and independent, so both a target and another discard exist.
-				var slots [SlotsPerAge]Slot
-				for i, c := range cards[age-1][:n] {
-					slots[5+i] = Slot{Card: hnCard(t, c), FaceUp: true}
+				left := cards[age-1][:n]
+				if n == 3 {
+					left = []string{cards[age-1][2], cards[age-1][1], cards[age-1][0]}
 				}
-				s.Slots = slots
+				s := hnNew(t, Scenario{Age: age, OnlyLeft: left, Pawn: intPtr(8), ToMove: seatPtr(0)})
 				target := cards[age-1][0]
 				quote := BuildingQuote(&s, 0, hnCard(t, target))
 				s.Players[0].Coins = quote.Total - 2
@@ -112,7 +120,10 @@ func TestHintsDiscardNeedsAnotherTakeableCard(t *testing.T) {
 	s.Slots = [SlotsPerAge]Slot{}
 	for i, c := range []string{"theater", "baths", "palisade"} {
 		slot := []int{0, 2, 5}[i] // one chain of coverers, only Palisade takeable
-		s.Slots[slot] = Slot{Card: hnCard(t, c), FaceUp: true}
+		s.Slots[slot] = Slot{Card: hnCard(t, c), FaceUp: i != 1, Back: cardBack(hnCard(t, c))}
+	}
+	if err := CheckInvariants(&s); err != nil {
+		t.Fatal(err)
 	}
 	for _, c := range hoView(t, &s).Disabled {
 		if c.Key == "construct:palisade" {
@@ -123,4 +134,40 @@ func TestHintsDiscardNeedsAnotherTakeableCard(t *testing.T) {
 		}
 	}
 	t.Fatal("missing blocked Palisade")
+}
+
+// Strategy can set up a military win after a science pair. The token
+// decision consumes no structure card, unlike the preceding Library pick.
+func TestHintsSubdecisionNextTurnThreat(t *testing.T) {
+	for _, left := range []int{19, 1} {
+		t.Run(fmt.Sprintf("left%d", left), func(t *testing.T) {
+			sc := Scenario{
+				Age:         2,
+				Accessible:  []string{"library", "horse-breeders"},
+				BoardTokens: []string{"strategy", "agriculture", "urbanism", "architecture", "economy"},
+				Pawn:        intPtr(7),
+				Players:     [2]ScenarioPlayer{{Coins: intPtr(40), City: []string{"scriptorium"}}},
+				ToMove:      seatPtr(0),
+			}
+			if left == 1 {
+				sc.OnlyLeft = []string{"library", "horse-breeders"}
+			}
+			s := hnNew(t, sc)
+			hnDo(t, &s, "construct:library")
+			if s.Phase != PhasePickBoardToken || s.ToMove != 0 {
+				t.Fatalf("phase %v, to move %v", s.Phase, s.ToMove)
+			}
+			if got := bits.OnesCount32(Occupied(&s)); got != left {
+				t.Fatalf("cards left %d, want %d", got, left)
+			}
+			o := hoOutcome(t, &s, "token:strategy")
+			want := []string{}
+			if left == 19 {
+				want = []string{"0:horse-breeders:military"}
+			}
+			if got := hoThreats(o.Threatens); !slices.Equal(got, want) {
+				t.Fatalf("token next-turn threats %v, want %v", got, want)
+			}
+		})
+	}
 }

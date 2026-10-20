@@ -214,12 +214,13 @@ func deciderHints(s *State, f view.HintSettings, out *view.View, c *simCtx) {
 			if dc.Kind != view.ChoiceKindConstruct || dc.Reason != view.Reason(ReasonUnaffordable.String()) || dc.Cost == nil || dc.Cost.Shortfall <= 0 {
 				continue
 			}
-			for _, ch := range out.Choices {
-				if ch.Kind != view.ChoiceKindDiscard || ch.Card == nil || dc.Card == nil || *ch.Card == *dc.Card || ch.Gain == nil || dc.Cost.Shortfall > *ch.Gain {
+			for k := range acts {
+				p := &acts[k]
+				ch := out.Choices[p.i]
+				if p.a.Type != ActDiscardBuilding || ch.Card == nil || dc.Card == nil || *ch.Card == *dc.Card || ch.Gain == nil || dc.Cost.Shortfall > *ch.Gain {
 					continue
 				}
-				a, err := ParseKey(ch.Key)
-				if err == nil && nextPickInAge(s, a) {
+				if d.nextPickAfterReply(&p.x) {
 					dc.DiscardToAfford = dtoInt(*ch.Gain)
 					break
 				}
@@ -286,7 +287,7 @@ func deciderHints(s *State, f view.HintSettings, out *view.View, c *simCtx) {
 		// The opponent's reply consumes a card too. Do not promise a
 		// next-turn win after the structure has run out. Extra-turn wins
 		// are already reported by outcome.Wins through winsNow.
-		if !nextPickInAge(s, p.a) {
+		if !d.nextPickAfterReply(&p.x) {
 			continue
 		}
 		z := normalised(&y, d.mover)
@@ -477,20 +478,12 @@ func (d *deciderCalc) flips(x *State) *[]view.AffordFlip {
 	return &out
 }
 
-// nextPickInAge reports whether the turn order leaves the mover another
-// structure pick this age, assuming the game does not end first. An ordinary
-// action needs cards for this pick, the opponent's reply, and the next pick;
-// Play again needs only this pick and the immediate extra pick. It does not
-// promise that a particular card survives the opponent's reply.
-func nextPickInAge(s *State, a Action) bool {
-	if s.Phase != PhasePlay {
-		return false
-	}
-	left := bits.OnesCount32(Occupied(s))
-	if state, _ := extraTurnOutcome(s, a); state == ExtraTurnGain {
-		return left >= 2
-	}
-	return left >= 3
+// nextPickAfterReply checks the state after the action: it must pass to
+// the opponent in this age and leave a card for their reply and our pick.
+// Sub-decisions consume no structure card; their preceding card pick is
+// already reflected in x. Immediate extra-turn wins are handled by winsNow.
+func (d *deciderCalc) nextPickAfterReply(x *State) bool {
+	return d.passes(x) && bits.OnesCount32(Occupied(x)) >= 2
 }
 
 // passes reports whether the state x after one of the decider's actions is

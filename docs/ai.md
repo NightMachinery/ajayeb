@@ -195,10 +195,11 @@ The tournaments and the calibration are subcommands of `ajayeb-sim`. Run them fr
 ## Advice at the end of an age
 
 The hints engine promises a next-turn opportunity only when the mover can
-pick another card in this age: an ordinary action needs at least three
-cards before the pick, while Play again needs two. Immediate extra-turn
-wins remain part of the action's win outcome. A discard-to-afford note also
-requires a different legal discard whose gain covers the shortfall. Both
+pick another card in this age: after the action passes to the opponent,
+two cards must remain for their reply and the mover's next pick. This also
+covers token and other sub-decisions that consume no structure card.
+Immediate extra-turn wins remain part of the action's win outcome. A
+discard-to-afford note also requires a different legal discard whose gain covers the shortfall. Both
 checks use the server's turn-order rule; the client renders the resulting
 fact without counting cards or comparing costs. A starter review carries
 the chosen age from its own decision, so reopening a summary later keeps

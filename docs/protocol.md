@@ -1303,9 +1303,10 @@ and actions still come exclusively from `choices`.
 `DisabledChoice.discardToAfford` is the coin gain of another legal discard
 that would cover this unaffordable card's shortfall at current prices. It
 is set only for the deciding seat with Economy hints on, when a different
-takeable card can be discarded and turn order leaves another pick in this
-age. Otherwise it is omitted. The target may still be taken by the opponent
-or its trade prices may change before that pick.
+takeable card can be discarded and its post-action state leaves two cards
+in this age for the opponent’s reply and the mover’s next pick. Otherwise
+it is omitted. The target may still be taken by the opponent or its trade
+prices may change before that pick.
 
 An actual building or build-from-discard choice takes precedence over those
 hypothetical prices in the whole-card summary. Build-from-discard choices
