@@ -1,7 +1,8 @@
 // Shared helpers for the vector tools in tools/art/vector: repository paths,
 // the set definitions in art/vector/sets.json, a small XML reader for the
-// icon sources, the sprite markup (the same <symbol> wrapping as
-// web/src/lib/icons/sprite.ts), and one headless Chrome page for the tools
+// icon sources, specimen-only <symbol> markup, and one headless Chrome page
+// for the tools. The client (web/src/lib/icons/sources.ts) renders local shapes;
+// its runtime has no shared sprite. This module supports the tools
 // that take screenshots. Dependency-free: Node 24 only.
 
 import fs from 'node:fs';
@@ -60,7 +61,7 @@ export function loadSets() {
   return raw;
 }
 
-/** The repo path of an icon id: its `file` from sets.json, else the sprite directory. */
+/** The repo path of an icon id: its `file` from sets.json, else the icon source directory. */
 export function iconFile(id, entry) {
   if (entry?.file && entry.id === id) return path.join(REPO, entry.file);
   if (entry?.smFile && entry.sm === id) return path.join(REPO, entry.smFile);
@@ -204,9 +205,9 @@ export function inherited(el, name) {
 }
 
 // ---------------------------------------------------------------------------
-// Sprite markup
+// Specimen-only symbol markup
 
-/** The viewBox and inner markup of a standalone <svg> source (as sprite.ts reads it). */
+/** The viewBox and inner markup of a standalone <svg> source, before client rendering optimizations. */
 export function svgParts(raw) {
   const open = /<svg\b[^>]*>/.exec(raw);
   const closeAt = raw.lastIndexOf('</svg>');
@@ -215,7 +216,7 @@ export function svgParts(raw) {
   return { viewBox, inner: raw.slice(open.index + open[0].length, closeAt).trim() };
 }
 
-/** <symbol id="i-<id>"> markup for each existing file, as the app's sprite builds it. */
+/** Specimen-only <symbol id="i-<id>"> markup for each original source file. */
 export function symbolsFor(files) {
   return files
     .filter((f) => f.exists)

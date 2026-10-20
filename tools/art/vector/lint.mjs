@@ -3,7 +3,7 @@
 // per problem ("path:line: error|warn rule: message") and a summary on
 // stderr; exits 1 when there is an error (or a warning, with --strict).
 //
-//   node tools/art/vector/lint.mjs                     # the whole sprite directory
+//   node tools/art/vector/lint.mjs                     # the whole icon source directory
 //   node tools/art/vector/lint.mjs --set science       # one set from art/vector/sets.json
 //   node tools/art/vector/lint.mjs web/src/lib/icons/svg/coin.svg other.svg
 //
@@ -14,8 +14,8 @@
 //   --quiet       print errors only
 //
 // With no paths and no --set it lints web/src/lib/icons/svg, checks that the
-// files match web/src/lib/icons/names.ts, and checks the sprite budget
-// (40 KB raw, 10 KB gzipped). It needs no browser and runs in well under a
+// files match web/src/lib/icons/names.ts, and checks the aggregate source-set budget
+// (40 KB raw, 10 KB gzipped in the tools' specimen SVG envelope). It needs no browser and runs in well under a
 // second, so it does not go through tools/heavy.py.
 //
 // Rules (STYLE.md has the reasons): parse, root, prolog, comment, element,
@@ -41,6 +41,8 @@ import {
   svgParts
 } from './lib.mjs';
 
+// Legacy names: these cap the complete original icon set serialized with the
+// tools' specimen symbol/SVG wrappers, not shipped client markup or instances.
 const SPRITE_RAW_MAX = 40 * 1024;
 const SPRITE_GZIP_MAX = 10 * 1024;
 
@@ -74,12 +76,12 @@ const FORBIDDEN = {
   filter: 'no filters (blur and shadows smear at icon sizes and cost render time)',
   foreignObject: 'no foreignObject',
   script: 'no scripts',
-  style: 'no <style>: it would leak into the whole page through the inline sprite',
+  style: 'no <style>: styles inside an inline SVG can affect the whole page',
   pattern: 'no SVG patterns: card patterns are CSS gradients',
   title: 'no <title>: accessible names come from the i18n tables',
   desc: 'no <desc>: accessible names come from the i18n tables',
   metadata: 'no metadata: editor leftovers cost bytes',
-  symbol: 'no <symbol>: sprite.ts wraps each file in its own symbol',
+  symbol: 'no <symbol>: each source is a standalone SVG; only specimens add symbol wrappers',
   a: 'no links'
 };
 const PAINT_ATTRS = ['fill', 'stroke', 'color', 'stop-color', 'flood-color', 'lighting-color'];
@@ -413,7 +415,7 @@ export function lintFiles(items, { sets = loadSets().sets } = {}) {
         sprite ? 'error' : 'warn',
         'comment',
         sprite
-          ? 'comments ship in the sprite; keep notes in art/vector/log/'
+          ? 'comments ship in inline icon markup; keep notes in art/vector/log/'
           : 'comments ship to the browser; keep notes in art/vector/log/'
       );
     }
@@ -642,7 +644,9 @@ export function lintFiles(items, { sets = loadSets().sets } = {}) {
   return { problems, bytes };
 }
 
-/** The sprite totals for the files of names.ts, as sprite.ts builds the markup. */
+/** Aggregate source-set size in the tools' canonical specimen SVG envelope.
+ *  Keep this historical API/rule name for tool callers; the client no longer
+ *  ships a sprite, and its direct SVG instances are not measured here. */
 export function spriteTotals(names = readIconNames()) {
   const symbols = names
     .filter((n) => fs.existsSync(path.join(ICON_DIR, `${n}.svg`)))
@@ -722,7 +726,7 @@ async function main() {
         line: 0,
         level: 'error',
         rule: 'sprite-budget',
-        message: `sprite is ${t.raw} bytes raw, over ${SPRITE_RAW_MAX}`
+        message: `icon source set (specimen envelope) is ${t.raw} bytes raw, over ${SPRITE_RAW_MAX}`
       });
     if (t.gzip > SPRITE_GZIP_MAX)
       problems.push({
@@ -730,10 +734,10 @@ async function main() {
         line: 0,
         level: 'error',
         rule: 'sprite-budget',
-        message: `sprite is ${t.gzip} bytes gzipped, over ${SPRITE_GZIP_MAX}`
+        message: `icon source set (specimen envelope) is ${t.gzip} bytes gzipped, over ${SPRITE_GZIP_MAX}`
       });
     console.error(
-      `lint: sprite ${t.raw} bytes raw (max ${SPRITE_RAW_MAX}), ${t.gzip} gzipped (max ${SPRITE_GZIP_MAX})`
+      `lint: icon source set (specimen envelope) ${t.raw} bytes raw (max ${SPRITE_RAW_MAX}), ${t.gzip} gzipped (max ${SPRITE_GZIP_MAX})`
     );
   }
 

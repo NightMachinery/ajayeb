@@ -292,7 +292,8 @@ substitutes both tones.
 Run from the repository root. Commands that launch Chrome must run inside the guard's browser lock (`python3 tools/heavy.py run --kind browser -- ...`), which keeps the machine to one headless Chrome; each of them starts one Chrome and closes it before it exits. The others need no lock.
 
 - `lint.mjs`: checks icon SVGs against STYLE.md and prints one line per problem, `path:line: error|warn rule: <element> #n: message`, then a summary on stderr. It exits 1 on any error (with `--strict`, on any warning too) and 2 when it cannot run.
-  - `node tools/art/vector/lint.mjs` lints the whole sprite directory, checks it against `names.ts`, and checks the sprite budget.
+  - `node tools/art/vector/lint.mjs` lints the whole icon source directory, checks it against `names.ts`, and checks the aggregate icon source-set budget.
+  - The legacy constants `SPRITE_RAW_MAX` (40 KB) and `SPRITE_GZIP_MAX` (10 KB) bound the complete source set serialized in the vector tools' specimen SVG envelope, including its symbol wrappers. They do not bound the client bundle or each rendered icon: the client draws local SVG shapes directly.
   - `node tools/art/vector/lint.mjs --set chain` lints one set from `art/vector/sets.json`.
   - `node tools/art/vector/lint.mjs path/to/a.svg path/to/dir` lints files and directories.
 - `fast.mjs` (no browser; needs `rsvg-convert` and `magick`): the inner-loop render. `node tools/art/vector/fast.mjs a.svg b.svg` writes one PNG per file, sizes 12 to 96 px on paper above the same on night, with the two tones substituted (`--i1`, `--i2`, and their `-dark` twins).
@@ -305,7 +306,7 @@ Run from the repository root. Commands that launch Chrome must run inside the gu
   - `--seed N` fixes the shuffle (the key records it), `--mono` draws plain ink shapes only, and `--force` skips the browser lock.
   - In the answers, a sheet is named `<px>@<dpr>` (`12@2`). `score` also accepts a bare `<px>` (`12`) when only one sheet has that size, so the directories made before `--sizes`, whose sheets were `12` and `16`, still score.
 - `family.mjs` (browser): `python3 tools/heavy.py run --kind browser -- node tools/art/vector/family.mjs` writes `art-work/vector/family/family@1x.png` and `family@2x.png`: every drawn icon of every set at 16 and 24 px, on paper and on night.
-- `lib.mjs`: shared helpers (paths, `sets.json`, the XML reader, sprite symbols, the Chrome page). Not a command.
+- `lib.mjs`: shared helpers (paths, `sets.json`, the XML reader, specimen-only symbols, the Chrome page). Not a command.
 
 Every script prints its usage with `--help`. A usage mistake or another expected error prints only its message and exits 1 (a refused browser launch exits 2); set `AJAYEB_STACK=1` to print the stack trace for every error. The `tools/chrome/` scripts follow the same rule.
 
@@ -313,7 +314,7 @@ Every script prints its usage with `--help`. A usage mistake or another expected
 
 These wrap the commands above in the guard:
 
-- `make vec-lint` runs `lint.mjs` over the whole sprite directory (guard kind `light`).
+- `make vec-lint` runs `lint.mjs` over the whole icon source directory (guard kind `light`).
 - `make vec-shot SET=<set> [ITER=<n>]` runs `shoot.mjs` under `--kind browser`, then `peep.mjs`.
 - `make vec-blind SET=<set>` runs `blind.mjs make` under `--kind browser`. Scoring stays a plain `node tools/art/vector/blind.mjs score ...` call.
 - `make vec-family` runs `family.mjs` under `--kind browser`.
