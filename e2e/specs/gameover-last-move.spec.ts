@@ -14,10 +14,12 @@
 // - A civilian win by the other side (the bot's last Age III card, the
 //   viewer in seat 1) and in hot-seat (named, never "Your").
 //
-// On the phone (the mobile project, held upright) the section sits above the
-// score sheet; on the desktop (1280x720) the dialog widens and puts it
-// beside the sheet. On both the score sheet stays in view without
-// scrolling the dialog, as it did before the section came.
+// The section sits above the score sheet on a phone held upright and beside
+// it where two columns fit (the split query: a desktop, or a short
+// landscape screen). The mobile project's phone (412x839), 390x844 and the
+// desktop (1280x720) show it all without scrolling; a small phone (360x740)
+// and phone landscape (740x360) scroll the body to the totals, the footer
+// in view.
 
 import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
@@ -61,42 +63,75 @@ async function openBotRoom(page: Page, scenario: string, seat: 0 | 1): Promise<G
   return driver;
 }
 
+/** The client's `split` variant (web/src/app.css): room for two columns. */
+const SPLIT = '(min-width: 64rem), (orientation: landscape) and (max-height: 32rem)';
+
 /**
- * The section sits above the score sheet, and on a phone held upright and
- * on a desktop the whole sheet shows in the dialog without scrolling.
+ * The section comes before the score sheet: beside it where two columns
+ * fit (the split query), above it otherwise. Where the dialog has the room
+ * (a phone of 800 px or more held upright, a desktop) nothing scrolls;
+ * everywhere, scrolling the body reaches the totals while the footer's
+ * buttons stay in view.
  */
 async function expectLayout(page: Page): Promise<void> {
-  const geometry = await page.evaluate(() => {
+  const size = page.viewportSize()!;
+  const at = `${size.width}x${size.height}`;
+  const geometry = await page.evaluate((split) => {
     const section = document.querySelector('dialog[open] [data-last-move]');
-    const table = document.querySelector('dialog[open] [data-score-table]');
-    const body = document.querySelector('dialog[open] [data-sheet-body]');
+    const table = document.querySelector<HTMLTableElement>('dialog[open] [data-score-table]');
+    const body = document.querySelector<HTMLElement>('dialog[open] [data-sheet-body]');
     if (!section || !table || !body) return null;
     const t = table.getBoundingClientRect();
-    const b = body.getBoundingClientRect();
     const sec = section.getBoundingClientRect();
     return {
+      split: matchMedia(split).matches,
       beside: sec.top < t.bottom && t.top < sec.bottom,
-      above: !!(section.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING),
-      scrolled: body.scrollTop,
-      tableInView: t.top >= b.top - 0.5 && t.bottom <= b.bottom + 0.5
+      above: !!(section.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING)
     };
-  });
-  expect(geometry, 'the section and the score sheet are in the dialog').not.toBeNull();
-  expect(geometry!.above, 'the final move comes before the score sheet').toBe(true);
-  const size = page.viewportSize()!;
-  expect(geometry!.beside, 'beside the score sheet on a desktop, above it on a phone').toBe(
-    size.width >= 1024
+  }, SPLIT);
+  expect(geometry, `${at}: the section and the score sheet are in the dialog`).not.toBeNull();
+  expect(geometry!.above, `${at}: the final move comes before the score sheet`).toBe(true);
+  expect(geometry!.beside, `${at}: beside the sheet where two columns fit, else above`).toBe(
+    geometry!.split
   );
-  if (size.height >= 700) {
-    expect(geometry!.scrolled).toBe(0);
-    expect(
-      geometry!.tableInView,
-      `the score sheet is unscrolled at ${size.width}x${size.height}`
-    ).toBe(true);
+  if (size.height >= 800 || (geometry!.split && size.height >= 700)) {
+    // Polled: after a viewport change the dialog settles over a few frames.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const body = document.querySelector<HTMLElement>('dialog[open] [data-sheet-body]');
+            return !!body && body.scrollHeight <= body.clientHeight + 1;
+          }),
+        { message: `${at}: the dialog shows everything without scrolling` }
+      )
+      .toBe(true);
   }
+  // The totals are reachable, with the footer in view.
+  const reach = await page.evaluate(() => {
+    const body = document.querySelector<HTMLElement>('dialog[open] [data-sheet-body]')!;
+    const table = document.querySelector<HTMLTableElement>('dialog[open] [data-score-table]')!;
+    const from = body.scrollTop;
+    body.scrollTop = body.scrollHeight;
+    const b = body.getBoundingClientRect();
+    const total = table.rows[table.rows.length - 1]!.getBoundingClientRect();
+    const buttons = [...document.querySelectorAll('dialog[open] [data-sheet-footer] button')].map(
+      (el) => el.getBoundingClientRect()
+    );
+    const result = {
+      totalInView: total.top >= b.top - 0.5 && total.bottom <= b.bottom + 0.5,
+      footerInView:
+        buttons.length > 0 &&
+        buttons.every((r) => r.top >= 0 && r.bottom <= innerHeight && r.height >= 44)
+    };
+    body.scrollTop = from;
+    return result;
+  });
+  expect(reach.totalInView, `${at}: scrolling reaches the totals`).toBe(true);
+  expect(reach.footerInView, `${at}: the footer's buttons stay in view`).toBe(true);
 }
 
-test.describe('the final move on the result screen', () => {
+test.describe('the final move on the result screen @mobile', () => {
   test('the final move plays out on the board before the result opens, with no popup', async ({
     page
   }) => {
@@ -188,6 +223,26 @@ test.describe('the final move on the result screen', () => {
     await expect(page.locator('[data-phase="wonderDraft"]')).toBeVisible();
     await expect(page.locator('[data-game-over]')).toHaveCount(0);
     await expect(page.locator(POPUP)).toHaveCount(0);
+    expect(problems).toEqual([]);
+  });
+
+  test('on a small phone and in phone landscape the totals are a scroll away, the footer in view', async ({
+    page
+  }) => {
+    const problems = watchHygiene(page);
+    await summaryOn(page);
+    const driver = await openBotRoom(page, 'military-supremacy', 0);
+    await playKey(driver, 'construct:walls');
+    await expect(page.locator(TITLE)).toBeVisible();
+    for (const size of [
+      { width: 360, height: 740 },
+      { width: 740, height: 360 },
+      { width: 390, height: 844 }
+    ]) {
+      await page.setViewportSize(size);
+      await expect(page.locator(SECTION)).toBeVisible();
+      await expectLayout(page);
+    }
     expect(problems).toEqual([]);
   });
 

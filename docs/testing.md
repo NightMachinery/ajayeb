@@ -1102,8 +1102,11 @@ the final frame ends before the dialog opens and no move summary popup ever
 shows; the viewer's own military win shows "Your final move" with the Walls row,
 its pawn chip and the review, through a reload, View final board and a rematch;
 the bot's civilian win (the viewer in seat 1) and a hot-seat one name the mover;
-and on a phone held upright (above) and the desktop at 1280x720 (beside) the
-section comes before a score sheet that shows without scrolling.
+and the section comes before the score sheet, above it on a phone held upright
+and beside it where the `split` query matches. The mobile project's phone,
+390x844 and the desktop at 1280x720 show everything without scrolling; at
+360x740 and 740x360 scrolling the body reaches the totals with the footer's
+buttons in view. The describe is tagged `@mobile`, so it runs on both projects.
 It also checks a short own name beside the YOU mark, device link and owned
 token, and every mini card at 48 by 74 px. Two checks are geometric, with one
 helper that lists what an element covers by bounding box:
