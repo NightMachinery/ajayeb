@@ -433,6 +433,14 @@ run supplies that Linux WebKit evidence.
   It counts every flow, every pending kind, every pass screen, every undo
   and every confirmed move in `driver.stats`.
 
+  The move-summary dismissal spec sends its first tap at a card's position
+  even when the popup covers it (`force: true`). This exercises the popup's
+  real pointer handling and requires the tap to close it without opening
+  the card sheet or sending a move. The following tap uses normal
+  actionability checks and must open the sheet. A taller draft review can
+  therefore cover the target without preventing the test from sending the
+  dismissal tap at all.
+
   Against the bot, `waitTurn` is what waits out the bot's turn: after the
   player's move the page shows the bot's thinking frame, the Presenter
   holds the bot's answer for its dwell and previews its pick, and only

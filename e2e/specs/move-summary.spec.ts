@@ -118,7 +118,10 @@ test.describe('opponent move summary', { tag: ['@mobile'] }, () => {
     const card = snap.choices.find((c) => c.kind === 'construct' || c.kind === 'discard')?.card;
     if (!card) throw new Error('no card to take');
     const cardSelector = `.card-structure [data-card="${card}"]`;
-    await press(page, isMobile, cardSelector);
+    // The complete draft review can cover this card. Send the actual tap
+    // at its position even then, so the popup must swallow it. The next
+    // press retains normal actionability checks once the popup is closed.
+    await press(page, isMobile, cardSelector, true);
     await expect(page.locator(POPUP)).toHaveCount(0);
     await expect(page.locator('dialog[open] [data-card-sheet]')).toHaveCount(0);
     expect((await driver.snapshot()).version).toBe(snap.version);
