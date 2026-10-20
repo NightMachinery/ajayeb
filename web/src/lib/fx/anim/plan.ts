@@ -41,8 +41,8 @@
 //            input to its end, so the dialog, and a bot's or opponent's
 //            answer, come after it (M11.age-start-order). The answer deals
 //            nothing (fx/cues.ts opensAge);
-//   victory  the end of the game: a banner over the result screen, after
-//            everything else of the frame has played.
+//   victory  the end of the game: a banner after the final board effects,
+//            before the first result dialog (over it during a replay).
 //
 // Live events only, the rule fx/cues.ts follows: nothing on the first frame
 // of a room, a resync, an undo or a frame that carries a history (the

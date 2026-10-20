@@ -491,10 +491,11 @@ export class AnimRunner {
 
   /**
    * The Presenter's play hook: starts the frame's animations and resolves
-   * when input may come back. Never throws for a missing element: a step
-   * whose element is gone is skipped.
+   * when input may come back. At game over, wait for every visual tail
+   * before the result dialog covers the board. Never throws for a missing
+   * element: a step whose element is gone is skipped.
    */
-  play(captured: unknown): Promise<void> {
+  play(captured: unknown, waitForAll = false): Promise<void> {
     const cap = captured as Captured | null;
     if (!cap) return Promise.resolve();
     const root = this.#root();
@@ -519,8 +520,8 @@ export class AnimRunner {
       open();
     }
 
-    // An age deal that holds input does so until its last card has landed.
-    const drain = heldDeal(cap.timeline) ? 'deal' : undefined;
+    // The final frame drains every kind; an age deal drains its cards.
+    const drain = waitForAll ? 'all' : heldDeal(cap.timeline) ? 'deal' : undefined;
     // The hold counts from the swap, so a slow render does not add to it,
     // but a render that consumed the whole time must still drain the deal:
     // its runs were tracked just above and start only after the gate.

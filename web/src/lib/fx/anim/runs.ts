@@ -29,6 +29,9 @@
 import type { StepKind } from './plan';
 import { recordAnim, type AnimRecord } from './records';
 
+/** An age deal, or every visual tail before the first result dialog. */
+type Drain = StepKind | 'all';
+
 /** What the runs need of a WAAPI Animation. */
 export interface Playing {
   readonly playState: string;
@@ -53,8 +56,8 @@ export class Runs {
   #running = new Set<Run>();
   #release: (() => void) | null = null;
   #timer: ReturnType<typeof setTimeout> | null = null;
-  /** The kind whose runs the waiting hold also waits for. */
-  #drain: StepKind | null = null;
+  /** Which runs the waiting hold also waits for. */
+  #drain: Drain | null = null;
   /** While a gate is shut: what starts each held run when it opens. */
   #held: (() => void)[] | null = null;
 
@@ -160,14 +163,14 @@ export class Runs {
     run.cleanup();
     run.record.endAt = this.#now();
     run.record.interrupted = interrupted;
-    if (this.#drain === run.record.kind) this.#drained();
+    if (this.#drain === 'all' || this.#drain === run.record.kind) this.#drained();
   }
 
   /**
-   * Resolves after `ms`, and once no run of `drain` (if given) is left, or
-   * as soon as finishAll() runs.
+   * Resolves after `ms` and once no selected run remains (`all` selects
+   * every kind), or as soon as finishAll() runs.
    */
-  hold(ms: number, released: () => void, drain?: StepKind): Promise<void> {
+  hold(ms: number, released: () => void, drain?: Drain): Promise<void> {
     this.letGo();
     return new Promise<void>((resolve) => {
       this.#release = () => {
@@ -186,7 +189,8 @@ export class Runs {
   #drained(): void {
     if (this.#timer !== null || !this.#release) return;
     const kind = this.#drain;
-    if (kind && [...this.#running].some((run) => run.record.kind === kind)) return;
+    if (kind && [...this.#running].some((run) => kind === 'all' || run.record.kind === kind))
+      return;
     this.letGo();
   }
 

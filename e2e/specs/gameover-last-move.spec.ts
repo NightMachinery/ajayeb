@@ -23,7 +23,7 @@
 
 import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
-import { clearFx, fxRecords, useSettings } from '../fixtures/anim';
+import { clearFx, fxRecords, useSettings, type AnimRecord } from '../fixtures/anim';
 import { GameDriver } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 import { openHotseatRoom, playKey, SCENARIO_SEED } from '../fixtures/scenario';
@@ -132,50 +132,92 @@ async function expectLayout(page: Page): Promise<void> {
 }
 
 test.describe('the final move on the result screen @mobile', () => {
-  test('the final move plays out on the board before the result opens, with no popup', async ({
-    page
-  }) => {
-    test.setTimeout(90_000);
-    const problems = watchHygiene(page);
-    await useSettings(page, 'normal');
-    await summaryOn(page);
-    const driver = await openBotRoom(page, 'military-supremacy', 0);
-    await page.evaluate(() => {
-      const seen = { opened: null as number | null, popup: false };
-      (window as unknown as { __lastMove: typeof seen }).__lastMove = seen;
-      const check = (): void => {
-        if (seen.opened === null && document.querySelector('dialog[open] #game-over-title'))
-          seen.opened = performance.now();
-        if (document.querySelector('[data-dismiss-layer] [data-move-summary]')) seen.popup = true;
-      };
-      new MutationObserver(check).observe(document.body, {
-        subtree: true,
-        childList: true,
-        attributes: true,
-        attributeFilter: ['open']
-      });
+  for (const cpu of [1, 4, 6]) {
+    test(`the final move plays out on the board before the result opens, with no popup (${cpu}x CPU)`, async ({
+      page,
+      context
+    }) => {
+      test.setTimeout(90_000);
+      const cdp = await context.newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpu });
+      try {
+        const problems = watchHygiene(page);
+        await useSettings(page, 'normal');
+        await summaryOn(page);
+        const driver = await openBotRoom(page, 'military-supremacy', 0);
+        await page.evaluate(() => {
+          const seen = { opened: null as number | null, popup: false, anims: [] as AnimRecord[] };
+          (window as unknown as { __lastMove: typeof seen }).__lastMove = seen;
+          // Capture before the native call, not a later observer/poll: a
+          // slow runner must never hide an early open from this assertion.
+          const native = HTMLDialogElement.prototype.showModal;
+          HTMLDialogElement.prototype.showModal = function () {
+            if (seen.opened === null && this.querySelector('#game-over-title')) {
+              seen.opened = performance.now();
+              seen.anims =
+                (
+                  window as unknown as {
+                    __ajayebFx?: { anims(): AnimRecord[] };
+                  }
+                ).__ajayebFx?.anims() ?? [];
+            }
+            native.call(this);
+          };
+          new MutationObserver(() => {
+            if (document.querySelector('[data-dismiss-layer] [data-move-summary]'))
+              seen.popup = true;
+          }).observe(document.body, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['open']
+          });
+        });
+        await clearFx(page);
+        await playKey(driver, 'construct:walls');
+        await expect(page.locator(TITLE)).toBeVisible({ timeout: 20_000 });
+        await expect(page.locator(SECTION)).toBeVisible();
+        const seen = await page.evaluate(
+          () =>
+            (
+              window as unknown as {
+                __lastMove: { opened: number | null; popup: boolean; anims: AnimRecord[] };
+              }
+            ).__lastMove
+        );
+        const { anims } = await fxRecords(page);
+        await test.info().attach('final move at native result open', {
+          body: JSON.stringify({ cpu, seen, anims }),
+          contentType: 'application/json'
+        });
+        expect(anims.length, 'the final move animates').toBeGreaterThan(0);
+        expect(anims.map((a) => a.kind)).toContain('pawn');
+        expect(anims.every((a) => a.endAt !== null)).toBe(true);
+        expect(
+          anims.every((a) => !a.interrupted),
+          'the final move completes naturally'
+        ).toBe(true);
+        expect(seen.anims, 'all recorded effects already ended at native showModal').toEqual(anims);
+        const lastEnd = Math.max(...anims.map((a) => a.endAt ?? Infinity));
+        expect(seen.opened, 'the result dialog opened').not.toBeNull();
+        expect(
+          seen.opened!,
+          'every animation ended before the result opened'
+        ).toBeGreaterThanOrEqual(lastEnd);
+        test
+          .info()
+          .annotations.push({
+            type: 'final-move-order',
+            description: `${cpu}x CPU: ${anims.length} naturally finished effects; result opened ${Math.round(seen.opened! - lastEnd)} ms after the last end`
+          });
+        expect(seen.popup, 'no move summary popup at the end of the game').toBe(false);
+        await expect(page.locator(POPUP)).toHaveCount(0);
+        expect(problems).toEqual([]);
+      } finally {
+        await cdp.detach();
+      }
     });
-    await clearFx(page);
-    await playKey(driver, 'construct:walls');
-    await expect(page.locator(TITLE)).toBeVisible({ timeout: 20_000 });
-    await expect(page.locator(SECTION)).toBeVisible();
-    const seen = await page.evaluate(
-      () =>
-        (window as unknown as { __lastMove: { opened: number | null; popup: boolean } }).__lastMove
-    );
-    const { anims } = await fxRecords(page);
-    expect(anims.length, 'the final move animates').toBeGreaterThan(0);
-    expect(anims.map((a) => a.kind)).toContain('pawn');
-    expect(anims.every((a) => a.endAt !== null)).toBe(true);
-    const lastEnd = Math.max(...anims.map((a) => a.endAt ?? Infinity));
-    expect(seen.opened, 'the result dialog opened').not.toBeNull();
-    expect(seen.opened!, 'every animation ended before the result opened').toBeGreaterThanOrEqual(
-      lastEnd
-    );
-    expect(seen.popup, 'no move summary popup at the end of the game').toBe(false);
-    await expect(page.locator(POPUP)).toHaveCount(0);
-    expect(problems).toEqual([]);
-  });
+  }
 
   test("an instant win by the viewer's own move: its row, its review, through reload and rematch", async ({
     page

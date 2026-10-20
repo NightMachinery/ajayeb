@@ -1132,7 +1132,13 @@ trade-price caret and an emptied-slot trace until the next player's move.
 `gameover-last-move.spec.ts` (both projects) checks the result screen's final
 move section (M11.gameover-last-move): with Animation normal every animation of
 the final frame ends before the dialog opens and no move summary popup ever
-shows; the viewer's own military win shows "Your final move" with the Walls row,
+shows. The ordering case runs at 1x, 4x and 6x CPU on both projects. It captures
+the FX records immediately before native `showModal`, checks natural completion
+(including the victory banner and landing pulses), and still compares every
+end timestamp with the open timestamp. Polling for a visible dialog cannot
+hide an early open. Its JSON attachment and `final-move-order` annotation
+report the evidence. The remaining cases check that the viewer's own military
+win shows "Your final move" with the Walls row,
 its pawn chip and the review, through a reload, View final board and a rematch;
 the bot's civilian win (the viewer in seat 1) and a hot-seat one name the mover;
 and the section comes before the score sheet, above it on a phone held upright

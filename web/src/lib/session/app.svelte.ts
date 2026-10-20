@@ -49,7 +49,9 @@ export function liveGame(): { session: Session; presenter: Presenter } {
             moveRemovedCardFocus(next, prev);
             return anim.capture(next, cuePrev(prev, next));
           },
-          play: (_next, _prev, captured) => anim.play(captured),
+          // Ordinary moves release input early; the first result waits
+          // until the final board effects (including the banner) end.
+          play: (next, _prev, captured) => anim.play(captured, next.view.phase === 'gameOver'),
           finish: () => anim.finish()
         }
       });

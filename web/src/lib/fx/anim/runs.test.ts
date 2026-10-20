@@ -133,6 +133,89 @@ describe('Runs', () => {
     expect(done).toBe(true);
   });
 
+  it('an all-kind drain waits for tails and counters after the input timer expires', async () => {
+    const runs = new Runs(() => now);
+    const take = fake();
+    const pawn = fake();
+    const banner = fake();
+    runs.track(5, 'take', [take], () => {});
+    runs.track(5, 'pawn', [pawn], () => {});
+    runs.track(5, 'victory', [banner], () => {});
+    const counter = runs.track(5, 'coins', [], () => {}, false);
+    const released = vi.fn();
+    void runs.hold(240, released, 'all');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(released).not.toHaveBeenCalled();
+    take.end();
+    pawn.end();
+    banner.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(released, 'a counter has no WAAPI finished promise').not.toHaveBeenCalled();
+    now = 1200;
+    runs.end(counter, false);
+    expect(released).toHaveBeenCalledOnce();
+    expect(animRecords().every((r) => r.endAt !== null && !r.interrupted)).toBe(true);
+  });
+
+  it('a zero-time all-kind hold still waits for a run behind the paint gate', async () => {
+    const frames: (() => void)[] = [];
+    const runs = new Runs(
+      () => now,
+      (frame) => frames.push(frame)
+    );
+    const open = runs.gate();
+    const pawn = fake();
+    runs.track(5, 'pawn', [pawn], () => {});
+    const released = vi.fn();
+    void runs.hold(0, released, 'all');
+    open();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(pawn.playState).toBe('paused');
+    expect(released).not.toHaveBeenCalled();
+    for (let i = 0; i < 2; i++) for (const frame of frames.splice(0)) frame();
+    expect(pawn.playState).toBe('running');
+    pawn.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(released).toHaveBeenCalledOnce();
+  });
+
+  it('an all-kind drain includes a landing pulse created by the last cleanup', async () => {
+    const runs = new Runs(() => now);
+    const take = fake();
+    const pulse = fake();
+    runs.track(5, 'take', [take], () => {
+      runs.track(5, 'take', [pulse], () => {});
+    });
+    const released = vi.fn(() => {
+      expect(animRecords().every((r) => r.endAt !== null)).toBe(true);
+    });
+    void runs.hold(0, released, 'all');
+    await vi.advanceTimersByTimeAsync(0);
+    take.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(released).not.toHaveBeenCalled();
+    pulse.end();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(released).toHaveBeenCalledOnce();
+  });
+
+  it('an interrupt releases an all-kind hold even while the gate is closed', async () => {
+    const runs = new Runs(
+      () => now,
+      () => {}
+    );
+    runs.gate();
+    const pawn = fake();
+    runs.track(5, 'pawn', [pawn], () => {});
+    const released = vi.fn();
+    void runs.hold(240, released, 'all');
+    runs.finishAll();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(released).toHaveBeenCalledOnce();
+    expect(pawn.finishes).toBe(1);
+    expect(animRecords()[0]?.interrupted).toBe(true);
+  });
+
   it('an interrupt lets input go at once', async () => {
     const runs = new Runs(() => now);
     runs.track(5, 'take', [fake()], () => {});
