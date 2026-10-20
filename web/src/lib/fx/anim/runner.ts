@@ -517,9 +517,9 @@ export class AnimRunner {
       });
       for (const start of starts) start();
 
-      // The final frame drains every kind; an age deal drains its cards.
+      // Final frames and Age II/III openings drain every visual tail.
       // The swap-based input timer alone cannot prove visual completion.
-      const drain = waitForAll ? 'all' : heldDeal(cap.timeline) ? 'deal' : undefined;
+      const drain = waitForAll || heldDeal(cap.timeline) ? 'all' : undefined;
       const block = cap.timeline.blockingMs - (this.#now() - cap.record.swapAt);
       const release = () => {
         cap.record.releasedAt = this.#now();

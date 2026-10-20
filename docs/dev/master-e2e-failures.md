@@ -92,3 +92,29 @@ the native call within each task; a CI native trace would be needed for that.
 This slice reduces style work and fixes bot presentation, but does not close
 the M11 runner performance criterion. The follow-up ordering work must measure
 both age transitions and game-end presentation.
+
+
+## Completion drains and modal tasks
+
+After the result barrier landed, runner CI still found an age-change task of
+139 ms on desktop and 91 ms on mobile. The age opening drained only its deal:
+coin counters continued for about 240 ms after its last card landed. The age
+modal's native style recalculation could therefore block moving counters.
+Age II/III opening frames now reuse the existing all-kind drain and its safety
+limit, as final frames already do. Ordinary turns retain their short input hold.
+
+A second boundary matters at game over. A source-mapped 6x trace captured a
+55 ms task that ended victory 1.2 ms after entering, then spent about 40 ms in
+`Sheet.showModal()`. Finishing the last animation resolved the hold in the same
+task; the modal's reactive continuation still shared that task with completion.
+An all-kind drain now reuses its hold timer for a zero-delay task handoff after
+its last cleanup. The handoff checks that no new tail appeared. Interrupts and
+room clearing still cancel the timer and release immediately. This lets the
+completion task finish before native modal style/layout work starts, without
+changing animation records, intersection rules or the 50 ms performance limit.
+
+The age-order probe captures animations before native modal entry and checks
+all opening effects, including counters and pulses. Unit tests check that the
+handoff waits through cleanup microtasks, notices a late tail and is cancelled
+by an interrupt. The former result-detail staging experiment was dropped: it
+did not beat the barrier-only master in the local repeated comparison.

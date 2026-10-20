@@ -20,9 +20,10 @@
 //           and stamps its record (endAt, and whether it was cut short);
 //   hold    the play hook's promise: it resolves after `ms`, or at once on
 //           finishAll(); it can drain one kind (an age deal) or 'all'
-//           (the final board effects), waiting for actual completion after
-//           the paint gate; an all-kind drain has a safety limit counted
-//           from when that gate opens, finishing stalled runs with a warning;
+//           (age openings and final board effects), waiting for completion after
+//           the paint gate and yielding past its final cleanup task; its
+//           safety limit counts from that gate opening and finishes stalled
+//           runs with a warning;
 //   finishAll  ends every run, cut short, and lets input go. A new frame,
 //           hurry() and clear() call it, so the screen never shows two
 //           frames at once.
@@ -170,7 +171,8 @@ export class Runs {
 
   /**
    * Resolves after `ms` and once no selected run remains (`all` selects
-   * every kind), or as soon as finishAll() runs. All-kind drains finish
+   * every kind), then yields past the final cleanup task for an all-kind
+   * drain. finishAll() still releases immediately. All-kind drains finish
    * stalled runs after maxDrainMs from the paint gate opening. Call while
    * the gate is shut so background time before its first paint is excluded.
    */
@@ -210,7 +212,17 @@ export class Runs {
     const kind = this.#drain;
     if (kind && [...this.#running].some((run) => kind === 'all' || run.record.kind === kind))
       return;
-    this.letGo();
+    if (kind === 'all') {
+      // A final animation's finished callback and the Promise continuation
+      // that opens a modal otherwise share one browser task. Let that final
+      // task finish before modal style/layout work starts in a new task.
+      // Reuse the hold timer, so interrupts cancel this handoff as usual.
+      this.#timer = setTimeout(() => {
+        this.#timer = null;
+        // Cleanup may have queued another visual tail before the handoff.
+        if (this.#running.size === 0) this.letGo();
+      }, 0);
+    } else this.letGo();
   }
 
   /** Lets input go now, if a hold is waiting. */

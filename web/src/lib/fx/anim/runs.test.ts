@@ -154,6 +154,11 @@ describe('Runs', () => {
     expect(released, 'a counter has no WAAPI finished promise').not.toHaveBeenCalled();
     now = 1200;
     runs.end(counter, false);
+    expect(
+      released,
+      'completion does not run modal work inside the cleanup task'
+    ).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
     expect(released).toHaveBeenCalledOnce();
     expect(animRecords().every((r) => r.endAt !== null && !r.interrupted)).toBe(true);
   });
@@ -176,7 +181,7 @@ describe('Runs', () => {
     for (let i = 0; i < 2; i++) for (const frame of frames.splice(0)) frame();
     expect(pawn.playState).toBe('running');
     pawn.end();
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1);
     expect(released).toHaveBeenCalledOnce();
   });
 
@@ -196,7 +201,38 @@ describe('Runs', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(released).not.toHaveBeenCalled();
     pulse.end();
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(released).toHaveBeenCalledOnce();
+  });
+
+  it('hands an all-kind drain off after the final cleanup and its microtasks', async () => {
+    const runs = new Runs(() => now);
+    const tail = runs.track(5, 'coins', [], () => {}, false);
+    const released = vi.fn();
+    void runs.hold(0, released, 'all');
+    await vi.advanceTimersByTimeAsync(1);
+    runs.end(tail, false);
+    expect(tail.record.endAt).not.toBeNull();
+    await Promise.resolve();
+    expect(released).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(released).toHaveBeenCalledOnce();
+  });
+
+  it('rechecks tails added before the all-kind handoff and cancels it on interrupt', async () => {
+    const runs = new Runs(() => now);
+    const tail = runs.track(5, 'coins', [], () => {}, false);
+    const released = vi.fn();
+    void runs.hold(0, released, 'all');
+    await vi.advanceTimersByTimeAsync(1);
+    runs.end(tail, false);
+    const late = runs.track(5, 'take', [], () => {}, false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(released).not.toHaveBeenCalled();
+    runs.end(late, false);
+    runs.finishAll();
+    expect(released).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(1);
     expect(released).toHaveBeenCalledOnce();
   });
 
@@ -256,7 +292,7 @@ describe('Runs', () => {
     void runs.hold(0, released, 'all', 2000);
     await vi.advanceTimersByTimeAsync(0);
     pawn.end();
-    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1);
     expect(released).toHaveBeenCalledOnce();
     await vi.advanceTimersByTimeAsync(20_000);
     expect(warn).not.toHaveBeenCalled();

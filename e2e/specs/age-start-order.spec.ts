@@ -41,6 +41,7 @@ interface Cover {
   at: number;
   /** The dialog holds the starter choice itself (not yet its outcome). */
   choosing: boolean;
+  anims: AnimRecord[];
 }
 
 /**
@@ -54,6 +55,23 @@ async function watchCovers(page: Page, slow = 0): Promise<void> {
     ({ covers, slow }) => {
       const seen: Cover[] = [];
       let slowed = false;
+      const animations = () =>
+        (window as unknown as { __ajayebFx?: { anims(): AnimRecord[] } }).__ajayebFx?.anims() ?? [];
+      const native = HTMLDialogElement.prototype.showModal;
+      HTMLDialogElement.prototype.showModal = function () {
+        if (
+          this.querySelector('[data-age-interstitial]') &&
+          !seen.some((c) => c.what === 'dialog')
+        ) {
+          seen.push({
+            what: 'dialog',
+            at: performance.now(),
+            choosing: !!this.closest('[data-choice-host="chooseStarter"]'),
+            anims: animations()
+          });
+        }
+        native.call(this);
+      };
       const note = () => {
         if (slow > 0 && !slowed && document.querySelector('[data-choice-host="chooseStarter"]')) {
           slowed = true;
@@ -67,7 +85,8 @@ async function watchCovers(page: Page, slow = 0): Promise<void> {
           seen.push({
             what,
             at: performance.now(),
-            choosing: !!document.querySelector('[data-choice-host="chooseStarter"] dialog[open]')
+            choosing: !!document.querySelector('[data-choice-host="chooseStarter"] dialog[open]'),
+            anims: animations()
           });
         }
       };
@@ -123,15 +142,21 @@ async function open(page: Page, mode: 'hotseat' | 'ai', baseURL: string): Promis
   return driver;
 }
 
-/** The deal's end, after checking that each dealt card landed uninterrupted. */
-function dealEnd(anims: AnimRecord[], label: string): number {
+/** The opening's end, including counters and pulses as well as every dealt card. */
+function openingEnd(anims: AnimRecord[], label: string): number {
   const deals = anims.filter((a) => a.kind === 'deal');
   expect(deals.length, `${label}: the new age was dealt`).toBeGreaterThan(0);
   for (const deal of deals) {
     expect(deal.interrupted, `${label}: a dealt card was cut short`).toBe(false);
     expect(deal.endAt, `${label}: a dealt card never landed`).not.toBeNull();
   }
-  return Math.max(...deals.map((d) => d.endAt!));
+  const versions = new Set(deals.map((d) => d.version));
+  const opening = anims.filter((a) => versions.has(a.version));
+  for (const run of opening) {
+    expect(run.interrupted, `${label}: ${run.kind} was cut short`).toBe(false);
+    expect(run.endAt, `${label}: ${run.kind} still ran at the cover`).not.toBeNull();
+  }
+  return Math.max(...opening.map((a) => a.endAt!));
 }
 
 async function ageStartCues(page: Page): Promise<number[]> {
@@ -163,8 +188,11 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
       expect(first!.choosing, 'the dialog opens on the choice').toBe(true);
       const { anims } = await fxRecords(page);
       if (speed === 'normal') {
-        const end = dealEnd(anims, 'the opening');
-        expect(first!.at, 'the deal ended before the choice opened').toBeGreaterThanOrEqual(end);
+        const end = openingEnd(first!.anims, 'the opening at native modal entry');
+        expect(
+          first!.at,
+          'every opening effect ended before the choice opened'
+        ).toBeGreaterThanOrEqual(end);
       } else {
         expect(anims, 'Animation off deals at once').toEqual([]);
       }
@@ -198,7 +226,7 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
     const [first] = await covers(page);
     expect(first?.what).toBe('dialog');
     expect(first!.at, 'the deal ended before the dialog').toBeGreaterThanOrEqual(
-      dealEnd((await fxRecords(page)).anims, 'the bot room')
+      openingEnd((await fxRecords(page)).anims, 'the bot room')
     );
     expect(first!.choosing, 'the dialog opens on the bot’s outcome').toBe(false);
     await expect(page.locator('dialog[open] [data-act^="starter:"]')).toHaveCount(0);
@@ -219,7 +247,7 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
     expect(first, 'something covers the board after the deal').toBeDefined();
     test.info().annotations.push({ type: 'first cover', description: first!.what });
     expect(first!.at, `the deal ended before the ${first!.what}`).toBeGreaterThanOrEqual(
-      dealEnd((await fxRecords(page)).anims, 'pass device')
+      openingEnd((await fxRecords(page)).anims, 'pass device')
     );
     expect(problems).toEqual([]);
   });
@@ -236,7 +264,7 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
     const [first] = await covers(page);
     expect(first?.what).toBe('dialog');
     expect(first!.at, 'the deal ended before the dialog').toBeGreaterThanOrEqual(
-      dealEnd((await fxRecords(page)).anims, 'slow swap')
+      openingEnd((await fxRecords(page)).anims, 'slow swap')
     );
     expect(problems).toEqual([]);
   });
@@ -313,7 +341,7 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
       await expect(viewer.locator(COVERS.summary), 'the summary still opens').toBeVisible();
       expect(skipped, 'the opening frame was dropped').toBe(true);
       const all = await covers(viewer);
-      const end = dealEnd((await fxRecords(viewer)).anims, 'recovered deal');
+      const end = openingEnd((await fxRecords(viewer)).anims, 'recovered deal');
       for (const cover of all) {
         expect(cover.at, `the ${cover.what} waited for the deal`).toBeGreaterThanOrEqual(end);
       }
