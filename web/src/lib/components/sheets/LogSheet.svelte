@@ -27,6 +27,7 @@
   // It changes nothing. It is disabled, with a tooltip saying why, while
   // Animation is off or before any move has animated.
   import RotateCcw from '@lucide/svelte/icons/rotate-ccw';
+  import type { Attachment } from 'svelte/attachments';
   import { ageLabel, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { GameEvent } from '$lib/wire';
@@ -90,6 +91,38 @@
       return groupLogByAge(events, names, currentAge);
     return groupGameLog(history, roomLog, names, ctx?.presenter.view?.ply, currentAge);
   });
+
+  // The lines are in the DOM only while the sheet shows: open, or sliding
+  // away. A long game's log would otherwise weigh on every board frame, and
+  // dropping them at the close itself would shrink the sheet to its header
+  // while its exit still plays. `showLines` turns on when the log opens and
+  // stays on through the close; the dialog's close turns it off once the
+  // exit transitions are done (at once with Animation off, which has none).
+  // Reopening mid-exit keeps the lines. `opened` is the plain memory the
+  // derived reads every time `open` changes, so it needs no $state write.
+  let opened = false;
+  let showLines = $derived.by(() => {
+    if (open) opened = true;
+    return opened;
+  });
+
+  const settleAfterExit: Attachment<HTMLElement> = (node) => {
+    const dialog = node.closest('dialog');
+    if (!dialog) return;
+    const onclose = (): void => {
+      const exits = dialog
+        .getAnimations({ subtree: true })
+        .filter((a) => a instanceof CSSTransition)
+        .map((a) => a.finished);
+      void Promise.allSettled(exits).then(() => {
+        if (open || dialog.open) return;
+        opened = false;
+        showLines = false;
+      });
+    };
+    dialog.addEventListener('close', onclose);
+    return () => dialog.removeEventListener('close', onclose);
+  };
 </script>
 
 {#snippet piece(part: LogPart)}
@@ -109,7 +142,7 @@
 {/snippet}
 
 <Sheet bind:open {titleId}>
-  <div class="flex flex-col gap-3 px-4 pt-1 pb-5">
+  <div class="flex flex-col gap-3 px-4 pt-1 pb-5" {@attach settleAfterExit}>
     <div class="flex flex-wrap items-center justify-between gap-2">
       <h2 id={titleId} class="font-display text-xl text-fg">{t('board.logSheet.title')}</h2>
       {#if replay}
@@ -136,9 +169,8 @@
         </span>
       {/if}
     </div>
-    {#if !open}
-      <!-- The lines exist only while the log is open: a long game's log
-           would otherwise weigh on every frame of the board. -->
+    {#if !showLines}
+      <!-- Fully closed: no lines (see settleAfterExit). -->
     {:else if groups.length === 0}
       <p class="text-sm text-fg-muted">{t('board.logSheet.empty')}</p>
     {:else}
