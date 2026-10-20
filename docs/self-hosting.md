@@ -339,14 +339,22 @@ Production commands treat Caddy configuration and game startup separately.
 A Caddy refusal, missing or invalid Caddyfile, missing Caddy executable,
 failed reload or stopped Caddy never prevents the server start attempt.
 The existing backup, refusal and check-then-load rules above still apply.
-After startup, the script polls `http://127.0.0.1:<port>/health` for up to
-10 seconds. Only a successful health check permits a message saying the
+After launching the server, the script polls `http://127.0.0.1:<port>/health`
+for up to 90 seconds, every 0.3 seconds. Slow starts print a progress line every
+five seconds and a successful check prints the elapsed time. The same startup
+window applies when recovering the previous binary after a stopped room-check
+failure; routine health probes keep their 10-second default. The longer window
+allows a cold start on a slow host but also delays reporting a truly unavailable
+server. Only a successful health check permits a message saying the
 game server is running. If Caddy failed, the command reports its reason,
 says the server is running on its loopback port but is not published at the
 configured URL, and exits nonzero. This conservative status also covers an
 unknown load outcome; the previous Caddy config may still serve a site.
 A failed server start or health check exits nonzero without claiming that
-the server runs or that the site is serving.
+the server runs or that the site is serving. A startup timeout leaves the new
+process and installed binary in place, with the previous binary retained as
+`.prev`; it does not trigger an automatic rollback or stop a late-starting
+process. Inspect its logs and health before using the recovery procedure below.
 
 For an unchanged managed block, production commands also check the running
 config through Caddy's TCP admin API when its address is available. The
@@ -478,7 +486,7 @@ and `DIR` is a directory relative to the remote home (default `ajayeb`).
    so the upload does not also linger on disk as a second ~8.5 MB copy once
    it is installed (falling back to copying and then removing it only when
    the two paths are on different filesystems).
-5. Polls `<url>/health` from the dev machine for up to 30 seconds and
+5. Polls `<url>/health` from the dev machine for up to 90 seconds, every second, and
    prints the version it reports, with a warning if it differs from the one
    just built, or if it never answers.
 
@@ -558,7 +566,7 @@ first health check failed:
   and reaps curl after timeout or early rejection. Curl configuration files
   are ignored; proxy environment variables retain their normal effect.
 
-Each probe gets a total 30-second polling window, including attempts and
+Each probe gets a total 90-second polling window, including attempts and
 retry delays. Success requires the health endpoint to report the version just
 built. The per-target report includes deployment,
 host-local health and public health results. A failed deployment, unavailable
@@ -568,8 +576,10 @@ reported by stage and exception type without echoing potentially sensitive
 exception messages. Public timeouts report `TimeoutError`, malformed or
 wrong-type health JSON reports `InvalidHealthResponse`, and oversized bodies
 report `HealthResponseTooLarge`. A stale version reports a version mismatch.
-The single-target `ship` health poll is unchanged. There is no automatic
-batch rollback; inspect the report before retrying failed hosts.
+The single-target `ship` uses the same 90-second window and keeps its warning-only
+health result. These URL checks follow the remote startup verification, so their
+budget is separate and also allows time for public-path recovery. There is no
+automatic batch rollback; inspect the report before retrying failed hosts.
 
 ## Testing
 

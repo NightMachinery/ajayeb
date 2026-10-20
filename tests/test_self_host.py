@@ -1871,7 +1871,7 @@ class ProductionCaddyFailureTests(unittest.TestCase):
         self.assertEqual(code, 1)
         mocks["command_stop"].assert_called_once()
         mocks["start_server_prod"].assert_called_once_with(replace(self.config.ports, server=38953), self.config.site)
-        mocks["poll_health"].assert_called_once_with(38953)
+        mocks["poll_health"].assert_called_once_with(38953, timeout=90.0, progress=True)
         mocks["announce_serving"].assert_not_called()
         self.assertEqual([call[0] for call in mocks["order"].mock_calls], ["command_stop", "start_server_prod", "poll_health"])
         self.assertIn("Caddy configuration failed", stderr)
@@ -1981,7 +1981,7 @@ class ProductionCaddyFailureTests(unittest.TestCase):
                     code, _, stderr, mocks = self._run(command, caddy_admin_address=mock.Mock(return_value=address))
                     self.assertEqual(code, 0, stderr)
                     mocks["start_server_prod"].assert_called_once()
-                    mocks["poll_health"].assert_called_once_with(38953)
+                    mocks["poll_health"].assert_called_once_with(38953, timeout=90.0, progress=True)
                     mocks["announce_serving"].assert_called_once()
                     if address:
                         mocks["load_through_caddy"].assert_called_once()
@@ -3079,6 +3079,7 @@ class CandidateRoomCheckTests(unittest.TestCase):
                     self_host.stop_for_candidate(config, Path("/tmp/candidate"), False)
                 self.assertEqual(calls, ["check", "stop", "check", "restart"])
                 self_host.start_server_prod.assert_called_once_with(config.ports, config.site)
+                self_host.poll_health.assert_called_once_with(config.ports.server, timeout=90.0, progress=True)
                 self.assertEqual(binary.read_bytes(), b"old")
 
     def test_success_checks_both_sides_of_stop_and_passes_force(self):

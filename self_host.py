@@ -69,7 +69,10 @@ ADAPTED_TEXT_HIDE = "./Caddyfile"
 DEFAULT_URL = "https://ajayeb.lilf.ir"
 DEFAULT_NODE_VERSION = "24"
 HEALTH_POLL_TIMEOUT = 10.0
+# Cold starts on slow hosts need a separate budget from a routine health probe.
+STARTUP_HEALTH_POLL_TIMEOUT = 90.0
 HEALTH_POLL_INTERVAL = 0.3
+HEALTH_PROGRESS_INTERVAL = 5.0
 
 # ship: cross-compile on this machine and install a prebuilt binary remotely.
 HEAVY_SCRIPT = ROOT / "tools" / "heavy.py"
@@ -77,7 +80,8 @@ HEAVY_REFUSED = 75
 DEFAULT_REMOTE_DIR = "ajayeb"
 REMOTE_UPLOAD_BIN = ".self-host/bin/ajayeb.upload"
 SHIP_BUILD_WAIT = 1800.0
-SHIP_HEALTH_POLL_TIMEOUT = 30.0
+# Allow the same recovery window through the public URL after startup.
+SHIP_HEALTH_POLL_TIMEOUT = STARTUP_HEALTH_POLL_TIMEOUT
 SHIP_HEALTH_POLL_INTERVAL = 1.0
 SHIP_HEALTH_REQUEST_TIMEOUT = 5.0
 SHIP_HEALTH_MAX_BYTES = 16 * 1024
@@ -591,7 +595,7 @@ def stop_for_candidate(config: Config, candidate: Path, force_room_archive: bool
         if previous_binary:
             try:
                 start_server_prod(config.ports, config.site)
-                if not poll_health(config.ports.server):
+                if not poll_health(config.ports.server, timeout=STARTUP_HEALTH_POLL_TIMEOUT, progress=True):
                     raise RuntimeError("previous server health check failed")
                 print("previous binary restarted after stopped room check failed", file=sys.stderr)
             except Exception as exc:
@@ -1056,17 +1060,29 @@ def announce_serving(config: Config) -> None:
     print(f"serving: {config.site.origin}")
 
 
-def poll_health(port: int, *, timeout: float = HEALTH_POLL_TIMEOUT, interval: float = HEALTH_POLL_INTERVAL) -> bool:
-    deadline = time.monotonic() + timeout
+def poll_health(
+    port: int, *, timeout: float = HEALTH_POLL_TIMEOUT, interval: float = HEALTH_POLL_INTERVAL,
+    progress: bool = False,
+) -> bool:
+    started = time.monotonic()
+    deadline = started + timeout
+    next_progress = started + HEALTH_PROGRESS_INTERVAL
     url = f"http://127.0.0.1:{port}/health"
-    while time.monotonic() < deadline:
+    while (now := time.monotonic()) < deadline:
+        if progress and now >= next_progress:
+            print(f"waiting for game server /health on port {port} ({now - started:.1f}s/{timeout:g}s)",
+                  file=sys.stderr, flush=True)
+            next_progress = now + HEALTH_PROGRESS_INTERVAL
         try:
-            with urllib.request.urlopen(url, timeout=1.0) as resp:
+            with urllib.request.urlopen(url, timeout=min(1.0, deadline - now)) as resp:
                 if resp.status == 200:
+                    if progress:
+                        print(f"game server /health ready on port {port} after {time.monotonic() - started:.1f}s",
+                              file=sys.stderr, flush=True)
                     return True
         except (urllib.error.URLError, OSError, TimeoutError):
             pass
-        time.sleep(interval)
+        time.sleep(min(interval, max(0, deadline - time.monotonic())))
     return False
 
 
@@ -1802,13 +1818,13 @@ def start_prod_with_caddy(config: Config, caddy_error: Exception | None) -> None
             print(f"warning: Caddy configuration failed: {exc}", file=sys.stderr)
     try:
         start_server_prod(config.ports, config.site)
-        healthy = poll_health(config.ports.server)
+        healthy = poll_health(config.ports.server, timeout=STARTUP_HEALTH_POLL_TIMEOUT, progress=True)
     except Exception as exc:
         raise RuntimeError(f"game server startup failed on port {config.ports.server}: {exc}") from exc
     if not healthy:
         raise RuntimeError(
             f"game server startup could not be verified on port {config.ports.server}: "
-            "/health did not respond within the poll window"
+            f"/health did not respond within {STARTUP_HEALTH_POLL_TIMEOUT:g}s"
         )
     if caddy_error is not None:
         raise RuntimeError(
