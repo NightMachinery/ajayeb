@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatSigned, i18n, stripBidiMarks } from '$lib/i18n';
-import type { CardHints, CostView, HintFamily, RoomInfo, SlotView, View } from '$lib/wire';
+import type {
+  CardHints,
+  CostView,
+  DisabledChoice,
+  HintFamily,
+  RoomInfo,
+  SlotView,
+  View
+} from '$lib/wire';
 import { tokenHint, tokenValueText } from './board-hints';
 import { outcomeContext, outcomeTerms } from './outcome';
 import { HINT_FAMILIES } from '$lib/hints/families';
@@ -362,12 +370,21 @@ describe('the sheet lines', () => {
     expect(cardSections('library', [PAIR, LOOT], SEAT0, none, NAMES)).toEqual([]);
   });
 
-  it('short by discard, only when a discard covers the gap', () => {
-    expect(shortByDiscard(2, 3, ALL)).toBe(
+  it('renders discard advice only from the server eligibility fact', () => {
+    expect(shortByDiscard(3, ALL)).toBe(
       'Discarding another card (+3 coins) would let you build this next turn, if it is still here and prices stay the same.'
     );
-    expect(shortByDiscard(4, 3, ALL)).toBeUndefined();
-    expect(shortByDiscard(2, 3, new Set())).toBeUndefined();
+    // The equivalent tutorial Palisade fixture has no fact: another
+    // takeable card and another pick in this age are both required.
+    const palisade: DisabledChoice = {
+      key: 'construct:palisade',
+      kind: 'construct',
+      card: 'palisade',
+      reason: 'unaffordable',
+      cost: cost({ affordable: false, shortfall: 1, total: 2 })
+    };
+    expect(shortByDiscard(palisade.discardToAfford, ALL)).toBeUndefined();
+    expect(shortByDiscard(3, new Set())).toBeUndefined();
   });
 });
 
@@ -418,8 +435,8 @@ describe('the notes beside the actions', () => {
       'If you discard it, Moon cannot take it from the structure for free by chain, but their Mausoleum could rebuild it.'
     ]);
     const plain = { ...slot, costs: [cost({}), cost({})] } as unknown as SlotView;
-    expect(discardNotes(plain, oppMausoleum, 0, ALL, NAMES).map((n) => n.id)).toEqual([
-      'mausoleum'
+    expect(discardNotes(plain, oppMausoleum, 0, ALL, NAMES)).toEqual([
+      { id: 'mausoleum', text: 'If you discard it, Moon’s Mausoleum could rebuild it for free.' }
     ]);
     expect(discardNotes(plain, oppMausoleum, 1, ALL, NAMES).map((n) => n.id)).toEqual([
       'mausoleumOwn'
@@ -538,6 +555,6 @@ describe('hint number formatting', () => {
     expect(stripBidiMarks(lines[0]!)).toBe('خاک رس برای شما: هر واحد از ۲ به ۱ سکه.');
     expect(lines[1]).toContain(formatSigned(-1));
     expect(stripBidiMarks(lines[1]!)).toBe('ارزش کنونی: ۰ سکه، −۱ امتیاز.');
-    expect(shortByDiscard(1, 2, ALL)).toContain(formatSigned(2, { signDisplay: 'exceptZero' }));
+    expect(shortByDiscard(2, ALL)).toContain(formatSigned(2, { signDisplay: 'exceptZero' }));
   });
 });

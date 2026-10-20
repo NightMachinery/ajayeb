@@ -11,7 +11,7 @@
 
 import { cardName, scienceName, wonderName } from '$lib/components/card/effect-text';
 import { tokenName } from '$lib/components/choices/token-text';
-import { t } from '$lib/i18n';
+import { ageLabel, t } from '$lib/i18n';
 import type { HistoryEntry, ReviewView } from '$lib/wire';
 import type { MoveSummary, Seat } from './move-summary';
 
@@ -63,7 +63,7 @@ function stepText(key: string): string {
 }
 
 /** "You built Baths." (or "Your two moves: ...") for the move or turn a review is about. */
-export function playedText(key: string, names?: ReviewNames): string {
+export function playedText(key: string, names?: ReviewNames, age?: number): string {
   const parts = key.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 2) {
     return t('hints.review.played.twoMoves', {
@@ -88,7 +88,7 @@ export function playedText(key: string, names?: ReviewNames): string {
     case 'draft':
       return t('hints.review.played.draft', { wonder: wonderName(k.wonder ?? '') });
     case 'starter':
-      return t('hints.review.played.starter', { name: starterName(k.card, names) });
+      return starterText('played', k.card, names, age);
     case 'construct':
       return t('hints.review.played.build', { card: cardName(k.card ?? '') });
     case 'discard':
@@ -109,7 +109,12 @@ export function playedText(key: string, names?: ReviewNames): string {
  * `playedKey` is given, same-wonder/different-card and same-card/different-wonder
  * comparisons are phrased so the distinction is explicit.
  */
-export function moveText(key: string, playedKey?: string, names?: ReviewNames): string {
+export function moveText(
+  key: string,
+  playedKey?: string,
+  names?: ReviewNames,
+  age?: number
+): string {
   const k = parseKey(key);
   const p = playedKey ? parseKey(playedKey) : undefined;
   switch (k.kind) {
@@ -122,7 +127,7 @@ export function moveText(key: string, playedKey?: string, names?: ReviewNames): 
     case 'draft':
       return t('hints.review.move.draft', { wonder: wonderName(k.wonder ?? '') });
     case 'starter':
-      return t('hints.review.move.starter', { name: starterName(k.card, names) });
+      return starterText('move', k.card, names, age);
     case 'construct':
       return t('hints.review.move.build', { card: cardName(k.card ?? '') });
     case 'discard':
@@ -148,6 +153,21 @@ export function moveText(key: string, playedKey?: string, names?: ReviewNames): 
     default:
       return t('hints.review.move.other');
   }
+}
+
+function starterText(
+  kind: 'played' | 'move',
+  seat: string | undefined,
+  names?: ReviewNames,
+  age?: number
+): string {
+  const label =
+    age === undefined
+      ? t('hints.review.starter.nextAge')
+      : t('card.ageLabel', { age: ageLabel(age) });
+  return names && Number(seat) === names.seat
+    ? t(`hints.review.${kind}.starterYou`, { age: label })
+    : t(`hints.review.${kind}.starter`, { name: starterName(seat, names), age: label });
 }
 
 function starterName(seat: string | undefined, names?: ReviewNames): string {
@@ -197,7 +217,7 @@ function reasonSentence(review: ReviewView, move: string, opp: string): string {
 }
 
 /** The verdict: why the better move was better, or empty when no better move was found. */
-export function verdictText(review: ReviewView, names: ReviewNames): string {
+export function verdictText(review: ReviewView, names: ReviewNames, age?: number): string {
   if (!review.better) return '';
   const playedParts = review.played.trim().split(/\s+/).filter(Boolean);
   const betterParts = review.better.trim().split(/\s+/).filter(Boolean);
@@ -215,7 +235,7 @@ export function verdictText(review: ReviewView, names: ReviewNames): string {
     playedKey = playedParts[stepIdx] ?? playedKey;
     betterKey = betterParts[stepIdx] ?? betterKey;
   }
-  const move = moveText(betterKey, playedKey, names);
+  const move = moveText(betterKey, playedKey, names, age);
   const opp = names.names[names.seat === 0 ? 1 : 0];
   const verdict = reasonSentence(review, move, opp);
   if (playedParts.length > 1) {
@@ -233,8 +253,12 @@ export function reviewLines(review: ReviewView, names: ReviewNames): ReviewLines
   const entries = review.entries?.length
     ? review.entries.map((entry) => ({
         ply: entry.ply,
-        played: playedText(entry.played, names),
-        verdict: verdictText({ ...entry, entries: [], strength: review.strength }, names),
+        played: playedText(entry.played, names, entry.age),
+        verdict: verdictText(
+          { ...entry, entries: [], strength: review.strength },
+          names,
+          entry.age
+        ),
         better: !!entry.better
       }))
     : [

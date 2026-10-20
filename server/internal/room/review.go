@@ -492,7 +492,13 @@ func buildTurnReview(ctx context.Context, steps []reviewStep, roomSeed uint64, c
 		if !ok {
 			return view.ReviewView{}, false
 		}
+		var age *int
+		if s.action.Type == engine.ActChooseStarter {
+			n := int(s.pre.Age)
+			age = &n
+		}
 		entries = append(entries, view.ReviewEntryView{
+			Age: age,
 			Ply: rv.Ply, Played: rv.Played, Better: rv.Better,
 			Reason: rv.Reason, Gap: rv.Gap, Threat: rv.Threat,
 			Symbol: rv.Symbol, Coins: rv.Coins,

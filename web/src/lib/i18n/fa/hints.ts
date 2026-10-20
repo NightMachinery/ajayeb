@@ -176,7 +176,7 @@ export const hints = {
       'اگر آن را کنار بگذارید، {name} نمی‌تواند آن را تنها با {count} سکه از چیدمان کارت‌ها بردارد، اما آرامگاه او می‌تواند آن را دوباره بسازد.'
   },
   'hints.note.mausoleumOpp':
-    'اگر آن را کنار بگذارید، آرامگاه {name} می‌تواند آن را رایگان دوباره بسازد. اگر آن را زیر شگفتی بگذارید، از دسترس بیرون است.',
+    'اگر آن را کنار بگذارید، آرامگاه {name} می‌تواند آن را رایگان دوباره بسازد.',
   'hints.note.mausoleumYou':
     'اگر آن را کنار بگذارید، آرامگاه شما می‌تواند بعداً آن را دوباره بسازد.',
   'hints.note.mausoleumNamed':
@@ -477,7 +477,9 @@ export const hints = {
   'hints.review.played.destroy': 'شما {card} را نابود کردید.',
   'hints.review.played.revive': 'شما {card} را از میان کارت‌های کنارگذاشته‌شده ساختید.',
   'hints.review.played.draft': 'شما {wonder} را در گزینش شگفتی‌ها برداشتید.',
-  'hints.review.played.starter': 'شما {name} را برای آغاز عصر بعد انتخاب کردید.',
+  'hints.review.played.starter': 'شما {name} را برای آغاز {age} انتخاب کردید.',
+  'hints.review.played.starterYou': 'شما انتخاب کردید {age} را آغاز کنید.',
+  'hints.review.starter.nextAge': 'عصر بعد',
   'hints.review.starter.player': 'بازیکن {count}',
   'hints.review.played.step.build': '{card} را ساختید',
   'hints.review.played.step.discard': '{card} را کنار گذاشتید',
@@ -500,7 +502,8 @@ export const hints = {
   'hints.review.move.destroy': 'نابود کردن {card}',
   'hints.review.move.revive': 'ساختن {card} از میان کارت‌های کنارگذاشته‌شده',
   'hints.review.move.draft': 'برداشتن {wonder}',
-  'hints.review.move.starter': 'انتخاب {name} برای آغاز عصر بعد',
+  'hints.review.move.starter': 'انتخاب {name} برای آغاز {age}',
+  'hints.review.move.starterYou': 'انتخاب آغاز {age}',
   'hints.review.turn.first': 'در حرکت اول: {verdict}',
   'hints.review.turn.extra': 'در نوبت دوباره: {verdict}',
   'hints.review.none': 'حرکت آشکارا بهتری پیدا نشد.',

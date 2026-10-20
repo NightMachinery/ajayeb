@@ -496,18 +496,17 @@ export function denyNotes(
 }
 
 /**
- * short-by-discard: a short build that a discard's coins would cover at
- * today's prices (an advisory, since the discard uses the turn).
+ * The server found another legal discard that funds this build on a later
+ * pick in this age, subject to the opponent's reply and unchanged prices.
  */
 export function shortByDiscard(
-  shortfall: number,
-  discardValue: number,
+  discardToAfford: number | undefined,
   families: ReadonlySet<HintFamily>
 ): string | undefined {
-  if (!families.has('economy') || shortfall <= 0 || shortfall > discardValue) return undefined;
+  if (!families.has('economy') || discardToAfford === undefined) return undefined;
   return t('hints.note.shortByDiscard', {
-    count: discardValue,
-    gain: formatSigned(discardValue, { signDisplay: 'exceptZero' })
+    count: discardToAfford,
+    gain: formatSigned(discardToAfford, { signDisplay: 'exceptZero' })
   });
 }
 

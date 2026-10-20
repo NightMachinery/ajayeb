@@ -241,13 +241,14 @@ type Choice struct {
 // DisabledChoice is a play action the seat to move cannot take now: a card
 // it cannot afford to build, or a wonder it cannot build with that card.
 type DisabledChoice struct {
-	Key    string     `json:"key"`
-	Kind   ChoiceKind `json:"kind"`
-	Card   *string    `json:"card,omitempty"`
-	Wonder *string    `json:"wonder,omitempty"`
-	Reason Reason     `json:"reason"`
-	Cost   *CostView  `json:"cost,omitempty"` // what it would cost
-	Wins   *WinView   `json:"wins,omitempty"` // threats: a supremacy the action would win if the seat had the coins (hints.go)
+	Key             string     `json:"key"`
+	Kind            ChoiceKind `json:"kind"`
+	Card            *string    `json:"card,omitempty"`
+	Wonder          *string    `json:"wonder,omitempty"`
+	Reason          Reason     `json:"reason"`
+	Cost            *CostView  `json:"cost,omitempty"`            // what it would cost
+	DiscardToAfford *int       `json:"discardToAfford,omitempty"` // economy: another legal discard funds this card on a later pick in this age, if it remains and prices stay unchanged; value is the discard gain
+	Wins            *WinView   `json:"wins,omitempty"`            // threats: a supremacy the action would win if the seat had the coins (hints.go)
 }
 
 // ScoreView is one seat's points by category, as on the score sheet.

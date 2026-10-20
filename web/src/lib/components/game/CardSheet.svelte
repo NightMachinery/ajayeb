@@ -250,13 +250,7 @@
   });
 
   const shortNote = $derived(
-    screen && actions?.buildBlocked?.cost
-      ? shortByDiscard(
-          actions.buildBlocked.cost.shortfall,
-          view.players[sheetSeat].discardValue,
-          screen.families
-        )
-      : undefined
+    screen ? shortByDiscard(actions?.buildBlocked?.discardToAfford, screen.families) : undefined
   );
 </script>
 

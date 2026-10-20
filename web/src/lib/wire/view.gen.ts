@@ -819,6 +819,7 @@ export interface ReviewView {
  * Strength is inherited from the containing ReviewView.
  */
 export interface ReviewEntryView {
+  age?: number /* int */; // starter decisions only: the age being started, from this decision
   ply: number /* int */;
   played: string;
   better?: string;
@@ -1129,6 +1130,7 @@ export interface DisabledChoice {
   wonder?: string;
   reason: Reason;
   cost?: CostView; // what it would cost
+  discardToAfford?: number /* int */; // economy: another legal discard funds this card on a later pick in this age, if it remains and prices stay unchanged; value is the discard gain
   wins?: WinView; // threats: a supremacy the action would win if the seat had the coins (hints.go)
 }
 /**

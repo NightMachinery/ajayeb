@@ -716,6 +716,8 @@ full game view described under "The view and its events" below.
   a destroyed card, a card built from the discard pile, a wonder draft pick,
   or the next age's starter. Automatic effects and automatic draft awards
   are not decisions. A resignation is not reviewed.
+  `ReviewEntryView.age` is the age being started (2 or 3), set only for a
+  starter decision from its pre-decision state; other entries omit it.
   Each entry contains its decision's `ply` and action key (`played`),
   and, when a clearly better action existed, its single action key
   (`better`), a `reason` code (`wins`, `stopsWin`, `pair`, `deniesPair`,
@@ -1297,6 +1299,13 @@ legal actions. The tooltip shows both seats' prices on face-up structure
 cards, naming the other player; city and discard summaries can retain the
 printed cost. Detailed sheets keep using the existing cost breakdowns,
 and actions still come exclusively from `choices`.
+
+`DisabledChoice.discardToAfford` is the coin gain of another legal discard
+that would cover this unaffordable card's shortfall at current prices. It
+is set only for the deciding seat with Economy hints on, when a different
+takeable card can be discarded and turn order leaves another pick in this
+age. Otherwise it is omitted. The target may still be taken by the opponent
+or its trade prices may change before that pick.
 
 An actual building or build-from-discard choice takes precedence over those
 hypothetical prices in the whole-card summary. Build-from-discard choices

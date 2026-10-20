@@ -191,3 +191,15 @@ The tournaments and the calibration are subcommands of `ajayeb-sim`. Run them fr
 - **CI.** The nightly CI run (`.github/workflows/ci.yml`, jobs `tournament` and `tournament-verdict`) plays all three targets in full, at the fixed budgets, split by deal over ten runners, then tallies them against the targets and runs the Easy tournaments of the slow tests. Its verdicts appear on the run's summary page. Start one by hand with `gh workflow run ci.yml`. CI is the authority on the full tournaments.
 
 **Tuning.** The evaluation's weights set the strength of every level but Random (Hard's rollouts end the game, so the evaluation never scores its leaves, but its rollout policy still prices cards with the weights' coin, science and military values); the gap between Medium and Hard depends on their budgets and on each level's search settings (`ai.Level.SearchConfig`: the UCB constant and the rollouts), which `-sa` and `-sb` override for a match. `bin/ajayeb-sim weights > w.json` prints the defaults as JSON; after editing a copy, `-wa w.json` (or `-wb`) gives bot A (or B) those weights for a match. Fields left out of the file keep their defaults. A sweep is a loop over such files against a fixed opponent, compared at equal seeds. The defaults in `server/internal/ai/eval.go` change only with a new set of tournaments and an update to this page.
+
+## Advice at the end of an age
+
+The hints engine promises a next-turn opportunity only when the mover can
+pick another card in this age: an ordinary action needs at least three
+cards before the pick, while Play again needs two. Immediate extra-turn
+wins remain part of the action's win outcome. A discard-to-afford note also
+requires a different legal discard whose gain covers the shortfall. Both
+checks use the server's turn-order rule; the client renders the resulting
+fact without counting cards or comparing costs. A starter review carries
+the chosen age from its own decision, so reopening a summary later keeps
+the correct age and addresses a player who chose themselves directly.

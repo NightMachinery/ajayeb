@@ -223,3 +223,62 @@ test.describe('decider hints', { tag: ['@mobile'] }, () => {
     expect(problems).toEqual([]);
   });
 });
+
+// A real Age I equivalent of the tutorial's last Palisade: a card is
+// short by less than a discard pays, but there is no next pick this age.
+test('the last two cards do not promise a build next turn @mobile', async ({ page, baseURL }) => {
+  test.setTimeout(150_000);
+  if (!baseURL) throw new Error('no baseURL');
+  let at: WinPosition | undefined;
+  for (const seed of SEEDS) {
+    const keys: string[] = [];
+    try {
+      await recordGame(baseURL, seed, (v) => {
+        if (
+          v.age === 1 &&
+          v.phase === 'play' &&
+          v.structure.filter((s) => s.state !== 'empty').length === 2
+        ) {
+          const gain = v.choices.find((c) => c.kind === 'discard')?.gain ?? 0;
+          const blocked = v.disabled.find(
+            (c) =>
+              c.kind === 'construct' && c.cost && c.cost.shortfall > 0 && c.cost.shortfall <= gain
+          );
+          if (blocked?.card) throw new Found({ seat: v.toMove === 1 ? 1 : 0, card: blocked.card });
+        }
+        // Spend the purse on legal builds to reach a small shortfall.
+        const pick =
+          v.choices
+            .filter((c) => c.kind === 'construct')
+            .sort((a, b) => (b.cost?.total ?? 0) - (a.cost?.total ?? 0))[0] ?? recordPolicy(v);
+        keys.push(pick.key);
+        return pick;
+      });
+    } catch (err) {
+      if (!(err instanceof Found)) throw err;
+      at = { seed, keys, ...err.position };
+      break;
+    }
+  }
+  if (!at) throw new Error('no seeded Age I endgame with a small shortfall');
+  await page.addInitScript(() => {
+    localStorage.setItem('ajayeb:name', 'Hints');
+    localStorage.setItem(
+      'ajayeb:settings',
+      JSON.stringify({ hotseatPassDevice: false, animationSpeed: 'off', showOpponentMove: false })
+    );
+  });
+  const room = await createDevRoom(baseURL, { mode: 'hotseat', seed: at.seed, actions: at.keys });
+  await page.goto(room.path);
+  const driver = new GameDriver(page);
+  await driver.waitReady();
+  const v = await currentView(page);
+  expect(v.age).toBe(1);
+  expect(v.structure.filter((s) => s.state !== 'empty')).toHaveLength(2);
+  expect(v.disabled.find((c) => c.key === `construct:${at.card}`)?.discardToAfford).toBeUndefined();
+  for (const c of v.choices) expect(c.outcome?.threatens ?? []).toEqual([]);
+  await driver.openCard(at.card);
+  const sheet = page.locator('dialog[open] [data-card-sheet]');
+  await expect(sheet).toBeVisible();
+  await expect(sheet.locator('[data-hint-note="short-by-discard"]')).toHaveCount(0);
+});

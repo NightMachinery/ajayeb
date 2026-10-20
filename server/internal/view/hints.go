@@ -493,6 +493,7 @@ type ReviewView struct {
 // immediately before it. Keys name a single action, never a sequence.
 // Strength is inherited from the containing ReviewView.
 type ReviewEntryView struct {
+	Age    *int           `json:"age,omitempty"` // starter decisions only: the age being started, from this decision
 	Ply    int            `json:"ply"`
 	Played string         `json:"played"`
 	Better *string        `json:"better,omitempty"`

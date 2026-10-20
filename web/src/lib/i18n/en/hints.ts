@@ -182,8 +182,7 @@ export const hints = {
     other:
       'If you discard it, {name} cannot take it from the structure for only {count} coins, but their Mausoleum could rebuild it.'
   },
-  'hints.note.mausoleumOpp':
-    'If you discard it, {name}’s Mausoleum could rebuild it for free. If you tuck it under a wonder, it is out of reach.',
+  'hints.note.mausoleumOpp': 'If you discard it, {name}’s Mausoleum could rebuild it for free.',
   'hints.note.mausoleumYou': 'If you discard it, your Mausoleum could rebuild it later.',
   'hints.note.mausoleumNamed': 'If you discard it, {name}’s Mausoleum could rebuild it later.',
   'hints.note.denyBuild': 'Building it takes it from {name}.',
@@ -509,7 +508,9 @@ export const hints = {
   'hints.review.played.destroy': 'You destroyed {card}.',
   'hints.review.played.revive': 'You built {card} from the discard pile.',
   'hints.review.played.draft': 'You picked {wonder} in the wonder draft.',
-  'hints.review.played.starter': 'You chose {name} to start the next age.',
+  'hints.review.played.starter': 'You chose {name} to start {age}.',
+  'hints.review.played.starterYou': 'You chose to start {age}.',
+  'hints.review.starter.nextAge': 'the next age',
   'hints.review.starter.player': 'Player {count}',
   'hints.review.played.step.build': 'built {card}',
   'hints.review.played.step.discard': 'discarded {card}',
@@ -533,7 +534,8 @@ export const hints = {
   'hints.review.move.destroy': 'Destroying {card}',
   'hints.review.move.revive': 'Building {card} from the discard pile',
   'hints.review.move.draft': 'Picking {wonder}',
-  'hints.review.move.starter': 'Choosing {name} to start the next age',
+  'hints.review.move.starter': 'Choosing {name} to start {age}',
+  'hints.review.move.starterYou': 'Choosing to start {age}',
   'hints.review.turn.first': 'First move: {verdict}',
   'hints.review.turn.extra': 'Extra turn: {verdict}',
   'hints.review.none': 'No clearly better move was found.',

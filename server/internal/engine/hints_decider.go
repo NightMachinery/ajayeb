@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"math/bits"
+
 	"github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
@@ -205,6 +207,25 @@ func deciderHints(s *State, f view.HintSettings, out *view.View, c *simCtx) {
 		ch.Outcome = d.outcome(a, &x, ev)
 		acts = append(acts, pendingAct{i: i, a: a, x: x})
 	}
+	// Eligibility is a server fact, not a coin comparison in the client.
+	if f.Economy {
+		for i := range out.Disabled {
+			dc := &out.Disabled[i]
+			if dc.Kind != view.ChoiceKindConstruct || dc.Reason != view.Reason(ReasonUnaffordable.String()) || dc.Cost == nil || dc.Cost.Shortfall <= 0 {
+				continue
+			}
+			for _, ch := range out.Choices {
+				if ch.Kind != view.ChoiceKindDiscard || ch.Card == nil || dc.Card == nil || *ch.Card == *dc.Card || ch.Gain == nil || dc.Cost.Shortfall > *ch.Gain {
+					continue
+				}
+				a, err := ParseKey(ch.Key)
+				if err == nil && nextPickInAge(s, a) {
+					dc.DiscardToAfford = dtoInt(*ch.Gain)
+					break
+				}
+			}
+		}
+	}
 	if !f.Threats {
 		return
 	}
@@ -261,6 +282,12 @@ func deciderHints(s *State, f view.HintSettings, out *view.View, c *simCtx) {
 			gives, blocks := after.minus(&before), before.minus(&after)
 			o.Gives = viewThreatsPtr(opp, &gives)
 			o.Blocks = viewThreatsPtr(opp, &blocks)
+		}
+		// The opponent's reply consumes a card too. Do not promise a
+		// next-turn win after the structure has run out. Extra-turn wins
+		// are already reported by outcome.Wins through winsNow.
+		if !nextPickInAge(s, p.a) {
+			continue
 		}
 		z := normalised(&y, d.mover)
 		own, ok := d.nested(func() (threatList, bool) { return threatsFor(&z, d.mover, d.mask, c, false) })
@@ -448,6 +475,22 @@ func (d *deciderCalc) flips(x *State) *[]view.AffordFlip {
 		return nil
 	}
 	return &out
+}
+
+// nextPickInAge reports whether the turn order leaves the mover another
+// structure pick this age, assuming the game does not end first. An ordinary
+// action needs cards for this pick, the opponent's reply, and the next pick;
+// Play again needs only this pick and the immediate extra pick. It does not
+// promise that a particular card survives the opponent's reply.
+func nextPickInAge(s *State, a Action) bool {
+	if s.Phase != PhasePlay {
+		return false
+	}
+	left := bits.OnesCount32(Occupied(s))
+	if state, _ := extraTurnOutcome(s, a); state == ExtraTurnGain {
+		return left >= 2
+	}
+	return left >= 3
 }
 
 // passes reports whether the state x after one of the decider's actions is

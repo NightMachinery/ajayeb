@@ -344,6 +344,30 @@ describe('every decision in a turn', () => {
     ]);
   });
 
+  it('names the starter age and addresses the viewer directly in both languages', async () => {
+    const r = review({
+      strength: 'deep',
+      entries: [
+        { ply: 20, played: 'starter:0', reason: 'points', gap: 0, age: 2, better: 'starter:1' }
+      ]
+    });
+    expect(reviewLines(r, names).entries[0]).toMatchObject({
+      played: 'You chose to start Age II.',
+      verdict: 'Choosing Moon to start Age II looked clearly stronger to a deeper search.'
+    });
+    r.entries[0]!.played = 'starter:1';
+    r.entries[0]!.better = 'starter:0';
+    expect(reviewLines(r, names).entries[0]?.played).toBe('You chose Moon to start Age II.');
+    await i18n.set('fa');
+    expect(stripBidiMarks(reviewLines(r, names).entries[0]?.played ?? '')).toBe(
+      'شما Moon را برای آغاز دوران دوم انتخاب کردید.'
+    );
+    r.entries[0]!.played = 'starter:0';
+    expect(stripBidiMarks(reviewLines(r, names).entries[0]?.played ?? '')).toBe(
+      'شما انتخاب کردید دوران دوم را آغاز کنید.'
+    );
+  });
+
   it('names destroy, revive, draft and starter decisions and alternatives in both languages', async () => {
     expect(playedText('destroy:quarry')).toBe('You destroyed Quarry.');
     expect(playedText('revive:baths')).toBe('You built Baths from the discard pile.');
@@ -360,7 +384,7 @@ describe('every decision in a turn', () => {
     });
     expect(reviewLines(r, names).entries[0]).toMatchObject({
       played: 'You chose Moon to start the next age.',
-      verdict: 'Choosing Sun to start the next age looked clearly stronger to a deeper search.'
+      verdict: 'Choosing to start the next age looked clearly stronger to a deeper search.'
     });
     await i18n.set('fa');
     for (const key of ['token:law', 'destroy:quarry', 'revive:baths', 'draft:pyramids']) {

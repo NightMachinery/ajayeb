@@ -222,3 +222,35 @@ func TestReviewTokenSkipsBot(t *testing.T) {
 		}
 	}
 }
+
+// A summary can be opened after the next age starts; carry the age from
+// the starter decision's own position, rather than the current snapshot.
+func TestReviewStarterCarriesAge(t *testing.T) {
+	for _, oldAge := range []int{1, 2} {
+		sc := &engine.Scenario{Age: oldAge}
+		// Use known age-appropriate final cards instead of depending on a
+		// random legal-action order in the fixture.
+		sc.OnlyLeft = []string{"library"}
+		if oldAge == 1 {
+			sc.OnlyLeft = []string{"palisade"}
+		}
+		s, err := engine.NewGameFromScenario(7, engine.Options{}, sc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		engine.ApplyTrusted(&s, mustKey(t, &s, "discard:"+sc.OnlyLeft[0]))
+		if s.Phase != engine.PhaseChooseStarter {
+			t.Fatal("missing starter decision")
+		}
+		age := int(s.Age)
+		for seat := range engine.Seat(2) {
+			rv, ok := buildTurnReview(context.Background(), []reviewStep{{pre: s, action: engine.StarterAction(seat)}}, 7, quickReview)
+			if !ok || len(rv.Entries) != 1 {
+				t.Fatalf("missing review: %+v", rv)
+			}
+			if got := rv.Entries[0].Age; got == nil || *got != age {
+				t.Fatalf("starter age %v, want %d", got, age)
+			}
+		}
+	}
+}
