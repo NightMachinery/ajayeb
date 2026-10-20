@@ -269,7 +269,7 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
     expect(problems).toEqual([]);
   });
 
-  test('a skipped opening frame: the recovered deal comes before the move summary', async ({
+  test('a skipped opening frame: the recovered deal comes first, then the recap, then the move summary', async ({
     browser,
     baseURL
   }, info) => {
@@ -338,7 +338,11 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
       await expect(starter.or(popup)).toBeVisible();
       if (await popup.isVisible()) await chooser.keyboard.press('Escape');
       await starter.click();
-      await expect(viewer.locator(COVERS.summary), 'the summary still opens').toBeVisible();
+      // The recap comes before the summary of the other side's starter
+      // choice, also when the opening frame was skipped and AgeSummary
+      // keeps the starter answer's view (M11.round3-board-fixes).
+      await expect(viewer.locator(AGE), 'the recap opens first').toBeVisible();
+      await expect(viewer.locator(COVERS.summary)).toHaveCount(0);
       expect(skipped, 'the opening frame was dropped').toBe(true);
       const all = await covers(viewer);
       const end = openingEnd((await fxRecords(viewer)).anims, 'recovered deal');
@@ -346,8 +350,12 @@ test.describe('the deal comes before the starter choice', { tag: '@mobile' }, ()
         expect(cover.at, `the ${cover.what} waited for the deal`).toBeGreaterThanOrEqual(end);
       }
       expect(await ageStartCues(viewer), 'the age sounds once').toHaveLength(1);
-      await viewer.keyboard.press('Escape');
-      await expect(viewer.locator(AGE), 'the age dialog follows the summary').toBeVisible();
+      await viewer.locator('dialog[open] [data-age-continue]').click();
+      await expect(viewer.locator(COVERS.summary), 'the summary follows the recap').toBeVisible();
+      await expect(viewer.locator(`${COVERS.summary} [data-summary-line]`).first()).toHaveAttribute(
+        'data-summary-line',
+        'ageStart'
+      );
       expect(problems).toEqual([[], []]);
     } finally {
       await a.close();

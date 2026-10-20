@@ -233,11 +233,12 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
     }) => {
       // M11.round3-board-fixes: the bot chose and played into the new age
       // while the viewer's screen caught up, and its summary opened first,
-      // then a recap with stale-looking totals and "Begin Age II".
+      // then a recap with "Begin Age II". With seed 1 the bot chooses itself
+      // and takes the first card of Age II at once.
       const problems = watchHygiene(page);
       await configure(page, true);
       await useSettings(page, speed);
-      await page.goto('/dev/new?mode=ai&seat=0&seed=7&scenario=age-transition-chooser');
+      await page.goto('/dev/new?mode=ai&seat=0&seed=1&scenario=age-transition-chooser');
       await page.waitForURL(/\/play\/[A-Z0-9]+$/);
       const driver = new GameDriver(page);
       await driver.waitReady();
@@ -249,12 +250,13 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
         })
         .toBe(true);
       await driver.waitTurn();
+      const history = await page.evaluate(() => window.__ajayeb?.history() ?? []);
+      const chosen = history.flatMap((e) => e.events).find((e) => e.kind === 'starterChosen');
+      expect(chosen?.starter, 'the bot chose itself').toBe(1);
+      expect((await currentView(page)).structure.some((slot) => slot.state === 'empty')).toBe(true);
       await expect(page.locator(AGE)).toBeVisible();
       await expect(page.locator(POPUP)).toHaveCount(0);
-      const begun = (await currentView(page)).structure.some((slot) => slot.state === 'empty');
-      await expect(page.locator('dialog[open] [data-age-continue]')).toHaveText(
-        begun ? 'Continue' : 'Begin Age II'
-      );
+      await expect(page.locator('dialog[open] [data-age-continue]')).toHaveText('Continue');
       await continueAge(page);
       const popup = page.locator(POPUP);
       await expect(popup).toBeVisible();
@@ -263,6 +265,7 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
         'ageStart'
       );
       await expect(popup.locator('[data-summary-line="starterChosen"]')).toHaveCount(1);
+      await expect(popup.locator('[data-summary-line]')).toHaveCount(3);
       expect(problems).toEqual([]);
     });
 

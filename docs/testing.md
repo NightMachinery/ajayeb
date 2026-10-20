@@ -1543,10 +1543,13 @@ so inspect the three LCP samples, their median and the script-byte breakdown.
 `age-summary.spec.ts` runs on desktop and mobile. Real bot games with Animation
 normal and off prove that an opponent's starter decision cannot close the
 completed-age summary or replace its server-supplied totals. With the move
-summary on, the same bot games check that the recap opens before the summary of
-the bot's starter choice and any move it made in the new age, with Continue
-when that age is under way, and that the summary then starts with the new age's
-line (M11.round3-board-fixes). Two real online
+summary on (M11.round3-board-fixes), in both Animation modes: with seed 1 the
+bot chooses itself and takes the first card of Age II, and the recap opens
+first with Continue, then the summary with the new age's line, the starter
+choice and that move; with seed 7 the bot chooses the viewer, and a reload
+while the recap holds the summary back still opens that summary, with no deal.
+`age-start-order.spec.ts`'s skipped-opener case checks the same recap-first
+order when the opening snapshot never reached the viewer. Two real online
 browsers cover closing before and after the opponent chooses, an opponent's
 first card, presence-only updates, reconnect/resync, and the final move shown in
 the result dialog itself, with no summary popup. Hidden boundaries and results wait for wake and the

@@ -522,16 +522,27 @@
   const moveSummary = $derived(
     summarySeat === null ? null : latestSummary(shownHistory, summarySeat)
   );
+  // The first ply of the age the unread recap opens: the one after the
+  // history entry that carried its ageStart event. The boundary's own view
+  // is not enough: when the opening snapshot was skipped, AgeSummary keeps
+  // the starter answer's view, one ply further on.
+  const ageOpenPly = $derived.by(() => {
+    if (!ageBoundary) return null;
+    const age = ageBoundary.age;
+    const opened = shownHistory.findLast((entry) =>
+      entry.events.some((e) => e.kind === 'ageStart' && e.age === age)
+    );
+    return opened ? opened.ply + 1 : ageBoundary.ply;
+  });
   // The recap of an ended age comes before any play in the new one
   // (M11.round3-board-fixes): when the other side chose who starts and
-  // played on before this screen caught up, its summary reaches past the
-  // age's end (a ply at or after the boundary's), so it waits for the
-  // unread age dialog, which opens first.
+  // played on before this screen caught up, its summary reaches into the
+  // new age, so it waits for the unread age dialog, which opens first.
   const summaryPastAge = $derived(
     !!moveSummary &&
       ageUnread &&
-      !!ageBoundary &&
-      moveSummary.plies.some((ply) => ply >= ageBoundary.ply)
+      ageOpenPly !== null &&
+      moveSummary.plies.some((ply) => ply >= ageOpenPly)
   );
   const summaryOpen = $derived(
     pageVisible &&
