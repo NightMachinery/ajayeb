@@ -54,3 +54,18 @@ The `1369875` CI run skipped e2e because `golangci-lint` rejected the
 protocol formatter's quote-state `if` chain (`gocritic`'s `ifElseChain`).
 The formatter now uses a switch with the same branches. Its existing JSON
 preservation tests cover the behavior; lint is checked alongside this slice.
+
+## Online reload connection count
+
+The supplied `40e5ec2` trace shows both players reconnecting before B reloads:
+B has two previous WebSockets, then creates its third during reload. The
+transport's reconnect behavior is expected; `FrameLog.sockets` counts every
+connection ever created and never decreases when one closes. Waiting for an
+old close cannot make that counter return to two.
+
+The reload assertion now polls for exactly one connection above the count
+immediately before reload, with a five-second bound. A focused case introduces
+a prior offline/reconnect cycle, then checks the replacement count and the
+same room version, seat and choices. Lifecycle attachments retain connection
+opening/closing times and whether hello had a name, without identity tokens.
+The transport behavior dates to `d0e08f8` (October 10); no networking code changes.

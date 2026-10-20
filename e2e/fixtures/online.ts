@@ -61,15 +61,26 @@ export async function newDeviceContext(
   return context;
 }
 
+export interface LoggedConnection {
+  socket: number;
+  openedAt: number;
+  closedAt: number | null;
+  helloNamed: boolean | null;
+  states: number;
+}
+
 /**
  * Every WebSocket frame a page receives from the server, in order, with its
  * room version. It follows the page across reloads (each new socket counts
- * up `sockets`). Attach it before the page's first navigation.
+ * up `sockets`). Lifecycle metadata records observed close events; a missing
+ * close event during navigation does not prove a connection is still open.
+ * Attach it before the page's first navigation.
  */
 export class FrameLog implements ViewerStream {
   readonly name: string;
   readonly frames: CapturedFrame[] = [];
   sockets = 0;
+  readonly connections: LoggedConnection[] = [];
   readonly #started = Date.now();
 
   constructor(page: Page, name: string) {
@@ -78,6 +89,26 @@ export class FrameLog implements ViewerStream {
       if (!new URL(ws.url()).pathname.endsWith('/ws')) return;
       this.sockets += 1;
       const socket = this.sockets;
+      const connection: LoggedConnection = {
+        socket,
+        openedAt: Date.now() - this.#started,
+        closedAt: null,
+        helloNamed: null,
+        states: 0
+      };
+      this.connections.push(connection);
+      ws.on('close', () => {
+        connection.closedAt = Date.now() - this.#started;
+      });
+      ws.on('framesent', ({ payload }) => {
+        try {
+          const text = typeof payload === 'string' ? payload : payload.toString('utf8');
+          const message = JSON.parse(text) as { t?: string; name?: string };
+          if (message.t === 'hello') connection.helloNamed = !!message.name;
+        } catch {
+          /* Only lifecycle metadata is needed; frame capture below is unchanged. */
+        }
+      });
       ws.on('framereceived', ({ payload }) => {
         const text = typeof payload === 'string' ? payload : payload.toString('utf8');
         let version: number | null = null;
@@ -87,6 +118,7 @@ export class FrameLog implements ViewerStream {
         } catch {
           // Kept as it came: the leak check reports a frame that is not JSON.
         }
+        if (version !== null) connection.states += 1;
         this.frames.push({ text, version, at: Date.now() - this.#started, socket });
       });
     });

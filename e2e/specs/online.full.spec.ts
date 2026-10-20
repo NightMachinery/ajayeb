@@ -59,6 +59,57 @@ async function hook<T>(page: Page, read: () => T): Promise<T> {
 }
 
 test.describe('online', { tag: ['@mobile', '@full'] }, () => {
+  test('reload creates one replacement after an earlier reconnect', async ({ browser }, info) => {
+    const contexts: BrowserContext[] = [];
+    try {
+      const ctxA = await newDeviceContext(browser, info, { clipboard: true });
+      contexts.push(ctxA);
+      const pageA = await ctxA.newPage();
+      await createOnlineGame(pageA, 'Roxana', 'Sun');
+      const invite = await readInvite(pageA);
+      const ctxB = await newDeviceContext(browser, info);
+      contexts.push(ctxB);
+      const pageB = await ctxB.newPage();
+      const log = new FrameLog(pageB, 'reload');
+      await joinByLink(pageB, invite.link, 'Babak');
+      const driver = new GameDriver(pageB);
+      const before = await driver.snapshot();
+      const initial = log.sockets;
+      // A controlled browser network notification exercises the real transport
+      // reconnect path without depending on how long an offline retry waits.
+      const interrupted = await pageB.evaluate(() => {
+        window.dispatchEvent(new Event('offline'));
+        const state = window.__ajayeb?.conn();
+        window.dispatchEvent(new Event('online'));
+        return state;
+      });
+      expect(interrupted).not.toBe('open');
+      await driver.waitReady();
+      await expect.poll(() => log.sockets, { timeout: 5_000 }).toBe(initial + 1);
+      const socketsBeforeReload = log.sockets;
+      await pageB.reload();
+      await driver.waitReady();
+      const after = await driver.snapshot();
+      expect(after.version).toBe(before.version);
+      expect(after.seats).toEqual(before.seats);
+      expect(after.choices.map((choice) => choice.key)).toEqual(
+        before.choices.map((choice) => choice.key)
+      );
+      await expect.poll(() => log.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 1);
+      await info.attach('reload after reconnect sockets', {
+        body: JSON.stringify({
+          initial,
+          socketsBeforeReload,
+          after: log.sockets,
+          connections: log.connections
+        }),
+        contentType: 'application/json'
+      });
+    } finally {
+      for (const context of contexts) await context.close();
+    }
+  });
+
   test('a full game between two browsers, with a spectator, a reload and an offline blip', async ({
     browser,
     isMobile
@@ -173,6 +224,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           const linesBefore = await logLines(driverB);
           const historyBefore = await pageB.evaluate(() => window.__ajayeb?.history() ?? []);
           expect(historyBefore.map((e) => e.ply)).toEqual([...Array(before.ply).keys()]);
+          const socketsBeforeReload = logB.sockets;
           await pageB.reload();
           await expect(pageB.locator('[data-name-prompt]')).toHaveCount(0);
           await driverB.waitTurn();
@@ -182,7 +234,17 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           expect(after.seats).toEqual([seatB]);
           expect(after.toMove).toBe(seatB);
           expect(after.choices.map((c) => c.key)).toEqual(before.choices.map((c) => c.key));
-          expect(logB.sockets).toBe(2);
+          await testInfo.attach('reload socket lifetimes', {
+            body: JSON.stringify({
+              socketsBeforeReload,
+              socketsAfterReload: logB.sockets,
+              connections: logB.connections
+            }),
+            contentType: 'application/json'
+          });
+          // This is a cumulative lifetime count, not the number still open.
+          // Earlier legitimate reconnects must not change the reload invariant.
+          await expect.poll(() => logB.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 1);
           // The log after the reload is the whole game, as before it.
           expect(await pageB.evaluate(() => window.__ajayeb?.history() ?? [])).toEqual(
             historyBefore
