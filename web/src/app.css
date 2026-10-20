@@ -14,10 +14,11 @@
 /* Self-hosted OFL fonts, subsets built by web/font-sources/subset.sh:
    Fraunces and Inter for Latin, Vazirmatn for Persian. Each unicode-range
    matches its subset, so a page downloads a face only when it shows a
-   character from that range. In English only the Home hero's Persian name
-   (app.nameNative) needs Vazirmatn, at 400. Vazirmatn's range leaves out
-   the direction marks (U+200E, U+200F), which the English strings carry
-   and no font needs to draw. */
+   character from that range. An English screen fetches Vazirmatn only for
+   Arabic-script text it shows: a player's name in Persian, or the Home
+   hero's decorative Persian name (app.nameNative, at 400). Vazirmatn's
+   range leaves out the direction marks (U+200E, U+200F), which the English
+   strings carry and no font needs to draw. */
 @font-face {
   font-family: 'Fraunces';
   font-style: normal;
