@@ -26,8 +26,11 @@ test('original icons retain their pixels and local clipping @mobile', async ({ p
   // Compare paint at a common multiple of the 12/24-unit source grids.
   // Fixed cells avoid differing fractional transforms in use shadow trees;
   // suppress the scrolling container's transient overlay scrollbar too.
+  // The body's tiled texture can repaint a few levels apart between two
+  // screenshots (its image decode is asynchronous), so it is flattened here.
   await page.addStyleTag({
     content: `
+    body { background-image: none; }
     main { scrollbar-width: none; }
     main > section:first-of-type > div { grid-template-columns: repeat(${info.project.name === 'mobile' ? 3 : 7}, 88px); }
     main > section:first-of-type svg { width: 48px; height: 48px; }
