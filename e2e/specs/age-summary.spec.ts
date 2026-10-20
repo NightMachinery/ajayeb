@@ -227,6 +227,46 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
     });
   }
 
+  for (const speed of ['off', 'normal'] as const) {
+    test(`summaries on: the recap opens before the summary of the bot's starter choice and its new-age move (${speed})`, async ({
+      page
+    }) => {
+      // M11.round3-board-fixes: the bot chose and played into the new age
+      // while the viewer's screen caught up, and its summary opened first,
+      // then a recap with stale-looking totals and "Begin Age II".
+      const problems = watchHygiene(page);
+      await configure(page, true);
+      await useSettings(page, speed);
+      await page.goto('/dev/new?mode=ai&seat=0&seed=7&scenario=age-transition-chooser');
+      await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+      const driver = new GameDriver(page);
+      await driver.waitReady();
+      await playKey(driver, 'discard:theater');
+      await expect
+        .poll(async () => {
+          const view = await currentView(page);
+          return view.age === 2 && !view.pending && view.toMove === 0;
+        })
+        .toBe(true);
+      await driver.waitTurn();
+      await expect(page.locator(AGE)).toBeVisible();
+      await expect(page.locator(POPUP)).toHaveCount(0);
+      const begun = (await currentView(page)).structure.some((slot) => slot.state === 'empty');
+      await expect(page.locator('dialog[open] [data-age-continue]')).toHaveText(
+        begun ? 'Continue' : 'Begin Age II'
+      );
+      await continueAge(page);
+      const popup = page.locator(POPUP);
+      await expect(popup).toBeVisible();
+      await expect(popup.locator('[data-summary-line]').first()).toHaveAttribute(
+        'data-summary-line',
+        'ageStart'
+      );
+      await expect(popup.locator('[data-summary-line="starterChosen"]')).toHaveCount(1);
+      expect(problems).toEqual([]);
+    });
+  }
+
   test('game over cannot replace an unread completed age, and Continue opens the result', async ({
     page
   }) => {

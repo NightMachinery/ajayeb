@@ -190,12 +190,25 @@ export function entriesSinceViewer(history: readonly HistoryEntry[], viewer: Sea
 
 /**
  * What the other side did since the viewer last acted, or null when there
- * is nothing to tell.
+ * is nothing to tell. When the viewer's own last move ended an age and the
+ * other side's run opens with its starter choice, the run starts with the
+ * new age's "Age N begins" line (its ageStart event is in the viewer's
+ * entry), as it does when the other side ended the age.
  */
 export function summarizeSince(history: readonly HistoryEntry[], viewer: Seat): MoveSummary | null {
   const entries = entriesSinceViewer(history, viewer);
   if (entries.length === 0) return null;
-  return summarize(entries, viewer === 0 ? 1 : 0);
+  const s = summarize(entries, viewer === 0 ? 1 : 0);
+  const first = entries[0]!;
+  const opened = history[history.length - entries.length - 1]?.events.findLast(
+    (e) => e.kind === 'ageStart'
+  );
+  if (opened && first.events.some((e) => e.kind === 'starterChosen')) {
+    const line = newLine(first.ply, 'ageStart', null);
+    if (opened.age !== undefined) line.age = opened.age;
+    s.lines.unshift(line);
+  }
+  return s;
 }
 
 /**

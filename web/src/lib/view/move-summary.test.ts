@@ -252,6 +252,46 @@ describe('lines', () => {
   });
 });
 
+describe('the age a starter choice opens', () => {
+  it("opens the other side's run with the age the viewer's last card began", () => {
+    const h = [
+      entry(40, 0, [
+        ev({ kind: 'build', seat: 0, card: 'barracks' }),
+        ev({ kind: 'ageStart', age: 3 })
+      ]),
+      entry(41, 1, [ev({ kind: 'starterChosen', seat: 1, starter: 1 })]),
+      entry(42, 1, [ev({ kind: 'build', seat: 1, card: 'chamber-of-commerce' })])
+    ];
+    const s = summarizeSince(h, 0)!;
+    expect(s.lines.map((l) => [l.kind, l.ply])).toEqual([
+      ['ageStart', 41],
+      ['starterChosen', 41],
+      ['build', 42]
+    ]);
+    expect(s.lines[0]).toMatchObject({ age: 3 });
+    expect(latestSummary(h, 0)!.lines[0]).toMatchObject({ kind: 'ageStart', age: 3 });
+  });
+
+  it('adds nothing to a run without a starter choice, or one that began the age itself', () => {
+    const plain = [
+      entry(40, 0, [ev({ kind: 'build', seat: 0, card: 'x' }), ev({ kind: 'ageStart', age: 2 })]),
+      entry(41, 0, [ev({ kind: 'starterChosen', seat: 0, starter: 1 })]),
+      entry(42, 1, [ev({ kind: 'build', seat: 1, card: 'y' })])
+    ];
+    expect(summarizeSince(plain, 0)!.lines.map((l) => l.kind)).toEqual(['build']);
+    const own = [
+      entry(40, 0, [ev({ kind: 'build', seat: 0, card: 'x' })]),
+      entry(41, 1, [ev({ kind: 'build', seat: 1, card: 'y' }), ev({ kind: 'ageStart', age: 2 })]),
+      entry(42, 1, [ev({ kind: 'starterChosen', seat: 1, starter: 0 })])
+    ];
+    expect(summarizeSince(own, 0)!.lines.map((l) => l.kind)).toEqual([
+      'build',
+      'ageStart',
+      'starterChosen'
+    ]);
+  });
+});
+
 describe('latestSummary', () => {
   const h = [
     entry(0, 0, [ev({ kind: 'build', seat: 0, card: 'a' })]),

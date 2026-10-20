@@ -522,10 +522,22 @@
   const moveSummary = $derived(
     summarySeat === null ? null : latestSummary(shownHistory, summarySeat)
   );
+  // The recap of an ended age comes before any play in the new one
+  // (M11.round3-board-fixes): when the other side chose who starts and
+  // played on before this screen caught up, its summary reaches past the
+  // age's end (a ply at or after the boundary's), so it waits for the
+  // unread age dialog, which opens first.
+  const summaryPastAge = $derived(
+    !!moveSummary &&
+      ageUnread &&
+      !!ageBoundary &&
+      moveSummary.plies.some((ply) => ply >= ageBoundary.ply)
+  );
   const summaryOpen = $derived(
     pageVisible &&
       !dealing &&
       !(ageSummary.isShown(ageViewer) && ageUnread) &&
+      !summaryPastAge &&
       !!moveSummary &&
       (summaryManual ||
         (summaryAuto !== null &&

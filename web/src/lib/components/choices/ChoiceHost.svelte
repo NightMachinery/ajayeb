@@ -155,6 +155,13 @@
       (ageSummary?.isShown(ageViewer) || showAge) &&
       !(ageSummary?.isDismissed(ageViewer) ?? ageMinimized)
   );
+  // The new age is already under way (the other side chose and took a
+  // card before this recap opened): its button says Continue, not Begin.
+  const ageBegun = $derived(
+    !!completed &&
+      completed.age === view.age &&
+      view.structure.some((slot) => slot.state === 'empty')
+  );
   const choosingStarter = $derived(
     pending?.kind === 'chooseStarter' && completed?.age === view.age
   );
@@ -311,7 +318,7 @@
           >
             {choosingStarter && mine
               ? t('choices.peek')
-              : choosingStarter || view.phase === 'gameOver' || completed.age < view.age
+              : choosingStarter || view.phase === 'gameOver' || completed.age < view.age || ageBegun
                 ? t('choices.age.continue')
                 : t('choices.age.begin', { age: ageLabel(view.age) })}
           </button>
