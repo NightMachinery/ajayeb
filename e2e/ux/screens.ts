@@ -141,21 +141,48 @@ export async function reachScreen(page: Page, origin: string, screen: Screen): P
       await phase(page, 'play', Number(screen.at(-1)));
       await expect(page.locator('.card-structure')).toBeVisible();
       return;
+    case 'card-unaffordable': {
+      // A live mid-age position, so the server supplies discardToAfford.
+      // Plain ViewFor protocol fixtures deliberately carry no hint facts.
+      const room = await createDevRoom(origin, {
+        mode: 'hotseat',
+        seed: '7',
+        actions: [
+          'draft:pyramids',
+          'draft:sphinx',
+          'draft:colossus',
+          'draft:hanging-gardens',
+          'draft:appian-way',
+          'draft:great-library',
+          'construct:wood-reserve',
+          'construct:workshop',
+          'construct:scriptorium',
+          'construct:palisade',
+          'construct:baths',
+          'construct:clay-pit'
+        ]
+      });
+      await page.goto(room.path);
+      const driver = new GameDriver(page);
+      await driver.waitReady();
+      const view = await currentView(page);
+      const blocked = view.disabled.find((c) => c.key === 'construct:apothecary');
+      expect(blocked?.discardToAfford).toBe(3);
+      await driver.openCard('apothecary');
+      await expect(visible(page, '[data-reason="unaffordable"]')).toBeVisible();
+      await expect(visible(page, '[data-hint-note="short-by-discard"]')).toBeVisible();
+      return;
+    }
     case 'card-buildable':
-    case 'card-unaffordable':
     case 'wonder-flow':
     case 'tooltip-card': {
       await fixture(page, 'costs-seat0');
       const view = await currentView(page);
-      const card =
-        screen === 'card-unaffordable'
-          ? view.disabled.find((a) => a.kind === 'construct' && a.reason === 'unaffordable')?.card
-          : view.choices.find((c) => c.kind === (screen === 'wonder-flow' ? 'wonder' : 'construct'))
-              ?.card;
+      const card = view.choices.find(
+        (c) => c.kind === (screen === 'wonder-flow' ? 'wonder' : 'construct')
+      )?.card;
       if (!card) throw new Error(`${screen}: no matching card in costs fixture`);
       await new GameDriver(page).openCard(card);
-      if (screen === 'card-unaffordable')
-        await expect(visible(page, '[data-reason]')).toBeVisible();
       if (screen === 'card-buildable')
         await expect(visible(page, `dialog[open] [data-act="construct:${card}"]`)).toBeEnabled();
       if (screen === 'wonder-flow') {

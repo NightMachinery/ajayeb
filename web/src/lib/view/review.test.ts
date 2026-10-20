@@ -362,9 +362,12 @@ describe('every decision in a turn', () => {
     expect(stripBidiMarks(reviewLines(r, names).entries[0]?.played ?? '')).toBe(
       'شما Moon را برای آغاز دوران دوم انتخاب کردید.'
     );
+    expect(stripBidiMarks(moveText('starter:0', undefined, names, 2))).toBe(
+      'انتخاب خودتان برای آغاز دوران دوم'
+    );
     r.entries[0]!.played = 'starter:0';
     expect(stripBidiMarks(reviewLines(r, names).entries[0]?.played ?? '')).toBe(
-      'شما انتخاب کردید دوران دوم را آغاز کنید.'
+      'شما خودتان را برای آغاز دوران دوم انتخاب کردید.'
     );
   });
 
@@ -392,7 +395,7 @@ describe('every decision in a turn', () => {
       expect(stripBidiMarks(moveText(key))).toMatch(/[\u0600-\u06ff]/);
     }
     expect(stripBidiMarks(reviewLines(r, names).entries[0]?.played ?? '')).toBe(
-      'شما Moon را برای آغاز عصر بعد انتخاب کردید.'
+      'شما Moon را برای آغاز دوران بعد انتخاب کردید.'
     );
   });
 });

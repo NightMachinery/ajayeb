@@ -27,6 +27,11 @@ for (const locale of ['en', 'fa'] as const) {
       await page.setViewportSize({ width: 740, height: 360 });
       await reachScreen(page, baseURL, 'card-unaffordable');
       await settleCapture(page, 'card-unaffordable');
+      // The positive note is supplied by the live server, rather than
+      // derived from the protocol fixture's cost and purse in the client.
+      const view = await currentView(page);
+      expect(view.disabled.find((c) => c.key === 'construct:apothecary')?.discardToAfford).toBe(3);
+      expect(await page.evaluate(() => window.__ajayeb?.room()?.hints.economy)).toBe(true);
       const sheet = page.locator('dialog[open] [data-card-sheet]');
       await expect(sheet.locator('[data-cost-breakdown]')).toHaveCount(1);
       await expect(sheet.locator('[data-reason="unaffordable"]')).toHaveCount(1);
@@ -53,12 +58,19 @@ for (const locale of ['en', 'fa'] as const) {
         .toBeLessThanOrEqual(1);
       // Let native keyboard scrolling settle before reversing direction.
       await page.waitForTimeout(150);
-      // Desktop tests native PageUp; mobile verifies the cue on an explicit scroll.
+      // The live sheet can exceed two pages. Check native PageUp moves
+      // upward, then Home returns to the top; one PageUp need not reach it.
       if (isMobile)
         await body.evaluate((el) => {
           el.scrollTop = 0;
         });
-      else await body.press('PageUp');
+      else {
+        const bottom = await body.evaluate((el) => el.scrollTop);
+        await body.press('PageUp');
+        await expect.poll(() => body.evaluate((el) => el.scrollTop)).toBeLessThan(bottom);
+        await expect(body).toHaveAttribute('data-scroll-more', '');
+        await body.press('Home');
+      }
       await expect.poll(() => body.evaluate((el) => el.scrollTop)).toBe(0);
       await expect(body).toHaveAttribute('data-scroll-more', '');
       const notes = sheet.locator('[data-hint-notes="discard"] li');

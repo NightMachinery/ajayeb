@@ -1,14 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatSigned, i18n, stripBidiMarks } from '$lib/i18n';
-import type {
-  CardHints,
-  CostView,
-  DisabledChoice,
-  HintFamily,
-  RoomInfo,
-  SlotView,
-  View
-} from '$lib/wire';
+import type { CardHints, CostView, HintFamily, RoomInfo, SlotView, View } from '$lib/wire';
 import { tokenHint, tokenValueText } from './board-hints';
 import { outcomeContext, outcomeTerms } from './outcome';
 import { HINT_FAMILIES } from '$lib/hints/families';
@@ -374,16 +366,7 @@ describe('the sheet lines', () => {
     expect(shortByDiscard(3, ALL)).toBe(
       'Discarding another card (+3 coins) would let you build this next turn, if it is still here and prices stay the same.'
     );
-    // The equivalent tutorial Palisade fixture has no fact: another
-    // takeable card and another pick in this age are both required.
-    const palisade: DisabledChoice = {
-      key: 'construct:palisade',
-      kind: 'construct',
-      card: 'palisade',
-      reason: 'unaffordable',
-      cost: cost({ affordable: false, shortfall: 1, total: 2 })
-    };
-    expect(shortByDiscard(palisade.discardToAfford, ALL)).toBeUndefined();
+    expect(shortByDiscard(undefined, ALL)).toBeUndefined();
     expect(shortByDiscard(3, new Set())).toBeUndefined();
   });
 });
