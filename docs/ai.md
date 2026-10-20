@@ -212,3 +212,10 @@ checks use the server's turn-order rule; the client renders the resulting
 fact without counting cards or comparing costs. A starter review carries
 the chosen age from its own decision, so reopening a summary later keeps
 the correct age and addresses a player who chose themselves directly.
+
+When every legal reply takes Age III's final card and wins on points, the
+hints omit card-specific Gives advice. The same enumeration that finds the
+threats checks this condition without extra simulations. A points win that
+depends on building rather than discarding the remaining card is still
+shown, as are military and science threats. This omission applies to both
+languages; the wire carries no new display text or fields.

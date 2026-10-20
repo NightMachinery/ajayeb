@@ -66,6 +66,8 @@ func threatOf(a Action, kind VictoryKind) threat {
 type threatList struct {
 	T [MaxLegalActions]threat
 	N int
+	// Every legal action was checked and wins for the seat on points.
+	allCivilian bool
 }
 
 // has reports whether the list names the same card or wonder as t.
@@ -111,10 +113,15 @@ func threatsFor(x *State, seat Seat, mask SlotMask, c *simCtx, first bool) (thre
 		return out, true
 	}
 	var buf [MaxLegalActions]Action
-	for _, a := range LegalActions(x, buf[:0]) {
+	legal := LegalActions(x, buf[:0])
+	allCivilian := len(legal) > 0
+	for _, a := range legal {
 		w, ok := winsNow(x, a, mask, c)
 		if c.exhausted() {
 			return out, false
+		}
+		if !ok || w.Kind != VictoryCivilian {
+			allCivilian = false
 		}
 		if ok {
 			out.add(threatOf(a, w.Kind))
@@ -123,6 +130,8 @@ func threatsFor(x *State, seat Seat, mask SlotMask, c *simCtx, first bool) (thre
 			}
 		}
 	}
+	// An early-exit probe cannot establish a fact about every choice.
+	out.allCivilian = !first && allCivilian
 	return out, true
 }
 
@@ -281,6 +290,11 @@ func deciderHints(s *State, f view.HintSettings, out *view.View, c *simCtx) {
 		afterOpp[k], afterOK[k] = after, ok
 		if before, bok := d.beforeFor(opp); ok && bok {
 			gives, blocks := after.minus(&before), before.minus(&after)
+			// If every final reply wins on points, naming the remaining
+			// card as the means of winning adds no choice-specific advice.
+			if y.Age == NumAges && bits.OnesCount32(Occupied(&y)) == 1 && after.allCivilian {
+				gives = threatList{}
+			}
 			o.Gives = viewThreatsPtr(opp, &gives)
 			o.Blocks = viewThreatsPtr(opp, &blocks)
 		}
