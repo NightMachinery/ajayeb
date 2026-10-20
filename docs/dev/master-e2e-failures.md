@@ -118,3 +118,12 @@ all opening effects, including counters and pulses. Unit tests check that the
 handoff waits through cleanup microtasks, notices a late tail and is cancelled
 by an interrupt. The former result-detail staging experiment was dropped: it
 did not beat the barrier-only master in the local repeated comparison.
+
+The runner criterion stays open: proof run 39428213353 failed 4/40 desktop
+and 11/40 mobile attempts, including 306-456 ms tasks during ordinary moves
+and mid-victory, away from the modal handoff. The existing JSON and failed
+Playwright trace do not identify an application function or style operation
+responsible; they contain no native CPU/GC profile. Treat these remaining
+unattributed stalls as runner noise for v1, without claiming a proven cause
+or a green runner repeat. Local 4x proof passed 80/80 first attempts; the
+runner perf job remains non-gating and the 50 ms assertion stays unchanged.
