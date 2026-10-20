@@ -1478,6 +1478,14 @@ checks compare coach bubbles with the measured top bar and hint pips with
 neighboring chip borders. A scrolled card detail body must scroll upward
 before a downward drag can dismiss its sheet.
 
+`dialog-focus.spec.ts` checks where the focus lands when a sheet opens. A
+reload into a finished game and a reload into the starter choice, with no
+input since the load, open on the dialog's title heading (`tabindex="-1"`,
+computed outline `none`, the dialog's `aria-labelledby`), never on the
+scrolling body. Tab then moves to a control inside the dialog that shows
+the keyboard ring. Home's settings sheet, opened with a click, does the same,
+and the join sheet opens on its autofocus code field.
+
 ### Home loading and prerendered paint
 
 `home-loading.spec.ts` runs on both desktop and mobile. It checks Home with
