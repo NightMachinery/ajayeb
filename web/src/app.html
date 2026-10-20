@@ -25,9 +25,10 @@
     <!-- Font preloads live in +layout.svelte, where Vite supplies their
          content-hashed URLs. -->
     <script>
-      // Theme bootstrap. It runs before the first paint, so the page never
-      // flashes the wrong theme. src/lib/ui/theme.svelte.ts owns the theme
-      // after the app starts and uses the same storage key and attributes.
+      // Theme and Home bootstrap. It runs before the first paint, so the
+      // page never flashes the wrong theme. src/lib/ui/theme.svelte.ts owns
+      // the theme after the app starts and uses the same storage key and
+      // attributes.
       (function () {
         var pref = 'system';
         try {
@@ -51,6 +52,41 @@
           var color = dark ? '#0a1936' : '#faf1df';
           var metas = document.querySelectorAll('meta[name="theme-color"]');
           for (var i = 0; i < metas.length; i++) metas[i].setAttribute('content', color);
+        }
+
+        // Home's device state, read before the first paint so the
+        // build-time Home does not move when it hydrates (M11.home-cold-cls):
+        // - data-boot-offer: the first-launch tutorial offer will show (no
+        //   saved rooms, offer not declined, tutorial not done; the same
+        //   test as src/routes/+page.svelte with tips.svelte.ts and
+        //   rooms.svelte.ts), so Home shows its build-time offer at once.
+        // - data-locale-pending: a stored locale other than English, whose
+        //   messages load after the app starts. Home keeps its text hidden
+        //   (not its hero) until the root layout has switched to it, and
+        //   shows it anyway after a few seconds if that never happens.
+        // Blocked storage or bad JSON reads as a new English device, like
+        // the stores themselves.
+        function read(key) {
+          try {
+            return JSON.parse(localStorage.getItem(key) || 'null');
+          } catch (e) {
+            return null;
+          }
+        }
+        var tips = read('ajayeb:tips');
+        var tutorial = tips && typeof tips === 'object' ? tips.tutorial : null;
+        var rooms = read('ajayeb:rooms');
+        var offer =
+          !(tutorial && (tutorial.offer === 'declined' || tutorial.done === true)) &&
+          !(Array.isArray(rooms) && rooms.length > 0);
+        if (offer) root.setAttribute('data-boot-offer', '');
+        var settings = read('ajayeb:settings');
+        // Keep in sync with LOCALES in src/lib/i18n/locale.svelte.ts.
+        if (settings && settings.locale === 'fa') {
+          root.setAttribute('data-locale-pending', settings.locale);
+          setTimeout(function () {
+            root.removeAttribute('data-locale-pending');
+          }, 6000);
         }
       })();
     </script>

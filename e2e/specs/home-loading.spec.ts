@@ -256,10 +256,23 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
         'ajayeb:tips',
         JSON.stringify({ off: true, seen: [], tutorial: { offer: 'declined', done: true } })
       );
+      // The build-time Home carries the offer, hidden before the first paint
+      // on a device that will not keep it; it must never become visible.
       const state = window as unknown as { __offerPainted?: boolean };
-      new MutationObserver(() => {
-        if (document.querySelector('[data-tutorial-offer]')) state.__offerPainted = true;
-      }).observe(document, { childList: true, subtree: true });
+      const check = () => {
+        if (document.querySelector('[data-tutorial-offer]')?.checkVisibility())
+          state.__offerPainted = true;
+      };
+      new MutationObserver(check).observe(document, {
+        attributes: true,
+        childList: true,
+        subtree: true
+      });
+      const frame = () => {
+        check();
+        requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
     });
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'fa');

@@ -1465,7 +1465,8 @@ Production helpers retain their immediate heading-then-click behavior.
 
 A returning-device case combines stored Continue details, a completed and
 declined tutorial, Persian, dark theme and Animation off. It records hydration
-warnings and any appearance of the first-launch tutorial offer. Another case
+warnings and any frame in which the first-launch tutorial offer is visible (the
+build-time Home carries it, hidden on such a device). Another case
 holds the Persian network import while switching back to English, then checks
 a successful switch and reload. Locale unit tests also cover shared pending
 loads and failures that preserve the working language. Image lifecycle unit

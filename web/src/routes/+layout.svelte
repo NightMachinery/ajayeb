@@ -43,10 +43,14 @@
   // Text, digits, lang and dir stay English until the requested locale's
   // messages are ready, then switch together. This also matches build-time
   // Home during hydration; the theme bootstrap can apply dark before paint.
+  // The bootstrap also marks a stored non-English locale as pending, which
+  // hides Home's text until this switch (M11.home-cold-cls); the mark goes
+  // once the requested locale is the shown one, or its load has failed.
   $effect(() => {
     const root = document.documentElement;
     root.lang = i18n.locale;
     root.dir = i18n.dir;
+    if (i18n.locale === i18n.requested) root.removeAttribute('data-locale-pending');
   });
 
   $effect(() => {

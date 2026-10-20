@@ -20,10 +20,12 @@ describe('on-demand locale messages', () => {
     expect(load).not.toHaveBeenCalled();
     const switched = state.set('fa');
     expect(state.locale).toBe('en');
+    expect(state.requested).toBe('fa');
     expect(state.dir).toBe('ltr');
     pending.resolve({ 'app.name': 'عجایب' });
     await switched;
     expect(state.locale).toBe('fa');
+    expect(state.requested).toBe('fa');
     expect(state.dir).toBe('rtl');
     expect(state.table?.['app.name']).toBe('عجایب');
     await state.set('en');
@@ -42,6 +44,7 @@ describe('on-demand locale messages', () => {
     pending.resolve({ 'app.name': 'عجایب' });
     await Promise.all([first, second]);
     expect(state.locale).toBe('en');
+    expect(state.requested).toBe('en');
     expect(state.dir).toBe('ltr');
     expect(load).toHaveBeenCalledTimes(1);
   });
@@ -54,6 +57,7 @@ describe('on-demand locale messages', () => {
     const state = new LocaleState(load);
     await state.set('fa');
     expect(state.locale).toBe('en');
+    expect(state.requested).toBe('en');
     expect(state.table).toBeUndefined();
     await state.set('fa');
     expect(state.locale).toBe('fa');

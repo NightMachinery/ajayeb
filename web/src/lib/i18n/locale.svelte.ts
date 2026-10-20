@@ -27,6 +27,9 @@ export function isLocale(value: unknown): value is Locale {
  * current language; a later English request cancels a pending Persian switch. */
 export class LocaleState {
   locale = $state<Locale>('en');
+  /** The locale last asked for. It differs from locale while its messages
+   *  load, and falls back to locale when they fail. */
+  requested = $state<Locale>('en');
   dir: Dir = $derived(dirFor(this.locale));
   table = $state.raw<PartialLocaleTable | undefined>(undefined);
   #request = 0;
@@ -39,6 +42,7 @@ export class LocaleState {
 
   async set(locale: Locale): Promise<void> {
     const request = ++this.#request;
+    this.requested = locale;
     if (locale === 'en' || this.table) {
       this.locale = locale;
       return;
@@ -51,6 +55,7 @@ export class LocaleState {
     } catch {
       // Stay in the working language, and permit a later retry.
       this.#loading = undefined;
+      if (request === this.#request) this.requested = this.locale;
     }
   }
 }

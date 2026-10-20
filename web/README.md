@@ -49,19 +49,40 @@ an inline event queue or another CSP allowance. A player must wait until the
 controls become available, then activate once. The tradeoff is a short visible
 wait rather than accepting an early action and replaying it later. The no-script
 Home remains readable with explicitly unavailable controls and working links.
-Continue and the tutorial offer appear only after mount, when their actions
-are already available. Production smoke helpers still click immediately after
+Continue appears only after mount, when its action is already available.
+Production smoke helpers still click immediately after
 the heading; native disabled semantics make their click wait safely.
 
 Home loads each sheet on first open and retains it for subsequent opens.
 The live session loads on the first create; `saved-rooms.svelte.ts` owns the
 one saved-room store and storage listener shared by Home and the game.
-Saved rooms and the tutorial offer appear after mount, preserving hydration
-and preventing returning players from briefly seeing the first-launch offer.
+Saved rooms appear after mount, preserving hydration.
+
+A cold load must not move Home (M11.home-cold-cls). Two things once did, on a
+slow phone: the first-launch tutorial offer was inserted above the modes when
+the app started, and a stored Persian locale mirrored the page when its
+messages arrived. The inline bootstrap in `src/app.html` now reads the device
+state before the first paint and marks the root:
+
+- `data-boot-offer` when the device will see the offer: no saved rooms, the
+  offer not declined and the tutorial not done. The build-time Home carries
+  the offer (inert until mount), and Home hides it before mount when the mark
+  is missing, so a returning player never sees it and a new one sees it at
+  once.
+- `data-locale-pending="fa"` when Persian is stored. Home keeps its text
+  hidden, already laid out right to left, until the root layout switches the
+  language (or the load fails), and the hero stays visible as the page's
+  largest paint. A timer in the bootstrap shows the text anyway after six
+  seconds if the app never starts.
+
+Without scripts the bootstrap does not run, so Home shows no offer and hides
+nothing. Saved rooms still appear after mount, so a returning player's
+Continue list can push the content below it down once; the fix covers first
+visits.
 
 ## Layout
 
-- `src/app.html` is the page template. Its inline script applies the stored theme before the first paint, so the page never flashes the wrong theme.
+- `src/app.html` is the page template. Its inline script applies the stored theme before the first paint, so the page never flashes the wrong theme, and marks Home's tutorial offer and a pending Persian locale (see Home loading).
 - `src/app.css` imports Tailwind and the tokens, declares the fonts, maps the tokens to Tailwind utilities, and holds the base styles (the `100dvh` app shell, the safe-area variables `--safe-t`, `--safe-r`, `--safe-b`, `--safe-l`, focus rings and the styles for Animation off).
 - `src/lib/styles/tokens.css` is the single source of colour, type and motion tokens, in OKLCH. Cards keep their paper colours in both themes; only the table surfaces change, from an ivory manuscript page (light) to lapis night (dark).
 - `src/lib/i18n/` holds the message tables and `t()`.
@@ -291,7 +312,7 @@ Age labels use `ageLabel()` and the existing `card.ageNumeral.*` messages everyw
 - **On-demand messages.** English is the initial table. `i18n.set(locale)` returns a promise and loads Persian only when requested. Text, digits and direction keep the current language until the table is ready, including for a persisted choice. The table is cached, repeated requests share one load, a later English choice cancels an earlier pending switch, and failed loading keeps the working language. Tests that require Persian await the switch.
 - **Per-key fallback.** A key the table leaves out falls back to English. Its plural form is chosen by English rules (the forms are English ones) and its numbers keep the locale's digits. In a right-to-left locale the fallback is marked left to right (a left-to-right isolate between two left-to-right marks), so its punctuation stays at its end and English sentences joined into one string keep their order; `isFallbackText()` tells such text apart, and `joinList` joins a list of fallback words the English way. End a sentence built from such text with `fullStop()`, never a bare `.` after it, or the stop lands at the start of the English sentence; and count letters with `stripBidiMarks()` first (CardFace's name fit does). A string param (a player's name, a card name) is isolated in a right-to-left locale, so a Latin name never trades places with the words around it. The Persian table is complete, so in practice the fallback shows only for a key added to English and not yet to Persian (a test fails until it is).
 - **The language setting.** Settings has a Language row (English, فارسی), stored as `locale` in `ajayeb:settings`. The settings store requests it when it loads and on every save; text and direction change when its table is ready. The browser's language is not read. The web manifest stays English.
-- **First paint.** Prerendered Home starts in English. The theme bootstrap applies the stored colour theme before paint; the root layout changes language and direction together after the requested messages load. This keeps English fallback text left to right while Persian is loading.
+- **First paint.** Prerendered Home starts in English. The theme bootstrap applies the stored colour theme before paint; the root layout changes language and direction together after the requested messages load. This keeps English fallback text left to right while Persian is loading. On Home, a stored Persian choice keeps that English text hidden until the switch, so the page does not mirror in view (see Home loading).
 - **Fonts.** Persian text is drawn in the self-hosted Vazirmatn, which follows Inter and Fraunces in both stacks: its subset holds only Arabic-script characters, so Latin keeps Inter and Fraunces. Until it arrives (`font-display: swap`), `lang="fa"` falls back to the device's Noto Naskh Arabic or Noto Sans Arabic, then the system fonts (`src/app.css`). See Fonts.
 - **Direction.** The app chrome follows `i18n.dir` (logical properties, `rtl:-scale-x-100` on back and undo arrows). The board region, the card structure and the military track are `dir="ltr"` in every locale, because their layout is spatial. Show numbers through `formatNumber`, never as a bare `{n}`, so they take the locale's digits. Translated text inherits the locale direction, including sentences beginning with a Latin player name. Use `dir="auto"` only on bare player names and name fields; interpolated names already have directional isolates. Card names, categories, age labels and textual badge labels explicitly use `i18n.dir` inside the left-to-right card geometry, as do translated labels inside spatial diagram rows. Numerical markers and operators keep their spatial direction.
 - **The fixture.** `e2e/specs/rtl.spec.ts` runs Home, Settings and a hot-seat game in Persian on both projects: no horizontal scroll, mirrored chrome measured against the same state in English, a left-to-right board, one move and the result screen. It also measures the visual order of Latin names in Persian pass-device logs and starter options, and checks that lobby sharing labels stay on one line at the four review sizes. The base fixture's `appLocale` option sets the language (`test.use({ appLocale: 'fa' })`).

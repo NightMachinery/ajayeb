@@ -249,7 +249,7 @@
 
       <div class="mt-8 short:mt-4 split:mt-0 split:w-full split:max-w-md split:justify-self-end">
         {#if tutorialOffer && onTutorial}
-          <div class="mb-3">
+          <div class="home-offer mb-3" inert={!ready}>
             <TutorialOffer
               botName={t('game.persona.easy')}
               onstart={onTutorial}
@@ -417,6 +417,25 @@
   [data-home-loading] button,
   [data-home-loading] label {
     cursor: wait;
+  }
+
+  /* Cold loads must not move Home (M11.home-cold-cls). The build-time Home
+     carries the first-launch offer, and the bootstrap in app.html says
+     before the first paint whether this device will keep it, so the offer
+     is never inserted above the modes after the app starts. */
+  :global(:root:not([data-boot-offer])) [data-home-loading] .home-offer {
+    display: none;
+  }
+  /* A stored Persian locale is pending until its messages load. Home's
+     text waits for them hidden, already laid out right to left, so the
+     switch neither mirrors the columns nor moves the hero, which stays
+     visible as the page's largest paint. */
+  :global(:root[data-locale-pending='fa']) main {
+    direction: rtl;
+    visibility: hidden;
+  }
+  :global(:root[data-locale-pending]) .hero {
+    visibility: visible;
   }
 
   /* Night uses a deliberate painting frame rather than fading cream into navy. */

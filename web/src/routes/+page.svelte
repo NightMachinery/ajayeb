@@ -19,7 +19,9 @@
 
   const rooms = savedRooms();
   // Build-time Home has no device state. Hydrate that same public view,
-  // then reveal saved rooms and the first-launch offer only after mount.
+  // then reveal saved rooms only after mount. The view carries the
+  // first-launch offer, which app.html's bootstrap shows or hides before the
+  // first paint, so it never moves Home; after mount the device decides.
   let deviceReady = $state(false);
 
   // Each promise starts on demand, then retains its component and sheet state.
@@ -155,10 +157,8 @@
   onPlayOnline={openOnline}
   onJoinCode={openJoin}
   onSettings={openSettings}
-  tutorialOffer={deviceReady &&
-    rooms.list.length === 0 &&
-    tips.value.tutorial.offer === 'new' &&
-    !tips.value.tutorial.done}
+  tutorialOffer={!deviceReady ||
+    (rooms.list.length === 0 && tips.value.tutorial.offer === 'new' && !tips.value.tutorial.done)}
   tutorialDone={deviceReady && tips.value.tutorial.done}
   onTutorial={tutorialFromHome}
   onDeclineTutorial={() => tips.declineOffer()}
