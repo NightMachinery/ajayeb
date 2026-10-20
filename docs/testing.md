@@ -1190,6 +1190,17 @@ replay changes neither state nor the final screen. Unit checks cover the
 Sound-off gate, single vibration timing, cancelled haptics and stale deal
 carry on interruption and resync.
 
+`age-start-order.spec.ts` (both projects, M11.age-start-order) checks
+that the start of Age II comes in order: the deal and its sound, then the
+"who starts" choice. A MutationObserver notes when the age dialog, the
+pass-device screen or the move summary first covers the board, and each
+must come after every dealt card landed, uncut (`__ajayebFx.anims()`).
+When the hot-seat player chooses, with Animation normal and off, the
+dialog opens on the choice, the age sounds once on the frame that opened
+it, and the answer deals and sounds nothing. When the bot chooses, the
+dialog opens on its outcome. A reload during the choice replays nothing,
+and its answer deals nothing.
+
 `rtl.spec.ts` checks the card sheet’s card layout and the progress-token
 row’s physical order as well as the board. `tooltip-coverage.spec.ts`
 accepts adjacent visible labels only when they accompany a single image
