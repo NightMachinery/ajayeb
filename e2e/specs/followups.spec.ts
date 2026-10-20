@@ -181,7 +181,7 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     }
   });
 
-  test('the viewer ending the game sees their own review and a floating final-board bar', async ({
+  test('the viewer ending the game sees their final move once and a floating final-board bar', async ({
     page
   }, info) => {
     await page.goto('/dev/new?mode=ai&level=easy&seat=0&seed=7&scenario=military-supremacy');
@@ -189,9 +189,11 @@ test.describe('web follow-ups', { tag: '@mobile' }, () => {
     const driver = new GameDriver(page);
     await driver.waitReady();
     await playKey(driver, 'construct:walls');
-    const review = page.locator('[data-game-over] [data-end-review] [data-move-review]');
-    await expect(review).toBeVisible();
-    await expect(review.locator('[data-review-played]')).toHaveText('You built Walls.');
+    // The final move's row, and no review saying "You built Walls." again
+    // under it (M11.recheck-polish): no better move was there.
+    const section = page.locator('[data-game-over] [data-last-move]');
+    await expect(section.locator('[data-summary-line="build"] [data-card="walls"]')).toBeVisible();
+    await expect(section.locator('[data-end-review]')).toHaveCount(0);
     await photograph(page, info, 'game-over-review');
     const button = page.locator('[data-view-board]');
     expect(await button.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);

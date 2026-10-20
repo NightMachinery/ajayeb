@@ -271,7 +271,9 @@ test.describe('the final move on the result screen @mobile', () => {
       await expect(rows.first().locator('[data-card="walls"]')).toBeVisible();
       await expect(rows.first().locator('[data-chip="pawn"]')).toBeVisible();
       await expect(section.locator('[data-summary-line="gameOver"]')).toHaveCount(0);
-      await expect(section.locator('[data-end-review] [data-move-review]')).toBeVisible();
+      // No better move than the winning one: the review would only repeat
+      // the row above it (M11.recheck-polish), so it is left out.
+      await expect(section.locator('[data-end-review]')).toHaveCount(0);
       await expect(page.locator(POPUP)).toHaveCount(0);
       await expectLayout(page);
     };

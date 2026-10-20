@@ -22,8 +22,11 @@
   // popup never opens at game over). Under them, the viewer's move review
   // (the advisor family, M10.F3): of that final move when it was theirs
   // (view/end-review.ts), else of their move before it, as the popup
-  // carried it (view/review.ts reviewForSummary). A forfeit, which no move
-  // ended, has no section.
+  // carried it (view/review.ts reviewForSummary). When the final move was
+  // the viewer's own and no better move was found, the review would only
+  // say that move again under its own rows, so it is left out
+  // (M11.recheck-polish); a lesson stays. A forfeit, which no move ended,
+  // has no section.
   //
   // The wordmark (M11.ornament-integration), small and decorative, never
   // costs the score sheet its room: on a phone it heads the dialog, where
@@ -187,7 +190,7 @@
         : t('choices.over.lastMove', { name: names[lastMove.seat] })
   );
 
-  const review = $derived.by((): ReviewLines | null => {
+  const advice = $derived.by((): ReviewLines | null => {
     if (reviewProp) return reviewProp;
     const session = ctx?.session;
     if (!session || !visibleFamilies(session.hints, hintHide.value).has('advisor')) return null;
@@ -199,6 +202,12 @@
         : null);
     return own ? reviewLines(own, { names, seat: asSeat(view.viewer) }) : null;
   });
+  // Not "Your move: You built Walls." under "Your final move: Walls".
+  const review = $derived(
+    advice && !advice.better && lastMove && youSeat === lastMove.seat && lastLines.length > 0
+      ? null
+      : advice
+  );
 
   const hasLastMove = $derived(lastLines.length > 0 || review !== null);
 
