@@ -225,6 +225,12 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           const historyBefore = await pageB.evaluate(() => window.__ajayeb?.history() ?? []);
           expect(historyBefore.map((e) => e.ply)).toEqual([...Array(before.ply).keys()]);
           const socketsBeforeReload = logB.sockets;
+          if (socketsBeforeReload > 1) {
+            testInfo.annotations.push({
+              type: 'unexpected-reconnect',
+              description: `B opened ${socketsBeforeReload} connections before its intentional reload; inspect reload socket lifetimes.`
+            });
+          }
           await pageB.reload();
           await expect(pageB.locator('[data-name-prompt]')).toHaveCount(0);
           await driverB.waitTurn();
