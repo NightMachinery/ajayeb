@@ -8,6 +8,7 @@ import {
   keyTargetName,
   openingCards,
   outcomeTerms,
+  outcomeText,
   selectionGhost,
   starterThreatLines,
   type OutcomeContext
@@ -103,6 +104,16 @@ describe('outcomeTerms', () => {
     expect(terms[0]).toMatchObject({ id: 'win', icon: 'hint-crown', tone: 'win' });
     expect(terms[0]!.text).toBe('Wins the game (military).');
     expect(terms.map((x) => x.id)).toEqual(['win', 'coins']);
+  });
+
+  it('joins the terms in words without a separator after a whole sentence', () => {
+    const win = outcomeTerms(
+      outcome({ wins: { kind: 'military', steps: 1 }, coins: [4, 7], score: [-3, 0] }),
+      ctx()
+    );
+    expect(outcomeText(win)).toBe('Wins the game (military). 4 coins after (\u22123)');
+    const plain = outcomeTerms(outcome({ coins: [4, 7], score: [3, 0] }), ctx());
+    expect(outcomeText(plain)).toBe('+3 total VP (coins included); 4 coins after (\u22123)');
   });
 
   it('words Law and two-step wins', () => {

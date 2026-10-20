@@ -299,9 +299,18 @@ export function outcomeTerms(o: OutcomeView | undefined, ctx: OutcomeContext): O
   return out;
 }
 
-/** The whole line in words, for a screen reader or a tooltip. */
+/**
+ * The whole line in words, for a screen reader or a tooltip. A term that is
+ * a whole sentence ("Wins the game (military).") is followed by a space,
+ * not the separator, so the line never reads ".;".
+ */
 export function outcomeText(terms: readonly OutcomeTerm[]): string {
-  return terms.map((x) => x.text).join(t('hints.outcome.separator'));
+  const separator = t('hints.outcome.separator');
+  return terms
+    .map((x, i) =>
+      i === 0 ? x.text : (/[.!?…؟]$/u.test(terms[i - 1]!.text) ? ' ' : separator) + x.text
+    )
+    .join('');
 }
 
 // --- The confirm step's warning (blunder-confirm) -------------------------
