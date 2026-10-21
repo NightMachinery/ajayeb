@@ -1709,3 +1709,101 @@ all phases, viewer redaction and additional message shapes. See
 [dev/protocol-fixtures.md](dev/protocol-fixtures.md) for the transcript's
 counts, scope and deliberate regeneration command. All these checks run in
 `make verify-quick`, without a browser.
+
+### Entry imports and bytes
+
+`web/src/platform-imports.test.ts` parses runtime imports, re-exports,
+literal dynamic imports and asset globs. It records the root layout, Home
+and `/play/<code>` import edges in `web/src/testdata/platform-imports.json`,
+separating eager reachability from lazy edges and ignoring whole-declaration type-only imports.
+Unresolved local edges and unsupported runtime imports fail closed. The
+eager closures contain 162, 57 and 360 nodes respectively (including
+external modules/assets), with 309, 406 and 1,066 total edges. No eager
+closure may contain Haftgane code. A changed import graph requires review
+before its golden is updated; a lazy edge is not permission for an eager
+import through another path. Regenerate with:
+
+```sh
+UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \
+  pnpm -C web exec vitest run src/platform-imports.test.ts
+```
+
+`e2e/ux/platform-baselines.spec.ts` measures fresh Home and deep-linked
+Duel entry contexts with service workers blocked and HTTP cache disabled,
+summing `gzipSync(response.body()).length` for unique script URLs, as in
+the UX budgets test. The Duel case is a seeded hot-seat room, no prior Home
+navigation, with a stored name and Animation off, measured through input
+readiness and network idle. This is a test-mode build, not a production
+network-bandwidth estimate.
+
+The committed `e2e/fixtures/platform-baselines.json` records Home at
+141,410 gzip bytes (35 scripts) and Duel at 266,384 (53 scripts). Home
+retains its 200,000-byte ceiling; both entries must stay within baseline
+plus 5,000 bytes: 146,410 for Home and 271,384 for Duel.
+
+Worker installation is measured separately in an empty context, registering
+the actual worker from `/health` so app assets have not warmed the cache.
+It makes 108 install requests, including the registration script, and
+caches 107 files. Responses contain 2,067,299 body bytes and 2,169,812
+bytes including response headers; the registration script is 7,952 bytes.
+The measurement excludes the initial health response, outgoing request
+headers and transport framing. Local responses are uncompressed. Chromium
+exposes precache bodies through request sizes and the registration body
+through its response buffer; the test cross-checks precache body sizes
+against the actual installed cache. No worker cache policy or install-byte
+ceiling is changed.
+
+To record both measurements deliberately, build and run:
+
+```sh
+UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind light -- \
+  make shots PW_ARGS=--grep=platform
+```
+
+Omit the update variable to enforce the committed entry budgets.
+`web/src/platform-bytes.test.ts`, included in `make verify-quick`, checks
+that recorded totals match every per-file measurement and that the fixed
+ceiling and allowance remain intact. The browser check still requires
+`make shots PW_ARGS=--grep=platform`; verify-quick does not start a browser.
+Byte-budget gates permit the documented allowance rather than requiring
+every rebuilt script to have identical bytes.
+
+### Existing load and latency tools
+
+`e2e/fixtures/platform-load-baseline.json` records the local diagnostic
+samples alongside the stable compatibility fixtures. These timings are
+observations for comparison, not exact runtime goldens or capacity limits.
+The existing commands were used without adding a new load harness:
+
+- `ajayeb-drive`: 20 concurrent Easy games, pick seeds 1200 to 1219,
+  server seed base 1000, bot delay zero, trusted loopback proxy for the
+  driver's synthetic addresses. All games finished. Peak RSS was
+  22,960 KiB, sampled 69 times at 100 ms intervals. Whole-game duration
+  ranged from 5.924 to 6.820 seconds, median 6.393 and nearest-rank p95
+  6.809. Driver pacing is included, so these are not action latencies.
+- `make bench BENCH_ARGS='-games 2 -positions 3 -playouts 30 -p 1'`: the
+  existing simulator reported 76.8 microseconds per random game, 69.7
+  actions/game and 0.91 million actions/second. Per-call timings were
+  1,007.6 ns for Determinize, 98.5 for LegalActions, 385.8 for Evaluate
+  and 155.5 for Observe. Mean clock-budget move times over three positions
+  were 0.071 ms for Easy, 400.999 for Medium and 2,013.213 for Hard. This
+  small diagnostic is not a strength or preset calibration.
+- `make e2e E2E_BUILD=0 GREP=@perf PW_ARGS='--project=desktop --retries=0'`:
+  both existing animation cases passed on their first attempt. At 1x CPU
+  the median/p90 frame gap was 17/17 ms, with none over 34 ms. At 4x,
+  72 animations had zero overlapping long tasks; the worst overall task
+  was 253 ms. Frame gaps had median/p90 17/17 ms, one over 34 ms (0.1%),
+  and a 67 ms maximum. Full annotations are retained in the fixture.
+
+For a future driver comparison, build the existing command through the
+guard, start a test binary with a fresh data directory and the same seed,
+bot-delay and loopback-proxy flags, then pass `--games 20 --concurrency 20
+--mode ai --bot easy --seed 1200 --server-pid <pid>` and a local `--origin`.
+Stop that server by its PID afterwards. Simulator and perf samples can be
+regenerated with the commands above; review and replace the observational
+fixture deliberately, never assert identical timings across machines.
+
+There is no Haftgane engine to mix into this baseline. The current driver
+does not record per-action/reveal p50/p95/p99 or bot queue/pool-hold times;
+the perf specs measure presentation, not server latency. Those measurements
+remain unavailable rather than inferred from whole-game time.

@@ -1,0 +1,90 @@
+{
+  "sourceRevision": "46a540d",
+  "recordedDate": "2026-10-21",
+  "scope": "Local diagnostic samples; timings are observations, not golden runtime limits or production capacity claims.",
+  "driver": {
+    "tool": "ajayeb-drive",
+    "mode": "ai",
+    "bot": "easy",
+    "games": 20,
+    "concurrency": 20,
+    "pickSeedBase": 1200,
+    "serverSeedBase": 1000,
+    "botDelayMilliseconds": 0,
+    "trustedLoopbackProxy": true,
+    "peakRssKiB": 22960,
+    "rssSamples": 69,
+    "rssSampleIntervalMilliseconds": 100,
+    "gameDurationsMilliseconds": [
+      5924, 6056, 6099, 6215, 6257, 6268, 6339, 6340, 6341, 6358, 6428, 6450, 6510, 6549, 6587,
+      6613, 6766, 6779, 6809, 6820
+    ],
+    "gameDurationMedianMilliseconds": 6393.0,
+    "gameDurationP95NearestRankMilliseconds": 6809
+  },
+  "simulator": {
+    "tool": "ajayeb-sim bench",
+    "arguments": ["-games", "2", "-positions", "3", "-playouts", "30", "-p", "1"],
+    "randomPlayoutMicrosecondsPerGame": 76.8,
+    "actionsPerGame": 69.7,
+    "millionActionsPerSecond": 0.91,
+    "engineNanosecondsPerCall": {
+      "Determinize": 1007.6,
+      "LegalActions": 98.5,
+      "Evaluate": 385.8,
+      "Observe": 155.5
+    },
+    "clockBudgetMoveTimes": {
+      "random": {
+        "meanMilliseconds": 0.008,
+        "medianMilliseconds": 0.004,
+        "maxMilliseconds": 0.016
+      },
+      "easy": {
+        "meanMilliseconds": 0.071,
+        "medianMilliseconds": 0.072,
+        "maxMilliseconds": 0.113
+      },
+      "greedy": {
+        "meanMilliseconds": 0.051,
+        "medianMilliseconds": 0.026,
+        "maxMilliseconds": 0.104
+      },
+      "medium": {
+        "meanMilliseconds": 400.999,
+        "medianMilliseconds": 401.042,
+        "maxMilliseconds": 401.081
+      },
+      "hard": {
+        "meanMilliseconds": 2013.213,
+        "medianMilliseconds": 2013.301,
+        "maxMilliseconds": 2018.912
+      }
+    },
+    "elapsedMilliseconds": 7313
+  },
+  "frontendPerf": {
+    "tool": "e2e/specs/animation.spec.ts",
+    "project": "desktop",
+    "retries": 0,
+    "cases": [
+      {
+        "name": "f. frame gaps during animations at 1x CPU",
+        "status": "expected",
+        "durationMilliseconds": 20053,
+        "annotation": "at 1x: frames during animations 914, median gap 17 ms, p90 17 ms, over 34 ms 0 (0%), worst gap 17 ms"
+      },
+      {
+        "name": "d. no long task over 50 ms during an animation at 4x CPU",
+        "status": "expected",
+        "durationMilliseconds": 29514,
+        "annotation": "moves 10 (and an age change, a game end), animations 72, long tasks 17, overlapping 0, worst overlapping 0 ms, worst overall 253 ms; at 4x: frames during animations 915, median gap 17 ms, p90 17 ms, over 34 ms 1 (0.1%), worst gap 67 ms"
+      }
+    ]
+  },
+  "missing": [
+    "No Haftgane engine exists in this baseline, so no Duel/Haftgane mixed-load measurement is possible.",
+    "Existing driver reports game durations and RSS, not per-action or reveal p50/p95/p99 or bot queue/pool-hold latency.",
+    "Small local simulator sample and desktop animation runs do not establish production-host capacity or full difficulty strength."
+  ]
+}
