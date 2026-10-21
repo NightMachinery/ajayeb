@@ -1752,6 +1752,34 @@ make test-go GO_PKGS=./internal/store
 make test-go GO_PKGS=./internal/store 'GO_RUN=^TestRoomFile'
 ```
 
+### Room-kind registry
+
+`TestRoomKindsRegistration` rejects duplicates, incomplete callbacks, invalid or
+mismatched codec ids, replacement of the schema-1 Duel codec and omission of
+Duel. `TestRoomKindsCodecBinding` proves the registry supplies the same immutable
+codec descriptors to store/preflight, checks header selection without decoding
+the game payload, rejects mismatched schema/game pairs and keeps test codecs out
+of the production table. `TestRoomGameHeaderSelection` covers the live/archive
+lookup, invalid or missing codes, byte preservation and the existing read cap.
+
+`TestRoomKindsDuelDispatch` observes the registered create/load/admission path,
+attach/detach and inbox delivery, then forces capacity eviction of the idle Duel
+room. `TestRoomKindsAdmissionBeforeReserve` verifies cold refusal before capacity
+reservation and unchanged identity/claim arguments; an unregistered game stays
+on disk without a loader call. `TestRoomKindsGlobalCodesAndHandleLifetime`
+forces a code collision across kinds and checks that a stale actor cannot remove
+or mark idle its replacement, and that Close waits for registered actors.
+`TestRoomKindsForeignLoadUsesRegisteredHandle` restores a fake game whose payload
+cannot decode as Duel, reuses its warm handle, exercises attach/detach and
+capacity eviction, and refuses Duel-only requests/snapshots for that actor.
+
+The existing room, WebSocket and protocol suites retain their claims, concurrent
+restore, ghost-attach, idle/dirty eviction, rematch, bot/review and shutdown
+coverage. Run them under `test-race` along with store. The schema-1 and version-1
+baselines above remain unchanged and must run without regeneration. Browser
+acceptance uses the existing online full-game/spectator/reconnect scenarios,
+room recovery and room/rematch flows on desktop and mobile, through `make e2e`.
+
 ### Version-1 frames
 
 `TestPlatformV1TranscriptBaseline` pins every raw frame's length/SHA-256,

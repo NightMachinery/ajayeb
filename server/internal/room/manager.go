@@ -44,7 +44,7 @@ type Manager struct {
 	// In-memory requests bypass this lock.
 	restoreMu sync.Mutex
 	mu        sync.Mutex
-	rooms     map[string]*Room
+	rooms     map[string]*Handle
 	pending   int // rooms being created or loaded, counted against MaxRooms
 	closed    bool
 }
@@ -54,6 +54,24 @@ func NewManager(cfg Config) (*Manager, error) {
 	if cfg.Store == nil {
 		return nil, errors.New("room: Config.Store is required")
 	}
+	if cfg.Kinds == nil {
+		var err error
+		cfg.Kinds, err = NewKinds(DuelKind())
+		if err != nil {
+			return nil, err
+		}
+	}
+	if cfg.Kinds.codecs == nil {
+		return nil, errors.New("room: Kinds must be built by NewKinds")
+	}
+	if cfg.KindOf == nil {
+		if len(cfg.Kinds.entries) != 1 {
+			return nil, errors.New("room: Config.KindOf is required for multiple kinds")
+		}
+		// Existing Storage adapters only expose Duel's typed API. Keep their
+		// admission/read ordering; production supplies Store.Game explicitly.
+		cfg.KindOf = func(string) (string, error) { return Duel, nil }
+	}
 	cfg = cfg.withDefaults()
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Manager{
@@ -61,7 +79,7 @@ func NewManager(cfg Config) (*Manager, error) {
 		log:         cfg.Logger,
 		ctx:         ctx,
 		cancel:      cancel,
-		rooms:       make(map[string]*Room),
+		rooms:       make(map[string]*Handle),
 		reviewSlots: make(chan struct{}, cfg.ReviewSearches),
 	}, nil
 }
@@ -72,8 +90,17 @@ func NewManager(cfg Config) (*Manager, error) {
 func (m *Manager) Close() {
 	m.mu.Lock()
 	m.closed = true
+	handles := make([]*Handle, 0, len(m.rooms))
+	for _, h := range m.rooms {
+		handles = append(handles, h)
+	}
 	m.mu.Unlock()
 	m.cancel()
+	for _, h := range handles {
+		if h.hooks.Cancel != nil {
+			h.hooks.Cancel()
+		}
+	}
 	m.wg.Wait()
 	m.mu.Lock()
 	clear(m.rooms)
@@ -102,14 +129,17 @@ func (m *Manager) Loaded(code string) bool {
 // hot-seat room c holds both seats; in a bot room c takes the chosen seat
 // (seat 0 unless req says otherwise) and the bot the other.
 func (m *Manager) Create(ctx context.Context, c *Client, req wire.Create) (string, error) {
-	f, err := m.newFile(c, req)
+	kind, ok := m.cfg.Kinds.entries[Duel]
+	var code string
+	var err error
+	if !ok {
+		err = ErrInvalidSpec
+	} else {
+		code, err = kind.Create(m, c, req)
+	}
 	if err == nil {
-		var code string
-		code, err = m.createRoom(f)
-		if err == nil {
-			c.Out.Push(wire.NewCreated(code))
-			return code, m.Join(ctx, c, code)
-		}
+		c.Out.Push(wire.NewCreated(code))
+		return code, m.Join(ctx, c, code)
 	}
 	c.Out.Push(wire.NewError(errorCode(err), errorMsg(err)))
 	return "", err
@@ -256,39 +286,19 @@ func (m *Manager) createRoom(f *store.File) (string, error) {
 		return "", fmt.Errorf("%w: %v", ErrInvalidSpec, err)
 	}
 	f.Version = max(f.Version, len(f.Actions))
-	if err := m.reserve(); err != nil {
-		return "", err
-	}
-	defer m.unreserve()
-
-	const attempts = 3
-	for range attempts {
-		code, err := m.cfg.Store.NewCode()
-		if err != nil {
-			return "", fmt.Errorf("%w: %v", ErrStorage, err)
-		}
-		if m.Loaded(code) {
-			continue
-		}
+	return m.CreateHandle(Duel, func(code string) (*Handle, error) {
 		f.Code = code
 		r := newRoom(m, f, s, hist)
 		r.persist()
 		if r.dirty {
 			r.cancel()
-			return "", fmt.Errorf("%w: saving the new room failed", ErrStorage)
+			return nil, fmt.Errorf("%w: saving the new room failed", ErrStorage)
 		}
-		mode := f.Mode // f belongs to the actor once it starts
-		if err := m.start(r); err != nil {
-			r.cancel()
-			if errors.Is(err, errCodeTaken) {
-				continue
-			}
-			return "", err
-		}
-		r.log.Info("created room", "mode", mode)
-		return code, nil
-	}
-	return "", fmt.Errorf("%w: no free room code", ErrStorage)
+		mode := f.Mode
+		h := duelHandle(m, r)
+		h.afterStart = func() { r.log.Info("created room", "mode", mode) }
+		return h, nil
+	})
 }
 
 var errCodeTaken = errors.New("room: code already in memory")
@@ -361,7 +371,7 @@ func (m *Manager) reserve() error {
 // reserveOrChoose reserves a slot if one is free. Otherwise it returns the
 // room idle longest, marked as being evicted so that no other caller picks
 // it too, or ErrTooManyRooms when no room is idle.
-func (m *Manager) reserveOrChoose() (*Room, error) {
+func (m *Manager) reserveOrChoose() (*Handle, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.closed {
@@ -371,7 +381,7 @@ func (m *Manager) reserveOrChoose() (*Room, error) {
 		m.pending++
 		return nil, nil
 	}
-	var victim *Room
+	var victim *Handle
 	for _, r := range m.rooms {
 		if !r.evictable || r.evicting {
 			continue
@@ -390,8 +400,8 @@ func (m *Manager) reserveOrChoose() (*Room, error) {
 
 // evict asks a room chosen by reserveOrChoose to leave memory, and waits
 // until it has answered (it leaves only if it is still idle) or is gone.
-func (m *Manager) evict(r *Room) {
-	_, _ = request(m.ctx, r, func(reply chan bool) any { return msgEvict{reply: reply} })
+func (m *Manager) evict(r *Handle) {
+	_ = r.hooks.Evict(m.ctx)
 	m.mu.Lock()
 	r.evicting = false
 	m.mu.Unlock()
@@ -404,6 +414,10 @@ func (m *Manager) setIdle(r *Room, idle bool, since time.Time) {
 	defer m.mu.Unlock()
 	r.evictable = idle
 	r.idleSince = since
+	if h := m.rooms[r.code]; h != nil && h.duel == r {
+		h.evictable = idle
+		h.idleSince = since
+	}
 }
 
 func (m *Manager) unreserve() {
@@ -413,7 +427,7 @@ func (m *Manager) unreserve() {
 }
 
 // start registers r and starts its actor, unless its code is taken.
-func (m *Manager) start(r *Room) error {
+func (m *Manager) start(r *Handle) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.closed {
@@ -422,9 +436,14 @@ func (m *Manager) start(r *Room) error {
 	if m.rooms[r.code] != nil {
 		return errCodeTaken
 	}
+	if r.owner != m {
+		return ErrInvalidSpec
+	}
+	if _, ok := m.cfg.Kinds.entries[r.kind]; !ok {
+		return ErrInvalidSpec
+	}
 	m.rooms[r.code] = r
-	m.wg.Add(1)
-	go r.run()
+	r.start()
 	return nil
 }
 
@@ -432,13 +451,13 @@ func (m *Manager) start(r *Room) error {
 func (m *Manager) remove(r *Room) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.rooms[r.code] == r {
+	if h := m.rooms[r.code]; h != nil && h.duel == r {
 		delete(m.rooms, r.code)
 	}
 }
 
 // lookup returns the room in memory for code, or nil.
-func (m *Manager) lookup(code string) (*Room, error) {
+func (m *Manager) lookup(code string) (*Handle, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.closed {
@@ -447,31 +466,29 @@ func (m *Manager) lookup(code string) (*Room, error) {
 	return m.rooms[code], nil
 }
 
-// get returns the room for code, loading it from the store if it is not in
-// memory. Before a load, check (when set) sees the room file's header and
-// may refuse with its own error; the room is then not loaded at all, so a
-// join the room would refuse costs a read of the file, never a slot among
-// the rooms in memory.
-func (m *Manager) get(code string, check func(*store.File) error) (*Room, error) {
+// get selects a kind, refuses cold admission before reserving, then serializes
+// restore through actor registration. Loaded rooms bypass all file reads.
+func (m *Manager) get(code string, c *Client, claim *string) (*Handle, error) {
 	if store.ValidateCode(code) != nil {
 		return nil, ErrRoomNotFound
 	}
 	if r, err := m.lookup(code); r != nil || err != nil {
 		return r, err
 	}
-	if check != nil {
-		hdr, err := m.cfg.Store.PeekHeader(code)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil, ErrRoomNotFound
-			}
-			m.log.Warn("reading a room's header failed", "room", code, "err", err)
-			return nil, ErrStorage
+	game, err := m.cfg.KindOf(code)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, ErrRoomNotFound
 		}
-		if hdr.Status == store.StatusArchived {
-			return nil, &archivedRoomError{reason: hdr.ArchiveReason}
-		}
-		if err := check(hdr); err != nil {
+		m.log.Warn("reading a room's kind failed", "room", code, "err", err)
+		return nil, ErrStorage
+	}
+	kind, ok := m.cfg.Kinds.entries[game]
+	if !ok {
+		return nil, ErrStorage
+	}
+	if c != nil {
+		if err := kind.Check(m, code, c, claim); err != nil {
 			return nil, err
 		}
 	}
@@ -484,35 +501,27 @@ func (m *Manager) get(code string, check func(*store.File) error) (*Room, error)
 		return nil, err
 	}
 	defer m.unreserve()
-	f, s, err := m.cfg.Store.Load(code)
+	r, err := kind.Load(m, code)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) && !errors.Is(err, store.ErrRestoreWrite) {
-			return nil, ErrRoomNotFound
-		}
-		m.log.Warn("loading a room failed", "room", code, "err", err)
-		if errors.Is(err, store.ErrArchived) && f != nil {
-			return nil, &archivedRoomError{reason: f.ArchiveReason}
-		}
-		return nil, ErrStorage
-	}
-	// The store checked every key by membership and refreshed the hash. The
-	// room also needs each action's seat and events, for undo and history.
-	_, hist, err := replayKeys(f, f.Actions)
-	if err != nil {
-		m.log.Error("a stored room does not replay through the legal actions", "room", code, "err", err)
-		return nil, ErrStorage
-	}
-	r := newRoom(m, f, s, hist)
-	actions := len(f.Actions) // f belongs to the actor once it starts
-	switch err := m.start(r); {
-	case errors.Is(err, errCodeTaken):
-		r.cancel()
-		return m.lookup(code) // someone else loaded it meanwhile
-	case err != nil:
-		r.cancel()
 		return nil, err
 	}
-	r.log.Info("loaded room", "actions", actions)
+	if r == nil || r.kind != game || r.code != code || r.owner != m {
+		if r != nil {
+			r.hooks.Cancel()
+		}
+		return nil, ErrStorage
+	}
+	switch err := m.start(r); {
+	case errors.Is(err, errCodeTaken):
+		r.hooks.Cancel()
+		return m.lookup(code)
+	case err != nil:
+		r.hooks.Cancel()
+		return nil, err
+	}
+	if r.afterStart != nil {
+		r.afterStart()
+	}
 	return r, nil
 }
 
@@ -545,48 +554,22 @@ func (m *Manager) JoinClaim(ctx context.Context, c *Client, code string, claim *
 }
 
 func (m *Manager) join(ctx context.Context, c *Client, code string, claim *string) error {
-	// A room this user could never enter, or a claim that is not one of the
-	// room's, is refused from its file's header without loading it (see
-	// get); a room in memory decides in admit.
-	check := func(f *store.File) error {
-		user := c.UserID
-		if claim != nil {
-			u, ok := claimHolder(m.cfg.Claims, code, f.Seats, *claim)
-			if !ok {
-				return ErrBadClaim
-			}
-			user = u
-		}
-		if closedTo(f.Mode, f.Seats, user) {
-			return ErrForbidden
-		}
-		return nil
-	}
 	// A room can exit (idle eviction) between the lookup and the attach;
 	// the retry then loads it again from disk.
 	const attempts = 3
 	for range attempts {
-		r, err := m.get(code, check)
+		r, err := m.get(code, c, claim)
 		if err != nil {
 			return err
 		}
 		if r == nil {
 			continue
 		}
-		res, err := request(ctx, r, func(reply chan error) any { return msgAttach{c: c, claim: claim, reply: reply} })
+		err = r.hooks.Attach(ctx, c, claim)
 		if errors.Is(err, errRoomGone) {
 			continue
 		}
-		if err != nil {
-			// The caller stopped waiting, but the attach may already be in
-			// the inbox. Nothing would ever detach it (the client does not
-			// record the room), so the room would report a ghost as present
-			// and never go idle. A detach queued behind it takes it back; for
-			// a client that never got in, it does nothing.
-			_ = r.post(context.Background(), msgDetach{c: c})
-			return err
-		}
-		return res
+		return err
 	}
 	// Exhausted eviction retries do not prove the persisted room is missing.
 	return ErrStorage
@@ -600,7 +583,7 @@ func (m *Manager) Leave(c *Client, code string) {
 	}
 	c.joined = ""
 	if r, _ := m.lookup(code); r != nil {
-		_ = r.post(context.Background(), msgDetach{c: c})
+		r.hooks.Detach(c)
 	}
 }
 
@@ -609,18 +592,18 @@ func (m *Manager) Leave(c *Client, code string) {
 func (m *Manager) Disconnect(c *Client) { m.Leave(c, c.joined) }
 
 // joinedRoom returns the room c joined, if its code is code.
-func (m *Manager) joinedRoom(c *Client, code string) (*Room, error) {
+func (m *Manager) joinedRoom(c *Client, code string) (*Handle, error) {
 	if c.joined == "" || c.joined != code {
 		return nil, ErrNotJoined
 	}
-	r, err := m.lookup(code)
+	h, err := m.lookup(code)
 	if err != nil {
 		return nil, err
 	}
-	if r == nil {
+	if h == nil || h.duel == nil {
 		return nil, ErrNotJoined
 	}
-	return r, nil
+	return h, nil
 }
 
 // Act routes an act frame to c's room.
@@ -659,7 +642,7 @@ func (m *Manager) Rematch(ctx context.Context, c *Client, code string) (string, 
 	if err != nil {
 		return "", m.requestFailed(c, 0, err)
 	}
-	res, err := request(ctx, r, func(reply chan rematchResult) any { return msgRematch{c: c, reply: reply} })
+	res, err := request(ctx, r.duel, func(reply chan rematchResult) any { return msgRematch{c: c, reply: reply} })
 	if err == nil {
 		err = res.err
 	}
@@ -697,14 +680,17 @@ func (m *Manager) requestFailed(c *Client, seq int, err error) error {
 // endpoints only, never for a client.
 func (m *Manager) Snapshot(ctx context.Context, code string) (Snapshot, error) {
 	for range 3 {
-		r, err := m.get(code, nil)
+		r, err := m.get(code, nil, nil)
 		if err != nil {
 			return Snapshot{}, err
 		}
 		if r == nil {
 			continue
 		}
-		snap, err := request(ctx, r, func(reply chan Snapshot) any { return msgSnapshot{reply: reply} })
+		if r.duel == nil {
+			return Snapshot{}, ErrInvalidSpec
+		}
+		snap, err := request(ctx, r.duel, func(reply chan Snapshot) any { return msgSnapshot{reply: reply} })
 		if errors.Is(err, errRoomGone) {
 			continue
 		}

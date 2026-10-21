@@ -72,6 +72,12 @@ type BotFactory func(level store.BotLevel, seed uint64) Bot
 type Config struct {
 	// Store persists the rooms. Required.
 	Store Storage
+	// Kinds is the composition root's immutable room/codec registry. The default
+	// registers Duel alone, for existing embedders and tests.
+	Kinds *Kinds
+	// KindOf selects a persisted file's bounded game header. Production passes
+	// Store.Game. With nil, legacy Storage implementations support Duel only.
+	KindOf func(code string) (string, error)
 	// Clock is the source of time. Default SystemClock.
 	Clock Clock
 	// Logger receives the rooms' logs. Default: discard. Tokens never reach

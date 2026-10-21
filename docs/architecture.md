@@ -54,6 +54,33 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/webdist`**: embeds the web build only under the `embedweb` build tag, so a fresh clone builds and tests without building the web app first. It also defines the build's cache policy (`CacheControl`, which the static handler in `internal/httpapi` applies): SvelteKit's content-hashed `_app/immutable/` files are cached for a year, and so is bitmap art under `art/` requested with a `v` query parameter that matches the start of the file's SHA-256 (the generated art index writes every art path that way); art without a matching hash is cached for a day and then revalidated in the background for up to a week; everything else, including the app shell and the stable app icon PNGs under `icons/`, is revalidated on every load.
 - **`cmd/ajayeb`** wires everything together. The other commands are `ajayeb-sim` (tournaments, the AI benchmark, level calibration, weight sweeps and the replay verifier; see [ai.md](ai.md)), `ajayeb-drive` (plays full games over WebSocket against a running server) and `ajayeb-gen`, the TypeScript generator. `ajayeb-gen` writes the presentation catalog and contract fixtures described below, and exports the catalog as CSV, JSON, prose or TypeScript for review (see [rules/sources.md](rules/sources.md)).
 
+### Room-kind composition
+
+`cmd/ajayeb` builds one closed `room.Kinds` table, currently containing only
+`DuelKind`. Each stable game id binds create, cold-join admission and load
+callbacks to its file codec. `NewKinds` rejects duplicate or incomplete
+registrations and mismatched codec ids before startup. Its `Codecs()` table is
+passed to the store, reaper and read-only preflight; there is no second list of
+games in those paths. Schema-1 Duel remains required and schema 2 has no
+production registration.
+
+Manager stores opaque lifetime handles and retains its existing capacity
+reservations, serialized restore, idle ordering, eviction retries and per-code
+identity checks. The store's `Game` selector reads a capped, bounded header and
+checks the schema/game pair against the bound codecs before Manager chooses a
+loader. Cold admission still runs before a slot is reserved; already loaded
+rooms bypass disk selection. Codes remain globally unique across live and
+archived files and all room kinds.
+
+Duel's adapter uses the existing `newRoom`, typed store operations, inbox,
+attach/detach, delivery and eviction messages. Its actor, constructor, bot/review
+scheduling, identity claims and room-file paths remain intact. `CreateHandle`
+shares code allocation and capacity bookkeeping; `NewHandle` tracks a separate
+actor's run/cancel lifecycle without requiring common rules, state or view types.
+A stale handle cannot unregister its replacement. Existing embedders default to
+Duel alone; production explicitly injects the table and store selector. No
+protocol or client registry changes are part of this seam.
+
 ## App shell
 
 The client ships with a service worker, `web/src/service-worker.ts`, served as `/service-worker.js`. It precaches the build of its version (the `_app/immutable/` files, the content-hashed fonts among them, the shell `index.html`, and the favicon, manifest and app icons), answers page loads network first with the cached shell as the offline fallback, caches `?v=`-hashed art at runtime in a bounded cache, and never touches `/ws`, `/api/*` or `/health`. Art-cache lookups and LRU refreshes share a transaction queue, so an offline request cannot mistake an entry being reordered for an uncached file. The app opens without a network and shows its own offline state; playing still needs the server. A new version waits while a game page is open. The server's headers above already fit it, so nothing on the server or a reverse proxy changes: the hashed files are immutable for a year, while the shell, `/service-worker.js`, the manifest, the favicon and the icons keep stable names and are revalidated on every load. [web/README.md](../web/README.md#app-shell) has the details.

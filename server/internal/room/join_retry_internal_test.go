@@ -24,7 +24,7 @@ func TestJoinExhaustedEvictionRetriesAreTemporary(t *testing.T) {
 	// attempt must retry, without needing timing or a running goroutine.
 	done := make(chan struct{})
 	close(done)
-	m.rooms["RACEXX"] = &Room{code: "RACEXX", done: done, inbox: make(chan any)}
+	m.rooms["RACEXX"] = duelHandle(m, &Room{code: "RACEXX", done: done, inbox: make(chan any)})
 	c := NewClient("player", "tab", "Player")
 	if err := m.Join(context.Background(), c, "RACEXX"); !errors.Is(err, ErrStorage) {
 		t.Fatalf("exhausted retries: %v", err)

@@ -308,6 +308,10 @@ func seedSource(base uint64) func() uint64 {
 // ready, when set, receives the listening address once connections are
 // accepted (port 0 picks a free one).
 func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(addr string)) error {
+	kinds, err := roomKinds()
+	if err != nil {
+		return err
+	}
 	if err := os.MkdirAll(opts.dataDir, 0o700); err != nil {
 		return fmt.Errorf("create data directory: %w", err)
 	}
@@ -315,7 +319,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 	if err != nil {
 		return err
 	}
-	st, err := store.Open(opts.dataDir)
+	st, err := store.OpenWithCodecs(opts.dataDir, nil, kinds.Codecs())
 	if err != nil {
 		return err
 	}
@@ -327,6 +331,8 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 	seed := seedSource(opts.seedBase)
 	rooms, err := room.NewManager(room.Config{
 		Store:    st,
+		Kinds:    kinds,
+		KindOf:   st.Game,
 		Logger:   logger,
 		BotPool:  ai.NewPoolPerKey(opts.botSearches, opts.botPerAddr),
 		BotDelay: opts.botDelay,
