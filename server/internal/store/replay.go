@@ -16,8 +16,8 @@ var ErrRulesVersion = errors.New("store: rules version mismatch")
 var ErrHashMismatch = errors.New("store: replay hash mismatch")
 
 // ErrSchema is wrapped by the error Load and PeekHeader return for a file
-// whose Schema is not this build's (a newer server's file, or one with no
-// schema at all). Such a file is left untouched.
+// whose schema/codec is unsupported (including a missing schema). ErrGame also
+// matches it. Such files are left untouched and counted as preflight errors.
 var ErrSchema = errors.New("store: unknown room file schema")
 
 // replay rebuilds the state f's Seed, Options, Scenario and Actions

@@ -31,8 +31,12 @@
 //     counts existing archives only as archived, never as live risk.
 //     It reports live archive risk separately
 //     from schema/read failures so deployment can refuse before stopping.
-//   - A file of another schema is refused and never rewritten, so a file
-//     from a newer server survives a rollback intact.
+//   - A capped, bounded schema/game header selects a codec before game decoding
+//     or replay. Schema 1 uses the existing Duel File and replay; schema 2
+//     requires a registered game codec. The production schema-2 table is empty.
+//     Unsupported files are refused and never rewritten or reaped, so a file
+//     from a newer server survives a rollback intact. Codecs expose transient
+//     retention metadata and read-only checks, never a common saved-game type.
 //   - The startup/hourly reaper deletes finished rooms after 7 days and
 //     idle rooms after 14 days. Archives expire 30 days after ArchivedAt
 //     (Updated for legacy files), with caps of 1000 files or 64 MiB,

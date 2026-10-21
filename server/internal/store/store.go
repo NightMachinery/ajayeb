@@ -22,6 +22,7 @@ var ErrRestoreWrite = errors.New("store: restore write failed")
 // The zero value is not valid; use Open or OpenWithClock.
 type Store struct {
 	dir     string
+	codecs  *Codecs
 	now     Clock // stamps archive time when Load archives a room
 	locksMu sync.Mutex
 	locks   map[string]*roomLock
@@ -37,6 +38,16 @@ func Open(dataDir string) (*Store, error) {
 
 // OpenWithClock is Open with an injected clock; nil means time.Now.
 func OpenWithClock(dataDir string, now Clock) (*Store, error) {
+	return OpenWithCodecs(dataDir, now, nil)
+}
+
+// OpenWithCodecs injects the same immutable table used by preflight and retention.
+// nil selects the production table (schema-1 Duel only). Load, PeekHeader and
+// Save remain typed Duel APIs; other games keep their own restoration paths.
+func OpenWithCodecs(dataDir string, now Clock, codecs *Codecs) (*Store, error) {
+	if codecs == nil {
+		codecs = productionCodecs
+	}
 	if now == nil {
 		now = time.Now
 	}
@@ -44,7 +55,7 @@ func OpenWithClock(dataDir string, now Clock) (*Store, error) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, fmt.Errorf("store: creating %s: %w", dir, err)
 	}
-	return &Store{dir: dir, now: now, locks: make(map[string]*roomLock)}, nil
+	return &Store{dir: dir, codecs: codecs, now: now, locks: make(map[string]*roomLock)}, nil
 }
 
 // Dir returns the rooms directory this Store reads and writes, mainly for
@@ -76,6 +87,9 @@ func (st *Store) path(code string) (string, error) {
 // cost is O(actions so far), which stays small for one game of 7 Wonders
 // Duel.
 func (st *Store) Save(f *File) error {
+	if err := checkSchema(f); err != nil {
+		return err
+	}
 	path, err := st.path(f.Code)
 	if err != nil {
 		return err
@@ -87,8 +101,12 @@ func (st *Store) Save(f *File) error {
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
-	if existing, err := readFile(path); err == nil && existing.Status == StatusArchived {
-		return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
+	if existing, err := readFile(path); err == nil {
+		if existing.Status == StatusArchived {
+			return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
+		}
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("store: save %s: %w", f.Code, err)
 	}
 	s, err := replay(f)
 	if err != nil {
@@ -107,8 +125,9 @@ func (st *Store) Save(f *File) error {
 // Load reads the room at code, replays it and returns both the header and
 // the resulting engine.State.
 //
-// A file of another Schema is refused with an error wrapping ErrSchema and
-// left exactly as it is: this build cannot read it faithfully, so it must
+// An unsupported schema/game is refused before Duel decoding with an error
+// wrapping ErrSchema (and ErrGame for a game/codec), and left exactly as it is:
+// this build cannot read it faithfully, so it must
 // not rewrite it either (a newer server's fields would be lost).
 //
 // Within the same RulesVersion, a complete legal replay is canonical. A differing

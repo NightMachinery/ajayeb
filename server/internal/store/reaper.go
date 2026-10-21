@@ -78,16 +78,14 @@ func (r *Reaper) sweepLive(code string, now time.Time) (bool, error) {
 	unlock := r.st.lockRoom(code)
 	defer unlock()
 	path := filepath.Join(r.st.dir, code+".json")
-	f, err := readFile(path)
+	record, _, err := r.st.codecs.read(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
 	}
-	if err := checkSchema(f); err != nil {
-		return false, err
-	}
+	f := record.Retention()
 	if f.Code != code {
 		return false, fmt.Errorf("store: mismatched room header for %s", code)
 	}
@@ -168,16 +166,14 @@ func (r *Reaper) archiveEntry(code string) (archiveEntry, bool, error) {
 	unlock := r.st.lockRoom(code)
 	defer unlock()
 	path := r.st.archivePath(code)
-	f, data, err := readFileData(path)
+	record, data, err := r.st.codecs.read(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return archiveEntry{}, false, nil
 	}
 	if err != nil {
 		return archiveEntry{}, false, err
 	}
-	if err := checkSchema(f); err != nil {
-		return archiveEntry{}, false, err
-	}
+	f := record.Retention()
 	if f.Code != code || f.Status != StatusArchived {
 		return archiveEntry{}, false, fmt.Errorf("store: invalid archive header for %s", code)
 	}

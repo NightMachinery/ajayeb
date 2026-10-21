@@ -1701,6 +1701,44 @@ UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \
   make test-go GO_PKGS=./internal/store 'GO_RUN=^TestPlatformSchema1Baseline$'
 ```
 
+### Room-file codec dispatch
+
+`M14.room-file-game-dispatch` keeps the schema-1 goldens above unchanged.
+`TestRoomFileDispatchBeforeDuelDecode` gives unsupported schemas/games payloads
+that cannot decode as Duel and checks explicit refusal before that decoder.
+`TestRoomFileCodecSelection` registers two fake schema-2 codecs, checks exact
+selection and original bytes, and proves unsupported headers call neither.
+`TestRoomFileCodecRegistration` rejects duplicate ids, attempts to replace Duel,
+invalid ids and missing decoders. Production registers no schema-2 codec.
+
+`TestRoomFileCodecPreflightAndRetention` uses the same injected table for both
+preflight and retention. Fake game rules differ from Duel's; the codec supplies
+the compatibility verdict. Existing aggregate counters, the report format and
+the scalar Duel `rules` value stay unchanged. The test checks read-only scans,
+hash-refresh classification, live archive risk, archive replay avoidance,
+expiry and byte-preserving legacy archive migration. Malformed discriminators
+or retention metadata fail closed in `TestRoomFileMalformedHeadersFailClosed`.
+`TestRoomFileSaveRefusesUnsupportedTarget` protects unsupported existing bytes
+from the typed Duel save path. Existing D28/D29 concurrency, restore failures,
+retention bounds and read-size limits remain covered by the full store suite.
+
+`TestRoomFileOldBinaryPreservesSchema2` uses only the pre-slice store API. It
+loads and peeks at schema-2 live, finished, legacy-archive and archive-folder
+fixtures, runs reaping with zero archive caps, then preflights the directory.
+All four remain byte-identical at their original paths; preflight reports four
+schema errors, with no playable room or archive candidate. The same test was
+compiled and run against frozen pre-slice master `31ec171`, extracted with
+`git archive` into temporary source space. No checkout, data directory or
+fixture regeneration was involved. This proves rollback refusal and preservation
+using the old implementation, alongside the current implementation's checks.
+
+Run targeted checks through the guard:
+
+```sh
+make test-go GO_PKGS=./internal/store
+make test-go GO_PKGS=./internal/store 'GO_RUN=^TestRoomFile'
+```
+
 ### Version-1 frames
 
 `TestPlatformV1TranscriptBaseline` pins every raw frame's length/SHA-256,

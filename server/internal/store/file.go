@@ -9,8 +9,9 @@ import (
 
 // Schema is the version of the room file format below. A change to File's
 // shape that an older reader could misinterpret (not just a new optional
-// field) bumps it. Load and PeekHeader refuse a file of any other schema
-// (ErrSchema) and never rewrite it.
+// field) requires a different codec. Schema-1 Duel writes keep this value and
+// their existing shape; schema 2 requires an explicitly registered game codec.
+// Duel Load and PeekHeader refuse unsupported headers without rewriting them.
 const Schema = 1
 
 // Mode is the kind of room: who, or what, holds the two seats.

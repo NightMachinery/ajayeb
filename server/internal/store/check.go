@@ -32,6 +32,15 @@ type CheckReport struct {
 // room directories are empty; every other read/format failure counts as an
 // error. No file is refreshed, archived, created or removed.
 func CheckDataDir(dataDir string) CheckReport {
+	return CheckDataDirWithCodecs(dataDir, nil)
+}
+
+// CheckDataDirWithCodecs uses the same composition-time table as the store.
+// The report format and scalar Duel rules version are unchanged.
+func CheckDataDirWithCodecs(dataDir string, codecs *Codecs) CheckReport {
+	if codecs == nil {
+		codecs = productionCodecs
+	}
 	r := CheckReport{Format: "ajayeb-room-check/1", Rules: engine.RulesVersion}
 	info, err := os.Stat(dataDir)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -42,12 +51,12 @@ func CheckDataDir(dataDir string) CheckReport {
 		return r
 	}
 	for _, folder := range []string{"rooms", "rooms-archive"} {
-		r.checkFolder(filepath.Join(dataDir, folder), folder == "rooms-archive")
+		r.checkFolder(filepath.Join(dataDir, folder), folder == "rooms-archive", codecs)
 	}
 	return r
 }
 
-func (r *CheckReport) checkFolder(dir string, archive bool) {
+func (r *CheckReport) checkFolder(dir string, archive bool, codecs *Codecs) {
 	entries, err := os.ReadDir(dir)
 	if errors.Is(err, fs.ErrNotExist) {
 		return
@@ -66,16 +75,15 @@ func (r *CheckReport) checkFolder(dir string, archive bool) {
 			continue
 		}
 		r.Rooms++
-		f, err := readFile(filepath.Join(dir, entry.Name()))
+		record, _, err := codecs.read(filepath.Join(dir, entry.Name()))
 		if err != nil {
+			if errors.Is(err, ErrSchema) {
+				r.SchemaErrors++
+			}
 			r.Errors++
 			continue
 		}
-		if checkSchema(f) != nil {
-			r.SchemaErrors++
-			r.Errors++
-			continue
-		}
+		f := record.Retention()
 		if f.Code != code {
 			r.Errors++
 			continue
@@ -98,7 +106,7 @@ func (r *CheckReport) checkFolder(dir string, archive bool) {
 			r.Errors++
 			continue
 		}
-		s, _, err := assess(f)
+		mismatch, err := record.Check()
 		if err != nil {
 			r.WouldArchive++
 			if f.Status == StatusLobby || f.Status == StatusPlaying {
@@ -107,7 +115,7 @@ func (r *CheckReport) checkFolder(dir string, archive bool) {
 			continue
 		}
 		r.Playable++
-		if engine.HashString(&s) != f.Hash {
+		if mismatch {
 			r.RefreshableHashes++
 		}
 	}

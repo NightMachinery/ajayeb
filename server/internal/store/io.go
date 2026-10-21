@@ -125,17 +125,15 @@ func readFile(path string) (*File, error) {
 }
 
 func readFileData(path string) (*File, []byte, error) {
-	data, err := readCapped(path)
+	record, data, err := productionCodecs.read(path)
 	if err != nil {
 		return nil, nil, err
 	}
-	var f File
-	if err := json.Unmarshal(data, &f); err != nil {
-		return nil, nil, fmt.Errorf("store: decoding %s: %w", path, err)
+	duel, ok := record.(duelInspection)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: Duel file required", ErrGame)
 	}
-	// Old files did not store Version; the room must not reuse prior versions.
-	f.Version = max(f.Version, len(f.Actions))
-	return &f, data, nil
+	return duel.file, data, nil
 }
 
 // readCapped reads the file at path, refusing one larger than MaxFileBytes
