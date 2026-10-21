@@ -11,7 +11,11 @@ import (
 
 // DuelKind registers the existing constructor, storage operations and actor.
 func DuelKind() Kind {
-	return Kind{ID: Duel, Create: func(m *Manager, c *Client, req wire.Create) (string, error) {
+	return Kind{ID: Duel, Create: func(m *Manager, c *Client, msg wire.ClientMessage) (string, error) {
+		req, ok := msg.(wire.Create)
+		if !ok {
+			return "", ErrInvalidSpec
+		}
 		f, err := m.newFile(c, req)
 		if err != nil {
 			return "", err
@@ -75,7 +79,7 @@ func loadDuel(m *Manager, code string) (*Handle, error) {
 
 func duelHandle(m *Manager, r *Room) *Handle {
 	h := &Handle{owner: m, kind: Duel, code: r.code, duel: r,
-		evictable: r.evictable, idleSince: r.idleSince, evicting: r.evicting}
+		evictable: r.evictable, idleSince: r.idleSince}
 	h.hooks = HandleConfig{
 		Run: r.run, Cancel: r.cancel, Deliver: r.post,
 		Attach: func(ctx context.Context, c *Client, claim *string) error {

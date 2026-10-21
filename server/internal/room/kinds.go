@@ -13,14 +13,14 @@ import (
 // Duel is the stable id of the existing schema-1 room kind.
 const Duel = "duel"
 
-// Kind binds the room's composition seams to its file codec. Creation still
-// uses the existing create frame; other frame families belong to later slices.
+// Kind binds the room's composition seams to its file codec. Create receives
+// the validated creation frame for that kind, rather than a Duel-only payload.
 // Check refuses a cold join before Manager reserves a room slot. Load restores
 // the concrete actor but does not start it or register it with Manager.
 type Kind struct {
 	ID     string
 	Codec  *store.Codec // nil only for the built-in schema-1 Duel codec
-	Create func(*Manager, *Client, wire.Create) (string, error)
+	Create func(*Manager, *Client, wire.ClientMessage) (string, error)
 	Check  func(*Manager, string, *Client, *string) error
 	Load   func(*Manager, string) (*Handle, error)
 }
@@ -78,7 +78,10 @@ func (r *Kinds) Codecs() *store.Codecs { return r.codecs }
 // HandleConfig supplies only lifetime and delivery operations. It never
 // exposes rules, views, actions or bot observations to Manager.
 // Run must return after Cancel, including any work the actor owns. Cancel
-// must be idempotent and safe before Run starts.
+// must be idempotent and safe before Run starts. An Evict hook that agrees
+// to leave must call Manager.Forget(handle) before returning; a hook refusing
+// eviction must leave it registered. Canceling Run alone is not enough, because
+// Manager must see the freed slot before its next reservation attempt.
 type HandleConfig struct {
 	Run     func()
 	Cancel  func()

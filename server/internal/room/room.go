@@ -77,7 +77,6 @@ type Room struct {
 	// when it must evict one to make room for another (see Manager.reserve).
 	evictable bool      // no connection is attached and nothing is left to save
 	idleSince time.Time // when the last connection left
-	evicting  bool      // a Manager is asking the room to leave memory
 }
 
 // The messages a room's inbox carries.

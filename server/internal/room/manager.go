@@ -442,6 +442,12 @@ func (m *Manager) start(r *Handle) error {
 	if _, ok := m.cfg.Kinds.entries[r.kind]; !ok {
 		return ErrInvalidSpec
 	}
+	// The first persist may publish idle before registration. Copy under mu
+	// here so handle construction can occur on either side of that save.
+	if r.duel != nil {
+		r.evictable = r.duel.evictable
+		r.idleSince = r.duel.idleSince
+	}
 	m.rooms[r.code] = r
 	r.start()
 	return nil
@@ -485,6 +491,7 @@ func (m *Manager) get(code string, c *Client, claim *string) (*Handle, error) {
 	}
 	kind, ok := m.cfg.Kinds.entries[game]
 	if !ok {
+		m.log.Warn("room kind is not registered", "room", code, "game", game)
 		return nil, ErrStorage
 	}
 	if c != nil {

@@ -77,7 +77,10 @@ attach/detach, delivery and eviction messages. Its actor, constructor, bot/revie
 scheduling, identity claims and room-file paths remain intact. `CreateHandle`
 shares code allocation and capacity bookkeeping; `NewHandle` tracks a separate
 actor's run/cancel lifecycle without requiring common rules, state or view types.
-A stale handle cannot unregister its replacement. Existing embedders default to
+A stale handle cannot unregister its replacement. An eviction hook that agrees
+to leave unregisters itself before replying; a refusal keeps the handle
+registered. Initial Duel idle state is synchronized at registration, independent
+of whether its handle was constructed before or after the first save. Existing embedders default to
 Duel alone; production explicitly injects the table and store selector. No
 protocol or client registry changes are part of this seam.
 

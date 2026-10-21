@@ -27,7 +27,7 @@ func fixtureKind() Kind {
 		}
 		err := json.Unmarshal(data, &raw)
 		return kindInspection{raw.Code}, err
-	}}, Create: func(*Manager, *Client, wire.Create) (string, error) { return "", ErrInvalidSpec }, Check: func(*Manager, string, *Client, *string) error { return nil }, Load: func(*Manager, string) (*Handle, error) { return nil, ErrStorage }}
+	}}, Create: func(*Manager, *Client, wire.ClientMessage) (string, error) { return "", ErrInvalidSpec }, Check: func(*Manager, string, *Client, *string) error { return nil }, Load: func(*Manager, string) (*Handle, error) { return nil, ErrStorage }}
 }
 
 func TestRoomKindsRegistration(t *testing.T) {
@@ -105,7 +105,10 @@ func TestRoomKindsDuelDispatch(t *testing.T) {
 	var creates, checks, loads, attaches, detaches, deliveries, evictions atomic.Int32
 	kind := DuelKind()
 	create, check, load := kind.Create, kind.Check, kind.Load
-	kind.Create = func(m *Manager, c *Client, req wire.Create) (string, error) { creates.Add(1); return create(m, c, req) }
+	kind.Create = func(m *Manager, c *Client, req wire.ClientMessage) (string, error) {
+		creates.Add(1)
+		return create(m, c, req)
+	}
 	kind.Check = func(m *Manager, code string, c *Client, claim *string) error {
 		checks.Add(1)
 		return check(m, code, c, claim)

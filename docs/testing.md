@@ -1754,6 +1754,11 @@ make test-go GO_PKGS=./internal/store 'GO_RUN=^TestRoomFile'
 
 ### Room-kind registry
 
+`TestRoomKindIdlePublicationBeforeRegistration` builds a Duel handle before the
+first save and proves its initial idle state remains evictable.
+`TestRoomKindUnmatchedSelectorIsLogged` pins the room/game diagnostic for a
+selector with no matching registry entry.
+
 `TestRoomKindsRegistration` rejects duplicates, incomplete callbacks, invalid or
 mismatched codec ids, replacement of the schema-1 Duel codec and omission of
 Duel. `TestRoomKindsCodecBinding` proves the registry supplies the same immutable
