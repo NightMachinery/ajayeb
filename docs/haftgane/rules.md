@@ -236,7 +236,7 @@ Guilds appear only in Age III, N + 2 of the 10 per game. Each scores at the end 
 
 There are seven boards. Each board has one starting resource, the same on both sides. A day side always has three stages: the first gives points, the second gives the board's special effect (on Gizah, more points), the third gives more points. Night sides vary: two, three or four stages, mixing effects and points.
 
-The abilities below are described by what they do and when they apply; the stage costs are data, settled in [data-rulings.md](data-rulings.md). One night side is still provisional, waiting for a clear photo of the printed board or the owner's acceptance: Babylon's (question Q1). Wherever this page relies on its layout (two stages, the ability on stage 1, no points), it says so.
+The abilities below are described by what they do and when they apply; the stage costs are data, settled in [data-rulings.md](data-rulings.md). One night side, Babylon's (question Q1), is provisional: no photo of the printed board shows it, and the owner accepted its corroborated values on 2026-10-22 until one does. Wherever this page relies on its layout (two stages, the ability on stage 1, no points), it says so.
 
 ### Alexandria: the Lighthouse
 

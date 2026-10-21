@@ -138,4 +138,4 @@ One question remains. The working catalog uses its provisional value, and the re
 
 - **Q1, Babylon night.** Provisional: two stages and no points. Stage 1 costs SS and gives the last card ability; stage 2 costs CCCG and gives a science symbol of your choice. Board Game Arena's data, the wiki and most implementations agree; two implementations differ (ruling 14). No photo of the printed strip has been found. The only night-side photo shows the top of the board (its name, the night mark and the wood starting resource), and the second look, through the galleries of the second edition, its expansions and the first edition, found only day sides and first-edition boards. Settled by: one clear photo of the whole night strip.
 
-The owner may accept Q1 as it stands or hold it for a photo; either way the 80 card designs and the other 39 stages are unaffected.
+The owner accepted Q1 as it stands on 2026-10-22, so it no longer holds the release; a clear photo would still override it. Either way the 80 card designs and the other 39 stages are unaffected.

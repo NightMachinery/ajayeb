@@ -133,7 +133,7 @@ Values that look plausible and are wrong appear in sources that claim the second
 
 ## Open questions
 
-- **Babylon's night side** is provisional, Q1: its two stages, their costs and their effects. It waits for a clear photo of the printed board or the owner's acceptance ([data-rulings.md](data-rulings.md#the-night-side-questions)). The other five night-side questions, Q2 to Q6, were confirmed by photos.
+- **Babylon's night side** is provisional, Q1: its two stages, their costs and their effects. The owner accepted it on 2026-10-22 until a clear photo of the printed board settles it ([data-rulings.md](data-rulings.md#the-night-side-questions)). The other five night-side questions, Q2 to Q6, were confirmed by photos.
 - **Rulings** where the publisher's texts are silent are listed with their reasons in [rules.md](rules.md#ambiguities).
 
 ## How the data was checked

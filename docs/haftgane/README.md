@@ -92,7 +92,7 @@ One question remains:
 
 - **Q1:** the whole Babylon night side. Provisional: two stages, the last-card ability and then a science symbol of your choice, with no points. Board Game Arena's data and the fan wiki agree, but no photo of the printed strip has been found.
 
-[data-rulings.md](data-rulings.md#the-night-side-questions) gives the provisional costs and the photo that would settle it. The release gate needs Q1 settled by a photo or accepted by the owner.
+[data-rulings.md](data-rulings.md#the-night-side-questions) gives the provisional costs and the photo that would settle it. The owner accepted Q1 on 2026-10-22, which satisfies the release gate; a clear photo would still override it.
 
 ### Provisional calls
 

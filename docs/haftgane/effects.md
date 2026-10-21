@@ -6,7 +6,7 @@ This page inventories every distinct effect kind on the cards, wonder stages and
 
 Counts are of card **designs** (80: 27 in Age I, 23 in Age II, 20 in Age III, 10 guilds) and of wonder **stages** (41 over 14 sides), not of physical copies. Glassworks, Press and Loom are separate designs in Age I and Age II with the same name. The counts come from the reference verified in M13 ([data-rulings.md](data-rulings.md)), recounted by a script.
 
-**Provisional values.** One open question remains, Q1 in [data-rulings.md](data-rulings.md#the-night-side-questions): the whole Babylon night side (its two stages, their costs and their effects) waits for a clear photo of the printed board or the owner's acceptance. Every item and size below that rests on it is marked "provisional (Q1)" or "rests on Q1". The other five night-side questions (Q2 to Q6) were confirmed by photos.
+**Provisional values.** One night side stays provisional, Q1 in [data-rulings.md](data-rulings.md#the-night-side-questions): the whole Babylon night side (its two stages, their costs and their effects) has no photo of the printed board; the owner accepted its corroborated values on 2026-10-22, and a clear photo would override them. Every item and size below that rests on it is marked "provisional (Q1)" or "rests on Q1". The other five night-side questions (Q2 to Q6) were confirmed by photos.
 
 ## Duel's effect language in one paragraph
 
