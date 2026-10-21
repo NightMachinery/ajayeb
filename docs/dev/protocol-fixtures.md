@@ -45,31 +45,55 @@ Regeneration uses the existing `make gen` target.
 
 ## Live version-1 compatibility transcript
 
-`server/internal/protocoltest/testdata/platform-v1-game.jsonl` records a
-complete seeded hot-seat game through the real WebSocket, actor and store.
-`TestPlatformV1TranscriptBaseline` compares received bytes without parsing,
-normalizing identities or re-encoding JSON. Each frame has one separator
-newline in the fixture. The synthetic identity, room code, key and setup
-are fixed test inputs, never deployment credentials.
+`server/internal/protocoltest/testdata/platform-v1-game.jsonl` is a compact
+SHA-256 manifest of a complete seeded hot-seat game through the real
+WebSocket, actor and store. Its first line pins the stream's frame count,
+length and SHA-256; each following short line pins one frame's zero-based
+index, kind, length and SHA-256. Frame lengths exclude separators. The
+stream has one newline after each untouched received frame. No fields,
+whitespace or field order are normalized before hashing.
 
 The baseline from `46a540d` contains 76 frames (one welcome, 73 states and
 two rejects), 69 accepted moves ending in a civilian result, and 2,252,287
-bytes including separators. It includes live events, illegal/stale rejects,
-a mid-game resync and a final full-history resync. Existing
-`TestRecordMessages` goldens still pin created, linked, error and uncommon
-state shapes; `TestProtocolFixtures` still pins every named phase and all
-three viewers. The live transcript supplements those fixtures rather than
-replacing or sampling them.
+stream bytes including separators. The manifest occupies 9,128 bytes in
+77 lines, replacing the full 2,252,287-byte recording. It covers live
+events, illegal/stale rejects, a mid-game resync and final history resync.
+The synthetic identity, room code, key and setup are fixed test inputs,
+never deployment credentials.
 
-Only after reviewing an intended protocol change, regenerate this one
-transcript with:
+`TestPlatformV1TranscriptBaseline` compares every frame record and the
+whole stream digest. On mismatch it names the first differing frame with
+expected/actual lengths and digests, saves the actual stream in a persistent
+OS temporary file, and prints a master-capture command and byte-diff
+command. The capture command archives only master's `server/` sources and
+injects this capture test into that temporary copy. It works before the
+test is merged into master, changes no checkout or ref, and cleans the
+source copy on exit. The actual and reference stream files remain available
+for inspection. Missing/extra frames and stream-only metadata differences
+also have bounded diagnostics, without dumping frames into the test log.
+
+Readable shapes stay in the existing `TestRecordMessages` and
+`TestProtocolFixtures` goldens, including additional message shapes,
+every named phase and all three viewers. No readable coverage is sampled
+out or duplicated into this manifest.
+
+After reviewing an intended protocol change, regenerate the manifest:
 
 ```sh
 UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \
   make test-go GO_PKGS=./internal/protocoltest 'GO_RUN=^TestPlatformV1TranscriptBaseline$'
 ```
 
-Then rerun without the update variable and inspect the diff. This fixture
-is not an input to the TypeScript generator, so it does not require editing
-existing generated files. See [../testing.md](../testing.md) for the other
-M14 baselines and the detached procedure for unattended runs.
+To capture this checkout's full stream explicitly, without updating the
+manifest or comparing it in this capture-only invocation:
+
+```sh
+PLATFORM_V1_STREAM_PATH=/tmp/ajayeb-platform-v1-current.jsonl \
+  python3 tools/heavy.py run --kind test -- \
+  go -C server test ./internal/protocoltest -run '^TestPlatformV1TranscriptBaseline$' -count=1
+```
+
+Normal verification leaves both variables unset. This manifest is not an
+input to the TypeScript generator. See [../testing.md](../testing.md) for
+the other M14 baselines and use the detached guard procedure for unattended
+runs.

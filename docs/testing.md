@@ -1703,25 +1703,34 @@ UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \
 
 ### Version-1 frames
 
-`TestPlatformV1TranscriptBaseline` records the real stack's full-game bytes;
-existing engine-view and individual wire-message goldens continue to cover
-all phases, viewer redaction and additional message shapes. See
-[dev/protocol-fixtures.md](dev/protocol-fixtures.md) for the transcript's
-counts, scope and deliberate regeneration command. All these checks run in
+`TestPlatformV1TranscriptBaseline` pins every raw frame's length/SHA-256,
+its index and kind, plus the full stream length/digest. The 9,128-byte
+manifest represents the unchanged 76-frame, 2,252,287-byte game without
+storing another copy of those payloads. Failures identify the first changed
+frame, save the actual stream and print commands to reproduce master's
+stream and compare the bytes. Existing readable engine-view and individual
+wire-message goldens retain all named phases, viewer redaction and
+additional message shapes. See [dev/protocol-fixtures.md](dev/protocol-fixtures.md)
+for capture and deliberate manifest regeneration. These checks run in
 `make verify-quick`, without a browser.
 
 ### Entry imports and bytes
 
 `web/src/platform-imports.test.ts` parses runtime imports, re-exports,
-literal dynamic imports and asset globs. It records the root layout, Home
-and `/play/<code>` import edges in `web/src/testdata/platform-imports.json`,
-separating eager reachability from lazy edges and ignoring whole-declaration type-only imports.
-Unresolved local edges and unsupported runtime imports fail closed. The
-eager closures contain 162, 57 and 360 nodes respectively (including
-external modules/assets), with 309, 406 and 1,066 total edges. No eager
-closure may contain Haftgane code. A changed import graph requires review
-before its golden is updated; a lazy edge is not permission for an eager
-import through another path. Regenerate with:
+literal dynamic imports and asset globs, excluding whole-declaration
+type-only imports. The fixture `web/src/testdata/platform-imports.json`
+keeps only each entry's sorted set of eager modules: root layout 162,
+Home 57, Duel route 360 (including external modules/assets). It occupies
+23,291 bytes in 596 lines, down from 268,086 bytes and 9,507 lines.
+
+The test computes eager edges and shortest predecessor paths in memory.
+An unexpected module fails with its name, entry and full import path;
+missing modules and unsorted/duplicate sets also fail. Eager Haftgane code
+is forbidden even if mistakenly added to the expected set. Lazy-only
+changes do not alter this fixture, and no full edge list is stored.
+Unresolved eager local edges and nonliteral runtime imports encountered
+in the eager closure fail closed. Review a changed eager module set before
+regenerating it:
 
 ```sh
 UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \

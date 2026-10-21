@@ -6,12 +6,14 @@ import { parse } from 'svelte/compiler';
 import ts from 'typescript';
 import { expect, it } from 'vitest';
 
-type Edge = { from: string; to: string; kind: 'eager' | 'lazy' };
+type ImportKind = 'eager' | 'lazy';
+type EagerBaseline = { entry: string; eager: string[] };
+type EagerGraph = EagerBaseline & { parents: Map<string, string | null> };
 const src = fileURLToPath(new URL('.', import.meta.url));
 const golden = new URL('./testdata/platform-imports.json', import.meta.url);
 const entries = ['routes/+layout.svelte', 'routes/+page.svelte', 'routes/play/[code]/+page.svelte'];
 
-function imports(file: string, input?: string): { specifier: string; kind: Edge['kind'] }[] {
+function imports(file: string, input?: string): { specifier: string; kind: ImportKind }[] {
   let text = input ?? readFileSync(path.join(src, file), 'utf8');
   if (file.endsWith('.svelte')) {
     const component = parse(text, { modern: true });
@@ -34,7 +36,7 @@ function imports(file: string, input?: string): { specifier: string; kind: Edge[
   }
   const ast = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const found: ReturnType<typeof imports> = [];
-  const add = (specifier: string, kind: Edge['kind']) => found.push({ specifier, kind });
+  const add = (specifier: string, kind: ImportKind) => found.push({ specifier, kind });
   function visit(node: ts.Node): void {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       // Binding-level type imports can emit `import {} from ...` under
@@ -90,43 +92,91 @@ function resolve(from: string, specifier: string): string {
   return path.relative(src, target).split(path.sep).join('/');
 }
 
-function graph(entry: string) {
+// Keep predecessor paths in memory only. Breadth-first traversal makes
+// each reported import chain shortest; sorted neighbours make ties stable.
+function eagerGraph(entry: string, dependencies: (file: string) => string[]): EagerGraph {
   const pending = [entry];
-  const seen = new Set<string>();
-  const edges: Edge[] = [];
-  while (pending.length) {
-    const file = pending.pop()!;
-    if (seen.has(file)) continue;
-    seen.add(file);
-    if (!/\.(svelte|ts|js)$/.test(file)) continue;
-    for (const { specifier, kind } of imports(file)) {
-      const to = resolve(file, specifier);
-      edges.push({ from: file, to, kind });
-      if (!to.startsWith('external:')) pending.push(to);
+  const parents = new Map<string, string | null>([[entry, null]]);
+  for (const file of pending) {
+    for (const to of dependencies(file).sort()) {
+      if (parents.has(to)) continue;
+      parents.set(to, file);
+      pending.push(to);
     }
   }
-  const unique = [...new Map(edges.map((e) => [JSON.stringify(e), e])).values()];
-  unique.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
-  const eager = new Set([entry]);
-  for (let size = -1; size !== eager.size;) {
-    size = eager.size;
-    for (const e of unique) if (e.kind === 'eager' && eager.has(e.from)) eager.add(e.to);
-  }
-  return { entry, eager: [...eager].sort(), edges: unique };
+  return { entry, eager: [...parents.keys()].sort(), parents };
 }
 
-it('pins root, Home and Duel runtime import edges and excludes eager Haftgane code', () => {
+function graph(entry: string): EagerGraph {
+  return eagerGraph(entry, (file) => {
+    if (file.startsWith('external:') || !/\.(svelte|ts|js)$/.test(file)) return [];
+    return imports(file)
+      .filter(({ kind }) => kind === 'eager')
+      .map(({ specifier }) => resolve(file, specifier));
+  });
+}
+
+function importPath(graph: EagerGraph, module: string): string {
+  const chain = [module];
+  for (let from = graph.parents.get(module); from != null; from = graph.parents.get(from))
+    chain.push(from);
+  return chain.reverse().join(' -> ');
+}
+
+function checkEagerBaseline(expected: EagerBaseline, actual: EagerGraph): void {
+  if (expected.entry !== actual.entry)
+    throw new Error(`entry baseline mismatch: ${expected.entry} versus ${actual.entry}`);
+  const wanted = new Set(expected.eager);
+  const unexpected = actual.eager.find((module) => !wanted.has(module) || /haftgane/i.test(module));
+  if (unexpected)
+    throw new Error(
+      `Unexpected eager module ${unexpected} for ${actual.entry}; import path: ${importPath(actual, unexpected)}`
+    );
+  const present = new Set(actual.eager);
+  const missing = expected.eager.find((module) => !present.has(module));
+  if (missing)
+    throw new Error(
+      `Missing eager module ${missing} for ${actual.entry}; review before regenerating its sorted module set.`
+    );
+  if (JSON.stringify(expected.eager) !== JSON.stringify(actual.eager))
+    throw new Error(`Eager module set for ${actual.entry} must be sorted and unique.`);
+}
+
+it('pins root, Home and Duel eager modules and reports unexpected import paths', () => {
   const actual = entries.map(graph);
-  for (const entry of actual)
-    expect(entry.eager.filter((file) => /haftgane/i.test(file))).toEqual([]);
-  const bytes = JSON.stringify(actual, null, 2) + '\n';
   if (process.env.UPDATE_PLATFORM_BASELINES === '1') {
     mkdirSync(new URL('./testdata/', import.meta.url), { recursive: true });
-    writeFileSync(golden, bytes);
+    writeFileSync(
+      golden,
+      JSON.stringify(
+        actual.map(({ entry, eager }) => ({ entry, eager })),
+        null,
+        2
+      ) + '\n'
+    );
   }
-  if (bytes !== readFileSync(golden, 'utf8')) {
-    throw new Error('Entry imports changed; review eager versus lazy edges before regenerating.');
-  }
+  const expected = JSON.parse(readFileSync(golden, 'utf8')) as EagerBaseline[];
+  expect(expected.length).toBe(actual.length);
+  for (const [index, entry] of actual.entries()) checkEagerBaseline(expected[index]!, entry);
+});
+
+it('names the shortest eager import path and permits lazy-only module changes', () => {
+  const dependencies: Record<string, string[]> = {
+    root: ['bridge', 'detour'],
+    bridge: ['new-module'],
+    detour: ['longer'],
+    longer: ['new-module']
+  };
+  const actual = eagerGraph('root', (file) => dependencies[file] ?? []);
+  expect(() =>
+    checkEagerBaseline({ entry: 'root', eager: ['bridge', 'detour', 'longer', 'root'] }, actual)
+  ).toThrow(
+    'Unexpected eager module new-module for root; import path: root -> bridge -> new-module'
+  );
+  expect(() => checkEagerBaseline({ entry: 'root', eager: actual.eager }, actual)).not.toThrow();
+  expect(
+    imports('fixture.ts', "void import('./lazy-only');").filter(({ kind }) => kind === 'eager')
+  ).toEqual([]);
 });
 
 it('retains module side effects from binding-level type imports and empty re-exports', () => {
