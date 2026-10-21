@@ -419,7 +419,7 @@ Scope (components as named in [phone-layout.md](../haftgane/phone-layout.md)):
 10. `M18.sound-and-motion` (LIGHT). Cue planning for this game's events (a decision opening, the reveal, conflicts, the end) within the cue budget, and the animations under D21.
 11. `M18.rules-reference` (LIGHT). Haftgane's rules reference, from Home and the game menu, as Duel has. No draft planned it.
 12. `M18.persian-messages` (LIGHT). Persian for every new message, with the native check deferred as it is for Duel. No draft planned it.
-13. `M18.shared-lobby` (FULL). Duel's side of the shared lobby (D60): Duel's create path from a lobby started with two seats, with the lobby's creator as the game's only admin for its hint settings (D23) and a two-seat Start refused unless the creator holds a seat, the two-seat settings panel, and the retirement of Duel's online sheet and its start-when-the-friend-joins flow, with Duel's online e2e updated. The lobby room kind itself comes with `M16.haftgane-room-actor`.
+13. `M18.shared-lobby` (FULL). Duel's side of the shared lobby (D60): Duel's create path from a lobby started with two seats, carrying the lobby's admins so that any of them may edit the game's hint settings (D23), the two-seat settings panel, and the retirement of Duel's online sheet and its start-when-the-friend-joins flow, with Duel's online e2e updated. The lobby room kind itself comes with `M16.haftgane-room-actor`.
 14. `M18.table-playthroughs` (NONE). The e2e playthroughs below and a layout spec.
 
 Acceptance:

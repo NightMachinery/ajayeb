@@ -63,7 +63,7 @@ The design documents are kept as they were reviewed, so a few points are settled
 - **Seen hands:** kept, with summary statistics built only from what the player knows, each certain or an upper bound.
 - **Recovery:** replaced by admin powers. An admin may switch any seat between a human and a bot at any time; a human replaced by a bot watches, and the bot plays their pick.
 - **Seating:** random by default, with the lobby order as an admin's option.
-- **Hint settings:** any admin may edit them in a Haftgane game. Duel keeps a single admin, the creator, also when a Duel game starts from the lobby (D23, D60).
+- **Hint settings:** any admin may edit them, in a Haftgane game and in a Duel game started from the lobby (D23, D60).
 - **Undo:** only in a game that started with exactly one human seat, and off for the rest of the game once a second human takes a seat.
 - **Bot strength:** equal work per bot at every table size.
 - **Bot levels:** the public release waits for Scholar. Apprentice first plays in an internal milestone, and Master may follow later.
