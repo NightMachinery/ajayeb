@@ -49,8 +49,8 @@ const (
 type Outbox struct {
 	mu       sync.Mutex
 	queue    []wire.ServerMessage
-	other    int // frames in queue that are not wire.State
-	states   int // frames in queue that are wire.State, one per room
+	other    int // non-snapshot frames in queue
+	states   int // typed snapshots, one per room across all families
 	overflow bool
 	closed   bool
 	ready    chan struct{} // capacity 1: a token means "queue may be non-empty"
@@ -68,9 +68,17 @@ func (o *Outbox) Push(m wire.ServerMessage) {
 	if o.closed {
 		return
 	}
-	if st, ok := m.(wire.State); ok {
+	switch st := m.(type) {
+	case wire.State:
+		o.dropOtherFamily(st.Code, "duel")
 		o.pushState(st)
-	} else {
+	case wire.TableState:
+		o.dropOtherFamily(st.Code, "haftgane")
+		o.pushTableState(st)
+	case wire.LobbyState:
+		o.dropOtherFamily(st.Code, "lobby")
+		o.pushLobbyState(st)
+	default:
 		if o.other >= MaxPendingFrames {
 			o.overflow = true
 		} else {

@@ -107,7 +107,7 @@ it, so all of them count as one client address.
    The server derives the user id from the token and answers `welcome`. A
    wrong first frame ends the connection:
    - no frame within 10 seconds: closed with 1008 `hello timeout`;
-   - a `hello` whose `v` is not the server's protocol version: an `error`
+   - a `hello` whose `v` is neither 1 nor 2: an `error`
      frame with code `protocol`, then 1008 `protocol`;
    - anything else (not a `hello`, malformed JSON, a token of the wrong
      shape): an `error` frame with code `bad-hello`, then 1008 `bad-hello`.
@@ -149,8 +149,8 @@ socket without a closing handshake, so the client sees 1006 (abnormal
 closure).
 
 A client reconnects with backoff and jitter after any close it did not ask
-for, except after `protocol` and `bad-hello`, which another try cannot fix:
-`protocol` means the server runs a newer build (reload the page) and
+for, except after `protocol` and `bad-hello`, which another identical try
+cannot fix: `protocol` means the builds cannot negotiate (reload the page) and
 `bad-hello` means the client itself is wrong.
 
 ### Pings
@@ -183,6 +183,15 @@ the pending `state` frames may belong to at most 4 rooms (a connection is in
 one room at a time; a few cover a switch from one room to the next). A
 connection that lets more pile up is closed with 1008 `client too slow`.
 
+The same four-room snapshot budget covers Duel `state`, Haftgane
+`table-state` and `lobby-state`. A snapshot of a new family under the same
+code replaces the old family without inheriting its ack, history or events.
+Table snapshots have their own typed merge: nondecreasing `revision` and
+`batch` continue history/events, while undo's lower `batch` drops them. An
+explicit new history supersedes earlier events. The newest frame inherits an
+absent ack even after undo. Lobby snapshots contain the full public log and
+inherit only an absent ack. The event cap remains 256.
+
 ## Client frames
 
 Every client frame is checked strictly. After `hello`, a frame with an
@@ -200,7 +209,8 @@ The first frame of every connection.
 {"t": "hello", "v": 1, "token": "Vf3kQ9xZr2LmT8wB1nYc0A", "name": "Sara", "clientId": "4f1c9a2e7b5d"}
 ```
 
-- `v` is the protocol version the client was built for, currently 1. A
+- `v` is the requested protocol version, 1 or 2. The shipped Duel client
+  still requests 1. A
   `hello` without `v` counts as version 0.
 - `token` is the user's identity token: 16 random bytes as 22 characters of
   unpadded base64url, made once by the browser and kept in `localStorage`.
@@ -505,7 +515,7 @@ Answers `hello`.
 {"t": "welcome", "v": 1, "server": {"version": "dev", "rules": 1}}
 ```
 
-- `v` is the protocol version the server speaks.
+- `v` echoes the accepted hello version, 1 or 2.
 - `server.version` is the build version (from `git describe`; `dev` for a
   development build).
 - `server.rules` is the engine's rules version, the same number the game
@@ -841,7 +851,8 @@ it again with the same `seq`.
   with settings the server refuses.
 - `bad-hello`: the first frame was not a valid `hello`. The connection
   closes (1008).
-- `protocol`: the `hello` asked for a protocol version the server does not
+- `protocol`: a v1 connection requested a non-Duel room, or the `hello`
+  asked for a protocol version the server does not
   speak. The connection closes (1008).
 - `busy`: the server holds as many rooms in memory as it can, and every one
   of them has a connection (a `create`, a `rematch`, or a `join` that must
@@ -854,9 +865,158 @@ it again with the same `seq`.
   the connection has left the room. A join without the claim, or with a
   fresh link, may follow.
 
+## Protocol 2: table and shared lobby
+
+Hello accepts versions 1 and 2; welcome echoes that choice. The existing
+`ProtocolVersion` and shipped Duel client remain 1. Duel's requests, `state`,
+events, `reject`, `linked` and errors have one contract on both versions,
+without a game discriminator added to Duel frames. The remaining Duel
+sections on this page describe that unchanged contract.
+
+Version 2 adds these frozen client families: `table-pick`, `table-undo`,
+`table-seat`, `table-role`, `table-resign`, `lobby-create`, `lobby-edit`,
+`lobby-role`, `lobby-start`. Their server families are `table-state`,
+`table-reject`, `lobby-state` and `lobby-reject`. The Go DTOs live in
+`wire/platform.go`, `table.go` and `lobby.go`; `make gen` writes their separate
+`platform.gen.ts`. No table or lobby actor/codec is registered in production
+at M14.protocol-game-frames, so these envelopes do not enable room creation.
+
+A v1 table/lobby request or a v1 join of any non-Duel room receives the
+existing `error` with `code: "protocol"`. Join refuses before admission,
+restore, or seat attachment, for both cold and already loaded rooms. A clean
+unsupported file header can supply this refusal without decoding its body.
+An unsupported hello version still ends the connection with status 1008;
+a room-operation protocol refusal leaves it connected. A cached v2 client
+meeting an old v1-only server receives that server's existing hello refusal.
+There is no new negotiation error or room-info operation.
+
+`join`, `leave`, `resync`, `link`, `relink` and `rematch` route by the room's
+actual registered kind and authenticated membership. Neither a family nor a
+request can choose a Go package or codec. Link/relink keep their existing
+names and fields, with seats 0 through 6 available on v2 for non-Duel rooms;
+Duel keeps its historical 0/1 validation and default. The private `linked`
+answer has the same `t`, `code`, `seat`, `claim` fields, with the wider seat
+range in `PlatformLinked`. A rematch's successor code arrives in `created`.
+The generic browser entry's hello and join must remain behind the existing
+name prompt, so a cold invite cannot claim a seat with an empty name.
+
+### Strict platform requests
+
+Every new non-pointer field is required, including `seq: 0`, `seat: 0`, and
+false booleans. Optional fields are omitted, never null. Unknown fields,
+duplicate fields, wrong case, nested unknown fields, trailing JSON, negative
+counters and out-of-range seats fail with the family's private `bad-request`.
+The existing 8192-byte input cap applies. Codes, user ids, point ids and keys
+must be nonempty and bounded; control/invisible formatting characters are
+refused. Bot difficulty is `easy`, `normal` or `hard`. The actor separately
+checks authorization and membership in its own offered legal set.
+
+All table requests carry `t`, `code` and nonnegative `seq`:
+
+- `table-pick` adds `point: {id, revision}`, `key` and `confirm`. `id` is the
+  logical point's string id, such as `age-1-turn-1`; `revision` is the durable
+  revision at its opening. The connection's current seat supplies the actor,
+  with no client seat override. Sending the same key with false withdraws a
+  confirmation. The last required confirmation resolves the point once.
+- `table-undo` adds nonnegative `base`, the last received transport revision.
+  Only the original sole human while still controlling their seat can undo,
+  if the Start policy allowed it and no second human has since taken a seat.
+- `table-seat` adds `seat` (0 through 6), `control` (`human` or `bot`), and
+  exactly one of `userId` (a spectator to seat) or `bot` (difficulty).
+  An admin switch keeps the seat's pending pick. A bot confirms it; a newly
+  seated human may change it. The replaced human becomes a spectator.
+- `table-role` adds `op`: `promote` or `demote` requires `userId`;
+  `step-down` forbids it and targets the sender. Temporary admins cannot
+  promote or demote; the actor enforces creator and promotion ownership.
+- `table-resign` adds required `confirm: true`. It replaces the sender with a
+  bot and does not award a terminal victory.
+
+The point reference persists while a point remains open, including across
+restart. Advance or undo opens a fresh reference derived from the logical
+id and existing durable revision, without an epoch or pending hash. Revision
+must never wrap or be reused. Only the logical id enters canonical batches
+and bot entropy. Sequence deduplication is per authenticated user/client;
+an old seq must never overwrite a newer accepted pick. Repeating an accepted
+seq is harmless. Other viewers receive neither the pending key nor any
+revision or metadata change that reveals private edit frequency.
+
+`lobby-create` carries `t`, `seatCount` (2 through 7) and `options`. It creates
+a shared lobby, not a client-selected game. Start selects Duel for two seats,
+Haftgane for three through seven. Options replace the complete platform
+options object: optional `seating` (`random` or `lobby`, default random),
+`firstPlayer` (Duel seat 0/1, absent means random), `allowUndo` (default true),
+and `finalReveal` (default true). Disabling final reveal also disables the
+finished game's log download. Game-specific options await their own contract.
+
+Other lobby requests carry `t`, `code` and nonnegative `seq`:
+
+- `lobby-edit` carries `op` and exactly that operation's payload:
+  `seats` requires `seatCount`; `options` requires `options`; `add-bot`
+  requires `seat` and `bot`; `remove-bot` requires `seat`; `seat` requires
+  `seat` and `userId`; `remove-human` requires `userId`; `release` has no
+  payload; `open-reservation` requires `seat`. Except releasing one's own
+  slot, these are admin operations. Unrelated known fields are refused.
+- `lobby-role` carries the same `op`/`userId` shape and policy as `table-role`.
+- `lobby-start` carries required `fillBots`, true or false. The sender must
+  be a seated human admin. Every seat must be filled, or `fillBots: true`
+  explicitly fills open slots. Reserved seats must first be opened; they
+  are never silently filled. There is no ready or roster-revision counter.
+
+### Platform snapshots and rejects
+
+`table-state` carries `t`, `game: "haftgane"`, `code`, `revision`, `batch`,
+`status` (`playing` or `finished`), `seats`, `humans`, `you`,
+`startingHumanCount`, `allowUndo`, `undoOff`, `finalReveal`, `events`,
+`roomLog` and `view`. Optional fields are `point`, `pending`, `ack` and
+`history`. `revision` orders changes visible to this viewer; private edits
+advance only their owner's frame. `batch` counts completed batches and goes
+back on undo. Starting human count and allowUndo freeze at Start; undoOff
+can only turn on afterward. `point` is `{ref: {id, revision}, kind, required,
+confirmed}`, with sorted seat arrays. `pending` is `{key, confirm}`, sent
+only to its owning seat. A spectator receives neither pending nor private
+view fields. `ack` is `{clientId, seq}` in the submitting connection's frame.
+
+The named `TableView` and public `TableEvent` placeholders are empty objects
+in this slice. M15.haftgane-views-and-observation supplies their whitelist
+projection and public outcome fields. They must never become arbitrary JSON
+or serialize engine state. `history` is a complete safe list of
+`{batch, events}` entries, with events describing resolved public outcomes,
+never hidden submitted keys. Collections are JSON arrays, never null.
+
+`lobby-state` carries `t`, `game: "lobby"`, `code`, `revision`, `seatCount`,
+`options`, `seats`, `humans`, `you`, `canStart`, `roomLog`, and optional `ack`.
+It is a full snapshot with the same role metadata. Start replaces the lobby
+under the same code; the next snapshot's family selects the game entry.
+
+Both snapshots use these fixed metadata shapes:
+
+- A seat is `{seat, kind}` with kind `open`, `reserved`, `human` or `bot`,
+  plus optional `userId` or `bot` as appropriate.
+- A human is `{userId, name, nameNo, connected, creator, admin, temporary}`
+  and optional `promotedBy`. Real admins, their promotion ownership and
+  temporary status persist. A returning real admin removes temporary status;
+  selection of a temporary admin follows the five-minute absence policy.
+- `you` is `{userId}` with optional current `seat`. Only an admin's own
+  `you` may also carry `previousSeats`, a list of `{userId, seat}` hints for
+  spectators. Former controllers and ordinary spectators receive no hints.
+- `roomLog` is the bounded public log, with entries `{kind, at, by}` and
+  optional `userId`, `seat`, `control`, `role`. Kind is `seat`, `role`,
+  `resign` or `link`; `at` is a completed batch count (zero in the lobby),
+  `by` the acting user; control is `human`/`bot`, role
+  `admin`/`temporary`/`human`. Every seat switch and role change is public.
+  Entries disclose no claims, private picks, observations or seeds.
+
+`table-reject` and `lobby-reject` carry only `t`, `seq`, and `code`, and go
+only to the submitting connection. Table codes are `decision-closed` (old
+or resolved point), `illegal` (unoffered key), `stale` (old sequence),
+`bad-request`, `not-admin`, `forbidden`, `rate`, and `storage`.
+Lobby codes are `bad-request`, `stale`, `not-admin`, `forbidden`, `rate`,
+and `storage`. A failed durable transaction reports storage without
+publishing the candidate or revealing another seat's information.
+
 ## Versions, idempotency and reconnecting
 
-### The room version
+### The Duel room version
 
 Every room has a **version**, an integer that goes up by one with every
 applied action (a player's or a bot's) and every undo, and never goes down:

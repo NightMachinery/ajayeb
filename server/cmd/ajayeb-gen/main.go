@@ -11,7 +11,8 @@
 // types themselves: the fixtures subcommand with its defaults
 // (fixtures.gen.ts), and the presentation catalog as a TypeScript module
 // (catalog.gen.ts, the same as catalog -format ts). A later generator that
-// also belongs in that default sweep gets a call here alongside them.
+// also belongs in that default sweep gets a call here alongside them. The
+// separate platform DTO pass writes platform.gen.ts without changing Duel output.
 //
 // fixtures turns real recorded server output into a TypeScript fixture file
 // that make check-web type-checks against the generated wire types:
@@ -58,7 +59,7 @@ func main() {
 }
 
 const usage = `Usage:
-  ajayeb-gen                     regenerate the TypeScript under web/src/lib/wire (fixtures.gen.ts and catalog.gen.ts)
+  ajayeb-gen                     regenerate the TypeScript under web/src/lib/wire (fixtures.gen.ts, catalog.gen.ts and platform.gen.ts)
   ajayeb-gen fixtures [flags]    write the wire and protocol fixtures (ajayeb-gen fixtures -help for the flags)
   ajayeb-gen catalog [flags]     dump the catalog (ajayeb-gen catalog -help for the flags)
 `
@@ -107,11 +108,13 @@ func run(args []string, stdout, stderr io.Writer) int {
 // genPaths are the inputs and outputs of the default run.
 type genPaths struct {
 	fixturesOut, catalogOut, messagesDir, protocolDir string
+	platformOut                                       string
 }
 
 // defaultPaths are relative to server/, where make gen runs this command.
 var defaultPaths = genPaths{
 	fixturesOut: defaultFixturesOut,
+	platformOut: "../web/src/lib/wire/platform.gen.ts",
 	catalogOut:  defaultCatalogTSOut,
 	messagesDir: defaultMessagesDir,
 	protocolDir: defaultProtocolDir,
@@ -127,6 +130,12 @@ func runDefault(stdout io.Writer, p genPaths) error {
 		return err
 	}
 	fmt.Fprintf(stdout, "wrote %s\n", p.catalogOut)
+	if p.platformOut != "" {
+		if err := generatePlatform(p.platformOut); err != nil {
+			return err
+		}
+		fmt.Fprintf(stdout, "wrote %s\n", p.platformOut)
+	}
 	return nil
 }
 

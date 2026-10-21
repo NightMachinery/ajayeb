@@ -1752,6 +1752,42 @@ make test-go GO_PKGS=./internal/store
 make test-go GO_PKGS=./internal/store 'GO_RUN=^TestRoomFile'
 ```
 
+### Protocol-2 game envelopes
+
+`TestPlatformStrictDecoders` and `TestPlatformInvalidValues` cover all frozen
+table/lobby request families, missing required fields (zero and false
+included), nulls, duplicate/unknown fields, exact spelling, nested options,
+operation-specific payloads and input bounds. `TestPlatformLeavesDuelRequestsUnchanged`
+compares v1/v2 decoding of the existing request corpus, including the common
+Duel device-link defaults. Platform DTOs generate separately into
+`web/src/lib/wire/platform.gen.ts`; `web/src/platform-frames.test.ts` compiles
+all new discriminator families against its generated unions. `make gen-check`
+must leave every existing
+Duel generated file and fixture byte-identical.
+
+`TestPlatformDuelPlaysOnBothVersions` completes a real-socket Duel game on
+each version, with action/reject/duplicate/undo/reconnect checks.
+`TestPlatformFamiliesAtTransportBoundary` checks welcome echoes, v1 platform
+refusals and v2 strict family rejects without enabling production creation.
+`TestPlatformV1AdmissionBeforeAnySeatClaim` covers cold and loaded non-Duel
+handles, a production-unsupported codec, preserved file bytes and refusal
+before admission, load or attachment. `TestPlatformDispatchByActualKind`
+uses a test-only handle to check authenticated sender routing for common
+operations and family isolation. Production registration remains Duel-only.
+
+`TestTableOutboxSlowClientAndUndo` checks forward event/history/ack retention,
+latest private pick, full-history replacement, undo and backward revision.
+`TestTableOutboxBoundsAndFamilySwitch` checks the 256-event cap, shared
+four-room snapshot budget and cross-family replacement under one room code.
+The original typed Duel merge and tests remain unchanged.
+
+The unchanged M14 v1 transcript digest manifest is a separate byte-exact
+check, without baseline regeneration. Full acceptance also runs the race
+suite over wire/ws/room/protocoltest/store/cmd/ajayeb, `make verify-quick`,
+and the online full-game/spectator/reconnect and leak Playwright specs on
+desktop and mobile with retries disabled. No engine or arbitrary hidden
+payload is used to fill the named M15 view/event placeholders.
+
 ### Room-kind registry
 
 `TestRoomKindIdlePublicationBeforeRegistration` builds a Duel handle before the

@@ -38,6 +38,12 @@ func claimHolder(cl Claims, code string, seats [2]store.Seat, claim string) (str
 // Link routes a link frame (a request for one seat's device link) to c's
 // room.
 func (m *Manager) Link(ctx context.Context, c *Client, l wire.Link) error {
+	if h := m.foreignJoined(c, l.Code); h != nil {
+		return m.commonPlatform(ctx, c, h, l)
+	}
+	if l.Seat < 0 || l.Seat > 1 {
+		return m.requestFailed(c, 0, ErrInvalidSpec)
+	}
 	r, err := m.joinedRoom(c, l.Code)
 	if err == nil {
 		err = r.post(ctx, msgLink{c: c, seat: l.Seat})
@@ -48,6 +54,12 @@ func (m *Manager) Link(ctx context.Context, c *Client, l wire.Link) error {
 // Relink routes a relink frame (the reset of one seat's device link) to
 // c's room.
 func (m *Manager) Relink(ctx context.Context, c *Client, l wire.Relink) error {
+	if h := m.foreignJoined(c, l.Code); h != nil {
+		return m.commonPlatform(ctx, c, h, l)
+	}
+	if l.Seat < 0 || l.Seat > 1 {
+		return m.requestFailed(c, 0, ErrInvalidSpec)
+	}
 	r, err := m.joinedRoom(c, l.Code)
 	if err == nil {
 		err = r.post(ctx, msgLink{c: c, seat: l.Seat, reset: true})

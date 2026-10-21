@@ -228,6 +228,7 @@ func TestRoomKindsAdmissionBeforeReserve(t *testing.T) {
 			t.Fatal(err)
 		}
 		c := NewClient("outsider", "outsider-tab", "Outsider")
+		c.ProtocolVersion = wire.PlatformProtocolVersion
 		want := ErrForbidden
 		if game == "unregistered" {
 			want = ErrStorage
@@ -339,7 +340,15 @@ func TestRoomKindsForeignLoadUsesRegisteredHandle(t *testing.T) {
 				attaches.Add(1)
 				return nil
 			},
-			Detach: func(*Client) { detaches.Add(1) }, Deliver: func(context.Context, any) error { t.Error("Duel request sent to foreign actor"); return nil },
+			Detach: func(*Client) { detaches.Add(1) }, Deliver: func(_ context.Context, message any) error {
+				inbound, ok := message.(Inbound)
+				if !ok {
+					t.Error("non-platform delivery to foreign actor")
+				} else if _, ok := inbound.Frame.(wire.Resync); !ok {
+					t.Error("unexpected common request")
+				}
+				return nil
+			},
 			Evict: func(context.Context) error { evicts.Add(1); m.Forget(loaded); cancel(); return nil },
 		})
 		loaded = h
@@ -364,6 +373,7 @@ func TestRoomKindsForeignLoadUsesRegisteredHandle(t *testing.T) {
 	}
 	defer m.Close()
 	a, b := NewClient("owner", "a", "A"), NewClient("owner", "b", "B")
+	a.ProtocolVersion, b.ProtocolVersion = wire.PlatformProtocolVersion, wire.PlatformProtocolVersion
 	for _, c := range []*Client{a, b} {
 		if err := m.Join(context.Background(), c, "REGAAA"); err != nil {
 			t.Fatal(err)
@@ -372,8 +382,8 @@ func TestRoomKindsForeignLoadUsesRegisteredHandle(t *testing.T) {
 	if loads.Load() != 1 || attaches.Load() != 2 || m.Len() != 1 {
 		t.Fatal("cold kind loader or warm handle bypassed")
 	}
-	if err := m.Resync(context.Background(), a, "REGAAA"); !errors.Is(err, ErrNotJoined) {
-		t.Fatalf("Duel-only request reached foreign kind: %v", err)
+	if err := m.Resync(context.Background(), a, "REGAAA"); err != nil {
+		t.Fatalf("common resync did not reach foreign kind: %v", err)
 	}
 	if _, err := m.Snapshot(context.Background(), "REGAAA"); !errors.Is(err, ErrInvalidSpec) {
 		t.Fatalf("foreign state exposed as Duel snapshot: %v", err)

@@ -84,6 +84,15 @@ of whether its handle was constructed before or after the first save. Existing e
 Duel alone; production explicitly injects the table and store selector. No
 protocol or client registry changes are part of this seam.
 
+M14.protocol-game-frames adds negotiated hello versions 1/2, keeping Duel's
+DTOs and actor unchanged. New table/lobby envelopes have strict separate
+decoding, authenticated `Inbound` delivery and typed snapshot queues.
+Join gates v1 before non-Duel admission or attachment. Common resync,
+device-link and rematch operations route by the joined handle's actual kind.
+Production still registers Duel alone; no new view or rules implementation
+is hidden in the platform envelope. See [protocol.md](protocol.md) for the
+frozen families and the named M15 projection placeholders.
+
 ## App shell
 
 The client ships with a service worker, `web/src/service-worker.ts`, served as `/service-worker.js`. It precaches the build of its version (the `_app/immutable/` files, the content-hashed fonts among them, the shell `index.html`, and the favicon, manifest and app icons), answers page loads network first with the cached shell as the offline fallback, caches `?v=`-hashed art at runtime in a bounded cache, and never touches `/ws`, `/api/*` or `/health`. Art-cache lookups and LRU refreshes share a transaction queue, so an offline request cannot mistake an entry being reordered for an uncached file. The app opens without a network and shows its own offline state; playing still needs the server. A new version waits while a game page is open. The server's headers above already fit it, so nothing on the server or a reverse proxy changes: the hashed files are immutable for a year, while the shell, `/service-worker.js`, the manifest, the favicon and the icons keep stable names and are revalidated on every load. [web/README.md](../web/README.md#app-shell) has the details.

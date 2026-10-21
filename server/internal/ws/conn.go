@@ -218,7 +218,7 @@ func (c *conn) readLoop() {
 				c.end(websocket.StatusPolicyViolation, "rate limit", false)
 				return
 			}
-			c.out.Push(wire.NewReject(peekSeq(data), wire.RejectCodeRate, "too many frames; slow down"))
+			c.rejectRequest(data, "rate", "too many frames; slow down")
 			continue
 		}
 		c.rejects = 0
@@ -234,13 +234,37 @@ func (c *conn) handle(data []byte) bool {
 	if c.client == nil {
 		return c.hello(data)
 	}
-	msg, err := wire.DecodeClient(data)
+	if c.client.ProtocolVersion != wire.PlatformProtocolVersion && wire.PlatformFamily(data) != "" {
+		c.out.Push(wire.NewError(wire.ErrorCodeProtocol, "this request requires protocol version 2"))
+		return true
+	}
+	msg, err := wire.DecodeClientVersion(data, c.client.ProtocolVersion)
 	if err != nil {
-		c.out.Push(wire.NewReject(peekSeq(data), wire.RejectCodeBadRequest, "malformed frame"))
+		c.rejectRequest(data, "bad-request", "malformed frame")
 		return true
 	}
 	rooms := c.s.cfg.Rooms
 	switch m := msg.(type) {
+	case wire.LobbyCreate:
+		if !c.s.allowCreate(c.client.UserID, c.key) {
+			c.out.Push(wire.NewLobbyReject(0, "rate"))
+			return true
+		}
+		if platform, ok := rooms.(platformRooms); ok {
+			_, err = platform.CreatePlatform(c.ctx, c.client, m)
+		} else {
+			c.out.Push(wire.NewLobbyReject(0, "bad-request"))
+		}
+	case wire.TablePick, wire.TableUndo, wire.TableSeat, wire.TableRole, wire.TableResign, wire.LobbyEdit, wire.LobbyRole, wire.LobbyStart, wire.PlatformLink, wire.PlatformRelink:
+		if _, undo := m.(wire.TableUndo); undo && !c.s.allowUndo(c.key) {
+			c.rejectRequest(data, "rate", "too many undos; slow down")
+			return true
+		}
+		if platform, ok := rooms.(platformRooms); ok {
+			err = platform.DispatchPlatform(c.ctx, c.client, m)
+		} else {
+			c.rejectRequest(data, "bad-request", "unsupported request")
+		}
 	case wire.Hello:
 		c.out.Push(wire.NewReject(0, wire.RejectCodeBadRequest, "hello was already received"))
 	case wire.Create:
@@ -298,7 +322,7 @@ func (c *conn) handle(data []byte) bool {
 // version gets a welcome, anything else an error frame and the end of the
 // connection (status 1008).
 func (c *conn) hello(data []byte) bool {
-	if v, ok := peekHelloVersion(data); ok && v != wire.ProtocolVersion {
+	if v, ok := peekHelloVersion(data); ok && !wire.SupportsProtocol(v) {
 		return c.refuse(wire.ErrorCodeProtocol, "unsupported protocol version")
 	}
 	msg, err := wire.DecodeClient(data)
@@ -325,10 +349,11 @@ func (c *conn) hello(data []byte) bool {
 	c.mu.Unlock()
 
 	c.client = &room.Client{
-		UserID:   userID,
-		ClientID: h.ClientID,
-		Name:     h.Name,
-		Out:      c.out,
+		ProtocolVersion: h.V,
+		UserID:          userID,
+		ClientID:        h.ClientID,
+		Name:            h.Name,
+		Out:             c.out,
 		// A rematch that creates a room counts against the same limits as
 		// a create.
 		AllowCreate: func() bool { return c.s.allowCreate(userID, c.key) },
@@ -336,7 +361,9 @@ func (c *conn) hello(data []byte) bool {
 		Addr: c.key.String(),
 	}
 	c.log.Debug("hello", "user", userID)
-	c.out.Push(c.s.welcome)
+	welcome := c.s.welcome
+	welcome.V = h.V
+	c.out.Push(welcome)
 	return true
 }
 
@@ -429,4 +456,20 @@ func (c *conn) flush() error {
 		}
 	}
 	return nil
+}
+
+// rejectRequest preserves Duel rejects on either version and uses the separate
+// private rejection family for platform frames after a v2 hello.
+func (c *conn) rejectRequest(data []byte, code, msg string) {
+	if c.client != nil && c.client.ProtocolVersion == wire.PlatformProtocolVersion {
+		switch wire.PlatformFamily(data) {
+		case "haftgane":
+			c.out.Push(wire.NewTableReject(peekSeq(data), code))
+			return
+		case "lobby":
+			c.out.Push(wire.NewLobbyReject(peekSeq(data), code))
+			return
+		}
+	}
+	c.out.Push(wire.NewReject(peekSeq(data), wire.RejectCode(code), msg))
 }

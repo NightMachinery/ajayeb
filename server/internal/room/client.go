@@ -11,10 +11,12 @@ package room
 // after another), because the Manager records on the client which room it
 // has joined.
 type Client struct {
-	UserID   string
-	ClientID string
-	Name     string
-	Out      *Outbox
+	// ProtocolVersion is fixed by hello. Zero retains v1 for legacy callers.
+	ProtocolVersion int
+	UserID          string
+	ClientID        string
+	Name            string
+	Out             *Outbox
 
 	// AllowCreate, when set, is asked (on a room's goroutine) before the
 	// rooms create a room on this client's behalf other than through

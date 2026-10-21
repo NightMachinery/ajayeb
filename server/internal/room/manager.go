@@ -129,20 +129,7 @@ func (m *Manager) Loaded(code string) bool {
 // hot-seat room c holds both seats; in a bot room c takes the chosen seat
 // (seat 0 unless req says otherwise) and the bot the other.
 func (m *Manager) Create(ctx context.Context, c *Client, req wire.Create) (string, error) {
-	kind, ok := m.cfg.Kinds.entries[Duel]
-	var code string
-	var err error
-	if !ok {
-		err = ErrInvalidSpec
-	} else {
-		code, err = kind.Create(m, c, req)
-	}
-	if err == nil {
-		c.Out.Push(wire.NewCreated(code))
-		return code, m.Join(ctx, c, code)
-	}
-	c.Out.Push(wire.NewError(errorCode(err), errorMsg(err)))
-	return "", err
+	return m.createKind(ctx, c, Duel, req)
 }
 
 // newFile builds the room file a create frame asks for.
@@ -479,9 +466,20 @@ func (m *Manager) get(code string, c *Client, claim *string) (*Handle, error) {
 		return nil, ErrRoomNotFound
 	}
 	if r, err := m.lookup(code); r != nil || err != nil {
-		return r, err
+		if err == nil {
+			err = protocolGate(c, r.kind)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
 	}
 	game, err := m.cfg.KindOf(code)
+	if game != "" {
+		if gate := protocolGate(c, game); gate != nil {
+			return nil, gate
+		}
+	}
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, ErrRoomNotFound
@@ -502,7 +500,13 @@ func (m *Manager) get(code string, c *Client, claim *string) (*Handle, error) {
 	m.restoreMu.Lock()
 	defer m.restoreMu.Unlock()
 	if r, err := m.lookup(code); r != nil || err != nil {
-		return r, err
+		if err == nil {
+			err = protocolGate(c, r.kind)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return r, nil
 	}
 	if err := m.reserve(); err != nil {
 		return nil, err
@@ -633,6 +637,9 @@ func (m *Manager) Undo(ctx context.Context, c *Client, undo wire.Undo) error {
 
 // Resync asks c's room for a fresh state frame.
 func (m *Manager) Resync(ctx context.Context, c *Client, code string) error {
+	if h := m.foreignJoined(c, code); h != nil {
+		return m.commonPlatform(ctx, c, h, wire.NewResync(code))
+	}
 	r, err := m.joinedRoom(c, code)
 	if err == nil {
 		err = r.post(ctx, msgResync{c: c})
@@ -645,6 +652,9 @@ func (m *Manager) Resync(ctx context.Context, c *Client, code string) error {
 // receives a created frame with the new code (the same code for every
 // request); the clients then join it.
 func (m *Manager) Rematch(ctx context.Context, c *Client, code string) (string, error) {
+	if h := m.foreignJoined(c, code); h != nil {
+		return "", m.commonPlatform(ctx, c, h, wire.NewRematch(code))
+	}
 	r, err := m.joinedRoom(c, code)
 	if err != nil {
 		return "", m.requestFailed(c, 0, err)

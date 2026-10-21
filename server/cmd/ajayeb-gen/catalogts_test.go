@@ -201,10 +201,11 @@ func TestCatalogFormatTS(t *testing.T) {
 	}
 }
 
-func TestDefaultRunWritesBothFiles(t *testing.T) {
+func TestDefaultRunWritesAllFiles(t *testing.T) {
 	dir := t.TempDir()
 	p := genPaths{
 		fixturesOut: filepath.Join(dir, "a", "fixtures.gen.ts"),
+		platformOut: filepath.Join(dir, "a", "platform.gen.ts"),
 		catalogOut:  filepath.Join(dir, "a", "catalog.gen.ts"),
 		messagesDir: messagesDir,
 		protocolDir: protocolDir,
@@ -213,7 +214,7 @@ func TestDefaultRunWritesBothFiles(t *testing.T) {
 	if err := runDefault(&out, p); err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{p.fixturesOut, p.catalogOut} {
+	for _, f := range []string{p.fixturesOut, p.catalogOut, p.platformOut} {
 		if _, err := os.Stat(f); err != nil {
 			t.Error(err)
 		}
@@ -271,5 +272,19 @@ func TestFixtureNames(t *testing.T) {
 	list = between(t, src, "export const protocolFixtureNames", "] as const;")
 	if n := strings.Count(list, "\n  \""); n != len(views) {
 		t.Errorf("protocolFixtureNames has %d entries, want %d", n, len(views))
+	}
+}
+
+// Failed fixture discovery must not leave platform output relative to an
+// unintended invocation directory (for example a no-args CLI usage test).
+func TestDefaultFailedInputsDoNotWritePlatform(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "platform.gen.ts")
+	p := genPaths{platformOut: out, messagesDir: filepath.Join(t.TempDir(), "missing")}
+	var stdout bytes.Buffer
+	if err := runDefault(&stdout, p); err == nil {
+		t.Fatal("missing inputs accepted")
+	}
+	if _, err := os.Stat(out); !os.IsNotExist(err) {
+		t.Fatalf("failed generation wrote platform output: %v", err)
 	}
 }

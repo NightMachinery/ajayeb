@@ -11,6 +11,8 @@ import (
 // matching wire frame into the client's outbox when it returns one of
 // them; the transport only decides whether to keep the connection.
 var (
+	// ErrProtocol: this connection cannot use a non-Duel room. Frame: error protocol.
+	ErrProtocol = errors.New("room: protocol version does not support this game")
 	// ErrRoomNotFound: no room has that code, its code is malformed, or its
 	// file is missing. Frame: error room-not-found.
 	ErrRoomNotFound = errors.New("room: no such room")
@@ -59,6 +61,8 @@ var (
 // client receives.
 func errorCode(err error) wire.ErrorCode {
 	switch {
+	case errors.Is(err, ErrProtocol):
+		return wire.ErrorCodeProtocol
 	case errors.Is(err, ErrRoomArchived):
 		return wire.ErrorCodeRoomArchived
 	case errors.Is(err, ErrRoomFull):
@@ -82,6 +86,8 @@ func errorMsg(err error) string {
 		return string(store.SafeArchiveReason(archived.reason))
 	}
 	switch {
+	case errors.Is(err, ErrProtocol):
+		return "this room requires protocol version 2"
 	case errors.Is(err, ErrRoomFull):
 		return "the room takes no more connections"
 	case errors.Is(err, ErrTooManyRooms):

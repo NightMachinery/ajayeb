@@ -91,6 +91,13 @@ type Rooms interface {
 	Relink(ctx context.Context, c *room.Client, l wire.Relink) error
 }
 
+// platformRooms is optional for legacy transport test adapters. Production's
+// Manager implements it; the production registry still contains Duel alone.
+type platformRooms interface {
+	CreatePlatform(context.Context, *room.Client, wire.LobbyCreate) (string, error)
+	DispatchPlatform(context.Context, *room.Client, wire.ClientMessage) error
+}
+
 // Identity derives a user id from a client token; ident.Secret satisfies
 // it. The token itself goes no further than this call.
 type Identity interface {

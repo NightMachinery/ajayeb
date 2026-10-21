@@ -81,7 +81,7 @@ func TestHelloRefused(t *testing.T) {
 		{"bad token", `{"t":"hello","v":1,"token":"short","name":"","clientId":"c1"}`, wire.ErrorCodeBadHello},
 		{"no client id", `{"t":"hello","v":1,"token":"` + token + `","name":"","clientId":""}`, wire.ErrorCodeBadHello},
 		{"unknown field", `{"t":"hello","v":1,"token":"` + token + `","name":"","clientId":"c1","x":1}`, wire.ErrorCodeBadHello},
-		{"newer protocol", `{"t":"hello","v":2,"token":"` + token + `","name":"","clientId":"c1"}`, wire.ErrorCodeProtocol},
+		{"newer protocol", `{"t":"hello","v":3,"token":"` + token + `","name":"","clientId":"c1"}`, wire.ErrorCodeProtocol},
 		{"no version", `{"t":"hello","token":"` + token + `","name":"","clientId":"c1"}`, wire.ErrorCodeProtocol},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

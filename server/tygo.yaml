@@ -30,5 +30,6 @@ packages:
     indent: "  "
     fallback_type: never
     enum_style: union
+    exclude_files: [platform.go, table.go, lobby.go, platform_decode.go]
     frontmatter: |
       import type * as view from "./view.gen";

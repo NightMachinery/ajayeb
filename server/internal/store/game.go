@@ -9,6 +9,8 @@ import (
 
 // Game selects only the bounded schema/game header, without game decoding or
 // replay. Manager uses it to choose the matching registered room kind.
+// A clean but unsupported tuple returns its game alongside ErrGame so admission
+// can refuse an older protocol before attempting any game decoding.
 func (st *Store) Game(code string) (string, error) {
 	path, err := st.path(code)
 	if err != nil {
@@ -30,5 +32,5 @@ func (st *Store) Game(code string) (string, error) {
 	if schema == Schema && game == "duel" || schema == 2 && st.codecs.schema2[game] != nil {
 		return game, nil
 	}
-	return "", fmt.Errorf("%w: game %q in schema %d", ErrGame, game, schema)
+	return game, fmt.Errorf("%w: game %q in schema %d", ErrGame, game, schema)
 }
