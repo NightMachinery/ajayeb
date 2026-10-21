@@ -1,4 +1,4 @@
-# Multiplayer art: reuse and production plan
+# Haftgane art: reuse and production plan
 
 @OpenAI, 2026-10-21. Design proposal for the second-edition base game. No artwork was generated or changed. Dimensions for the proposed board layout are design targets, not browser measurements.
 
@@ -14,7 +14,7 @@ The audit used `art/style.md`, `art/subjects.json`, `art/manifest.json`, `docs/a
 
 ## Card mapping: reuse unchanged
 
-Each line names the new game's card, then its existing art id and why the depicted subject still fits. “Unchanged” means the existing 4:3 AVIF and thumbnail, including their current content-hashed URLs. The presenter supplies the new game's name, category, effects and chains separately. An art alias never aliases engine data.
+Each line names Haftgane's card, then its existing art id and why the depicted subject still fits. “Unchanged” means the existing 4:3 AVIF and thumbnail, including their current content-hashed URLs. The presenter supplies the card's Haftgane name, category, effects and chains separately. An art alias never aliases engine data.
 
 - **Academy:** `card/academy`. Philosophers debating in an academy remain a suitable science scene.
 - **Altar:** `card/altar`. Quiet garden architecture and offerings remain a civic subject, without baking in a chain destination.
@@ -158,7 +158,7 @@ Science therefore adds five files: four for compass/tablet and one gear-sm. A sc
 
 ### Military: reuse shields, add conflict tokens
 
-Reuse `shield` unchanged for strength. Do not reuse the pawn, military track, looting tokens or the coin-loss glyph as conflict results. The new game resolves neighbour comparisons at Age end and has no moving pawn.
+Reuse `shield` unchanged for strength. Do not reuse the pawn, military track, looting tokens or the coin-loss glyph as conflict results. Haftgane resolves neighbour comparisons at Age end and has no moving pawn.
 
 Add two vector outlines: **conflict-victory**, an intact broad notched pennant, and **conflict-defeat**, a split pennant with a large open break. Render the signed point value as translated, localized live text in the token component. One victory shape supports all three Age values; one defeat shape supports the negative result. Shape, sign and text distinguish outcomes without colour. Keep them distinct from the shield and the chain helmet. No four-value bitmap medallion set is needed.
 
@@ -199,7 +199,7 @@ Draw ten new chain concepts, one md file each initially:
 - **star:** a solid five-point star, different from the eight-point category-green and rayed sun.
 - **torch:** a straight handle with one large flame, different from the low-spouted lamp and zigzag lightning.
 
-The accounting is eleven existing chain files, three reused instruments and ten new drawings: exactly 24. Do not reuse any Duel card-to-card chain relationship. In/out chips use the same geometry and translated help; the new game's public catalog supplies the relationships. Any later sm chain drawings are additional optical variants, not extra chain symbols.
+The accounting is eleven existing chain files, three reused instruments and ten new drawings: exactly 24. Do not reuse any Duel card-to-card chain relationship. In/out chips use the same geometry and translated help; Haftgane's public catalog supplies the relationships. Any later sm chain drawings are additional optical variants, not extra chain symbols.
 
 ### Categories, passing and backs
 
@@ -230,7 +230,7 @@ Reuse `build-from-discard` with new timing/help text. Compose all other counting
 - Cards: 80 design bindings across 77 names. Reuse 58 designs from 55 existing originals; make 21 new originals for 22 designs. The resulting game uses 76 distinct card paintings because the trading posts share a painting as well as the three same-name pairs.
 - Wonders: seven existing originals for fourteen side bindings. Zero new paintings, zero crops and zero new sizes.
 - Backs: four existing originals available, three used for public concealed Age cards. Zero new paintings; the guild ornament is restricted to public category contexts.
-- Other bitmaps: reuse paper/night textures, the shared site branding and avatars where their UI is used. No game-specific hero or victory scene is required to make the base game playable; show the shared hero and a neutral score-led result. Do not present Duel's military/science victory paintings as new-game instant-win outcomes.
+- Other bitmaps: reuse paper/night textures, the shared site branding and avatars where their UI is used. No game-specific hero or victory scene is required to make the base game playable; show the shared hero and a neutral score-led result. Do not present Duel's military/science victory paintings as Haftgane instant-win outcomes.
 - New bitmap total: **21 originals and 42 shipped AVIF files**, two variants per new card. Shared originals and URLs are referenced once, without copying files into another game directory.
 - New core vectors: resource 4, science 5, chains 10, conflict 2, passing 1: **22 files**.
 - New ability vectors: **5 files**. Complete planned total: **27 SVG drawings**, comprising 22 new concepts and five extra size drawings (ore-sm, cloth-sm, compass-sm, tablet-sm and gear-sm). Geometry aliases, mirrors, number labels, CSS frames and composed effects do not add drawings.
@@ -274,7 +274,7 @@ Vector production has three review groups: resources/science, chains, and confli
 
 ## Delivery, privacy and licensing
 
-Follow the platform's lazy game loading: loading the Home or Duel page must not fetch every new card, icon or catalog. That holds for page loads: the service worker's all-build precache still fetches the new game's code chunks in the background, its catalog and inline icons among them, while art bitmaps are never precached. Prefetch only after entering this game, one file at a time at idle and low priority. Build the plan from the complete public catalog for the current Age and later Ages, never from the viewer's hand, selected guild subset, discard membership, committed key or tucked identities. Use the frame's exact `srcset` and `sizes`, pause when hidden, cancel on exit and retain D24's Save-Data/slow-connection small plan. Loading a known static art file must not be used as evidence that its card was dealt.
+Follow the platform's lazy game loading: loading the Home or Duel page must not fetch every new card, icon or catalog. That holds for page loads: the service worker's all-build precache still fetches Haftgane's code chunks in the background, its catalog and inline icons among them, while art bitmaps are never precached. Prefetch only after entering this game, one file at a time at idle and low priority. Build the plan from the complete public catalog for the current Age and later Ages, never from the viewer's hand, selected guild subset, discard membership, committed key or tucked identities. Use the frame's exact `srcset` and `sizes`, pause when hidden, cancel on exit and retain D24's Save-Data/slow-connection small plan. Loading a known static art file must not be used as evidence that its card was dealt.
 
 Whitelisted game views supply public board/side/stage and concealed-card presentation kinds. The client must never choose an Age/guild back from a hidden engine id. A shared image alias is a display lookup, not a way around the platform's per-viewer redaction or game-specific renderer boundaries.
 
@@ -300,9 +300,9 @@ Original paintings, derivatives, vectors and ornaments remain **CC BY 4.0**, as 
 
 ### Concealed backs follow information visibility
 
-**Decision:** in the new game, conceal guilds behind the ordinary Age III back and represent mixed-age piles and tucked stages procedurally. Restrict the violet guild back to public category contexts. Preserve Duel's existing policy.
+**Decision:** in Haftgane, conceal guilds behind the ordinary Age III back and represent mixed-age piles and tucked stages procedurally. Restrict the violet guild back to public category contexts. Preserve Duel's existing policy.
 
-**Reasons:** a distinct guild or tucked-card back would expose information that the new game's rules and platform projection keep hidden.
+**Reasons:** a distinct guild or tucked-card back would expose information that Haftgane's rules and platform projection keep hidden.
 
 **Rejected:** applying Duel's public guild-back rule to every game; inspecting hidden card ids in the client; painting four new backs to solve a redaction problem.
 
@@ -311,3 +311,7 @@ Original paintings, derivatives, vectors and ornaments remain **CC BY 4.0**, as 
 This proposal enumerates every design, all fourteen board sides and all 24 chain symbols. File inventory confirms approved source art exists for every reuse id and that all seven wonders have all three shipped sizes. All seven wonder originals and the key cross-name or changed-role candidates were inspected directly; the other reuse judgements use approved subjects and manifest critiques. This is an art-reuse design audit, not a new full-set visual certification.
 
 No owner answer is needed to continue the recommended design. Before implementation release, verify card-data licensing/values through the data milestone, approve the board composition in the UI slice, inspect new optical variants in context, measure byte/download gates and complete the generation critique rounds. Those are future acceptance gates; no new artwork, browser render, build, performance result or product-code change is claimed here.
+
+## Owner answers (2026-10-21)
+
+The game is named Haftgane: the title and "the new game" now read Haftgane. Nothing else changed.

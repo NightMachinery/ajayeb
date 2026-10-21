@@ -1,4 +1,4 @@
-# Phone layout for the 3 to 7 player game
+# Phone layout for Haftgane
 
 @Opus5.5 [2026-10-21 Wed]. Design proposal with rendered mockups, which stay private (see [The mockups](#the-mockups)). Nothing here is built. Paths starting with `web/`, `e2e/`, `server/` or `docs/` are repository paths.
 
@@ -22,7 +22,7 @@ The design reuses Duel's visual language throughout: theme tokens, tally pills, 
 - The design was checked against 74 rendered shots of static mockup pages, grouped by screen and named `screen__viewport__variant`, in light and dark, left to right and right to left, at phone, landscape and desktop sizes. The shot names below refer to that set.
 - The mockup pages and shots are private and are not published, because they show draft card values (costs, chains, coins and scores) that the data milestone has not yet verified.
 - They were built from a copy of Duel's theme tokens, the repository's icons and fonts, and a small kit whose functions are named after the components proposed below. They were rendered with the repository's headless Chromium tools under the guard, and a probe recorded, for every shot, horizontal overflow, script errors and any control smaller than 44 px. In the final set all three are empty.
-- The mockups call the new game **Circle**. That is a working name only (see Open questions).
+- The mockups call the game by a working name, Circle; the owner has since named it **Haftgane**. They also predate the owner's answers of 2026-10-21: they show locked picks, a takeover bar and a 3 to 7 seat lobby, which the text below replaces.
 
 ## Terms
 
@@ -35,18 +35,19 @@ The design reuses Duel's visual language throughout: theme tokens, tally pills, 
 - **Pass mark:** the arrow on the corner of a neighbour panel that shows whether your hand goes to them or theirs comes to you this age.
 - **Affordability badge:** the badge on a card in your hand that says, from the server's `choices`, how that card can be built: free through a chain, for coins only, with purchases (and the total), free through a wonder ability, already built, or not at all.
 - **Payment option:** one entry in the server's list of ways to pay for a building or stage. It names the coins that go to each neighbour, and nothing else, because the rules treat two ways of covering a cost that pay the same amounts as one outcome (rules.md, ambiguity 10).
-- **Status badge:** the corner badge on a far chip or neighbour panel: a tick (chosen), three dots (a bot still choosing), a dashed ring (a human still choosing) or the word "away" (disconnected).
+- **Status badge:** the corner badge on a far chip or neighbour panel: a tick (confirmed), three dots (a bot still choosing), a dashed ring (a human still choosing, including one who withdrew a confirmation) or the word "away" (disconnected).
 - **Reveal tag:** the mini card, "Stage 2" or "Sold +3" label that appears on every seat when a turn is revealed.
 - **Turn recap:** the list of every seat's action in the turn just revealed, opened over the board.
-- **Seen hands:** the private notebook of the hands you have held this age (the platform's Memory default).
-- **Takeover bar:** the bar that offers to hand a disconnected player's seat to a bot.
+- **Seen hands:** the private notebook of the hands you have held and the pile you have seen, over the whole game and grouped by Age, with its summary statistics (the platform's Memory decision).
+- **Admin menu:** the admin's menu on a seat, in the lobby and in a game: switch the seat between a human and a bot, or seat a spectator in a bot's seat.
+- **Shared lobby:** the one online lobby of 2 to 7 seats whose Start creates a Duel game at two seats and a Haftgane game at three or more (the platform's default, awaiting the owner).
 - **Crest:** the round seat emblem. Duel draws a sun and a moon; this game needs seven, one per seat.
 
 ## What the design takes as given
 
-From the owner: one kind of room of 3 to 7 seats, the creator may add any number of bots (a table can be the creator alone with bots), other humans join by link, spectators work as in Duel, pass-the-phone is deferred, and both games live on the same site with a game picker on Home.
+From the owner: the game is called Haftgane; one kind of room of 3 to 7 seats, the creator may add any number of bots (a table can be the creator alone with bots), other humans join by link, spectators work as in Duel, pass-the-phone is deferred, and both games live on the same site with a game picker on Home.
 
-From `platform-architecture.md` (final version, re-read before finishing): confirmed picks lock until the reveal; committed flags and commit timing are public, the choice itself is not; one grouped reveal per turn with no per-bot pauses; no ready check in the lobby, because Start is the consent and an explicit Start fills open seats with bots; the admin may move a seated human to the spectators; any seated human may hand a seat to a bot after it has been disconnected for two minutes, permanently for that game; voluntary resignation to a bot; undo only in a game that started with exactly one human, unless the creator turned it off; random seating by default with an "as listed" option; a creation option to keep the end hidden, which also disables the download; rematch opens a fresh lobby with seats reserved for the original humans; Seen hands as a private view field. Where those are still owner defaults, the screens follow the recommended choice and would change with it.
+From `platform-architecture.md` (re-read after the owner's answers of 2026-10-21): a pick stays changeable, and its confirmation can be withdrawn, until the last required player confirms, and that confirmation resolves the turn; who has confirmed is public, the pick and its changes are not; one grouped reveal per turn with no per-bot pauses; no ready check in the lobby, because Start is the consent and an explicit Start fills open seats with bots; the admin may move a seated human to the spectators, switch any seat between a human and a bot at any time, and seat a spectator in a bot's seat; voluntary resignation to a bot; undo only in a game that started with exactly one human, unless the creator turned it off, and never again once a second human takes a seat; random seating by default with an "as listed" option; a creation option to keep the end hidden, which also disables the download; rematch opens a fresh lobby with seats reserved for the original humans; Seen hands as a private view field with summary statistics. The shared lobby with Duel still awaits the owner; the screens follow its default.
 
 From AGENTS.md: the client renders the server's `choices` and never computes a cost or a legality; every string goes through `t()`; logical CSS only; the tooltip rule; the Animation setting; dark mode; `data-card`, `data-act` and the other test attributes.
 
@@ -101,7 +102,7 @@ Variants:
 - **Chain:** the badge and cost line say "Free through *card*"; the payment list disappears.
 - **Free build (Olympia):** the cost line says "Free: your first green building" and a callout explains the ability, including that it uses up green.
 - **Cannot build:** the Build button is disabled with its reason ("no cloth for sale"); the card can still go to a stage or be sold.
-- **Confirm:** with the existing confirmation setting, the first tap turns the button into "Tap again to build" (Duel's `ConfirmButton`). After confirmation the pick is locked; the card in your hand keeps a ribbon ("Build, pay 3") until the reveal.
+- **Confirm:** with the existing confirmation setting, the first tap turns the button into "Tap again to build" (Duel's `ConfirmButton`). After confirmation the card in your hand keeps a ribbon ("Build, pay 3") with a **Change** button until the last player confirms (see Waiting).
 - **Landscape:** the sheet splits into the card on the start side and the choices on the end side, with the three actions in one row, so the payment list is visible without scrolling.
 
 The client computes nothing here: the options, totals, the affordability class, the chain and free reasons and the explanation lines all come from the server's `choices` (see Server fields below).
@@ -110,11 +111,13 @@ The client computes nothing here: the options, totals, the affordability class, 
 
 Shots: `waiting__390x844__locked`, `__away-takeover`, `__bots-only-undo`, `waiting__1280x800__locked`.
 
-- Your hand dims except the card you picked, which keeps its ribbon. The hand header reads "Locked in" with "Hidden until the reveal".
+- Your hand dims except the card you picked, which keeps its ribbon and its Change button. The hand header reads "Confirmed" with "You can change it until everyone has confirmed".
 - Every seat shows its status badge. Bots show three dots until their pick is accepted. Because the platform runs one bot search at a time per room, the dots turn into ticks one by one; the design adds no artificial pause.
 - The turn bar names who is still choosing ("Waiting for Darius, Scholar and Master") and shows the count (4/7).
-- **Disconnected player:** the badge reads "away". After two minutes of continuous absence the **takeover bar** appears above the turn bar for every seated human: "Darius has been away for 2:14. You can give the seat to a bot for the rest of the game." The button opens a confirmation that says the change is permanent for this game and that reconnecting will not take the seat back.
-- **A table of you and bots:** undo is on, so the top bar shows the undo button and the header reads "Undo takes it back".
+- **Changing your mind.** Change withdraws your confirmation (your badge goes back to choosing for everyone) and reopens the card sheet; confirming again, with the same pick or another, puts the tick back. Nobody else sees what you picked or how often you changed it. If the last player confirms first, the turn resolves at once and a toast explains the refusal: "Everyone had confirmed; your confirmed pick was played." A reload or a reconnect shows the same pick, ribbon and confirmed state.
+- **Disconnected player:** the badge reads "away", with the time once it passes two minutes. Only the admin gets an action, in that seat's admin menu; nobody else is prompted, and the game never switches a seat by itself.
+- **Admin controls in a game.** The admin opens a seat's admin menu from its chip or panel. A human seat offers "Give the seat to a bot": the person watches from then on, and their pick, confirmed or not, is played by the bot. A bot seat offers "Seat a spectator here", listing the spectators who may take it (a former player only their own former seat). A confirmation states what changes. Every switch appears for everyone in the turn recap and the game log ("Darius's seat is now played by Scholar"). If the admin is away for two minutes, the role passes to the human seated longest, and the log says so.
+- **A table of you and bots:** undo is on, so the top bar shows the undo button and the header reads "Undo takes it back". When a second human takes a seat, the undo button disappears for the rest of the game, with a toast that says why.
 
 ## 4. The reveal and passing the hand
 
@@ -146,24 +149,27 @@ Shots: `military__360x740`, `__390x844`, `__1280x800`, `__dark`; `score__360x740
 
 Shots: `lobby__360x740__host`, `lobby__390x844__host`, `__guest`, `__bots-only`, `__rematch`, `__host-dark`, `lobby__1280x800__host`; `home__390x844__circle`, `__duel`, `home__1280x800__circle`; `side-pick__390x844`, `side-pick__1280x800`.
 
-**Home** keeps Duel's page and adds a game picker: two tiles, Duel (two crests) and the new game (seven crests). The new game tile leads to one flow, **New table**, then the lobby; there is no mode choice, because bots are added seat by seat in the lobby. "Join with a code" and the Continue list work for both games; each saved room carries a game tag. With the Duel tile selected, Home shows Duel's existing buttons unchanged.
+**Home** keeps Duel's page and adds a game picker: two tiles, Duel (two crests) and Haftgane (seven crests). With the Duel tile selected, Home shows Duel's buttons, and its one-tap starts (play the bot, the tutorial, pass and play) are unchanged. Under the shared lobby default, Duel's online start ("play with friends") opens the shared lobby at two seats, and the Haftgane tile's one flow, **New table**, opens the same lobby at four seats, ready for friends or bots; there is no mode choice, because bots are added seat by seat. "Join with a code" and the Continue list work for both games; each saved room carries a game tag. Under the platform's alternatives, (A) keeps two separate online entries and (B) moves the one-tap starts into the lobby.
 
 **The lobby** is one page:
 
-- **Seats:** the seat count (3 to 7, a segmented control) and the seats in table order, with a note that each player's left neighbour is the next one down and the last sits left of the first. The host drags seats by their handle (the handle also shows the seat number). An open seat offers Invite and "+ Bot". A bot seat shows its level as a picker and a remove button. A human seat shows a presence dot and, for the host, a button that moves that person to the spectators.
+- **Seats:** the seat count (2 to 7, a segmented control) and the seats in table order, with a note that each player's left neighbour is the next one down and the last sits left of the first. The page title follows the count: Duel at two seats, Haftgane at three or more. Lowering the count while a removed seat is occupied sends its human to the spectators, after a confirmation.
 - **Invite:** Copy link, Share, QR code, and how many people are watching.
-- **Settings:** Seating (Random, As listed), Wonder sides (Each picks, Day, Random), At the end (Reveal all, Keep hidden), and Undo. Undo is on only while the creator is the only human, and the creator may turn it off; the note says why it is off otherwise.
-- **Start:** there is no ready check. With an open seat, the button says what will happen ("Start: a Normal bot takes seat 4"). A guest sees who will start the game, a warning that it can begin at any moment, and "Leave seat and watch".
-- **Rematch lobby:** seats from the last game are reserved for the original humans until they come back; the host can open a reservation to anyone. Start stays disabled while a reservation is pending, and says so.
-- **Bot names** are a persona per level (Apprentice for easy, Scholar for normal, Master for hard), numbered when repeated ("Master 2").
+- **Admin menu in the lobby:** on an open seat Invite and "+ Bot"; on a bot seat its level as a picker and a remove button; on a human seat a presence dot and "Move to spectators". The admin drags seats by their handle (the handle also shows the seat number), which matters with As listed.
+- **Settings** follow the seat count, with one panel per game. At two seats, Duel's: who starts (Random by default) and, for a bot seat, its level, as in Duel's own games. At three or more, Haftgane's: Seating (Random, As listed), Wonder sides (Each picks, Day, Random), At the end (Reveal all, Keep hidden), and Undo. Undo is on only while the creator is the only human, and the creator may turn it off; the note says why it is off otherwise. Changing the count swaps the panel and keeps each panel's choices.
+- **Start:** there is no ready check. With an open seat, the button says what will happen ("Start: a Scholar bot takes seat 4"). With two seats it starts a Duel game under the same code and link, which then plays exactly like today's Duel; with three to seven, a Haftgane game. A guest sees who will start the game, a warning that it can begin at any moment, and "Leave seat and watch".
+- **Rematch lobby:** seats from the last game are reserved for the original humans until they come back; the admin can open a reservation to anyone. Start stays disabled while a reservation is pending, and says so.
+- **Bot names** are a persona per level (Apprentice for easy, Scholar for normal, Master for hard), numbered when repeated ("Master 2"), as the owner chose. Only the levels released so far are offered.
 
 **Wonder side.** With "Each picks", every player gets a sheet before Age I with the day and night sides of their wonder, each with its stage summaries, and picks one. Sides are revealed together.
 
-## 8. Viewing any player's city
+## 8. Viewing any player's city, and Seen hands
 
 Shots: `city-sheet__390x844__darius`, `city-sheet__1280x800__darius`.
 
 Tapping a far chip or a neighbour panel opens the city sheet at that seat. A row of ring tabs across the top (You, then every seat in ring order) switches between cities without closing the sheet. Each city shows: crest, name and position ("two seats to your left"), wonder and side; points, coins, shields, conflict tokens, stages built and science counts; each wonder stage with its effect and built state (a stage built with a hidden card says so); production, with the note that only that player's two neighbours can buy it; and the city by colour, one row per colour with the card names and a count, empty colours dimmed. Card names in the rows open the card's tooltip.
+
+**The Seen hands sheet** opens from the hand header's button. Tabs by Age, the current one first, list for each turn the hand you held, with the card you played and what you did with it, and the pile at each of your discard opportunities. A summary at the top shows the statistics the server sends, each marked as certain or as at most: per colour, the cards you saw in hands you passed that may still be circulating; for each neighbour, the card they took from a hand you passed, once that is certain; and the cards you saw this Age that can still come back to you (only with five players or fewer). Tapping a figure filters the list to those cards. The client computes none of it, and bots know exactly as much.
 
 ## 9. Accessibility
 
@@ -182,7 +188,7 @@ Tapping a far chip or a neighbour panel opens the city sheet at that seat. A row
 - HUD: `ConnectionPill`, `PresenceDot`, `SpectatorCount`, `ThinkingDots` (in `hud/`).
 - Card parts: `Coin`, `ResourceTile`, `CostPips`, `EffectGlyph`, `EffectGlyphs`, `ChainChip`, `CardPlaceholderArt`, `CardArt`, `CardBack` (in `card/`).
 - City parts: `Tally` (points, coins, shields pills), `CityBand` (colour rows in the city sheet).
-- Choices: `CardPickGrid`, `DiscardPickChoice`, `CommitButton`, `PeekBar` (the takeover bar is a `PeekBar`).
+- Choices: `CardPickGrid`, `DiscardPickChoice`, `CommitButton` (which also carries Change).
 - Identity and screens: `NamePrompt`, `JoinSheet`, `DeviceLinkSheet`, `RoomError`, `Settings`, `LogSheet`.
 - UI helpers: `tooltip.svelte.ts`, `tooltip-gesture.ts`, `tooltip-place.ts`, `motion.svelte.ts`, `theme.svelte.ts`, `safe-area.ts`.
 
@@ -200,7 +206,7 @@ Tapping a far chip or a neighbour panel opens the city sheet at that seat. A row
 
 ### New, one component per file
 
-`SeatRing` (the grid of far chips, neighbour panels and your strip, always left to right), `FarSeatChip`, `NeighbourPanel`, `TradeChip`, `MilitaryOutlook`, `PassChip`, `PassMark`, `PassFlow`, `HandGrid`, `PaymentOptions`, `StagePills`, `ColourCounts`, `StatusBadge`, `RevealTag`, `CoinDelta`, `TurnRecap`, `SeenHandsSheet`, `TakeoverBar` (a `PeekBar` with its confirmation), `AgeMilitary`, `SeatSlot` and `LobbySeats`, `GamePicker`, `SidePicker`, `RingTabs`. The private mockup kit's functions carry the same names in short form (`K.neighbour`, `K.farChip`, `K.tradeChip`, `K.outlook` and so on), so the markup can be read as a sketch of each component.
+`SeatRing` (the grid of far chips, neighbour panels and your strip, always left to right), `FarSeatChip`, `NeighbourPanel`, `TradeChip`, `MilitaryOutlook`, `PassChip`, `PassMark`, `PassFlow`, `HandGrid`, `PaymentOptions`, `StagePills`, `ColourCounts`, `StatusBadge`, `RevealTag`, `CoinDelta`, `TurnRecap`, `SeenHandsSheet`, `AdminSeatMenu` (with its confirmation), `LobbySettings` (one panel per game), `SeenHandsSummary`, `AgeMilitary`, `SeatSlot` and `LobbySeats`, `GamePicker`, `SidePicker`, `RingTabs`. The private mockup kit's functions carry the same names in short form (`K.neighbour`, `K.farChip`, `K.tradeChip`, `K.outlook` and so on), so the markup can be read as a sketch of each component.
 
 ### New tokens and art
 
@@ -215,48 +221,60 @@ The client stays thin, so each number on screen must arrive in the per-viewer vi
 - For each neighbour: the resources you may buy from them, with units and your price per unit after discounts, and the discount source for the tooltip.
 - For each neighbour: the military outlook (their shields, and the token value you would get against them at the current age).
 - For each card in your hand: its affordability class and, for purchases, the cheapest total; the action keys for each payment option with the coins per neighbour and the resources bought from each; the stage options the same way; the sale; chain and free reasons as codes.
-- For each seat: commit status, bot or human, disconnected time when it passes the takeover threshold, and position relative to you (left, right, two to your left).
-- Running points for every seat, if the owner keeps them visible (see Open questions).
+- For each seat: whether it has confirmed, bot or human, disconnected time once it passes two minutes, and position relative to you (left, right, two to your left).
+- For you: your current pick and its confirmed state, so a reload restores them; for the admin, which spectators may take each bot seat.
+- Running points for every seat, which the owner chose to show.
 - For the reveal: per seat, the action kind, the card id for a building, the stage number, payments made and received, and coin changes.
-- The Seen hands field and, at the end, the score categories and the tie-break reason.
+- The Seen hands field with its summary statistics and, at the end, the score categories and the tie-break reason.
 
 ## Alternatives considered
 
 - **Hand as a single scrolling row.** Familiar from card apps, but it breaks the no sideways scroll rule and hides most of the costs. Rejected. **Hand as list rows** (name, cost, badge per line) fits more text but loses the card face, which is how players recognise cards across turns; kept as a fallback for very small screens. **A fanned hand** overlaps the cost corner of every card but one. Rejected. **The grid of four by two** shows all seven costs and badges at 83 px or more per card. Chosen.
 - **Neighbours.** Full neighbour cities always on screen take more than half the height at 390 px. Neighbours only on demand hide the trade prices that matter every turn. The trading summary (trade chips, outlook, coins, colour counts) with the full city one tap away is the middle ground. Chosen.
-- **Other players as a ring diagram.** A circle of seats around a table is a nice picture, but its labels get too small for seven seats and status badges become hard to read. **A drawer** hides commit status. **A row of chips in ring order** keeps statuses visible. Chosen.
-- **Turn recap.** Board tags alone are glanceable but easy to miss with six other players. A recap that waits behind a button is easy to skip. A recap that opens by itself and closes on any tap costs one tap per turn and matches Duel's move summary. Chosen, with a setting to open it only on request (Open questions).
+- **Other players as a ring diagram.** A circle of seats around a table is a nice picture, but its labels get too small for seven seats and status badges become hard to read. **A drawer** hides who has confirmed. **A row of chips in ring order** keeps statuses visible. Chosen.
+- **Turn recap.** Board tags alone are glanceable but easy to miss with six other players. A recap that waits behind a button is easy to skip. A recap that opens by itself and closes on any tap costs one tap per turn and matches Duel's move summary. Chosen, with a setting to open it only on request, as the owner accepted.
 - **Payment choice.** Always taking the cheapest split is simpler but takes away a real decision (which opponent gets your coins); the rules ruling keeps the choice. A two-step picker (choose a neighbour, then amounts) is slower than a short radio list of the offered outcomes. The radio list is chosen.
 - **Score sheet.** A score pad with players as columns (as on paper) needs seven columns of names and does not fit 360 px; rows per player with category columns fit. Chosen.
-- **Crests.** Crests fixed by table position (seat 1 is always the sun) are simple and stable across a game; crests chosen by players in the lobby are more personal but need a picker and collision handling. The mockups use fixed crests (Open questions).
+- **Crests.** Crests fixed by table position (seat 1 is always the sun) are simple and stable across a game; crests chosen by players in the lobby are more personal but need a picker and collision handling. The owner accepted fixed crests.
 - **Landscape.** Asking phone users to rotate back to portrait is simpler, but Duel supports landscape and the three-column layout works, so it is kept.
 
 ## Draft decision entries
 
 These follow the decisions file format; they are proposals only and do not touch `docs/dev/decisions.md`.
 
-- **The seat ring is drawn left to right in every language.** *Decision:* the left neighbour is always on the screen's left and the ring runs left to right across the top, also in right-to-left languages; panel contents, the chrome and the sheets follow the page direction. *Reasons:* left and right are rules terms that name real table directions (passing, trading posts); mirroring would put the "left" neighbour on the right. This extends the board region convention to the new game. *Rejected:* mirroring the ring; relabelling neighbours "first" and "second".
+- **The seat ring is drawn left to right in every language.** *Decision:* the left neighbour is always on the screen's left and the ring runs left to right across the top, also in right-to-left languages; panel contents, the chrome and the sheets follow the page direction. *Reasons:* left and right are rules terms that name real table directions (passing, trading posts); mirroring would put the "left" neighbour on the right. This extends the board region convention to Haftgane. *Rejected:* mirroring the ring; relabelling neighbours "first" and "second".
 - **The hand never scrolls.** *Decision:* the whole hand is always visible as a grid sized by its container; on phones four columns by two rows, in short landscape one row of seven. *Reasons:* every card's cost and affordability must be comparable at a glance, and the board never scrolls sideways. *Rejected:* a scrolling row, a fan.
 - **Each turn ends with one grouped reveal and a recap.** *Decision:* the reveal tags every seat at once, the recap opens by itself and closes on any tap, and the eye button reopens it during the next turn; no per-seat or per-bot pauses. *Reasons:* simultaneous turns should feel simultaneous; with up to six bots a sequence of pauses would add seconds every turn; the recap makes six actions readable on a phone. *Rejected:* sequential per-seat reveals, a recap only on request.
 - **Neighbour panels carry server-computed trade prices and the military outlook.** *Decision:* the per-viewer view includes, for each neighbour, the units you may buy and your price per unit, and the outlook token; the client shows them and computes neither. *Reasons:* D01 and D02 keep the client thin; prices depend on discounts and the outlook on the age. *Rejected:* client-side derivation from public city data.
-- **Seat crests are fixed by table position.** *Decision:* seven crests and seat colours assigned by seat order at Start. *Reasons:* stable identity for a whole game without a lobby picker; distinct shapes for colour vision. *Rejected:* crests chosen in the lobby (pending the owner's answer).
+- **Seat crests are fixed by table position.** *Decision:* seven crests and seat colours assigned by seat order at Start. *Reasons:* stable identity for a whole game without a lobby picker; distinct shapes for colour vision. *Rejected:* crests chosen in the lobby.
 
-## Open questions for the owner
+## Owner answers
 
-Each with the choices and a recommendation.
+The owner answered the open questions on 2026-10-21:
 
-1. **The new game's display name.** The mockups say "Circle". Choices: a descriptive name (such as "Circle" or "Table"), or a name in the style of Ajayeb itself. A descriptive name is clear on the picker; a themed name has more character but needs a subtitle ("3 to 7 players"). Recommendation: a short themed name with the player count as the subtitle, once the owner picks one.
-2. **Crests by table position or chosen in the lobby.** Fixed crests need no picker and never collide; chosen crests are more personal and let a player keep "their" crest across games, at the cost of a picker in the lobby and a rule for duplicates. Recommendation: fixed by position for the first release.
-3. **Show every player's running points.** Every input is public, so a player could compute it; showing it makes the race visible and helps beginners, but it also makes the leader an obvious target and shows science and guild values before the end. Duel shows running points. Recommendation: show them, as Duel does.
-4. **Turn recap opens by itself, or only on request.** Opening by itself costs one tap per turn and guarantees nobody misses an action; on request is faster for experienced players. Recommendation: open by itself, with a setting to switch to on request.
-5. **Bot names.** Personas per level (Apprentice, Scholar, Master, numbered when repeated) read naturally in sentences ("Master built Forum"); generic names ("Bot 3") are plainer and say less about strength. Recommendation: personas per level.
-6. **Seen hands.** The platform recommends the notebook; the screens include it (button in the hand header, `seen-hands__390x844`). Without it the button and sheet go away and humans rely on memory while bots remember perfectly. Recommendation: keep it.
+1. **Name:** Haftgane, in UI text and prose; the source game is named only where it is described.
+2. **Crests:** fixed by table position.
+3. **Running points:** shown for every player.
+4. **Turn recap:** opens by itself, with a setting to open it only on request.
+5. **Bot names:** a persona per level.
+6. **Seen hands:** kept, with the summary statistics of section 8.
+
+Still open: the shared lobby with Duel (platform-architecture.md, "Shared lobby, awaiting the owner"). The screens follow its default; either alternative changes only the Home tiles and the lobby's two-seat option.
 
 ## Known gaps
 
 - The mockups are static: no motion is shown, only the end state of each step and annotations. The reveal and hand-pass timings need a prototype in the real client.
 - The spectator view is described, not drawn: the same seat ring centred on a seat the spectator picks, with the hand region replaced by the turn recap and no private information.
-- Resignation to a bot (from the menu) and the returning former player ("A bot is playing your seat for the rest of this game; you are watching") are not drawn.
+- Resignation to a bot (from the menu), the admin menus, Change on a confirmed pick, the Seen hands statistics and the lobby's two-seat Duel panel are described, not drawn. A former player sees "A bot is playing your seat; the admin can seat you there again".
 - The guild and science end-of-game breakdown inside a city row is not drawn.
 - Only chrome strings are translated in the RTL shots; card names and sentences stay English.
 - Card names, costs and effects in the mockups are illustrative and must be replaced by the verified catalog.
+
+## Changes for the owner's answers
+
+- Haftgane replaces the working name; the mockups are marked as older than the answers.
+- The changeable pick: the Change button, the "Changing your mind" behaviour, the refusal toast and reload restore (sections 2 and 3).
+- The admin menu replaces the takeover bar, in the game (section 3) and in the lobby (section 7); undo disappears when a second human sits down.
+- The shared lobby default: 2 to 7 seats, the title and settings panel following the seat count, Duel's one-tap starts unchanged (section 7).
+- The Seen hands sheet with its statistics (section 8) and the matching server fields.
+- The open questions became the answers list.

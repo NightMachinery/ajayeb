@@ -4,7 +4,7 @@ Draft for M12.rules-inventory, by @Opus5.5 (2026-10-21). It follows the format o
 
 This page records where the rules and data of the 7 Wonders base game come from, what each source was used for, its licence as far as we could determine it, and what we never copy. Facts about a game (its rules as mechanics, and the numbers on its cards) are not protected by copyright; the wording of a rulebook, the code of an implementation and the art are. We take facts and state them again in our own words and our own data format. Where a licence was unclear, we treat the source as all rights reserved.
 
-The edition is the main risk. Ajayeb targets the **second edition** (Repos Production, 2020, 3 to 7 players). Most data online describes the first edition (2010), and several data sets that claim the second edition were edited from first-edition files. So every source below says which edition it describes and how we established that. The differences we found are in a working note that is held back until the blind data verification in M13.
+The edition is the main risk. Haftgane, Ajayeb's version of the game, targets the **second edition** (Repos Production, 2020, 3 to 7 players). Most data online describes the first edition (2010), and several data sets that claim the second edition were edited from first-edition files. So every source below says which edition it describes and how we established that. The differences we found are in a working note that is held back until the blind data verification in M13.
 
 ## How the edition was established
 
@@ -96,7 +96,7 @@ On costs, 76 of the 80 card designs agree across the wiki and every implementati
 
 - **The Esoteric Order of Gamers rules summary** (a file named for version 2): it describes the first edition (it lists the Strategists Guild). Rejected.
 - **The Board Game Arena help page for 7 Wonders:** it describes A and B sides, so the first edition. Rejected. Board Game Arena's licensed online game does offer the second edition, but its data is not public, so we could not check it.
-- **BoardGameGeek:** not consulted, as the brief directs, and no image from it or from anywhere else is used.
+- **BoardGameGeek:** not consulted for this draft, as its brief directed, and no image from it or from anywhere else is used. M13's printed-card check will read photos from its gallery for facts only, kept private (roadmap proposal, M13).
 - **Several further public implementations:** read briefly and not used, because they have no costs, their edition was unclear, or both.
 - **The publisher's German, Spanish, Italian and Dutch files:** available on the same page and not needed.
 
@@ -120,3 +120,7 @@ These checks were run on the private drafts (`cards-draft.csv`, `wonders-draft.c
 - Wording check: every public draft was compared with the text of every source above, and no run of 7 or more words is shared.
 
 The engine milestone should repeat Duel's approach: a catalog checked by structural tests, golden tables, and two blind verification tables built without looking at the catalog.
+
+## Owner answers (2026-10-21)
+
+The game is named Haftgane. The BoardGameGeek entry now says that M13's printed-card check reads photos from its gallery, for facts only and kept private.
