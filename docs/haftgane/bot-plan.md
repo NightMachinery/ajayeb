@@ -1,6 +1,6 @@
 # Bots for Haftgane (7 Wonders, second edition)
 
-@OpenAI, 2026-10-21. Revised M12 design against the platform revision and engine design sections 11 and 16. This is design only. Timing, memory and strength claims below are proposed checks or explicitly illustrative estimates, not measurements. Duel's bots and presets stay unchanged.
+@OpenAI, 2026-10-21. Revised M12 design against the platform revision and engine design sections 11 and 16. This is design only. Timing, memory and strength claims below are proposed checks or explicitly illustrative estimates, not measurements. Duel's bots and presets stay unchanged. The sections headed "Draft decision" were accepted on 2026-10-21 as D44 to D48 and D50 of [decisions.md](../dev/decisions.md), whose entries are the ones in force.
 
 ## Recommendation and scope
 
@@ -180,5 +180,5 @@ No builds, tests, tournaments, host probes or product changes were performed for
 - **Release order.** Greedy and Apprentice form an internal milestone; the public release waits for the sampler and Scholar (slices 5 to 7 and 9); Master may follow.
 - **Bot strength.** Equal fixed work per bot, decided.
 - **Undo.** Off for good once a second human takes a seat.
-- **Admin powers.** Seat switches in both directions replace the takeover in the work rows, restore checks and slice 4.
+- **Admin powers.** Seat switches in both directions replace the takeover in the work rows, restore checks and slice 4. The final answers (any spectator in any seat, admin roles, the temporary admin) change nothing for bots: a bot never holds a role, and a seat a human takes from another human has no bot work to keep.
 - **Commitment and notebook.** Human pick changes and withdrawn confirmations are among the inputs that must not change a bot's decision; the notebook statistics give bots nothing new.

@@ -255,7 +255,7 @@ The existing 480-pixel card main is a sound starting point, not permission to en
 
 This is a future production plan. No commands below have been run by this slice, and no imagegen or vector-authoring skill is being invoked by this document.
 
-First parameterize the catalog/manifest/index tools for the registered game. `platform-architecture.md` does not plan this step; the roadmap proposal gives it its own slice in the art milestone. Store semantic-to-art aliases separately from card rules and reuse existing content-hashed paths. New assets need a game-qualified namespace; a naive combined manifest regeneration must not drop Duel assets or overwrite the old Clay Pit. Approved-only lookup and procedural fallback stay in force.
+First parameterize the catalog/manifest/index tools for the registered game. `platform-architecture.md` does not plan this step; the [roadmap](../dev/roadmap.md) gives it its own slice in the art milestone (`M19.art-pipeline-game-inputs`). Store semantic-to-art aliases separately from card rules and reuse existing content-hashed paths. New assets need a game-qualified namespace; a naive combined manifest regeneration must not drop Duel assets or overwrite the old Clay Pit. Approved-only lookup and procedural fallback stay in force.
 
 Generate new subjects through `tools/art/generate.mjs` using Codex `image_gen`, **one asset at a time under `heavy.py --kind codex`**. A review batch groups decisions, not simultaneous calls. Use the style prefix and card template from `art/style.md`; do not use official illustrations as references or same-subject reference images that invite near-copies.
 
@@ -281,6 +281,8 @@ Whitelisted game views supply public board/side/stage and concealed-card present
 Original paintings, derivatives, vectors and ornaments remain **CC BY 4.0**, as stated in `art/LICENSE` and `docs/legal.md`. Preserve the existing “Ajayeb original art by NightMachinery” attribution, license link and source notice. Record new aliases, crops or other adaptations so attribution and change history survive. Code remains under its existing license; no font or audio relicensing follows from this art work. No official painting, icon, frame, logo or rulebook wording is an input to production.
 
 ## Draft decisions for coordinator review
+
+The drafts as this plan proposed them. They were accepted on 2026-10-21 as D57 to D59 of [decisions.md](../dev/decisions.md), whose entries are the ones in force.
 
 ### Shared paintings with game-specific bindings
 

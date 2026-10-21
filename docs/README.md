@@ -22,7 +22,7 @@ These docs explain the current implementation, its rules and the tools used to b
 
 ## The second game (design)
 
-- [haftgane/](haftgane/README.md): the design of Haftgane, Ajayeb's second game, an unofficial version of 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words, the platform, engine, bot, screen and art designs, the draft decisions and the proposed roadmap. Nothing in it is built yet.
+- [haftgane/](haftgane/README.md): the design of Haftgane, Ajayeb's second game, an unofficial version of 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words and the platform, engine, bot, screen and art designs. The design is accepted: its decisions are D30 to D60 in [dev/decisions.md](dev/decisions.md) and its build plan is M13 to M23 in [dev/roadmap.md](dev/roadmap.md). Nothing in it is built yet.
 
 ## Package guides
 
@@ -38,7 +38,7 @@ These docs explain the current implementation, its rules and the tools used to b
 
 ## Development process
 
-- [dev/roadmap.md](dev/roadmap.md): milestones M0 to M11 with their acceptance criteria.
+- [dev/roadmap.md](dev/roadmap.md): milestones M0 to M23 with their acceptance criteria: Duel in M0 to M11, the design of Haftgane in M12 and its build in M13 to M23.
 - [dev/orchestration.md](dev/orchestration.md): how the long-running, agent-driven work is organized: run modes, scheduled procedures, bounded slices with independent review.
 - [dev/master-e2e-failures.md](dev/master-e2e-failures.md): bot-frame animation, modal restyling, localized age labels and reload connection-count attribution.
 - [dev/protocol-fixtures.md](dev/protocol-fixtures.md): fixture coverage, compact storage and regeneration.

@@ -294,4 +294,4 @@ New decisions without an existing Duel counterpart: game identity and URL/discri
 
 ## Owner answers (2026-10-21)
 
-The game is named Haftgane: this audit's "multiplayer" and "new game" now read Haftgane, and its `seven-wonders` discriminator reads `haftgane`. Nothing else changed; the platform design and the roadmap proposal carry the answers.
+The game is named Haftgane: this audit's "multiplayer" and "new game" now read Haftgane, and its `seven-wonders` discriminator reads `haftgane`. Nothing else changed; the platform design and the [roadmap](../dev/roadmap.md) carry the answers.

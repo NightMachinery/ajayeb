@@ -96,7 +96,7 @@ On costs, 76 of the 80 card designs agree across the wiki and every implementati
 
 - **The Esoteric Order of Gamers rules summary** (a file named for version 2): it describes the first edition (it lists the Strategists Guild). Rejected.
 - **The Board Game Arena help page for 7 Wonders:** it describes A and B sides, so the first edition. Rejected. Board Game Arena's licensed online game does offer the second edition, but its data is not public, so we could not check it.
-- **BoardGameGeek:** not consulted for this draft, as its brief directed, and no image from it or from anywhere else is used. M13's printed-card check will read photos from its gallery for facts only, kept private (roadmap proposal, M13).
+- **BoardGameGeek:** not consulted for this draft, as its brief directed, and no image from it or from anywhere else is used. M13's printed-card check will read the fan reference files the owner downloads from it (wonder cards, an icon reference, a cost sheet) when they are present, and photos from its gallery otherwise, for facts only, kept private ([roadmap](../dev/roadmap.md), M13).
 - **Several further public implementations:** read briefly and not used, because they have no costs, their edition was unclear, or both.
 - **The publisher's German, Spanish, Italian and Dutch files:** available on the same page and not needed.
 
@@ -123,4 +123,4 @@ The engine milestone should repeat Duel's approach: a catalog checked by structu
 
 ## Owner answers (2026-10-21)
 
-The game is named Haftgane. The BoardGameGeek entry now says that M13's printed-card check reads photos from its gallery, for facts only and kept private.
+The game is named Haftgane. The BoardGameGeek entry now says that M13's printed-card check reads photos from its gallery, for facts only and kept private. The owner's final answer adds the fan reference files, which the owner downloads by hand; the check reads them when present.

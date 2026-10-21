@@ -39,15 +39,17 @@ The design reuses Duel's visual language throughout: theme tokens, tally pills, 
 - **Reveal tag:** the mini card, "Stage 2" or "Sold +3" label that appears on every seat when a turn is revealed.
 - **Turn recap:** the list of every seat's action in the turn just revealed, opened over the board.
 - **Seen hands:** the private notebook of the hands you have held and the pile you have seen, over the whole game and grouped by Age, with its summary statistics (the platform's Memory decision).
-- **Admin menu:** the admin's menu on a seat, in the lobby and in a game: switch the seat between a human and a bot, or seat a spectator in a bot's seat.
-- **Shared lobby:** the one online lobby of 2 to 7 seats whose Start creates a Duel game at two seats and a Haftgane game at three or more (the platform's default, awaiting the owner).
+- **Admin menu:** an admin's menu on a seat or a spectator, in the lobby and in a game: switch the seat between a human and a bot, seat a spectator in any seat, and promote or demote an admin.
+- **Previous-seat hint:** the note beside a spectator in an admin's menu that names the seat they held earlier in this game, if any. Only admins see it.
+- **Role tag:** the small label on a seat's chip, panel or lobby row, or on a spectator's row, that marks an admin, the creator or a temporary admin (the platform's Admin roles).
+- **Shared lobby:** the one online lobby of 2 to 7 seats whose Start creates a Duel game at two seats and a Haftgane game at three or more (decided by the owner, D60).
 - **Crest:** the round seat emblem. Duel draws a sun and a moon; this game needs seven, one per seat.
 
 ## What the design takes as given
 
 From the owner: the game is called Haftgane; one kind of room of 3 to 7 seats, the creator may add any number of bots (a table can be the creator alone with bots), other humans join by link, spectators work as in Duel, pass-the-phone is deferred, and both games live on the same site with a game picker on Home.
 
-From `platform-architecture.md` (re-read after the owner's answers of 2026-10-21): a pick stays changeable, and its confirmation can be withdrawn, until the last required player confirms, and that confirmation resolves the turn; who has confirmed is public, the pick and its changes are not; one grouped reveal per turn with no per-bot pauses; no ready check in the lobby, because Start is the consent and an explicit Start fills open seats with bots; the admin may move a seated human to the spectators, switch any seat between a human and a bot at any time, and seat a spectator in a bot's seat; voluntary resignation to a bot; undo only in a game that started with exactly one human, unless the creator turned it off, and never again once a second human takes a seat; random seating by default with an "as listed" option; a creation option to keep the end hidden, which also disables the download; rematch opens a fresh lobby with seats reserved for the original humans; Seen hands as a private view field with summary statistics. The shared lobby with Duel still awaits the owner; the screens follow its default.
+From `platform-architecture.md` (re-read after the owner's answers of 2026-10-21): a pick stays changeable, and its confirmation can be withdrawn, until the last required player confirms, and that confirmation resolves the turn; who has confirmed is public, the pick and its changes are not; one grouped reveal per turn with no per-bot pauses; no ready check in the lobby, because Start is the consent and an explicit Start fills open seats with bots; an admin may move a seated human to the spectators, switch any seat between a human and a bot at any time, and seat any spectator in any seat; the creator and the humans an admin promotes are the admins, with a temporary admin only while all of them are away; voluntary resignation to a bot; undo only in a game that started with exactly one human, unless the creator turned it off, and never again once a second human takes a seat; random seating by default with an "as listed" option; a creation option to keep the end hidden, which also disables the download; rematch opens a fresh lobby with seats reserved for the original humans; Seen hands as a private view field with summary statistics. The shared lobby with Duel is decided (D60), and the screens follow it.
 
 From AGENTS.md: the client renders the server's `choices` and never computes a cost or a legality; every string goes through `t()`; logical CSS only; the tooltip rule; the Animation setting; dark mode; `data-card`, `data-act` and the other test attributes.
 
@@ -115,8 +117,9 @@ Shots: `waiting__390x844__locked`, `__away-takeover`, `__bots-only-undo`, `waiti
 - Every seat shows its status badge. Bots show three dots until their pick is accepted. Because the platform runs one bot search at a time per room, the dots turn into ticks one by one; the design adds no artificial pause.
 - The turn bar names who is still choosing ("Waiting for Darius, Scholar and Master") and shows the count (4/7).
 - **Changing your mind.** Change withdraws your confirmation (your badge goes back to choosing for everyone) and reopens the card sheet; confirming again, with the same pick or another, puts the tick back. Nobody else sees what you picked or how often you changed it. If the last player confirms first, the turn resolves at once and a toast explains the refusal: "Everyone had confirmed; your confirmed pick was played." A reload or a reconnect shows the same pick, ribbon and confirmed state.
-- **Disconnected player:** the badge reads "away", with the time once it passes two minutes. Only the admin gets an action, in that seat's admin menu; nobody else is prompted, and the game never switches a seat by itself.
-- **Admin controls in a game.** The admin opens a seat's admin menu from its chip or panel. A human seat offers "Give the seat to a bot": the person watches from then on, and their pick, confirmed or not, is played by the bot. A bot seat offers "Seat a spectator here", listing the spectators who may take it (a former player only their own former seat). A confirmation states what changes. Every switch appears for everyone in the turn recap and the game log ("Darius's seat is now played by Scholar"). If the admin is away for two minutes, the role passes to the human seated longest, and the log says so.
+- **Disconnected player:** the badge reads "away", with the time once it passes two minutes. Only admins get an action, in that seat's admin menu; nobody else is prompted, and the game never switches a seat by itself.
+- **Admin controls in a game.** An admin opens a seat's admin menu from its chip or panel. A human seat offers "Give the seat to a bot": the person watches from then on, and their pick, confirmed or not, is played by the bot. Every seat, a bot's or a human's, offers "Seat a spectator here", listing every spectator; beside a former player the previous-seat hint reads "earlier in seat 3". Choosing one for a human's seat says that its occupant will watch from then on. A confirmation states what changes. Every switch appears for everyone in the turn recap and the game log ("Darius's seat is now played by Scholar").
+- **Roles.** Each admin's chip, panel or spectator row carries a role tag: "admin", "creator" for the creator, or "temporary admin", whose tooltip says it lasts until an admin returns. The spectator count opens the list of spectators. On a human seat or a spectator row, an admin's menu offers "Make admin", and "Remove admin" where that admin may demote the person: someone they promoted, or anyone but themselves for the creator. The game menu offers "Stop being admin" to every admin. A temporary admin's menus have the seat actions only. If every real admin has been away for five minutes, the human seated longest (or, with none connected, the spectator connected longest) becomes temporary admin until a real admin returns. Every role change appears in the game log for everyone ("Sara made Darius an admin", "Darius is temporary admin while the admins are away").
 - **A table of you and bots:** undo is on, so the top bar shows the undo button and the header reads "Undo takes it back". When a second human takes a seat, the undo button disappears for the rest of the game, with a toast that says why.
 
 ## 4. The reveal and passing the hand
@@ -149,16 +152,16 @@ Shots: `military__360x740`, `__390x844`, `__1280x800`, `__dark`; `score__360x740
 
 Shots: `lobby__360x740__host`, `lobby__390x844__host`, `__guest`, `__bots-only`, `__rematch`, `__host-dark`, `lobby__1280x800__host`; `home__390x844__circle`, `__duel`, `home__1280x800__circle`; `side-pick__390x844`, `side-pick__1280x800`.
 
-**Home** keeps Duel's page and adds a game picker: two tiles, Duel (two crests) and Haftgane (seven crests). With the Duel tile selected, Home shows Duel's buttons, and its one-tap starts (play the bot, the tutorial, pass and play) are unchanged. Under the shared lobby default, Duel's online start ("play with friends") opens the shared lobby at two seats, and the Haftgane tile's one flow, **New table**, opens the same lobby at four seats, ready for friends or bots; there is no mode choice, because bots are added seat by seat. "Join with a code" and the Continue list work for both games; each saved room carries a game tag. Under the platform's alternatives, (A) keeps two separate online entries and (B) moves the one-tap starts into the lobby.
+**Home** keeps Duel's page and adds a game picker: two tiles, Duel (two crests) and Haftgane (seven crests). With the Duel tile selected, Home shows Duel's buttons, and its one-tap starts (play the bot, the tutorial, pass and play) are unchanged. With the shared lobby, Duel's online start ("play with friends") opens it at two seats, and the Haftgane tile's one flow, **New table**, opens the same lobby at four seats, ready for friends or bots; there is no mode choice, because bots are added seat by seat. "Join with a code" and the Continue list work for both games; each saved room carries a game tag.
 
 **The lobby** is one page:
 
 - **Seats:** the seat count (2 to 7, a segmented control) and the seats in table order, with a note that each player's left neighbour is the next one down and the last sits left of the first. The page title follows the count: Duel at two seats, Haftgane at three or more. Lowering the count while a removed seat is occupied sends its human to the spectators, after a confirmation.
-- **Invite:** Copy link, Share, QR code, and how many people are watching.
-- **Admin menu in the lobby:** on an open seat Invite and "+ Bot"; on a bot seat its level as a picker and a remove button; on a human seat a presence dot and "Move to spectators". The admin drags seats by their handle (the handle also shows the seat number), which matters with As listed.
+- **Invite:** Copy link, Share, QR code, and how many people are watching; the count opens the list of spectators.
+- **Admin menu in the lobby:** on an open seat Invite and "+ Bot"; on a bot seat its level as a picker and a remove button; on a human seat a presence dot, "Move to spectators" and the role actions of section 3, with the same role tags. An admin drags seats by their handle (the handle also shows the seat number), which matters with As listed.
 - **Settings** follow the seat count, with one panel per game. At two seats, Duel's: who starts (Random by default) and, for a bot seat, its level, as in Duel's own games. At three or more, Haftgane's: Seating (Random, As listed), Wonder sides (Each picks, Day, Random), At the end (Reveal all, Keep hidden), and Undo. Undo is on only while the creator is the only human, and the creator may turn it off; the note says why it is off otherwise. Changing the count swaps the panel and keeps each panel's choices.
 - **Start:** there is no ready check. With an open seat, the button says what will happen ("Start: a Scholar bot takes seat 4"). With two seats it starts a Duel game under the same code and link, which then plays exactly like today's Duel; with three to seven, a Haftgane game. A guest sees who will start the game, a warning that it can begin at any moment, and "Leave seat and watch".
-- **Rematch lobby:** seats from the last game are reserved for the original humans until they come back; the admin can open a reservation to anyone. Start stays disabled while a reservation is pending, and says so.
+- **Rematch lobby:** seats from the last game are reserved for the original humans until they come back; whoever asked for the rematch is its creator, and an admin can open a reservation to anyone. Start stays disabled while a reservation is pending, and says so.
 - **Bot names** are a persona per level (Apprentice for easy, Scholar for normal, Master for hard), numbered when repeated ("Master 2"), as the owner chose. Only the levels released so far are offered.
 
 **Wonder side.** With "Each picks", every player gets a sheet before Age I with the day and night sides of their wonder, each with its stage summaries, and picks one. Sides are revealed together.
@@ -206,7 +209,7 @@ Tapping a far chip or a neighbour panel opens the city sheet at that seat. A row
 
 ### New, one component per file
 
-`SeatRing` (the grid of far chips, neighbour panels and your strip, always left to right), `FarSeatChip`, `NeighbourPanel`, `TradeChip`, `MilitaryOutlook`, `PassChip`, `PassMark`, `PassFlow`, `HandGrid`, `PaymentOptions`, `StagePills`, `ColourCounts`, `StatusBadge`, `RevealTag`, `CoinDelta`, `TurnRecap`, `SeenHandsSheet`, `AdminSeatMenu` (with its confirmation), `LobbySettings` (one panel per game), `SeenHandsSummary`, `AgeMilitary`, `SeatSlot` and `LobbySeats`, `GamePicker`, `SidePicker`, `RingTabs`. The private mockup kit's functions carry the same names in short form (`K.neighbour`, `K.farChip`, `K.tradeChip`, `K.outlook` and so on), so the markup can be read as a sketch of each component.
+`SeatRing` (the grid of far chips, neighbour panels and your strip, always left to right), `FarSeatChip`, `NeighbourPanel`, `TradeChip`, `MilitaryOutlook`, `PassChip`, `PassMark`, `PassFlow`, `HandGrid`, `PaymentOptions`, `StagePills`, `ColourCounts`, `StatusBadge`, `RevealTag`, `CoinDelta`, `TurnRecap`, `SeenHandsSheet`, `AdminSeatMenu` (with its confirmation and the previous-seat hint), `RoleTag`, `SpectatorList`, `LobbySettings` (one panel per game), `SeenHandsSummary`, `AgeMilitary`, `SeatSlot` and `LobbySeats`, `GamePicker`, `SidePicker`, `RingTabs`. The private mockup kit's functions carry the same names in short form (`K.neighbour`, `K.farChip`, `K.tradeChip`, `K.outlook` and so on), so the markup can be read as a sketch of each component.
 
 ### New tokens and art
 
@@ -222,7 +225,8 @@ The client stays thin, so each number on screen must arrive in the per-viewer vi
 - For each neighbour: the military outlook (their shields, and the token value you would get against them at the current age).
 - For each card in your hand: its affordability class and, for purchases, the cheapest total; the action keys for each payment option with the coins per neighbour and the resources bought from each; the stage options the same way; the sale; chain and free reasons as codes.
 - For each seat: whether it has confirmed, bot or human, disconnected time once it passes two minutes, and position relative to you (left, right, two to your left).
-- For you: your current pick and its confirmed state, so a reload restores them; for the admin, which spectators may take each bot seat.
+- For you: your current pick and its confirmed state, so a reload restores them.
+- For everyone: who is an admin, who created the room and who is a temporary admin. For admins only: the previous-seat hint of each spectator, and which admins the viewer may demote.
 - Running points for every seat, which the owner chose to show.
 - For the reveal: per seat, the action kind, the card id for a building, the stage number, payments made and received, and coin changes.
 - The Seen hands field with its summary statistics and, at the end, the score categories and the tie-break reason.
@@ -240,7 +244,7 @@ The client stays thin, so each number on screen must arrive in the per-viewer vi
 
 ## Draft decision entries
 
-These follow the decisions file format; they are proposals only and do not touch `docs/dev/decisions.md`.
+The drafts as this design proposed them. They were accepted on 2026-10-21 as D52 to D56 of [decisions.md](../dev/decisions.md), whose entries are the ones in force.
 
 - **The seat ring is drawn left to right in every language.** *Decision:* the left neighbour is always on the screen's left and the ring runs left to right across the top, also in right-to-left languages; panel contents, the chrome and the sheets follow the page direction. *Reasons:* left and right are rules terms that name real table directions (passing, trading posts); mirroring would put the "left" neighbour on the right. This extends the board region convention to Haftgane. *Rejected:* mirroring the ring; relabelling neighbours "first" and "second".
 - **The hand never scrolls.** *Decision:* the whole hand is always visible as a grid sized by its container; on phones four columns by two rows, in short landscape one row of seven. *Reasons:* every card's cost and affordability must be comparable at a glance, and the board never scrolls sideways. *Rejected:* a scrolling row, a fan.
@@ -259,13 +263,17 @@ The owner answered the open questions on 2026-10-21:
 5. **Bot names:** a persona per level.
 6. **Seen hands:** kept, with the summary statistics of section 8.
 
-Still open: the shared lobby with Duel (platform-architecture.md, "Shared lobby, awaiting the owner"). The screens follow its default; either alternative changes only the Home tiles and the lobby's two-seat option.
+The owner's final answers, the same evening:
+
+7. **Shared lobby:** decided as designed (section 7).
+8. **Seating spectators:** an admin may seat any spectator in any seat, and the menu shows the previous-seat hint (section 3).
+9. **Admin roles:** promotion, demotion, stepping down, the temporary admin after five minutes and the role tags (sections 3 and 7).
 
 ## Known gaps
 
 - The mockups are static: no motion is shown, only the end state of each step and annotations. The reveal and hand-pass timings need a prototype in the real client.
 - The spectator view is described, not drawn: the same seat ring centred on a seat the spectator picks, with the hand region replaced by the turn recap and no private information.
-- Resignation to a bot (from the menu), the admin menus, Change on a confirmed pick, the Seen hands statistics and the lobby's two-seat Duel panel are described, not drawn. A former player sees "A bot is playing your seat; the admin can seat you there again".
+- Resignation to a bot (from the menu), the admin menus with their role actions and the previous-seat hint, the role tags, the spectator list, Change on a confirmed pick, the Seen hands statistics and the lobby's two-seat Duel panel are described, not drawn. A former player sees "A bot is playing your seat; an admin can seat you again".
 - The guild and science end-of-game breakdown inside a city row is not drawn.
 - Only chrome strings are translated in the RTL shots; card names and sentences stay English.
 - Card names, costs and effects in the mockups are illustrative and must be replaced by the verified catalog.
@@ -275,6 +283,7 @@ Still open: the shared lobby with Duel (platform-architecture.md, "Shared lobby,
 - Haftgane replaces the working name; the mockups are marked as older than the answers.
 - The changeable pick: the Change button, the "Changing your mind" behaviour, the refusal toast and reload restore (sections 2 and 3).
 - The admin menu replaces the takeover bar, in the game (section 3) and in the lobby (section 7); undo disappears when a second human sits down.
-- The shared lobby default: 2 to 7 seats, the title and settings panel following the seat count, Duel's one-tap starts unchanged (section 7).
+- The shared lobby: 2 to 7 seats, the title and settings panel following the seat count, Duel's one-tap starts unchanged (section 7).
 - The Seen hands sheet with its statistics (section 8) and the matching server fields.
 - The open questions became the answers list.
+- The final answers: the shared lobby decided, any spectator in any seat with the previous-seat hint, the roles and their tags, the temporary admin after five minutes in place of the two-minute handover, and the server fields for them (sections 3 and 7).
