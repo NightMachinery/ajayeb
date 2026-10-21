@@ -109,7 +109,7 @@ The engine is the single source of truth for the rules, so it must be determinis
 ### Privacy (this repository is public)
 
 - Commit no personal information: no absolute home-directory paths (write `~/...` or repo-relative paths), no email addresses, no machine hostnames, no usernames other than the GitHub organization `NightMachinery`, no tokens or keys.
-- **Private run state lives outside the repo** in `~/tmp/agents/ajayeb/` (override with `AJAYEB_RUN_DIR`): `TASK.md` (owner instructions, verbatim), `STATE.md` (progress, newest first), `NOTES.md` (iteration notes and learnings), `mode.json`, and the `heavy/`, `logs/`, `results/`, `briefs/`, `patches/`, `shots/`, `art-work/`, `reports/`, `design/` and `workflows/` directories. Never copy any of it into the repo.
+- **Private run state lives outside the repo** in `~/tmp/agents/ajayeb/` (override with `AJAYEB_RUN_DIR`): `USER-VERBATIM.md` (owner instructions, verbatim), `STATE.md` (progress, newest first), `NOTES.md` (iteration notes and learnings), `mode.json`, and the `heavy/`, `logs/`, `results/`, `briefs/`, `patches/`, `shots/`, `art-work/`, `reports/`, `design/` and `workflows/` directories. Never copy any of it into the repo.
 
 ## Commits
 
@@ -132,7 +132,7 @@ git commit -m "engine: add military track and looting (M2.military-looting)" \
 
 ## Owner phrases
 
-The owner steers the long run with a few fixed phrases. Each one is first recorded verbatim in `~/tmp/agents/ajayeb/TASK.md`, then acted on. The procedures are described in [docs/dev/orchestration.md](docs/dev/orchestration.md).
+The owner steers the long run with a few fixed phrases. Each one is first recorded verbatim in `~/tmp/agents/ajayeb/USER-VERBATIM.md`, then acted on. The procedures are described in [docs/dev/orchestration.md](docs/dev/orchestration.md).
 
 - **"switch to nightshift [HH:MM-HH:MM]"** (the window defaults to 00:00-10:00 local time):
   1. Run `python3 tools/heavy.py mode nightshift --window HH:MM-HH:MM`.

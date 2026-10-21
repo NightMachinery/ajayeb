@@ -14,7 +14,7 @@ Ajayeb is built by a long-running coordinator agent that hands bounded pieces of
 
 The repository is public, so operational state lives outside it, in a private run directory (`~/tmp/agents/ajayeb/` by default, or `AJAYEB_RUN_DIR`):
 
-- `TASK.md`: the original request and every owner instruction, dated and verbatim. It contains only the owner's words. Coordinator prompts and progress go in checkpoints, events and `STATE.md`, never in `TASK.md`.
+- `USER-VERBATIM.md`: the original request and every owner instruction, dated and verbatim. It contains only the owner's words. Coordinator prompts and progress go in checkpoints, events and `STATE.md`, never in `USER-VERBATIM.md`.
 - `STATE.md`: the handoff state, newest entry first, stamped with the output of `date`. It records the mode, the cron job ids and when they were armed, active workflow run ids and script paths, live worktrees, the task list with status tokens, and open questions for the owner with the assumption used meanwhile.
 - `NOTES.md`: iteration notes, written only by the coordinator. A curated "Learnings index" of at most 40 lines sits at the top, followed by one entry per iteration:
 
@@ -40,7 +40,7 @@ The mode lives in `mode.json` and is set with `python3 tools/heavy.py mode ...`.
 
 ## Owner phrases
 
-Each phrase is first recorded verbatim in `TASK.md`, then acted on.
+Each phrase is first recorded verbatim in `USER-VERBATIM.md`, then acted on.
 
 - **"switch to nightshift [HH:MM-HH:MM]"**: set the mode with `heavy.py mode nightshift --window ...`; create the recurring jobs for the start procedure (`3 0 * * *`), the last call (`12 9 * * *`) and the wind-down (`44 9 * * *`), keeping the hourly recovery ping (`17 * * * *`); record their ids in `STATE.md`; and if the current time is outside the window, run the wind-down at once. For a window other than the default, keep the same offsets: start 3 minutes after the window opens, last call 48 minutes before it closes, wind-down 16 minutes before it closes. Off-minutes such as :03 and :17 avoid the crowd of jobs scheduled on the hour.
 - **"switch to continuous"** (or "nightshift off"): delete the three window jobs, set the mode to continuous, and resume.
