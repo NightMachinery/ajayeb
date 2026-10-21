@@ -1,8 +1,8 @@
 # Haftgane: 7 Wonders, second edition, in Ajayeb
 
-@Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12 and updated the same day for the owner's answers.
+@Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: design accepted, M12 done, build starts with M13.** Its decisions are D30 to D60 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing here is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
+**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional.** Its decisions are D30 to D60 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing here is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
 
 ## What it is and why
 
@@ -28,18 +28,21 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 ## Reading order
 
 1. [rules.md](rules.md): the rules and the 30 rulings, the rules reference for everything else.
-2. [sources.md](sources.md): every source, what it was used for and its licence.
-3. [duel-overlap.md](duel-overlap.md): which card and wonder names Duel shares, and how far their effects agree.
-4. [reuse-audit.md](reuse-audit.md): what Duel's code can be reused, with file and line evidence. Its slice plan ("Question 2") is superseded by the platform design.
-5. [platform-architecture.md](platform-architecture.md): rooms, decision points, persistence, views, the lobby, bots in rooms, the protocol and the client entry.
-6. [engine-architecture.md](engine-architecture.md): catalog, state, turn flow, payment, scoring, views, observations, replay and the engine's slices.
-7. [bot-plan.md](bot-plan.md): bot levels, search, fixed work, evaluation and how strength is measured.
-8. [phone-layout.md](phone-layout.md): the screens, their components and the server fields they need.
-9. [art-reuse.md](art-reuse.md): card and wonder art reuse, new subjects, vectors, budgets and generation batches.
-10. [decisions.md](../dev/decisions.md), D30 to D60: the accepted decisions, each with its reasons, the options rejected and the earlier decision it extends or supersedes.
-11. [roadmap.md](../dev/roadmap.md), M12 to M23: the build plan, with slices, review levels, standing gates, parallel tracks and owner decision points.
+2. [effects.md](effects.md): every effect kind the engine must model, with its count in the verified data, and the sizes the engine must hold.
+3. [edition-differences.md](edition-differences.md): how the second edition differs from the first, and the first-edition values that older sources still carry.
+4. [data-rulings.md](data-rulings.md): how M13 verified the card and wonder data, each disagreement it settled, and the one night-side question still open.
+5. [sources.md](sources.md): every source, what it was used for and its licence.
+6. [duel-overlap.md](duel-overlap.md): which card and wonder names Duel shares, and how far their effects agree, card by card.
+7. [reuse-audit.md](reuse-audit.md): what Duel's code can be reused, with file and line evidence. Its slice plan ("Question 2") is superseded by the platform design.
+8. [platform-architecture.md](platform-architecture.md): rooms, decision points, persistence, views, the lobby, bots in rooms, the protocol and the client entry.
+9. [engine-architecture.md](engine-architecture.md): catalog, state, turn flow, payment, scoring, views, observations, replay and the engine's slices.
+10. [bot-plan.md](bot-plan.md): bot levels, search, fixed work, evaluation and how strength is measured.
+11. [phone-layout.md](phone-layout.md): the screens, their components and the server fields they need.
+12. [art-reuse.md](art-reuse.md): card and wonder art reuse, new subjects, vectors, budgets and generation batches.
+13. [decisions.md](../dev/decisions.md), D30 to D60: the accepted decisions, each with its reasons, the options rejected and the earlier decision it extends or supersedes.
+14. [roadmap.md](../dev/roadmap.md), M12 to M23: the build plan, with slices, review levels, standing gates, parallel tracks and owner decision points.
 
-Two working notes that carry draft card values, the effect inventory and the list of differences between the editions, are held back until the blind data verification in M13.
+The effect inventory and the edition differences were held back as working notes until M13 had verified the data, and are now published with the verified values. The per-card values themselves are not in these pages: they stay in the private run directory until the catalog slice `M15.haftgane-catalog-data` commits them as the engine's catalog.
 
 ## Points reconciled in this package
 
@@ -68,7 +71,7 @@ The design documents are kept as they were reviewed, so a few points are settled
 - **Bot strength:** equal work per bot at every table size.
 - **Bot levels:** the public release waits for Scholar. Apprentice first plays in an internal milestone, and Master may follow later.
 - **Screens:** crests fixed by table position, running points shown, the turn recap opening by itself with a setting, bot names by level.
-- **Draft data:** the two working notes with draft values stay private until M13.
+- **Draft data:** the two working notes with draft values stay private until M13. They were published after the verification, as [effects.md](effects.md) and [edition-differences.md](edition-differences.md).
 
 The owner's final answers, the same evening:
 
@@ -79,15 +82,17 @@ The owner's final answers, the same evening:
 
 ## Open items
 
-Everything else is decided. What remains is listed here, in one place: the data checks, which M13 settles, and a few provisional calls, which stand unless the owner overturns them.
+Everything else is decided. What remains is listed here, in one place: one data question that M13 left open, and a few provisional calls, which stand unless the owner overturns them.
 
-### Data checks
+### Night-side data question
 
-No publisher sheet prints card costs, and the rulebook draws only 2 of the 14 wonder sides, so three things must be read from the printed game before the catalog is frozen. No physical copy is needed: `M13.printed-card-check` reads the fan reference files the owner downloads from BoardGameGeek when they are present, and otherwise user photos captioned as boards, card artwork and the like, which BoardGameGeek's gallery API and image server serve even though its own pages refuse scripts. It takes facts only, keeps the files and photos private in the run directory, and never ships or copies them. The release gate needs the engine's list of unconfirmed fields to be empty or accepted by the owner.
+M13 compared four independently built tables of the card and wonder data ([data-rulings.md](data-rulings.md)). It settled what the M12 design had left to it: the printed cards fixed the four unconfirmed costs (Town Hall, Arena, Circus and the Craftsmens Guild), the printed arrows confirmed ruling 30's trading-post directions, and photos confirmed every card design, every day side and the night sides of Alexandria, Ephesos and Olympia. It left six night-side questions with provisional values; a second, targeted look at the photos the same day confirmed five of them (Gizah's, Halikarnassos's and Rhodos's), each at its provisional value.
 
-- **Four unconfirmed costs:** Town Hall, Arena, Circus and the Craftsmens Guild. The fan wiki and one implementation agree on one value each; five implementations give the first-edition value but appear to have been edited from first-edition data. Reading every cost would be better still, because for costs the two blind tables cannot be independent.
-- **Twelve wonder sides:** every side except Alexandria's day and Halikarnassos's day rests on the fan wiki and two implementations that agree.
-- **The trading-post arrows:** ruling 30 reads West Trading Post as the left neighbour and East as the right one, from the fan wiki and the effects sheet's note that an arrow sets the direction. The blind tables record each printed arrow.
+One question remains:
+
+- **Q1:** the whole Babylon night side. Provisional: two stages, the last-card ability and then a science symbol of your choice, with no points. Board Game Arena's data and the fan wiki agree, but no photo of the printed strip has been found.
+
+[data-rulings.md](data-rulings.md#the-night-side-questions) gives the provisional costs and the photo that would settle it. The release gate needs Q1 settled by a photo or accepted by the owner.
 
 ### Provisional calls
 
@@ -110,6 +115,7 @@ Calls left to a build slice, with the design's recommendation:
 ## How the design was reviewed
 
 - The rules inventory checked its counts on the draft data by script, and compared every public draft with every saved source text: no run of seven or more words is shared.
+- M13 verified the data blind, from four tables built without sight of each other ([data-rulings.md](data-rulings.md)). `M13.rules-docs-final` then folded the result into the rules pages, recounted the effect inventory on the verified data, and compared every page it published or changed with every saved source, now including the publisher sheets, the fan files and the wiki pages: no run of seven or more words is shared. A full review by the other model family asked for three fixes (a stale verification paragraph in the engine design, a record of the lesser source errors, and the Babylon night marks); `M13.rules-docs-fix` made them, together with the five night-side values that a second look at the photos confirmed.
 - The reuse audit's file and line references were checked by script and spot-checked.
 - The platform design had a full review by an agent of the other model family (two blockers, ten major findings), a revision that took it from 461 to 210 lines, and a targeted recheck that found one gap, now fixed.
 - The engine design had a full review by the other model family (four majors, three minors, no blockers), a revision from 1023 to 717 lines, and a targeted recheck whose two closures were fixed and verified.

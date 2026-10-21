@@ -1,12 +1,12 @@
 # 7 Wonders, second edition: the base-game rules
 
-Draft for M12.rules-inventory, by @Opus5.5 (2026-10-21). Facts from the publisher's second-edition rulebook and sheets, stated in our own words; see [sources.md](sources.md).
+Written in M12.rules-inventory and finalised in M13.rules-docs-final, by @Opus5.5 (2026-10-21). Facts from the publisher's second-edition rulebook and sheets, stated in our own words; see [sources.md](sources.md).
 
 This page states the rules that Haftgane implements: the base game of 7 Wonders, second edition (Repos Production, 2020), for 3 to 7 players, with no expansions. It is written for two readers: a player who wants to know exactly what happens, and the engine designer, who should never need the rulebook. Where the published rules leave a point open, the page gives a provisional ruling; every one of them is collected under [Ambiguities](#ambiguities) at the end.
 
-Per-card numbers (costs, point values, player-count markers) are data, not rules. They live in the private draft tables `cards-draft.csv` and `wonders-draft.csv` until the data milestone verifies them. This page names a card only where a rule depends on it, and describes each wonder ability without its stage costs.
+Per-card numbers (costs, point values, player-count markers) are data, not rules. M13 verified them against the printed game ([data-rulings.md](data-rulings.md)), and the catalog slice `M15.haftgane-catalog-data` turns them into the engine's catalog. This page names a card only where a rule depends on it, and describes each wonder ability without its stage costs. [effects.md](effects.md) inventories the effects and the sizes the engine must hold.
 
-The second edition differs from the first (2010) in many card and wonder details and in a few rules. Our list of those differences is a working note, held back until the blind data verification in M13; until then, check which edition a source describes before trusting it (see [sources.md](sources.md)).
+The second edition differs from the first (2010) in many card and wonder details and in a few rules. [edition-differences.md](edition-differences.md) lists those differences; check which edition a source describes before trusting it (see [sources.md](sources.md)).
 
 ## Terms used throughout
 
@@ -52,7 +52,7 @@ Each Age card shows its cost, its effect, its name, a colour-blind symbol for it
 
 ## Setup
 
-1. **Build the three decks for N players.** Every printed card carries a minimum player count (3+ to 7+). Keep the cards whose minimum is at most N and return the rest to the box. A card design printed with several minimums (for example 3+ and 5+) is several physical copies, one per minimum.
+1. **Build the three decks for N players.** Every printed card carries a minimum player count (3+ to 7+). Keep the cards whose minimum is at most N and return the rest to the box. A card design printed with several minimums (for example 3+ and 5+) is several physical copies, one per minimum. The guilds also print a minimum, but step 2 decides which of them are used.
 2. **Add the guilds.** Shuffle the 10 guilds face down, draw N + 2 of them without looking, and shuffle them into the Age III deck. The other guilds return to the box unseen. Nobody knows which guilds are in the game.
 3. **Shuffle each deck.**
 4. **Wonder boards.** Each player receives a random board and picks which side to play. The rulebook suggests day sides for first games and allows players to agree to pick boards instead of dealing them.
@@ -236,7 +236,7 @@ Guilds appear only in Age III, N + 2 of the 10 per game. Each scores at the end 
 
 There are seven boards. Each board has one starting resource, the same on both sides. A day side always has three stages: the first gives points, the second gives the board's special effect (on Gizah, more points), the third gives more points. Night sides vary: two, three or four stages, mixing effects and points.
 
-The abilities below are described by what they do and when they apply. The stage costs are in the private draft table.
+The abilities below are described by what they do and when they apply; the stage costs are data, settled in [data-rulings.md](data-rulings.md). One night side is still provisional, waiting for a clear photo of the printed board or the owner's acceptance: Babylon's (question Q1). Wherever this page relies on its layout (two stages, the ability on stage 1, no points), it says so.
 
 ### Alexandria: the Lighthouse
 
@@ -249,7 +249,7 @@ The abilities below are described by what they do and when they apply. The stage
 
 - Starting resource: wood.
 - Day: stage 1 points; stage 2 one science symbol of your choice at the end of the game; stage 3 points.
-- Night (two stages, no points): stage 1 the **last card ability**; stage 2 one science symbol of your choice.
+- Night (two stages, no points; provisional, Q1): stage 1 the **last card ability**; stage 2 one science symbol of your choice.
 - **Last card ability.** In every Age from the one in which this stage is built, the owner does not discard the second card of the sixth turn. After every player has played their sixth card, the owner plays that card as an extra turn of their own, with any of the three actions and all the usual rules (paying, buying from neighbours, chains). The extra turn comes before the military conflicts. If the ability is built during the sixth turn itself, it already works for that Age (see [Ambiguities](#ambiguities), item 1). Built in Age I, it gives three extra cards over the game.
 
 ### Ephesos: the Temple of Artemis
@@ -312,9 +312,9 @@ The highest total wins. On a tie, the tied player with the most coins wins. If t
 
 ### Sizes
 
-- Seats: 3 to 7. Hand: 7 cards at the start of an Age, one fewer each turn. Turns per Age: 6, plus one extra turn for a Babylon night player with stage 1.
-- A city can hold at most 20 buildings: a Babylon night player who builds only stage 1 in Age I plays 21 cards and uses 1 for the stage. Under every other board the bound is 18. A board holds at most 4 tucked cards (Gizah night).
-- Data size: 80 card designs (70 Age cards, with Glassworks, Press and Loom present in two Ages, and 10 guilds), 77 distinct names, 148 physical cards; 7 boards, 14 sides, 41 stages.
+- Seats: 3 to 7. Hand: 7 cards at the start of an Age, one fewer each turn. Turns per Age: 6, plus one extra turn for a Babylon night player with stage 1 (Q1).
+- A city can hold at most 20 buildings: a Babylon night player who builds only stage 1 in Age I plays 21 cards and uses 1 for the stage (this rests on Q1). Under every other board the bound is 18. A board holds at most 4 tucked cards (Gizah night).
+- Data size: 80 card designs (70 Age cards, with Glassworks, Press and Loom present in two Ages, and 10 guilds), 77 distinct names, 148 physical cards; 7 boards, 14 sides, 41 stages (the 41 rests on Q1).
 
 ### Hidden information
 
@@ -332,7 +332,7 @@ All randomness is resolved at setup: deck order for each Age, the guild draw, th
 
 Each item gives a provisional ruling and its reason. None of these is settled by the publisher's FAQ unless it says so.
 
-1. **Babylon night, stage 1 built on the sixth turn.** *Ruling:* the ability already works in that Age: a player who commits the sixth card to building stage 1 keeps the second card instead of discarding it (ruling 25), and plays it after everyone's sixth card. *Reason:* the effects sheet says the ability works once the stage is built, and the extra card is played after all other sixth cards, which is after the stage exists; the fan wiki reports the publisher's own app plays it this way. The FAQ is silent. *Alternative:* only from the next Age.
+1. **Babylon night, stage 1 built on the sixth turn** (the stage with the ability; its number rests on Q1). *Ruling:* the ability already works in that Age: a player who commits the sixth card to building stage 1 keeps the second card instead of discarding it (ruling 25), and plays it after everyone's sixth card. *Reason:* the effects sheet says the ability works once the stage is built, and the extra card is played after all other sixth cards, which is after the stage exists; the fan wiki reports the publisher's own app plays it this way. The FAQ is silent. *Alternative:* only from the next Age.
 2. **Halikarnassos: which cards it can take.** *Ruling:* every Age card in the discard pile at step 6 of the turn, which includes cards sold that turn by any player and, on the sixth turn, the discarded second cards (but not a Babylon owner's kept card). *Reason:* the ability fires at the end of the turn, and the sixth-turn leftovers are discarded at its start. *Alternative:* only cards discarded before the turn began.
 3. **Halikarnassos: declining.** *Ruling:* if a legal card exists, the owner must take one. *Reason:* the effect says to choose one and build it, and in the base game a building never lowers a score, so a refusal is never useful. *Alternative:* allow declining, at the cost of one more decision node.
 4. **Babylon's extra card: the allowed actions.** *Ruling:* any of the three actions, including a wonder stage (which could be Babylon's own stage 2) and selling. *Reason:* the effects sheet says the card is played under the usual rules as a new turn. *Alternative:* construction only.
@@ -350,7 +350,7 @@ Each item gives a provisional ruling and its reason. None of these is settled by
 16. **Wonder sides.** *Ruling:* a room option: each player picks their side after seeing their board (the rulebook's default), all day sides, or random sides. *Reason:* the rulebook gives the first and recommends the second for beginners; random sides are useful for bots and quick games.
 17. **What the action reveals.** *Ruling:* at the reveal, every player sees each player's action kind and any constructed building, but not which card was tucked under a stage or sold. *Reason:* the rulebook has those cards placed face down.
 18. **Same name across ages.** *Ruling:* a city holds at most one card of each name, so the Age I and Age II Glassworks (and Press and Loom) exclude each other. *Reason:* the rulebook's rule is stated by name.
-19. **The Decorators Guild on short sides.** *Ruling:* "every stage" means every stage of the side in play (2 on Babylon and Rhodos night, 4 on Gizah night). *Reason:* that is the only reading that works for every side.
+19. **The Decorators Guild on short sides.** *Ruling:* "every stage" means every stage of the side in play (2 on Babylon night, provisional, Q1, and on Rhodos night; 4 on Gizah night). *Reason:* that is the only reading that works for every side.
 20. **The tie-break.** *Ruling:* compare coins held at the end of the game; players still tied all win. *Reason:* the rulebook.
 21. **A free construction is offered only as free.** *Ruling:* when a chain or an Olympia ability makes a building free, the only payment offered for it is the free one: no coins to the reserve, no resources, no purchases. *Reason:* the rules present a chain as an option, but paying instead only gives coins away and saves nothing for later. Olympia's day ability depends on whether the colour is already in the city, and the first building of that colour fills it however it was paid for; the night abilities belong to one particular turn. *Alternative:* offer the paid outcomes as well.
 22. **Babylon's kept card cannot be declined.** *Ruling:* a Babylon night owner who keeps the second card of the sixth turn must play it with one of the three actions; selling is always possible. *Reason:* the effects sheet says the owner may play the card, but declining would only throw it away, which is never better than selling it for 3 coins in the base game, where coins never lower a score. This simplifies an optional ability for the base game only; an expansion may need a pass. *Alternative:* allow a pass that discards the card for nothing.
@@ -361,14 +361,16 @@ Each item gives a provisional ruling and its reason. None of these is settled by
 27. **Payments are public.** *Ruling:* for every play, every player sees how many coins it paid to each neighbour, including for a wonder stage, whose tucked card stays hidden. *Reason:* at the table the buyer hands the coins over in plain view, and treasures are public; with several transfers in one turn the treasures alone would not always show who paid whom. *Alternative:* show only the resulting treasures.
 28. **What a free building from the discard counts.** *Ruling:* a building constructed by the Halikarnassos ability resolves its own coin effect when it is placed in step 6, counting the cities as they stand then: every card placed in step 4 of that turn, the neighbours' included, and the building itself where its effect counts its own colour. Coin effects already resolved in step 5 are not recomputed. *Reason:* it is placed after everything else that turn, and ruling 12 already settles what the step 5 effects count. *Alternative:* count the cities as they stood at the start of the turn.
 29. **The sixth turn's discard build comes before Babylon's kept card.** *Ruling:* on the sixth turn, a Halikarnassos discard build (step 6) happens before the Babylon night owner's extra turn. That extra turn therefore sees the free building, and may buy its production if it belongs to a neighbour and is tradeable (brown or grey). *Reason:* the discard ability belongs to the turn in which its stage is built, and the effects sheet puts the kept card after every other player's last card. *Alternative:* play Babylon's card first.
-30. **Left, right and the trading posts.** *Ruling:* a player's left neighbour is the one who receives their hand in Ages I and III. The West Trading Post discounts raw resources bought from the left neighbour, and the East Trading Post those bought from the right neighbour. *Reason:* the passing rule defines left; the effects sheet says an arrow on each trading post sets its direction, and the second-edition fan wiki gives West as left and East as right. *Alternative:* none; the printed arrows decide (see Open below).
+30. **Left, right and the trading posts.** *Ruling:* a player's left neighbour is the one who receives their hand in Ages I and III. The West Trading Post discounts raw resources bought from the left neighbour, and the East Trading Post those bought from the right neighbour. *Reason:* the passing rule defines left, and the effects sheet says an arrow on each trading post sets its direction. The printed cards confirm the reading: the East Trading Post's arrow points right and the West Trading Post's points left ([data-rulings.md](data-rulings.md), ruling 5). *Alternative:* none.
 
 ### Open
 
-The engine design and its review agree on every rules question they raised, so no question is left open for lack of agreement. One point needs the printed cards:
-
-- **The trading-post arrows.** Ruling 30 rests on the fan wiki and on the effects sheet's statement that an arrow sets the direction. The engine design and its review both ask the blind data tables to record each trading post's direction from the printed card, so that the reading is checked rather than assumed. A screen layout must also never reverse the meaning of left and right.
+No rules question is open. The one point that needed the printed cards, the direction of the trading-post arrows, is settled in ruling 30; a screen layout must still never reverse the meaning of left and right. What remains open is data, not rules: Babylon's night side, Q1 ([data-rulings.md](data-rulings.md#the-night-side-questions)). The other five night-side questions were settled by photos.
 
 ## Owner answers (2026-10-21)
 
 The game is named Haftgane: the opening paragraph says that this page states the rules Haftgane implements. The rules and rulings are unchanged; the owner accepted rulings 10, 25 and 26 as written, and ruling 25 no longer calls itself provisional.
+
+## M13 data verification (2026-10-21)
+
+M13 verified the card and wonder data against the printed game. On this page: ruling 30 is confirmed by the printed arrows, and its Open item is closed; the setup notes that the guilds' printed minimum does not apply; Babylon's night side (Q1) is marked provisional wherever this page relies on it, including the sizes and rulings 1 and 19; the Halikarnassos night side's starting resource, provisional after the reconciliation (Q5), is confirmed by photo; and the links to the draft tables and to the held-back notes now point to [data-rulings.md](data-rulings.md), [effects.md](effects.md) and [edition-differences.md](edition-differences.md). No other rule or ruling changed.

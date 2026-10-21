@@ -246,14 +246,14 @@ Status: done on 2026-10-21. The owner chose Ajayeb's second game, **Haftgane**: 
 
 Scope:
 
-- A rules inventory from the publisher's sheets and rulebook, the fan wiki and several implementations, with the card data kept private until M13 verifies it.
+- A rules inventory from the publisher's sheets and rulebook, the fan wiki and several implementations, with the card data kept private until M13 verified it (the effect inventory and the edition differences were then published).
 - A reuse audit of Duel's server, client and art, with file and line evidence.
-- The platform and engine designs, each reviewed by the other model family, and the bot plan revised against them; the phone screens as rendered mockups, kept private because they show unverified card values; the art reuse plan.
+- The platform and engine designs, each reviewed by the other model family, and the bot plan revised against them; the phone screens as rendered mockups, kept private because they show draft card values; the art reuse plan.
 - One package that reconciles the documents, the owner's answers folded in, and the move of the decisions and this plan into `docs/dev/`.
 
 Acceptance:
 
-- No public text shares a run of seven or more words with a saved source, and no unverified card value is published.
+- No public text shares a run of seven or more words with a saved source, and no card value is published before M13 verifies it.
 - Every design names its slices, review levels and acceptance checks, merged here into one plan ordered by dependency.
 - The owner has answered every question that gates a build slice and accepted the design.
 
@@ -272,7 +272,7 @@ These milestones build Haftgane from the M12 design. They merge the slice plans 
 
 - Every slice that touches code Duel runs keeps Duel unchanged.
 - Cold Home stays at or below 200,000 gzip bytes, and cold Home and cold Duel entry stay at or below their recorded baseline plus 5,000 gzip bytes, measured with service workers blocked.
-- No unverified card value (a draft cost, effect or mockup value) is committed before M13's reconciliation, and no public text shares a run of seven or more words with a saved source.
+- A card value is committed only as verified by M13's reconciliation, or marked provisional with its open question (now only Babylon's night side, Q1), never as a draft or mockup value; and no public text shares a run of seven or more words with a saved source.
 - Haftgane rooms cannot be created in production until M22 turns creation on.
 
 **Where work runs in parallel.** Four tracks can move at once:
@@ -294,15 +294,17 @@ The tracks share one machine: the heavy guard queues builds and tests, and only 
 
 ## M13: Rules and data for Haftgane
 
+Status: done on 2026-10-21. Three blind tables (from the publisher's sheets, from the fan wiki and implementations, and from BoardGameGeek photos of the printed game) and the M12 drafts were reconciled field by field: all 80 card designs and 39 of the 41 wonder stages are confirmed, four draft costs changed (Town Hall, Arena, Circus, the Craftsmens Guild), and the printed arrows confirmed ruling 30. The rules docs in [docs/haftgane/](../haftgane/README.md) are final, with the data rulings, the effect inventory and the edition differences published, after a FULL review and one round of fixes. Left open, as a release-gate item awaiting the owner: Q1, Babylon's night side (two stages, provisional), which no photo of the printed board shows; the owner may accept it or hold it for a photo ([data-rulings.md](../haftgane/data-rulings.md#the-night-side-questions)).
+
 Needs: nothing; the design was accepted on 2026-10-21.
 
 Scope:
 
-- `M13.blind-table-publisher` (NONE). A verifier builds a table of all 80 designs and 41 stages from the publisher's card and chain sheet, effects sheet and rulebook. It works blind: it never sees the private drafts, the two held-back working notes (the effect inventory and the edition differences) or the other verifier.
+- `M13.blind-table-publisher` (NONE). A verifier builds a table of all 80 designs and 41 stages from the publisher's card and chain sheet, effects sheet and rulebook. It works blind: it never sees the private drafts, the two working notes then held back (the effect inventory and the edition differences, published since) or the other verifier.
 - `M13.blind-table-wiki` (NONE). A second verifier, equally blind, builds the same table from the second-edition fan wiki's costs and boards, cross-checked against second-edition implementations.
 - `M13.printed-card-check` (NONE). The four unconfirmed costs, the twelve wonder sides the rulebook does not draw and the direction of each trading post's arrow are read from the printed game; reading every cost is better still, because no publisher sheet prints costs and so the two tables are not independent there. No physical copy is needed. BoardGameGeek lists three fan reference files (wonder cards, an icon reference, a cost sheet) whose downloads need a signed-in browser, so the owner downloads them by hand into the private run directory, and the check reads them when they are present. Otherwise it reads user photos: BoardGameGeek's own pages refuse scripts, but its gallery API and image server answer (tested on 2026-10-21), so photos captioned as boards, card artwork and the like can be fetched. Files and photos are read for facts only (costs, wonder sides, arrows), kept private in the run directory, and never shipped or copied. The licensed online version stays a fallback.
-- `M13.data-reconciliation` (NONE). A field-by-field reconciliation of both tables, the printed-card check and the drafts; independent refuters settle each disagreement, and anything left becomes an owner question with a provisional ruling. The reconciled reference and the text of the data rulings stay in the private run directory until `M15.haftgane-catalog-data` encodes and commits them.
-- `M13.rules-docs-final` (FULL). The rules docs in their final place: rules.md with the owner's rules answers, sources.md, the two held-back working notes once reconciled, and the data rulings. Two reviewers: one for completeness, one for rulebook wording by seven-word matching.
+- `M13.data-reconciliation` (NONE). A field-by-field reconciliation of both tables, the printed-card check and the drafts; independent refuters settle each disagreement, and anything left becomes an owner question with a provisional ruling. The reconciled reference stays in the private run directory until `M15.haftgane-catalog-data` encodes and commits it; the data rulings were published by `M13.rules-docs-final`.
+- `M13.rules-docs-final` (FULL). The rules docs in their final place: rules.md with the owner's rules answers, sources.md, the effect inventory and the edition differences (published once reconciled), and the data rulings. Two reviewers: one for completeness, one for rulebook wording by seven-word matching.
 
 Acceptance:
 
