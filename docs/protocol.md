@@ -188,7 +188,9 @@ The same four-room snapshot budget covers Duel `state`, Haftgane
 code replaces the old family without inheriting its ack, history or events.
 Table snapshots have their own typed merge: nondecreasing `revision` and
 `batch` continue history/events, while undo's lower `batch` drops them. An
-explicit new history supersedes earlier events. The newest frame inherits an
+explicit new history supersedes earlier events. A table frame that does not
+continue the previous one (undo) must carry its own `history`, as Duel's undo
+frames do. The newest frame inherits an
 absent ack even after undo. Lobby snapshots contain the full public log and
 inherit only an absent ack. The event cap remains 256.
 
@@ -853,7 +855,9 @@ it again with the same `seq`.
   closes (1008).
 - `protocol`: a v1 connection requested a non-Duel room, or the `hello`
   asked for a protocol version the server does not
-  speak. The connection closes (1008).
+  speak. After an unsupported hello the connection closes (1008); after a
+  room-operation refusal it stays open. The shipped Duel client treats both
+  as fatal and asks for a reload.
 - `busy`: the server holds as many rooms in memory as it can, and every one
   of them has a connection (a `create`, a `rematch`, or a `join` that must
   load a room), or the room could not be read or saved during restoration.

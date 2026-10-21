@@ -26,6 +26,8 @@ func (o *Outbox) dropOtherFamily(code, family string) {
 
 // tableContinues uses completed batches, never the pending point or private
 // pick. Undo reduces Batch while advancing Revision, so it drops stale events.
+// A table frame that does not continue the previous one must carry its own
+// complete History, as Duel undo frames do.
 func tableContinues(prev, next wire.TableState) bool {
 	return next.Revision >= prev.Revision && next.Batch >= prev.Batch
 }
