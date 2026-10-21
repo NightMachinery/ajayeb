@@ -85,7 +85,12 @@ func validGameID(s string) bool {
 // types. The complete input is already capped by MaxFileBytes. No field order
 // is required. Reject duplicate discriminators (including case aliases) rather
 // than letting two readers select different codecs for the same bytes.
-func fileKind(data []byte) (int, string, error) {
+func fileKind(data []byte) (schema int, game string, err error) {
+	defer func() {
+		if errors.Is(err, io.EOF) {
+			err = io.ErrUnexpectedEOF
+		}
+	}()
 	d := json.NewDecoder(bytes.NewReader(data))
 	token, err := d.Token()
 	if err != nil {
@@ -94,8 +99,6 @@ func fileKind(data []byte) (int, string, error) {
 	if token != json.Delim('{') {
 		return 0, "", fmt.Errorf("%w: expected room object", ErrSchema)
 	}
-	var schema int
-	var game string
 	var schemaSeen, gameSeen bool
 	for d.More() {
 		token, err = d.Token()
@@ -133,7 +136,10 @@ func fileKind(data []byte) (int, string, error) {
 		return 0, "", err
 	}
 	if _, err := d.Token(); !errors.Is(err, io.EOF) {
-		return 0, "", fmt.Errorf("store: trailing room data: %v", err)
+		if err != nil {
+			return 0, "", fmt.Errorf("store: trailing room data: %w", err)
+		}
+		return 0, "", errors.New("store: trailing room data")
 	}
 	if !schemaSeen || schema != 1 && schema != 2 {
 		return 0, "", fmt.Errorf("%w: schema %d", ErrSchema, schema)
@@ -215,4 +221,18 @@ func (d duelInspection) Check() (bool, error) {
 		return false, err
 	}
 	return engine.HashString(&s) != d.file.Hash, nil
+}
+
+// foreignRoomFile reports a cleanly read header selecting anything other than
+// schema-1 Duel. Damaged or unreadable bytes stay overwritable by Save.
+func foreignRoomFile(path string) (bool, error) {
+	data, err := readCapped(path)
+	if err != nil {
+		return false, err
+	}
+	schema, game, err := fileKind(data)
+	if err != nil {
+		return false, err
+	}
+	return schema != Schema || game != "duel", nil
 }

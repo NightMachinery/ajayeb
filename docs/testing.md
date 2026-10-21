@@ -1713,13 +1713,21 @@ invalid ids and missing decoders. Production registers no schema-2 codec.
 
 `TestRoomFileCodecPreflightAndRetention` uses the same injected table for both
 preflight and retention. Fake game rules differ from Duel's; the codec supplies
-the compatibility verdict. Existing aggregate counters, the report format and
-the scalar Duel `rules` value stay unchanged. The test checks read-only scans,
+the compatibility verdict. Aggregate counters are unchanged in kind; malformed or Duel-incompatible
+headers can now count as schema errors instead of only read errors. The report
+format and scalar Duel `rules` value stay unchanged. The test checks read-only scans,
 hash-refresh classification, live archive risk, archive replay avoidance,
 expiry and byte-preserving legacy archive migration. Malformed discriminators
 or retention metadata fail closed in `TestRoomFileMalformedHeadersFailClosed`.
-`TestRoomFileSaveRefusesUnsupportedTarget` protects unsupported existing bytes
-from the typed Duel save path. Existing D28/D29 concurrency, restore failures,
+`TestRoomFileSaveRefusesUnsupportedTarget` protects clean bounded headers
+selecting a non-Duel game or schema-2 codec from the typed Duel save path.
+`TestRoomFileSaveRepairsDamagedLiveFile`, lifted from the FULL review's repair
+probe, checks that the next save repairs truncated, empty, garbage, schema-string
+and oversized files, plus missing/duplicate discriminators, undecodable Duel
+bodies and unreadable files. Each repaired file must load successfully, matching
+pre-slice Duel behavior. Decoded Duel archives retain their existing protection.
+`TestRoomFileHeaderErrors` checks unexpected EOF for incomplete inputs and a
+trailing-data diagnostic without a nil-error suffix. Existing D28/D29 concurrency, restore failures,
 retention bounds and read-size limits remain covered by the full store suite.
 
 `TestRoomFileOldBinaryPreservesSchema2` uses only the pre-slice store API. It
@@ -1731,6 +1739,11 @@ compiled and run against frozen pre-slice master `31ec171`, extracted with
 `git archive` into temporary source space. No checkout, data directory or
 fixture regeneration was involved. This proves rollback refusal and preservation
 using the old implementation, alongside the current implementation's checks.
+`TestRoomFileOldBinaryPreservesIncompatibleSchema2` adds a schema-2 payload whose
+numeric seed conflicts with Duel's string field. Both old and new code must
+preserve its bytes through load, peek, reaping and preflight, with one error and
+no playable room or archive candidate. The old binary counts it as a read error;
+the new dispatcher counts it as a schema error. Either error refuses rollback.
 
 Run targeted checks through the guard:
 

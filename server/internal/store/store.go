@@ -105,7 +105,7 @@ func (st *Store) Save(f *File) error {
 		if existing.Status == StatusArchived {
 			return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
 		}
-	} else if !errors.Is(err, fs.ErrNotExist) {
+	} else if foreign, ferr := foreignRoomFile(path); ferr == nil && foreign {
 		return fmt.Errorf("store: save %s: %w", f.Code, err)
 	}
 	s, err := replay(f)

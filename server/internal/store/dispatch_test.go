@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -49,7 +50,7 @@ func TestRoomFileOldBinaryPreservesSchema2(t *testing.T) {
 		t.Fatalf("sweep: removed=%v err=%v", removed, err)
 	}
 	report := store.CheckDataDir(root)
-	if report.Rooms != 4 || report.Errors != 4 || report.SchemaErrors != 4 || report.WouldArchive != 0 || report.Playable != 0 || report.Rules != 1 || report.Format != "ajayeb-room-check/1" {
+	if report.Rooms != 4 || report.Errors != 4 || report.SchemaErrors != 4 || report.WouldArchive != 0 || report.Playable != 0 || report.Rules != engine.RulesVersion || report.Format != "ajayeb-room-check/1" {
 		t.Fatalf("report: %+v", report)
 	}
 	for name, raw := range fixtures {
@@ -70,6 +71,41 @@ func TestRoomFileOldBinaryPreservesSchema2(t *testing.T) {
 		if len(entries) != want {
 			t.Fatalf("unexpected %s entries: %v", dir, entries)
 		}
+	}
+}
+
+// Unlike the compatible shapes above, this payload cannot decode as Duel.
+// Old builds classify it as a read error; dispatching builds as a schema error.
+// Either classification must refuse rollback and leave all bytes untouched.
+func TestRoomFileOldBinaryPreservesIncompatibleSchema2(t *testing.T) {
+	st := newStore(t)
+	raw := []byte(`{"schema":2,"game":"haftgane","code":"FTXAAE","status":"playing","updated":"2000-01-01T00:00:00Z","seed":7}`)
+	path := filepath.Join(st.Dir(), "FTXAAE.json")
+	if err := os.WriteFile(path, raw, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := st.Load("FTXAAE"); err == nil {
+		t.Fatal("loaded incompatible schema-2 payload")
+	}
+	if _, err := st.PeekHeader("FTXAAE"); err == nil {
+		t.Fatal("peek accepted incompatible schema-2 payload")
+	}
+	if removed, err := store.NewReaper(st, nil).Sweep(); err == nil || len(removed) != 0 {
+		t.Fatalf("reaper: %v %v", removed, err)
+	}
+	report := store.CheckDataDir(filepath.Dir(st.Dir()))
+	if report.Rooms != 1 || report.Errors != 1 || report.Playable != 0 || report.WouldArchive != 0 || report.LiveWouldArchive != 0 {
+		t.Fatalf("report: %+v", report)
+	}
+	if got, err := os.ReadFile(path); err != nil || !bytes.Equal(raw, got) {
+		t.Fatalf("changed incompatible schema-2 bytes: %v", err)
+	}
+	entries, err := os.ReadDir(st.Dir())
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("live entries changed: %v %v", entries, err)
+	}
+	if _, err := os.Stat(st.ArchiveDir()); !os.IsNotExist(err) {
+		t.Fatalf("archive directory created: %v", err)
 	}
 }
 
@@ -325,5 +361,77 @@ func TestRoomFileCodecSelection(t *testing.T) {
 				t.Fatalf("selection: calls=%v report=%+v", calls, report)
 			}
 		})
+	}
+}
+
+func TestRoomFileSaveRepairsDamagedLiveFile(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		mutate func([]byte) []byte
+	}{
+		{"truncated", func(b []byte) []byte { return b[:len(b)/2] }},
+		{"empty", func([]byte) []byte { return []byte{} }},
+		{"garbage", func([]byte) []byte { return []byte("not json\n") }},
+		{"schema-string", func(b []byte) []byte { return bytes.Replace(b, []byte(`"schema": 1`), []byte(`"schema": "1"`), 1) }},
+		{"missing-schema", func(b []byte) []byte { return bytes.Replace(b, []byte(`"schema": 1,`), nil, 1) }},
+		{"duplicate-schema", func(b []byte) []byte {
+			return bytes.Replace(b, []byte(`"schema": 1`), []byte(`"schema": 1, "Schema": 1`), 1)
+		}},
+		{"duel-body", func(b []byte) []byte { return bytes.Replace(b, []byte(`"seed": "7"`), []byte(`"seed": {}`), 1) }},
+		{"unreadable", func(b []byte) []byte { return b }},
+		{"oversized", func(b []byte) []byte { return append(b, bytes.Repeat([]byte(" "), store.MaxFileBytes)...) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st := newStore(t)
+			f := store.New("PRBSAV", store.ModeHotseat, engine.Options{}, 7, time.Now())
+			f.Status = store.StatusPlaying
+			if err := st.Save(f); err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(st.Dir(), "PRBSAV.json")
+			raw, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, tc.mutate(raw), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if tc.name == "unreadable" {
+				if os.Geteuid() == 0 {
+					t.Skip("permission check requires unprivileged user")
+				}
+				if err := os.Chmod(path, 0); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := st.Save(f); err != nil {
+				t.Fatalf("Save no longer repairs a damaged live file: %v", err)
+			}
+			if _, _, err := st.Load("PRBSAV"); err != nil {
+				t.Fatalf("load after repair: %v", err)
+			}
+		})
+	}
+}
+
+func TestRoomFileHeaderErrors(t *testing.T) {
+	for _, raw := range []string{"", " ", "{", `{"schema":`, `{"schema":1,`, `{"schema":1,"seed":`} {
+		t.Run(raw, func(t *testing.T) {
+			st := newStore(t)
+			if err := os.WriteFile(filepath.Join(st.Dir(), "HDRERR.json"), []byte(raw), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if _, _, err := st.Load("HDRERR"); !errors.Is(err, io.ErrUnexpectedEOF) {
+				t.Fatalf("incomplete header: %v", err)
+			}
+		})
+	}
+	st := newStore(t)
+	raw := `{"schema":1} {}`
+	if err := os.WriteFile(filepath.Join(st.Dir(), "HDRERR.json"), []byte(raw), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := st.Load("HDRERR"); err == nil || !strings.HasSuffix(err.Error(), "trailing room data") {
+		t.Fatalf("trailing data: %v", err)
 	}
 }
