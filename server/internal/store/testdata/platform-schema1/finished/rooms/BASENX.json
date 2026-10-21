@@ -1,0 +1,163 @@
+{
+  "schema": 1,
+  "rules": 1,
+  "code": "BASENX",
+  "mode": "hotseat",
+  "created": "2026-10-21T11:00:00Z",
+  "updated": "2026-10-21T11:00:00Z",
+  "seats": [
+    {
+      "kind": "human",
+      "userId": "fixture-owner",
+      "name": "Seat 0",
+      "epoch": 2
+    },
+    {
+      "kind": "human",
+      "userId": "fixture-owner",
+      "name": "Seat 1",
+      "nameNo": 2
+    }
+  ],
+  "options": {
+    "firstPlayer": "seat0",
+    "centerPawn": "lastActiveChooses",
+    "hideAtEnd": false
+  },
+  "seed": "11",
+  "actions": [
+    "draft:great-library",
+    "draft:sphinx",
+    "draft:temple-of-artemis",
+    "draft:great-lighthouse",
+    "draft:circus-maximus",
+    "draft:colossus",
+    "construct:clay-reserve",
+    "construct:theater",
+    "construct:stone-pit",
+    "construct:stone-reserve",
+    "construct:glassworks",
+    "construct:altar",
+    "construct:apothecary",
+    "construct:logging-camp",
+    "discard:stable",
+    "construct:wood-reserve",
+    "construct:baths",
+    "construct:tavern",
+    "construct:lumber-yard",
+    "construct:press",
+    "construct:palisade",
+    "construct:quarry",
+    "construct:workshop",
+    "construct:clay-pit",
+    "discard:pharmacist",
+    "construct:guard-tower",
+    "starter:0",
+    "construct:brickyard",
+    "discard:laboratory",
+    "construct:library",
+    "construct:courthouse",
+    "construct:rostrum",
+    "discard:dispensary",
+    "construct:parade-ground",
+    "construct:archery-range",
+    "construct:aqueduct",
+    "construct:forum",
+    "construct:glass-blower",
+    "construct:statue",
+    "construct:brewery",
+    "construct:horse-breeders",
+    "construct:barracks",
+    "construct:caravansery",
+    "construct:sawmill",
+    "construct:drying-room",
+    "discard:customs-house",
+    "construct:walls",
+    "starter:0",
+    "discard:pretorium",
+    "construct:fortifications",
+    "construct:merchants-guild",
+    "construct:builders-guild",
+    "construct:senate",
+    "discard:academy",
+    "construct:armory",
+    "construct:lighthouse",
+    "construct:siege-workshop",
+    "construct:arena",
+    "construct:gardens",
+    "construct:chamber-of-commerce",
+    "construct:obelisk",
+    "construct:pantheon",
+    "construct:moneylenders-guild",
+    "construct:circus",
+    "discard:university",
+    "construct:arsenal",
+    "construct:palace",
+    "construct:town-hall"
+  ],
+  "hash": "869ae1a9b41a3bf3",
+  "version": 70,
+  "lastSeq": {
+    "fixture-owner:fixture-tab": 17
+  },
+  "status": "finished",
+  "result": {
+    "kind": "civilian",
+    "winner": 0,
+    "scores": [
+      {
+        "blue": 35,
+        "green": 4,
+        "yellow": 3,
+        "purple": 12,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 1,
+        "military": 0,
+        "total": 55
+      },
+      {
+        "blue": 28,
+        "green": 0,
+        "yellow": 9,
+        "purple": 0,
+        "wonders": 0,
+        "tokens": 0,
+        "coins": 4,
+        "military": 10,
+        "total": 51
+      }
+    ]
+  },
+  "rematch": "REMATC",
+  "admin": "fixture-owner",
+  "hints": {
+    "prices": true,
+    "economy": false,
+    "science": false,
+    "military": false,
+    "threats": false,
+    "tempo": false,
+    "wonders": false,
+    "tokens": false,
+    "scoring": false,
+    "counting": false,
+    "recap": false,
+    "advisor": false,
+    "advisorStrength": ""
+  },
+  "roomLog": [
+    {
+      "kind": "hints",
+      "at": 3,
+      "seat": -1,
+      "on": [
+        "prices"
+      ],
+      "off": [
+        "advisor"
+      ]
+    }
+  ],
+  "noUndo": true
+}

@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "rules": 1,
+  "code": "BASENX",
+  "mode": "hotseat",
+  "created": "2026-10-21T11:00:00Z",
+  "updated": "2026-10-21T11:00:00Z",
+  "seats": [
+    {
+      "kind": "human",
+      "userId": "fixture-owner",
+      "name": "Seat 0",
+      "epoch": 2
+    },
+    {
+      "kind": "human",
+      "userId": "fixture-owner",
+      "name": "Seat 1",
+      "nameNo": 2
+    }
+  ],
+  "options": {
+    "firstPlayer": "seat0",
+    "centerPawn": "lastActiveChooses",
+    "hideAtEnd": false
+  },
+  "seed": "11",
+  "actions": [
+    "draft:great-library",
+    "draft:sphinx",
+    "draft:temple-of-artemis",
+    "draft:great-lighthouse",
+    "draft:circus-maximus",
+    "draft:colossus",
+    "construct:clay-reserve",
+    "construct:theater",
+    "construct:stone-pit",
+    "construct:stone-reserve",
+    "construct:glassworks",
+    "construct:altar"
+  ],
+  "hash": "2e3237af90736c97",
+  "version": 19,
+  "lastSeq": {
+    "fixture-owner:fixture-tab": 17
+  },
+  "status": "archived",
+  "archiveReason": "replay-failed",
+  "archivedAt": "2026-10-21T12:00:00Z",
+  "admin": "fixture-owner",
+  "hints": {
+    "prices": true,
+    "economy": false,
+    "science": false,
+    "military": false,
+    "threats": false,
+    "tempo": false,
+    "wonders": false,
+    "tokens": false,
+    "scoring": false,
+    "counting": false,
+    "recap": false,
+    "advisor": false,
+    "advisorStrength": ""
+  },
+  "roomLog": [
+    {
+      "kind": "hints",
+      "at": 3,
+      "seat": -1,
+      "on": [
+        "prices"
+      ],
+      "off": [
+        "advisor"
+      ]
+    }
+  ],
+  "noUndo": true
+}

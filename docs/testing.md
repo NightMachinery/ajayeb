@@ -1673,3 +1673,39 @@ their own clipping definitions after interaction ids are stripped. The existing
 Age III DOM limit remains below 2,500 elements; neither the long-task threshold
 nor the measured animation windows change. See
 [the attribution](dev/master-e2e-failures.md) for the rejected alternatives.
+
+## Duel compatibility baselines before Haftgane
+
+@OpenAI, 2026-10-21. The M14 baselines record `46a540d` before shared-layer
+changes. They are tests and measurements, with no product behavior changes.
+Regeneration is an explicit review action, never a normal test side effect.
+Use the agent guide's detached guard form when running unattended.
+
+### Schema-1 writes and loads
+
+`TestPlatformSchema1Baseline` compares actual Store output byte for byte
+against `server/internal/store/testdata/platform-schema1/`. Seven cases cover
+lobby, unfinished play, a finished game, both unfinished and finished
+archives, rules-version archiving and a compatible hash refresh. The goldens
+include fixed timestamps, rules/hash fields and non-default room metadata.
+The D28 transition cases preserve an unknown additive field. Archive paths
+are pinned under `rooms-archive/`, outside live `rooms/` scans (D29).
+
+Each committed fixture is also loaded in a separate fresh store. Loaded
+fields and replay hashes must agree, and load must leave its bytes intact.
+Existing D28/D29 suites retain their broader failure, retention and
+concurrency coverage. To regenerate deliberately:
+
+```sh
+UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \
+  make test-go GO_PKGS=./internal/store 'GO_RUN=^TestPlatformSchema1Baseline$'
+```
+
+### Version-1 frames
+
+`TestPlatformV1TranscriptBaseline` records the real stack's full-game bytes;
+existing engine-view and individual wire-message goldens continue to cover
+all phases, viewer redaction and additional message shapes. See
+[dev/protocol-fixtures.md](dev/protocol-fixtures.md) for the transcript's
+counts, scope and deliberate regeneration command. All these checks run in
+`make verify-quick`, without a browser.

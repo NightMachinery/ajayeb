@@ -1,0 +1,81 @@
+{
+  "actions": [
+    "draft:great-library",
+    "draft:sphinx",
+    "draft:temple-of-artemis",
+    "draft:great-lighthouse",
+    "draft:circus-maximus",
+    "draft:colossus",
+    "construct:clay-reserve",
+    "construct:theater",
+    "construct:stone-pit",
+    "construct:stone-reserve",
+    "construct:glassworks",
+    "construct:altar"
+  ],
+  "admin": "fixture-owner",
+  "code": "BASENX",
+  "created": "2026-10-21T11:00:00Z",
+  "futureMetadata": {
+    "keep": true
+  },
+  "hash": "2e3237af90736c97",
+  "hints": {
+    "advisor": false,
+    "advisorStrength": "",
+    "counting": false,
+    "economy": false,
+    "military": false,
+    "prices": true,
+    "recap": false,
+    "science": false,
+    "scoring": false,
+    "tempo": false,
+    "threats": false,
+    "tokens": false,
+    "wonders": false
+  },
+  "lastSeq": {
+    "fixture-owner:fixture-tab": 17
+  },
+  "mode": "hotseat",
+  "noUndo": true,
+  "options": {
+    "centerPawn": "lastActiveChooses",
+    "firstPlayer": "seat0",
+    "hideAtEnd": false
+  },
+  "roomLog": [
+    {
+      "at": 3,
+      "kind": "hints",
+      "off": [
+        "advisor"
+      ],
+      "on": [
+        "prices"
+      ],
+      "seat": -1
+    }
+  ],
+  "rules": 1,
+  "schema": 1,
+  "seats": [
+    {
+      "epoch": 2,
+      "kind": "human",
+      "name": "Seat 0",
+      "userId": "fixture-owner"
+    },
+    {
+      "kind": "human",
+      "name": "Seat 1",
+      "nameNo": 2,
+      "userId": "fixture-owner"
+    }
+  ],
+  "seed": "11",
+  "status": "playing",
+  "updated": "2026-10-21T11:00:00Z",
+  "version": 19
+}

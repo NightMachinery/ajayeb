@@ -42,3 +42,34 @@ check procedure in the agent guide when working unattended. `make
 verify-quick` checks golden drift, generator drift, TypeScript compatibility,
 null arrays and equality between every generated snapshot and its source.
 Regeneration uses the existing `make gen` target.
+
+## Live version-1 compatibility transcript
+
+`server/internal/protocoltest/testdata/platform-v1-game.jsonl` records a
+complete seeded hot-seat game through the real WebSocket, actor and store.
+`TestPlatformV1TranscriptBaseline` compares received bytes without parsing,
+normalizing identities or re-encoding JSON. Each frame has one separator
+newline in the fixture. The synthetic identity, room code, key and setup
+are fixed test inputs, never deployment credentials.
+
+The baseline from `46a540d` contains 76 frames (one welcome, 73 states and
+two rejects), 69 accepted moves ending in a civilian result, and 2,252,287
+bytes including separators. It includes live events, illegal/stale rejects,
+a mid-game resync and a final full-history resync. Existing
+`TestRecordMessages` goldens still pin created, linked, error and uncommon
+state shapes; `TestProtocolFixtures` still pins every named phase and all
+three viewers. The live transcript supplements those fixtures rather than
+replacing or sampling them.
+
+Only after reviewing an intended protocol change, regenerate this one
+transcript with:
+
+```sh
+UPDATE_PLATFORM_BASELINES=1 python3 tools/heavy.py run --kind test -- \
+  make test-go GO_PKGS=./internal/protocoltest 'GO_RUN=^TestPlatformV1TranscriptBaseline$'
+```
+
+Then rerun without the update variable and inspect the diff. This fixture
+is not an input to the TypeScript generator, so it does not require editing
+existing generated files. See [../testing.md](../testing.md) for the other
+M14 baselines and the detached procedure for unattended runs.

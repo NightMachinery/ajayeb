@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "rules": 1,
+  "code": "BASENX",
+  "mode": "online",
+  "created": "2026-10-21T11:00:00Z",
+  "updated": "2026-10-21T11:00:00Z",
+  "seats": [
+    {
+      "kind": "human",
+      "userId": "fixture-owner",
+      "name": "Seat 0",
+      "epoch": 2
+    },
+    {
+      "kind": "open"
+    }
+  ],
+  "options": {
+    "firstPlayer": "seat0",
+    "centerPawn": "lastActiveChooses",
+    "hideAtEnd": false
+  },
+  "seed": "11",
+  "actions": [],
+  "hash": "8b1d4ff9967616e7",
+  "version": 0,
+  "lastSeq": {},
+  "status": "lobby",
+  "admin": "fixture-owner"
+}
