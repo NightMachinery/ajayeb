@@ -20,6 +20,10 @@ These docs explain the current implementation, its rules and the tools used to b
 - [rules/wonders-tokens.md](rules/wonders-tokens.md): wonders, progress tokens and their choices.
 - [rules/ages-scoring.md](rules/ages-scoring.md): age transitions, scoring and ties.
 
+## The second game (design)
+
+- [multiplayer/](multiplayer/README.md): the design of Ajayeb's second game, 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words, the platform, engine, bot, screen and art designs, the draft decisions and the proposed roadmap. Nothing in it is built yet.
+
 ## Package guides
 
 - [../web/README.md](../web/README.md): the web client: its layout, design tokens and Tailwind utilities, i18n, fonts and the `PUBLIC_DEV_ROUTES` flag.
