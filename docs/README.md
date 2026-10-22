@@ -22,7 +22,7 @@ These docs explain the current implementation, its rules and the tools used to b
 
 ## The second game (design)
 
-- [haftgane/](haftgane/README.md): the design of Haftgane, Ajayeb's second game, an unofficial version of 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words and the platform, engine, bot, screen and art designs. The design is accepted: its decisions are D30 to D60 in [dev/decisions.md](dev/decisions.md) and its build plan is M13 to M23 in [dev/roadmap.md](dev/roadmap.md). Nothing in it is built yet.
+- [haftgane/](haftgane/README.md): the design of Haftgane, Ajayeb's second game, an unofficial version of 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words and the platform, engine, bot, screen and art designs. The design is accepted: its decisions are D30 to D61 in [dev/decisions.md](dev/decisions.md) and its build plan is M13 to M23 in [dev/roadmap.md](dev/roadmap.md). Nothing in it is built yet.
 
 ## Package guides
 

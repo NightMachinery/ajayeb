@@ -2,7 +2,7 @@
 
 @Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional.** Its decisions are D30 to D60 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing here is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
+**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional.** Its decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing here is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
 
 ## What it is and why
 
@@ -39,7 +39,7 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 10. [bot-plan.md](bot-plan.md): bot levels, search, fixed work, evaluation and how strength is measured.
 11. [phone-layout.md](phone-layout.md): the screens, their components and the server fields they need.
 12. [art-reuse.md](art-reuse.md): card and wonder art reuse, new subjects, vectors, budgets and generation batches.
-13. [decisions.md](../dev/decisions.md), D30 to D60: the accepted decisions, each with its reasons, the options rejected and the earlier decision it extends or supersedes.
+13. [decisions.md](../dev/decisions.md), D30 to D61: the accepted decisions, each with its reasons, the options rejected and the earlier decision it extends or supersedes.
 14. [roadmap.md](../dev/roadmap.md), M12 to M23: the build plan, with slices, review levels, standing gates, parallel tracks and owner decision points.
 
 The effect inventory and the edition differences were held back as working notes until M13 had verified the data, and are now published with the verified values. The per-card values themselves are not in these pages: they stay in the private run directory until the catalog slice `M15.haftgane-catalog-data` commits them as the engine's catalog.

@@ -2,7 +2,7 @@
 
 A short record of the decisions that shape Ajayeb. Each entry gives the decision, the reasons for it, and the options we rejected. Settled decisions are not reopened casually: change one only with a new entry that says what changed and why, and mark the old entry as superseded.
 
-All entries below were accepted on 2026-10-01 unless they say otherwise. D30 to D60 belong to Haftgane, Ajayeb's second game, and were accepted together on 2026-10-21 with its design ([milestone M12](roadmap.md), [haftgane/README.md](../haftgane/README.md)). Each says what it applies to and which earlier decision it extends or supersedes; Duel keeps D01 to D29 as written. A call marked provisional stands until the owner overturns it.
+All entries below were accepted on 2026-10-01 unless they say otherwise. D30 to D60 belong to Haftgane, Ajayeb's second game, and were accepted together on 2026-10-21 with its design ([milestone M12](roadmap.md), [haftgane/README.md](../haftgane/README.md)). Each says what it applies to and which earlier decision it extends or supersedes; Duel keeps D01 to D29 as written, except that D61 (2026-10-22, after the review of the client entry) changes how D51 enters a Duel room. A call marked provisional stands until the owner overturns it.
 
 ## D01. The Go server holds the only rules engine; the client is thin
 
@@ -670,3 +670,15 @@ Source: [art-reuse.md](../haftgane/art-reuse.md), draft decisions.
 **Relation.** Both games: it changes Duel's online creation through one new create path, under a FULL review, and leaves every Duel game after Start as it is. Extends D31, since the lobby is one more registered room kind. D14's identity and claims carry through the swap.
 
 Source: [platform-architecture.md](../haftgane/platform-architecture.md), "Shared lobby"; the owner's answers of 2026-10-21, including "for hint, any admin can edit them" and, for a Duel game, "you can allow duel with admins too".
+
+## D61. A Duel room is entered on its own connection first
+
+**Decision (2026-10-22).** The `/play/<code>` entry opens the ordinary version-1 Duel Session first, after the same name prompt, unless the room is known to be another game: a saved `game` tag other than `duel`, or a lobby or table code the page itself created. If the server refuses that join with its `protocol` error (it does so before claiming a seat or touching the room file), the page falls back to the discovery of D51 over version 2. Wherever a discovery connection still hands a room over to Duel, it stays open until the Duel Session has its first state, so the seat never shows its player as away. The server's answer to the join remains the authority; a tag only chooses which connection to try first.
+
+**Rationale.** The FULL review of M14.client-game-entry measured what D51's discovery cost Duel: the opponent saw their friend join, leave and come back on every cold invite and every reload, a bot move due on entry ran on the discovery connection and its events were lost, and a reload showed the board 0.3 s later at a 100 ms round trip and 0.9 s later at 300 ms. Trying Duel first removes all three for every Duel room, and only a future room with a stale or missing tag pays one refused join.
+
+**Rejected.** Discovery before every entry (D51 as first written). Only overlapping the two connections (it hides the flash, but the bot still runs on discovery and the delay stays). One version-2 connection shared by both games (it changes Duel's Session and transport more than this needs). A peek join that the server neither counts as presence nor lets wake the bot (it is the room-info operation that D41 rejected).
+
+**Relation.** Amends D51's entry mechanism: Duel's Session gains one case, a `protocol` refusal of a join after a welcome, which it reports as a wrong-game answer for the page instead of a fatal error. D51's budgets and its service-worker rule stand. D60's lobby uses the same overlapping hand-off when its Start turns the room into a Duel game.
+
+Source: the M14.client-game-entry review, 2026-10-22; [platform-architecture.md](../haftgane/platform-architecture.md), "Protocol and lazy client entry".
