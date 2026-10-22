@@ -45,7 +45,7 @@ PNPM_FROZEN := $(if $(wildcard pnpm-lock.yaml),--frozen-lockfile)
 E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 
 .PHONY: help install install-offline install-webkit dev gen gen-check gen-check-if-ready \
-        fmt-check vet test-go test-race lint-go build-server fuzz bench \
+        fmt-check tidy-check vet test-go test-race lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
         e2e e2e-smoke e2e-webkit e2e-prod shots vec-lint vec-shot vec-blind vec-family \
         test-py test-tools verify-quick verify verify-full clean
@@ -133,6 +133,9 @@ gen-check-if-ready:
 fmt-check: ## Fail if gofmt would change any Go file under server/
 	@out=$$(gofmt -l server) || exit 1; \
 	if [ -n "$$out" ]; then echo "fmt-check: these files need gofmt -w:" >&2; echo "$$out" >&2; exit 1; fi
+
+tidy-check: ## Fail if go mod tidy would change server/go.mod or go.sum (CI runs the same check)
+	$(HEAVY) run --kind light -- go -C server mod tidy -diff
 
 vet: ## go vet ./... in server/
 	$(HEAVY) run --kind lint -- go -C server vet ./...
@@ -235,7 +238,7 @@ test-py: ## Python unit tests for tools/heavy.py and self_host.py (guard kind li
 test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
 	$(HEAVY) run --kind light -- node --test tools/chrome/cli.test.mjs
 
-verify-quick: fmt-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
+verify-quick: fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go mod tidy, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
 
 verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room and ws, the release build and the e2e smoke
 
