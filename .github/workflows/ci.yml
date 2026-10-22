@@ -100,16 +100,18 @@ jobs:
         run: pnpm -C e2e lint
 
   e2e:
-    # Two shards, each with its own server: the whole suite (278 tests, about
-    # 31 minutes on one runner) outgrew one 30-minute job in M10.
-    name: e2e (Playwright, bundled Chromium, shard ${{ matrix.shard }} of 2)
+    # Three shards, each with its own server: the whole suite (278 tests, about
+    # 31 minutes on one runner) outgrew one 30-minute job in M10, and two
+    # shards outgrew it in M14, when a slow package mirror added minutes to
+    # the browser install.
+    name: e2e (Playwright, bundled Chromium, shard ${{ matrix.shard }} of 3)
     needs: [go, web]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2]
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -134,7 +136,7 @@ jobs:
         env:
           CI: 'true'
         # The @perf case runs in e2e-perf below, which reports without gating.
-        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/2 --grep-invert @perf
+        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/3 --grep-invert @perf
       - name: Keep the report and traces
         if: failure() || cancelled()
         uses: actions/upload-artifact@v7
@@ -152,7 +154,7 @@ jobs:
     if: github.event_name != 'schedule'
     needs: [go, web]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
