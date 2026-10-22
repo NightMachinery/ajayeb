@@ -3,30 +3,43 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 
-// A rebuild of one commit must produce the same chunk hashes. In a source
-// archive without git, hash the shipped inputs instead of using a timestamp.
+// Clean commits use their revision; dirty trees and source archives also hash
+// shipped inputs so a changed build always gets a changed version.
+function contentVersion() {
+  const hash = createHash('sha256');
+  for (const root of ['src', 'static']) {
+    const base = new URL(`./${root}/`, import.meta.url);
+    for (const file of readdirSync(base, { recursive: true, withFileTypes: true })
+      .filter((file) => file.isFile())
+      .map((file) => new URL(`${file.parentPath}/${file.name}`, 'file:'))
+      .sort((a, b) => a.href.localeCompare(b.href))) {
+      hash.update(file.href.slice(base.href.length));
+      hash.update(readFileSync(file));
+    }
+  }
+  for (const file of [
+    'package.json',
+    'svelte.config.js',
+    'vite.config.ts',
+    '../pnpm-lock.yaml',
+    'tsconfig.json'
+  ])
+    hash.update(readFileSync(new URL(file, import.meta.url)));
+  return hash.digest('hex');
+}
+
 function buildVersion() {
   try {
-    return execFileSync('git', ['rev-parse', 'HEAD'], {
-      cwd: new URL('.', import.meta.url),
-      stdio: ['ignore', 'pipe', 'ignore'],
-      encoding: 'utf8'
-    }).trim();
+    const git = (args) =>
+      execFileSync('git', args, {
+        cwd: new URL('.', import.meta.url),
+        stdio: ['ignore', 'pipe', 'ignore'],
+        encoding: 'utf8'
+      }).trim();
+    const revision = git(['rev-parse', 'HEAD']);
+    return git(['status', '--porcelain', '--', '.']) ? `${revision}-${contentVersion()}` : revision;
   } catch {
-    const hash = createHash('sha256');
-    for (const root of ['src', 'static']) {
-      const base = new URL(`./${root}/`, import.meta.url);
-      for (const file of readdirSync(base, { recursive: true, withFileTypes: true })
-        .filter((file) => file.isFile())
-        .map((file) => new URL(`${file.parentPath}/${file.name}`, 'file:'))
-        .sort((a, b) => a.href.localeCompare(b.href))) {
-        hash.update(file.href.slice(base.href.length));
-        hash.update(readFileSync(file));
-      }
-    }
-    for (const file of ['package.json', 'svelte.config.js', 'vite.config.ts'])
-      hash.update(readFileSync(new URL(file, import.meta.url)));
-    return hash.digest('hex');
+    return contentVersion();
   }
 }
 

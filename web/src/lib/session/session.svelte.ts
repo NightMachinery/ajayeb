@@ -755,6 +755,7 @@ export class Session {
         this.notice = { kind: 'reject', code: msg.code, message: rejectMessage(msg.code) };
         break;
       case 'error':
+        // Error frames have no room code: a late refusal uses the current intent; discovery corrects it.
         if (
           msg.code === 'protocol' &&
           this.#welcomed &&
