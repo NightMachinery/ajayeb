@@ -6,7 +6,7 @@ import { AnimRunner } from '$lib/fx/anim/runner';
 import { hintDefaults } from '$lib/hints/local.svelte';
 import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
 import { moveRemovedCardFocus } from '$lib/ui/removed-card-focus';
-import { loadIdentity } from './identity';
+import { entryIdentity, registerDuelCode, rememberDuelCode } from '$lib/entry/identity';
 import { detached, savedRooms } from './saved-rooms.svelte';
 import { cuePrev, Presenter } from './presenter.svelte';
 import { Session } from './session.svelte';
@@ -24,12 +24,17 @@ export function liveGame(): { session: Session; presenter: Presenter } {
     live = detached(() => {
       const session = new Session({
         transport: new WsTransport(),
-        identity: loadIdentity(),
+        identity: entryIdentity(),
         rooms: savedRooms(),
         // A new game starts from the hint settings saved on this device.
         defaultHints: (mode) => hintDefaults.for(mode),
         // ...and from the "Allow undo" choice saved next to them.
         defaultAllowUndo: (mode) => undoDefault.for(mode)
+      });
+      registerDuelCode(() => session.code);
+      session.subscribe((frame) => {
+        rememberDuelCode(frame.code);
+        if (frame.room.status !== 'finished') savedRooms().setGame(frame.code, 'duel');
       });
       // A bot's move waits out its thinking dwell, then its pick is
       // highlighted, both scaled by the animation speed (read at each move).

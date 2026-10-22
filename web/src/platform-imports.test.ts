@@ -202,3 +202,17 @@ it('retains module side effects from binding-level type imports and empty re-exp
     'nonliteral runtime import'
   );
 });
+
+it('keeps the generic and Duel entry closures free of eager Haftgane modules', () => {
+  for (const entry of [...entries, 'lib/games/duel/entry.ts']) {
+    const actual = graph(entry);
+    for (const module of actual.eager) {
+      if (/haftgane/i.test(module))
+        throw new Error(`Unexpected eager Haftgane module: ${importPath(actual, module)}`);
+    }
+  }
+  expect(graph('routes/+layout.svelte').eager).not.toContain('lib/components/card/CardFace.svelte');
+  expect(graph('routes/play/[code]/+page.svelte').eager).not.toContain(
+    'lib/session/session.svelte.ts'
+  );
+});

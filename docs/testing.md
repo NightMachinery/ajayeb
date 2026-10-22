@@ -1752,6 +1752,41 @@ make test-go GO_PKGS=./internal/store
 make test-go GO_PKGS=./internal/store 'GO_RUN=^TestRoomFile'
 ```
 
+### Authoritative lazy client entry
+
+`lib/entry/bootstrap.test.ts` checks v2 welcome-before-join, same identity/claim
+on retry, latest unknown snapshot replacement, old-server protocol refusal and
+close without leave, and an offline initial load resuming on the online event.
+Saved Rooms tests cover valid optional game hints,
+normalization, cross-room updates, stale-hint correction and an old tab's exact
+legacy-field rewrite, which retains `mode: "online"` and drops `game`.
+
+`e2e/specs/game-entry.spec.ts` runs on desktop and mobile. A cold online invite
+with no name sends no hello/join, leaves the creator waiting and its second
+seat open until submit. After submit it verifies v2 discovery then v1 Duel,
+same token/client id/name, no leave and closed bootstrap. A blocked name-storage
+write still sends the submitted name on both hellos. Duplicate tabs and
+reconnect retain the seat. A scripted Haftgane snapshot overrides a stale Duel
+hint without starting Duel Session or gameplay. A real Duel invite must not
+fetch the build manifest's Haftgane chunk. Scripted recovery tests distinguish
+discovery from the ordinary v1 connection, and online reload checks expect one
+closed discovery plus one replacement live connection, with no duplicate event
+playback or loss of safe history.
+
+The import fixture removes Duel modules from the root and generic room route;
+Home's set is unchanged. The generic route adds only bootstrap/identity/registry
+and GameEntry modules. No eager closure may contain Haftgane. The browser test
+also protects the emitted lazy preload boundary, which a source graph alone
+cannot prove. Conditional import expressions can cause a bundler to associate
+only the last branch's CSS/preloads, so the registry uses separate table loaders.
+
+Run the unchanged `make shots PW_ARGS=--grep=platform` baseline after building.
+Do not regenerate byte budgets. M14.client-game-entry measured cold Home
+109,285 gzip bytes and Duel 271,220 (baselines 141,410 and 266,384, with at most
+5,000 extra per entry). The all-build precache policy is unchanged; the measured
+116-file install transferred 2,188,321 bytes, with 2,077,252 cached body bytes.
+These are build-specific measurements, not replacement baselines.
+
 ### Protocol-2 game envelopes
 
 `TestPlatformStrictDecoders` and `TestPlatformInvalidValues` cover all frozen

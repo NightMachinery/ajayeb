@@ -4,7 +4,6 @@
   // positions it and draws the connector between it and the bubble. Card
   // previews are real full-tier card faces, so they read like the card
   // sheet. At most two items fit beside each other at 360 px.
-  import CardFace from '$lib/components/card/CardFace.svelte';
   import { i18n } from '$lib/i18n';
   import type { TooltipStackItem } from '$lib/ui/tooltip.svelte';
 
@@ -36,7 +35,9 @@
       </figcaption>
       {#if item.kind === 'card'}
         <div class="h-[216px] w-[140px]" data-card-preview={item.slug}>
-          <CardFace slug={item.slug} tier="full" width={140} />
+          {#await import('$lib/components/card/CardFace.svelte') then { default: CardFace }}
+            <CardFace slug={item.slug} tier="full" width={140} />
+          {/await}
         </div>
       {:else}
         {@render item.render()}

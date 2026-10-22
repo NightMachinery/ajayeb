@@ -56,7 +56,7 @@ async function socketGate(page: Page) {
     client = socket;
     server = socket.connectToServer();
     server.onMessage((raw) => {
-      const frame = JSON.parse(String(raw)) as { t: string };
+      const frame = JSON.parse(String(raw)) as { t: string; v?: number };
       if (frame.t === 'state') frames.push(frame as State);
       socket.send(raw);
     });
@@ -112,9 +112,11 @@ async function recordedRoom(page: Page, first: State): Promise<(frame: State) =>
   await page.routeWebSocket('**/ws', (socket) => {
     deliver = (frame) => socket.send(JSON.stringify(frame));
     socket.onMessage((raw) => {
-      const message = JSON.parse(String(raw)) as { t: string };
+      const message = JSON.parse(String(raw)) as { t: string; v?: number };
       if (message.t === 'hello')
-        socket.send(JSON.stringify({ t: 'welcome', v: 1, server: { version: 'test', rules: 1 } }));
+        socket.send(
+          JSON.stringify({ t: 'welcome', v: message.v, server: { version: 'test', rules: 1 } })
+        );
       if (message.t === 'join') deliver!(first);
     });
   });
@@ -353,10 +355,10 @@ test.describe('completed-age summary', { tag: '@mobile' }, () => {
     await page.routeWebSocket('**/ws', (socket) => {
       deliver = (frame) => socket.send(JSON.stringify(frame));
       socket.onMessage((raw) => {
-        const message = JSON.parse(String(raw)) as { t: string };
+        const message = JSON.parse(String(raw)) as { t: string; v?: number };
         if (message.t === 'hello')
           socket.send(
-            JSON.stringify({ t: 'welcome', v: 1, server: { version: 'test', rules: 1 } })
+            JSON.stringify({ t: 'welcome', v: message.v, server: { version: 'test', rules: 1 } })
           );
         if (message.t === 'join') deliver!(first);
       });

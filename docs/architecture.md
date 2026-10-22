@@ -129,6 +129,41 @@ The TypeScript types in the client are generated from the Go structs, never writ
 
 `make gen` runs `tygo`, then `ajayeb-gen` with no subcommand to write both the catalog and fixtures. `make gen-check`, included in `make verify-quick`, compares regenerated wire files with a snapshot of the working tree and fails on any difference. On a clean checkout such as CI, this checks the committed files.
 
+## Authoritative client entry
+
+`/play/<code>` keeps the existing name prompt ahead of all connection work.
+A device claim or known saved room skips that prompt under the existing rules.
+The generic entry opens a small v2 bootstrap, says hello with this page's identity,
+then joins with the URL or saved claim. It holds one newest full snapshot as
+`unknown`; actions remain unavailable. A closed lazy registry selects by the
+server's frame family, never the optional saved hint or a client import path.
+
+Once a Duel module validates `state`, discovery closes without sending leave
+or releasing a seat. The module discards discovery's snapshot/events and mounts
+the existing Room, Session and WsTransport: ordinary v1 hello and join, the same
+token, client id, name and claim, with fresh full history from that join.
+Creation and previously verified Duel rooms in the current live app can reuse
+the direct v1 path, including Home's Continue flow. Reloaded tabs discover again.
+Each tab has its own client id; shared identity keeps its seat through handoff,
+duplicate tabs, disconnect and reconnect. Session and WsTransport are unchanged.
+
+`lib/games/haftgane` is an empty lazy entry for table/lobby envelopes, with no
+rules, renderer, catalog, actions or invented view. It retains the already
+welcomed bootstrap connection and requests resync after envelope validation.
+Its snapshot stays unknown until M15 supplies the typed game projection.
+Loader functions stay separate in a frozen table: combining dynamic imports
+in a conditional lets the bundler associate preloads with the wrong entry.
+
+Saved Rooms preserves optional `game: "duel" | "haftgane"` hints, with
+`mode: "online"` for Haftgane as an old-parser shim. Missing, stale or erased
+hints always resolve from snapshots. An old tab's field-by-field rewrite keeps
+the room and drops the unknown game field; the next current tab rediscovers it.
+No hidden view data is stored. Card tooltip previews now load on demand; shared
+gestures and translation lookup stay in the root. The separate optional English
+message-table split has not changed the existing translation contract here.
+The worker still precaches all build chunks so an open page keeps its lazy
+chunks across deploys. Install transfer is measured separately from cold JS.
+
 ## The client: Transport, Session, Presenter
 
 ```
@@ -140,7 +175,7 @@ WebSocket -> Transport -> Session (authoritative) -> Presenter (paced) -> compon
 - **Presenter** queues incoming snapshots and decides when the UI sees each one. Before swapping in a new view it records where things were on screen, then plays the animations described by the snapshot's `events` (FLIP and the Web Animations API). It paces a bot's answer: the bot's thinking snapshot stays up for a minimum dwell (about 700 ms, scaled by the animation speed, with a 300 ms floor when animation is off), then the answer is previewed for about 300 ms, so the screen can highlight the card the bot takes, before the new view shows. It fast-forwards when updates pile up (for example after a reconnect) and never paces a snapshot that has others queued behind it. Moves are enabled only when the presenter is idle and the session can act, so input stays locked through the dwell and the preview.
 - **Components** are pure functions of `presenter.view` plus local UI state (selection, open sheet, armed confirmation). Every card element has `data-card="<id>"` and every actionable control has `data-act="<key>"`; the end-to-end tests drive the game through these attributes.
 
-**The game screen** (`web/src/lib/components/game/GameScreen.svelte`) is the one component every room page mounts. It keeps one markup and switches CSS grid areas by viewport class: a phone in portrait stacks the top bar, the opponent's strip, the track and tokens, the structure, the player's own strip and the turn bar; a phone in landscape puts the strips in side columns and the compact track in the top bar; a tablet stacks as on a phone with city bands; a desktop has city panels in 300 px columns (380 px from 1600 px wide). The board region is `dir="ltr"`, and "you" sit at the bottom or on the left. Its local UI state (open sheet, selected slot, the wonder chosen for a wonder-first build, the hot-seat device holder, the session's event log) lives in `GameUi` (`web/src/lib/ui/ui.svelte.ts`). Every move it sends is a key from `choices`: the card sheet shows a card's build, discard and wonder choices with the server's cost breakdowns, and a disabled choice shows the server's reason; for a covered card it shows both seats' costs from the slot's `costs`. Each player's wonder button marks a wonder as buildable only when a `wonder` choice names it. The military track puts the capital of the seat at the bottom (or on the left) at its left end, so a player at the Moon sees it mirrored. Against the bot, the turn bar and the bot's strip or panel say the bot (named by its level's persona: Apprentice, Scholar or Master) is thinking, and the slot it takes carries `data-bot-pick` during the preview. The top bar's game menu leads Home, Settings and the log in every mode, and Forfeit while the Session says a forfeit can be sent; after a confirm step it sends `resign:<seat>`; leaving through Home keeps an unfinished room on the Continue list, while a forfeit finishes it and removes it from that list.
+**The Duel game screen** (`web/src/lib/components/game/GameScreen.svelte`) is the component the Duel entry mounts. It keeps one markup and switches CSS grid areas by viewport class: a phone in portrait stacks the top bar, the opponent's strip, the track and tokens, the structure, the player's own strip and the turn bar; a phone in landscape puts the strips in side columns and the compact track in the top bar; a tablet stacks as on a phone with city bands; a desktop has city panels in 300 px columns (380 px from 1600 px wide). The board region is `dir="ltr"`, and "you" sit at the bottom or on the left. Its local UI state (open sheet, selected slot, the wonder chosen for a wonder-first build, the hot-seat device holder, the session's event log) lives in `GameUi` (`web/src/lib/ui/ui.svelte.ts`). Every move it sends is a key from `choices`: the card sheet shows a card's build, discard and wonder choices with the server's cost breakdowns, and a disabled choice shows the server's reason; for a covered card it shows both seats' costs from the slot's `costs`. Each player's wonder button marks a wonder as buildable only when a `wonder` choice names it. The military track puts the capital of the seat at the bottom (or on the left) at its left end, so a player at the Moon sees it mirrored. Against the bot, the turn bar and the bot's strip or panel say the bot (named by its level's persona: Apprentice, Scholar or Master) is thinking, and the slot it takes carries `data-bot-pick` during the preview. The top bar's game menu leads Home, Settings and the log in every mode, and Forfeit while the Session says a forfeit can be sent; after a confirm step it sends `resign:<seat>`; leaving through Home keeps an unfinished room on the Continue list, while a forfeit finishes it and removes it from that list.
 
 **Languages and direction.** The server sends ids and codes, never display strings, so every word on screen comes from the client's message tables (`web/src/lib/i18n/`). English is the complete table; Persian (`fa`) is a stub table, and any key it leaves out falls back to English per key. The player chooses the language in Settings; it is stored with the other settings and applied before the first paint by an inline script in `web/src/app.html`. Persian is written right to left: `<html dir>` follows the locale, and the app chrome mirrors through logical CSS properties. The board region, the card structure and the military track stay `dir="ltr"` in every locale, because their layout is spatial, so a card keeps its slot and the pawn its direction. `web/README.md` ("Languages and direction") has the details.
 

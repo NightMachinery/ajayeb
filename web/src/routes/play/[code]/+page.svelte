@@ -5,19 +5,19 @@
   // the Session (and the dev room helper) remember a room the moment it is
   // made, before the page moves here. Neither does a device link
   // (/play/<code>#claim=...): the room already knows its seat's name. Then
-  // Room joins the room over the app's live connection and shows it.
+  // Only then does GameEntry discover the authoritative room family.
   import { untrack } from 'svelte';
   import { page } from '$app/state';
   import NamePrompt from '$lib/components/screens/NamePrompt.svelte';
   import { t } from '$lib/i18n';
-  import { liveGame, savedRooms } from '$lib/session/app.svelte';
+  import { savedRooms } from '$lib/session/saved-rooms.svelte';
   import { parseClaimFragment } from '$lib/session/claim';
   import { loadName, saveName } from '$lib/session/identity';
-  import { normalizeCode } from '$lib/session/session.svelte';
+  import { rememberEntryName } from '$lib/entry/identity';
   import { needsName, suggestName } from '$lib/ui/online';
-  import Room from './Room.svelte';
+  import GameEntry from './GameEntry.svelte';
 
-  const code = $derived(normalizeCode(page.params.code ?? ''));
+  const code = $derived((page.params.code ?? '').trim().toUpperCase());
   let named = $state(loadName() !== '');
   // The saved list is read when the code (or the name) changes, never
   // tracked: a room is dropped from it when its game ends, and that must
@@ -34,15 +34,15 @@
   const suggestion = suggestName(t('online.name.suggestions'));
 
   function submit(name: string): void {
-    const saved = saveName(name);
+    rememberEntryName(saveName(name));
     named = true;
-    // The live connection, when it is already up, says hello again under it.
-    liveGame().session.setName(saved);
   }
 </script>
 
 {#if ask}
   <NamePrompt {suggestion} {code} onsubmit={submit} />
 {:else}
-  <Room />
+  {#key code + (claim ?? '')}
+    <GameEntry {code} claim={claim ?? savedRooms().claimFor(code)} />
+  {/key}
 {/if}

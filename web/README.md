@@ -501,3 +501,19 @@ focus to the persistent, labelled game region. This runs against the old DOM
 before the swap, avoiding focus fixup during removal. Dialog cancellation and
 rejected actions keep native opener restoration; the region stays outside the
 normal Tab order, and Tab from it reaches the board controls.
+
+## Room entry
+
+`routes/play/[code]/+page.svelte` owns the existing name gate. GameEntry opens
+v2 discovery only after it, retaining one unknown snapshot until a closed lazy
+registry validates the server's family. `lib/games/duel` hands off without leave
+to the ordinary v1 Session/Transport with the same identity and claim; known
+Duel creation in this tab keeps its direct path. `lib/games/haftgane` is an empty
+entry pending M15, with no game renderer or actions. Shared tooltip gestures
+stay at the root; card previews load their card component on demand.
+
+Saved Rooms' optional game hint never selects an entry. An old tab may erase
+it while retaining the online-mode compatibility entry, which the next current
+tab discovers again. The service worker continues to precache all build chunks.
+See [client entry](../docs/architecture.md#authoritative-client-entry) and
+[acceptance tests](../docs/testing.md#authoritative-lazy-client-entry).

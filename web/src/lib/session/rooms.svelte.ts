@@ -17,6 +17,8 @@ export const MAX_SAVED_ROOMS = 20;
 export interface SavedRoom {
   code: string;
   mode: Mode;
+  /** A hint only; the authoritative snapshot always selects the entry. */
+  game?: 'duel' | 'haftgane';
   /** When this browser last saw the room, in ms since the epoch. */
   lastSeen: number;
   /** The device link's claim this browser plays the room with, if any. */
@@ -48,7 +50,7 @@ function entry(
   mode: Mode,
   lastSeen: number,
   claim?: string,
-  details: { bot?: unknown; age?: unknown; tutorial?: unknown } = {}
+  details: { bot?: unknown; age?: unknown; tutorial?: unknown; game?: unknown } = {}
 ): SavedRoom {
   const item: SavedRoom =
     claim === undefined ? { code, mode, lastSeen } : { code, mode, lastSeen, claim };
@@ -68,6 +70,7 @@ function entry(
     item.age = details.age;
   }
   if (mode === 'ai' && details.tutorial === true) item.tutorial = true;
+  if (details.game === 'duel' || details.game === 'haftgane') item.game = details.game;
   return item;
 }
 
@@ -135,7 +138,9 @@ export class SavedRooms {
     }
     this.#save(
       this.list.map((r) =>
-        r.code === code ? entry(r.code, r.mode, r.lastSeen, r.claim, details) : r
+        r.code === code
+          ? entry(r.code, r.mode, r.lastSeen, r.claim, { ...details, game: r.game })
+          : r
       )
     );
   }
@@ -145,18 +150,31 @@ export class SavedRooms {
    * claim replaces the room's saved one; null drops it; undefined (the
    * default) keeps whatever claim the room had.
    */
-  remember(code: string, mode: Mode, at: number = Date.now(), claim?: string | null): void {
+  remember(
+    code: string,
+    mode: Mode,
+    at: number = Date.now(),
+    claim?: string | null,
+    game?: SavedRoom['game']
+  ): void {
     const kept = claim === undefined ? this.claimFor(code) : claim;
-    const item = entry(
-      code,
-      mode,
-      at,
-      kept ?? undefined,
-      this.list.find((r) => r.code === code)
-    );
+    const item = entry(code, mode, at, kept ?? undefined, {
+      ...this.list.find((r) => r.code === code),
+      ...(game ? { game } : {})
+    });
     if (!isSavedRoom(item)) return;
     const rest = this.list.filter((r) => r.code !== code);
     this.#save(sortRooms([item, ...rest]).slice(0, MAX_SAVED_ROOMS));
+  }
+
+  /** Writes an authoritative game's hint without changing last-seen order. */
+  setGame(code: string, game: NonNullable<SavedRoom['game']>): void {
+    if (!this.list.some((r) => r.code === code && r.game !== game)) return;
+    this.#save(
+      this.list.map((r) =>
+        r.code === code ? entry(r.code, r.mode, r.lastSeen, r.claim, { ...r, game }) : r
+      )
+    );
   }
 
   /** The claim this browser plays a room with, or null. */

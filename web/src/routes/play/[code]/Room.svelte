@@ -30,7 +30,8 @@
   installTestHook(game);
   const { session, presenter } = game;
   // A connection opened before the name was stored says hello again.
-  session.setName(loadName());
+  // A submitted in-memory name survives blocked name storage at handoff.
+  session.setName(loadName() || session.name);
 
   // Joins the page's room now (Room may mount after the navigation, once
   // the name prompt is answered) and after every navigation within this

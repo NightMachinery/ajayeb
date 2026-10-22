@@ -21,6 +21,8 @@
 
 import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
+import { GameDriver } from '../fixtures/driver';
+import { playKey } from '../fixtures/scenario';
 import { motionLog, recordMotion, waitSettled } from '../fixtures/anim';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
@@ -143,12 +145,16 @@ test.describe('the tutorial', { tag: '@mobile' }, () => {
       body: JSON.stringify({
         mode: 'ai',
         bot: 'easy',
-        scenario: 'age-transition-chooser',
-        actions: ['discard:theater']
+        scenario: 'age-transition-chooser'
       })
     });
     const room = (await res.json()) as { code: string; path: string };
     await page.goto(room.path);
+    const driver = new GameDriver(page);
+    await driver.waitReady();
+    // Cross the boundary on the live Duel connection, after discovery. A cold
+    // join of an already-advanced age intentionally does not replay its events.
+    await playKey(driver, 'discard:theater');
     // The age-start sheet comes first. No tip opens over a modal dialog,
     // where its dismissal would swallow the player's first tap in it.
     const begin = page.locator('[data-age-start] dialog[open] [data-age-continue]');

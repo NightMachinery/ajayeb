@@ -170,3 +170,37 @@ describe('SavedRooms with device links', () => {
     ]);
   });
 });
+
+it('preserves known game hints and survives an old tab rewriting only legacy fields', () => {
+  const storage = memory();
+  const rooms = new SavedRooms(storage);
+  rooms.remember('AAAAAA', 'online', 1000, undefined, 'haftgane');
+  rooms.remember('BBBBBB', 'ai', 2000);
+  rooms.updateDetails('BBBBBB', { bot: 'easy', age: 1 });
+  expect(parseSavedRooms(storage.data.get(ROOMS_KEY)!)[1]?.game).toBe('haftgane');
+  // Exact legacy reconstruction: unknown game is erased, but mode online keeps
+  // the Haftgane room. A new tab must discover it rather than assume Duel.
+  const old = JSON.parse(storage.data.get(ROOMS_KEY)!) as {
+    code: string;
+    mode: 'online' | 'ai' | 'hotseat';
+    lastSeen: number;
+  }[];
+  storage.setItem(
+    ROOMS_KEY,
+    JSON.stringify(old.map(({ code, mode, lastSeen }) => ({ code, mode, lastSeen })))
+  );
+  rooms.refresh();
+  expect(rooms.list[1]).toEqual({ code: 'AAAAAA', mode: 'online', lastSeen: 1000 });
+  rooms.setGame('AAAAAA', 'haftgane');
+  rooms.remember('AAAAAA', 'online', 3000);
+  expect(rooms.list[0]?.game).toBe('haftgane');
+  rooms.updateDetails('AAAAAA', { age: 2 });
+  expect(rooms.list[0]?.game).toBe('haftgane');
+  rooms.setGame('AAAAAA', 'duel'); // authoritative snapshot corrects a stale hint
+  expect(rooms.list[0]?.game).toBe('duel');
+  expect(
+    parseSavedRooms(
+      JSON.stringify([{ code: 'CCCCCC', mode: 'online', lastSeen: 1, game: 'unknown' }])
+    )
+  ).toEqual([{ code: 'CCCCCC', mode: 'online', lastSeen: 1 }]);
+});
