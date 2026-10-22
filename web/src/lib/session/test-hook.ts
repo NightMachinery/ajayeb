@@ -58,6 +58,10 @@ interface Game {
 }
 
 let active: Game | null = null;
+// The game whose screen is mounted. The live game exists before its screen
+// (Duel's screen loads lazily after the route), and a driver must not act
+// before the buttons it clicks are on the page.
+let screen: Game | null = null;
 
 // Copies, so a driver cannot change what the page renders.
 function copy<T>(value: T): T {
@@ -85,7 +89,7 @@ const hook: AjayebTestHook = {
   tutorial: () => copy(active?.presenter.frame?.tutorial ?? null),
   coach: () => copy(coachShown()),
   ready: () => {
-    if (!active) return false;
+    if (!active || active !== screen) return false;
     const { session, presenter } = active;
     return (
       session.conn === 'open' &&
@@ -108,4 +112,10 @@ export function installTestHook(game: Game): void {
 /** Stops pointing window.__ajayeb at this game, if it still does. */
 export function uninstallTestHook(game: Game): void {
   if (active === game) active = null;
+}
+
+/** Records whether this game's screen is mounted; ready() needs it. */
+export function markTestHookScreen(game: Game, mounted: boolean): void {
+  if (mounted) screen = game;
+  else if (screen === game) screen = null;
 }

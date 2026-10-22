@@ -234,7 +234,10 @@ onto the game the page shows, for end-to-end drivers:
 - `you()`: the seats this connection may act for, and `canAct`;
 - `conn()`: `connecting`, `open`, `reconnecting` or `offline`;
 - `ready()`: true when the page shows the latest state and takes input
-  (welcomed, nothing queued in the Presenter, no request pending);
+  (welcomed, the game screen mounted, nothing queued in the Presenter, no
+  request pending). The screen counts because Duel's screen loads lazily
+  after the route: on a real network the live game holds its first state
+  before the buttons exist;
 - `history()`: the game's history as the session holds it, one entry per
   applied action (the `history` field of the state frame, kept across live
   frames), so a spec can check the log after a reload;

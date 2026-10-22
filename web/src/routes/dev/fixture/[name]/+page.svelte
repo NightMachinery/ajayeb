@@ -11,7 +11,7 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import GameScreen from '$lib/components/game/GameScreen.svelte';
   import { t } from '$lib/i18n';
   import { setGameContext, type GameContext } from '$lib/session/context';
@@ -21,7 +21,7 @@
   import { newClientId, newToken } from '$lib/session/identity';
   import { Presenter } from '$lib/session/presenter.svelte';
   import { Session } from '$lib/session/session.svelte';
-  import { installTestHook, uninstallTestHook } from '$lib/session/test-hook';
+  import { installTestHook, markTestHookScreen, uninstallTestHook } from '$lib/session/test-hook';
 
   const name = page.params.name ?? '';
   const frames = fixtureFrames(name);
@@ -46,6 +46,11 @@
 
   const game = frames ? makeGame(frames) : null;
   if (game) installTestHook(game);
+  onMount(() => {
+    if (!game) return;
+    markTestHookScreen(game, true);
+    return () => markTestHookScreen(game, false);
+  });
 
   // DOM only: it writes an attribute, never state.
   $effect(() => {

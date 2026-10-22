@@ -14,7 +14,7 @@
   import { afterNavigate, goto, replaceState } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import GameScreen from '$lib/components/game/GameScreen.svelte';
   import RoomError from '$lib/components/screens/RoomError.svelte';
   import { i18n, t } from '$lib/i18n';
@@ -24,7 +24,7 @@
   import { setGameContext } from '$lib/session/context';
   import { loadName } from '$lib/session/identity';
   import { normalizeCode } from '$lib/session/session.svelte';
-  import { installTestHook } from '$lib/session/test-hook';
+  import { installTestHook, markTestHookScreen } from '$lib/session/test-hook';
 
   interface Props {
     onwronggame?: (code: string) => void;
@@ -34,6 +34,10 @@
 
   const game = setGameContext(liveGame());
   installTestHook(game);
+  onMount(() => {
+    markTestHookScreen(game, true);
+    return () => markTestHookScreen(game, false);
+  });
   const { session, presenter } = game;
   // A connection opened before the name was stored says hello again.
   // A submitted in-memory name survives blocked name storage at handoff.
