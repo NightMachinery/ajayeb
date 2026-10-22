@@ -315,6 +315,8 @@ Acceptance:
 
 ## M14: Shared layers, with Duel unchanged
 
+Status: done on 2026-10-22. Duel runs on the shared layers in production with only Duel registered: the room-file dispatch, the room-kind registry and the version-2 frames on the server, and a lazy client entry. After its FULL review measured what discovery before every entry cost Duel (the opponent saw a leave and a return, a bot move due on entry was lost, reloads were slower), the entry opens a Duel room on its own version-1 connection first and discovers another game only when the server refuses that join (D61). Duel's recorded game bytes, schema-1 golden files and generated wire files are unchanged. Cold Home fell from 141,410 to 109,351 gzip bytes; cold Duel rose by 3,499 to 269,883, within its budget, and two clean builds of one commit are now byte-identical. Slice 6 was not needed: the client entry split the card preview, and splitting the English game messages would save Duel nothing. The first deploy's production smoke found the test hook reporting ready before the lazily loaded Duel screen had mounted; with that fixed, `make e2e-prod` passed 5 of 5 against the main host, and both hosts serve that build. `make verify-quick` now also runs CI's `go mod tidy` check.
+
 Needs: the owner's start signal. These slices change Duel's production code paths, so they run in this order, one at a time.
 
 Scope:

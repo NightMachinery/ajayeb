@@ -2,7 +2,7 @@
 
 @Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional.** Its decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing here is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
+**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional; the layers it shares with Duel have run in production since M14, with only Duel registered.** Its decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing of Haftgane itself is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
 
 ## What it is and why
 
