@@ -2,7 +2,10 @@ module github.com/NightMachinery/ajayeb/server
 
 go 1.26.0
 
-require github.com/coder/websocket v1.8.15
+require (
+	github.com/coder/websocket v1.8.15
+	github.com/gzuidhof/tygo v0.2.21
+)
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
@@ -18,7 +21,6 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gohugoio/hashstructure v0.6.0 // indirect
 	github.com/gohugoio/hugo v0.164.0 // indirect
-	github.com/gzuidhof/tygo v0.2.21 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
