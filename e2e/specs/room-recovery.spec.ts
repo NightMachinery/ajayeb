@@ -4,6 +4,7 @@ import { expect, type WebSocketRoute } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { fixtureNames, fixtures } from '../../web/src/lib/wire/fixtures.gen';
+import { ProtocolVersion } from '../../web/src/lib/wire/types.gen';
 import type { State } from '../../web/src/lib/wire';
 import { session as english } from '../../web/src/lib/i18n/en/session';
 import { session as persian } from '../../web/src/lib/i18n/fa/session';
@@ -26,17 +27,14 @@ for (const locale of ['en', 'fa'] as const) {
       delete first.ack;
       const sockets: WebSocketRoute[] = [];
       await page.routeWebSocket('**/ws', (socket) => {
-        let connection = 0;
-        let version = 0;
+        const connection = sockets.push(socket);
         socket.onMessage((raw) => {
-          const message = JSON.parse(String(raw)) as { t: string; v?: number };
+          const message = JSON.parse(String(raw)) as { t: string };
           if (message.t === 'hello') {
-            version = message.v ?? 0;
-            if (version === 1) connection = sockets.push(socket);
             socket.send(
               JSON.stringify({
                 t: 'welcome',
-                v: version,
+                v: ProtocolVersion,
                 server: {
                   version: connection === 1 ? 'before' : 'after',
                   rules: connection === 1 ? 1 : 2
@@ -47,7 +45,7 @@ for (const locale of ['en', 'fa'] as const) {
           if (message.t === 'join') {
             socket.send(
               JSON.stringify(
-                version === 2 || connection === 1
+                connection === 1
                   ? first
                   : {
                       t: 'error',

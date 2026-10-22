@@ -296,6 +296,7 @@ export class Session {
   #rateTries = 0;
   #rateTimer: ReturnType<typeof setTimeout> | undefined;
   #frames = new Listeners<State>();
+  #wrongGames = new Listeners<string>();
   #links: LinkWaiter[] = [];
   #offs: Unsubscribe[] = [];
   #closed = false;
@@ -353,6 +354,11 @@ export class Session {
     if (clean === this.#identity.name) return;
     this.#identity.name = clean;
     if (this.#helloName !== null && this.#helloName !== clean) this.#transport.reconnect?.();
+  }
+
+  /** A welcomed v1 join was refused before admission because this is another game. */
+  onWrongGame(fn: (code: string) => void): Unsubscribe {
+    return this.#wrongGames.add(fn);
   }
 
   /** Calls fn with every accepted state frame (and at once with the current one). */
@@ -549,6 +555,7 @@ export class Session {
     this.#failLinks('closed');
     for (const off of this.#offs) off();
     this.#frames.clear();
+    this.#wrongGames.clear();
     this.#transport.close();
   }
 
@@ -701,6 +708,7 @@ export class Session {
           // Remembered before the page moves to the room, so the room page
           // knows this browser made it and asks for no name first.
           this.#rooms?.remember(msg.code, frame.mode);
+          this.#rooms?.setGame(msg.code, 'duel');
           resolve(msg.code);
         } else if (this.#intent?.kind === 'join') {
           // A rematch room: the client joins it by its code. It is this
@@ -709,7 +717,10 @@ export class Session {
           this.rematchCode = msg.code;
           this.rematchClaim = msg.claim ?? null;
           const mode = this.frame?.room.mode;
-          if (mode) this.#rooms?.remember(msg.code, mode, Date.now(), msg.claim);
+          if (mode) {
+            this.#rooms?.remember(msg.code, mode, Date.now(), msg.claim);
+            this.#rooms?.setGame(msg.code, 'duel');
+          }
         }
         break;
       case 'state':
@@ -744,6 +755,18 @@ export class Session {
         this.notice = { kind: 'reject', code: msg.code, message: rejectMessage(msg.code) };
         break;
       case 'error':
+        if (
+          msg.code === 'protocol' &&
+          this.#welcomed &&
+          this.#intent?.kind === 'join' &&
+          !this.frame
+        ) {
+          const code = this.#intent.code;
+          this.#intent = null; // never retry the refused join on reconnect
+          this.roomError = 'wrong-game';
+          this.#wrongGames.emit(code);
+          return;
+        }
         if (msg.code === 'protocol' || msg.code === 'bad-hello') {
           this.#fail(msg.code);
           return;

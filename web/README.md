@@ -504,16 +504,20 @@ normal Tab order, and Tab from it reaches the board controls.
 
 ## Room entry
 
-`routes/play/[code]/+page.svelte` owns the existing name gate. GameEntry opens
-v2 discovery only after it, retaining one unknown snapshot until a closed lazy
-registry validates the server's family. `lib/games/duel` hands off without leave
-to the ordinary v1 Session/Transport with the same identity and claim; known
-Duel creation in this tab keeps its direct path. `lib/games/haftgane` is an empty
-entry pending M15, with no game renderer or actions. Shared tooltip gestures
-stay at the root; card previews load their card component on demand.
+`routes/play/[code]/+page.svelte` owns the existing name gate. After it, D61
+opens the ordinary v1 Duel Room unless a saved hint identifies another game.
+Only a welcomed join refused before its first state falls back to lazy v2
+discovery. Its one unknown snapshot selects a validated module, so server
+admission and frame family remain authoritative. A stale non-Duel hint that
+resolves to Duel retains discovery until the first v1 state, then closes without
+leave. Rematches and fragment changes keep the same Room and socket.
+`lib/games/haftgane` is an empty entry pending M15, with no renderer or actions.
+Shared tooltip gestures stay at the root; card previews load on demand.
 
-Saved Rooms' optional game hint never selects an entry. An old tab may erase
-it while retaining the online-mode compatibility entry, which the next current
-tab discovers again. The service worker continues to precache all build chunks.
+An old tab may erase Saved Rooms' optional game hint while retaining the
+online-mode compatibility entry. The next current tab tries v1, then discovers
+if refused. The service worker continues to precache all build chunks.
+`kit.version.name` uses the git commit, or a source-content digest without git,
+so repeated builds are deterministic while changed deployments remain detectable.
 See [client entry](../docs/architecture.md#authoritative-client-entry) and
 [acceptance tests](../docs/testing.md#authoritative-lazy-client-entry).

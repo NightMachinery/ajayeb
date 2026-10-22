@@ -6,6 +6,7 @@
 // A driver waits for ready(), reads choices(), and clicks the button whose
 // data-act is the chosen key.
 
+import { updated } from '$app/state';
 import { coachShown, type CoachShown } from '$lib/tutorial/coach.svelte';
 import type { Choice, HistoryEntry, RoomInfo, TutorialState, View, YouInfo } from '$lib/wire';
 import type { Presenter } from './presenter.svelte';
@@ -19,6 +20,8 @@ export interface TestHookRoom extends RoomInfo {
 }
 
 export interface AjayebTestHook {
+  /** Checks SvelteKit's deployed build version without changing game state. */
+  checkForUpdate(): Promise<boolean>;
   /** The view on screen, or null before the first state. */
   view(): View | null;
   /** The legal choices of the view on screen; each key is a [data-act] button. */
@@ -62,6 +65,7 @@ function copy<T>(value: T): T {
 }
 
 const hook: AjayebTestHook = {
+  checkForUpdate: () => updated.check(),
   view: () => copy(active?.presenter.view ?? null),
   choices: () => copy(active?.presenter.view?.choices ?? []),
   room: () => {

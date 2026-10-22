@@ -7,20 +7,17 @@ let submittedName = '';
 export function rememberEntryName(name: string): void {
   submittedName = name;
 }
-const knownDuel = new Set<string>();
-let duelCode: () => string | null = () => null;
+const games = new Map<string, 'duel' | 'haftgane' | 'lobby' | 'other'>();
+export function rememberEntryGame(
+  code: string,
+  game: 'duel' | 'haftgane' | 'lobby' | 'other'
+): void {
+  games.set(code, game);
+}
+export function knownEntryGame(code: string) {
+  return games.get(code);
+}
 export function entryIdentity(): Identity {
   identity ??= loadIdentity();
   return { ...identity, name: loadName() || submittedName };
-}
-export function registerDuelCode(current: () => string | null): void {
-  duelCode = current;
-}
-/** Only the existing live Duel Session, never a persisted hint, bypasses discovery. */
-export function rememberDuelCode(code: string): void {
-  knownDuel.add(code);
-}
-export function isDirectDuel(code: string): boolean {
-  if (duelCode() === code) knownDuel.add(code);
-  return knownDuel.has(code);
 }

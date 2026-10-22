@@ -109,7 +109,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       expect(after.choices.map((choice) => choice.key)).toEqual(
         before.choices.map((choice) => choice.key)
       );
-      await expect.poll(() => log.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 2);
+      await expect.poll(() => log.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 1);
       await expect
         .poll(() => log.networkEvents.filter((event) => event.kind === 'document').length)
         .toBeGreaterThan(documentsBefore);
@@ -250,7 +250,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           const historyBefore = await pageB.evaluate(() => window.__ajayeb?.history() ?? []);
           expect(historyBefore.map((e) => e.ply)).toEqual([...Array(before.ply).keys()]);
           const socketsBeforeReload = logB.sockets;
-          if (logA.sockets > 1 || socketsBeforeReload > 2) {
+          if (logA.sockets > 1 || socketsBeforeReload > 1) {
             testInfo.annotations.push({
               type: 'unexpected-reconnect',
               description: `Before the intentional reload A opened ${logA.sockets} connections and B opened ${socketsBeforeReload}; inspect socket lifetimes and browser network events.`
@@ -281,7 +281,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           });
           // This is a cumulative lifetime count, not the number still open.
           // Earlier legitimate reconnects must not change the reload invariant.
-          await expect.poll(() => logB.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 2);
+          await expect.poll(() => logB.sockets, { timeout: 5_000 }).toBe(socketsBeforeReload + 1);
           // The log after the reload is the whole game, as before it.
           expect(await pageB.evaluate(() => window.__ajayeb?.history() ?? [])).toEqual(
             historyBefore

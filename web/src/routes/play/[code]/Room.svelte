@@ -26,6 +26,12 @@
   import { normalizeCode } from '$lib/session/session.svelte';
   import { installTestHook } from '$lib/session/test-hook';
 
+  interface Props {
+    onwronggame?: (code: string) => void;
+    onstate?: (code: string) => void;
+  }
+  let { onwronggame, onstate }: Props = $props();
+
   const game = setGameContext(liveGame());
   installTestHook(game);
   const { session, presenter } = game;
@@ -52,7 +58,13 @@
   joinPageRoom();
   afterNavigate(joinPageRoom);
 
-  onDestroy(() => session.leave());
+  const offWrongGame = session.onWrongGame((code) => onwronggame?.(code));
+  const offState = session.subscribe((frame) => onstate?.(frame.code));
+  onDestroy(() => {
+    offWrongGame();
+    offState();
+    if (session.roomError !== 'wrong-game') session.leave();
+  });
 
   // Screenshots require the current idle frame, loaded fonts and a rAF stamp.
   // Reuse settled font readiness without forcing layout on every frame.
@@ -105,7 +117,9 @@
   <title>{t('game.title', { code: session.code ?? '' })} · {t('app.name')}</title>
 </svelte:head>
 
-{#if session.roomError}
+{#if session.roomError === 'wrong-game'}
+  <!-- Refused before admission; the parent switches to lazy discovery. -->
+{:else if session.roomError}
   <RoomError error={session.roomError} code={session.code ?? page.params.code} onhome={toHome} />
 {:else}
   <GameScreen {session} {presenter} onhome={toHome} />

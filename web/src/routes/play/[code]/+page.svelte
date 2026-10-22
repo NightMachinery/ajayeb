@@ -42,7 +42,5 @@
 {#if ask}
   <NamePrompt {suggestion} {code} onsubmit={submit} />
 {:else}
-  {#key code + (claim ?? '')}
-    <GameEntry {code} claim={claim ?? savedRooms().claimFor(code)} />
-  {/key}
+  <GameEntry {code} claim={claim ?? savedRooms().claimFor(code)} />
 {/if}

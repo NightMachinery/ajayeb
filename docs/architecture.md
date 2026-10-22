@@ -133,19 +133,23 @@ The TypeScript types in the client are generated from the Go structs, never writ
 
 `/play/<code>` keeps the existing name prompt ahead of all connection work.
 A device claim or known saved room skips that prompt under the existing rules.
-The generic entry opens a small v2 bootstrap, says hello with this page's identity,
-then joins with the URL or saved claim. It holds one newest full snapshot as
-`unknown`; actions remain unavailable. A closed lazy registry selects by the
-server's frame family, never the optional saved hint or a client import path.
+D61 keeps the ordinary v1 Duel Room and Session first, unless a saved game hint
+or a room created in this page identifies another kind. Its first state is the
+authority. A welcomed v1 join refused with `error protocol` before its first
+state reports a wrong-game outcome and loads discovery; other protocol errors
+and bad hellos remain fatal reload notices. The server refuses that join before
+admitting a seat. Missing or stale hints therefore cannot admit the wrong game.
 
-Once a Duel module validates `state`, discovery closes without sending leave
-or releasing a seat. The module discards discovery's snapshot/events and mounts
-the existing Room, Session and WsTransport: ordinary v1 hello and join, the same
-token, client id, name and claim, with fresh full history from that join.
-Creation and previously verified Duel rooms in the current live app can reuse
-the direct v1 path, including Home's Continue flow. Reloaded tabs discover again.
-Each tab has its own client id; shared identity keeps its seat through handoff,
-duplicate tabs, disconnect and reconnect. Session and WsTransport are unchanged.
+Discovery and its closed lazy registry load only on this fallback path. Its
+v2 hello uses the same page identity and claim, holding one newest snapshot as
+`unknown` until its module validates the server's frame family. A stale non-Duel
+hint that discovers Duel keeps the bootstrap attached until the ordinary v1
+Session receives its first state for that code, then closes without leave.
+Discovery's snapshot/events never feed Duel's Presenter. Overlap prevents a
+false away notification; ordinary Duel entry wakes the bot only on its real
+Session and preserves all resulting events. Each tab retains its own client id.
+Rematches and device-link fragment changes reuse Room and its existing socket;
+`created` marks a rematch code as Duel before navigation.
 
 `lib/games/haftgane` is an empty lazy entry for table/lobby envelopes, with no
 rules, renderer, catalog, actions or invented view. It retains the already

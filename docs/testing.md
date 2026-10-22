@@ -238,6 +238,8 @@ onto the game the page shows, for end-to-end drivers:
 - `history()`: the game's history as the session holds it, one entry per
   applied action (the `history` field of the state frame, kept across live
   frames), so a spec can check the log after a reload;
+- `checkForUpdate()`: SvelteKit's deployed-version check, without changing
+  the game or returning any identity data.
 - `tutorial()` and `coach()`: the tutorial state of the displayed frame and
   the visible coach step, or `null` outside their respective contexts.
 
@@ -1762,30 +1764,44 @@ normalization, cross-room updates, stale-hint correction and an old tab's exact
 legacy-field rewrite, which retains `mode: "online"` and drops `game`.
 
 `e2e/specs/game-entry.spec.ts` runs on desktop and mobile. A cold online invite
-with no name sends no hello/join, leaves the creator waiting and its second
-seat open until submit. After submit it verifies v2 discovery then v1 Duel,
-same token/client id/name, no leave and closed bootstrap. A blocked name-storage
-write still sends the submitted name on both hellos. Duplicate tabs and
-reconnect retain the seat. A scripted Haftgane snapshot overrides a stale Duel
-hint without starting Duel Session or gameplay. A real Duel invite must not
-fetch the build manifest's Haftgane chunk. Scripted recovery tests distinguish
-discovery from the ordinary v1 connection, and online reload checks expect one
-closed discovery plus one replacement live connection, with no duplicate event
-playback or loss of safe history.
+with no name sends no hello/join and leaves the second seat open until submit.
+D61 then takes the ordinary v1 path. Every creator-side state is checked for a
+transient away flag after admission, and toast observations catch a false left
+notice. Reload allows the old document's one real disconnect, with no second
+handoff disconnect after the player returns. Blocked name storage still sends
+the submitted name. Duplicate tabs and reconnect retain the same seat.
 
-The import fixture removes Duel modules from the root and generic room route;
-Home's set is unchanged. The generic route adds only bootstrap/identity/registry
-and GameEntry modules. No eager closure may contain Haftgane. The browser test
-also protects the emitted lazy preload boundary, which a source graph alone
-cannot prove. Conditional import expressions can cause a bundler to associate
-only the last branch's CSS/preloads, so the registry uses separate table loaders.
+A stale Haftgane tag for a real Duel room verifies overlapping v2/v1 membership,
+identical identity, no leave, and discovery closing after the first v1 state.
+An untagged table first refuses v1 before admission, then opens the empty
+Haftgane entry through v2; no Duel board or seat is produced by that refusal.
+Session unit tests limit the wrong-game outcome to a welcomed join before its
+first state; all other protocol errors remain fatal. Discovery bad-hello uses
+the same fatal reload notice. Rematch and device-fragment tests retain the
+actual GameScreen node and one socket, with no leave. The tutorial test from
+2912538 remains unchanged and covers a pending bot transition on cold entry.
+Online and recovery connection counts retain their pre-slice expectations.
+
+The import fixture removes Duel modules from the root; Home's set is unchanged.
+The generic route contains only the lightweight host and identity helpers.
+Bootstrap, discovery, registry and all Haftgane modules stay outside its eager
+closure. A real Duel invite must not fetch the Haftgane chunk. The frozen
+registry's separate loader functions also protect emitted CSS/preload boundaries.
+
+The build version uses the git commit, or a source-content digest when git is
+absent, rather than a timestamp. The browser test calls SvelteKit's actual
+`updated.check()` through the read-only hook: the deployed version returns
+false and an intercepted newer `/_app/version.json` returns true. Two clean
+builds must give identical cold-entry and install measurements. The Duel gate
+stays 271,384 gzip bytes; this slice additionally retains at least 500 bytes
+of margin without regenerating the byte baseline.
 
 Run the unchanged `make shots PW_ARGS=--grep=platform` baseline after building.
-Do not regenerate byte budgets. M14.client-game-entry measured cold Home
-109,285 gzip bytes and Duel 271,220 (baselines 141,410 and 266,384, with at most
-5,000 extra per entry). The all-build precache policy is unchanged; the measured
-116-file install transferred 2,188,321 bytes, with 2,077,252 cached body bytes.
-These are build-specific measurements, not replacement baselines.
+Do not regenerate byte budgets. The baselines remain 141,410 gzip bytes for
+Home and 266,384 for Duel, with at most 5,000 extra per entry. Record both clean
+builds' actual cold bytes and worker install transfer in the slice result.
+The all-build precache policy is unchanged; install transfer is measured
+separately from code executed on the cold path.
 
 ### Protocol-2 game envelopes
 

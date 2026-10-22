@@ -27,6 +27,7 @@ import type {
 
 /** window.__ajayeb as the page defines it (web/src/lib/session/test-hook.ts). */
 export interface AjayebHook {
+  checkForUpdate(): Promise<boolean>;
   view(): View | null;
   choices(): Choice[];
   room():

@@ -127,6 +127,42 @@ describe('Session: connecting', () => {
     expect(transport.sentOf('join')).toEqual([{ t: 'join', code: 'H8TQ4R' }]);
   });
 
+  it('reports only a welcomed, not-yet-admitted join protocol refusal as wrong-game', () => {
+    const { session, transport } = setup();
+    const wrong = vi.fn();
+    const off = session.onWrongGame(wrong);
+    connect(transport);
+    session.join('H8TQ4R');
+    transport.receive({ t: 'error', code: 'protocol', msg: 'requires v2' });
+    expect(wrong).toHaveBeenCalledWith('H8TQ4R');
+    expect(session.roomError).toBe('wrong-game');
+    expect(session.fatal).toBeNull();
+    expect(session.conn).toBe('open');
+    expect(transport.closed).toBe(false);
+    transport.setState('reconnecting');
+    connect(transport);
+    expect(transport.sentOf('join')).toHaveLength(1); // refusal cannot retry on reconnect
+    off();
+    for (const stage of ['before-welcome', 'no-join', 'already-joined'] as const) {
+      const s = stage === 'already-joined' ? joined() : setup();
+      const listener = vi.fn();
+      s.session.onWrongGame(listener);
+      if (stage === 'before-welcome') {
+        s.session.join('H8TQ4R');
+        s.transport.setState('open');
+      }
+      if (stage === 'no-join') connect(s.transport);
+      s.transport.receive({ t: 'error', code: 'protocol', msg: 'fatal' });
+      expect(s.session.fatal).toBe('protocol');
+      expect(listener).not.toHaveBeenCalled();
+    }
+    const bad = setup();
+    connect(bad.transport);
+    bad.session.join('H8TQ4R');
+    bad.transport.receive({ t: 'error', code: 'bad-hello', msg: 'fatal' });
+    expect(bad.session.fatal).toBe('bad-hello');
+  });
+
   it('treats a welcome of another protocol version as fatal', () => {
     const { transport, session } = setup();
     transport.setState('open');
@@ -626,6 +662,7 @@ describe('Session: rooms', () => {
     expect(session.rematchCode).toBe('NEXT22');
     expect(session.code).toBe('H8TQ4R');
     expect(rooms.list.map((r) => [r.code, r.mode])).toContainEqual(['NEXT22', 'hotseat']);
+    expect(rooms.list.find((r) => r.code === 'NEXT22')?.game).toBe('duel');
   });
 
   it('leaves the room it is in, and only tells the server about another', () => {

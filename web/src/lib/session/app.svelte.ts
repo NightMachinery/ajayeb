@@ -6,7 +6,7 @@ import { AnimRunner } from '$lib/fx/anim/runner';
 import { hintDefaults } from '$lib/hints/local.svelte';
 import { botDwellMs, botPickMs, motion } from '$lib/ui/motion.svelte';
 import { moveRemovedCardFocus } from '$lib/ui/removed-card-focus';
-import { entryIdentity, registerDuelCode, rememberDuelCode } from '$lib/entry/identity';
+import { entryIdentity, rememberEntryGame } from '$lib/entry/identity';
 import { detached, savedRooms } from './saved-rooms.svelte';
 import { cuePrev, Presenter } from './presenter.svelte';
 import { Session } from './session.svelte';
@@ -31,9 +31,8 @@ export function liveGame(): { session: Session; presenter: Presenter } {
         // ...and from the "Allow undo" choice saved next to them.
         defaultAllowUndo: (mode) => undoDefault.for(mode)
       });
-      registerDuelCode(() => session.code);
       session.subscribe((frame) => {
-        rememberDuelCode(frame.code);
+        rememberEntryGame(frame.code, 'duel');
         if (frame.room.status !== 'finished') savedRooms().setGame(frame.code, 'duel');
       });
       // A bot's move waits out its thinking dwell, then its pick is

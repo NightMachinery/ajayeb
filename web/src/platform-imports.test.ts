@@ -216,3 +216,14 @@ it('keeps the generic and Duel entry closures free of eager Haftgane modules', (
     'lib/session/session.svelte.ts'
   );
 });
+
+it('loads discovery and its registry only on fallback, outside the ordinary Duel closure', () => {
+  const eager = graph('routes/play/[code]/+page.svelte').eager;
+  for (const module of [
+    'lib/entry/bootstrap.ts',
+    'lib/entry/discovery.ts',
+    'lib/entry/registry.ts'
+  ])
+    expect(eager).not.toContain(module);
+  expect(graph('lib/games/duel/Entry.svelte').eager).not.toContain('lib/entry/bootstrap.ts');
+});

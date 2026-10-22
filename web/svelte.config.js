@@ -1,4 +1,34 @@
 import adapter from '@sveltejs/adapter-static';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync } from 'node:fs';
+
+// A rebuild of one commit must produce the same chunk hashes. In a source
+// archive without git, hash the shipped inputs instead of using a timestamp.
+function buildVersion() {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], {
+      cwd: new URL('.', import.meta.url),
+      stdio: ['ignore', 'pipe', 'ignore'],
+      encoding: 'utf8'
+    }).trim();
+  } catch {
+    const hash = createHash('sha256');
+    for (const root of ['src', 'static']) {
+      const base = new URL(`./${root}/`, import.meta.url);
+      for (const file of readdirSync(base, { recursive: true, withFileTypes: true })
+        .filter((file) => file.isFile())
+        .map((file) => new URL(`${file.parentPath}/${file.name}`, 'file:'))
+        .sort((a, b) => a.href.localeCompare(b.href))) {
+        hash.update(file.href.slice(base.href.length));
+        hash.update(readFileSync(file));
+      }
+    }
+    for (const file of ['package.json', 'svelte.config.js', 'vite.config.ts'])
+      hash.update(readFileSync(new URL(file, import.meta.url)));
+    return hash.digest('hex');
+  }
+}
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -8,6 +38,7 @@ const config = {
     runes: ({ filename }) => (filename.split(/[/\\]/).includes('node_modules') ? undefined : true)
   },
   kit: {
+    version: { name: buildVersion() },
     // Home prerenders to index.html. Other routes use a separate generic
     // client shell, so a game deep link never hydrates a Home document.
     adapter: adapter({ fallback: 'shell.html' }),
