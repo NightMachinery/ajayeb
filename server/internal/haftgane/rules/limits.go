@@ -1,5 +1,6 @@
 // Package rules holds Haftgane's pure rules values and canonical vocabulary.
-// No setup, legal-action generation or resolution is implemented in this slice.
+// Setup, legality, resolution, scoring and the wonder abilities live beside it;
+// views and the observation come next (docs/haftgane/engine-architecture.md section 14).
 package rules
 
 import "github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
