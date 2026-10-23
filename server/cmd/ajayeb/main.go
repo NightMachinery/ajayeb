@@ -37,6 +37,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/httpapi"
 	"github.com/NightMachinery/ajayeb/server/internal/ident"
+	"github.com/NightMachinery/ajayeb/server/internal/lobbyroom"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
@@ -140,7 +141,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.StringVar(&opts.staticDir, "static", "", "serve the web build from this `directory` instead of the embedded one")
 	fset.BoolVar(&opts.dev, "dev", false, "development mode: debug logging and loopback WebSocket origins")
 	fset.BoolVar(&opts.devEndpoints, "dev-endpoints", false, "enable the test-only /api/dev/ endpoints (requires -dev)")
-	fset.BoolVar(&opts.tables, "haftgane-tables", false, "allow creating Haftgane tables through POST /api/dev/tables, until the lobby ships (requires -dev and -dev-endpoints)")
+	fset.BoolVar(&opts.tables, "haftgane-tables", false, "allow creating Haftgane tables through POST /api/dev/tables and shared lobbies with lobby-create, until the lobby's client ships (requires -dev and -dev-endpoints)")
 	fset.Var(listValue{&origins}, "origin", "allowed site `origin` such as https://example.org (repeatable or comma separated)")
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
@@ -317,7 +318,8 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 	seed := seedSource(opts.seedBase)
 	pool := ai.NewPoolPerKey(opts.botSearches, opts.botPerAddr)
 	tables := tableroom.New(tableroom.Config{Logger: logger, Pool: pool, Seed: seed, Creation: opts.tables})
-	kinds, err := roomKinds(tables)
+	lobbies := lobbyroom.New(lobbyroom.Config{Logger: logger, Tables: tables, Creation: opts.tables})
+	kinds, err := roomKinds(tables, lobbies)
 	if err != nil {
 		return err
 	}
@@ -354,6 +356,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 	}
 	defer rooms.Close() // idempotent; the normal path closes it in order below
 	tables.Bind(rooms, st)
+	lobbies.Bind(rooms, st)
 
 	sockets, err := ws.New(ws.Config{
 		Rooms:          rooms,

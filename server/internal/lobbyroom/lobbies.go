@@ -61,7 +61,7 @@ type Config struct {
 	// Tables starts the Haftgane games.
 	Tables *tableroom.Tables
 	// Creation allows creating lobbies (lobby-create and rematches). It is
-	// off in production until the shared lobby ships (-haftgane-tables).
+	// off in production until the lobby's client ships (-haftgane-tables).
 	Creation bool
 	// SeqClients bounds, for each user, the clients whose last accepted
 	// seq the lobby remembers.

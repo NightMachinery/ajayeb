@@ -9,8 +9,9 @@
 // The engine sits behind one seam, engine.go: the fake engine until
 // M16.haftgane-engine-contract binds the real one. The kind's codec and
 // load path are always registered; creating a table is behind a flag that
-// is off in production (Config.Creation), and only the Go API and the
-// development endpoint create one until the lobby's Start calls it.
+// is off in production (Config.Creation): the Go API and the development
+// endpoint create one directly, and a lobby's Start (StartTable) builds
+// one under the lobby's code.
 //
 // Every change is a transaction: clone the record, validate the operation,
 // write the candidate atomically, then swap it in and publish frames. A
@@ -69,9 +70,10 @@ type Config struct {
 	Pool *ai.Pool
 	// Seed returns a new table's seed. Default: crypto/rand.
 	Seed func() uint64
-	// Creation allows creating tables. It is off in production until the
-	// lobby ships (flag -haftgane-tables); loading saved tables does not
-	// depend on it.
+	// Creation allows creating tables directly (CreateTable). It is off
+	// in production until the lobby's client ships (flag
+	// -haftgane-tables); loading saved tables and a lobby's Start, gated
+	// by the lobby's own creation, do not depend on it.
 	Creation bool
 	// SeqClients bounds, for each user, the clients whose last accepted
 	// seq the table remembers.

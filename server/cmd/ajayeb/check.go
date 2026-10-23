@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/NightMachinery/ajayeb/server/internal/lobbyroom"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
 )
@@ -12,7 +13,8 @@ import (
 // checkRooms exits before all identity, directory, signal and listener setup.
 // 1 is an operational/schema error; 3 is live-room loss requiring explicit consent.
 func checkRooms(dataDir string, stdout, stderr io.Writer) int {
-	kinds, err := roomKinds(tableroom.New(tableroom.Config{}))
+	tables := tableroom.New(tableroom.Config{})
+	kinds, err := roomKinds(tables, lobbyroom.New(lobbyroom.Config{Tables: tables}))
 	if err != nil {
 		fmt.Fprintf(stderr, "ajayeb: room kinds: %v\n", err)
 		return 1
