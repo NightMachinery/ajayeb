@@ -8,7 +8,20 @@ import type { LobbyState, TableChoice, TableState } from '$lib/wire/platform.gen
 export const CODE = 'TBLAAA';
 
 export function choice(design: string, left = 0, right = 0): TableChoice {
-  return { key: `build:${design}:${left}:${right}`, kind: 'build', design, left, right };
+  return {
+    key: `build:${design}:${left}:${right}`,
+    kind: 'build',
+    design,
+    left,
+    right,
+    side: '',
+    stage: 0,
+    printed: 0,
+    total: left + right,
+    gain: 0,
+    free: '',
+    witness: []
+  };
 }
 
 export const CHOICES = [choice('amber'), choice('basalt'), choice('cedar')];
@@ -79,9 +92,27 @@ export function tableFrame(
       turn: 1,
       pass: 'left',
       pile: 0,
+      canDownload: false,
       seats: [0, 1, 2].map((s) => ({
         seat: s,
         board: 'rhodos',
+        side: 'day',
+        victories: [0, 0, 0],
+        defeats: 0,
+        shields: 0,
+        relative: s,
+        relation: 'other',
+        score: {
+          wonder: 0,
+          treasure: 1,
+          military: 0,
+          blue: 0,
+          yellow: 0,
+          green: 0,
+          purple: 0,
+          total: 1
+        },
+        science: { counts: [0, 0, 0], choices: [0, 0, 0], points: 0 },
         coins: 3,
         built: [],
         stages: 0,
@@ -98,7 +129,13 @@ export function tableFrame(
               tucked: [],
               choices: CHOICES,
               offer: [],
-              seen: []
+              disabled: [],
+              neighbours: [],
+              notebook: {
+                seen: [],
+                pileLooks: [],
+                statistics: { circulating: [], returning: [], neighbourPicks: [] }
+              }
             }
           })
     },

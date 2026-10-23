@@ -19,6 +19,9 @@ var platformExamples = []string{
 	`{"t":"lobby-create","seatCount":7,"options":{"seating":"random","allowUndo":true,"finalReveal":false}}`,
 	`{"t":"lobby-edit","code":"REGAAA","seq":7,"op":"seats","seatCount":2}`,
 	`{"t":"lobby-edit","code":"REGAAA","seq":8,"op":"options","options":{"firstPlayer":0}}`,
+	`{"t":"lobby-create","seatCount":3,"options":{"sides":"choose"}}`,
+	`{"t":"lobby-create","seatCount":3,"options":{"sides":"day"}}`,
+	`{"t":"lobby-edit","code":"REGAAA","seq":8,"op":"options","options":{"sides":"random"}}`,
 	`{"t":"lobby-edit","code":"REGAAA","seq":9,"op":"add-bot","seat":6,"bot":"hard"}`,
 	`{"t":"lobby-edit","code":"REGAAA","seq":10,"op":"remove-bot","seat":0}`,
 	`{"t":"lobby-edit","code":"REGAAA","seq":11,"op":"seat","seat":0,"userId":"spectator"}`,
@@ -102,6 +105,10 @@ func TestPlatformInvalidValues(t *testing.T) {
 		`{"t":"lobby-create","seatCount":8,"options":{}}`,
 		`{"t":"lobby-create","seatCount":3,"options":{"firstPlayer":2}}`,
 		`{"t":"lobby-create","seatCount":3,"options":{"seating":"arbitrary"}}`,
+		`{"t":"lobby-create","seatCount":3,"options":{"sides":""}}`,
+		`{"t":"lobby-create","seatCount":3,"options":{"sides":"night"}}`,
+		`{"t":"lobby-create","seatCount":3,"options":{"sides":null}}`,
+		`{"t":"lobby-edit","code":"REGAAA","seq":0,"op":"options","options":{"sides":"unknown"}}`,
 		`{"t":"lobby-create","seatCount":3,"options":{"allowUndo":null}}`,
 		`{"t":"lobby-create","seatCount":3,"options":{"AllowUndo":true}}`,
 		`{"t":"lobby-create","seatCount":3,"options":{"seed":123}}`,
@@ -187,11 +194,10 @@ func TestPlatformServerEnvelopes(t *testing.T) {
 			t.Fatalf("bad discriminator: %s", b)
 		}
 	}
-	// The table view and event are a whitelist: exactly these fields, until
-	// M16.haftgane-engine-contract replaces them with the real engine's.
+	// The table envelope preserves exactly these fields around the real engine DTOs.
 	for typ, want := range map[reflect.Type]string{
-		reflect.TypeFor[TableView]():  "phase age turn pass pile seats you result reveal",
-		reflect.TypeFor[TableEvent](): "kind seat play design stage left right age pass",
+		reflect.TypeFor[TableView]():  "phase age turn pass pile seats you result reveal canDownload",
+		reflect.TypeFor[TableEvent](): "kind seat other age turn play design stage side left right printed delta source outcome pass",
 	} {
 		var got []string
 		for i := 0; i < typ.NumField(); i++ {

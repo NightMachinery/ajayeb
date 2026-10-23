@@ -164,6 +164,7 @@ type SetupRecord struct {
 	Seats         int    `json:"seats"`
 	RandomSeating bool   `json:"randomSeating"`
 	HideAtEnd     bool   `json:"hideAtEnd"`
+	Sides         string `json:"sides"`
 }
 
 // Seat controller kinds. A table has no open seats: the lobby's Start
@@ -466,7 +467,10 @@ func restore(r *Record, b seqBounds) (*state, bool, error) {
 	if len(r.Batches) > maxBatches {
 		return nil, false, invalid("%d batches", len(r.Batches))
 	}
-	su := makeSetup(r.Setup.Seed, n, r.Setup.RandomSeating, r.Setup.HideAtEnd)
+	su, err := recordSetup(r.Setup)
+	if err != nil {
+		return nil, false, err
+	}
 	g, err := replay(su, engineBatches(r.Batches))
 	if err != nil {
 		return nil, false, invalid("the batches do not replay")
@@ -494,7 +498,10 @@ func validate(r *Record, g *game, b seqBounds) error {
 	if n < MinSeats || n > MaxSeats {
 		return invalid("seat count %d", n)
 	}
-	su := makeSetup(r.Setup.Seed, n, r.Setup.RandomSeating, r.Setup.HideAtEnd)
+	su, err := recordSetup(r.Setup)
+	if err != nil {
+		return err
+	}
 	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
 	if len(r.Assignment) != n || len(r.Original) != n || len(r.Seats) != n || len(r.Edits) != n {
 		return invalid("per-seat fields do not hold %d seats", n)

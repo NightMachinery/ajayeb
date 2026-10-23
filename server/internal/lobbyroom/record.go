@@ -131,6 +131,10 @@ func (r *Record) clone() Record {
 
 func cloneOptions(o wire.LobbyOptions) wire.LobbyOptions {
 	c := wire.LobbyOptions{}
+	if o.Sides != nil {
+		v := *o.Sides
+		c.Sides = &v
+	}
 	if o.Seating != nil {
 		v := *o.Seating
 		c.Seating = &v
@@ -322,6 +326,9 @@ func validLevel(level string) bool {
 }
 
 func validOptions(o wire.LobbyOptions) bool {
+	if o.Sides != nil && *o.Sides != "choose" && *o.Sides != "day" && *o.Sides != "random" {
+		return false
+	}
 	if o.Seating != nil && *o.Seating != "random" && *o.Seating != "lobby" {
 		return false
 	}

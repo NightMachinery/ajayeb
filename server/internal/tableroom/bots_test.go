@@ -217,7 +217,7 @@ func TestUndo(t *testing.T) {
 		t.Fatalf("undo: %s", got)
 	}
 	fr = h.latest(me)
-	if fr.Batch != 0 || fr.History == nil || len(*fr.History) != 0 || fr.Point.Ref == oldRef || fr.Point.Ref.ID != oldRef.ID || fr.Ack == nil || fr.Ack.Seq != 3 {
+	if fr.Batch != 0 || fr.History == nil || len(*fr.History) != 1 || fr.Point.Ref == oldRef || fr.Point.Ref.ID != oldRef.ID || fr.Ack == nil || fr.Ack.Seq != 3 {
 		t.Fatalf("after undo: %+v", fr)
 	}
 	if sp := h.latest(tabletest.SpectatorClient); sp.History == nil || sp.Batch != 0 {

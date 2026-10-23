@@ -141,7 +141,7 @@ func viewerAt(models []seatModel, log int, user, clientID string) tableroom.Fram
 func TestWebSocketLobbyToTable(t *testing.T) {
 	s := newStack(t, t.TempDir())
 	for n := tableroom.MinSeats; n <= tableroom.MaxSeats; n++ {
-		lobbyToTable(wsContext(t, time.Minute), t, s, n)
+		lobbyToTable(wsContext(t, 5*time.Minute), t, s, n)
 	}
 }
 

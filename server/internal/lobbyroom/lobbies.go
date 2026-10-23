@@ -192,8 +192,12 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 	if rm.LobbyOrder {
 		seating = "lobby"
 	}
+	sides := rm.Sides
+	if sides == "" {
+		sides = "day"
+	}
 	undo, reveal := rm.AllowUndo, rm.FinalReveal
-	r := newRecord(len(rm.Slots), wire.LobbyOptions{Seating: &seating, AllowUndo: &undo, FinalReveal: &reveal}, rm.Creator)
+	r := newRecord(len(rm.Slots), wire.LobbyOptions{Sides: &sides, Seating: &seating, AllowUndo: &undo, FinalReveal: &reveal}, rm.Creator)
 	for i, s := range rm.Slots {
 		if s.UserID != "" {
 			r.Slots[i] = Slot{Kind: SlotReserved, UserID: s.UserID, Name: s.Name}

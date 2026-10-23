@@ -1,9 +1,10 @@
 package wire
 
 // LobbyOptions replaces the lobby's complete platform options. Absent values
-// mean random seating, random Duel starter, undo enabled and final reveal on.
-// Game-specific options are deferred until their rules and view contracts land.
+// mean random seating, random Duel starter, undo enabled, final reveal on and day sides.
+// Sides applies to Haftgane; a two-seat Duel start ignores it.
 type LobbyOptions struct {
+	Sides       *string `json:"sides,omitempty" tstype:"'choose' | 'day' | 'random'"`
 	Seating     *string `json:"seating,omitempty" tstype:"'random' | 'lobby'"`
 	FirstPlayer *int    `json:"firstPlayer,omitempty" tstype:"0 | 1"`
 	AllowUndo   *bool   `json:"allowUndo,omitempty"`

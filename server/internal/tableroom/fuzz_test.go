@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine"
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
@@ -43,11 +43,11 @@ const tabClient tabletest.ClientID = "seat-0-tab"
 
 // boundaryKinds are where a fuzzed table opens: the start, or the first
 // salvage or last-card point of a game.
-var boundaryKinds = []fakeengine.PointKind{fakeengine.PointNone, fakeengine.PointSalvage, fakeengine.PointLastCard}
+var boundaryKinds = []rules.PointKind{rules.PointNone, rules.PointDiscardBuild, rules.PointLastCard}
 
 type boundaryKey struct {
 	seats int
-	kind  fakeengine.PointKind
+	kind  rules.PointKind
 	from  uint64
 }
 
@@ -55,6 +55,7 @@ type boundary struct {
 	seed   uint64
 	prefix []BatchRecord
 	ok     bool
+	sides  string
 }
 
 var boundaries sync.Map // boundaryKey -> boundary
@@ -62,7 +63,7 @@ var boundaries sync.Map // boundaryKey -> boundary
 // boundaryPrefix finds, from seed from on, a game (chosen seating) that
 // reaches a point of the kind, and returns its seed and the batches
 // before that point.
-func boundaryPrefix(seats int, kind fakeengine.PointKind, from uint64) boundary {
+func boundaryPrefix(seats int, kind rules.PointKind, from uint64) boundary {
 	k := boundaryKey{seats, kind, from}
 	if b, ok := boundaries.Load(k); ok {
 		return b.(boundary)
@@ -72,9 +73,15 @@ func boundaryPrefix(seats int, kind fakeengine.PointKind, from uint64) boundary 
 	return b
 }
 
-func findBoundary(seats int, kind fakeengine.PointKind, from uint64) boundary {
+func findBoundary(seats int, kind rules.PointKind, from uint64) boundary {
 	for seed := from; seed < from+64; seed++ {
-		g, err := newGame(makeSetup(seed, seats, false, false))
+		su := makeSetup(seed, seats, false, false)
+		sides := "day"
+		if kind == rules.PointLastCard {
+			su.Options.Sides = rules.SidesRandom
+			sides = "random"
+		}
+		g, err := newGame(su)
 		if err != nil {
 			return boundary{}
 		}
@@ -83,7 +90,7 @@ func findBoundary(seats int, kind fakeengine.PointKind, from uint64) boundary {
 		for !pointOver(g.Point()) {
 			pt := g.Point()
 			if pt.Kind == kind {
-				return boundary{seed: seed, prefix: prefix, ok: true}
+				return boundary{seed: seed, prefix: prefix, ok: true, sides: sides}
 			}
 			b, br := batch{Point: pt.ID}, BatchRecord{Point: pt.ID}
 			for _, s := range pt.Required.Seats() {
@@ -107,7 +114,7 @@ func TestAbilityBoundariesReachable(t *testing.T) {
 	for n := MinSeats; n <= MaxSeats; n++ {
 		for _, kind := range boundaryKinds[1:] {
 			if b := boundaryPrefix(n, kind, 0); !b.ok {
-				t.Errorf("%d seats: no game reaches a %s point", n, kind)
+				t.Errorf("%d seats: no game reaches a %v point", n, kind)
 			}
 		}
 	}
@@ -194,15 +201,15 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	if solo {
 		sp = soloSpec(n, seed, BotEasy)
 	}
-	if kind != fakeengine.PointNone {
+	if kind != rules.PointNone {
 		if b := boundaryPrefix(n, kind, seed); b.ok {
-			sp.Seed, sp.Prefix = &b.seed, b.prefix
+			sp.Seed, sp.Prefix, sp.Sides = &b.seed, b.prefix, b.sides
 		}
 	}
 	step, opName := -1, "setup"
 	defer func() {
 		if t.Failed() {
-			t.Logf("failed at step %d (%s): %d seats, solo %t, opening %s, seq memory %d, floors %d",
+			t.Logf("failed at step %d (%s): %d seats, solo %t, opening %v, seq memory %d, floors %d",
 				step, opName, n, solo, kind, cfg.SeqClients, cfg.PickClients)
 		}
 	}()

@@ -782,7 +782,11 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		a.refuse(c, f.Seq, "start", outBad)
 		return false
 	}
-	spec := tableroom.Spec{RandomSeating: r.Options.Seating == nil || *r.Options.Seating == "random",
+	sides := "day"
+	if r.Options.Sides != nil {
+		sides = *r.Options.Sides
+	}
+	spec := tableroom.Spec{Sides: sides, RandomSeating: r.Options.Seating == nil || *r.Options.Seating == "random",
 		HideAtEnd: r.Options.FinalReveal != nil && !*r.Options.FinalReveal,
 		AllowUndo: r.Options.AllowUndo == nil || *r.Options.AllowUndo, Creator: r.Roles.Creator}
 	// The table starts from the roles as the rule last made them, saved

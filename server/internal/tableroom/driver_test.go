@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine"
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
-	"github.com/NightMachinery/ajayeb/server/internal/tabletest/direct"
+	direct "github.com/NightMachinery/ajayeb/server/internal/tabletest/real"
 )
 
 // TestDriverInProcess: Play and CompareSchedules pass unchanged over the
@@ -19,20 +19,29 @@ import (
 // seed gives the same canonical batches and hash.
 func TestDriverInProcess(t *testing.T) {
 	for n := MinSeats; n <= MaxSeats; n++ {
-		// Each seat count has its own deadline, as in the differential.
-		ctx := testContext(t)
 		f := newFixture(t, Config{})
 		cfg := tabletest.Config{Seats: n, PickSeed: uint64(n), Script: tabletest.ScriptOptions{Drafts: 50, Resends: 30}}
-		runs, err := tabletest.CompareSchedules(ctx, f.factory(n, uint64(100+n), false), cfg, []uint64{1, 2, 3, 4})
-		if err != nil {
-			t.Fatalf("%d seats: %v", n, err)
+		// Every real game gets its own bounded context. Comparing all four
+		// schedules must not consume the later game's wall-clock budget.
+		var runs []tabletest.Run
+		for _, arrival := range []uint64{1, 2, 3, 4} {
+			one, err := tabletest.CompareSchedules(testContext(t), f.factory(n, uint64(100+n), false), cfg, []uint64{arrival})
+			if err != nil {
+				t.Fatalf("%d seats, arrival %d: %v", n, arrival, err)
+			}
+			if len(runs) > 0 && !bytes.Equal(runs[0].Canonical.Bytes(), one[0].Canonical.Bytes()) {
+				t.Fatal("arrival schedules changed canonical history")
+			}
+			runs = append(runs, one...)
 		}
+
 		if len(runs) != 4 || len(runs[0].Canonical.Batches) == 0 {
 			t.Fatalf("%d seats: %d runs", n, len(runs))
 		}
 		race := cfg
 		race.Script = tabletest.ScriptOptions{Race: true, Resends: 30}
 		race.ArrivalSeed = 5
+		ctx := testContext(t)
 		tb, err := f.factory(n, uint64(200+n), true)(ctx, nil)
 		if err != nil {
 			t.Fatal(err)
@@ -112,7 +121,7 @@ func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 		var prefix []tabletest.Batch
 		for !pointOver(g.Point()) {
 			p := g.Point()
-			if p.Kind == fakeengine.PointSalvage {
+			if p.Kind == rules.PointDiscardBuild {
 				return seed, prefix
 			}
 			eb := batch{Point: p.ID}
@@ -161,7 +170,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 	t.Helper()
 	where := fmt.Sprintf("%d seats, seed %d, seq memory %d", n, seed, seqClients)
 	// direct's setup uses the engine's default (random) seating.
-	ref, err := direct.New(ctx, direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: uint8(n)}, SeqClients: seqClients, Tabs: true})
+	ref, err := direct.New(ctx, direct.Options{Setup: makeSetup(seed, n, true, false), SeqClients: seqClients, Tabs: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -285,7 +294,7 @@ func TestDifferentialSwitches(t *testing.T) {
 func differentialSwitches(ctx context.Context, t *testing.T, n int, seed, salt uint64, kept *int) {
 	t.Helper()
 	where := fmt.Sprintf("%d seats, seed %d", n, seed)
-	ref, err := direct.New(ctx, direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: uint8(n)}, Tabs: true})
+	ref, err := direct.New(ctx, direct.Options{Setup: makeSetup(seed, n, true, false), Tabs: true})
 	if err != nil {
 		t.Fatal(err)
 	}

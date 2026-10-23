@@ -23,12 +23,14 @@ type state struct {
 
 // actor runs one table. Everything below is touched only on its goroutine.
 type actor struct {
-	t     *Tables
-	m     *room.Manager
-	h     *room.Handle
-	code  string
-	st    *state
-	conns []*room.Client
+	viewHash    string
+	engineViews map[int]*roleView
+	t           *Tables
+	m           *room.Manager
+	h           *room.Handle
+	code        string
+	st          *state
+	conns       []*room.Client
 	// claims holds, for each connection that joined with a device link,
 	// the claim and the user it acts as (package ident).
 	claims map[*room.Client]claimed
@@ -1072,7 +1074,10 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	cand.Batches = cand.Batches[:cut]
 	cand.Pending = []PendingSlot{}
 	bumpPublic(&cand)
-	su := makeSetup(cand.Setup.Seed, cand.Setup.Seats, cand.Setup.RandomSeating, cand.Setup.HideAtEnd)
+	su, err := recordSetup(cand.Setup)
+	if err != nil {
+		return a.refuse(c, u.Seq, "undo", seat, outStorage)
+	}
 	g, err := replay(su, engineBatches(cand.Batches))
 	if err != nil {
 		a.t.log.Error("table undo replay failed", "room", a.code, "seat", seat)

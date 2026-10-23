@@ -29,7 +29,7 @@ func TestMergedFramesPassTheOracle(t *testing.T) {
 		spans, histories := 0, 0
 		for id, frames := range p.frames {
 			v := frameViewer{Seat: viewerOf(id), Client: string(id), Admin: viewerOf(id) == 0}
-			for _, every := range []int{2, 3, 7} {
+			for _, every := range []int{2, 3, 7, 31, 127} {
 				label := fmt.Sprintf("%d seats %s merged every %d", n, id, every)
 				merged := mergeFrames(t, withResync(t, frames), every)
 				if leaks := frameLeaks(t, c, label, v, merged, nil, nil); len(leaks) != 0 {
@@ -80,11 +80,11 @@ func withResync(t *testing.T, frames []wire.TableState) []wire.TableState {
 			at = i
 		}
 	}
-	if at < 0 || (*last.History)[k-1].Batch != k {
+	if at < 0 || (*last.History)[k].Batch != k {
 		t.Fatalf("no frame at batch %d", k)
 	}
 	resync := frames[at]
-	history := slices.Clone((*last.History)[:k])
+	history := slices.Clone((*last.History)[:k+1])
 	resync.History, resync.Events = &history, []wire.TableEvent{}
 	return slices.Insert(slices.Clone(frames), at+1, resync)
 }

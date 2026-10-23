@@ -610,7 +610,7 @@ func TestDetachAcrossStart(t *testing.T) {
 func TestRematch(t *testing.T) {
 	f := newFixture(t, nil)
 	k := f.conn(user(0), "c0", "P0")
-	code := f.create(k, 3, wire.LobbyOptions{Seating: ptr("lobby"), AllowUndo: ptr(false), FinalReveal: ptr(false)})
+	code := f.create(k, 3, wire.LobbyOptions{Seating: ptr("lobby"), Sides: ptr("random"), AllowUndo: ptr(false), FinalReveal: ptr(false)})
 	ab := edit(code, 1, "add-bot")
 	ab.Seat, ab.Bot = ptr(2), ptr(tableroom.BotHard)
 	f.send(k, ab)
@@ -666,7 +666,7 @@ func TestRematch(t *testing.T) {
 	}
 	r := f.record(next.Code)
 	if r.SeatCount != 3 || r.Slots[0] != (Slot{Kind: SlotReserved, UserID: user(0), Name: "P0"}) || r.Slots[1].Bot != tableroom.BotEasy ||
-		r.Slots[2].Bot != tableroom.BotHard || *r.Options.Seating != "lobby" || *r.Options.AllowUndo || *r.Options.FinalReveal ||
+		r.Slots[2].Bot != tableroom.BotHard || *r.Options.Seating != "lobby" || r.Options.Sides == nil || *r.Options.Sides != "random" || *r.Options.AllowUndo || *r.Options.FinalReveal ||
 		r.Roles.Creator != user(0) || len(r.Roles.Admins) != 1 {
 		t.Fatalf("the successor: %+v", r)
 	}

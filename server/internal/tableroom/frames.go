@@ -8,10 +8,10 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
-// broadcast builds the frames of one publication. Its cache, like Duel's
-// frame cache, lives for this one broadcast only: each seat's projection
-// and the spectator role's are built once and shared by every connection
-// of that role, and nothing is kept for the next change.
+// broadcast builds one publication's metadata. Engine views and history are
+// immutable for the engine fingerprint and cached by seat (plus spectator),
+// at most eight entries. Pending picks, acks, roles and presence are never
+// cached. A resolve or undo changes the fingerprint and discards all entries.
 type broadcast struct {
 	a        *actor
 	resolved bool // this change resolved a batch: frames carry its events
@@ -28,7 +28,11 @@ type roleView struct {
 }
 
 func (a *actor) newBroadcast(resolved bool) *broadcast {
-	b := &broadcast{a: a, resolved: resolved, views: map[int]*roleView{}}
+	if a.engineViews == nil || a.viewHash != a.st.rec.Hash {
+		a.viewHash = a.st.rec.Hash
+		a.engineViews = map[int]*roleView{}
+	}
+	b := &broadcast{a: a, resolved: resolved, views: a.engineViews}
 	b.seats, b.humans = a.meta()
 	return b
 }

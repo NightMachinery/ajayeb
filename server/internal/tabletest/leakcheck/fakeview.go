@@ -80,15 +80,22 @@ type wSeen struct {
 }
 
 type wEvent struct {
-	Kind   string `json:"kind"`
-	Seat   int    `json:"seat"`
-	Play   string `json:"play"`
-	Design string `json:"design"`
-	Stage  int    `json:"stage"`
-	Left   int    `json:"left"`
-	Right  int    `json:"right"`
-	Age    int    `json:"age"`
-	Pass   string `json:"pass"`
+	Other   int    `json:"other"`
+	Turn    int    `json:"turn"`
+	Side    string `json:"side"`
+	Printed int    `json:"printed"`
+	Delta   int    `json:"delta"`
+	Source  string `json:"source"`
+	Outcome string `json:"outcome"`
+	Kind    string `json:"kind"`
+	Seat    int    `json:"seat"`
+	Play    string `json:"play"`
+	Design  string `json:"design"`
+	Stage   int    `json:"stage"`
+	Left    int    `json:"left"`
+	Right   int    `json:"right"`
+	Age     int    `json:"age"`
+	Pass    string `json:"pass"`
 }
 
 type wHistory struct {
@@ -127,15 +134,22 @@ func strict(data []byte, v any) error {
 // its leftover and its kept card; nobody for the rest.
 func visible(e Event, viewer int) bool {
 	switch {
-	case e.Kind == "salvage", e.Kind == "play" && e.Play == "build":
+	case e.Kind == "discard-build", e.Kind == "coins" && e.Source == "design", e.Kind == "salvage", e.Kind == "play" && e.Play == "build":
 		return true
-	case e.Kind == "play", e.Kind == "leftover", e.Kind == "kept":
+	case e.Kind == "play", e.Kind == "leftover-discarded", e.Kind == "card-kept", e.Kind == "leftover", e.Kind == "kept":
 		return viewer >= 0 && viewer == e.Seat
 	}
 	return false
 }
 
 func (c *Checker) checkView(r *report, d Doc) {
+	if c.Truth.Real {
+		c.checkRealView(r, d)
+		return
+	}
+	c.checkLegacyView(r, d)
+}
+func (c *Checker) checkLegacyView(r *report, d Doc) {
 	var v wTable
 	if err := strict(d.Data, &v); err != nil {
 		r.add(UnknownField, "", err.Error())
@@ -154,7 +168,11 @@ func (c *Checker) checkView(r *report, d Doc) {
 	same("turn", v.Turn, m.Turn)
 	same("pile", v.Pile, len(m.Pile))
 	c.seats(r, "required", v.Required, m.Required)
-	if pass := map[int]string{1: "left", 2: "right"}[m.Age]; v.Pass != pass {
+	pass := map[int]string{1: "left", 2: "right"}[m.Age]
+	if c.Truth.Real && m.Age == 3 {
+		pass = "left"
+	}
+	if v.Pass != pass {
 		r.add(Mismatch, "pass", fmt.Sprintf("%q, want %q", v.Pass, pass))
 	}
 
@@ -181,6 +199,9 @@ func (c *Checker) checkView(r *report, d Doc) {
 	c.private(r, d, v.You)
 
 	want := []Event{}
+	if c.Truth.Real && d.Moment == 0 {
+		want = append(want, c.Truth.Initial...)
+	}
 	if d.Span > max(d.Moment, 1) {
 		r.add(Mismatch, "events", fmt.Sprintf("the events of %d resolutions after %d", d.Span, d.Moment))
 	}
@@ -261,7 +282,7 @@ func (c *Checker) private(r *report, d Doc, y *wPrivate) {
 			continue
 		}
 		parts := strings.Split(ch.Key, ":")
-		if ch.Kind != parts[0] || ch.Design != parts[1] {
+		if ch.Kind != parts[0] || (ch.Kind != "side" && ch.Design != parts[1]) {
 			r.add(Mismatch, p, fmt.Sprintf("%s %s for the key %q", ch.Kind, ch.Design, ch.Key))
 		}
 	}
@@ -285,7 +306,11 @@ func (c *Checker) private(r *report, d Doc, y *wPrivate) {
 			if n := count(m.Pile, o.Design); o.Count != n {
 				r.add(Mismatch, p+".count", fmt.Sprintf("%d, want %d", o.Count, n))
 			}
-			if legal := !slices.Contains(m.Built[v], o.Design); o.Legal != legal {
+			legal := !slices.Contains(m.Built[v], o.Design)
+			if c.Truth.Real {
+				legal = slices.Contains(m.Legal[v], "build-discarded:"+o.Design)
+			}
+			if o.Legal != legal {
 				r.add(Mismatch, p+".legal", fmt.Sprint(o.Legal))
 			}
 		}
@@ -298,7 +323,7 @@ func (c *Checker) private(r *report, d Doc, y *wPrivate) {
 
 	var seen []wSeen
 	for _, res := range c.Truth.Resolutions[:d.Moment] {
-		if slices.Contains(res.Required, v) {
+		if slices.Contains(res.Required, v) && (!c.Truth.Real || res.Kind == "turn" || res.Kind == "last-card") {
 			seen = append(seen, wSeen{Point: res.Point, Hand: res.Held[v], Played: res.Actions[v].Design, Action: res.Actions[v].Kind})
 		}
 	}
@@ -332,11 +357,14 @@ func (c *Checker) last(r *report, path string, got *wPlay, seat int, d Doc) {
 			continue
 		}
 		a := res.Actions[seat]
+		if c.Truth.Real && a.Kind == "side" {
+			continue
+		}
 		want = &wPlay{Kind: a.Kind, Left: a.Left, Right: a.Right}
 		switch a.Kind {
-		case "build", "salvage":
+		case "build", "salvage", "build-discarded":
 			want.Design = a.Design
-		case "tuck":
+		case "tuck", "stage":
 			stage++
 			want.Stage = stage
 		}
@@ -377,7 +405,7 @@ func (c *Checker) events(r *report, path string, got []wEvent, want []Event, vie
 			}
 		}
 		g.Design = design
-		if g != (wEvent{w.Kind, w.Seat, w.Play, design, w.Stage, w.Left, w.Right, w.Age, w.Pass}) {
+		if g != (wEvent{Kind: w.Kind, Seat: w.Seat, Play: w.Play, Design: design, Stage: w.Stage, Left: w.Left, Right: w.Right, Age: w.Age, Pass: w.Pass, Other: w.Other, Turn: w.Turn, Side: w.Side, Printed: w.Printed, Delta: w.Delta, Source: w.Source, Outcome: w.Outcome}) {
 			r.add(Mismatch, p, fmt.Sprintf("%+v, want %+v", g, w))
 		}
 	}
@@ -390,6 +418,9 @@ func (c *Checker) checkHistory(r *report, d Doc) {
 		return
 	}
 	res := c.Truth.Resolutions[:d.Moment]
+	if c.Truth.Real {
+		res = append([]Resolution{{Point: "game-start", Events: c.Truth.Initial}}, res...)
+	}
 	if len(h) != len(res) {
 		r.add(Mismatch, "", fmt.Sprintf("%d entries, want %d", len(h), len(res)))
 		return

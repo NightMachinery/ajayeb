@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine"
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest/leakcheck"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -154,8 +154,8 @@ func samePending(a, b *wire.TablePending) bool {
 
 // leakDocs turns one viewer's frames into the oracle's documents: the
 // whole frame (raws[i], as frameLeaks prepared it), its engine
-// view rebuilt in the fake view's shape (the frame's view plus its point
-// and, as the fake view carries them, the latest resolution's events, or
+// view rebuilt in the engine view's shape (the frame's view plus its point
+// and, as the engine view carries them, the latest resolution's events, or
 // every resolution's since the viewer's previous frame where an outbox
 // merged frames), the frame's own events wherever it carries events the
 // rebuilt view did not take from it, and its history. Frame i's viewer is
@@ -197,15 +197,19 @@ func leakDocs(t testing.TB, label string, seats []int, frames []wire.TableState,
 		}
 		batch = fr.Batch
 		docs = append(docs, leakcheck.Doc{Label: where + " view", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch, Span: span,
-			Data: fakeViewJSON(t, fr, events)})
+			Data: engineViewJSON(t, fr, events)})
 		if !own && len(fr.Events) > 0 {
 			docs = append(docs, leakcheck.Doc{Label: where + " events", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch,
-				Data: fakeViewJSON(t, fr, fr.Events)})
+				Data: engineViewJSON(t, fr, fr.Events)})
 		}
 		if fr.History != nil {
 			var h []map[string]any
 			for _, e := range *fr.History {
-				h = append(h, map[string]any{"point": truth.Moments[e.Batch-1].Point, "events": e.Events})
+				point := rules.HistoryStartPoint
+				if e.Batch > 0 {
+					point = truth.Moments[e.Batch-1].Point
+				}
+				h = append(h, map[string]any{"point": point, "events": e.Events})
 			}
 			if h == nil {
 				h = []map[string]any{}
@@ -284,7 +288,7 @@ func TestPendingExtrasStayScanned(t *testing.T) {
 	h := newTH(t, Config{}, humans(3, 2029))
 	own := h.snap(tabletest.SeatClient(0))
 	h.expect(h.send(tabletest.SeatClient(0), 1, own.Ref, own.Legal[0], false), tabletest.Accepted, "own draft")
-	truth, err := leakcheck.FromFake(makeSetup(2029, 3, false, false), nil)
+	truth, err := leakcheck.FromReal(makeSetup(2029, 3, false, false), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -386,8 +390,15 @@ func lastEvents(fr wire.TableState) []wire.TableEvent {
 	return (*fr.History)[len(*fr.History)-1].Events
 }
 
-// fakeViewJSON rebuilds the fake engine's view from a frame.
-func fakeViewJSON(t testing.TB, fr wire.TableState, events []wire.TableEvent) []byte {
+// engineViewJSON rebuilds the engine's view from a frame.
+func engineViewJSON(t testing.TB, fr wire.TableState, events []wire.TableEvent) []byte {
+	// Transport cosmetics omit events; the pure day/random-side view at
+	// batch zero still describes Age I. Reconstruct this public setup fact
+	// just as point/kind/required below, without exempting any raw field.
+	if fr.Batch == 0 && fr.View.Age == 1 && len(events) == 0 {
+		events = []wire.TableEvent{{Kind: "age-start", Age: 1}}
+	}
+
 	t.Helper()
 	data, err := json.Marshal(fr.View)
 	if err != nil {
@@ -397,7 +408,7 @@ func fakeViewJSON(t testing.TB, fr wire.TableState, events []wire.TableEvent) []
 	if err := json.Unmarshal(data, &m); err != nil {
 		t.Fatal(err)
 	}
-	m["point"], m["kind"], m["required"] = "", fakeengine.PointNone.String(), []int{}
+	m["point"], m["kind"], m["required"] = "", kindName(rules.PointNone), []int{}
 	if fr.Point != nil {
 		m["point"], m["kind"], m["required"] = fr.Point.Ref.ID, fr.Point.Kind, fr.Point.Required
 	}
@@ -446,15 +457,15 @@ func truthOf(t *testing.T, p *inproc, n int, seed uint64, hide bool) *leakcheck.
 // batches, under chosen seating.
 func truthFrom(t testing.TB, can tabletest.Canonical, n int, seed uint64, hide bool) *leakcheck.Truth {
 	t.Helper()
-	var bs []fakeengine.Batch
+	var bs []rules.Batch
 	for _, b := range can.Batches {
-		eb := fakeengine.Batch{Point: b.Point}
+		eb := rules.Batch{Point: b.Point}
 		for _, pk := range b.Picks {
-			eb.Picks = append(eb.Picks, fakeengine.Pick{Seat: fakeengine.Seat(pk.Seat), Key: pk.Key})
+			eb.Picks = append(eb.Picks, rules.Pick{Seat: rules.Seat(pk.Seat), Key: pk.Key})
 		}
 		bs = append(bs, eb)
 	}
-	truth, err := leakcheck.FromFake(makeSetup(seed, n, false, hide), bs)
+	truth, err := leakcheck.FromReal(makeSetup(seed, n, false, hide), bs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -717,7 +728,7 @@ func TestPlantedLeaksInFrames(t *testing.T) {
 		raw, _ := json.Marshal(st)
 		return []leakcheck.Doc{
 			{Label: "frame", Kind: leakcheck.Frame, Viewer: 0, Data: raw},
-			{Label: "view", Kind: leakcheck.View, Viewer: 0, Moment: 1, Data: fakeViewJSON(t, st, ev)},
+			{Label: "view", Kind: leakcheck.View, Viewer: 0, Moment: 1, Data: engineViewJSON(t, st, ev)},
 		}
 	}
 	if leaks := c.Check(clean(base, events)...); len(leaks) != 0 {
@@ -781,7 +792,7 @@ func TestPlantedLeaksInFrames(t *testing.T) {
 		}
 	}
 	// An unknown field in the view.
-	data := fakeViewJSON(t, base, events)
+	data := engineViewJSON(t, base, events)
 	data = append(data[:len(data)-1], []byte(`,"seed":1}`)...)
 	if leaks := c.Check(leakcheck.Doc{Label: "unknown", Kind: leakcheck.View, Viewer: 0, Moment: 1, Data: data}); !slices.ContainsFunc(leaks, func(l leakcheck.Leak) bool { return l.Rule == leakcheck.UnknownField }) {
 		t.Errorf("an unknown field: got %v", leaks)
@@ -862,7 +873,7 @@ func TestGameLog(t *testing.T) {
 	raw, _ := json.Marshal(l)
 	var tree any
 	_ = json.Unmarshal(raw, &tree)
-	if got, want := fieldNames(tree), "batches format game hash hideAtEnd key picks point randomSeating rules seat seats seed setup"; got != want {
+	if got, want := fieldNames(tree), "batches format game hash hideAtEnd key picks point randomSeating rules seat seats seed setup sides"; got != want {
 		t.Fatalf("the log's fields: %s, want %s", got, want)
 	}
 	hidden, _ := playForLeaks(t, f, 3, 5, true)

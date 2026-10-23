@@ -30,9 +30,8 @@
 //   - mismatch: a public value that differs from the truth (not a leak, but
 //     a view the checker cannot vouch for).
 //
-// The whitelist and the Truth builder (truth.go) are written for the fake
-// engine's DTOs today; M16.haftgane-engine-contract writes the same two
-// for the real engine's. The actor's tests pass each frame's engine view as
+// Separate whitelists and truth builders cover the real engine and the
+// isolated fake test double. The actor's tests pass each frame's engine view as
 // a View document and the whole frame as a Frame document, which gets the
 // field-independent detectors (raw-key, hash, shuffle-id) with the frame's
 // own key, text and hex paths allowed in Config. They check each frame's
@@ -46,6 +45,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 )
 
 // Rule names a detector.
@@ -152,15 +153,22 @@ type Action struct {
 
 // Event is one unfiltered engine event.
 type Event struct {
-	Kind   string
-	Seat   int
-	Play   string
-	Design string
-	Stage  int
-	Left   int
-	Right  int
-	Age    int
-	Pass   string
+	Other   int
+	Turn    int
+	Side    string
+	Printed int
+	Delta   int
+	Source  string
+	Outcome string
+	Kind    string
+	Seat    int
+	Play    string
+	Design  string
+	Stage   int
+	Left    int
+	Right   int
+	Age     int
+	Pass    string
 }
 
 // Resolution is one resolved point: who decided, what each did, the hand
@@ -177,23 +185,51 @@ type Resolution struct {
 // Truth is a game's ground truth: Moments[k] is the state after the first
 // k Resolutions.
 type Truth struct {
-	Seats       int
-	Slugs       []string // the catalog, in order
-	Secrets     []Secret
-	Moments     []Moment
-	Resolutions []Resolution
+	RealStatistics   [][]rules.Statistics
+	realNeighbours   [][][]realNeighbour
+	realScience      [][]realScience
+	RealObservations [][]rules.Observation
+	RealChoices      [][][]rules.Choice
+	RealPublicFacts  [][]rules.PublicFacts
+	Real             bool
+	Initial          []Event
+	RealGames        []rules.Game
+	Seats            int
+	Slugs            []string // the catalog, in order
+	Secrets          []Secret
+	Moments          []Moment
+	Resolutions      []Resolution
 }
 
 // Checker runs every detector.
+type stringFacts struct {
+	key, hex          bool
+	secrets, suffixes []string
+}
+
 type Checker struct {
-	Truth  *Truth
-	Config Config
-	index  map[string]int
+	strings      map[string]stringFacts
+	secretNames  map[string]string
+	suffixCache  map[string]bool
+	Truth        *Truth
+	Config       Config
+	index        map[string]int
+	otherSecrets []Secret
 }
 
 // New returns a checker for a truth.
 func New(t *Truth, cfg Config) *Checker {
 	c := &Checker{Truth: t, Config: cfg, index: map[string]int{}}
+	c.secretNames = map[string]string{}
+	for _, s := range t.Secrets {
+		c.secretNames[s.Value] = s.Name
+		if !hexRE.MatchString(s.Value) && !decimalRE.MatchString(s.Value) {
+			c.otherSecrets = append(c.otherSecrets, s)
+		}
+	}
+	c.suffixCache = map[string]bool{}
+	c.strings = map[string]stringFacts{}
+
 	for i, s := range t.Slugs {
 		c.index[s] = i
 	}
@@ -255,8 +291,9 @@ func (r *report) add(rule Rule, path, detail string) {
 // --- field-independent detectors ------------------------------------------
 
 var (
-	keyRE = regexp.MustCompile(`\b(build|tuck|sell|salvage):[a-z]`)
-	hexRE = regexp.MustCompile(`[0-9a-f]{12,}`)
+	keyRE     = regexp.MustCompile(`\b(build-discarded|build|stage|side|tuck|sell|salvage):[a-z]`)
+	hexRE     = regexp.MustCompile(`[0-9a-f]{12,}`)
+	decimalRE = regexp.MustCompile(`[0-9]{6,}`)
 )
 
 // walk visits every string, number and field name.
@@ -283,38 +320,56 @@ func (c *Checker) walk(r *report, v any, path string, keyPaths []string) {
 	case string:
 		c.scanString(r, x, path, keyPaths)
 	case json.Number:
-		for _, s := range c.Truth.Secrets {
-			if string(x) == s.Value {
-				r.add(Hash, path, "a number equal to the "+s.Name)
-			}
+		if name, ok := c.secretNames[string(x)]; ok {
+			r.add(Hash, path, "a number equal to the "+name)
 		}
 	}
 }
 
 func (c *Checker) scanString(r *report, s, path string, keyPaths []string) {
-	if keyRE.MatchString(s) && !slices.Contains(keyPaths, path) {
+	f, ok := c.strings[s]
+	if !ok {
+		f.key = strings.Contains(s, ":") && keyRE.MatchString(s)
+		f.hex = hexRE.MatchString(s)
+		secrets := c.otherSecrets
+		if f.hex || decimalRE.MatchString(s) {
+			secrets = c.Truth.Secrets
+		}
+		for _, sec := range secrets {
+			if s == sec.Value || (len(sec.Value) >= 6 && strings.Contains(s, sec.Value)) {
+				f.secrets = append(f.secrets, sec.Name)
+			}
+		}
+		for _, tok := range strings.FieldsFunc(s, func(ch rune) bool { return ch == ':' || ch == ' ' || ch == ',' }) {
+			if c.suffixed(tok) {
+				f.suffixes = append(f.suffixes, tok)
+			}
+		}
+		c.strings[s] = f
+	}
+	if f.key && !slices.Contains(keyPaths, path) {
 		r.add(RawKey, path, fmt.Sprintf("%q", s))
 	}
-	for _, sec := range c.Truth.Secrets {
-		if s == sec.Value || (len(sec.Value) >= 6 && strings.Contains(s, sec.Value)) {
-			r.add(Hash, path, "the "+sec.Name)
-		}
+	for _, name := range f.secrets {
+		r.add(Hash, path, "the "+name)
 	}
-	if hexRE.MatchString(s) && !slices.Contains(c.Config.HexPaths, path) {
+	if f.hex && !slices.Contains(c.Config.HexPaths, path) {
 		r.add(Hash, path, fmt.Sprintf("a hex token in %q", s))
 	}
 	if !slices.Contains(c.Config.TextPaths, path) {
-		for _, tok := range strings.FieldsFunc(s, func(ch rune) bool { return ch == ':' || ch == ' ' || ch == ',' }) {
-			if c.suffixed(tok) {
-				r.add(ShuffleID, path, fmt.Sprintf("%q names a card with a suffix", tok))
-			}
+		for _, tok := range f.suffixes {
+			r.add(ShuffleID, path, fmt.Sprintf("%q names a card with a suffix", tok))
 		}
 	}
 }
 
 // suffixed reports whether tok is a slug followed by a copy or position
 // suffix, rather than a slug or another word.
-func (c *Checker) suffixed(tok string) bool {
+func (c *Checker) suffixed(tok string) (out bool) {
+	if v, ok := c.suffixCache[tok]; ok {
+		return v
+	}
+	defer func() { c.suffixCache[tok] = out }()
 	if _, ok := c.index[tok]; ok {
 		return false
 	}

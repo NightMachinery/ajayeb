@@ -279,6 +279,9 @@ func platformRole(op string, user *string) error {
 	}
 }
 func platformOptions(o LobbyOptions) error {
+	if o.Sides != nil && *o.Sides != "choose" && *o.Sides != "day" && *o.Sides != "random" {
+		return fmt.Errorf("unknown side rule")
+	}
 	if o.Seating != nil && *o.Seating != "random" && *o.Seating != "lobby" {
 		return fmt.Errorf("unknown seating")
 	}

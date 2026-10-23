@@ -18,17 +18,13 @@ import (
 // any _test.go file, but by non-test code only inside testOnlyImporters.
 // cmd/ajayeb-drive is a test tool that drives the fake in process.
 //
-// One exception holds until M16.haftgane-engine-contract swaps in the real
-// engine: the Haftgane table actor (engineSeam, that package alone) runs on
-// the fake, so it may import fakeEngine, and the server binary links the
-// fake through it, behind a creation flag that is off. Nothing else in the
-// binary may reach the fake, and nothing in it may reach the harness.
+// The real actor imports rules/view only. The server binary must reach
+// neither the fake nor any test harness, even behind a creation flag.
 var (
 	testOnlyPackages  = []string{"internal/haftgane/fakeengine", "internal/tabletest"}
 	testOnlyImporters = []string{"internal/haftgane/fakeengine", "internal/tabletest", "cmd/ajayeb-drive"}
 	serverBinary      = "cmd/ajayeb"
 	engineSeam        = "internal/tableroom"
-	fakeEngine        = []string{"internal/haftgane/fakeengine"}
 )
 
 // moduleImports maps each package directory of the server module (relative
@@ -112,7 +108,7 @@ func guardViolations(imports map[string][]string) []string {
 			continue
 		}
 		for _, p := range imports[d] {
-			if under(p, testOnlyPackages) && (d != engineSeam || !under(p, fakeEngine)) {
+			if under(p, testOnlyPackages) {
 				out = append(out, d+" imports "+p)
 			}
 		}
@@ -122,7 +118,7 @@ func guardViolations(imports map[string][]string) []string {
 	for len(queue) > 0 {
 		d := queue[0]
 		queue = queue[1:]
-		if under(d, testOnlyPackages) && !under(d, fakeEngine) {
+		if under(d, testOnlyPackages) {
 			out = append(out, serverBinary+" reaches "+d)
 		}
 		for _, p := range imports[d] {

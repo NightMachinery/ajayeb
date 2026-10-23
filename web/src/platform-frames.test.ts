@@ -40,7 +40,7 @@ const snapshots = [
     finalReveal: true,
     events: [],
     roomLog: [],
-    view: { phase: 'turn', age: 1, turn: 1, pass: 'left', pile: 0, seats: [] }
+    view: { phase: 'turn', age: 1, turn: 1, pass: 'left', pile: 0, seats: [], canDownload: false }
   },
   {
     t: 'lobby-state',

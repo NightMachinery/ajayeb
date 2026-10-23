@@ -319,7 +319,7 @@ test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
       for (const page of [a, b, c]) {
         await expect.poll(async () => (await latest(page)).point?.ref.id).not.toBe(point.id);
         expect((await latest(page)).batch).toBe(1);
-        expect((await page.evaluate(() => window.__ajayebTable!.history())).length).toBe(1);
+        expect((await page.evaluate(() => window.__ajayebTable!.history())).length).toBe(2);
       }
 
       // The creator gives the second human's seat to a bot: that tab now

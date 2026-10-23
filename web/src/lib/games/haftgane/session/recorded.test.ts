@@ -180,7 +180,7 @@ describe('the recorded table', () => {
       expect(f.view.you ?? null).toBeNull();
     }
     expect(r.played.length).toBe(1);
-    expect(r.session.history.length).toBe(1);
+    expect(r.session.history.length).toBe(2);
     r.session.close();
   });
 });

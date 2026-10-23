@@ -106,6 +106,7 @@ func (a *actor) afterRevoke(gone []string) {
 // the bots kept), the options and the requester, its creator and only
 // admin.
 type Rematch struct {
+	Sides       string
 	Parent      string
 	Creator     string
 	Slots       []StartSlot
@@ -188,7 +189,7 @@ func (a *actor) rematch(c *room.Client) string {
 	}
 	code := r.Reserved
 	err := succ.Rematch(a.m, code, Rematch{Parent: a.code, Creator: r.Rematcher, Slots: slices.Clone(r.Start),
-		LobbyOrder: !r.Setup.RandomSeating, AllowUndo: r.AllowUndo, FinalReveal: !r.Setup.HideAtEnd})
+		Sides: r.Setup.Sides, LobbyOrder: !r.Setup.RandomSeating, AllowUndo: r.AllowUndo, FinalReveal: !r.Setup.HideAtEnd})
 	switch {
 	case errors.Is(err, ErrCodeTaken):
 		// Another room took the code first: forget it, so the next

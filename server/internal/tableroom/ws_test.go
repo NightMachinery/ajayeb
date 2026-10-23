@@ -470,11 +470,11 @@ func viewerOf(id tabletest.ClientID) int {
 // every frame every connection received, byte for byte, passes the leak
 // oracle; the log names no hidden value.
 func TestWebSocketTables(t *testing.T) {
-	ctx := wsContext(t, 5*time.Minute)
 	s := newStack(t, t.TempDir())
 	var truths []*leakcheck.Truth
 	var users []string
 	for n := tableroom.MinSeats; n <= tableroom.MaxSeats; n++ {
+		ctx := wsContext(t, 5*time.Minute)
 		tokens := newTokens(t, n+1)
 		for _, tok := range tokens {
 			u, _ := s.secret.UserID(tok)

@@ -175,6 +175,13 @@ describe('picks', () => {
         events: [
           {
             kind: 'build',
+            other: 0,
+            turn: 1,
+            side: '',
+            printed: 0,
+            delta: 0,
+            source: '',
+            outcome: '',
             seat: 1,
             play: 'build',
             design: 'basalt',
@@ -523,6 +530,13 @@ describe('the seq counter', () => {
 describe('history', () => {
   const event = {
     kind: 'build',
+    other: 0,
+    turn: 1,
+    side: '',
+    printed: 0,
+    delta: 0,
+    source: '',
+    outcome: '',
     seat: 1,
     play: 'build',
     design: 'basalt',

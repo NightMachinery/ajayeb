@@ -271,6 +271,7 @@ type Participant struct {
 // the creator (if any) is the one admin. Prefix, for tests and development
 // only, starts the table with these complete batches already resolved.
 type Spec struct {
+	Sides         string        `json:"sides"` // day (default), random, or choose
 	Participants  []Participant `json:"participants"`
 	RandomSeating bool          `json:"randomSeating"`
 	HideAtEnd     bool          `json:"hideAtEnd"`
@@ -393,7 +394,11 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	if spec.Seed != nil {
 		seed = *spec.Seed
 	}
-	su := makeSetup(seed, n, spec.RandomSeating, spec.HideAtEnd)
+	sr := SetupRecord{Seed: seed, Seats: n, RandomSeating: spec.RandomSeating, HideAtEnd: spec.HideAtEnd, Sides: spec.Sides}
+	su, err := recordSetup(sr)
+	if err != nil {
+		return Record{}, game{}, ErrSpec
+	}
 	g, err := replay(su, engineBatches(spec.Prefix))
 	if err != nil {
 		return Record{}, game{}, ErrSpec
@@ -401,7 +406,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
 	base := Record{
 		Schema: Schema, Game: Game, Rules: RulesVersion, Format: recordFormat,
-		Setup:      SetupRecord{Seed: seed, Seats: n, RandomSeating: spec.RandomSeating, HideAtEnd: spec.HideAtEnd},
+		Setup:      sr,
 		Assignment: make([]int, n), Original: make([]string, n), Seats: make([]SeatRecord, n), Start: make([]StartSlot, n),
 		Roles: rs, Previous: []PreviousRecord{}, Retired: []string{},
 		StartingHumans: humans, AllowUndo: spec.AllowUndo,
