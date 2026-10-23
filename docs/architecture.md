@@ -612,8 +612,13 @@ allocations. These are measurements, not timing gates. The acceptance sweep's
 largest reachable JSON view is 25,789 bytes across 7,204 views. A deliberately
 unreachable serialization stress combines 217 keys, seven witness units per
 key, a full notebook and three full pile looks, and measures 185,536 bytes.
-The earlier 24 KB design estimate is not a bound or a transport cap; the
-release gate must measure actual catalog maxima before freezing view limits.
+The earlier 24 KB design estimate is not a bound or a transport cap. The
+rules gate publishes a separate conservative structural bound of 570,406 bytes:
+every optional DTO section and list at its proven capacity, all safe-ASCII
+strings at 64 bytes and all integers at their widest emitted width. Its test
+covers partial-history scenarios as well as natural games, and rejects unknown
+slice dimensions, unsafe strings and overflowing dimensions. This bound does
+not assert that the mutually exclusive sections can occur together.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen
