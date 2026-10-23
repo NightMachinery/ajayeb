@@ -4,7 +4,7 @@
 //
 //	ajayeb-gen
 //	ajayeb-gen fixtures [-out PATH] [-messages DIR] [-protocol DIR]
-//	ajayeb-gen catalog [-format csv|json|prose|ts] [-out DIR] [-table cards|wonders|tokens]
+//	ajayeb-gen catalog [-game duel|haftgane] [-format csv|json|prose|ts] [-out DIR] [-table TABLE]
 //
 // Without a subcommand it regenerates the TypeScript under web/src/lib/wire
 // that make gen is responsible for, after tygo has already written the
@@ -41,6 +41,13 @@
 // catalog.gen.ts.
 // Without -out it goes to stdout; for csv that is the three tables one after
 // the other, each starting with its header row. -table picks one csv table.
+//
+// -game picks the game whose catalog is dumped: duel (the default, all of the
+// above) or haftgane, whose csv format writes the record tables cards,
+// wonders and boards, byte for byte the goldens in
+// internal/haftgane/catalog/testdata/*.golden.csv, and whose prose format
+// writes every design and wonder stage in plain English (haftgane.go).
+// Haftgane has no json or ts format yet.
 package main
 
 import (
@@ -141,12 +148,14 @@ func runDefault(stdout io.Writer, p genPaths) error {
 
 // catalogOptions is the parsed command line of the catalog subcommand.
 type catalogOptions struct {
+	game   string // duel or haftgane
 	format string // csv, json, prose or ts
 	out    string // output directory, or "" for stdout
 	table  string // csv only: one table, or "" for all three
 }
 
 var (
+	games   = []string{"duel", "haftgane"}
 	formats = []string{"csv", "json", "prose", "ts"}
 	tables  = []string{"cards", "wonders", "tokens"}
 )
@@ -155,11 +164,12 @@ func parseCatalogFlags(args []string, stderr io.Writer) (catalogOptions, error) 
 	var o catalogOptions
 	fs := flag.NewFlagSet("ajayeb-gen catalog", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	fs.StringVar(&o.format, "format", "csv", "output format: "+strings.Join(formats, ", "))
+	fs.StringVar(&o.game, "game", "duel", "the game whose catalog to dump: "+strings.Join(games, ", "))
+	fs.StringVar(&o.format, "format", "csv", "output format: "+strings.Join(formats, ", ")+" (haftgane: csv, prose)")
 	fs.StringVar(&o.out, "out", "", "write files into this directory (created if needed) instead of stdout")
-	fs.StringVar(&o.table, "table", "", "csv only: write just this table ("+strings.Join(tables, ", ")+")")
+	fs.StringVar(&o.table, "table", "", "csv only: write just this table ("+strings.Join(tables, ", ")+"; haftgane: "+strings.Join(haftganeTables, ", ")+")")
 	fs.Usage = func() {
-		fmt.Fprint(stderr, "Usage: ajayeb-gen catalog [-format csv|json|prose|ts] [-out DIR] [-table cards|wonders|tokens]\n\n")
+		fmt.Fprint(stderr, "Usage: ajayeb-gen catalog [-game duel|haftgane] [-format csv|json|prose|ts] [-out DIR] [-table TABLE]\n\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -175,15 +185,25 @@ func parseCatalogFlags(args []string, stderr io.Writer) (catalogOptions, error) 
 	if fs.NArg() > 0 {
 		return bad("unexpected argument %q", fs.Arg(0))
 	}
-	if !slices.Contains(formats, o.format) {
+	if !slices.Contains(games, o.game) {
+		return bad("unknown game %q (want %s)", o.game, strings.Join(games, ", "))
+	}
+	gameFormats, gameTables := formats, tables
+	if o.game == "haftgane" {
+		gameFormats, gameTables = haftganeFormats, haftganeTables
+	}
+	if !slices.Contains(gameFormats, o.format) {
+		if slices.Contains(formats, o.format) {
+			return bad("format %q is not available for -game %s (want %s)", o.format, o.game, strings.Join(gameFormats, ", "))
+		}
 		return bad("unknown format %q (want %s)", o.format, strings.Join(formats, ", "))
 	}
 	if o.table != "" {
 		if o.format != "csv" {
 			return bad("-table applies only to -format csv")
 		}
-		if !slices.Contains(tables, o.table) {
-			return bad("unknown table %q (want %s)", o.table, strings.Join(tables, ", "))
+		if !slices.Contains(gameTables, o.table) {
+			return bad("unknown table %q (want %s)", o.table, strings.Join(gameTables, ", "))
 		}
 	}
 	return o, nil
@@ -225,6 +245,9 @@ type output struct {
 
 // catalogOutputs renders the files the options ask for, in a fixed order.
 func catalogOutputs(o catalogOptions) ([]output, error) {
+	if o.game == "haftgane" {
+		return haftganeOutputs(o)
+	}
 	switch o.format {
 	case "csv":
 		return csvOutputs(o.table)
