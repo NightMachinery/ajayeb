@@ -263,9 +263,12 @@ ordinary cost. An independent unit-by-unit oracle checks the small-universe
 sweep and 100,000 deterministic random inputs, and `FuzzPayment` checks outcomes
 and every witness against it.
 
-Both the shared `enginekit/puritycheck` and a dedicated depguard rule enforce
-the purity boundary. Haftgane cannot import either math/rand version, even in
-rng.go; the shared generator is provided by `enginekit/rng`. The shape guard
+The shared `enginekit/puritycheck` and strict depguard allow-lists enforce
+exact module dependencies for each pure package: the catalog can use only
+`enginekit/rng`, and rules can also use their own catalog and view. Forbidigo
+keeps both games' `ReplaceForTest` registry helpers in test files. Haftgane
+cannot import either math/rand version, even in rng.go; the shared generator is
+provided by `enginekit/rng`. The shape guard
 checks fixed widths, comparability and independent State/Record/Game size
 limits. Science's timing mask includes continuous cache construction and
 end-game scoring. Wonder free-build effects apply to buildings, never stage

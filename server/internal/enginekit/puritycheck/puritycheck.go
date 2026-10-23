@@ -24,6 +24,14 @@ type ImportRule struct {
 	Message      string
 }
 
+// ModuleImportRule permits exact module package paths for sources under Dir.
+// Dir is root-relative ("." is the default). The most specific matching Dir
+// wins, so an empty Allowed list can tighten a broader parent rule.
+type ModuleImportRule struct {
+	Dir     string
+	Allowed []string
+}
+
 // Config holds a game's policy. Packages are directories relative to Scan's
 // root; each is walked recursively, excluding testdata and *_test.go. MapFiles
 // are exact root-relative paths whose DTOs may use maps.
@@ -31,6 +39,11 @@ type Config struct {
 	Packages []string
 	Imports  []ImportRule
 	MapFiles []string
+	// Module enables a fail-closed allow-list for this module's imports. Other
+	// modules and standard-library imports remain subject to Imports. With a
+	// nonempty Module, no matching directory rule means no module imports.
+	Module        string
+	ModuleImports []ModuleImportRule
 }
 
 // Report retains the scanned file paths so each game can enforce its own
@@ -55,6 +68,9 @@ func (c Config) Violations(rel string, src []byte) []string {
 		if err != nil {
 			bad(imp.Pos(), "unreadable import")
 			continue
+		}
+		if !c.moduleImportAllowed(rel, path) {
+			bad(imp.Pos(), "imports "+path+" outside the module import allow-list")
 		}
 		for _, rule := range c.Imports {
 			if path != rule.Path && (rule.Exact || !strings.HasPrefix(path, rule.Path+"/")) {
@@ -96,6 +112,23 @@ func (c Config) Violations(rel string, src []byte) []string {
 		return true
 	})
 	return out
+}
+
+func (c Config) moduleImportAllowed(rel, imported string) bool {
+	if c.Module == "" || (imported != c.Module && !strings.HasPrefix(imported, c.Module+"/")) {
+		return true
+	}
+	best, size := -1, -1
+	for i, rule := range c.ModuleImports {
+		dir := strings.TrimSuffix(rule.Dir, "/")
+		if dir == "." {
+			dir = ""
+		}
+		if (dir == "" || strings.HasPrefix(rel, dir+"/")) && len(dir) > size {
+			best, size = i, len(dir)
+		}
+	}
+	return best >= 0 && contains(c.ModuleImports[best].Allowed, imported)
 }
 
 func contains(values []string, want string) bool {

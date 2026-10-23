@@ -49,6 +49,25 @@ structs. Duel keeps its State/Action/Event roots, comparability checks and
 State's 512-byte memory limit in `state_test.go`; the helper sets no game size
 limit. The original state remains 386 bytes encoded and 408 bytes in memory.
 
+### Module imports and test-only registry replacement
+
+The shared purity checker can restrict module-internal imports by source
+directory. It accepts exact package paths; the most specific directory policy
+wins, and an unconfigured directory admits no module import when the module
+boundary is enabled. Existing I/O, randomness and numeric bans still apply.
+Duel permits its current catalog, DTO and RNG dependencies. Haftgane's catalog
+permits only `enginekit/rng`; its rules additionally permit its own catalog and
+view packages. DTOs and the shared RNG have no module-internal dependencies.
+Test helpers keep their existing explicit dependencies. These policies never
+admit all of `enginekit` or a similarly named package by prefix.
+
+Strict depguard rules enforce the same production boundaries while permitting
+the standard library. Forbidigo resolves import aliases and rejects references
+to either catalog's `ReplaceForTest` outside `_test.go` files, including command
+packages. The test exemption applies only to that diagnostic; existing print
+checks still apply in tests, and command print exemptions do not admit catalog
+replacement. Registry validation and test replacement behaviour stay unchanged.
+
 ### Seeded generator and byte digests
 
 `internal/enginekit/rng` owns the PCG reference, rejection-sampling, copy/fork,

@@ -11,6 +11,19 @@ import (
 // maps stay confined to these exact files; all randomness uses enginekit/rng.
 var duelPurity = puritycheck.Config{
 	Packages: []string{"."},
+	Module:   "github.com/NightMachinery/ajayeb/server",
+	ModuleImports: []puritycheck.ModuleImportRule{
+		{Dir: ".", Allowed: []string{
+			"github.com/NightMachinery/ajayeb/server/internal/engine/catalog",
+			"github.com/NightMachinery/ajayeb/server/internal/view",
+			"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng",
+		}},
+		{Dir: "catalog"},
+		{Dir: "enginetest", Allowed: []string{
+			"github.com/NightMachinery/ajayeb/server/internal/engine",
+			"github.com/NightMachinery/ajayeb/server/internal/engine/catalog",
+		}},
+	},
 	Imports: []puritycheck.ImportRule{
 		{Path: "time"}, {Path: "os"}, {Path: "net"}, {Path: "log"},
 		{Path: "sync"}, {Path: "unsafe"}, {Path: "syscall"},
@@ -91,8 +104,19 @@ func TestPurityCheckCatches(t *testing.T) {
 func TestPurityHelperIsTestOnly(t *testing.T) {
 	src := []byte(`package engine; import "github.com/NightMachinery/ajayeb/server/internal/enginekit/puritycheck"`)
 	bad := purityViolations("rules.go", src)
-	if len(bad) != 1 || !strings.Contains(bad[0], "test helper only") {
+	if len(bad) != 2 || !strings.Contains(strings.Join(bad, "\n"), "test helper only") || !strings.Contains(strings.Join(bad, "\n"), "outside the module import allow-list") {
 		t.Fatalf("Duel admitted the impure test helper: %v", bad)
 	}
 	t.Log(bad[0])
+}
+
+func TestDuelModuleImportBoundary(t *testing.T) {
+	for _, file := range []string{"rules.go", "catalog/data.go", "enginetest/playout.go"} {
+		for _, pkg := range []string{"internal/room", "internal/wire", "internal/haftgane/catalog", "internal/enginekit/catalogdiff", "internal/engine/catalog/extra"} {
+			bad := duelPurity.Violations(file, []byte(`package engine;import "github.com/NightMachinery/ajayeb/server/`+pkg+`"`))
+			if len(bad) == 0 {
+				t.Errorf("%s admitted %s", file, pkg)
+			}
+		}
+	}
 }

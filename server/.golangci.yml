@@ -103,6 +103,68 @@ linters:
               desc: "puritycheck is an impure test helper"
             - pkg: github.com/NightMachinery/ajayeb/server/internal/enginekit/catalogdiff
               desc: "catalogdiff is an impure test helper"
+        # Exact imports only: standard library plus the declared engine layers.
+        duel-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/engine/**"
+            - "!**/internal/engine/catalog/**"
+            - "!**/internal/engine/enginetest/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - "github.com/NightMachinery/ajayeb/server/internal/engine/catalog$"
+            - "github.com/NightMachinery/ajayeb/server/internal/view$"
+            - "github.com/NightMachinery/ajayeb/server/internal/enginekit/rng$"
+        duel-catalog-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/engine/catalog/**"
+            - "!$test"
+          allow:
+            - $gostd
+        duel-test-helper-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/engine/enginetest/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - "github.com/NightMachinery/ajayeb/server/internal/engine$"
+            - "github.com/NightMachinery/ajayeb/server/internal/engine/catalog$"
+        haftgane-catalog-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/haftgane/catalog/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - "github.com/NightMachinery/ajayeb/server/internal/enginekit/rng$"
+        haftgane-rules-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/haftgane/rules/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - "github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog$"
+            - "github.com/NightMachinery/ajayeb/server/internal/haftgane/view$"
+            - "github.com/NightMachinery/ajayeb/server/internal/enginekit/rng$"
+        dto-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/view/**"
+            - "**/internal/haftgane/view/**"
+            - "!$test"
+          allow:
+            - $gostd
+        shared-rng-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/enginekit/rng/**"
+            - "!$test"
+          allow:
+            - $gostd
         # Bots compute only. They may use time budgets, goroutines and floats,
         # but no I/O and no unseeded randomness.
         ai:
@@ -125,7 +187,11 @@ linters:
               desc: "math/rand v1 is banned; use the engine RNG"
 
     forbidigo:
+      analyze-types: true
       forbid:
+        - pattern: '^(catalog\.)?ReplaceForTest$'
+          pkg: '^github\.com/NightMachinery/ajayeb/server/internal/(engine|haftgane)/catalog$'
+          msg: "ReplaceForTest is test-only; production must use the registered catalog"
         - pattern: ^(fmt\.Print(f|ln)?|print|println)$
           msg: "write to an io.Writer or use the injected *slog.Logger; fmt.Print* is allowed only in cmd/"
 
@@ -135,6 +201,11 @@ linters:
       - std-error-handling
     rules:
       - path: ^cmd/
+        text: 'fmt\.Print|\bprint\b|\bprintln\b'
+        linters:
+          - forbidigo
+      - path: '_test\.go$'
+        text: 'ReplaceForTest is test-only'
         linters:
           - forbidigo
 

@@ -112,3 +112,43 @@ func TestFixedShapeAllowedValues(t *testing.T) {
 		t.Fatal(bad)
 	}
 }
+
+func TestModuleImportAllowList(t *testing.T) {
+	const module = "example.test/game"
+	config := Config{Module: module, ModuleImports: []ModuleImportRule{
+		{Dir: ".", Allowed: []string{module + "/internal/catalog", module + "/internal/enginekit/rng"}},
+		{Dir: "catalog", Allowed: []string{module + "/internal/enginekit/rng"}},
+		{Dir: "catalog/nested"},
+	}}
+	for _, tt := range []struct {
+		file, path string
+		want       bool
+	}{
+		{"rules.go", module + "/internal/catalog", true},
+		{"rules.go", module + "/internal/catalog/extra", false},
+		{"rules.go", module + "/internal/catalogue", false},
+		{"rules.go", module + "/internal/enginekit/rng", true},
+		{"rules.go", module + "/internal/enginekit/catalogdiff", false},
+		{"rules.go", module + "/internal/wire", false},
+		{"rules.go", module, false},
+		{"catalog/data.go", module + "/internal/catalog", false},
+		{"catalog/data.go", module + "/internal/enginekit/rng", true},
+		{"catalog/nested/data.go", module + "/internal/enginekit/rng", false},
+		{"catalogue/data.go", module + "/internal/catalog", true},
+		{"rules.go", module + "-other/internal/room", true},
+		{"rules.go", "fmt", true},
+	} {
+		for _, alias := range []string{"", "alias ", "_ ", ". "} {
+			bad := config.Violations(tt.file, []byte("package rules;import "+alias+`"`+tt.path+`"`))
+			if (len(bad) == 0) != tt.want {
+				t.Errorf("%s imports%s: %v wantallowed%v", tt.file, tt.path, bad, tt.want)
+			}
+		}
+	}
+	if bad := (Config{Module: module}).Violations("x.go", []byte(`package x;import "example.test/game/internal/catalog"`)); len(bad) != 1 {
+		t.Fatalf("missing directory policy did not fail closed: %v", bad)
+	}
+	if bad := (Config{}).Violations("x.go", []byte(`package x;import "example.test/game/internal/room"`)); len(bad) != 0 {
+		t.Fatalf("unset Module changed old configs: %v", bad)
+	}
+}
