@@ -63,6 +63,44 @@ linters:
           deny:
             - pkg: math/rand/v2
               desc: "use the engine RNG (engine/rng.go)"
+        # Haftgane has the same purity boundary, but its generator is shared
+        # enginekit/rng: no local file may import either math/rand version.
+        haftgane-pure:
+          list-mode: lax
+          files:
+            - "**/internal/haftgane/catalog/**"
+            - "**/internal/haftgane/rules/**"
+            - "**/internal/haftgane/view/**"
+            - "!$test"
+          deny:
+            - pkg: time
+              desc: "Haftgane rules must not read clocks"
+            - pkg: os
+              desc: "Haftgane rules must not do I/O"
+            - pkg: net
+              desc: "Haftgane rules must not do I/O"
+            - pkg: log
+              desc: "Haftgane rules return events, not logs"
+            - pkg: sync
+              desc: "Haftgane rules are single-threaded value code"
+            - pkg: unsafe
+              desc: "Haftgane state must remain a fixed value"
+            - pkg: syscall
+              desc: "Haftgane rules must not do I/O"
+            - pkg: io/ioutil
+              desc: "Haftgane rules must not do I/O"
+            - pkg: crypto/rand
+              desc: "Haftgane randomness belongs in enginekit/rng"
+            - pkg: math/rand
+              desc: "Haftgane uses enginekit/rng, never either math/rand version"
+            - pkg: github.com/NightMachinery/ajayeb/server/internal/engine$
+              desc: "Haftgane shares infrastructure, not Duel rules"
+            - pkg: github.com/NightMachinery/ajayeb/server/internal/engine/
+              desc: "Haftgane shares infrastructure, not Duel rules"
+            - pkg: github.com/NightMachinery/ajayeb/server/internal/enginekit/puritycheck
+              desc: "puritycheck is an impure test helper"
+            - pkg: github.com/NightMachinery/ajayeb/server/internal/enginekit/catalogdiff
+              desc: "catalogdiff is an impure test helper"
         # Bots compute only. They may use time budgets, goroutines and floats,
         # but no I/O and no unseeded randomness.
         ai:

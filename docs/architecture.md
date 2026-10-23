@@ -230,6 +230,35 @@ An online game, seat 0 builds the Baths:
 - **Golden replays** pin known games (seed, keys, winner, victory type, scores, final hash), and property sweeps replay thousands of seeded bot games, checking invariants after every action.
 - **Bots are reproducible too.** A bot's random stream is seeded from the room seed and the game's ply (not the room version, which an undo moves on), and searches with an iteration budget give the same answer every time.
 
+## Haftgane engine foundation
+
+Haftgane's pure packages live under `server/internal/haftgane`, independently of
+Duel. `catalog` defines 80 design identities, 77 name identities, seven boards,
+resource/colour/science vocabularies and sixteen validated effect kinds. It
+currently has no card data: synthetic catalogs exercise validation and slug
+lookup. Registration checks field use, saleable production, copy markers,
+chains and twin semantics; the later data slice pins the verified edition's
+complete counts and order. The existing Duel packages and data stay unchanged.
+
+`rules` defines fixed-value State, Record, Game, actions, events and decision
+points. It contains the seat ring and canonical key grammar, with no setup,
+legality, payment solver, resolution, views or bots yet. Left is the next seat
+modulo the seat count, and right is the previous. Public plays and private picks
+have separate record arrays. Events have typed source fields and no raw key.
+Point ids are computed from kind, Age and turn; pending choices stay in the room.
+Actions name design slugs and payment outcomes, never copies or seats. Parsing
+checks canonical syntax and the tagged union; only future offer membership can
+make an action legal. The rules version starts at 1.
+
+Both the shared `enginekit/puritycheck` and a dedicated depguard rule enforce
+the purity boundary. Haftgane cannot import either math/rand version, even in
+rng.go; the seeded generator will come from enginekit/rng. The shape guard
+checks fixed widths, comparability and independent State/Record/Game size
+limits. Science's timing mask includes continuous cache construction and
+end-game scoring. Wonder free-build effects apply to buildings, never stage
+actions. State, keys, events and catalog/types.go become single-writer files
+after this core slice merges.
+
 ## Saved room compatibility
 
 `internal/store` is the only reader/writer of room files. A bounded header selects the codec before game decoding or replay: schema 1 defaults to `duel` when `game` is absent and delegates to the existing Duel `File`, while schema 2 requires an explicit registered game id. The complete input retains the existing `MaxFileBytes` cap; the schema discriminator is at most 10 JSON bytes and the game id is at most 32 lowercase ASCII letters, digits or hyphens (starting with a letter), in at most 34 JSON bytes. Discriminator order is unrestricted; duplicate schema/game fields, including case aliases, fail closed. `NewCodecs` builds an immutable composition-time table, rejecting duplicate or invalid registrations. Its production schema-2 table is empty. Codecs own their file types and game rules checks; shared inspection exposes only retention metadata and read-only replay assessment. `OpenWithCodecs` and `CheckDataDirWithCodecs` take the same table. Duel's load/save APIs retain their typed signatures and schema-1 write bytes.
