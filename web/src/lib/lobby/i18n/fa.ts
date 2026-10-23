@@ -65,6 +65,7 @@ export const lobby = {
   'lobby.shrink': 'حذف این صندلی‌ها بازیکنانشان را تماشاگر می‌کند. ادامه می‌دهید؟',
   'lobby.confirm': 'تأیید',
   'lobby.cancel': 'لغو',
+  'lobby.rematchParticipant': 'تنها یکی از بازیکنان آغاز بازی می‌تواند لابی بازی دوباره را بسازد.',
   'lobby.rematch': 'لابی بازی دوباره',
   'lobby.roles': 'نقش‌ها',
   'lobby.status': '{name}: {status}',

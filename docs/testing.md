@@ -519,7 +519,8 @@ browser and no server:
 `make e2e PW_ARGS='--project=desktop --project=mobile specs/home-lobby.full.spec.ts'`
 checks the production Home flow, named creation, adding and removing released
 bots, a second isolated human, spectating, promote/demote/step-down, settings,
-Start and a finished game's rematch reservations. These cases carry `@full`
+Start and a finished game's rematch reservations, including an original human
+who became a spectator after a controller switch. These cases carry `@full`
 and `@mobile`. A cold invite sends no hello or join until its name is
 submitted. The count regression exercises three through seven seats and
 requires confirmation before a decrease displaces a human; cancel keeps both

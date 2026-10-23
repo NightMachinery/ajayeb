@@ -52,6 +52,15 @@ describe('production lobby requests', () => {
     expect(session.lobby).toBeNull();
     expect(session.pending).toBeNull();
   });
+  it('lets the actor distinguish former participants from spectators, and shows refusal', () => {
+    const { connection, session } = setup();
+    connection.frame(tableFrame({ status: 'finished', point: undefined }, null));
+    expect(session.rematch()).toBe(true);
+    expect(connection.last()).toEqual({ t: 'rematch', code: CODE });
+    connection.frame({ t: 'table-reject', seq: 0, code: 'forbidden' });
+    expect(session.rematchAsked).toBe(false);
+    expect(session.rematchError).toBe('forbidden');
+  });
   it('keeps a returned rematch claim private and follows only after an explicit request', () => {
     const { connection, session } = setup();
     expect(session.rematch()).toBe(false);

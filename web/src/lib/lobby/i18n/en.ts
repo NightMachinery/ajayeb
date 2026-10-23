@@ -62,6 +62,7 @@ export const lobby = {
   'lobby.shrink': 'Removing these seats moves their players to spectators. Continue?',
   'lobby.confirm': 'Confirm',
   'lobby.cancel': 'Cancel',
+  'lobby.rematchParticipant': 'Only an original player can create this rematch lobby.',
   'lobby.rematch': 'Rematch lobby',
   'lobby.roles': 'Role actions',
   'lobby.status': '{name}: {status}',

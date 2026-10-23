@@ -140,7 +140,7 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
     }
   });
 
-  test('a finished game returns to a rematch lobby with reservations', async ({
+  test('a former controller creates a rematch lobby with reservations', async ({
     page,
     browser
   }, info) => {
@@ -154,6 +154,10 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
       await page.locator('[data-act="lobby-seating"]').selectOption('lobby');
       await lobbyReady(page);
       await lobbyAction(page, 'lobby-start');
+      await lobbyReady(guest);
+      const previousSeat = await guest.evaluate(() => window.__ajayebTable!.latest()!.you.seat!);
+      await lobbyAction(page, `seat-bot:${previousSeat}`);
+      await expect(guest.locator('[data-watching]')).toBeVisible();
       for (let i = 0; i < 200; i++) {
         await lobbyReady(page);
         await lobbyReady(guest);
@@ -172,15 +176,17 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
         }
       }
       await expect(page.locator('[data-finished]')).toBeVisible();
-      await lobbyAction(page, 'lobby-rematch');
-      await page.waitForURL((url) => /\/play\//.test(url.pathname) && !url.pathname.endsWith(code));
-      await expect(page.locator('[data-lobby]')).toBeVisible();
-      await expect(page.locator('[data-kind="reserved"]')).toHaveCount(1);
-      await expect(page.locator('[data-act="lobby-start"]')).toBeDisabled();
-      const seat = await page.locator('[data-kind="reserved"]').getAttribute('data-seat');
-      await menu(page, Number(seat));
-      await lobbyAction(page, `lobby-open:${seat}`);
-      await expect(page.locator('[data-act="lobby-start"]')).toBeEnabled();
+      await lobbyAction(guest, 'lobby-rematch');
+      await guest.waitForURL(
+        (url) => /\/play\//.test(url.pathname) && !url.pathname.endsWith(code)
+      );
+      await expect(guest.locator('[data-lobby]')).toBeVisible();
+      await expect(guest.locator('[data-kind="reserved"]')).toHaveCount(1);
+      await expect(guest.locator('[data-act="lobby-start"]')).toBeDisabled();
+      const seat = await guest.locator('[data-kind="reserved"]').getAttribute('data-seat');
+      await menu(guest, Number(seat));
+      await lobbyAction(guest, `lobby-open:${seat}`);
+      await expect(guest.locator('[data-act="lobby-start"]')).toBeEnabled();
       expect(hygiene).toEqual([]);
     } finally {
       await extra.close();

@@ -61,9 +61,18 @@
   {:else}
     {#if game.session.table?.status === 'finished'}
       <div class="bg-panel p-3" data-rematch-actions>
+        {#if game.session.rematchError}
+          <p role="alert" class="mb-2 text-sm" data-rematch-error={game.session.rematchError}>
+            {t(
+              game.session.rematchError === 'forbidden'
+                ? 'lobby.rematchParticipant'
+                : 'lobby.failed'
+            )}
+          </p>
+        {/if}
         <Button
           disabled={game.session.conn !== 'open' ||
-            (!game.session.rematchCode && game.session.seat === null)}
+            (game.session.rematchAsked && !game.session.rematchCode)}
           onclick={() => game.session.rematch()}
           data-act="lobby-rematch">{t('lobby.rematch')}</Button
         >

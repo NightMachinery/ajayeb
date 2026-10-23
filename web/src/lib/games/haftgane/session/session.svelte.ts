@@ -193,6 +193,7 @@ export class TableSession {
   rematchCode = $state<string | null>(null);
   rematchClaim = $state<string | null>(null);
   rematchAsked = $state(false);
+  rematchError = $state<string | null>(null);
   /** One entry per resolved batch, as the frames gave them. */
   history = $state.raw<readonly TableHistoryEntry[]>([]);
 
@@ -418,7 +419,9 @@ export class TableSession {
   /** Finished participants request a successor; everyone may follow an announced one. */
   rematch(): boolean {
     if (!this.table || this.table.status !== 'finished' || this.conn !== 'open') return false;
-    if (!this.rematchCode && this.seat === null) return false;
+    // The frame does not list the original humans. A former controller
+    // may still be one, so the actor decides who can create the successor.
+    this.rematchError = null;
     this.rematchAsked = true;
     if (!this.rematchCode) this.#connection.send({ t: 'rematch', code: this.code });
     return true;
@@ -657,6 +660,11 @@ export class TableSession {
       if (code === 'stale' && pending.frame.t === 'table-undo' && this.#resendUndo(pending)) return;
       this.#settle();
       this.notice = { kind: 'reject', code, message: rejectMessage(code) };
+      return;
+    }
+    if (seq === 0 && this.rematchAsked && !this.rematchCode) {
+      this.rematchAsked = false;
+      this.rematchError = code;
       return;
     }
     if (seq === 0 && this.#links.length > 0) {
