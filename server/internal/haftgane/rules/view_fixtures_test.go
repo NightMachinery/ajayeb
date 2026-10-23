@@ -40,8 +40,17 @@ func TestHaftganeViewFixtures(t *testing.T) {
 			case PhaseOver:
 				if _, ok := fixtures["over-reveal-spectator"]; !ok {
 					fixtures["over-reveal-spectator"] = g.ViewFor(NoSeat)
-					g.State.Opts.HideAtEnd = true
-					fixtures["over-hidden-seat"] = g.ViewFor(0)
+					hidden, err := NewGame(Setup{Seats: 7, Seed: seed, Options: Options{Sides: SidesChoose, HideAtEnd: true}})
+					if err != nil {
+						t.Fatal(err)
+					}
+					for hidden.State.Phase != PhaseOver {
+						hidden, _, err = hidden.Resolve(observationBatch(hidden, seed))
+						if err != nil {
+							t.Fatal(err)
+						}
+					}
+					fixtures["over-hidden-seat"] = hidden.ViewFor(0)
 				}
 			}
 			if g.State.Phase == PhaseOver {
