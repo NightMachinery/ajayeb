@@ -1948,6 +1948,12 @@ AGENT = "00000000-0000-4000-8000-000000000001"  # placeholder Paseo agent id
 
 FAKE_PASEO = r"""#!/usr/bin/env python3
 import json, os, sys
+try:
+    os.getcwd()
+except FileNotFoundError:
+    # The real CLI (Node) dies the same way: uv_cwd ENOENT.
+    print("paseo: uv_cwd ENOENT", file=sys.stderr)
+    sys.exit(1)
 with open(os.environ["FAKE_PASEO_LOG"], "a") as fh:
     fh.write(json.dumps(sys.argv[1:]) + "\n")
 if sys.argv[1:2] == ["inspect"]:
@@ -2132,6 +2138,23 @@ class NotifyFinishTests(NotifyCase):
         self.assertTrue(n.finish(0, None))
         self.assertEqual(sum(self.clock.sleeps), heavy.BUSY_MAX)
         self.assertEqual(len(self.sends()), 2)
+
+    def test_outcome_is_sent_after_the_jobs_directory_is_removed(self):
+        # The coordinator merges and removes a worktree while the outcome
+        # waits for it to go idle; the send must not run from that directory.
+        g = self.guard(env=self.notify_env())
+        n = self.notifier(g)
+        gone = os.path.join(self.tmp, "worktree")
+        os.mkdir(gone)
+        here = os.getcwd()
+        os.chdir(gone)
+        try:
+            os.rmdir(gone)
+            self.assertTrue(n.finish(0, None))
+        finally:
+            os.chdir(here)
+        self.assertEqual(len(self.sends()), 1)
+        self.assertFalse(os.path.exists(os.path.join(self.run_dir, "alerts")))
 
     def test_missing_paseo_binary_still_alerts(self):
         g = self.guard(env=self.notify_env(PASEO_BIN=os.path.join(self.tmp, "no-such-paseo")))

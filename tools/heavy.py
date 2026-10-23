@@ -94,7 +94,8 @@ itself in a new session with its output in RUN_DIR/logs/heavy-notify/, waits
 until that copy has published its queue ticket (or, for light, started the
 command), prints the ticket and the log path, and exits 0. The copy waits in
 the queue as usual, runs the command, and then sends the agent one message
-with `paseo send UUID TEXT --no-wait --json` (PASEO_BIN, default paseo): the
+with `paseo send UUID TEXT --no-wait --json` (PASEO_BIN, default paseo, run
+from RUN_DIR so a worktree removed meanwhile cannot break it): the
 kind, the command, the outcome and exit code, the durations, the log path and
 the last lines of the log. A failed send is retried 3 times with backoff and
 then written to RUN_DIR/alerts/quota-<epoch>-heavy-notify-failed.md. While it
@@ -1914,8 +1915,12 @@ class Notifier:
 
     def paseo(self, *args: str) -> Tuple[bool, str, str]:
         argv = [self.guard.env.get("PASEO_BIN") or "paseo", *args]
+        # Not the job's directory: the outcome may wait for a busy agent,
+        # which meanwhile can merge and remove that worktree, and the paseo
+        # CLI (Node) dies at startup when its working directory is gone.
+        cwd = next((d for d in (self.guard.run_dir, self.guard.home) if os.path.isdir(d)), "/")
         try:
-            res = subprocess.run(argv, env=self.guard.env, stdin=subprocess.DEVNULL,
+            res = subprocess.run(argv, env=self.guard.env, stdin=subprocess.DEVNULL, cwd=cwd,
                                  capture_output=True, text=True, timeout=PASEO_TIMEOUT)
         except (OSError, subprocess.SubprocessError) as exc:
             return False, "", str(exc)
