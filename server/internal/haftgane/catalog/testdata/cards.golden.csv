@@ -1,0 +1,81 @@
+id,slug,age,name,name_id,colour,player_counts,cost,chain_in,chain_from,chain_out,chain_to,effects
+1,clay-pit,1,Clay Pit,1,brown,3,coins:1,,,,,produce:clay/ore
+2,clay-pool,1,Clay Pool,2,brown,3;5,free,,,,,produce:clay
+3,excavation,1,Excavation,3,brown,4,coins:1,,,,,produce:stone/clay
+4,forest-cave,1,Forest Cave,4,brown,5,coins:1,,,,,produce:wood/ore
+5,lumber-yard,1,Lumber Yard,5,brown,3;4,free,,,,,produce:wood
+6,mine,1,Mine,6,brown,6,coins:1,,,,,produce:stone/ore
+7,ore-vein,1,Ore Vein,7,brown,3;4,free,,,,,produce:ore
+8,stone-pit,1,Stone Pit,8,brown,3;5,free,,,,,produce:stone
+9,timber-yard,1,Timber Yard,9,brown,3,coins:1,,,,,produce:wood/stone
+10,tree-farm,1,Tree Farm,10,brown,6,coins:1,,,,,produce:wood/clay
+11,glassworks-age-1,1,Glassworks,11,grey,3;6,free,,,,,produce:glass
+12,loom-age-1,1,Loom,12,grey,3;6,free,,,,,produce:cloth
+13,press-age-1,1,Press,13,grey,3;6,free,,,,,produce:papyrus
+14,barracks,1,Barracks,14,red,3;5,ore:1,,,,,shields:1
+15,guard-tower,1,Guard Tower,15,red,3;4,clay:1,,,,,shields:1
+16,stockade,1,Stockade,16,red,3;7,wood:1,,,,,shields:1
+17,altar,1,Altar,17,blue,3;5,free,,,15,Pantheon,points:3
+18,baths,1,Baths,18,blue,3;7,stone:1,,,3,Aqueduct,points:3
+19,theater,1,Theater,19,blue,3;6,free,,,14,Gardens,points:3
+20,well,1,Well,20,blue,4;7,free,,,5,Statue,points:3
+21,east-trading-post,1,East Trading Post,21,yellow,3;7,free,,,7,Forum,trade:raw:right
+22,marketplace,1,Marketplace,22,yellow,3;6,free,,,6,Caravansery,trade:manufactured:both
+23,tavern,1,Tavern,23,yellow,4;5;7,free,,,,,coins:5
+24,west-trading-post,1,West Trading Post,24,yellow,3;7,free,,,7,Forum,trade:raw:left
+25,apothecary,1,Apothecary,25,green,3;5,cloth:1,,,2;8,Dispensary;Stables,science:compass
+26,scriptorium,1,Scriptorium,26,green,3;4,papyrus:1,,,4;10,Courthouse;Library,science:tablet
+27,workshop,1,Workshop,27,green,3;7,glass:1,,,1;9,Archery Range;Laboratory,science:gear
+28,brickyard,2,Brickyard,28,brown,3;4,coins:1,,,,,produce:clay*2
+29,foundry,2,Foundry,29,brown,3;4,coins:1,,,,,produce:ore*2
+30,quarry,2,Quarry,30,brown,3;4,coins:1,,,,,produce:stone*2
+31,sawmill,2,Sawmill,31,brown,3;4,coins:1,,,,,produce:wood*2
+32,glassworks-age-2,2,Glassworks,11,grey,3;5,free,,,,,produce:glass
+33,loom-age-2,2,Loom,12,grey,3;5,free,,,,,produce:cloth
+34,press-age-2,2,Press,13,grey,3;5,free,,,,,produce:papyrus
+35,archery-range,2,Archery Range,32,red,3;6,wood:2 ore:1,1,Workshop,,,shields:2
+36,stables,2,Stables,33,red,3;5,wood:1 clay:1 ore:1,2,Apothecary,,,shields:2
+37,training-ground,2,Training Ground,34,red,4;6;7,wood:1 ore:2,,,11,Circus,shields:2
+38,walls,2,Walls,35,red,3;7,stone:3,,,12,Fortifications,shields:2
+39,aqueduct,2,Aqueduct,36,blue,3;7,stone:3,3,Baths,,,points:5
+40,courthouse,2,Courthouse,37,blue,3;5,clay:2 cloth:1,4,Scriptorium,,,points:4
+41,statue,2,Statue,38,blue,3;7,wood:1 ore:2,5,Well,,,points:4
+42,temple,2,Temple,39,blue,3;6,wood:1 clay:1 glass:1,,,,,points:4
+43,bazar,2,Bazar,40,yellow,4;7,free,,,,,per:grey:self+neighbours:coins2
+44,caravansery,2,Caravansery,41,yellow,3;5;6,wood:2,6,Marketplace,19,Lighthouse,produce:wood/stone/clay/ore
+45,forum,2,Forum,42,yellow,3;6;7,clay:2,7,East Trading Post;West Trading Post,18,Haven,produce:glass/papyrus/cloth
+46,vineyard,2,Vineyard,43,yellow,3;6,free,,,,,per:brown:self+neighbours:coins1
+47,dispensary,2,Dispensary,44,green,3;4,ore:2 glass:1,8,Apothecary,17;21,Arena;Lodge,science:compass
+48,laboratory,2,Laboratory,45,green,3;5,clay:2 papyrus:1,9,Workshop,13;22,Observatory;Siege Workshop,science:gear
+49,library,2,Library,46,green,3;6,stone:2 cloth:1,10,Scriptorium,16;24,Senate;University,science:tablet
+50,school,2,School,47,green,3;7,wood:1 papyrus:1,,,20;23,Academy;Study,science:tablet
+51,arsenal,3,Arsenal,48,red,3;5,wood:2 ore:1 cloth:1,,,,,shields:3
+52,castrum,3,Castrum,49,red,4;7,wood:1 clay:2 papyrus:1,,,,,shields:3
+53,circus,3,Circus,50,red,4;6,stone:3 ore:1,11,Training Ground,,,shields:3
+54,fortifications,3,Fortifications,51,red,3;7,clay:1 ore:3,12,Walls,,,shields:3
+55,siege-workshop,3,Siege Workshop,52,red,3;5,wood:1 clay:3,13,Laboratory,,,shields:3
+56,gardens,3,Gardens,53,blue,3;4,wood:1 clay:2,14,Theater,,,points:5
+57,palace,3,Palace,54,blue,3;7,wood:1 stone:1 clay:1 ore:1 glass:1 papyrus:1 cloth:1,,,,,points:8
+58,pantheon,3,Pantheon,55,blue,3;6,clay:2 ore:1 glass:1 papyrus:1 cloth:1,15,Altar,,,points:7
+59,senate,3,Senate,56,blue,3;5,wood:2 stone:1 ore:1,16,Library,,,points:6
+60,town-hall,3,Town Hall,57,blue,3;6,stone:2 ore:1 glass:1,,,,,points:6
+61,arena,3,Arena,58,yellow,3;5,stone:2 ore:1,17,Dispensary,,,per:wonder-stage:self:coins3;per:wonder-stage:self:points1
+62,chamber-of-commerce,3,Chamber of Commerce,59,yellow,4;6,clay:2 papyrus:1,,,,,per:grey:self:coins2;per:grey:self:points2
+63,haven,3,Haven,60,yellow,3;4,wood:1 ore:1 cloth:1,18,Forum,,,per:brown:self:coins1;per:brown:self:points1
+64,lighthouse,3,Lighthouse,61,yellow,3;6,stone:1 glass:1,19,Caravansery,,,per:yellow:self:coins1;per:yellow:self:points1
+65,ludus,3,Ludus,62,yellow,5;7,stone:1 ore:1,,,,,per:red:self:coins3;per:red:self:points1
+66,academy,3,Academy,63,green,3;7,stone:3 glass:1,20,School,,,science:compass
+67,lodge,3,Lodge,64,green,3;6,clay:2 papyrus:1 cloth:1,21,Dispensary,,,science:compass
+68,observatory,3,Observatory,65,green,3;7,ore:2 glass:1 cloth:1,22,Laboratory,,,science:gear
+69,study,3,Study,66,green,3;5,wood:1 papyrus:1 cloth:1,23,School,,,science:gear
+70,university,3,University,67,green,3;4,wood:2 glass:1 papyrus:1,24,Library,,,science:tablet
+71,builders-guild,3,Builders Guild,68,purple,guild,stone:3 clay:2 glass:1,,,,,per:wonder-stage:self+neighbours:points1
+72,craftsmens-guild,3,Craftsmens Guild,69,purple,guild,stone:2 ore:2,,,,,per:grey:neighbours:points2
+73,decorators-guild,3,Decorators Guild,70,purple,guild,stone:1 ore:2 cloth:1,,,,,other:points7-if-all-own-wonder-stages-built
+74,magistrates-guild,3,Magistrates Guild,71,purple,guild,wood:3 stone:1 cloth:1,,,,,per:blue:neighbours:points1
+75,philosophers-guild,3,Philosophers Guild,72,purple,guild,clay:3 papyrus:1 cloth:1,,,,,per:green:neighbours:points1
+76,scientists-guild,3,Scientists Guild,73,purple,guild,wood:2 ore:2 papyrus:1,,,,,science:any
+77,shipowners-guild,3,Shipowners Guild,74,purple,guild,wood:3 glass:1 papyrus:1,,,,,per:brown:self:points1;per:grey:self:points1;per:purple:self:points1
+78,spies-guild,3,Spies Guild,75,purple,guild,clay:2 glass:1,,,,,per:red:neighbours:points1
+79,traders-guild,3,Traders Guild,76,purple,guild,glass:1 papyrus:1 cloth:1,,,,,per:yellow:neighbours:points1
+80,workers-guild,3,Workers Guild,77,purple,guild,wood:1 stone:1 clay:1 ore:2,,,,,per:brown:neighbours:points1

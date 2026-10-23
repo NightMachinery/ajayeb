@@ -1,0 +1,8 @@
+id,slug,name,wonder,starting_resource,day_stages,night_stages
+1,alexandria,Alexandria,the Lighthouse,glass,3,3
+2,babylon,Babylon,the Hanging Gardens,wood,3,2
+3,ephesos,Ephesos,the Temple of Artemis,papyrus,3,3
+4,gizah,Gizah,the Pyramids,stone,3,4
+5,halikarnassos,Halikarnassos,the Mausoleum,cloth,3,3
+6,olympia,Olympia,the Statue of Zeus,clay,3,3
+7,rhodos,Rhodos,the Colossus,ore,3,2

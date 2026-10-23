@@ -9,16 +9,86 @@ type registry struct {
 	designs [NumDesigns + 1]Design
 	boards  [NumBoards + 1]Board
 	twins   [NumDesigns + 1]DesignID
+	tables  Tables
 }
 
-var reg = &registry{}
+// The base game's catalog, registered from package-level initializers (not
+// init) so that every reader sees it. A data error panics at initialization,
+// which fails every test of every package that imports the catalog.
+var reg = mustRegistry(BaseDesigns(), boardDefs)
 
-// Twin maps a design to the other Age's same-name design, or zero. The data
-// slice will populate it; production readers never mutate the catalog.
-var Twin [NumDesigns + 1]DesignID
+// Twin maps a design to the other Age's same-name design, or zero. Production
+// readers never mutate the catalog.
+var Twin = reg.twins
 
-// ValidateCatalog accepts a small synthetic subset or the later full catalog.
-// Complete edition counts and registration order are pinned by the data slice.
+// T holds the lookup tables compiled from the catalog (compiled.go). Never
+// write to it.
+var T = reg.tables
+
+// BaseDesigns returns the base game's 80 designs in id order, with their Age
+// set from the list that holds them and their name ids assigned: names are
+// numbered from 1 in order of their first design, so a twin shares the id of
+// its Age I design.
+func BaseDesigns() []Design {
+	var all []Design
+	for _, list := range []struct {
+		age     uint8
+		designs []Design
+	}{{1, ageOneDesigns}, {2, ageTwoDesigns}, {3, ageThreeDesigns}, {3, guildDesigns}} {
+		for _, d := range list.designs {
+			d.Age = list.age
+			all = append(all, d)
+		}
+	}
+	next := NameID(1)
+	for i := range all {
+		for j := range i {
+			if all[j].Name == all[i].Name {
+				all[i].NameID = all[j].NameID
+				break
+			}
+		}
+		if all[i].NameID == 0 {
+			all[i].NameID = next
+			next++
+		}
+	}
+	return all
+}
+
+// BaseBoards returns the seven boards in id order.
+func BaseBoards() []Board { return slices.Clone(boardDefs) }
+
+func mustRegistry(designs []Design, boards []Board) *registry {
+	r, err := makeRegistry(designs, boards)
+	if err == nil {
+		err = r.checkComplete()
+	}
+	if err != nil {
+		panic("catalog: " + err.Error())
+	}
+	return r
+}
+
+// checkComplete asserts what the engine relies on beyond ValidateCatalog:
+// every design and board id is present. The edition's counts, order and
+// values are pinned by the tests.
+func (r *registry) checkComplete() error {
+	for id := DesignID(1); id <= NumDesigns; id++ {
+		if r.designs[id].ID != id {
+			return fmt.Errorf("design %d missing", id)
+		}
+	}
+	for id := BoardID(1); id <= NumBoards; id++ {
+		if r.boards[id].ID != id {
+			return fmt.Errorf("board %d missing", id)
+		}
+	}
+	return nil
+}
+
+// ValidateCatalog accepts a small synthetic subset or the full catalog. The
+// complete edition's counts and registration order are pinned by the tests.
 func ValidateCatalog(designs []Design, boards []Board) error {
 	_, err := makeRegistry(designs, boards)
 	return err
@@ -69,6 +139,7 @@ func makeRegistry(designs []Design, boards []Board) (*registry, error) {
 	if err := r.checkChains(); err != nil {
 		return nil, err
 	}
+	r.tables = compile(r)
 	return r, nil
 }
 func sameTwin(a, b Design) bool {
@@ -125,9 +196,9 @@ func ReplaceForTest(designs []Design, boards []Board) func() {
 	if err != nil {
 		panic(err)
 	}
-	old, oldTwin := reg, Twin
-	reg, Twin = next, next.twins
-	return func() { reg, Twin = old, oldTwin }
+	old, oldTwin, oldT := reg, Twin, T
+	reg, Twin, T = next, next.twins, next.tables
+	return func() { reg, Twin, T = old, oldTwin, oldT }
 }
 
 // DesignByID returns read-only definition data. Effects must not be mutated.
