@@ -450,6 +450,8 @@ point requires only its owner and opens only when a legal name exists. Every
 offer constructs that design for free; there is no decline. The building's own
 income counts the cities at that point without repeating earlier income.
 An empty or all-duplicate pile emits `EvDiscardBuildNothing` and continues.
+Discard points and rebuild records require the corresponding discard stage
+play. Legal, resolution and invariants share the same pile/name predicate.
 The stage play and its rebuilt/no-build outcome identify every pile look for
 history reconstruction, including skipped searches. Private pile views and
 knowledge reconstruction belong to the later view layer.

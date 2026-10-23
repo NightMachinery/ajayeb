@@ -509,7 +509,8 @@ func TestRuling19DecoratorsEveryBoardSideLength(t *testing.T) {
 
 func TestDiscardNameRuleAndNoDecline(t *testing.T) {
 	g := abilityScenario(t, 2, 4, [MaxSeats]wonderCity{0: {board: catalog.BoardHalikarnassos, side: catalog.Night, buildings: []catalog.DesignID{2, 11}}, 1: {board: catalog.BoardOlympia}}, [MaxSeats][]catalog.DesignID{0: {39}}, 32)
-	pending, _, err := resolveAbility(t, g, actionBatch(g, 0, stagePick(t, g, 0, 39)))
+	batch := actionBatch(g, 0, stagePick(t, g, 0, 39))
+	pending, _, err := resolveAbility(t, g, batch)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -524,8 +525,16 @@ func TestDiscardNameRuleAndNoDecline(t *testing.T) {
 	if err == nil || next != before || pending != before || len(events) != 0 {
 		t.Fatal("discard could be declined")
 	}
-	if !reflect.DeepEqual(pending.State.Hands, before.State.Hands) {
-		t.Fatal("pending point passed hands")
+	for _, pick := range batch.Picks {
+		want := g.State.Hands[pick.Seat]
+		a, err := ParseKey(pick.Key)
+		if err != nil {
+			t.Fatal(err)
+		}
+		takeCard(&want, a.Design)
+		if pending.State.Hands[pick.Seat] != want {
+			t.Fatal("pending point passed hands", pick.Seat)
+		}
 	}
 }
 

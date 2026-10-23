@@ -19,6 +19,26 @@ func stageHasEffect(c *City, stage uint8, kind catalog.EffectKind) bool {
 	return false
 }
 
+// discardBuilds is the shared trigger and name-rule predicate for a pile
+// search. A physical design is offered once, regardless of its copy count.
+func discardBuilds(st *State, seat Seat) catalog.DesignSet {
+	var out catalog.DesignSet
+	if st == nil || !seat.Valid(st.Seats) {
+		return out
+	}
+	c := &st.Cities[seat]
+	if !stageHasEffect(c, c.Stages, catalog.EffBuildFromDiscard) {
+		return out
+	}
+	for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
+		d, ok := catalog.DesignByID(id)
+		if ok && st.Discard[id] != 0 && c.Buildings.And(catalog.T.ByName[d.NameID]).Empty() {
+			out.Add(id)
+		}
+	}
+	return out
+}
+
 func resolveDiscardState(st *State, picks *[MaxSeats]Action, evs []Event, reverse bool) (State, []Event, error) {
 	if st.Age < 1 || st.Age > NumAges || st.Turn < 1 || st.Turn > TurnsPerAge || !st.Decider.Valid(st.Seats) {
 		return *st, evs, fmt.Errorf("rules: invalid discard point")
@@ -30,8 +50,8 @@ func resolveDiscardState(st *State, picks *[MaxSeats]Action, evs []Event, revers
 			return *st, evs, fmt.Errorf("rules: pick outside discard decider")
 		}
 	}
-	d, ok := catalog.DesignByID(a.Design)
-	if !ok || !a.Valid() || a.Kind != ActBuildDiscarded || st.Discard[a.Design] == 0 || !st.Cities[seat].Buildings.And(catalog.T.ByName[d.NameID]).Empty() {
+	d, _ := catalog.DesignByID(a.Design)
+	if !a.Valid() || a.Kind != ActBuildDiscarded || !discardBuilds(st, seat).Has(a.Design) {
 		return *st, evs, fmt.Errorf("rules: invalid discard construction")
 	}
 	next := *st

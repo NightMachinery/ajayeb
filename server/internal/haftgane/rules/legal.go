@@ -152,9 +152,9 @@ func LegalState(st *State, seat Seat, buf []Choice) []Choice {
 		if seat != st.Decider || !st.Decider.Valid(st.Seats) {
 			return out
 		}
+		builds := discardBuilds(st, seat)
 		for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
-			d, ok := catalog.DesignByID(id)
-			if ok && st.Discard[id] != 0 && st.Cities[seat].Buildings.And(catalog.T.ByName[d.NameID]).Empty() {
+			if builds.Has(id) {
 				out = append(out, Choice{Action: Action{Kind: ActBuildDiscarded, Design: id}, Free: FreeDiscard})
 			}
 		}

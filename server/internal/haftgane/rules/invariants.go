@@ -215,8 +215,15 @@ func (g *Game) CheckInvariants() error {
 			return fmt.Errorf("rules: design %s has %d copies, want %d", d.Slug, copies[id], want)
 		}
 	}
-	if st.Phase == PhaseDiscardBuild && !hasDiscardChoice(st) {
-		return fmt.Errorf("rules: discard point has no choice or trigger")
+	if st.Phase == PhaseDiscardBuild {
+		c := &st.Cities[st.Decider]
+		play := g.Record.Plays[st.Age-1][st.Turn-1][st.Decider]
+		if play.Kind != ActStage || play.Stage != c.Stages || !stageHasEffect(c, play.Stage, catalog.EffBuildFromDiscard) {
+			return fmt.Errorf("rules: discard point lacks current discard stage play")
+		}
+		if discardBuilds(st, st.Decider).Empty() {
+			return fmt.Errorf("rules: discard point has no choice or trigger")
+		}
 	}
 	if err := g.checkRecord(box); err != nil {
 		return err
@@ -283,33 +290,6 @@ func checkPackets(row [MaxSeats][HandSize]catalog.DesignID, age, n uint8, box ca
 		}
 	}
 	return nil
-}
-
-func hasDiscardChoice(st *State) bool {
-	c := &st.Cities[st.Decider]
-	b, _ := catalog.BoardByID(c.Board)
-	if c.Stages == 0 || c.Side == catalog.NoSide {
-		return false
-	}
-	trigger := false
-	for _, e := range b.Sides[c.Side-1].Stages[c.Stages-1].Effects {
-		if e.Kind == catalog.EffBuildFromDiscard {
-			trigger = true
-		}
-	}
-	if !trigger {
-		return false
-	}
-	for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
-		if st.Discard[id] == 0 {
-			continue
-		}
-		d, _ := catalog.DesignByID(id)
-		if c.Buildings.And(catalog.T.ByName[d.NameID]).Empty() {
-			return true
-		}
-	}
-	return false
 }
 
 func checkResult(st *State) error {
@@ -411,6 +391,10 @@ func (g *Game) checkRecord(box catalog.DesignSet) error {
 				allowed := age < int(st.Age)-1 || age == int(st.Age)-1 && (turn < int(st.Turn)-1 || st.Phase == PhaseLastCard || st.Phase == PhaseOver)
 				if seat >= int(st.Seats) || !allowed {
 					return fmt.Errorf("rules: future/unused rebuild record")
+				}
+				play := g.Record.Plays[age][turn][seat]
+				if play.Kind != ActStage || !stageHasEffect(&st.Cities[seat], play.Stage, catalog.EffBuildFromDiscard) {
+					return fmt.Errorf("rules: rebuild lacks discard stage play")
 				}
 				d, ok := catalog.DesignByID(id)
 				if !ok || d.Age > uint8(age+1) || !st.Cities[seat].Buildings.Has(id) {

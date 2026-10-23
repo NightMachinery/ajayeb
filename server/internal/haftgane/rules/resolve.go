@@ -196,11 +196,10 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 		if a.Kind != ActStage || !stageHasEffect(&next.Cities[seat], terms[seat].stage, catalog.EffBuildFromDiscard) {
 			continue
 		}
-		next.Phase, next.Decider = PhaseDiscardBuild, seat
-		if hasDiscardChoice(&next) {
+		if !discardBuilds(&next, seat).Empty() {
+			next.Phase, next.Decider = PhaseDiscardBuild, seat
 			opened = true
 		} else {
-			next.Decider = NoSeat
 			tail = append(tail, Event{Kind: EvDiscardBuildNothing, Seat: seat})
 		}
 	}
