@@ -658,7 +658,29 @@ payment targets. `Quote` takes 0.658 to 0.824 microseconds typical, 3.40 to 3.60
 microseconds for feasible capacity and 48.0 to 49.3 microseconds for impossible
 capacity; `QuoteState` takes 0.460 to 0.583 microseconds. The impossible fixture
 exceeds the design's 5-microsecond `Quote` target by about ten times. This
-measured stress gap remains open; the oracle and other correctness gates pass.
+synthetic, unreachable stress gap is accepted after the rules audit. It needs
+six saleable choice symbols that can each supply any resource, while the
+catalog's only saleable choice producers are the six brown two-raw cards.
+Their shared-capacity infeasibility is confined to raw resources and stays small.
+
+The reviewer measured 1,456,185 inputs across 200 natural games at N=3 to 7,
+including 503,052 unaffordable costs. The first-pass median was 0.45 microseconds
+and p99 2.0 microseconds. Re-timing the 14,164 inputs over 2 microseconds gave
+a median of 0.45, p99 2.4 and maximum 9.2 microseconds; a third pass reduced the
+ten still over 5 microseconds to 2.2 to 5.25 microseconds. These slowest inputs
+were all feasible and affordable, with 1 to 3 own choice producers. No natural
+input approached the impossible fixture, which took 57 to 75 microseconds on
+the review's loaded host. The solver is unchanged since its payment review;
+these stress timing differences reflect host load, not a solver regression.
+
+Revisit this acceptance if the payment solver occupies a significant share of
+profiles in `M21.simultaneous-age-rollouts`. Then add a global feasibility
+pre-check: one bipartite matching of units missing after maximal own coverage
+against own choice symbols and both neighbours' saleable symbols, ignoring
+price. Coverability is exact because a covering exists if and only if a
+maximal-own covering does. Verify that change with the exhaustive payment
+oracle, a 10-minute `FuzzPayment` run and `BenchmarkQuoteImpossible`.
+No pre-check is added while current callers do not need it.
 
 The seven-seat Legal benchmarks distinguish feasible capacity from impossible
 shared capacity. In the rules-gate run, `LegalState` takes 28.4 to 30.7
