@@ -110,7 +110,7 @@ Calls made while folding in the final answers, so that the rules have no gap:
 Calls left to a build slice, with the design's recommendation:
 
 7. The bot level used when an admin switches a seat to a bot: the admin picks it in the switch, defaulting to the lowest level released (`M16.haftgane-room-actor`).
-8. The sun and moon mean either a seat or a wonder side, not both: seven new crests, so that the sun and moon keep their day and night meaning (`M19.vectors-seat-crests`). Done: a lotus, a palm, a scarab, a falcon, a wave, an anchor and a fish (`art/vector/specs/haftgane-seat-crests.md`).
+8. The sun and moon mean either a seat or a wonder side, not both: seven new crests, so that the sun and moon keep their day and night meaning (`M19.vectors-seat-crests`). Done: a lotus, a palm, a boat, a bee, a wave, an anchor and a fish (`art/vector/specs/haftgane-seat-crests.md`).
 
 ## How the design was reviewed
 

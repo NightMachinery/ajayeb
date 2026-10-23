@@ -4,17 +4,17 @@
 
 - crest-0 (lotus): done (iteration 3)
 - crest-1 (palm): done (iteration 3)
-- crest-2 (scarab): done (iteration 3)
-- crest-3 (falcon): done (iteration 4), replacing the eagle of iterations 1 to 3
+- crest-2 (boat): done (iteration 5), replacing the scarab of iterations 1 to 4
+- crest-3 (bee): done (iteration 5), replacing the eagle of iterations 1 to 3 and the falcon of iteration 4
 - crest-4 (wave): done (iteration 1)
 - crest-5 (anchor): done (iteration 3)
 - crest-6 (fish): done (iteration 3)
 - No `-sm` files: every md drawing reads at 11 and 12 px.
 - Seat colours `--seat-0` to `--seat-6` and the ore and cloth tokens: done, in `web/src/lib/games/haftgane/theme.css`.
 
-Every file is lint clean and between 335 and 533 bytes. The files live in `web/src/lib/games/haftgane/icons/svg/`, so Duel's icon source set (27252 bytes raw, 5638 gzipped) is unchanged.
+Every file is lint clean and between 324 and 498 bytes. The files live in `web/src/lib/games/haftgane/icons/svg/`, so Duel's icon source set (27252 bytes raw, 5638 gzipped) is unchanged.
 
-The private renders are under `art-work/vector/haftgane-seat-crests/` in the run directory. Besides the specimens, iterations 3 and 4 have a `sheets/` directory made by a private script: `rings@2x.png` (every crest in its ring at the five mockup sizes, with the bot badge, a far chip, the Home tile and the pass flow, both themes), the same in greyscale and under the three colour-vision emulations (`rings-grey@2x.png`, `rings-deuteranopia@2x.png`, `rings-protanopia@2x.png`, `rings-tritanopia@2x.png`), `swatches@2x.png` (the seat colours on both panels with their contrast ratios, and the ore and cloth tiles beside Duel's five) and `contrast.txt` (the numbers below).
+The private renders are under `art-work/vector/haftgane-seat-crests/` in the run directory. Besides the specimens, iterations 3 to 5 have a `sheets/` directory made by a private script: `rings@2x.png` (every crest in its ring at the five mockup sizes, with the bot badge, a far chip, the Home tile and the pass flow, both themes), the same in greyscale and under the three colour-vision emulations (`rings-grey@2x.png`, `rings-deuteranopia@2x.png`, `rings-protanopia@2x.png`, `rings-tritanopia@2x.png`), `swatches@2x.png` (the seat colours on both panels with their contrast ratios, and the ore and cloth tiles beside Duel's five) and `contrast.txt` (the numbers below).
 
 ## Iteration 1 (2026-10-23): fast-render drafts
 
@@ -77,7 +77,7 @@ Three bird constructions in scratch, at 11, 12, 15, 20 and 64 px:
 - bird-b, a bird in flight seen from the side: a V over a bar at 11 px.
 - bird-f, a bird standing in profile, leaning forward: reads as a bird at 11 px, because its whole outline (round head, beak, breast, tail) is one solid mass.
 
-Then three refinements of bird-f: a broad blunt beak (reads as a duck), the legs merged into a perch block (loses the legs' "standing" at 12 px), and a hooked beak (bird-f4). bird-f4 reads as a bird of prey at 20 px and up and as a bird at 11 px. Kept bird-f4 as crest-3, a falcon of Horus, which joins the scarab and the lotus as an Egyptian emblem. The spec's crest-3 section now describes the falcon and why the eagle was dropped.
+Then three refinements of bird-f: a broad blunt beak (reads as a duck), the legs merged into a perch block (loses the legs' "standing" at 12 px), and a hooked beak (bird-f4). bird-f4 reads as a bird of prey at 20 px and up and as a bird at 11 px. Kept bird-f4 as crest-3, a falcon. The review then ruled the falcon out, with the scarab, because both are sacred or state emblems; iteration 5 replaced them.
 
 ## Seat colours (2026-10-23)
 
@@ -121,7 +121,7 @@ Colour vision: in greyscale and under each emulation some pairs fall together (g
 - `--res-cloth` oklch(0.55 0.15 345), a madder red-violet. Distance to Duel's tiles: wood 0.162, clay 0.140, stone 0.168, glass 0.280, papyrus 0.365. The paper-bright glyph on it: 5.05. Inks: light oklch(0.5 0.15 345) (panel 6.26, sunken 5.15, table 5.81), dark oklch(0.74 0.13 345) (6.18, 7.55, 7.09).
 - `swatches@2x.png` shows both glyphs on their new tiles at 12, 16 and 32 px beside Duel's five, and both inks on each theme's panel.
 
-## Family check (2026-10-23)
+## Family check (2026-10-23, iteration 4)
 
 Renders: art-work/vector/haftgane-seat-crests/family/ (`family.mjs --sets haftgane-seat-crests,haftgane-chain,haftgane-conflicts-passing-abilities,haftgane-resources-science,ornaments-track-logo`, at 16 and 24 px on paper and night).
 
@@ -137,3 +137,36 @@ Renders: art-work/vector/haftgane-seat-crests/family/ (`family.mjs --sets haftga
 - Mono: 12 px DPR 2 22/22, 16 px DPR 1 22/22 (100%).
 
 Neither reader hesitated over a crest. Both hesitated only between `hint-crown` and `category-purple`, two Duel crowns that differ only by how the band is set off (a stripe in the detail tone, or a gap), and both readers still named them right; and the mono reader named `crest-sun` by elimination because its face is not visible at 12 or 16 px. Neither doubt touches this set.
+
+## Revision: iteration 5 (2026-10-23), a boat and a bee
+
+The review found two motifs that break art/style.md "Culturally respectful": the scarab is an identifiable religious amulet, and the falcon is a deity's emblem (Horus), a national emblem of several living states and, as a bird of prey on a badge, a heraldic animal. Both were replaced in the same slots and seat colours, from daily life, trade and nature, and every metaphor of the set now describes a generic thing: the lotus is a decorative flower of garden pools and carved borders, with nothing about worship. The spec's shared rules now state the rule.
+
+Renders: art-work/vector/haftgane-seat-crests/rev/ (the candidates, `cand1.png` to `cand4.png`, fast strips at 11, 12, 15, 20 and 64 px beside their look-alikes) and iter-5/ (specimens, the three emulations in both themes, the peeps and `sheets/`).
+Lint: clean (0 errors, 0 warnings).
+Looked at: `rev/cand1.png` to `cand4.png`, `iter-5/sheets/rings@2x.png` (both themes), `rings-grey@2x.png`, `rings-protanopia@2x.png`, `family-rev/family@1x.png`.
+
+Candidates, checked against every Duel and Haftgane glyph (`neighbours/all-48.png`); an amphora was ruled out before drawing, because `chain-amphora` exists:
+
+- Grape cluster, six berries in rows of three, two and one with a stem and a leaf (grapes-a, grapes-c), ten smaller berries (grapes-b) and a vine leaf over the top (grapes-d): grapes at 64 px, but at 11 and 12 px every version is a heart-shaped blob, a raspberry. The overlaps between the berries are too shallow to show at that size, and berries that only touch leave pinholes where three of them meet. Not kept.
+- Pomegranate, a round fruit with a crown-shaped calyx: a plain disc with a nub at 12 px, next to `coin` and `chain-target`. Not kept.
+- Key, a ring bow at the lower left and the bit at the upper right: thin, a magnifying glass at 12 px. Not kept.
+- Butterfly, four wing lobes on a thin body: reads at every size, but its X is close to `category-red`'s crossed swords, which sit beside seats in the city colour counts. Not kept.
+- Sailing ship, square sail on a mast over a hull: reads as a ship from 11 px, the firmest silhouette of all the candidates. A prow post on its own (boat-b) read as a handle; the hull's left end swept up into the prow and a yard over the sail (boat-c) read as an ancient trading ship. Kept as crest-2.
+- Bee seen from above, round head, raised wings, the abdomen in three pieces so the gaps make two stripes: reads as a bee from 11 px, stripes included. Wings held level (bee-b) also read; the raised wings (bee-c) leave the lower right to the pointed abdomen alone and keep the bee taller, so bee-c was kept as crest-3. An earlier version cut the stripes with `evenodd` bars wider than the body, which left tabs outside it.
+
+What the iteration 5 sheets showed:
+
+- crest-2, the boat: reads at every size from 11 in 16 to 28 in 44 in both themes, and with the bot badge, which covers only the hull's right end.
+- crest-3, the bee: reads at every size in both themes; the stripes hold at 12 in 18 at DPR 2, and with the badge the head, wings and stripes stay clear.
+- In greyscale and under protanopia the seven stay apart by shape. Under protanopia the boat and the wave both fall to blue, and their shapes keep them apart.
+- Family: the boat and the bee are solid single-tone silhouettes of the same weight as the chain and conflict glyphs.
+
+### Blind check, iteration 5
+
+`blind.mjs make --set haftgane-seat-crests --sizes 12@2,16@1`, in colour (seed 31) and with `--mono` (seed 47), among the 15 neighbours of iteration 4 plus the new crests' look-alikes `chain-amphora`, `category-yellow`, `chain-awning` and `science-sundial`: 26 tiles per sheet. Each run had its own fresh in-process reader that saw only the sheets, `names.txt` and one gloss line per name (crest-2 "a sailing ship", crest-3 "a bee"), and never the key.
+
+- Colour: 12 px DPR 2 26/26, 16 px DPR 1 26/26 (100%).
+- Mono: 12 px DPR 2 26/26, 16 px DPR 1 26/26 (100%).
+
+Neither reader hesitated over a crest. Both hesitated again between the two Duel crowns, and over `crest-sun` at 12 px, whose face does not show; one paused over `science-sundial` ("a dish with a sail on it") before placing it, because the ship was plainly another tile. All were named right.

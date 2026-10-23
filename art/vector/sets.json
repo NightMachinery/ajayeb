@@ -171,7 +171,7 @@
     },
     "haftgane-seat-crests": {
       "title": "Haftgane: the seven seat crests",
-      "neighbours": ["crest-sun", "crest-moon", "chain-star", "chain-tower", "chain-torch", "chain-drop", "chain-lighthouse", "hint-crown", "category-purple", "vp-laurel", "choice", "chain-sword", "conflict-victory", "pass-hand", "military-pawn"],
+      "neighbours": ["crest-sun", "crest-moon", "chain-star", "chain-tower", "chain-torch", "chain-drop", "chain-lighthouse", "hint-crown", "category-purple", "vp-laurel", "choice", "chain-sword", "conflict-victory", "pass-hand", "military-pawn", "chain-amphora", "category-yellow", "chain-awning", "science-sundial"],
       "icons": [
         {"id": "crest-0", "file": "web/src/lib/games/haftgane/icons/svg/crest-0.svg", "ink": "var(--seat-0)"},
         {"id": "crest-1", "file": "web/src/lib/games/haftgane/icons/svg/crest-1.svg", "ink": "var(--seat-1)"},

@@ -37,15 +37,16 @@ The blind check's 12 px DPR 2 and 16 px DPR 1 sheets bracket the two common size
   - Haftgane's science and resources ([haftgane-resources-science.md](haftgane-resources-science.md)): compass, gear, tablet, ore and cloth; Duel's wood, clay, stone, glass and papyrus.
   - The conflict tokens, the pass mark and the ability glyphs (spec [haftgane-conflicts-passing-abilities.md](haftgane-conflicts-passing-abilities.md)): the intact and the split pennant on a staff, two cards over a horizontal arrow, the stepped ziggurat, the bays with a check, a card with a plus, a palette, a card against a bracket.
   - The category glyphs, which show beside seats in the city's colour counts: the mountain, the anvil, the domed gate, the eight-point star, the purse, the crossed swords and the crown. Also `hint-crown`, `token-frame`'s rosette, `vp-laurel`'s wreath, `wonder`'s gateway, `shield`, `coin`, `choice`'s Y and `military-pawn`.
-- So no crest is a star, tower, sun, moon, gear, compass, tablet, scroll, book, lyre, crown, rosette, flag, shield or quadruped.
+- So no crest is a star, tower, sun, moon, gear, compass, tablet, scroll, book, lyre, crown, rosette, flag, shield, amphora, purse, awning or quadruped.
+- **No faith, state or heraldic meaning** ([art/style.md](../../style.md), "Culturally respectful"). No crest is a deity's emblem, a religious amulet, a national or political emblem, or a heraldic animal such as a bird of prey or a lion. Crests come from daily life, trade and nature in the ancient world, and each metaphor describes the generic thing, not a sacred or state one. The first draft's scarab (an Egyptian amulet) and falcon (the bird of Horus, and a national emblem of living states) broke this rule and were replaced by the boat and the bee.
 
 ## The seven crests
 
-Each crest is something of the game's world (the gardens, rivers and harbours of the ancient wonders) and a different silhouette family. The colour each wears is in "Seat colours".
+Each crest is something of the game's world (the gardens, rivers, fields and harbours of the ancient wonders) and a different silhouette family. The colour each wears is in "Seat colours".
 
 ### crest-0: lotus (rose)
 
-- Metaphor: a lotus flower seen from the side, the flower of the Nile and of Persepolis' reliefs.
+- Metaphor: a lotus flower seen from the side, a decorative flower of garden pools and of the carved borders of palace reliefs.
 - Silhouette: a broad open lotus with no stem: one tall pointed petal in the middle, two broad petals leaning out on each side, the lowest nearly flat, all rising from a shallow bowl at the foot. Wide and full, a fan of petals opening upwards, never a band with points. (A cup on a stem read as a chalice, and a pointed fan on a stem as a cannabis leaf; see the log.)
 - Must differ from: `hint-crown` and `category-purple`, the crowns (no band, no balls on the points: broad petals that rise from a bowl), `token-frame` (no rosette of round lobes), crest-1 the palm (petals rise from a bowl; the palm's fronds droop from a trunk).
 
@@ -55,18 +56,18 @@ Each crest is something of the game's world (the gardens, rivers and harbours of
 - Silhouette: a tall, slightly curving trunk that takes the lower half, and a crown of fronds that arch outwards and droop at their tips, the crown wider than the trunk is tall.
 - Must differ from: `chain-torch` (no cup or flame: the crown hangs down), `chain-lighthouse` (no lantern or beams), `choice` (the fronds droop, the Y's arms rise), crest-0 the lotus.
 
-### crest-2: scarab (violet)
+### crest-2: boat (violet)
 
-- Metaphor: a scarab beetle seen from above, the emblem of Egypt's seals.
-- Silhouette: a broad oval body split down the back into two wing cases, a wide shield-like head with a toothed front, and three short legs on each side.
-- Must differ from: `coin` and `chain-target` (not a plain disc), `chain-mask` (no face), `military-pawn`, `shield` (legs, and a body split down the middle, rounded at the foot).
+- Metaphor: a trading ship of the ancient sea lanes, which carried the goods that neighbours trade.
+- Silhouette: a broad hull along the lower third whose left end sweeps up into a pointed prow, a mast in the middle, and a square sail under a yard that is wider than the sail. Wide, its mass spread across the ring; the hull's right end, the only part under the bot badge, carries no identity.
+- Must differ from: `conflict-victory` (a square sail on a mast over a hull, not a pennant flying from a staff), `chain-awning` (no scalloped canopy, no posts), `science-sundial` (a square sail, not a triangle on a disc), `chain-lighthouse`, crest-5 the anchor and crest-4 the wave (a vessel, not water or a fitting).
+- Chosen over a grape cluster, which blurred into a heart-shaped blob at 11 and 12 px, a butterfly, which risked reading as `category-red`'s crossed swords, a pomegranate (a plain disc at 12 px) and a key (a magnifier at 12 px); see the log.
 
-### crest-3: falcon (amber)
+### crest-3: bee (amber)
 
-- Metaphor: a falcon standing in profile, the bird of Horus on Egypt's standards and seals.
-- Silhouette: a bird perched and facing right, leaning forward: a round head with a hooked beak at the upper right, a full breast, the folded wing and a long tail sweeping down to the lower left, two short legs at the foot. Its mass runs on the diagonal from the upper right to the lower left; the legs, the only detail near the lower right, carry no identity.
-- Must differ from: crest-6 the fish (upright and on legs, with a beak; the fish lies flat), `chain-drop` (a beak, a tail and legs; not a plain drop), `military-pawn` (it leans and has a beak; the pawn stands straight and round), `pass-hand`.
-- Not an eagle displayed: wings spread to both edges read as a bat or an angel at 15 px and as a blurred W at 11 to 12 px (see the log), and the profile bird reads at every size.
+- Metaphor: a honey bee seen from above, of the hives in the gardens and fields.
+- Silhouette: a round head on top, two rounded wings raised to the upper left and the upper right, a domed thorax, and a pointed abdomen crossed by two stripes (the gaps between three body pieces). Tall and symmetric; the stripes help but the head, wings and pointed body read without them.
+- Must differ from: `chain-amphora` (wings, not handles; a head on top, not a neck), `category-yellow`'s purse (no tied neck; wings), `military-pawn` (wings and stripes), `chain-helmet`, crest-0 the lotus (a body under the wings, not petals from a bowl).
 
 ### crest-4: wave (azure)
 
@@ -105,6 +106,6 @@ Each crest is something of the game's world (the gardens, rivers and harbours of
 ## Acceptance
 
 - **Blind check, 100%** at 12 px DPR 2 and 16 px DPR 1, by a fresh reader with one gloss line per name, among the neighbours below. Run twice, in colour and in `--mono`, because crests must be told apart by shape alone.
-- **Neighbours** (`neighbours` in `sets.json`): `crest-sun`, `crest-moon`, `chain-star`, `chain-tower`, `chain-torch`, `chain-drop`, `chain-lighthouse`, `hint-crown`, `category-purple`, `vp-laurel`, `choice`, `chain-sword`, `conflict-victory`, `pass-hand` and `military-pawn`.
+- **Neighbours** (`neighbours` in `sets.json`): `crest-sun`, `crest-moon`, `chain-star`, `chain-tower`, `chain-torch`, `chain-drop`, `chain-lighthouse`, `hint-crown`, `category-purple`, `vp-laurel`, `choice`, `chain-sword`, `conflict-victory`, `pass-hand`, `military-pawn`, and the boat's and the bee's look-alikes `chain-amphora`, `category-yellow`, `chain-awning` and `science-sundial`.
 - **Colour vision:** a sheet of the seven crests in their rings at the mockup sizes, in both themes, in greyscale and under the three emulations, and a swatch sheet of the seven seat colours with their contrast ratios in both themes.
 - Lint clean, each file within the 1228-byte budget, no change to Duel's icon budget or bundle. Family check passed.

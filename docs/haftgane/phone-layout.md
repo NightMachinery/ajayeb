@@ -215,7 +215,7 @@ Tapping a far chip or a neighbour panel opens the city sheet at that seat. A row
 
 - Two resource colours for the resources Duel lacks: ore and cloth (`--res-ore`, `--res-cloth` and their inks), drafted in the private mockup kit.
 - Seven seat colours with light and dark values (`--seat-0` to `--seat-6`), used for crest rings and your strip's outline.
-- Seven crest glyphs, one per seat, and ore, cloth and science glyphs. The mockups use rough stand-in shapes; the drawn crests are a lotus, a palm, a scarab, a falcon, a wave, an anchor and a fish (`art/vector/specs/haftgane-seat-crests.md`), and the drawn colour tokens live in `web/src/lib/games/haftgane/theme.css` (M19).
+- Seven crest glyphs, one per seat, and ore, cloth and science glyphs. The mockups use rough stand-in shapes; the drawn crests are a lotus, a palm, a boat, a bee, a wave, an anchor and a fish (`art/vector/specs/haftgane-seat-crests.md`), and the drawn colour tokens live in `web/src/lib/games/haftgane/theme.css` (M19).
 
 ## Server fields the screens rely on
 
