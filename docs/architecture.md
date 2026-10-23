@@ -334,14 +334,45 @@ behind a release-gate test. [data-rulings.md](haftgane/data-rulings.md)
 records the rulings and the fixtures' normalisations.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
-points. It contains the seat ring and canonical key grammar, with no setup,
-legality, resolution, views or bots yet. Left is the next seat modulo the seat
-count, and right is the previous. Public plays and private picks
+points. It contains setup, the seat ring and canonical key grammar; turn legality,
+resolution, views and bots follow in later slices. Left is the next seat modulo
+the seat count, and right is the previous. Public plays and private picks
 have separate record arrays. Events have typed source fields and no raw key.
 Point ids are computed from kind, Age and turn; pending choices stay in the room.
 Actions name design slugs and payment outcomes, never copies or seats. Parsing
 checks canonical syntax and the tagged union; only future offer membership can
 make an action legal. The rules version starts at 1.
+
+`NewGame(Setup)` validates 3 to 7 seats and resolves seating, boards, sides,
+guilds and each Age deck through separate fixed-tag `enginekit/rng` streams.
+`SeatOrder` maps engine seats to lobby slots without moving another draw.
+Deck inputs follow design id and copy-marker order, with the N + 2 drawn
+guilds appended in id order to Age III; Fisher-Yates is followed by sorted
+seven-card packets. Day and random sides deal Age I immediately. Choosing
+sides leaves all hands empty until the simultaneous side point reveals every
+choice together, then transfers Age I from `Deals` to `Hands` and
+`Record.Packets`. Every seat starts with 3 coins. Five setup goldens pin stream
+tags, seat order, boards, sides, packets, box guilds and fingerprints; the
+invariant sweep covers 10,000 seeds per player count and all option kinds.
+
+`ScenarioFromGame` makes a value snapshot whose explicit `State` and `Record`
+fields tests can edit. `NewGameFromScenario` copies it, sorts card lists,
+rebuilds city caches and rejects invalid conservation, shape or phase-specific
+hand sizes. It never invents missing cards or a play history. Scenarios may
+retain a partial history; the checker validates record shapes and placements,
+while full historical legality belongs to the later resolver and replay slice.
+`CheckInvariants` also checks city names, board and stage bounds, inactive
+slots, tokens, result shape and cache consistency. `Fingerprint` hashes an
+explicit 2,157-byte little-endian encoding of every State and Record field in
+declaration order, with one-byte booleans and no memory padding, through the
+shared FNV-1a digest and hex helper.
+
+`city.go` is the sole cache writer. Production symbols follow board start,
+then ascending building design id and effect index, then ascending built
+stage number and effect index. `ChoiceForSale` filters that same sequence to
+saleable producers. This public-city order lets views identify the producer
+behind a payment witness without using acquisition history. Rebuilding applies
+continuous effects only, never income or scoring.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen
