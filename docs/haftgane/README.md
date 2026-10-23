@@ -2,7 +2,7 @@
 
 @Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional; the layers it shares with Duel have run in production since M14, with only Duel registered.** Its decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Nothing of Haftgane itself is built yet, and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
+**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional; the layers it shares with Duel have run in production since M14, with only Duel registered.** Its decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Little of Haftgane itself is built yet (see "In the app so far"), and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
 
 ## What it is and why
 
@@ -24,6 +24,10 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 - **Bots** ([bot-plan.md](bot-plan.md)). Every level sees only what its seat may know. Apprentice (Greedy with noise) comes first, in an internal milestone. Scholar and Master compare candidate moves by simulating whole simultaneous rounds over sampled hidden cards; the public release waits for Scholar and the proven sampler, and Master may follow later. Each bot gets fixed work per decision at its difficulty, so a full table is slower rather than weaker.
 - **Screens** ([phone-layout.md](phone-layout.md)). A phone in portrait shows the whole table: chips for distant players, two neighbour panels with trade prices and a military outlook, your own city strip, a hand that never scrolls, and a turn bar. A card sheet lists the offered payments, a confirmed pick can be changed until everyone has confirmed, and each turn ends with one grouped reveal and a recap. A private notebook of the hands you have seen carries summary statistics. Landscape and desktop rearrange the same pieces. The mockups behind it stay private, because they show unverified card values.
 - **Art** ([art-reuse.md](art-reuse.md)). 58 of the 80 card designs reuse Duel's approved paintings. 21 new paintings cover the rest, all seven wonder paintings serve both sides of their boards, and 27 new vector drawings are planned, plus the seat crests. Every hidden Age III card shows the ordinary Age III back, so a guild never gives itself away.
+
+## In the app so far
+
+- **Rules reference:** `/rules/haftgane` gives players these rules in short, in our own words, with a deep link per section (`/rules/haftgane#trade`), and `openHaftganeRules()` shows the same content over a table (`web/src/lib/games/haftgane/rules/`, M18.rules-reference). Home does not link it yet.
 
 ## Reading order
 
