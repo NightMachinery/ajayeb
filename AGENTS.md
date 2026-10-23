@@ -16,6 +16,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 ## Where things live
 
 - `server/internal/engine` and `server/internal/engine/catalog`: the rules and the card, wonder and token data. Pure Go.
+- `server/internal/enginekit`: infrastructure shared by the game engines (Duel's now, Haftgane's from M15), such as the test-only purity guards (`puritycheck`) and the three-way catalog data check (`catalogdiff`).
 - `server/internal/view` and `server/internal/wire`: the DTO and message types that `tygo` turns into TypeScript.
 - `server/internal/{ai, room, store, ident, ws, httpapi, webdist}`: bots, room actors, persistence, identity, transport, HTTP endpoints, the embedded web build.
 - `server/cmd/{ajayeb, ajayeb-sim, ajayeb-drive, ajayeb-gen}`: the server, the simulator, the WebSocket game driver, the code generator.
