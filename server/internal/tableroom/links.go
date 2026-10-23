@@ -1,6 +1,7 @@
 package tableroom
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/NightMachinery/ajayeb/server/internal/room"
@@ -138,6 +139,9 @@ func (t *Tables) successors() Successors {
 // requester's included; a repeated request's to the requester alone.
 // A connection that joined with an original human's claim also receives
 // that human's claim in the successor, where their slot is reserved.
+// Making the successor counts against the requester's room-creation
+// limits (room.Client.AllowCreate), as Duel's rematch does; a repeated
+// request creates nothing and does not.
 func (a *actor) rematch(c *room.Client) string {
 	r := &a.st.rec
 	user := a.userOf(c)
@@ -154,9 +158,15 @@ func (a *actor) rematch(c *room.Client) string {
 	if succ == nil {
 		return a.refuse(c, 0, "rematch", -1, outBad)
 	}
+	if c.AllowCreate != nil && !c.AllowCreate() {
+		return a.refuse(c, 0, "rematch", -1, outRate)
+	}
 	code, err := succ.Rematch(a.m, Rematch{Creator: user, Slots: slices.Clone(r.Start),
 		LobbyOrder: !r.Setup.RandomSeating, AllowUndo: r.AllowUndo, FinalReveal: !r.Setup.HideAtEnd})
-	if err != nil {
+	switch {
+	case errors.Is(err, room.ErrForbidden):
+		return a.refuse(c, 0, "rematch", -1, outForbidden)
+	case err != nil:
 		a.t.log.Warn("table rematch failed", "room", a.code, "err", err)
 		return a.refuse(c, 0, "rematch", -1, outStorage)
 	}

@@ -157,3 +157,54 @@ func TestRematchRefusals(t *testing.T) {
 		t.Fatalf("a rematch while playing: %s", out)
 	}
 }
+
+// TestRematchCreationLimit: on a finished table, a spectator's rematch is
+// forbidden; an original human's counts against their room-creation
+// limit, so a refused one makes nothing; an allowed one makes the
+// successor once and sends its code to every connection; a repeat answers
+// the same code to its sender without asking the limit again.
+func TestRematchCreationLimit(t *testing.T) {
+	h := newTH(t, Config{}, humans(3, 61))
+	stub := &stubSuccessors{}
+	h.f.succ = stub
+	h.f.tables.SetSuccessors(stub)
+	if _, err := tabletest.Play(h.ctx, h.p, tabletest.Config{Seats: 3, PickSeed: 61, ArrivalSeed: 62}); err != nil {
+		t.Fatal(err)
+	}
+	a, err := h.p.actor()
+	if err != nil {
+		t.Fatal(err)
+	}
+	rematch := func(id tabletest.ClientID) string {
+		var out string
+		if err := a.call(h.ctx, func() { out = a.rematch(h.p.clients[id]) }); err != nil {
+			t.Fatal(err)
+		}
+		h.p.drain()
+		return out
+	}
+	seat0, seat1 := h.p.clients[tabletest.SeatClient(0)], h.p.clients[tabletest.SeatClient(1)]
+	if out := rematch(tabletest.SpectatorClient); out != outForbidden {
+		t.Fatalf("the spectator's rematch: %s", out)
+	}
+	asked := 0
+	allow := false
+	seat0.AllowCreate = func() bool { asked++; return allow }
+	if out := rematch(tabletest.SeatClient(0)); out != outRate || len(stub.made) != 0 {
+		t.Fatalf("a rematch past the limit: %s, %d made", out, len(stub.made))
+	}
+	allow = true
+	if out := rematch(tabletest.SeatClient(0)); out != outAccepted || len(stub.made) != 1 || stub.made[0].Creator != userOf(0) {
+		t.Fatalf("the rematch: %s, %+v", out, stub.made)
+	}
+	for id := range h.p.clients {
+		others := h.p.other[id]
+		if cr, ok := others[len(others)-1].(wire.Created); !ok || cr.Code != "RMATCH" || cr.Claim != nil {
+			t.Fatalf("%s's created frame: %+v", id, others)
+		}
+	}
+	seat1.AllowCreate = func() bool { asked++; return false }
+	if out := rematch(tabletest.SeatClient(1)); out != outDuplicate || asked != 2 || len(stub.made) != 1 {
+		t.Fatalf("a repeated rematch: %s, the limit asked %d times, %d made", out, asked, len(stub.made))
+	}
+}
