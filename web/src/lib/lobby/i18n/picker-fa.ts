@@ -8,5 +8,6 @@ export const lobby = {
   'lobby.duelHint': 'دو بازیکن',
   'lobby.haftganeHint': 'سه تا هفت بازیکن',
   'lobby.new': 'میز جدید',
+  'lobby.tagline': 'دور یک میز شگفتی بسازید',
   'lobby.newHint': 'دوستان را دعوت کنید، ربات اضافه کنید یا هر دو.'
 } as const satisfies Translation<typeof en>;

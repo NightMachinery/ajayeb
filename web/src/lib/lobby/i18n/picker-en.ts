@@ -5,5 +5,6 @@ export const lobby = {
   'lobby.duelHint': 'Two players',
   'lobby.haftganeHint': 'Three to seven players',
   'lobby.new': 'New table',
+  'lobby.tagline': 'Build wonders around one table',
   'lobby.newHint': 'Invite friends, add bots, or mix both.'
 } as const;

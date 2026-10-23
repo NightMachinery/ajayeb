@@ -248,12 +248,19 @@
           {t('app.nameNative')}
         </p>
         <h1 class="mt-2 font-display text-5xl tracking-tight text-fg">{t('app.name')}</h1>
-        <p class="mt-3 text-lg text-fg-muted">{t('app.tagline')}</p>
-        {#if !ready}
-          <p role="status" class="home-loading-status mx-auto w-fit text-sm font-semibold text-fg">
-            {t('home.loading')}
+        <div class="relative mt-3">
+          <p class="text-lg text-fg-muted" class:invisible={!ready}>
+            {selectedGame === 'haftgane' ? pickerT('lobby.tagline') : t('app.tagline')}
           </p>
-        {/if}
+          {#if !ready}
+            <p
+              role="status"
+              class="home-loading-status mx-auto w-fit text-sm font-semibold text-fg"
+            >
+              {t('home.loading')}
+            </p>
+          {/if}
+        </div>
       </header>
 
       <div class="mt-8 short:mt-4 split:mt-0 split:w-full split:max-w-md split:justify-self-end">
@@ -461,8 +468,7 @@
   .home-loading-status {
     position: absolute;
     inset-inline: 0;
-    inset-block-start: 100%;
-    margin-block-start: 0.25rem;
+    inset-block-start: 0;
   }
   /* Native disabled semantics cover touch, click, keyboard and radio arrows. */
   [data-home-loading] button,

@@ -22,6 +22,15 @@ for (const locale of ['en', 'fa'] as const)
         const probes = [];
         for (const [width, height] of sizes) {
           await page.setViewportSize({ width, height });
+          await page.goto('/');
+          await expect(page.locator('[data-act="home-game:haftgane"]')).toBeEnabled();
+          await page.screenshot({
+            path: path.join(out, `home-duel-${width}x${height}-${locale}-${theme}.png`)
+          });
+          await page.locator('[data-act="home-game:haftgane"]').click();
+          await page.screenshot({
+            path: path.join(out, `home-haftgane-${width}x${height}-${locale}-${theme}.png`)
+          });
           await createTableFromHome(page, locale === 'fa' ? 'روشن' : 'Roshan');
           await page.locator('[data-act="lobby-seat-menu:1"]').click();
           await lobbyAction(page, 'lobby-add-bot:1');
