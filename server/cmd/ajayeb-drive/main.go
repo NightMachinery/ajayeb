@@ -8,6 +8,15 @@
 //
 // Run ajayeb-drive -help for the flags.
 //
+//	ajayeb-drive table [flags]
+//
+// is the N-seat driver for Haftgane's simultaneous decision points. It
+// needs no server: it plays the fake hand game on an in-process table from
+// a common snapshot under seeded arrival schedules, with duplicate and
+// stale seqs, compares the canonical batches and hashes across schedules,
+// and runs the leak oracle (docs/testing.md, "The N-seat table harness").
+// Run ajayeb-drive table -help for its flags.
+//
 // Each game picks a uniformly random legal choice every turn (from the
 // view's own choices, never computed locally) until the server reports a
 // result, exactly as a thin client must. An online game is played against
@@ -51,6 +60,9 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "table" {
+		os.Exit(runTable(context.Background(), os.Args[2:], os.Stdout, os.Stderr))
+	}
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
