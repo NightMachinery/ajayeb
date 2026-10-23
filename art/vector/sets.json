@@ -130,6 +130,20 @@
         {"id": "destroy-card", "ink": "var(--cinnabar)", "band": "red"}
       ]
     },
+    "haftgane-conflicts-passing-abilities": {
+      "title": "Haftgane conflict tokens, the pass mark and the wonder ability glyphs",
+      "neighbours": ["shield", "chain-helmet", "coin-loss", "destroy-card", "trade", "play-again", "build-from-discard", "wonder", "badge-check"],
+      "icons": [
+        {"id": "conflict-victory", "file": "web/src/lib/games/haftgane/icons/svg/conflict-victory.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "red"},
+        {"id": "conflict-defeat", "file": "web/src/lib/games/haftgane/icons/svg/conflict-defeat.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "red"},
+        {"id": "pass-hand", "file": "web/src/lib/games/haftgane/icons/svg/pass-hand.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "blue"},
+        {"id": "wonder-stage", "file": "web/src/lib/games/haftgane/icons/svg/wonder-stage.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "yellow"},
+        {"id": "wonder-complete", "file": "web/src/lib/games/haftgane/icons/svg/wonder-complete.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "purple"},
+        {"id": "play-last-card", "file": "web/src/lib/games/haftgane/icons/svg/play-last-card.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "blue"},
+        {"id": "free-first-colour", "file": "web/src/lib/games/haftgane/icons/svg/free-first-colour.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "blue"},
+        {"id": "free-age-boundary", "file": "web/src/lib/games/haftgane/icons/svg/free-age-boundary.svg", "ink": "var(--fg)", "cardInk": "var(--card-ink)", "band": "blue"}
+      ]
+    },
     "ornaments-track-logo": {
       "title": "Ornaments, track parts and the logo",
       "rules": {"viewBox": "any", "budget": 4096, "gradients": 1, "tokens": true},

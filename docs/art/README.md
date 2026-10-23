@@ -24,6 +24,8 @@ Haftgane's chain symbols are the set `haftgane-chain` (M19): 24 symbols, of whic
 
 The ornaments reached the app in M11 (slice `M11.ornament-integration`): the girih as a faint inlay behind the card structure, the track cells and the city gates on the military track's full bar, and the wordmark above Home's about footer and in the GameOver dialog. `web/README.md` (section Ornaments) says how each is drawn. In the same slice `crest-moon-sm` was redrawn as a plain tilted crescent, because at the 11 px of the compact track the crescent face read as the same round blob as `crest-sun-sm` without colour (log: `art/vector/log/tt2-glyphs.md`).
 
+Haftgane's glyphs (M19) live in `web/src/lib/games/haftgane/icons/svg/`, outside Duel's icon directory, so none of them reaches a Duel player's bundle; Duel drawings they reuse are referenced, never copied. The set `haftgane-conflicts-passing-abilities` holds the conflict victory and defeat tokens, the pass mark and five wonder ability glyphs (spec in `art/vector/specs/haftgane-conflicts-passing-abilities.md`). Its blind check also shuffles in the Duel glyphs each new one must not be confused with (the set's `neighbours` in `sets.json`).
+
 ### How one set is drawn
 
 An agent owns one set at a time and loops over it:
