@@ -20,6 +20,11 @@
 // one: the next age's backs and card thumbnails, within about 200 KB.
 // Only approved art is ever requested: an id with no entry in the index is
 // skipped, so with no art approved the plan is empty.
+//
+// The idle, visibility and cancellation machinery serves every game. What
+// differs per game is its public lists (a PrefetchCatalog: Duel's is
+// duelPrefetchCatalog) and its own art index; the ...For functions build a
+// plan from those and a stage alone. Only Duel's screens prefetch so far.
 
 import { cardBySlug, cardSlugs, tokenSlugs, wonderSlugs } from '$lib/catalog';
 import type { Back } from '$lib/wire';
@@ -46,6 +51,51 @@ export const PREFETCH_BUDGET = 200 * 1024;
  *  count for it: the asset table's card thumbnail budget. */
 const UNKNOWN_BYTES = 10 * 1024;
 
+/** The parts of the full plan, in the order they are fetched. */
+export type PrefetchPart =
+  'current' | 'next' | 'remaining' | 'guilds' | 'wonders' | 'tokens' | 'backs' | 'victory';
+
+/** One file of the full plan: what its frame renders, and what it is. */
+export interface PrefetchItem extends ArtSource {
+  readonly id: string;
+  readonly part: PrefetchPart;
+}
+
+/** A frame that shows art: the variant it prefers, and the `sizes` string
+ *  it passes with its srcset, if any (lookup.ts artSource). */
+export interface PrefetchFrame {
+  readonly size: ArtSize;
+  readonly sizes?: string;
+}
+
+/** A group of the full plan after the cards: each id, in each frame, in order. */
+export interface PrefetchGroup {
+  readonly part: PrefetchPart;
+  readonly ids: readonly string[];
+  readonly frames: readonly PrefetchFrame[];
+}
+
+/**
+ * A game's public art lists: everything a prefetch plan may read. They come
+ * from the game's public catalog (whole decks, every wonder, every token),
+ * never from a view, so a plan cannot name which cards were dealt, kept,
+ * passed or hidden. Each game has one; Duel's is duelPrefetchCatalog, and
+ * a game's plan is built from its lists, a stage and its own art index.
+ */
+export interface PrefetchCatalog {
+  /** The decks dealt in a stage (0 is before the first deal), none after the last. */
+  decksOfStage(stage: number): readonly string[];
+  /** Every deck, in the order the full plan fetches those that are neither
+   *  the current nor the next stage's, with the part each is listed in. */
+  readonly decks: readonly { readonly deck: string; readonly part: PrefetchPart }[];
+  /** The cards of these decks, as art ids, in catalog order. */
+  cardIds(decks: readonly string[]): readonly string[];
+  /** A deck's back, as an art id. */
+  backId(deck: string): string;
+  /** The art after the cards, group by group. */
+  readonly rest: readonly PrefetchGroup[];
+}
+
 const ALL_BACKS: readonly Back[] = ['age1', 'age2', 'age3', 'guild'];
 
 /** The decks dealt in an age (1 to 3); the guilds come with Age III. */
@@ -68,7 +118,7 @@ export function nextBacks(age: number): Back[] {
 }
 
 /** Every card of these decks, in catalog order, as art ids. */
-function cardIdsOf(backs: readonly Back[]): string[] {
+function cardIdsOf(backs: readonly string[]): string[] {
   return cardSlugs
     .filter((slug) => {
       const back = cardBySlug(slug)?.back;
@@ -76,6 +126,37 @@ function cardIdsOf(backs: readonly Back[]): string[] {
     })
     .map((slug) => artId('card', slug));
 }
+
+/** The victory scenes the result screen can show (lookup.ts victoryArtId). */
+const VICTORY_IDS = ['victory/military', 'victory/science', 'victory/civilian', 'victory/draw'];
+
+/** Duel's public art lists: its catalog's decks by age, its wonders and
+ *  tokens, the four backs and the victory scenes. */
+export const duelPrefetchCatalog: PrefetchCatalog = {
+  decksOfStage: backsOfAge,
+  decks: [
+    { deck: 'age1', part: 'remaining' },
+    { deck: 'age2', part: 'remaining' },
+    { deck: 'age3', part: 'remaining' },
+    { deck: 'guild', part: 'guilds' }
+  ],
+  cardIds: cardIdsOf,
+  backId: (deck) => artId('back', deck),
+  rest: [
+    {
+      part: 'wonders',
+      ids: wonderSlugs.map((slug) => artId('wonder', slug)),
+      frames: [{ size: 'thumb' }, { size: 'default', sizes: WONDER_ART_SIZES }]
+    },
+    {
+      part: 'tokens',
+      ids: tokenSlugs.map((slug) => artId('token', slug)),
+      frames: [{ size: 'thumb' }, { size: 'thumb', sizes: tokenArtSizes('md') }]
+    },
+    { part: 'backs', ids: ALL_BACKS.map(backArtId), frames: [{ size: 'default' }] },
+    { part: 'victory', ids: VICTORY_IDS, frames: [{ size: 'default' }] }
+  ]
+};
 
 /** The art ids of the small plan during `age`: the next age's backs, then
  *  its cards (and the guilds before Age III), in catalog order. */
@@ -98,10 +179,23 @@ export function prefetchPlan(
     index = art
   }: { cardSize?: ArtSize; budget?: number; index?: ArtIndex } = {}
 ): string[] {
-  const { backs, cards } = nextAgeArtIds(age);
+  return smallPrefetchPlanFor(duelPrefetchCatalog, age, { cardSize, budget, index });
+}
+
+/** prefetchPlan for any game: the next stage's backs, then its cards. */
+export function smallPrefetchPlanFor(
+  catalog: PrefetchCatalog,
+  stage: number,
+  {
+    cardSize = 'thumb',
+    budget = PREFETCH_BUDGET,
+    index
+  }: { cardSize?: ArtSize; budget?: number; index: ArtIndex }
+): string[] {
+  const decks = catalog.decksOfStage(stage + 1);
   const wanted: { id: string; size: ArtSize }[] = [
-    ...backs.map((id) => ({ id, size: 'default' })),
-    ...cards.map((id) => ({ id, size: cardSize }))
+    ...decks.map((deck) => ({ id: catalog.backId(deck), size: 'default' })),
+    ...catalog.cardIds(decks).map((id) => ({ id, size: cardSize }))
   ];
   const plan: string[] = [];
   let spent = 0;
@@ -116,19 +210,6 @@ export function prefetchPlan(
   return plan;
 }
 
-/** The parts of the full plan, in the order they are fetched. */
-export type PrefetchPart =
-  'current' | 'next' | 'remaining' | 'guilds' | 'wonders' | 'tokens' | 'backs' | 'victory';
-
-/** One file of the full plan: what its frame renders, and what it is. */
-export interface PrefetchItem extends ArtSource {
-  readonly id: string;
-  readonly part: PrefetchPart;
-}
-
-/** The victory scenes the result screen can show (lookup.ts victoryArtId). */
-const VICTORY_IDS = ['victory/military', 'victory/science', 'victory/civilian', 'victory/draw'];
-
 /**
  * The whole game's art in fetch order during `age` (0 is the wonder
  * draft): the current age's cards at the card sheet's file, then their
@@ -141,6 +222,15 @@ const VICTORY_IDS = ['victory/military', 'victory/science', 'victory/civilian', 
 export function fullPrefetchPlan(
   age: number,
   { index = art }: { index?: ArtIndex } = {}
+): PrefetchItem[] {
+  return fullPrefetchPlanFor(duelPrefetchCatalog, age, { index });
+}
+
+/** fullPrefetchPlan for any game, from its public lists and its own index. */
+export function fullPrefetchPlanFor(
+  catalog: PrefetchCatalog,
+  stage: number,
+  { index }: { index: ArtIndex }
 ): PrefetchItem[] {
   const items: PrefetchItem[] = [];
   const seen = new Set<string>();
@@ -155,36 +245,27 @@ export function fullPrefetchPlan(
   // srcset (CardArt's full tier at the sheet's width).
   const thumb = (id: string) => artSource(id, 'thumb', undefined, index);
   const sheet = (id: string) => artSource(id, 'default', cardArtSizes(FULL_CARD_WIDTH), index);
-  const cards = (part: PrefetchPart, backs: readonly Back[], sheetFirst: boolean) => {
-    const ids = cardIdsOf(backs);
+  const cards = (part: PrefetchPart, decks: readonly string[], sheetFirst: boolean) => {
+    const ids = catalog.cardIds(decks);
     for (const frame of sheetFirst ? [sheet, thumb] : [thumb, sheet]) {
       for (const id of ids) add(id, part, frame(id));
     }
   };
 
-  const current = backsOfAge(age);
-  const next = backsOfAge(age + 1);
+  const current = catalog.decksOfStage(stage);
+  const next = catalog.decksOfStage(stage + 1);
   cards('current', current, true);
   cards('next', next, false);
-  const done = new Set<Back>([...current, ...next]);
-  for (const back of ['age1', 'age2', 'age3'] as const) {
-    if (!done.has(back)) cards('remaining', [back], false);
+  const done = new Set<string>([...current, ...next]);
+  for (const { deck, part } of catalog.decks) {
+    if (!done.has(deck)) cards(part, [deck], false);
   }
-  if (!done.has('guild')) cards('guilds', ['guild'], false);
-  for (const slug of wonderSlugs) {
-    const id = artId('wonder', slug);
-    add(id, 'wonders', artSource(id, 'thumb', undefined, index));
-    add(id, 'wonders', artSource(id, 'default', WONDER_ART_SIZES, index));
+  for (const group of catalog.rest) {
+    for (const id of group.ids) {
+      for (const frame of group.frames)
+        add(id, group.part, artSource(id, frame.size, frame.sizes, index));
+    }
   }
-  for (const slug of tokenSlugs) {
-    const id = artId('token', slug);
-    add(id, 'tokens', artSource(id, 'thumb', undefined, index));
-    add(id, 'tokens', artSource(id, 'thumb', tokenArtSizes('md'), index));
-  }
-  for (const back of ALL_BACKS) {
-    add(backArtId(back), 'backs', artSource(backArtId(back), 'default', undefined, index));
-  }
-  for (const id of VICTORY_IDS) add(id, 'victory', artSource(id, 'default', undefined, index));
   return items;
 }
 
@@ -212,8 +293,19 @@ export function artPrefetchPlan(
   age: number,
   { connection, index = art }: { connection?: ConnectionInfo | null; index?: ArtIndex } = {}
 ): ArtSource[] {
-  if (wantsSmallPlan(connection)) return prefetchPlan(age, { index }).map((src) => ({ src }));
-  return fullPrefetchPlan(age, { index });
+  return artPrefetchPlanFor(duelPrefetchCatalog, age, { connection, index });
+}
+
+/** artPrefetchPlan for any game, from its public lists and its own index. */
+export function artPrefetchPlanFor(
+  catalog: PrefetchCatalog,
+  stage: number,
+  { connection, index }: { connection?: ConnectionInfo | null; index: ArtIndex }
+): ArtSource[] {
+  if (wantsSmallPlan(connection)) {
+    return smallPrefetchPlanFor(catalog, stage, { index }).map((src) => ({ src }));
+  }
+  return fullPrefetchPlanFor(catalog, stage, { index });
 }
 
 /** This browser's connection, when it says. */

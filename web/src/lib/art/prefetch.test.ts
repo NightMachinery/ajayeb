@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cardBySlug, cardSlugs, tokenSlugs, wonderSlugs } from '$lib/catalog';
 import { art } from './available.gen';
 import {
+  artId,
   cardArtSizes,
   FULL_CARD_WIDTH,
   pickArt,
@@ -12,13 +13,17 @@ import {
 } from './lookup';
 import {
   artPrefetchPlan,
+  artPrefetchPlanFor,
   fullPrefetchPlan,
+  fullPrefetchPlanFor,
   nextAgeArtIds,
   nextBacks,
   PREFETCH_BUDGET,
   prefetchImages,
   prefetchPlan,
+  smallPrefetchPlanFor,
   wantsSmallPlan,
+  type PrefetchCatalog,
   type PrefetchItem
 } from './prefetch';
 
@@ -420,5 +425,92 @@ describe('prefetchImages in a browser', () => {
     b.idle();
     expect(b.images.map((i) => i.src)).toEqual(['/t2/a.avif', '/t2/b.avif']);
     again();
+  });
+});
+
+describe('another game’s plan', () => {
+  // A hand game's public lists, shaped like Haftgane's: three Ages whose
+  // guilds are shuffled into Age III under its back, wonder boards and no
+  // tokens. The plan reads these lists, a stage and the game's own index,
+  // nothing else.
+  const designs = [
+    { slug: 'clay-pit', age: 1 },
+    { slug: 'loom', age: 1 },
+    { slug: 'forum', age: 2 },
+    { slug: 'arena', age: 3 },
+    { slug: 'builders-guild', age: 3 }
+  ];
+  const catalog: PrefetchCatalog = {
+    decksOfStage: (stage) => (stage >= 1 && stage <= 3 ? [`age${stage}`] : []),
+    decks: [
+      { deck: 'age1', part: 'remaining' },
+      { deck: 'age2', part: 'remaining' },
+      { deck: 'age3', part: 'remaining' }
+    ],
+    cardIds: (decks) =>
+      designs.filter((d) => decks.includes(`age${d.age}`)).map((d) => artId('card', d.slug)),
+    backId: (deck) => artId('back', deck),
+    rest: [
+      {
+        part: 'wonders',
+        ids: ['wonder/babylon'],
+        frames: [{ size: 'thumb' }, { size: 'default', sizes: WONDER_ART_SIZES }]
+      },
+      {
+        part: 'backs',
+        ids: ['back/age1', 'back/age2', 'back/age3'],
+        frames: [{ size: 'default' }]
+      }
+    ]
+  };
+  const entry = (kind: string, path: string) => ({
+    kind,
+    variants: {
+      default: { path: `${path}.avif?v=1`, width: 480, height: 360, bytes: 30000 },
+      thumb: { path: `${path}@thumb.avif?v=1`, width: 240, height: 180, bytes: 6000 }
+    }
+  });
+  const index: ArtIndex = {
+    'card/clay-pit': entry('card', '/art/haftgane/cards/clay-pit'),
+    'card/forum': entry('card', '/art/haftgane/cards/forum'),
+    'card/builders-guild': entry('card', '/art/haftgane/cards/builders-guild'),
+    // An alias carries the Duel painting's own paths.
+    'card/arena': entry('card', '/art/cards/arena'),
+    'wonder/babylon': entry('wonder', '/art/haftgane/wonders/babylon'),
+    'back/age2': entry('back', '/art/haftgane/backs/age2'),
+    // Approved, but in no public list: never fetched.
+    'card/hidden': entry('card', '/art/haftgane/cards/hidden')
+  };
+
+  it('fetches the current Age, the next, the rest, the boards and the backs, from the lists alone', () => {
+    const plan = fullPrefetchPlanFor(catalog, 1, { index });
+    expect(plan.map((i) => `${i.part} ${i.id}${i.srcset ? ' sheet' : ''}`)).toEqual([
+      'current card/clay-pit sheet',
+      'current card/clay-pit',
+      'next card/forum',
+      'next card/forum sheet',
+      'remaining card/arena',
+      'remaining card/builders-guild',
+      'remaining card/arena sheet',
+      'remaining card/builders-guild sheet',
+      'wonders wonder/babylon',
+      'wonders wonder/babylon sheet',
+      'backs back/age2'
+    ]);
+    expect(plan.some((i) => i.id === 'card/hidden')).toBe(false);
+    expect(plan.find((i) => i.id === 'card/arena')?.src).toBe('/art/cards/arena@thumb.avif?v=1');
+    expect(fullPrefetchPlanFor(catalog, 1, { index })).toEqual(plan);
+    expect(fullPrefetchPlanFor(catalog, 1, { index: {} })).toEqual([]);
+  });
+
+  it('keeps to the next Age’s back and thumbnails on a small plan', () => {
+    expect(smallPrefetchPlanFor(catalog, 1, { index })).toEqual([
+      '/art/haftgane/backs/age2.avif?v=1',
+      '/art/haftgane/cards/forum@thumb.avif?v=1'
+    ]);
+    expect(artPrefetchPlanFor(catalog, 1, { connection: { saveData: true }, index })).toEqual(
+      smallPrefetchPlanFor(catalog, 1, { index }).map((src) => ({ src }))
+    );
+    expect(smallPrefetchPlanFor(catalog, 3, { index })).toEqual([]);
   });
 });

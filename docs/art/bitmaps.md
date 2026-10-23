@@ -271,6 +271,15 @@ With Save-Data on, or when `navigator.connection` reports an effective
 type of `slow-2g` or `2g`, it keeps the small plan instead: the next age's
 backs and card thumbnails, within 200 KB.
 
+The plan builders (`smallPrefetchPlanFor`, `fullPrefetchPlanFor` and
+`artPrefetchPlanFor`) take a game's `PrefetchCatalog`: its decks by stage,
+the card ids of a set of decks, the back of a deck, and the rest of its
+art in order. A catalog holds public lists only, so every game's plan
+keeps the property above. `duelPrefetchCatalog` is Duel's, and Duel's
+`prefetchPlan`, `fullPrefetchPlan` and `artPrefetchPlan` are those builders
+on it, with the same plans as before. No other game's screen prefetches
+yet.
+
 ## Running it, step by step
 
 1. **`node tools/art/manifest.mjs`** rebuilds `art/manifest.json` from the
