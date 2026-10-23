@@ -2,10 +2,9 @@
 // connection of its own, and resolves with its code. The creator holds the
 // lobby's first slot by its user, not by this connection, so the page then
 // opens /play/<code> and joins it through the ordinary entry. The real
-// New table flow comes with M18.home-picker-and-lobby; the development
-// route /dev/table uses this until then.
+// New table sheet loads this helper only when the player creates a table.
 
-import { entryIdentity, rememberEntryGame } from '$lib/entry/identity';
+import { entryIdentity, rememberEntryGame, rememberEntryName } from '$lib/entry/identity';
 import { defaultSocketUrl, type SocketLike } from '$lib/session/ws-transport';
 import type { LobbyCreate, LobbyOptions } from '$lib/wire/platform.gen';
 
@@ -17,6 +16,8 @@ export class CreateLobbyError extends Error {
 }
 
 export interface CreateLobbyOptions {
+  /** Submitted before hello, including when storage is unavailable. */
+  name?: string;
   socket?: () => SocketLike;
   timeoutMs?: number;
 }
@@ -26,6 +27,7 @@ export function createLobby(
   options: LobbyOptions = {},
   opts: CreateLobbyOptions = {}
 ): Promise<string> {
+  if (opts.name) rememberEntryName(opts.name);
   return new Promise<string>((resolve, reject) => {
     let socket: SocketLike;
     try {

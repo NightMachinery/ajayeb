@@ -26,6 +26,7 @@ import type { LobbyState, PointRef, TableState } from '../../web/src/lib/wire/pl
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { FrameLog, newDeviceContext } from '../fixtures/online';
+import { createTableFromHome } from '../fixtures/lobby';
 
 interface TableHook {
   table(): TableState | null;
@@ -233,7 +234,7 @@ test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
 
       // The lobby: the creator holds the first slot, the second human takes
       // the next open one by joining.
-      await a.goto('/dev/table?seats=4');
+      await createTableFromHome(a);
       await a.waitForURL(/\/play\/[A-Z0-9]+$/);
       const code = a.url().split('/').at(-1)!;
       await b.goto(`/play/${code}`);
@@ -367,7 +368,7 @@ test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
   test('a return from Home in the same page goes on with its request seqs', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Ana'));
     const log = traffic(page);
-    await page.goto('/dev/table?seats=3');
+    await createTableFromHome(page);
     await page.waitForURL(/\/play\/[A-Z0-9]+$/);
     const path = new URL(page.url()).pathname;
     await choose(page, 'lobby-start');

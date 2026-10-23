@@ -161,15 +161,6 @@ test('platform entry bytes and cold worker install baseline', async ({
   if (update) writeFileSync(golden, JSON.stringify(measured, null, 2) + '\n');
   if (!existsSync(golden)) throw new Error('record baselines deliberately (docs/testing.md)');
   const baseline = JSON.parse(readFileSync(golden, 'utf8')) as Baseline;
-  expect(measured.home.gzipBytes).toBeLessThanOrEqual(baseline.homeLimit);
-  expect(measured.home.gzipBytes).toBeLessThanOrEqual(
-    baseline.home.gzipBytes + baseline.entryAllowance
-  );
-  expect(measured.duel.gzipBytes).toBeLessThanOrEqual(
-    baseline.duel.gzipBytes + baseline.entryAllowance
-  );
-  expect(measured.install.files).toBeGreaterThan(0);
-  expect(measured.install.transferBytes).toBeGreaterThan(0);
   await info.attach('platform-baselines', {
     body: JSON.stringify(measured, null, 2),
     contentType: 'application/json'
@@ -185,4 +176,13 @@ test('platform entry bytes and cold worker install baseline', async ({
       workerScriptBodyBytes: measured.install.workerScriptBodyBytes
     })
   );
+  expect(measured.home.gzipBytes).toBeLessThanOrEqual(baseline.homeLimit);
+  expect(measured.home.gzipBytes).toBeLessThanOrEqual(
+    baseline.home.gzipBytes + baseline.entryAllowance
+  );
+  expect(measured.duel.gzipBytes).toBeLessThanOrEqual(
+    baseline.duel.gzipBytes + baseline.entryAllowance
+  );
+  expect(measured.install.files).toBeGreaterThan(0);
+  expect(measured.install.transferBytes).toBeGreaterThan(0);
 });

@@ -514,6 +514,30 @@ browser and no server:
   of requests the Session would never make change nothing; and the
   Presenter plays only the resolution.
 
+### Home and the Haftgane lobby
+
+`make e2e PW_ARGS='--project=desktop --project=mobile specs/home-lobby.full.spec.ts'`
+checks the production Home flow, named creation, adding and removing released
+bots, a second isolated human, spectating, promote/demote/step-down, settings,
+Start and a finished game's rematch reservations. These cases carry `@full`
+and `@mobile`. A cold invite sends no hello or join until its name is
+submitted. The count regression exercises three through seven seats and
+requires confirmation before a decrease displaces a human; cancel keeps both
+the roster and the displayed count unchanged. The QR check waits for the
+real encoder's rendered path. Existing table-session leak and reconnect tests
+also create their lobby from Home instead of the retired `/dev/table` route.
+
+`make shots PW_ARGS=--grep=lobby.geometry` captures 360x740, 390x844, 844x390
+and 1280x800 in English and Persian, light and dark themes. Every capture
+checks horizontal overflow, 44 px control boxes, page hygiene and the game's
+Animation-off setting. `LOBBY_SHOTS_DIR` selects the output directory; the
+four `probes-<locale>-<theme>.json` files retain the measurements. The
+lobby request tests cover ordered acknowledgements, rejection, reconnect
+retries and explicit rematch navigation with a private claim. Local message
+tests check complete Persian keys, RTL isolates and Intl number formatting.
+`make shots PW_ARGS=--grep=platform` retains its measured resource list even
+when a byte assertion fails, without changing the original entry limits.
+
 ### The client test hook
 
 Every build of the client defines `window.__ajayeb`, a read-only window
@@ -1290,7 +1314,7 @@ subsequent batches may use `E2E_BUILD=0` while those build inputs stay unchanged
 
 A Haftgane table over the real server and the development screen, on
 desktop only, in three browser contexts. The creator opens
-`/dev/table?seats=4`, a second human joins the lobby from its own context,
+Home’s Haftgane picker and New table form, a second human joins the lobby from its own context,
 and the creator starts it with bots in the two empty seats; a spectator
 joins the running table. The creator confirms a pick and reloads, and the
 pick comes back confirmed; it withdraws, changes and confirms again. The

@@ -1,0 +1,9 @@
+export const lobby = {
+  'lobby.duel': 'Duel',
+  'lobby.haftgane': 'Haftgane',
+  'lobby.chooseGame': 'Choose a game',
+  'lobby.duelHint': 'Two players',
+  'lobby.haftganeHint': 'Three to seven players',
+  'lobby.new': 'New table',
+  'lobby.newHint': 'Invite friends, add bots, or mix both.'
+} as const;

@@ -338,13 +338,24 @@ a reload mends a client and a server that disagree.
   game and is shown without playing events. A frame that only refreshes
   presence replaces the one on screen in place, and a backlog fast-forwards
   to the newest frame.
-- **The development screen** (`dev/TableDev.svelte`) is the minimal UI until
-  the table screen and the lobby screens replace it: the seats, the open
-  point, each choice as a button with its key in `data-act`, the pending
-  pick with confirm and withdraw, an admin's seat menu, resign and the
-  notices. `/dev/table?seats=N` creates a shared lobby over a short v2
-  connection (on a server started with `-haftgane-tables`) and opens it at
-  `/play/<code>`.
+- **Home and the lobby** (`lib/lobby`) add a game picker while leaving Duel's
+  starts intact. Haftgane's New table sheet submits a name before its short
+  v2 creation connection, then enters the ordinary room route. Tables default
+  to four seats and the lobby offers three through seven. The lazy lobby
+  renders the actor's roster, presence, role tags, seating, final reveal and
+  undo policy. Its edits and role changes use the Session's existing sequenced
+  retry lane; Start uses the server's `canStart` and explicitly fills open
+  seats with Apprentice bots. Reservations block Start until their humans
+  return or an admin opens them. Side selection awaits the engine-contract
+  wire option; the source marks its control slot. The current protocol has no
+  atomic seat-order edit, so seat numbers show the listed order without fake
+  drag handles. A finished participant can request the rematch lobby; its
+  private device claim stays in the successor URL fragment. Saved lobbies
+  and live tables return through Home's Continue list with a Haftgane label.
+  Lobby-only English and Persian messages load with the lobby or its New
+  table sheet, while Home loads only its picker labels. The development
+  creation route `/dev/table` is retired. Running tables still use
+  `dev/TableDev.svelte` until the parallel table-screen slice lands.
 
 Loader functions stay separate in a frozen table: combining dynamic imports
 in a conditional lets the bundler associate preloads with the wrong entry.

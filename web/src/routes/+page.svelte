@@ -34,6 +34,18 @@
   let settingsSheet =
     $state.raw<Promise<typeof import('$lib/components/screens/Settings.svelte')>>();
 
+  let newTableSheet = $state.raw<Promise<typeof import('$lib/lobby/NewTableSheet.svelte')>>();
+  let tableOpen = $state(false);
+  function openTable(): void {
+    newTableSheet ??= import('$lib/lobby/NewTableSheet.svelte');
+    tableOpen = true;
+  }
+  async function startTable(code: string): Promise<void> {
+    tableOpen = false;
+    storedName = loadName();
+    await toRoom(code);
+  }
+
   async function liveGame() {
     return (await import('$lib/session/app.svelte')).liveGame();
   }
@@ -157,6 +169,7 @@
   onPlayOnline={openOnline}
   onJoinCode={openJoin}
   onSettings={openSettings}
+  onNewTable={openTable}
   tutorialOffer={!deviceReady || offersTutorial(tips.value.tutorial, rooms.list.length)}
   tutorialDone={deviceReady && tips.value.tutorial.done}
   onTutorial={tutorialFromHome}
@@ -199,5 +212,11 @@
         <Settings />
       </div>
     </Sheet>
+  {/await}
+{/if}
+
+{#if newTableSheet}
+  {#await newTableSheet then { default: NewTableSheet }}
+    <NewTableSheet bind:open={tableOpen} name={storedName} {suggestion} onStart={startTable} />
   {/await}
 {/if}

@@ -35,6 +35,7 @@
   import SettingsIcon from '@lucide/svelte/icons/settings';
   import Sun from '@lucide/svelte/icons/sun';
   import Users from '@lucide/svelte/icons/users';
+  import { t as pickerT } from '$lib/lobby/i18n/picker';
   import { ageLabel, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
@@ -59,6 +60,7 @@
     /** Opens the join-by-code sheet; the link shows only when given. */
     onJoinCode?: () => void;
     onSettings: () => void;
+    onNewTable?: () => void;
     /** Shows the first-launch tutorial offer (needs onTutorial). */
     tutorialOffer?: boolean;
     /** This device finished the tutorial: the row offers it again. */
@@ -78,6 +80,7 @@
     onPlayOnline,
     onJoinCode,
     onSettings,
+    onNewTable,
     tutorialOffer = false,
     tutorialDone = false,
     onTutorial,
@@ -85,6 +88,7 @@
   }: Props = $props();
   // Unique per instance: the gallery shows Home more than once on a page.
   const uid = $props.id();
+  let selectedGame = $state<'duel' | 'haftgane'>('duel');
 
   /** Home shows at most this many; the full list lives in localStorage. */
   const MAX_CONTINUE = 3;
@@ -253,7 +257,33 @@
       </header>
 
       <div class="mt-8 short:mt-4 split:mt-0 split:w-full split:max-w-md split:justify-self-end">
-        {#if tutorialOffer && onTutorial}
+        {#if onNewTable}
+          <div
+            class="mb-3 grid grid-cols-2 gap-2"
+            role="group"
+            aria-label={pickerT('lobby.chooseGame')}
+          >
+            {#each ['duel', 'haftgane'] as game (game)}
+              <button
+                type="button"
+                disabled={!ready}
+                aria-pressed={selectedGame === game}
+                data-act={`home-game:${game}`}
+                onclick={() => (selectedGame = game as 'duel' | 'haftgane')}
+                class="flex min-h-16 flex-col items-start justify-center rounded-control border border-rule-strong px-3 py-2 text-start"
+                class:bg-accent-soft={selectedGame === game}
+                class:bg-panel={selectedGame !== game}
+              >
+                <span class="font-display text-lg"
+                  >{pickerT(game === 'duel' ? 'lobby.duel' : 'lobby.haftgane')}</span
+                ><span class="text-xs text-fg-muted"
+                  >{pickerT(game === 'duel' ? 'lobby.duelHint' : 'lobby.haftganeHint')}</span
+                >
+              </button>
+            {/each}
+          </div>
+        {/if}
+        {#if selectedGame === 'duel' && tutorialOffer && onTutorial}
           <div class="home-offer mb-3" inert={!ready}>
             <TutorialOffer
               botName={t('game.persona.easy')}
@@ -273,11 +303,15 @@
                     disabled={!ready}
                     class="flex min-h-14 w-full items-center justify-between gap-3 rounded-control border border-rule-strong bg-accent-soft px-4 py-2 text-start text-accent-soft-fg"
                     onclick={() => onContinue(room.code)}
+                    data-act={`home-continue:${room.code}`}
                   >
                     <span class="flex min-w-0 flex-col gap-0.5">
                       <span class="font-semibold"
                         >{t('home.continueEntry', {
-                          mode: t(room.tutorial ? 'home.mode.tutorial' : MODE_LABEL[room.mode]),
+                          mode:
+                            room.game === 'haftgane'
+                              ? pickerT('lobby.haftgane')
+                              : t(room.tutorial ? 'home.mode.tutorial' : MODE_LABEL[room.mode]),
                           code: room.code
                         })}</span
                       >
@@ -309,32 +343,48 @@
 
         <nav aria-labelledby="{uid}-modes">
           <h2 id="{uid}-modes" class="sr-only">{t('home.modes')}</h2>
-          <ul class="flex flex-col gap-3 short:gap-2">
-            {#each modes as mode (mode.id)}
-              <li>
-                <button
-                  type="button"
-                  disabled={!ready}
-                  onclick={mode.onclick}
-                  class={[
-                    'flex min-h-16 w-full items-center gap-3 rounded-control border px-4 py-3 text-start shadow-panel short:min-h-14 short:py-2',
-                    'primary' in mode
-                      ? 'border-transparent bg-accent text-on-accent hover:brightness-105'
-                      : 'border-rule-strong bg-panel text-fg hover:bg-panel-sunken'
-                  ]}
-                >
-                  <mode.icon class="shrink-0" size={24} aria-hidden="true" />
-                  <span class="flex min-w-0 flex-1 flex-col">
-                    <span class="text-base font-semibold">{t(mode.label)}</span>
-                    <span class={['text-sm', 'primary' in mode ? 'opacity-90' : 'text-fg-muted']}>
-                      {t(mode.hint)}
+          {#if selectedGame === 'haftgane' && onNewTable}
+            <button
+              type="button"
+              disabled={!ready}
+              data-act="home-new-table"
+              onclick={onNewTable}
+              class="flex min-h-16 w-full items-center gap-3 rounded-control bg-accent px-4 py-3 text-start text-on-accent"
+              ><Users size={24} aria-hidden="true" /><span
+                ><span class="block font-semibold">{pickerT('lobby.new')}</span><span
+                  class="block text-sm">{pickerT('lobby.newHint')}</span
+                ></span
+              ></button
+            >
+          {:else}
+            <ul class="flex flex-col gap-3 short:gap-2">
+              {#each modes as mode (mode.id)}
+                <li>
+                  <button
+                    type="button"
+                    disabled={!ready}
+                    onclick={mode.onclick}
+                    data-act={`home-mode:${mode.id}`}
+                    class={[
+                      'flex min-h-16 w-full items-center gap-3 rounded-control border px-4 py-3 text-start shadow-panel short:min-h-14 short:py-2',
+                      'primary' in mode
+                        ? 'border-transparent bg-accent text-on-accent hover:brightness-105'
+                        : 'border-rule-strong bg-panel text-fg hover:bg-panel-sunken'
+                    ]}
+                  >
+                    <mode.icon class="shrink-0" size={24} aria-hidden="true" />
+                    <span class="flex min-w-0 flex-1 flex-col">
+                      <span class="text-base font-semibold">{t(mode.label)}</span>
+                      <span class={['text-sm', 'primary' in mode ? 'opacity-90' : 'text-fg-muted']}>
+                        {t(mode.hint)}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-          {#if onTutorial}
+                  </button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+          {#if selectedGame === 'duel' && onTutorial}
             <button
               type="button"
               disabled={!ready}

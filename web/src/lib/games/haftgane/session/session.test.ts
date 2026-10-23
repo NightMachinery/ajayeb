@@ -622,14 +622,20 @@ describe('the lobby', () => {
     const { session, connection, rooms } = setup(lobbyFrame());
     expect(session.lobby?.code).toBe(CODE);
     expect(session.table).toBeNull();
-    expect(rooms.remember).not.toHaveBeenCalled();
+    expect(rooms.remember).toHaveBeenCalledWith(
+      CODE,
+      'online',
+      expect.any(Number),
+      null,
+      'haftgane'
+    );
     expect(session.start(true)).toBe(true);
     expect(connection.last()).toEqual({ t: 'lobby-start', code: CODE, seq: 1, fillBots: true });
     connection.frame(tableFrame());
     expect(session.pending).toBeNull();
     expect(session.lobby).toBeNull();
     expect(session.table?.code).toBe(CODE);
-    expect(rooms.remember).toHaveBeenCalledTimes(1);
+    expect(rooms.remember).toHaveBeenCalledTimes(2);
   });
 
   it('shows a lobby refusal', () => {

@@ -66,6 +66,8 @@ import { Listeners, type TransportStatus, type Unsubscribe } from '$lib/session/
 import type { SavedRooms } from '$lib/session/rooms.svelte';
 import type {
   LobbyStart,
+  LobbyEdit,
+  LobbyRole,
   LobbyState,
   PlatformHuman,
   PlatformLink,
@@ -96,7 +98,8 @@ export interface RoomConnection {
   useClaim(claim: string | null): void;
 }
 
-type Request = TablePick | TableUndo | TableSeat | TableRole | TableResign | LobbyStart;
+type Request =
+  TablePick | TableUndo | TableSeat | TableRole | TableResign | LobbyStart | LobbyEdit | LobbyRole;
 
 export interface PendingRequest {
   readonly frame: Request;
@@ -187,6 +190,9 @@ export class TableSession {
   notice = $state.raw<Notice | null>(null);
   /** The device link's claim this connection plays with, if any. */
   claim = $state<string | null>(null);
+  rematchCode = $state<string | null>(null);
+  rematchClaim = $state<string | null>(null);
+  rematchAsked = $state(false);
   /** One entry per resolved batch, as the frames gave them. */
   history = $state.raw<readonly TableHistoryEntry[]>([]);
 
@@ -391,6 +397,33 @@ export class TableSession {
     return true;
   }
 
+  /** Sends a lobby edit over the same sequenced, retryable request lane. */
+  editLobby(edit: Omit<LobbyEdit, 't' | 'code' | 'seq'>): boolean {
+    if (!this.#ready || !this.lobby) return false;
+    this.#request({ ...edit, t: 'lobby-edit', code: this.code, seq: this.#nextSeq() });
+    return true;
+  }
+
+  lobbyRole(op: LobbyRole['op'], userId?: string): boolean {
+    if (!this.#ready || !this.lobby) return false;
+    const frame: LobbyRole = { t: 'lobby-role', code: this.code, seq: this.#nextSeq(), op };
+    if (op !== 'step-down') {
+      if (!userId) return false;
+      frame.userId = userId;
+    }
+    this.#request(frame);
+    return true;
+  }
+
+  /** Finished participants request a successor; everyone may follow an announced one. */
+  rematch(): boolean {
+    if (!this.table || this.table.status !== 'finished' || this.conn !== 'open') return false;
+    if (!this.rematchCode && this.seat === null) return false;
+    this.rematchAsked = true;
+    if (!this.rematchCode) this.#connection.send({ t: 'rematch', code: this.code });
+    return true;
+  }
+
   /**
    * Asks for a seat's device link (its own user or an admin may) and
    * resolves with its claim; with reset, the seat's old links stop working
@@ -540,8 +573,11 @@ export class TableSession {
         if (frame.code === this.code) this.#onLinked(frame.seat, frame.claim);
         break;
       case 'created':
-        // A rematch's successor; following it belongs to the lobby screens
-        // (M18.home-picker-and-lobby).
+        if (this.table?.status === 'finished') {
+          this.rematchCode = frame.code;
+          this.rematchClaim = frame.claim ?? null;
+          rememberEntryGame(frame.code, 'lobby');
+        }
         break;
     }
   }
@@ -576,10 +612,19 @@ export class TableSession {
       this.#settle();
     }
     this.#tables.emit(frame);
+    if (
+      this.rematchAsked &&
+      !this.rematchCode &&
+      frame.status === 'finished' &&
+      this.conn === 'open'
+    ) {
+      this.#connection.send({ t: 'rematch', code: this.code });
+    }
   }
 
   #onLobby(frame: LobbyState): void {
     this.lobby = frame;
+    this.#rooms?.remember(this.code, 'online', this.#now(), this.claim, 'haftgane');
     this.#answer(frame.ack);
     this.#afterJoin();
   }
