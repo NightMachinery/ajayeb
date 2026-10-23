@@ -177,6 +177,10 @@ MB resident, comfortably under the working target of 40 MB for this
 scenario (see [dev/ram-policy.md](dev/ram-policy.md) for the server's other
 budgets).
 
+`ajayeb-drive table` is a separate subcommand: the N-seat driver for
+Haftgane's simultaneous points, which needs no server (see "The N-seat table
+harness" below).
+
 ## The TypeScript fixture check
 
 The client's generated types (`web/src/lib/wire/*.gen.ts`, from `tygo`)
@@ -2023,3 +2027,175 @@ There is no Haftgane engine to mix into this baseline. The current driver
 does not record per-action/reveal p50/p95/p99 or bot queue/pool-hold times;
 the perf specs measure presentation, not server latency. Those measurements
 remain unavailable rather than inferred from whole-game time.
+
+## The N-seat table harness
+
+@Claude Opus 5.5, 2026-10-23 (M16.platform-interleaving-harness). Haftgane's
+room actor takes simultaneous picks from three to seven seats, so arrival
+order must decide nothing, and its hand game has far more hidden information
+than Duel. This harness lets the actor be built and tested before M15's
+engine exists. All of it is test infrastructure:
+`internal/haftgane/fakeengine/guard_test.go` fails if the server binary
+(`cmd/ajayeb`) reaches any of it, or if any non-test package outside the
+harness and `cmd/ajayeb-drive` imports it.
+
+Run its tests with `make test-go GO_PKGS='./internal/haftgane/...
+./internal/tabletest/... ./cmd/ajayeb-drive'`.
+
+### The fake engine (`internal/haftgane/fakeengine`)
+
+A small pure hand game with exactly the functions of
+[haftgane/engine-architecture.md](haftgane/engine-architecture.md) section 16:
+`NewGame`, `SeatOrder`, `Replay`, `Point`, `Legal`, `Resolve`, `ViewFor`,
+`History`, `Observe`, `Fingerprint`, `CheckInvariants`, `Batch` and `Pick`.
+Its types are its own (views in `fakeview`), so M16.haftgane-engine-contract
+can swap in the real engine mechanically. The package documentation states
+the rules. In short:
+
+- three to seven seats, two Ages of two simultaneous turns, hands of three
+  passed left and then right, Age 2 dealt at setup with an undealt box;
+- every turn's keys are `build:<design>:<left>:<right>` (the coins paid to
+  each neighbour), `tuck:<design>` and `sell:<design>`; a tuck or a sale is
+  private, and so are the leftover and kept cards;
+- one-seat points: the archive's holder salvages a design from the pile
+  after it tucks, and the orchard's holder plays its kept last card;
+- the end reveal shows every tucked card, the pile and the box, unless the
+  game was created with `HideAtEnd`.
+
+It follows the engine purity rules: standard library only, integers only, no
+maps, its own seeded streams, and no chance after `NewGame`. `purity_test.go`
+enforces them. `fakeengine_test.go` sweeps 400 random games at every seat
+count, under both seating rules and both end policies. After every point it
+checks the invariants, that replay matches play, that every view is free of
+`null`, and that history matches the live events. Its noninterference
+test, early in 200 games, replaces the other seats' hands, Age 2's deal and
+box, and the pile's contents. It requires each seat's view, observation and
+observation fingerprint, and the spectator's view, to stay the same.
+
+### The driver core (`internal/tabletest`)
+
+The driver speaks to a `Table`: `Snapshot` per client, `Submit` of
+`{seq, point, key, confirm}`, and `Canonical`, which returns the batches and
+the rules hash. A `Factory` opens a table at a prefix of batches.
+
+- `Play` takes every seat's snapshot and requires one **common snapshot**:
+  the same reference, point and required seats, with an offer for each
+  required seat only. It then builds each seat's **script** from that
+  snapshot with a seeded pick stream: optional drafts (a different pick
+  before the final one), optional **resends** (a copy with the same seq,
+  delivered later), or, in race mode, a confirmation followed by a change or
+  a withdrawal. Last, it merges the scripts in a seeded **arrival order**
+  that keeps each client's own order.
+- `CheckPoint` checks every reply against what the rules allow. A seq that
+  is not newer is a duplicate, and a refusal uses up no seq. An older seq
+  that changed nothing since is stale. Every arrival after the completing
+  confirmation is closed. The implied batch must equal the final picks.
+- `CompareSchedules` plays one game under many arrival seeds and requires
+  byte-identical canonical batches and hashes. `ExhaustPoint` replays one
+  point under every arrival order, on a fresh table each time.
+
+`internal/tabletest/direct` is the in-process adapter: a model actor over the
+fake that submits in the platform's acceptance order. The order is
+membership, then seq dedupe in a recency list (`SeqClients` bounds it, so
+small values make stale seqs), then the point reference, then the
+requirement and the offer, then staleness. Each change is cloned,
+validated, persisted and only then swapped in. Its `Record` and `Restore`
+are the room file this harness assumes. A WebSocket adapter plugs in as
+another `Factory`.
+
+The tests prove that the same seeds give the same trace and canonical
+history. Games at three to seven seats under eight arrival seeds, with
+drafts, resends and a two-client seq memory, must give one history that
+replays to its hash. Every arrival order of small points must give one
+batch: 90 at three seats, 2,520 at four seats, and a one-seat salvage
+point. Races must change the batch only through arrival. Six lying tables
+(a duplicate, a stale seq or a resolution reported as accepted, a false
+duplicate, a false close, and a false canonical batch) must each make
+`Play` fail.
+
+### The leak oracle (`internal/tabletest/leakcheck`)
+
+The oracle is independent of the code it checks. It builds the truth from the
+setup and the batches by reading the engine's state, never its views. It
+judges each document against that truth and against its own whitelist of
+the view's fields, decoded with unknown fields refused. Its detectors are:
+
+- `shuffle-id`: a card that is not a bare catalog slug, or a slug with a
+  copy or position suffix such as `amber#2`;
+- `deal-order`: a card list out of catalog order;
+- `raw-key`: an action key anywhere but the viewer's own offer, including in
+  events, the history and logs;
+- `hidden-card`: a card the viewer may not know there. That covers another
+  seat's hand, a sold, tucked, leftover or kept card in a public place, the
+  reveal before the end or with the reveal off, and any card in a log line;
+- `hash`: the seed, a game fingerprint, any seat's observation hash, or any
+  hex token of twelve digits or more;
+- `foreign-offer`: another seat's offered keys, salvage offer or private
+  section, or a private section shown to a spectator;
+- `order`: offered keys out of the engine's order, seats or history out of
+  order;
+- `unknown-field`: a field outside the whitelist;
+- `mismatch`: a public value that differs from the truth.
+
+A `View` or `History` document gets every detector. A whole wire `Frame`
+gets the field-independent ones (`raw-key`, `hash`, `shuffle-id`), with its
+own key paths allowed in `Config`. A `Log` gets the key, card and secret
+checks. `TestCleanFakePasses` checks every view and history of every viewer
+at every moment of forty games and requires no finding. `TestPlantedLeaksFail`
+plants 26 leaks in clean documents, covering the five the platform design
+names: a shuffle-derived id, a deal-ordered hand, a raw sold or tucked key,
+a pending or observation hash, and an opponent's offer, plus the ordering and
+whitelist cases. Each planted leak must be reported by its own detector.
+`TestLogCapture` checks the in-process table's captured log, then plants a
+key and a fingerprint in it. The truth builder and the whitelist are written
+for the fake's views; the engine-contract slice writes the same two for the
+real engine's.
+
+### Failure injection (`internal/tabletest/faults`)
+
+- `FileStore` writes the room record the way the room store does (temporary
+  file, sync, rename). It can fail a write, or crash before or after the
+  rename.
+- `PendingSubsets` enumerates every pending block a restore must accept:
+  each required seat with no pick, an unconfirmed pick or a confirmed pick,
+  minus the block that would have resolved. `InvalidPendings` lists five it
+  must refuse.
+- `Permits` is a counting work pool that reports held permits and waiters.
+  `Work` is a bot search that blocks until it is released or cancelled, and
+  counts its starts, finishes and cancellations.
+
+Their tests run them against `direct`:
+
+- a storage error discards the candidate and leaves the pick unapplied;
+- a crash before the rename restores the previous record, and the
+  submission can be retried;
+- a crash after the rename restores the resolved point, and a retried seq
+  is a duplicate;
+- every pending subset at turn points for three to seven seats, and at a
+  salvage and a last-card point, restores and completes to the same hash;
+- every invalid block, wrong hash, wrong reference and unoffered batch key
+  is refused;
+- cancelling bot work leaks no permit or waiter;
+- a room with no human attached starts no bot search.
+
+### `ajayeb-drive table`
+
+`ajayeb-drive table` runs the harness from the command line, with no server.
+It plays the fake game on the in-process table under `-schedules` arrival
+seeds per game, with `-drafts` and `-resends` percentages and a
+`-seq-clients` seq memory. It compares the canonical batches and hashes,
+optionally replays the first point under every arrival order (`-exhaust`
+with an order limit), and runs the leak oracle over every view, history,
+snapshot and log line (`-leaks`, on by default). It prints one summary line
+per game with the outcome counts and the hash, and exits 1 if any game
+failed. For example:
+
+```
+ajayeb-drive table -seats 3,4,5,6,7 -games 4 -schedules 8
+ajayeb-drive table -seats 4 -games 1 -drafts 100 -resends 0 -exhaust 3000
+ajayeb-drive table -seats 5 -race
+```
+
+Duel's driver is unchanged: `main` dispatches a first argument `table` to
+the new subcommand, and every other invocation goes to the same `run` as
+before.
