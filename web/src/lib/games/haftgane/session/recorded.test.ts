@@ -8,6 +8,7 @@
 // and its Presenter plays the resolution and only restates the rest.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { SeqCounters } from '$lib/entry/identity';
 import type { TableState } from '$lib/wire/platform.gen';
 import { FakeConnection } from './fake-connection';
 import { parseFrame } from './frames';
@@ -75,6 +76,7 @@ async function replay(id: string): Promise<Replay> {
     code: recording.code.toLowerCase(),
     claim: null,
     clientId: id,
+    seqs: new SeqCounters(),
     rateRetryMs: 10
   });
   const played: TableState[] = [];

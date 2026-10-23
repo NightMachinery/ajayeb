@@ -18,10 +18,13 @@
 // The Session logs no frame.
 //
 // Requests (docs/protocol.md, "Strict platform requests"): every one
-// carries this page's next seq (the client id is per page load, so the two
-// start fresh together). One is in flight at a time, from the moment it is
-// sent until a frame acknowledges its seq or a reject names it. Lobby Start
-// has no ack: the table's first frame answers it.
+// carries the next seq of this page's client id. The counter lives beside
+// the id for the whole page ($lib/entry/identity), not in the Session, so a
+// Session mounted again in the same page (Home and back) never repeats a
+// seq the table already took; a reload makes a new id, and a new counter
+// with it. One is in flight at a time, from the moment it is sent until a
+// frame acknowledges its seq or a reject names it. Lobby Start has no ack:
+// the table's first frame answers it.
 //
 // A pick is {point, key, confirm}: the open point's reference as the frame
 // gave it, a key of the choices, and whether the seat confirms. Sending the
@@ -48,7 +51,7 @@
 // sent again for the new seat. A revoked device link ends the connection
 // with error bad-claim, which the bootstrap turns into the room error.
 
-import { rememberEntryGame } from '$lib/entry/identity';
+import { entrySeqs, rememberEntryGame, type SeqCounters } from '$lib/entry/identity';
 import type { RoomListener } from '$lib/entry/bootstrap';
 import { Listeners, type TransportStatus, type Unsubscribe } from '$lib/session/transport';
 import type { SavedRooms } from '$lib/session/rooms.svelte';
@@ -115,6 +118,8 @@ export interface TableSessionOptions {
   claim: string | null;
   /** This page's client id, the one its hello carried. */
   clientId: string;
+  /** Where the client id's seq counter lives: the page's by default. */
+  seqs?: SeqCounters;
   /** Where rooms seen are remembered for Home; none in tests. */
   rooms?: Pick<SavedRooms, 'remember' | 'forget'> | null;
   slowMs?: number;
@@ -221,7 +226,7 @@ export class TableSession {
   #rateRetries: number;
   #linkTimeoutMs: number;
   #now: () => number;
-  #seq = 0;
+  #seqs: SeqCounters;
   #rateTries = 0;
   /** The undo in flight was sent again once already. */
   #undoResent = false;
@@ -242,6 +247,7 @@ export class TableSession {
     this.claim = opts.claim;
     this.#connection = opts.connection;
     this.#clientId = opts.clientId;
+    this.#seqs = opts.seqs ?? entrySeqs();
     this.#rooms = opts.rooms ?? null;
     this.#slowMs = opts.slowMs ?? 300;
     this.#rateRetryMs = opts.rateRetryMs ?? 250;
@@ -286,7 +292,7 @@ export class TableSession {
       {
         t: 'table-pick',
         code: this.code,
-        seq: this.#seq + 1,
+        seq: this.#nextSeq(),
         point: { id: f.point.ref.id, revision: f.point.ref.revision },
         key,
         confirm
@@ -312,7 +318,7 @@ export class TableSession {
   undo(): boolean {
     const f = this.table;
     if (!this.canUndo || !f) return false;
-    this.#request({ t: 'table-undo', code: this.code, seq: this.#seq + 1, base: f.revision });
+    this.#request({ t: 'table-undo', code: this.code, seq: this.#nextSeq(), base: f.revision });
     return true;
   }
 
@@ -324,7 +330,7 @@ export class TableSession {
         ? {
             t: 'table-seat',
             code: this.code,
-            seq: this.#seq + 1,
+            seq: this.#nextSeq(),
             seat,
             control: 'bot',
             bot: to.bot
@@ -332,7 +338,7 @@ export class TableSession {
         : {
             t: 'table-seat',
             code: this.code,
-            seq: this.#seq + 1,
+            seq: this.#nextSeq(),
             seat,
             control: 'human',
             userId: to.userId
@@ -344,7 +350,7 @@ export class TableSession {
   /** Promotes or demotes a user, or steps this user down. */
   role(op: 'promote' | 'demote' | 'step-down', userId?: string): boolean {
     if (!this.#ready || !this.table || this.table.status !== 'playing') return false;
-    const frame: TableRole = { t: 'table-role', code: this.code, seq: this.#seq + 1, op };
+    const frame: TableRole = { t: 'table-role', code: this.code, seq: this.#nextSeq(), op };
     if (op !== 'step-down') {
       if (!userId) return false;
       frame.userId = userId;
@@ -356,14 +362,14 @@ export class TableSession {
   /** Hands this seat to a bot and watches. */
   resign(): boolean {
     if (!this.canResign) return false;
-    this.#request({ t: 'table-resign', code: this.code, seq: this.#seq + 1, confirm: true });
+    this.#request({ t: 'table-resign', code: this.code, seq: this.#nextSeq(), confirm: true });
     return true;
   }
 
   /** Starts the lobby's game; open slots get bots when fillBots is set. */
   start(fillBots: boolean): boolean {
     if (!this.canStart) return false;
-    this.#request({ t: 'lobby-start', code: this.code, seq: this.#seq + 1, fillBots });
+    this.#request({ t: 'lobby-start', code: this.code, seq: this.#nextSeq(), fillBots });
     return true;
   }
 
@@ -416,8 +422,12 @@ export class TableSession {
 
   // Internals ----------------------------------------------------------------
 
+  #nextSeq(): number {
+    return this.#seqs.next(this.#clientId);
+  }
+
   #request(frame: Request, seat: number | null = null): void {
-    this.#seq = frame.seq;
+    this.#seqs.sent(this.#clientId, frame.seq);
     this.#undoResent = false;
     this.#track({ frame, seat, sentAt: this.#now() });
     this.notice = null;

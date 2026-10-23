@@ -3,6 +3,7 @@
 // outcome, reconnecting, reload restore, former-controller tabs, the
 // lobby's Start, device links and the bootstrap handover.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { entryIdentity, SeqCounters } from '$lib/entry/identity';
 import type { TableState } from '$lib/wire/platform.gen';
 import { FakeConnection } from './fake-connection';
 import { TableSession } from './session.svelte';
@@ -11,7 +12,17 @@ import { CHOICES, CODE, lobbyFrame, tableFrame } from './test-frames';
 const KEY = CHOICES[0]!.key;
 const OTHER = CHOICES[1]!.key;
 
-function setup(first: unknown = tableFrame(), claim: string | null = null) {
+/** A page's client id and its seq counter; each test is a page of its own. */
+interface PageIds {
+  clientId: string;
+  seqs: SeqCounters;
+}
+
+function setup(
+  first: unknown = tableFrame(),
+  claim: string | null = null,
+  page: PageIds = { clientId: 'tab', seqs: new SeqCounters() }
+) {
   const connection = new FakeConnection();
   connection.latest = first;
   const rooms = { remember: vi.fn(), forget: vi.fn() };
@@ -19,7 +30,8 @@ function setup(first: unknown = tableFrame(), claim: string | null = null) {
     connection,
     code: CODE.toLowerCase(),
     claim,
-    clientId: 'tab',
+    clientId: page.clientId,
+    seqs: page.seqs,
     rooms,
     rateRetryMs: 10
   });
@@ -361,6 +373,72 @@ describe('former-controller tabs', () => {
     expect(session.pending).toBeNull();
     expect(session.seat).toBeNull();
     expect(session.notice?.code).toBe('watching');
+  });
+});
+
+describe('the seq counter', () => {
+  it('goes on from the last seq when the Session mounts again in the same page', () => {
+    const page = { clientId: 'page', seqs: new SeqCounters() };
+    const a = setup(tableFrame(), null, page);
+    expect(a.session.pick(KEY)).toBe(true);
+    expect(a.connection.last()).toMatchObject({ seq: 1, key: KEY });
+    a.connection.frame(
+      tableFrame({ ack: { clientId: 'page', seq: 1 }, pending: { key: KEY, confirm: false } })
+    );
+    a.session.close();
+    // Home and back: a new Session over the frame the server restores the
+    // pending pick in.
+    const b = setup(tableFrame({ history: [], pending: { key: KEY, confirm: false } }), null, page);
+    expect(b.session.table?.pending).toEqual({ key: KEY, confirm: false });
+    expect(b.session.pick(OTHER)).toBe(true);
+    expect(b.connection.last()).toMatchObject({ seq: 2, key: OTHER });
+    b.connection.frame(
+      tableFrame({ ack: { clientId: 'page', seq: 2 }, pending: { key: OTHER, confirm: false } })
+    );
+    expect(b.session.pending).toBeNull();
+  });
+
+  it('starts again at 1 under the new client id a reload makes', () => {
+    const seqs = new SeqCounters();
+    const a = setup(tableFrame(), null, { clientId: 'before', seqs });
+    a.session.pick(KEY);
+    a.session.close();
+    const b = setup(tableFrame({ history: [], pending: { key: KEY, confirm: false } }), null, {
+      clientId: 'after',
+      seqs
+    });
+    expect(b.session.pick(OTHER)).toBe(true);
+    expect(b.connection.last()).toMatchObject({ seq: 1, key: OTHER });
+    // Acknowledgements match the id this page's hello carried, not the old one.
+    b.connection.frame(
+      tableFrame({ ack: { clientId: 'before', seq: 1 }, pending: { key: KEY, confirm: false } })
+    );
+    expect(b.session.pending).not.toBeNull();
+    b.connection.frame(
+      tableFrame({ ack: { clientId: 'after', seq: 1 }, pending: { key: OTHER, confirm: false } })
+    );
+    expect(b.session.pending).toBeNull();
+  });
+
+  it('keeps the counter beside the page identity when none is given, as the entry does', () => {
+    const clientId = entryIdentity().clientId;
+    const mount = (first: TableState) => {
+      const connection = new FakeConnection();
+      connection.latest = first;
+      return {
+        connection,
+        session: new TableSession({ connection, code: CODE, claim: null, clientId })
+      };
+    };
+    const a = mount(tableFrame());
+    expect(a.session.pick(KEY)).toBe(true);
+    const seq = a.connection.last()!.seq as number;
+    a.session.close();
+    const b = mount(tableFrame({ history: [], pending: { key: KEY, confirm: false } }));
+    expect(entryIdentity().clientId).toBe(clientId);
+    expect(b.session.pick(OTHER)).toBe(true);
+    expect(b.connection.last()!.seq).toBe(seq + 1);
+    b.session.close();
   });
 });
 
