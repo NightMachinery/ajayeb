@@ -48,6 +48,8 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below). Its `Pool` bounds the searches running at once and shares them fairly between client addresses, so one address's many bot rooms cannot hold up another's bot.
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
 - **`internal/tableroom`**: Haftgane's table room kind, a separate actor beside Duel's (see "The table actor" below). Until the real engine is linked it plays the fake engine through one seam file.
+- **`internal/lobbyroom`**: the shared lobby room kind (D60), where a group gathers before a game; its Start hands a filled table to `tableroom` under the same code (see "The shared lobby" below).
+- **`internal/roles`**: the admin roles of D42, shared by the lobby and the table: real admins and who promoted them, demotion and stepping down, and the temporary admin of the five-minute rule, all persisted, with the clock passed in.
 - **`internal/store`**: one JSON file per room, written atomically (temporary file, sync, rename), plus a reaper for old rooms with an injectable clock. It refuses to read a room file larger than a cap derived from what a room can hold.
 - **`internal/ident`**: the server secret and the HMAC-derived user ids. The secret file must be a regular file, and one other users could read is tightened to mode 0600.
 - **`internal/wire`**: the client and server message types.
@@ -58,8 +60,9 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 
 ### Room-kind composition
 
-`cmd/ajayeb` builds one closed `room.Kinds` table: `DuelKind` and Haftgane's
-table kind (`tableroom.Tables.Kind`). Each stable game id binds create, cold-join admission and load
+`cmd/ajayeb` builds one closed `room.Kinds` table: `DuelKind`, Haftgane's
+table kind (`tableroom.Tables.Kind`) and the shared lobby
+(`lobbyroom.Lobbies.Kind`). Each stable game id binds create, cold-join admission and load
 callbacks to its file codec. `NewKinds` rejects duplicate or incomplete
 registrations and mismatched codec ids before startup. Its `Codecs()` table is
 passed to the store, reaper and read-only preflight; there is no second list of
@@ -99,10 +102,12 @@ families.
 
 `internal/tableroom` is Haftgane's room kind (M16.haftgane-room-actor). Its
 `Kind` is always registered, so saved tables load, play and archive; only
-creating one is switched off. Until the lobby ships, a table is made by the Go
-API `CreateTable` (a seat list, optional seed and prefix batches) or the
-development endpoint `POST /api/dev/tables`, both refused unless the server
-runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
+creating one is switched off. A lobby's Start makes a table under the lobby's
+code (`StartTable`, below). The Go API `CreateTable` (a filled seat list,
+optional seed, roles and prefix batches) and the development endpoint
+`POST /api/dev/tables` make one directly. Creating a lobby, or a table
+directly, is refused unless the server runs with `-haftgane-tables` (which
+needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
 
 - **Engine seam.** `engine.go` is the only file that names an engine: today
   the fake engine (`internal/haftgane/fakeengine`, whose rules version 1000
@@ -110,13 +115,19 @@ runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
   the real engine replaces it). M16.haftgane-engine-contract swaps this file.
   The import guard lets production code reach the fake engine only through
   this package.
-- **Record.** One schema-2 file per table, `game: "haftgane"`, with its rules
-  version, setup (seed, seat count, seating rule, end reveal), seat
-  assignment, seats, roles, undo policy, the complete canonical batches, the
-  rules hash, the two revision counters, the open point's reference, the
-  pending block (each required seat's key, confirmed flag and per-client
-  seq floors, bounded per user), the seq memory (bounded per user), the
-  bots' work rows and the room log. Restore
+- **Record.** One schema-2 file per table, `game: "haftgane"`, with its
+  format, rules version, setup (seed, seat count, seating rule, end reveal),
+  seat assignment, the Start-time slots, seats (each with the revision its
+  human took it at and its device-link epoch), roles, the seat each former
+  player held last, undo policy, the complete canonical batches, the rules hash, the
+  two revision counters, the open point's reference, the pending block (each
+  required seat's key, confirmed flag and per-client seq floors, bounded per
+  user), the seq memory (bounded per user and kept only for users with
+  authority, plus a bounded list of retired ones), the bots' work rows, the
+  room log and the rematch's code. The format field names the record's
+  semantics: a reader refuses a newer format and leaves the file untouched,
+  and upgrades an older one explicitly instead of relying on unknown-field
+  lenience. Restore
   validates all of it and replays the batches; a hash mismatch alone is
   refreshed in place, a rules-version mismatch or a failed replay archives the
   file (D29), and an invalid pending block counts as a failed replay. Unknown
@@ -130,16 +141,34 @@ runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
   completes a point's required set appends one sorted batch, resolves it and
   opens the next point in that same write.
 - **Revisions and references.** The public revision advances on what every
-  viewer sees (confirmation flips, resolutions, undo, seats taken); each
-  seat's edit count advances on its other accepted picks, which reach only
-  that seat's connections. Frames carry the public revision plus the viewer's
-  own edit count. A point reference is the logical id and the public revision
+  viewer sees (confirmation flips, resolutions, undo, seat switches,
+  resignations, role changes, relinks); each seat's edit count advances on
+  its other accepted picks, which reach only that seat's connections, and
+  starts again at every public change. Frames carry the public revision
+  times 2^20 plus the viewer's seat's edit count, so a switch never takes a
+  connection's revision backwards. A point reference is the logical id and the public revision
   at its opening, so it is fresh after an advance or an undo and unchanged
   across a restart, and it never counts anyone's private edits.
 - **Frames.** Each broadcast builds one frame per role (a seated viewer, or
   the one spectator role) through the engine's whitelist view and caches it
   for that broadcast; a connection's frame adds only its own pending pick and
-  ack. Events and history carry public outcomes only.
+  ack, and an admin's adds the previous-seat hint. Events and history carry
+  public outcomes only, redacted for the viewer's seat; a connection's first
+  frame after its seat changes carries its whole history again.
+- **Roles, switches and resignation.** Package `roles` decides every role
+  change and the temporary admin; a timer on the injected clock rechecks the
+  five-minute rule. An admin seats any spectator in any seat or gives a seat
+  to a bot; the switch keeps the pending pick (a bot confirms it), rewrites
+  the open point's work rows, stops or starts the bot, and logs a public
+  entry. A resignation hands the sender's seat to a bot of the lowest level.
+  Either revokes the device links of the seat's former user.
+- **Links and rematch.** A connection joining with a seat's claim acts as
+  that seat's user. A claim's epoch is the public revision when the seat's
+  human took it or relinked it, so a relink or a change of the seat's user
+  revokes the claims before it, and their connections are detached. A
+  finished table's original human asks for its one rematch: package
+  `lobbyroom` makes the successor lobby through the `Successors` interface,
+  and the table keeps its code.
 - **Undo.** Only the original sole human, while still controlling their seat,
   with undo allowed at creation; it is off for good once a second human takes
   a seat. It cuts back before the latest batch holding that seat's decision
@@ -162,6 +191,24 @@ runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
 - **Game log.** A finished table with the final reveal on serves
   `ajayeb-log/2`: setup, complete batches and the rules hash, checked by a
   strict replay before it is served ([protocol.md](protocol.md#downloading-a-games-log)).
+
+### The shared lobby
+
+`internal/lobbyroom` is the `lobby` room kind (D60, M16.haftgane-lobby-and-roles):
+a small actor and a schema-2 record (format, seat count, options, slots that
+are open, reserved, human or bot, roles, the users who released or were
+removed, the seq memory and a role log), changed by the same clone, validate,
+write, publish transaction as the table. It knows no game rules. Start, by a
+seated admin, builds the table's spec from the slots and roles and calls
+`tableroom.Tables.StartTable`, which writes the table's record in place of the
+lobby's (`store.ReplaceGame`, which requires the lobby's live record under that
+code) and builds the table's actor with the lobby's connections. The lobby then
+swaps its handle for the table's (`room.Manager.Swap`), so the code and every
+connection move together. A detach that reaches the lobby during the swap is
+forwarded to the table; a join that arrives after it is retried on the
+table, and a lobby request is refused, so nothing is lost or applied twice. Two seats are refused until Duel's create
+path exists (M18.shared-lobby). A table's rematch is a new lobby made here,
+with the original humans' slots reserved for them.
 
 ## App shell
 

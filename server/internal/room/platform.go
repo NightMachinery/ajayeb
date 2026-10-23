@@ -23,7 +23,8 @@ func protocolGate(c *Client, kind string) error {
 }
 
 // CreatePlatform has a closed creation table. A request cannot select a codec,
-// constructor or package. No lobby/Haftgane kind is registered in production yet.
+// constructor or package. Production registers the lobby kind, whose Create
+// refuses until -haftgane-tables allows it.
 func (m *Manager) CreatePlatform(ctx context.Context, c *Client, req wire.LobbyCreate) (string, error) {
 	return m.createKind(ctx, c, "lobby", req)
 }

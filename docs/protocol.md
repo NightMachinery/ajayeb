@@ -882,11 +882,14 @@ Version 2 adds these frozen client families: `table-pick`, `table-undo`,
 `lobby-role`, `lobby-start`. Their server families are `table-state`,
 `table-reject`, `lobby-state` and `lobby-reject`. The Go DTOs live in
 `wire/platform.go`, `table.go` and `lobby.go`; `make gen` writes their separate
-`platform.gen.ts`. Since M16.haftgane-room-actor the Haftgane table kind (its
-codec, restore and actor, `internal/tableroom`) is registered, so saved tables
-load, play and archive. No lobby is registered yet, so `lobby-create` still
-answers `forbidden`, and a table is created only through the development path
-(`POST /api/dev/tables` on a server started with `-haftgane-tables`).
+`platform.gen.ts`. The Haftgane table kind (its codec, restore and actor,
+`internal/tableroom`, since M16.haftgane-room-actor) and the shared lobby kind
+(`internal/lobbyroom`, since M16.haftgane-lobby-and-roles) are registered, so
+saved tables and lobbies load, play and archive. Creating either stays behind
+the server's `-haftgane-tables` switch until the lobby's client ships. Without
+it, `lobby-create` answers `forbidden`. With it, `lobby-create` makes a lobby
+whose Start makes the table (below), and the development path
+(`POST /api/dev/tables`) still makes a filled table directly.
 
 A v1 table/lobby request or a v1 join of any non-Duel room receives the
 existing `error` with `code: "protocol"`. Join refuses before admission,
@@ -929,25 +932,34 @@ All table requests carry `t`, `code` and nonnegative `seq`:
   Only the original sole human while still controlling their seat can undo,
   if the Start policy allowed it and no second human has since taken a seat.
 - `table-seat` adds `seat` (0 through 6), `control` (`human` or `bot`), and
-  exactly one of `userId` (a spectator to seat) or `bot` (difficulty).
-  An admin switch keeps the seat's pending pick. A bot confirms it; a newly
-  seated human may change it. The replaced human becomes a spectator.
+  exactly one of `userId` (a spectator to seat) or `bot` (difficulty; a
+  client offers the lowest released level, `easy`, first). An admin may seat
+  any connected spectator in any seat. The switch keeps the seat's pending
+  pick. A bot confirms it; a newly seated human may change it. The replaced
+  human becomes a spectator, and the claims of the seat's former user are
+  revoked (Device links). At a table that started with one human, seating
+  anyone else turns `undoOff` on for good.
 - `table-role` adds `op`: `promote` or `demote` requires `userId`;
   `step-down` forbids it and targets the sender. Temporary admins cannot
   promote or demote; the actor enforces creator and promotion ownership.
 - `table-resign` adds required `confirm: true`. It replaces the sender with a
-  bot and does not award a terminal victory.
+  bot of the lowest released level and does not award a terminal victory.
+  The sender becomes a spectator, and its seat's claims are revoked.
 
 The point reference persists while a point remains open, including across
 restart. Advance or undo opens a fresh reference derived from the logical
 id and the public revision, without an epoch or pending hash. The table keeps
 two durable counters. The public revision advances only on changes every
 viewer sees: a confirmation turning on or off, a resolution, an undo, a seat
-taken. Each seat's edit count advances on that seat's other accepted picks
-(a changed key that stays unconfirmed). A frame's `revision` is the public
-revision plus the viewer's own edit count, and a spectator's is the public
-revision, so it never goes backwards for a viewer and says nothing about
-anyone else's edits. A reference built from a revision that counted private
+switch, a resignation, a role change or a relink. Each seat's edit count
+advances on that seat's other accepted picks (a changed key that stays
+unconfirmed) and starts again at zero with every public change. A frame's
+`revision` is the public revision times 2^20 plus the viewer's seat's edit
+count, and a spectator's is the public revision times 2^20. A seat past
+2^20 - 1 edits is refused with `rate` until the next public change. So a
+viewer's revision never goes backwards, also when a seat switch moves the
+viewer from a seat with many edits to another seat or to watching, and it
+says nothing about anyone else's edits. A reference built from a revision that counted private
 edits would publish their frequency, which is why references use the public
 one. Revisions never wrap or repeat. Only the logical id enters canonical
 batches and bot entropy.
@@ -1001,6 +1013,51 @@ Other lobby requests carry `t`, `code` and nonnegative `seq`:
   explicitly fills open slots. Reserved seats must first be opened; they
   are never silently filled. There is no ready or roster-revision counter.
 
+### Shared lobby, Start and rematch
+
+A lobby's creator takes its first slot and is its one real admin. A human
+who joins takes the slot reserved for them, or else the first open slot,
+unless they released their slot or were removed earlier in this lobby:
+then, like everyone who finds no open slot, they watch until an admin
+seats them. A joiner whose name is invalid also watches, unless a slot is
+reserved for them, which keeps its reserved name. `add-bot` and
+`seat` fill an open slot only; `remove-bot`, `remove-human`, `release` and
+`open-reservation` open one. `seats` changes the count: slots past a
+smaller count go, and their humans watch. Roles follow `table-role`'s
+policy, temporary admin included, and the lobby's `roomLog` records the
+role changes; its seats show everything else. `link`, `relink` and
+`rematch` answer `bad-request` in a lobby: a lobby has no device links of
+its own, and its rematch is the game's. A connection that joins with a
+claim the rematch handed out (below) acts as that claim's user, in the
+lobby and in the game it starts.
+
+`canStart` tells the viewer whether they may start now: a seated admin, real
+or temporary, at three to seven seats, with no reserved slot left (open
+slots are fine, since `fillBots` can fill them). Start answers `forbidden`
+when that does not hold or when open slots remain without `fillBots`. Two
+seats answer `forbidden` until Duel's create path exists
+(M18.shared-lobby). Start writes the table in place of the lobby under the
+same code and hands every connection over: each connection's next frame is
+the table's first, the sender's included, which acknowledges Start in
+place of an `ack`. The table's seats follow the lobby's slots under
+`seating: lobby`, and are drawn at random otherwise. Its roles, promoters
+and temporary status are the lobby's.
+
+A finished table has at most one rematch. Any human who held a seat at
+Start may ask for it with `rematch`, also after leaving that seat. The
+successor is a lobby with the old seat count and options, each Start-time
+bot at its level, and each original human's slot reserved for them; the
+requester is its creator and only admin. Every connection then receives
+`created` with its code. A connection acting through an original human's
+claim also receives that human's claim in the successor, which its
+reserved slot accepts. A repeated request answers the same code to its
+sender alone. Making the successor counts against the requester's
+room-creation limits, as Duel's rematch does. A rematch while the game
+runs, or with no lobby kind registered, answers `bad-request`; from a
+human who was not seated at Start, or with creation switched off,
+`forbidden`; past the limits, `rate`. Refusals come as `table-reject` with
+seq 0.
+
 ### Platform snapshots and rejects
 
 `table-state` carries `t`, `game: "haftgane"`, `code`, `revision`, `batch`,
@@ -1029,8 +1086,11 @@ JSON or serializes engine state.
 
 `events` holds the public outcomes of the resolution this frame announces,
 and is empty in any other frame. `history`, sent in join, resync and undo
-frames, is the complete list of `{batch, events}` entries, one per resolved
-batch. An event is `{kind, seat, play, design, stage, left, right, age, pass}`.
+frames, and in a connection's first frame after its seat changes (a switch
+or a resignation moves it to another seat or to watching), is the complete
+list of `{batch, events}` entries, one per resolved batch, redacted for the
+frame's viewer. The events a connection received before a seat change were
+redacted for its old seat, so it replaces them. An event is `{kind, seat, play, design, stage, left, right, age, pass}`.
 Its `design` names a card only when this viewer may know it: anyone for a
 build or a salvage, only the seat itself for its own tuck, sale, leftover or
 kept card. Events never carry submitted keys. Collections are JSON arrays,
@@ -1050,8 +1110,10 @@ Both snapshots use these fixed metadata shapes:
   temporary status persist. A returning real admin removes temporary status;
   selection of a temporary admin follows the five-minute absence policy.
 - `you` is `{userId}` with optional current `seat`. Only an admin's own
-  `you` may also carry `previousSeats`, a list of `{userId, seat}` hints for
-  spectators. Former controllers and ordinary spectators receive no hints.
+  `you` may also carry `previousSeats`, a list of `{userId, seat}` hints:
+  each connected spectator who held a seat earlier in this game, with the
+  seat they held last. Former controllers and ordinary spectators receive
+  no hints. A lobby frame never carries them.
 - `roomLog` is the bounded public log, with entries `{kind, at, by}` and
   optional `userId`, `seat`, `control`, `role`. Kind is `seat`, `role`,
   `resign` or `link`; `at` is a completed batch count (zero in the lobby),
@@ -1152,6 +1214,19 @@ check is constant-time.
   `ajayeb:rooms`, and opening a device link never asks for a display name.
 - **Revocable.** `relink` raises the epoch, which revokes every claim made
   before it and detaches the connections using one.
+
+In a Haftgane table (protocol 2), seats 0 through 6 have links. A seat's
+epoch is the table's public revision when its current human took it or last
+relinked it, and 0 for the seats filled at Start, so one user's claims for
+two seatings never coincide. Only the seat's own user or an admin, real or
+temporary, may `link` or `relink` it, and `linked` goes to the sender alone.
+A relink adds a `link` entry to the room log. A switch or a resignation that
+takes the seat from its user revokes that user's claims for it in the same
+way: each connection using one receives `error` with `bad-claim` and is
+detached. A connection that relinks the seat it joined with a claim for
+keeps its place under the new claim. A lobby has no `link` or `relink`; its
+only claims are those a rematch hands out, with epoch 0, which the slot
+reserved for their user accepts, and so does the table it starts.
 
 **Security.** A device link is a password for that seat in that room:
 whoever holds it plays as that player there (as the admin too, for the
@@ -1438,19 +1513,22 @@ Each entry has the `seat` that plays it, its `key`, the `lessons` shown
 before it, and, on the player's entries, the `action`. A bot entry has empty
 `lessons` and no `action`.
 
-`POST /api/dev/tables` creates a Haftgane table from a seat list, on a server
-started with `-haftgane-tables` (which requires `-dev` and `-dev-endpoints`);
-without it the answer is 403 `creation-off`. `seats` are the lobby slots,
-three to seven: `{}` is an open human seat, which the first users to join
-without a seat take in seat order, and `{"bot": "easy"}` (or `normal`,
-`hard`) a bot. `seed`, `randomSeating`, `hideAtEnd`, `allowUndo` and `prefix`
-(complete batches `{point, picks: [{seat, key}]}` resolved before the table
-opens, checked by a replay) are optional. A table made here has no creator
-and so no admin. A seat list or prefix the table refuses answers 400
-`invalid-table`.
+`POST /api/dev/tables` creates a filled Haftgane table from a seat list, the
+direct path beside a lobby's Start, on a server started with
+`-haftgane-tables` (which requires `-dev` and `-dev-endpoints`); without it
+the answer is 403 `creation-off`. `seats` are the lobby slots, three to
+seven, every one filled: `{"userId": ..., "name": ...}` is a human, by the
+user id their `welcome` frame named, and `{"bot": "easy"}` (or `normal`,
+`hard`) a bot. `creator`, a seated human's user id, makes that human the
+table's one real admin; without it the table has no real admin, so the
+temporary-admin rule applies at once. `seed`, `randomSeating`, `hideAtEnd`,
+`allowUndo` and `prefix` (complete batches `{point, picks: [{seat, key}]}`
+resolved before the table opens, checked by a replay) are optional. A seat
+list or prefix the table refuses answers 400 `invalid-table`.
 
 ```json
-{"seats": [{}, {"bot": "easy"}, {"bot": "normal"}], "seed": "7", "allowUndo": true}
+{"seats": [{"userId": "3f9c...", "name": "Sara"}, {"bot": "easy"}, {"bot": "normal"}],
+ "creator": "3f9c...", "seed": "7", "allowUndo": true}
 ```
 
 ```json

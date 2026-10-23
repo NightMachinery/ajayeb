@@ -195,8 +195,8 @@ contract (`internal/tabletest`), by two adapters. The in-process adapter
 on the actor's goroutine and keeps every frame it pushed. The WebSocket
 adapter (`ws_test.go`, the external test package) drives the same tables
 over the real stack, wired as `cmd/ajayeb` wires it: the schema-2 store,
-the Manager with both kinds, `ws` and `httpapi` behind an `httptest`
-server. It sees only frames: a snapshot is the latest frame after a resync,
+the Manager with every kind (Duel, the table and the lobby), `ws` and
+`httpapi` behind an `httptest` server. It sees only frames: a snapshot is the latest frame after a resync,
 an outcome is read from the reject or the acknowledging frame, and the
 canonical history is the `ajayeb-log/2` download.
 
@@ -230,6 +230,21 @@ canonical history is the `ajayeb-log/2` download.
   every pending subset (and an invalid pending block archiving as
   `replay-failed`), and the compatibility paths: hash refresh keeping
   unknown fields, rules-version archive, unknown schema or game untouched.
+- `switch_test.go` covers seat switches before and after a pick and its
+  confirmation (a bot taking the seat confirms the kept pick or starts
+  work; a seated spectator may still change it; the human replaced
+  watches), undo turned off for good when a second human sits, roles under
+  an injected clock (promotion and demotion limits, the temporary admin
+  made after five minutes away, kept across a restart, passed on and
+  demoted when a real admin returns) and resignation. Each checks that
+  only admins see the previous-seat hint, every change reaches every
+  viewer's log, and no viewer's revision goes back.
+- `links_test.go` covers device links (who may link a seat, a connection
+  joining with a claim acting as the seat's user, admin powers included,
+  revocation by a relink and by a switch, bad and revoked claims refused)
+  and the rematch's refusals and creation limit. `actor_test.go` also
+  refuses a record of a newer format untouched and upgrades the room
+  actor's format-0 record.
 - `bots_test.go` plays one human against bots at 3 to 7 seats through
   `ai.Pool`, checks the no-human pause (a spectator alone starts nothing,
   the last human leaving cancels the job and frees its permit, a restart
@@ -262,7 +277,13 @@ canonical history is the `ajayeb-log/2` download.
   every key, the rules and observation hashes). `TestWebSocketTables`
   repeats the frame check on the raw bytes each connection received, and
   plants another seat's pending pick in a spectator's and a seat's frame
-  received over the socket.
+  received over the socket. The envelope also requires that only an
+  admin's frame carries the previous-seat hint and that the hint names no
+  seated user. Where viewers change, the oracle takes one viewer per frame
+  and requires a connection's first frame for a new seat to carry its
+  history: `TestSwitchFramesLeakNothing` checks every frame across
+  switches, role changes and a resignation against the viewer the test's
+  own model gives it, with planted cases for both rules.
 - `FuzzTableOps` (`fuzz_test.go`) drives one table through fuzzed picks,
   changes and confirmations from every seat, a second tab and the
   spectator, new tabs that open, pick and close under fresh client ids,
@@ -272,15 +293,46 @@ canonical history is the `ajayeb-log/2` download.
   operation the record in memory must equal the stored bytes, the stored
   record must restore with a matching rules hash, no frame revision may go
   backwards, and a restart keeps every pick, confirmation and reference. A
-  refusal or a duplicate must leave the stored bytes alone.
+  refusal or a duplicate must leave the stored bytes alone. Seat switches to
+  bots of any level and to any person, role changes from any client,
+  resignations and rematches (through a stub successor maker) are among its
+  operations, and bots act only when the fuzzer says so.
 - `TestWebSocketRestart` restarts the server on the same data directory with
   a confirmed pick pending and finishes the game: the pick lands in the
   first batch of the downloaded log.
+- `TestWebSocketLobbyToTable` (`lobby_ws_test.go`) runs the whole platform
+  path over the socket at 3 to 7 seats, with a spectator and two device
+  links: a lobby filled by joins and a bot, a lobby promotion, Start
+  moving every connection to the table under the same code, a switch to a
+  bot that revokes that seat's device, the spectator seated, a demotion and
+  a resignation, every connection's log the same, the game played out with
+  the bots, and every frame through the oracle against its viewer at that
+  frame's log length. Odd seat counts hide the cards at the end: the log
+  download answers `log-hidden` and no final frame carries the reveal; even
+  counts reveal it in every final frame. Then the rematch reaches every
+  connection, the device linked to the creator's seat follows with its new
+  claim, and the rematch lobby starts again.
 
 Run the socket tests with the race detector, through the guard, from the
 repository root:
 
     python3 tools/heavy.py run --kind test -- go -C server test -race -short -run WebSocket ./internal/tableroom/
+
+## `internal/lobbyroom`: the shared lobby
+
+`lobby_test.go` runs lobbies in process through the real Manager and store,
+beside the table kind. `TestLobbyEditsAndStart` walks a lobby from creation
+to Start (joins, a removed human staying out, bots, a seated spectator, a
+seat count change, a release, the refusal order, a repeated seq) and checks
+that Start hands every connection the table under the same code with the
+roles carried on. `TestStartRefusals` covers two seats, a reservation not yet
+opened and a failed write that leaves the lobby as it was.
+`TestLobbyRolesAcrossRestart` persists promotions, the temporary admin and
+the unseated list across a restart, and lets the temporary admin start.
+`TestDetachAcrossStart` races a detach against Start twenty times: it is
+never lost. `TestRematch` checks the successor lobby a finished table makes.
+Package `roles` has its own unit tests of the role policy and the
+five-minute rules at explicit times.
 
 ## `ajayeb-drive`: a thin client against a running binary
 
