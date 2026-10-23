@@ -32,6 +32,17 @@
         {"id": "science-wheel", "sm": "science-wheel-sm", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"}
       ]
     },
+    "haftgane-resources-science": {
+      "title": "Haftgane: ore, cloth, compass, tablet and the small gear",
+      "neighbours": ["resource-wood", "resource-clay", "resource-stone", "resource-glass", "resource-papyrus", "category-grey", "category-red", "chain-book", "chain-lyre", "science-set-square", "science-wheel"],
+      "icons": [
+        {"id": "resource-ore", "sm": "resource-ore-sm", "file": "web/src/lib/games/haftgane/icons/svg/resource-ore.svg", "smFile": "web/src/lib/games/haftgane/icons/svg/resource-ore-sm.svg", "ink": "var(--res-stone-ink)", "tile": {"bg": "var(--res-stone)", "ink": "var(--paper-bright)"}, "band": "brown"},
+        {"id": "resource-cloth", "sm": "resource-cloth-sm", "file": "web/src/lib/games/haftgane/icons/svg/resource-cloth.svg", "smFile": "web/src/lib/games/haftgane/icons/svg/resource-cloth-sm.svg", "ink": "var(--res-papyrus-ink)", "tile": {"bg": "var(--res-papyrus)", "ink": "var(--card-ink)"}, "band": "grey"},
+        {"id": "science-compass", "sm": "science-compass-sm", "file": "web/src/lib/games/haftgane/icons/svg/science-compass.svg", "smFile": "web/src/lib/games/haftgane/icons/svg/science-compass-sm.svg", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-tablet", "sm": "science-tablet-sm", "file": "web/src/lib/games/haftgane/icons/svg/science-tablet.svg", "smFile": "web/src/lib/games/haftgane/icons/svg/science-tablet-sm.svg", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"},
+        {"id": "science-gear", "sm": "science-gear-sm", "file": "web/src/lib/icons/svg/chain-gear.svg", "smFile": "web/src/lib/games/haftgane/icons/svg/science-gear-sm.svg", "ink": "var(--card-green)", "i2": "var(--paper-bright)", "band": "green"}
+      ]
+    },
     "chain": {
       "title": "Chain symbols",
       "icons": [

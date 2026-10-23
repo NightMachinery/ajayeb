@@ -144,6 +144,8 @@ Reuse wood, clay, stone, glass and papyrus, each with its existing md and sm dra
 - **Ore:** a low trapezoidal metal ingot with one broad bevel. It must differ from irregular stone, rectilinear clay bricks and the anvil category glyph. Do not rely on grey colouring to distinguish it.
 - **Cloth:** a folded bolt with one broad hanging fold and a notched fringe. It must differ from the papyrus roll, bundled wood and the tablet science symbol.
 
+Drawn in M19.vectors-resources-and-science: spec and log in `art/vector/specs/haftgane-resources-science.md` and `art/vector/log/haftgane-resources-science.md`, sources in `web/src/lib/games/haftgane/icons/svg/`.
+
 Choice production composes the existing choice marker and resource tiles; seven resources do not require seven new choice symbols. Directional trade discounts compose the price tag, family symbols and a neighbour-direction marker.
 
 ### Science: two new concepts, one adapted concept
@@ -153,6 +155,8 @@ Use compass, gear and tablet consistently; none inherits Duel's pair/token or in
 - **Compass:** new md and sm drawings of an open drafting compass, two legs joined at a broad hinge. No magnetic compass rose. Separate it from the lyre, crossed spears and set square.
 - **Gear:** reuse the existing `chain-gear` geometry at md under a science semantic alias. Draw a new 12-grid sm version, rather than scaling the md teeth. Do not substitute `science-wheel`, whose smooth rim and spokes convey a different object.
 - **Tablet:** new md and sm drawings of a single broad writing slab with rounded shoulders and one heavy bevel, blank face. Separate it from the closed book's spine and the scroll's curled ends.
+
+Drawn in M19.vectors-resources-and-science, in the same set as ore and cloth; the `-sm` gear has eight short teeth like the md, on a larger ring.
 
 Science therefore adds five files: four for compass/tablet and one gear-sm. A science-choice effect combines the choice marker and the three symbols, rather than generating another painting or inventing a fourth science symbol.
 
