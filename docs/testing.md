@@ -2313,12 +2313,14 @@ Their tests run them against `direct`:
 `ajayeb-drive table` runs the harness from the command line, with no server.
 It plays the fake game on the in-process table under `-schedules` arrival
 seeds per game, with `-drafts` and `-resends` percentages and a
-`-seq-clients` seq memory. It compares the canonical batches and hashes,
-optionally replays the first point under every arrival order (`-exhaust`
-with an order limit), and runs the leak oracle over every view, history,
-snapshot and log line (`-leaks`, on by default). It prints one summary line
-per game with the outcome counts and the hash, and exits 1 if any game
-failed. For example:
+`-seq-clients` seq memory for each user. With `-tabs` (on by default) each
+seat sends its last submission from a second tab, so a small memory forgets
+the first tab's seqs and its resends meet stale. It compares the
+canonical batches and hashes, optionally replays the first point under
+every arrival order (`-exhaust` with an order limit), and runs the leak
+oracle over every view, history, snapshot and log line (`-leaks`, on by
+default). It prints one summary line per game with the outcome counts and
+the hash, and exits 1 if any game failed. For example:
 
 ```
 ajayeb-drive table -seats 3,4,5,6,7 -games 4 -schedules 8

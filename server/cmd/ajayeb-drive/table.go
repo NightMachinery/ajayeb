@@ -31,6 +31,7 @@ type tableOptions struct {
 	drafts     int
 	resends    int
 	race       bool
+	tabs       bool
 	hideAtEnd  bool
 	leaks      bool
 }
@@ -50,10 +51,11 @@ func parseTableFlags(args []string, stderr io.Writer) (tableOptions, error) {
 	fs.IntVar(&o.games, "games", 2, "games per seat count")
 	fs.IntVar(&o.schedules, "schedules", 8, "arrival schedules per game, compared for identical canonical batches")
 	fs.Uint64Var(&o.exhaust, "exhaust", 0, "also replay the first point under every arrival order, refusing above this many orders (0: off)")
-	fs.IntVar(&o.seqClients, "seq-clients", 2, "clients whose last seq the table remembers (small values make stale seqs)")
+	fs.IntVar(&o.seqClients, "seq-clients", 1, "clients of each user whose last seq the table remembers (1 forgets the first tab, so -race resends meet stale)")
 	fs.IntVar(&o.drafts, "drafts", 50, "percent of seats that send a draft before their final pick")
 	fs.IntVar(&o.resends, "resends", 40, "percent of submissions re-sent later with the same seq")
 	fs.BoolVar(&o.race, "race", false, "seats confirm, then change or withdraw, so arrival decides the batch")
+	fs.BoolVar(&o.tabs, "tabs", true, "each seat sends its last submission from a second tab, so a small -seq-clients makes stale seqs")
 	fs.BoolVar(&o.hideAtEnd, "hide-at-end", false, "play with the end reveal off")
 	fs.BoolVar(&o.leaks, "leaks", true, "run the leak oracle over every view, history, snapshot and log line")
 	if err := fs.Parse(args); err != nil {
@@ -129,13 +131,13 @@ func tableGame(ctx context.Context, o tableOptions, n, game int) (string, error)
 	var current tabletest.Table
 	var frames []leakcheck.Doc
 	open := func(ctx context.Context, prefix []tabletest.Batch) (tabletest.Table, error) {
-		t, err := direct.Factory(direct.Options{Setup: setup, SeqClients: o.seqClients, Logger: logger})(ctx, prefix)
+		t, err := direct.Factory(direct.Options{Setup: setup, SeqClients: o.seqClients, Logger: logger, Tabs: o.tabs})(ctx, prefix)
 		current = t
 		return t, err
 	}
 	cfg := tabletest.Config{
 		Seats: n, PickSeed: seed,
-		Script: tabletest.ScriptOptions{Drafts: o.drafts, Resends: o.resends, Race: o.race},
+		Script: tabletest.ScriptOptions{Drafts: o.drafts, Resends: o.resends, Race: o.race, Tabs: o.tabs},
 	}
 	if o.leaks {
 		cfg.AfterPoint = func(ctx context.Context, idx int) error {

@@ -15,7 +15,7 @@ func TestParseTableFlags(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(o.seats, []int{3, 4, 5, 6, 7}) || o.games != 2 || o.schedules != 8 || o.seqClients != 2 || !o.leaks || o.race {
+	if !slices.Equal(o.seats, []int{3, 4, 5, 6, 7}) || o.games != 2 || o.schedules != 8 || o.seqClients != 1 || !o.leaks || !o.tabs || o.race {
 		t.Errorf("defaults = %+v", o)
 	}
 	for _, bad := range [][]string{{"-seats", "2"}, {"-seats", "3,8"}, {"-seats", "x"}, {"-games", "0"}, {"-drafts", "101"}, {"extra"}} {
@@ -36,28 +36,35 @@ func table(t *testing.T, args ...string) (int, string, string) {
 }
 
 // TestRunTable plays games at three and six seats under several schedules
-// with the leak oracle on, and requires one ok line per game, with
-// duplicate and stale seqs met, and the same output for the same seed.
+// with the leak oracle on, and requires one ok line per game, the same
+// output for the same seed, duplicate seqs met, and stale seqs met once
+// seats race (a stale seq needs two submissions from the forgotten tab).
 func TestRunTable(t *testing.T) {
-	args := []string{"-seats", "3,6", "-games", "2", "-schedules", "4", "-seed", "40"}
-	code, out, errs := table(t, args...)
-	if code != 0 {
-		t.Fatalf("exit %d\n%s%s", code, out, errs)
-	}
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	if len(lines) != 4 {
-		t.Fatalf("want 4 lines, got:\n%s", out)
-	}
-	for _, l := range lines {
-		if !strings.HasSuffix(l, "status=ok") || !strings.Contains(l, " leaks=0") || !strings.Contains(l, " schedules=4 ") {
-			t.Errorf("line %q", l)
+	base := []string{"-seats", "3,6", "-games", "2", "-schedules", "4", "-seed", "40"}
+	for _, c := range []struct {
+		extra []string
+		met   string
+	}{{nil, " duplicate="}, {[]string{"-race"}, " stale="}} {
+		args := append(slices.Clone(base), c.extra...)
+		code, out, errs := table(t, args...)
+		if code != 0 {
+			t.Fatalf("%v: exit %d\n%s%s", args, code, out, errs)
 		}
-	}
-	if !strings.Contains(out, " duplicate=") || !strings.Contains(out, " stale=") {
-		t.Errorf("no duplicate or stale seq met:\n%s", out)
-	}
-	if _, again, _ := table(t, args...); again != out {
-		t.Errorf("the same seed gave other output:\n%s\n%s", out, again)
+		lines := strings.Split(strings.TrimSpace(out), "\n")
+		if len(lines) != 4 {
+			t.Fatalf("%v: want 4 lines, got:\n%s", args, out)
+		}
+		for _, l := range lines {
+			if !strings.HasSuffix(l, "status=ok") || !strings.Contains(l, " leaks=0") || !strings.Contains(l, " schedules=4 ") {
+				t.Errorf("%v: line %q", args, l)
+			}
+		}
+		if !strings.Contains(out, c.met) {
+			t.Errorf("%v: no%s met:\n%s", args, strings.TrimSuffix(c.met, "="), out)
+		}
+		if _, again, _ := table(t, args...); again != out {
+			t.Errorf("%v: the same seed gave other output:\n%s\n%s", args, out, again)
+		}
 	}
 }
 
