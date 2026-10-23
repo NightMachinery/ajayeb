@@ -286,11 +286,19 @@ func TestRolesAndTemporaryAdmin(t *testing.T) {
 	h.until(c2, "user-1 as the temporary admin", func(fr wire.TableState) bool { return human(t, fr, userOf(1)).Temporary })
 	h.want(c1, roleOp(5, "promote", userOf(2)), outNotAdmin, "a temporary admin's promotion")
 
-	// A restart keeps the temporary admin and the away times.
+	// A restart keeps the temporary admin, the promoters and the away times.
 	h.f.restart()
 	h.rejoin()
-	if r := h.record(); r.Roles.Temporary != userOf(1) || len(r.Roles.Away) != 2 || !r.Roles.Away[1].Since.Equal(t0) {
+	r := h.record()
+	if r.Roles.Temporary != userOf(1) || len(r.Roles.Away) != 2 || !r.Roles.Away[1].Since.Equal(t0) {
 		t.Fatalf("roles across the restart: %+v", r.Roles)
+	}
+	promoted := false
+	for _, a := range r.Roles.Admins {
+		promoted = promoted || a.UserID == "watcher" && a.PromotedBy != nil && *a.PromotedBy == userOf(1)
+	}
+	if !promoted {
+		t.Fatalf("the spectator's promoter across the restart: %+v", r.Roles.Admins)
 	}
 	h.want(c1, toBot(6, 2, BotEasy), outAccepted, "the temporary admin's switch")
 

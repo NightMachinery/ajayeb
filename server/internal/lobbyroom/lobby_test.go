@@ -455,6 +455,11 @@ func TestLobbyRolesAcrossRestart(t *testing.T) {
 	if after.Roles.Temporary != user(1) || len(after.Roles.Admins) != 2 || len(after.Roles.Away) != 2 || !after.Roles.Away[0].Since.Equal(before.Roles.Away[0].Since) {
 		t.Fatalf("roles across the restart: %+v", after.Roles)
 	}
+	for _, a := range after.Roles.Admins {
+		if a.UserID == user(3) && (a.PromotedBy == nil || *a.PromotedBy != user(0)) {
+			t.Fatalf("user-3's promoter across the restart: %+v", a)
+		}
+	}
 	ks[1], ks[2] = f.conn(user(1), "c1b", "P1"), f.conn(user(2), "c2b", "P2")
 	f.join(ks[1], code)
 	f.join(ks[2], code)
