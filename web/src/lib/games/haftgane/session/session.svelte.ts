@@ -36,20 +36,29 @@
 // or the pick's floor bound refused it) is sent again unchanged a few times
 // before the notice shows.
 //
+// A request the seat itself makes (a pick, an undo, a resignation) names
+// no seat: the table applies it to the sender's seat when it arrives. So
+// each is bound to the seat it was chosen for, and is never sent again once
+// the latest frame shows this connection anywhere else (another seat, or
+// watching); a pick, also only at the same point. Reconnecting and a `rate`
+// retry ask the same question (#stillValid), and a frame that moves this
+// connection to another place drops such a request at once (a pick whose
+// point merely closed waits for its answer, decision-closed or the ack).
+// A request that names its target
+// (a seat switch, a role change) and Start go out again unchanged, which
+// their seq makes safe, as it does a same-seat retry.
+//
 // Reconnecting: after a new socket's join, the Session waits for the join's
-// frame before it settles the request in flight. A pick goes out again
-// (same seq) only when that frame shows the same seat and the same point;
-// otherwise it was applied or overtaken, and the frame's own pending pick
-// says which. That is what keeps a tab whose seat changed while it was away
-// from sending a pick meant for another seat. Other requests go out again
-// unchanged, which their seq makes safe.
+// frame before it settles the request in flight: it goes out again (same
+// seq) when still valid, else it was applied or overtaken, and the frame's
+// own pending pick says which.
 //
 // Seat changes (former-controller tabs): a switch, a resignation or a
 // relink by an admin moves this connection to watching, or to another
 // seat. Its next frame carries the whole history again, redacted for its
-// new place, which replaces what it held. A pick still in flight is never
-// sent again for the new seat. A revoked device link ends the connection
-// with error bad-claim, which the bootstrap turns into the room error.
+// new place, which replaces what it held. A revoked device link ends the
+// connection with error bad-claim, which the bootstrap turns into the room
+// error.
 
 import { entrySeqs, rememberEntryGame, type SeqCounters } from '$lib/entry/identity';
 import type { RoomListener } from '$lib/entry/bootstrap';
@@ -91,7 +100,10 @@ type Request = TablePick | TableUndo | TableSeat | TableRole | TableResign | Lob
 
 export interface PendingRequest {
   readonly frame: Request;
-  /** For a pick: the seat it was chosen for. */
+  /**
+   * For a request the seat makes (a pick, an undo, a resignation): the seat
+   * it was chosen for. Null for one that names its target, and for Start.
+   */
   readonly seat: number | null;
   /** When it was first sent, in ms (the Session's clock). */
   readonly sentAt: number;
@@ -318,7 +330,10 @@ export class TableSession {
   undo(): boolean {
     const f = this.table;
     if (!this.canUndo || !f) return false;
-    this.#request({ t: 'table-undo', code: this.code, seq: this.#nextSeq(), base: f.revision });
+    this.#request(
+      { t: 'table-undo', code: this.code, seq: this.#nextSeq(), base: f.revision },
+      this.seat
+    );
     return true;
   }
 
@@ -362,7 +377,10 @@ export class TableSession {
   /** Hands this seat to a bot and watches. */
   resign(): boolean {
     if (!this.canResign) return false;
-    this.#request({ t: 'table-resign', code: this.code, seq: this.#nextSeq(), confirm: true });
+    this.#request(
+      { t: 'table-resign', code: this.code, seq: this.#nextSeq(), confirm: true },
+      this.seat
+    );
     return true;
   }
 
@@ -455,17 +473,18 @@ export class TableSession {
     this.slow = false;
   }
 
-  /** Whether the request in flight may go out again under the latest frame. */
+  /**
+   * Whether the request in flight may go out again under the latest frame,
+   * after a reconnect or a `rate` refusal alike: one the seat makes only
+   * while the frame still shows this connection in that seat, and a pick
+   * only at the same point (see the file comment).
+   */
   #stillValid(pending: PendingRequest): boolean {
-    const frame = pending.frame;
-    if (frame.t !== 'table-pick') return true;
+    if (pending.seat === null) return true;
     const f = this.table;
-    return (
-      !!f &&
-      f.status === 'playing' &&
-      f.you.seat === pending.seat &&
-      sameRef(f.point?.ref, frame.point)
-    );
+    if (!f || f.status !== 'playing' || f.you.seat !== pending.seat) return false;
+    const frame = pending.frame;
+    return frame.t !== 'table-pick' || sameRef(f.point?.ref, frame.point);
   }
 
   #failLinks(code: string): void {
@@ -550,7 +569,12 @@ export class TableSession {
     this.#answer(frame.ack);
     // Start has no ack: the table's first frame answers it.
     if (this.pending?.frame.t === 'lobby-start') this.#settle();
-    this.#afterJoin();
+    if (this.#rejoined) this.#afterJoin();
+    // A frame that moved this connection: what its old seat asked for is
+    // never sent again (see the file comment).
+    else if (this.pending && this.pending.seat !== null && this.pending.seat !== seatNow) {
+      this.#settle();
+    }
     this.#tables.emit(frame);
   }
 
@@ -619,10 +643,10 @@ export class TableSession {
     const undo = pending.frame;
     const f = this.table;
     if (this.#undoResent || undo.t !== 'table-undo' || !f || f.revision <= undo.base) return false;
-    if (!this.#undoAllowed(f)) return false;
+    if (!this.#undoAllowed(f) || !this.#stillValid(pending)) return false;
     this.#undoResent = true;
     const again: TableUndo = { ...undo, base: f.revision };
-    this.#track({ frame: again, seat: null, sentAt: pending.sentAt });
+    this.#track({ frame: again, seat: pending.seat, sentAt: pending.sentAt });
     this.#connection.send(again);
     return true;
   }

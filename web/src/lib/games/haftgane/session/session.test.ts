@@ -376,6 +376,84 @@ describe('former-controller tabs', () => {
   });
 });
 
+/** The frame after an admin moved this tab's user (u0) to seat 1, or to watching. */
+function moved(to: 1 | null): TableState {
+  return tableFrame(
+    {
+      revision: 3 << 20,
+      history: [],
+      you: to === null ? { userId: 'u0' } : { userId: 'u0', seat: 1 },
+      seats: [
+        { seat: 0, kind: 'bot', bot: 'easy' },
+        { seat: 1, kind: 'human', userId: to === null ? 'u1' : 'u0' },
+        { seat: 2, kind: 'bot', bot: 'easy' }
+      ]
+    },
+    to
+  );
+}
+
+describe('requests the seat makes stay with that seat', () => {
+  // Undo is offered too: a sole human's table one batch in.
+  const solo = { allowUndo: true, startingHumanCount: 1, batch: 1, revision: 2 << 20 };
+  const requests: [string, (s: TableSession) => boolean][] = [
+    ['resignation', (s) => s.resign()],
+    ['undo', (s) => s.undo()],
+    ['pick', (s) => s.pick(KEY)]
+  ];
+  for (const [name, send] of requests) {
+    for (const to of [1, null] as const) {
+      const where = to === null ? 'watching' : 'another seat';
+      it(`never sends a ${name} again after a reconnect into ${where}`, () => {
+        const { session, connection } = setup(tableFrame(solo));
+        expect(send(session)).toBe(true);
+        connection.drop();
+        connection.rejoin();
+        connection.frame(moved(to));
+        expect(session.seat).toBe(to);
+        expect(connection.sent).toHaveLength(1);
+        expect(session.pending).toBeNull();
+      });
+
+      it(`never retries a rate-limited ${name} after a move to ${where}`, () => {
+        const { session, connection } = setup(tableFrame(solo));
+        expect(send(session)).toBe(true);
+        connection.frame({ t: 'table-reject', seq: 1, code: 'rate' });
+        connection.frame(moved(to));
+        expect(session.pending).toBeNull();
+        vi.advanceTimersByTime(100);
+        expect(connection.sent).toHaveLength(1);
+      });
+    }
+
+    it(`sends a ${name} again unchanged while the seat stays, after a reconnect and after rate`, () => {
+      const { session, connection } = setup(tableFrame(solo));
+      expect(send(session)).toBe(true);
+      const first = connection.last();
+      connection.drop();
+      connection.rejoin();
+      connection.frame(tableFrame({ ...solo, history: [] }));
+      expect(connection.sent).toEqual([first, first]);
+      connection.frame({ t: 'table-reject', seq: 1, code: 'rate' });
+      vi.advanceTimersByTime(10);
+      expect(connection.sent).toEqual([first, first, first]);
+      expect(session.pending?.frame).toEqual(first);
+    });
+  }
+
+  it('drops a resignation in flight as soon as a frame shows this tab moved', () => {
+    const { session, connection } = setup();
+    expect(session.resign()).toBe(true);
+    connection.frame(moved(1));
+    expect(session.pending).toBeNull();
+    expect(session.notice).toEqual({ kind: 'seated', code: 'seated', seat: 1 });
+    // An answer to it that comes later changes nothing.
+    connection.frame({ t: 'table-reject', seq: 1, code: 'forbidden' });
+    expect(session.notice).toEqual({ kind: 'seated', code: 'seated', seat: 1 });
+    expect(connection.sent).toHaveLength(1);
+  });
+});
+
 describe('the seq counter', () => {
   it('goes on from the last seq when the Session mounts again in the same page', () => {
     const page = { clientId: 'page', seqs: new SeqCounters() };
