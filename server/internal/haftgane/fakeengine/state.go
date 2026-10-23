@@ -1,5 +1,11 @@
 package fakeengine
 
+// RulesVersion is the fake game's rules version, the third member of D28's
+// saved-room tuple. It can never equal the real engine's (which starts at 1),
+// so a table saved under the fake archives as rules-version once
+// M16.haftgane-engine-contract swaps in the real engine.
+const RulesVersion = 1000
+
 // Sizes of the fake game.
 const (
 	MinSeats, MaxSeats = 3, 7
