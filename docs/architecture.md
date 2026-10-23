@@ -223,13 +223,17 @@ lobby's (`store.ReplaceGame`, which requires the lobby's live record under that
 code) and builds the table's actor with the lobby's connections. The lobby then
 swaps its handle for the table's (`room.Manager.Swap`), so the code and every
 connection move together. A detach that reaches the lobby during the swap is
-forwarded to the table; a join that arrives after it is retried on the
+forwarded to the table, and a detach always takes effect before a later join
+of the same connection, so leaving and quickly joining again leaves it
+attached; a join that arrives after it is retried on the
 table, and a lobby request is refused, so nothing is lost or applied twice. Two seats are refused until Duel's create
 path exists (M18.shared-lobby). A table's rematch is a new lobby made here,
-with the original humans' slots reserved for them: `Lobbies.Rematch` writes
-it under the code the table reserved, finds it instead when an earlier
-attempt for the same table already did, and refuses a code another room
-took meanwhile.
+with the original humans' slots reserved for them: `Lobbies.Rematch` makes
+it under the code the table reserved with the store's conditional create, so
+checking the code and writing the lobby are one step: it finds the lobby
+instead when an earlier attempt for the same table already made it (the
+lobby names that table as its parent), and refuses a code any other room
+holds, whose bytes stay as they were.
 
 ## App shell
 
@@ -655,7 +659,7 @@ play events carry payments, and neighbours' plays determine trade receipts.
 
 ## Saved room compatibility
 
-`internal/store` is the only reader/writer of room files. A bounded header selects the codec before game decoding or replay: schema 1 defaults to `duel` when `game` is absent and delegates to the existing Duel `File`, while schema 2 requires an explicit registered game id. The complete input retains the existing `MaxFileBytes` cap; the schema discriminator is at most 10 JSON bytes and the game id is at most 32 lowercase ASCII letters, digits or hyphens (starting with a letter), in at most 34 JSON bytes. Discriminator order is unrestricted; duplicate schema/game fields, including case aliases, fail closed. `NewCodecs` builds an immutable composition-time table, rejecting duplicate or invalid registrations. Its production schema-2 table holds Haftgane's table codec. Schema-2 records are read and written through game-agnostic `LoadGame`, `SaveGame` and `PeekGame` under the same per-code lock: a load runs the codec's assessment, rewriting only the hash for a refresh (keeping unknown fields) or archiving durably; a save refuses an archived file, a file of another game and a file of an unknown schema. Codecs own their file types and game rules checks; shared inspection exposes only retention metadata and read-only replay assessment. `OpenWithCodecs` and `CheckDataDirWithCodecs` take the same table. Duel's load/save APIs retain their typed signatures and schema-1 write bytes.
+`internal/store` is the only reader/writer of room files. A bounded header selects the codec before game decoding or replay: schema 1 defaults to `duel` when `game` is absent and delegates to the existing Duel `File`, while schema 2 requires an explicit registered game id. The complete input retains the existing `MaxFileBytes` cap; the schema discriminator is at most 10 JSON bytes and the game id is at most 32 lowercase ASCII letters, digits or hyphens (starting with a letter), in at most 34 JSON bytes. Discriminator order is unrestricted; duplicate schema/game fields, including case aliases, fail closed. `NewCodecs` builds an immutable composition-time table, rejecting duplicate or invalid registrations. Its production schema-2 table holds Haftgane's table codec. Schema-2 records are read and written through game-agnostic `LoadGame`, `SaveGame` and `PeekGame` under the same per-code lock: a load runs the codec's assessment, rewriting only the hash for a refresh (keeping unknown fields) or archiving durably; a save refuses an archived file, a file of another game and a file of an unknown schema. A room's first record is written by a conditional create instead (`CreateGame`, and `Create` for Duel's schema 1, which writes the same bytes as `Save`): under the same lock it writes only when no file holds the code, live or archived, of any schema, readable or not, and otherwise writes nothing and answers `ErrExists` (`CreateGame` with the live bytes it found). Rooms of every kind share one namespace of codes and `NewCode` reserves nothing, so every creation path (Duel's rooms, lobbies, tables and a rematch's lobby) makes its first write this way, and `room.Manager.CreateHandle` draws another code on `ErrExists`. Codecs own their file types and game rules checks; shared inspection exposes only retention metadata and read-only replay assessment. `OpenWithCodecs` and `CheckDataDirWithCodecs` take the same table. Duel's load/save APIs retain their typed signatures and schema-1 write bytes.
 
 Duel restoration selects ordinary keys from `LegalActions`, matching the room's own replay path; resignation uses the room's explicit legal, engine-generated resignation exception. A key parsed into an action is insufficient: it must match the canonical key of that generated action. Within the same `engine.RulesVersion`, seed, options and keys are authoritative. The hash is a diagnostic fingerprint, not an authenticated integrity check. A successful replay with a different hash refreshes only the hash and logs both values. The room manager serializes disk restores through actor registration, so a second restore cannot overwrite a move saved by the first actor. Requests to already-loaded rooms bypass that lock. The atomic rewrite preserves all other metadata, including additive fields unknown to this build, and does not refresh `Updated` or extend idle retention.
 

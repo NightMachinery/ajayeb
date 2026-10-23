@@ -216,6 +216,9 @@ canonical history is the `ajayeb-log/2` download.
   viewer's snapshot agrees (each seat's two tabs and the spectator: the
   point, required and confirmed seats, offer, pick and confirmation), the
   final canonical bytes agree, and duplicates and stale seqs both occur.
+  Each game has its own deadline (each seat count in
+  `TestDriverInProcess`), so the sweep, several times slower under the race
+  detector, never shares one budget, and a hung game still fails.
   `TestDifferentialSwitches` does the same around seat switches, which the
   model plays through `direct.Switch`: the spectator takes a seat at one
   point, and at the next a seat goes to a bot halfway through the arrivals
@@ -269,7 +272,11 @@ canonical history is the `ajayeb-log/2` download.
   test saw its seat's accepted submissions set). Then the oracle checks the
   whole frame, its view rebuilt in the engine view's shape,
   the frame's own events wherever the rebuilt view did not take them from
-  it (a history frame's, say), and its history. A planted leak of each
+  it (a history frame's, say), and its history. `merge_test.go` passes the
+  same frames through an outbox drained only every few pushes, as a slow
+  connection's is, so a frame carries the events of several resolutions
+  and a history frame the events after its history; they pass, and a
+  merged frame missing one event does not. A planted leak of each
   kind must be reported: another seat's card, a raw key in an event, a
   fingerprint, a suffixed card id, a deal-ordered hand, another seat's
   offer, an unknown field, and in the envelope another seat's pending pick
@@ -350,6 +357,16 @@ again, a restart and Start never revive them, while an unbroken claim
 reaches its seat at the table. `TestRematchOneSuccessor` refuses each of a
 rematch's three writes, restarts and lets the other original human retry:
 the table always ends with one successor.
+`TestCreationCollisions` races a rematch's lobby against another rematch,
+an ordinary lobby, a table and a Duel room drawing the same code, in both
+orders: the first to write keeps the code and its bytes, and the other
+answers `ErrCodeTaken` or is made under another code.
+`TestRematchCollisionAtTheWrite`, from the re-review's probe, plants a
+competing lobby at the moment of the rematch's write: the rematch refuses
+the code, the competitor's bytes stay as they were, and the code is never
+written unconditionally. `TestLeaveThenJoinStaysAttached` holds the actor
+while a connection leaves and joins again, twenty times: the connection
+always ends attached.
 Package `roles` has its own unit tests of the role policy and the
 five-minute rules at explicit times.
 
@@ -1995,6 +2012,17 @@ make test-go GO_PKGS=./internal/store
 make test-go GO_PKGS=./internal/store 'GO_RUN=^TestRoomFile'
 ```
 
+### Room creation
+
+`create_test.go` checks the conditional create every room's first write
+uses. `TestCreateGame` and `TestCreate` hold codes with a live record of the
+same game, another game's record, a Duel room, damaged bytes, a newer schema
+and an archived room: each creation is refused with `ErrExists`, every file
+stays byte for byte, and `CreateGame` returns the live bytes it found. A free
+code is written as a save would write it. `TestCreateRace` races twelve
+creators of both schemas for one code, twenty times: exactly one wins, and
+the file is its own.
+
 ### Authoritative lazy client entry
 
 `lib/entry/bootstrap.test.ts` checks v2 welcome-before-join, same identity/claim
@@ -2346,7 +2374,9 @@ the view's fields, decoded with unknown fields refused. Its detectors are:
 A `View` or `History` document gets every detector. A whole wire `Frame`
 gets the field-independent ones (`raw-key`, `hash`, `shuffle-id`), with its
 own key paths allowed in `Config`. A `Log` gets the key, card and secret
-checks. `TestCleanFakePasses` checks every view and history of every viewer
+checks. A `View` document's `Span` is the number of resolutions whose
+events it carries, the latest last: more than one in a frame an outbox
+merged for a slow connection. `TestCleanFakePasses` checks every view and history of every viewer
 at every moment of forty games and requires no finding. `TestPlantedLeaksFail`
 plants 26 leaks in clean documents, covering the five the platform design
 names: a shuffle-derived id, a deal-ordered hand, a raw sold or tucked key,
