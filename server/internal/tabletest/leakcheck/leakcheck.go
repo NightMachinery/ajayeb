@@ -92,7 +92,11 @@ type Doc struct {
 	Kind   Kind
 	Viewer int // the viewer's seat, or -1 for the spectator
 	Moment int // the number of batches resolved when it was sent (unused for a Frame or a Log)
-	Data   []byte
+	// Span is, for a View, the number of resolutions whose events it
+	// carries, the latest last: more than one in a frame an outbox merged
+	// for a slow connection. Zero means one.
+	Span int
+	Data []byte
 }
 
 // Spectator is the Viewer of a spectator's documents.

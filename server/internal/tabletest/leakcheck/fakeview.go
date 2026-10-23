@@ -181,8 +181,12 @@ func (c *Checker) checkView(r *report, d Doc) {
 	c.private(r, d, v.You)
 
 	want := []Event{}
-	if d.Moment > 0 {
-		want = t.Resolutions[d.Moment-1].Events
+	if d.Span > max(d.Moment, 1) {
+		r.add(Mismatch, "events", fmt.Sprintf("the events of %d resolutions after %d", d.Span, d.Moment))
+	}
+	span := min(max(d.Span, 1), d.Moment)
+	for _, res := range t.Resolutions[d.Moment-span : d.Moment] {
+		want = append(want, res.Events...)
 	}
 	c.events(r, "events", v.Events, want, d.Viewer)
 

@@ -155,14 +155,16 @@ func samePending(a, b *wire.TablePending) bool {
 // leakDocs turns one viewer's frames into the oracle's documents: the
 // whole frame (raws[i], as frameLeaks prepared it), its engine
 // view rebuilt in the fake view's shape (the frame's view plus its point
-// and, as the fake view carries them, the latest resolution's events), the
-// frame's own events wherever it carries events the rebuilt view did not
-// take from it, and its history. Frame i's viewer is seats[i].
+// and, as the fake view carries them, the latest resolution's events, or
+// every resolution's since the viewer's previous frame where an outbox
+// merged frames), the frame's own events wherever it carries events the
+// rebuilt view did not take from it, and its history. Frame i's viewer is
+// seats[i].
 func leakDocs(t testing.TB, label string, seats []int, frames []wire.TableState, raws [][]byte, truth *leakcheck.Truth) []leakcheck.Doc {
 	t.Helper()
 	var docs []leakcheck.Doc
 	events := []wire.TableEvent{}
-	batch := 0
+	batch, span := 0, 1 // events are those of the span resolutions up to batch
 	for i, fr := range frames {
 		raw, err := json.Marshal(fr)
 		if err != nil {
@@ -176,17 +178,25 @@ func leakDocs(t testing.TB, label string, seats []int, frames []wire.TableState,
 		docs = append(docs, leakcheck.Doc{Label: where, Kind: leakcheck.Frame, Viewer: viewer, Data: raw})
 		own := true // the rebuilt view takes its events from this frame
 		switch {
-		case fr.History != nil:
+		case fr.History != nil && fr.Batch == historyBatch(fr):
 			// A join, resync or undo frame: the latest entry of its history.
-			events, own = lastEvents(fr), false
+			events, span, own = lastEvents(fr), 1, false
+		case fr.History != nil:
+			// A history frame an outbox merged with the live frames after
+			// it: its events follow the history's last entry.
+			events, span = fr.Events, fr.Batch-historyBatch(fr)
+		case fr.Batch > batch:
+			// A resolution frame carries that resolution's events, or, where
+			// an outbox merged frames, every resolution's since the last.
+			events, span = fr.Events, fr.Batch-batch
 		case fr.Batch != batch:
-			// A resolution frame carries that resolution's events.
-			events = fr.Events
+			events, span = fr.Events, 1
 		default:
+			// The view still carries the events it took last.
 			own = false
 		}
 		batch = fr.Batch
-		docs = append(docs, leakcheck.Doc{Label: where + " view", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch,
+		docs = append(docs, leakcheck.Doc{Label: where + " view", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch, Span: span,
 			Data: fakeViewJSON(t, fr, events)})
 		if !own && len(fr.Events) > 0 {
 			docs = append(docs, leakcheck.Doc{Label: where + " events", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch,
@@ -201,7 +211,7 @@ func leakDocs(t testing.TB, label string, seats []int, frames []wire.TableState,
 				h = []map[string]any{}
 			}
 			data, _ := json.Marshal(h)
-			docs = append(docs, leakcheck.Doc{Label: where + " history", Kind: leakcheck.History, Viewer: viewer, Moment: fr.Batch, Data: data})
+			docs = append(docs, leakcheck.Doc{Label: where + " history", Kind: leakcheck.History, Viewer: viewer, Moment: historyBatch(fr), Data: data})
 		}
 	}
 	return docs
@@ -359,6 +369,14 @@ func duplicateField(data []byte) string {
 		return ""
 	}
 	return walk("")
+}
+
+// historyBatch is the batch a frame's history reaches: its last entry's.
+func historyBatch(fr wire.TableState) int {
+	if fr.History == nil || len(*fr.History) == 0 {
+		return 0
+	}
+	return (*fr.History)[len(*fr.History)-1].Batch
 }
 
 func lastEvents(fr wire.TableState) []wire.TableEvent {
