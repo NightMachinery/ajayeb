@@ -138,6 +138,7 @@ type fixture struct {
 	ms     *memStore // that store, which outlives restarts
 	tabs   bool      // openInproc also joins each human seat's second tab
 	secret ident.Secret
+	succ   Successors // the rematch maker, kept across restarts
 }
 
 func newFixture(t testing.TB, cfg Config) *fixture {
@@ -164,6 +165,9 @@ func (f *fixture) start() {
 	cfg.Creation = true
 	cfg.Logger = slog.New(slog.NewJSONHandler(f.logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	f.tables = New(cfg)
+	if f.succ != nil {
+		f.tables.SetSuccessors(f.succ)
+	}
 	kinds, err := room.NewKinds(room.DuelKind(), f.tables.Kind())
 	if err != nil {
 		f.t.Fatal(err)

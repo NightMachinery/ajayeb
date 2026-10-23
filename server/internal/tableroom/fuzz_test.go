@@ -16,7 +16,22 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
+	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
+
+// stubSuccessors makes a rematch without a lobby kind: the same valid
+// code every time, each request kept.
+type stubSuccessors struct {
+	mu   sync.Mutex
+	made []Rematch
+}
+
+func (s *stubSuccessors) Rematch(_ *room.Manager, r Rematch) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.made = append(s.made, r)
+	return "RMATCH", nil
+}
 
 // tabClient is seat 0's second tab: the same user on another client.
 const tabClient tabletest.ClientID = "seat-0-tab"
@@ -105,8 +120,9 @@ func blockBots(ctx context.Context, _ int, _ string) error {
 // tabs that open, pick and close (each a new client id, so the seq memory
 // and the picks' floors meet many clients of one user), resends of
 // earlier submissions (a closed tab reconnecting under its id to resend),
-// stale references, undo, bot picks, detaches and restarts, opening at the
-// start or at a salvage or last-card point, with small seq and floor
+// stale references, undo, bot picks, detaches and restarts, seat switches
+// to bots and humans, role changes, resignations and rematches, opening at
+// the start or at a salvage or last-card point, with small seq and floor
 // bounds. After every operation the table in memory must equal the stored
 // record byte for byte, the stored record must restore with a matching
 // rules hash, no frame revision may go backwards, and a restart must keep
@@ -127,6 +143,11 @@ func FuzzTableOps(f *testing.F) {
 	f.Add(uint64(8), byte(0x14), byte(0), finish)
 	f.Add(uint64(9), byte(0x40), byte(0), []byte{0, 1, 8, 0, 8, 2, 8, 4, 1, 3, 8, 6, 1, 4, 6, 0, 8, 1, 1, 9, 4, 0, 8, 8, 1, 2})
 	f.Add(uint64(10), byte(0x01), byte(0), []byte{8, 0, 8, 8, 8, 16, 8, 24, 8, 32, 1, 1, 1, 2, 8, 40, 1, 4, 6, 0})
+	// Switches before and after picks and confirmations, roles, a
+	// resignation, restarts, then a finish and its rematch.
+	f.Add(uint64(11), byte(0x02), byte(0), []byte{0, 9, 9, 1, 0, 1, 9, 0x19, 6, 0, 10, 0x08, 9, 0x0a, 4, 0, 11, 0x0a, 10, 0x11, 6, 1, 12, 0, 7, 0})
+	rematch := append(slices.Clone(finish), 9, 2, 11, 0x09, 12, 1, 12, 9, 4, 0, 12, 3)
+	f.Add(uint64(12), byte(0x03), byte(0), rematch)
 	f.Fuzz(func(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 		if len(ops) > 200 {
 			ops = ops[:200]
@@ -146,18 +167,27 @@ type sentSub struct {
 const fuzzWait = 5 * time.Second
 
 // fuzzOps names the operations for failure messages.
-var fuzzOps = [...]string{"pick", "resend", "old reference", "undo", "restart", "reattach", "confirm all", "second tab or bot", "new tab"}
+var fuzzOps = [...]string{"pick", "resend", "old reference", "undo", "restart", "reattach", "confirm all", "second tab or bot", "new tab",
+	"seat switch", "role", "resign", "rematch"}
+
+// The fuzzer's switch targets: real levels and an unknown one, and the
+// spectator, seat users and a stranger.
+var (
+	fuzzLevels = []string{BotEasy, BotNormal, BotHard, "grandmaster"}
+	fuzzRoles  = []string{"promote", "demote", "step-down"}
+)
 
 func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	n := MinSeats + int(shape&0x0f)%(MaxSeats-MinSeats+1)
 	solo := mode&1 == 1
 	kind := boundaryKinds[int(mode>>1)%len(boundaryKinds)]
-	cfg := Config{SeqClients: 1 + int(shape>>4)%4, PickClients: 1 + int(shape>>6)%4}
+	// Bots never act on their own, also after a switch makes one: the
+	// fuzzer decides when.
+	cfg := Config{SeqClients: 1 + int(shape>>4)%4, PickClients: 1 + int(shape>>6)%4, BotWork: blockBots}
 	seed %= 64
 	sp := humans(n, seed)
 	if solo {
 		sp = soloSpec(n, seed, BotEasy)
-		cfg.BotWork = blockBots
 	}
 	if kind != fakeengine.PointNone {
 		if b := boundaryPrefix(n, kind, seed); b.ok {
@@ -173,6 +203,8 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	}()
 	ctx := testContextFor(t, fuzzWait)
 	fx := newFixtureOn(t, cfg, true)
+	fx.succ = &stubSuccessors{}
+	fx.tables.SetSuccessors(fx.succ)
 	p, err := fx.openInproc(ctx, sp)
 	if err != nil {
 		t.Fatal(err)
@@ -253,6 +285,44 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 		p.drain()
 		return acted
 	}
+	// control runs a seat, role or resignation request, or a rematch: any
+	// refusal writes nothing.
+	control := func(id tabletest.ClientID, f wire.ClientMessage) {
+		t.Helper()
+		before, _, _ := fx.ms.PeekGame(p.code, Game)
+		var out string
+		if _, ok := f.(wire.Rematch); ok {
+			a, err := p.actor()
+			if err == nil {
+				err = a.call(ctx, func() { out = a.rematch(p.clients[id]) })
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			p.drain()
+		} else {
+			out = h.do(id, f)
+		}
+		switch out {
+		case outAccepted:
+		case outBad, outForbidden, outNotAdmin, outStale, outDuplicate:
+			if after, _, _ := fx.ms.PeekGame(p.code, Game); !bytes.Equal(before, after) {
+				t.Fatalf("%s %+v: %s changed the record", id, f, out)
+			}
+		default:
+			t.Fatalf("%s %+v: %s", id, f, out)
+		}
+	}
+	people := func(k int) string {
+		switch k %= n + 2; k {
+		case n:
+			return "watcher"
+		case n + 1:
+			return "stranger"
+		default:
+			return userOf(k)
+		}
+	}
 	seen := map[tabletest.ClientID]int{}
 	check := func(step int) {
 		t.Helper()
@@ -294,7 +364,7 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	check(-1)
 
 	for i := 0; i+1 < len(ops); i += 2 {
-		op, arg := ops[i]%9, int(ops[i+1])
+		op, arg := ops[i]%13, int(ops[i+1])
 		step, opName = i/2, fuzzOps[op]
 		ids := slices.Sorted(maps.Keys(p.clients))
 		switch op {
@@ -344,7 +414,7 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 					pickFrom(id, arg<<1|1, "")
 				}
 			}
-			for k := 0; solo && k < MaxSeats && botAct(arg+k); k++ {
+			for k := 0; k < MaxSeats && botAct(arg+k); k++ {
 			}
 		case 7: // seat 0's second tab, or a bot, acts
 			if solo {
@@ -358,6 +428,27 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 				id := tabletest.ClientID(fmt.Sprintf("seat-%d-new-%d", arg%n, tabs))
 				tab(id, c.UserID, c.Name, func() { pickFrom(id, arg>>3, "") })
 			}
+		case 9: // seat 0's client, the creator's, switches a seat to a bot or a human
+			id, seat := tabletest.SeatClient(0), arg%n
+			if arg&0x08 == 0 {
+				control(id, toBot(int(next(id)), seat, fuzzLevels[(arg>>4)%len(fuzzLevels)]))
+			} else {
+				control(id, toHuman(int(next(id)), seat, people(arg>>4)))
+			}
+		case 10: // a role change from any client
+			id := ids[arg%len(ids)]
+			op := fuzzRoles[(arg>>3)%len(fuzzRoles)]
+			user := people(arg >> 5)
+			if op == "step-down" {
+				user = ""
+			}
+			control(id, roleOp(int(next(id)), op, user))
+		case 11: // a seat's first client resigns, confirmed or not
+			if id := tabletest.SeatClient(arg % n); p.clients[id] != nil {
+				control(id, wire.TableResign{T: "table-resign", Code: p.code, Seq: int(next(id)), Confirm: arg&0x08 != 0})
+			}
+		case 12: // a rematch from any client
+			control(ids[arg%len(ids)], wire.NewRematch(p.code))
 		}
 		check(i / 2)
 	}
