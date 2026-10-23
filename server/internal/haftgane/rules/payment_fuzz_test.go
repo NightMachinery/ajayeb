@@ -1,8 +1,9 @@
 package rules
 
 import (
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 )
 
 func FuzzPayment(f *testing.F) {
@@ -43,7 +44,8 @@ func FuzzPayment(f *testing.F) {
 			}
 		}
 		checkPaymentOracle(t, in)
-		if solvePayment(in) != solvePayment(in) {
+		first, second := solvePayment(in), solvePayment(in)
+		if first != second {
 			t.Fatal("noncanonical witness")
 		}
 	})

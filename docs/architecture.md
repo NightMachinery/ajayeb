@@ -242,8 +242,8 @@ complete counts and order. The existing Duel packages and data stay unchanged.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
 points. It contains the seat ring and canonical key grammar, with no setup,
-legality, resolution, views or bots yet. Left is the next seat
-modulo the seat count, and right is the previous. Public plays and private picks
+legality, resolution, views or bots yet. Left is the next seat modulo the seat
+count, and right is the previous. Public plays and private picks
 have separate record arrays. Events have typed source fields and no raw key.
 Point ids are computed from kind, Age and turn; pending choices stay in the room.
 Actions name design slugs and payment outcomes, never copies or seats. Parsing

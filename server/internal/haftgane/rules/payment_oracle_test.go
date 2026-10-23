@@ -260,9 +260,10 @@ func randomTrade(rng *rand.Rand) tradeInput {
 
 // Exhaust all costs <=4 over three resources, every nonempty mask, <=2
 // choice producers per city, fixed capacities 0..need for EVERY resource in
-// EVERY city, and all 64 price matrices. Resource permutations are redundant: use nonincreasing needs and
-// enumerate ALL masks/prices in those coordinates. Producer order is immaterial
-// to outcomes; duplicate producers remain distinct capacities. Random/fuzz
+// EVERY city, and all 64 price matrices. Resource permutations are redundant:
+// use nonincreasing needs and enumerate ALL masks/prices in those coordinates.
+// Producer order is immaterial to outcomes; duplicates remain distinct
+// capacities. Random/fuzz
 // cases exercise arbitrary producer order, all seven resources and full limits.
 // Opt in because this sweep has millions of cases; verify-quick retains the
 // 100000-case oracle and the small representative sweep.

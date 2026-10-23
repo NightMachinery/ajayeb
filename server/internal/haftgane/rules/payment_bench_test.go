@@ -1,8 +1,9 @@
 package rules
 
 import (
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 )
 
 var paymentSink Payments
