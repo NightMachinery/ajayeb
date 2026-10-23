@@ -335,9 +335,9 @@ records the rulings and the fixtures' normalisations.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
 points. It contains setup, the seat ring, canonical keys, turn legality,
-resolution and replay. Views, bots and the remaining effects follow in later
-slices. Left is the next seat modulo the seat count, and right is the previous.
-Public plays and private picks have separate record arrays. Events have typed source fields and no raw key.
+resolution and replay. Views and bots follow in later slices. Left is the next seat modulo the seat count, and right is the previous.
+Public plays and private picks have separate record arrays. Events have typed
+source fields and no raw key.
 Point ids are computed from kind, Age and turn; pending choices stay in the room.
 Actions name design slugs and payment outcomes, never copies or seats. Parsing
 checks canonical syntax and the tagged union; only membership in the current
@@ -362,7 +362,7 @@ hand sizes. A sixth-turn discard point requires empty ordinary hands and a
 kept card for a Babylon night seat whose last-card stage is built. It never
 invents missing cards or a play history. Scenarios may
 retain a partial history; the checker validates record shapes and placements,
-while full historical legality belongs to the later resolver and replay slice.
+while `Replay` checks full historical legality for recorded batches.
 `CheckInvariants` also checks city names, board and stage bounds, inactive
 slots, balanced victory/defeat tokens, real final-score consistency and cache
 consistency. Known picks and current cards consume the multiset of their
@@ -392,7 +392,10 @@ and contains no free flags. It solves each ordinary cost with an unbounded
 purse once, retaining the complete frontier before filtering by frozen treasure.
 `AssessCostState` exposes `Coverable`, `Cheapest` (including printed coins) and
 `Affordable`, preserving the difference between missing production and short
-treasure. The existing `QuoteState` API still returns only affordable quotes.
+treasure. A view should say "cannot be covered" for `Coverable == false`,
+or compute per-resource availability itself if it must name a resource,
+because the shortfall may be shared producer capacity. The existing
+`QuoteState` API still returns only affordable quotes.
 
 `ResolveState` trusts actions selected by `LegalState` on that same State;
 it never invokes legality generation or the payment solver. It removes picks,
@@ -490,6 +493,18 @@ covering before testing dominance. It checks 100,000 deterministic random inputs
 and an opt-in small-universe sweep, run by
 `make test-haftgane-payment-exhaustive` (part of `make verify-full`). The sweep runs need vectors in
 parallel; `FuzzPayment` checks outcomes and every witness against the same oracle.
+
+The seven-seat Legal benchmarks distinguish feasible capacity from impossible
+shared capacity. On Apple M2 (three runs, 2026-10-23), `LegalState` takes
+12.4 to 12.8 microseconds for the typical fixture, 0.457 to 0.549 milliseconds
+for feasible capacity, and 1.112 to 1.252 milliseconds for impossible capacity,
+with zero allocations in each core fixture. The impossible fixture has seven
+units per cost and only six shared flexible symbols, so every construction is
+refuted and only 49 sales remain across all seven seats. `Game.Legal` takes
+1.049 to 1.089 milliseconds for that fixture (seven allocations), below the
+10 millisecond target. These synthetic capacity cases are stress fixtures,
+not claims of reachable cities; the previous "worst" fixture is now named
+`FeasibleCapacity`, and `ImpossibleCapacity` records the slower known shape.
 
 The shared `enginekit/puritycheck` and strict depguard allow-lists enforce
 exact module dependencies for each pure package: the catalog can use only

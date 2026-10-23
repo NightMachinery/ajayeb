@@ -9,7 +9,7 @@ import (
 
 // Synthetic cards isolate the rule from production costs. The two resource
 // cards deliberately have identical costs but different names, colours/chains.
-func freeFixture(t *testing.T, reverse bool) State {
+func freeFixture(t *testing.T) State {
 	t.Helper()
 	defs := []catalog.Design{
 		{ID: 1, NameID: 1, Slug: "provider", Name: "Provider", Age: 1, Color: catalog.Blue, Copies: catalog.At(3), Effects: catalog.Fx(catalog.Points(1)), ChainOut: catalog.Out(1)},
@@ -30,9 +30,6 @@ func freeFixture(t *testing.T, reverse bool) State {
 	}
 	// Remove starting clay only for this flat-core fixture: no source sells wood.
 	st.Hands[0] = [HandSize]catalog.DesignID{2, 3, 4}
-	if reverse {
-		st.Hands[0][0], st.Hands[0][1] = st.Hands[0][1], st.Hands[0][0]
-	}
 	return st
 }
 
@@ -47,80 +44,76 @@ func buildChoices(cs []Choice, kind ActionKind, id catalog.DesignID) []Choice {
 }
 
 func TestLegalFreeChecksBeforeCostCache(t *testing.T) {
-	for _, reverse := range []bool{false, true} {
-		for _, rule := range []string{"chain", "colour", "first-turn", "last-turn"} {
-			t.Run(rule+map[bool]string{false: "/forward", true: "/reverse"}[reverse], func(t *testing.T) {
-				st := freeFixture(t, reverse)
-				switch rule {
-				case "chain":
-					st.Cities[0].Chains = 1 << 1
-				case "colour":
-					st.Cities[0].Abilities = AbilityFreeFirstOfColour
-					st.Cities[0].Colors[catalog.Blue] = 1
-				case "first-turn":
-					st.Cities[0].Abilities = AbilityFreeFirstTurn
-				case "last-turn":
-					st.Cities[0].Abilities = AbilityFreeLastTurn
-					st.Turn = 6
-				}
-				before := st
-				cs := LegalState(&st, 0, nil)
-				free := buildChoices(cs, ActBuild, 2)
-				if len(free) != 1 || free[0].Left != 0 || free[0].Right != 0 || free[0].Printed != 0 || free[0].Total != 0 || free[0].Free == FreeNone {
-					t.Fatalf("missing free card: %+v", free)
-				}
-				other := buildChoices(cs, ActBuild, 3)
-				if rule == "chain" || rule == "colour" {
-					if len(other) != 0 {
-						t.Fatal("free result leaked across same-cost designs", other)
-					}
-				} else if len(other) != 1 {
-					t.Fatal("turn condition did not free both buildings")
-				}
-				if st != before {
-					t.Fatal("Legal mutated its frozen input")
-				}
-			})
-		}
-	}
-}
-
-func TestLegalStageNeverFreeAndPrintedFreeCostsNothing(t *testing.T) {
-	for _, reverse := range []bool{false, true} {
-		t.Run(map[bool]string{false: "forward", true: "reverse"}[reverse], func(t *testing.T) {
-			st := freeFixture(t, reverse)
-			st.Cities[0].Stages = 2
-			st.Cities[0].Abilities = AbilityFreeFirstOfColour | AbilityFreeFirstTurn | AbilityFreeLastTurn
-			st.Turn = 6
+	// Offer order follows design ids, not hand order. The later refusal test
+	// swaps which same-cost design is free to exercise the opposite ordering.
+	for _, rule := range []string{"chain", "colour", "first-turn", "last-turn"} {
+		t.Run(rule, func(t *testing.T) {
+			st := freeFixture(t)
+			switch rule {
+			case "chain":
+				st.Cities[0].Chains = 1 << 1
+			case "colour":
+				st.Cities[0].Abilities = AbilityFreeFirstOfColour
+				st.Cities[0].Colors[catalog.Blue] = 1
+			case "first-turn":
+				st.Cities[0].Abilities = AbilityFreeFirstTurn
+			case "last-turn":
+				st.Cities[0].Abilities = AbilityFreeLastTurn
+				st.Turn = 6
+			}
+			before := st
 			cs := LegalState(&st, 0, nil)
-			if len(buildChoices(cs, ActStage, 2)) != 0 || len(buildChoices(cs, ActStage, 3)) != 0 {
-				t.Fatal("building free condition leaked into same-cost stage")
+			free := buildChoices(cs, ActBuild, 2)
+			if len(free) != 1 || free[0].Left != 0 || free[0].Right != 0 || free[0].Printed != 0 || free[0].Total != 0 || free[0].Free == FreeNone {
+				t.Fatalf("missing free card: %+v", free)
 			}
-			paid := buildChoices(cs, ActBuild, 4)
-			if len(paid) != 1 || paid[0].Total != 0 || paid[0].Printed != 0 {
-				t.Fatalf("free printed coin cost: %+v", paid)
-			}
-			st.Turn = 2 // Test the debit without an automatic Age transition.
-			st.Hands[0] = [HandSize]catalog.DesignID{4, 2}
-			for s := 1; s < 3; s++ {
-				st.Hands[s] = [HandSize]catalog.DesignID{3, 4}
-			}
-			picks := [MaxSeats]Action{{Kind: ActBuild, Design: 4}, {Kind: ActSell, Design: 3}, {Kind: ActSell, Design: 3}}
-			next, evs, err := ResolveState(&st, &picks, nil)
-			if err != nil || next.Cities[0].Coins != 0 {
-				t.Fatal("free build paid printed coins", err, next.Cities[0].Coins)
-			}
-			for _, e := range evs {
-				if e.Kind == EvPlay && e.Seat == 0 && (e.Printed != 0 || e.Left != 0 || e.Right != 0) {
-					t.Fatal("free play charged", e)
+			other := buildChoices(cs, ActBuild, 3)
+			if rule == "chain" || rule == "colour" {
+				if len(other) != 0 {
+					t.Fatal("free result leaked across same-cost designs", other)
 				}
+			} else if len(other) != 1 {
+				t.Fatal("turn condition did not free both buildings")
+			}
+			if st != before {
+				t.Fatal("Legal mutated its frozen input")
 			}
 		})
 	}
 }
 
+func TestLegalStageNeverFreeAndPrintedFreeCostsNothing(t *testing.T) {
+	st := freeFixture(t)
+	st.Cities[0].Stages = 2
+	st.Cities[0].Abilities = AbilityFreeFirstOfColour | AbilityFreeFirstTurn | AbilityFreeLastTurn
+	st.Turn = 6
+	cs := LegalState(&st, 0, nil)
+	if len(buildChoices(cs, ActStage, 2)) != 0 || len(buildChoices(cs, ActStage, 3)) != 0 {
+		t.Fatal("building free condition leaked into same-cost stage")
+	}
+	paid := buildChoices(cs, ActBuild, 4)
+	if len(paid) != 1 || paid[0].Total != 0 || paid[0].Printed != 0 {
+		t.Fatalf("free printed coin cost: %+v", paid)
+	}
+	st.Turn = 2 // Test the debit without an automatic Age transition.
+	st.Hands[0] = [HandSize]catalog.DesignID{4, 2}
+	for s := 1; s < 3; s++ {
+		st.Hands[s] = [HandSize]catalog.DesignID{3, 4}
+	}
+	picks := [MaxSeats]Action{{Kind: ActBuild, Design: 4}, {Kind: ActSell, Design: 3}, {Kind: ActSell, Design: 3}}
+	next, evs, err := ResolveState(&st, &picks, nil)
+	if err != nil || next.Cities[0].Coins != 0 {
+		t.Fatal("free build paid printed coins", err, next.Cities[0].Coins)
+	}
+	for _, e := range evs {
+		if e.Kind == EvPlay && e.Seat == 0 && (e.Printed != 0 || e.Left != 0 || e.Right != 0) {
+			t.Fatal("free play charged", e)
+		}
+	}
+}
+
 func TestLegalFreePrecedenceAndNameRule(t *testing.T) {
-	st := freeFixture(t, false)
+	st := freeFixture(t)
 	st.Cities[0].Chains = 1 << 1
 	st.Cities[0].Abilities = AbilityFreeFirstOfColour | AbilityFreeFirstTurn
 	cs := LegalState(&st, 0, nil)
@@ -211,9 +204,9 @@ func TestLegalTwinNameAndStageCompletion(t *testing.T) {
 }
 
 func TestLegalOlympiaFrozenConditions(t *testing.T) {
-	st := freeFixture(t, false)
+	st := freeFixture(t)
 	st.Cities[0].Abilities = AbilityFreeFirstTurn | AbilityFreeLastTurn
-	for turn := uint8(1); turn <= 7; turn++ {
+	for turn := uint8(1); turn <= TurnsPerAge; turn++ {
 		st.Turn = turn
 		free := buildChoices(LegalState(&st, 0, nil), ActBuild, 2)
 		if (len(free) == 1) != (turn == 1 || turn == 6) {
@@ -231,29 +224,48 @@ func TestLegalOlympiaFrozenConditions(t *testing.T) {
 func TestLegalFreeAfterCachedOrdinaryRefusal(t *testing.T) {
 	// Canonical id order, not just hand order, makes the failed ordinary quote
 	// enter the cache before the free action. Test both directions of leakage.
-	for _, reverse := range []bool{false, true} {
-		for _, chain := range []bool{false, true} {
-			t.Run(map[bool]string{false: "colour", true: "chain"}[chain]+map[bool]string{false: "/forward", true: "/reverse"}[reverse], func(t *testing.T) {
-				st := freeFixture(t, reverse)
-				var defs []catalog.Design
-				for id := catalog.DesignID(1); id <= 4; id++ {
-					d, _ := catalog.DesignByID(id)
-					defs = append(defs, d)
-				}
-				defs[1].ChainIn, defs[1].Color = 0, catalog.Blue
-				defs[2].ChainIn, defs[2].Color = 1, catalog.Red
-				t.Cleanup(catalog.ReplaceForTest(defs, catalog.BaseBoards()))
-				if chain {
-					st.Cities[0].Chains = 1 << 1
-				} else {
-					st.Cities[0].Abilities = AbilityFreeFirstOfColour
-					st.Cities[0].Colors[catalog.Blue] = 1
-				}
-				cs := LegalState(&st, 0, nil)
-				if len(buildChoices(cs, ActBuild, 2)) != 0 || len(buildChoices(cs, ActBuild, 3)) != 1 {
-					t.Fatal("cached ordinary refusal disabled the free action", cs)
-				}
-			})
-		}
+	for _, chain := range []bool{false, true} {
+		t.Run(map[bool]string{false: "colour", true: "chain"}[chain], func(t *testing.T) {
+			st := freeFixture(t)
+			var defs []catalog.Design
+			for id := catalog.DesignID(1); id <= 4; id++ {
+				d, _ := catalog.DesignByID(id)
+				defs = append(defs, d)
+			}
+			defs[1].ChainIn, defs[1].Color = 0, catalog.Blue
+			defs[2].ChainIn, defs[2].Color = 1, catalog.Red
+			t.Cleanup(catalog.ReplaceForTest(defs, catalog.BaseBoards()))
+			if chain {
+				st.Cities[0].Chains = 1 << 1
+			} else {
+				st.Cities[0].Abilities = AbilityFreeFirstOfColour
+				st.Cities[0].Colors[catalog.Blue] = 1
+			}
+			cs := LegalState(&st, 0, nil)
+			if len(buildChoices(cs, ActBuild, 2)) != 0 || len(buildChoices(cs, ActBuild, 3)) != 1 {
+				t.Fatal("cached ordinary refusal disabled the free action", cs)
+			}
+		})
+	}
+}
+
+// The first design's ordinary stage quote is cached before the next design's
+// free building, even though their costs are identical.
+func TestLegalFreeBuildingAfterCachedStage(t *testing.T) {
+	st := freeFixture(t)
+	var defs []catalog.Design
+	for id := catalog.DesignID(1); id <= 4; id++ {
+		d, _ := catalog.DesignByID(id)
+		defs = append(defs, d)
+	}
+	boards := catalog.BaseBoards()
+	boards[catalog.BoardOlympia-1].Sides[0].Stages[0].Cost = catalog.MustCost("W")
+	t.Cleanup(catalog.ReplaceForTest(defs, boards))
+	st.Cities[0].Abilities = AbilityFreeFirstTurn
+	cs := LegalState(&st, 0, nil)
+	assertFree(t, cs, 2, FreeFirstTurn)
+	assertFree(t, cs, 3, FreeFirstTurn)
+	if len(buildChoices(cs, ActStage, 2)) != 0 || len(buildChoices(cs, ActStage, 3)) != 0 {
+		t.Fatal("stage inherited a free building quote")
 	}
 }

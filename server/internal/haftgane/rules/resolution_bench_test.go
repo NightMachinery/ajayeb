@@ -45,7 +45,7 @@ func BenchmarkGameLegalSevenTypical(b *testing.B) {
 func benchmarkWorstTurn(b *testing.B) State {
 	b.Helper()
 	// Deliberate capacity stress, not a reachable-city claim. Seven distinct
-	// seven-unit costs plus an eighth stage cost, with maximal flexible caches.
+	// seven-unit costs plus an eighth stage cost, with wide flexible caches.
 	designs := catalog.BaseDesigns()
 	var hand [HandSize]catalog.DesignID
 	for i := 0; i < HandSize; i++ {
@@ -83,7 +83,7 @@ func benchmarkWorstTurn(b *testing.B) State {
 	return st
 }
 
-func BenchmarkLegalSevenWorst(b *testing.B) {
+func BenchmarkLegalSevenFeasibleCapacity(b *testing.B) {
 	st := benchmarkWorstTurn(b)
 	var buf [MaxTurnChoices]Choice
 	b.ReportAllocs()
@@ -95,7 +95,7 @@ func BenchmarkLegalSevenWorst(b *testing.B) {
 	}
 }
 
-func BenchmarkGameLegalSevenWorst(b *testing.B) {
+func BenchmarkGameLegalSevenFeasibleCapacity(b *testing.B) {
 	g := Game{State: benchmarkWorstTurn(b)}
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -122,5 +122,67 @@ func BenchmarkResolveSeven(b *testing.B) {
 			b.Fatal(err)
 		}
 		resolvedStateSink, resolvedEventsSink = st, evs
+	}
+}
+
+// The payment solver's slowest known shape: every resource looks available,
+// but six shared choice symbols cannot cover seven units, so every split must
+// be refuted by matching. Eight such costs per seat, seven seats.
+func benchmarkImpossibleTurn(b *testing.B) State {
+	b.Helper()
+	designs := catalog.BaseDesigns()
+	var hand [HandSize]catalog.DesignID
+	for i := 0; i < HandSize; i++ {
+		id := catalog.DesignID(51 + i)
+		hand[i] = id
+		cost := catalog.Cost{Res: [catalog.NumResources]uint8{1, 1, 1, 1, 1, 1, 1}}
+		if i > 0 {
+			cost.Res[i-1] = 0
+			cost.Res[i] = 2
+		}
+		designs[id-1].Cost = cost
+	}
+	boards := catalog.BaseBoards()
+	for i := range boards {
+		boards[i].Sides[0].Stages[0].Cost = catalog.Cost{Res: [catalog.NumResources]uint8{2, 1, 1, 1, 1, 1, 0}}
+	}
+	b.Cleanup(catalog.ReplaceForTest(designs, boards))
+	st := State{Seats: 7, Phase: PhaseTurn, Age: 3, Turn: 1, Decider: NoSeat}
+	for s := 0; s < 7; s++ {
+		st.Hands[s] = hand
+		c := City{Board: catalog.BoardID(s + 1), Side: catalog.Day, Coins: 30, NChoiceForSale: 3}
+		for i := uint8(0); i < c.NChoiceForSale; i++ {
+			c.ChoiceForSale[i] = catalog.AllResources
+		}
+		st.Cities[s] = c
+	}
+	return st
+}
+
+func BenchmarkLegalSevenImpossibleCapacity(b *testing.B) {
+	st := benchmarkImpossibleTurn(b)
+	var buf [MaxTurnChoices]Choice
+	n := 0
+	for seat := Seat(0); seat < 7; seat++ {
+		n += len(LegalState(&st, seat, buf[:0]))
+	}
+	b.Logf("choices offered in all: %d", n)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		for seat := Seat(0); seat < 7; seat++ {
+			legalChoicesSink = LegalState(&st, seat, buf[:0])
+		}
+	}
+}
+
+func BenchmarkGameLegalSevenImpossibleCapacity(b *testing.B) {
+	g := Game{State: benchmarkImpossibleTurn(b)}
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		for seat := Seat(0); seat < 7; seat++ {
+			legalChoicesSink = g.Legal(seat)
+		}
 	}
 }
