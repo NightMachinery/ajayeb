@@ -2666,3 +2666,40 @@ rejecting public replay divergence. The recorded sweep covers 120 pairs,
 excluded. `TestNotebookAgainstActualWorld` checks notebook bounds against
 independently rotated actual packets and the future hands that really return:
 1,032 deductions, 1,472,175 Returning bounds and 145,400 circulating bounds.
+
+
+## Haftgane bot tournaments
+
+The baseline policy tests cover observation-only inputs, all player counts
+and decision kinds, exact offered-key fallback, deterministic fixed work,
+concurrent repeatability, mid-ranking cancellation and paired forbidden-data
+changes. Their seeded sweeps and opt-in smoke are documented in
+[the Haftgane AI page](haftgane/ai.md).
+
+`TestHATournamentSyntheticRewards` independently pins score/coin ordering,
+fractional wins and tied rank reward. The tournament tests also check fixed
+deals and side strata, every focal/offset/reflection treatment, entropy-root
+separation, repeated keys/work, incomplete or changed comparison/game sets,
+corrupt digests, changed policy versions, truncated plain/gzip streams,
+missing/duplicate shards and cancellation without a complete footer.
+An exact-threshold test prevents floating-point roundoff from turning an
+exact target into failure or a zero paired difference into positive evidence.
+
+```sh
+make test-go GO_PKGS=./cmd/ajayeb-sim GO_RUN='^TestHATournament'
+make test-race RACE_DIRS='cmd/ajayeb-sim internal/haftgane/bot'
+```
+
+Run long experiments serially through the guarded commands in
+[the simulator guide](haftgane/ai.md#seat-balanced-simulator). A complete
+release tally requires all declared blocks, replays every accepted batch and
+keeps a deal's rotations together for its 95% block-bootstrap interval.
+A partial shard or short development run cannot pass the release flag.
+The first fixed preset passed all 25 targets over 100 held-out blocks at
+each N, with 30,600 complete unique games and no normal fallback.
+
+Duel compatibility includes byte-identical help, weights, replay, tally and
+twelve full fixed-seed game logs. The match/levels/bench reports and match
+JSON are byte-identical after removing only the variable timing/heap
+measurement fields; engine outcomes, action counts, iteration counts,
+configuration and statistical report text stay pinned.

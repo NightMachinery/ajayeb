@@ -145,7 +145,8 @@ Each independent deal block materializes the decks, guild selection, physical
 boards and sides once. Blocks cycle through all-day, all-night and random-side
 strata. Side selection is complete before any policy runs. Every candidate
 replaces one baseline seat on that same setup, keeping all other policies and
-their call tapes fixed. Focal seats cover the whole ring. Mixed backgrounds
+their logical-point entropy inputs fixed. The bot still mixes its actual
+permitted-observation fingerprint, so changed observations can change draws. Focal seats cover the whole ring. Mixed backgrounds
 cycle Greedy, Apprentice and Random as evenly as the count permits, with every
 relative offset and both reflected lineups. Reflections never reverse the
 engine's actual Age pass direction.
@@ -247,3 +248,67 @@ inspection but has no complete footer and cannot enter a tally. Gate failure
 returns status 1 after writing the honest summary; invalid command flags
 return status 2. Normal run/tally status zero means the experiment is complete,
 unless the explicitly requested `-check-gates` also requires strength success.
+
+
+## First held-out tournament
+
+Preset 1 passed all 25 declared strength checks on 500 independent held-out
+deal blocks (100 per N). Five serial shards contained 30,600 unique complete
+games and 3,102,857 accepted picks. Tallying replayed every key and checked the
+complete assigned block, lineup and rotation manifests. Every decision
+completed its prescribed work; normal fallback count was zero. The policy,
+temperature and work row were frozen before this run, without release-seed
+tuning.
+
+The following are means with 95% deal-block bootstrap intervals. Against
+Random, Greedy's targets are rank reward 0.85 and win credit 0.70;
+Apprentice's are 0.75 and 0.50. The last metric is Greedy's paired rank change
+when replacing Apprentice in the same mixed field:
+
+- N=3: Greedy rank 0.9900 [0.9800, 0.9983],
+  win 0.9833 [0.9667, 0.9967];
+  Apprentice rank 0.9383 [0.9183, 0.9583],
+  win 0.8900 [0.8533, 0.9267];
+  paired mixed rank improvement 0.3733 [0.3525, 0.3933].
+- N=4: Greedy rank 0.9867 [0.9800, 0.9933],
+  win 0.9650 [0.9475, 0.9825];
+  Apprentice rank 0.8967 [0.8750, 0.9175],
+  win 0.7800 [0.7375, 0.8200];
+  paired mixed rank improvement 0.2665 [0.2558, 0.2773].
+- N=5: Greedy rank 0.9905 [0.9850, 0.9950],
+  win 0.9700 [0.9520, 0.9840];
+  Apprentice rank 0.8602 [0.8380, 0.8820],
+  win 0.6870 [0.6420, 0.7320];
+  paired mixed rank improvement 0.2718 [0.2619, 0.2815].
+- N=6: Greedy rank 0.9900 [0.9857, 0.9940],
+  win 0.9617 [0.9467, 0.9767];
+  Apprentice rank 0.8845 [0.8698, 0.8992],
+  win 0.6825 [0.6483, 0.7167];
+  paired mixed rank improvement 0.2899 [0.2817, 0.2982].
+- N=7: Greedy rank 0.9843 [0.9795, 0.9886],
+  win 0.9329 [0.9157, 0.9500];
+  Apprentice rank 0.8729 [0.8576, 0.8876],
+  win 0.6257 [0.5943, 0.6571];
+  paired mixed rank improvement 0.2673 [0.2588, 0.2760].
+
+Every interval's lower bound also clears its corresponding target. In the
+inverse fields, replacing Random with Greedy or Apprentice improved rank
+reward with an interval above zero at every N. Mean improvements ranged from
+0.4675 to 0.4917 for Greedy and 0.3515 to 0.3750 for Apprentice. Homogeneous
+self-play had average midrank 2.0, 2.5, 3.0, 3.5 and 4.0 at N=3 to 7, with
+rank reward 0.5, as the reporting sanity check requires.
+
+At N=7, Greedy ordinary-turn decision time was 0.137 ms p50, 0.411 ms p95 and
+0.729 ms p99; Apprentice was 0.132, 0.373 and 0.640 ms; Random was 0.006,
+0.011 and 0.027 ms. Discard-build p95/p99 was 0.869/1.258 ms for Greedy and
+1.030/1.643 ms for Apprentice. These are `Choose` wall times, excluding
+Legal, Observe, I/O and queues, but including host preemption. The loaded
+host produced occasional long scheduling tails, including a 106 ms maximum
+Apprentice ordinary decision. This is not a per-pick CPU-time measurement or
+a room latency claim.
+
+Maximum heap allocation sampled after a block was 17,610,736 bytes. The five
+gzip reports totalled 33670927 bytes and stay in private experiment storage;
+no large measured-data fixture is committed. Header/source/binary and report
+digests retain the reproduction inputs. The sampler, Scholar and room
+scheduling gates remain later work in the bot plan.
