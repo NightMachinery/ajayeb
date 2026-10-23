@@ -32,6 +32,10 @@ type actor struct {
 	// claims holds, for each connection that joined with a device link,
 	// the claim and the user it acts as (package ident).
 	claims map[*room.Client]claimed
+	// shown is the viewer role (seat, or -1) of the last frame each
+	// connection got. A frame for another role carries the whole history,
+	// since the connection's events so far were redacted for its old role.
+	shown map[*room.Client]int
 
 	inbox  chan any
 	ctx    context.Context
@@ -85,7 +89,7 @@ type msgBotResult struct {
 // newActor builds a table's actor. members are connections the lobby
 // hands over at Start: the actor sends each its first frame when it runs.
 func (t *Tables) newActor(m *room.Manager, st *state, members []Member) (*room.Handle, error) {
-	a := &actor{t: t, m: m, code: st.rec.Code, st: st, claims: map[*room.Client]claimed{},
+	a := &actor{t: t, m: m, code: st.rec.Code, st: st, claims: map[*room.Client]claimed{}, shown: map[*room.Client]int{},
 		inbox: make(chan any, t.cfg.InboxSize), done: make(chan struct{})}
 	for _, mb := range members {
 		a.conns = append(a.conns, mb.Client)
@@ -367,6 +371,7 @@ func (a *actor) detach(c *room.Client) {
 	user := a.userOf(c)
 	a.conns = slices.Delete(a.conns, i, i+1)
 	delete(a.claims, c)
+	delete(a.shown, c)
 	if !a.connected(user) {
 		a.broadcastExcept(a.newBroadcast(false), nil)
 		a.checkRoles()

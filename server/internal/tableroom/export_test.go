@@ -8,6 +8,7 @@ var (
 	RefString   = refString
 	ParseRef    = parseRef
 	FrameLeaks  = frameLeaks
+	ViewerLeaks = viewerLeaks
 	TruthFrom   = truthFrom
 	FrameConfig = frameConfig
 	// PendingCanaries runs the pending-extras canaries on a raw frame.

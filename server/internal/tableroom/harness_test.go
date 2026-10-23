@@ -20,6 +20,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest/faults"
+	"github.com/NightMachinery/ajayeb/server/internal/tabletest/leakcheck"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
@@ -245,6 +246,12 @@ type inproc struct {
 	seats map[string]int // user -> seat
 	model map[int]wire.TablePending
 	wants map[tabletest.ClientID][]pendingWant
+	// viewers holds, beside each frame, its viewer as the test's model of
+	// seats and admins says (seats, admins) when the frame was drained. A
+	// test that switches seats or roles updates the model before the
+	// change's frames are drained.
+	admins  map[string]bool
+	viewers map[tabletest.ClientID][]frameViewer
 }
 
 func newClient(user, client, name string) *room.Client {
@@ -263,7 +270,8 @@ func (f *fixture) openInproc(ctx context.Context, spec Spec) (*inproc, error) {
 	}
 	p := &inproc{f: f, code: code, clients: map[tabletest.ClientID]*room.Client{},
 		frames: map[tabletest.ClientID][]wire.TableState{}, rejects: map[tabletest.ClientID][]wire.TableReject{},
-		seats: map[string]int{}, model: map[int]wire.TablePending{}, wants: map[tabletest.ClientID][]pendingWant{}}
+		seats: map[string]int{}, model: map[int]wire.TablePending{}, wants: map[tabletest.ClientID][]pendingWant{},
+		admins: map[string]bool{spec.Creator: true}, viewers: map[tabletest.ClientID][]frameViewer{}}
 	// The driver's client for seat s is the user seated there, whatever the
 	// seating rule made of the lobby order.
 	var seats []SeatRecord
@@ -316,6 +324,9 @@ func (p *inproc) drain() {
 	if p.wants == nil {
 		p.wants = map[tabletest.ClientID][]pendingWant{}
 	}
+	if p.viewers == nil {
+		p.viewers = map[tabletest.ClientID][]frameViewer{}
+	}
 	for id, c := range p.clients {
 		for _, m := range c.Out.Take() {
 			switch m := m.(type) {
@@ -328,6 +339,11 @@ func (p *inproc) drain() {
 					}
 				}
 				p.wants[id] = append(p.wants[id], w)
+				v := frameViewer{Seat: leakcheck.Spectator, Client: string(id), Admin: p.admins[c.UserID]}
+				if seat, ok := p.seats[c.UserID]; ok {
+					v.Seat = seat
+				}
+				p.viewers[id] = append(p.viewers[id], v)
 			case wire.TableReject:
 				p.rejects[id] = append(p.rejects[id], m)
 			default:

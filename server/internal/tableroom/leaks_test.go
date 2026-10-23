@@ -24,14 +24,17 @@ import (
 var frameConfig = leakcheck.Config{
 	KeyPaths:  []string{"view.you.choices[].key", "you.choices[].key"},
 	TextPaths: []string{"humans[].name"},
-	HexPaths:  []string{"seats[].userId", "humans[].userId", "you.userId", "ack.clientId", "roomLog[].by", "roomLog[].userId"},
+	HexPaths:  []string{"seats[].userId", "humans[].userId", "humans[].promotedBy", "you.userId", "you.previousSeats[].userId", "ack.clientId", "roomLog[].by", "roomLog[].userId"},
 }
 
 // frameViewer is who received a frame: a seat, or leakcheck.Spectator,
-// and the connection's client id, which an acknowledgement must name.
+// the connection's client id, which an acknowledgement must name, and
+// whether its user was an admin then, the only viewers the previous-seat
+// hint may reach.
 type frameViewer struct {
 	Seat   int
 	Client string
+	Admin  bool
 }
 
 // pendingWant is the pending pick the test's own model says the viewer's
@@ -55,15 +58,33 @@ type pendingWant struct {
 // re-encoded frames; wants may be nil.
 func frameLeaks(t testing.TB, c *leakcheck.Checker, label string, v frameViewer, frames []wire.TableState, raws [][]byte, wants []pendingWant) []leakcheck.Leak {
 	t.Helper()
+	vs := make([]frameViewer, len(frames))
+	for i := range vs {
+		vs[i] = v
+	}
+	return viewerLeaks(t, c, label, vs, frames, raws, wants)
+}
+
+// viewerLeaks is frameLeaks with each frame's own viewer, vs[i], for a
+// connection whose seat or admin status changed. A frame for another seat
+// than the frame before it must carry the whole history, since the
+// connection's events so far were redacted for the old seat.
+func viewerLeaks(t testing.TB, c *leakcheck.Checker, label string, vs []frameViewer, frames []wire.TableState, raws [][]byte, wants []pendingWant) []leakcheck.Leak {
+	t.Helper()
 	var leaks []leakcheck.Leak
 	scanned := make([][]byte, len(frames))
+	seats := make([]int, len(frames))
 	for i, fr := range frames {
 		var w pendingWant
 		if i < len(wants) {
 			w = wants[i]
 		}
 		where := fmt.Sprintf("%s frame %d", label, i)
-		bad := envelope(where, v, fr, w, c.Truth)
+		bad := envelope(where, vs[i], fr, w, c.Truth)
+		if i > 0 && vs[i].Seat != vs[i-1].Seat && fr.History == nil {
+			bad = append(bad, leakcheck.Leak{Rule: leakcheck.Envelope, Doc: where, Path: "history", Detail: "a frame for another seat without the history"})
+		}
+		seats[i] = vs[i].Seat
 		leaks = append(leaks, bad...)
 		raw, err := json.Marshal(fr)
 		if err != nil {
@@ -82,7 +103,7 @@ func frameLeaks(t testing.TB, c *leakcheck.Checker, label string, v frameViewer,
 		}
 		scanned[i] = raw
 	}
-	return append(leaks, c.Check(leakDocs(t, label, v.Seat, frames, scanned, c.Truth)...)...)
+	return append(leaks, c.Check(leakDocs(t, label, seats, frames, scanned, c.Truth)...)...)
 }
 
 // envelope checks a frame's private fields against its viewer.
@@ -99,6 +120,15 @@ func envelope(where string, v frameViewer, fr wire.TableState, w pendingWant, tr
 	}
 	if fr.Ack != nil && fr.Ack.ClientID != v.Client {
 		bad("ack.clientId", "another connection's acknowledgement")
+	}
+	if ps := fr.You.PreviousSeats; ps != nil && !v.Admin {
+		bad("you.previousSeats", "the previous-seat hint in a non-admin's frame")
+	} else if ps != nil {
+		for _, p := range *ps {
+			if slices.ContainsFunc(fr.Seats, func(s wire.PlatformSeat) bool { return s.UserID != nil && *s.UserID == p.UserID }) {
+				bad("you.previousSeats", "a seated user in the previous-seat hint")
+			}
+		}
 	}
 	if pd := fr.Pending; pd != nil {
 		switch {
@@ -127,8 +157,8 @@ func samePending(a, b *wire.TablePending) bool {
 // view rebuilt in the fake view's shape (the frame's view plus its point
 // and, as the fake view carries them, the latest resolution's events), the
 // frame's own events wherever it carries events the rebuilt view did not
-// take from it, and its history.
-func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, raws [][]byte, truth *leakcheck.Truth) []leakcheck.Doc {
+// take from it, and its history. Frame i's viewer is seats[i].
+func leakDocs(t testing.TB, label string, seats []int, frames []wire.TableState, raws [][]byte, truth *leakcheck.Truth) []leakcheck.Doc {
 	t.Helper()
 	var docs []leakcheck.Doc
 	events := []wire.TableEvent{}
@@ -142,6 +172,7 @@ func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, 
 			raw = raws[i]
 		}
 		where := fmt.Sprintf("%s frame %d", label, i)
+		viewer := seats[i]
 		docs = append(docs, leakcheck.Doc{Label: where, Kind: leakcheck.Frame, Viewer: viewer, Data: raw})
 		own := true // the rebuilt view takes its events from this frame
 		switch {
@@ -251,7 +282,7 @@ func TestPendingExtrasStayScanned(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pendingCanaries(t, leakcheck.New(truth, frameConfig), "in process", frameViewer{Seat: 0, Client: string(tabletest.SeatClient(0))}, raw)
+	pendingCanaries(t, leakcheck.New(truth, frameConfig), "in process", frameViewer{Seat: 0, Client: string(tabletest.SeatClient(0)), Admin: true}, raw)
 }
 
 // withoutVouchedKey removes exactly the vouched pending key from a frame's
@@ -434,7 +465,7 @@ func TestFramesLeakNothing(t *testing.T) {
 			c := leakcheck.New(truth, frameConfig)
 			total, picks := 0, 0
 			for id, frames := range p.frames {
-				v := frameViewer{Seat: viewerOf(id), Client: string(id)}
+				v := frameViewer{Seat: viewerOf(id), Client: string(id), Admin: viewerOf(id) == 0}
 				if leaks := frameLeaks(t, c, fmt.Sprintf("%d seats hide=%t %s", n, hide, id), v, frames, nil, p.wants[id]); len(leaks) != 0 {
 					t.Fatalf("%d seats, hide=%t, %s: %v", n, hide, id, leaks[:min(len(leaks), 5)])
 				}
@@ -452,20 +483,119 @@ func TestFramesLeakNothing(t *testing.T) {
 	}
 }
 
+// TestSwitchFramesLeakNothing: across seat switches, role changes and a
+// resignation, every frame passes the oracle checked against its viewer
+// as the test's model says it was when the frame was sent. A user who
+// loses their seat sees no hand from then on, the spectator who takes a
+// seat sees that seat's, each connection's first frame for a new seat
+// carries the history redacted for it (planted: without it, the oracle
+// reports it), and the previous-seat hint reaches a user while, and only
+// while, they are an admin.
+func TestSwitchFramesLeakNothing(t *testing.T) {
+	const n, seed = 4, 67
+	h := newTH(t, Config{BotWork: blockBots}, humans(n, seed))
+	p := h.p
+	admin, c1, c2 := tabletest.SeatClient(0), tabletest.SeatClient(1), tabletest.SeatClient(2)
+	seqs := map[tabletest.ClientID]int{}
+	seq := func(id tabletest.ClientID) int { seqs[id]++; return seqs[id] }
+
+	// A whole batch first, so the switches land on a table with history,
+	// then a pick of seat 1's own that stays pending.
+	for s := range n {
+		id := tabletest.SeatClient(s)
+		if sn := h.snap(id); len(sn.Legal) > 0 {
+			if o := h.send(id, uint64(seq(id)), sn.Ref, sn.Legal[0], true); o != tabletest.Accepted && o != tabletest.Resolved {
+				t.Fatalf("seat %d's confirmed pick: %s", s, o)
+			}
+		}
+	}
+	if b := h.latest(tabletest.SpectatorClient).Batch; b != 1 {
+		t.Fatalf("batch %d after every seat confirmed", b)
+	}
+	if sn := h.snap(c1); len(sn.Legal) > 0 {
+		h.expect(h.send(c1, uint64(seq(c1)), sn.Ref, sn.Legal[0], false), tabletest.Accepted, "seat 1's pick")
+	}
+
+	// change runs one accepted request after the frames sent before it are
+	// drained under the old model and the model is moved to the new one.
+	change := func(what string, model func(), id tabletest.ClientID, f wire.ClientMessage) {
+		t.Helper()
+		p.drain()
+		model()
+		h.want(id, f, outAccepted, what)
+	}
+	change("seat 1 to a bot", func() { delete(p.seats, userOf(1)) }, admin, toBot(seq(admin), 1, BotEasy))
+	if ps := h.latest(admin).You.PreviousSeats; ps == nil || len(*ps) != 1 || (*ps)[0] != (wire.PreviousSeat{UserID: userOf(1), Seat: 1}) {
+		t.Fatalf("the admin's hint after the switch: %v", ps)
+	}
+	change("the watcher to seat 1", func() { p.seats["watcher"] = 1 }, admin, toHuman(seq(admin), 1, "watcher"))
+	change("user-1's promotion", func() { p.admins[userOf(1)] = true }, admin, roleOp(seq(admin), "promote", userOf(1)))
+	change("user-1 steps down", func() { p.admins[userOf(1)] = false }, c1, roleOp(seq(c1), "step-down", ""))
+	change("seat 2 resigns", func() { delete(p.seats, userOf(2)) }, c2, wire.TableResign{T: "table-resign", Seq: seq(c2), Confirm: true})
+	change("user-2's promotion", func() { p.admins[userOf(2)] = true }, admin, roleOp(seq(admin), "promote", userOf(2)))
+	change("user-2's demotion", func() { p.admins[userOf(2)] = false }, admin, roleOp(seq(admin), "demote", userOf(2)))
+	for _, c := range p.clients {
+		a, err := p.actor()
+		if err == nil {
+			err = a.call(h.ctx, func() { a.inbound(c, wire.NewResync(p.code)) })
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	p.drain()
+
+	c := leakcheck.New(truthOf(t, p, n, seed, false), frameConfig)
+	hinted := map[tabletest.ClientID]int{}
+	unseated := 0
+	moved := 0
+	for id, frames := range p.frames {
+		vs := p.viewers[id]
+		if leaks := viewerLeaks(t, c, string(id), vs, frames, nil, nil); len(leaks) != 0 {
+			t.Fatalf("%s: %v", id, leaks[:min(len(leaks), 5)])
+		}
+		// Planted: the first frame for a new seat without its history.
+		if i := slices.IndexFunc(vs, func(v frameViewer) bool { return v.Seat != vs[0].Seat }); i > 0 {
+			moved++
+			planted := slices.Clone(frames)
+			planted[i].History = nil
+			if leaks := viewerLeaks(t, c, string(id)+" planted", vs, planted, nil, nil); !slices.ContainsFunc(leaks, func(l leakcheck.Leak) bool {
+				return l.Rule == leakcheck.Envelope && l.Path == "history"
+			}) {
+				t.Errorf("%s: a seat change without history was not reported: %v", id, leaks)
+			}
+		}
+		for i, fr := range frames {
+			if ps := fr.You.PreviousSeats; ps != nil && len(*ps) > 0 {
+				hinted[id]++
+			}
+			if vs[i].Seat < 0 && id != tabletest.SpectatorClient {
+				unseated++
+			}
+		}
+	}
+	if hinted[admin] == 0 || hinted[c1] == 0 || hinted[c2] == 0 || unseated == 0 || moved < 3 {
+		t.Fatalf("too little checked: hinted frames %v, %d frames of an unseated user, %d connections moved", hinted, unseated, moved)
+	}
+}
+
 // TestPlantedEnvelopeLeaks: a frame's private fields are checked against
 // the viewer and the accepted state, and a pending pick is left out of the
 // raw-key scan only once that check vouches for it. Planted in real
 // frames, each of these is reported: another seat's pending pick sent to
 // the spectator, another seat's key as the viewer's pick, the viewer's own
 // key that is not its accepted pick, a confirmation the public list does
-// not show, another seat's you, another connection's acknowledgement, and
-// a hidden card in the events of a history frame.
+// not show, another seat's you, another connection's acknowledgement, a
+// hidden card in the events of a history frame, and the previous-seat
+// hint where it does not belong: the admin's own frame given to a
+// non-admin, a hint planted in the spectator's frame, and a seated user in
+// the admin's hint.
 func TestPlantedEnvelopeLeaks(t *testing.T) {
 	f := newFixture(t, Config{})
 	p, truth := playForLeaks(t, f, 3, 2028, false)
 	c := leakcheck.New(truth, frameConfig)
 	spec := frameViewer{Seat: leakcheck.Spectator, Client: string(tabletest.SpectatorClient)}
-	seat0 := frameViewer{Seat: 0, Client: string(tabletest.SeatClient(0))}
+	seat0 := frameViewer{Seat: 0, Client: string(tabletest.SeatClient(0)), Admin: true}
 	sf, s0 := p.frames[tabletest.SpectatorClient][0], p.frames[tabletest.SeatClient(0)][0]
 	m := &truth.Moments[0]
 	if sf.Batch != 0 || s0.Batch != 0 || s0.Pending != nil || s0.Point == nil || !slices.Contains(s0.Point.Required, 0) || slices.Contains(s0.Point.Confirmed, 0) {
@@ -489,6 +619,15 @@ func TestPlantedEnvelopeLeaks(t *testing.T) {
 	ack.Ack = &wire.PlatformAck{ClientID: string(tabletest.SeatClient(1)), Seq: 1}
 	you := s0
 	you.You.Seat = &other
+	if s0.You.PreviousSeats == nil || sf.You.PreviousSeats != nil {
+		t.Fatal("the hint is not in the admin's frame alone")
+	}
+	notAdmin := seat0
+	notAdmin.Admin = false
+	hinted := sf
+	hinted.You.PreviousSeats = &[]wire.PreviousSeat{}
+	seated := s0
+	seated.You.PreviousSeats = &[]wire.PreviousSeat{{UserID: *s0.Seats[1].UserID, Seat: 1}}
 
 	// A history frame whose own events name a card seat 0 may not see.
 	var hist wire.TableState
@@ -521,6 +660,9 @@ func TestPlantedEnvelopeLeaks(t *testing.T) {
 		{"another seat's you", seat0, you, nil, []leakcheck.Rule{leakcheck.Envelope}},
 		{"another connection's acknowledgement", seat0, ack, nil, []leakcheck.Rule{leakcheck.Envelope}},
 		{"a hidden card in a history frame's events", seat0, hist, nil, []leakcheck.Rule{leakcheck.HiddenCard}},
+		{"the admin's frame given to a non-admin", notAdmin, s0, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"a hint in the spectator's frame", spec, hinted, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"a seated user in the admin's hint", seat0, seated, nil, []leakcheck.Rule{leakcheck.Envelope}},
 	} {
 		leaks := frameLeaks(t, c, tc.name, tc.v, []wire.TableState{tc.fr}, nil, tc.wants)
 		for _, rule := range tc.rules {

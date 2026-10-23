@@ -492,7 +492,7 @@ func TestWebSocketTables(t *testing.T) {
 		truths = append(truths, truth)
 		checker := leakcheck.New(truth, tableroom.FrameConfig)
 		for id, c := range tb.clients {
-			v := tableroom.FrameViewer{Seat: viewerOf(id), Client: c.clientID}
+			v := tableroom.FrameViewer{Seat: viewerOf(id), Client: c.clientID, Admin: viewerOf(id) == 0}
 			if leaks := tableroom.FrameLeaks(t, checker, fmt.Sprintf("%d seats %s", n, id), v, c.states, c.raw, nil); len(leaks) != 0 {
 				t.Fatalf("%d seats, %s: %v", n, id, leaks[:min(5, len(leaks))])
 			}
@@ -534,7 +534,7 @@ func plantedPending(t *testing.T, checker *leakcheck.Checker, truth *leakcheck.T
 			t.Fatalf("%s's first frame: batch %d", id, fr.Batch)
 		}
 		fr.Pending = &wire.TablePending{Key: foreign}
-		leaks := tableroom.FrameLeaks(t, checker, "planted "+string(id), tableroom.FrameViewer{Seat: viewerOf(id), Client: c.clientID}, []wire.TableState{fr}, nil, nil)
+		leaks := tableroom.FrameLeaks(t, checker, "planted "+string(id), tableroom.FrameViewer{Seat: viewerOf(id), Client: c.clientID, Admin: viewerOf(id) == 0}, []wire.TableState{fr}, nil, nil)
 		for _, rule := range []leakcheck.Rule{leakcheck.Envelope, leakcheck.RawKey} {
 			if !slices.ContainsFunc(leaks, func(l leakcheck.Leak) bool { return l.Rule == rule }) {
 				t.Errorf("seat 1's pending pick planted in %s's socket frame: %s did not report it; got %v", id, rule, leaks)
@@ -545,7 +545,7 @@ func plantedPending(t *testing.T, checker *leakcheck.Checker, truth *leakcheck.T
 	for s := range len(truth.Moments[0].Legal) {
 		c := tb.clients[tabletest.SeatClient(s)]
 		if i := slices.IndexFunc(c.states, func(st wire.TableState) bool { return st.Pending != nil && st.Batch == 0 }); i >= 0 {
-			tableroom.PendingCanaries(t, checker, "socket", tableroom.FrameViewer{Seat: s, Client: c.clientID}, c.raw[i])
+			tableroom.PendingCanaries(t, checker, "socket", tableroom.FrameViewer{Seat: s, Client: c.clientID, Admin: s == 0}, c.raw[i])
 			return
 		}
 	}

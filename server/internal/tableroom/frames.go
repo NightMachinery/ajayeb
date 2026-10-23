@@ -56,11 +56,16 @@ func (b *broadcast) view(role int, withHistory bool) *roleView {
 
 // frame is c's whole whitelist snapshot. ack is set only on the
 // submitter's own connection; withHistory adds the viewer's full history
-// (join, resync, undo).
+// (join, resync, undo), as does a change of the connection's viewer role
+// (a switch, a resignation).
 func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck, withHistory bool) wire.TableState {
 	a := b.a
 	r := &a.st.rec
 	role := b.role(c)
+	if last, ok := a.shown[c]; ok && last != role {
+		withHistory = true
+	}
+	a.shown[c] = role
 	withHistory = withHistory || b.history
 	v := b.view(role, withHistory)
 	st := wire.NewTableState(a.code)
