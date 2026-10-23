@@ -399,7 +399,7 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 		return a.refuse(c, p.Seq, "pick", seat, outForbidden)
 	}
 	key := seqKey(c)
-	if last, ok := seqGet(&r.Seqs, key); ok && p.Seq <= last {
+	if last, ok := seqLast(r.Seqs, key); ok && p.Seq <= last {
 		c.Out.Push(a.newBroadcast(false).frame(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: p.Seq}, false))
 		return a.note("pick", seat, outDuplicate)
 	}
@@ -534,7 +534,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 		return a.refuse(c, u.Seq, "undo", seat, outForbidden)
 	}
 	key := seqKey(c)
-	if last, ok := seqGet(&r.Seqs, key); ok && u.Seq <= last {
+	if last, ok := seqLast(r.Seqs, key); ok && u.Seq <= last {
 		c.Out.Push(a.newBroadcast(false).frame(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: u.Seq}, false))
 		return a.note("undo", seat, outDuplicate)
 	}
@@ -610,20 +610,22 @@ func seqSet(xs []SeqRecord, k SeqRecord) []SeqRecord {
 	return append(xs, k)
 }
 
-// seqGet returns the client's last applied seq and marks it most recently
-// used; the list is least recently used first.
-func seqGet(xs *[]SeqRecord, k SeqRecord) (int, bool) {
-	for i, x := range *xs {
+// seqLast returns the client's last applied seq. A lookup never reorders
+// the list: a duplicate changes nothing, in memory or on disk, so a table
+// restarted from its record forgets the same clients as one that never
+// stopped.
+func seqLast(xs []SeqRecord, k SeqRecord) (int, bool) {
+	for _, x := range xs {
 		if sameClient(x, k) {
-			*xs = append(slices.Delete(*xs, i, i+1), x)
 			return x.Seq, true
 		}
 	}
 	return 0, false
 }
 
-// seqPut records k as the client's last applied seq, forgetting the least
-// recently used client beyond capacity.
+// seqPut records k as the client's last applied seq, moving the client to
+// the end, and beyond capacity forgets the clients whose last applied seq
+// is the oldest.
 func seqPut(xs *[]SeqRecord, k SeqRecord, capacity int) {
 	for i, x := range *xs {
 		if sameClient(x, k) {

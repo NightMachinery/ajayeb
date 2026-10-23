@@ -549,17 +549,19 @@ func setSeq(seqs []ClientSeq, by ClientSeq) []ClientSeq {
 	return append(seqs, by)
 }
 
-// lru remembers the last applied seq of at most cap clients, least
-// recently used first, as Duel's seqLRU does.
+// lru remembers the last applied seq of at most cap clients, the oldest
+// applied first. Unlike Duel's seqLRU, which lives only in memory, a lookup
+// is not a use: the record holds this list, so a duplicate must change
+// nothing, and a table restored from its record must forget the same
+// clients as one that never stopped.
 type lru struct {
 	cap     int
 	entries []ClientSeq
 }
 
 func (l *lru) get(c tabletest.ClientID) (uint64, bool) {
-	for i, e := range l.entries {
+	for _, e := range l.entries {
 		if e.Client == c {
-			l.entries = append(append(l.entries[:i:i], l.entries[i+1:]...), e)
 			return e.Seq, true
 		}
 	}

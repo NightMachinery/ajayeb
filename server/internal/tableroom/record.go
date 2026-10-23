@@ -72,7 +72,8 @@ type Record struct {
 	// pick and confirmed flag, with the seq per client that last set it.
 	Pending []PendingSlot `json:"pending"`
 
-	// Seqs are the bounded seq acknowledgements, least recently used first.
+	// Seqs are the bounded seq acknowledgements, the client whose last
+	// applied seq is oldest first.
 	Seqs []SeqRecord `json:"seqs"`
 	// Work is the bot work ledger of the open point.
 	Work []WorkRow `json:"work"`

@@ -954,8 +954,10 @@ batches and bot entropy.
 
 Sequence deduplication is per authenticated user/client. The actor
 remembers the latest accepted seq of a bounded number of user/client pairs,
-forgetting the least recently used first, and only an accepted request
-records its seq. A seq at or below the remembered one answers a frame
+forgetting first the pair whose last accepted request is oldest. Only an
+accepted request records its seq; looking one up changes nothing, so a
+table restored from its record forgets the same pairs as one that never
+stopped. A seq at or below the remembered one answers a frame
 acknowledging it and changes nothing (repeating an accepted seq is
 harmless). Each pending pick also remembers the seq that last changed it
 from each client, so a forgotten old seq still cannot overwrite a newer
