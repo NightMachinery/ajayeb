@@ -45,7 +45,7 @@ PNPM_FROZEN := $(if $(wildcard pnpm-lock.yaml),--frozen-lockfile)
 E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 
 .PHONY: help install install-offline install-webkit dev gen gen-check gen-check-if-ready \
-        fmt-check tidy-check vet test-go test-race test-haftgane-payment-exhaustive lint-go build-server fuzz bench \
+        fmt-check tidy-check vet test-go test-race test-haftgane-payment-exhaustive test-haftgane-rules-sweep fuzz-haftgane-rules lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
         e2e e2e-smoke e2e-webkit e2e-prod shots vec-lint vec-shot vec-blind vec-family \
         test-py test-tools verify-quick verify verify-full clean
@@ -157,6 +157,18 @@ test-haftgane-payment-exhaustive: ## The opt-in exhaustive sweep of Haftgane's p
 	  go -C server test -count=1 -shuffle=on -parallel 4 -timeout 2h \
 	  -run '^TestPaymentOracleExhaustive$$' -v ./internal/haftgane/rules
 
+test-haftgane-rules-sweep: ## Haftgane's rules-gate sweep: 2000 seeded games per player count with invariants and path counts (about 2 minutes)
+	HAFTGANE_GATE_GAMES=2000 $(HEAVY) run --kind test -- \
+	  go -C server test -count=1 -shuffle=on -v -timeout 90m \
+	  -run '^TestRulesGateSweep$$' ./internal/haftgane/rules
+
+fuzz-haftgane-rules: ## Haftgane's three rules fuzzers (FuzzPlayout, FuzzKeys, FuzzPayment), ten minutes each, one after another
+	@for target in FuzzPlayout FuzzKeys FuzzPayment; do \
+	  $(HEAVY) run --kind fuzz -- go -C server test ./internal/haftgane/rules \
+	    -run '^$$' -fuzz "^$${target}$$" -fuzztime 10m -fuzzminimizetime 10s -parallel 2 -timeout 15m \
+	    || exit $$?; \
+	done
+
 lint-go: ## golangci-lint run in server/
 	cd server && $(HEAVY) run --kind lint -- golangci-lint run
 
@@ -247,9 +259,9 @@ verify-quick: fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-w
 
 verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room, ws, tableroom, lobbyroom and roles, the release build and the e2e smoke
 
-verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, the payment solver's exhaustive sweep, every e2e spec and the screenshot matrix
+verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, Haftgane's payment, rules sweep and fuzzers, every e2e spec and the screenshot matrix
 	$(MAKE) --no-print-directory test-go AJAYEB_SWEEP=5000 TEST_TIMEOUT=90m
-	$(MAKE) --no-print-directory fuzz bench test-haftgane-payment-exhaustive e2e shots
+	$(MAKE) --no-print-directory fuzz bench test-haftgane-payment-exhaustive test-haftgane-rules-sweep fuzz-haftgane-rules e2e shots
 
 ##@ Housekeeping
 
