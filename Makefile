@@ -40,7 +40,7 @@ BENCH_ARGS ?=
 GEN_ARGS ?=
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo dev)
 
-RACE_DIRS := internal/room internal/ws internal/tableroom
+RACE_DIRS := internal/room internal/ws internal/tableroom internal/lobbyroom internal/roles
 PNPM_FROZEN := $(if $(wildcard pnpm-lock.yaml),--frozen-lockfile)
 E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 
@@ -144,7 +144,7 @@ test-go: ## Go tests with -shuffle=on (AJAYEB_SWEEP games in the playout sweep, 
 	AJAYEB_SWEEP=$(AJAYEB_SWEEP) $(HEAVY) run --kind test -- \
 	  go -C server test -shuffle=on -timeout $(TEST_TIMEOUT) $(if $(GO_RUN),-run '$(GO_RUN)') $(GO_PKGS)
 
-test-race: ## go test -race -short on RACE_DIRS: the room, ws and tableroom packages (-short skips timing tests and the exhaustive arrival orders, which verify-quick runs)
+test-race: ## go test -race -short on RACE_DIRS: the room, ws, tableroom, lobbyroom and roles packages (-short skips timing tests and the exhaustive arrival orders, which verify-quick runs)
 	@pkgs=; for d in $(RACE_DIRS); do \
 	  if [ -n "$$(find server/$$d -name '*_test.go' 2>/dev/null | head -n 1)" ]; then pkgs="$$pkgs ./$$d/..."; fi; \
 	done; \
@@ -245,7 +245,7 @@ test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
 
 verify-quick: fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go mod tidy, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
 
-verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room, ws and tableroom, the release build and the e2e smoke
+verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room, ws, tableroom, lobbyroom and roles, the release build and the e2e smoke
 
 verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, the payment solver's exhaustive sweep, every e2e spec and the screenshot matrix
 	$(MAKE) --no-print-directory test-go AJAYEB_SWEEP=5000 TEST_TIMEOUT=90m
