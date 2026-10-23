@@ -55,6 +55,9 @@ const (
 type Storage interface {
 	LoadGame(code, game string, assess func(data []byte) (store.Assessment, error)) ([]byte, error)
 	SaveGame(code, game string, data []byte) error
+	// CreateGame writes a new table's first record, refusing with
+	// store.ErrExists a code that any file holds (store.Store.CreateGame).
+	CreateGame(code, game string, data []byte) ([]byte, error)
 	PeekGame(code, game string) ([]byte, bool, error)
 	// ReplaceGame writes code's record of game in place of its live record
 	// of game from: the lobby's Start.
@@ -196,9 +199,10 @@ type unbound struct{}
 func (unbound) LoadGame(string, string, func([]byte) (store.Assessment, error)) ([]byte, error) {
 	return nil, errUnbound
 }
-func (unbound) SaveGame(string, string, []byte) error            { return errUnbound }
-func (unbound) PeekGame(string, string) ([]byte, bool, error)    { return nil, false, errUnbound }
-func (unbound) ReplaceGame(string, string, string, []byte) error { return errUnbound }
+func (unbound) SaveGame(string, string, []byte) error             { return errUnbound }
+func (unbound) CreateGame(string, string, []byte) ([]byte, error) { return nil, errUnbound }
+func (unbound) PeekGame(string, string) ([]byte, bool, error)     { return nil, false, errUnbound }
+func (unbound) ReplaceGame(string, string, string, []byte) error  { return errUnbound }
 
 // check refuses a cold join before the Manager reserves a slot. A claim
 // is checked by the actor once the table is loaded.
@@ -299,7 +303,10 @@ func (t *Tables) CreateTable(spec Spec) (string, error) {
 		rec.Created, rec.Updated = now, now
 		data, err := rec.encode()
 		if err == nil {
-			err = t.store().SaveGame(code, Game, data)
+			_, err = t.store().CreateGame(code, Game, data)
+		}
+		if errors.Is(err, store.ErrExists) {
+			return nil, err
 		}
 		if err != nil {
 			t.log.Warn("table create failed", "room", code, "err", err)

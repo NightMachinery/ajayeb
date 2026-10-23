@@ -51,8 +51,10 @@ const (
 type Storage interface {
 	LoadGame(code, game string, assess func(data []byte) (store.Assessment, error)) ([]byte, error)
 	SaveGame(code, game string, data []byte) error
+	// CreateGame writes a new lobby's first record, refusing with
+	// store.ErrExists a code that any file holds (store.Store.CreateGame).
+	CreateGame(code, game string, data []byte) ([]byte, error)
 	PeekGame(code, game string) ([]byte, bool, error)
-	Exists(code string) (bool, error)
 }
 
 // Config holds the lobbies' dependencies and limits.
@@ -141,9 +143,9 @@ type unbound struct{}
 func (unbound) LoadGame(string, string, func([]byte) (store.Assessment, error)) ([]byte, error) {
 	return nil, errUnbound
 }
-func (unbound) SaveGame(string, string, []byte) error         { return errUnbound }
-func (unbound) PeekGame(string, string) ([]byte, bool, error) { return nil, false, errUnbound }
-func (unbound) Exists(string) (bool, error)                   { return false, errUnbound }
+func (unbound) SaveGame(string, string, []byte) error             { return errUnbound }
+func (unbound) PeekGame(string, string) ([]byte, bool, error)     { return nil, false, errUnbound }
+func (unbound) CreateGame(string, string, []byte) ([]byte, error) { return nil, errUnbound }
 
 // create answers lobby-create: a lobby of the requested seat count and
 // options, the creator in its first slot and its one real admin. The
@@ -177,8 +179,11 @@ func (l *Lobbies) Reserve(m *room.Manager) (string, error) {
 // requester its creator and only admin, and the table its parent. When
 // an earlier attempt for the same parent already wrote it, Rematch finds
 // it and writes nothing; when another room has the code, it answers
-// tableroom.ErrCodeTaken. It only writes the record: the first join
-// loads the lobby, as after a restart.
+// tableroom.ErrCodeTaken. Both are decided by the store's CreateGame,
+// from the bytes that hold the code, in the same step as the write, so
+// another creator taking the code at any moment can neither be
+// overwritten nor overwrite the lobby. It only writes the record: the
+// first join loads the lobby, as after a restart.
 func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) error {
 	if !l.cfg.Creation {
 		return room.ErrForbidden
@@ -202,28 +207,27 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 	if rm.Parent == "" || validate(&r, l.cfg.SeqClients) != nil {
 		return room.ErrInvalidSpec
 	}
-	st := l.store()
-	data, _, err := st.PeekGame(code, Game)
-	switch {
-	case err == nil:
+	successor := func(data []byte) error {
 		if old, err := decodeRecord(data); err == nil && old.Parent == rm.Parent {
 			return nil
 		}
 		return tableroom.ErrCodeTaken
-	case !errors.Is(err, fs.ErrNotExist):
-		// Another kind's room, or a file no lobby reads.
-		if exists, xerr := st.Exists(code); xerr != nil || !exists {
-			l.log.Warn("lobby rematch failed", "room", code, "err", err)
-			return room.ErrStorage
-		}
-		return tableroom.ErrCodeTaken
-	case m.Loaded(code):
-		return tableroom.ErrCodeTaken
 	}
-	if data, err = r.encode(); err == nil {
-		err = st.SaveGame(code, Game, data)
+	st := l.store()
+	if m.Loaded(code) {
+		// A room in memory has its file, which says whose it is.
+		data, _, _ := st.PeekGame(code, Game)
+		return successor(data)
 	}
-	if err != nil {
+	data, err := r.encode()
+	var existing []byte
+	if err == nil {
+		existing, err = st.CreateGame(code, Game, data)
+	}
+	switch {
+	case errors.Is(err, store.ErrExists):
+		return successor(existing)
+	case err != nil:
 		l.log.Warn("lobby rematch failed", "room", code, "err", err)
 		return room.ErrStorage
 	}
@@ -254,7 +258,10 @@ func (l *Lobbies) save(m *room.Manager, base Record) (string, error) {
 		r.Created, r.Updated = now, now
 		data, err := r.encode()
 		if err == nil {
-			err = l.store().SaveGame(code, Game, data)
+			_, err = l.store().CreateGame(code, Game, data)
+		}
+		if errors.Is(err, store.ErrExists) {
+			return nil, err
 		}
 		if err != nil {
 			l.log.Warn("lobby create failed", "room", code, "err", err)

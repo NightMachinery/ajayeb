@@ -276,9 +276,11 @@ func (m *Manager) createRoom(f *store.File) (string, error) {
 	return m.CreateHandle(Duel, func(code string) (*Handle, error) {
 		f.Code = code
 		r := newRoom(m, f, s, hist)
-		r.persist()
-		if r.dirty {
+		if err := r.create(); err != nil {
 			r.cancel()
+			if errors.Is(err, store.ErrExists) {
+				return nil, err
+			}
 			return nil, fmt.Errorf("%w: saving the new room failed", ErrStorage)
 		}
 		mode := f.Mode

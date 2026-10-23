@@ -46,11 +46,14 @@ const (
 
 // Storage is what the rooms need from package store; *store.Store
 // satisfies it. Save must replay the file and set its Hash, and Load must
-// return the replayed state, as store does. PeekHeader reads a file without
-// replaying it (a join that the room would refuse is refused from it).
+// return the replayed state, as store does. Create is Save for a new room's
+// first file, refusing with store.ErrExists a code that any file holds.
+// PeekHeader reads a file without replaying it (a join that the room would
+// refuse is refused from it).
 type Storage interface {
 	NewCode() (string, error)
 	Save(f *store.File) error
+	Create(f *store.File) error
 	Load(code string) (*store.File, engine.State, error)
 	PeekHeader(code string) (*store.File, error)
 }

@@ -802,6 +802,17 @@ func (r *Room) status() store.Status {
 // dirty: it keeps running from memory, the next change retries, and it is
 // not evicted until a write succeeds.
 func (r *Room) persist() {
+	_ = r.save(r.m.cfg.Store.Save)
+}
+
+// create writes a new room's first file. It fails with store.ErrExists
+// when another room's file holds the code, and then logs nothing: the
+// Manager tries another code.
+func (r *Room) create() error {
+	return r.save(r.m.cfg.Store.Create)
+}
+
+func (r *Room) save(write func(*store.File) error) error {
 	f := r.file
 	f.Status = r.status()
 	f.Result = nil
@@ -813,17 +824,20 @@ func (r *Room) persist() {
 	f.Version = r.version
 	f.Rematch = r.rematch
 	f.Updated = r.m.cfg.Clock.Now()
-	if err := r.m.cfg.Store.Save(f); err != nil {
+	if err := write(f); err != nil {
 		r.dirty = true
 		r.publishIdle()
-		r.log.Error("saving the room failed", "err", err)
-		return
+		if !errors.Is(err, store.ErrExists) {
+			r.log.Error("saving the room failed", "err", err)
+		}
+		return err
 	}
 	r.dirty = false
 	r.publishIdle()
 	if got := engine.HashString(&r.state); got != f.Hash {
 		r.log.Error("the saved log does not replay to the room's state", "want", got, "file", f.Hash)
 	}
+	return nil
 }
 
 // armIdle starts the idle countdown: when it runs out the room checks

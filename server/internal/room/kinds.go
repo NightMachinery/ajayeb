@@ -149,6 +149,9 @@ func (m *Manager) Forget(h *Handle) {
 // CreateHandle allocates a globally unique code and a Manager slot before a
 // registered kind builds and durably saves its actor. It uses the same bounded
 // retries, cancellation and registration as Duel's original create path.
+// build writes the room's first file with the store's Create or CreateGame,
+// and returns an error wrapping store.ErrExists when another room's file
+// took the code since NewCode drew it: CreateHandle then tries another.
 func (m *Manager) CreateHandle(kind string, build func(code string) (*Handle, error)) (string, error) {
 	if _, ok := m.cfg.Kinds.entries[kind]; !ok || build == nil {
 		return "", ErrInvalidSpec
@@ -167,6 +170,9 @@ func (m *Manager) CreateHandle(kind string, build func(code string) (*Handle, er
 			continue
 		}
 		h, err := build(code)
+		if errors.Is(err, store.ErrExists) {
+			continue
+		}
 		if err != nil {
 			return "", err
 		}
@@ -194,8 +200,8 @@ func (m *Manager) CreateHandle(kind string, build func(code string) (*Handle, er
 // FreshCode returns a code that no room file has and no loaded room holds,
 // for a kind that writes a room's code down before it makes the room (a
 // finished table reserves its rematch lobby's). Nothing holds the code
-// for the caller: the kind checks it is still free when it makes the
-// room.
+// for the caller: the kind makes the room with the store's CreateGame,
+// which refuses the code if another room's file took it meanwhile.
 func (m *Manager) FreshCode() (string, error) {
 	const attempts = 3
 	for range attempts {

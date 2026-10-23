@@ -37,6 +37,8 @@ type fixture struct {
 	// and how many after them fail (failSaves).
 	mu    sync.Mutex
 	saves map[string]*saveFault
+	// codes are the Manager's next NewCode answers (codeStore).
+	codes []string
 }
 
 type saveFault struct{ pass, fail int }
@@ -66,6 +68,24 @@ func (s failingStore) SaveGame(code, game string, data []byte) error {
 	return s.Store.SaveGame(code, game, data)
 }
 
+// codeStore answers the Manager's NewCode with the fixture's queued codes
+// first, so a test can make two creators draw the same code.
+type codeStore struct {
+	*store.Store
+	f *fixture
+}
+
+func (s codeStore) NewCode() (string, error) {
+	s.f.mu.Lock()
+	defer s.f.mu.Unlock()
+	if len(s.f.codes) > 0 {
+		code := s.f.codes[0]
+		s.f.codes = s.f.codes[1:]
+		return code, nil
+	}
+	return s.Store.NewCode()
+}
+
 // failSaves lets the next pass writes of key (a room code, or a game: a
 // kind's every room) through, then fails the n after them.
 func (f *fixture) failSaves(key string, pass, n int) {
@@ -92,6 +112,13 @@ func (f *fixture) failing(key string) bool {
 	return true
 }
 
+func (s failingStore) CreateGame(code, game string, data []byte) ([]byte, error) {
+	if s.f.failing(code) || s.f.failing(game) {
+		return nil, errors.New("injected")
+	}
+	return s.Store.CreateGame(code, game, data)
+}
+
 func (s failingStore) ReplaceGame(code, from, game string, data []byte) error {
 	if s.f.replaceFails {
 		s.f.replaceFails = false
@@ -111,7 +138,7 @@ func (f *fixture) start() {
 	if f.st, err = store.OpenWithCodecs(f.dir, nil, kinds.Codecs()); err != nil {
 		f.t.Fatal(err)
 	}
-	f.m, err = room.NewManager(room.Config{Store: f.st, Kinds: kinds, KindOf: f.st.Game, Claims: f.secret, Clock: f.clock})
+	f.m, err = room.NewManager(room.Config{Store: codeStore{Store: f.st, f: f}, Kinds: kinds, KindOf: f.st.Game, Claims: f.secret, Clock: f.clock})
 	if err != nil {
 		f.t.Fatal(err)
 	}

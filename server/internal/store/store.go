@@ -18,6 +18,11 @@ import (
 // even when the filesystem reports not-exist for a vanished parent directory.
 var ErrRestoreWrite = errors.New("store: restore write failed")
 
+// ErrExists answers Create and CreateGame when a file already holds the
+// code: rooms of every kind share one namespace of codes, and a room's
+// first write never replaces another room.
+var ErrExists = errors.New("store: the room code is taken")
+
 // Store handles the live and archived room directories under <data>.
 // The zero value is not valid; use Open or OpenWithClock.
 type Store struct {
@@ -87,6 +92,20 @@ func (st *Store) path(code string) (string, error) {
 // cost is O(actions so far), which stays small for one game of 7 Wonders
 // Duel.
 func (st *Store) Save(f *File) error {
+	return st.save(f, false)
+}
+
+// Create writes f as its code's first file, as Save does, except that the
+// check that no file holds the code (live or archived, of any schema or
+// game, damaged or not) and the write are one step under the code's lock.
+// When a file holds it, Create writes nothing and returns an error
+// wrapping ErrExists, so two creators that drew the same code cannot
+// overwrite each other's rooms, whatever their kinds.
+func (st *Store) Create(f *File) error {
+	return st.save(f, true)
+}
+
+func (st *Store) save(f *File, create bool) error {
 	if err := checkSchema(f); err != nil {
 		return err
 	}
@@ -96,12 +115,15 @@ func (st *Store) Save(f *File) error {
 	}
 	unlock := st.lockRoom(f.Code)
 	defer unlock()
-	if _, err := os.Stat(st.archivePath(f.Code)); err == nil {
+	if create {
+		if err := st.vacant(f.Code, path); err != nil {
+			return err
+		}
+	} else if _, err := os.Stat(st.archivePath(f.Code)); err == nil {
 		return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
 	} else if !errors.Is(err, fs.ErrNotExist) {
 		return err
-	}
-	if existing, err := readFile(path); err == nil {
+	} else if existing, err := readFile(path); err == nil {
 		if existing.Status == StatusArchived {
 			return fmt.Errorf("store: save %s: %w", f.Code, ErrArchived)
 		}
@@ -189,6 +211,19 @@ func (st *Store) archive(path string, f *File, data []byte, reason ArchiveReason
 func checkSchema(f *File) error {
 	if f.Schema != Schema {
 		return fmt.Errorf("%w: the file has schema %d, this server reads %d", ErrSchema, f.Schema, Schema)
+	}
+	return nil
+}
+
+// vacant requires code's lock: it answers ErrExists when a file holds
+// code in the live folder (path) or the archive.
+func (st *Store) vacant(code, path string) error {
+	for _, candidate := range []string{path, st.archivePath(code)} {
+		if _, err := os.Lstat(candidate); err == nil {
+			return fmt.Errorf("store: create %s: %w", code, ErrExists)
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("store: create %s: %w", code, err)
+		}
 	}
 	return nil
 }

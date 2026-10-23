@@ -115,17 +115,63 @@ func (st *Store) ReplaceGame(code, from, game string, data []byte) error {
 	return st.saveGame(code, game, data, from)
 }
 
-func (st *Store) saveGame(code, game string, data []byte, from string) error {
+// CreateGame atomically writes data as code's first record of game. It
+// checks data as SaveGame does; then, under the code's lock, the check that
+// no file holds the code (live or archived, of any schema or game, damaged
+// or not) and the write are one step, so two creators that drew the same
+// code cannot overwrite each other's rooms, whatever their kinds. When a
+// file holds it, CreateGame writes nothing and returns an error wrapping
+// ErrExists, with the live file's bytes as read under that lock (nil for
+// an archived room or an unreadable file): a caller retrying its own
+// creation can tell the room it made from another.
+func (st *Store) CreateGame(code, game string, data []byte) ([]byte, error) {
+	path, record, err := st.checkGame(code, game, data)
+	if err != nil {
+		return nil, err
+	}
+	unlock := st.lockRoom(code)
+	defer unlock()
+	if err := st.vacant(code, path); err != nil {
+		if !errors.Is(err, ErrExists) {
+			return nil, err
+		}
+		existing, rerr := readCapped(path)
+		if rerr != nil {
+			existing = nil
+		}
+		return existing, err
+	}
+	if err := writeBytes(path, data); err != nil {
+		return nil, err
+	}
+	if record.Retention().Status == StatusArchived {
+		return nil, st.moveArchive(path, code)
+	}
+	return nil, nil
+}
+
+// checkGame validates code and checks that data decodes through game's
+// codec as a record of code, so the store never writes a file it cannot
+// read back.
+func (st *Store) checkGame(code, game string, data []byte) (string, Inspection, error) {
 	path, err := st.path(code)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 	record, err := st.codecs.decode(data)
 	if err != nil {
-		return fmt.Errorf("store: save %s: %w", code, err)
+		return "", nil, fmt.Errorf("store: save %s: %w", code, err)
 	}
 	if schema, g, _ := fileKind(data); schema != 2 || g != game || record.Retention().Code != code {
-		return fmt.Errorf("store: save %s: the record is not a %s room of this code", code, game)
+		return "", nil, fmt.Errorf("store: save %s: the record is not a %s room of this code", code, game)
+	}
+	return path, record, nil
+}
+
+func (st *Store) saveGame(code, game string, data []byte, from string) error {
+	path, record, err := st.checkGame(code, game, data)
+	if err != nil {
+		return err
 	}
 	unlock := st.lockRoom(code)
 	defer unlock()

@@ -63,6 +63,17 @@ func (s *faultyStore) SaveGame(code, game string, data []byte) error {
 	return err
 }
 
+// CreateGame takes the next queued fault as SaveGame does.
+func (s *faultyStore) CreateGame(code, game string, data []byte) ([]byte, error) {
+	s.mu.Lock()
+	queued := len(s.queued) > 0
+	s.mu.Unlock()
+	if queued {
+		return nil, s.SaveGame(code, game, data)
+	}
+	return s.Store.CreateGame(code, game, data)
+}
+
 // memStore keeps records in memory, for the exhaustive arrival-order tests
 // that open thousands of tables and for the fuzzer: the actor's logic is
 // the same, and the real store's writes are tested everywhere else. It
@@ -89,6 +100,16 @@ func (s *memStore) SaveGame(code, _ string, data []byte) error {
 	defer s.mu.Unlock()
 	s.recs[code] = slices.Clone(data)
 	return nil
+}
+
+func (s *memStore) CreateGame(code, _ string, data []byte) ([]byte, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if old, ok := s.recs[code]; ok {
+		return slices.Clone(old), store.ErrExists
+	}
+	s.recs[code] = slices.Clone(data)
+	return nil, nil
 }
 
 func (s *memStore) ReplaceGame(code, _, _ string, data []byte) error {
