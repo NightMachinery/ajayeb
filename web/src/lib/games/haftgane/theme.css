@@ -1,0 +1,51 @@
+/*
+ * Haftgane's own colour tokens: the seven seat colours and the ore and cloth
+ * resources, in OKLCH like web/src/lib/styles/tokens.css.
+ *
+ * Haftgane-only. Nothing imports this file yet (M19.art-wiring wires it into
+ * Haftgane's entry), so Duel's tokens.css and app.css, which every Duel
+ * player downloads, stay as they are. The vector specimens inline it after
+ * tokens.css. Why each value was chosen, and its contrast ratios, are in
+ * art/vector/specs/haftgane-seat-crests.md and art/vector/log/haftgane-seat-crests.md.
+ */
+
+:root {
+  /* Seats: one colour per seat, fixed by table position like the crests
+     (crest-0 to crest-6). Each colours its crest's ring, the crest glyph
+     inside it and the outline of the player's own strip. Every value keeps
+     3:1 or more against the panel, the sunken panel and the table of its
+     theme, and against an 18% tint of itself over the panel (the ring's
+     fill), so the ring and the glyph both hold as non-text elements
+     (WCAG 1.4.11). Each hue sits between two card colour hues, and the
+     order puts the most distinct pairs next to each other around the table
+     for every player count. Colour only helps: the crests differ by shape. */
+  --seat-0: oklch(0.56 0.18 352); /* rose, the lotus */
+  --seat-1: oklch(0.55 0.13 122); /* olive, the palm */
+  --seat-2: oklch(0.5 0.17 290); /* violet, the scarab */
+  --seat-3: oklch(0.59 0.12 70); /* amber, the falcon */
+  --seat-4: oklch(0.5 0.11 243); /* azure, the wave */
+  --seat-5: oklch(0.52 0.15 41); /* rust, the anchor */
+  --seat-6: oklch(0.56 0.1 182); /* teal, the fish */
+
+  /* Resources, as Duel's --res-* tokens: the tile fills, then the inks for
+     a glyph drawn straight on a page surface. Ore is a dark iron and cloth
+     a madder dye, each distinct from Duel's five tiles; both tiles take the
+     paper-bright glyph (resourceTile in card-style.ts). The dark inks are
+     in the dark block below. */
+  --res-ore: oklch(0.42 0.035 270);
+  --res-cloth: oklch(0.55 0.15 345);
+  --res-ore-ink: oklch(0.42 0.035 270);
+  --res-cloth-ink: oklch(0.5 0.15 345);
+}
+
+:root[data-theme='dark'] {
+  --seat-0: oklch(0.76 0.15 352);
+  --seat-1: oklch(0.8 0.15 125);
+  --seat-2: oklch(0.74 0.14 290);
+  --seat-3: oklch(0.8 0.13 66);
+  --seat-4: oklch(0.7 0.12 238);
+  --seat-5: oklch(0.72 0.14 41);
+  --seat-6: oklch(0.82 0.11 182);
+  --res-ore-ink: oklch(0.68 0.045 275);
+  --res-cloth-ink: oklch(0.74 0.13 345);
+}

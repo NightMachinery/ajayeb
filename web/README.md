@@ -308,6 +308,7 @@ Any component can open the overlay at a section with `openRules('military')` fro
 - Two screen-level variants exist: `short:` (a height of 32rem or less, such as a phone in landscape) and `split:` (room for two columns: 64rem wide, or a short landscape screen).
 - Use logical properties only (`ms-*`, `pe-*`, `text-start` and so on). Padding by the physical safe-area insets is the one deliberate exception.
 - The two players' crests are fixed by seat: seat 0 is the Sun (turquoise, `sun` colours) and seat 1 is the Moon (pomegranate, `moon` colours), in every mode and on every screen.
+- Haftgane-only tokens live in `src/lib/games/haftgane/theme.css`, not in `tokens.css`, so Duel players never download them. Nothing imports the file yet, and it has no Tailwind utilities; M19.art-wiring loads it with Haftgane and adds them. `--seat-0` to `--seat-6` are the seat colours (one per seat, fixed by position like the crests `crest-0` to `crest-6`), for the crest ring, the crest glyph and the outline of the player's own strip; each keeps 3:1 or more against the panel, the sunken panel, the table and its own 18% ring tint in both themes. `--res-ore` and `--res-cloth` are the tile fills of Haftgane's two extra resources, and `--res-ore-ink` and `--res-cloth-ink` their theme-aware inks on a page surface, as for Duel's resources. The values and their measurements are in `art/vector/log/haftgane-seat-crests.md`.
 
 ## Strings
 
