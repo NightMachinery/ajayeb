@@ -251,16 +251,134 @@ export interface TableResign {
   confirm: boolean;
 }
 /**
- * TableView is the named Haftgane projection placeholder. M15 supplies its
- * whitelist fields. Do not serialize engine state or arbitrary JSON here.
+ * TableView is one viewer's whitelist projection of the game, beside the
+ * frame's Point and Events, which carry the open point and the latest
+ * resolution. Until M16.haftgane-engine-contract it mirrors the fake
+ * engine's view (haftgane/fakeengine/fakeview) field for field; that slice
+ * replaces these fields with the real engine's. Never serialize engine
+ * state or arbitrary JSON here. Every card list is catalog design ids in
+ * catalog order, never a copy or deal position.
  */
 export interface TableView {
+  phase: string;
+  age: number /* int */;
+  turn: number /* int */;
+  pass: string;
+  pile: number /* int */;
+  seats: TableCity[];
+  you?: TablePrivate;
+  result?: TableResult;
+  reveal?: TableReveal;
 }
 /**
- * TableEvent is the named public resolved-event placeholder, filled by M15.
- * Events and history will describe outcomes, never raw private submitted keys.
+ * TableCity is one seat's public city.
+ */
+export interface TableCity {
+  seat: number /* int */;
+  board: string;
+  coins: number /* int */;
+  built: string[];
+  stages: number /* int */;
+  handSize: number /* int */;
+  hasKept: boolean;
+  last?: TablePlay;
+}
+/**
+ * TablePlay is a seat's latest play as everyone saw it: the design only
+ * for a build or a salvage.
+ */
+export interface TablePlay {
+  kind: string;
+  design: string;
+  stage: number /* int */;
+  left: number /* int */;
+  right: number /* int */;
+}
+/**
+ * TablePrivate is what only the seat's controller sees: its hand, kept and
+ * tucked cards, its offered keys with their payments, its private salvage
+ * offer during its own salvage point, and the hands it has held.
+ */
+export interface TablePrivate {
+  seat: number /* int */;
+  hand: string[];
+  kept: string;
+  tucked: string[];
+  choices: TableChoice[];
+  offer: TableOffer[];
+  seen: TableSeen[];
+}
+/**
+ * TableChoice is one offered key, in the engine's canonical order.
+ */
+export interface TableChoice {
+  key: string;
+  kind: string;
+  design: string;
+  left: number /* int */;
+  right: number /* int */;
+}
+/**
+ * TableOffer is one design of the pile during the seat's own salvage point.
+ */
+export interface TableOffer {
+  design: string;
+  count: number /* int */;
+  legal: boolean;
+}
+/**
+ * TableSeen is one point the seat played: the hand it held and its play.
+ */
+export interface TableSeen {
+  point: string;
+  hand: string[];
+  played: string;
+  action: string;
+}
+/**
+ * TableResult is the final score, public under either end policy.
+ */
+export interface TableResult {
+  scores: TableScore[];
+  rank: number /* int */[];
+  winners: number /* int */[];
+}
+/**
+ * TableScore is one seat's score.
+ */
+export interface TableScore {
+  seat: number /* int */;
+  built: number /* int */;
+  stages: number /* int */;
+  treasure: number /* int */;
+  total: number /* int */;
+}
+/**
+ * TableReveal is every hidden card, sent once the game is over unless the
+ * table turned the final reveal off.
+ */
+export interface TableReveal {
+  tucked: string[][];
+  pile: string[];
+  box: string[];
+}
+/**
+ * TableEvent is one public outcome of a resolution, filtered for the
+ * viewer: Design is empty where the viewer may not know the card (another
+ * seat's tuck, sale, leftover or kept card). Events and history describe
+ * outcomes, never raw submitted keys. Like TableView it mirrors the fake
+ * engine's event until M16.haftgane-engine-contract.
  */
 export interface TableEvent {
+  kind: string;
+  seat: number /* int */;
+  play: string;
+  design: string;
+  stage: number /* int */;
+  left: number /* int */;
+  right: number /* int */;
+  age: number /* int */;
+  pass: string;
 }
 /**
  * TableHistoryEntry describes one completed batch's public outcomes.

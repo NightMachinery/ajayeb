@@ -187,7 +187,19 @@ func TestPlatformServerEnvelopes(t *testing.T) {
 			t.Fatalf("bad discriminator: %s", b)
 		}
 	}
-	if reflect.TypeFor[TableView]().NumField() != 0 || reflect.TypeFor[TableEvent]().NumField() != 0 {
-		t.Fatal("placeholder gained speculative fields")
+	// The table view and event are a whitelist: exactly these fields, until
+	// M16.haftgane-engine-contract replaces them with the real engine's.
+	for typ, want := range map[reflect.Type]string{
+		reflect.TypeFor[TableView]():  "phase age turn pass pile seats you result reveal",
+		reflect.TypeFor[TableEvent](): "kind seat play design stage left right age pass",
+	} {
+		var got []string
+		for i := 0; i < typ.NumField(); i++ {
+			name, _, _ := strings.Cut(typ.Field(i).Tag.Get("json"), ",")
+			got = append(got, name)
+		}
+		if strings.Join(got, " ") != want {
+			t.Fatalf("%s fields %v, want %s", typ, got, want)
+		}
 	}
 }

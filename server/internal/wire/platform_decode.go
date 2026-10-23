@@ -339,7 +339,7 @@ func validateLobbyEdit(m LobbyEdit) error {
 
 // NewTableState initializes every required collection to a JSON array.
 func NewTableState(code string) TableState {
-	return TableState{T: "table-state", Game: "haftgane", Code: code, Status: "playing", Seats: []PlatformSeat{}, Humans: []PlatformHuman{}, Events: []TableEvent{}, RoomLog: []PlatformLogEntry{}}
+	return TableState{T: "table-state", Game: "haftgane", Code: code, Status: "playing", Seats: []PlatformSeat{}, Humans: []PlatformHuman{}, Events: []TableEvent{}, RoomLog: []PlatformLogEntry{}, View: TableView{Seats: []TableCity{}}}
 }
 
 // NewLobbyState initializes every required collection to a JSON array.
