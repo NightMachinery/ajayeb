@@ -1,0 +1,151 @@
+package direct_test
+
+import (
+	"slices"
+	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine"
+	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
+	"github.com/NightMachinery/ajayeb/server/internal/tabletest/direct"
+)
+
+type harness struct {
+	t  *testing.T
+	tb *direct.Table
+}
+
+func newHarness(t *testing.T, seats uint8, seqClients int) *harness {
+	t.Helper()
+	tb, err := direct.New(t.Context(), direct.Options{Setup: fakeengine.Setup{Seed: 77, Seats: seats}, SeqClients: seqClients})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &harness{t, tb}
+}
+
+func (h *harness) snap(c tabletest.ClientID) tabletest.Snapshot {
+	h.t.Helper()
+	sn, err := h.tb.Snapshot(h.t.Context(), c)
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	return sn
+}
+
+func (h *harness) send(c tabletest.ClientID, seq uint64, ref, key string, confirm bool) tabletest.Outcome {
+	h.t.Helper()
+	o, err := h.tb.Submit(h.t.Context(), c, tabletest.Submission{Seq: seq, Ref: ref, Key: key, Confirm: confirm})
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	return o
+}
+
+func (h *harness) expect(got, want tabletest.Outcome, what string) {
+	h.t.Helper()
+	if got != want {
+		h.t.Fatalf("%s: %s, want %s", what, got, want)
+	}
+}
+
+func TestAcceptanceRules(t *testing.T) {
+	h := newHarness(t, 3, 32)
+	a, b, c := tabletest.SeatClient(0), tabletest.SeatClient(1), tabletest.SeatClient(2)
+	sa := h.snap(a)
+	ref := sa.Ref
+	if len(sa.Legal) < 2 {
+		t.Fatal("seat 0 needs two offered keys")
+	}
+	k0, k1 := sa.Legal[0], sa.Legal[1]
+
+	h.expect(h.send(tabletest.SpectatorClient, 1, ref, k0, true), tabletest.Forbidden, "a spectator")
+	h.expect(h.send(a, 1, "age-1-turn-1@99", k0, false), tabletest.Closed, "another reference")
+	h.expect(h.send(a, 1, ref, "salvage:amber", false), tabletest.Illegal, "an unoffered key")
+	h.expect(h.send(a, 1, ref, k0, true), tabletest.Accepted, "a pick (refusals used up no seq)")
+	h.expect(h.send(a, 1, ref, k1, false), tabletest.Duplicate, "the same seq again")
+	if sn := h.snap(a); sn.Pick != k0 || !sn.Confirm {
+		t.Fatalf("a duplicate changed the pick: %+v", sn)
+	}
+	h.expect(h.send(a, 2, ref, k1, false), tabletest.Accepted, "a change, withdrawing the confirmation")
+	if sn := h.snap(b); len(sn.Confirmed) != 0 || sn.Pick != "" {
+		t.Fatalf("seat 1 sees %+v: another seat's pick, or a withdrawn confirmation", sn)
+	}
+	h.expect(h.send(a, 3, ref, k1, true), tabletest.Accepted, "confirming again")
+	if sn := h.snap(b); !slices.Equal(sn.Confirmed, []int{0}) || sn.Pick != "" {
+		t.Fatalf("seat 1 sees %+v; want seat 0's confirmation and no pick", sn)
+	}
+	h.expect(h.send(b, 1, ref, h.snap(b).Legal[0], true), tabletest.Accepted, "seat 1")
+	h.expect(h.send(c, 1, ref, h.snap(c).Legal[0], true), tabletest.Resolved, "the completing confirmation")
+	h.expect(h.send(a, 4, ref, k0, true), tabletest.Closed, "a change after the last confirmation")
+	can, _ := h.tb.Canonical(t.Context())
+	if len(can.Batches) != 1 || can.Batches[0].Picks[0].Key != k1 {
+		t.Fatalf("batches %+v; want one, with seat 0's confirmed change", can.Batches)
+	}
+	if sn := h.snap(a); sn.Ref == ref || sn.Pick != "" || len(sn.Confirmed) != 0 {
+		t.Fatalf("the next point %+v reuses the reference or keeps a pick", sn)
+	}
+}
+
+// TestStaleOnceForgotten: with room for one client's seq, an old seq that
+// the table forgot is judged afresh and refused as stale, so it never
+// reverts the newer pick.
+func TestStaleOnceForgotten(t *testing.T) {
+	h := newHarness(t, 3, 1)
+	a, b := tabletest.SeatClient(0), tabletest.SeatClient(1)
+	sa := h.snap(a)
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "a draft")
+	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "a change")
+	h.expect(h.send(b, 1, sa.Ref, h.snap(b).Legal[0], false), tabletest.Accepted, "another client, evicting the first")
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Stale, "the old draft again")
+	if sn := h.snap(a); sn.Pick != sa.Legal[1] {
+		t.Fatalf("a stale seq reverted the pick to %q", sn.Pick)
+	}
+	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], true), tabletest.Accepted, "the newest seq, forgotten, is judged afresh")
+}
+
+// TestSecondTab: two tabs of one seat keep separate seqs; a lower seq from
+// the other tab is not stale.
+func TestSecondTab(t *testing.T) {
+	h := newHarness(t, 3, 32)
+	a := tabletest.SeatClient(0)
+	h.tb.Attach("seat-0-tab-2", 0)
+	sa := h.snap(a)
+	h.expect(h.send(a, 5, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "tab one")
+	h.expect(h.send("seat-0-tab-2", 1, sa.Ref, sa.Legal[1], true), tabletest.Accepted, "tab two")
+	if sn := h.snap("seat-0-tab-2"); sn.Pick != sa.Legal[1] || !sn.Confirm {
+		t.Fatalf("tab two sees %+v", sn)
+	}
+}
+
+func TestOneSeatPointRefusesOthers(t *testing.T) {
+	for seed := uint64(0); seed < 300; seed++ {
+		tb, err := direct.New(t.Context(), direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: 4}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		seq := uint64(0)
+		for range 12 {
+			seq++
+			sn, _ := tb.Snapshot(t.Context(), tabletest.SeatClient(0))
+			if sn.Over {
+				break
+			}
+			if len(sn.Required) == 1 {
+				other := (sn.Required[0] + 1) % 4
+				osn, _ := tb.Snapshot(t.Context(), tabletest.SeatClient(other))
+				o, _ := tb.Submit(t.Context(), tabletest.SeatClient(other), tabletest.Submission{Seq: 100, Ref: sn.Ref, Key: "sell:amber", Confirm: true})
+				if o != tabletest.Illegal || len(osn.Legal) != 0 {
+					t.Fatalf("a seat the point does not require: %s, offered %v", o, osn.Legal)
+				}
+				return
+			}
+			for _, s := range sn.Required {
+				ssn, _ := tb.Snapshot(t.Context(), tabletest.SeatClient(s))
+				if _, err := tb.Submit(t.Context(), tabletest.SeatClient(s), tabletest.Submission{Seq: seq, Ref: ssn.Ref, Key: ssn.Legal[0], Confirm: true}); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+	}
+	t.Fatal("no game reached a one-seat point")
+}
