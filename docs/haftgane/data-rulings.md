@@ -17,7 +17,7 @@ Four tables of the same data were compared, one row per card design (80) and one
 
 "Blind" means the verifier saw neither the drafts nor the other verifiers' work. Cards were joined by English name and Age, stages by board, side and stage number. Every field was compared, including empty chain fields, which mean "no chain", not "unknown". A spelling difference, an empty field, a translated name and a photo that shows only some copies of a card were each recorded as what they are, never as a vote for another value.
 
-The reconciled reference and its cell-by-cell evidence stay in the private run directory until `M15.haftgane-catalog-data` encodes them as the engine's catalog and commits them ([roadmap](../dev/roadmap.md), M13 and M15).
+`M15.haftgane-catalog-data` encoded the reconciled reference as the engine's catalog, `server/internal/haftgane/catalog`, and committed two of the blind tables as its test fixtures ([The committed verifier tables](#the-committed-verifier-tables)). The cell-by-cell evidence stays in the private run directory.
 
 ## How a disagreement is settled
 
@@ -124,6 +124,24 @@ Each ruling gives the item, what the sources showed, the decision and its eviden
       - In `7wonders`: Ephesos night stage 3 worth 4 points (5, besides its 4 coins) and Halikarnassos day stage 1 at SS (OO). Its Alexandria night side differs in every stage; the verifier recorded no single alternative, and photos confirm the reference's side.
       - Babylon night: `portfolio` puts a first stage, CL for 3 points, before the reference's two, which is the first-edition shape, and `7wonders` gives stage 1 a cost of CCG and the discard ability. Both are set aside, but this side is still provisional (Q1).
       - Rhodos night stage 1 read as SS from a partly covered photo: ruling 12.
+
+## The committed verifier tables
+
+Added in `M15.haftgane-catalog-data` (2026-10-23).
+
+The catalog's golden tables (`testdata/*.golden.csv` in the catalog package) agree with the reconciled reference in every compared cell. Two of the blind tables are committed beside them as regression fixtures, as Duel's were: the wiki table and the publisher table, under `testdata/verify/`. They hold values only. The verifiers' source and note columns, written for the private run directory, are left out, and so is every screenshot the verifiers worked from. The printed-card table and our M12 drafts are not committed: the first lists only the copies its photos show (ruling 7), and the second was never an independent witness.
+
+`TestVerify` renders the catalog through the same code as `ajayeb-gen catalog -game haftgane`, joins each table's rows with ours (designs by name and Age, stages by board, side and stage number) and compares every field. The publisher's sources print no card costs and draw no night sides, so its pass leaves out our design cost column and our night sides; every field the publisher table does show is compared. The check reports zero mismatches: 121 items against the wiki table and 101 against the publisher table.
+
+The fixtures were first committed as received, then normalised in one reviewable commit by rules that change no value:
+
+- **Resource name:** textile became cloth, the engine's name (ruling 1), in 38 cells: 29 in the wiki table and 9 in the publisher table.
+- **Names:** the wiki table's Bazaar became Bazar, and the publisher table's three `giza` stages became `gizah` (ruling 2).
+- **List order:** lists whose order the notation leaves open were sorted as the catalog writes them. Chain lists go by name (Laboratory's in the wiki table, Apothecary's in the publisher table); effect terms go alphabetically (the wiki table's two Rhodos night stages); the options of a choice go wood, stone, clay, ore, glass, papyrus, cloth (the publisher table's Clay Pit, Caravansery and Alexandria day stage 2).
+- **Own words:** M13 let each verifier name an ability in its own words. Four such names became the reference's: the Decorators Guild's effect in both tables (`other:points7-if-all-own-wonder-stages-built`), and in the publisher table the abilities of Halikarnassos day stage 2 (`other:build-from-discard`) and Olympia day stage 2 (`other:first-card-of-each-colour-free`).
+- **The publisher table's cost column,** empty in every row, was dropped.
+
+One ruling changed values: the publisher table's nine misread chain cells became the chains of ruling 4. No other cell of either table disagreed with the catalog.
 
 ## The night-side questions
 
