@@ -36,6 +36,9 @@
 //                   (default: sheet-<timestamp>)
 //   --tile COLSxROWS  montage grid (default: up to 4 columns)
 //   --cell WxH      each cell's size (default 384x288)
+//   --game NAME     the game whose manifest and raw directory to use
+//                   (default duel); its sheets go to art-work/<game>/sheets/
+//                   (lib.mjs "Games")
 //   --help          print this usage and exit
 
 import { spawn } from 'node:child_process';
@@ -43,7 +46,7 @@ import { mkdir, readdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { rawDir, sheetsDir, idKind, idSlug, loadManifest, printUsage, die } from './lib.mjs';
+import { rawDir, sheetsDir, idKind, idSlug, loadManifest, setGame, printUsage, die } from './lib.mjs';
 
 // montage's -label needs a font it can rasterize; a bare install (notably
 // this repo's macOS machines) registers none by default, so point at a
@@ -70,6 +73,7 @@ function parseArgs(argv) {
     else if (a === '--name') args.name = argv[++i];
     else if (a === '--tile') args.tile = argv[++i];
     else if (a === '--cell') args.cell = argv[++i];
+    else if (a === '--game') setGame(argv[++i]);
     else die(`unknown argument "${a}" (see --help)`, 2);
   }
   return args;

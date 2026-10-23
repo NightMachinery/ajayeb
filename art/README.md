@@ -34,6 +34,14 @@ license and what this art is never allowed to copy.
   why the owner chose it over committing the PNG). `web/static/art/**.avif` is derived from
   these by `tools/art/process.mjs`; a shipped file is never hand-edited,
   only regenerated from its original.
+- `haftgane/`: Haftgane's own `subjects.json`, `manifest.json` (marked
+  `"game": "haftgane"`) and `aliases.json`, and `originals/haftgane/` its
+  approved originals. Each game other than Duel has such a namespace, so a
+  Haftgane asset never overwrites a Duel asset of the same id.
+  `aliases.json` maps a Haftgane id to an existing painting, such as
+  `"card/lumber-yard": "duel:card/lumber-yard"`, which the app then loads
+  from Duel's own shipped file. See
+  [docs/art/bitmaps.md "Games"](../docs/art/bitmaps.md#games).
 - `LICENSE`: the CC BY 4.0 notice covering this directory, its shipped
   derivatives and the hand-drawn SVG icon set.
 
@@ -60,3 +68,4 @@ writes `decisions.jsonl` → `apply-review.mjs` (apply it) → `process.mjs`
 (ship the AVIFs for an approved asset, mapping its paper tone onto
 `--card-paper` and, for a token, masking to its own painted rim) →
 `index.mjs` (regenerate `web/src/lib/art/available.gen.ts`).
+Each script works on Duel's art unless given `--game haftgane`.

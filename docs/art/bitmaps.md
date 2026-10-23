@@ -43,6 +43,9 @@ art/
   refs/                 the owner's style anchors, one JPEG per kind, and a README
   originals/<kind>/<id>.webp  approved originals (committed, lossless WebP,
                               pixel-identical to the generated PNG)
+  haftgane/             Haftgane's subjects.json, manifest.json and
+                        aliases.json (see "Games")
+  originals/haftgane/<kind>/<id>.webp  Haftgane's approved originals
   LICENSE                CC BY 4.0 notice
 
 tools/art/
@@ -60,10 +63,12 @@ tools/art/
   index.mjs         art/manifest.json (approved only) -> available.gen.ts
 
 web/src/lib/art/available.gen.ts   generated: approved ids -> shipped paths and sizes
+web/static/art/haftgane/           Haftgane's shipped files (see "Games")
 
 ${AJAYEB_RUN_DIR:-~/tmp/agents/ajayeb}/art-work/   outside the repo
   raw/<kind>/<slug>/<attempt>.png   every attempt, approved or not
   sheets/                           contact sheets
+  haftgane/raw/, haftgane/sheets/   the same for Haftgane
 ```
 
 The scripts use Node 24 ESM and its standard library, with no bundler or
@@ -106,6 +111,76 @@ wonder and token slugs come from the engine's presentation catalog
 The exact numbers live in one place, `KIND_SPEC` in `tools/art/lib.mjs`, so
 this list and the code cannot drift silently; check the code first if they
 ever disagree.
+
+## Games
+
+The pipeline serves more than one game. Each game's art lives in its own
+**namespace**, a set of files and directories that only that game's runs
+write, so two games can each have an asset with the same id and neither
+can overwrite the other: Haftgane's `card/clay-pit` is a different painting
+from Duel's. Inside a game's own files an id is still `<kind>/<slug>`.
+Where an id has to say which game it belongs to, it is a **qualified id**,
+`<game>:<kind>/<slug>` (`duel:card/lumber-yard`).
+
+Duel's namespace is the original layout, unchanged, so nothing Duel
+ships moved or changed a byte. Every other game's namespace sits in a
+directory named after the game:
+
+- subjects, manifest and aliases: `art/haftgane/subjects.json`,
+  `art/haftgane/manifest.json` and `art/haftgane/aliases.json`;
+- originals: `art/originals/haftgane/<kind>/<slug>.webp`;
+- shipped files: `web/static/art/haftgane/<outDir>/<file>`, served at
+  `/art/haftgane/...` under the same `/art/` cache policy;
+- the generated index: `web/src/lib/art/available-haftgane.gen.ts`;
+- raw attempts and contact sheets: `art-work/haftgane/raw/` and
+  `art-work/haftgane/sheets/` in the run directory.
+
+`GAMES` in `tools/art/lib.mjs` is the list of games and their paths. Every
+script takes `--game NAME` (or `AJAYEB_ART_GAME`), default `duel`, and
+works only inside that game's namespace. A game may not be named like a
+kind or an output directory (`card`, `cards`, `sound`, ...), because its
+directory sits beside those; `lib.mjs` refuses to load if one is.
+
+Two guards keep a careless run from losing art:
+
+- **A manifest names its game.** Haftgane's manifest has
+  `"game": "haftgane"`; Duel's predates the field, and a manifest without
+  one is Duel's. Every script refuses a manifest of another game than the
+  one it runs for, whether it came from `--manifest` or
+  `AJAYEB_ART_MANIFEST`, so a Haftgane rebuild aimed at Duel's manifest
+  stops before writing instead of dropping Duel's assets.
+- **A rebuild keeps approved art.** `manifest.mjs` drops an asset whose
+  id no longer has a catalog entry or subject only while it is unapproved.
+  When a rebuild would drop an approved one, it stops and names it; pass
+  `--drop-approved` to drop it on purpose. The original and shipped files
+  stay on disk either way.
+
+A game's asset list comes from its catalog. Duel's is the engine's
+presentation catalog plus `STATIC_ASSETS`; until Haftgane has a public
+catalog of its own, its list is the ids in `art/haftgane/subjects.json`.
+
+**Aliases** let a game reuse a painting that already exists, possibly
+another game's, without copying a file. `art/<game>/aliases.json` maps one
+of the game's ids to a qualified id:
+
+```json
+{ "card/lumber-yard": "duel:card/lumber-yard" }
+```
+
+An alias lives apart from the card rules and from `subjects.json`: an id
+is either painted (it has a subject) or aliased, never both, and an alias
+cannot point at another alias. `manifest.mjs` checks this, and that the
+target is an asset of its game. `index.mjs` writes an alias's entry as a
+copy of its target's, with the target's own content-hashed paths, so the
+browser fetches and caches one file for both games. While the target is
+not approved the alias has no entry, and the app draws its placeholder,
+as it does for any asset without approved art.
+
+A non-Duel game's index is a new `*.gen.ts` file, which only the
+coordinator commits (AGENTS.md "Commits"). The tests in
+`web/src/lib/art/art-games.test.ts` run the whole pipeline for a fixture
+Haftgane asset beside a same-slug Duel asset, in a throwaway tree named by
+`AJAYEB_ART_ROOT` (the art data's root; the repository by default).
 
 ## Budgets
 
@@ -203,7 +278,10 @@ backs and card thumbnails, within 200 KB.
    `subjects.json` edit. It never overwrites `subjects.json`, and it keeps
    every asset's existing status, attempt count, prompt amendment and
    shipped byte counts; it only adds missing ids and drops stale ones (with
-   a warning). `--check` fails without writing, for a CI-style gate.
+   a warning). It stops rather than drop an approved asset, unless given
+   `--drop-approved` (see "Games"). `--check` fails without writing, for a
+   CI-style gate. Every step below takes `--game NAME` for a game other
+   than Duel.
 
 2. **`python3 tools/heavy.py run --kind codex -- node tools/art/generate.mjs --ids <id>`**
    generates one attempt for one asset:

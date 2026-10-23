@@ -71,6 +71,8 @@
 //   --json          print one JSON object per line instead of a table
 //   --strict        exit 1 if anything failed (default: always exit 0,
 //                   since this is a reporting aid, not a CI gate)
+//   --game NAME     the game whose manifest and raw directory to use
+//                   (default duel; lib.mjs "Games")
 //   --help          print this usage and exit
 
 import { readdir, stat } from 'node:fs/promises';
@@ -87,6 +89,7 @@ import {
   hexToRgb,
   deltaE2000,
   PAPER_HEX,
+  setGame,
   printUsage,
   die,
 } from './lib.mjs';
@@ -108,6 +111,7 @@ function parseArgs(argv) {
     else if (a === '--paper-max') args.paperMax = Number(argv[++i]);
     else if (a === '--json') args.json = true;
     else if (a === '--strict') args.strict = true;
+    else if (a === '--game') setGame(argv[++i]);
     else die(`unknown argument "${a}" (see --help)`, 2);
   }
   return args;

@@ -21,6 +21,14 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url)); // tools/art
 export const repoRoot = path.resolve(scriptDir, '..', '..');
 
 /**
+ * Where the art data lives: the repository, unless AJAYEB_ART_ROOT names
+ * another tree with the same layout (art/, web/static/art/, web/src/lib/).
+ * Tests point it at a fixture tree; the tools themselves (Prettier,
+ * tools/heavy.py) are always the repository's.
+ */
+export const dataRoot = process.env.AJAYEB_ART_ROOT ? path.resolve(process.env.AJAYEB_ART_ROOT) : repoRoot;
+
+/**
  * Private run state directory, outside the repo (AGENTS.md "Private run
  * state"). Same default and override as tools/heavy.py, so both tools agree
  * on where it lives.
@@ -28,22 +36,128 @@ export const repoRoot = path.resolve(scriptDir, '..', '..');
 export const runDir = process.env.AJAYEB_RUN_DIR || path.join(os.homedir(), 'tmp', 'agents', 'ajayeb');
 
 export const artWorkDir = path.join(runDir, 'art-work');
-export const rawDir = path.join(artWorkDir, 'raw');
-export const sheetsDir = path.join(artWorkDir, 'sheets');
+
+// --- Games -----------------------------------------------------------------
+//
+// Each game's art lives in its own namespace, so two games can each have an
+// asset of the same kind and slug (Haftgane's Clay Pit is a different
+// painting from Duel's) and neither can overwrite the other. Inside a
+// game's own files an id is "<kind>/<slug>"; across games it is qualified,
+// "<game>:<kind>/<slug>" (qualifiedId). Duel's namespace is the original
+// layout, unchanged; every other game's sits in a directory named after it:
+//
+//   subjects, manifest  art/subjects.json, art/manifest.json
+//                       art/<game>/subjects.json, art/<game>/manifest.json
+//   aliases             art/<game>/aliases.json (Duel has none)
+//   originals           art/originals/<kind>/<slug>.webp
+//                       art/originals/<game>/<kind>/<slug>.webp
+//   shipped files, URL  web/static/art/<outDir>/<file>, /art/<outDir>/<file>
+//                       web/static/art/<game>/<outDir>/<file>, /art/<game>/...
+//   generated index     web/src/lib/art/available.gen.ts
+//                       web/src/lib/art/available-<game>.gen.ts
+//   raw attempts        <run dir>/art-work/raw/<kind>/<slug>/<n>.png
+//                       <run dir>/art-work/<game>/raw/<kind>/<slug>/<n>.png
+//   contact sheets      <run dir>/art-work/sheets/
+//                       <run dir>/art-work/<game>/sheets/
+//
+// A manifest records its game ("game"; Duel's predates the field and has
+// none), and every tool refuses a manifest of another game, so a rebuild
+// pointed at the wrong file stops instead of dropping that game's assets.
+// An alias maps one of a game's semantic ids to an existing painting,
+// possibly another game's ("card/lumber-yard": "duel:card/lumber-yard");
+// the index lists it with that painting's own content-hashed paths.
+
+/** A game's art paths, relative to dataRoot, and its URL prefix. */
+function gamePaths(name) {
+  const own = name === 'duel' ? [] : [name];
+  return {
+    name,
+    manifest: path.join('art', ...own, 'manifest.json'),
+    subjects: path.join('art', ...own, 'subjects.json'),
+    aliases: name === 'duel' ? null : path.join('art', name, 'aliases.json'),
+    originals: path.join('art', 'originals', ...own),
+    shipped: path.join('web', 'static', 'art', ...own),
+    urlBase: ['/art', ...own].join('/'),
+    index: path.join('web', 'src', 'lib', 'art', name === 'duel' ? 'available.gen.ts' : `available-${name}.gen.ts`),
+    raw: path.join(...own, 'raw'),
+    sheets: path.join(...own, 'sheets'),
+  };
+}
+
+/** The games with art, by name. */
+export const GAMES = { duel: gamePaths('duel'), haftgane: gamePaths('haftgane') };
+
+/** A game's absolute directories and files (paths as gamePaths, resolved). */
+export function gameDirs(name) {
+  const g = GAMES[name];
+  if (!g) throw new Error(`no art game "${name}" (known: ${Object.keys(GAMES).join(', ')})`);
+  return {
+    name,
+    manifest: path.join(dataRoot, g.manifest),
+    subjects: path.join(dataRoot, g.subjects),
+    aliases: g.aliases && path.join(dataRoot, g.aliases),
+    originals: path.join(dataRoot, g.originals),
+    shipped: path.join(dataRoot, g.shipped),
+    urlBase: g.urlBase,
+    index: path.join(dataRoot, g.index),
+    indexRel: g.index,
+    raw: path.join(artWorkDir, g.raw),
+    sheets: path.join(artWorkDir, g.sheets),
+  };
+}
+
+/** "<game>:<kind>/<slug>", an id that names its game. */
+export function qualifiedId(gameName, id) {
+  return `${gameName}:${id}`;
+}
+
+/** The game and id of a qualified id, or null when it is not one. */
+export function parseQualifiedId(q) {
+  const m = /^([a-z][a-z0-9-]*):([a-z]+\/[a-z0-9-]+)$/.exec(q);
+  return m && GAMES[m[1]] ? { game: m[1], id: m[2] } : null;
+}
+
+/** The game whose art the tools work on: Duel, unless AJAYEB_ART_GAME or a
+ *  script's --game flag (setGame) says otherwise. A live binding. */
+export let game;
+
+/** The active game's paths, as live bindings (setGame moves them). */
+export let rawDir;
+export let sheetsDir;
+export let subjectsPath;
+export let originalsDir;
+export let shippedRoot;
+export let availableGenPath;
 
 /**
- * art/manifest.json, unless AJAYEB_ART_MANIFEST names another file, or a
- * script's --manifest flag calls setManifestPath(). A scratch copy is how
- * apply-review.mjs, process.mjs and index.mjs are proved without touching
- * the committed manifest. A live binding: importers see the change.
+ * The active game's manifest (art/manifest.json for Duel), unless
+ * AJAYEB_ART_MANIFEST names another file, or a script's --manifest flag
+ * calls setManifestPath(). A scratch copy is how apply-review.mjs,
+ * process.mjs and index.mjs are proved without touching the committed
+ * manifest. A live binding: importers see the change.
  */
-export let manifestPath = process.env.AJAYEB_ART_MANIFEST
-  ? path.resolve(process.env.AJAYEB_ART_MANIFEST)
-  : path.join(repoRoot, 'art', 'manifest.json');
+export let manifestPath;
+let manifestOverride = process.env.AJAYEB_ART_MANIFEST ? path.resolve(process.env.AJAYEB_ART_MANIFEST) : null;
 
 export function setManifestPath(p) {
-  manifestPath = path.resolve(p);
+  manifestOverride = path.resolve(p);
+  manifestPath = manifestOverride;
 }
+
+/** Makes `name` the active game; an explicit manifest path stays. */
+export function setGame(name) {
+  if (!GAMES[name]) die(`no art game "${name}" (known: ${Object.keys(GAMES).join(', ')})`, 2);
+  game = gameDirs(name);
+  rawDir = game.raw;
+  sheetsDir = game.sheets;
+  subjectsPath = game.subjects;
+  originalsDir = game.originals;
+  shippedRoot = game.shipped;
+  availableGenPath = game.index;
+  manifestPath = manifestOverride ?? game.manifest;
+}
+
+setGame(process.env.AJAYEB_ART_GAME || 'duel');
 
 /** A path for messages: repo-relative inside the repo, `~/...` under the
  * home directory, else absolute. */
@@ -60,13 +174,10 @@ export function displayPath(p) {
 export function manifestLabel() {
   return displayPath(manifestPath);
 }
-export const subjectsPath = path.join(repoRoot, 'art', 'subjects.json');
-export const styleDocPath = path.join(repoRoot, 'art', 'style.md');
-export const originalsDir = path.join(repoRoot, 'art', 'originals');
-export const refsDir = path.join(repoRoot, 'art', 'refs');
-export const shippedRoot = path.join(repoRoot, 'web', 'static', 'art');
-export const availableGenPath = path.join(repoRoot, 'web', 'src', 'lib', 'art', 'available.gen.ts');
-export const catalogGenPath = path.join(repoRoot, 'web', 'src', 'lib', 'wire', 'catalog.gen.ts');
+export const styleDocPath = path.join(dataRoot, 'art', 'style.md');
+export const refsDir = path.join(dataRoot, 'art', 'refs');
+/** Duel's presentation catalog, the source of Duel's asset list. */
+export const catalogGenPath = path.join(dataRoot, 'web', 'src', 'lib', 'wire', 'catalog.gen.ts');
 
 // --- id helpers --------------------------------------------------------
 // A manifest/subjects id is always "<kind>/<slug>", e.g. "card/lumber-yard"
@@ -95,13 +206,15 @@ export function makeId(kind, slug) {
 export const ORIGINAL_EXT = 'webp';
 const ORIGINAL_EXTS = ['webp', 'png'];
 
-/** Where process.mjs writes an id's original: art/originals/<kind>/<slug>.webp,
- * or the same layout under `root` (a scratch --out directory). */
+/** Where process.mjs writes an id's original: art/originals/<kind>/<slug>.webp
+ * (art/originals/<game>/... for a game other than Duel), or the same layout
+ * under `root` (a scratch --out directory). */
 export function originalPath(id, root = originalsDir) {
   return path.join(root, idKind(id), `${idSlug(id)}.${ORIGINAL_EXT}`);
 }
 
-/** The committed original for an id, .webp first, else a legacy .png, else null. */
+/** The active game's committed original for an id, .webp first, else a
+ *  legacy .png, else null. */
 export function findOriginal(id) {
   for (const ext of ORIGINAL_EXTS) {
     const candidate = path.join(originalsDir, idKind(id), `${idSlug(id)}.${ext}`);
@@ -110,7 +223,8 @@ export function findOriginal(id) {
   return null;
 }
 
-/** The raw attempt file for an id: art-work/raw/<kind>/<slug>/<n>.png. */
+/** The raw attempt file for an id: art-work/raw/<kind>/<slug>/<n>.png
+ *  (art-work/<game>/raw/... for a game other than Duel). */
 export function rawAttemptPath(id, attempt) {
   return path.join(rawDir, idKind(id), idSlug(id), `${attempt}.png`);
 }
@@ -342,6 +456,28 @@ export function shippedFileName(kind, slug, size) {
   return size.suffix ? `${base}@${size.suffix}.avif` : `${base}.avif`;
 }
 
+/** Where one shipped size of an id lands: under `root` (the game's shipped
+ *  directory, or a scratch --out), in its kind's outDir. */
+export function shippedPath(id, size, root = shippedRoot) {
+  const kind = idKind(id);
+  return path.join(root, KIND_SPEC[kind].outDir, shippedFileName(kind, idSlug(id), size));
+}
+
+/** The URL path of one shipped size of an id in a game (gameDirs), before
+ *  its ?v= content hash: /art/<outDir>/<file> for Duel, /art/<game>/... else. */
+export function shippedUrlPath(dirs, id, size) {
+  const kind = idKind(id);
+  return `${dirs.urlBase}/${KIND_SPEC[kind].outDir}/${shippedFileName(kind, idSlug(id), size)}`;
+}
+
+// A game's directory sits beside Duel's kind directories (art/originals/
+// <kind>, web/static/art/<outDir>, art/originals/sound), so no game may be
+// named like one of them.
+for (const name of Object.keys(GAMES)) {
+  const taken = new Set(['sound', ...Object.keys(KIND_SPEC), ...Object.values(KIND_SPEC).map((s) => s.outDir)]);
+  if (name !== 'duel' && taken.has(name)) throw new Error(`lib.mjs: the game "${name}" is named like an art directory`);
+}
+
 // --- JSON file helpers -----------------------------------------------------
 
 export async function readJson(filePath, fallback = undefined) {
@@ -362,12 +498,66 @@ export async function loadSubjects() {
   return readJson(subjectsPath, {});
 }
 
+/** The game a manifest belongs to: its "game" field, and Duel for a
+ *  manifest without one (Duel's predates the field). */
+export function manifestGame(manifest) {
+  return manifest.game ?? 'duel';
+}
+
+/** Stops when `manifest`, read from `file`, belongs to another game than
+ *  `gameName`: a rebuild or review aimed at the wrong game's manifest would
+ *  otherwise drop or rewrite that game's assets. */
+export function checkManifestGame(manifest, file, gameName = game.name) {
+  const owner = manifestGame(manifest);
+  if (owner !== gameName) {
+    die(
+      `${displayPath(file)} is the ${owner} manifest, not ${gameName}'s; ` +
+        `pass --game ${owner} to work on it, or leave --manifest out to use ${GAMES[gameName].manifest}`,
+    );
+  }
+}
+
+/** The active game's manifest. A missing one is empty; one of another game
+ *  stops the script (checkManifestGame). */
 export async function loadManifest() {
-  return readJson(manifestPath, { assets: {} });
+  const manifest = await readJson(manifestPath, game.name === 'duel' ? { assets: {} } : { game: game.name, assets: {} });
+  checkManifestGame(manifest, manifestPath);
+  return manifest;
+}
+
+/** Another game's committed manifest, read only (for alias targets). */
+export async function loadGameManifest(gameName) {
+  const file = gameDirs(gameName).manifest;
+  const manifest = await readJson(file, gameName === 'duel' ? { assets: {} } : { game: gameName, assets: {} });
+  checkManifestGame(manifest, file, gameName);
+  return manifest;
 }
 
 export async function saveManifest(manifest) {
+  checkManifestGame(manifest, manifestPath);
   await writeJson(manifestPath, manifest);
+}
+
+/**
+ * The active game's aliases: semantic id -> { game, id } of the painting it
+ * reuses. Each key is an id of this game that has no subject of its own;
+ * each target is a qualified id ("duel:card/lumber-yard") of an asset with
+ * its own art, never another alias. Duel has none.
+ */
+export async function loadAliases() {
+  if (!game.aliases) return new Map();
+  const raw = await readJson(game.aliases, {});
+  const out = new Map();
+  for (const [id, target] of Object.entries(raw)) {
+    if (!/^[a-z]+\/[a-z0-9-]+$/.test(id) || !KIND_SPEC[idKind(id)]) {
+      die(`${displayPath(game.aliases)}: "${id}" is not a "<kind>/<slug>" id of a known kind`);
+    }
+    const t = typeof target === 'string' ? parseQualifiedId(target) : null;
+    if (!t) die(`${displayPath(game.aliases)}: ${id}: "${target}" is not a "<game>:<kind>/<slug>" id of a known game`);
+    if (idKind(t.id) !== idKind(id)) die(`${displayPath(game.aliases)}: ${id} aliases ${target}, a different kind`);
+    out.set(id, t);
+  }
+  return out;
 }
 
 // --- Process helpers ---------------------------------------------------

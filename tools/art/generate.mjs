@@ -50,6 +50,8 @@
 //                 anchor, when one exists (default: no reference image at
 //                 all; see "Reference images" above)
 //   --dry-run     print the prompt and the codex command, run nothing
+//   --game NAME   the game whose manifest and raw directory to use
+//                 (default duel; lib.mjs "Games")
 //   --help        print this usage and exit
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -63,6 +65,8 @@ import {
   rawDir,
   loadManifest,
   saveManifest,
+  manifestLabel,
+  setGame,
   idKind,
   idSlug,
   styleDocPath,
@@ -89,6 +93,7 @@ function parseArgs(argv) {
     else if (a === '--amend') args.amend = argv[++i];
     else if (a === '--ref') args.ref = true;
     else if (a === '--dry-run') args.dryRun = true;
+    else if (a === '--game') setGame(argv[++i]);
     else die(`unknown argument "${a}" (see --help)`, 2);
   }
   return args;
@@ -351,7 +356,7 @@ async function main() {
   let ids;
   if (args.ids) {
     ids = args.ids;
-    for (const id of ids) if (!assetsById[id]) die(`"${id}" is not in art/manifest.json`);
+    for (const id of ids) if (!assetsById[id]) die(`"${id}" is not in ${manifestLabel()}`);
   } else {
     ids = Object.values(assetsById)
       .filter((a) => (args.kind ? a.kind === args.kind : true))

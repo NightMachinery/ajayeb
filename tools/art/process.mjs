@@ -61,8 +61,12 @@
 //                    attempt's raw file, see above)
 //   --out DIR        scratch run: write everything under DIR, skip the
 //                    approval check, touch nothing committed
+//   --game NAME      the game whose asset this is (default duel); another
+//                    game's original goes to art/originals/<game>/ and its
+//                    files to web/static/art/<game>/ (lib.mjs "Games"), so
+//                    it never replaces a Duel file of the same slug
 //   --manifest PATH  read (and, without --out, update) this manifest
-//                    instead of art/manifest.json
+//                    instead of the game's own (art/manifest.json for Duel)
 //   --help           print this usage and exit
 //
 // The app icon PNGs (the one exception to "shipped bitmaps are AVIF only",
@@ -109,12 +113,16 @@ import {
   displayPath,
   setManifestPath,
   manifestLabel,
-  shippedFileName,
   idKind,
   idSlug,
   originalPath,
   findOriginal,
+  originalsDir,
   shippedRoot,
+  shippedPath,
+  setGame,
+  game,
+  qualifiedId,
   loadManifest,
   saveManifest,
   cropToRawRgb,
@@ -136,6 +144,7 @@ function parseArgs(argv) {
     else if (a === '--src') args.src = argv[++i];
     else if (a === '--out') args.out = argv[++i];
     else if (a === '--manifest') setManifestPath(argv[++i]);
+    else if (a === '--game') setGame(argv[++i]);
     else if (a === '--app-icons') args.appIcons = true;
     else if (a === '--batch') args.batch = true;
     else if (a === '--kind') args.kind = argv[++i];
@@ -151,6 +160,7 @@ function parseArgs(argv) {
   if (args.kind || args.ids || args.force) die('--kind, --ids and --force go with --batch', 2);
   if (args.appIcons) {
     if (args.id || args.src) die('--app-icons takes no --id or --src (it reads the icon/app original)', 2);
+    if (game.name !== 'duel') die('--app-icons makes the app icon, which is Duel\'s icon/app; it takes no --game', 2);
     return args;
   }
   if (!args.id) die('usage: process.mjs --id <id> [--src <original>] [--out DIR] [--manifest PATH] (see --help)', 2);
@@ -476,7 +486,7 @@ async function appIcons(args) {
  * smooths most of them away (3.5 KB, half the original's grain), while q75
  * keeps them for 13 KB (M10.F2).
  */
-const OWN_GROUND = new Map([['texture/night', [75, 65, 55]]]);
+const OWN_GROUND = new Map([[qualifiedId('duel', 'texture/night'), [75, 65, 55]]]);
 
 /**
  * Writes one shipped size of the original of `id`: the fill crop to the
@@ -497,7 +507,7 @@ async function shipSize(src, id, size, outPath, scratchRoot, qualities = [55, 45
   // scan would stop at the first pixel, leaving the ivory ring in place.
   const radius = spec.mask === 'circle' ? detectTokenRadius(buf, w, h, ownPaperRgb) : 0;
   const targetPaperRgb = hexToRgb(PAPER_HEX);
-  const ownGround = OWN_GROUND.get(id);
+  const ownGround = OWN_GROUND.get(qualifiedId(game.name, id));
   if (!ownGround) mapPaperTone(buf, w, h, ownPaperRgb, targetPaperRgb);
   if (spec.mask === 'circle') applyCircleMask(buf, w, h, radius, targetPaperRgb);
   await rawRgbToPng(buf, w, h, croppedPng);
@@ -541,11 +551,10 @@ async function batch(args) {
   try {
     for (const id of ids) {
       const kind = idKind(id);
-      const slug = idSlug(id);
       const spec = KIND_SPEC[kind];
       if (!spec) die(`no KIND_SPEC for kind "${kind}" (${id})`);
       const todo = spec.sizes
-        .map((size) => ({ size, outPath: path.join(outRoot, spec.outDir, shippedFileName(kind, slug, size)) }))
+        .map((size) => ({ size, outPath: shippedPath(id, size, outRoot) }))
         .filter(({ outPath }) => args.force || !existsSync(outPath));
       kept += spec.sizes.length - todo.length;
       if (todo.length === 0) continue;
@@ -571,7 +580,7 @@ async function batch(args) {
       `${args.force ? '' : ' (--force rewrites them)'}; ${manifestLabel()} left unchanged\n`,
   );
   if (noOriginal.length) {
-    die(`no committed original under art/originals/ for ${noOriginal.join(', ')}; their missing sizes were not written`);
+    die(`no committed original under ${displayPath(originalsDir)}/ for ${noOriginal.join(', ')}; their missing sizes were not written`);
   }
 }
 
@@ -607,12 +616,13 @@ async function main() {
       `magick compare -metric AE: ${orig.differing} differing pixels, raw RGBA identical\n`,
   );
 
-  const shippedDir = args.out ? path.join(args.out, spec.outDir) : path.join(shippedRoot, spec.outDir);
+  const outRoot = args.out ?? shippedRoot;
   const bytes = {};
 
   for (const size of spec.sizes) {
-    const fileName = shippedFileName(kind, slug, size);
-    const result = await shipSize(args.src, args.id, size, path.join(shippedDir, fileName), scratchRoot, args.qualities);
+    const outPath = shippedPath(args.id, size, outRoot);
+    const fileName = path.basename(outPath);
+    const result = await shipSize(args.src, args.id, size, outPath, scratchRoot, args.qualities);
     bytes[fileName] = result.bytes;
     process.stdout.write(`process.mjs: ${fileName} ${sizeReport(size, result)}\n`);
   }

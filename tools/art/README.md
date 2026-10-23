@@ -28,6 +28,14 @@ raw attempts and contact sheets. Every script prints its usage, the
 comment block at its top, with `--help`, and rejects an unknown flag with
 exit code 2.
 
+Every script works on one game's art namespace: Duel's, unless given
+`--game NAME` or `AJAYEB_ART_GAME` (`haftgane` is the other one so far).
+Another game's files sit in a directory named after it, and every script
+refuses a manifest of another game. `AJAYEB_ART_ROOT` moves the art data
+(`art/`, `web/static/art/`, the generated index) to another tree with the
+same layout, which is how the tests run on fixtures. See
+[docs/art/bitmaps.md "Games"](../../docs/art/bitmaps.md#games).
+
 ### `lib.mjs`
 
 Not a script; the shared module the other scripts import. Holds the repo
@@ -42,13 +50,17 @@ back to a PNG), `cornerPaperColor` (an image's own paper colour, the
 corner-median), `colorDistance`, `hexToRgb`, `PAPER_HEX` (the app's
 `--card-paper` token, `#f4ecdc`), `rgbToLab` and `deltaE2000` (the
 perceptual colour difference `gate.mjs`'s paper check uses) and
-`imageSize` (via `magick identify`).
+`imageSize` (via `magick identify`). It also holds the game namespaces:
+`GAMES` and `gameDirs` (each game's paths), `setGame`, `qualifiedId` and
+`parseQualifiedId` (`<game>:<kind>/<slug>`), `checkManifestGame` and
+`loadAliases`.
 
 ### `manifest.mjs`
 
 ```
 node tools/art/manifest.mjs           # write art/manifest.json
 node tools/art/manifest.mjs --check   # exit 1 if that would change it
+node tools/art/manifest.mjs --game haftgane   # write art/haftgane/manifest.json
 ```
 
 Rebuilds `art/manifest.json` (or the file `AJAYEB_ART_MANIFEST` names)
@@ -56,7 +68,11 @@ from the catalog and `art/subjects.json`. Never writes `subjects.json`.
 Keeps every existing asset's `status`, `attempt`, `promptAmend` and
 `bytes`, and the review's `approvedAttempt` and `reasons` when present; only adds ids that are missing and
 drops (with a warning on stderr) ids that no longer correspond to a
-catalog entry or a static asset.
+catalog entry or a static asset. It stops instead of dropping an approved
+id, unless given `--drop-approved`. For a game other than Duel the ids
+come from that game's `subjects.json`, and the script also checks its
+`aliases.json`: an aliased id has no subject, and its target is an asset
+in its own game's manifest.
 
 ### `generate.mjs`
 
@@ -275,6 +291,9 @@ times 3 against its widest size). `--manifest` and `--out` point it at
 scratch files for a proof. Run it after any `apply-review.mjs` or
 `process.mjs` call that changes which assets are approved or which files
 ship, so the app's index never claims a file that was not actually shipped.
+With `--game haftgane` it writes `available-haftgane.gen.ts`, with paths
+under `/art/haftgane/`, and adds each alias whose target is approved,
+under the target's own paths; it reports no prefetch plan for that game.
 
 ## Vector pipeline (`vector/`)
 

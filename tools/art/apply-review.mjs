@@ -38,6 +38,9 @@
 //                     art/manifest.json (a scratch copy, for a proof that
 //                     touches nothing committed); AJAYEB_ART_MANIFEST does
 //                     the same
+//   --game NAME       the game whose manifest and raw attempts to use
+//                     (default duel; lib.mjs "Games"); a --manifest must be
+//                     that game's
 //   --dry-run         print what would change, write nothing
 //   --help            print this usage and exit
 
@@ -48,6 +51,7 @@ import {
   loadManifest,
   saveManifest,
   setManifestPath,
+  setGame,
   manifestLabel,
   rawAttemptPath,
   displayPath,
@@ -69,6 +73,7 @@ function parseArgs(argv) {
         die('--max-attempts needs a whole number of 1 or more', 2);
       }
     } else if (a === '--manifest') setManifestPath(argv[++i]);
+    else if (a === '--game') setGame(argv[++i]);
     else if (a.startsWith('-')) die(`unknown argument "${a}" (see --help)`, 2);
     else if (!args.file) args.file = a;
     else die(`unexpected extra argument "${a}" (see --help)`, 2);

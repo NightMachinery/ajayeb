@@ -35,17 +35,29 @@
 // of each kind (lib.mjs hiDpiCheck), warning when a kind's largest display
 // needs a wider size than it ships.
 //
+// With --game haftgane (lib.mjs "Games") it indexes that game's manifest
+// into web/src/lib/art/available-haftgane.gen.ts, with paths under
+// /art/haftgane/. Each alias in art/haftgane/aliases.json whose target is
+// approved gets the target's own entry, the same content-hashed paths of
+// the same files (an alias never copies or re-encodes a painting); an
+// alias whose target is not approved yet is left out, so its placeholder
+// draws. The prefetch plan report is Duel's only, until another game's
+// screens prefetch.
+//
 // Usage:
 //   node tools/art/index.mjs
 //   node tools/art/index.mjs --check
 //   node tools/art/index.mjs --manifest /scratch/manifest.json --out /scratch/available.gen.ts
+//   node tools/art/index.mjs --game haftgane --out /scratch/available-haftgane.gen.ts
 //
 // Flags:
+//   --game NAME      the game to index (default duel)
 //   --check          write nothing; exit 1 when the module on disk differs
 //                    from what this would write (the art index check)
-//   --manifest PATH  read this manifest instead of art/manifest.json
-//   --out FILE       write the module here instead of
-//                    web/src/lib/art/available.gen.ts (a scratch proof)
+//   --manifest PATH  read this manifest instead of the game's own (it must
+//                    be that game's)
+//   --out FILE       write the module here instead of the game's index,
+//                    web/src/lib/art/available.gen.ts for Duel (a scratch proof)
 //   --quiet          print only the summary lines, not one line per id
 //   --help           print this usage and exit
 
@@ -57,20 +69,25 @@ import path from 'node:path';
 
 import {
   KIND_SPEC,
-  shippedFileName,
   idKind,
-  idSlug,
   loadManifest,
+  loadGameManifest,
+  loadAliases,
   availableGenPath,
   approvedAttemptOf,
   findOriginal,
   setManifestPath,
+  setGame,
+  game,
+  gameDirs,
+  qualifiedId,
+  shippedPath,
+  shippedUrlPath,
   manifestLabel,
   displayPath,
   printUsage,
   die,
   repoRoot,
-  shippedRoot,
   readCatalog,
   hiDpiCheck,
   HIDPI_DPR,
@@ -81,16 +98,18 @@ import {
 const HASH_DIGITS = 10;
 
 function parseArgs(argv) {
-  const args = { out: availableGenPath };
+  const args = {};
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--help' || a === '-h') printUsage(import.meta.url);
     else if (a === '--manifest') setManifestPath(argv[++i]);
+    else if (a === '--game') setGame(argv[++i]);
     else if (a === '--out') args.out = path.resolve(argv[++i]);
     else if (a === '--check') args.check = true;
     else if (a === '--quiet') args.quiet = true;
     else die(`unknown argument "${a}"`, 2);
   }
+  args.out ??= availableGenPath;
   return args;
 }
 
@@ -99,7 +118,9 @@ function contentHash(buf) {
   return createHash('sha256').update(buf).digest('hex').slice(0, HASH_DIGITS);
 }
 
-function buildEntries(manifest) {
+/** The index entries of a manifest's approved assets, from the shipped
+ *  files of the game `dirs` (lib.mjs gameDirs). */
+function buildEntries(manifest, dirs = game) {
   const entries = {};
   const missing = [];
   const ids = Object.keys(manifest.assets).sort();
@@ -107,12 +128,10 @@ function buildEntries(manifest) {
     const asset = manifest.assets[id];
     if (asset.status !== 'approved') continue;
     const kind = idKind(id);
-    const slug = idSlug(id);
     const spec = KIND_SPEC[kind];
     const variants = {};
     for (const size of spec.sizes) {
-      const fileName = shippedFileName(kind, slug, size);
-      const file = path.join(shippedRoot, spec.outDir, fileName);
+      const file = shippedPath(id, size, dirs.shipped);
       if (!existsSync(file)) {
         missing.push(displayPath(file));
         continue;
@@ -120,7 +139,7 @@ function buildEntries(manifest) {
       const buf = readFileSync(file);
       const suffix = size.suffix || 'default';
       variants[suffix] = {
-        path: `/art/${spec.outDir}/${fileName}?v=${contentHash(buf)}`,
+        path: `${shippedUrlPath(dirs, id, size)}?v=${contentHash(buf)}`,
         width: size.w,
         height: size.h,
         bytes: buf.length,
@@ -137,6 +156,34 @@ function buildEntries(manifest) {
   return entries;
 }
 
+/**
+ * The active game's aliases with approved targets, as index entries that
+ * are the targets' own (same files, same hashed paths), plus a line per
+ * alias for the log. A target still waiting for approval gives no entry.
+ */
+async function aliasEntries() {
+  const entries = {};
+  const lines = [];
+  const targets = new Map();
+  for (const [id, target] of await loadAliases()) {
+    if (!targets.has(target.game)) {
+      targets.set(target.game, buildEntries(await loadGameManifest(target.game), gameDirs(target.game)));
+    }
+    const q = qualifiedId(target.game, target.id);
+    const entry = targets.get(target.game)[target.id];
+    if (entry) entries[id] = entry;
+    lines.push(`${id}: alias of ${q}${entry ? '' : ', not approved yet, so no entry (its placeholder draws)'}`);
+  }
+  return { entries, lines };
+}
+
+/** Own and alias entries in one id order (an id is never both). */
+function mergeSorted(own, aliases) {
+  const out = {};
+  for (const id of [...Object.keys(own), ...Object.keys(aliases)].sort()) out[id] = own[id] ?? aliases[id];
+  return out;
+}
+
 function renderTs(entries) {
   const count = Object.keys(entries).length;
   const body = JSON.stringify(entries, null, 2)
@@ -144,24 +191,7 @@ function renderTs(entries) {
     .map((line, i) => (i === 0 ? line : `  ${line}`))
     .join('\n');
 
-  return `// Code generated by tools/art/index.mjs. DO NOT EDIT.
-//
-// Approved bitmap art only (${count} id${count === 1 ? '' : 's'} right now):
-// every id here has a real file under web/static/art/, written by
-// tools/art/process.mjs from an original a review round approved
-// (art/manifest.json, status "approved"). An id with no entry has no
-// approved art yet; the app draws its procedural placeholder instead
-// (CardPlaceholderArt and friends never look here first). See
-// docs/art/bitmaps.md for the pipeline that fills this in.
-//
-// Ids are "<kind>/<slug>", e.g. "card/lumber-yard", "wonder/pyramids",
-// "token/agriculture", "back/age1", "texture/paper", "hero/hero",
-// "avatar/apprentice", "victory/military", "icon/app".
-//
-// Each path ends in ?v= and the start of the file's SHA-256, so it names
-// one exact file: the server caches it for a year, and new art gets a new
-// URL. bytes is the shipped file's size.
-
+  return `${game.name === 'duel' ? duelHeader(count) : gameHeader(count)}
 export interface ArtVariant {
   readonly path: string;
   readonly width: number;
@@ -188,6 +218,48 @@ export function artVariant(id: string, suffix: string = 'default'): ArtVariant |
 `;
 }
 
+/** The index's header comment for Duel, as it has always been. */
+function duelHeader(count) {
+  return `// Code generated by tools/art/index.mjs. DO NOT EDIT.
+//
+// Approved bitmap art only (${count} id${count === 1 ? '' : 's'} right now):
+// every id here has a real file under web/static/art/, written by
+// tools/art/process.mjs from an original a review round approved
+// (art/manifest.json, status "approved"). An id with no entry has no
+// approved art yet; the app draws its procedural placeholder instead
+// (CardPlaceholderArt and friends never look here first). See
+// docs/art/bitmaps.md for the pipeline that fills this in.
+//
+// Ids are "<kind>/<slug>", e.g. "card/lumber-yard", "wonder/pyramids",
+// "token/agriculture", "back/age1", "texture/paper", "hero/hero",
+// "avatar/apprentice", "victory/military", "icon/app".
+//
+// Each path ends in ?v= and the start of the file's SHA-256, so it names
+// one exact file: the server caches it for a year, and new art gets a new
+// URL. bytes is the shipped file's size.
+`;
+}
+
+/** The index's header comment for another game. */
+function gameHeader(count) {
+  const g = game.name;
+  return `// Code generated by tools/art/index.mjs --game ${g}. DO NOT EDIT.
+//
+// ${g}'s approved bitmap art only (${count} id${count === 1 ? '' : 's'} right now): each id
+// here is either ${g}'s own art, a real file under web/static/art/${g}/
+// written by tools/art/process.mjs --game ${g} from an original a review
+// round approved (art/${g}/manifest.json, status "approved"), or an alias
+// (art/${g}/aliases.json) that carries the paths of an approved painting it
+// reuses, possibly another game's. An id with no entry draws its procedural
+// placeholder. See docs/art/bitmaps.md "Games".
+//
+// Ids are "<kind>/<slug>" in ${g}'s own namespace. Each path ends in ?v= and
+// the start of the file's SHA-256, so it names one exact file: the server
+// caches it for a year, and new art gets a new URL. bytes is the shipped
+// file's size.
+`;
+}
+
 /**
  * Formats the module with the web package's Prettier, as `make lint-web`
  * checks it: the config is found from the module's real path whatever
@@ -198,7 +270,7 @@ function prettierFormat(src) {
   const bin = path.join(webDir, 'node_modules', '.bin', 'prettier');
   if (!existsSync(bin)) die(`no Prettier at ${displayPath(bin)}; run make install first`);
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, ['--stdin-filepath', path.relative(webDir, availableGenPath)], {
+    const child = spawn(bin, ['--stdin-filepath', path.relative(webDir, path.join(repoRoot, game.indexRel))], {
       cwd: webDir,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -248,7 +320,23 @@ async function report(entries, quiet) {
   const total = shipped.reduce((n, v) => n + v.bytes, 0);
   const out = (line) => process.stdout.write(`index.mjs: ${line}\n`);
   out(`shipped: ${shipped.length} files, ${(total / 1024 / 1024).toFixed(2)} MB (per-image budgets only; no total cap)`);
+  if (game.name === 'duel') await duelPlanReport(entries, out);
+  else out(`prefetch plan: not reported for ${game.name}; only Duel's screens prefetch so far`);
 
+  for (const kind of Object.keys(KIND_SPEC)) {
+    const c = hiDpiCheck(kind);
+    if (c.displayCss === null) continue;
+    const verdict = c.ok
+      ? 'enough'
+      : `NEEDS A WIDER SIZE (more than ${HIDPI_SLACK} times ${c.widest}); add one to KIND_SPEC and run process.mjs --batch`;
+    if (!quiet || !c.ok) {
+      out(`high-DPI ${kind}: shown up to ${c.displayCss} CSS px, ${c.needed} px at DPR ${HIDPI_DPR}; widest shipped ${c.widest}: ${verdict}`);
+    }
+  }
+}
+
+/** Duel's full prefetch plan per part, on each device (see above). */
+async function duelPlanReport(entries, out) {
   const { cards, wonders, tokens } = await readCatalog();
   const ageCards = (back) => cards.filter((c) => c.data.back === back).map((c) => `card/${c.slug}`);
   const parts = [
@@ -288,25 +376,16 @@ async function report(entries, quiet) {
     }
     out(`full prefetch plan, ${device.name}: ${(sum / 1024).toFixed(0)} KB in ${seen.size} files: ${lines.join(', ')}`);
   }
-
-  for (const kind of Object.keys(KIND_SPEC)) {
-    const c = hiDpiCheck(kind);
-    if (c.displayCss === null) continue;
-    const verdict = c.ok
-      ? 'enough'
-      : `NEEDS A WIDER SIZE (more than ${HIDPI_SLACK} times ${c.widest}); add one to KIND_SPEC and run process.mjs --batch`;
-    if (!quiet || !c.ok) {
-      out(`high-DPI ${kind}: shown up to ${c.displayCss} CSS px, ${c.needed} px at DPR ${HIDPI_DPR}; widest shipped ${c.widest}: ${verdict}`);
-    }
-  }
 }
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const manifest = await loadManifest();
-  const entries = buildEntries(manifest);
+  const own = buildEntries(manifest);
+  const aliases = await aliasEntries();
+  const entries = mergeSorted(own, aliases.entries);
   if (!args.quiet && !args.check) {
-    for (const id of Object.keys(entries)) {
+    for (const id of Object.keys(own)) {
       const asset = manifest.assets[id];
       const approved = approvedAttemptOf(asset);
       const earlier = approved < asset.attempt ? ` (earlier than the latest, ${asset.attempt})` : '';
@@ -315,12 +394,15 @@ async function main() {
       const origText = original ? `original ${displayPath(original)}` : 'WARNING: no original under art/originals/ yet (run process.mjs)';
       process.stdout.write(`index.mjs: ${id}: approved attempt ${approved}${earlier}${recorded}; ${origText}\n`);
     }
+    for (const line of aliases.lines) process.stdout.write(`index.mjs: ${line}\n`);
   }
   const ts = await prettierFormat(renderTs(entries));
   if (args.check) {
     const current = existsSync(args.out) ? await readFile(args.out, 'utf8') : '';
     if (current !== ts) {
-      die(`${displayPath(args.out)} is out of date or not formatted; run node tools/art/index.mjs`);
+      die(
+        `${displayPath(args.out)} is out of date or not formatted; run node tools/art/index.mjs${game.name === 'duel' ? '' : ` --game ${game.name}`}`,
+      );
     }
     process.stdout.write(`index.mjs: ${displayPath(args.out)} is up to date (${Object.keys(entries).length} ids)\n`);
     return;
