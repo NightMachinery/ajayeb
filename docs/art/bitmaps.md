@@ -518,7 +518,10 @@ resolution and at the shipped thumbnail size (cards at 120 px, tokens at
   to every edge, and that paper is ivory, not gold leaf or brown. This is checked before the sheet is
   even built, so a full-bleed attempt is caught before a human looks at it.
 - No text, letters, numerals, pseudo-writing or watermark anywhere in the
-  image, including as a pedestal frieze, a ruled page or a carved wall.
+  image, including as a pedestal frieze, a ruled page, a carved wall, a band
+  inside a striped cloth or a pavilion's parapet. Look for it at full
+  resolution: in the Haftgane pilot, script-like marks on a parapet and
+  inside a bolt's stripes were invisible at the thumbnail size.
 - The subject reads clearly at the shipped thumbnail size, not just at full
   resolution; one or two large figures, not a crowd.
 - The palette and accent match the category (see `art/style.md`'s palette

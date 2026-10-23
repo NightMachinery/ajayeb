@@ -73,12 +73,18 @@ palaces, domed garden pavilions and kiosks, not places of worship: see
 - **Painterly realism, photorealism or 3D rendering.** This is what keeps
   the art at a clear distance from the official game's photographed and
   painted art and from any other illustrated edition.
-- **No inscriptions, no glyph friezes, no writing on scrolls, pages, banners
-  or buildings; scrolls and pages are blank.** No text, letters, numerals,
-  calligraphy, pseudo-writing or a signature anywhere in the image,
-  including as a pedestal frieze, a ruled page or a carved wall. The
-  numeral cartouche on a card back is drawn separately, in SVG, never
-  baked into the bitmap.
+- **No inscriptions, no glyph friezes, no writing on scrolls, pages, banners,
+  cloth or buildings; scrolls and pages are blank.** No text, letters,
+  numerals, calligraphy, pseudo-writing or a signature anywhere in the
+  image, including as a pedestal frieze, a ruled page or a carved wall.
+  Woven and dyed cloth (a bolt, a robe, an awning) carries plain stripes,
+  checks or small floral sprigs, never a band of script-like marks or a
+  cartouche inside a stripe. A background pavilion's parapet, door panels
+  and steps carry plain geometric tile bands. Those two places are where
+  pseudo-writing slipped into the Haftgane pilot (M19.bitmaps-pilot), and
+  it showed only at full resolution, not at thumbnail size. The numeral
+  cartouche on a card back is drawn separately, in SVG, never baked into
+  the bitmap.
 - **A frame, border or watermark.** The processing step feathers the image
   into the card; a hard rectangle or a drawn border fights that.
 - **Religious figures or scenes of worship as the subject.** A temple or an
@@ -88,8 +94,9 @@ palaces, domed garden pavilions and kiosks, not places of worship: see
   No minarets, no mosques, no religious buildings, unless the asset's own
   `subject` names one. A skyline filling the background of a scene is
   secular civic architecture, not a place of worship.
-- **Political or national emblems.** No lion-and-sun, no flag, no crest tied
-  to a real nation, ancient or modern.
+- **Political or national emblems.** No lion-and-sun, no flag, no
+  fleur-de-lis, no crest tied to a real nation, ancient or modern. Patterned
+  robes use rosettes and leafy sprigs, not a repeated emblem.
 - **No heraldic animals on buildings or banners.** No lions, no winged
   lions, no eagles as carved, painted or bannered emblems, and no lion
   paired with a sun disc or sun orb.
@@ -181,6 +188,8 @@ must tile, so it has no vignette at all.
 > no minarets, no mosques, no religious buildings unless the subject names
 > one. One clear central subject readable as a small thumbnail, calm
 > uncluttered background of warm ivory paper. No inscriptions, no glyph
-> friezes, no writing on scrolls, pages, banners or buildings; scrolls and
-> pages are blank. No border, no frame, no watermark, no signature. Not
-> photorealistic, not 3D, no modern objects.
+> friezes, no writing on scrolls, pages, banners, cloth or buildings;
+> scrolls and pages are blank, cloth shows only plain stripes or small
+> floral sprigs, and parapets show only plain geometric tile bands. No
+> border, no frame, no watermark, no signature. Not photorealistic, not
+> 3D, no modern objects.
