@@ -1,126 +1,45 @@
 package engine
 
 import (
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"io/fs"
-	"os"
-	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/enginekit/puritycheck"
 )
 
-// The purity guard. Rules code must be deterministic: no I/O, clocks,
-// goroutine synchronization, unseeded randomness, floating point or map
-// iteration. golangci-lint (depguard) bans the same imports; this test keeps
-// the guarantee even where the linter does not run.
+// Duel owns its policy; the shared helper only parses and walks files. DTO
+// maps stay confined to these exact files, and only rng.go may import v2 RNG.
+var duelPurity = puritycheck.Config{
+	Packages: []string{"."},
+	Imports: []puritycheck.ImportRule{
+		{Path: "time"}, {Path: "os"}, {Path: "net"}, {Path: "log"},
+		{Path: "sync"}, {Path: "unsafe"}, {Path: "syscall"},
+		{Path: "crypto/rand"}, {Path: "io/ioutil"},
+		{Path: "math/rand", Exact: true, Message: "imports math/rand (v1); use the engine RNG"},
+		{Path: "math/rand/v2", Exact: true, AllowedFiles: []string{"rng.go"}, Message: "imports math/rand/v2 outside rng.go; use the engine RNG"},
+	},
+	MapFiles: []string{"view.go", "eventfilter.go"},
+}
 
-// bannedImports are forbidden in every non-test file under internal/engine,
-// each with every package below it (os also bans os/exec, log bans
-// log/slog, and so on).
-var bannedImports = []string{"time", "os", "net", "log", "sync", "unsafe", "syscall", "crypto/rand", "io/ioutil"}
-
-// rngOnlyImport may be imported only by rngFile; math/rand (v1) is banned
-// everywhere.
-const (
-	rngOnlyImport = "math/rand/v2"
-	rngFile       = "rng.go"
-)
-
-// mapFiles may use map types. They build the view DTOs, whose maps
-// encoding/json writes in sorted key order; rules logic never uses maps.
-var mapFiles = []string{"view.go", "eventfilter.go"}
-
-// purityViolations checks one non-test source file. rel is its path relative
-// to internal/engine, with forward slashes.
 func purityViolations(rel string, src []byte) []string {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, rel, src, parser.SkipObjectResolution)
-	if err != nil {
-		return []string{err.Error()}
-	}
-	var out []string
-	bad := func(pos token.Pos, msg string) { out = append(out, fset.Position(pos).String()+": "+msg) }
-	for _, imp := range f.Imports {
-		path, err := strconv.Unquote(imp.Path.Value)
-		if err != nil {
-			bad(imp.Pos(), "unreadable import")
-			continue
-		}
-		for _, b := range bannedImports {
-			if path == b || strings.HasPrefix(path, b+"/") {
-				bad(imp.Pos(), "imports "+path)
-			}
-		}
-		if path == "math/rand" {
-			bad(imp.Pos(), "imports math/rand (v1); use the engine RNG")
-		}
-		if path == rngOnlyImport && rel != rngFile {
-			bad(imp.Pos(), "imports math/rand/v2 outside "+rngFile+"; use the engine RNG")
-		}
-	}
-	mapsOK := false
-	for _, m := range mapFiles {
-		if rel == m {
-			mapsOK = true
-		}
-	}
-	ast.Inspect(f, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.MapType:
-			if !mapsOK {
-				bad(n.Pos(), "uses a map; rules logic uses arrays indexed by enums")
-			}
-		case *ast.BasicLit:
-			if n.Kind == token.FLOAT || n.Kind == token.IMAG {
-				bad(n.Pos(), "has a floating-point literal "+n.Value)
-			}
-		case *ast.Ident:
-			switch n.Name {
-			case "float32", "float64", "complex64", "complex128":
-				bad(n.Pos(), "uses "+n.Name)
-			}
-		}
-		return true
-	})
-	return out
+	return duelPurity.Violations(rel, src)
 }
 
 // TestEngineImports scans every non-test Go file of internal/engine and its
-// subpackages (catalog, enginetest).
+// subpackages (catalog, enginetest), including imports of impure test helpers.
 func TestEngineImports(t *testing.T) {
-	var files, catalogFiles int
-	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() {
-			if d.Name() == "testdata" {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
-			return nil
-		}
-		src, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		rel := filepath.ToSlash(path)
-		files++
+	report, err := duelPurity.Scan(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, v := range report.Violations {
+		t.Error(v)
+	}
+	files, catalogFiles := len(report.Files), 0
+	for _, rel := range report.Files {
 		if strings.HasPrefix(rel, "catalog/") {
 			catalogFiles++
 		}
-		for _, v := range purityViolations(rel, src) {
-			t.Error(v)
-		}
-		return nil
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 	// Guard against a scan that silently checks nothing.
 	if files < 10 || catalogFiles < 3 {
@@ -167,4 +86,13 @@ func TestPurityCheckCatches(t *testing.T) {
 			t.Errorf("%s %q: %d violations, want %d: %v", c.rel, c.src, len(got), c.bad, got)
 		}
 	}
+}
+
+func TestPurityHelperIsTestOnly(t *testing.T) {
+	src := []byte(`package engine; import "github.com/NightMachinery/ajayeb/server/internal/enginekit/puritycheck"`)
+	bad := purityViolations("rules.go", src)
+	if len(bad) != 1 || !strings.Contains(bad[0], "test helper only") {
+		t.Fatalf("Duel admitted the impure test helper: %v", bad)
+	}
+	t.Log(bad[0])
 }

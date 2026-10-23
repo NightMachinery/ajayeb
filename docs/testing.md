@@ -23,6 +23,29 @@ join key of each (Duel's is the name; a key may also combine columns, such as
 a name and an Age), its fixtures and its row counts. Only `_test.go` files may
 import the helper, which its own `TestOnlyTestsImport` checks.
 
+### Purity and fixed-value guards
+
+`internal/enginekit/puritycheck` is a test helper shared by the rules engines.
+It reads and parses every non-test Go file in configured package directories,
+recursing through subpackages and excluding `testdata`. Parse and file errors
+fail closed. Each game supplies import rules (including exact file exceptions
+for its seeded generator), DTO map exceptions and the checked root types.
+Duel's `TestEngineImports` keeps its scan-count minimums locally, including the
+catalog minimum, so a broken source walk cannot silently pass. The shared
+checker always rejects imports of itself from scanned production sources.
+It performs I/O and reflection and belongs only in engine test imports.
+The linter's existing engine depguard rules remain unchanged.
+
+`TestPurityCheckCatches` retains the original parser negatives and allowed-file
+cases. `purity_regression_test.go` adds a negative for every existing import,
+map, numeric and parse rule, plus forbidden fixed-value kinds and nested
+array/struct references. Those fixtures were run against the unchanged master
+guards before extraction and again through the shared helper afterwards.
+The reflection walker accepts only bools, fixed-width integers, arrays and
+structs. Duel keeps its State/Action/Event roots, comparability checks and
+State's 512-byte memory limit in `state_test.go`; the helper sets no game size
+limit. The original state remains 386 bytes encoded and 408 bytes in memory.
+
 ## Fuzzing
 
 The module has six fuzz targets:

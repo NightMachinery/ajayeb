@@ -8,34 +8,16 @@ import (
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
+	"github.com/NightMachinery/ajayeb/server/internal/enginekit/puritycheck"
 )
 
 // States, actions and events are comparable values. This line fails to
 // compile if any of them gains a slice, map or function field.
 var _ = func(a, b State, c, d Action, e, f Event) bool { return a == b && c == d && e == f }
 
-// fixedShapeViolations lists every part of t that is not allowed in a fixed
-// value type: anything but bools, fixed-width integers, arrays and structs.
-// Platform-sized ints, floats, strings, pointers, slices, maps, interfaces,
-// functions and channels are all rejected.
+// Keep the checked roots and size limits in Duel, not the shared walker.
 func fixedShapeViolations(t reflect.Type, path string) []string {
-	switch t.Kind() {
-	case reflect.Bool,
-		reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return nil
-	case reflect.Array:
-		return fixedShapeViolations(t.Elem(), path+"[]")
-	case reflect.Struct:
-		var out []string
-		for i := range t.NumField() {
-			f := t.Field(i)
-			out = append(out, fixedShapeViolations(f.Type, path+"."+f.Name)...)
-		}
-		return out
-	default:
-		return []string{path + " is a " + t.Kind().String()}
-	}
+	return puritycheck.FixedShapeViolations(t, path)
 }
 
 func TestStateIsFixedSize(t *testing.T) {
