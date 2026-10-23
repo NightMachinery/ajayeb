@@ -47,6 +47,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below). Its `Pool` bounds the searches running at once and shares them fairly between client addresses, so one address's many bot rooms cannot hold up another's bot.
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
+- **`internal/tableroom`**: Haftgane's table room kind, a separate actor beside Duel's (see "The table actor" below). Until the real engine is linked it plays the fake engine through one seam file.
 - **`internal/store`**: one JSON file per room, written atomically (temporary file, sync, rename), plus a reaper for old rooms with an injectable clock. It refuses to read a room file larger than a cap derived from what a room can hold.
 - **`internal/ident`**: the server secret and the HMAC-derived user ids. The secret file must be a regular file, and one other users could read is tightened to mode 0600.
 - **`internal/wire`**: the client and server message types.
@@ -57,13 +58,13 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 
 ### Room-kind composition
 
-`cmd/ajayeb` builds one closed `room.Kinds` table, currently containing only
-`DuelKind`. Each stable game id binds create, cold-join admission and load
+`cmd/ajayeb` builds one closed `room.Kinds` table: `DuelKind` and Haftgane's
+table kind (`tableroom.Tables.Kind`). Each stable game id binds create, cold-join admission and load
 callbacks to its file codec. `NewKinds` rejects duplicate or incomplete
 registrations and mismatched codec ids before startup. Its `Codecs()` table is
 passed to the store, reaper and read-only preflight; there is no second list of
-games in those paths. Schema-1 Duel remains required and schema 2 has no
-production registration.
+games in those paths. Schema-1 Duel remains required; schema 2's one
+production registration is `haftgane`.
 
 Manager stores opaque lifetime handles and retains its existing capacity
 reservations, serialized restore, idle ordering, eviction retries and per-code
@@ -90,9 +91,74 @@ DTOs and actor unchanged. New table/lobby envelopes have strict separate
 decoding, authenticated `Inbound` delivery and typed snapshot queues.
 Join gates v1 before non-Duel admission or attachment. Common resync,
 device-link and rematch operations route by the joined handle's actual kind.
-Production still registers Duel alone; no new view or rules implementation
-is hidden in the platform envelope. See [protocol.md](protocol.md) for the
-frozen families and the named M15 projection placeholders.
+At that slice production registered Duel alone; M16.haftgane-room-actor
+adds the table kind below. See [protocol.md](protocol.md) for the frozen
+families.
+
+### The table actor
+
+`internal/tableroom` is Haftgane's room kind (M16.haftgane-room-actor). Its
+`Kind` is always registered, so saved tables load, play and archive; only
+creating one is switched off. Until the lobby ships, a table is made by the Go
+API `CreateTable` (a seat list, optional seed and prefix batches) or the
+development endpoint `POST /api/dev/tables`, both refused unless the server
+runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
+
+- **Engine seam.** `engine.go` is the only file that names an engine: today
+  the fake engine (`internal/haftgane/fakeengine`, whose rules version 1000
+  can never match the real one, so fake tables archive as `rules-version` once
+  the real engine replaces it). M16.haftgane-engine-contract swaps this file.
+  The import guard lets production code reach the fake engine only through
+  this package.
+- **Record.** One schema-2 file per table, `game: "haftgane"`, with its rules
+  version, setup (seed, seat count, seating rule, end reveal), seat
+  assignment, seats, roles, undo policy, the complete canonical batches, the
+  rules hash, the two revision counters, the open point's reference, the
+  pending block (each required seat's key, confirmed flag and per-client
+  seqs), the bounded seq memory, the bots' work rows and the room log. Restore
+  validates all of it and replays the batches; a hash mismatch alone is
+  refreshed in place, a rules-version mismatch or a failed replay archives the
+  file (D29), and an invalid pending block counts as a failed replay. Unknown
+  schemas and games stay untouched.
+- **Transactions.** Every change clones the record, applies and validates the
+  change, writes the file durably, then swaps the new state in and publishes
+  frames. A failed write publishes nothing and answers `storage`, so no frame
+  ever shows a state, or a reveal, that is not on disk. The confirmation that
+  completes a point's required set appends one sorted batch, resolves it and
+  opens the next point in that same write.
+- **Revisions and references.** The public revision advances on what every
+  viewer sees (confirmation flips, resolutions, undo, seats taken); each
+  seat's edit count advances on its other accepted picks, which reach only
+  that seat's connections. Frames carry the public revision plus the viewer's
+  own edit count. A point reference is the logical id and the public revision
+  at its opening, so it is fresh after an advance or an undo and unchanged
+  across a restart, and it never counts anyone's private edits.
+- **Frames.** Each broadcast builds one frame per role (a seated viewer, or
+  the one spectator role) through the engine's whitelist view and caches it
+  for that broadcast; a connection's frame adds only its own pending pick and
+  ack. Events and history carry public outcomes only.
+- **Undo.** Only the original sole human, while still controlling their seat,
+  with undo allowed at creation; it is off for good once a second human takes
+  a seat. It cuts back before the latest batch holding that seat's decision
+  and reopens that point under a fresh reference.
+- **Bots.** One bot job per table at a time, for the first required bot seat
+  that has not confirmed. It searches under a permit from the server's shared
+  `ai.Pool`, keyed by the smallest attached human participant's address, and
+  confirms its pick through the same transaction as a human's. A durable work
+  row per required bot seat freezes the policy version, level and allowance
+  when the point opens, so a restart resumes the same work. No bot runs while
+  no human participant is attached; the last human leaving cancels the job
+  and releases its permit. A bot's random tape hashes a policy root derived
+  from the seed under its own label, the game, the policy version, the
+  logical point, the seat and its observation hash, never arrival order,
+  references or pending keys. The seat's level defaults to the lowest
+  released level.
+- **Logs.** Log lines name the room, the operation, the seat, the public
+  revision and the outcome, never a key, a card, an observation, the seed or
+  a hash.
+- **Game log.** A finished table with the final reveal on serves
+  `ajayeb-log/2`: setup, complete batches and the rules hash, checked by a
+  strict replay before it is served ([protocol.md](protocol.md#downloading-a-games-log)).
 
 ## App shell
 
@@ -306,7 +372,7 @@ play events carry payments, and neighbours' plays determine trade receipts.
 
 ## Saved room compatibility
 
-`internal/store` is the only reader/writer of room files. A bounded header selects the codec before game decoding or replay: schema 1 defaults to `duel` when `game` is absent and delegates to the existing Duel `File`, while schema 2 requires an explicit registered game id. The complete input retains the existing `MaxFileBytes` cap; the schema discriminator is at most 10 JSON bytes and the game id is at most 32 lowercase ASCII letters, digits or hyphens (starting with a letter), in at most 34 JSON bytes. Discriminator order is unrestricted; duplicate schema/game fields, including case aliases, fail closed. `NewCodecs` builds an immutable composition-time table, rejecting duplicate or invalid registrations. Its production schema-2 table is empty. Codecs own their file types and game rules checks; shared inspection exposes only retention metadata and read-only replay assessment. `OpenWithCodecs` and `CheckDataDirWithCodecs` take the same table. Duel's load/save APIs retain their typed signatures and schema-1 write bytes.
+`internal/store` is the only reader/writer of room files. A bounded header selects the codec before game decoding or replay: schema 1 defaults to `duel` when `game` is absent and delegates to the existing Duel `File`, while schema 2 requires an explicit registered game id. The complete input retains the existing `MaxFileBytes` cap; the schema discriminator is at most 10 JSON bytes and the game id is at most 32 lowercase ASCII letters, digits or hyphens (starting with a letter), in at most 34 JSON bytes. Discriminator order is unrestricted; duplicate schema/game fields, including case aliases, fail closed. `NewCodecs` builds an immutable composition-time table, rejecting duplicate or invalid registrations. Its production schema-2 table holds Haftgane's table codec. Schema-2 records are read and written through game-agnostic `LoadGame`, `SaveGame` and `PeekGame` under the same per-code lock: a load runs the codec's assessment, rewriting only the hash for a refresh (keeping unknown fields) or archiving durably; a save refuses an archived file, a file of another game and a file of an unknown schema. Codecs own their file types and game rules checks; shared inspection exposes only retention metadata and read-only replay assessment. `OpenWithCodecs` and `CheckDataDirWithCodecs` take the same table. Duel's load/save APIs retain their typed signatures and schema-1 write bytes.
 
 Duel restoration selects ordinary keys from `LegalActions`, matching the room's own replay path; resignation uses the room's explicit legal, engine-generated resignation exception. A key parsed into an action is insufficient: it must match the canonical key of that generated action. Within the same `engine.RulesVersion`, seed, options and keys are authoritative. The hash is a diagnostic fingerprint, not an authenticated integrity check. A successful replay with a different hash refreshes only the hash and logs both values. The room manager serializes disk restores through actor registration, so a second restore cannot overwrite a move saved by the first actor. Requests to already-loaded rooms bypass that lock. The atomic rewrite preserves all other metadata, including additive fields unknown to this build, and does not refresh `Updated` or extend idle retention.
 

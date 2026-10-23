@@ -80,7 +80,7 @@ remain unchanged. Which bytes enter a hash is each game's own contract.
 
 ## Fuzzing
 
-The module has six fuzz targets:
+The module's fuzz targets include:
 
 - `FuzzPlayout` (`server/internal/engine/fuzz_test.go`): plays a seed's game
   by fuzzed choices among the legal actions and checks the invariants after
@@ -99,7 +99,10 @@ The module has six fuzz targets:
   seed's game by fuzzed choices and runs the hints leak guard on the states
   it passes: each viewer's view with every hint family on must be the same
   on determinizations of that viewer's observation (see architecture.md,
-  "Hints").
+  "Hints");
+- `FuzzTableOps` (`server/internal/tableroom/fuzz_test.go`): fuzzed
+  operations on one Haftgane table with the record, replay, revision and
+  restart invariants checked after each (see "`internal/tableroom`" above).
 
 Their seeds, and the crashers that were fixed, run as ordinary tests in
 every `make test-go`. To fuzz one locally, under the guard's `fuzz` kind
@@ -183,6 +186,68 @@ It covers, per game mode (online with a spectator, hot-seat, versus a bot):
 Run it with the race detector, through the guard, from `server/`:
 
     python3 ../tools/heavy.py run --kind test -- go test -race ./internal/protocoltest/...
+
+## `internal/tableroom`: the table actor
+
+Haftgane's table actor is tested through `tabletest.Table`, the driver's
+contract (`internal/tabletest`), by two adapters. The in-process adapter
+(`harness_test.go`) joins real `room.Client`s through the Manager, submits
+on the actor's goroutine and keeps every frame it pushed. The WebSocket
+adapter (`ws_test.go`, the external test package) drives the same tables
+over the real stack, wired as `cmd/ajayeb` wires it: the schema-2 store,
+the Manager with both kinds, `ws` and `httpapi` behind an `httptest`
+server. It sees only frames: a snapshot is the latest frame after a resync,
+an outcome is read from the reject or the acknowledging frame, and the
+canonical history is the `ajayeb-log/2` download.
+
+- `TestDriverInProcess` and `TestWebSocketTables` pass `Play` and
+  `CompareSchedules` unchanged at 3 to 7 seats, with drafts, resends and
+  races; every arrival seed gives the same canonical history.
+- `TestEveryArrivalOrderInProcess` runs `ExhaustPoint` on small points (90
+  and 2,520 orders, a one-seat salvage point, seq memories of 32 and 1) and
+  the races of a change or withdrawn confirmation against the last
+  confirmation (1,680 orders); `TestWebSocketEveryArrivalOrder` runs the
+  90 orders over the socket.
+- `TestDifferentialAgainstDirect` delivers the same seeded scripts to the
+  reference model (`tabletest/direct`) and the actor, arrival by arrival,
+  at 3 to 7 seats with seq memories large and small: every outcome, every
+  snapshot and the final canonical bytes agree.
+- `actor_test.go` covers the refusal order, private edits that change no
+  other connection's frame (revision included), two tabs and forgotten seqs,
+  a reload that restores a pick and its confirmation, storage errors and
+  crashes before and after the rename (`tabletest/faults`), the restore of
+  every pending subset (and an invalid pending block archiving as
+  `replay-failed`), and the compatibility paths: hash refresh keeping
+  unknown fields, rules-version archive, unknown schema or game untouched.
+- `bots_test.go` plays one human against bots at 3 to 7 seats through
+  `ai.Pool`, checks the no-human pause (a spectator alone starts nothing,
+  the last human leaving cancels the job and frees its permit, a restart
+  resumes from the durable work rows) and undo's policy and refusals.
+- `leaks_test.go` passes every frame of whole games, for every seat and the
+  spectator under both end policies, to the leak oracle
+  (`tabletest/leakcheck`): the whole frame, its view rebuilt in the engine
+  view's shape and its history. A planted leak of each kind (another seat's
+  card, a raw key in an event, a fingerprint, a suffixed card id, a
+  deal-ordered hand, another seat's offer, an unknown field) must be
+  reported. The captured log is checked by the oracle and searched for
+  hidden sentinels (the seed in decimal and hex, every key, the rules and
+  observation hashes). `TestWebSocketTables` repeats the frame check on the
+  raw bytes each connection received.
+- `FuzzTableOps` (`fuzz_test.go`) drives one table through fuzzed picks,
+  changes and confirmations from every seat, a second tab and the
+  spectator, resends, stale references, undo, bot picks, detaches and
+  restarts, from the start or a salvage or last-card point. After every
+  operation the record in memory must equal the stored bytes, the stored
+  record must restore with a matching rules hash, no frame revision may go
+  backwards, and a restart keeps every pick, confirmation and reference.
+- `TestWebSocketRestart` restarts the server on the same data directory with
+  a confirmed pick pending and finishes the game: the pick lands in the
+  first batch of the downloaded log.
+
+Run the socket tests with the race detector, through the guard, from the
+repository root:
+
+    python3 tools/heavy.py run --kind test -- go -C server test -race -short -run WebSocket ./internal/tableroom/
 
 ## `ajayeb-drive`: a thin client against a running binary
 

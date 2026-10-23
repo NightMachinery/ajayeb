@@ -882,8 +882,11 @@ Version 2 adds these frozen client families: `table-pick`, `table-undo`,
 `lobby-role`, `lobby-start`. Their server families are `table-state`,
 `table-reject`, `lobby-state` and `lobby-reject`. The Go DTOs live in
 `wire/platform.go`, `table.go` and `lobby.go`; `make gen` writes their separate
-`platform.gen.ts`. No table or lobby actor/codec is registered in production
-at M14.protocol-game-frames, so these envelopes do not enable room creation.
+`platform.gen.ts`. Since M16.haftgane-room-actor the Haftgane table kind (its
+codec, restore and actor, `internal/tableroom`) is registered, so saved tables
+load, play and archive. No lobby is registered yet, so `lobby-create` still
+answers `forbidden`, and a table is created only through the development path
+(`POST /api/dev/tables` on a server started with `-haftgane-tables`).
 
 A v1 table/lobby request or a v1 join of any non-Duel room receives the
 existing `error` with `code: "protocol"`. Join refuses before admission,
@@ -918,8 +921,8 @@ checks authorization and membership in its own offered legal set.
 All table requests carry `t`, `code` and nonnegative `seq`:
 
 - `table-pick` adds `point: {id, revision}`, `key` and `confirm`. `id` is the
-  logical point's string id, such as `age-1-turn-1`; `revision` is the durable
-  revision at its opening. The connection's current seat supplies the actor,
+  logical point's string id, such as `age-1-turn-1`; `revision` is the table's
+  public revision when the point opened (below). The connection's current seat supplies the actor,
   with no client seat override. Sending the same key with false withdraws a
   confirmation. The last required confirmation resolves the point once.
 - `table-undo` adds nonnegative `base`, the last received transport revision.
@@ -937,11 +940,29 @@ All table requests carry `t`, `code` and nonnegative `seq`:
 
 The point reference persists while a point remains open, including across
 restart. Advance or undo opens a fresh reference derived from the logical
-id and existing durable revision, without an epoch or pending hash. Revision
-must never wrap or be reused. Only the logical id enters canonical batches
-and bot entropy. Sequence deduplication is per authenticated user/client;
-an old seq must never overwrite a newer accepted pick. Repeating an accepted
-seq is harmless. Other viewers receive neither the pending key nor any
+id and the public revision, without an epoch or pending hash. The table keeps
+two durable counters. The public revision advances only on changes every
+viewer sees: a confirmation turning on or off, a resolution, an undo, a seat
+taken. Each seat's edit count advances on that seat's other accepted picks
+(a changed key that stays unconfirmed). A frame's `revision` is the public
+revision plus the viewer's own edit count, and a spectator's is the public
+revision, so it never goes backwards for a viewer and says nothing about
+anyone else's edits. A reference built from a revision that counted private
+edits would publish their frequency, which is why references use the public
+one. Revisions never wrap or repeat. Only the logical id enters canonical
+batches and bot entropy.
+
+Sequence deduplication is per authenticated user/client. The actor
+remembers the latest accepted seq of a bounded number of user/client pairs,
+forgetting the least recently used first, and only an accepted request
+records its seq. A seq at or below the remembered one answers a frame
+acknowledging it and changes nothing (repeating an accepted seq is
+harmless). Each pending pick also remembers the seq that last changed it
+from each client, so a forgotten old seq still cannot overwrite a newer
+accepted pick: it answers `stale`. A request is judged in this order:
+`forbidden` (no seat), duplicate, `decision-closed` (another reference or
+the game over), `illegal` (the seat is not required or the key is not
+offered), `stale`. Other viewers receive neither the pending key nor any
 revision or metadata change that reveals private edit frequency.
 
 `lobby-create` carries `t`, `seatCount` (2 through 7) and `options`. It creates
@@ -980,12 +1001,26 @@ confirmed}`, with sorted seat arrays. `pending` is `{key, confirm}`, sent
 only to its owning seat. A spectator receives neither pending nor private
 view fields. `ack` is `{clientId, seq}` in the submitting connection's frame.
 
-The named `TableView` and public `TableEvent` placeholders are empty objects
-in this slice. M15.haftgane-views-and-observation supplies their whitelist
-projection and public outcome fields. They must never become arbitrary JSON
-or serialize engine state. `history` is a complete safe list of
-`{batch, events}` entries, with events describing resolved public outcomes,
-never hidden submitted keys. Collections are JSON arrays, never null.
+`view` is the viewer's whitelist projection of the engine's view: `phase`,
+`age`, `turn`, `pass`, `pile` (a count), `seats` and optional `you`, `result`
+and `reveal`. Each of `seats` is one city's public `{seat, board, coins,
+built, stages, handSize, hasKept}` and optional `last` play. `you`, only for a
+seated viewer, holds that seat's own `seat`, `hand`, `kept`, `tucked`,
+`choices` (each with its `key`), `offer` and `seen`. `result` appears once the
+game is over and `reveal` once it is over with the final reveal on. Card lists
+are catalog ids in catalog order, never deal order. Until
+M16.haftgane-engine-contract links the real engine these are the fake
+engine's fields; the frame around them stays. `view` never becomes arbitrary
+JSON or serializes engine state.
+
+`events` holds the public outcomes of the resolution this frame announces,
+and is empty in any other frame. `history`, sent in join, resync and undo
+frames, is the complete list of `{batch, events}` entries, one per resolved
+batch. An event is `{kind, seat, play, design, stage, left, right, age, pass}`.
+Its `design` names a card only when this viewer may know it: anyone for a
+build or a salvage, only the seat itself for its own tuck, sale, leftover or
+kept card. Events never carry submitted keys. Collections are JSON arrays,
+never null.
 
 `lobby-state` carries `t`, `game: "lobby"`, `code`, `revision`, `seatCount`,
 `options`, `seats`, `humans`, `you`, `canStart`, `roomLog`, and optional `ack`.
@@ -1388,6 +1423,25 @@ Each entry has the `seat` that plays it, its `key`, the `lessons` shown
 before it, and, on the player's entries, the `action`. A bot entry has empty
 `lessons` and no `action`.
 
+`POST /api/dev/tables` creates a Haftgane table from a seat list, on a server
+started with `-haftgane-tables` (which requires `-dev` and `-dev-endpoints`);
+without it the answer is 403 `creation-off`. `seats` are the lobby slots,
+three to seven: `{}` is an open human seat, which the first users to join
+without a seat take in seat order, and `{"bot": "easy"}` (or `normal`,
+`hard`) a bot. `seed`, `randomSeating`, `hideAtEnd`, `allowUndo` and `prefix`
+(complete batches `{point, picks: [{seat, key}]}` resolved before the table
+opens, checked by a replay) are optional. A table made here has no creator
+and so no admin. A seat list or prefix the table refuses answers 400
+`invalid-table`.
+
+```json
+{"seats": [{}, {"bot": "easy"}, {"bot": "normal"}], "seed": "7", "allowUndo": true}
+```
+
+```json
+{"ok": true, "code": "T7QX2M", "seed": "7"}
+```
+
 ## The view and its events
 
 A game state is never sent as-is. `internal/engine.ViewFor(state, viewer)`
@@ -1620,7 +1674,24 @@ the code is all the request needs. The refusals:
   like the room creation limit, refuses a newcomer while all of them are
   still refilling.
 
-To replay a downloaded log and check its final hash, run
+A Haftgane table's code answers its `ajayeb-log/2` under the same rules and
+refusals, its `hideAtEnd` being the table's final reveal turned off:
+
+```json
+{"format": "ajayeb-log/2", "game": "haftgane", "rules": 1000,
+ "setup": {"seed": 7, "seats": 3, "randomSeating": false, "hideAtEnd": false},
+ "batches": [{"point": "age-1-turn-1", "picks": [{"seat": 0, "key": "build:amber:0:0"},
+   {"seat": 1, "key": "tuck:dune"}, {"seat": 2, "key": "sell:cedar"}]}],
+ "hash": "..."}
+```
+
+It holds the setup, every complete batch in order and the rules hash the
+server checked by a strict replay before answering, and no seqs, arrivals,
+pending picks, bot work or point references. The server refuses to serve a
+table whose record does not replay to its hash. No command-line replay reads
+it yet.
+
+To replay a downloaded Duel log and check its final hash, run
 `go -C server run ./cmd/ajayeb-sim replay ajayeb-K7QX2M-2026-10-01.json` (or a built
 `ajayeb-sim replay FILE`). It replays every action through the engine's own
 legality checks and reports a mismatch with the log's `finalHash`.
