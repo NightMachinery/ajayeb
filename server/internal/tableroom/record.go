@@ -7,6 +7,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
@@ -39,15 +40,23 @@ type Record struct {
 	// Assignment is the fixed initial assignment: seat s holds lobby slot
 	// Assignment[s]. Restore recomputes it from the setup.
 	Assignment []int `json:"assignment"`
-	// Original is each seat's original participant: the first human to
-	// control it, or "" while it has had none (a starting bot, or an open
-	// seat not yet claimed).
+	// Original is each seat's original participant: the human who held it
+	// at Start, or "" for a starting bot. Later switches never change it.
 	Original []string `json:"original"`
 	// Seats are the current controllers, one per seat.
 	Seats []SeatRecord `json:"seats"`
-	// Roles are the table's roles. This slice has only the creator, who is
-	// the one admin; M16.haftgane-lobby-and-roles adds the rest of D42.
-	Roles Roles `json:"roles"`
+	// Roles are the table's roles (package roles), carried on from the
+	// lobby at Start.
+	Roles roles.Roles `json:"roles"`
+	// Previous holds the seat each former player held last, oldest first
+	// and at most maxPrevious: the admins' previous-seat hint.
+	Previous []PreviousRecord `json:"previous"`
+	// Retired are the users who lost all authority (no seat, no admin
+	// role) while the table remembered their seqs, in the order they lost
+	// it. Their seqs stay until more than maxRetired users follow them, so
+	// a retry after a switch is still a duplicate; the order depends only
+	// on public switches and role changes.
+	Retired []string `json:"retired"`
 	// StartingHumans and AllowUndo are the starting policy inputs, fixed at
 	// Start; UndoOff can only become true afterwards.
 	StartingHumans int  `json:"startingHumans"`
@@ -60,9 +69,11 @@ type Record struct {
 	Hash    string        `json:"hash"`
 
 	// Public is the public revision: it advances on every change everyone
-	// may see. Edits counts each seat's private edits; a viewer's frame
-	// revision is Public plus its own seat's Edits, so a private edit
-	// advances only its owner's frames.
+	// may see. Edits counts each seat's private edits since the last
+	// public change, which resets them. A viewer's frame revision is
+	// Public<<editBits plus its own seat's Edits (revisionOf), so a private
+	// edit advances only its owner's frames, and a seat switch (a public
+	// change) never takes a viewer's revision backwards.
 	Public int   `json:"public"`
 	Edits  []int `json:"edits"`
 	// Point is the open point's wire reference (nil once the game is
@@ -78,9 +89,57 @@ type Record struct {
 	Seqs []SeqRecord `json:"seqs"`
 	// Work is the bot work ledger of the open point.
 	Work []WorkRow `json:"work"`
-	// RoomLog is the public log of seat switches and role changes (empty
-	// until M16.haftgane-lobby-and-roles).
+	// RoomLog is the public log of seat switches, resignations, role
+	// changes and device-link resets, oldest first and at most maxRoomLog.
 	RoomLog []wire.PlatformLogEntry `json:"roomLog"`
+}
+
+// Bounds of the record's lists that grow with switches and role changes.
+const (
+	maxPrevious = 64
+	maxRetired  = 32
+	maxRoomLog  = 512
+	// maxSlotUsers bounds the users whose floors one pending pick keeps:
+	// each user who controlled the seat during the point and changed it.
+	maxSlotUsers = 16
+	// editBits is the room a frame revision leaves for a seat's own edits
+	// between two public changes; a seat past maxEdits is refused with
+	// rate until the next public change.
+	editBits = 20
+	maxEdits = 1<<editBits - 1
+)
+
+// PreviousRecord is the seat a former player held last.
+type PreviousRecord struct {
+	UserID string `json:"userId"`
+	Seat   int    `json:"seat"`
+}
+
+// revisionOf is the frame revision of a viewer at seat (-1: no seat).
+func revisionOf(r *Record, seat int) int {
+	rev := r.Public << editBits
+	if seat >= 0 {
+		rev += r.Edits[seat]
+	}
+	return rev
+}
+
+// bumpPublic records a public change: the public revision advances and
+// every seat's private edit count starts again.
+func bumpPublic(r *Record) {
+	r.Public++
+	for s := range r.Edits {
+		r.Edits[s] = 0
+	}
+}
+
+// appendLog adds entries to the room log, forgetting its oldest beyond
+// maxRoomLog.
+func appendLog(r *Record, entries ...wire.PlatformLogEntry) {
+	r.RoomLog = append(r.RoomLog, entries...)
+	if over := len(r.RoomLog) - maxRoomLog; over > 0 {
+		r.RoomLog = slices.Delete(r.RoomLog, 0, over)
+	}
 }
 
 // SetupRecord is the stored setup.
@@ -91,34 +150,24 @@ type SetupRecord struct {
 	HideAtEnd     bool   `json:"hideAtEnd"`
 }
 
-// Seat controller kinds.
+// Seat controller kinds. A table has no open seats: the lobby's Start
+// fills every one.
 const (
-	SeatOpen  = "open"
 	SeatHuman = "human"
 	SeatBot   = "bot"
 )
 
-// SeatRecord is one seat's current controller. An open seat is a human
-// seat no user has claimed yet; the next user to join without a seat
-// claims it, as an online Duel room's open seats are claimed today.
+// SeatRecord is one seat's current controller: a human or a bot. Taken
+// is the public revision when its human took it (0 at Start), which ranks
+// the candidates for the temporary admin. (Records of the dev path before
+// the lobby may hold open seats; restore refuses them.)
 type SeatRecord struct {
 	Seat   int    `json:"seat"`
 	Kind   string `json:"kind"`
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
 	Bot    string `json:"bot"`
-}
-
-// Roles are the table's roles.
-type Roles struct {
-	Creator string        `json:"creator"`
-	Admins  []AdminRecord `json:"admins"`
-}
-
-// AdminRecord is one admin. PromotedBy is nil for the creator.
-type AdminRecord struct {
-	UserID     string  `json:"userId"`
-	PromotedBy *string `json:"promotedBy,omitempty"`
+	Taken  int    `json:"taken"`
 }
 
 // BatchRecord is one complete batch: the logical point id and one key per
@@ -193,14 +242,9 @@ func (r *Record) clone() Record {
 	c.Assignment = slices.Clone(r.Assignment)
 	c.Original = slices.Clone(r.Original)
 	c.Seats = slices.Clone(r.Seats)
-	c.Roles.Admins = make([]AdminRecord, 0, len(r.Roles.Admins))
-	for _, a := range r.Roles.Admins {
-		if a.PromotedBy != nil {
-			by := *a.PromotedBy
-			a.PromotedBy = &by
-		}
-		c.Roles.Admins = append(c.Roles.Admins, a)
-	}
+	c.Roles = r.Roles.Clone()
+	c.Previous = slices.Clone(r.Previous)
+	c.Retired = slices.Clone(r.Retired)
 	c.Batches = make([]BatchRecord, 0, len(r.Batches))
 	for _, b := range r.Batches {
 		c.Batches = append(c.Batches, BatchRecord{Point: b.Point, Picks: slices.Clone(b.Picks)})
@@ -224,12 +268,16 @@ func (r *Record) clone() Record {
 // encode returns the record's file bytes, with every slice a JSON array.
 func (r *Record) encode() ([]byte, error) {
 	c := r.clone()
-	for _, p := range []*[]PendingSlot{&c.Pending} {
-		for i := range *p {
-			if (*p)[i].Seqs == nil {
-				(*p)[i].Seqs = []SeqRecord{}
-			}
+	for i := range c.Pending {
+		if c.Pending[i].Seqs == nil {
+			c.Pending[i].Seqs = []SeqRecord{}
 		}
+	}
+	if c.Previous == nil {
+		c.Previous = []PreviousRecord{}
+	}
+	if c.Retired == nil {
+		c.Retired = []string{}
 	}
 	data, err := json.MarshalIndent(&c, "", "  ")
 	if err != nil {
@@ -383,8 +431,11 @@ func validate(r *Record, g *game, b seqBounds) error {
 		if r.Assignment[s] != int(order[s]) {
 			return invalid("the assignment of seat %d", s)
 		}
-		if r.Edits[s] < 0 {
+		if r.Edits[s] < 0 || r.Edits[s] > maxEdits {
 			return invalid("the edit count of seat %d", s)
+		}
+		if t := r.Seats[s].Taken; t < 0 || t > r.Public {
+			return invalid("when seat %d was taken", s)
 		}
 	}
 	if err := checkSeats(r); err != nil {
@@ -411,7 +462,7 @@ func validate(r *Record, g *game, b seqBounds) error {
 			return invalid("two pending picks for seat %d", ps.Seat)
 		case !slices.Contains(legalKeys(g, ps.Seat), ps.Key):
 			return invalid("a pending key seat %d is not offered", ps.Seat)
-		case !validSeqs(ps.Seqs) || !seqsBounded(ps.Seqs, b.floors, n):
+		case !validSeqs(ps.Seqs) || !seqsBounded(ps.Seqs, b.floors, maxSlotUsers):
 			return invalid("the seqs of seat %d's pending pick", ps.Seat)
 		}
 		seen[ps.Seat] = true
@@ -422,15 +473,58 @@ func validate(r *Record, g *game, b seqBounds) error {
 	if !pointOver(p) && confirmed == p.Required.Count() {
 		return invalid("every required seat has confirmed, so the point should have resolved")
 	}
-	if !validSeqs(r.Seqs) || !seqsBounded(r.Seqs, b.acks, n) {
-		return invalid("the seq acknowledgements")
+	if err := checkAuthority(r, b); err != nil {
+		return err
 	}
 	return checkWork(r, g)
 }
 
+// checkAuthority checks what grows with switches and role changes: the
+// roles, the previous seats, the retired users, the room log, and that
+// only a user with authority or a retired one has seqs remembered, each at
+// most b.acks clients.
+func checkAuthority(r *Record, b seqBounds) error {
+	if r.Roles.Valid() != nil {
+		return invalid("the roles")
+	}
+	if len(r.Previous) > maxPrevious || len(r.Retired) > maxRetired || len(r.RoomLog) > maxRoomLog {
+		return invalid("a list past its bound")
+	}
+	for i, p := range r.Previous {
+		if p.UserID == "" || p.Seat < 0 || p.Seat >= len(r.Seats) ||
+			slices.IndexFunc(r.Previous, func(x PreviousRecord) bool { return x.UserID == p.UserID }) != i {
+			return invalid("the previous seats")
+		}
+	}
+	for i, u := range r.Retired {
+		if u == "" || slices.Index(r.Retired, u) != i || hasAuthority(r, u) {
+			return invalid("the retired users")
+		}
+	}
+	if !validSeqs(r.Seqs) || !seqsBounded(r.Seqs, b.acks, maxSeqUsers) {
+		return invalid("the seq acknowledgements")
+	}
+	for _, x := range r.Seqs {
+		if !hasAuthority(r, x.User) && !slices.Contains(r.Retired, x.User) {
+			return invalid("the seq acknowledgements")
+		}
+	}
+	return nil
+}
+
+// maxSeqUsers bounds the users with remembered seqs: every seated human,
+// every real admin, the temporary admin and the retired users.
+const maxSeqUsers = MaxSeats + roles.MaxAdmins + 1 + maxRetired
+
+// hasAuthority reports whether u may act at the table: a seated human or
+// an admin (real or temporary).
+func hasAuthority(r *Record, u string) bool {
+	return u != "" && (slices.ContainsFunc(r.Seats, func(s SeatRecord) bool { return s.Kind == SeatHuman && s.UserID == u }) ||
+		r.Roles.IsAdmin(u))
+}
+
 // seqsBounded reports whether xs holds at most capacity clients of each
-// user, and no more users than there are seats (only a seated user's
-// requests are accepted).
+// user, and at most users users.
 func seqsBounded(xs []SeqRecord, capacity, users int) bool {
 	per := map[string]int{}
 	for _, x := range xs {
@@ -449,10 +543,6 @@ func checkSeats(r *Record) error {
 			return invalid("seat %d is out of order", s)
 		}
 		switch sr.Kind {
-		case SeatOpen:
-			if sr.UserID != "" || sr.Bot != "" {
-				return invalid("open seat %d has a controller", s)
-			}
 		case SeatHuman:
 			if sr.UserID == "" || sr.Bot != "" || users[sr.UserID] {
 				return invalid("human seat %d", s)
@@ -465,13 +555,6 @@ func checkSeats(r *Record) error {
 		default:
 			return invalid("seat %d's kind", s)
 		}
-	}
-	admins := map[string]bool{}
-	for _, a := range r.Roles.Admins {
-		if a.UserID == "" || admins[a.UserID] {
-			return invalid("the admins")
-		}
-		admins[a.UserID] = true
 	}
 	return nil
 }

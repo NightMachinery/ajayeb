@@ -18,6 +18,7 @@ type broadcast struct {
 	history  bool // every frame carries its viewer's whole history (undo)
 	seats    []wire.PlatformSeat
 	humans   []wire.PlatformHuman
+	previous *[]wire.PreviousSeat
 	views    map[int]*roleView // by seat; -1 is the spectator role
 }
 
@@ -33,7 +34,7 @@ func (a *actor) newBroadcast(resolved bool) *broadcast {
 }
 
 // role is the viewer role of a connection: its user's seat, or -1.
-func (b *broadcast) role(c *room.Client) int { return b.a.seatOf(c.UserID) }
+func (b *broadcast) role(c *room.Client) int { return b.a.seatOf(b.a.userOf(c)) }
 
 func (b *broadcast) view(role int, withHistory bool) *roleView {
 	v := b.views[role]
@@ -63,19 +64,20 @@ func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck, withHistory boo
 	withHistory = withHistory || b.history
 	v := b.view(role, withHistory)
 	st := wire.NewTableState(a.code)
-	st.Revision = r.Public
-	if role >= 0 {
-		st.Revision += r.Edits[role]
-	}
+	st.Revision = revisionOf(r, role)
 	st.Batch = len(r.Batches)
 	if r.Status == store.StatusFinished {
 		st.Status = "finished"
 	}
 	st.Seats, st.Humans = b.seats, b.humans
-	st.You = wire.PlatformYou{UserID: c.UserID}
+	user := a.userOf(c)
+	st.You = wire.PlatformYou{UserID: user}
 	if role >= 0 {
 		seat := role
 		st.You.Seat = &seat
+	}
+	if r.Roles.IsAdmin(user) {
+		st.You.PreviousSeats = b.hints()
 	}
 	st.StartingHumanCount, st.AllowUndo, st.UndoOff, st.FinalReveal = r.StartingHumans, r.AllowUndo, r.UndoOff, !r.Setup.HideAtEnd
 	if p := a.st.game.Point(); !pointOver(p) && r.Point != nil {
@@ -103,6 +105,23 @@ func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck, withHistory boo
 	return st
 }
 
+// hints is the admins' previous-seat hint: for each connected spectator
+// who held a seat earlier in this game, the seat they held last.
+func (b *broadcast) hints() *[]wire.PreviousSeat {
+	if b.previous == nil {
+		a := b.a
+		h := []wire.PreviousSeat{}
+		for _, p := range a.st.rec.Previous {
+			if a.seatOf(p.UserID) < 0 && a.connected(p.UserID) {
+				h = append(h, wire.PreviousSeat{UserID: p.UserID, Seat: p.Seat})
+			}
+		}
+		b.previous = &h
+	}
+	h := slices.Clone(*b.previous)
+	return &h
+}
+
 // meta is the public room metadata: seats with their controllers, and the
 // humans (seated ones in seat order, then connected spectators in the
 // order they arrived) with presence and roles.
@@ -114,8 +133,8 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 		if slices.ContainsFunc(humans, func(h wire.PlatformHuman) bool { return h.UserID == userID }) {
 			return
 		}
-		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator}
-		h.Admin = slices.ContainsFunc(r.Roles.Admins, func(ad AdminRecord) bool { return ad.UserID == userID })
+		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator,
+			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temporary == userID, PromotedBy: r.Roles.PromotedBy(userID)}
 		same := 0
 		for _, o := range humans {
 			if o.Name == name {
@@ -141,7 +160,7 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 		seats = append(seats, ps)
 	}
 	for _, c := range a.conns {
-		add(c.UserID, c.Name)
+		add(a.userOf(c), c.Name)
 	}
 	return seats, humans
 }
@@ -161,7 +180,7 @@ func (a *actor) publish(b *broadcast, submitter *room.Client, ack *wire.Platform
 // only: nobody else's frame changes, not even its revision.
 func (a *actor) publishSeat(b *broadcast, seat int, submitter *room.Client, ack *wire.PlatformAck) {
 	for _, c := range a.conns {
-		if a.seatOf(c.UserID) != seat {
+		if a.seatOf(a.userOf(c)) != seat {
 			continue
 		}
 		if c == submitter {

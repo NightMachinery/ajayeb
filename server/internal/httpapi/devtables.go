@@ -19,13 +19,15 @@ type Tables interface {
 }
 
 // devTableRequest is the body of POST /api/dev/tables: a filled table
-// from a seat list. Each human seat is open, and the first users to join
-// without a seat take them in seat order; the table has no creator, so
-// nobody is its admin until the lobby slice adds roles to this path.
+// from a seat list, the direct path beside the lobby's Start. Every seat
+// is filled: a human by their user id (the welcome frame's) and name, or a
+// bot. Creator, if set, is the table's one admin; without one there is no
+// real admin, so the temporary-admin rule applies at once.
 type devTableRequest struct {
-	// Seats are the lobby slots, 3 to 7: {} for an open human seat,
-	// {"bot":"easy"} (or normal, hard) for a bot.
-	Seats []devTableSeat `json:"seats"`
+	// Seats are the lobby slots, 3 to 7: {"userId":"...","name":"..."} for
+	// a human, {"bot":"easy"} (or normal, hard) for a bot.
+	Seats   []devTableSeat `json:"seats"`
+	Creator string         `json:"creator"`
 	// Seed is the game's seed, a decimal string or a JSON integer; absent
 	// means a random one.
 	Seed          *devSeed `json:"seed"`
@@ -38,7 +40,9 @@ type devTableRequest struct {
 }
 
 type devTableSeat struct {
-	Bot string `json:"bot"`
+	Bot    string `json:"bot"`
+	UserID string `json:"userId"`
+	Name   string `json:"name"`
 }
 
 type devTableResponse struct {
@@ -68,9 +72,9 @@ func (d *devAPI) createTable(w http.ResponseWriter, r *http.Request) {
 		seed = uint64(*req.Seed)
 	}
 	spec := tableroom.Spec{Seed: &seed, RandomSeating: req.RandomSeating, HideAtEnd: req.HideAtEnd,
-		AllowUndo: req.AllowUndo, Prefix: req.Prefix}
+		AllowUndo: req.AllowUndo, Prefix: req.Prefix, Creator: req.Creator}
 	for _, s := range req.Seats {
-		spec.Participants = append(spec.Participants, tableroom.Participant{Bot: s.Bot})
+		spec.Participants = append(spec.Participants, tableroom.Participant{Bot: s.Bot, UserID: s.UserID, Name: s.Name})
 	}
 	code, err := d.tables.CreateTable(spec)
 	switch {

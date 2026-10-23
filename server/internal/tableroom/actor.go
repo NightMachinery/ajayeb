@@ -1,11 +1,14 @@
 package tableroom
 
 import (
+	"cmp"
 	"context"
+	"errors"
 	"slices"
 	"sync"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -33,6 +36,7 @@ type actor struct {
 	done   chan struct{}
 
 	idleStop   func() bool
+	rolesStop  func() bool
 	emptySince time.Time
 	shownIdle  bool
 	shownSince time.Time
@@ -55,6 +59,9 @@ type msgEvict struct{ reply chan bool }
 
 type msgIdle struct{}
 
+// msgRoles is the roles' clock: the temporary-admin rule's next deadline.
+type msgRoles struct{}
+
 // msgCall runs fn on the actor goroutine (tests and diagnostics).
 type msgCall struct {
 	fn    func()
@@ -69,8 +76,11 @@ type msgBotResult struct {
 	err   error
 }
 
-func (t *Tables) newActor(m *room.Manager, st *state) (*room.Handle, error) {
-	a := &actor{t: t, m: m, code: st.rec.Code, st: st, inbox: make(chan any, t.cfg.InboxSize), done: make(chan struct{})}
+// newActor builds a table's actor. conns are connections the lobby hands
+// over at Start: the actor sends each its first frame when it runs.
+func (t *Tables) newActor(m *room.Manager, st *state, conns []*room.Client) (*room.Handle, error) {
+	a := &actor{t: t, m: m, code: st.rec.Code, st: st, conns: slices.Clone(conns),
+		inbox: make(chan any, t.cfg.InboxSize), done: make(chan struct{})}
 	a.ctx, a.cancel = context.WithCancel(m.Context())
 	h, err := m.NewHandle(Game, a.code, room.HandleConfig{
 		Run: a.run, Cancel: a.cancel, Attach: a.attachHook, Detach: a.detachHook, Deliver: a.post, Evict: a.evictHook,
@@ -89,7 +99,16 @@ func (a *actor) run() {
 	defer close(a.done)
 	defer a.botWG.Wait()
 	defer a.stopBots()
+	defer a.disarmRoles()
 	a.emptySince = a.now()
+	if len(a.conns) > 0 {
+		// Handed over by the lobby's Start: everyone's first table frame.
+		b := a.newBroadcast(false)
+		b.history = true
+		a.publish(b, nil, nil)
+		a.checkRoles()
+		a.kickBots()
+	}
 	a.armIdle()
 	a.publishIdle()
 	for {
@@ -117,6 +136,9 @@ func (a *actor) handle(msg any) bool {
 		a.inbound(msg.Client, msg.Frame)
 	case msgBotResult:
 		a.botResult(msg)
+	case msgRoles:
+		a.rolesStop = nil
+		a.checkRoles()
 	case msgCall:
 		msg.fn()
 		close(msg.reply)
@@ -205,9 +227,14 @@ func (a *actor) evictHook(ctx context.Context) error {
 
 // --- membership and presence ----------------------------------------------
 
+// userOf is the user a connection acts as.
+func (a *actor) userOf(c *room.Client) string { return c.UserID }
+
 // seatOf returns the seat the user controls, or -1.
-func (a *actor) seatOf(userID string) int {
-	for s, sr := range a.st.rec.Seats {
+func (a *actor) seatOf(userID string) int { return seatIn(&a.st.rec, userID) }
+
+func seatIn(r *Record, userID string) int {
+	for s, sr := range r.Seats {
 		if sr.Kind == SeatHuman && sr.UserID == userID {
 			return s
 		}
@@ -216,27 +243,48 @@ func (a *actor) seatOf(userID string) int {
 }
 
 func (a *actor) connected(userID string) bool {
-	return slices.ContainsFunc(a.conns, func(c *room.Client) bool { return c.UserID == userID })
+	return slices.ContainsFunc(a.conns, func(c *room.Client) bool { return a.userOf(c) == userID })
 }
 
-// humanAttached reports whether a human participant (a user controlling a
-// seat) has a connection. Spectators alone keep no bot running.
+// nameOf is a connected user's display name.
+func (a *actor) nameOf(userID string) string {
+	for _, c := range a.conns {
+		if a.userOf(c) == userID {
+			return c.Name
+		}
+	}
+	return ""
+}
+
+// inRoom reports whether u is a human in the room: seated, or connected.
+func (a *actor) inRoom(u string) bool { return a.seatOf(u) >= 0 || a.connected(u) }
+
+// participant reports whether u keeps bots running: a user controlling a
+// seat, or an original participant watching (after resigning, say).
+// Unrelated spectators keep no bot running.
+func (a *actor) participant(u string) bool {
+	return a.seatOf(u) >= 0 || slices.Contains(a.st.rec.Original, u)
+}
+
+// humanAttached reports whether a participant has a connection.
 func (a *actor) humanAttached() bool {
-	return slices.ContainsFunc(a.conns, func(c *room.Client) bool { return a.seatOf(c.UserID) >= 0 })
+	return slices.ContainsFunc(a.conns, func(c *room.Client) bool { return a.participant(a.userOf(c)) })
 }
 
+// attach adds a connection. A table has no open seats to claim: a user
+// without a seat watches until an admin seats them.
 func (a *actor) attach(c *room.Client, claim *string) error {
 	if claim != nil {
 		return room.ErrBadClaim
 	}
 	already := slices.Contains(a.conns, c)
-	wasConnected := a.connected(c.UserID)
-	seat := a.seatOf(c.UserID)
+	user := a.userOf(c)
+	wasConnected := a.connected(user)
 	if !already {
-		if seat >= 0 {
+		if a.seatOf(user) >= 0 {
 			n := 0
 			for _, o := range a.conns {
-				if o.UserID == c.UserID {
+				if a.userOf(o) == user {
 					n++
 				}
 			}
@@ -246,33 +294,13 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		} else if len(a.conns) >= a.t.cfg.MaxClients {
 			return room.ErrRoomFull
 		}
-	}
-	claimed := false
-	if seat < 0 && a.st.rec.Status == store.StatusPlaying && validName(c.Name) {
-		for s, sr := range a.st.rec.Seats {
-			if sr.Kind != SeatOpen {
-				continue
-			}
-			cand := a.st.rec.clone()
-			cand.Seats[s] = SeatRecord{Seat: s, Kind: SeatHuman, UserID: c.UserID, Name: c.Name}
-			if cand.Original[s] == "" {
-				cand.Original[s] = c.UserID
-			}
-			cand.Public++
-			if err := a.commit("claim", cand, a.st.game); err != nil {
-				return room.ErrStorage
-			}
-			claimed = true
-			break
-		}
-	}
-	if !already {
 		a.conns = append(a.conns, c)
 	}
 	b := a.newBroadcast(false)
 	c.Out.Push(b.frame(c, nil, true))
-	if claimed || !wasConnected {
+	if !wasConnected {
 		a.broadcastExcept(b, c)
+		a.checkRoles()
 	}
 	a.armIdle()
 	a.publishIdle()
@@ -286,8 +314,9 @@ func (a *actor) detach(c *room.Client) {
 		return
 	}
 	a.conns = slices.Delete(a.conns, i, i+1)
-	if !a.connected(c.UserID) {
+	if !a.connected(a.userOf(c)) {
 		a.broadcastExcept(a.newBroadcast(false), nil)
+		a.checkRoles()
 	}
 	if !a.humanAttached() {
 		a.stopBots()
@@ -297,6 +326,120 @@ func (a *actor) detach(c *room.Client) {
 	}
 	a.armIdle()
 	a.publishIdle()
+}
+
+// --- roles ------------------------------------------------------------------
+
+// checkRoles applies the temporary-admin rule now (package roles) and
+// persists what it changed: a role change publicly, a new away time
+// silently. It arms the roles' clock for the rule's next deadline. A
+// finished table changes no roles.
+func (a *actor) checkRoles() {
+	if a.st.rec.Status != store.StatusPlaying {
+		a.disarmRoles()
+		return
+	}
+	cand := a.st.rec.clone()
+	log, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), len(cand.Batches))
+	if len(log) > 0 || !sameAway(cand.Roles.Away, a.st.rec.Roles.Away) {
+		if len(log) > 0 {
+			appendLog(&cand, log...)
+			bumpPublic(&cand)
+			retire(&a.st.rec, &cand)
+		}
+		if err := a.commit("roles", cand, a.st.game); err == nil && len(log) > 0 {
+			a.publish(a.newBroadcast(false), nil, nil)
+			a.stopBots()
+			a.kickBots()
+		}
+	}
+	a.armRoles(next)
+}
+
+func sameAway(x, y []roles.Away) bool {
+	return slices.EqualFunc(x, y, func(p, q roles.Away) bool { return p.UserID == q.UserID && p.Since.Equal(q.Since) })
+}
+
+// candidates are the connected humans in the temporary-admin rule's
+// order: seated humans by how long they have held their seat (seat order
+// breaks ties), then spectators by how long they have been connected.
+func (a *actor) candidates(r *Record) []string {
+	var seated []SeatRecord
+	for _, sr := range r.Seats {
+		if sr.Kind == SeatHuman && a.connected(sr.UserID) {
+			seated = append(seated, sr)
+		}
+	}
+	slices.SortStableFunc(seated, func(x, y SeatRecord) int { return cmp.Compare(x.Taken, y.Taken) })
+	out := []string{}
+	for _, sr := range seated {
+		out = append(out, sr.UserID)
+	}
+	for _, c := range a.conns {
+		if u := a.userOf(c); seatIn(r, u) < 0 && !slices.Contains(out, u) {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+// armRoles sets the roles' clock to at (zero: no deadline).
+func (a *actor) armRoles(at time.Time) {
+	a.disarmRoles()
+	if at.IsZero() {
+		return
+	}
+	a.rolesStop = a.t.cfg.Clock.AfterFunc(max(at.Sub(a.now()), 0), func() {
+		select {
+		case a.inbox <- msgRoles{}:
+		case <-a.done:
+		}
+	})
+}
+
+func (a *actor) disarmRoles() {
+	if a.rolesStop != nil {
+		a.rolesStop()
+		a.rolesStop = nil
+	}
+}
+
+// retire keeps the retired list after a control change from before to
+// after: users who lost all authority join it (in user order, so the
+// list follows public changes only), users who regained authority leave
+// it, and beyond maxRetired the oldest is forgotten with its seqs.
+func retire(before, after *Record) {
+	after.Retired = slices.DeleteFunc(after.Retired, func(u string) bool { return hasAuthority(after, u) })
+	var lost []string
+	for _, u := range authorities(before) {
+		if !hasAuthority(after, u) && !slices.Contains(after.Retired, u) {
+			lost = append(lost, u)
+		}
+	}
+	slices.Sort(lost)
+	after.Retired = append(after.Retired, lost...)
+	for len(after.Retired) > maxRetired {
+		u := after.Retired[0]
+		after.Retired = slices.Delete(after.Retired, 0, 1)
+		after.Seqs = slices.DeleteFunc(after.Seqs, func(x SeqRecord) bool { return x.User == u })
+	}
+}
+
+// authorities are the users with authority at the table.
+func authorities(r *Record) []string {
+	var out []string
+	for _, sr := range r.Seats {
+		if sr.Kind == SeatHuman {
+			out = append(out, sr.UserID)
+		}
+	}
+	for _, ad := range r.Roles.Admins {
+		out = append(out, ad.UserID)
+	}
+	if r.Roles.Temporary != "" {
+		out = append(out, r.Roles.Temporary)
+	}
+	return out
 }
 
 // armIdle starts the idle countdown while nobody is connected.
@@ -345,6 +488,7 @@ const (
 	outIllegal   = "illegal"
 	outClosed    = "decision-closed"
 	outForbidden = "forbidden"
+	outNotAdmin  = "not-admin"
 	outRate      = "rate"
 	outStorage   = "storage"
 	outBad       = "bad-request"
@@ -360,11 +504,15 @@ func (a *actor) inbound(c *room.Client, f wire.ClientMessage) {
 		a.submit(c, f)
 	case wire.TableUndo:
 		a.undo(c, f)
+	case wire.TableSeat:
+		a.switchSeat(c, f)
+	case wire.TableRole:
+		a.role(c, f)
+	case wire.TableResign:
+		a.resign(c, f)
 	case wire.Resync:
 		c.Out.Push(a.newBroadcast(false).frame(c, nil, true))
 	default:
-		// Seat switches, roles, resignation, rematch and device links are
-		// M16.haftgane-lobby-and-roles's.
 		c.Out.Push(wire.NewTableReject(seqOfFrame(f), outBad))
 	}
 }
@@ -394,7 +542,9 @@ func (a *actor) duplicate(c *room.Client, op string, seat int, seq int) string {
 	return a.note(op, seat, outDuplicate)
 }
 
-func seqKey(c *room.Client) SeqRecord { return SeqRecord{User: c.UserID, Client: c.ClientID} }
+func (a *actor) seqKey(c *room.Client) SeqRecord {
+	return SeqRecord{User: a.userOf(c), Client: c.ClientID}
+}
 
 // submit applies one {seq, point, key, confirm} submission, checking in
 // the design's order: membership, the client's seq acknowledgement, the
@@ -403,11 +553,11 @@ func seqKey(c *room.Client) SeqRecord { return SeqRecord{User: c.UserID, Client:
 // changed the slot from it, or a new client past the slot's bound (rate).
 func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	r := &a.st.rec
-	seat := a.seatOf(c.UserID)
+	seat := a.seatOf(a.userOf(c))
 	if seat < 0 {
 		return a.refuse(c, p.Seq, "pick", seat, outForbidden)
 	}
-	key := seqKey(c)
+	key := a.seqKey(c)
 	if last, ok := seqLast(r.Seqs, key); ok && p.Seq <= last {
 		return a.duplicate(c, "pick", seat, p.Seq)
 	}
@@ -424,14 +574,17 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	// by presence, since seq 0 is valid. The slot keeps a bounded number
 	// of each user's floors: past it a new client is refused, because
 	// dropping a floor would let a forgotten old seq overwrite this pick.
+	// It keeps the floors of every user who controlled the seat during the
+	// point, up to maxSlotUsers of them, so a switch never reopens one.
 	if slot := pendingOf(r, seat); slot != nil {
 		floor, ok := seqLast(slot.Seqs, key)
+		users := seqUsers(slot.Seqs, key.User)
 		switch {
 		case ok && p.Seq == floor:
 			return a.duplicate(c, "pick", seat, p.Seq)
 		case ok && p.Seq < floor:
 			return a.refuse(c, p.Seq, "pick", seat, outStale)
-		case !ok && seqUsers(slot.Seqs, key.User) >= a.t.cfg.PickClients:
+		case !ok && users >= a.t.cfg.PickClients, users == 0 && slotUsers(slot.Seqs) >= maxSlotUsers:
 			return a.refuse(c, p.Seq, "pick", seat, outRate)
 		}
 	}
@@ -441,84 +594,304 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	return a.transact(c, "pick", seat, cand, p.Key, p.Confirm, &key, p.Seq)
 }
 
-// transact applies an accepted pick to cand: the slot's key and confirmed
-// flag, and the confirmation that completes the required set appends one
-// sorted batch, resolves it and opens the next point in the same write.
-// A confirmation flip or a resolution advances the public revision; any
-// other change is the seat's private edit. Then it persists, swaps and
-// publishes. c is nil for a bot.
+// transact applies an accepted pick to cand (applyPick). A confirmation
+// flip or a resolution is a public change; any other change is the seat's
+// private edit, refused with rate past maxEdits between public changes.
+// Then it persists, swaps and publishes. c is nil for a bot.
 func (a *actor) transact(c *room.Client, op string, seat int, cand Record, key string, confirm bool, by *SeqRecord, seq int) string {
-	slot := pendingOf(&cand, seat)
-	wasConfirmed := slot != nil && slot.Confirmed
-	if slot == nil {
-		cand.Pending = append(cand.Pending, PendingSlot{Seat: seat, Seqs: []SeqRecord{}})
-		slices.SortFunc(cand.Pending, func(x, y PendingSlot) int { return x.Seat - y.Seat })
-		slot = pendingOf(&cand, seat)
-	}
-	slot.Key, slot.Confirmed = key, confirm
-	if by != nil {
-		slot.Seqs = seqSet(slot.Seqs, *by)
-	}
-	g := a.st.game
-	pt := g.Point()
-	complete := true
-	for _, s := range pt.Required.Seats() {
-		ps := pendingOf(&cand, int(s))
-		complete = complete && ps != nil && ps.Confirmed
-	}
-	outcome := outAccepted
-	public := wasConfirmed != confirm
-	if complete {
-		b := BatchRecord{Point: pt.ID, Picks: make([]PickRecord, 0, pt.Required.Count())}
-		for _, s := range pt.Required.Seats() {
-			b.Picks = append(b.Picks, PickRecord{Seat: int(s), Key: pendingOf(&cand, int(s)).Key})
+	fail := func(outcome string) string {
+		if c != nil {
+			return a.refuse(c, seq, op, seat, outcome)
 		}
-		next, _, err := g.Resolve(engineBatches([]BatchRecord{b})[0])
-		if err != nil {
-			// Every key was offered when it was accepted, so this is a bug;
-			// refuse rather than persist a record that cannot replay.
-			a.t.log.Error("table resolve failed", "room", a.code, "op", op, "seat", seat)
-			if c != nil {
-				return a.refuse(c, seq, op, seat, outStorage)
-			}
-			return a.note(op, seat, outStorage)
-		}
-		g = next
-		cand.Batches = append(cand.Batches, b)
-		cand.Pending = []PendingSlot{}
-		cand.Hash = g.Fingerprint()
-		public = true
-		outcome = outResolved
+		return a.note(op, seat, outcome)
 	}
-	if public {
-		cand.Public++
-	} else {
+	g, resolved, public, err := a.applyPick(&cand, a.st.game, seat, key, confirm, by)
+	switch {
+	case err != nil:
+		return fail(outStorage)
+	case public:
+		bumpPublic(&cand)
+	case cand.Edits[seat] >= maxEdits:
+		return fail(outRate)
+	default:
 		cand.Edits[seat]++
 	}
-	if complete {
+	if resolved {
 		openPoint(&cand, &g)
 	}
 	if err := a.commit(op, cand, g); err != nil {
-		if c != nil {
-			return a.refuse(c, seq, op, seat, outStorage)
-		}
-		return a.note(op, seat, outStorage)
+		return fail(outStorage)
 	}
 	var ack *wire.PlatformAck
 	if c != nil {
 		ack = &wire.PlatformAck{ClientID: c.ClientID, Seq: seq}
 	}
-	b := a.newBroadcast(complete)
+	b := a.newBroadcast(resolved)
 	if public {
 		a.publish(b, c, ack)
 	} else {
 		a.publishSeat(b, seat, c, ack)
 	}
-	if complete {
+	if resolved {
 		a.stopBots()
 	}
 	a.kickBots()
+	outcome := outAccepted
+	if resolved {
+		outcome = outResolved
+	}
 	return a.note(op, seat, outcome)
+}
+
+// applyPick sets seat's pending pick on cand: its key, its confirmation
+// and, from a client, that client's floor. The confirmation that completes
+// the required set appends one sorted batch and resolves it. It returns
+// the engine value after the pick, whether it resolved, and whether the
+// change is public (a confirmation flip or a resolution); the caller
+// advances the revisions and opens the next point.
+func (a *actor) applyPick(cand *Record, g game, seat int, key string, confirm bool, by *SeqRecord) (game, bool, bool, error) {
+	slot := pendingOf(cand, seat)
+	wasConfirmed := slot != nil && slot.Confirmed
+	if slot == nil {
+		cand.Pending = append(cand.Pending, PendingSlot{Seat: seat, Seqs: []SeqRecord{}})
+		slices.SortFunc(cand.Pending, func(x, y PendingSlot) int { return x.Seat - y.Seat })
+		slot = pendingOf(cand, seat)
+	}
+	slot.Key, slot.Confirmed = key, confirm
+	if by != nil {
+		slot.Seqs = seqSet(slot.Seqs, *by)
+	}
+	pt := g.Point()
+	for _, s := range pt.Required.Seats() {
+		if ps := pendingOf(cand, int(s)); ps == nil || !ps.Confirmed {
+			return g, false, wasConfirmed != confirm, nil
+		}
+	}
+	b := BatchRecord{Point: pt.ID, Picks: make([]PickRecord, 0, pt.Required.Count())}
+	for _, s := range pt.Required.Seats() {
+		b.Picks = append(b.Picks, PickRecord{Seat: int(s), Key: pendingOf(cand, int(s)).Key})
+	}
+	next, _, err := g.Resolve(engineBatches([]BatchRecord{b})[0])
+	if err != nil {
+		// Every key was offered when it was accepted, so this is a bug;
+		// refuse rather than persist a record that cannot replay.
+		a.t.log.Error("table resolve failed", "room", a.code, "seat", seat)
+		return g, false, false, err
+	}
+	cand.Batches = append(cand.Batches, b)
+	cand.Pending = []PendingSlot{}
+	cand.Hash = next.Fingerprint()
+	return next, true, true, nil
+}
+
+// --- seat switches, roles and resignation -----------------------------------
+
+// switchSeat handles table-seat: an admin gives a seat to a bot (at the
+// level the request names) or seats a spectator in it. A human replaced
+// becomes a spectator. The seat's pending pick stays: a bot taking the
+// seat confirms it, a human may still change it.
+func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
+	r := &a.st.rec
+	user := a.userOf(c)
+	key := a.seqKey(c)
+	if last, ok := seqLast(r.Seqs, key); ok && f.Seq <= last {
+		return a.duplicate(c, "seat", f.Seat, f.Seq)
+	}
+	switch {
+	case !r.Roles.IsAdmin(user):
+		return a.refuse(c, f.Seq, "seat", f.Seat, outNotAdmin)
+	case r.Status != store.StatusPlaying:
+		return a.refuse(c, f.Seq, "seat", f.Seat, outForbidden)
+	case f.Seat < 0 || f.Seat >= len(r.Seats):
+		return a.refuse(c, f.Seq, "seat", -1, outBad)
+	}
+	cur := r.Seats[f.Seat]
+	cand := r.clone()
+	seat, control := f.Seat, f.Control
+	entry := wire.PlatformLogEntry{Kind: "seat", At: len(r.Batches), By: user, Seat: &seat, Control: &control}
+	switch {
+	case f.Control == SeatBot && f.Bot != nil && f.UserID == nil:
+		if _, ok := allowance(*f.Bot); !ok || (cur.Kind == SeatBot && cur.Bot == *f.Bot) {
+			return a.refuse(c, f.Seq, "seat", f.Seat, outBad)
+		}
+		cand.Seats[f.Seat] = SeatRecord{Seat: f.Seat, Kind: SeatBot, Bot: *f.Bot}
+	case f.Control == SeatHuman && f.UserID != nil && f.Bot == nil:
+		target := *f.UserID
+		if a.seatOf(target) >= 0 || !a.connected(target) {
+			return a.refuse(c, f.Seq, "seat", f.Seat, outBad)
+		}
+		cand.Seats[f.Seat] = SeatRecord{Seat: f.Seat, Kind: SeatHuman, UserID: target, Name: a.nameOf(target), Taken: cand.Public + 1}
+		entry.UserID = &target
+		secondHuman(&cand, target)
+	default:
+		return a.refuse(c, f.Seq, "seat", f.Seat, outBad)
+	}
+	if cur.Kind == SeatHuman {
+		rememberSeat(&cand, cur.UserID, f.Seat)
+	}
+	key.Seq = f.Seq
+	seqPut(&cand.Seqs, key, a.t.cfg.SeqClients)
+	appendLog(&cand, entry)
+	return a.control(c, "seat", f.Seat, cand, f.Seq)
+}
+
+// secondHuman turns undo off for good once a human other than the
+// original sole human takes a seat.
+func secondHuman(r *Record, user string) {
+	if r.StartingHumans != 1 {
+		return
+	}
+	for _, o := range r.Original {
+		if o != "" && o != user {
+			r.UndoOff = true
+		}
+	}
+}
+
+// rememberSeat records the seat a player is leaving, for the admins'
+// previous-seat hint.
+func rememberSeat(r *Record, user string, seat int) {
+	r.Previous = slices.DeleteFunc(r.Previous, func(p PreviousRecord) bool { return p.UserID == user })
+	r.Previous = append(r.Previous, PreviousRecord{UserID: user, Seat: seat})
+	if over := len(r.Previous) - maxPrevious; over > 0 {
+		r.Previous = slices.Delete(r.Previous, 0, over)
+	}
+}
+
+// role handles table-role: promote, demote or step down (package roles).
+func (a *actor) role(c *room.Client, f wire.TableRole) string {
+	r := &a.st.rec
+	user := a.userOf(c)
+	key := a.seqKey(c)
+	if last, ok := seqLast(r.Seqs, key); ok && f.Seq <= last {
+		return a.duplicate(c, "role", -1, f.Seq)
+	}
+	if r.Status != store.StatusPlaying {
+		return a.refuse(c, f.Seq, "role", -1, outForbidden)
+	}
+	cand := r.clone()
+	at := len(r.Batches)
+	var entry wire.PlatformLogEntry
+	var err error
+	switch {
+	case f.Op == "promote" && f.UserID != nil:
+		entry, err = cand.Roles.Promote(user, *f.UserID, a.inRoom(*f.UserID), at)
+	case f.Op == "demote" && f.UserID != nil:
+		entry, err = cand.Roles.Demote(user, *f.UserID, at)
+	case f.Op == "step-down" && f.UserID == nil:
+		entry, err = cand.Roles.StepDown(user, at)
+	default:
+		err = roles.ErrBadRequest
+	}
+	if err != nil {
+		return a.refuse(c, f.Seq, "role", -1, roleOutcome(err))
+	}
+	key.Seq = f.Seq
+	seqPut(&cand.Seqs, key, a.t.cfg.SeqClients)
+	appendLog(&cand, entry)
+	return a.control(c, "role", -1, cand, f.Seq)
+}
+
+func roleOutcome(err error) string {
+	switch {
+	case errors.Is(err, roles.ErrNotAdmin):
+		return outNotAdmin
+	case errors.Is(err, roles.ErrForbidden):
+		return outForbidden
+	}
+	return outBad
+}
+
+// resign handles table-resign: the sender's seat goes to a bot at the
+// lowest released level, which confirms its pending pick. Nobody wins by
+// it, and the game goes on.
+func (a *actor) resign(c *room.Client, f wire.TableResign) string {
+	r := &a.st.rec
+	user := a.userOf(c)
+	key := a.seqKey(c)
+	if last, ok := seqLast(r.Seqs, key); ok && f.Seq <= last {
+		return a.duplicate(c, "resign", -1, f.Seq)
+	}
+	seat := a.seatOf(user)
+	switch {
+	case !f.Confirm:
+		return a.refuse(c, f.Seq, "resign", seat, outBad)
+	case seat < 0 || r.Status != store.StatusPlaying:
+		return a.refuse(c, f.Seq, "resign", seat, outForbidden)
+	}
+	cand := r.clone()
+	cand.Seats[seat] = SeatRecord{Seat: seat, Kind: SeatBot, Bot: DefaultBotLevel}
+	rememberSeat(&cand, user, seat)
+	control := SeatBot
+	appendLog(&cand, wire.PlatformLogEntry{Kind: "resign", At: len(r.Batches), By: user, Seat: &seat, Control: &control})
+	key.Seq = f.Seq
+	seqPut(&cand.Seqs, key, a.t.cfg.SeqClients)
+	return a.control(c, "resign", seat, cand, f.Seq)
+}
+
+// control finishes a public change of who controls a seat or holds a
+// role. A bot that took seat with an unconfirmed pick confirms it, which
+// can resolve the point. The open point's work rows follow the seats, the
+// roles are brought up to date (a new admin demotes the temporary one;
+// the last real admin stepping down makes one at once), and users who lost
+// all authority retire. Then it persists, publishes to everyone and starts
+// the bot job again. seat is -1 for a role change.
+func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq int) string {
+	g := a.st.game
+	resolved := false
+	if seat >= 0 && cand.Seats[seat].Kind == SeatBot {
+		if ps := pendingOf(&cand, seat); ps != nil && !ps.Confirmed {
+			var err error
+			if g, resolved, _, err = a.applyPick(&cand, g, seat, ps.Key, true, nil); err != nil {
+				return a.refuse(c, seq, op, seat, outStorage)
+			}
+		}
+	}
+	bumpPublic(&cand)
+	if resolved {
+		openPoint(&cand, &g)
+	} else {
+		syncWork(&cand, &g)
+	}
+	log, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), len(cand.Batches))
+	appendLog(&cand, log...)
+	retire(&a.st.rec, &cand)
+	if err := a.commit(op, cand, g); err != nil {
+		return a.refuse(c, seq, op, seat, outStorage)
+	}
+	a.armRoles(next)
+	a.publish(a.newBroadcast(resolved), c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})
+	a.stopBots()
+	a.kickBots()
+	outcome := outAccepted
+	if resolved {
+		outcome = outResolved
+	}
+	return a.note(op, seat, outcome)
+}
+
+// syncWork makes the open point's work rows follow the seats: one for each
+// required bot seat (a bot new to the seat, or at a new level, gets its
+// level's fixed allowance, persisted before its work starts), none for a
+// seat a human now controls.
+func syncWork(r *Record, g *game) {
+	p := g.Point()
+	out := []WorkRow{}
+	if !pointOver(p) {
+		for _, s := range p.Required.Seats() {
+			sr := r.Seats[s]
+			if sr.Kind != SeatBot {
+				continue
+			}
+			if i := slices.IndexFunc(r.Work, func(w WorkRow) bool { return w.Seat == int(s) && w.Level == sr.Bot }); i >= 0 {
+				out = append(out, r.Work[i])
+				continue
+			}
+			al, _ := allowance(sr.Bot)
+			out = append(out, WorkRow{Seat: int(s), Point: p.ID, Policy: policyVersion, Level: sr.Bot, Allowance: al})
+		}
+	}
+	r.Work = out
 }
 
 // commit writes cand durably, then swaps it in with its engine value. A
@@ -557,18 +930,19 @@ func (a *actor) undoAllowed(userID string, seat int) bool {
 // reference. Base must be the requester's latest frame revision.
 func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	r := &a.st.rec
-	seat := a.seatOf(c.UserID)
+	user := a.userOf(c)
+	seat := a.seatOf(user)
 	if seat < 0 {
 		return a.refuse(c, u.Seq, "undo", seat, outForbidden)
 	}
-	key := seqKey(c)
+	key := a.seqKey(c)
 	if last, ok := seqLast(r.Seqs, key); ok && u.Seq <= last {
 		return a.duplicate(c, "undo", seat, u.Seq)
 	}
-	if !a.undoAllowed(c.UserID, seat) {
+	if !a.undoAllowed(user, seat) {
 		return a.refuse(c, u.Seq, "undo", seat, outForbidden)
 	}
-	if u.Base != r.Public+r.Edits[seat] {
+	if u.Base != revisionOf(r, seat) {
 		return a.refuse(c, u.Seq, "undo", seat, outStale)
 	}
 	cut := -1
@@ -585,7 +959,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	seqPut(&cand.Seqs, key, a.t.cfg.SeqClients)
 	cand.Batches = cand.Batches[:cut]
 	cand.Pending = []PendingSlot{}
-	cand.Public++
+	bumpPublic(&cand)
 	su := makeSetup(cand.Setup.Seed, cand.Setup.Seats, cand.Setup.RandomSeating, cand.Setup.HideAtEnd)
 	g, err := replay(su, engineBatches(cand.Batches))
 	if err != nil {
@@ -657,6 +1031,17 @@ func seqPut(xs *[]SeqRecord, k SeqRecord, capacity int) {
 		i := slices.IndexFunc(*xs, func(x SeqRecord) bool { return x.User == k.User })
 		*xs = slices.Delete(*xs, i, i+1)
 	}
+}
+
+// slotUsers counts the users with a floor in xs.
+func slotUsers(xs []SeqRecord) int {
+	var users []string
+	for _, x := range xs {
+		if !slices.Contains(users, x.User) {
+			users = append(users, x.User)
+		}
+	}
+	return len(users)
 }
 
 // seqUsers counts the user's clients in xs.

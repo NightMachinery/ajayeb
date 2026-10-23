@@ -110,11 +110,11 @@ func (a *actor) botResult(res msgBotResult) {
 	a.transact(nil, "bot-pick", res.seat, r.clone(), res.key, true, nil, 0)
 }
 
-// poolKey is the smallest attached human participant's address.
+// poolKey is the smallest attached participant's address.
 func (a *actor) poolKey() string {
 	key, found := "", false
 	for _, c := range a.conns {
-		if a.seatOf(c.UserID) >= 0 && (!found || c.Addr < key) {
+		if a.participant(a.userOf(c)) && (!found || c.Addr < key) {
 			key, found = c.Addr, true
 		}
 	}

@@ -32,6 +32,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
+	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -240,12 +241,11 @@ func (t *Tables) load(m *room.Manager, code string) (*room.Handle, error) {
 		t.log.Warn("table load failed", "room", code, "err", err)
 		return nil, room.ErrStorage
 	}
-	return t.newActor(m, st)
+	return t.newActor(m, st, nil)
 }
 
-// Participant is one lobby slot of a new table. A bot has Bot set to its
-// level; a human has UserID and Name; neither makes an open human seat,
-// which the next user to join without a seat claims.
+// Participant is one lobby slot of a new table: a human (UserID and
+// Name) or a bot (Bot, its level).
 type Participant struct {
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
@@ -253,21 +253,23 @@ type Participant struct {
 }
 
 // Spec is a new table: its participants in lobby order and its options.
-// Prefix, for tests and development only, starts the table with these
-// complete batches already resolved.
+// Roles, when set, are the lobby's roles carried on at Start; otherwise
+// the creator (if any) is the one admin. Prefix, for tests and development
+// only, starts the table with these complete batches already resolved.
 type Spec struct {
 	Participants  []Participant `json:"participants"`
 	RandomSeating bool          `json:"randomSeating"`
 	HideAtEnd     bool          `json:"hideAtEnd"`
 	AllowUndo     bool          `json:"allowUndo"`
 	Creator       string        `json:"creator"`
+	Roles         *roles.Roles  `json:"roles,omitempty"`
 	Seed          *uint64       `json:"seed,omitempty"`
 	Prefix        []BatchRecord `json:"prefix"`
 }
 
-// CreateTable starts a filled table from a seat list and returns its code.
-// It is the lobby's Start (M16.haftgane-lobby-and-roles) and the tests' and
-// development endpoint's creation path, behind Config.Creation.
+// CreateTable starts a filled table from a seat list and returns its code:
+// the tests' and the development endpoint's direct path, behind
+// Config.Creation. The lobby's Start builds the same record (StartTable).
 func (t *Tables) CreateTable(spec Spec) (string, error) {
 	if !t.cfg.Creation {
 		return "", ErrCreationOff
@@ -276,70 +278,9 @@ func (t *Tables) CreateTable(spec Spec) (string, error) {
 	if m == nil {
 		return "", errUnbound
 	}
-	n := len(spec.Participants)
-	if n < MinSeats || n > MaxSeats || len(spec.Prefix) > maxBatches {
-		return "", ErrSpec
-	}
-	users := map[string]bool{}
-	humans := 0
-	for _, p := range spec.Participants {
-		switch {
-		case p.Bot != "":
-			if _, ok := allowance(p.Bot); !ok || p.UserID != "" {
-				return "", ErrSpec
-			}
-		default:
-			humans++
-			if p.UserID != "" && (users[p.UserID] || len(p.UserID) > 64 || !validName(p.Name)) {
-				return "", ErrSpec
-			}
-			users[p.UserID] = true
-		}
-	}
-	seed := t.cfg.Seed()
-	if spec.Seed != nil {
-		seed = *spec.Seed
-	}
-	su := makeSetup(seed, n, spec.RandomSeating, spec.HideAtEnd)
-	g, err := replay(su, engineBatches(spec.Prefix))
+	base, g, err := t.newRecord(spec)
 	if err != nil {
-		return "", ErrSpec
-	}
-	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
-	base := Record{
-		Schema: Schema, Game: Game, Rules: RulesVersion,
-		Setup:      SetupRecord{Seed: seed, Seats: n, RandomSeating: spec.RandomSeating, HideAtEnd: spec.HideAtEnd},
-		Assignment: make([]int, n), Original: make([]string, n), Seats: make([]SeatRecord, n),
-		Roles:          Roles{Creator: spec.Creator, Admins: []AdminRecord{}},
-		StartingHumans: humans, AllowUndo: spec.AllowUndo,
-		Batches: make([]BatchRecord, 0, len(spec.Prefix)), Hash: g.Fingerprint(),
-		Public: len(spec.Prefix) + 1, Edits: make([]int, n),
-		Pending: []PendingSlot{}, Seqs: []SeqRecord{}, Work: []WorkRow{}, RoomLog: []wire.PlatformLogEntry{},
-		Status: store.StatusPlaying,
-	}
-	if spec.Creator != "" {
-		base.Roles.Admins = append(base.Roles.Admins, AdminRecord{UserID: spec.Creator})
-	}
-	for _, b := range spec.Prefix {
-		base.Batches = append(base.Batches, BatchRecord{Point: b.Point, Picks: append([]PickRecord{}, b.Picks...)})
-	}
-	for s := range n {
-		p := spec.Participants[order[s]]
-		base.Assignment[s] = int(order[s])
-		sr := SeatRecord{Seat: s, Kind: SeatOpen}
-		switch {
-		case p.Bot != "":
-			sr.Kind, sr.Bot = SeatBot, p.Bot
-		case p.UserID != "":
-			sr.Kind, sr.UserID, sr.Name = SeatHuman, p.UserID, p.Name
-			base.Original[s] = p.UserID
-		}
-		base.Seats[s] = sr
-	}
-	openPoint(&base, &g)
-	if err := validate(&base, &g, t.bounds()); err != nil {
-		t.log.Error("table create invalid", "err", err)
-		return "", room.ErrStorage
+		return "", err
 	}
 	return m.CreateHandle(Game, func(code string) (*room.Handle, error) {
 		rec := base.clone()
@@ -354,9 +295,79 @@ func (t *Tables) CreateTable(spec Spec) (string, error) {
 			t.log.Warn("table create failed", "room", code, "err", err)
 			return nil, room.ErrStorage
 		}
-		t.log.Info("table created", "room", code, "seats", n)
-		return t.newActor(m, &state{rec: rec, game: g})
+		t.log.Info("table created", "room", code, "seats", len(rec.Seats))
+		return t.newActor(m, &state{rec: rec, game: g}, nil)
 	})
+}
+
+// newRecord builds and validates a new table's record (without its code
+// and times) and its engine value.
+func (t *Tables) newRecord(spec Spec) (Record, game, error) {
+	n := len(spec.Participants)
+	if n < MinSeats || n > MaxSeats || len(spec.Prefix) > maxBatches {
+		return Record{}, game{}, ErrSpec
+	}
+	users := map[string]bool{}
+	humans := 0
+	for _, p := range spec.Participants {
+		switch {
+		case p.Bot != "":
+			if _, ok := allowance(p.Bot); !ok || p.UserID != "" {
+				return Record{}, game{}, ErrSpec
+			}
+		default:
+			humans++
+			if p.UserID == "" || users[p.UserID] || len(p.UserID) > 64 || !validName(p.Name) {
+				return Record{}, game{}, ErrSpec
+			}
+			users[p.UserID] = true
+		}
+	}
+	rs := roles.New(spec.Creator)
+	if spec.Roles != nil {
+		rs = spec.Roles.Clone()
+	}
+	seed := t.cfg.Seed()
+	if spec.Seed != nil {
+		seed = *spec.Seed
+	}
+	su := makeSetup(seed, n, spec.RandomSeating, spec.HideAtEnd)
+	g, err := replay(su, engineBatches(spec.Prefix))
+	if err != nil {
+		return Record{}, game{}, ErrSpec
+	}
+	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
+	base := Record{
+		Schema: Schema, Game: Game, Rules: RulesVersion,
+		Setup:      SetupRecord{Seed: seed, Seats: n, RandomSeating: spec.RandomSeating, HideAtEnd: spec.HideAtEnd},
+		Assignment: make([]int, n), Original: make([]string, n), Seats: make([]SeatRecord, n),
+		Roles: rs, Previous: []PreviousRecord{}, Retired: []string{},
+		StartingHumans: humans, AllowUndo: spec.AllowUndo,
+		Batches: make([]BatchRecord, 0, len(spec.Prefix)), Hash: g.Fingerprint(),
+		Public: len(spec.Prefix) + 1, Edits: make([]int, n),
+		Pending: []PendingSlot{}, Seqs: []SeqRecord{}, Work: []WorkRow{}, RoomLog: []wire.PlatformLogEntry{},
+		Status: store.StatusPlaying,
+	}
+	for _, b := range spec.Prefix {
+		base.Batches = append(base.Batches, BatchRecord{Point: b.Point, Picks: append([]PickRecord{}, b.Picks...)})
+	}
+	for s := range n {
+		p := spec.Participants[order[s]]
+		base.Assignment[s] = int(order[s])
+		sr := SeatRecord{Seat: s, Kind: SeatHuman, UserID: p.UserID, Name: p.Name}
+		if p.Bot != "" {
+			sr = SeatRecord{Seat: s, Kind: SeatBot, Bot: p.Bot}
+		} else {
+			base.Original[s] = p.UserID
+		}
+		base.Seats[s] = sr
+	}
+	openPoint(&base, &g)
+	if err := validate(&base, &g, t.bounds()); err != nil {
+		t.log.Error("table create invalid", "err", err)
+		return Record{}, game{}, ErrSpec
+	}
+	return base, g, nil
 }
 
 func validName(name string) bool {

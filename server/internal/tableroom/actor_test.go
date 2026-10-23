@@ -170,7 +170,7 @@ func TestPrivateEditsChangeNobodyElsesFrame(t *testing.T) {
 	}
 	h.expect(h.send(a, 3, sa.Ref, sa.Legal[1], true), tabletest.Accepted, "a confirmation")
 	fb := h.framesSince(b, nb)
-	if len(fb) != 1 || fb[0].Pending != nil || !slices.Equal(fb[0].Point.Confirmed, []int{0}) || fb[0].Revision != revB+1 {
+	if len(fb) != 1 || fb[0].Pending != nil || !slices.Equal(fb[0].Point.Confirmed, []int{0}) || fb[0].Revision != revB+1<<editBits {
 		t.Fatalf("seat 1 after the confirmation: %+v", fb)
 	}
 	if fb[0].Point.Ref.Revision != h.snapRef(b).Revision {
@@ -346,12 +346,25 @@ func TestWritesKeepRestoreBounds(t *testing.T) {
 		{"floors at the bound", func(r *Record) { r.Pending[0].Seqs = many(2) }, true},
 		{"floors past the bound", func(r *Record) { r.Pending[0].Seqs = many(3) }, false},
 		{"acknowledgements at the bound", func(r *Record) { r.Seqs = many(2) }, true},
-		{"floors of more users than seats", func(r *Record) {
+		{"floors of as many users as a slot keeps", func(r *Record) {
 			r.Pending[0].Seqs = nil
-			for u := range 4 {
+			for u := range maxSlotUsers {
+				r.Pending[0].Seqs = append(r.Pending[0].Seqs, SeqRecord{User: userOf(u), Client: "c", Seq: 1})
+			}
+		}, true},
+		{"floors of more users than a slot keeps", func(r *Record) {
+			r.Pending[0].Seqs = nil
+			for u := range maxSlotUsers + 1 {
 				r.Pending[0].Seqs = append(r.Pending[0].Seqs, SeqRecord{User: userOf(u), Client: "c", Seq: 1})
 			}
 		}, false},
+		{"acknowledgements of a user with no authority", func(r *Record) {
+			r.Seqs = append(r.Seqs, SeqRecord{User: "watcher", Client: "c", Seq: 1})
+		}, false},
+		{"acknowledgements of a retired user", func(r *Record) {
+			r.Seqs = append(r.Seqs, SeqRecord{User: "watcher", Client: "c", Seq: 1})
+			r.Retired = append(r.Retired, "watcher")
+		}, true},
 	} {
 		r := h.record()
 		tc.mutate(&r)

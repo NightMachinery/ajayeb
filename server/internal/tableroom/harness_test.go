@@ -252,7 +252,7 @@ func (f *fixture) openInproc(ctx context.Context, spec Spec) (*inproc, error) {
 		frames: map[tabletest.ClientID][]wire.TableState{}, rejects: map[tabletest.ClientID][]wire.TableReject{},
 		seats: map[string]int{}, model: map[int]wire.TablePending{}, wants: map[tabletest.ClientID][]pendingWant{}}
 	// The driver's client for seat s is the user seated there, whatever the
-	// seating rule made of the lobby order; an open seat goes to user-s.
+	// seating rule made of the lobby order.
 	var seats []SeatRecord
 	a, err := p.actor()
 	if err == nil {
@@ -263,11 +263,8 @@ func (f *fixture) openInproc(ctx context.Context, spec Spec) (*inproc, error) {
 	}
 	for s, sr := range seats {
 		user, name := sr.UserID, sr.Name
-		switch sr.Kind {
-		case SeatBot:
+		if sr.Kind == SeatBot {
 			continue
-		case SeatOpen:
-			user, name = userOf(s), "P"+strconv.Itoa(s)
 		}
 		p.seats[user] = s
 		if err := p.join(ctx, tabletest.SeatClient(s), user, name); err != nil {

@@ -69,7 +69,7 @@ func TestDevTables(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rec := postTable(t, h, `{"seats":[{},{"bot":"easy"},{}],"seed":"18446744073709551615","hideAtEnd":true,"allowUndo":true,
+	rec := postTable(t, h, `{"seats":[{"userId":"u0","name":"Ann"},{"bot":"easy"},{}],"creator":"u0","seed":"18446744073709551615","hideAtEnd":true,"allowUndo":true,
 		"prefix":[{"point":"age-1-turn-1","picks":[{"seat":0,"key":"tuck:amber"}]}]}`)
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("create: %d %s", rec.Code, rec.Body.String())
@@ -79,8 +79,9 @@ func TestDevTables(t *testing.T) {
 		t.Fatalf("response %+v", got)
 	}
 	sp := tables.specs[0]
-	if len(sp.Participants) != 3 || sp.Participants[1].Bot != "easy" || sp.Participants[0] != (tableroom.Participant{}) ||
-		*sp.Seed != 1<<64-1 || !sp.HideAtEnd || !sp.AllowUndo || sp.RandomSeating || sp.Creator != "" ||
+	if len(sp.Participants) != 3 || sp.Participants[1].Bot != "easy" || sp.Participants[0] != (tableroom.Participant{UserID: "u0", Name: "Ann"}) ||
+		sp.Participants[2] != (tableroom.Participant{}) ||
+		*sp.Seed != 1<<64-1 || !sp.HideAtEnd || !sp.AllowUndo || sp.RandomSeating || sp.Creator != "u0" ||
 		len(sp.Prefix) != 1 || sp.Prefix[0].Picks[0].Key != "tuck:amber" {
 		t.Fatalf("spec %+v", sp)
 	}
