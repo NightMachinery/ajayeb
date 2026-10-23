@@ -132,3 +132,116 @@ The sequential runs experienced different host load; their relative timing
 does not imply Apprentice's identical ranking pass is faster. Room queueing,
 presentation and full-table scheduling are outside this simulator slice.
 Seat-balanced held-out release gates belong to the next simulator slice.
+
+
+## Seat-balanced simulator
+
+The explicit `tournament -game haftgane` command runs these baseline policies.
+Duel continues to use its existing `match`, `tally`, `levels`, `weights`,
+`bench` and `replay` commands and report formats. The new command is separate;
+its flags and JSONL format do not change Duel's defaults.
+
+Each independent deal block materializes the decks, guild selection, physical
+boards and sides once. Blocks cycle through all-day, all-night and random-side
+strata. Side selection is complete before any policy runs. Every candidate
+replaces one baseline seat on that same setup, keeping all other policies and
+their call tapes fixed. Focal seats cover the whole ring. Mixed backgrounds
+cycle Greedy, Apprentice and Random as evenly as the count permits, with every
+relative offset and both reflected lineups. Reflections never reverse the
+engine's actual Age pass direction.
+
+The `release` suite has Greedy against Random, Apprentice against Random and
+a paired Greedy-for-Apprentice replacement in balanced mixed backgrounds.
+The `diagnostics` suite has the inverse fields and homogeneous self-play for
+all three policies. `all` runs both. Identical complete physical lineups share
+one game within a block; every declared comparison, focal seat, background
+offset and reflection remains in the manifest. This saves duplicate work
+without treating those references as independent observations.
+
+Derivation version 1 uses `tag = 5*block + (N-3)`. The setup seed is
+`MixSeed(deal_base, tag)`, and the independent policy root is
+`MixSeed(policy_base, tag)`. A call receives
+`MixSeed(policy_root, 1024*point_kind + 128*age + 8*turn + seat)`, followed by
+the bot's observation-fingerprint mixing. Lineup identity, accepted-batch
+count, runtime scheduling and the setup seed never enter the policy tape.
+An extra ability point cannot shift the tape for a later ordinary turn.
+
+### Complete reports and intervals
+
+Reports stream one block at a time as JSONL, optionally gzip-compressed.
+The header records the game, rules and catalog digest, policy/preset/work,
+temperature, seed partition and domains, side schedule, counts and suite.
+Each block records its fixed setup identity, boards/sides, full comparison
+manifest, unique games, accepted batches, terminal score categories, coins
+and ranks. Each accepted pick has a compact diagnostic tuple:
+`[seat, point_kind, active_ns, iterations, ranked, previews, quotes, draws,
+fallback_reason]`. Keys are in the corresponding batch in seat order.
+Reason zero means normal completion; this runner aborts on incomplete
+policies instead of silently replacing their prescribed work.
+
+A footer pins the block-stream SHA-256 and block count. Tallying requires every
+shard and assigned block, rejects duplicates or changed headers, rotations,
+lineups and game sets, then replays every accepted key and checks terminal
+results, diagnostic cardinality and bounded work. Missing footers, truncated
+gzip streams and changed block bytes fail. Equivalent cached lineups are
+counted once in work/latency statistics.
+
+Strength uses mean focal rank reward and win credit per deal block, with
+all that block's correlated rotations kept together in 5,000 bootstrap
+resamples. Paired changes are computed within the same physical seat and
+background before block averaging. Reports include per-N intervals,
+inverse-field changes, self-play midrank sanity and score/coin distributions
+by policy and full seat/board/side/neighbour context. These diagnostic
+breakdowns cover unique games; they are not the balanced focal strength
+estimators. Phase latency uses one-microsecond bins, exact active-time sums
+and maxima. Heap allocation is sampled after each block; this is not peak RSS.
+
+A complete held-out gate report requires the release partition, at least
+100 independent blocks at every N from 3 to 7, and the release suite.
+Greedy/Apprentice against Random check the predeclared mean targets and
+show whether their interval crosses the target. Greedy-for-Apprentice requires
+the paired rank-improvement interval above zero at each N. The combined
+release flag passes only when all 25 checks pass. A small development or
+partial-shard run cannot pass that flag. Failed or uncertain gates are
+reported without tuning on the same seeds.
+
+### Guarded commands
+
+Keep controlled experiment files outside the repository. For a short
+development check:
+
+```sh
+report_dir="${AJAYEB_RUN_DIR:-$HOME/tmp/agents/ajayeb}/logs/haftgane-tournaments"
+command mkdir -p "$report_dir"
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+  go -C server run ./cmd/ajayeb-sim tournament -game haftgane \
+  -partition development -blocks 2 -suite all \
+  -out "$report_dir/development.jsonl.gz" \
+  -summary "$report_dir/development-summary.json"
+```
+
+For held-out evidence, run shards serially, waiting for each completion
+notification before starting the next. Change `0/5` and `release-0` below
+to `1/5` through `4/5` and `release-1` through `release-4`:
+
+```sh
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+  go -C server run ./cmd/ajayeb-sim tournament -game haftgane \
+  -partition release -blocks 100 -suite all -shard 0/5 \
+  -out "$report_dir/release-0.jsonl.gz"
+```
+
+After every shard completes, validate and tally the complete set:
+
+```sh
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+  go -C server run ./cmd/ajayeb-sim tournament-tally -game haftgane \
+  -check-gates -summary "$report_dir/release-summary.json" \
+  "$report_dir"/release-{0,1,2,3,4}.jsonl.gz
+```
+
+Output files must not already exist. An interrupted file stays available for
+inspection but has no complete footer and cannot enter a tally. Gate failure
+returns status 1 after writing the honest summary; invalid command flags
+return status 2. Normal run/tally status zero means the experiment is complete,
+unless the explicitly requested `-check-gates` also requires strength success.

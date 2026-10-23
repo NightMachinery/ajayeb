@@ -107,6 +107,10 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	var err error
 	switch args[0] {
+	case "tournament":
+		err = runTournament(args[1:], stdout, stderr)
+	case "tournament-tally":
+		err = runTournamentTally(args[1:], stdout, stderr)
 	case "match":
 		err = runMatch(args[1:], stdout, stderr)
 	case "tally":
