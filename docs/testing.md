@@ -2379,9 +2379,9 @@ A small pure hand game with exactly the functions of
 [haftgane/engine-architecture.md](haftgane/engine-architecture.md) section 16:
 `NewGame`, `SeatOrder`, `Replay`, `Point`, `Legal`, `Resolve`, `ViewFor`,
 `History`, `Observe`, `Fingerprint`, `CheckInvariants`, `Batch` and `Pick`.
-Its types are its own (views in `fakeview`), so M16.haftgane-engine-contract
-can swap in the real engine mechanically. The package documentation states
-the rules. In short:
+Its types are its own (views in `fakeview`). The actor now uses the real engine;
+this double remains isolated test infrastructure. The package documentation
+states the rules. In short:
 
 - three to seven seats, two Ages of two simultaneous turns, hands of three
   passed left and then right, Age 2 dealt at setup with an undealt box;
@@ -2485,9 +2485,15 @@ names: a shuffle-derived id, a deal-ordered hand, a raw sold or tucked key,
 a pending or observation hash, and an opponent's offer, plus the ordering and
 whitelist cases. Each planted leak must be reported by its own detector.
 `TestLogCapture` checks the in-process table's captured log, then plants a
-key and a fingerprint in it. The truth builder and the whitelist are written
-for the fake's views; the engine-contract slice writes the same two for the
-real engine's.
+key and a fingerprint in it. The original fake truth and whitelist remain
+for the small harness. Actor tests use `FromReal`, a separate strict real-view whitelist and semantic
+checks; they never take `ViewFor` or `History` as the expected answer.
+Deals and accepted batches supply hands, picks, ordering and live event
+entitlements. The separately reviewed permitted observation supplies private
+pile-look memory and inference facts. Rich-field canaries contaminate seen
+hands, pile looks, deductions, payment witnesses, science and nested hashes.
+String classification is memoized independently of path exemptions; a
+regression sends the same key through an allowed and a forbidden path.
 
 ### Failure injection (`internal/tabletest/faults`)
 
@@ -2728,3 +2734,42 @@ twelve full fixed-seed game logs. The match/levels/bench reports and match
 JSON are byte-identical after removing only the variable timing/heap
 measurement fields; engine outcomes, action counts, iteration counts,
 configuration and statistical report text stay pinned.
+
+## The real Haftgane engine contract
+
+`internal/tableroom` now runs `haftgane/rules`, including its actor sweeps,
+fuzzer and real WebSocket tables at three to seven seats plus a spectator.
+The original `tabletest/direct` fake remains a small acceptance-model test;
+`tabletest/real` independently applies the same platform acceptance order to
+real rules for the actor's differential tests. Neither harness enters the
+production binary.
+
+`TestEngineContractSidesAndReplay` checks day, random and chosen sides at
+three and seven seats, a private draft across restart, complete games under
+interleaving, and identical replay projections/history for every viewer.
+`TestEngineContractAbilityOrder` finds a natural replayable seven-seat game
+(seed 0): a sixth-turn discard build precedes Babylon's last-card point,
+then the next Age opens. Both intermediate schema-2 records replay.
+`TestEngineContractLegacyRules` refuses fake rules version 1000 before real
+replay and refuses unknown side rules. Existing compatibility tests preserve
+unknown fields on hash refresh and leave unsupported schemas/formats alone.
+
+`TestLobbySidesStartAndRestore` exercises the additive `options.sides` through
+cold lobby load and actual Start. Missing old values mean day sides;
+`choose` opens a side point, while `day` and `random` deal Age I immediately.
+Rematches retain the effective side rule. The lobby-screen control can send
+`choose`, `day` or `random` through the generated `LobbyOptions` type.
+
+`TestEngineContractMeasurements` reports retained seven-seat heap (32 live
+tables, seven humans and a spectator, empty outboxes, cached real views) and
+last-confirmation transaction time, including storage, all eight projections
+and driver dispatch/drain overhead. These are observations, not capacity or
+latency gates. See [the contract](haftgane/engine-contract.md) for a sample.
+Run it with `make test-go GO_PKGS=./internal/tableroom
+GO_RUN=TestEngineContractMeasurements GOFLAGS=-count=1`.
+
+Race sweeps give every real game its own bounded context. The socket sweep
+uses five minutes per seat count, including three games and privacy checks;
+the full lobby/game/rematch scenario uses five minutes per game. The merged
+frame test retains every assertion and drains at 2, 3, 7, 31 and 127 pushes,
+so cosmetic traffic cannot keep its multi-resolution canary unreachable.

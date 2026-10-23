@@ -47,3 +47,6 @@ These docs explain the current implementation, its rules and the tools used to b
 - [dev/decisions.md](dev/decisions.md): a short record of each major decision, its rationale and the options we rejected.
 
 Contributors and coding agents should also read [../AGENTS.md](../AGENTS.md), the working agreement for this repository.
+
+The [Haftgane engine contract](haftgane/engine-contract.md) describes real room
+setup, replay, privacy bounds and measurements.

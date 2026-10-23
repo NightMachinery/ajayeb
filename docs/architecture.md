@@ -47,7 +47,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below). Its `Pool` bounds the searches running at once and shares them fairly between client addresses, so one address's many bot rooms cannot hold up another's bot.
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
-- **`internal/tableroom`**: Haftgane's table room kind, a separate actor beside Duel's (see "The table actor" below). Until the real engine is linked it plays the fake engine through one seam file.
+- **`internal/tableroom`**: Haftgane's table room kind, a separate actor beside Duel's (see "The table actor" below). Its concrete engine seam binds Haftgane rules and whitelisted views.
 - **`internal/lobbyroom`**: the shared lobby room kind (D60), where a group gathers before a game; its Start hands a filled table to `tableroom` under the same code (see "The shared lobby" below).
 - **`internal/roles`**: the admin roles of D42, shared by the lobby and the table: real admins and who promoted them, demotion and stepping down, and the temporary admin of the five-minute rule, all persisted, with the clock passed in.
 - **`internal/store`**: one JSON file per room, written atomically (temporary file, sync, rename), plus a reaper for old rooms with an injectable clock. It refuses to read a room file larger than a cap derived from what a room can hold.
@@ -109,14 +109,21 @@ optional seed, roles and prefix batches) and the development endpoint
 directly, is refused unless the server runs with `-haftgane-tables` (which
 needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
 
-- **Engine seam.** `engine.go` is the only file that names an engine: today
-  the fake engine (`internal/haftgane/fakeengine`, whose rules version 1000
-  can never match the real one, so fake tables archive as `rules-version` once
-  the real engine replaces it). M16.haftgane-engine-contract swaps this file.
-  The import guard lets production code reach the fake engine only through
-  this package.
+- **Engine contract.** `engine.go` binds concrete `haftgane/rules` and
+  `haftgane/view` values. The actor accepts only engine-offered keys and
+  preserves full payment witnesses, notebook memory and score facts. Rules
+  version 1 is separate from development fake version 1000: fake records
+  archive as `rules-version`, never migrate into a different game. The fake
+  remains isolated test infrastructure and the import guard prohibits the
+  production binary from reaching it. [The engine contract](haftgane/engine-contract.md)
+  records setup, history numbering, bounds, replay and measurements.
+- **Projection cache.** At most eight immutable engine projections, one per
+  seat plus the spectator, are retained for the current engine fingerprint.
+  Private draft edits, confirmations and presence updates reuse these engine
+  facts. A resolution or undo replaces the cache; pending picks, acks,
+  presence, roles and viewer metadata are always built for the publication.
 - **Record.** One schema-2 file per table, `game: "haftgane"`, with its
-  format, rules version, setup (seed, seat count, seating rule, end reveal),
+  format, rules version, setup (seed, seat count, seating rule, side rule, end reveal),
   seat assignment, the Start-time slots, seats (each with the revision its
   human took it at and its device-link epoch), roles, the seat each former
   player held last, undo policy, the complete canonical batches, the rules hash, the
