@@ -259,7 +259,7 @@ type Options struct {
 }
 ```
 
-`NewGame` validates its input, then resolves every random element from its own stream `rng.New2(seed, tag)`, where each tag is a fixed 64-bit constant pinned by a golden, with the shared Fisher-Yates over inputs in a fixed order (decision 5):
+`NewGame` validates its input, then resolves every random element from its own stream `rng.NewRNG2(seed, tag)`, where each tag is a fixed 64-bit constant pinned by a golden, with the shared Fisher-Yates over inputs in a fixed order (decision 5):
 
 1. **Seating:** when random, a permutation of the N lobby slots onto seats; when chosen, the identity. `SeatOrder(seed, n, rule)` exposes it to the actor.
 2. **Boards:** shuffle the seven board ids; seat s gets entry s.
@@ -546,9 +546,9 @@ Then the bot plan's Scholar slice, which the public release waits for; Master ma
 
 **Shared:**
 
-- **The seeded generator and shuffle** (`server/internal/engine/rng.go`): PCG from `math/rand/v2` with the project's own bounded-integer and Fisher-Yates code, so a seed gives the same games on every Go version. Into `enginekit/rng` in slice rng-sharing, with Duel's names kept as aliases and wrappers; `TestRNGGolden` and Duel's setup and replay goldens pin it. The import guard's one permitted generator file moves with it.
+- **The seeded generator and shuffle** (`server/internal/enginekit/rng/rng.go`, moved from Duel's engine in slice rng-sharing): PCG from `math/rand/v2` with the project's own bounded-integer and Fisher-Yates code, so a seed gives the same games on every Go version. Duel keeps its names as aliases and wrappers; `TestRNGGolden` and Duel's setup and replay goldens pin it. This file is the only one in the module that may import `math/rand/v2`.
 - **The seed mixer** (`ai.MixSeed`, a splitmix64 finalizer): into `enginekit/rng` with the first new bot slice; `ai.MixSeed` stays as a wrapper, and no Duel call site or seed changes.
-- **The digest helper:** FNV-1a over a byte slice and its 16-hex-digit form, in slice rng-sharing. Which bytes are hashed stays each game's own: Duel keeps its encoding and its state prefix.
+- **The digest helper:** FNV-1a over a byte slice and its 16-hex-digit form (`rng.Digest` and `rng.Hex`), moved in slice rng-sharing. Which bytes are hashed stays each game's own: Duel keeps its encoding and its state prefix.
 - **The purity checker and the fixed-value shape checker:** test helpers configured per game, in slice purity-guard-sharing. They read files, so they are not pure, and no engine file may import them.
 - **The three-way catalog diff:** a test helper with per-game schemas and join keys, in slice catalog-diff-sharing.
 - **The fair permit pool** (`ai/pool.go`): shared by use, not moved. The actor calls `ai.Pool.AcquireFor` and `ReleaseFor` directly.
