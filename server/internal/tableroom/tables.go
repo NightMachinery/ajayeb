@@ -55,6 +55,9 @@ type Storage interface {
 	LoadGame(code, game string, assess func(data []byte) (store.Assessment, error)) ([]byte, error)
 	SaveGame(code, game string, data []byte) error
 	PeekGame(code, game string) ([]byte, bool, error)
+	// ReplaceGame writes code's record of game in place of its live record
+	// of game from: the lobby's Start.
+	ReplaceGame(code, from, game string, data []byte) error
 }
 
 // Config holds the tables' dependencies and limits.
@@ -104,6 +107,7 @@ type Tables struct {
 	m    *room.Manager
 	st   Storage
 	live map[string]*actor
+	succ Successors
 }
 
 // New returns the table kind with cfg's defaults filled in.
@@ -190,14 +194,13 @@ type unbound struct{}
 func (unbound) LoadGame(string, string, func([]byte) (store.Assessment, error)) ([]byte, error) {
 	return nil, errUnbound
 }
-func (unbound) SaveGame(string, string, []byte) error         { return errUnbound }
-func (unbound) PeekGame(string, string) ([]byte, bool, error) { return nil, false, errUnbound }
+func (unbound) SaveGame(string, string, []byte) error            { return errUnbound }
+func (unbound) PeekGame(string, string) ([]byte, bool, error)    { return nil, false, errUnbound }
+func (unbound) ReplaceGame(string, string, string, []byte) error { return errUnbound }
 
-// check refuses a cold join before the Manager reserves a slot.
-func (t *Tables) check(_ *room.Manager, code string, _ *room.Client, claim *string) error {
-	if claim != nil {
-		return room.ErrBadClaim
-	}
+// check refuses a cold join before the Manager reserves a slot. A claim
+// is checked by the actor once the table is loaded.
+func (t *Tables) check(_ *room.Manager, code string, _ *room.Client, _ *string) error {
 	data, archived, err := t.store().PeekGame(code, Game)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
@@ -300,6 +303,51 @@ func (t *Tables) CreateTable(spec Spec) (string, error) {
 	})
 }
 
+// Started is a table the lobby's Start built: its handle, not started,
+// for Manager.Swap; its detach hook, for the detaches the lobby received
+// after it handed its connections over; and abort, which discards the
+// handle when the swap fails (the record is the table's by then, so the
+// next join loads it).
+type Started struct {
+	Handle *room.Handle
+	Detach func(*room.Client)
+	Abort  func()
+}
+
+// StartTable is the lobby's Start: it builds the table of spec under the
+// lobby's code, writes it durably in place of the lobby's record (code's
+// live record of game from) and returns it with the lobby's connections
+// handed over. It does not depend on Config.Creation: the lobby's creation
+// does.
+func (t *Tables) StartTable(m *room.Manager, code, from string, spec Spec, members []Member) (Started, error) {
+	base, g, err := t.newRecord(spec)
+	if err != nil {
+		return Started{}, err
+	}
+	rec := base.clone()
+	rec.Code = code
+	now := t.cfg.Clock.Now().UTC()
+	rec.Created, rec.Updated = now, now
+	data, err := rec.encode()
+	if err == nil {
+		err = t.store().ReplaceGame(code, from, Game, data)
+	}
+	if err != nil {
+		t.log.Warn("table start failed", "room", code, "err", err)
+		return Started{}, room.ErrStorage
+	}
+	t.log.Info("table started", "room", code, "seats", len(rec.Seats))
+	h, err := t.newActor(m, &state{rec: rec, game: g}, members)
+	if err != nil {
+		return Started{}, err
+	}
+	a := t.lookup(code)
+	return Started{Handle: h, Detach: a.detachHook, Abort: func() {
+		a.cancel()
+		t.unregister(a)
+	}}, nil
+}
+
 // newRecord builds and validates a new table's record (without its code
 // and times) and its engine value.
 func (t *Tables) newRecord(spec Spec) (Record, game, error) {
@@ -338,9 +386,9 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	}
 	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
 	base := Record{
-		Schema: Schema, Game: Game, Rules: RulesVersion,
+		Schema: Schema, Game: Game, Rules: RulesVersion, Format: recordFormat,
 		Setup:      SetupRecord{Seed: seed, Seats: n, RandomSeating: spec.RandomSeating, HideAtEnd: spec.HideAtEnd},
-		Assignment: make([]int, n), Original: make([]string, n), Seats: make([]SeatRecord, n),
+		Assignment: make([]int, n), Original: make([]string, n), Seats: make([]SeatRecord, n), Start: make([]StartSlot, n),
 		Roles: rs, Previous: []PreviousRecord{}, Retired: []string{},
 		StartingHumans: humans, AllowUndo: spec.AllowUndo,
 		Batches: make([]BatchRecord, 0, len(spec.Prefix)), Hash: g.Fingerprint(),
@@ -350,6 +398,9 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	}
 	for _, b := range spec.Prefix {
 		base.Batches = append(base.Batches, BatchRecord{Point: b.Point, Picks: append([]PickRecord{}, b.Picks...)})
+	}
+	for i, p := range spec.Participants {
+		base.Start[i] = StartSlot{UserID: p.UserID, Name: p.Name, Bot: p.Bot}
 	}
 	for s := range n {
 		p := spec.Participants[order[s]]

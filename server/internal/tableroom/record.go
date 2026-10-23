@@ -25,9 +25,12 @@ const Schema = 2
 // or task generation: the engine value is rebuilt by replaying Batches from
 // Setup, and restore validates all of it.
 type Record struct {
-	Schema        int                 `json:"schema"`
-	Game          string              `json:"game"`
-	Rules         int                 `json:"rules"`
+	Schema int    `json:"schema"`
+	Game   string `json:"game"`
+	Rules  int    `json:"rules"`
+	// Format is the record format (recordFormat); decodeRecord upgrades an
+	// older one explicitly and refuses a newer one.
+	Format        int                 `json:"format"`
 	Code          string              `json:"code"`
 	Status        store.Status        `json:"status"`
 	Created       time.Time           `json:"created"`
@@ -45,6 +48,12 @@ type Record struct {
 	Original []string `json:"original"`
 	// Seats are the current controllers, one per seat.
 	Seats []SeatRecord `json:"seats"`
+	// Start holds the lobby's slots at Start, in lobby order: each human's
+	// user and name, or a bot's level. A rematch's lobby reserves the
+	// humans' slots and keeps the bots.
+	Start []StartSlot `json:"start"`
+	// Successor is the code of the rematch's lobby, once one was made.
+	Successor string `json:"successor"`
 	// Roles are the table's roles (package roles), carried on from the
 	// lobby at Start.
 	Roles roles.Roles `json:"roles"`
@@ -159,8 +168,12 @@ const (
 
 // SeatRecord is one seat's current controller: a human or a bot. Taken
 // is the public revision when its human took it (0 at Start), which ranks
-// the candidates for the temporary admin. (Records of the dev path before
-// the lobby may hold open seats; restore refuses them.)
+// the candidates for the temporary admin. Epoch is the epoch of the
+// seat's device-link claims (package ident): the public revision of the
+// last time a human took the seat or its link was reset, 0 at Start. Two
+// claims for one user never share an epoch, so a reset or a switch
+// revokes every claim made before it. (Records of the dev path before the
+// lobby may hold open seats; restore refuses them.)
 type SeatRecord struct {
 	Seat   int    `json:"seat"`
 	Kind   string `json:"kind"`
@@ -168,7 +181,21 @@ type SeatRecord struct {
 	Name   string `json:"name"`
 	Bot    string `json:"bot"`
 	Taken  int    `json:"taken"`
+	Epoch  int    `json:"epoch"`
 }
+
+// StartSlot is one lobby slot at Start: a human (UserID and Name) or a
+// bot (Bot, its level).
+type StartSlot struct {
+	UserID string `json:"userId"`
+	Name   string `json:"name"`
+	Bot    string `json:"bot"`
+}
+
+// recordFormat is the format this build writes. Format 0 (no field) is
+// the room actor's development record from before the lobby, which
+// upgrade reads explicitly.
+const recordFormat = 1
 
 // BatchRecord is one complete batch: the logical point id and one key per
 // required seat, sorted by seat.
@@ -242,6 +269,7 @@ func (r *Record) clone() Record {
 	c.Assignment = slices.Clone(r.Assignment)
 	c.Original = slices.Clone(r.Original)
 	c.Seats = slices.Clone(r.Seats)
+	c.Start = slices.Clone(r.Start)
 	c.Roles = r.Roles.Clone()
 	c.Previous = slices.Clone(r.Previous)
 	c.Retired = slices.Clone(r.Retired)
@@ -279,6 +307,9 @@ func (r *Record) encode() ([]byte, error) {
 	if c.Retired == nil {
 		c.Retired = []string{}
 	}
+	if c.Start == nil {
+		c.Start = []StartSlot{}
+	}
 	data, err := json.MarshalIndent(&c, "", "  ")
 	if err != nil {
 		return nil, err
@@ -288,7 +319,9 @@ func (r *Record) encode() ([]byte, error) {
 
 // decodeRecord decodes a record and validates its header. Unknown fields
 // are ignored, as for Duel's file, so an additive field of a newer build
-// of the same rules does not make the room unreadable.
+// of the same rules does not make the room unreadable; but a newer record
+// format, whose fields this build would misread, is refused and left as
+// it is, and an older one is upgraded explicitly.
 func decodeRecord(data []byte) (*Record, error) {
 	var r Record
 	if err := json.Unmarshal(data, &r); err != nil {
@@ -296,6 +329,12 @@ func decodeRecord(data []byte) (*Record, error) {
 	}
 	if r.Schema != Schema || r.Game != Game {
 		return nil, fmt.Errorf("%w: not a %s schema-%d record", store.ErrGame, Game, Schema)
+	}
+	switch {
+	case r.Format > recordFormat || r.Format < 0:
+		return nil, fmt.Errorf("%w: record format %d is not this build's", store.ErrGame, r.Format)
+	case r.Format < recordFormat:
+		upgrade(&r)
 	}
 	if store.ValidateCode(r.Code) != nil || r.Updated.IsZero() {
 		return nil, errors.New("tableroom: invalid record header")
@@ -306,6 +345,32 @@ func decodeRecord(data []byte) (*Record, error) {
 		return nil, errors.New("tableroom: invalid record status")
 	}
 	return &r, nil
+}
+
+// upgrade reads a format-0 record, the room actor's development record
+// from before the lobby: it had no previous seats, retired users, away
+// times, epochs or Start slots, and no switches had happened, so each
+// seat's Start slot is its original human or its current bot. A seat
+// still open (the old dev path's) stays open, which restore refuses.
+func upgrade(r *Record) {
+	r.Format = recordFormat
+	r.Previous, r.Retired = []PreviousRecord{}, []string{}
+	r.Roles = r.Roles.Clone()
+	if len(r.Assignment) != len(r.Seats) || len(r.Original) != len(r.Seats) {
+		return // validate refuses it
+	}
+	r.Start = make([]StartSlot, len(r.Seats))
+	for s, sr := range r.Seats {
+		slot := r.Assignment[s]
+		if slot < 0 || slot >= len(r.Start) {
+			return
+		}
+		if r.Original[s] != "" {
+			r.Start[slot] = StartSlot{UserID: r.Original[s], Name: sr.Name}
+		} else {
+			r.Start[slot] = StartSlot{Bot: sr.Bot}
+		}
+	}
 }
 
 // inspection is the codec's read-only view of a record for the store's
@@ -434,11 +499,14 @@ func validate(r *Record, g *game, b seqBounds) error {
 		if r.Edits[s] < 0 || r.Edits[s] > maxEdits {
 			return invalid("the edit count of seat %d", s)
 		}
-		if t := r.Seats[s].Taken; t < 0 || t > r.Public {
-			return invalid("when seat %d was taken", s)
+		if t, e := r.Seats[s].Taken, r.Seats[s].Epoch; t < 0 || t > r.Public || e < 0 || e > r.Public {
+			return invalid("when seat %d was taken or linked", s)
 		}
 	}
 	if err := checkSeats(r); err != nil {
+		return err
+	}
+	if err := checkStart(r); err != nil {
 		return err
 	}
 	p := g.Point()
@@ -555,6 +623,37 @@ func checkSeats(r *Record) error {
 		default:
 			return invalid("seat %d's kind", s)
 		}
+	}
+	return nil
+}
+
+// checkStart requires the Start slots to match the original seats: each
+// human seat's slot names its original human, each starting bot's slot a
+// level, and a successor only once the game is over.
+func checkStart(r *Record) error {
+	if r.Format != recordFormat || len(r.Start) != len(r.Seats) {
+		return invalid("the record format or the Start slots")
+	}
+	humans := 0
+	for s := range r.Seats {
+		slot := r.Start[r.Assignment[s]]
+		switch {
+		case r.Original[s] != "":
+			if slot.UserID != r.Original[s] || slot.Bot != "" || !validName(slot.Name) {
+				return invalid("the Start slot of seat %d", s)
+			}
+			humans++
+		default:
+			if _, ok := allowance(slot.Bot); !ok || slot.UserID != "" || slot.Name != "" {
+				return invalid("the Start slot of seat %d", s)
+			}
+		}
+	}
+	switch {
+	case humans != r.StartingHumans:
+		return invalid("the starting human count")
+	case r.Successor != "" && (r.Status == store.StatusPlaying || store.ValidateCode(r.Successor) != nil || r.Successor == r.Code):
+		return invalid("the successor")
 	}
 	return nil
 }

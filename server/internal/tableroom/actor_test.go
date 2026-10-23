@@ -659,6 +659,7 @@ func TestCompatibility(t *testing.T) {
 	for code, mutate := range map[string]func(map[string]any){
 		"CMPAAC": func(m map[string]any) { m["schema"] = 3 },
 		"CMPAAD": func(m map[string]any) { m["game"] = "unknown" },
+		"CMPAAE": func(m map[string]any) { m["format"] = recordFormat + 1 },
 	} {
 		before := put(code, mutate)
 		if err := h.f.m.Join(h.ctx, newClient(userOf(0), "x", "P0"), code); err == nil {
@@ -668,5 +669,72 @@ func TestCompatibility(t *testing.T) {
 		if string(after) != string(before) {
 			t.Fatalf("%s was rewritten", code)
 		}
+	}
+}
+
+// TestUpgradeFormatZero: the room actor's record from before the lobby,
+// without a format, Start slots, previous seats, retired users, epochs or
+// away times, loads explicitly upgraded, and its next write is the
+// current format. One whose seat is still open is archived, not misread.
+func TestUpgradeFormatZero(t *testing.T) {
+	h := newTH(t, Config{}, soloSpec(3, 16, BotEasy))
+	sa := h.snap(tabletest.SeatClient(0))
+	h.expect(h.send(tabletest.SeatClient(0), 1, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "a draft")
+	base := h.record()
+	h.p.leave()
+	h.f.restart()
+	old := func(code string, open bool) {
+		r := base.clone()
+		r.Code = code
+		data, _ := r.encode()
+		var m map[string]any
+		_ = json.Unmarshal(data, &m)
+		for _, k := range []string{"format", "start", "previous", "retired", "successor"} {
+			delete(m, k)
+		}
+		roles := m["roles"].(map[string]any)
+		delete(roles, "temporary")
+		delete(roles, "away")
+		for _, seat := range m["seats"].([]any) {
+			delete(seat.(map[string]any), "taken")
+			delete(seat.(map[string]any), "epoch")
+		}
+		if open {
+			seat := m["seats"].([]any)[1].(map[string]any)
+			seat["kind"], seat["bot"] = "open", ""
+		}
+		data, _ = json.Marshal(m)
+		if err := os.WriteFile(filepath.Join(h.f.store.Dir(), code+".json"), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	old("UPGAAA", false)
+	c := newClient(userOf(0), "x", "P0")
+	if err := h.f.m.Join(h.ctx, c, "UPGAAA"); err != nil {
+		t.Fatal(err)
+	}
+	if fr := lastFrame(t, c); fr.Pending == nil || fr.Pending.Key != sa.Legal[0] {
+		t.Fatal("the upgraded table lost its pending pick")
+	}
+	a := h.f.tables.lookup("UPGAAA")
+	var pick wire.TablePick
+	if err := a.call(h.ctx, func() {
+		pick = wire.TablePick{T: "table-pick", Code: "UPGAAA", Seq: 2, Point: *a.st.rec.Point, Key: sa.Legal[0], Confirm: true}
+		a.submit(c, pick)
+	}); err != nil {
+		t.Fatal(err)
+	}
+	data, _, err := h.f.store.PeekGame("UPGAAA", Game)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := decodeRecord(data)
+	if err != nil || r.Format != recordFormat || len(r.Start) != 3 || r.Start[0].UserID != userOf(0) || r.Start[1].Bot != BotEasy {
+		t.Fatalf("the upgraded record: %v %+v", err, r)
+	}
+	h.f.m.Leave(c, "UPGAAA")
+	old("UPGAAB", true)
+	if err := h.f.m.Join(h.ctx, newClient(userOf(0), "x", "P0"), "UPGAAB"); !errors.Is(err, room.ErrRoomArchived) {
+		t.Fatalf("an open seat: %v", err)
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/ident"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
@@ -89,6 +90,10 @@ func (s *memStore) SaveGame(code, _ string, data []byte) error {
 	return nil
 }
 
+func (s *memStore) ReplaceGame(code, _, _ string, data []byte) error {
+	return s.SaveGame(code, Game, data)
+}
+
 func (s *memStore) PeekGame(code, _ string) ([]byte, bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -131,6 +136,7 @@ type fixture struct {
 	mem    bool      // keep tables in a memStore
 	ms     *memStore // that store, which outlives restarts
 	tabs   bool      // openInproc also joins each human seat's second tab
+	secret ident.Secret
 }
 
 func newFixture(t testing.TB, cfg Config) *fixture {
@@ -141,6 +147,10 @@ func newFixture(t testing.TB, cfg Config) *fixture {
 func newFixtureOn(t testing.TB, cfg Config, mem bool) *fixture {
 	t.Helper()
 	f := &fixture{t: t, dir: t.TempDir(), cfg: cfg, mem: mem}
+	var err error
+	if f.secret, err = ident.LoadSecret(f.dir); err != nil {
+		t.Fatal(err)
+	}
 	f.start()
 	t.Cleanup(f.close)
 	return f
@@ -174,7 +184,7 @@ func (f *fixture) start() {
 			return st.Game(code)
 		}
 	}
-	f.m, err = room.NewManager(room.Config{Store: st, Kinds: kinds, KindOf: kindOf, Logger: cfg.Logger})
+	f.m, err = room.NewManager(room.Config{Store: st, Kinds: kinds, KindOf: kindOf, Logger: cfg.Logger, Claims: f.secret})
 	if err != nil {
 		f.t.Fatal(err)
 	}
@@ -223,6 +233,9 @@ type inproc struct {
 	clients map[tabletest.ClientID]*room.Client
 	frames  map[tabletest.ClientID][]wire.TableState
 	rejects map[tabletest.ClientID][]wire.TableReject
+	// other holds every other frame each client received (linked,
+	// created, error).
+	other map[tabletest.ClientID][]wire.ServerMessage
 	// track keeps the test's own model of each seat's accepted pending
 	// pick, from the outcomes of its submissions, and wants holds, beside
 	// each frame, the pick the model says its viewer's seat had when it
@@ -317,6 +330,11 @@ func (p *inproc) drain() {
 				p.wants[id] = append(p.wants[id], w)
 			case wire.TableReject:
 				p.rejects[id] = append(p.rejects[id], m)
+			default:
+				if p.other == nil {
+					p.other = map[tabletest.ClientID][]wire.ServerMessage{}
+				}
+				p.other[id] = append(p.other[id], m)
 			}
 		}
 	}

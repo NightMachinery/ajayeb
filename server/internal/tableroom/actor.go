@@ -29,6 +29,9 @@ type actor struct {
 	code  string
 	st    *state
 	conns []*room.Client
+	// claims holds, for each connection that joined with a device link,
+	// the claim and the user it acts as (package ident).
+	claims map[*room.Client]claimed
 
 	inbox  chan any
 	ctx    context.Context
@@ -46,6 +49,9 @@ type actor struct {
 	botCancel context.CancelFunc
 	botWG     sync.WaitGroup
 }
+
+// claimed is a connection's device-link claim and the user it acts as.
+type claimed struct{ claim, user string }
 
 type msgAttach struct {
 	c     *room.Client
@@ -76,11 +82,17 @@ type msgBotResult struct {
 	err   error
 }
 
-// newActor builds a table's actor. conns are connections the lobby hands
-// over at Start: the actor sends each its first frame when it runs.
-func (t *Tables) newActor(m *room.Manager, st *state, conns []*room.Client) (*room.Handle, error) {
-	a := &actor{t: t, m: m, code: st.rec.Code, st: st, conns: slices.Clone(conns),
+// newActor builds a table's actor. members are connections the lobby
+// hands over at Start: the actor sends each its first frame when it runs.
+func (t *Tables) newActor(m *room.Manager, st *state, members []Member) (*room.Handle, error) {
+	a := &actor{t: t, m: m, code: st.rec.Code, st: st, claims: map[*room.Client]claimed{},
 		inbox: make(chan any, t.cfg.InboxSize), done: make(chan struct{})}
+	for _, mb := range members {
+		a.conns = append(a.conns, mb.Client)
+		if mb.Claim != "" {
+			a.claims[mb.Client] = claimed{claim: mb.Claim, user: mb.User}
+		}
+	}
 	a.ctx, a.cancel = context.WithCancel(m.Context())
 	h, err := m.NewHandle(Game, a.code, room.HandleConfig{
 		Run: a.run, Cancel: a.cancel, Attach: a.attachHook, Detach: a.detachHook, Deliver: a.post, Evict: a.evictHook,
@@ -102,7 +114,9 @@ func (a *actor) run() {
 	defer a.disarmRoles()
 	a.emptySince = a.now()
 	if len(a.conns) > 0 {
-		// Handed over by the lobby's Start: everyone's first table frame.
+		// Handed over by the lobby's Start: everyone's first table frame,
+		// but for a claim that names no seat (none should).
+		a.revokeClaims()
 		b := a.newBroadcast(false)
 		b.history = true
 		a.publish(b, nil, nil)
@@ -227,8 +241,31 @@ func (a *actor) evictHook(ctx context.Context) error {
 
 // --- membership and presence ----------------------------------------------
 
-// userOf is the user a connection acts as.
-func (a *actor) userOf(c *room.Client) string { return c.UserID }
+// userOf is the user a connection acts as: the user of the seat whose
+// device link it joined with, or its own.
+func (a *actor) userOf(c *room.Client) string {
+	if cl, ok := a.claims[c]; ok {
+		return cl.user
+	}
+	return c.UserID
+}
+
+// claimHolder returns the user of the human seat claim was made for.
+// Every seat is checked, in constant time each, whatever the first says.
+// Without device links nothing is a claim.
+func (a *actor) claimHolder(r *Record, claim string) (string, bool) {
+	cl := a.m.Claims()
+	if cl == nil {
+		return "", false
+	}
+	user := ""
+	for _, sr := range r.Seats {
+		if sr.Kind == SeatHuman && cl.VerifyClaim(claim, a.code, sr.UserID, sr.Epoch) && user == "" {
+			user = sr.UserID
+		}
+	}
+	return user, user != ""
+}
 
 // seatOf returns the seat the user controls, or -1.
 func (a *actor) seatOf(userID string) int { return seatIn(&a.st.rec, userID) }
@@ -272,13 +309,24 @@ func (a *actor) humanAttached() bool {
 }
 
 // attach adds a connection. A table has no open seats to claim: a user
-// without a seat watches until an admin seats them.
+// without a seat watches until an admin seats them. A connection with a
+// seat's claim acts as that seat's user. A connection already attached
+// under another claim (or none) is detached and admitted afresh, and
+// stays detached if that fails.
 func (a *actor) attach(c *room.Client, claim *string) error {
-	if claim != nil {
-		return room.ErrBadClaim
-	}
 	already := slices.Contains(a.conns, c)
-	user := a.userOf(c)
+	if cl, ok := a.claims[c]; already && (ok != (claim != nil) || ok && cl.claim != *claim) {
+		a.detach(c)
+		already = false
+	}
+	user := c.UserID
+	if claim != nil {
+		u, ok := a.claimHolder(&a.st.rec, *claim)
+		if !ok {
+			return room.ErrBadClaim
+		}
+		user = u
+	}
 	wasConnected := a.connected(user)
 	if !already {
 		if a.seatOf(user) >= 0 {
@@ -295,6 +343,9 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 			return room.ErrRoomFull
 		}
 		a.conns = append(a.conns, c)
+		if claim != nil {
+			a.claims[c] = claimed{claim: *claim, user: user}
+		}
 	}
 	b := a.newBroadcast(false)
 	c.Out.Push(b.frame(c, nil, true))
@@ -313,11 +364,18 @@ func (a *actor) detach(c *room.Client) {
 	if i < 0 {
 		return
 	}
+	user := a.userOf(c)
 	a.conns = slices.Delete(a.conns, i, i+1)
-	if !a.connected(a.userOf(c)) {
+	delete(a.claims, c)
+	if !a.connected(user) {
 		a.broadcastExcept(a.newBroadcast(false), nil)
 		a.checkRoles()
 	}
+	a.dropped()
+}
+
+// dropped settles the bots and the idle clock after connections left.
+func (a *actor) dropped() {
 	if !a.humanAttached() {
 		a.stopBots()
 	}
@@ -510,6 +568,16 @@ func (a *actor) inbound(c *room.Client, f wire.ClientMessage) {
 		a.role(c, f)
 	case wire.TableResign:
 		a.resign(c, f)
+	case wire.PlatformLink:
+		a.link(c, f.Seat, false)
+	case wire.PlatformRelink:
+		a.link(c, f.Seat, true)
+	case wire.Link:
+		a.link(c, f.Seat, false)
+	case wire.Relink:
+		a.link(c, f.Seat, true)
+	case wire.Rematch:
+		a.rematch(c)
 	case wire.Resync:
 		c.Out.Push(a.newBroadcast(false).frame(c, nil, true))
 	default:
@@ -720,7 +788,8 @@ func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
 		if a.seatOf(target) >= 0 || !a.connected(target) {
 			return a.refuse(c, f.Seq, "seat", f.Seat, outBad)
 		}
-		cand.Seats[f.Seat] = SeatRecord{Seat: f.Seat, Kind: SeatHuman, UserID: target, Name: a.nameOf(target), Taken: cand.Public + 1}
+		cand.Seats[f.Seat] = SeatRecord{Seat: f.Seat, Kind: SeatHuman, UserID: target, Name: a.nameOf(target),
+			Taken: cand.Public + 1, Epoch: cand.Public + 1}
 		entry.UserID = &target
 		secondHuman(&cand, target)
 	default:
@@ -860,7 +929,9 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 		return a.refuse(c, seq, op, seat, outStorage)
 	}
 	a.armRoles(next)
+	gone := a.revokeClaims()
 	a.publish(a.newBroadcast(resolved), c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})
+	a.afterRevoke(gone)
 	a.stopBots()
 	a.kickBots()
 	outcome := outAccepted
