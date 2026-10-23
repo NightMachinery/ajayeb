@@ -1,10 +1,11 @@
 package rules
 
 import (
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/view"
 	"reflect"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/view"
 )
 
 func observationBatch(g Game, seed uint64) Batch {

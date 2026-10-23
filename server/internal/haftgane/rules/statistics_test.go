@@ -1,8 +1,9 @@
 package rules
 
 import (
-	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 )
 
 // Section 10's notebook: bounds concern remembered packets, not an estimate of
@@ -101,7 +102,7 @@ func TestNotebookDoesNotCountPacketTwice(t *testing.T) {
 		t.Fatal("latest sighting must replace same packet", s)
 	}
 	o.Now.Phase = PhaseLastCard
-	if o.Statistics() != (Statistics{}) {
+	if s := o.Statistics(); s.Circulating != ([catalog.NumColors]Bounds{}) || s.Returning != ([catalog.NumDesigns + 1]Bounds{}) {
 		t.Fatal("nothing circulates after turn six")
 	}
 	o.Now.Phase, o.Now.Seat = PhaseTurn, NoSeat

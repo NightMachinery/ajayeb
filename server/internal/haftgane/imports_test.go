@@ -21,6 +21,11 @@ var policy = puritycheck.Config{
 			"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng",
 		}},
 		{Dir: "view"},
+		{Dir: "bot", Allowed: []string{
+			"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules",
+			"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog",
+			"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng",
+		}},
 		{Dir: "fakeengine", Allowed: []string{
 			"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine/fakeview",
 		}},

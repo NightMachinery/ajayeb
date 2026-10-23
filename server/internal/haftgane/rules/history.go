@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
-
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/view"
 )
 
@@ -53,13 +52,18 @@ func (g *Game) walkRecord(visit recordVisitor) error {
 	if g.State.Points > MaxPoints {
 		return fmt.Errorf("rules: history exceeds point bound")
 	}
+	// Visitor pointers borrow these reusable values until the callback returns.
+	var before, next State
+	var picks [MaxSeats]Action
+	var buf [64]Event
+	var events []Event
 	for step := uint16(0); step < g.State.Points; step++ {
-		before := st
+		before = st
 		point := (&Game{State: st}).Point()
 		if point.Kind == PointNone {
 			return fmt.Errorf("rules: history continues past game end")
 		}
-		var picks [MaxSeats]Action
+		picks = [MaxSeats]Action{}
 		for seat := Seat(0); seat < Seat(st.Seats); seat++ {
 			if !point.Required.Has(seat) {
 				continue
@@ -77,8 +81,7 @@ func (g *Game) walkRecord(visit recordVisitor) error {
 				return fmt.Errorf("rules: incomplete record at %s seat %d", point.ID(), seat)
 			}
 		}
-		var buf [32]Event
-		next, events, err := ResolveState(&st, &picks, buf[:0])
+		next, events, err = ResolveState(&st, &picks, buf[:0])
 		if err != nil {
 			return fmt.Errorf("rules: history %s: %w", point.ID(), err)
 		}

@@ -1,7 +1,7 @@
 # Go -> TypeScript type generation. Run from server/: go tool tygo generate
 #
 # tygo writes one file per Go package and overwrites the output file on every
-# package, so the two packages need separate outputs. web/src/lib/wire/index.ts
+# package, so the packages need separate outputs. web/src/lib/wire/index.ts
 # (hand-written) re-exports both and holds the message unions.
 #
 # Conventions the Go types must follow (enforced by the wire hygiene test):
@@ -33,3 +33,8 @@ packages:
     exclude_files: [platform.go, table.go, lobby.go, platform_decode.go]
     frontmatter: |
       import type * as view from "./view.gen";
+  - path: github.com/NightMachinery/ajayeb/server/internal/haftgane/view
+    output_path: ../web/src/lib/wire/haftgane.gen.ts
+    indent: "  "
+    fallback_type: never
+    enum_style: union

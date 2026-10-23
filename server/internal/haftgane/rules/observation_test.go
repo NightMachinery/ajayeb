@@ -125,3 +125,32 @@ func TestFilteredEventWhitelist(t *testing.T) {
 		t.Fatal("empty event list must be nonnil")
 	}
 }
+
+func TestObservedSentinelsEveryViewer(t *testing.T) {
+	g, err := NewGame(Setup{Seats: 7, Seed: 41, Options: Options{Sides: SidesDay}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, viewer := range []Seat{0, 1, 2, 3, 4, 5, 6, NoSeat} {
+		a, b := g, g
+		// Invalid sentinels deliberately keep every public count unchanged.
+		a.State.Discard[1], a.State.Discard[2] = 2, 1
+		b.State.Discard[1], b.State.Discard[2] = 1, 2
+		b.State.Seed = ^a.State.Seed
+		for seat := Seat(0); seat < 7; seat++ {
+			if seat != viewer {
+				b.State.Hands[seat][0] = 80
+				b.State.Cities[seat].Tucked[0] = 79
+			}
+		}
+		b.State.Deals[1][0][0] = 78
+		b.State.BoxGuilds[0] = 77
+		if a.Observe(viewer) != b.Observe(viewer) {
+			t.Fatal("hidden sentinel entered normalized observation", viewer)
+		}
+		av, bv := a.ViewFor(viewer), b.ViewFor(viewer)
+		if !reflect.DeepEqual(av, bv) {
+			t.Fatal("hidden sentinel entered view", viewer)
+		}
+	}
+}

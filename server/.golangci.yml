@@ -73,6 +73,7 @@ linters:
             - "**/internal/haftgane/catalog/**"
             - "**/internal/haftgane/rules/**"
             - "**/internal/haftgane/view/**"
+            - "**/internal/haftgane/bot/**"
             - "!$test"
           deny:
             - pkg: time
@@ -149,6 +150,16 @@ linters:
             - $gostd
             - "github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog$"
             - "github.com/NightMachinery/ajayeb/server/internal/haftgane/view$"
+            - "github.com/NightMachinery/ajayeb/server/internal/enginekit/rng$"
+        haftgane-bot-module-allowlist:
+          list-mode: strict
+          files:
+            - "**/internal/haftgane/bot/**"
+            - "!$test"
+          allow:
+            - $gostd
+            - "github.com/NightMachinery/ajayeb/server/internal/haftgane/rules$"
+            - "github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog$"
             - "github.com/NightMachinery/ajayeb/server/internal/enginekit/rng$"
         dto-module-allowlist:
           list-mode: strict

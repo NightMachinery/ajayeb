@@ -2336,3 +2336,63 @@ ajayeb-drive table -seats 5 -race
 Duel's driver is unchanged: `main` dispatches a first argument `table` to
 the new subcommand, and every other invocation goes to the same `run` as
 before.
+
+
+## Haftgane views and permitted observations
+
+`make test-go GO_PKGS=./internal/haftgane/...` runs the view and observation
+acceptance tests with the rest of the engine. `TestViewPrivacyAndQuoteSweep`
+checks every seat and the spectator under both end policies at 1,194 positions
+in 60 complete games, covering every player count and side rule. Its independent
+screen model collects private hands, picks, pile looks and public plays when
+they become visible; it checks 7,204 serialized views, including notebook,
+offer and final-reveal entitlements. Negative fixtures inject an extra public
+building, another hand, a fabricated remembered hand, an unsolicited pile
+offer, premature reveal/download permission and a spectator private section.
+The model must reject each leak. DTO reflection and recursive value walks
+require explicit JSON tags, optional pointers only, non-nil slices and no
+seed or fingerprint fields. Hidden sentinels also leave every viewer's view
+and normalized observation unchanged.
+
+`TestReachableHiddenPlacePairs` and `TestReachableHiddenResolvedChoicePairs`
+start from valid materialized initial deals. Different unknown sales, tucked
+cards, other hands, future packets and boxed guilds leave the seat's normalized
+Current/Knowledge fields, encoding, observation fingerprint, notebook statistics
+and JSON view byte-identical; spectators agree too. Resolved sale/stage pairs
+are replayed and undo/redone from their own setups. A test-only observation
+Greedy witness exercises quotes and remembered bounds; shipping bot policies
+remain the bot milestone's work. The game has no pending-pick field, so room
+submission-order and draft/withdrawal privacy remain platform harness checks.
+
+On every sweep position and every seat, both quote paths are compared with
+`PaymentsState` for all 80 building costs and all 41 stage costs, including
+stages not at that table: 727,210 comparisons. An independent packet-label
+rotation checks that circulating bounds contain the actual consistent world
+and that every certain neighbour pick matches the resolved record. Hand-built
+notebook cases cover exact and at-most circulation/returns, ambiguous and
+certain neighbour picks, repeated packets, both pass directions and packets
+that cannot return. The later sampler gate enumerates all consistent worlds;
+this slice makes no sampling-distribution claim.
+
+`TestHistoryEqualsLiveFilteredStreams` compares the whole filtered stream at
+every prefix for all seats and the spectator, through 96 complete games and
+both end policies. The run includes 34 private pile looks and 44 kept-card
+points. A separate reachable empty-pile stage tests a skipped look. History
+includes Age I's start and never retroactively reveals private event identities.
+A partial-history scenario must fail closed rather than invent remembered cards.
+
+`TestHaftganeViewFixtures` pins seven compact raw JSON game bodies (65,633 bytes
+including newlines) under `internal/haftgane/rules/testdata/views/`, spanning
+sides, ordinary seat/spectator, discard build, kept card and both end policies.
+It also decodes them into the exported DTOs for platform consumption. After
+reviewing an intentional shape change, regenerate through the guard with
+`UPDATE_HAFTGANE_VIEWS=1 make test-go GO_PKGS=./internal/haftgane/rules GO_RUN=TestHaftganeViewFixtures`.
+`make gen` generates the separate Haftgane TypeScript DTO file. Package-local
+view and bot import/shape guards have explicit negative cases; the bot package
+currently reserves its observation-only boundary, with policies added later.
+
+`TestViewCapacityBytes` measures a conservative serialization stress with 217
+choices and seven-unit witnesses. It is not a reachable-city maximum or a cap.
+`BenchmarkCloneSeven`, `BenchmarkObserveSeven` and `BenchmarkViewForSeven` record
+seven-seat timings and allocations on the same Age III position, with no timing
+threshold. Current sizes and measurements are in [architecture.md](architecture.md).

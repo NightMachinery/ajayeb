@@ -28,15 +28,19 @@ type rememberedPacket struct {
 // unknown removals and at most min(count, packet size).
 func (o *Observation) Statistics() Statistics {
 	var out Statistics
-	if o == nil || !o.Now.Seat.Valid(o.Now.Seats) || o.Now.Age < 1 || o.Now.Age > NumAges || o.Now.Turn > TurnsPerAge || (o.Now.Phase != PhaseTurn && o.Now.Phase != PhaseDiscardBuild) {
+	if o == nil || !o.Now.Seat.Valid(o.Now.Seats) || o.Now.Age < 1 || o.Now.Age > NumAges || o.Now.Turn < 1 || o.Now.Turn > MaxTurns {
 		return out
 	}
 	c, k := &o.Now, &o.Know
 	age := c.Age - 1
-	resolved := c.Turn - 1
+	resolved := min(c.Turn-1, uint8(TurnsPerAge))
 	if c.Phase == PhaseDiscardBuild {
 		resolved = c.Turn
 	}
+	if c.Phase == PhaseLastCard || c.Phase == PhaseOver {
+		resolved = TurnsPerAge
+	}
+	o.neighbourDeductions(&out, resolved)
 	if resolved >= TurnsPerAge {
 		return out
 	} // Sixth-turn leftovers no longer circulate.
@@ -124,7 +128,6 @@ func (o *Observation) Statistics() Statistics {
 			}
 		}
 	}
-	o.neighbourDeductions(&out, resolved)
 	return out
 }
 func (b *Bounds) add(count, unknown, remaining uint8) {
@@ -191,9 +194,10 @@ func (o *Observation) neighbourDeductions(out *Statistics, resolved uint8) {
 		for t := first + 1; t < last; t++ {
 			holder = passTo(holder, c.Seats, c.Age)
 			play := k.Plays[age][t-1][holder]
-			if play.Kind == ActBuild {
+			switch play.Kind {
+			case ActBuild:
 				missing[play.Design]--
-			} else if play.Kind == ActStage || play.Kind == ActSell {
+			case ActStage, ActSell:
 				anonymous[count] = KnownPick{Age: c.Age, Turn: t, Seat: holder}
 				count++
 			}

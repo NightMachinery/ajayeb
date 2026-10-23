@@ -6,12 +6,26 @@ import "github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 // Every pile opportunity is captured after ordinary placements, before a
 // discard build, including the publicly skipped opportunity.
 func (g *Game) knowledge(viewer Seat) Knowledge {
+	out, _ := g.readKnowledge(viewer, nil)
+	return out
+}
+
+// Presentation may consume the same walk to collect public latest plays and
+// filtered events, without another replay or a retained history allocation.
+func (g *Game) readKnowledge(viewer Seat, extra recordVisitor) (Knowledge, error) {
 	var out Knowledge
-	if g == nil || !viewer.Valid(g.State.Seats) {
-		return out
+	if g == nil {
+		return out, nil
 	}
+	seated := viewer.Valid(g.State.Seats)
 	looks := 0
-	err := g.walkRecord(func(before *State, picks *[MaxSeats]Action, after *State, _ []Event) {
+	err := g.walkRecord(func(before *State, picks *[MaxSeats]Action, after *State, evs []Event) {
+		if extra != nil {
+			extra(before, picks, after, evs)
+		}
+		if !seated {
+			return
+		}
 		switch before.Phase {
 		case PhaseTurn, PhaseLastCard:
 			age, turn := before.Age-1, before.Turn-1
@@ -50,7 +64,7 @@ func (g *Game) knowledge(viewer Seat) Knowledge {
 		}
 	})
 	if err != nil {
-		return Knowledge{}
+		return Knowledge{}, err
 	}
-	return out
+	return out, nil
 }

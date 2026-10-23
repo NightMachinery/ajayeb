@@ -335,7 +335,7 @@ records the rulings and the fixtures' normalisations.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
 points. It contains setup, the seat ring, canonical keys, turn legality,
-resolution and replay. Views and bots follow in later slices. Left is the next seat modulo the seat count, and right is the previous.
+resolution, replay, whitelisted views and immutable observations. Bot policies follow in the bot milestone. Left is the next seat modulo the seat count, and right is the previous.
 Public plays and private picks have separate record arrays. Events have typed
 source fields and no raw key.
 Point ids are computed from kind, Age and turn; pending choices stay in the room.
@@ -430,7 +430,7 @@ owner's wonder side. Points follow the holder's category, while science always
 scores in green, including the Scientists Guild and Babylon's stage. Science
 tries all distributions of choice symbols and maximises squares plus seven
 per complete set. Equal optima prefer compass, then gear; the derived assignment
-and final symbol counts are available to the later view layer. An independent
+and final symbol counts appear in each public city view. An independent
 oracle checks every ordered assignment for fixed counts 0 to 7 and up to seven
 choices (real cities have at most two).
 
@@ -456,8 +456,8 @@ An empty or all-duplicate pile emits `EvDiscardBuildNothing` and continues.
 Discard points and rebuild records require the corresponding discard stage
 play. Legal, resolution and invariants share the same pile/name predicate.
 The stage play and its rebuilt/no-build outcome identify every pile look for
-history reconstruction, including skipped searches. Private pile views and
-knowledge reconstruction belong to the later view layer.
+history reconstruction, including skipped searches. Private pile offers and
+remembered looks appear only in the owner's view.
 
 Babylon's kept-card point follows that discard opportunity and precedes
 military. Only its owner acts, using a fresh frozen position: sixth-turn income
@@ -477,8 +477,71 @@ The rules now resolve complete games without a deferred ability path. Seeded
 games check scores, conservation, record shape, replay and reversed seat order;
 forced scenarios check all 41 stages and both skipped-pile outcomes immediately
 at ability boundaries. Production release still needs the independent rules
-review and acceptance gate, viewer redaction/knowledge views, and the later
-actor, persistence and client integration slices.
+review and acceptance gate, followed by the real-engine actor, persistence
+and client integration slices.
+
+`Observe(seat)` builds a fixed, comparable whitelist: public cities without
+production caches, this seat's sorted hand, tucked and kept cards, an offer
+only at its own discard point, and the seat's historical `Knowledge`.
+`Project(state, seat)` supplies the same current-position fields to sampled
+search without reading a record. `o.Quote(seat, cost)` rebuilds public city
+caches and uses the ordinary solver for any seat. The explicit field-order
+little-endian observation encoding is 1,693 bytes; its FNV fingerprint remains
+internal and never appears in a view, event, ordinary log or download.
+
+Knowledge belongs to the seat. It contains its own held hands and picks,
+everyone's public plays and rebuilds, and its own pile opportunities, including
+an empty or all-duplicate skipped search. The notebook exposes these sightings
+and conservative statistics for the current Age. A named public construction
+removes that design from a remembered packet; a sale or stage removes one
+unknown card. Per-colour and returning-design counts carry `certain` and
+`atMost` bounds. A returned packet identifies a neighbour's private pick only
+when every unexplained missing copy has the same design. A newer sighting
+replaces the earlier packet, so a second circuit never counts it twice.
+Statistics read the observation alone. Past deductions remain remembered when
+no packet can circulate or return before the Age ends.
+
+`ViewFor(seat)` produces `view.Table`, with a private `you` section only for a
+valid seat. Public fields include each city's running score and optimal science
+assignment, relative seat positions, latest public play and hand/kept counts.
+Each neighbour panel includes fixed saleable units and separate shared choice
+symbols, the viewer's unit prices and discount source, and the Age's conflict
+token if military resolved now. Choices carry effective printed/trade totals,
+free reasons and canonical producer witnesses. Disabled constructions distinguish
+`already-built`, `wonder-complete`, `cannot-cover` and `insufficient-coins`;
+the last includes the exact shortfall. Offers list every pile design and mark
+which names are legal. Every DTO slice is non-nil, every field has an explicit
+JSON name, and only pointer fields use `omitempty`.
+
+`FilterEvents` selects fields by event kind, action and coin source, regardless
+of the raw event's `Private` assertion; unknown kinds are dropped. `History`
+replays materialized entered packets and public setup facts, rebuilding every
+batch from the record without regenerating randomness from a seed. Its stream
+includes Age I's `age-start`, even for day/random setup, and preserves live
+privacy after the game ends. The same bounded walk builds Knowledge, latest
+plays and view events using reusable scratch. Explicit scenarios with missing
+past picks have no reconstructable history: `History` returns an error and an
+empty list, while `Observe`/`ViewFor` keep current facts but omit historical
+knowledge and events. They never invent a past.
+
+With the default end policy, final views reveal all tucked cards, every
+sixth-turn leftover (including a card kept and later played), the pile and the
+box. `HideAtEnd` retains running-game privacy. `canDownload` exposes only the
+end-policy permission; the platform owns log generation. There is no download
+payload or seed field in these engine DTOs. The platform can embed the seven
+raw JSON fixtures in `rules/testdata/views/`; `tygo` generates their types into
+`web/src/lib/wire/haftgane.gen.ts`.
+
+Measurements on Apple M2 (three runs, 2026-10-23) cover seven seats per operation
+at Age III turn 4. Seven `Clone` calls take 213 to 228 ns with zero allocations;
+seven `Observe` calls take 199 to 219 microseconds, 24,528 bytes and 28 allocations;
+seven `ViewFor` calls take 423 to 529 microseconds, about 180,208 bytes and 923
+allocations. These are measurements, not timing gates. The acceptance sweep's
+largest reachable JSON view is 25,789 bytes across 7,204 views. A deliberately
+unreachable serialization stress combines 217 keys, seven witness units per
+key, a full notebook and three full pile looks, and measures 185,536 bytes.
+The earlier 24 KB design estimate is not a bound or a transport cap; the
+release gate must measure actual catalog maxima before freezing view limits.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen
