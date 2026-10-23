@@ -176,8 +176,9 @@ browser fetches and caches one file for both games. While the target is
 not approved the alias has no entry, and the app draws its placeholder,
 as it does for any asset without approved art.
 
-A non-Duel game's index is a new `*.gen.ts` file, which only the
-coordinator commits (AGENTS.md "Commits"). The tests in
+A non-Duel game's index is a `*.gen.ts` file, which only the coordinator
+commits, or a slice it delegates that file to (AGENTS.md "Commits"); the
+Haftgane pilot (M19.bitmaps-pilot) created Haftgane's. The tests in
 `web/src/lib/art/art-games.test.ts` run the whole pipeline for a fixture
 Haftgane asset beside a same-slug Duel asset, in a throwaway tree named by
 `AJAYEB_ART_ROOT` (the art data's root; the repository by default).
