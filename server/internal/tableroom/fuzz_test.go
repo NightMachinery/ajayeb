@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
@@ -139,6 +140,14 @@ type sentSub struct {
 	sub tabletest.Submission
 }
 
+// fuzzWait bounds one fuzz input. An input of 200 operations runs in
+// milliseconds, so an operation that never returns fails here, its input
+// saved and named by step and operation, instead of outliving -fuzztime.
+const fuzzWait = 5 * time.Second
+
+// fuzzOps names the operations for failure messages.
+var fuzzOps = [...]string{"pick", "resend", "old reference", "undo", "restart", "reattach", "confirm all", "second tab or bot", "new tab"}
+
 func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	n := MinSeats + int(shape&0x0f)%(MaxSeats-MinSeats+1)
 	solo := mode&1 == 1
@@ -155,7 +164,14 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 			sp.Seed, sp.Prefix = &b.seed, b.prefix
 		}
 	}
-	ctx := testContext(t)
+	step, opName := -1, "setup"
+	defer func() {
+		if t.Failed() {
+			t.Logf("failed at step %d (%s): %d seats, solo %t, opening %s, seq memory %d, floors %d",
+				step, opName, n, solo, kind, cfg.SeqClients, cfg.PickClients)
+		}
+	}()
+	ctx := testContextFor(t, fuzzWait)
 	fx := newFixtureOn(t, cfg, true)
 	p, err := fx.openInproc(ctx, sp)
 	if err != nil {
@@ -279,6 +295,7 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 
 	for i := 0; i+1 < len(ops); i += 2 {
 		op, arg := ops[i]%9, int(ops[i+1])
+		step, opName = i/2, fuzzOps[op]
 		ids := slices.Sorted(maps.Keys(p.clients))
 		switch op {
 		case 0: // a pick, change or confirmation from any client
