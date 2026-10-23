@@ -40,7 +40,7 @@ BENCH_ARGS ?=
 GEN_ARGS ?=
 VERSION = $(shell git describe --always --dirty 2>/dev/null || echo dev)
 
-RACE_DIRS := internal/room internal/ws
+RACE_DIRS := internal/room internal/ws internal/tableroom
 PNPM_FROZEN := $(if $(wildcard pnpm-lock.yaml),--frozen-lockfile)
 E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 
@@ -144,13 +144,13 @@ test-go: ## Go tests with -shuffle=on (AJAYEB_SWEEP games in the playout sweep, 
 	AJAYEB_SWEEP=$(AJAYEB_SWEEP) $(HEAVY) run --kind test -- \
 	  go -C server test -shuffle=on -timeout $(TEST_TIMEOUT) $(if $(GO_RUN),-run '$(GO_RUN)') $(GO_PKGS)
 
-test-race: ## go test -race on internal/room and internal/ws (skipped while they have no tests)
+test-race: ## go test -race -short on RACE_DIRS: the room, ws and tableroom packages (-short skips timing tests and the exhaustive arrival orders, which verify-quick runs)
 	@pkgs=; for d in $(RACE_DIRS); do \
 	  if [ -n "$$(find server/$$d -name '*_test.go' 2>/dev/null | head -n 1)" ]; then pkgs="$$pkgs ./$$d/..."; fi; \
 	done; \
 	if [ -z "$$pkgs" ]; then echo "test-race: no tests under $(RACE_DIRS) yet, skipping"; exit 0; fi; \
-	echo "go -C server test -race$$pkgs"; \
-	AJAYEB_SWEEP=$(AJAYEB_SWEEP) $(HEAVY) run --kind test -- go -C server test -race -timeout $(TEST_TIMEOUT) $$pkgs
+	echo "go -C server test -race -short$$pkgs"; \
+	AJAYEB_SWEEP=$(AJAYEB_SWEEP) $(HEAVY) run --kind test -- go -C server test -race -short -timeout $(TEST_TIMEOUT) $$pkgs
 
 test-haftgane-payment-exhaustive: ## The opt-in exhaustive sweep of Haftgane's payment solver against its oracle (about 9 minutes)
 	HAFTGANE_PAYMENT_EXHAUSTIVE=1 $(HEAVY) run --kind test -- \
@@ -164,7 +164,7 @@ build-server: ## The Go server without the embedded web build, at server/bin/aja
 	$(HEAVY) run --kind build -- go -C server build -o bin/ajayeb ./cmd/ajayeb
 
 fuzz: ## Fuzz FUZZ (default FuzzPlayout) in FUZZ_PKG (default ./internal/engine) for FUZZTIME (default 5m), under nice 10
-	$(HEAVY) run --kind fuzz -- go -C server test -run '^$$' -fuzz '^$(FUZZ)$$' -fuzztime $(FUZZTIME) -parallel 2 $(FUZZ_PKG)
+	$(HEAVY) run --kind fuzz -- go -C server test -run '^$$' -fuzz '^$(FUZZ)$$' -fuzztime $(FUZZTIME) -fuzzminimizetime 10s -parallel 2 $(FUZZ_PKG)
 
 bench: ## The AI tournament bench (ajayeb-sim bench), under nice 10
 	$(HEAVY) run --kind bench -- go -C server run ./cmd/ajayeb-sim bench $(BENCH_ARGS)
@@ -245,7 +245,7 @@ test-tools: ## Browser-free screenshot tool CLI argument and diagnostic tests
 
 verify-quick: fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-web check-web test-web test-py test-tools vec-lint ## gofmt, go mod tidy, go vet, golangci-lint, gen-check, Go tests (sweep 300), web lint, svelte-check, vitest, Python tests, tool CLI tests, icon lint
 
-verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room and ws, the release build and the e2e smoke
+verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room, ws and tableroom, the release build and the e2e smoke
 
 verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, the payment solver's exhaustive sweep, every e2e spec and the screenshot matrix
 	$(MAKE) --no-print-directory test-go AJAYEB_SWEEP=5000 TEST_TIMEOUT=90m
