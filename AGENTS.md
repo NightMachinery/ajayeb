@@ -19,6 +19,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 - `server/internal/enginekit`: infrastructure shared by the game engines (Duel's now, Haftgane's from M15), such as the test-only purity guards (`puritycheck`), the three-way catalog data check (`catalogdiff`), and the seeded generator and byte digest (`rng`).
 - `server/internal/view` and `server/internal/wire`: the DTO and message types that `tygo` turns into TypeScript.
 - `server/internal/{ai, room, store, ident, ws, httpapi, webdist}`: bots, room actors, persistence, identity, transport, HTTP endpoints, the embedded web build.
+- `server/internal/tableroom` and `server/internal/tabletest`: Haftgane's table actor (its room kind, schema-2 record, frames and bots), and its N-seat test driver, reference model, failure fixtures and leak oracle.
 - `server/cmd/{ajayeb, ajayeb-sim, ajayeb-drive, ajayeb-gen}`: the server, the simulator, the WebSocket game driver, the code generator.
 - `web/`: the SvelteKit client. `web/src/lib/wire/*.gen.ts` is generated; never edit it by hand.
 - `e2e/`: Playwright playthroughs (`specs/`), their shared helpers (`fixtures/`), and the opt-in `ux` project (`ux/`, run by `make shots`) that captures the review loop's screenshot set with its probes and budgets. One-off screenshots and layout probes come from `tools/chrome/`.
