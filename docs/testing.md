@@ -216,6 +216,12 @@ canonical history is the `ajayeb-log/2` download.
   viewer's snapshot agrees (each seat's two tabs and the spectator: the
   point, required and confirmed seats, offer, pick and confirmation), the
   final canonical bytes agree, and duplicates and stale seqs both occur.
+  `TestDifferentialSwitches` does the same around seat switches, which the
+  model plays through `direct.Switch`: the spectator takes a seat at one
+  point, and at the next a seat goes to a bot halfway through the arrivals
+  (confirming a kept pick at least once) and back to its human after them;
+  the former controllers' picks are forbidden in both, and the switches'
+  own outcomes agree.
 - `actor_test.go` covers the refusal order, private edits that change no
   other connection's frame (revision included), two tabs and forgotten seqs
   (the pick's floor answers a forgotten seq as a duplicate or stale, seq 0
