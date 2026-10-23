@@ -1,5 +1,8 @@
 # The bots
 
+This page covers Duel. [Haftgane baseline bots](haftgane/ai.md) document the
+separate observation-only policies and their versioned work rows.
+
 Ajayeb's bots live in `server/internal/ai`, on the server, next to the rules engine. A room with a bot seat asks the bot for a move whenever that seat must decide, exactly as it would wait for a human. This page explains how the bots choose, what each difficulty level searches, how strong the levels measured, what a move costs in time and memory, and how to rerun the measurements.
 
 ## What a bot sees

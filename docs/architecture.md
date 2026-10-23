@@ -43,7 +43,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 
 - **`internal/engine/catalog`**: the typed card, wonder and token data and the small effect language used to describe them. Numeric ids follow a public reference numbering (cards 1 to 73, wonders 1 to 12, tokens 1 to 10) and travel on the wire as kebab-case slugs.
 - **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`, and `ViewWithHints` with the hints of `hints.go`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog`, the view types and shared deterministic helpers in `enginekit`.
-- **`internal/enginekit`**: shared deterministic infrastructure. `rng` owns the value PCG generator, bounded draws, Fisher-Yates shuffle and FNV-1a byte digest with fixed-width hex formatting. Duel keeps its RNG names through aliases and wrappers and owns its state/catalog encoding and hashed prefix. `puritycheck` and `catalogdiff` are test-only helpers for source/shape guards and three-way catalog verification.
+- **`internal/enginekit`**: shared deterministic infrastructure. `rng` owns the value PCG generator, bounded draws, Fisher-Yates shuffle, the policy seed mixer and FNV-1a byte digest with fixed-width hex formatting. Duel keeps its RNG names through aliases and wrappers and owns its state/catalog encoding and hashed prefix. `puritycheck` and `catalogdiff` are test-only helpers for source/shape guards and three-way catalog verification.
 - **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below). Its `Pool` bounds the searches running at once and shares them fairly between client addresses, so one address's many bot rooms cannot hold up another's bot.
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
@@ -744,6 +744,13 @@ allocation, below its 0.2-millisecond target. The impossible fixture has seven
 units per cost and only six shared flexible symbols, so every construction is
 refuted and only 49 sales remain across all seats. These capacity cases are
 synthetic stress fixtures, not claims of reachable cities.
+
+Haftgane's baseline policies live in `internal/haftgane/bot`. Each receives
+only its observation, exact offered choices, independent policy entropy and
+a fixed per-bot work row. Public facts and isolated offered-choice previews
+keep exact score, payment and placement logic in the engine. Forward-looking
+features remain policy estimates. [The Haftgane AI page](haftgane/ai.md)
+documents Random, Greedy, Apprentice and their exact Greedy fallback.
 
 The shared `enginekit/puritycheck` and strict depguard allow-lists enforce
 exact module dependencies for each pure package: the catalog can use only
