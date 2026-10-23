@@ -54,6 +54,13 @@ type Record struct {
 	Start []StartSlot `json:"start"`
 	// Successor is the code of the rematch's lobby, once one was made.
 	Successor string `json:"successor"`
+	// Reserved is the code a rematch wrote down for its lobby before
+	// making it, and Rematcher the original human who asked, its creator.
+	// A retry after a refused write or a crash, by anyone who played,
+	// makes or finds that same lobby, so a table has one successor. Both
+	// are empty once Successor is set.
+	Reserved  string `json:"reserved"`
+	Rematcher string `json:"rematcher"`
 	// Roles are the table's roles (package roles), carried on from the
 	// lobby at Start.
 	Roles roles.Roles `json:"roles"`
@@ -654,6 +661,10 @@ func checkStart(r *Record) error {
 		return invalid("the starting human count")
 	case r.Successor != "" && (r.Status == store.StatusPlaying || store.ValidateCode(r.Successor) != nil || r.Successor == r.Code):
 		return invalid("the successor")
+	case r.Reserved == "" && r.Rematcher != "",
+		r.Reserved != "" && (r.Status == store.StatusPlaying || r.Successor != "" || store.ValidateCode(r.Reserved) != nil ||
+			r.Reserved == r.Code || !slices.ContainsFunc(r.Start, func(s StartSlot) bool { return s.UserID != "" && s.UserID == r.Rematcher })):
+		return invalid("the reserved successor")
 	}
 	return nil
 }

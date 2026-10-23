@@ -20,17 +20,22 @@ import (
 )
 
 // stubSuccessors makes a rematch without a lobby kind: the same valid
-// code every time, each request kept.
+// code every time, each request to make it kept.
 type stubSuccessors struct {
 	mu   sync.Mutex
 	made []Rematch
 }
 
-func (s *stubSuccessors) Rematch(_ *room.Manager, r Rematch) (string, error) {
+func (s *stubSuccessors) Reserve(*room.Manager) (string, error) { return "RMATCH", nil }
+
+func (s *stubSuccessors) Rematch(_ *room.Manager, code string, r Rematch) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if code != "RMATCH" {
+		return ErrCodeTaken
+	}
 	s.made = append(s.made, r)
-	return "RMATCH", nil
+	return nil
 }
 
 // tabClient is seat 0's second tab: the same user on another client.

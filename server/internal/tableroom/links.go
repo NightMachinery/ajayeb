@@ -101,10 +101,12 @@ func (a *actor) afterRevoke(gone []string) {
 	a.dropped()
 }
 
-// Rematch is a finished table's successor lobby: its Start slots in lobby
-// order (each human's to be reserved for them, the bots kept), the options
-// and the requester, its creator and only admin.
+// Rematch is a finished table's successor lobby: the table it follows,
+// its Start slots in lobby order (each human's to be reserved for them,
+// the bots kept), the options and the requester, its creator and only
+// admin.
 type Rematch struct {
+	Parent      string
 	Creator     string
 	Slots       []StartSlot
 	LobbyOrder  bool
@@ -112,10 +114,16 @@ type Rematch struct {
 	FinalReveal bool
 }
 
-// Successors makes a finished table's rematch lobby (package lobbyroom)
-// and returns its code.
+// ErrCodeTaken: another room holds the code a rematch reserved.
+var ErrCodeTaken = errors.New("tableroom: the reserved successor code is another room's")
+
+// Successors makes a finished table's rematch lobby (package lobbyroom).
+// Reserve returns a fresh code for it, which the table writes down first.
+// Rematch then makes the lobby under that code, or finds the one an
+// earlier attempt for the same parent made, or answers ErrCodeTaken.
 type Successors interface {
-	Rematch(m *room.Manager, r Rematch) (string, error)
+	Reserve(m *room.Manager) (string, error)
+	Rematch(m *room.Manager, code string, r Rematch) error
 }
 
 // SetSuccessors gives the tables the lobby kind that makes their rematch
@@ -133,15 +141,19 @@ func (t *Tables) successors() Successors {
 }
 
 // rematch answers a rematch request from an original participant of a
-// finished table with its one successor lobby, made by the first request
-// and persisted, so every later request answers the same code. A new
-// successor's code goes to every connection in a created frame, the
-// requester's included; a repeated request's to the requester alone.
-// A connection that joined with an original human's claim also receives
-// that human's claim in the successor, where their slot is reserved.
-// Making the successor counts against the requester's room-creation
-// limits (room.Client.AllowCreate), as Duel's rematch does; a repeated
-// request creates nothing and does not.
+// finished table with its one successor lobby, in three writes: the
+// table reserves a fresh code (Reserved, with the requester as
+// Rematcher), the lobby is made under it, recording this table as its
+// parent, and the table records it as its Successor. A request after a
+// refused write or a crash between them, by any original participant,
+// goes on from the reservation, so the table never has two successors;
+// one after the last write answers the same code. A new successor's code
+// goes to every connection in a created frame, the requester's included;
+// a repeated request's to the requester alone. A connection that joined
+// with an original human's claim also receives that human's claim in the
+// successor, where their slot is reserved. Reserving the code counts
+// against the requester's room-creation limits (room.Client.AllowCreate),
+// as Duel's rematch does; going on from a reservation does not.
 func (a *actor) rematch(c *room.Client) string {
 	r := &a.st.rec
 	user := a.userOf(c)
@@ -158,12 +170,34 @@ func (a *actor) rematch(c *room.Client) string {
 	if succ == nil {
 		return a.refuse(c, 0, "rematch", -1, outBad)
 	}
-	if c.AllowCreate != nil && !c.AllowCreate() {
-		return a.refuse(c, 0, "rematch", -1, outRate)
+	if r.Reserved == "" {
+		if c.AllowCreate != nil && !c.AllowCreate() {
+			return a.refuse(c, 0, "rematch", -1, outRate)
+		}
+		code, err := succ.Reserve(a.m)
+		if err != nil {
+			a.t.log.Warn("table rematch failed", "room", a.code, "err", err)
+			return a.refuse(c, 0, "rematch", -1, outStorage)
+		}
+		cand := r.clone()
+		cand.Reserved, cand.Rematcher = code, user
+		if err := a.commit("rematch", cand, a.st.game); err != nil {
+			return a.refuse(c, 0, "rematch", -1, outStorage)
+		}
+		r = &a.st.rec
 	}
-	code, err := succ.Rematch(a.m, Rematch{Creator: user, Slots: slices.Clone(r.Start),
+	code := r.Reserved
+	err := succ.Rematch(a.m, code, Rematch{Parent: a.code, Creator: r.Rematcher, Slots: slices.Clone(r.Start),
 		LobbyOrder: !r.Setup.RandomSeating, AllowUndo: r.AllowUndo, FinalReveal: !r.Setup.HideAtEnd})
 	switch {
+	case errors.Is(err, ErrCodeTaken):
+		// Another room took the code first: forget it, so the next
+		// request reserves another.
+		cand := r.clone()
+		cand.Reserved, cand.Rematcher = "", ""
+		_ = a.commit("rematch", cand, a.st.game)
+		a.t.log.Warn("table rematch code taken", "room", a.code)
+		return a.refuse(c, 0, "rematch", -1, outStorage)
 	case errors.Is(err, room.ErrForbidden):
 		return a.refuse(c, 0, "rematch", -1, outForbidden)
 	case err != nil:
@@ -171,7 +205,7 @@ func (a *actor) rematch(c *room.Client) string {
 		return a.refuse(c, 0, "rematch", -1, outStorage)
 	}
 	cand := r.clone()
-	cand.Successor = code
+	cand.Successor, cand.Reserved, cand.Rematcher = code, "", ""
 	if err := a.commit("rematch", cand, a.st.game); err != nil {
 		return a.refuse(c, 0, "rematch", -1, outStorage)
 	}

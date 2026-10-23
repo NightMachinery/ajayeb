@@ -83,6 +83,9 @@ type Record struct {
 	Seqs     []SeqRecord `json:"seqs"`
 	// RoomLog is the public log of role changes, at most maxRoomLog.
 	RoomLog []wire.PlatformLogEntry `json:"roomLog"`
+	// Parent is the finished table whose rematch made this lobby, or "".
+	// A retried rematch finds its lobby by it (Lobbies.Rematch).
+	Parent string `json:"parent"`
 }
 
 // Slot is one lobby slot. Taken is the revision when its human took it,
@@ -247,6 +250,9 @@ func validate(r *Record, acks int) error {
 	}
 	if !validOptions(r.Options) {
 		return invalid("the options")
+	}
+	if r.Parent != "" && (store.ValidateCode(r.Parent) != nil || r.Parent == r.Code) {
+		return invalid("the parent")
 	}
 	if r.Roles.Valid() != nil {
 		return invalid("the roles")

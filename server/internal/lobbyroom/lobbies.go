@@ -52,6 +52,7 @@ type Storage interface {
 	LoadGame(code, game string, assess func(data []byte) (store.Assessment, error)) ([]byte, error)
 	SaveGame(code, game string, data []byte) error
 	PeekGame(code, game string) ([]byte, bool, error)
+	Exists(code string) (bool, error)
 }
 
 // Config holds the lobbies' dependencies and limits.
@@ -142,6 +143,7 @@ func (unbound) LoadGame(string, string, func([]byte) (store.Assessment, error)) 
 }
 func (unbound) SaveGame(string, string, []byte) error         { return errUnbound }
 func (unbound) PeekGame(string, string) ([]byte, bool, error) { return nil, false, errUnbound }
+func (unbound) Exists(string) (bool, error)                   { return false, errUnbound }
 
 // create answers lobby-create: a lobby of the requested seat count and
 // options, the creator in its first slot and its one real admin. The
@@ -159,12 +161,27 @@ func (l *Lobbies) create(m *room.Manager, c *room.Client, msg wire.ClientMessage
 	return l.save(m, r)
 }
 
-// Rematch makes a finished table's successor lobby (tableroom.Successors):
-// the old seat count, options and Start-time bots, each original human's
-// slot reserved for them, and the requester its creator and only admin.
-func (l *Lobbies) Rematch(m *room.Manager, rm tableroom.Rematch) (string, error) {
+// Reserve returns a fresh code for a finished table's rematch lobby
+// (tableroom.Successors), which the table writes down before Rematch
+// makes the lobby.
+func (l *Lobbies) Reserve(m *room.Manager) (string, error) {
 	if !l.cfg.Creation {
 		return "", room.ErrForbidden
+	}
+	return m.FreshCode()
+}
+
+// Rematch makes a finished table's successor lobby under the code the
+// table reserved (tableroom.Successors): the old seat count, options and
+// Start-time bots, each original human's slot reserved for them, the
+// requester its creator and only admin, and the table its parent. When
+// an earlier attempt for the same parent already wrote it, Rematch finds
+// it and writes nothing; when another room has the code, it answers
+// tableroom.ErrCodeTaken. It only writes the record: the first join
+// loads the lobby, as after a restart.
+func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) error {
+	if !l.cfg.Creation {
+		return room.ErrForbidden
 	}
 	seating := "random"
 	if rm.LobbyOrder {
@@ -179,7 +196,39 @@ func (l *Lobbies) Rematch(m *room.Manager, rm tableroom.Rematch) (string, error)
 			r.Slots[i] = Slot{Kind: SlotBot, Bot: s.Bot}
 		}
 	}
-	return l.save(m, r)
+	r.Code, r.Parent = code, rm.Parent
+	now := l.cfg.Clock.Now().UTC()
+	r.Created, r.Updated = now, now
+	if rm.Parent == "" || validate(&r, l.cfg.SeqClients) != nil {
+		return room.ErrInvalidSpec
+	}
+	st := l.store()
+	data, _, err := st.PeekGame(code, Game)
+	switch {
+	case err == nil:
+		if old, err := decodeRecord(data); err == nil && old.Parent == rm.Parent {
+			return nil
+		}
+		return tableroom.ErrCodeTaken
+	case !errors.Is(err, fs.ErrNotExist):
+		// Another kind's room, or a file no lobby reads.
+		if exists, xerr := st.Exists(code); xerr != nil || !exists {
+			l.log.Warn("lobby rematch failed", "room", code, "err", err)
+			return room.ErrStorage
+		}
+		return tableroom.ErrCodeTaken
+	case m.Loaded(code):
+		return tableroom.ErrCodeTaken
+	}
+	if data, err = r.encode(); err == nil {
+		err = st.SaveGame(code, Game, data)
+	}
+	if err != nil {
+		l.log.Warn("lobby rematch failed", "room", code, "err", err)
+		return room.ErrStorage
+	}
+	l.log.Info("lobby created", "room", code, "seats", r.SeatCount, "parent", rm.Parent)
+	return nil
 }
 
 func newRecord(seats int, opts wire.LobbyOptions, creator string) Record {

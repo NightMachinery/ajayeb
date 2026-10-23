@@ -191,6 +191,25 @@ func (m *Manager) CreateHandle(kind string, build func(code string) (*Handle, er
 	return "", fmt.Errorf("%w: no free room code", ErrStorage)
 }
 
+// FreshCode returns a code that no room file has and no loaded room holds,
+// for a kind that writes a room's code down before it makes the room (a
+// finished table reserves its rematch lobby's). Nothing holds the code
+// for the caller: the kind checks it is still free when it makes the
+// room.
+func (m *Manager) FreshCode() (string, error) {
+	const attempts = 3
+	for range attempts {
+		code, err := m.cfg.Store.NewCode()
+		if err != nil {
+			return "", fmt.Errorf("%w: %v", ErrStorage, err)
+		}
+		if !m.Loaded(code) {
+			return code, nil
+		}
+	}
+	return "", fmt.Errorf("%w: no free room code", ErrStorage)
+}
+
 // Swap hands old's code to next, a handle of another registered kind for
 // the same code: the shared lobby's Start, which writes the started game's
 // record in place of the lobby's and passes its connections on. Swap
