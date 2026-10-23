@@ -2,7 +2,9 @@
   // M5.S05's screens, for a visual check in both themes: Home (with and
   // without a saved game to continue), the two new-game sheets, Settings,
   // the hot-seat pass-device interstitial, the sound board and the hint
-  // settings (Hints.svelte), and the tutorial's components (Tutorial.svelte).
+  // settings (Hints.svelte), the rules references of both games
+  // (Rules.svelte, HaftganeRules.svelte), and the tutorial's components
+  // (Tutorial.svelte).
   // No live connection: the
   // sheets' Start buttons are wired to a no-op here, same as the rest of
   // this gallery page's demo controls (see dev/gallery/+page.svelte).
@@ -12,6 +14,7 @@
   import NewGameSheet from '$lib/components/screens/NewGameSheet.svelte';
   import PassDevice from '$lib/components/screens/PassDevice.svelte';
   import Settings from '$lib/components/screens/Settings.svelte';
+  import HaftganeRules from './HaftganeRules.svelte';
   import Hints from './Hints.svelte';
   import Online from './Online.svelte';
   import Rules from './Rules.svelte';
@@ -145,6 +148,8 @@
   <Hints />
 
   <Rules />
+
+  <HaftganeRules />
 
   <Tutorial />
 </div>
