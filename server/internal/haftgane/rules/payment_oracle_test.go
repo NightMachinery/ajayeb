@@ -17,6 +17,15 @@ type oraclePairs [15][15]bool
 // coverage. Every affordable complete covering enters the dominance frontier,
 // including those buying units own production could have covered.
 func paymentOracle(in tradeInput) oraclePairs {
+	return paymentOraclePhysical(in, true)
+}
+
+// Equal unused masks in one city are interchangeable physical suppliers.
+// Explore one representative at each depth, but retain every producer bit so
+// two equal symbols can still cover two units. This removes only permutations
+// of identical symbols, not coverings, purchase pairs or duplicate capacity.
+// The uncollapsed traversal remains available for the equivalence test.
+func paymentOraclePhysical(in tradeInput, collapseIdentical bool) oraclePairs {
 	var demand []catalog.Resource
 	for r, n := range in.need {
 		for k := uint8(0); k < n; k++ {
@@ -53,9 +62,14 @@ func paymentOracle(in tradeInput) oraclePairs {
 				visit(at+1, left+dl, right+dr)
 				fixed[city][r]--
 			}
+			var seen [128]bool
 			for p, mask := range choices {
 				bit := uint16(1) << p
 				if used[city]&bit == 0 && mask.Has(r) {
+					if collapseIdentical && seen[mask] {
+						continue
+					}
+					seen[mask] = true
 					used[city] |= bit
 					visit(at+1, left+dl, right+dr)
 					used[city] &^= bit
@@ -429,4 +443,32 @@ func expandedPaymentProfiles(need [catalog.NumResources]uint8) []smallPaymentPro
 		}
 	}
 	return out
+}
+
+// Compare the original physical enumeration with its symmetry reduction on
+// duplicated and permuted suppliers. The full exhaustive small universe and
+// fuzz tests separately compare the reduced oracle with production.
+func TestPaymentOraclePhysicalSymmetry(t *testing.T) {
+	r := rand.New(rand.NewPCG(0x73796d6d65747279, 0x706879736963616c))
+	for k := 0; k < 1000; k++ {
+		in := randomTrade(r)
+		in.need = [catalog.NumResources]uint8{}
+		for j := r.IntN(5); j > 0; j-- {
+			in.need[r.IntN(7)]++
+		}
+		in.nOwnChoice = uint8(r.IntN(5))
+		for p := range in.nOwnChoice {
+			in.ownChoice[p] = catalog.Raw
+		}
+		for city := 0; city < 2; city++ {
+			in.nSellChoice[city] = uint8(r.IntN(4))
+			for p := range in.nSellChoice[city] {
+				in.sellChoice[city][p] = catalog.ResMask(3 + city*12)
+			}
+		}
+		if before, after := paymentOraclePhysical(in, false), paymentOraclePhysical(in, true); before != after {
+			t.Fatalf("symmetry changed outcomes input=%+v before=%v after=%v", in, before, after)
+		}
+	}
+	t.Log("1000 duplicated/permuted physical-supplier worlds preserve exact frontiers")
 }

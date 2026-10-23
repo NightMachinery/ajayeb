@@ -7,7 +7,7 @@ import (
 )
 
 func FuzzPayment(f *testing.F) {
-	for _, seed := range [][]byte{{}, {1, 2, 3}, {255, 128, 64, 32, 16, 8, 4, 2, 1}, make([]byte, 128)} {
+	for _, seed := range [][]byte{{}, {1, 2, 3}, {255, 128, 64, 32, 16, 8, 4, 2, 1}, make([]byte, 128), {207, 207, 207}, {207, 207, 207, 207, 56}} {
 		f.Add(seed)
 	}
 	f.Fuzz(func(t *testing.T, data []byte) {
