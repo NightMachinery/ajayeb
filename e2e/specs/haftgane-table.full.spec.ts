@@ -94,7 +94,7 @@ function consoleOf(page: Page): string[] {
   return lines;
 }
 
-test.describe('Haftgane table', { tag: ['@full', '@haftgane'] }, () => {
+test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
   test('picks change, survive a reload and a network blip, and stay private', async ({
     browser
   }, info) => {

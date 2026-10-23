@@ -1280,7 +1280,7 @@ and duration. For a bounded local run, select files with
 `make e2e PW_ARGS='specs/online.full.spec.ts'`. After a successful build,
 subsequent batches may use `E2E_BUILD=0` while those build inputs stay unchanged.
 
-### `haftgane-table.full.spec.ts` (`@full @haftgane`)
+### `haftgane-table.full.spec.ts` (`@full @haftgane-table`)
 
 A Haftgane table over the real server and the development screen, on
 desktop only, in three browser contexts. The creator opens
@@ -1300,7 +1300,7 @@ shown, and neither may appear in the creator's or the spectator's
 WebSocket frames, DOM, local or session storage, console, or
 `window.__ajayebTable` dump; and no frame of theirs carries a pending pick
 that is not their own. It runs in CI's shards but not in `make e2e-smoke`;
-run it alone with `make e2e GREP=@haftgane`.
+run it alone with `make e2e GREP=@haftgane-table`.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
