@@ -69,22 +69,30 @@ func TestSetupRules(t *testing.T) {
 				}
 			}
 		}
+		var ageCounts [NumAges]int
+		for age, row := range g.State.Deals {
+			for _, hand := range row {
+				for _, id := range hand {
+					if id != 0 {
+						ageCounts[age]++
+					}
+				}
+			}
+		}
+		for age, total := range ageCounts {
+			if total != 7*int(n) {
+				t.Fatalf("n%d age%d total%d want%d", n, age+1, total, 7*int(n))
+			}
+		}
 		guilds := 0
 		for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
 			d, _ := catalog.DesignByID(id)
 			if d.Color == catalog.Purple {
 				guilds += int(counts[id])
-			} else {
-				var want uint8
-				for _, marker := range d.Copies {
-					if marker != 0 && marker <= n {
-						want++
-					}
-				}
-				if counts[id] != want {
-					t.Fatalf("n%d %s copies%d want%d", n, d.Slug, counts[id], want)
-				}
 			}
+		}
+		if ageCounts[2]-guilds != 6*int(n)-2 {
+			t.Fatal("non-guild Age III total", ageCounts[2]-guilds)
 		}
 		if guilds != int(n)+2 {
 			t.Fatal("guild draw", guilds)

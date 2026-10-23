@@ -87,6 +87,7 @@ func scenarioPhases(t *testing.T) []Game {
 		}
 		last.State.Hands[seat] = [HandSize]catalog.DesignID{}
 	}
+	alignScenarioHistory(t, &last)
 	last, err = NewGameFromScenario(last.State.Seed, last.State.Opts, ScenarioFromGame(last))
 	if err != nil {
 		t.Fatal("last fixture", err)
@@ -117,6 +118,7 @@ func scenarioPhases(t *testing.T) []Game {
 		over.State.Deals[age] = [MaxSeats][HandSize]catalog.DesignID{}
 	}
 	over.State.Result = scoreResult(&over.State)
+	alignScenarioHistory(t, &over)
 	if err := over.CheckInvariants(); err != nil {
 		t.Fatal("over fixture", err)
 	}
@@ -259,6 +261,7 @@ func TestScenarioEveryTurnHandSize(t *testing.T) {
 						h[HandSize-1] = 0
 					}
 				}
+				alignScenarioHistory(t, &g)
 				if err := g.CheckInvariants(); err != nil {
 					t.Fatalf("n%d age%d turn%d: %v", n, age, turn, err)
 				}

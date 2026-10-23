@@ -180,7 +180,7 @@ func dealAge(g *Game, age uint8) error {
 		return fmt.Errorf("rules: invalid Age deal transition")
 	}
 	for s := uint8(0); s < g.State.Seats; s++ {
-		if _, err := checkIDs(g.State.Deals[age-1][s][:], age, HandSize); err != nil {
+		if err := checkIDs(g.State.Deals[age-1][s][:], age, HandSize); err != nil {
 			return err
 		}
 	}

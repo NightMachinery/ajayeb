@@ -364,7 +364,12 @@ invents missing cards or a play history. Scenarios may
 retain a partial history; the checker validates record shapes and placements,
 while full historical legality belongs to the later resolver and replay slice.
 `CheckInvariants` also checks city names, board and stage bounds, inactive
-slots, tokens, real final-score consistency and cache consistency. `Fingerprint` hashes an
+slots, balanced victory/defeat tokens, real final-score consistency and cache
+consistency. Known picks and current cards consume the multiset of their
+originating packet, following each Age's pass direction (the kept card stays
+with its sixth-turn packet). Point counts meet the phase minimum plus recorded
+ability points, and equal that count when all resolved ordinary picks are
+present. `Fingerprint` hashes an
 explicit 2,157-byte little-endian encoding of every State and Record field in
 declaration order, with one-byte booleans and no memory padding, through the
 shared FNV-1a digest and hex helper.

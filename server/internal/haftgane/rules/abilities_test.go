@@ -158,6 +158,7 @@ func abilityScenario(t *testing.T, age, turn uint8, specs [MaxSeats]wonderCity, 
 	}
 	g.State.Phase, g.State.Age, g.State.Turn, g.State.Decider = PhaseTurn, age, turn, NoSeat
 	g.State.Points = 0
+	alignScenarioHistory(t, &g)
 	g.State.Result = Result{}
 	built, err := NewGameFromScenario(g.State.Seed, g.State.Opts, ScenarioFromGame(g))
 	if err != nil {

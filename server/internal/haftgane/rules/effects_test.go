@@ -144,6 +144,7 @@ func effectWorld(t *testing.T, board catalog.BoardID, side catalog.Side, stages 
 		}
 	}
 	g.State.Result = scoreResult(&g.State)
+	alignScenarioHistory(t, &g)
 	built, err := NewGameFromScenario(g.State.Seed, g.State.Opts, ScenarioFromGame(g))
 	if err != nil {
 		t.Fatal("effect scenario", err)
@@ -253,6 +254,7 @@ func ageTwoCoinScenario(t *testing.T, old catalog.DesignID) Game {
 		g.State.Discard[old]--
 		g.State.Cities[0].Buildings.Add(old)
 	}
+	alignScenarioHistory(t, &g)
 	g, err = NewGameFromScenario(g.State.Seed, g.State.Opts, ScenarioFromGame(g))
 	if err != nil {
 		t.Fatal(err)
@@ -270,6 +272,7 @@ func forceHand(t *testing.T, g *Game, seat Seat, id catalog.DesignID) {
 		for k, got := range hand {
 			if got == id {
 				g.State.Hands[s][k], g.State.Hands[seat][0] = g.State.Hands[seat][0], got
+				alignScenarioHistory(t, g)
 				return
 			}
 		}
@@ -484,6 +487,7 @@ func TestIncomeSixthTurnBeforeFinalScoring(t *testing.T) {
 		canonicalIDs(g.State.Hands[seat][:])
 	}
 	var err error
+	alignScenarioHistory(t, &g)
 	g, err = NewGameFromScenario(g.State.Seed, g.State.Opts, ScenarioFromGame(g))
 	if err != nil {
 		t.Fatal(err)

@@ -63,6 +63,7 @@ func sixthTurnDiscardScenario(t *testing.T) (Game, Seat, Seat) {
 		}
 		g.State.Cities[seat] = c
 	}
+	alignScenarioHistory(t, &g)
 	return g, halik, babylon
 }
 

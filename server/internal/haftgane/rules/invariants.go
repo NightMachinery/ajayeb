@@ -7,8 +7,8 @@ import (
 )
 
 // CheckInvariants is diagnostic, not a step in ordinary resolution. Scenarios
-// call it at their trust boundary. History legality will be checked by replay
-// once Resolve exists; here the record's shapes and public placements are checked.
+// call it at their trust boundary. Known history must fit packet budgets and
+// public placements; Replay checks the legality of a complete action history.
 func (g *Game) CheckInvariants() error {
 	if g == nil {
 		return fmt.Errorf("rules: nil game")
@@ -147,7 +147,7 @@ func (g *Game) CheckInvariants() error {
 				want = 7 - int(st.Turn)
 			}
 		}
-		if _, err := checkIDs(st.Hands[seat][:], st.Age, want); err != nil {
+		if err := checkIDs(st.Hands[seat][:], st.Age, want); err != nil {
 			return fmt.Errorf("rules: hand seat %d: %w", seat, err)
 		}
 		for _, id := range st.Hands[seat] {
@@ -170,7 +170,7 @@ func (g *Game) CheckInvariants() error {
 		copies[id] += uint16(n)
 	}
 	var box catalog.DesignSet
-	if _, err := checkIDs(st.BoxGuilds[:], 3, 8-int(st.Seats)); err != nil {
+	if err := checkIDs(st.BoxGuilds[:], 3, 8-int(st.Seats)); err != nil {
 		return fmt.Errorf("rules: box: %w", err)
 	}
 	for _, id := range st.BoxGuilds {
@@ -221,6 +221,9 @@ func (g *Game) CheckInvariants() error {
 	if err := g.checkRecord(box); err != nil {
 		return err
 	}
+	if err := g.checkHistory(); err != nil {
+		return err
+	}
 	// Public-city shapes and caches are validated above, so scoring is safe.
 	if st.Phase == PhaseOver && st.Result != scoreResult(st) {
 		return fmt.Errorf("rules: final scores differ from public cities")
@@ -228,7 +231,7 @@ func (g *Game) CheckInvariants() error {
 	return nil
 }
 
-func checkIDs(ids []catalog.DesignID, age uint8, want int) (int, error) {
+func checkIDs(ids []catalog.DesignID, age uint8, want int) error {
 	count := 0
 	zero := false
 	var prior catalog.DesignID
@@ -239,15 +242,15 @@ func checkIDs(ids []catalog.DesignID, age uint8, want int) (int, error) {
 		}
 		d, ok := catalog.DesignByID(id)
 		if zero || !ok || id < prior || (age != 0 && d.Age != age) {
-			return count, fmt.Errorf("invalid id, Age, order or padding")
+			return fmt.Errorf("invalid id, Age, order or padding")
 		}
 		prior = id
 		count++
 	}
 	if want >= 0 && count != want {
-		return count, fmt.Errorf("has %d cards, want %d", count, want)
+		return fmt.Errorf("has %d cards, want %d", count, want)
 	}
-	return count, nil
+	return nil
 }
 
 func checkPackets(row [MaxSeats][HandSize]catalog.DesignID, age, n uint8, box catalog.DesignSet) error {
@@ -257,7 +260,7 @@ func checkPackets(row [MaxSeats][HandSize]catalog.DesignID, age, n uint8, box ca
 		if seat < int(n) {
 			want = HandSize
 		}
-		if _, err := checkIDs(hand[:], age, want); err != nil {
+		if err := checkIDs(hand[:], age, want); err != nil {
 			return err
 		}
 		for _, id := range hand {
@@ -350,7 +353,6 @@ func (g *Game) checkRecord(box catalog.DesignSet) error {
 			return fmt.Errorf("rules: record packet: %w", err)
 		}
 	}
-	var picked [NumAges][catalog.NumDesigns + 1]uint8
 	for age, turns := range g.Record.Picks {
 		for turn, seats := range turns {
 			for seat, id := range seats {
@@ -375,7 +377,6 @@ func (g *Game) checkRecord(box catalog.DesignSet) error {
 				if !ok || d.Age != uint8(age+1) {
 					return fmt.Errorf("rules: invalid private record pick")
 				}
-				picked[age][id]++
 				switch p.Kind {
 				case ActBuild:
 					if p.Design != id || p.Stage != 0 || !st.Cities[seat].Buildings.Has(id) {
@@ -398,21 +399,6 @@ func (g *Game) checkRecord(box catalog.DesignSet) error {
 				if turn == MaxTurns-1 && st.Cities[seat].Abilities&AbilityPlayLastCard == 0 {
 					return fmt.Errorf("rules: last-card record outside ability seat")
 				}
-			}
-		}
-	}
-	for age, row := range picked {
-		for id, n := range row {
-			if n == 0 {
-				continue
-			}
-			d, _ := catalog.DesignByID(catalog.DesignID(id))
-			want := catalog.CopiesAt(catalog.DesignID(id), st.Seats)
-			if d.Color == catalog.Purple {
-				want = 1
-			}
-			if n > want {
-				return fmt.Errorf("rules: Age %d record uses a copy twice", age+1)
 			}
 		}
 	}

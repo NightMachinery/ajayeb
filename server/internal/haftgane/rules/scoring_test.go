@@ -61,8 +61,11 @@ func TestScienceOracle(t *testing.T) {
 func TestScoreSevenCategories(t *testing.T) {
 	g := effectWorld(t, catalog.BoardGizah, catalog.Day, 2, 64)
 	g.State.Cities[0].Coins = 8
-	g.State.Cities[0].Victories = [NumAges]uint8{2, 1, 2}
-	g.State.Cities[0].Defeats = 3
+	g.State.Cities[0].Victories = [NumAges]uint8{0, 1, 2}
+	g.State.Cities[0].Defeats = 1
+	// Matching tokens in another city preserve the literal owner score.
+	g.State.Cities[1].Victories[0] = 1
+	g.State.Cities[1].Defeats = 3
 	want := Score{Wonder: 8, Treasure: 2, Military: 12, Blue: 6, Yellow: 3, Green: 2, Purple: 6, Total: 39}
 	if got := scoreCity(&g.State, 0); got != want {
 		t.Fatalf("categories %+v want %+v", got, want)
