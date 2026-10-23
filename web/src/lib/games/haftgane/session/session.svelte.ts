@@ -401,7 +401,10 @@ export class TableSession {
   /** Sends a lobby edit over the same sequenced, retryable request lane. */
   editLobby(edit: Omit<LobbyEdit, 't' | 'code' | 'seq'>): boolean {
     if (!this.#ready || !this.lobby) return false;
-    this.#request({ ...edit, t: 'lobby-edit', code: this.code, seq: this.#nextSeq() });
+    this.#request(
+      { ...edit, t: 'lobby-edit', code: this.code, seq: this.#nextSeq() },
+      edit.op === 'release' ? this.seat : null
+    );
     return true;
   }
 
@@ -516,6 +519,10 @@ export class TableSession {
    * only at the same point (see the file comment).
    */
   #stillValid(pending: PendingRequest): boolean {
+    const request = pending.frame;
+    if (request.t === 'lobby-edit' || request.t === 'lobby-role' || request.t === 'lobby-start') {
+      return !!this.lobby && (pending.seat === null || this.lobby.you.seat === pending.seat);
+    }
     if (pending.seat === null) return true;
     const f = this.table;
     if (!f || f.status !== 'playing' || f.you.seat !== pending.seat) return false;
@@ -607,7 +614,7 @@ export class TableSession {
     }
     this.#answer(frame.ack);
     // Start has no ack: the table's first frame answers it.
-    if (this.pending?.frame.t === 'lobby-start') this.#settle();
+    if (this.pending?.frame.t.startsWith('lobby-')) this.#settle();
     if (this.#rejoined) this.#afterJoin();
     // A frame that moved this connection: what its old seat asked for is
     // never sent again (see the file comment).
@@ -629,6 +636,12 @@ export class TableSession {
     this.lobby = frame;
     this.#rooms?.remember(this.code, 'online', this.#now(), this.claim, 'haftgane');
     this.#answer(frame.ack);
+    if (
+      this.pending?.seat !== null &&
+      this.pending?.seat !== undefined &&
+      this.pending.seat !== frame.you.seat
+    )
+      this.#settle();
     this.#afterJoin();
   }
 

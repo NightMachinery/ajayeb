@@ -52,6 +52,37 @@ describe('production lobby requests', () => {
     expect(session.lobby).toBeNull();
     expect(session.pending).toBeNull();
   });
+  it('never retries leave-seat against a different seat after reconnect or a live move', () => {
+    for (const reconnect of [false, true]) {
+      const { connection, session } = setup();
+      expect(session.editLobby({ op: 'release' })).toBe(true);
+      const before = connection.sent.length;
+      if (reconnect) {
+        connection.drop();
+        connection.rejoin();
+      }
+      connection.frame(lobbyFrame({ you: { userId: 'u0', seat: 1 } }));
+      expect(session.pending).toBeNull();
+      expect(connection.sent).toHaveLength(before);
+    }
+  });
+  it('retries leaving the same seat, but retires lobby edits once Start changes the family', () => {
+    const { connection, session } = setup();
+    session.editLobby({ op: 'release' });
+    const request = connection.last();
+    connection.drop();
+    connection.rejoin();
+    connection.frame(lobbyFrame());
+    expect(connection.last()).toEqual(request);
+    connection.frame(lobbyFrame({ ack: { clientId: 'tab', seq: 1 } }));
+    session.editLobby({ op: 'options', options: { finalReveal: false } });
+    connection.frame(tableFrame());
+    expect(session.pending).toBeNull();
+    connection.drop();
+    connection.rejoin();
+    connection.frame(tableFrame());
+    expect(connection.sent.filter((f) => f.t === 'lobby-edit')).toHaveLength(3);
+  });
   it('lets the actor distinguish former participants from spectators, and shows refusal', () => {
     const { connection, session } = setup();
     connection.frame(tableFrame({ status: 'finished', point: undefined }, null));
