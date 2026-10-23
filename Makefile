@@ -45,7 +45,7 @@ PNPM_FROZEN := $(if $(wildcard pnpm-lock.yaml),--frozen-lockfile)
 E2E_PREREQS := $(if $(filter 1,$(E2E_BUILD)),build-server build-web-test)
 
 .PHONY: help install install-offline install-webkit dev gen gen-check gen-check-if-ready \
-        fmt-check tidy-check vet test-go test-race lint-go build-server fuzz bench \
+        fmt-check tidy-check vet test-go test-race test-haftgane-payment-exhaustive lint-go build-server fuzz bench \
         build-web build-web-test test-web check-web lint-web build \
         e2e e2e-smoke e2e-webkit e2e-prod shots vec-lint vec-shot vec-blind vec-family \
         test-py test-tools verify-quick verify verify-full clean
@@ -152,6 +152,11 @@ test-race: ## go test -race on internal/room and internal/ws (skipped while they
 	echo "go -C server test -race$$pkgs"; \
 	AJAYEB_SWEEP=$(AJAYEB_SWEEP) $(HEAVY) run --kind test -- go -C server test -race -timeout $(TEST_TIMEOUT) $$pkgs
 
+test-haftgane-payment-exhaustive: ## The opt-in exhaustive sweep of Haftgane's payment solver against its oracle (about 9 minutes)
+	HAFTGANE_PAYMENT_EXHAUSTIVE=1 $(HEAVY) run --kind test -- \
+	  go -C server test -count=1 -shuffle=on -parallel 4 -timeout 2h \
+	  -run '^TestPaymentOracleExhaustive$$' -v ./internal/haftgane/rules
+
 lint-go: ## golangci-lint run in server/
 	cd server && $(HEAVY) run --kind lint -- golangci-lint run
 
@@ -242,9 +247,9 @@ verify-quick: fmt-check tidy-check vet lint-go gen-check-if-ready test-go lint-w
 
 verify: verify-quick test-race build e2e-smoke ## verify-quick, then -race on room and ws, the release build and the e2e smoke
 
-verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, every e2e spec and the screenshot matrix
+verify-full: verify ## verify, then a 5000-game sweep, fuzzing, the AI bench, the payment solver's exhaustive sweep, every e2e spec and the screenshot matrix
 	$(MAKE) --no-print-directory test-go AJAYEB_SWEEP=5000 TEST_TIMEOUT=90m
-	$(MAKE) --no-print-directory fuzz bench e2e shots
+	$(MAKE) --no-print-directory fuzz bench test-haftgane-payment-exhaustive e2e shots
 
 ##@ Housekeeping
 

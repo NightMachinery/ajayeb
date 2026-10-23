@@ -284,8 +284,8 @@ affordable ordinary total without building witnesses.
 Chains and free-build abilities bypass this solver per action; stages use their
 ordinary cost. An independent unit-by-unit oracle retains every affordable
 covering before testing dominance. It checks 100,000 deterministic random inputs
-and an opt-in small-universe sweep, run by the planned
-`make test-haftgane-payment-exhaustive` target. The sweep runs need vectors in
+and an opt-in small-universe sweep, run by
+`make test-haftgane-payment-exhaustive` (part of `make verify-full`). The sweep runs need vectors in
 parallel; `FuzzPayment` checks outcomes and every witness against the same oracle.
 
 The shared `enginekit/puritycheck` and strict depguard allow-lists enforce
