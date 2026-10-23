@@ -91,6 +91,8 @@ const serverCommand = [
   '--data ../.cache/e2e/data',
   '--static ../web/build',
   '--dev --dev-endpoints',
+  // Haftgane tables and shared lobbies (specs/haftgane-table.spec.ts).
+  '--haftgane-tables',
   '--bot-delay 0',
   '--seed-base 1000'
 ].join(' ');

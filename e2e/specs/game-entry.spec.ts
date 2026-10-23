@@ -15,6 +15,19 @@ const manifest = JSON.parse(
 ) as Record<string, { file: string }>;
 const haftganeChunk = '/' + manifest['src/lib/games/haftgane/entry.ts']!.file;
 
+// A spectator's first frame from the real table actor
+// (server/internal/tableroom/testdata/client-frames.json), for code.
+function spectatorFrame(code: string): Record<string, unknown> {
+  const recording = JSON.parse(
+    readFileSync(
+      new URL('../../server/internal/tableroom/testdata/client-frames.json', import.meta.url),
+      'utf8'
+    )
+  ) as { code: string; clients: Record<string, { log: { recv?: Record<string, unknown> }[] }> };
+  const frame = JSON.stringify(recording.clients['watcher']!.log[0]!.recv);
+  return JSON.parse(frame.replaceAll(recording.code, code)) as Record<string, unknown>;
+}
+
 function sentFrames(page: Page) {
   const frames: {
     socket: number;
@@ -211,18 +224,7 @@ test('a table with no saved tag refuses v1 before admission, then discovers Haft
         socket.send(JSON.stringify({ t: 'error', code: 'protocol' }));
       } else if (m.t === 'join' || m.t === 'resync') {
         if (m.t === 'join') admitted++;
-        socket.send(
-          JSON.stringify({
-            t: 'table-state',
-            game: 'haftgane',
-            code: 'REGAAA',
-            revision: 1,
-            seats: [],
-            humans: [],
-            you: { userId: 'player' },
-            view: {}
-          })
-        );
+        socket.send(JSON.stringify(spectatorFrame('REGAAA')));
       }
     });
   });
