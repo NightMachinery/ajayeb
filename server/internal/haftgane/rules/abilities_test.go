@@ -552,6 +552,7 @@ func resolveAbility(t *testing.T, g Game, b Batch) (Game, []Event, error) {
 	if e != nil || re != nil || core != next.State || reverse != core || !reflect.DeepEqual(events, coreEvents) || !reflect.DeepEqual(events, reverseEvents) || g != before {
 		t.Fatal("forced ability core/order mismatch", e, re)
 	}
+	checkCoinLedger(t, &g.State, &next.State, &picks, events)
 	if err := next.CheckInvariants(); err != nil {
 		t.Fatal("immediately after ability transition", err)
 	}

@@ -429,7 +429,13 @@ total then actual coins, and gives tied seats the same competition rank, with
 every rank-one seat in the winners mask. Final-score invariants recompute every
 category from the public cities. Literal card/stage scenarios and an independent
 raw-building score oracle check the results, with replay/core equivalence and
-reversed seat-loop order in the seeded sweep.
+reversed seat-loop order in the seeded sweep. A separate coin ledger checks
+every seat after ordinary, discard-build and kept-card points: frozen treasure
+minus public payments, plus trade receipts, sales and literal card/stage income
+counted from raw buildings. It also checks income events, independently of the
+effect interpreter and production caches. The score oracle uses these checked
+coins and the state's military tokens. Forced discard-income scenarios use the
+same ledger at each boundary, including ruling 28.
 
 Halikarnassos searches the whole pile after the turn's placements and coin
 effects, including sixth-turn leftovers and cards just sold. A discard-build

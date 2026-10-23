@@ -192,6 +192,7 @@ func TestResolveMilitaryRing(t *testing.T) {
 
 func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 	var phaseHits [NumPhases]int
+	var incomeHits [NumPhases][catalog.NumDesigns + 1]int
 	var freeHits [FreeDiscard + 1]int
 	var lastHits [ActBuildDiscarded + 1]int
 	var discarded, kept, rebuilt, skipped, emptySkip, duplicateSkip int
@@ -257,6 +258,9 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 				if err != nil || next.State != core || !reflect.DeepEqual(wrapperEvents, events) || frozen != g {
 					t.Fatal("Game/core mismatch", err)
 				}
+				for id, n := range checkCoinLedger(t, &g.State, &next.State, &picks, events) {
+					incomeHits[g.State.Phase][id] += n
+				}
 				if err := next.CheckInvariants(); err != nil {
 					t.Fatalf("n%d seed%d step%d: %v", n, seed, steps, err)
 				}
@@ -291,6 +295,18 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 			if err != nil || replay != g || replay.Fingerprint() != g.Fingerprint() {
 				t.Fatal("replay differs", err)
 			}
+		}
+	}
+	for _, id := range []catalog.DesignID{0, 23, 43, 46, 61, 62, 63, 64, 65} {
+		name := "stage"
+		if id != 0 {
+			d, _ := catalog.DesignByID(id)
+			name = d.Slug
+		}
+		ordinary, discard, last := incomeHits[PhaseTurn][id], incomeHits[PhaseDiscardBuild][id], incomeHits[PhaseLastCard][id]
+		t.Logf("coin ledger nonzero income %s: ordinary=%d discard=%d last=%d", name, ordinary, discard, last)
+		if ordinary+discard+last == 0 {
+			t.Fatal("income source not exercised", name)
 		}
 	}
 	t.Logf("1000 complete games: phase=%v free=%v last-actions=%v kept=%d discarded=%d rebuilt=%d skipped=%d (empty=%d duplicate=%d)", phaseHits, freeHits, lastHits, kept, discarded, rebuilt, skipped, emptySkip, duplicateSkip)
