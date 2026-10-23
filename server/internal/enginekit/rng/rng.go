@@ -1,4 +1,4 @@
-// Package rng supplies the shared deterministic generator and byte digest.
+// Package rng supplies the shared deterministic generator, seed mixer and byte digest.
 package rng
 
 import (

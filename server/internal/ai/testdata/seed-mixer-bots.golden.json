@@ -1,0 +1,506 @@
+[
+  {
+    "seed": 101,
+    "position": 0,
+    "bot": "random",
+    "key": "draft:mausoleum"
+  },
+  {
+    "seed": 101,
+    "position": 0,
+    "bot": "greedy",
+    "key": "draft:sphinx"
+  },
+  {
+    "seed": 101,
+    "position": 0,
+    "bot": "easy",
+    "key": "draft:mausoleum"
+  },
+  {
+    "seed": 101,
+    "position": 11,
+    "bot": "random",
+    "key": "discard:clay-pit"
+  },
+  {
+    "seed": 101,
+    "position": 11,
+    "bot": "greedy",
+    "key": "construct:tavern"
+  },
+  {
+    "seed": 101,
+    "position": 11,
+    "bot": "easy",
+    "key": "construct:tavern"
+  },
+  {
+    "seed": 101,
+    "position": 22,
+    "bot": "random",
+    "key": "wonder:great-library:guard-tower"
+  },
+  {
+    "seed": 101,
+    "position": 22,
+    "bot": "greedy",
+    "key": "wonder:great-library:wood-reserve"
+  },
+  {
+    "seed": 101,
+    "position": 22,
+    "bot": "easy",
+    "key": "discard:guard-tower"
+  },
+  {
+    "seed": 101,
+    "position": 33,
+    "bot": "random",
+    "key": "wonder:piraeus:shelf-quarry"
+  },
+  {
+    "seed": 101,
+    "position": 33,
+    "bot": "greedy",
+    "key": "construct:courthouse"
+  },
+  {
+    "seed": 101,
+    "position": 33,
+    "bot": "easy",
+    "key": "construct:courthouse"
+  },
+  {
+    "seed": 101,
+    "position": 44,
+    "bot": "random",
+    "key": "construct:brewery"
+  },
+  {
+    "seed": 101,
+    "position": 44,
+    "bot": "greedy",
+    "key": "construct:brewery"
+  },
+  {
+    "seed": 101,
+    "position": 44,
+    "bot": "easy",
+    "key": "construct:brewery"
+  },
+  {
+    "seed": 101,
+    "position": 55,
+    "bot": "random",
+    "key": "construct:armory"
+  },
+  {
+    "seed": 101,
+    "position": 55,
+    "bot": "greedy",
+    "key": "construct:port"
+  },
+  {
+    "seed": 101,
+    "position": 55,
+    "bot": "easy",
+    "key": "construct:port"
+  },
+  {
+    "seed": 101,
+    "position": 66,
+    "bot": "random",
+    "key": "construct:gardens"
+  },
+  {
+    "seed": 101,
+    "position": 66,
+    "bot": "greedy",
+    "key": "construct:gardens"
+  },
+  {
+    "seed": 101,
+    "position": 66,
+    "bot": "easy",
+    "key": "construct:gardens"
+  },
+  {
+    "seed": 102,
+    "position": 0,
+    "bot": "random",
+    "key": "draft:colossus"
+  },
+  {
+    "seed": 102,
+    "position": 0,
+    "bot": "greedy",
+    "key": "draft:piraeus"
+  },
+  {
+    "seed": 102,
+    "position": 0,
+    "bot": "easy",
+    "key": "draft:piraeus"
+  },
+  {
+    "seed": 102,
+    "position": 11,
+    "bot": "random",
+    "key": "discard:clay-pool"
+  },
+  {
+    "seed": 102,
+    "position": 11,
+    "bot": "greedy",
+    "key": "construct:clay-pool"
+  },
+  {
+    "seed": 102,
+    "position": 11,
+    "bot": "easy",
+    "key": "discard:clay-pool"
+  },
+  {
+    "seed": 102,
+    "position": 22,
+    "bot": "random",
+    "key": "construct:quarry"
+  },
+  {
+    "seed": 102,
+    "position": 22,
+    "bot": "greedy",
+    "key": "construct:press"
+  },
+  {
+    "seed": 102,
+    "position": 22,
+    "bot": "easy",
+    "key": "discard:quarry"
+  },
+  {
+    "seed": 102,
+    "position": 33,
+    "bot": "random",
+    "key": "discard:laboratory"
+  },
+  {
+    "seed": 102,
+    "position": 33,
+    "bot": "greedy",
+    "key": "construct:laboratory"
+  },
+  {
+    "seed": 102,
+    "position": 33,
+    "bot": "easy",
+    "key": "construct:laboratory"
+  },
+  {
+    "seed": 102,
+    "position": 44,
+    "bot": "random",
+    "key": "discard:school"
+  },
+  {
+    "seed": 102,
+    "position": 44,
+    "bot": "greedy",
+    "key": "wonder:great-library:school"
+  },
+  {
+    "seed": 102,
+    "position": 44,
+    "bot": "easy",
+    "key": "wonder:great-library:school"
+  },
+  {
+    "seed": 102,
+    "position": 55,
+    "bot": "random",
+    "key": "construct:circus"
+  },
+  {
+    "seed": 102,
+    "position": 55,
+    "bot": "greedy",
+    "key": "construct:circus"
+  },
+  {
+    "seed": 102,
+    "position": 55,
+    "bot": "easy",
+    "key": "discard:town-hall"
+  },
+  {
+    "seed": 102,
+    "position": 66,
+    "bot": "random",
+    "key": "discard:palace"
+  },
+  {
+    "seed": 102,
+    "position": 66,
+    "bot": "greedy",
+    "key": "construct:palace"
+  },
+  {
+    "seed": 102,
+    "position": 66,
+    "bot": "easy",
+    "key": "construct:palace"
+  },
+  {
+    "seed": 103,
+    "position": 0,
+    "bot": "random",
+    "key": "draft:great-lighthouse"
+  },
+  {
+    "seed": 103,
+    "position": 0,
+    "bot": "greedy",
+    "key": "draft:temple-of-artemis"
+  },
+  {
+    "seed": 103,
+    "position": 0,
+    "bot": "easy",
+    "key": "draft:great-lighthouse"
+  },
+  {
+    "seed": 103,
+    "position": 11,
+    "bot": "random",
+    "key": "construct:palisade"
+  },
+  {
+    "seed": 103,
+    "position": 11,
+    "bot": "greedy",
+    "key": "construct:altar"
+  },
+  {
+    "seed": 103,
+    "position": 11,
+    "bot": "easy",
+    "key": "construct:altar"
+  },
+  {
+    "seed": 103,
+    "position": 22,
+    "bot": "random",
+    "key": "wonder:pyramids:quarry"
+  },
+  {
+    "seed": 103,
+    "position": 22,
+    "bot": "greedy",
+    "key": "construct:quarry"
+  },
+  {
+    "seed": 103,
+    "position": 22,
+    "bot": "easy",
+    "key": "construct:quarry"
+  },
+  {
+    "seed": 103,
+    "position": 33,
+    "bot": "random",
+    "key": "construct:sawmill"
+  },
+  {
+    "seed": 103,
+    "position": 33,
+    "bot": "greedy",
+    "key": "construct:parade-ground"
+  },
+  {
+    "seed": 103,
+    "position": 33,
+    "bot": "easy",
+    "key": "construct:sawmill"
+  },
+  {
+    "seed": 103,
+    "position": 44,
+    "bot": "random",
+    "key": "construct:aqueduct"
+  },
+  {
+    "seed": 103,
+    "position": 44,
+    "bot": "greedy",
+    "key": "construct:aqueduct"
+  },
+  {
+    "seed": 103,
+    "position": 44,
+    "bot": "easy",
+    "key": "construct:aqueduct"
+  },
+  {
+    "seed": 103,
+    "position": 55,
+    "bot": "random",
+    "key": "discard:arsenal"
+  },
+  {
+    "seed": 103,
+    "position": 55,
+    "bot": "greedy",
+    "key": "construct:academy"
+  },
+  {
+    "seed": 103,
+    "position": 55,
+    "bot": "easy",
+    "key": "construct:academy"
+  },
+  {
+    "seed": 103,
+    "position": 66,
+    "bot": "random",
+    "key": "discard:study"
+  },
+  {
+    "seed": 103,
+    "position": 66,
+    "bot": "greedy",
+    "key": "construct:lighthouse"
+  },
+  {
+    "seed": 103,
+    "position": 66,
+    "bot": "easy",
+    "key": "construct:lighthouse"
+  },
+  {
+    "seed": 104,
+    "position": 0,
+    "bot": "random",
+    "key": "draft:appian-way"
+  },
+  {
+    "seed": 104,
+    "position": 0,
+    "bot": "greedy",
+    "key": "draft:appian-way"
+  },
+  {
+    "seed": 104,
+    "position": 0,
+    "bot": "easy",
+    "key": "draft:hanging-gardens"
+  },
+  {
+    "seed": 104,
+    "position": 11,
+    "bot": "random",
+    "key": "wonder:colossus:tavern"
+  },
+  {
+    "seed": 104,
+    "position": 11,
+    "bot": "greedy",
+    "key": "construct:tavern"
+  },
+  {
+    "seed": 104,
+    "position": 11,
+    "bot": "easy",
+    "key": "construct:tavern"
+  },
+  {
+    "seed": 104,
+    "position": 22,
+    "bot": "random",
+    "key": "construct:stone-pit"
+  },
+  {
+    "seed": 104,
+    "position": 22,
+    "bot": "greedy",
+    "key": "construct:stone-pit"
+  },
+  {
+    "seed": 104,
+    "position": 22,
+    "bot": "easy",
+    "key": "construct:stone-pit"
+  },
+  {
+    "seed": 104,
+    "position": 33,
+    "bot": "random",
+    "key": "construct:brewery"
+  },
+  {
+    "seed": 104,
+    "position": 33,
+    "bot": "greedy",
+    "key": "construct:brewery"
+  },
+  {
+    "seed": 104,
+    "position": 33,
+    "bot": "easy",
+    "key": "discard:brewery"
+  },
+  {
+    "seed": 104,
+    "position": 44,
+    "bot": "random",
+    "key": "discard:sawmill"
+  },
+  {
+    "seed": 104,
+    "position": 44,
+    "bot": "greedy",
+    "key": "discard:sawmill"
+  },
+  {
+    "seed": 104,
+    "position": 44,
+    "bot": "easy",
+    "key": "discard:sawmill"
+  },
+  {
+    "seed": 104,
+    "position": 55,
+    "bot": "random",
+    "key": "discard:lighthouse"
+  },
+  {
+    "seed": 104,
+    "position": 55,
+    "bot": "greedy",
+    "key": "construct:lighthouse"
+  },
+  {
+    "seed": 104,
+    "position": 55,
+    "bot": "easy",
+    "key": "construct:lighthouse"
+  },
+  {
+    "seed": 104,
+    "position": 66,
+    "bot": "random",
+    "key": "wonder:statue-of-zeus:gardens"
+  },
+  {
+    "seed": 104,
+    "position": 66,
+    "bot": "greedy",
+    "key": "wonder:statue-of-zeus:gardens"
+  },
+  {
+    "seed": 104,
+    "position": 66,
+    "bot": "easy",
+    "key": "wonder:statue-of-zeus:gardens"
+  }
+]

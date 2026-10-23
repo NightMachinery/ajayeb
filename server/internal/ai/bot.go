@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	sharedrng "github.com/NightMachinery/ajayeb/server/internal/enginekit/rng"
 )
 
 // Budget bounds one search. The zero Budget means "the bot's own defaults".
@@ -185,12 +186,7 @@ func callRNG(seed uint64, obs *engine.Observation) engine.RNG {
 // example a game index or a seat), with the splitmix64 finalizer. Tools use
 // it to give every game and every bot its own seed from one command-line
 // seed.
-func MixSeed(seed, tag uint64) uint64 {
-	z := seed + 0x9e3779b97f4a7c15*(tag+1)
-	z = (z ^ z>>30) * 0xbf58476d1ce4e5b9
-	z = (z ^ z>>27) * 0x94d049bb133111eb
-	return z ^ z>>31
-}
+func MixSeed(seed, tag uint64) uint64 { return sharedrng.MixSeed(seed, tag) }
 
 // PairedGame returns the setup of game i of a paired match played from a
 // base seed: the deal's seed, the seat of the match's first bot (A), and the
