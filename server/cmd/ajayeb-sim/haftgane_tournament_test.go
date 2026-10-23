@@ -213,6 +213,59 @@ func TestHATournamentShardsAndCLI(t *testing.T) {
 			t.Fatal("bad shard set accepted", tc, err)
 		}
 	}
+	// Byte/digest/header corruption must fail independently of the missing
+	// shard and missing comparison checks.
+	original, err := os.ReadFile(paths[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	frames := strings.Split(strings.TrimSpace(string(original)), "\n")
+	for _, tc := range []struct {
+		name string
+		edit func([]string)
+	}{
+		{"changed-footer-digest", func(lines []string) {
+			var f haFrame
+			if err := json.Unmarshal([]byte(lines[len(lines)-1]), &f); err != nil {
+				t.Fatal(err)
+			}
+			f.Footer.SHA256 = strings.Repeat("0", 64)
+			b, _ := json.Marshal(f)
+			lines[len(lines)-1] = string(b)
+		}},
+		{"wrong-policy-version", func(lines []string) {
+			var f haFrame
+			if err := json.Unmarshal([]byte(lines[0]), &f); err != nil {
+				t.Fatal(err)
+			}
+			f.Header.Policy++
+			b, _ := json.Marshal(f)
+			lines[0] = string(b)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			lines := append([]string(nil), frames...)
+			tc.edit(lines)
+			path := filepath.Join(dir, tc.name+".jsonl")
+			if err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := haMerge([]string{path, paths[1]}); err == nil {
+				t.Fatal("corrupt shard accepted")
+			}
+		})
+	}
+	zipped, err := os.ReadFile(paths[1])
+	if err != nil {
+		t.Fatal(err)
+	}
+	brokenZip := filepath.Join(dir, "truncated.jsonl.gz")
+	if err := os.WriteFile(brokenZip, zipped[:len(zipped)-8], 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := haMerge([]string{paths[0], brokenZip}); err == nil {
+		t.Fatal("truncated gzip accepted")
+	}
 	data, err := os.ReadFile(paths[0])
 	if err != nil {
 		t.Fatal(err)
@@ -233,5 +286,38 @@ func TestHATournamentShardsAndCLI(t *testing.T) {
 		if code, _, _ := simRun(t, "", args...); code != 2 {
 			t.Fatal("usage", args, code)
 		}
+	}
+}
+
+func TestHATournamentCancellationCannotFinishAShard(t *testing.T) {
+	h, err := haNewHeader("development", 1, []int{3}, "all")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	path := filepath.Join(t.TempDir(), "cancelled.jsonl.gz")
+	if _, err := haWriteTournament(ctx, h, haAssignment{0, 1}, path, &strings.Builder{}); err == nil {
+		t.Fatal("cancelled tournament completed")
+	}
+	if _, err := haMerge([]string{path}); err == nil || !strings.Contains(err.Error(), "footer") {
+		t.Fatal("cancelled shard accepted", err)
+	}
+}
+
+func TestHATournamentExactThresholdRoundoff(t *testing.T) {
+	// An exact 70/100 result can land on either adjacent float after block
+	// averaging; it must not become a failed 0.70 target.
+	if !haThresholdPass(haCI{Mean: .7 - 1e-16}, .7, false) {
+		t.Fatal("roundoff failed an exact point target")
+	}
+	if haThresholdPass(haCI{Mean: .7 - 1e-8}, .7, false) {
+		t.Fatal("real point-target shortfall accepted")
+	}
+	if haThresholdPass(haCI{Low: 1e-16}, 0, true) {
+		t.Fatal("roundoff claimed positive paired evidence")
+	}
+	if !haThresholdPass(haCI{Low: 1e-8}, 0, true) {
+		t.Fatal("positive paired evidence rejected")
 	}
 }

@@ -76,6 +76,17 @@ type haContrast struct {
 	DeltaWin          haCI   `json:"paired_win_improvement"`
 	DeltaPoints       haCI   `json:"paired_point_improvement"`
 }
+
+// The smallest possible nonzero reward change in the bounded experiment is
+// far larger than 1e-12. Ignore only accumulated floating-point roundoff at
+// an exact rational threshold, never a substantive strength shortfall.
+func haThresholdPass(ci haCI, target float64, paired bool) bool {
+	if paired {
+		return ci.Low-target > 1e-12
+	}
+	return ci.Mean-target >= -1e-12
+}
+
 type haGate struct {
 	N         int     `json:"n"`
 	Name      string  `json:"name"`
@@ -293,11 +304,8 @@ func (a *haAccumulator) finish() haSummary {
 		c.DeltaPoints = haInterval(dp)
 		out.Contrasts = append(out.Contrasts, c)
 		gate := func(metric string, ci haCI, target float64, strict bool) {
-			pass := ci.Mean >= target
-			if strict {
-				pass = ci.Low > target
-			}
-			out.Gates = append(out.Gates, haGate{n, name + "/" + metric, ci, target, pass, ci.Low <= target && ci.High >= target})
+			pass := haThresholdPass(ci, target, strict)
+			out.Gates = append(out.Gates, haGate{n, name + "/" + metric, ci, target, pass, ci.Low-target <= 1e-12 && ci.High-target >= -1e-12})
 		}
 		switch name {
 		case "greedy-random":

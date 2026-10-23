@@ -201,7 +201,9 @@ A complete held-out gate report requires the release partition, at least
 Greedy/Apprentice against Random check the predeclared mean targets and
 show whether their interval crosses the target. Greedy-for-Apprentice requires
 the paired rank-improvement interval above zero at each N. The combined
-release flag passes only when all 25 checks pass. A small development or
+release flag passes only when all 25 checks pass. Threshold comparisons ignore
+at most 1e-12 of floating-point roundoff, below any possible nonzero reward
+change in the bounded experiment. A small development or
 partial-shard run cannot pass that flag. Failed or uncertain gates are
 reported without tuning on the same seeds.
 
