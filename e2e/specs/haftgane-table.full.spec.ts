@@ -17,6 +17,10 @@
 // storage, console, or the table hook's dump). And every table frame any
 // of the three pages received shows as its pending pick exactly its own:
 // the one its own acknowledged submissions set, or none.
+//
+// A second test leaves the table for Home and comes back within the same
+// page: the requests after the return go on from the page's seq, so the
+// table applies them instead of taking them for repeats.
 import { expect, type BrowserContext, type Page } from '@playwright/test';
 import type { LobbyState, PointRef, TableState } from '../../web/src/lib/wire/platform.gen';
 import { test } from '../fixtures/base';
@@ -185,6 +189,17 @@ function contaminate(
   return log.map((t, j) => (j === i ? { dir: t.dir, msg: { ...t.msg, pending } } : t));
 }
 
+/** Follows a link inside the page, as the app's own links do: no reload. */
+async function follow(page: Page, href: string): Promise<void> {
+  await page.evaluate((to) => {
+    const a = document.createElement('a');
+    a.href = to;
+    document.body.append(a);
+    a.click();
+    a.remove();
+  }, href);
+}
+
 function consoleOf(page: Page): string[] {
   const lines: string[] = [];
   page.on('console', (msg) => lines.push(msg.text()));
@@ -347,5 +362,49 @@ test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
     } finally {
       for (const context of contexts) await context.close();
     }
+  });
+
+  test('a return from Home in the same page goes on with its request seqs', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Ana'));
+    const log = traffic(page);
+    await page.goto('/dev/table?seats=3');
+    await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+    const path = new URL(page.url()).pathname;
+    await choose(page, 'lobby-start');
+    const [first, second] = (await latest(page)).view.you!.choices.map((ch) => ch.key) as [
+      string,
+      string
+    ];
+    await choose(page, first);
+    await expectPending(page, first, false);
+
+    // Home and back by the app's own navigation: the page, and with it the
+    // client id, stays.
+    await page.evaluate(() => {
+      (window as unknown as { samePage?: boolean }).samePage = true;
+    });
+    await follow(page, '/');
+    await page.waitForURL(/\/$/);
+    await follow(page, path);
+    await page.waitForURL(new RegExp(`${path}$`));
+    // The server restores the pending pick, and the new one is applied.
+    await expectPending(page, first, false);
+    await choose(page, second);
+    await expectPending(page, second, false);
+    expect(await page.evaluate(() => (window as unknown as { samePage?: boolean }).samePage)).toBe(
+      true
+    );
+
+    const sent = log.filter((t) => t.dir === 'sent').map((t) => t.msg);
+    expect(new Set(sent.filter((m) => m.t === 'hello').map((m) => m.clientId)).size).toBe(1);
+    // Start, the pick before leaving and the one after it.
+    const seqs = sent
+      .filter((m) => /^(table|lobby)-/.test(String(m.t)) && typeof m.seq === 'number')
+      .map((m) => m.seq as number);
+    expect(seqs.length).toBe(3);
+    expect(seqs, 'each request a new, higher seq').toEqual(
+      [...new Set(seqs)].sort((x, y) => x - y)
+    );
+    expect(pendingOwnership('the page', log)).toEqual([]);
   });
 });
