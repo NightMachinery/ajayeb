@@ -402,7 +402,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 		base.Batches = append(base.Batches, BatchRecord{Point: b.Point, Picks: append([]PickRecord{}, b.Picks...)})
 	}
 	for i, p := range spec.Participants {
-		base.Start[i] = StartSlot{UserID: p.UserID, Name: p.Name, Bot: p.Bot}
+		base.Start[i] = StartSlot(p)
 	}
 	for s := range n {
 		p := spec.Participants[order[s]]

@@ -135,12 +135,6 @@ func (l *Lobbies) store() Storage {
 	return l.st
 }
 
-func (l *Lobbies) manager() *room.Manager {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	return l.m
-}
-
 type unbound struct{}
 
 func (unbound) LoadGame(string, string, func([]byte) (store.Assessment, error)) ([]byte, error) {
