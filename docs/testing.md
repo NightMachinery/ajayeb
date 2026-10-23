@@ -242,8 +242,7 @@ canonical history is the `ajayeb-log/2` download.
   gets only its own (required at the point, offered to it, its confirmation
   the one the public list shows, and, in process, exactly the pick the
   test saw its seat's accepted submissions set). Then the oracle checks the
-  whole frame (the pending pick left out of the raw-key scan only once the
-  envelope vouched for it), its view rebuilt in the engine view's shape,
+  whole frame, its view rebuilt in the engine view's shape,
   the frame's own events wherever the rebuilt view did not take them from
   it (a history frame's, say), and its history. A planted leak of each
   kind must be reported: another seat's card, a raw key in an event, a
@@ -252,7 +251,13 @@ canonical history is the `ajayeb-log/2` download.
   sent to the spectator or given as the viewer's, the viewer's own key it
   never had accepted, a confirmation the public list does not show,
   another seat's `you`, another connection's acknowledgement, and a hidden
-  card in a history frame's events. The captured log is checked by the
+  card in a history frame's events. In the whole-frame scan only the
+  pending key the envelope vouched for is left out, and only once the raw
+  frame holds exactly that key and confirmation and names no field twice;
+  everything beside it is scanned. Canaries plant another seat's
+  observation hash, another seat's key and the key named twice beside a
+  legitimate pending pick, in process and in a frame received over the
+  socket, and each must be reported. The captured log is checked by the
   oracle and searched for hidden sentinels (the seed in decimal and hex,
   every key, the rules and observation hashes). `TestWebSocketTables`
   repeats the frame check on the raw bytes each connection received, and

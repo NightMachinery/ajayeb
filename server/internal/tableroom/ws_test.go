@@ -521,7 +521,8 @@ func TestWebSocketTables(t *testing.T) {
 
 // plantedPending: through the same check as the socket's frames, a frame
 // received over the socket fails once it carries another seat's pending
-// pick, whether it went to the spectator or to seat 0.
+// pick, whether it went to the spectator or to seat 0, and once anything
+// rides beside a seat's own pending pick (PendingCanaries).
 func plantedPending(t *testing.T, checker *leakcheck.Checker, truth *leakcheck.Truth, tb *wsTable) {
 	t.Helper()
 	m := &truth.Moments[0]
@@ -540,6 +541,15 @@ func plantedPending(t *testing.T, checker *leakcheck.Checker, truth *leakcheck.T
 			}
 		}
 	}
+	// Beside a seat's own pending pick, as received over the socket.
+	for s := range len(truth.Moments[0].Legal) {
+		c := tb.clients[tabletest.SeatClient(s)]
+		if i := slices.IndexFunc(c.states, func(st wire.TableState) bool { return st.Pending != nil && st.Batch == 0 }); i >= 0 {
+			tableroom.PendingCanaries(t, checker, "socket", tableroom.FrameViewer{Seat: s, Client: c.clientID}, c.raw[i])
+			return
+		}
+	}
+	t.Fatal("no seat received a frame with its pending pick at the first point")
 }
 
 // TestWebSocketEveryArrivalOrder: ExhaustPoint over the real stack on the

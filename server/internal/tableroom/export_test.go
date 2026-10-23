@@ -10,6 +10,8 @@ var (
 	FrameLeaks  = frameLeaks
 	TruthFrom   = truthFrom
 	FrameConfig = frameConfig
+	// PendingCanaries runs the pending-extras canaries on a raw frame.
+	PendingCanaries = pendingCanaries
 )
 
 // FrameViewer is who received a frame, for FrameLeaks.

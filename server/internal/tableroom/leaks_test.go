@@ -47,24 +47,42 @@ type pendingWant struct {
 // you names the viewer's seat, an acknowledgement the viewer's own client,
 // a spectator gets no pending pick, and a seat only its own (required at
 // the point, offered to it, its confirmation the one the public list
-// shows). Then the oracle checks the frames' documents, the pending pick
-// left out of the whole-frame scan only where the envelope was vouched for.
-// raws, when given, are the frames as received, scanned instead of the
+// shows). Then the oracle checks the frames' documents. Only the pending
+// key the envelope vouched for is left out of the whole-frame scan, and
+// only once the raw frame holds it exactly (withoutVouchedKey): every
+// other field, the rest of the pending object included, is scanned. raws,
+// when given, are the frames as received, scanned instead of the
 // re-encoded frames; wants may be nil.
 func frameLeaks(t testing.TB, c *leakcheck.Checker, label string, v frameViewer, frames []wire.TableState, raws [][]byte, wants []pendingWant) []leakcheck.Leak {
 	t.Helper()
 	var leaks []leakcheck.Leak
-	vouched := make([]bool, len(frames))
+	scanned := make([][]byte, len(frames))
 	for i, fr := range frames {
 		var w pendingWant
 		if i < len(wants) {
 			w = wants[i]
 		}
-		bad := envelope(fmt.Sprintf("%s frame %d", label, i), v, fr, w, c.Truth)
-		vouched[i] = len(bad) == 0
+		where := fmt.Sprintf("%s frame %d", label, i)
+		bad := envelope(where, v, fr, w, c.Truth)
 		leaks = append(leaks, bad...)
+		raw, err := json.Marshal(fr)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if i < len(raws) {
+			raw = raws[i]
+		}
+		if len(bad) == 0 && fr.Pending != nil {
+			stripped, problem := withoutVouchedKey(raw, *fr.Pending)
+			if problem != "" {
+				leaks = append(leaks, leakcheck.Leak{Rule: leakcheck.Envelope, Doc: where, Path: "pending", Detail: problem})
+			} else {
+				raw = stripped
+			}
+		}
+		scanned[i] = raw
 	}
-	return append(leaks, c.Check(leakDocs(t, label, v.Seat, frames, raws, vouched, c.Truth)...)...)
+	return append(leaks, c.Check(leakDocs(t, label, v.Seat, frames, scanned, c.Truth)...)...)
 }
 
 // envelope checks a frame's private fields against its viewer.
@@ -105,12 +123,12 @@ func samePending(a, b *wire.TablePending) bool {
 }
 
 // leakDocs turns one viewer's frames into the oracle's documents: the
-// whole frame (its pending pick removed where vouched for), its engine
+// whole frame (raws[i], as frameLeaks prepared it), its engine
 // view rebuilt in the fake view's shape (the frame's view plus its point
 // and, as the fake view carries them, the latest resolution's events), the
 // frame's own events wherever it carries events the rebuilt view did not
 // take from it, and its history.
-func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, raws [][]byte, vouched []bool, truth *leakcheck.Truth) []leakcheck.Doc {
+func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, raws [][]byte, truth *leakcheck.Truth) []leakcheck.Doc {
 	t.Helper()
 	var docs []leakcheck.Doc
 	events := []wire.TableEvent{}
@@ -122,9 +140,6 @@ func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, 
 		}
 		if i < len(raws) {
 			raw = raws[i]
-		}
-		if vouched[i] {
-			raw = withoutPending(t, raw)
 		}
 		where := fmt.Sprintf("%s frame %d", label, i)
 		docs = append(docs, leakcheck.Doc{Label: where, Kind: leakcheck.Frame, Viewer: viewer, Data: raw})
@@ -161,22 +176,158 @@ func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, 
 	return docs
 }
 
-// withoutPending drops a frame's pending pick, keeping every other field
-// and number exactly.
-func withoutPending(t testing.TB, data []byte) []byte {
+// pendingCanaries plants, beside a frame's legitimate pending pick, what
+// must never ride along with it, and requires the oracle to report each:
+// another seat's observation hash, another seat's raw key, and the key
+// named twice (a decoder keeps only the second). raw is the frame as
+// received; each planted frame is decoded from its bytes as the socket
+// adapter does, and the oracle gets both, as it gets the socket's frames.
+func pendingCanaries(t testing.TB, c *leakcheck.Checker, label string, v frameViewer, raw []byte) {
 	t.Helper()
+	var fr wire.TableState
+	if err := json.Unmarshal(raw, &fr); err != nil || fr.Pending == nil || v.Seat < 0 {
+		t.Fatalf("%s: no frame with the viewer's pending pick: %v", label, err)
+	}
+	check := func(name string, planted []byte, rule leakcheck.Rule) {
+		t.Helper()
+		var got wire.TableState
+		if err := json.Unmarshal(planted, &got); err != nil {
+			t.Fatalf("%s, %s: %v", label, name, err)
+		}
+		leaks := frameLeaks(t, c, label+" "+name, v, []wire.TableState{got}, [][]byte{planted}, nil)
+		switch {
+		case rule == "" && len(leaks) != 0:
+			t.Errorf("%s, %s: %v", label, name, leaks)
+		case rule != "" && !slices.ContainsFunc(leaks, func(l leakcheck.Leak) bool { return l.Rule == rule }):
+			t.Errorf("%s, %s: %s did not report it; got %v", label, name, rule, leaks)
+		}
+	}
+	plant := func(field string, value any) []byte {
+		dec := json.NewDecoder(bytes.NewReader(raw))
+		dec.UseNumber()
+		var tree map[string]any
+		if err := dec.Decode(&tree); err != nil {
+			t.Fatal(err)
+		}
+		tree["pending"].(map[string]any)[field] = value
+		out, err := json.Marshal(tree)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return out
+	}
+	other := (v.Seat + 1) % c.Truth.Seats
+	m := &c.Truth.Moments[fr.Batch]
+	name := fmt.Sprintf("seat %d's observation hash at moment %d", other, fr.Batch)
+	i := slices.IndexFunc(c.Truth.Secrets, func(s leakcheck.Secret) bool { return s.Name == name })
+	j := slices.IndexFunc(m.Legal[other], func(k string) bool { return !slices.Contains(m.Legal[v.Seat], k) })
+	if i < 0 || j < 0 {
+		t.Fatalf("%s: no %s or key of seat %d's own", label, name, other)
+	}
+	foreign, _ := json.Marshal(m.Legal[other][j])
+	check("unplanted", raw, "")
+	check("an observation hash beside the pick", plant("observationHash", c.Truth.Secrets[i].Value), leakcheck.Hash)
+	check("another seat's key beside the pick", plant("also", m.Legal[other][j]), leakcheck.RawKey)
+	twice := bytes.Replace(raw, []byte(`"pending":{`), append(append([]byte(`"pending":{"key":`), foreign...), ','), 1)
+	if bytes.Equal(twice, raw) {
+		t.Fatalf("%s: no pending object in the raw frame", label)
+	}
+	check("the key named twice", twice, leakcheck.Envelope)
+}
+
+// TestPendingExtrasStayScanned: vouching for a pending pick exempts only
+// its key from the whole-frame scan, never the fields beside it, in a
+// frame of the in-process table (the socket test runs the same canaries
+// on frames it received).
+func TestPendingExtrasStayScanned(t *testing.T) {
+	h := newTH(t, Config{}, humans(3, 2029))
+	own := h.snap(tabletest.SeatClient(0))
+	h.expect(h.send(tabletest.SeatClient(0), 1, own.Ref, own.Legal[0], false), tabletest.Accepted, "own draft")
+	truth, err := leakcheck.FromFake(makeSetup(2029, 3, false, false), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(h.latest(tabletest.SeatClient(0)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pendingCanaries(t, leakcheck.New(truth, frameConfig), "in process", frameViewer{Seat: 0, Client: string(tabletest.SeatClient(0))}, raw)
+}
+
+// withoutVouchedKey removes exactly the vouched pending key from a frame's
+// raw bytes, and keeps every other field and number for the whole-frame
+// scan: the confirmation and anything else beside the key included. It
+// removes nothing, and says why, unless the raw frame names no field twice
+// at any level (decoding would keep only one of them, hiding the other
+// from the scan) and its one pending object holds that key as a string and
+// that confirmation as a boolean.
+func withoutVouchedKey(data []byte, want wire.TablePending) ([]byte, string) {
+	if dup := duplicateField(data); dup != "" {
+		return nil, "the raw frame names " + dup + " twice"
+	}
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
 	var m map[string]any
 	if err := dec.Decode(&m); err != nil {
-		t.Fatal(err)
+		return nil, "the raw frame is not a JSON object"
 	}
-	delete(m, "pending")
+	pd, ok := m["pending"].(map[string]any)
+	if !ok {
+		return nil, "the raw pending pick is not an object"
+	}
+	if key, ok := pd["key"].(string); !ok || key != want.Key {
+		return nil, "the raw pending key is not the vouched one"
+	}
+	if confirm, ok := pd["confirm"].(bool); !ok || confirm != want.Confirm {
+		return nil, "the raw confirmation is not the vouched one"
+	}
+	delete(pd, "key")
 	out, err := json.Marshal(m)
 	if err != nil {
-		t.Fatal(err)
+		return nil, "the raw frame does not encode again"
 	}
-	return out
+	return out, ""
+}
+
+// duplicateField returns the path of a field name that appears twice in
+// one object of data, or "".
+func duplicateField(data []byte) string {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	var walk func(path string) string
+	walk = func(path string) string {
+		tok, err := dec.Token()
+		if err != nil {
+			return path + " (unreadable)"
+		}
+		switch tok {
+		case json.Delim('{'):
+			seen := map[string]bool{}
+			for dec.More() {
+				name, err := dec.Token()
+				if err != nil {
+					return path + " (unreadable)"
+				}
+				k, _ := name.(string)
+				if seen[k] {
+					return path + "." + k
+				}
+				seen[k] = true
+				if d := walk(path + "." + k); d != "" {
+					return d
+				}
+			}
+			_, _ = dec.Token()
+		case json.Delim('['):
+			for dec.More() {
+				if d := walk(path + "[]"); d != "" {
+					return d
+				}
+			}
+			_, _ = dec.Token()
+		}
+		return ""
+	}
+	return walk("")
 }
 
 func lastEvents(fr wire.TableState) []wire.TableEvent {
