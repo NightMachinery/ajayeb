@@ -15,8 +15,13 @@ func salesBatch(g Game) Batch {
 			continue
 		}
 		key := "side:day"
-		if g.State.Phase != PhaseSides {
+		switch g.State.Phase {
+		case PhaseTurn:
 			key = (Action{Kind: ActSell, Design: g.State.Hands[s][0]}).Key()
+		case PhaseLastCard:
+			key = (Action{Kind: ActSell, Design: g.State.Cities[s].Kept}).Key()
+		case PhaseDiscardBuild:
+			key = g.Legal(s)[0].Key()
 		}
 		b.Picks = append(b.Picks, Pick{Seat: s, Key: key})
 	}
@@ -186,8 +191,13 @@ func TestResolveMilitaryRing(t *testing.T) {
 }
 
 func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
-	// Wonder scheduling is the only deferred effect path. The sweep checks
-	// real categories/ranks independently, plus conservation and equivalence.
+	var phaseHits [NumPhases]int
+	var freeHits [FreeDiscard + 1]int
+	var lastHits [ActBuildDiscarded + 1]int
+	var discarded, kept, rebuilt, skipped, emptySkip, duplicateSkip int
+	var stageHits [catalog.NumBoards + 1][3][catalog.MaxStages + 1]int
+	// Check complete games, including one-seat ability points, against the
+	// independent score oracle and both core traversal orders.
 	for n := uint8(3); n <= 7; n++ {
 		for seed := uint64(0); seed < 200; seed++ {
 			setup := Setup{Seats: n, Seed: seed, Options: Options{Sides: SideRule(seed % 3)}}
@@ -200,14 +210,37 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 				if steps >= MaxPoints {
 					t.Fatal("did not terminate")
 				}
+				phaseHits[g.State.Phase]++
 				b := Batch{Point: g.Point().ID()}
 				var picks [MaxSeats]Action
 				for s := Seat(0); s < Seat(n); s++ {
+					if !g.Point().Required.Has(s) {
+						if len(g.Legal(s)) != 0 {
+							t.Fatal("nonrequired offer")
+						}
+						continue
+					}
 					cs := g.Legal(s)
 					if len(cs) == 0 {
 						t.Fatal("empty required offer")
 					}
 					c := cs[(int(seed)+steps*3+int(s)*7)%len(cs)]
+					if seed%4 == 0 {
+						for _, offer := range cs {
+							if offer.Kind == ActStage {
+								c = offer
+								break
+							}
+						}
+					}
+					freeHits[c.Free]++
+					if g.State.Phase == PhaseLastCard {
+						lastHits[c.Kind]++
+					}
+					if c.Kind == ActStage {
+						city := g.State.Cities[s]
+						stageHits[city.Board][city.Side][city.Stages+1]++
+					}
 					b.Picks = append(b.Picks, Pick{Seat: s, Key: c.Key()})
 					picks[s] = c.Action
 				}
@@ -227,6 +260,27 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 				if err := next.CheckInvariants(); err != nil {
 					t.Fatalf("n%d seed%d step%d: %v", n, seed, steps, err)
 				}
+				for _, e := range events {
+					switch e.Kind {
+					case EvCardKept:
+						kept++
+					case EvLeftoverDiscarded:
+						discarded++
+					case EvDiscardBuild:
+						rebuilt++
+					case EvDiscardBuildNothing:
+						skipped++
+						total := 0
+						for _, n := range next.State.Discard {
+							total += int(n)
+						}
+						if total == 0 {
+							emptySkip++
+						} else {
+							duplicateSkip++
+						}
+					}
+				}
 				batches = append(batches, b)
 				g = next
 			}
@@ -238,6 +292,15 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 				t.Fatal("replay differs", err)
 			}
 		}
+	}
+	t.Logf("1000 complete games: phase=%v free=%v last-actions=%v kept=%d discarded=%d rebuilt=%d skipped=%d (empty=%d duplicate=%d)", phaseHits, freeHits, lastHits, kept, discarded, rebuilt, skipped, emptySkip, duplicateSkip)
+	for board := catalog.BoardID(1); board <= catalog.NumBoards; board++ {
+		for _, side := range []catalog.Side{catalog.Day, catalog.Night} {
+			t.Logf("stage paths %s %s: %v", board, side, stageHits[board][side])
+		}
+	}
+	if phaseHits[PhaseDiscardBuild] == 0 || phaseHits[PhaseLastCard] == 0 || freeHits[FreeFirstColour] == 0 || freeHits[FreeFirstTurn] == 0 || freeHits[FreeLastTurn] == 0 {
+		t.Fatal("missing ability sweep path")
 	}
 }
 

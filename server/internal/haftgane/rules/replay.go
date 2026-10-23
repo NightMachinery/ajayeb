@@ -52,9 +52,12 @@ func (g *Game) Resolve(b Batch) (Game, []Event, error) {
 	}
 	out := *g
 	out.State = next
-	if g.State.Phase == PhaseTurn {
+	if g.State.Phase == PhaseTurn || g.State.Phase == PhaseLastCard {
 		age, turn := g.State.Age-1, g.State.Turn-1
 		for seat := uint8(0); seat < g.State.Seats; seat++ {
+			if !point.Required.Has(Seat(seat)) {
+				continue
+			}
 			a := picks[seat]
 			play := Play{Kind: a.Kind, Left: a.Left, Right: a.Right}
 			if a.Kind == ActBuild {
@@ -66,6 +69,9 @@ func (g *Game) Resolve(b Batch) (Game, []Event, error) {
 			out.Record.Picks[age][turn][seat] = a.Design
 			out.Record.Plays[age][turn][seat] = play
 		}
+	}
+	if g.State.Phase == PhaseDiscardBuild {
+		out.Record.Rebuilt[g.State.Age-1][g.State.Turn-1][g.State.Decider] = picks[g.State.Decider].Design
 	}
 	if next.Age != g.State.Age && next.Phase == PhaseTurn {
 		out.Record.Packets[next.Age-1] = next.Hands

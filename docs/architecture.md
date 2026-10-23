@@ -391,14 +391,16 @@ treasure. The existing `QuoteState` API still returns only affordable quotes.
 it never invokes legality generation or the payment solver. It removes picks,
 computes additive payments from the frozen city, places every card, rebuilds
 caches, and passes the remaining hands left in Ages I/III and right in Age II.
-Sixth-turn leftovers enter the pile before placement. Military compares each
-adjacent pair once after placement, then transfers the next Age or closes the
-game. Events follow pipeline step and ascending seat even when the independent
-seat loops run backwards. The core reads neither seed nor record and appends
+Sixth-turn leftovers enter the pile before placement, except Babylon night
+keeps its other card when stage 1 already exists or is built on that turn.
+After the discard opportunity and any kept-card turn, military compares each
+adjacent pair once, then transfers the next Age or closes the game. Events
+follow pipeline step and ascending seat even when the independent seat loops
+run backwards. The core reads neither seed nor record and appends
 to the caller's event buffer. `Game.Resolve` checks the exact point, sorted
 required seats and offered keys, applies the engine's own actions, then writes
-private picks, public plays and newly dealt packets. `Replay` uses those same
-checked batches; an error changes no caller value.
+private picks (including Babylon's seventh row), public plays, discard rebuilds
+and newly dealt packets. `Replay` uses those same checked batches; an error changes no caller value.
 
 `applyWhenPlaced` interprets fixed coins, coins per card and coins per stage
 once for the selected placement. It runs only after every city/cache reflects
@@ -429,14 +431,36 @@ category from the public cities. Literal card/stage scenarios and an independent
 raw-building score oracle check the results, with replay/core equivalence and
 reversed seat-loop order in the seeded sweep.
 
-This turn engine is still intermediate and must not be released. Halikarnassos
-discard-build and Babylon last-card scheduling remain for the wonder slice;
-until then, sixth-turn leftovers are always discarded. Olympia free checks are
-inherited, including chain precedence and zero effective printed coins. Sweeps
-compare point formulas and ranks using the state's coins and military tokens,
-as well as conservation, record shape and determinism. Literal scenarios check
-income; an independent sweep coin ledger and the remaining wonder timing
-belong to the next slice.
+Halikarnassos searches the whole pile after the turn's placements and coin
+effects, including sixth-turn leftovers and cards just sold. A discard-build
+point requires only its owner and opens only when a legal name exists. Every
+offer constructs that design for free; there is no decline. The building's own
+income counts the cities at that point without repeating earlier income.
+An empty or all-duplicate pile emits `EvDiscardBuildNothing` and continues.
+The stage play and its rebuilt/no-build outcome identify every pile look for
+history reconstruction, including skipped searches. Private pile views and
+knowledge reconstruction belong to the later view layer.
+
+Babylon's kept-card point follows that discard opportunity and precedes
+military. Only its owner acts, using a fresh frozen position: sixth-turn income
+can be spent and newly built neighbour production can be bought. Construction,
+stage building and selling are all offered under the ordinary rules. Resolving
+one clears `Kept`; neighbours still receive its trade payments. No decline is
+offered because selling always exists.
+
+Olympia's free conditions read the frozen city for each building: day stage 2
+frees only the first building of an absent colour; night stages free buildings
+on turn 1 or turn 6 when the stage already stood at that turn's opening.
+Selling or building a stage loses that turn's window. Free constructions have
+one zero-payment offer, with chain precedence; stages never inherit it.
+Decorators checks the actual side length, including two- and four-stage sides.
+
+The rules now resolve complete games without a deferred ability path. Seeded
+games check scores, conservation, record shape, replay and reversed seat order;
+forced scenarios check all 41 stages and both skipped-pile outcomes immediately
+at ability boundaries. Production release still needs the independent rules
+review and acceptance gate, viewer redaction/knowledge views, and the later
+actor, persistence and client integration slices.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen

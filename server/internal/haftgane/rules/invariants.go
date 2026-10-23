@@ -140,7 +140,9 @@ func (g *Game) CheckInvariants() error {
 		case PhaseTurn:
 			want = 8 - int(st.Turn)
 		case PhaseDiscardBuild:
-			want = 7 - int(st.Turn)
+			if st.Turn < TurnsPerAge {
+				want = 7 - int(st.Turn)
+			}
 		}
 		if _, err := checkIDs(st.Hands[seat][:], st.Age, want); err != nil {
 			return fmt.Errorf("rules: hand seat %d: %w", seat, err)

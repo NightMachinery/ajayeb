@@ -11,6 +11,7 @@ const (
 	FreeFirstColour
 	FreeFirstTurn
 	FreeLastTurn
+	FreeDiscard
 )
 
 // Choice embeds the engine-owned action. Key() is its canonical serialization;
@@ -144,14 +145,39 @@ func LegalState(st *State, seat Seat, buf []Choice) []Choice {
 		}
 		return out
 	}
-	if st.Phase != PhaseTurn || st.Age < 1 || st.Age > NumAges || st.Turn < 1 || st.Turn > TurnsPerAge {
+	if st.Age < 1 || st.Age > NumAges {
+		return out
+	}
+	if st.Phase == PhaseDiscardBuild {
+		if seat != st.Decider || !st.Decider.Valid(st.Seats) {
+			return out
+		}
+		for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
+			d, ok := catalog.DesignByID(id)
+			if ok && st.Discard[id] != 0 && st.Cities[seat].Buildings.And(catalog.T.ByName[d.NameID]).Empty() {
+				out = append(out, Choice{Action: Action{Kind: ActBuildDiscarded, Design: id}, Free: FreeDiscard})
+			}
+		}
 		return out
 	}
 	var hand catalog.DesignSet
-	for _, id := range st.Hands[seat] {
-		if id.Valid() {
-			hand.Add(id)
+	switch st.Phase {
+	case PhaseTurn:
+		if st.Turn < 1 || st.Turn > TurnsPerAge {
+			return out
 		}
+		for _, id := range st.Hands[seat] {
+			if id.Valid() {
+				hand.Add(id)
+			}
+		}
+	case PhaseLastCard:
+		if st.Turn != MaxTurns || seat != st.Decider || !st.Cities[seat].Kept.Valid() {
+			return out
+		}
+		hand.Add(st.Cities[seat].Kept)
+	default:
+		return out
 	}
 	var cache quoteCache
 	for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
