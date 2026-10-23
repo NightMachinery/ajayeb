@@ -64,7 +64,14 @@ export class Discovery {
         );
       this.#options.ready(
         module.Component,
-        kind === 'duel' ? {} : { connection: this.#connection, snapshot: this.#connection.latest },
+        kind === 'duel'
+          ? {}
+          : {
+              connection: this.#connection,
+              snapshot: this.#connection.latest,
+              code: this.#options.code,
+              claim: this.#options.claim
+            },
         kind
       );
     } catch {
