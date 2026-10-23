@@ -493,10 +493,16 @@ browser and no server:
   with the next seq and the open point; a change, a confirmation and its
   withdrawal; every refusal (decision-closed, illegal, stale, forbidden,
   storage, and rate, retried three times); duplicates answered by a frame;
-  a reconnect resending a pick only for the same seat and point; a reload
-  restoring the pending pick and its confirmation; a tab moved off its
-  seat becoming a spectator; the lobby's Start; device links; and the
-  saved rooms' `haftgane` hint.
+  a reconnect resending a pick only for the same seat and point; a
+  resignation, an undo and a pick each moved to another seat and to
+  watching before a reconnect and before a `rate` retry, never sent again,
+  and sent again unchanged while the seat stays; a reload restoring the
+  pending pick and its confirmation; a Session mounted again in the same
+  page going on from the last seq of the page's client id (with the
+  server's restored pick), a reload's new id starting at 1, and the
+  default counter being the page's; a tab moved off its seat becoming a
+  spectator; the lobby's Start; device links; and the saved rooms'
+  `haftgane` hint.
 - `src/lib/games/haftgane/session/presenter.test.ts`: the TablePresenter
   plays a resolution's events in order, shows a frame with history or a
   changed seat without playing it, replaces a presence refresh in place
@@ -1298,9 +1304,24 @@ The leak boundary is checked while both of the second human's drafts are
 pending: the spec picks two of its choices that no page of the others has
 shown, and neither may appear in the creator's or the spectator's
 WebSocket frames, DOM, local or session storage, console, or
-`window.__ajayebTable` dump; and no frame of theirs carries a pending pick
-that is not their own. It runs in CI's shards but not in `make e2e-smoke`;
-run it alone with `make e2e GREP=@haftgane-table`.
+`window.__ajayebTable` dump. A pending-pick ownership oracle reads each
+page's socket traffic both ways, in order, across reloads and reconnects:
+it takes a page's own pick from what the page sent (each `table-pick`
+under its hello's client id and seq), once a frame acknowledges that seq,
+until the point changes or the page holds no seat, and requires every
+`table-state` frame's pending pick to be exactly that, or absent. It runs
+over the creator's and the spectator's traffic at the leak boundary and
+over all three pages' at the end, and three contaminated copies must fail
+it: a creator frame showing the second human's draft, the creator's own
+pick with the wrong confirmation, and a spectator frame with a pick.
+
+A second test leaves a solo table for Home and comes back through the
+app's own links, in the same page and under the same client id: the
+server restores the pending pick, a new pick is applied, and Start and the
+two picks carry three rising seqs.
+
+Both run in CI's shards but not in `make e2e-smoke`; run them alone with
+`make e2e GREP=@haftgane-table`.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 

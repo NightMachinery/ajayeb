@@ -306,16 +306,25 @@ a reload mends a client and a server that disagree.
 - **TableSession** (`session/session.svelte.ts`) keeps the latest table or
   lobby frame in `$state.raw`, replaced whole, and one request in flight.
   Each page load is a client with its own id and a seq, counted from 1 and
-  shared by all its requests; a refusal does not use one up. A pick is
+  shared by all its requests; a refusal does not use one up. The counter
+  lives beside the page's id (`entrySeqs` in `$lib/entry/identity`), not
+  in the Session, so a Session mounted again in the same page (Home and
+  back) goes on from the last seq instead of repeating ones the table
+  already took; a reload makes a new id, which starts at 1. A pick is
   `{seq, point, key, confirm}`, sent only for a key among the latest
   frame's choices. Confirm and withdraw send the pending pick again with
   the confirmation flipped, so a pick can change until the point resolves.
   A frame whose `ack` names this client and seq settles the request; a
   `table-reject` ends it with its outcome (decision-closed, illegal, stale,
   forbidden, storage), except `rate`, which is retried after a pause up to
-  three times. After a new socket's join, a pick in flight goes out again
-  only when the join's frame shows the same seat and point, so a reconnect
-  never lands a pick on the next decision. The server keeps each seat's
+  three times. A request the seat itself makes (a pick, an undo, a
+  resignation) names no seat, so the table applies it to whatever seat the
+  sender holds when it arrives; each is bound to the seat it was chosen
+  for. After a new socket's join or a `rate` refusal, it goes out again
+  only while the latest frame still shows this tab in that seat (a pick,
+  also at the same point), and a frame that moves the tab drops it, so a
+  retry never resigns or picks for a seat the tab was given since. The
+  server keeps each seat's
   pending pick and its confirmation and sends them back in that seat's
   frames, so a reconnect or a reload restores both. A frame that moves this
   tab off its seat (an admin gave the seat to a bot or another human) turns
