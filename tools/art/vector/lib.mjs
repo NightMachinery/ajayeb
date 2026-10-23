@@ -18,6 +18,10 @@ export const NAMES_TS = path.join(REPO, 'web/src/lib/icons/names.ts');
  *  A drawing reused from Duel is referenced from sets.json, never copied here. */
 export const GAME_ICON_DIRS = [path.join(REPO, 'web/src/lib/games/haftgane/icons/svg')];
 export const TOKENS_CSS = path.join(REPO, 'web/src/lib/styles/tokens.css');
+/** Colour tokens of games other than Duel (Haftgane's seat and resource
+ *  colours). The app loads them only with that game; the specimens inline
+ *  them after TOKENS_CSS, so a set's sets.json inks may name them. */
+export const GAME_TOKENS_CSS = [path.join(REPO, 'web/src/lib/games/haftgane/theme.css')];
 export const SETS_JSON = path.join(REPO, 'art/vector/sets.json');
 export const FONT_DIR = path.join(REPO, 'web/src/lib/fonts');
 
@@ -246,6 +250,13 @@ export function aspectOf(file) {
 /** tokens.css, for inlining into a specimen page. */
 export function tokensCss() {
   return fs.readFileSync(TOKENS_CSS, 'utf8');
+}
+
+/** tokens.css, then every game's token sheet that exists, in that order. */
+export function tokenSheets() {
+  return [TOKENS_CSS, ...GAME_TOKENS_CSS.filter((f) => fs.existsSync(f))].map((f) =>
+    fs.readFileSync(f, 'utf8')
+  );
 }
 
 /** An @font-face rule that inlines one of the shipped WOFF2 fonts. */

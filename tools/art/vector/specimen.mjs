@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Writes the specimen page of one icon set: a self-contained HTML file that
-// inlines web/src/lib/styles/tokens.css, one shipped font and the set's SVGs
+// inlines web/src/lib/styles/tokens.css (and the game token sheets of
+// GAME_TOKENS_CSS in lib.mjs), one shipped font and the set's SVGs
 // (as <symbol>s used through <use>, the way the app's sprite works), so it
 // needs no server and no file:// fetches. shoot.mjs photographs it.
 //
@@ -43,7 +44,7 @@ import {
   setFiles,
   shown,
   symbolsFor,
-  tokensCss
+  tokenSheets
 } from './lib.mjs';
 
 export const SIZES = [12, 14, 16, 20, 24, 32, 48];
@@ -98,14 +99,15 @@ function blockBody(css, selector) {
 }
 
 /**
- * The tokens, plus .theme-light and .theme-dark classes that pin a subtree
- * to one theme's values whatever the page theme is (columns A and B).
+ * The tokens (tokens.css and the game token sheets), plus .theme-light and
+ * .theme-dark classes that pin a subtree to one theme's values whatever the
+ * page theme is (columns A and B).
  */
 export function themedTokens() {
-  const css = tokensCss();
-  const light = blockBody(css, ':root {');
-  const dark = blockBody(css, ":root[data-theme='dark'] {");
-  return `${css}\n.theme-light{${light}}\n.theme-dark{${light}${dark}}\n`;
+  const sheets = tokenSheets();
+  const light = sheets.map((css) => blockBody(css, ':root {')).join('');
+  const dark = sheets.map((css) => blockBody(css, ":root[data-theme='dark'] {")).join('');
+  return `${sheets.join('\n')}\n.theme-light{${light}}\n.theme-dark{${light}${dark}}\n`;
 }
 
 /** One <svg><use/></svg> at a size, like Icon.svelte. Wide files keep their aspect. */
