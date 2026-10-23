@@ -52,7 +52,7 @@ The design documents are kept as they were reviewed, so a few points are settled
 - The Seen hands notebook covers the whole game, as the engine defines it, not only the current Age. A screen may group it by Age.
 - Greedy is the bots' fallback and the simulator's baseline, never a level offered to players.
 - The reuse audit's `M13.*` slices are not the plan. The roadmap's M13 to M23 are.
-- The sun and moon cannot mean both a seat (as Duel's crests do) and a wonder side (as the art plan's side marker does). The art milestone settles one meaning for each (Open items, call 8).
+- The sun and moon cannot mean both a seat (as Duel's crests do) and a wonder side (as the art plan's side marker does). The art milestone settled it: seven new crests, so the sun and moon keep their day and night meaning (Open items, call 8).
 - The service worker keeps precaching the whole build, so a Duel player's browser fetches Haftgane code in the background. Art is never precached, and Home and Duel never run Haftgane code.
 
 ## Decided by the owner (2026-10-21)
@@ -110,7 +110,7 @@ Calls made while folding in the final answers, so that the rules have no gap:
 Calls left to a build slice, with the design's recommendation:
 
 7. The bot level used when an admin switches a seat to a bot: the admin picks it in the switch, defaulting to the lowest level released (`M16.haftgane-room-actor`).
-8. The sun and moon mean either a seat or a wonder side, not both: seven new crests, so that the sun and moon keep their day and night meaning (`M19.vectors-seat-crests`).
+8. The sun and moon mean either a seat or a wonder side, not both: seven new crests, so that the sun and moon keep their day and night meaning (`M19.vectors-seat-crests`). Done: a lotus, a palm, a scarab, a falcon, a wave, an anchor and a fish (`art/vector/specs/haftgane-seat-crests.md`).
 
 ## How the design was reviewed
 

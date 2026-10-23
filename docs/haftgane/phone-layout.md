@@ -215,7 +215,7 @@ Tapping a far chip or a neighbour panel opens the city sheet at that seat. A row
 
 - Two resource colours for the resources Duel lacks: ore and cloth (`--res-ore`, `--res-cloth` and their inks), drafted in the private mockup kit.
 - Seven seat colours with light and dark values (`--seat-0` to `--seat-6`), used for crest rings and your strip's outline.
-- Five new crest glyphs (the mockups use rough star, cypress, wave, lotus and tower shapes) and placeholder ore, cloth and science glyphs. All of them go through the vector loop in `art/vector/STYLE.md`; the mockup shapes are stand-ins only.
+- Seven crest glyphs, one per seat, and ore, cloth and science glyphs. The mockups use rough stand-in shapes; the drawn crests are a lotus, a palm, a scarab, a falcon, a wave, an anchor and a fish (`art/vector/specs/haftgane-seat-crests.md`), and the drawn colour tokens live in `web/src/lib/games/haftgane/theme.css` (M19).
 
 ## Server fields the screens rely on
 
@@ -239,7 +239,7 @@ The client stays thin, so each number on screen must arrive in the per-viewer vi
 - **Turn recap.** Board tags alone are glanceable but easy to miss with six other players. A recap that waits behind a button is easy to skip. A recap that opens by itself and closes on any tap costs one tap per turn and matches Duel's move summary. Chosen, with a setting to open it only on request, as the owner accepted.
 - **Payment choice.** Always taking the cheapest split is simpler but takes away a real decision (which opponent gets your coins); the rules ruling keeps the choice. A two-step picker (choose a neighbour, then amounts) is slower than a short radio list of the offered outcomes. The radio list is chosen.
 - **Score sheet.** A score pad with players as columns (as on paper) needs seven columns of names and does not fit 360 px; rows per player with category columns fit. Chosen.
-- **Crests.** Crests fixed by table position (seat 1 is always the sun) are simple and stable across a game; crests chosen by players in the lobby are more personal but need a picker and collision handling. The owner accepted fixed crests.
+- **Crests.** Crests fixed by table position (seat 0 always wears the lotus) are simple and stable across a game; crests chosen by players in the lobby are more personal but need a picker and collision handling. The owner accepted fixed crests.
 - **Landscape.** Asking phone users to rotate back to portrait is simpler, but Duel supports landscape and the three-column layout works, so it is kept.
 
 ## Draft decision entries

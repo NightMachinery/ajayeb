@@ -35,7 +35,7 @@ The blind check's 12 px DPR 2 and 16 px DPR 1 sheets bracket the two common size
   - Duel's crests and capitals: sun and moon (any rayed disc or crescent).
   - Haftgane's chains (spec [haftgane-chain.md](haftgane-chain.md)): barrel, book, column, drop, helmet, horseshoe, lamp, lyre, mask, target, tower, mortar, scales, quill, awning, camel, hammer, lighthouse, lightning, planet, saw, scroll, star (five points) and torch.
   - Haftgane's science and resources ([haftgane-resources-science.md](haftgane-resources-science.md)): compass, gear, tablet, ore and cloth; Duel's wood, clay, stone, glass and papyrus.
-  - The conflict tokens, the pass mark and the ability glyphs (spec `haftgane-conflicts-passing-abilities.md`, not on master when this was written): the intact and the split pennant on a staff, two cards over a horizontal arrow, the stepped ziggurat, the bays with a check, a card with a plus, a palette, a card against a bracket.
+  - The conflict tokens, the pass mark and the ability glyphs (spec [haftgane-conflicts-passing-abilities.md](haftgane-conflicts-passing-abilities.md)): the intact and the split pennant on a staff, two cards over a horizontal arrow, the stepped ziggurat, the bays with a check, a card with a plus, a palette, a card against a bracket.
   - The category glyphs, which show beside seats in the city's colour counts: the mountain, the anvil, the domed gate, the eight-point star, the purse, the crossed swords and the crown. Also `hint-crown`, `token-frame`'s rosette, `vp-laurel`'s wreath, `wonder`'s gateway, `shield`, `coin`, `choice`'s Y and `military-pawn`.
 - So no crest is a star, tower, sun, moon, gear, compass, tablet, scroll, book, lyre, crown, rosette, flag, shield or quadruped.
 
@@ -46,8 +46,8 @@ Each crest is something of the game's world (the gardens, rivers and harbours of
 ### crest-0: lotus (rose)
 
 - Metaphor: a lotus flower seen from the side, the flower of the Nile and of Persepolis' reliefs.
-- Silhouette: a wide cup of pointed petals opening upwards, three tall in the middle and two flaring out to the sides, on a short stem with a flat pad. Low and wide, its mass in the upper middle, a cup (open upwards), never a band with points.
-- Must differ from: `hint-crown` and `category-purple`, the crowns (no band, no balls on the points: pointed petals that rise from a curved cup), `token-frame` (no rosette of round lobes), crest-1 the palm (petals rise from a cup; the palm's fronds droop from a trunk).
+- Silhouette: a broad open lotus with no stem: one tall pointed petal in the middle, two broad petals leaning out on each side, the lowest nearly flat, all rising from a shallow bowl at the foot. Wide and full, a fan of petals opening upwards, never a band with points. (A cup on a stem read as a chalice, and a pointed fan on a stem as a cannabis leaf; see the log.)
+- Must differ from: `hint-crown` and `category-purple`, the crowns (no band, no balls on the points: broad petals that rise from a bowl), `token-frame` (no rosette of round lobes), crest-1 the palm (petals rise from a bowl; the palm's fronds droop from a trunk).
 
 ### crest-1: palm (olive)
 
@@ -61,11 +61,12 @@ Each crest is something of the game's world (the gardens, rivers and harbours of
 - Silhouette: a broad oval body split down the back into two wing cases, a wide shield-like head with a toothed front, and three short legs on each side.
 - Must differ from: `coin` and `chain-target` (not a plain disc), `chain-mask` (no face), `military-pawn`, `shield` (legs, and a body split down the middle, rounded at the foot).
 
-### crest-3: eagle (amber)
+### crest-3: falcon (amber)
 
-- Metaphor: an eagle displayed, wings spread, head in profile, the bird of royal standards.
-- Silhouette: a solid upright body with a small head turned to one side, two broad wings raised and spread to both edges, their lower edges cut into feathers, and a short fanned tail.
-- Must differ from: `vp-laurel` (a solid body in the middle; the wreath is open), `category-red`'s crossed swords (broad wings, not thin blades), `crest-sun` (no rays).
+- Metaphor: a falcon standing in profile, the bird of Horus on Egypt's standards and seals.
+- Silhouette: a bird perched and facing right, leaning forward: a round head with a hooked beak at the upper right, a full breast, the folded wing and a long tail sweeping down to the lower left, two short legs at the foot. Its mass runs on the diagonal from the upper right to the lower left; the legs, the only detail near the lower right, carry no identity.
+- Must differ from: crest-6 the fish (upright and on legs, with a beak; the fish lies flat), `chain-drop` (a beak, a tail and legs; not a plain drop), `military-pawn` (it leans and has a beak; the pawn stands straight and round), `pass-hand`.
+- Not an eagle displayed: wings spread to both edges read as a bat or an angel at 15 px and as a blurred W at 11 to 12 px (see the log), and the profile bird reads at every size.
 
 ### crest-4: wave (azure)
 
@@ -104,6 +105,6 @@ Each crest is something of the game's world (the gardens, rivers and harbours of
 ## Acceptance
 
 - **Blind check, 100%** at 12 px DPR 2 and 16 px DPR 1, by a fresh reader with one gloss line per name, among the neighbours below. Run twice, in colour and in `--mono`, because crests must be told apart by shape alone.
-- **Neighbours** (`neighbours` in `sets.json`): `crest-sun`, `crest-moon`, `chain-star`, `chain-tower`, `chain-torch`, `chain-drop`, `chain-planet`, `hint-crown`, `vp-laurel`, `choice` and `chain-sword`. For the blind check, the conflict pennants and the pass mark join them from their own set, which was not on master when this set was drawn.
+- **Neighbours** (`neighbours` in `sets.json`): `crest-sun`, `crest-moon`, `chain-star`, `chain-tower`, `chain-torch`, `chain-drop`, `chain-lighthouse`, `hint-crown`, `category-purple`, `vp-laurel`, `choice`, `chain-sword`, `conflict-victory`, `pass-hand` and `military-pawn`.
 - **Colour vision:** a sheet of the seven crests in their rings at the mockup sizes, in both themes, in greyscale and under the three emulations, and a swatch sheet of the seven seat colours with their contrast ratios in both themes.
 - Lint clean, each file within the 1228-byte budget, no change to Duel's icon budget or bundle. Family check passed.
