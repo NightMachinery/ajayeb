@@ -18,8 +18,9 @@ import (
 // actor at 3 to 7 seats, with drafts, resends and races, and every arrival
 // seed gives the same canonical batches and hash.
 func TestDriverInProcess(t *testing.T) {
-	ctx := testContext(t)
 	for n := MinSeats; n <= MaxSeats; n++ {
+		// Each seat count has its own deadline, as in the differential.
+		ctx := testContext(t)
 		f := newFixture(t, Config{})
 		cfg := tabletest.Config{Seats: n, PickSeed: uint64(n), Script: tabletest.ScriptOptions{Drafts: 50, Resends: 30}}
 		runs, err := tabletest.CompareSchedules(ctx, f.factory(n, uint64(100+n), false), cfg, []uint64{1, 2, 3, 4})
@@ -138,12 +139,14 @@ func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 // two tabs and the spectator) sees the same point, required and confirmed
 // seats, offer, pick and confirmation in both.
 func TestDifferentialAgainstDirect(t *testing.T) {
-	ctx := testContext(t)
 	seen := map[tabletest.Outcome]int{}
 	for n := MinSeats; n <= MaxSeats; n++ {
 		for _, seqClients := range []int{32, 1} {
 			for game := range uint64(3) {
-				differential(ctx, t, n, 300+game*7+uint64(n), seqClients, game, seen)
+				// Each game has its own deadline, so a hang in one is caught
+				// however long the whole sweep takes (several times longer
+				// under the race detector).
+				differential(testContext(t), t, n, 300+game*7+uint64(n), seqClients, game, seen)
 			}
 		}
 	}
@@ -265,11 +268,11 @@ func compareViews(ctx context.Context, t *testing.T, where string, ref, act tabl
 // snapshot agree after every arrival, and the canonical histories end
 // equal.
 func TestDifferentialSwitches(t *testing.T) {
-	ctx := testContext(t)
 	kept := 0
 	for n := MinSeats; n <= MaxSeats; n++ {
 		for game := range uint64(2) {
-			differentialSwitches(ctx, t, n, 700+game*11+uint64(n), game, &kept)
+			// Each game has its own deadline, as in the differential.
+			differentialSwitches(testContext(t), t, n, 700+game*11+uint64(n), game, &kept)
 		}
 	}
 	if kept == 0 {
