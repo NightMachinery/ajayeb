@@ -426,20 +426,21 @@ func (p *inproc) Canonical(ctx context.Context) (tabletest.Canonical, error) {
 		return tabletest.Canonical{}, err
 	}
 	var c tabletest.Canonical
-	err = a.call(ctx, func() {
-		c.Hash = a.st.rec.Hash
-		for _, b := range a.st.rec.Batches {
-			tb := tabletest.Batch{Point: b.Point, Picks: []tabletest.Pick{}}
-			for _, pk := range b.Picks {
-				tb.Picks = append(tb.Picks, tabletest.Pick{Seat: pk.Seat, Key: pk.Key})
-			}
-			c.Batches = append(c.Batches, tb)
-		}
-	})
-	if c.Batches == nil {
-		c.Batches = []tabletest.Batch{}
-	}
+	err = a.call(ctx, func() { c = canonicalOf(&a.st.rec) })
 	return c, err
+}
+
+// canonicalOf is a record's canonical history.
+func canonicalOf(r *Record) tabletest.Canonical {
+	c := tabletest.Canonical{Hash: r.Hash, Batches: []tabletest.Batch{}}
+	for _, b := range r.Batches {
+		tb := tabletest.Batch{Point: b.Point, Picks: []tabletest.Pick{}}
+		for _, pk := range b.Picks {
+			tb.Picks = append(tb.Picks, tabletest.Pick{Seat: pk.Seat, Key: pk.Key})
+		}
+		c.Batches = append(c.Batches, tb)
+	}
+	return c
 }
 
 func outcomeOf(out string) tabletest.Outcome {

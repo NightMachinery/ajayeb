@@ -21,6 +21,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/httpapi"
 	"github.com/NightMachinery/ajayeb/server/internal/ident"
+	"github.com/NightMachinery/ajayeb/server/internal/lobbyroom"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
@@ -31,7 +32,7 @@ import (
 )
 
 // These tests drive tables over the real stack, wired as cmd/ajayeb wires
-// it: the schema-2 store, the room manager with both kinds, package ws on
+// it: the schema-2 store, the room manager with every kind, package ws on
 // /ws and package httpapi for the log download, behind an httptest.Server,
 // through real WebSocket connections. The tabletest.Table adapter sees
 // only frames: a snapshot is the client's latest frame after a resync, and
@@ -46,6 +47,7 @@ type stack struct {
 	st      *store.Store
 	m       *room.Manager
 	tables  *tableroom.Tables
+	lobbies *lobbyroom.Lobbies
 	sockets *ws.Server
 	hs      *httptest.Server
 	url     string
@@ -75,7 +77,8 @@ func newStack(t *testing.T, dir string) *stack {
 	s := &stack{t: t, dir: dir, logs: &lockedBuffer{}}
 	logger := slog.New(slog.NewJSONHandler(s.logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	s.tables = tableroom.New(tableroom.Config{Logger: logger, Creation: true})
-	kinds, err := room.NewKinds(room.DuelKind(), s.tables.Kind())
+	s.lobbies = lobbyroom.New(lobbyroom.Config{Logger: logger, Tables: s.tables, Creation: true})
+	kinds, err := room.NewKinds(room.DuelKind(), s.tables.Kind(), s.lobbies.Kind())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,6 +93,7 @@ func newStack(t *testing.T, dir string) *stack {
 		t.Fatal(err)
 	}
 	s.tables.Bind(s.m, s.st)
+	s.lobbies.Bind(s.m, s.st)
 	s.sockets, err = ws.New(ws.Config{Rooms: s.m, Identity: s.secret, Version: "tables", Logger: logger,
 		Limits: ws.Limits{FrameRate: 100000, FrameBurst: 100000, MaxConns: 4096, MaxConnsPerIP: 4096, JoinMissesPerIP: 4096}})
 	if err != nil {
@@ -154,7 +158,9 @@ type client struct {
 	states   []wire.TableState
 	raw      [][]byte // every table-state frame, as received
 	rejects  []wire.TableReject
+	lobby    []wire.LobbyState
 	other    []string
+	seq      int // the last seq this client sent in a lobby or table request
 }
 
 func (s *stack) dial(ctx context.Context, token, clientID, name string) *client {
@@ -235,6 +241,10 @@ func (c *client) next(ctx context.Context) string {
 		var r wire.TableReject
 		strict(&r)
 		c.rejects = append(c.rejects, r)
+	case "lobby-state":
+		var st wire.LobbyState
+		strict(&st)
+		c.lobby = append(c.lobby, st)
 	case "welcome":
 	default:
 		c.other = append(c.other, string(data))
@@ -242,14 +252,16 @@ func (c *client) next(ctx context.Context) string {
 	return head.T
 }
 
-// untilState reads until a table-state frame satisfies ok.
+// untilState reads until a table-state frame satisfies ok, and fails on
+// any other non-state frame meanwhile.
 func (c *client) untilState(ctx context.Context, what string, ok func(wire.TableState) bool) wire.TableState {
 	c.t.Helper()
+	others := len(c.other)
 	for {
 		if c.next(ctx) == "table-state" && ok(c.states[len(c.states)-1]) {
 			return c.states[len(c.states)-1]
 		}
-		if len(c.other) > 0 {
+		if len(c.other) > others {
 			c.t.Fatalf("waiting for %s: %s", what, c.other[len(c.other)-1])
 		}
 	}
