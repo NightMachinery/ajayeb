@@ -374,3 +374,27 @@ The game is named Haftgane: the opening paragraph says that this page states the
 ## M13 data verification (2026-10-21)
 
 M13 verified the card and wonder data against the printed game. On this page: ruling 30 is confirmed by the printed arrows, and its Open item is closed; the setup notes that the guilds' printed minimum does not apply; Babylon's night side (Q1) is marked provisional wherever this page relies on it, including the sizes and rulings 1 and 19; the Halikarnassos night side's starting resource, provisional after the reconciliation (Q5), is confirmed by photo; and the links to the draft tables and to the held-back notes now point to [data-rulings.md](data-rulings.md), [effects.md](effects.md) and [edition-differences.md](edition-differences.md). No other rule or ruling changed.
+
+
+## Engine acceptance checks
+
+The engine implements these rules in `server/internal/haftgane/rules`.
+`TestRulesGateSweep` runs random and simple acceptance policies for each player
+count and side option. The full gate uses 2,000 seeds per combination, 60,000
+complete games, with invariants and a literal per-card/per-stage coin ledger
+after every point. Its final scores are compared with an independent raw-card
+reference, and its accepted batches replay to the exact same game value.
+These policies are test drivers; the shipping bots are a later milestone.
+
+The compact replay goldens cover ten natural games, all 41 stages on all 14
+board/sides, Babylon's stage built on the sixth turn in every Age, every
+Halikarnassos discard stage with empty and all-duplicate piles and with its own
+sixth-turn leftover, all Olympia windows including lost windows, and shared
+victory versus the coin tie-break. Forced worlds are explicit conserving
+scenarios; they do not assert that every arrangement is naturally reachable.
+Their keys stay readable while hashes pin the full initial game, each resolved
+point, raw event order and every offered choice. A field-by-field catalog diff,
+independent payment and science oracles, privacy/history checks and three
+fuzzers complement these stability fixtures. See [testing](../testing.md#haftgane-rules-gate)
+for the commands and [architecture](../architecture.md) for capacities and costs.
+The independent FULL review of the gate is the rules-audit round.

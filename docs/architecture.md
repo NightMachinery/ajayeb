@@ -548,9 +548,16 @@ Decorators checks the actual side length, including two- and four-stage sides.
 The rules now resolve complete games without a deferred ability path. Seeded
 games check scores, conservation, record shape, replay and reversed seat order;
 forced scenarios check all 41 stages and both skipped-pile outcomes immediately
-at ability boundaries. Production release still needs the independent rules
-review and acceptance gate, followed by the real-engine actor, persistence
-and client integration slices.
+at ability boundaries. The rules gate adds 60,000 complete games (2,000 seeds
+for every player count, random/simple acceptance policy and side option),
+1,183,834 resolved points, invariants and an independent literal coin ledger
+after every point, independent final scoring and exact replay. All effect,
+free-condition, event and point kinds occur; every one of the 41 stages is
+also forced. The 75 compact golden replays retain readable keys and SHA-256
+hashes of each point's full game value, raw events and offered choices. They
+bind materialized scenario builders by an initial-state hash, rather than
+copying large states into fixtures. The independent FULL review is the rules
+audit; actor, persistence and client integration follow separately.
 
 `Observe(seat)` builds a fixed, comparable whitelist: public cities without
 production caches, this seat's sorted hand, tucked and kept cards, an offer
@@ -604,11 +611,12 @@ payload or seed field in these engine DTOs. The platform can embed the seven
 raw JSON fixtures in `rules/testdata/views/`; `tygo` generates their types into
 `web/src/lib/wire/haftgane.gen.ts`.
 
-Measurements on Apple M2 (three runs, 2026-10-23) cover seven seats per operation
-at Age III turn 4. Seven `Clone` calls take 213 to 228 ns with zero allocations;
-seven `Observe` calls take 199 to 219 microseconds, 24,528 bytes and 28 allocations;
-seven `ViewFor` calls take 423 to 529 microseconds, about 180,208 bytes and 923
-allocations. These are measurements, not timing gates. The acceptance sweep's
+Rules-gate measurements on Apple M2 (three 500 ms benchmark runs,
+2026-10-23) cover seven seats per operation at Age III turn 4. Seven `Clone`
+calls take 440 to 491 ns with zero allocations; seven `Observe` calls take
+585 to 619 microseconds, 24,528 bytes and 28 allocations; seven `ViewFor` calls
+take 0.981 to 1.218 milliseconds, about 180,210 bytes and 923 allocations.
+These are measurements, not timing gates. The acceptance sweep's
 largest reachable JSON view is 25,789 bytes across 7,204 views. A deliberately
 unreachable serialization stress combines 217 keys, seven witness units per
 key, a full notebook and three full pile looks, and measures 185,536 bytes.
@@ -632,19 +640,35 @@ ordinary cost. An independent unit-by-unit oracle retains every affordable
 covering before testing dominance. It checks 100,000 deterministic random inputs
 and an opt-in small-universe sweep, run by
 `make test-haftgane-payment-exhaustive` (part of `make verify-full`). The sweep runs need vectors in
-parallel; `FuzzPayment` checks outcomes and every witness against the same oracle.
+parallel. The test oracle collapses permutations of unused identical-mask
+producers within one city, retaining each physical capacity; a separate
+comparison pins equality with its original uncollapsed traversal. This avoids
+Go's ten-second fuzz-worker watchdog on dense duplicate inputs. `FuzzPayment` checks outcomes and every
+witness against the same oracle.
+
+Rules-gate payment measurements on the same host and run take 0.745 to
+0.846 microseconds for a typical construction, 29.2 to 30.8 microseconds for
+feasible capacity and 47.2 to 50.9 microseconds for impossible capacity, all
+allocation-free. These meet the 50-microsecond typical and 1-millisecond worst
+payment targets. `Quote` takes 0.658 to 0.824 microseconds typical, 3.40 to 3.60
+microseconds for feasible capacity and 48.0 to 49.3 microseconds for impossible
+capacity; `QuoteState` takes 0.460 to 0.583 microseconds. The impossible fixture
+exceeds the design's 5-microsecond `Quote` target by about ten times. This
+measured stress gap remains open; the oracle and other correctness gates pass.
 
 The seven-seat Legal benchmarks distinguish feasible capacity from impossible
-shared capacity. On Apple M2 (three runs, 2026-10-23), `LegalState` takes
-12.4 to 12.8 microseconds for the typical fixture, 0.457 to 0.549 milliseconds
-for feasible capacity, and 1.112 to 1.252 milliseconds for impossible capacity,
-with zero allocations in each core fixture. The impossible fixture has seven
+shared capacity. In the rules-gate run, `LegalState` takes 28.4 to 30.7
+microseconds typical, 1.071 to 1.448 milliseconds for feasible capacity and
+2.395 to 2.524 milliseconds for impossible capacity, with zero allocations.
+The corresponding `Game.Legal` ranges are 31.8 to 34.2 microseconds (9,856
+bytes, 7 allocations), 1.028 to 1.086 milliseconds (66,304 bytes, 21 allocations)
+and 2.586 to 3.442 milliseconds (9,856 bytes, 7 allocations). Both APIs meet
+the seven-seat 2-millisecond typical and 10-millisecond worst targets.
+`ResolveState` for all seven seats takes 2.67 to 2.80 microseconds with no
+allocation, below its 0.2-millisecond target. The impossible fixture has seven
 units per cost and only six shared flexible symbols, so every construction is
-refuted and only 49 sales remain across all seven seats. `Game.Legal` takes
-1.049 to 1.089 milliseconds for that fixture (seven allocations), below the
-10 millisecond target. These synthetic capacity cases are stress fixtures,
-not claims of reachable cities; the previous "worst" fixture is now named
-`FeasibleCapacity`, and `ImpossibleCapacity` records the slower known shape.
+refuted and only 49 sales remain across all seats. These capacity cases are
+synthetic stress fixtures, not claims of reachable cities.
 
 The shared `enginekit/puritycheck` and strict depguard allow-lists enforce
 exact module dependencies for each pure package: the catalog can use only

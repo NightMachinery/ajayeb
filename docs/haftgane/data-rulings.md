@@ -157,3 +157,14 @@ One question remains. The working catalog uses its provisional value, and the re
 - **Q1, Babylon night.** Provisional: two stages and no points. Stage 1 costs SS and gives the last card ability; stage 2 costs CCCG and gives a science symbol of your choice. Board Game Arena's data, the wiki and most implementations agree; two implementations differ (ruling 14). No photo of the printed strip has been found. The only night-side photo shows the top of the board (its name, the night mark and the wood starting resource), and the second look, through the galleries of the second edition, its expansions and the first edition, found only day sides and first-edition boards. Settled by: one clear photo of the whole night strip.
 
 The owner accepted Q1 as it stands on 2026-10-22, so it no longer holds the release; a clear photo would still override it. Either way the 80 card designs and the other 39 stages are unaffected.
+
+
+## Engine release check
+
+The M15 rules gate reruns the committed three-way verifier against the compiled
+catalog, with zero unresolved field mismatches. `TestUnconfirmedList` retains
+only Q1's five Babylon night fields; the owner's acceptance above permits
+release without presenting them as photographically confirmed. Replay and
+stage tests exercise all 41 encoded stages, including those accepted values.
+These engine checks detect drift from this reconciliation; they supply no new
+independent evidence about the printed components.

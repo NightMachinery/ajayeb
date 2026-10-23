@@ -2497,3 +2497,80 @@ choices and seven-unit witnesses. It is not a reachable-city maximum or a cap.
 `BenchmarkCloneSeven`, `BenchmarkObserveSeven` and `BenchmarkViewForSeven` record
 seven-seat timings and allocations on the same Age III position, with no timing
 threshold. Current sizes and measurements are in [architecture.md](architecture.md).
+
+
+## Haftgane rules gate
+
+`TestRulesGateSweep` defaults to eight seeds for each of five player counts,
+three side options and two acceptance policies (240 complete games). Set
+`HAFTGANE_GATE_GAMES=2000` for the milestone gate's 60,000 games:
+
+```sh
+HAFTGANE_GATE_GAMES=2000 python3 tools/heavy.py run --kind test -- \
+  go -C server test -count=1 -v -timeout 90m \
+  -run '^TestRulesGateSweep$' ./internal/haftgane/rules
+```
+
+Every point checks conservation, caches, history shape and a literal coin
+ledger; every game's result is checked against the raw-card scoring reference
+and its accepted batches replay exactly. Counts name each effect, free reason,
+free condition, point, event, board/side/stage, kept-card action and skipped
+pile path. The full run reached 1,183,834 points, all kinds and all 41 stages,
+7,036 empty-pile skips and 14 all-duplicate skips. Observed maxima were 72
+choices per seat, 10 payments per construction, 29 events, 25 points, 20 built
+cards in a city and 126 cards in the pile. The catalog/structure proofs in
+`TestRulesGateDimensions` bound these dimensions independently of sampling.
+
+`TestRulesGateReplayGoldens` pins 75 cases in
+`internal/haftgane/rules/testdata/replays/replays.jsonl` (one short case per
+line, about 158 KB): ten complete natural games; all 41 stages; three sixth-turn
+Babylon cases; twelve Halikarnassos empty/duplicate/sixth-turn cases; seven
+Olympia windows; shared victory and the coin tie-break at three seats.
+Named explicit scenario builders are bound by a full initial-value SHA-256.
+Each frame stores its readable point/seat/keys and SHA-256 hashes of every
+seat's offers, the complete resulting game value and the ordered raw events.
+The scenarios are development roots, including deliberate partial histories,
+not production room files or claims of natural reachability. Existing raw view
+fixtures cover readable DTO shapes. On a mismatch the test names the first
+case/frame and writes the actual JSONL stream to a temporary file for diffing.
+After inspecting an intentional change, regenerate with:
+
+```sh
+UPDATE_HAFTGANE_REPLAYS=1 make test-go \
+  GO_PKGS=./internal/haftgane/rules GO_RUN=TestRulesGateReplayGoldens
+```
+
+Run `FuzzPlayout`, `FuzzKeys` and `FuzzPayment` separately for ten minutes each,
+serially, under heavy kind `fuzz`. For example, substitute each target name:
+
+```sh
+python3 tools/heavy.py run --kind fuzz -- go -C server test \
+  ./internal/haftgane/rules -run '^$' -fuzz '^FuzzPlayout$' \
+  -fuzztime 10m -parallel 2 -timeout 15m
+```
+
+`FuzzPlayout` consumes bytes into valid setups and offered batches, checking
+invariants, the state-only core, the coin ledger, replay and atomic malformed-key
+refusal. The independent payment oracle compares complete frontiers, quote
+minima and every physical witness. It removes only permutations of identical
+unused supplier masks, preserving duplicate capacity. A 1,000-world test
+compares this symmetry reduction directly with the original physical traversal.
+Two dense seeds retain the cases that previously tripped Go's ten-second
+instrumented fuzz watchdog. `make test-haftgane-payment-exhaustive` still checks
+all 202,448,192 small-universe inputs and remains part of `verify-full`.
+`TestScienceOracle` separately enumerates ordered science-symbol assignments.
+
+Measure rules/catalog statement coverage with a guarded `go test -count=1
+-coverprofile=... ./internal/haftgane/...`; both must reach 90% (the rules gate measured 91.9% for each). Run the
+seven-seat and payment benchmarks with `-benchmem`, then compare with the
+published targets in [architecture](architecture.md). Timings are recorded,
+not flaky unit-test thresholds. `TestRulesGateViewByteBound` fills every DTO
+section at once, checks the conservative 570,406-byte JSON ceiling, and rejects
+unknown dimensions or widths. It is not a transport cap or a reachable-view
+claim. The view redaction, history and noninterference suite remains mandatory.
+
+The Duel regression proof includes its RNG/setup/replay goldens and twelve
+fixed-seed `ajayeb-sim match -a greedy:1 -b random -games 12 -seed 1234567 -p 1`
+game logs compared byte for byte before and after the slice. The independent
+FULL review of this gate supplies M15's rules audit; automated checks do not
+substitute for it.
