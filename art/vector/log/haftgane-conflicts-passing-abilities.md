@@ -163,3 +163,9 @@ Score: all tiles 12 px 17/17, 16 px 17/17; the eight new glyphs 16/16 (100%).
 
 - Medium-high: free-first-colour ("the palette reads as colour"). Medium: conflict-victory, wonder-complete, wonder-stage. Low-medium: free-age-boundary, play-last-card. Medium-low: conflict-defeat ("the detached piece also reads as an hourglass", "a < chevron at 16 px").
 - Two readers in a row named every tile; the weak readings repeat, though: the defeat flag's fallen half is small at 16 px DPR 1, and the bracket and the plus each say their idea only weakly without the label. In the app all three always sit beside live text (the signed value, the stage's tooltip), which the blind sheets leave out on purpose.
+
+## Family check, final drawings (2026-10-23)
+
+Renders: art-work/vector/haftgane-conflicts-passing-abilities/family-final/ (the same sets as the first family check).
+
+- The palette and the card with its plus, new since the first family check, match the weight and size of the rest of the set and of the Duel card glyphs; the palette's wells in the detail tone are no noisier than the chain book's lozenge. No outlier.
