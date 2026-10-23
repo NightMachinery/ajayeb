@@ -47,8 +47,9 @@ const maxDevBody = 64 << 10
 // another site cannot post to it with a simple form or fetch. Both answer
 // only a client on the same machine (localOnly).
 type devAPI struct {
-	rooms DevRooms
-	seed  func() uint64
+	rooms  DevRooms
+	tables Tables // POST /api/dev/tables, when set (devtables.go)
+	seed   func() uint64
 }
 
 func newDevAPI(rooms DevRooms, seed func() uint64) *devAPI {

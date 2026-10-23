@@ -11,11 +11,13 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
 )
 
 // This file serves the replay download, GET /api/rooms/{code}/log: the game
 // log (ajayeb-log/1, see docs/protocol.md "The game log") of a room whose
-// game has ended. The log holds the seed, which determines every hidden
+// game has ended, or a Haftgane table's ajayeb-log/2 under the same rules
+// (devtables.go). The log holds the seed, which determines every hidden
 // card, so it is served only when the end of the game has revealed all of
 // them anyway: never while the game runs, and never for a game whose
 // hideAtEnd option keeps them hidden after the end. Anyone who knows the
@@ -42,6 +44,7 @@ const (
 
 type logAPI struct {
 	logs    GameLogs
+	tables  Tables // nil: every code is a Duel room's
 	trusted []netip.Prefix
 	now     func() time.Time
 
@@ -99,6 +102,12 @@ func (a *logAPI) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	code := strings.ToUpper(r.PathValue("code"))
+	if a.tables != nil {
+		if l, err := a.tables.ReadTableLog(code); !errors.Is(err, tableroom.ErrNotTable) {
+			a.serveTableLog(w, code, l, err)
+			return
+		}
+	}
 	f, l, err := a.logs.ReadLog(code)
 	if f == nil {
 		if errors.Is(err, store.ErrBadCode) || errors.Is(err, fs.ErrNotExist) {

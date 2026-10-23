@@ -39,6 +39,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/ident"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
+	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
 	"github.com/NightMachinery/ajayeb/server/internal/webdist"
 	"github.com/NightMachinery/ajayeb/server/internal/ws"
 )
@@ -72,6 +73,7 @@ type options struct {
 	staticDir    string
 	dev          bool
 	devEndpoints bool
+	tables       bool
 	origins      []string
 	trustProxy   []netip.Prefix
 	botDelay     time.Duration
@@ -138,6 +140,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.StringVar(&opts.staticDir, "static", "", "serve the web build from this `directory` instead of the embedded one")
 	fset.BoolVar(&opts.dev, "dev", false, "development mode: debug logging and loopback WebSocket origins")
 	fset.BoolVar(&opts.devEndpoints, "dev-endpoints", false, "enable the test-only /api/dev/ endpoints (requires -dev)")
+	fset.BoolVar(&opts.tables, "haftgane-tables", false, "allow creating Haftgane tables through POST /api/dev/tables, until the lobby ships (requires -dev and -dev-endpoints)")
 	fset.Var(listValue{&origins}, "origin", "allowed site `origin` such as https://example.org (repeatable or comma separated)")
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")
@@ -163,6 +166,9 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	}
 	if opts.devEndpoints && !opts.dev {
 		return options{}, errors.New("-dev-endpoints requires -dev; refusing to start")
+	}
+	if opts.tables && !opts.devEndpoints {
+		return options{}, errors.New("-haftgane-tables requires -dev and -dev-endpoints; refusing to start")
 	}
 	// Seeds from a counter make every deal predictable: whoever recognizes
 	// one game's deal knows the hidden cards of every later one.
@@ -308,7 +314,10 @@ func seedSource(base uint64) func() uint64 {
 // ready, when set, receives the listening address once connections are
 // accepted (port 0 picks a free one).
 func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(addr string)) error {
-	kinds, err := roomKinds()
+	seed := seedSource(opts.seedBase)
+	pool := ai.NewPoolPerKey(opts.botSearches, opts.botPerAddr)
+	tables := tableroom.New(tableroom.Config{Logger: logger, Pool: pool, Seed: seed, Creation: opts.tables})
+	kinds, err := roomKinds(tables)
 	if err != nil {
 		return err
 	}
@@ -328,13 +337,12 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		return err
 	}
 
-	seed := seedSource(opts.seedBase)
 	rooms, err := room.NewManager(room.Config{
 		Store:    st,
 		Kinds:    kinds,
 		KindOf:   st.Game,
 		Logger:   logger,
-		BotPool:  ai.NewPoolPerKey(opts.botSearches, opts.botPerAddr),
+		BotPool:  pool,
 		BotDelay: opts.botDelay,
 		Seed:     seed,
 		Claims:   secret,
@@ -345,6 +353,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		return err
 	}
 	defer rooms.Close() // idempotent; the normal path closes it in order below
+	tables.Bind(rooms, st)
 
 	sockets, err := ws.New(ws.Config{
 		Rooms:          rooms,
@@ -366,6 +375,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		DevRooms:       rooms,
 		Seed:           seed,
 		Logs:           st,
+		Tables:         tables,
 		TrustedProxies: opts.trustProxy,
 	}, static)
 	if err != nil {
@@ -403,6 +413,7 @@ func serve(ctx context.Context, opts options, logger *slog.Logger, ready func(ad
 		"data", opts.dataDir,
 		"dev", opts.dev,
 		"devEndpoints", opts.devEndpoints,
+		"haftganeTables", opts.tables,
 		"origins", strings.Join(opts.origins, ","),
 		"trustedProxies", len(opts.trustProxy),
 		"botDelay", opts.botDelay,

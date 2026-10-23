@@ -99,6 +99,16 @@ func TestServeEndToEnd(t *testing.T) {
 		t.Fatalf("dev room: %d %+v (%v)", resp.StatusCode, created, err)
 	}
 
+	// Creating a Haftgane table stays off without -haftgane-tables.
+	resp, err = client.Post("http://"+addr+"/api/dev/tables", "application/json", strings.NewReader(`{"seats":[{},{},{}]}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("a dev table with creation off: %d", resp.StatusCode)
+	}
+
 	// Play one move over the socket.
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), serveWait)
 	defer dialCancel()

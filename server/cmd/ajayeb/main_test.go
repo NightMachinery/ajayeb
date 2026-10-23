@@ -34,7 +34,7 @@ func TestParseFlagsValues(t *testing.T) {
 		"--addr", "127.0.0.1:0",
 		"--data", "/tmp/x",
 		"--static", "../web/build",
-		"--dev", "--dev-endpoints",
+		"--dev", "--dev-endpoints", "--haftgane-tables",
 		"--origin", "https://Example.org, http://localhost:38952",
 		"--origin=https://other.example:8443/",
 		"--trust-proxy", "127.0.0.1,10.0.0.0/8",
@@ -59,7 +59,7 @@ func TestParseFlagsValues(t *testing.T) {
 	if !slices.Equal(opts.trustProxy, wantProxies) {
 		t.Errorf("trustProxy = %v, want %v", opts.trustProxy, wantProxies)
 	}
-	if !opts.dev || !opts.devEndpoints || opts.botDelay != 0 || opts.botSearches != 3 || opts.botPerAddr != 1 || opts.seedBase != 1000 {
+	if !opts.dev || !opts.devEndpoints || !opts.tables || opts.botDelay != 0 || opts.botSearches != 3 || opts.botPerAddr != 1 || opts.seedBase != 1000 {
 		t.Errorf("opts = %+v", opts)
 	}
 	if opts.addr != "127.0.0.1:0" || opts.dataDir != "/tmp/x" || opts.staticDir != "../web/build" {
@@ -70,6 +70,8 @@ func TestParseFlagsValues(t *testing.T) {
 func TestParseFlagsRejects(t *testing.T) {
 	for name, args := range map[string][]string{
 		"dev endpoints without dev": {"--dev-endpoints"},
+		"tables without endpoints":  {"--dev", "--haftgane-tables"},
+		"tables without dev":        {"--dev-endpoints", "--haftgane-tables"},
 		"negative bot delay":        {"--bot-delay", "-1s"},
 		"no bot searches":           {"--bot-searches", "0"},
 		"no bot searches per addr":  {"--bot-searches-per-address", "0"},
@@ -134,7 +136,7 @@ func TestRunVersionAndHelp(t *testing.T) {
 	if code := run([]string{"--help"}, io.Discard, &stderr); code != 0 {
 		t.Errorf("--help exit code = %d, want 0", code)
 	}
-	for _, flagName := range []string{"-addr", "-data", "-static", "-dev-endpoints", "-origin", "-trust-proxy", "-bot-delay", "-bot-searches", "-bot-searches-per-address", "-seed-base"} {
+	for _, flagName := range []string{"-addr", "-data", "-static", "-dev-endpoints", "-haftgane-tables", "-origin", "-trust-proxy", "-bot-delay", "-bot-searches", "-bot-searches-per-address", "-seed-base"} {
 		if !strings.Contains(stderr.String(), flagName) {
 			t.Errorf("--help output lacks %s", flagName)
 		}

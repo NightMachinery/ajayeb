@@ -52,6 +52,11 @@ type Config struct {
 	// path.
 	Logs GameLogs
 
+	// Tables is the Haftgane table kind (a *tableroom.Tables): the log
+	// download serves a table's ajayeb-log/2, and with DevEndpoints, POST
+	// /api/dev/tables creates a table. Nil leaves both to Duel alone.
+	Tables Tables
+
 	// TrustedProxies are the reverse proxies whose X-Forwarded-For the
 	// per-address limit of the log download believes, as for /ws.
 	TrustedProxies []netip.Prefix
@@ -88,9 +93,15 @@ func New(cfg Config, static fs.FS) (http.Handler, error) {
 		mux.Handle("/api/dev/rooms", localOnly(http.HandlerFunc(d.createRoom)))
 		mux.Handle("/api/dev/scenarios", localOnly(http.HandlerFunc(d.scenarios)))
 		mux.Handle("/api/dev/tutorial", localOnly(http.HandlerFunc(d.tutorialScript)))
+		if cfg.Tables != nil {
+			d.tables = cfg.Tables
+			mux.Handle("/api/dev/tables", localOnly(http.HandlerFunc(d.createTable)))
+		}
 	}
 	if cfg.Logs != nil {
-		mux.HandleFunc("/api/rooms/{code}/log", newLogAPI(cfg.Logs, cfg.TrustedProxies, cfg.Clock).serve)
+		logs := newLogAPI(cfg.Logs, cfg.TrustedProxies, cfg.Clock)
+		logs.tables = cfg.Tables
+		mux.HandleFunc("/api/rooms/{code}/log", logs.serve)
 	}
 	if cfg.WebSocket != nil {
 		mux.Handle("/ws", cfg.WebSocket)
