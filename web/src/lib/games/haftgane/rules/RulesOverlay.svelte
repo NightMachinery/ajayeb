@@ -1,0 +1,172 @@
+<script lang="ts">
+  // Haftgane's in-game rules overlay, mounted once by openHaftganeRules()
+  // (rules-overlay.svelte.ts). It never leaves the screen it was opened on,
+  // and works as Duel's does (components/rules/RulesOverlay.svelte):
+  //
+  // - On wide screens and short landscape ones (the split breakpoint) it is
+  //   a side panel, a non-modal manual popover in the top layer, below the
+  //   top bar at the inline end, so the rest of the table stays visible
+  //   and usable.
+  // - On phones it is a bottom sheet (shell/Sheet.svelte): modal, with
+  //   swipe-down, Esc and a backdrop tap to close.
+  //
+  // Duel's panel sits at the physical right, over its opponent's column.
+  // Haftgane's table has no such column yet; the table screen may move the
+  // panel when it exists (M18.table-screen).
+  import { afterNavigate } from '$app/navigation';
+  import { page } from '$app/state';
+  import { MediaQuery } from 'svelte/reactivity';
+  import Sheet from '$lib/components/shell/Sheet.svelte';
+  import { SPLIT_QUERY } from '$lib/components/shell/sheet-drag';
+  import RulesPanel from './RulesPanel.svelte';
+  import { closeHaftganeRules, hgRulesOverlay } from './rules-overlay.svelte';
+
+  const split = new MediaQuery(SPLIT_QUERY, false);
+  const uid = $props.id();
+  const titleId = `${uid}-rules-title`;
+
+  /** Shown only on the page it was opened on. */
+  const visible = $derived(hgRulesOverlay.open && page.url.pathname === hgRulesOverlay.openedOn);
+
+  // Leaving the page closes the rules, so coming back does not reopen them.
+  afterNavigate(({ to }) => {
+    if (to && to.url.pathname !== hgRulesOverlay.openedOn) closeHaftganeRules();
+  });
+
+  let drawer = $state<HTMLElement | undefined>();
+
+  /** The element that had focus before the panel opened, to give it back. */
+  let opener: HTMLElement | null = null;
+
+  /** Places the panel just under the screen's top bar, when there is one. */
+  function placeDrawer(el: HTMLElement): void {
+    const bar = document.querySelector('.top-bar');
+    const top = bar ? Math.max(0, Math.round(bar.getBoundingClientRect().bottom)) : 0;
+    el.style.setProperty('--rules-top', `${top}px`);
+  }
+
+  // DOM-only effect for the side panel: show or hide the popover, place it,
+  // move focus in and back out, and close on Escape. It writes no $state;
+  // the Escape listener closes from an event, not from here.
+  $effect(() => {
+    const el = drawer;
+    if (!el) return;
+    if (!visible) {
+      if (el.matches(':popover-open')) {
+        el.hidePopover();
+        if (opener?.isConnected) opener.focus({ preventScroll: true });
+        opener = null;
+      }
+      return;
+    }
+    if (!el.matches(':popover-open')) {
+      opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      placeDrawer(el);
+      el.showPopover();
+      el.querySelector<HTMLElement>('[data-rules-title]')?.focus({ preventScroll: true });
+    }
+    const onResize = () => placeDrawer(el);
+    const onKey = (event: KeyboardEvent) => {
+      // A modal sheet above the panel takes its own Escape first.
+      if (event.key !== 'Escape' || document.querySelector('dialog:modal')) return;
+      closeHaftganeRules();
+    };
+    window.addEventListener('resize', onResize);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('keydown', onKey);
+    };
+  });
+</script>
+
+{#if split.current}
+  <aside
+    bind:this={drawer}
+    popover="manual"
+    class="rules-drawer"
+    aria-labelledby={titleId}
+    data-rules-overlay="drawer"
+  >
+    <RulesPanel
+      {titleId}
+      onclose={closeHaftganeRules}
+      section={hgRulesOverlay.section}
+      request={hgRulesOverlay.request}
+      shown={visible}
+    />
+  </aside>
+{:else}
+  <Sheet
+    bind:open={() => visible, (open) => (open ? undefined : closeHaftganeRules())}
+    {titleId}
+    class="rules-sheet"
+  >
+    <div data-rules-overlay="sheet">
+      <RulesPanel
+        {titleId}
+        onclose={closeHaftganeRules}
+        section={hgRulesOverlay.section}
+        request={hgRulesOverlay.request}
+        shown={visible}
+      />
+    </div>
+  </Sheet>
+{/if}
+
+<style>
+  .rules-drawer {
+    position: fixed;
+    inset: auto;
+    inset-block: var(--rules-top, 0px) 0;
+    inset-inline-end: 0;
+    margin: 0;
+    /* A popover is fit-content high by default; this one spans from the
+       top bar to the bottom edge, so its own content scrolls inside it. */
+    height: auto;
+    /* The screen edge it sits on may hold a notch, on either side
+       depending on the page's direction. */
+    --rules-edge: max(var(--safe-r, 0px), var(--safe-l, 0px));
+    width: min(calc(22rem + var(--rules-edge)), 100vw);
+    border: 0;
+    border-inline-start: 1px solid var(--rule);
+    padding-block-end: var(--safe-b, 0px);
+    padding-inline-end: var(--rules-edge);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+    background: var(--panel);
+    color: var(--fg);
+    box-shadow: var(--shadow);
+    translate: 0 0;
+    transition:
+      translate var(--dur-base) var(--curve-out),
+      display var(--dur-base) allow-discrete,
+      overlay var(--dur-base) allow-discrete;
+  }
+  .rules-drawer:not(:popover-open) {
+    display: none;
+    translate: 100% 0;
+  }
+  :global([dir='rtl']) .rules-drawer:not(:popover-open) {
+    translate: -100% 0;
+  }
+  @starting-style {
+    .rules-drawer:popover-open {
+      translate: 100% 0;
+    }
+    :global([dir='rtl']) .rules-drawer:popover-open {
+      translate: -100% 0;
+    }
+  }
+  /* A phone on its side: never more than half the screen. */
+  @media (orientation: landscape) and (max-height: 32rem) {
+    .rules-drawer {
+      width: min(20rem, 50vw);
+    }
+  }
+
+  :global(.rules-sheet .sheet-panel) {
+    scroll-behavior: smooth;
+  }
+</style>
