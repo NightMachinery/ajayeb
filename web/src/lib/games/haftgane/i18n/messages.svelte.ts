@@ -111,14 +111,16 @@ function selectPlural(forms: PluralForms, count: number, locale: string): string
   return forms[rules.select(count)] ?? forms.other;
 }
 
+// Built from code points: the Svelte compiler warns on a bidirectional
+// control character in a .svelte.ts string literal, escaped or not.
 /** U+2068 FIRST STRONG ISOLATE and U+2069 POP DIRECTIONAL ISOLATE. */
-const FSI = '\u2068';
-const PDI = '\u2069';
+const FSI = String.fromCharCode(0x2068);
+const PDI = String.fromCharCode(0x2069);
 
 /** An English fallback in right-to-left text: a left-to-right isolate
  *  between two LEFT-TO-RIGHT MARKs, as the root t() writes it. */
-const FALLBACK_START = '\u200e\u2066';
-const FALLBACK_END = '\u2069\u200e';
+const FALLBACK_START = String.fromCharCode(0x200e, 0x2066);
+const FALLBACK_END = String.fromCharCode(0x2069, 0x200e);
 
 /** Replaces each {name} with its param: numbers through Intl, and a string
  *  isolated with its own direction in a right-to-left locale. */
