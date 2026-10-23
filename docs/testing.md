@@ -13,6 +13,16 @@ strength and the playout sweep. These run as part of `make test-go`, in
 process, with no server, no socket and no browser; they are the cheapest
 layer and catch almost everything.
 
+The catalog's three-way data check, `TestVerify` in
+`server/internal/engine/catalog/verify_test.go`, joins the catalog's own CSV
+tables with two blind verifier tables and compares every field (the rulings it
+led to are in [rules/data-rulings.md](rules/data-rulings.md)). Its mechanics
+live in the test-only helper `server/internal/enginekit/catalogdiff`, shared
+with Haftgane's catalog: each game supplies its verifiers, its tables with the
+join key of each (Duel's is the name; a key may also combine columns, such as
+a name and an Age), its fixtures and its row counts. Only `_test.go` files may
+import the helper, which its own `TestOnlyTestsImport` checks.
+
 ## Fuzzing
 
 The module has six fuzz targets:

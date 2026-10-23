@@ -12,7 +12,7 @@ The check compares three versions of the same data, one row per building, wonder
 
 The details:
 
-- The verifier tables are `server/internal/engine/catalog/testdata/verify/v1_*.csv` and `v2_*.csv`, one file per table (cards, wonders, tokens). `TestVerify` in `verify_test.go` runs the comparison.
+- The verifier tables are `server/internal/engine/catalog/testdata/verify/v1_*.csv` and `v2_*.csv`, one file per table (cards, wonders, tokens). `TestVerify` in `verify_test.go` runs the comparison with Duel's schema, through the shared test helper `server/internal/enginekit/catalogdiff`.
 - Rows are joined by a **join key** made from the item's name: lower case, without a leading "The", and with spaces and hyphens removed. So "The Great Library", "great library" and "Great-Library" join. Only a separate leading word "The" is dropped, so "Theater" and "Theology" keep their first letters.
 - After the join, every column is compared exactly, the id and the name included. A row that one source lacks, a name that one source lists twice, and a column that one source lacks all count as mismatches, so nothing can drop out of the comparison unnoticed. The test prints each mismatch as the table, the item, the field, and the value in each source.
 - **Notation differences** (the same fact written differently, such as another spelling of a name) are fixed in the verifier files, never by making the comparison looser.
