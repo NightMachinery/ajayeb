@@ -2574,3 +2574,18 @@ fixed-seed `ajayeb-sim match -a greedy:1 -b random -games 12 -seed 1234567 -p 1`
 game logs compared byte for byte before and after the slice. The independent
 FULL review of this gate supplies M15's rules audit; automated checks do not
 substitute for it.
+
+
+The approved views-review follow-ups are durable regression tests.
+`TestHistoryBatchZeroContract` checks every side option and live prefix: entry 0
+is `rules.HistoryStartPoint` (`"game-start"`), with an Age I start for day/random
+sides or an empty event list for chosen sides; entry i is batch i. Partial
+scenario history still fails closed.
+`TestWholeGameGuildSwapNoninterference` compares whole-game reachable pairs
+for every viewer who has not seen the swapped guild, including the spectator.
+It checks view JSON, observations, fingerprints, statistics, History and Legal,
+rejecting public replay divergence. The recorded sweep covers 120 pairs,
+2,336 positions and 11,791 equal viewer frames, with 2,261 witness frames
+excluded. `TestNotebookAgainstActualWorld` checks notebook bounds against
+independently rotated actual packets and the future hands that really return:
+1,032 deductions, 1,472,175 Returning bounds and 145,400 circulating bounds.
