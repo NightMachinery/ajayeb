@@ -3,8 +3,9 @@
 // (docs/haftgane/platform-architecture.md, "Decision points and
 // acceptance" and "Persistence, replay and compatibility"), so the N-seat
 // driver, the leak oracle and the failure fixtures run before the actor
-// exists. It is not the actor: no lobby, roles, seat switches, undo, frames
-// or presence beyond what the fixtures need.
+// exists. It is not the actor: no lobby, roles, undo, frames or presence
+// beyond what the fixtures need, and seat switches only as far as they
+// change outcomes (Switch).
 //
 // Acceptance checks run in the platform's order: membership; the client's
 // last applied seq (a seq not newer is a harmless duplicate); the open point
@@ -26,6 +27,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"slices"
 	"strconv"
@@ -206,6 +208,47 @@ func (t *Table) Attach(c tabletest.ClientID, seat int) {
 
 // Detach marks c absent; it stays a member.
 func (t *Table) Detach(c tabletest.ClientID) { t.present[c] = false }
+
+// Switch gives seat to a new controller, as an admin's table-seat does: to
+// the clients listed, one human's, each watching until now; or, with none,
+// to a bot. The clients that controlled the seat watch from then on. The
+// seat's pending pick stays, with its floors; a bot confirms it, which may
+// resolve the point. The switch uses up no seq of the seat's clients. A
+// failed write changes nothing.
+func (t *Table) Switch(ctx context.Context, seat int, clients ...tabletest.ClientID) (tabletest.Outcome, error) {
+	if t.dead {
+		return "", ErrDead
+	}
+	if seat < 0 || seat >= int(t.opts.Setup.Seats) {
+		return "", fmt.Errorf("direct: no seat %d", seat)
+	}
+	for _, c := range clients {
+		if s, ok := t.members[c]; !ok || s >= 0 {
+			return "", fmt.Errorf("direct: %s is not watching", c)
+		}
+	}
+	outcome := tabletest.Accepted
+	if sl := t.v.slots[seat]; len(clients) == 0 && sl.key != "" && !sl.confirm {
+		o, err := t.transact(ctx, "seat", seat, sl.key, true, nil, t.seqs.clone())
+		if err != nil || o != tabletest.Accepted && o != tabletest.Resolved {
+			return o, err
+		}
+		outcome = o
+	}
+	for c, s := range t.members {
+		if s == seat {
+			t.members[c] = -1
+		}
+	}
+	t.opts.Bots = slices.DeleteFunc(slices.Clone(t.opts.Bots), func(s int) bool { return s == seat })
+	if len(clients) == 0 {
+		t.opts.Bots = append(t.opts.Bots, seat)
+	}
+	for _, c := range clients {
+		t.members[c], t.present[c] = seat, true
+	}
+	return t.answer("seat", seat, outcome), nil
+}
 
 // Game returns the current engine value, for oracles.
 func (t *Table) Game() fakeengine.Game { return t.v.game }

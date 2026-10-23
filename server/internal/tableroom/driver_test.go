@@ -253,3 +253,165 @@ func compareViews(ctx context.Context, t *testing.T, where string, ref, act tabl
 		}
 	}
 }
+
+// TestDifferentialSwitches: the same seeded scripts reach the reference
+// model and the actor around seat switches, at 3 to 7 seats. At the second
+// point the spectator takes seat 1, and the former controller's resends
+// and fresh picks are forbidden from then on. At the third, halfway
+// through the arrivals, seat 2 goes to a bot, which confirms a kept pick
+// (resolving the point when it was the last), so its former clients'
+// remaining picks are forbidden or closed; after the arrivals it goes back
+// to its human. Every outcome, the switches' included, and every viewer's
+// snapshot agree after every arrival, and the canonical histories end
+// equal.
+func TestDifferentialSwitches(t *testing.T) {
+	ctx := testContext(t)
+	kept := 0
+	for n := MinSeats; n <= MaxSeats; n++ {
+		for game := range uint64(2) {
+			differentialSwitches(ctx, t, n, 700+game*11+uint64(n), game, &kept)
+		}
+	}
+	if kept == 0 {
+		t.Fatal("no bot took over a kept, unconfirmed pick")
+	}
+}
+
+// differentialSwitches plays one game; kept counts the bot switches that
+// found a kept, unconfirmed pick to confirm.
+func differentialSwitches(ctx context.Context, t *testing.T, n int, seed, salt uint64, kept *int) {
+	t.Helper()
+	where := fmt.Sprintf("%d seats, seed %d", n, seed)
+	ref, err := direct.New(ctx, direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: uint8(n)}, Tabs: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := newFixture(t, Config{BotWork: blockBots})
+	f.tabs = true
+	sp := humans(n, seed)
+	sp.RandomSeating = true
+	act, err := f.openInproc(ctx, sp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := &th{t: t, ctx: ctx, f: f, p: act}
+	// The creator switches from a connection of its own, so the scripts'
+	// seqs never meet the switches'.
+	if err := act.join(ctx, "admin", userOf(0), "P0"); err != nil {
+		t.Fatal(err)
+	}
+	adminSeq := 0
+	switchTo := func(what string, seat int, user string, clients ...tabletest.ClientID) {
+		t.Helper()
+		do, err := ref.Switch(ctx, seat, clients...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		adminSeq++
+		var ao string
+		if user == "" {
+			ao = h.do("admin", toBot(adminSeq, seat, BotEasy))
+		} else {
+			ao = h.do("admin", toHuman(adminSeq, seat, user))
+		}
+		if string(do) != ao {
+			t.Fatalf("%s, %s: direct %s, actor %s", where, what, do, ao)
+		}
+	}
+	const k1, k2 = 1, 2
+	human2 := act.clients[tabletest.SeatClient(k2)].UserID
+	clients := make([]tabletest.ClientID, n)
+	viewers := []tabletest.ClientID{tabletest.SpectatorClient}
+	for s := range clients {
+		clients[s] = tabletest.SeatClient(s)
+		viewers = append(viewers, tabletest.SeatClient(s), tabletest.TabClient(s))
+	}
+	seqs := tabletest.Seqs{}
+	snaps := func() ([]tabletest.Snapshot, []tabletest.Snapshot) {
+		t.Helper()
+		d, a := make([]tabletest.Snapshot, n), make([]tabletest.Snapshot, n)
+		for s, c := range clients {
+			if d[s], err = ref.Snapshot(ctx, c); err != nil {
+				t.Fatal(err)
+			}
+			if a[s], err = act.Snapshot(ctx, c); err != nil {
+				t.Fatal(err)
+			}
+		}
+		return d, a
+	}
+	both := func(what string, c tabletest.ClientID, sub tabletest.Submission, dRef, aRef string) tabletest.Outcome {
+		t.Helper()
+		do, err := ref.Submit(ctx, c, sub)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if sub.Ref == dRef {
+			sub.Ref = aRef
+		}
+		ao, err := act.Submit(ctx, c, sub)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if do != ao {
+			t.Fatalf("%s, %s (%s seq %d confirm=%t): direct %s, actor %s", where, what, c, sub.Seq, sub.Confirm, do, ao)
+		}
+		compareViews(ctx, t, where+", "+what, ref, act, viewers, dRef, aRef)
+		return do
+	}
+	forbidden := 0
+	for idx := 0; ; idx++ {
+		if idx > 100 {
+			t.Fatalf("%s: the game did not end", where)
+		}
+		dsnaps, asnaps := snaps()
+		compareViews(ctx, t, fmt.Sprintf("%s, point %d", where, idx), ref, act, viewers, dsnaps[0].Ref, asnaps[0].Ref)
+		if dsnaps[0].Over {
+			break
+		}
+		if idx == 1 {
+			switchTo("the spectator to seat 1", k1, "watcher", tabletest.SpectatorClient)
+			old := clients[k1]
+			clients[k1] = tabletest.SpectatorClient
+			dsnaps, asnaps = snaps()
+			if sn := dsnaps[0]; len(sn.Legal) > 0 {
+				for _, c := range []tabletest.ClientID{old, tabletest.TabClient(k1)} {
+					seqs[c]++
+					if o := both("a former controller's pick", c, tabletest.Submission{Seq: seqs[c], Ref: sn.Ref, Key: sn.Legal[0], Confirm: true}, dsnaps[0].Ref, asnaps[0].Ref); o == tabletest.Forbidden {
+						forbidden++
+					}
+				}
+			}
+		}
+		scripts, err := tabletest.Scripts(dsnaps, clients, seed*37+uint64(idx)+salt, tabletest.ScriptOptions{Drafts: 70, Resends: 30}, seqs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ops := tabletest.Interleave(scripts, seed+uint64(idx)*13)
+		for i, op := range ops {
+			if idx == 2 && i == len(ops)/2 {
+				if sn, _ := ref.Snapshot(ctx, clients[k2]); sn.Pick != "" && !sn.Confirm {
+					*kept++
+				}
+				switchTo("seat 2 to a bot", k2, "")
+			}
+			if o := both(fmt.Sprintf("point %s, arrival %d", dsnaps[0].Point, i), op.Client, op.Sub, dsnaps[0].Ref, asnaps[0].Ref); o == tabletest.Forbidden {
+				forbidden++
+			}
+		}
+		if idx == 2 {
+			switchTo("seat 2 back to its human", k2, human2, tabletest.SeatClient(k2), tabletest.TabClient(k2))
+		}
+	}
+	if forbidden == 0 {
+		t.Fatalf("%s: no former controller was refused", where)
+	}
+	dc, _ := ref.Canonical(ctx)
+	ac, err := act.Canonical(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(dc.Bytes(), ac.Bytes()) {
+		t.Fatalf("%s: canonical histories differ:\n%s\n%s", where, dc.Bytes(), ac.Bytes())
+	}
+}

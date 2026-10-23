@@ -184,3 +184,43 @@ func TestOneSeatPointRefusesOthers(t *testing.T) {
 	}
 	t.Fatal("no game reached a one-seat point")
 }
+
+// TestSwitch: a seat switched to the spectator is the spectator's from then
+// on, its pending pick kept and still changeable, and its former client is
+// forbidden; a seat switched to a bot has its pending pick confirmed, which
+// resolves the point when it was the last. Switching a seat to a client
+// that controls one is refused, and changes nothing.
+func TestSwitch(t *testing.T) {
+	h := newHarness(t, 3, 32)
+	ctx := t.Context()
+	a, b, c, spec := tabletest.SeatClient(0), tabletest.SeatClient(1), tabletest.SeatClient(2), tabletest.SpectatorClient
+	ref := h.snap(a).Ref
+	k0, k1 := h.snap(a).Legal[0], h.snap(b).Legal[0]
+	h.expect(h.send(a, 1, ref, k0, false), tabletest.Accepted, "seat 0's draft")
+	if _, err := h.tb.Switch(ctx, 0, b); err == nil {
+		t.Fatal("a seated client took a second seat")
+	}
+	if o, err := h.tb.Switch(ctx, 0, spec); err != nil || o != tabletest.Accepted {
+		t.Fatalf("seat 0 to the spectator: %s %v", o, err)
+	}
+	if sn := h.snap(spec); sn.Seat != 0 || sn.Pick != k0 || sn.Confirm {
+		t.Fatalf("the spectator in seat 0: %+v", sn)
+	}
+	h.expect(h.send(a, 2, ref, k0, true), tabletest.Forbidden, "the former controller")
+	h.expect(h.send(spec, 1, ref, k0, true), tabletest.Accepted, "the new controller confirms")
+	h.expect(h.send(b, 1, ref, k1, false), tabletest.Accepted, "seat 1's draft")
+	if o, err := h.tb.Switch(ctx, 1); err != nil || o != tabletest.Accepted {
+		t.Fatalf("seat 1 to a bot: %s %v", o, err)
+	}
+	if sn := h.snap(c); !slices.Equal(sn.Confirmed, []int{0, 1}) {
+		t.Fatalf("the bot did not confirm seat 1's pick: %+v", sn)
+	}
+	h.expect(h.send(c, 1, ref, h.snap(c).Legal[0], false), tabletest.Accepted, "seat 2's draft")
+	if o, err := h.tb.Switch(ctx, 2); err != nil || o != tabletest.Resolved {
+		t.Fatalf("seat 2 to a bot, the last to confirm: %s %v", o, err)
+	}
+	can, _ := h.tb.Canonical(ctx)
+	if len(can.Batches) != 1 || can.Batches[0].Picks[1].Key != k1 {
+		t.Fatalf("batches %+v", can.Batches)
+	}
+}
