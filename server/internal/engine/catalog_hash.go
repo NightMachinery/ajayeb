@@ -1,9 +1,8 @@
 package engine
 
 import (
-	"hash/fnv"
-
 	"github.com/NightMachinery/ajayeb/server/internal/engine/catalog"
+	"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng"
 )
 
 // catalogHashFormat versions the encoding below. Changing the encoding (not
@@ -20,7 +19,6 @@ const catalogHashFormat = 1
 // data changes the hash in practice; the same data always gives the same
 // hash.
 func CatalogHash() string {
-	h := fnv.New64a()
 	b := make([]byte, 0, 6<<10) // the base game encodes to about 4.5 KB
 	b = append(b, 'a', 'j', 'c', catalogHashFormat)
 	for d := range catalog.Cards() {
@@ -49,15 +47,7 @@ func CatalogHash() string {
 		b = hashString(b, d.Name)
 		b = hashEffects(b, d.Effects)
 	}
-	_, _ = h.Write(b) // a hash.Hash never returns an error
-	const digits = "0123456789abcdef"
-	sum := h.Sum64()
-	var out [16]byte
-	for i := 15; i >= 0; i-- {
-		out[i] = digits[sum&15]
-		sum >>= 4
-	}
-	return string(out[:])
+	return rng.Hex(rng.Digest(b))
 }
 
 // hashString appends a string with its length, so that no two different

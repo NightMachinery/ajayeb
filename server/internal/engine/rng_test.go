@@ -1,10 +1,10 @@
 package engine
 
 import (
-	"math/big"
-	"math/rand/v2"
 	"slices"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng"
 )
 
 // TestRNGGolden pins the output of fixed seeds. Setup shuffles with this
@@ -41,136 +41,30 @@ func TestRNGGolden(t *testing.T) {
 	}
 }
 
-// TestRNGIsPCG checks that the raw stream is math/rand/v2's PCG with the
-// documented seeding.
-func TestRNGIsPCG(t *testing.T) {
-	for _, seed := range []uint64{0, 1, 42, 1<<64 - 1} {
-		r := NewRNG(seed)
-		p := rand.NewPCG(seed, seed^0x9e3779b97f4a7c15)
-		for i := range 100 {
-			if a, b := r.Uint64(), p.Uint64(); a != b {
-				t.Fatalf("seed %d draw %d: %#x, PCG gives %#x", seed, i, a, b)
-			}
+// Comparing Duel and shared values without conversion requires matching types;
+// golden values above additionally pin the constructors and generic wrapper.
+func TestSharedRNGCompatibility(t *testing.T) {
+	duel := NewRNG2(17, 39)
+	shared := rng.NewRNG2(17, 39)
+	for range 100 {
+		if x, y := duel.Uint64(), shared.Uint64(); x != y {
+			t.Fatalf("alias stream %x != %x", x, y)
 		}
 	}
-}
-
-// TestUint64NMatchesReference compares Uint64N with a big-integer statement
-// of Lemire's method on the same raw stream: take x * n as a 128-bit number,
-// reject it while its low 64 bits are below 2^64 mod n, return its high 64
-// bits. The large bounds reject often, which exercises the retry loop.
-func TestUint64NMatchesReference(t *testing.T) {
-	two64 := new(big.Int).Lsh(big.NewInt(1), 64)
-	bounds := []uint64{1, 2, 3, 7, 10, 20, 23, 1 << 32, 1<<32 + 1, 1<<63 - 1, 1 << 63, 1<<63 + 1,
-		(1<<64-1)/3 + 1, 1<<64 - 2, 1<<64 - 1}
-	for _, n := range bounds {
-		r := NewRNG2(n, 99)
-		p := rand.NewPCG(n, 99)
-		bn := new(big.Int).SetUint64(n)
-		threshold := new(big.Int).Mod(two64, bn)
-		rejected := 0
-		for i := range 300 {
-			var want uint64
-			for {
-				prod := new(big.Int).Mul(new(big.Int).SetUint64(p.Uint64()), bn)
-				lo := new(big.Int).Mod(prod, two64)
-				if lo.Cmp(threshold) >= 0 {
-					want = new(big.Int).Rsh(prod, 64).Uint64()
-					break
-				}
-				rejected++
-			}
-			got := r.Uint64N(n)
-			if got != want {
-				t.Fatalf("Uint64N(%d) draw %d = %d, reference %d", n, i, got, want)
-			}
-			if got >= n {
-				t.Fatalf("Uint64N(%d) = %d is out of range", n, got)
-			}
-		}
-		if n == 1<<63+1 && rejected == 0 {
-			t.Errorf("Uint64N(2^63+1) never rejected; the retry loop went untested")
-		}
+	words := []string{"one", "two", "three", "four"}
+	copy := slices.Clone(words)
+	ShuffleSlice(&duel, words)
+	rng.ShuffleSlice(&shared, copy)
+	if !slices.Equal(words, copy) {
+		t.Fatal("generic shuffle wrapper changed")
 	}
-}
-
-func TestRNGPanics(t *testing.T) {
-	r := NewRNG(1)
-	for name, f := range map[string]func(){
-		"Uint64N(0)":  func() { r.Uint64N(0) },
-		"IntN(0)":     func() { r.IntN(0) },
-		"IntN(-1)":    func() { r.IntN(-1) },
-		"Shuffle(-1)": func() { r.Shuffle(-1, func(int, int) {}) },
-	} {
-		func() {
-			defer func() {
-				if recover() == nil {
-					t.Errorf("%s did not panic", name)
-				}
-			}()
-			f()
-		}()
+	if duel != shared {
+		t.Fatal("wrapper consumed different draws")
 	}
-	r.Shuffle(0, func(int, int) { t.Error("Shuffle(0) swapped") })
-	r.Shuffle(1, func(int, int) { t.Error("Shuffle(1) swapped") })
-}
-
-func TestRNGCopyForksAndMarshal(t *testing.T) {
-	a := NewRNG(5)
-	a.Uint64()
-	b := a // a copy continues the same stream
-	for i := range 10 {
-		if x, y := a.Uint64(), b.Uint64(); x != y {
-			t.Fatalf("draw %d: copies diverged", i)
-		}
+	if RulesVersion != 1 {
+		t.Fatalf("rules version changed to %d", RulesVersion)
 	}
-	blob, err := a.MarshalBinary()
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := a.Uint64()
-	var c RNG
-	if err := c.UnmarshalBinary(blob); err != nil {
-		t.Fatal(err)
-	}
-	if got := c.Uint64(); got != want {
-		t.Errorf("restored generator gave %#x, want %#x", got, want)
-	}
-	if err := c.UnmarshalBinary([]byte("junk")); err == nil {
-		t.Error("UnmarshalBinary accepted junk")
-	}
-}
-
-func TestShuffleIsAPermutationAndUniform(t *testing.T) {
-	r := NewRNG(2026)
-	// Shuffle and ShuffleSlice consume the stream identically.
-	r2 := r
-	x := []int{0, 1, 2, 3, 4, 5, 6, 7}
-	y := slices.Clone(x)
-	ShuffleSlice(&r, x)
-	r2.Shuffle(len(y), func(i, j int) { y[i], y[j] = y[j], y[i] })
-	if !slices.Equal(x, y) {
-		t.Fatalf("ShuffleSlice %v and Shuffle %v differ", x, y)
-	}
-	sorted := slices.Clone(x)
-	slices.Sort(sorted)
-	if !slices.Equal(sorted, []int{0, 1, 2, 3, 4, 5, 6, 7}) {
-		t.Fatalf("shuffle lost elements: %v", x)
-	}
-	// All 6 orders of 3 elements appear about equally often. The seed is
-	// fixed, so this is deterministic; the bound is about 6 standard
-	// deviations.
-	const draws = 60000
-	var counts [6]int
-	perms := [][3]int{{0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}}
-	for range draws {
-		p := [3]int{0, 1, 2}
-		ShuffleSlice(&r, p[:])
-		counts[slices.Index(perms, p)]++
-	}
-	for i, n := range counts {
-		if n < draws/6-550 || n > draws/6+550 {
-			t.Errorf("order %v came up %d times of %d", perms[i], n, draws)
-		}
+	if got := CatalogHash(); got != "64943c7be6864ff4" {
+		t.Fatalf("catalog hash changed: %s", got)
 	}
 }

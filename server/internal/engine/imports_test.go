@@ -8,7 +8,7 @@ import (
 )
 
 // Duel owns its policy; the shared helper only parses and walks files. DTO
-// maps stay confined to these exact files, and only rng.go may import v2 RNG.
+// maps stay confined to these exact files; all randomness uses enginekit/rng.
 var duelPurity = puritycheck.Config{
 	Packages: []string{"."},
 	Imports: []puritycheck.ImportRule{
@@ -16,7 +16,7 @@ var duelPurity = puritycheck.Config{
 		{Path: "sync"}, {Path: "unsafe"}, {Path: "syscall"},
 		{Path: "crypto/rand"}, {Path: "io/ioutil"},
 		{Path: "math/rand", Exact: true, Message: "imports math/rand (v1); use the engine RNG"},
-		{Path: "math/rand/v2", Exact: true, AllowedFiles: []string{"rng.go"}, Message: "imports math/rand/v2 outside rng.go; use the engine RNG"},
+		{Path: "math/rand/v2", Exact: true, Message: "imports math/rand/v2; use the engine RNG"},
 	},
 	MapFiles: []string{"view.go", "eventfilter.go"},
 }
@@ -64,7 +64,7 @@ func TestPurityCheckCatches(t *testing.T) {
 		{"x.go", `package engine; import "math/rand"`, 1},
 		{"x.go", `package engine; import "math/rand/v2"`, 1},
 		{"catalog/rng.go", `package catalog; import "math/rand/v2"`, 1},
-		{"rng.go", `package engine; import "math/rand/v2"`, 0},
+		{"rng.go", `package engine; import "math/rand/v2"`, 1},
 		{"x.go", `package engine; import ("math/bits"; "strings"; "fmt"; "errors"; "iter")`, 0},
 		{"x.go", `package engine; import "timeutil"`, 0}, // not time/...
 		{"x.go", `package engine; var m map[string]int`, 1},

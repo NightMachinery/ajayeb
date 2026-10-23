@@ -28,16 +28,19 @@ import the helper, which its own `TestOnlyTestsImport` checks.
 `internal/enginekit/puritycheck` is a test helper shared by the rules engines.
 It reads and parses every non-test Go file in configured package directories,
 recursing through subpackages and excluding `testdata`. Parse and file errors
-fail closed. Each game supplies import rules (including exact file exceptions
-for its seeded generator), DTO map exceptions and the checked root types.
+fail closed. Each game supplies import rules, DTO map exceptions and the
+checked root types. Duel and Haftgane forbid both math/rand versions in every local file;
+only `enginekit/rng/rng.go` may import math/rand/v2.
 Duel's `TestEngineImports` keeps its scan-count minimums locally, including the
 catalog minimum, so a broken source walk cannot silently pass. The shared
 checker always rejects imports of itself from scanned production sources.
 It performs I/O and reflection and belongs only in engine test imports.
-The linter's existing engine depguard rules remain unchanged.
+The depguard rules enforce that same shared-file exception.
 
-`TestPurityCheckCatches` retains the original parser negatives and allowed-file
-cases. `purity_regression_test.go` adds a negative for every existing import,
+`TestPurityCheckCatches` retains the parser negatives, including the rejection
+of v2 even in Duel's local rng.go. `enginekit/rng` owns the exact permitted-file
+case and checks the rest of its package for I/O, maps and floating-point code.
+`purity_regression_test.go` adds a negative for every existing import,
 map, numeric and parse rule, plus forbidden fixed-value kinds and nested
 array/struct references. Those fixtures were run against the unchanged master
 guards before extraction and again through the shared helper afterwards.
@@ -45,6 +48,16 @@ The reflection walker accepts only bools, fixed-width integers, arrays and
 structs. Duel keeps its State/Action/Event roots, comparability checks and
 State's 512-byte memory limit in `state_test.go`; the helper sets no game size
 limit. The original state remains 386 bytes encoded and 408 bytes in memory.
+
+### Seeded generator and byte digests
+
+`internal/enginekit/rng` owns the PCG reference, rejection-sampling, copy/fork,
+marshal and permutation tests moved from Duel. `TestRNGGolden` runs in both
+packages with identical pinned draws and shuffle values; Duel's alias/wrapper
+test also pins rules version 1 and catalog hash `64943c7be6864ff4`. Shared
+`TestDigestGolden` pins FNV-1a vectors and 16-digit lower-case hex formatting.
+Duel's setup, replay, state-hash, catalog, protocol, view and store fixtures
+remain unchanged. Which bytes enter a hash is each game's own contract.
 
 ## Fuzzing
 

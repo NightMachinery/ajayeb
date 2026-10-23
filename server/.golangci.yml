@@ -29,6 +29,7 @@ linters:
           files:
             - "**/internal/engine/**"
             - "**/internal/view/**"
+            - "**/internal/enginekit/rng/**"
             - "!$test"
           deny:
             - pkg: time
@@ -48,21 +49,22 @@ linters:
             - pkg: io/ioutil
               desc: "deprecated, and engine and view must not do I/O"
             - pkg: crypto/rand
-              desc: "all chance comes from the seeded RNG in engine/rng.go"
+              desc: "all chance comes from the seeded generator in enginekit/rng"
             - pkg: math/rand$
-              desc: "math/rand v1 is banned; engine/rng.go wraps math/rand/v2 PCG"
-        # Only engine/rng.go may touch math/rand/v2, so every random choice
-        # goes through the engine's own seeded IntN and Shuffle.
-        rng-only-in-rng-go:
+              desc: "math/rand v1 is banned; enginekit/rng wraps math/rand/v2 PCG"
+        # Only enginekit/rng/rng.go may touch math/rand/v2. Duel's local
+        # rng.go is an alias/wrapper and has no exception.
+        rng-only-in-shared-rng-go:
           list-mode: lax
           files:
             - "**/internal/engine/**"
             - "**/internal/view/**"
-            - "!**/internal/engine/rng.go"
+            - "**/internal/enginekit/rng/**"
+            - "!**/internal/enginekit/rng/rng.go"
             - "!$test"
           deny:
             - pkg: math/rand/v2
-              desc: "use the engine RNG (engine/rng.go)"
+              desc: "use the shared seeded generator (enginekit/rng)"
         # Haftgane has the same purity boundary, but its generator is shared
         # enginekit/rng: no local file may import either math/rand version.
         haftgane-pure:

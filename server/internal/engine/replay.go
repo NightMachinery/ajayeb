@@ -4,8 +4,9 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"strconv"
+
+	"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng"
 )
 
 // This file holds the game log and replay. A game is fully described by its
@@ -140,9 +141,7 @@ func Hash(s *State) uint64 {
 	if err != nil {
 		panic("engine: State is not fixed-size: " + err.Error())
 	}
-	h := fnv.New64a()
-	_, _ = h.Write(buf[:stateHashedSize])
-	return h.Sum64()
+	return rng.Digest(buf[:stateHashedSize])
 }
 
 // stateEncodedSize is the length of a state's binary encoding, and
@@ -154,16 +153,7 @@ var (
 )
 
 // HashString returns Hash as 16 lower-case hex digits.
-func HashString(s *State) string {
-	const digits = "0123456789abcdef"
-	h := Hash(s)
-	var b [16]byte
-	for i := 15; i >= 0; i-- {
-		b[i] = digits[h&15]
-		h >>= 4
-	}
-	return string(b[:])
-}
+func HashString(s *State) string { return rng.Hex(Hash(s)) }
 
 // truncateString bounds untrusted text quoted in an error message.
 func truncateString(s string) string {

@@ -20,7 +20,7 @@ func TestPurityNewNegativeFixtures(t *testing.T) {
 		{"unseeded-random", "sentinel.go", `package engine; import entropy "crypto/rand"`, "imports crypto/rand"},
 		{"deprecated-io", "sentinel.go", `package engine; import "io/ioutil"`, "imports io/ioutil"},
 		{"v1-random-alias", "rng.go", `package engine; import random "math/rand"`, "imports math/rand (v1)"},
-		{"v2-wrong-file", "catalog/random.go", `package catalog; import random "math/rand/v2"`, "imports math/rand/v2 outside rng.go"},
+		{"v2-wrong-file", "catalog/random.go", `package catalog; import random "math/rand/v2"`, "imports math/rand/v2; use the engine RNG"},
 		{"map-alias", "sentinel.go", `package engine; type lookup = map[uint16]bool`, "uses a map"},
 		{"map-exception-is-exact", "nested/eventfilter.go", `package nested; type lookup map[uint16]bool`, "uses a map"},
 		{"hex-float", "sentinel.go", `package engine; const ratio = 0x1p2`, "floating-point literal 0x1p2"},

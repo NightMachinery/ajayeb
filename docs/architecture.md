@@ -42,7 +42,8 @@ In production, Caddy terminates TLS and reverse-proxies everything to the one Go
 The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). Dependencies point inward: the engine knows nothing about rooms, sockets, files or clocks; the room knows nothing about sockets; only `ws` and `httpapi` touch the network.
 
 - **`internal/engine/catalog`**: the typed card, wonder and token data and the small effect language used to describe them. Numeric ids follow a public reference numbering (cards 1 to 73, wonders 1 to 12, tokens 1 to 10) and travel on the wire as kebab-case slugs.
-- **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`, and `ViewWithHints` with the hints of `hints.go`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog` and the view types.
+- **`internal/engine`**: the rules. Setup (`NewGame`), legality, `Apply`, payment and its breakdown, military, science, wonders and the pending choices they open, ages, scoring, the view builder (`ViewFor`, and `ViewWithHints` with the hints of `hints.go`) and the per-viewer event filter, the bot observation and determinization, replay and hashing, and the scenario API used by tests. It imports only the standard library, `catalog`, the view types and shared deterministic helpers in `enginekit`.
+- **`internal/enginekit`**: shared deterministic infrastructure. `rng` owns the value PCG generator, bounded draws, Fisher-Yates shuffle and FNV-1a byte digest with fixed-width hex formatting. Duel keeps its RNG names through aliases and wrappers and owns its state/catalog encoding and hashed prefix. `puritycheck` and `catalogdiff` are test-only helpers for source/shape guards and three-way catalog verification.
 - **`internal/view`**: the view DTO types, with no logic. The builder lives in the engine because only the engine can read the hidden state; the types live apart so that `tygo` can read them without pulling in the rules.
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below). Its `Pool` bounds the searches running at once and shares them fairly between client addresses, so one address's many bot rooms cannot hold up another's bot.
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
@@ -264,7 +265,7 @@ and every witness against it.
 
 Both the shared `enginekit/puritycheck` and a dedicated depguard rule enforce
 the purity boundary. Haftgane cannot import either math/rand version, even in
-rng.go; the seeded generator will come from enginekit/rng. The shape guard
+rng.go; the shared generator is provided by `enginekit/rng`. The shape guard
 checks fixed widths, comparability and independent State/Record/Game size
 limits. Science's timing mask includes continuous cache construction and
 end-game scoring. Wonder free-build effects apply to buildings, never stage

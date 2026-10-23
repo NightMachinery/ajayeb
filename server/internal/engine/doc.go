@@ -58,7 +58,7 @@
 //     wonders, the discard pile, which cards are accessible, the pawn) on
 //     top of an ordinary NewGame deal, and RunTrigger, which plays a named
 //     scenario's trigger script.
-//   - rng.go: the seeded generator NewGame shuffles with.
+//   - rng.go: aliases and wrappers for enginekit/rng, used by NewGame.
 //   - errors.go: IllegalError and its Reason codes, ErrBadKey,
 //     ErrMalformedAction.
 //
@@ -79,9 +79,9 @@
 //   - All chance is resolved in NewGame from an explicit seed: wonder order,
 //     age deals, removed cards, the guild draw, token placement and the box
 //     order, and the first player. Apply uses no randomness and the state
-//     holds no RNG. Only rng.go may import math/rand/v2; it wraps PCG with its
-//     own IntN and Shuffle so replays do not depend on library helper
-//     algorithms.
+//     holds no RNG. No engine file may import either math/rand version;
+//     enginekit/rng wraps PCG with the pinned IntN and Shuffle algorithms so
+//     replays do not depend on library helper algorithms.
 //   - The same seed, options and action keys give the same states, events,
 //     views and hashes on every platform and Go version.
 //   - Never iterate a map where the order could reach state, events, views,
