@@ -1,8 +1,10 @@
 package rules
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"os"
+	"sync/atomic"
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
@@ -12,7 +14,8 @@ type oraclePairs [15][15]bool
 
 // The oracle tries every physical supplier of each demanded unit in turn. It
 // never takes fixed production first, splits by resource, or matches/prunes own
-// coverage. Only complete coverings compete on their number of bought units.
+// coverage. Every affordable complete covering enters the dominance frontier,
+// including those buying units own production could have covered.
 func paymentOracle(in tradeInput) oraclePairs {
 	var demand []catalog.Resource
 	for r, n := range in.need {
@@ -22,18 +25,10 @@ func paymentOracle(in tradeInput) oraclePairs {
 	}
 	var fixed [3][catalog.NumResources]uint8
 	var used [3]uint16
-	bestBought := len(demand) + 1
 	var pairs oraclePairs
-	var visit func(int, int, int, int)
-	visit = func(at, bought, left, right int) {
-		if bought > bestBought {
-			return
-		}
+	var visit func(int, int, int)
+	visit = func(at, left, right int) {
 		if at == len(demand) {
-			if bought < bestBought {
-				bestBought = bought
-				pairs = oraclePairs{}
-			}
 			if left+right+int(in.printed) <= int(in.purse) {
 				pairs[left][right] = true
 			}
@@ -43,11 +38,10 @@ func paymentOracle(in tradeInput) oraclePairs {
 		for city := 0; city < 3; city++ {
 			supply := in.own[r]
 			choices := in.ownChoice[:in.nOwnChoice]
-			dl, dr, db := 0, 0, 0
+			dl, dr := 0, 0
 			if city > 0 {
 				supply = in.sell[city-1][r]
 				choices = in.sellChoice[city-1][:in.nSellChoice[city-1]]
-				db = 1
 				if city == 1 {
 					dl = int(in.price[0][r])
 				} else {
@@ -56,20 +50,20 @@ func paymentOracle(in tradeInput) oraclePairs {
 			}
 			if fixed[city][r] < supply {
 				fixed[city][r]++
-				visit(at+1, bought+db, left+dl, right+dr)
+				visit(at+1, left+dl, right+dr)
 				fixed[city][r]--
 			}
 			for p, mask := range choices {
 				bit := uint16(1) << p
 				if used[city]&bit == 0 && mask.Has(r) {
 					used[city] |= bit
-					visit(at+1, bought+db, left+dl, right+dr)
+					visit(at+1, left+dl, right+dr)
 					used[city] &^= bit
 				}
 			}
 		}
 	}
-	visit(0, 0, 0, 0)
+	visit(0, 0, 0)
 	var frontier oraclePairs
 	for l := 0; l < 15; l++ {
 		for r := 0; r < 15; r++ {
@@ -271,54 +265,62 @@ func TestPaymentOracleExhaustive(t *testing.T) {
 	if os.Getenv("HAFTGANE_PAYMENT_EXHAUSTIVE") != "1" {
 		t.Skip("set HAFTGANE_PAYMENT_EXHAUSTIVE=1 for full small-universe sweep")
 	}
-	var cases uint64
+	var total atomic.Uint64
+	t.Cleanup(func() { t.Logf("exhaustive cases: %d", total.Load()) })
+	// There are 11 nonincreasing vectors (including zero) of total at most four
+	// over three resources. Preserve exactly the original exhaustive universe.
 	for a := uint8(0); a <= 4; a++ {
 		for b := uint8(0); b <= a && a+b <= 4; b++ {
 			for c := uint8(0); c <= b && a+b+c <= 4; c++ {
 				need := [catalog.NumResources]uint8{a, b, c}
-				profiles := expandedPaymentProfiles(need)
-				for _, own := range profiles {
-					if !own.relevant(need) {
-						continue
-					}
-					for _, left := range profiles {
-						if !left.relevant(need) {
+				t.Run(fmt.Sprintf("need-%d-%d-%d", a, b, c), func(t *testing.T) {
+					t.Parallel()
+					var cases uint64
+					profiles := expandedPaymentProfiles(need)
+					for _, own := range profiles {
+						if !own.relevant(need) {
 							continue
 						}
-						for _, right := range profiles {
-							if !right.relevant(need) {
+						for _, left := range profiles {
+							if !left.relevant(need) {
 								continue
 							}
-							in := baseTrade()
-							in.need = need
-							in.own = own.fixed
-							in.ownChoice[0] = own.choice[0]
-							in.ownChoice[1] = own.choice[1]
-							in.nOwnChoice = own.n
-							in.sell[0] = left.fixed
-							in.sell[1] = right.fixed
-							in.sellChoice[0][0] = left.choice[0]
-							in.sellChoice[0][1] = left.choice[1]
-							in.nSellChoice[0] = left.n
-							in.sellChoice[1][0] = right.choice[0]
-							in.sellChoice[1][1] = right.choice[1]
-							in.nSellChoice[1] = right.n
-							for prices := 0; prices < 64; prices++ {
-								for s := 0; s < 2; s++ {
-									for r := 0; r < 3; r++ {
-										in.price[s][r] = uint8(1 + (prices>>(s*3+r))&1)
-									}
+							for _, right := range profiles {
+								if !right.relevant(need) {
+									continue
 								}
-								checkPaymentOracle(t, in)
-								cases++
+								in := baseTrade()
+								in.need = need
+								in.own = own.fixed
+								in.ownChoice[0] = own.choice[0]
+								in.ownChoice[1] = own.choice[1]
+								in.nOwnChoice = own.n
+								in.sell[0] = left.fixed
+								in.sell[1] = right.fixed
+								in.sellChoice[0][0] = left.choice[0]
+								in.sellChoice[0][1] = left.choice[1]
+								in.nSellChoice[0] = left.n
+								in.sellChoice[1][0] = right.choice[0]
+								in.sellChoice[1][1] = right.choice[1]
+								in.nSellChoice[1] = right.n
+								for prices := 0; prices < 64; prices++ {
+									for s := 0; s < 2; s++ {
+										for r := 0; r < 3; r++ {
+											in.price[s][r] = uint8(1 + (prices>>(s*3+r))&1)
+										}
+									}
+									checkPaymentOracle(t, in)
+									cases++
+								}
 							}
 						}
 					}
-				}
+					total.Add(cases)
+					t.Logf("exhaustive cases: %d", cases)
+				})
 			}
 		}
 	}
-	t.Logf("exhaustive cases: %d", cases)
 }
 
 type smallPaymentProfile struct {

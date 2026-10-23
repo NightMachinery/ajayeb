@@ -118,8 +118,7 @@ func TestPaymentStateAdapter(t *testing.T) {
 		t.Fatalf("adapter %+v", ps)
 	}
 	q := QuoteState(&st, 0, c)
-	g := Game{State: st}
-	if q != (Quote{Affordable: true, Total: 4}) || g.Quote(0, c) != q {
+	if q != (Quote{Affordable: true, Total: 4}) {
 		t.Fatalf("quote %+v", q)
 	}
 	if st.Cities[0].Coins != 4 {

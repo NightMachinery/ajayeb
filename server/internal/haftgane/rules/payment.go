@@ -76,13 +76,6 @@ func QuoteState(st *State, seat Seat, cost catalog.Cost) Quote {
 	return quotePayment(in)
 }
 
-func (g *Game) Quote(seat Seat, cost catalog.Cost) Quote {
-	if g == nil {
-		return Quote{}
-	}
-	return QuoteState(&g.State, seat, cost)
-}
-
 func tradeFromState(st *State, seat Seat, cost catalog.Cost) (tradeInput, bool) {
 	if st == nil || !seat.Valid(st.Seats) {
 		return tradeInput{}, false

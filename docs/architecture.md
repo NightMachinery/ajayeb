@@ -279,12 +279,14 @@ production, per-side prices and the starting purse. It returns at most fifteen
 undominated `(left, right)` outcomes, ordered by total then left, each with a
 canonical physical-symbol witness. Fixed own symbols are used first; a proven
 maximum-own-coverage filter, bounded resource splits and separate choice-symbol
-matchings keep the hot path allocation-free. `QuoteState` and `Game.Quote`
-return the cheapest affordable ordinary total without building witnesses.
+matchings keep the hot path allocation-free. `QuoteState` returns the cheapest
+affordable ordinary total without building witnesses.
 Chains and free-build abilities bypass this solver per action; stages use their
-ordinary cost. An independent unit-by-unit oracle checks the small-universe
-sweep and 100,000 deterministic random inputs, and `FuzzPayment` checks outcomes
-and every witness against it.
+ordinary cost. An independent unit-by-unit oracle retains every affordable
+covering before testing dominance. It checks 100,000 deterministic random inputs
+and an opt-in small-universe sweep, run by the planned
+`make test-haftgane-payment-exhaustive` target. The sweep runs need vectors in
+parallel; `FuzzPayment` checks outcomes and every witness against the same oracle.
 
 The shared `enginekit/puritycheck` and strict depguard allow-lists enforce
 exact module dependencies for each pure package: the catalog can use only
