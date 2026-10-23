@@ -334,14 +334,14 @@ behind a release-gate test. [data-rulings.md](haftgane/data-rulings.md)
 records the rulings and the fixtures' normalisations.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
-points. It contains setup, the seat ring and canonical key grammar; turn legality,
-resolution, views and bots follow in later slices. Left is the next seat modulo
-the seat count, and right is the previous. Public plays and private picks
-have separate record arrays. Events have typed source fields and no raw key.
+points. It contains setup, the seat ring, canonical keys, turn legality,
+resolution and replay. Views, bots and the remaining effects follow in later
+slices. Left is the next seat modulo the seat count, and right is the previous.
+Public plays and private picks have separate record arrays. Events have typed source fields and no raw key.
 Point ids are computed from kind, Age and turn; pending choices stay in the room.
 Actions name design slugs and payment outcomes, never copies or seats. Parsing
-checks canonical syntax and the tagged union; only future offer membership can
-make an action legal. The rules version starts at 1.
+checks canonical syntax and the tagged union; only membership in the current
+offer makes an action legal. The rules version starts at 1.
 
 `NewGame(Setup)` validates 3 to 7 seats and resolves seating, boards, sides,
 guilds and each Age deck through separate fixed-tag `enginekit/rng` streams.
@@ -373,6 +373,42 @@ stage number and effect index. `ChoiceForSale` filters that same sequence to
 saleable producers. This public-city order lets views identify the producer
 behind a payment witness without using acquisition history. Rebuilding applies
 continuous effects only, never income or scoring.
+
+`LegalState` offers engine-owned actions from a frozen State into a reusable
+choice buffer, ordered by design id, build/stage/sell, then payment total and
+left amount. Each `Choice` embeds `Action` (including its canonical `Key()`)
+and carries effective printed/trade totals, stage number, free reason and a
+payment witness. The name rule is checked first. Chains and Olympia conditions
+are checked per building before consulting the ordinary cost cache; a stage
+never inherits a free result. A seat's local cache holds at most eight costs
+and contains no free flags. It solves each ordinary cost with an unbounded
+purse once, retaining the complete frontier before filtering by frozen treasure.
+`AssessCostState` exposes `Coverable`, `Cheapest` (including printed coins) and
+`Affordable`, preserving the difference between missing production and short
+treasure. The existing `QuoteState` API still returns only affordable quotes.
+
+`ResolveState` trusts actions selected by `LegalState` on that same State;
+it never invokes legality generation or the payment solver. It removes picks,
+computes additive payments from the frozen city, places every card, rebuilds
+caches, and passes the remaining hands left in Ages I/III and right in Age II.
+Sixth-turn leftovers enter the pile before placement. Military compares each
+adjacent pair once after placement, then transfers the next Age or closes the
+game. Events follow pipeline step and ascending seat even when the independent
+seat loops run backwards. The core reads neither seed nor record and appends
+to the caller's event buffer. `Game.Resolve` checks the exact point, sorted
+required seats and offered keys, applies the engine's own actions, then writes
+private picks, public plays and newly dealt packets. `Replay` uses those same
+checked batches; an error changes no caller value.
+
+This turn engine is intermediate and must not be released. Card/stage coin
+effects, science/point scoring, Halikarnassos discard-build points and Babylon
+last-card points are deferred to the effects and wonder slices. Until then,
+sixth-turn leftovers are always discarded and end totals are zero; the closing
+result's coin tie-break only keeps invariant sweeps structurally complete.
+Olympia free conditions are already checked from the frozen city, with chain
+precedence and zero effective printed coins on every free build. Sweeps assert
+termination, conservation, record shape, replay/core equivalence and seat-order
+independence rather than complete game rules.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen
