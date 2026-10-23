@@ -110,3 +110,14 @@ type archivedRoomError struct{ reason store.ArchiveReason }
 
 func (e *archivedRoomError) Error() string { return ErrRoomArchived.Error() }
 func (e *archivedRoomError) Unwrap() error { return ErrRoomArchived }
+
+// ArchivedRoom is the error a registered kind's Check or Load returns for a
+// durably archived room: error room-archived, carrying only the bounded
+// reason.
+func ArchivedRoom(reason store.ArchiveReason) error {
+	return &archivedRoomError{reason: store.SafeArchiveReason(reason)}
+}
+
+// ErrRoomGone is what a registered kind's Attach or Deliver returns once its
+// actor has exited (idle eviction); Manager then loads the room again.
+var ErrRoomGone = errRoomGone
