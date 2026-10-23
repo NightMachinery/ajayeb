@@ -3,12 +3,36 @@
     "subject": "two workers in one shallow open pit: one carries a basket of wet ochre clay up the bank, the other prises lumps of rust-red iron ore, glinting with dark metallic flecks, from a seam exposed in the pit wall; the clay and the ore both clearly visible as two different materials",
     "accent": "brown"
   },
+  "card/excavation": {
+    "subject": "two diggers in one stepped excavation cut into a low hillside: on the upper ledge one levers out a squared block of pale limestone, on the floor below the other shovels soft ochre clay into a basket; the pale stone above and the ochre clay below both clearly visible as two different materials",
+    "accent": "brown"
+  },
+  "card/forest-cave": {
+    "subject": "at the round dark mouth of a small cave in a wooded hillside, a woodcutter carries a bundle of cut logs on his shoulder while a second worker steps out of the cave with a basket heaped with lumps of rust-red iron ore, glinting with dark metallic flecks; two or three tall broadleaf trees frame the cave; the logs and the ore both clearly visible as two different materials",
+    "accent": "brown"
+  },
+  "card/foundry": {
+    "subject": "two metalworkers at a squat round smelting furnace glowing at its mouth: one tips a basket of rust-red iron ore, glinting with dark metallic flecks into the furnace, the other pours a glowing orange melt from a crucible into a row of plain ingot moulds; two large heaps of the same rust-red ore lie beside the furnace, and a few finished dark iron ingots, plain and unmarked, rest beside the moulds; one material only, no weapons, no blades, no armour",
+    "accent": "brown"
+  },
   "card/loom": {
     "subject": "a weaver seated at a simple upright wooden loom, drawing a shuttle through the warp threads of a broad, half-woven cloth in rose and lapis stripes, a folded bolt of the same striped cloth on a low stool beside the loom",
     "accent": "grey"
   },
+  "card/mine": {
+    "subject": "two miners at a squared mine entrance cut into a grey rock hill, its lintel one slab of stone: one carries a squared block of pale stone out on his shoulder, the other tips a basket of rust-red iron ore, glinting with dark metallic flecks onto a heap; a stack of pale stone blocks and a heap of rust-red ore lie apart in front of the entrance, clearly two different materials",
+    "accent": "brown"
+  },
   "card/ore-vein": {
     "subject": "a miner with a short pick prising lumps of rust-red iron ore, glinting with dark metallic flecks, from a narrow seam that runs through a pale rock face, and dropping them into a shallow basket at his feet",
+    "accent": "brown"
+  },
+  "card/timber-yard": {
+    "subject": "a small timber yard on level ground: one worker stacks squared cedar beams on a low wooden rack, the other dresses a pale limestone block with a mallet and chisel beside a few finished blocks; the stack of beams and the pale stone blocks both clearly visible as two different materials; no tree felling, no stream",
+    "accent": "brown"
+  },
+  "card/tree-farm": {
+    "subject": "two workers at one small tree farm: one ties a bundle of straight cut poles taken from a neat row of slender young poplars, the other digs wet ochre clay from a low bank at the edge of the grove into a basket; the bundled wooden poles and the ochre clay both clearly visible as two different materials",
     "accent": "brown"
   }
 }

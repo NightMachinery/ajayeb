@@ -23,6 +23,78 @@
         "Brown accent fits; style, density and figure scale match the anchor and Duel's clay-pool and brickyard; one domed pavilion, no minaret, emblem or animals. Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     },
+    "card/excavation": {
+      "id": "card/excavation",
+      "kind": "card",
+      "out": "haftgane/cards/excavation",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two diggers in one stepped excavation cut into a low hillside: on the upper ledge one levers out a squared block of pale limestone, on the floor below the other shovels soft ochre clay into a basket; the pale stone above and the ochre clay below both clearly visible as two different materials",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Leave out the background pavilion entirely: behind the excavation show only cypresses, a flowering shrub and pastel rocky hills, with no building, parapet, frieze or corner ornament anywhere in the picture.",
+      "bytes": {
+        "excavation.avif": 15394,
+        "excavation@thumb.avif": 4850
+      },
+      "approvedAttempt": 2,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 3.9), with wide paper margins: the painting spans about 73% of the crop width.",
+        "No text, glyphs or emblems at native size or 2x: the robes carry loose gold floral sprigs, the sash plain stripes, the stone faces only cracks, and there is no building.",
+        "Stone and clay are distinct and balanced at 120 px: stacked pale limestone blocks on the upper ledge, a bright ochre pit with a filled basket below, split diagonally with equal weight.",
+        "Two large figures, uncluttered; line, palette and density match Duel's quarry neighbours.",
+        "The orange pit separates it from Duel's all-pale shelf-quarry and quarry, and the white ledge from clay-pit and tree-farm. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/forest-cave": {
+      "id": "card/forest-cave",
+      "kind": "card",
+      "out": "haftgane/cards/forest-cave",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "at the round dark mouth of a small cave in a wooded hillside, a woodcutter carries a bundle of cut logs on his shoulder while a second worker steps out of the cave with a basket heaped with lumps of rust-red iron ore, glinting with dark metallic flecks; two or three tall broadleaf trees frame the cave; the logs and the ore both clearly visible as two different materials",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Put the two materials on the open ground in front of the cave, each about as large as a standing figure: on the left a neat stack of cut brown logs showing pale ring ends, on the right a heap of rust-red ore lumps with dark metallic glints spilling from the cave mouth onto pale ochre ground. Keep the cave mouth smaller and the foliage sparser, so the log stack and the ore heap are the boldest shapes at a glance.",
+      "bytes": {
+        "forest-cave.avif": 23286,
+        "forest-cave@thumb.avif": 6944
+      },
+      "approvedAttempt": 2,
+      "reasons": [
+        "Passes the gate (band 96.0%, dE00 3.7); the right-hand rocks come within about 10 px of the crop edge but fade out, as wide as the approved mine #1.",
+        "No text, emblem or mark at native size and 2x: plain tunics and belts, a natural rock arch, an empty dark interior.",
+        "Wood and ore both read and balance at 120 px: a large stack of sawn brown logs plus a carried bundle, and a rust-red ore heap with dark and silver glints, each larger than a figure.",
+        "Against mine #1, which shares a dark opening with an ore heap at lower right: the other material differs (brown log cylinders against white cubes), the carried load repeats it, the opening differs (natural arch against a squared door) and so do the trees (broadleaf against cypress), so a player would not confuse them at 120 px.",
+        "Line, palette and density match Duel's logging-camp and the pilot's ore-vein. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/foundry": {
+      "id": "card/foundry",
+      "kind": "card",
+      "out": "haftgane/cards/foundry",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two metalworkers at a squat round smelting furnace glowing at its mouth: one tips a basket of rust-red iron ore, glinting with dark metallic flecks into the furnace, the other pours a glowing orange melt from a crucible into a row of plain ingot moulds; two large heaps of the same rust-red ore lie beside the furnace, and a few finished dark iron ingots, plain and unmarked, rest beside the moulds; one material only, no weapons, no blades, no armour",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Leave out the background pavilion entirely: behind the furnace show only a few trees and pastel rocky hills, with no building anywhere. Pattern every robe with loose, irregular leafy sprigs or small round rosettes, never a uniform repeated lily, trefoil or cross shape; the lapis robe may also be left plain. Paint the ingot moulds and the ingots flat, with ink outlines and no glossy highlights.",
+      "bytes": {
+        "foundry.avif": 21830,
+        "foundry@thumb.avif": 6289
+      },
+      "approvedAttempt": 3,
+      "reasons": [
+        "Passes the gate (band 93.7%, dE00 5.2); the widest scene in the family (the left ore heap's outer lumps come within about 3 to 9 px of the left edge at 480 px, the ingots end about 19 px from the right), as wide as the approved forest-cave #2 and timber-yard #2, and a simulated in-app soft feather keeps both heaps and all ingots legible.",
+        "No building, text, glyph band, signature, weapon or blade at native size or 2x; both robes carry loose leafy sprigs (cream on vermilion, gold on lapis), with no lily, trefoil, cross or other repeated emblem even at 4x (checked again at 2x by the integrator); sashes, moulds, ingots and crucible are plain.",
+        "One material in quantity, as the card produces two ore: two large rust-red heaps with dark and silver glints, a basket tipping more into the furnace, and ore glowing in its mouth; the dark moulds and ingots read as cast metal, not as a second material.",
+        "The ingots and moulds are matte and ink-outlined like Duel brickyard's bricks; two large figures, uncluttered.",
+        "Distinct in the family: the only furnace, fire and ingots. Reviewer: a fresh in-process subagent that did not write the prompts and had not seen earlier rounds."
+      ]
+    },
     "card/loom": {
       "id": "card/loom",
       "kind": "card",
@@ -47,6 +119,30 @@
         "One small domed garden kiosk, no minaret, mosque, emblem or animals; generic period dress. The cloth reads as woven cloth on a loom (white warp above the woven edge, boat shuttle in hand), not a carpet, rug or banner. Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     },
+    "card/mine": {
+      "id": "card/mine",
+      "kind": "card",
+      "out": "haftgane/cards/mine",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two miners at a squared mine entrance cut into a grey rock hill, its lintel one slab of stone: one carries a squared block of pale stone out on his shoulder, the other tips a basket of rust-red iron ore, glinting with dark metallic flecks onto a heap; a stack of pale stone blocks and a heap of rust-red ore lie apart in front of the entrance, clearly two different materials",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "mine.avif": 19325,
+        "mine@thumb.avif": 5905
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 99%, dE00 4.8); the scene runs closest to the edges in this batch (about 40 to 50 px of paper at left and right), within the range of approved Duel cards.",
+        "No text at full resolution: the lintel is a plain veined slab, the doorway and posts are plain, and there is no building, emblem or animal.",
+        "Stone and ore are distinct and balanced at 120 px: a stack of pale limestone cubes and the block on the miner's shoulder at left, a large rust-red ore heap with grey metallic glints fed by a tipping basket at right.",
+        "Two large figures at a squared doorway in a grey rock hill; the style matches Duel's stone-pit and the approved ore-vein.",
+        "Distinct within the family: the bare grey hill and square doorway are unlike forest-cave's wood and round cave, ore-vein's seam and clay-pit's ochre pit. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
     "card/ore-vein": {
       "id": "card/ore-vein",
       "kind": "card",
@@ -66,6 +162,54 @@
         "The ore reads as metal ore: rust-red lumps with grey-blue metallic glints, not stone or coal, and stays rust-red at 480 px.",
         "Brown accent fits (brown robe, ochre ground, pastel rocks); gold only on the sun disc and finial; line, gouache and margin match the anchor.",
         "One domed garden kiosk, no minaret, emblem or animals; figure scale and density match Duel's stone-pit and quarry. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/timber-yard": {
+      "id": "card/timber-yard",
+      "kind": "card",
+      "out": "haftgane/cards/timber-yard",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a small timber yard on level ground: one worker stacks squared cedar beams on a low wooden rack, the other dresses a pale limestone block with a mallet and chisel beside a few finished blocks; the stack of beams and the pale stone blocks both clearly visible as two different materials; no tree felling, no stream",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Leave out the background pavilion entirely: behind the yard show only cypresses, a leafy tree and pastel rocks, with no building, eave or frieze anywhere. Keep the paper around the scene clean, with no stray sprig or mark floating in the sky.",
+      "bytes": {
+        "timber-yard.avif": 18610,
+        "timber-yard@thumb.avif": 5869
+      },
+      "approvedAttempt": 2,
+      "reasons": [
+        "Passes the gate (band 98.7%, dE00 5.1); the scene is wide (about 97% of the crop) but fades to paper at both sides, like the approved mine #1.",
+        "No building and no stray mark: at native size and 2x the sash shows small broken stripes, the robes loose leafy sprigs, the beam ends plain grain rings.",
+        "Wood and stone are distinct and balanced at 120 px: a large rack of squared brown cedar beams against five pale cubes and the block being dressed.",
+        "Two large figures doing different tasks, in flat gouache that matches Duel's sawmill and stone-pit.",
+        "Distinct from Duel's lumber-yard (felling by a stream) and sawmill (two men sawing), and from mine #1. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/tree-farm": {
+      "id": "card/tree-farm",
+      "kind": "card",
+      "out": "haftgane/cards/tree-farm",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two workers at one small tree farm: one ties a bundle of straight cut poles taken from a neat row of slender young poplars, the other digs wet ochre clay from a low bank at the edge of the grove into a basket; the bundled wooden poles and the ochre clay both clearly visible as two different materials",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "tree-farm.avif": 18667,
+        "tree-farm@thumb.avif": 6016
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 4.2), with about 105 to 125 px of clean ivory at left and right.",
+        "No text at full resolution: the kiosk's base panels carry symmetric, repeated gold strapwork knots (tile ornament, not script), the plinth's faint round dabs form no letter shapes, and the robes carry rosettes and sprigs only; no animals or emblems.",
+        "Wood and clay are distinct and balanced at 120 px: the left half is a row of young poplars and a rope-tied bundle of peeled poles, the right half a cut ochre clay bank, a shovel load and a full basket.",
+        "Two large figures, uncrowded; line, gouache, pastel rocks and density match Duel's lumber-yard and clay-pool.",
+        "Distinct within the family: its pale vertical grove is unique, unlike Duel's lumber-yard (a felled giant tree by a stream) and the clay-pit (a deep pit with an ore seam). Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     }
   }
