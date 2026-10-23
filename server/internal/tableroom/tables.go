@@ -255,6 +255,11 @@ type Participant struct {
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
 	Bot    string `json:"bot"`
+	// FreshClaim: the lobby revoked this human's rematch claim (they lost
+	// their slot and were seated again), so their seat starts at a fresh
+	// claim epoch, the table's first public revision, not at the
+	// rematch's 0. Only the lobby's Start sets it.
+	FreshClaim bool `json:"-"`
 }
 
 // Spec is a new table: its participants in lobby order and its options.
@@ -402,12 +407,15 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 		base.Batches = append(base.Batches, BatchRecord{Point: b.Point, Picks: append([]PickRecord{}, b.Picks...)})
 	}
 	for i, p := range spec.Participants {
-		base.Start[i] = StartSlot(p)
+		base.Start[i] = StartSlot{UserID: p.UserID, Name: p.Name, Bot: p.Bot}
 	}
 	for s := range n {
 		p := spec.Participants[order[s]]
 		base.Assignment[s] = int(order[s])
 		sr := SeatRecord{Seat: s, Kind: SeatHuman, UserID: p.UserID, Name: p.Name}
+		if p.FreshClaim {
+			sr.Epoch = base.Public
+		}
 		if p.Bot != "" {
 			sr = SeatRecord{Seat: s, Kind: SeatBot, Bot: p.Bot}
 		} else {

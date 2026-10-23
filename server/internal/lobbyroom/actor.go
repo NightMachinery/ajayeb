@@ -235,9 +235,10 @@ func (a *actor) userOf(c *room.Client) string {
 }
 
 // claimHolder returns the user of the human or reserved slot claim was
-// made for: a lobby's claims are of epoch 0, the one a rematch hands out
-// and Start carries into the table. Every slot is checked, in constant
-// time each.
+// made for, at the slot's claim epoch (Slot.Epoch): the only claims a
+// lobby honours are a rematch's, of epoch 0, while their user has held
+// the reservation or the slot it became without a break. Every slot is
+// checked, in constant time each.
 func (a *actor) claimHolder(claim string) (string, bool) {
 	cl := a.m.Claims()
 	if cl == nil {
@@ -245,7 +246,7 @@ func (a *actor) claimHolder(claim string) (string, bool) {
 	}
 	user := ""
 	for _, s := range a.rec.Slots {
-		if (s.Kind == SlotHuman || s.Kind == SlotReserved) && cl.VerifyClaim(claim, a.code, s.UserID, 0) && user == "" {
+		if (s.Kind == SlotHuman || s.Kind == SlotReserved) && cl.VerifyClaim(claim, a.code, s.UserID, s.Epoch) && user == "" {
 			user = s.UserID
 		}
 	}
@@ -310,16 +311,21 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 }
 
 // takeSlot seats a user who just connected: in the slot reserved for
-// them, or the first open one unless they left a slot before. A claim
-// never renames its slot. It reports whether it committed a change.
+// them, keeping its claim epoch, or the first open one, at a fresh epoch,
+// unless they left a slot before. A claim never renames its slot. It
+// reports whether it committed a change.
 func (a *actor) takeSlot(user, name string, claimed bool) bool {
 	r := &a.rec
 	i := slotOf(r, user, SlotReserved)
+	cand := r.clone()
+	cand.Revision++
+	epoch := cand.Revision
 	switch {
 	case i >= 0:
 		if claimed || !validName(name) {
 			name = r.Slots[i].Name
 		}
+		epoch = r.Slots[i].Epoch
 	case slotOf(r, user, SlotHuman) >= 0 || slices.Contains(r.Unseated, user) || !validName(name):
 		return false
 	default:
@@ -328,9 +334,7 @@ func (a *actor) takeSlot(user, name string, claimed bool) bool {
 			return false
 		}
 	}
-	cand := r.clone()
-	cand.Revision++
-	cand.Slots[i] = Slot{Kind: SlotHuman, UserID: user, Name: name, Taken: cand.Revision}
+	cand.Slots[i] = Slot{Kind: SlotHuman, UserID: user, Name: name, Taken: cand.Revision, Epoch: epoch}
 	retire(r, &cand)
 	return a.commit("join", cand) == nil
 }
@@ -678,7 +682,7 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 			slotOf(r, *f.UserID, SlotHuman) >= 0 || slotOf(r, *f.UserID, SlotReserved) >= 0 {
 			return bad()
 		}
-		cand.Slots[i] = Slot{Kind: SlotHuman, UserID: *f.UserID, Name: a.nameOf(*f.UserID), Taken: cand.Revision + 1}
+		cand.Slots[i] = Slot{Kind: SlotHuman, UserID: *f.UserID, Name: a.nameOf(*f.UserID), Taken: cand.Revision + 1, Epoch: cand.Revision + 1}
 		cand.Unseated = slices.DeleteFunc(cand.Unseated, func(u string) bool { return u == *f.UserID })
 	case "remove-human":
 		if f.UserID == nil {
@@ -785,7 +789,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	for _, s := range r.Slots {
 		switch s.Kind {
 		case SlotHuman:
-			spec.Participants = append(spec.Participants, tableroom.Participant{UserID: s.UserID, Name: s.Name})
+			spec.Participants = append(spec.Participants, tableroom.Participant{UserID: s.UserID, Name: s.Name, FreshClaim: s.Epoch != 0})
 		case SlotBot:
 			spec.Participants = append(spec.Participants, tableroom.Participant{Bot: s.Bot})
 		default:

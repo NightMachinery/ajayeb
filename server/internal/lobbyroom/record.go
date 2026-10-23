@@ -22,9 +22,10 @@ const Game = "lobby"
 // Schema is the record's schema, dispatched by the store's bounded header.
 const Schema = 2
 
-// recordFormat is the format this build writes; decodeRecord refuses any
-// other, so a newer build's lobby is left as it is.
-const recordFormat = 1
+// recordFormat is the format this build writes. decodeRecord upgrades
+// format 1 (before slots had claim epochs) and refuses any other, so a
+// newer build's lobby is left as it is.
+const recordFormat = 2
 
 // Seat counts: two seats start Duel (M18.shared-lobby), three to seven
 // Haftgane.
@@ -89,13 +90,20 @@ type Record struct {
 }
 
 // Slot is one lobby slot. Taken is the revision when its human took it,
-// which ranks the candidates for the temporary admin.
+// which ranks the candidates for the temporary admin. Epoch is the claim
+// epoch of its user's device links: 0 for a rematch's reservation and the
+// human who takes it (the claim a rematch hands out, carried into the
+// table at Start), and the revision of the change for every other
+// seating, so a claim revoked when its user lost a slot stays revoked
+// when they are seated again. The creator's first slot is epoch 0 too:
+// nothing hands out a claim for it.
 type Slot struct {
 	Kind   string `json:"kind"`
 	UserID string `json:"userId"`
 	Name   string `json:"name"`
 	Bot    string `json:"bot"`
 	Taken  int    `json:"taken"`
+	Epoch  int    `json:"epoch"`
 }
 
 // SeqRecord is one client's last accepted seq.
@@ -164,11 +172,15 @@ func (r *Record) encode() ([]byte, error) {
 }
 
 // decodeRecord decodes a record and validates its header. Unknown fields
-// are ignored, as for the other room files; another format is refused.
+// are ignored, as for the other room files; format 1 is upgraded and any
+// other format refused.
 func decodeRecord(data []byte) (*Record, error) {
 	var r Record
 	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, fmt.Errorf("lobbyroom: decoding the record: %w", err)
+	}
+	if r.Format == 1 {
+		upgrade(&r)
 	}
 	switch {
 	case r.Schema != Schema || r.Game != Game:
@@ -181,6 +193,19 @@ func decodeRecord(data []byte) (*Record, error) {
 		return nil, errors.New("lobbyroom: invalid record status")
 	}
 	return &r, nil
+}
+
+// upgrade reads a format-1 record, whose slots had no claim epochs: a
+// reservation keeps epoch 0, and a human the epoch of the revision they
+// took their slot at, so a rematch claim from before fails closed rather
+// than outliving a removal.
+func upgrade(r *Record) {
+	for i := range r.Slots {
+		if r.Slots[i].Kind == SlotHuman {
+			r.Slots[i].Epoch = r.Slots[i].Taken
+		}
+	}
+	r.Format = recordFormat
 }
 
 type inspection struct{ r *Record }
@@ -246,6 +271,9 @@ func validate(r *Record, acks int) error {
 		}
 		if s.Taken < 0 || s.Taken > r.Revision || s.Kind != SlotHuman && s.Taken != 0 {
 			return invalid("when slot %d was taken", i)
+		}
+		if s.Epoch < 0 || s.Epoch > r.Revision || s.Kind != SlotHuman && s.Epoch != 0 {
+			return invalid("slot %d's claim epoch", i)
 		}
 	}
 	if !validOptions(r.Options) {
