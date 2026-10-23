@@ -101,6 +101,10 @@ func (a *actor) run() {
 		case <-a.wake:
 			a.takeDetaches()
 		case msg := <-a.inbox:
+			// A detach queued before this message was sent comes first,
+			// whichever case select picked: a connection that leaves and
+			// joins again on the same socket must end up attached.
+			a.takeDetaches()
 			if a.handle(msg) {
 				a.disarmIdle()
 				return
