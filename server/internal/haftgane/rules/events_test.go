@@ -3,9 +3,9 @@ package rules
 import "testing"
 
 // With payments represented by EvPlay, the design's 32-event budget covers a
-// seven-seat sixth turn. This is a contract model until resolution exists.
+// seven-seat sixth turn. The sweep also checks actual resolved event counts.
 func TestResolutionEventBudget(t *testing.T) {
-	const limit = 32
+	const limit = MaxResolutionEvents
 	tests := []struct {
 		name                                                                                       string
 		plays, income, leftovers, pass, discardResult, discardIncome, conflicts, ageStart, gameEnd int
