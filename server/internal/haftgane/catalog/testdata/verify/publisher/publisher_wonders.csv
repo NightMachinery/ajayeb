@@ -1,0 +1,22 @@
+board,side,starting_resource,stage,cost,effects
+alexandria,day,glass,1,stone:2,points:3
+alexandria,day,glass,2,ore:2,produce:wood/stone/ore/clay
+alexandria,day,glass,3,papyrus:1 textile:1,points:7
+babylon,day,wood,1,clay:2,points:3
+babylon,day,wood,2,ore:2 textile:1,science:any
+babylon,day,wood,3,wood:4,points:7
+ephesos,day,papyrus,1,clay:2,points:3
+ephesos,day,papyrus,2,wood:2,coins:9
+ephesos,day,papyrus,3,ore:2 glass:1,points:7
+giza,day,stone,1,wood:2,points:3
+giza,day,stone,2,clay:2 textile:1,points:5
+giza,day,stone,3,stone:4,points:7
+halikarnassos,day,textile,1,ore:2,points:3
+halikarnassos,day,textile,2,glass:1 papyrus:1,other:construct-one-discarded-age-card-free
+halikarnassos,day,textile,3,stone:3,points:7
+olympia,day,clay,1,stone:2,points:3
+olympia,day,clay,2,wood:2,other:first-age-card-in-each-colour-free
+olympia,day,clay,3,clay:3,points:7
+rhodos,day,ore,1,wood:2,points:3
+rhodos,day,ore,2,clay:3,shields:2
+rhodos,day,ore,3,ore:4,points:7

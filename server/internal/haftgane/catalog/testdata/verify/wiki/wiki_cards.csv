@@ -1,0 +1,81 @@
+age,name,colour,player_counts,cost,chain_from,chain_to,effects
+1,Lumber Yard,brown,3;4,free,,,produce:wood
+1,Stone Pit,brown,3;5,free,,,produce:stone
+1,Clay Pool,brown,3;5,free,,,produce:clay
+1,Ore Vein,brown,3;4,free,,,produce:ore
+1,Tree Farm,brown,6,coins:1,,,produce:wood/clay
+1,Excavation,brown,4,coins:1,,,produce:stone/clay
+1,Clay Pit,brown,3,coins:1,,,produce:clay/ore
+1,Timber Yard,brown,3,coins:1,,,produce:wood/stone
+1,Forest Cave,brown,5,coins:1,,,produce:wood/ore
+1,Mine,brown,6,coins:1,,,produce:stone/ore
+1,Loom,grey,3;6,free,,,produce:textile
+1,Glassworks,grey,3;6,free,,,produce:glass
+1,Press,grey,3;6,free,,,produce:papyrus
+1,Altar,blue,3;5,free,,Pantheon,points:3
+1,Theater,blue,3;6,free,,Gardens,points:3
+1,Well,blue,4;7,free,,Statue,points:3
+1,Baths,blue,3;7,stone:1,,Aqueduct,points:3
+1,Tavern,yellow,4;5;7,free,,,coins:5
+1,East Trading Post,yellow,3;7,free,,Forum,trade:raw:right
+1,West Trading Post,yellow,3;7,free,,Forum,trade:raw:left
+1,Marketplace,yellow,3;6,free,,Caravansery,trade:manufactured:both
+1,Stockade,red,3;7,wood:1,,,shields:1
+1,Barracks,red,3;5,ore:1,,,shields:1
+1,Guard Tower,red,3;4,clay:1,,,shields:1
+1,Apothecary,green,3;5,textile:1,,Dispensary;Stables,science:compass
+1,Workshop,green,3;7,glass:1,,Archery Range;Laboratory,science:gear
+1,Scriptorium,green,3;4,papyrus:1,,Courthouse;Library,science:tablet
+2,Sawmill,brown,3;4,coins:1,,,produce:wood*2
+2,Quarry,brown,3;4,coins:1,,,produce:stone*2
+2,Brickyard,brown,3;4,coins:1,,,produce:clay*2
+2,Foundry,brown,3;4,coins:1,,,produce:ore*2
+2,Loom,grey,3;5,free,,,produce:textile
+2,Glassworks,grey,3;5,free,,,produce:glass
+2,Press,grey,3;5,free,,,produce:papyrus
+2,Aqueduct,blue,3;7,stone:3,Baths,,points:5
+2,Temple,blue,3;6,wood:1 clay:1 glass:1,,,points:4
+2,Statue,blue,3;7,wood:1 ore:2,Well,,points:4
+2,Courthouse,blue,3;5,clay:2 textile:1,Scriptorium,,points:4
+2,Forum,yellow,3;6;7,clay:2,East Trading Post;West Trading Post,Haven,produce:glass/papyrus/textile
+2,Caravansery,yellow,3;5;6,wood:2,Marketplace,Lighthouse,produce:wood/stone/clay/ore
+2,Vineyard,yellow,3;6,free,,,per:brown:self+neighbours:coins1
+2,Bazaar,yellow,4;7,free,,,per:grey:self+neighbours:coins2
+2,Walls,red,3;7,stone:3,,Fortifications,shields:2
+2,Training Ground,red,4;6;7,wood:1 ore:2,,Circus,shields:2
+2,Stables,red,3;5,wood:1 clay:1 ore:1,Apothecary,,shields:2
+2,Archery Range,red,3;6,wood:2 ore:1,Workshop,,shields:2
+2,Dispensary,green,3;4,ore:2 glass:1,Apothecary,Arena;Lodge,science:compass
+2,Laboratory,green,3;5,clay:2 papyrus:1,Workshop,Siege Workshop;Observatory,science:gear
+2,Library,green,3;6,stone:2 textile:1,Scriptorium,Senate;University,science:tablet
+2,School,green,3;7,wood:1 papyrus:1,,Academy;Study,science:tablet
+3,Pantheon,blue,3;6,clay:2 ore:1 glass:1 papyrus:1 textile:1,Altar,,points:7
+3,Gardens,blue,3;4,wood:1 clay:2,Theater,,points:5
+3,Town Hall,blue,3;6,stone:2 ore:1 glass:1,,,points:6
+3,Palace,blue,3;7,wood:1 stone:1 clay:1 ore:1 glass:1 papyrus:1 textile:1,,,points:8
+3,Senate,blue,3;5,wood:2 stone:1 ore:1,Library,,points:6
+3,Haven,yellow,3;4,wood:1 ore:1 textile:1,Forum,,per:brown:self:coins1;per:brown:self:points1
+3,Lighthouse,yellow,3;6,stone:1 glass:1,Caravansery,,per:yellow:self:coins1;per:yellow:self:points1
+3,Chamber of Commerce,yellow,4;6,clay:2 papyrus:1,,,per:grey:self:coins2;per:grey:self:points2
+3,Arena,yellow,3;5,stone:2 ore:1,Dispensary,,per:wonder-stage:self:coins3;per:wonder-stage:self:points1
+3,Ludus,yellow,5;7,stone:1 ore:1,,,per:red:self:coins3;per:red:self:points1
+3,Fortifications,red,3;7,clay:1 ore:3,Walls,,shields:3
+3,Circus,red,4;6,stone:3 ore:1,Training Ground,,shields:3
+3,Arsenal,red,3;5,wood:2 ore:1 textile:1,,,shields:3
+3,Siege Workshop,red,3;5,wood:1 clay:3,Laboratory,,shields:3
+3,Castrum,red,4;7,wood:1 clay:2 papyrus:1,,,shields:3
+3,Lodge,green,3;6,clay:2 papyrus:1 textile:1,Dispensary,,science:compass
+3,Observatory,green,3;7,ore:2 glass:1 textile:1,Laboratory,,science:gear
+3,University,green,3;4,wood:2 glass:1 papyrus:1,Library,,science:tablet
+3,Academy,green,3;7,stone:3 glass:1,School,,science:compass
+3,Study,green,3;5,wood:1 papyrus:1 textile:1,School,,science:gear
+3,Workers Guild,purple,guild,wood:1 stone:1 clay:1 ore:2,,,per:brown:neighbours:points1
+3,Craftsmens Guild,purple,guild,stone:2 ore:2,,,per:grey:neighbours:points2
+3,Traders Guild,purple,guild,glass:1 papyrus:1 textile:1,,,per:yellow:neighbours:points1
+3,Philosophers Guild,purple,guild,clay:3 papyrus:1 textile:1,,,per:green:neighbours:points1
+3,Spies Guild,purple,guild,clay:2 glass:1,,,per:red:neighbours:points1
+3,Magistrates Guild,purple,guild,wood:3 stone:1 textile:1,,,per:blue:neighbours:points1
+3,Shipowners Guild,purple,guild,wood:3 glass:1 papyrus:1,,,per:brown:self:points1;per:grey:self:points1;per:purple:self:points1
+3,Scientists Guild,purple,guild,wood:2 ore:2 papyrus:1,,,science:any
+3,Builders Guild,purple,guild,stone:3 clay:2 glass:1,,,per:wonder-stage:self+neighbours:points1
+3,Decorators Guild,purple,guild,stone:1 ore:2 textile:1,,,other:all-wonder-stages-built-points7

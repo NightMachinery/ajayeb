@@ -1,0 +1,81 @@
+age,name,colour,player_counts,cost,chain_from,chain_to,effects
+1,Lumber Yard,brown,3;4,,,,produce:wood
+1,Stone Pit,brown,3;5,,,,produce:stone
+1,Clay Pool,brown,3;5,,,,produce:clay
+1,Ore Vein,brown,3;4,,,,produce:ore
+1,Tree Farm,brown,6,,,,produce:wood/clay
+1,Excavation,brown,4,,,,produce:stone/clay
+1,Clay Pit,brown,3,,,,produce:ore/clay
+1,Timber Yard,brown,3,,,,produce:wood/stone
+1,Forest Cave,brown,5,,,,produce:wood/ore
+1,Mine,brown,6,,,,produce:stone/ore
+1,Glassworks,grey,3;6,,,,produce:glass
+1,Press,grey,3;6,,,,produce:papyrus
+1,Loom,grey,3;6,,,,produce:textile
+1,Well,blue,4;7,,,Statue,points:3
+1,Baths,blue,3;7,,,Aqueduct,points:3
+1,Altar,blue,3;5,,,Pantheon,points:3
+1,Theater,blue,3;6,,,Gardens,points:3
+1,Tavern,yellow,4;5;7,,,,coins:5
+1,Marketplace,yellow,3;6,,,Caravansery,trade:manufactured:both
+1,West Trading Post,yellow,3;7,,,Forum,trade:raw:left
+1,East Trading Post,yellow,3;7,,,Forum,trade:raw:right
+1,Stockade,red,3;7,,,,shields:1
+1,Barracks,red,3;5,,,,shields:1
+1,Guard Tower,red,3;4,,,,shields:1
+1,Apothecary,green,3;5,,,Stables;Dispensary,science:compass
+1,Workshop,green,3;7,,,Archery Range;Laboratory,science:gear
+1,Scriptorium,green,3;4,,,Courthouse;Library,science:tablet
+2,Sawmill,brown,3;4,,,,produce:wood*2
+2,Quarry,brown,3;4,,,,produce:stone*2
+2,Brickyard,brown,3;4,,,,produce:clay*2
+2,Foundry,brown,3;4,,,,produce:ore*2
+2,Glassworks,grey,3;5,,,,produce:glass
+2,Press,grey,3;5,,,,produce:papyrus
+2,Loom,grey,3;5,,,,produce:textile
+2,Statue,blue,3;7,,Well,,points:4
+2,Aqueduct,blue,3;7,,Baths,,points:5
+2,Temple,blue,3;6,,,,points:4
+2,Courthouse,blue,3;5,,Scriptorium,Senate,points:4
+2,Caravansery,yellow,3;5;6,,Marketplace,Lighthouse,produce:wood/stone/ore/clay
+2,Forum,yellow,3;6;7,,East Trading Post;West Trading Post,Haven,produce:glass/papyrus/textile
+2,Vineyard,yellow,3;6,,,,per:brown:self+neighbours:coins1
+2,Bazar,yellow,4;7,,,,per:grey:self+neighbours:coins2
+2,Stables,red,3;5,,Apothecary,Arena,shields:2
+2,Archery Range,red,3;6,,Workshop,Siege Workshop,shields:2
+2,Walls,red,3;7,,,Fortifications,shields:2
+2,Training Ground,red,4;6;7,,,Circus,shields:2
+2,Dispensary,green,3;4,,Apothecary,Lodge,science:compass
+2,Laboratory,green,3;5,,Workshop,Observatory,science:gear
+2,Library,green,3;6,,Scriptorium,University,science:tablet
+2,School,green,3;7,,,Academy;Study,science:tablet
+3,Pantheon,blue,3;6,,Altar,,points:7
+3,Gardens,blue,3;4,,Theater,,points:5
+3,Town Hall,blue,3;6,,,,points:6
+3,Palace,blue,3;7,,,,points:8
+3,Senate,blue,3;5,,Courthouse,,points:6
+3,Lighthouse,yellow,3;6,,Caravansery,,per:yellow:self:coins1;per:yellow:self:points1
+3,Haven,yellow,3;4,,Forum,,per:brown:self:coins1;per:brown:self:points1
+3,Chamber of Commerce,yellow,4;6,,,,per:grey:self:coins2;per:grey:self:points2
+3,Ludus,yellow,5;7,,,,per:red:self:coins3;per:red:self:points1
+3,Arena,yellow,3;5,,Stables,,per:wonder-stage:self:coins3;per:wonder-stage:self:points1
+3,Castrum,red,4;7,,,,shields:3
+3,Fortifications,red,3;7,,Walls,,shields:3
+3,Circus,red,4;6,,Training Ground,,shields:3
+3,Arsenal,red,3;5,,,,shields:3
+3,Siege Workshop,red,3;5,,Archery Range,,shields:3
+3,Lodge,green,3;6,,Dispensary,,science:compass
+3,Academy,green,3;7,,School,,science:compass
+3,Observatory,green,3;7,,Laboratory,,science:gear
+3,Study,green,3;5,,School,,science:gear
+3,University,green,3;4,,Library,,science:tablet
+3,Workers Guild,purple,guild,,,,per:brown:neighbours:points1
+3,Craftsmens Guild,purple,guild,,,,per:grey:neighbours:points2
+3,Magistrates Guild,purple,guild,,,,per:blue:neighbours:points1
+3,Traders Guild,purple,guild,,,,per:yellow:neighbours:points1
+3,Builders Guild,purple,guild,,,,per:wonder-stage:self+neighbours:points1
+3,Spies Guild,purple,guild,,,,per:red:neighbours:points1
+3,Philosophers Guild,purple,guild,,,,per:green:neighbours:points1
+3,Decorators Guild,purple,guild,,,,other:seven-points-if-wonder-complete
+3,Scientists Guild,purple,guild,,,,science:any
+3,Shipowners Guild,purple,guild,,,,per:brown:self:points1;per:grey:self:points1;per:purple:self:points1

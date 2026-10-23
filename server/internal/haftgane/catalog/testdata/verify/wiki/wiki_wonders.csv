@@ -1,0 +1,42 @@
+board,side,starting_resource,stage,cost,effects
+alexandria,day,glass,1,stone:2,points:3
+alexandria,day,glass,2,ore:2,produce:wood/stone/clay/ore
+alexandria,day,glass,3,papyrus:1 textile:1,points:7
+alexandria,night,glass,1,clay:2,produce:wood/stone/clay/ore
+alexandria,night,glass,2,ore:3,produce:glass/papyrus/textile
+alexandria,night,glass,3,wood:4,points:7
+babylon,day,wood,1,clay:2,points:3
+babylon,day,wood,2,ore:2 textile:1,science:any
+babylon,day,wood,3,wood:4,points:7
+babylon,night,wood,1,stone:2,other:play-last-card-of-age
+babylon,night,wood,2,clay:3 glass:1,science:any
+ephesos,day,papyrus,1,clay:2,points:3
+ephesos,day,papyrus,2,wood:2,coins:9
+ephesos,day,papyrus,3,ore:2 glass:1,points:7
+ephesos,night,papyrus,1,stone:2,coins:4;points:2
+ephesos,night,papyrus,2,wood:2,coins:4;points:3
+ephesos,night,papyrus,3,ore:2 textile:1,coins:4;points:5
+gizah,day,stone,1,wood:2,points:3
+gizah,day,stone,2,clay:2 textile:1,points:5
+gizah,day,stone,3,stone:4,points:7
+gizah,night,stone,1,wood:2,points:3
+gizah,night,stone,2,stone:3,points:5
+gizah,night,stone,3,clay:3,points:5
+gizah,night,stone,4,stone:4 papyrus:1,points:7
+halikarnassos,day,textile,1,ore:2,points:3
+halikarnassos,day,textile,2,glass:1 papyrus:1,other:build-from-discard
+halikarnassos,day,textile,3,stone:3,points:7
+halikarnassos,night,textile,1,clay:2,other:build-from-discard;points:2
+halikarnassos,night,textile,2,glass:1 papyrus:1,other:build-from-discard;points:1
+halikarnassos,night,textile,3,wood:3,other:build-from-discard
+olympia,day,clay,1,stone:2,points:3
+olympia,day,clay,2,wood:2,other:first-card-of-each-colour-free
+olympia,day,clay,3,clay:3,points:7
+olympia,night,clay,1,ore:2,other:first-card-of-each-age-free;points:2
+olympia,night,clay,2,clay:3,other:last-card-of-each-age-free;points:3
+olympia,night,clay,3,glass:1 papyrus:1 textile:1,points:5
+rhodos,day,ore,1,wood:2,points:3
+rhodos,day,ore,2,clay:3,shields:2
+rhodos,day,ore,3,ore:4,points:7
+rhodos,night,ore,1,stone:3,coins:3;shields:1;points:3
+rhodos,night,ore,2,ore:4,coins:4;shields:1;points:4
