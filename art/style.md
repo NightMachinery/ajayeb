@@ -56,7 +56,11 @@ dress, shown from the flattened three-quarter angle typical of the idiom;
 domes, arches and columns for architecture; calm water rendered as a
 patterned ripple, not a realistic reflection. Background buildings read as
 palaces, domed garden pavilions and kiosks, not places of worship: see
-"Don't" below.
+"Don't" below. A card shows one only when its subject names one (see the
+card template): a small background kiosk was where most pseudo-writing
+appeared in the Haftgane cards (M19.bitmaps-production-sites), as a band of
+script-like marks on its parapet or eave, and leaving it out removed the
+fault.
 
 ## Do
 
@@ -141,8 +145,9 @@ must tile, so it has no vignette at all.
   leave a wide margin of plain ivory paper on all four sides, widest at
   left and right. One or two large figures doing the named activity,
   filling the central third; no crowds, no distant city skyline, no filler
-  animals unless the subject names them. Soft vignette fading to the paper
-  colour at the edges."
+  animals unless the subject names them. No building in the background
+  unless the subject names one. Soft vignette fading to the paper colour at
+  the edges."
 - **wonder**: "Panoramic view of `{subject}` as monumental architecture in
   the Persian-miniature idiom, landscape, dominant accent `{accent}`. The
   monument centered and whole, occupying the middle third, not cut by the
@@ -178,18 +183,20 @@ must tile, so it has no vignette at all.
 
 > Original illustration in the manner of a 16th-century Persian miniature
 > painting (Safavid manuscript illumination): flat decorative perspective,
-> fine dark ink outlines, opaque gouache in jewel tones (lapis lazuli blue,
-> turquoise, saffron, vermilion, malachite green, ochre) with small touches
-> of gold leaf; stylized cypress trees, rounded rocky hills with pastel
-> edges, patterned tilework, ornamental clouds, tiny figures in period
-> dress. The sky and background are plain ivory paper, never gold leaf;
-> gold appears only on small details such as finials, rims and a sun disc.
-> Background buildings are palaces, domed garden pavilions and kiosks;
-> no minarets, no mosques, no religious buildings unless the subject names
-> one. One clear central subject readable as a small thumbnail, calm
-> uncluttered background of warm ivory paper. No inscriptions, no glyph
-> friezes, no writing on scrolls, pages, banners, cloth or buildings;
-> scrolls and pages are blank, cloth shows only plain stripes or small
-> floral sprigs, and parapets show only plain geometric tile bands. No
-> border, no frame, no watermark, no signature. Not photorealistic, not
-> 3D, no modern objects.
+> fine dark ink outlines, opaque gouache in jewel tones (lapis lazuli
+> blue, turquoise, saffron, vermilion, malachite green, ochre) with small
+> touches of gold leaf; stylized cypress trees, rounded rocky hills with
+> pastel edges, patterned tilework, ornamental clouds, tiny figures in
+> period dress. The sky and background are plain ivory paper, never gold
+> leaf; gold appears only on small details such as finials, rims and a sun
+> disc. Background buildings are palaces, domed garden pavilions and
+> kiosks; no minarets, no mosques, no religious buildings unless the
+> subject names one. Robes are plain or patterned with small rosettes or
+> leafy sprigs, never fleur-de-lis or another repeated emblem. One clear
+> central subject readable as a small thumbnail, calm uncluttered
+> background of warm ivory paper. No inscriptions, no glyph friezes, no
+> writing on scrolls, pages, banners, cloth or buildings; scrolls and
+> pages are blank, cloth shows only plain stripes or small floral sprigs,
+> and parapets show only plain geometric tile bands. No border, no frame,
+> no watermark, no signature. Not photorealistic, not 3D, no modern
+> objects.
