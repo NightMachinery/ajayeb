@@ -11,8 +11,10 @@ import (
 // when-placed income independent of the order of other income calculations.
 func scopeCount(st *State, seat Seat, scope catalog.SeatScope, colors catalog.ColorMask, stages bool) int16 {
 	var count int16
-	for i, s := range [3]Seat{seat, seat.Left(st.Seats), seat.Right(st.Seats)} {
-		if scope&([3]catalog.SeatScope{catalog.Self, catalog.Left, catalog.Right}[i]) == 0 {
+	seats := [3]Seat{seat, seat.Left(st.Seats), seat.Right(st.Seats)}
+	scopes := [3]catalog.SeatScope{catalog.Self, catalog.Left, catalog.Right}
+	for i, s := range seats {
+		if scope&scopes[i] == 0 {
 			continue
 		}
 		c := &st.Cities[s]
@@ -50,7 +52,7 @@ func applyWhenPlaced(st *State, seat Seat, effects []catalog.Effect) (int16, err
 		}
 	}
 	coins := int32(st.Cities[seat].Coins) + income
-	if coins < 0 || coins > 32767 || income > 32767 {
+	if coins < 0 || coins > 32767 {
 		return 0, fmt.Errorf("rules: when-placed coin overflow")
 	}
 	st.Cities[seat].Coins = int16(coins)

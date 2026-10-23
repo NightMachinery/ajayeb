@@ -10,6 +10,7 @@ import (
 // A conserving terminal scenario with two cards of each ordinary colour in
 // the owner and each neighbour, one owner guild, and 2/1/3 built stages. Each
 // card case comes from real supply; no production interpreter shapes the wants.
+// Seat 3 holds brown, grey and a stage to detect non-neighbour scope leaks.
 func effectWorld(t *testing.T, board catalog.BoardID, side catalog.Side, stages uint8, card catalog.DesignID) Game {
 	t.Helper()
 	var g Game
@@ -65,10 +66,12 @@ func effectWorld(t *testing.T, board catalog.BoardID, side catalog.Side, stages 
 	g.State.Cities[0].Side = side
 	g.State.Cities[0].Stages = stages
 	g.State.Cities[1].Stages = 1
+	g.State.Cities[3].Stages = 1
 	g.State.Cities[6].Stages = 3
 	baseline := [MaxSeats][]catalog.DesignID{
 		0: {2, 5, 11, 12, 14, 15, 17, 18, 21, 24, 25, 26, 71},
 		1: {7, 8, 11, 13, 16, 35, 19, 20, 22, 23, 27, 47},
+		3: {1, 34},
 		6: {28, 29, 12, 13, 36, 37, 39, 40, 44, 45, 48, 49},
 	}
 	for s, ids := range baseline {

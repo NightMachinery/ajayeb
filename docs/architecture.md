@@ -433,8 +433,10 @@ This turn engine is still intermediate and must not be released. Halikarnassos
 discard-build and Babylon last-card scheduling remain for the wonder slice;
 until then, sixth-turn leftovers are always discarded. Olympia free checks are
 inherited, including chain precedence and zero effective printed coins. Sweeps
-now check real totals and ranks, conservation, record shape and determinism,
-while the remaining wonder timing is covered by the next slice.
+compare point formulas and ranks using the state's coins and military tokens,
+as well as conservation, record shape and determinism. Literal scenarios check
+income; an independent sweep coin ledger and the remaining wonder timing
+belong to the next slice.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen
