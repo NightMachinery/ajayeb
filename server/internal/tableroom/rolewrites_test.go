@@ -9,6 +9,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/room/roomtest"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest/faults"
+	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
 // TestRolesRefusedWrites: the store refuses each of the temporary-admin
@@ -109,4 +110,26 @@ func TestRolesRefusedWrites(t *testing.T) {
 	if !slices.Equal(log, want) {
 		t.Fatalf("role log %v, want %v", log, want)
 	}
+}
+
+// TestRestartAbsence pins the downtime rule (package roles): an admin
+// still connected when the server stopped has no away time, so their
+// absence counts from the room's first check after the reload, not from
+// the shutdown. (An admin already away keeps their time across a restart:
+// TestRolesAndTemporaryAdmin.)
+func TestRestartAbsence(t *testing.T) {
+	clk := roomtest.NewFakeClock(time.Date(2026, 10, 23, 12, 0, 0, 0, time.UTC))
+	h := newTH(t, Config{Clock: clk, BotWork: blockBots}, humans(3, 92))
+	h.f.restart()
+	clk.Advance(10 * time.Minute)
+	c1 := tabletest.SeatClient(1)
+	if err := h.p.join(h.ctx, c1, userOf(1), "P1"); err != nil {
+		t.Fatal(err)
+	}
+	r := h.record()
+	if r.Roles.Temporary != "" || len(r.Roles.Away) != 1 || !r.Roles.Away[0].Since.Equal(clk.Now()) {
+		t.Fatalf("the reload's first check: %+v", r.Roles)
+	}
+	clk.Advance(5 * time.Minute)
+	h.until(c1, "user-1 as the temporary admin", func(fr wire.TableState) bool { return human(t, fr, userOf(1)).Temporary })
 }

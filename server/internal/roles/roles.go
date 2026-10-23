@@ -26,6 +26,11 @@
 // closed meanwhile: Holds grants it only to a user whom both the saved
 // roles and the rule, checked now, name. So a refused write can delay a
 // change, but never keeps a demoted or replaced temporary admin's powers.
+//
+// Away times start when a room sees an admin's last connection drop. An
+// admin still connected when the server stopped has no away time, so
+// their absence counts from the room's next check after the restart,
+// not from the shutdown; one already away keeps their time.
 package roles
 
 import (
