@@ -134,7 +134,9 @@ func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 // tabs per seat to the reference model (tabletest/direct) and to the actor
 // arrival by arrival, give identical outcomes, batches and hashes,
 // including with a seq memory of one client per user, small enough for
-// evictions and stale seqs.
+// evictions and stale seqs. After every arrival every viewer (each seat's
+// two tabs and the spectator) sees the same point, required and confirmed
+// seats, offer, pick and confirmation in both.
 func TestDifferentialAgainstDirect(t *testing.T) {
 	ctx := testContext(t)
 	seen := map[tabletest.Outcome]int{}
@@ -169,8 +171,10 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 		t.Fatal(err)
 	}
 	clients := make([]tabletest.ClientID, n)
+	viewers := []tabletest.ClientID{tabletest.SpectatorClient}
 	for s := range clients {
 		clients[s] = tabletest.SeatClient(s)
+		viewers = append(viewers, tabletest.SeatClient(s), tabletest.TabClient(s))
 	}
 	seqs := tabletest.Seqs{}
 	opts := []tabletest.ScriptOptions{{Drafts: 60, Resends: 40, Tabs: true}, {Race: true, Resends: 40, Tabs: true}, {Drafts: 100, Tabs: true}}
@@ -187,11 +191,8 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 			if asnaps[s], err = act.Snapshot(ctx, c); err != nil {
 				t.Fatal(err)
 			}
-			d, a := dsnaps[s], asnaps[s]
-			if d.Point != a.Point || d.Over != a.Over || d.Seat != a.Seat || fmt.Sprint(d.Required, d.Confirmed, d.Legal) != fmt.Sprint(a.Required, a.Confirmed, a.Legal) {
-				t.Fatalf("%s, point %d: snapshots differ:\n direct %+v\n actor  %+v", where, idx, d, a)
-			}
 		}
+		compareViews(ctx, t, fmt.Sprintf("%s, point %d", where, idx), ref, act, viewers, dsnaps[0].Ref, asnaps[0].Ref)
 		if dsnaps[0].Over {
 			break
 		}
@@ -217,6 +218,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 					where, dsnaps[0].Point, i, op.Client, op.Sub.Seq, op.Sub.Confirm, do, ao)
 			}
 			seen[do]++
+			compareViews(ctx, t, fmt.Sprintf("%s, point %s, arrival %d", where, dsnaps[0].Point, i), ref, act, viewers, dsnaps[0].Ref, asnaps[0].Ref)
 		}
 	}
 	dc, _ := ref.Canonical(ctx)
@@ -226,5 +228,28 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 	}
 	if !bytes.Equal(dc.Bytes(), ac.Bytes()) {
 		t.Fatalf("%s: canonical histories differ:\n%s\n%s", where, dc.Bytes(), ac.Bytes())
+	}
+}
+
+// compareViews requires every viewer's snapshot to agree between the
+// reference model and the actor: the point and whether it is over, the
+// required and confirmed seats, the viewer's seat, offer, pick and
+// confirmation, and whether the reference is still the one the point
+// opened with (the two number references differently).
+func compareViews(ctx context.Context, t *testing.T, where string, ref, act tabletest.Table, viewers []tabletest.ClientID, dRef, aRef string) {
+	t.Helper()
+	for _, c := range viewers {
+		d, err := ref.Snapshot(ctx, c)
+		if err != nil {
+			t.Fatal(err)
+		}
+		a, err := act.Snapshot(ctx, c)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if d.Point != a.Point || d.Over != a.Over || d.Seat != a.Seat || d.Pick != a.Pick || d.Confirm != a.Confirm ||
+			(d.Ref == dRef) != (a.Ref == aRef) || fmt.Sprint(d.Required, d.Confirmed, d.Legal) != fmt.Sprint(a.Required, a.Confirmed, a.Legal) {
+			t.Fatalf("%s, %s: snapshots differ:\n direct %+v\n actor  %+v", where, c, d, a)
+		}
 	}
 }

@@ -212,8 +212,10 @@ canonical history is the `ajayeb-log/2` download.
 - `TestDifferentialAgainstDirect` delivers the same seeded scripts, from
   two tabs per seat, to the reference model (`tabletest/direct`) and the
   actor, arrival by arrival, at 3 to 7 seats with seq memories of 32 and of
-  one client per user: every outcome, every snapshot and the final
-  canonical bytes agree, and duplicates and stale seqs both occur.
+  one client per user: every outcome agrees, after every arrival every
+  viewer's snapshot agrees (each seat's two tabs and the spectator: the
+  point, required and confirmed seats, offer, pick and confirmation), the
+  final canonical bytes agree, and duplicates and stale seqs both occur.
 - `actor_test.go` covers the refusal order, private edits that change no
   other connection's frame (revision included), two tabs and forgotten seqs
   (the pick's floor answers a forgotten seq as a duplicate or stale, seq 0
