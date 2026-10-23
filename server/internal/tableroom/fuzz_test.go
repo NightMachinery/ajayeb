@@ -286,7 +286,9 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 		return acted
 	}
 	// control runs a seat, role or resignation request, or a rematch: any
-	// refusal writes nothing.
+	// refusal writes nothing. A switch or resignation that hands a seat to
+	// a bot resolves the point when the bot confirms its seat's last
+	// unconfirmed pick.
 	control := func(id tabletest.ClientID, f wire.ClientMessage) {
 		t.Helper()
 		before, _, _ := fx.ms.PeekGame(p.code, Game)
@@ -304,7 +306,7 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 			out = h.do(id, f)
 		}
 		switch out {
-		case outAccepted:
+		case outAccepted, outResolved:
 		case outBad, outForbidden, outNotAdmin, outStale, outDuplicate:
 			if after, _, _ := fx.ms.PeekGame(p.code, Game); !bytes.Equal(before, after) {
 				t.Fatalf("%s %+v: %s changed the record", id, f, out)
