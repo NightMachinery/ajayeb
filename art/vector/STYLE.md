@@ -126,7 +126,7 @@ Before a set is finished:
 
 ## 9. sets.json
 
-`art/vector/sets.json` lists each set's files and how the specimen shows them. Per set: `title`, optional `rules` (lint overrides for the whole set: `viewBox` ("any" to skip the check), `budget` in bytes, `gradients`, `snap`, `tokens` (allow `var(--token)` paints), `rawColors`, `liveArea` (false for a full-bleed file such as the favicon)) and `overrides` (the same per id). Per icon:
+`art/vector/sets.json` lists each set's files and how the specimen shows them. Per set: `title`, optional `rules` (lint overrides for the whole set: `viewBox` ("any" to skip the check), `budget` in bytes, `gradients`, `snap`, `tokens` (allow `var(--token)` paints), `rawColors`, `liveArea` (false for a full-bleed file such as the favicon)) `overrides` (the same per id) and `neighbours` (ids from other sets that the blind check shuffles in as extra candidates, the drawings this set must not be confused with). Per icon:
 
 - `id`: the md file's id; `sm`: the `-sm` id, when there is one; `file`: the path, when the file does not live in the sprite directory.
 - `ink`: the colour of the icon on a theme surface (strips, panels, the specimen's columns A and B); `cardInk`: the colour on a card, when it differs (cards are paper in both themes); `i2`: the detail tone, when the app sets one (otherwise the specimen mixes the ink 45% into the surface).

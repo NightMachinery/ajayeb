@@ -20,6 +20,9 @@
 //   answers.txt         a template: one line "<sheet> <tile> " per tile, where
 //                       the sheet id is "<px>@<dpr>", such as 12@2
 //   KEY-do-not-open-before-answering.json   the key
+// A set may list "neighbours" in sets.json: ids from other sets that its
+// icons must not be confused with. They join the sheets and names.txt as
+// ordinary candidates, so a reader cannot tell them from the set's own icons.
 // Hand the reader (you, or a fresh agent) the sheets and names.txt only.
 // A reader who has seen the key may not take the test. --reader-dir does the
 // handing over for you: it copies only the sheets, names.txt and the answers
@@ -55,6 +58,7 @@ import {
   getSet,
   isMain,
   list,
+  loadSets,
   printHeader,
   runMain,
   setFiles,
@@ -110,6 +114,23 @@ export function sheetFor(word, keyIds) {
   return null;
 }
 
+/**
+ * The entries of a set's "neighbours": icons of other sets that its glyphs
+ * must not be confused with. Each is looked up in the set that owns it, so it
+ * keeps its own ink, and is shuffled into the sheets as one more candidate.
+ */
+export function neighbourEntries(set, sets = loadSets().sets) {
+  return (set.neighbours ?? []).map((id) => {
+    const entry = Object.values(sets)
+      .flatMap((s) => s.icons)
+      .find((e) => e.id === id);
+    if (!entry) throw new Error(`set ${set.name}: neighbour "${id}" is in no set`);
+    if (set.icons.some((e) => e.id === id))
+      throw new Error(`set ${set.name}: neighbour "${id}" is one of its own icons`);
+    return entry;
+  });
+}
+
 /** Refuses a reader directory that already holds something. */
 function checkReaderDir(dir) {
   if (!fs.existsSync(dir)) return;
@@ -159,9 +180,10 @@ async function make(o) {
   const readerDir = o['reader-dir'] ? path.resolve(o['reader-dir']) : null;
   if (readerDir) checkReaderDir(readerDir);
   const set = getSet(o.set);
-  const files = setFiles(set);
+  const near = neighbourEntries(set);
+  const files = [...setFiles(set), ...setFiles({ icons: near })];
   const existing = new Set(files.filter((f) => f.exists).map((f) => f.id));
-  const concepts = set.icons.filter((e) => existing.has(e.id));
+  const concepts = [...set.icons, ...near].filter((e) => existing.has(e.id));
   if (concepts.length < 2) throw new Error(`set ${set.name} has fewer than 2 drawn icons`);
   const seed = Number(o.seed ?? Date.now() % 1_000_000_007);
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
