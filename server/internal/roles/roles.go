@@ -19,6 +19,13 @@
 // cannot promote or demote. With no real admin at all (the last one
 // stepped down, or a table made without a creator), the rule applies at
 // once.
+//
+// A room saves each change the rule makes. When its store refuses one,
+// the room keeps the unsaved roles (Carry starts the next check from
+// them) and checks again after Retry, and the temporary role fails
+// closed meanwhile: Holds grants it only to a user whom both the saved
+// roles and the rule, checked now, name. So a refused write can delay a
+// change, but never keeps a demoted or replaced temporary admin's powers.
 package roles
 
 import (
@@ -36,6 +43,10 @@ const AwayLimit = 5 * time.Minute
 
 // MaxAdmins bounds the real admins of one room.
 const MaxAdmins = 32
+
+// Retry is how soon a room checks its roles again after its store
+// refused a role change.
+const Retry = 5 * time.Second
 
 // Log entry roles.
 const (
@@ -246,6 +257,57 @@ func (r *Roles) Check(now time.Time, connected func(string) bool, candidates []s
 	// Nobody to pass the role to: it stays, and the next connection checks
 	// again.
 	return log, time.Time{}
+}
+
+// Carry brings onto r, the saved roles, what ahead (the roles of a later
+// check whose write the store refused, or nil) holds that r lacks: its
+// temporary admin, unless a later saved change made them a real admin,
+// and its away times for admins r has none for. The result is valid
+// roles. It returns the log entries of the temporary change.
+func (r *Roles) Carry(ahead *Roles, at int) []wire.PlatformLogEntry {
+	if ahead == nil {
+		return nil
+	}
+	var log []wire.PlatformLogEntry
+	t := ahead.Temporary
+	if r.Real(t) {
+		t = ""
+	}
+	if t != r.Temporary {
+		if r.Temporary != "" {
+			log = append(log, entry(at, "", r.Temporary, RoleHuman))
+		}
+		if t != "" {
+			log = append(log, entry(at, "", t, RoleTemporary))
+		}
+		r.Temporary = t
+	}
+	away := make([]Away, 0, len(r.Away)+len(ahead.Away))
+	for _, w := range append(slices.Clone(r.Away), ahead.Away...) {
+		if r.IsAdmin(w.UserID) && !slices.ContainsFunc(away, func(x Away) bool { return x.UserID == w.UserID }) {
+			away = append(away, w)
+		}
+	}
+	r.Away = away
+	return log
+}
+
+// Holds reports whether u has the admin powers at now: a real admin, or
+// the temporary admin of r, the saved roles, whom the rule still keeps
+// when checked now from r and ahead (Carry). A temporary change the
+// store refused thus takes the powers from the user it demoted or
+// replaced at once, and gives them to their successor only once saved.
+func (r *Roles) Holds(u string, ahead *Roles, now time.Time, connected func(string) bool, candidates []string) bool {
+	if r.Real(u) {
+		return true
+	}
+	if u == "" || r.Temporary != u {
+		return false
+	}
+	live := r.Clone()
+	live.Carry(ahead, 0)
+	live.Check(now, connected, candidates, 0)
+	return live.Temporary == u
 }
 
 // sync keeps one Away row for each real or temporary admin who is not

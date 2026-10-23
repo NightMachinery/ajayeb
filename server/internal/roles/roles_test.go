@@ -188,6 +188,88 @@ func TestTemporaryAdmin(t *testing.T) {
 	}
 }
 
+// TestRefusedWrite: when a room's store refuses a role change, the room
+// keeps the saved roles and the unsaved ones (ahead). Holds fails closed
+// for the temporary role in each of the rule's three changes: a real
+// admin's return, the role's grant and its passing on; and Carry starts
+// the next check from the unsaved change, so it is made once, with its
+// log entries, when a write succeeds.
+func TestRefusedWrite(t *testing.T) {
+	cands := []string{"s1", "s2"}
+	saved := New("c")
+	saved.Check(t0, present("s1", "s2"), cands, 0)
+
+	// The grant at five minutes is refused: nobody holds the role yet.
+	grant := saved.Clone()
+	grant.Check(t0.Add(5*time.Minute), present("s1", "s2"), cands, 0)
+	if grant.Temporary != "s1" {
+		t.Fatalf("the grant: %q", grant.Temporary)
+	}
+	if saved.Holds("s1", &grant, t0.Add(5*time.Minute), present("s1", "s2"), cands) {
+		t.Fatal("an unsaved grant gave the powers")
+	}
+	// Retried from the saved roles and the unsaved ones: the same grant.
+	retry := saved.Clone()
+	log := retry.Carry(&grant, 3)
+	more, _ := retry.Check(t0.Add(5*time.Minute+Retry), present("s1", "s2"), cands, 3)
+	if retry.Temporary != "s1" || len(log) != 1 || *log[0].UserID != "s1" || *log[0].Role != RoleTemporary || log[0].At != 3 || len(more) != 0 {
+		t.Fatalf("the retried grant: %q %v %v", retry.Temporary, log, more)
+	}
+	if err := retry.Valid(); err != nil {
+		t.Fatal(err)
+	}
+	saved = retry
+	if !saved.Holds("s1", nil, t0.Add(6*time.Minute), present("s1", "s2"), cands) {
+		t.Fatal("the saved grant")
+	}
+
+	// The creator's return is refused: s1 loses the powers at once.
+	back := saved.Clone()
+	back.Check(t0.Add(6*time.Minute), present("c", "s1", "s2"), cands, 0)
+	if back.Temporary != "" {
+		t.Fatalf("the return: %q", back.Temporary)
+	}
+	if saved.Holds("s1", &back, t0.Add(6*time.Minute), present("c", "s1", "s2"), cands) ||
+		!saved.Holds("c", &back, t0.Add(6*time.Minute), present("c", "s1", "s2"), cands) {
+		t.Fatal("the powers after a refused return")
+	}
+
+	// The passing on is refused, and s1 comes back before the retry: the
+	// rule had given the role to s2, so neither holds it until it is
+	// saved, and the retry passes it on.
+	saved.Check(t0.Add(8*time.Minute), present("s2"), cands, 0)
+	pass := saved.Clone()
+	pass.Check(t0.Add(13*time.Minute), present("s2"), cands, 0)
+	if pass.Temporary != "s2" {
+		t.Fatalf("the passing on: %q", pass.Temporary)
+	}
+	now := t0.Add(13*time.Minute + time.Second)
+	if saved.Holds("s1", &pass, now, present("s1", "s2"), cands) || saved.Holds("s2", &pass, now, present("s1", "s2"), cands) {
+		t.Fatal("the powers after a refused passing on")
+	}
+	if !saved.Holds("s1", nil, now, present("s1", "s2"), cands) {
+		t.Fatal("without the unsaved roles s1 would keep the role: the case Carry exists for")
+	}
+	retry = saved.Clone()
+	log = retry.Carry(&pass, 0)
+	more, _ = retry.Check(now, present("s1", "s2"), cands, 0)
+	if retry.Temporary != "s2" || len(log) != 2 || *log[0].UserID != "s1" || *log[1].UserID != "s2" || len(more) != 0 {
+		t.Fatalf("the retried passing on: %q %v %v", retry.Temporary, log, more)
+	}
+	if err := retry.Valid(); err != nil || len(retry.Away) != 1 || retry.Away[0].UserID != "c" {
+		t.Fatalf("after the retry: %+v %v", retry.Away, err)
+	}
+
+	// An unsaved temporary admin promoted since is not carried back.
+	promoted := saved.Clone()
+	if _, err := promoted.Promote("c", "s2", true, 0); err != nil {
+		t.Fatal(err)
+	}
+	if log := promoted.Carry(&pass, 0); promoted.Temporary != "" || len(log) != 1 || *log[0].UserID != "s1" {
+		t.Fatalf("carried onto a promotion: %q %v", promoted.Temporary, log)
+	}
+}
+
 // TestValid refuses records that break the invariants.
 func TestValid(t *testing.T) {
 	ok := New("c")

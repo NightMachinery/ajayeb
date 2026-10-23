@@ -39,7 +39,7 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 			return
 		}
 		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator,
-			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temporary == userID, PromotedBy: r.Roles.PromotedBy(userID)}
+			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temporary == userID && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
 		same := 0
 		for _, o := range humans {
 			if o.Name == name {

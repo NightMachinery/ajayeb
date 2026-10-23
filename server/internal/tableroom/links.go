@@ -37,7 +37,7 @@ func (a *actor) link(c *room.Client, seat int, reset bool) string {
 		return a.refuse(c, 0, op, seat, outBad)
 	}
 	user, target := a.userOf(c), r.Seats[seat].UserID
-	if user != target && !r.Roles.IsAdmin(user) {
+	if user != target && !a.isAdmin(user) {
 		return a.refuse(c, 0, op, seat, outNotAdmin)
 	}
 	if reset {

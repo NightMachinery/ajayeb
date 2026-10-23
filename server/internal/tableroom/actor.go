@@ -42,8 +42,11 @@ type actor struct {
 	cancel context.CancelFunc
 	done   chan struct{}
 
-	idleStop   func() bool
-	rolesStop  func() bool
+	idleStop  func() bool
+	rolesStop func() bool
+	// rolesAhead holds the roles of the last check whose write the store
+	// refused, until a write saves them (roles.Carry, roles.Holds).
+	rolesAhead *roles.Roles
 	emptySince time.Time
 	shownIdle  bool
 	shownSince time.Time
@@ -393,30 +396,60 @@ func (a *actor) dropped() {
 
 // --- roles ------------------------------------------------------------------
 
-// checkRoles applies the temporary-admin rule now (package roles) and
-// persists what it changed: a role change publicly, a new away time
-// silently. It arms the roles' clock for the rule's next deadline. A
-// finished table changes no roles.
+// checkRoles applies the temporary-admin rule now (package roles), from
+// the saved roles and any the store refused before, and persists what it
+// changed: a role change publicly, a new away time silently. It arms the
+// roles' clock for the rule's next deadline, or for a retry when the
+// store refuses the write. A finished table changes no roles.
 func (a *actor) checkRoles() {
 	if a.st.rec.Status != store.StatusPlaying {
+		a.rolesAhead = nil
 		a.disarmRoles()
 		return
 	}
 	cand := a.st.rec.clone()
-	log, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), len(cand.Batches))
-	if len(log) > 0 || !sameAway(cand.Roles.Away, a.st.rec.Roles.Away) {
-		if len(log) > 0 {
-			appendLog(&cand, log...)
-			bumpPublic(&cand)
-			retire(&a.st.rec, &cand)
+	at := len(cand.Batches)
+	log := cand.Roles.Carry(a.rolesAhead, at)
+	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), at)
+	log = append(log, more...)
+	if len(log) == 0 && sameAway(cand.Roles.Away, a.st.rec.Roles.Away) {
+		a.rolesAhead = nil
+		a.armRoles(next)
+		return
+	}
+	if len(log) > 0 {
+		appendLog(&cand, log...)
+		bumpPublic(&cand)
+		retire(&a.st.rec, &cand)
+	}
+	if err := a.commit("roles", cand, a.st.game); err != nil {
+		ahead := cand.Roles.Clone()
+		a.rolesAhead = &ahead
+		if retry := a.now().Add(roles.Retry); next.IsZero() || retry.Before(next) {
+			next = retry
 		}
-		if err := a.commit("roles", cand, a.st.game); err == nil && len(log) > 0 {
-			a.publish(a.newBroadcast(false), nil, nil)
-			a.stopBots()
-			a.kickBots()
-		}
+		a.armRoles(next)
+		return
+	}
+	a.rolesAhead = nil
+	if len(log) > 0 {
+		a.publish(a.newBroadcast(false), nil, nil)
+		a.stopBots()
+		a.kickBots()
 	}
 	a.armRoles(next)
+}
+
+// isAdmin reports whether u has the admin powers now (roles.Holds): a
+// temporary admin whose demotion or replacement the store refused has
+// none, nor does one whose grant it refused. Frames ask it for every
+// connection and human, so only the temporary admin pays for the check.
+func (a *actor) isAdmin(u string) bool {
+	r := &a.st.rec
+	if r.Roles.Real(u) || u == "" || r.Roles.Temporary != u {
+		return r.Roles.Real(u)
+	}
+	return r.Roles.Holds(u, a.rolesAhead, a.now(), a.connected, a.candidates(r))
 }
 
 func sameAway(x, y []roles.Away) bool {
@@ -771,7 +804,7 @@ func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
 		return a.duplicate(c, "seat", f.Seat, f.Seq)
 	}
 	switch {
-	case !r.Roles.IsAdmin(user):
+	case !a.isAdmin(user):
 		return a.refuse(c, f.Seq, "seat", f.Seat, outNotAdmin)
 	case r.Status != store.StatusPlaying:
 		return a.refuse(c, f.Seq, "seat", f.Seat, outForbidden)
@@ -927,12 +960,15 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 	} else {
 		syncWork(&cand, &g)
 	}
-	log, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), len(cand.Batches))
-	appendLog(&cand, log...)
+	at := len(cand.Batches)
+	log := cand.Roles.Carry(a.rolesAhead, at)
+	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), at)
+	appendLog(&cand, append(log, more...)...)
 	retire(&a.st.rec, &cand)
 	if err := a.commit(op, cand, g); err != nil {
 		return a.refuse(c, seq, op, seat, outStorage)
 	}
+	a.rolesAhead = nil
 	a.armRoles(next)
 	gone := a.revokeClaims()
 	a.publish(a.newBroadcast(resolved), c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})

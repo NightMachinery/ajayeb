@@ -39,8 +39,11 @@ type actor struct {
 	cancel context.CancelFunc
 	done   chan struct{}
 
-	idleStop   func() bool
-	rolesStop  func() bool
+	idleStop  func() bool
+	rolesStop func() bool
+	// rolesAhead holds the roles of the last check whose write the store
+	// refused, until a write saves them (roles.Carry, roles.Holds).
+	rolesAhead *roles.Roles
 	emptySince time.Time
 	shownIdle  bool
 	shownSince time.Time
@@ -377,22 +380,51 @@ func (a *actor) revokeClaims() bool {
 
 // --- roles ------------------------------------------------------------------
 
-// checkRoles applies the temporary-admin rule now and persists what it
-// changed, publicly for a role change and silently for an away time.
+// checkRoles applies the temporary-admin rule now, from the saved roles
+// and any the store refused before, and persists what it changed,
+// publicly for a role change and silently for an away time. When the
+// store refuses the write, it checks again after roles.Retry.
 func (a *actor) checkRoles() {
 	cand := a.rec.clone()
-	log, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)
-	if len(log) > 0 || !sameAway(cand.Roles.Away, a.rec.Roles.Away) {
-		if len(log) > 0 {
-			appendLog(&cand, log...)
-			cand.Revision++
-			retire(&a.rec, &cand)
+	log := cand.Roles.Carry(a.rolesAhead, 0)
+	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)
+	log = append(log, more...)
+	if len(log) == 0 && sameAway(cand.Roles.Away, a.rec.Roles.Away) {
+		a.rolesAhead = nil
+		a.armRoles(next)
+		return
+	}
+	if len(log) > 0 {
+		appendLog(&cand, log...)
+		cand.Revision++
+		retire(&a.rec, &cand)
+	}
+	if err := a.commit("roles", cand); err != nil {
+		ahead := cand.Roles.Clone()
+		a.rolesAhead = &ahead
+		if retry := a.now().Add(roles.Retry); next.IsZero() || retry.Before(next) {
+			next = retry
 		}
-		if err := a.commit("roles", cand); err == nil && len(log) > 0 {
-			a.publish(nil, nil)
-		}
+		a.armRoles(next)
+		return
+	}
+	a.rolesAhead = nil
+	if len(log) > 0 {
+		a.publish(nil, nil)
 	}
 	a.armRoles(next)
+}
+
+// isAdmin reports whether u has the admin powers now (roles.Holds): a
+// temporary admin whose demotion or replacement the store refused has
+// none, nor does one whose grant it refused. Frames ask it for every
+// connection and human, so only the temporary admin pays for the check.
+func (a *actor) isAdmin(u string) bool {
+	r := &a.rec
+	if r.Roles.Real(u) || u == "" || r.Roles.Temporary != u {
+		return r.Roles.Real(u)
+	}
+	return r.Roles.Holds(u, a.rolesAhead, a.now(), a.connected, a.candidates(r))
 }
 
 func sameAway(x, y []roles.Away) bool {
@@ -568,12 +600,14 @@ func (a *actor) seen(c *room.Client, seq int) bool {
 func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
 	seqPut(&cand.Seqs, SeqRecord{User: a.userOf(c), Client: c.ClientID, Seq: seq}, a.l.cfg.SeqClients)
 	cand.Revision++
-	log, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)
-	appendLog(&cand, log...)
+	log := cand.Roles.Carry(a.rolesAhead, 0)
+	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)
+	appendLog(&cand, append(log, more...)...)
 	retire(&a.rec, &cand)
 	if err := a.commit(op, cand); err != nil {
 		return a.refuse(c, seq, op, outStorage)
 	}
+	a.rolesAhead = nil
 	a.armRoles(next)
 	away := a.revokeClaims()
 	a.publish(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})
@@ -592,7 +626,7 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 	}
 	r := &a.rec
 	user := a.userOf(c)
-	if f.Op != "release" && !r.Roles.IsAdmin(user) {
+	if f.Op != "release" && !a.isAdmin(user) {
 		return a.refuse(c, f.Seq, f.Op, outNotAdmin)
 	}
 	cand := r.clone()
@@ -712,7 +746,7 @@ func (a *actor) role(c *room.Client, f wire.LobbyRole) string {
 // and no reservation still waiting.
 func (a *actor) canStart(u string) bool {
 	r := &a.rec
-	return r.Roles.IsAdmin(u) && slotOf(r, u, SlotHuman) >= 0 && r.SeatCount >= tableroom.MinSeats &&
+	return a.isAdmin(u) && slotOf(r, u, SlotHuman) >= 0 && r.SeatCount >= tableroom.MinSeats &&
 		!slices.ContainsFunc(r.Slots, func(s Slot) bool { return s.Kind == SlotReserved })
 }
 
@@ -730,7 +764,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	r := &a.rec
 	user := a.userOf(c)
 	switch {
-	case !r.Roles.IsAdmin(user):
+	case !a.isAdmin(user):
 		a.refuse(c, f.Seq, "start", outNotAdmin)
 		return false
 	case !a.canStart(user) || !f.FillBots && slices.ContainsFunc(r.Slots, func(s Slot) bool { return s.Kind == SlotOpen }):
@@ -743,7 +777,10 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	spec := tableroom.Spec{RandomSeating: r.Options.Seating == nil || *r.Options.Seating == "random",
 		HideAtEnd: r.Options.FinalReveal != nil && !*r.Options.FinalReveal,
 		AllowUndo: r.Options.AllowUndo == nil || *r.Options.AllowUndo, Creator: r.Roles.Creator}
+	// The table starts from the roles as the rule last made them, saved
+	// or not: the table's record, written at Start, saves them.
 	rs := r.Roles.Clone()
+	rs.Carry(a.rolesAhead, 0)
 	spec.Roles = &rs
 	for _, s := range r.Slots {
 		switch s.Kind {

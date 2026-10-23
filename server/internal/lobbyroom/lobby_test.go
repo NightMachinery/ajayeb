@@ -5,6 +5,7 @@ import (
 	"errors"
 	"slices"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,7 +33,13 @@ type fixture struct {
 	lobbies *Lobbies
 	// replaceFails makes the tables' next ReplaceGame fail.
 	replaceFails bool
+	// saves holds, for a code or a game, how many of its next writes pass
+	// and how many after them fail (failSaves).
+	mu    sync.Mutex
+	saves map[string]*saveFault
 }
+
+type saveFault struct{ pass, fail int }
 
 func newFixture(t *testing.T, clock room.Clock) *fixture {
 	t.Helper()
@@ -46,10 +53,43 @@ func newFixture(t *testing.T, clock room.Clock) *fixture {
 	return f
 }
 
-// failingStore fails ReplaceGame while the fixture says so.
+// failingStore fails ReplaceGame and SaveGame while the fixture says so.
 type failingStore struct {
 	*store.Store
 	f *fixture
+}
+
+func (s failingStore) SaveGame(code, game string, data []byte) error {
+	if s.f.failing(code) || s.f.failing(game) {
+		return errors.New("injected")
+	}
+	return s.Store.SaveGame(code, game, data)
+}
+
+// failSaves lets the next pass writes of key (a room code, or a game: a
+// kind's every room) through, then fails the n after them.
+func (f *fixture) failSaves(key string, pass, n int) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.saves == nil {
+		f.saves = map[string]*saveFault{}
+	}
+	f.saves[key] = &saveFault{pass: pass, fail: n}
+}
+
+func (f *fixture) failing(key string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	sf := f.saves[key]
+	switch {
+	case sf == nil || sf.fail == 0:
+		return false
+	case sf.pass > 0:
+		sf.pass--
+		return false
+	}
+	sf.fail--
+	return true
 }
 
 func (s failingStore) ReplaceGame(code, from, game string, data []byte) error {
@@ -76,7 +116,7 @@ func (f *fixture) start() {
 		f.t.Fatal(err)
 	}
 	f.tables.Bind(f.m, failingStore{Store: f.st, f: f})
-	f.lobbies.Bind(f.m, f.st)
+	f.lobbies.Bind(f.m, failingStore{Store: f.st, f: f})
 }
 
 func (f *fixture) close() {
