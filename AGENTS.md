@@ -16,7 +16,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 ## Where things live
 
 - `server/internal/engine` and `server/internal/engine/catalog`: the rules and the card, wonder and token data. Pure Go.
-- `server/internal/enginekit`: infrastructure shared by the game engines (Duel's now, Haftgane's from M15), such as the test-only purity guards (`puritycheck`) and the three-way catalog data check (`catalogdiff`).
+- `server/internal/enginekit`: infrastructure shared by the game engines (Duel's now, Haftgane's from M15), such as the test-only purity guards (`puritycheck`), the three-way catalog data check (`catalogdiff`), and the seeded generator and byte digest (`rng`).
 - `server/internal/view` and `server/internal/wire`: the DTO and message types that `tygo` turns into TypeScript.
 - `server/internal/{ai, room, store, ident, ws, httpapi, webdist}`: bots, room actors, persistence, identity, transport, HTTP endpoints, the embedded web build.
 - `server/cmd/{ajayeb, ajayeb-sim, ajayeb-drive, ajayeb-gen}`: the server, the simulator, the WebSocket game driver, the code generator.
@@ -66,7 +66,7 @@ server:  ws -> room actor -> engine (Legal, Apply, ViewFor) + ai -> store (seed 
 
 The engine is the single source of truth for the rules, so it must be deterministic and easy to replay.
 
-- `internal/engine` and `internal/engine/catalog` use the standard library only. Their non-test files must not import `time`, `os`, `net/...`, `log`, `sync`, `unsafe` or `math/rand` (v1). `math/rand/v2` is allowed only inside `rng.go`. An import-guard test and golangci-lint (`depguard`) enforce this.
+- `internal/engine` and `internal/engine/catalog` use the standard library, plus an exact allow-list of module packages: the engine may import its catalog, `internal/view` (the DTOs) and `enginekit/rng`, and the catalog nothing of the module. Their non-test files must not import `time`, `os`, `net/...`, `log`, `sync`, `unsafe` or `math/rand` (either version). Only `server/internal/enginekit/rng/rng.go` may import `math/rand/v2`; Duel's own `rng.go` is just aliases and wrappers over it. Haftgane's packages have their own, stricter allow-lists (docs/architecture.md). An import-guard test and golangci-lint (`depguard`) enforce all of this.
 - **Integers only** in rules code. No floats. (The AI's evaluation function may use floats; it is not rules code.)
 - **No maps in rules logic.** Use arrays indexed by enums, such as `[NumResources]int`. Never iterate a map to produce output, because Go randomizes map iteration order. (DTO maps are acceptable because `encoding/json` sorts their keys.)
 - All chance is resolved in `NewGame`. `Apply` uses no randomness. The state is a fixed-size value struct, so `Clone` is a plain copy.
