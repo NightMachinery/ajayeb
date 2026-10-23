@@ -17,3 +17,9 @@ it('has every Persian lobby key and uses the shared RTL and Intl interpolation',
   for (const key of ['lobby.duel', 'lobby.haftgane', 'lobby.new'] as const)
     expect(t(key)).toBe(pickerT(key));
 });
+
+it('preserves every message placeholder in Persian', () => {
+  const slots = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+  for (const key of Object.keys(en) as (keyof typeof en)[])
+    expect(slots(fa[key]), key).toEqual(slots(en[key]));
+});
