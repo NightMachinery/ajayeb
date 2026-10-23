@@ -1,1 +1,14 @@
-{}
+{
+  "card/clay-pit": {
+    "subject": "two workers in one shallow open pit: one carries a basket of wet ochre clay up the bank, the other prises lumps of rust-red iron ore, glinting with dark metallic flecks, from a seam exposed in the pit wall; the clay and the ore both clearly visible as two different materials",
+    "accent": "brown"
+  },
+  "card/loom": {
+    "subject": "a weaver seated at a simple upright wooden loom, drawing a shuttle through the warp threads of a broad, half-woven cloth in rose and lapis stripes, a folded bolt of the same striped cloth on a low stool beside the loom",
+    "accent": "grey"
+  },
+  "card/ore-vein": {
+    "subject": "a miner with a short pick prising lumps of rust-red iron ore, glinting with dark metallic flecks, from a narrow seam that runs through a pale rock face, and dropping them into a shallow basket at his feet",
+    "accent": "brown"
+  }
+}

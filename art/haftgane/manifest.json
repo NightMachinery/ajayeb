@@ -1,5 +1,72 @@
 {
   "game": "haftgane",
   "generatedFrom": "tools/art/manifest.mjs",
-  "assets": {}
+  "assets": {
+    "card/clay-pit": {
+      "id": "card/clay-pit",
+      "kind": "card",
+      "out": "haftgane/cards/clay-pit",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two workers in one shallow open pit: one carries a basket of wet ochre clay up the bank, the other prises lumps of rust-red iron ore, glinting with dark metallic flecks, from a seam exposed in the pit wall; the clay and the ore both clearly visible as two different materials",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {},
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 3.3); no text: the dome's gold pattern is floral sprigs, the parapet and pit walls are plain.",
+        "Two large figures read at 120 px: the clay carrier climbing the bank with a basket on his shoulder, and the miner at the seam.",
+        "Clay and ore are distinct at shipped size without counting: ochre clay heaps and a full basket on the left, a dark crimson ore seam with blue-grey metallic flecks and fallen lumps on the right (the clay looks dry rather than wet, a minor point).",
+        "Clearly a different painting from Duel's clay-pit (a shallow open pit with an ore seam, against Duel's deep shaft with a rope-hauled basket).",
+        "Brown accent fits; style, density and figure scale match the anchor and Duel's clay-pool and brickyard; one domed pavilion, no minaret, emblem or animals. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/loom": {
+      "id": "card/loom",
+      "kind": "card",
+      "out": "haftgane/cards/loom",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a weaver seated at a simple upright wooden loom, drawing a shuttle through the warp threads of a broad, half-woven cloth in rose and lapis stripes, a folded bolt of the same striped cloth on a low stool beside the loom",
+      "accent": "grey",
+      "status": "approved",
+      "attempt": 3,
+      "promptAmend": "Keep the background pavilion plain: its parapet, door panels and steps show only simple geometric tile bands with no lettering, glyphs or script-like marks. Pattern the weaver's robe with small round floral rosettes or leafy sprigs, never fleur-de-lis or lily emblems. Weave the cloth on the loom and the folded bolt in plain broad rose and lapis stripes edged with thin gold pinstripes only: no gold motifs, cartouches, medallions, marks or bands inside the stripes.",
+      "bytes": {
+        "loom.avif": 18551,
+        "loom@thumb.avif": 5910
+      },
+      "approvedAttempt": 3,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 4.9); the 4:3 crop keeps every element with about 100 px of ivory paper at left and right; the edges feather cleanly; no signature or watermark in the corners.",
+        "No text or pseudo-writing at full resolution: the robe has rosettes and gold specks only, no fleurs-de-lis; the bolt and the cloth on the loom are plain rose and lapis stripes with gold pinstripes and nothing inside the stripes; the kiosk's parapet band is diamonds, rosettes and palmettes with no strokes or baseline, tile ornament (checked again at 6x by the integrator).",
+        "Reads at 120 px as one large weaver at an upright loom with striped cloth, and a striped bolt on a stool; no crowd.",
+        "Grey accent carried by the slate robe and veil, matching Duel's grey cards; line, opaque gouache, lilac rocks and density match the anchor; gold on finials, pinstripes, sash and specks (the gold kiosk dome is a minor excess, small and in the background).",
+        "One small domed garden kiosk, no minaret, mosque, emblem or animals; generic period dress. The cloth reads as woven cloth on a loom (white warp above the woven edge, boat shuttle in hand), not a carpet, rug or banner. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/ore-vein": {
+      "id": "card/ore-vein",
+      "kind": "card",
+      "out": "haftgane/cards/ore-vein",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a miner with a short pick prising lumps of rust-red iron ore, glinting with dark metallic flecks, from a narrow seam that runs through a pale rock face, and dropping them into a shallow basket at his feet",
+      "accent": "brown",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {},
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 3.5); no text anywhere: the kiosk's base band is leafy vine scrolls, not letter-like.",
+        "One large kneeling miner reads at 120 px; the rust-red seam stands out in the pale rock, with the basket of lumps at his feet.",
+        "The ore reads as metal ore: rust-red lumps with grey-blue metallic glints, not stone or coal, and stays rust-red at 480 px.",
+        "Brown accent fits (brown robe, ochre ground, pastel rocks); gold only on the sun disc and finial; line, gouache and margin match the anchor.",
+        "One domed garden kiosk, no minaret, emblem or animals; figure scale and density match Duel's stone-pit and quarry. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    }
+  }
 }
