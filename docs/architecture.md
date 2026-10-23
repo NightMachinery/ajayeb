@@ -293,10 +293,50 @@ Session and preserves all resulting events. Each tab retains its own client id.
 Rematches and device-link fragment changes reuse Room and its existing socket;
 `created` marks a rematch code as Duel before navigation.
 
-`lib/games/haftgane` is an empty lazy entry for table/lobby envelopes, with no
-rules, renderer, catalog, actions or invented view. It retains the already
-welcomed bootstrap connection and requests resync after envelope validation.
-Its snapshot stays unknown until M15 supplies the typed game projection.
+`lib/games/haftgane` is the lazy entry for table and lobby frames
+(M18.table-session). It holds no rules: it renders what the frames say and
+sends keys from `view.you.choices`. The bootstrap hands it the already
+welcomed connection with the one snapshot it held, then forwards every table
+and lobby frame, their rejects, `linked` and `created`, and reports each new
+socket's join; the entry asks for a resync once mounted, since the bootstrap
+kept only that snapshot. `session/frames.ts` checks each frame's shape. A
+frame that does not match fails the page with a reload notice, because only
+a reload mends a client and a server that disagree.
+
+- **TableSession** (`session/session.svelte.ts`) keeps the latest table or
+  lobby frame in `$state.raw`, replaced whole, and one request in flight.
+  Each page load is a client with its own id and a seq, counted from 1 and
+  shared by all its requests; a refusal does not use one up. A pick is
+  `{seq, point, key, confirm}`, sent only for a key among the latest
+  frame's choices. Confirm and withdraw send the pending pick again with
+  the confirmation flipped, so a pick can change until the point resolves.
+  A frame whose `ack` names this client and seq settles the request; a
+  `table-reject` ends it with its outcome (decision-closed, illegal, stale,
+  forbidden, storage), except `rate`, which is retried after a pause up to
+  three times. After a new socket's join, a pick in flight goes out again
+  only when the join's frame shows the same seat and point, so a reconnect
+  never lands a pick on the next decision. The server keeps each seat's
+  pending pick and its confirmation and sends them back in that seat's
+  frames, so a reconnect or a reload restores both. A frame that moves this
+  tab off its seat (an admin gave the seat to a bot or another human) turns
+  it into a spectator's view with a notice, and carries the history again,
+  replacing the old view. A tab whose device link was revoked gets the
+  `bad-claim` error and a reload notice. Rooms seen are remembered with the
+  `haftgane` game hint, and a finished table leaves Home's Continue list.
+- **TablePresenter** (`session/presenter.svelte.ts`) holds the frame on
+  screen and moves it forward one queued frame at a time, as Duel's does.
+  A frame with history, or one that changes this tab's seat, restates the
+  game and is shown without playing events. A frame that only refreshes
+  presence replaces the one on screen in place, and a backlog fast-forwards
+  to the newest frame.
+- **The development screen** (`dev/TableDev.svelte`) is the minimal UI until
+  the table screen and the lobby screens replace it: the seats, the open
+  point, each choice as a button with its key in `data-act`, the pending
+  pick with confirm and withdraw, an admin's seat menu, resign and the
+  notices. `/dev/table?seats=N` creates a shared lobby over a short v2
+  connection (on a server started with `-haftgane-tables`) and opens it at
+  `/play/<code>`.
+
 Loader functions stay separate in a frozen table: combining dynamic imports
 in a conditional lets the bundler associate preloads with the wrong entry.
 
@@ -329,7 +369,7 @@ WebSocket -> Transport -> Session (authoritative) -> Presenter (paced) -> compon
 
 **Tooltips.** Every tooltip in the app goes through one helper, never the native `title` attribute. A component gives an element a tooltip with the `tooltip` attachment (`web/src/lib/ui/tooltip.svelte.ts`), and one layer mounted in the root layout (`components/shell/TooltipLayer.svelte`) listens to the pointer, touch, focus and keyboard events of the whole page and draws the one open tooltip. The innermost registered element under the pointer or finger wins, so a symbol on a card shows its own tooltip, not the card's. A fine pointer shows it after a hover delay and on keyboard focus; on touch, a tap shows it on an element with no action, and an actionable element keeps its tap and shows its tooltip on a long-press whose release never acts. Any tap while a tooltip is open closes it and is swallowed (`ui/dismiss.ts`, which the floating `DismissLayer` panel shares). In the opponent move summary, a panel that any tap closes, the tooltips inside follow the actionable rule: a long-press shows one and keeps the panel open, and the next tap closes only the tooltip. A tooltip can carry a stack: a second panel of linked previews joined to its bubble, such as the card a chain symbol makes free. Like everything else in the client, tooltips only reshape data the client already has (the catalog's printed text, or numbers the server sent).
 
-Every build of the client exposes `window.__ajayeb` (the displayed view, the room and version, the current choices, the controlled seats, connection state, history and tutorial state). It contains only what the client already received, which is safe because the client never holds hidden information.
+Every build of the client exposes `window.__ajayeb` (the displayed view, the room and version, the current choices, the controlled seats, connection state, history and tutorial state). It contains only what the client already received, which is safe because the client never holds hidden information. A Haftgane page exposes `window.__ajayebTable` instead (`lib/games/haftgane/session/test-hook.ts`): the frame on screen and the latest one, the lobby frame, the connection, the request in flight, the notice and the history, all of it what the server sent this viewer.
 
 ## Data flow of one move
 

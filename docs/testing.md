@@ -335,6 +335,17 @@ repository root:
 
     python3 tools/heavy.py run --kind test -- go -C server test -race -short -run WebSocket ./internal/tableroom/
 
+`TestRecordClientFrames` (`clientframes_test.go`) records, in order, what
+four clients of one table send and receive through the Manager: three
+humans and a spectator. Seat 0 drafts, changes, confirms, withdraws and
+confirms again; seat 1 sends a key it was not offered, confirms, and
+changes its pick just as seat 2's confirmation closes the decision; seat 0
+repeats a seq; seat 0, the creator, gives seat 1 to a bot, and seat 1 then
+picks from the seat it lost. The recording, with the table's code replaced
+by `TBLAAA`, is `testdata/client-frames.json`, one message per line; the
+test fails when it changes. Rewrite it with `UPDATE_CLIENT_FRAMES=1` and
+review the diff, because the web client's replay test reads it.
+
 ## `internal/lobbyroom`: the shared lobby
 
 `lobby_test.go` runs lobbies in process through the real Manager and store,
@@ -475,6 +486,27 @@ browser and no server:
   per-load client id, display-name cleaning, the saved rooms list, the
   Presenter's queue, minimum thinking dwell and fast-forward, and the
   fixture transport and the dev room endpoint client.
+- `src/lib/games/haftgane/session/session.test.ts`: Haftgane's
+  TableSession over synthetic frames (`test-frames.ts`) and a fake
+  connection standing in for the bootstrap (`fake-connection.ts`). It
+  covers the handover's first frame; picks only from the choices, each
+  with the next seq and the open point; a change, a confirmation and its
+  withdrawal; every refusal (decision-closed, illegal, stale, forbidden,
+  storage, and rate, retried three times); duplicates answered by a frame;
+  a reconnect resending a pick only for the same seat and point; a reload
+  restoring the pending pick and its confirmation; a tab moved off its
+  seat becoming a spectator; the lobby's Start; device links; and the
+  saved rooms' `haftgane` hint.
+- `src/lib/games/haftgane/session/presenter.test.ts`: the TablePresenter
+  plays a resolution's events in order, shows a frame with history or a
+  changed seat without playing it, replaces a presence refresh in place
+  and fast-forwards a backlog.
+- `src/lib/games/haftgane/session/recorded.test.ts`: the same two over the
+  frames the real table actor sent (`TestRecordClientFrames`, above).
+  Every frame parses; each client's Session, driven through its own API by
+  the recorded requests, sends exactly what that client sent; the refusals
+  of requests the Session would never make change nothing; and the
+  Presenter plays only the resolution.
 
 ### The client test hook
 
@@ -547,8 +579,8 @@ token, and `tools/chrome/shot.mjs --token` refuses one.
 
 `e2e/` holds the Playwright specs. They run against the real server binary
 and the test-mode web build, which the Playwright config starts itself
-(`server/bin/ajayeb --dev --dev-endpoints --bot-delay 0 --seed-base 1000`
-on port 38954, with a fresh data directory under `.cache/e2e/`), in
+(`server/bin/ajayeb --dev --dev-endpoints --haftgane-tables --bot-delay 0
+--seed-base 1000` on port 38954, with a fresh data directory under `.cache/e2e/`), in
 Playwright's own Chromium (Chrome for Testing, `channel: 'chromium'`) both
 locally and on CI, never the installed Google Chrome (D26). CI splits the
 suite into three shards (`--shard=1/3` to `--shard=3/3`), each a job with its
@@ -1247,6 +1279,28 @@ has grown since then; use the current Playwright report for its test count
 and duration. For a bounded local run, select files with
 `make e2e PW_ARGS='specs/online.full.spec.ts'`. After a successful build,
 subsequent batches may use `E2E_BUILD=0` while those build inputs stay unchanged.
+
+### `haftgane-table.full.spec.ts` (`@full @haftgane`)
+
+A Haftgane table over the real server and the development screen, on
+desktop only, in three browser contexts. The creator opens
+`/dev/table?seats=4`, a second human joins the lobby from its own context,
+and the creator starts it with bots in the two empty seats; a spectator
+joins the running table. The creator confirms a pick and reloads, and the
+pick comes back confirmed; it withdraws, changes and confirms again. The
+second human drafts a pick and changes it, drops off the network
+(`setOffline`) and comes back to the changed draft, then confirms last,
+which resolves the point for every page. Finally the creator gives the
+second human's seat to a bot, and that tab shows the watching notice and a
+spectator's view with no pending pick.
+
+The leak boundary is checked while both of the second human's drafts are
+pending: the spec picks two of its choices that no page of the others has
+shown, and neither may appear in the creator's or the spectator's
+WebSocket frames, DOM, local or session storage, console, or
+`window.__ajayebTable` dump; and no frame of theirs carries a pending pick
+that is not their own. It runs in CI's shards but not in `make e2e-smoke`;
+run it alone with `make e2e GREP=@haftgane`.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
@@ -2042,8 +2096,10 @@ the submitted name. Duplicate tabs and reconnect retain the same seat.
 
 A stale Haftgane tag for a real Duel room verifies overlapping v2/v1 membership,
 identical identity, no leave, and discovery closing after the first v1 state.
-An untagged table first refuses v1 before admission, then opens the empty
+An untagged table first refuses v1 before admission, then opens the
 Haftgane entry through v2; no Duel board or seat is produced by that refusal.
+Its stubbed table frame is the spectator's first frame from the recorded
+client frames (`TestRecordClientFrames`), so it stays a valid frame.
 Session unit tests limit the wrong-game outcome to a welcomed join before its
 first state; all other protocol errors remain fatal. Discovery bad-hello uses
 the same fatal reload notice. Rematch and device-fragment tests retain the
