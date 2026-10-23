@@ -23,6 +23,10 @@
 //   - order: an offer not in the engine's canonical order, or a history out
 //     of point order;
 //   - unknown-field: a field outside the whitelist;
+//   - envelope: a table frame's private field (pending pick, seat,
+//     acknowledgement) sent to a viewer it does not belong to, or differing
+//     from the viewer's accepted state; the table's tests report it, since
+//     the envelope is the platform's, not the engine view's;
 //   - mismatch: a public value that differs from the truth (not a leak, but
 //     a view the checker cannot vouch for).
 //
@@ -31,7 +35,8 @@
 // for the real engine's. The actor's tests pass each frame's engine view as
 // a View document and the whole frame as a Frame document, which gets the
 // field-independent detectors (raw-key, hash, shuffle-id) with the frame's
-// own key, text and hex paths allowed in Config.
+// own key, text and hex paths allowed in Config. They check each frame's
+// envelope against its viewer first, and report what fails as envelope.
 package leakcheck
 
 import (
@@ -55,6 +60,7 @@ const (
 	ForeignOffer Rule = "foreign-offer"
 	Order        Rule = "order"
 	UnknownField Rule = "unknown-field"
+	Envelope     Rule = "envelope"
 	Mismatch     Rule = "mismatch"
 )
 

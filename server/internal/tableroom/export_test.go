@@ -7,7 +7,10 @@ var (
 	SnapshotOf  = snapshotOf
 	RefString   = refString
 	ParseRef    = parseRef
-	LeakDocs    = leakDocs
+	FrameLeaks  = frameLeaks
 	TruthFrom   = truthFrom
 	FrameConfig = frameConfig
 )
+
+// FrameViewer is who received a frame, for FrameLeaks.
+type FrameViewer = frameViewer

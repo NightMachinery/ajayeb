@@ -223,6 +223,15 @@ type inproc struct {
 	clients map[tabletest.ClientID]*room.Client
 	frames  map[tabletest.ClientID][]wire.TableState
 	rejects map[tabletest.ClientID][]wire.TableReject
+	// track keeps the test's own model of each seat's accepted pending
+	// pick, from the outcomes of its submissions, and wants holds, beside
+	// each frame, the pick the model says its viewer's seat had when it
+	// was sent. Set it only where submissions are the only change (no
+	// bots, no undo).
+	track bool
+	seats map[string]int // user -> seat
+	model map[int]wire.TablePending
+	wants map[tabletest.ClientID][]pendingWant
 }
 
 func newClient(user, client, name string) *room.Client {
@@ -240,7 +249,8 @@ func (f *fixture) openInproc(ctx context.Context, spec Spec) (*inproc, error) {
 		return nil, err
 	}
 	p := &inproc{f: f, code: code, clients: map[tabletest.ClientID]*room.Client{},
-		frames: map[tabletest.ClientID][]wire.TableState{}, rejects: map[tabletest.ClientID][]wire.TableReject{}}
+		frames: map[tabletest.ClientID][]wire.TableState{}, rejects: map[tabletest.ClientID][]wire.TableReject{},
+		seats: map[string]int{}, model: map[int]wire.TablePending{}, wants: map[tabletest.ClientID][]pendingWant{}}
 	// The driver's client for seat s is the user seated there, whatever the
 	// seating rule made of the lobby order; an open seat goes to user-s.
 	var seats []SeatRecord
@@ -259,6 +269,7 @@ func (f *fixture) openInproc(ctx context.Context, spec Spec) (*inproc, error) {
 		case SeatOpen:
 			user, name = userOf(s), "P"+strconv.Itoa(s)
 		}
+		p.seats[user] = s
 		if err := p.join(ctx, tabletest.SeatClient(s), user, name); err != nil {
 			return nil, err
 		}
@@ -292,11 +303,21 @@ func (p *inproc) leave() {
 }
 
 func (p *inproc) drain() {
+	if p.wants == nil {
+		p.wants = map[tabletest.ClientID][]pendingWant{}
+	}
 	for id, c := range p.clients {
 		for _, m := range c.Out.Take() {
 			switch m := m.(type) {
 			case wire.TableState:
 				p.frames[id] = append(p.frames[id], m)
+				w := pendingWant{Known: p.track}
+				if seat, ok := p.seats[c.UserID]; ok {
+					if pd, ok := p.model[seat]; ok {
+						w.Pending = &pd
+					}
+				}
+				p.wants[id] = append(p.wants[id], w)
 			case wire.TableReject:
 				p.rejects[id] = append(p.rejects[id], m)
 			}
@@ -342,6 +363,14 @@ func (p *inproc) Submit(ctx context.Context, id tabletest.ClientID, s tabletest.
 	pick := wire.TablePick{T: "table-pick", Code: p.code, Seq: int(s.Seq), Point: parseRef(s.Ref), Key: s.Key, Confirm: s.Confirm}
 	if err := a.call(ctx, func() { out = a.submit(c, pick) }); err != nil {
 		return "", err
+	}
+	if seat, ok := p.seats[c.UserID]; ok {
+		switch out {
+		case outAccepted:
+			p.model[seat] = wire.TablePending{Key: s.Key, Confirm: s.Confirm}
+		case outResolved:
+			clear(p.model)
+		}
 	}
 	p.drain()
 	if p.f.store.crashes() > crashs {

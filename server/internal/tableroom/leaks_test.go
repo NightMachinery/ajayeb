@@ -1,6 +1,7 @@
 package tableroom
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,19 +17,100 @@ import (
 )
 
 // frameConfig allows a frame's own legitimate paths: the viewer's offered
-// keys (in the frame and in the view rebuilt from it) and own pending pick,
-// display names, and user and client ids.
+// keys (in the frame and in the view rebuilt from it), display names, and
+// user and client ids. The pending pick is not among them: frameLeaks
+// leaves it out of the scanned frame only once the envelope check has
+// vouched for it.
 var frameConfig = leakcheck.Config{
-	KeyPaths:  []string{"view.you.choices[].key", "you.choices[].key", "pending.key"},
+	KeyPaths:  []string{"view.you.choices[].key", "you.choices[].key"},
 	TextPaths: []string{"humans[].name"},
 	HexPaths:  []string{"seats[].userId", "humans[].userId", "you.userId", "ack.clientId", "roomLog[].by", "roomLog[].userId"},
 }
 
+// frameViewer is who received a frame: a seat, or leakcheck.Spectator,
+// and the connection's client id, which an acknowledgement must name.
+type frameViewer struct {
+	Seat   int
+	Client string
+}
+
+// pendingWant is the pending pick the test's own model says the viewer's
+// seat had accepted when a frame was sent. Known is false where the test
+// cannot tell, as over the socket.
+type pendingWant struct {
+	Known   bool
+	Pending *wire.TablePending
+}
+
+// frameLeaks checks one viewer's frames. Each frame's envelope is checked
+// against the viewer and, where wants knows it, the accepted pending pick:
+// you names the viewer's seat, an acknowledgement the viewer's own client,
+// a spectator gets no pending pick, and a seat only its own (required at
+// the point, offered to it, its confirmation the one the public list
+// shows). Then the oracle checks the frames' documents, the pending pick
+// left out of the whole-frame scan only where the envelope was vouched for.
+// raws, when given, are the frames as received, scanned instead of the
+// re-encoded frames; wants may be nil.
+func frameLeaks(t testing.TB, c *leakcheck.Checker, label string, v frameViewer, frames []wire.TableState, raws [][]byte, wants []pendingWant) []leakcheck.Leak {
+	t.Helper()
+	var leaks []leakcheck.Leak
+	vouched := make([]bool, len(frames))
+	for i, fr := range frames {
+		var w pendingWant
+		if i < len(wants) {
+			w = wants[i]
+		}
+		bad := envelope(fmt.Sprintf("%s frame %d", label, i), v, fr, w, c.Truth)
+		vouched[i] = len(bad) == 0
+		leaks = append(leaks, bad...)
+	}
+	return append(leaks, c.Check(leakDocs(t, label, v.Seat, frames, raws, vouched, c.Truth)...)...)
+}
+
+// envelope checks a frame's private fields against its viewer.
+func envelope(where string, v frameViewer, fr wire.TableState, w pendingWant, truth *leakcheck.Truth) []leakcheck.Leak {
+	var out []leakcheck.Leak
+	bad := func(path, detail string) {
+		out = append(out, leakcheck.Leak{Rule: leakcheck.Envelope, Doc: where, Path: path, Detail: detail})
+	}
+	switch {
+	case v.Seat < 0 && fr.You.Seat != nil:
+		bad("you.seat", "a seat in a spectator's frame")
+	case v.Seat >= 0 && (fr.You.Seat == nil || *fr.You.Seat != v.Seat):
+		bad("you.seat", fmt.Sprintf("not the viewer's seat %d", v.Seat))
+	}
+	if fr.Ack != nil && fr.Ack.ClientID != v.Client {
+		bad("ack.clientId", "another connection's acknowledgement")
+	}
+	if pd := fr.Pending; pd != nil {
+		switch {
+		case v.Seat < 0:
+			bad("pending", "a pending pick in a spectator's frame")
+		case fr.Point == nil || !slices.Contains(fr.Point.Required, v.Seat):
+			bad("pending", "a pending pick while the viewer's seat is not required")
+		case fr.Batch < 0 || fr.Batch >= len(truth.Moments) || !slices.Contains(truth.Moments[fr.Batch].Legal[v.Seat], pd.Key):
+			bad("pending.key", "a key not offered to the viewer's seat")
+		case pd.Confirm != slices.Contains(fr.Point.Confirmed, v.Seat):
+			bad("pending.confirm", "not the confirmation the public list shows")
+		}
+	}
+	if w.Known && !samePending(fr.Pending, w.Pending) {
+		bad("pending", "not the seat's accepted pick")
+	}
+	return out
+}
+
+func samePending(a, b *wire.TablePending) bool {
+	return (a == nil) == (b == nil) && (a == nil || *a == *b)
+}
+
 // leakDocs turns one viewer's frames into the oracle's documents: the
-// whole frame, its engine view rebuilt in the fake view's shape (the
-// frame's view plus its point and, as the fake view carries them, the
-// latest resolution's events), and its history.
-func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, truth *leakcheck.Truth) []leakcheck.Doc {
+// whole frame (its pending pick removed where vouched for), its engine
+// view rebuilt in the fake view's shape (the frame's view plus its point
+// and, as the fake view carries them, the latest resolution's events), the
+// frame's own events wherever it carries events the rebuilt view did not
+// take from it, and its history.
+func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, raws [][]byte, vouched []bool, truth *leakcheck.Truth) []leakcheck.Doc {
 	t.Helper()
 	var docs []leakcheck.Doc
 	events := []wire.TableEvent{}
@@ -38,19 +120,32 @@ func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, 
 		if err != nil {
 			t.Fatal(err)
 		}
+		if i < len(raws) {
+			raw = raws[i]
+		}
+		if vouched[i] {
+			raw = withoutPending(t, raw)
+		}
 		where := fmt.Sprintf("%s frame %d", label, i)
 		docs = append(docs, leakcheck.Doc{Label: where, Kind: leakcheck.Frame, Viewer: viewer, Data: raw})
+		own := true // the rebuilt view takes its events from this frame
 		switch {
 		case fr.History != nil:
 			// A join, resync or undo frame: the latest entry of its history.
-			events = lastEvents(fr)
+			events, own = lastEvents(fr), false
 		case fr.Batch != batch:
 			// A resolution frame carries that resolution's events.
 			events = fr.Events
+		default:
+			own = false
 		}
 		batch = fr.Batch
 		docs = append(docs, leakcheck.Doc{Label: where + " view", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch,
 			Data: fakeViewJSON(t, fr, events)})
+		if !own && len(fr.Events) > 0 {
+			docs = append(docs, leakcheck.Doc{Label: where + " events", Kind: leakcheck.View, Viewer: viewer, Moment: fr.Batch,
+				Data: fakeViewJSON(t, fr, fr.Events)})
+		}
 		if fr.History != nil {
 			var h []map[string]any
 			for _, e := range *fr.History {
@@ -64,6 +159,24 @@ func leakDocs(t testing.TB, label string, viewer int, frames []wire.TableState, 
 		}
 	}
 	return docs
+}
+
+// withoutPending drops a frame's pending pick, keeping every other field
+// and number exactly.
+func withoutPending(t testing.TB, data []byte) []byte {
+	t.Helper()
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.UseNumber()
+	var m map[string]any
+	if err := dec.Decode(&m); err != nil {
+		t.Fatal(err)
+	}
+	delete(m, "pending")
+	out, err := json.Marshal(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return out
 }
 
 func lastEvents(fr wire.TableState) []wire.TableEvent {
@@ -104,6 +217,7 @@ func playForLeaks(t *testing.T, f *fixture, n int, seed uint64, hide bool) (*inp
 	if err != nil {
 		t.Fatal(err)
 	}
+	p.track = true
 	if _, err := tabletest.Play(ctx, p, tabletest.Config{Seats: n, PickSeed: seed, ArrivalSeed: seed + 1,
 		Script: tabletest.ScriptOptions{Drafts: 60, Resends: 30}}); err != nil {
 		t.Fatal(err)
@@ -157,7 +271,9 @@ func viewerOf(id tabletest.ClientID) int {
 
 // TestFramesLeakNothing: every frame every seat and the spectator received
 // over whole games at 3 to 7 seats, under both end policies, with live
-// events, history on join and resync, passes the oracle.
+// events, history on join and resync, passes the oracle, each pending pick
+// checked against the pick the test saw its seat's accepted submissions
+// set.
 func TestFramesLeakNothing(t *testing.T) {
 	for n := MinSeats; n <= MaxSeats; n++ {
 		for _, hide := range []bool{false, true} {
@@ -165,23 +281,107 @@ func TestFramesLeakNothing(t *testing.T) {
 			seed := uint64(500 + n)
 			p, truth := playForLeaks(t, f, n, seed, hide)
 			c := leakcheck.New(truth, frameConfig)
-			total := 0
+			total, picks := 0, 0
 			for id, frames := range p.frames {
-				docs := leakDocs(t, fmt.Sprintf("%d seats hide=%t %s", n, hide, id), viewerOf(id), frames, truth)
-				total += len(docs)
-				if leaks := c.Check(docs...); len(leaks) != 0 {
+				v := frameViewer{Seat: viewerOf(id), Client: string(id)}
+				if leaks := frameLeaks(t, c, fmt.Sprintf("%d seats hide=%t %s", n, hide, id), v, frames, nil, p.wants[id]); len(leaks) != 0 {
 					t.Fatalf("%d seats, hide=%t, %s: %v", n, hide, id, leaks[:min(len(leaks), 5)])
 				}
+				total += len(frames)
+				for i, w := range p.wants[id] {
+					if w.Known && frames[i].Pending != nil {
+						picks++
+					}
+				}
 			}
-			if total < 50 {
-				t.Fatalf("%d seats: only %d documents", n, total)
+			if total < 20 || picks == 0 {
+				t.Fatalf("%d seats: only %d frames, %d with a pending pick checked against the model", n, total, picks)
+			}
+		}
+	}
+}
+
+// TestPlantedEnvelopeLeaks: a frame's private fields are checked against
+// the viewer and the accepted state, and a pending pick is left out of the
+// raw-key scan only once that check vouches for it. Planted in real
+// frames, each of these is reported: another seat's pending pick sent to
+// the spectator, another seat's key as the viewer's pick, the viewer's own
+// key that is not its accepted pick, a confirmation the public list does
+// not show, another seat's you, another connection's acknowledgement, and
+// a hidden card in the events of a history frame.
+func TestPlantedEnvelopeLeaks(t *testing.T) {
+	f := newFixture(t, Config{})
+	p, truth := playForLeaks(t, f, 3, 2028, false)
+	c := leakcheck.New(truth, frameConfig)
+	spec := frameViewer{Seat: leakcheck.Spectator, Client: string(tabletest.SpectatorClient)}
+	seat0 := frameViewer{Seat: 0, Client: string(tabletest.SeatClient(0))}
+	sf, s0 := p.frames[tabletest.SpectatorClient][0], p.frames[tabletest.SeatClient(0)][0]
+	m := &truth.Moments[0]
+	if sf.Batch != 0 || s0.Batch != 0 || s0.Pending != nil || s0.Point == nil || !slices.Contains(s0.Point.Required, 0) || slices.Contains(s0.Point.Confirmed, 0) {
+		t.Fatalf("the first frames: %+v, %+v", sf.Point, s0.Point)
+	}
+	for _, clean := range []struct {
+		v  frameViewer
+		fr wire.TableState
+	}{{spec, sf}, {seat0, s0}} {
+		if leaks := frameLeaks(t, c, "clean", clean.v, []wire.TableState{clean.fr}, nil, nil); len(leaks) != 0 {
+			t.Fatalf("an unplanted frame: %v", leaks)
+		}
+	}
+	foreign := m.Legal[1][slices.IndexFunc(m.Legal[1], func(k string) bool { return !slices.Contains(m.Legal[0], k) })]
+	pending := func(fr wire.TableState, key string, confirm bool) wire.TableState {
+		fr.Pending = &wire.TablePending{Key: key, Confirm: confirm}
+		return fr
+	}
+	other := 1
+	ack := s0
+	ack.Ack = &wire.PlatformAck{ClientID: string(tabletest.SeatClient(1)), Seq: 1}
+	you := s0
+	you.You.Seat = &other
+
+	// A history frame whose own events name a card seat 0 may not see.
+	var hist wire.TableState
+	for _, fr := range p.frames[tabletest.SeatClient(0)] {
+		if fr.Batch == 1 && len(fr.Events) > 0 {
+			hist = fr
+			break
+		}
+	}
+	hidden := slices.IndexFunc(hist.Events, func(e wire.TableEvent) bool { return e.Design == "" })
+	if hist.Batch != 1 || hidden < 0 {
+		t.Fatal("no resolution frame with an event seat 0 may not see")
+	}
+	entry := []wire.TableHistoryEntry{{Batch: 1, Events: hist.Events}}
+	hist.History = &entry
+	hist.Events = slices.Clone(hist.Events)
+	hist.Events[hidden].Design = truth.Moments[1].Hands[1][0]
+
+	for _, tc := range []struct {
+		name  string
+		v     frameViewer
+		fr    wire.TableState
+		wants []pendingWant
+		rules []leakcheck.Rule
+	}{
+		{"seat 1's pick sent to the spectator", spec, pending(sf, m.Legal[1][0], false), nil, []leakcheck.Rule{leakcheck.Envelope, leakcheck.RawKey}},
+		{"seat 1's key as seat 0's pick", seat0, pending(s0, foreign, false), nil, []leakcheck.Rule{leakcheck.Envelope, leakcheck.RawKey}},
+		{"seat 0's own key, never accepted", seat0, pending(s0, m.Legal[0][0], false), []pendingWant{{Known: true}}, []leakcheck.Rule{leakcheck.Envelope}},
+		{"a confirmation the public list does not show", seat0, pending(s0, m.Legal[0][0], true), nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"another seat's you", seat0, you, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"another connection's acknowledgement", seat0, ack, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"a hidden card in a history frame's events", seat0, hist, nil, []leakcheck.Rule{leakcheck.HiddenCard}},
+	} {
+		leaks := frameLeaks(t, c, tc.name, tc.v, []wire.TableState{tc.fr}, nil, tc.wants)
+		for _, rule := range tc.rules {
+			if !slices.ContainsFunc(leaks, func(l leakcheck.Leak) bool { return l.Rule == rule }) {
+				t.Errorf("%s: %s did not report it; got %v", tc.name, rule, leaks)
 			}
 		}
 	}
 }
 
 // TestPlantedLeaksInFrames: a leak planted in a real frame fails its own
-// detector: another seat's pending key or hand card, a raw key in an event,
+// detector: another seat's hand card, a raw key in an event,
 // a game fingerprint, a copy-suffixed card id, a deal-ordered hand,
 // another seat's offer and an unknown field.
 func TestPlantedLeaksInFrames(t *testing.T) {
