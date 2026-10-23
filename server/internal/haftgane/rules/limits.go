@@ -30,7 +30,7 @@ const (
 const (
 	MaxCityBuildings     = 20 // Babylon: 18 ordinary + 3 kept cards - its ability stage.
 	MaxPileCards         = NumAges * HandSize * MaxSeats
-	MaxResolutionEvents  = 32 // Four per-seat event groups plus three transition events.
+	MaxResolutionEvents  = 32 // Per-seat choose, play, coin and conflict groups, plus three transition events.
 	MaxKnownHands        = NumAges * MaxTurns
 	MaxSeenCards         = NumAges * HandSize * (HandSize + 1) / 2
 	MaxHistoryEntries    = MaxPoints + 1 // Optional initial Age-I entry and resolved points.

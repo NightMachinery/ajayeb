@@ -487,6 +487,46 @@ func TestRuling28DiscardIncomeAfterEarlierEffects(t *testing.T) {
 	}
 }
 
+// Ruling 28: a building rebuilt from the pile counts itself where its effect
+// counts its own colour. Lighthouse: 1 coin per yellow card in its own city.
+func TestRuling28LighthouseCountsItself(t *testing.T) {
+	own := append(gateResources(), 22, 23) // Marketplace and Tavern: two yellow cards.
+	g := abilityScenario(t, 3, 3, [MaxSeats]wonderCity{0: {board: catalog.BoardHalikarnassos, side: catalog.Night, buildings: own}}, [MaxSeats][]catalog.DesignID{0: {51}}, 64)
+	pending, _, err := resolveAbility(t, g, actionBatch(g, 0, stagePick(t, g, 0, 51)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pending.State.Phase != PhaseDiscardBuild || len(buildChoices(pending.Legal(0), ActBuildDiscarded, 64)) != 1 {
+		t.Fatal("Lighthouse not offered from the pile", pending.State.Phase)
+	}
+	before := pending.State.Cities[0].Coins
+	done, events, err := resolveAbility(t, pending, requiredBatch(pending, 0, Action{Kind: ActBuildDiscarded, Design: 64}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	yellow := int16(0)
+	for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
+		if done.State.Cities[0].Buildings.Has(id) {
+			if d, _ := catalog.DesignByID(id); d.Color == catalog.Yellow {
+				yellow++
+			}
+		}
+	}
+	if yellow != 3 {
+		t.Fatal("fixture yellow count", yellow)
+	}
+	income := int16(0)
+	for _, e := range events {
+		if e.Kind == EvCoins && e.Seat == 0 && e.Design == 64 {
+			income += e.Delta
+		}
+	}
+	if income != yellow || done.State.Cities[0].Coins != before+yellow {
+		t.Fatal("rebuilt Lighthouse income", income, "want", yellow, "coins", before, done.State.Cities[0].Coins)
+	}
+	t.Logf("rebuilt Lighthouse paid %d coins for %d yellow cards, itself included", income, yellow)
+}
+
 func TestRuling19DecoratorsEveryBoardSideLength(t *testing.T) {
 	for board := catalog.BoardID(1); board <= catalog.NumBoards; board++ {
 		for _, side := range []catalog.Side{catalog.Day, catalog.Night} {
