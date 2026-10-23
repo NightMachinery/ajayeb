@@ -117,6 +117,9 @@ func (g *Game) CheckInvariants() error {
 			}
 			copies[c.Kept]++
 		}
+		if st.Phase == PhaseDiscardBuild && st.Turn == TurnsPerAge && c.Abilities&AbilityPlayLastCard != 0 && c.Kept == 0 {
+			return fmt.Errorf("rules: sixth-turn kept card missing")
+		}
 		if st.Phase == PhaseLastCard && Seat(seat) == st.Decider && c.Kept == 0 {
 			return fmt.Errorf("rules: last card missing")
 		}

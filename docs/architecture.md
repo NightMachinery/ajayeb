@@ -358,7 +358,9 @@ invariant sweep covers 10,000 seeds per player count and all option kinds.
 `ScenarioFromGame` makes a value snapshot whose explicit `State` and `Record`
 fields tests can edit. `NewGameFromScenario` copies it, sorts card lists,
 rebuilds city caches and rejects invalid conservation, shape or phase-specific
-hand sizes. It never invents missing cards or a play history. Scenarios may
+hand sizes. A sixth-turn discard point requires empty ordinary hands and a
+kept card for a Babylon night seat whose last-card stage is built. It never
+invents missing cards or a play history. Scenarios may
 retain a partial history; the checker validates record shapes and placements,
 while full historical legality belongs to the later resolver and replay slice.
 `CheckInvariants` also checks city names, board and stage bounds, inactive
