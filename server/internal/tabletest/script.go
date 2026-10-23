@@ -20,6 +20,13 @@ type ScriptOptions struct {
 	// lands depends on arrival order. Without it a seat confirms only in
 	// its last submission, and every arrival order must give one batch.
 	Race bool
+	// Tabs sends a seat's last submission from a second tab of its user
+	// (TabClient) and the others from its client. The seq memory is per
+	// user, so only a user's own tabs push each other's seqs out of a small
+	// one; a resend of an earlier submission then meets the pick's floor (a
+	// duplicate, or stale after a race's two submissions from the client)
+	// or a resolved point.
+	Tabs bool
 }
 
 // Op is one submission as scheduled.
@@ -91,6 +98,12 @@ func Scripts(snaps []Snapshot, clients []ClientID, pickSeed uint64, opts ScriptO
 			ops = append(ops, op(other(), false), op(final, true))
 		default:
 			ops = append(ops, op(final, true))
+		}
+		if opts.Tabs {
+			// The last op took the client's last seq; give it back.
+			tab, last := TabClient(sn.Seat), &ops[len(ops)-1]
+			seqs[c]--
+			last.Client, last.Sub.Seq = tab, seqs.next(tab)
 		}
 		for j := 0; j < len(ops); j++ {
 			if ops[j].Resend || rng.IntN(100) >= opts.Resends {

@@ -13,7 +13,7 @@ import (
 )
 
 func open(seats uint8, seed uint64, seqClients int) tabletest.Factory {
-	return direct.Factory(direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: seats}, SeqClients: seqClients})
+	return direct.Factory(direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: seats}, SeqClients: seqClients, Tabs: true})
 }
 
 func play(t *testing.T, f tabletest.Factory, cfg tabletest.Config) tabletest.Run {
@@ -29,7 +29,12 @@ func play(t *testing.T, f tabletest.Factory, cfg tabletest.Config) tabletest.Run
 	return r
 }
 
-var busy = tabletest.ScriptOptions{Drafts: 50, Resends: 40}
+var (
+	busy = tabletest.ScriptOptions{Drafts: 50, Resends: 40, Tabs: true}
+	// racy makes stale seqs reachable: a race sends two submissions from
+	// the seat's client before its tab's last one.
+	racy = tabletest.ScriptOptions{Race: true, Resends: 60, Tabs: true}
+)
 
 // TestSameSeedsSameSchedule: the same seeds give the same submissions in
 // the same order, the same outcomes and the same canonical history.
@@ -50,15 +55,16 @@ func TestSameSeedsSameSchedule(t *testing.T) {
 }
 
 // TestArrivalOrderDecidesNothing plays each game under many arrival seeds,
-// with drafts, re-sent seqs and a seq memory of two clients (so stale seqs
-// occur), and requires one canonical history, which replays from setup to
-// the same hash. It also checks that the sweep met every outcome the rules
+// with drafts, re-sent seqs, two tabs per seat and a seq memory of one
+// client per user, and requires one canonical history, which replays from
+// setup to the same hash. Races, whose batches follow arrival, are played
+// once each. It also checks that the sweep met every outcome the rules
 // allow a well-behaved client to meet.
 func TestArrivalOrderDecidesNothing(t *testing.T) {
 	seen := map[tabletest.Outcome]int{}
 	for n := 3; n <= 7; n++ {
 		for game := uint64(0); game < 6; game++ {
-			f := open(uint8(n), 100*uint64(n)+game, 2)
+			f := open(uint8(n), 100*uint64(n)+game, 1)
 			cfg := tabletest.Config{Seats: n, PickSeed: game, Script: busy}
 			runs, err := tabletest.CompareSchedules(t.Context(), f, cfg, []uint64{1, 2, 3, 4, 5, 6, 7, 8})
 			if err != nil {
@@ -73,6 +79,10 @@ func TestArrivalOrderDecidesNothing(t *testing.T) {
 				for _, a := range r.Trace {
 					seen[a.Outcome]++
 				}
+			}
+			r := play(t, f, tabletest.Config{Seats: n, PickSeed: game, ArrivalSeed: game, Script: racy})
+			for _, a := range r.Trace {
+				seen[a.Outcome]++
 			}
 		}
 	}
@@ -108,6 +118,7 @@ func TestEveryArrivalOrder(t *testing.T) {
 		for _, seqClients := range []int{32, 1} {
 			f := open(uint8(c.seats), seed, seqClients)
 			cfg := tabletest.Config{Seats: c.seats, PickSeed: 9, Script: c.opts}
+			cfg.Script.Tabs = true
 			n, distinct, err := tabletest.ExhaustPoint(t.Context(), f, prefix, cfg, 200000)
 			if err != nil {
 				t.Fatalf("%s, seq memory %d: %v", c.name, seqClients, err)
@@ -150,13 +161,17 @@ type lying struct {
 	outcome func(n int, s tabletest.Submission, o tabletest.Outcome) tabletest.Outcome
 	canon   func(c tabletest.Canonical) tabletest.Canonical
 	n       int
+	race    bool // play races, which reach stale seqs
+	lied    bool
 }
 
 func (l *lying) Submit(ctx context.Context, c tabletest.ClientID, s tabletest.Submission) (tabletest.Outcome, error) {
 	o, err := l.Table.Submit(ctx, c, s)
 	l.n++
 	if l.outcome != nil && err == nil {
-		o = l.outcome(l.n, s, o)
+		if lie := l.outcome(l.n, s, o); lie != o {
+			o, l.lied = lie, true
+		}
 	}
 	return o, err
 }
@@ -164,7 +179,7 @@ func (l *lying) Submit(ctx context.Context, c tabletest.ClientID, s tabletest.Su
 func (l *lying) Canonical(ctx context.Context) (tabletest.Canonical, error) {
 	c, err := l.Table.Canonical(ctx)
 	if l.canon != nil {
-		c = l.canon(c)
+		c, l.lied = l.canon(c), true
 	}
 	return c, err
 }
@@ -182,7 +197,7 @@ func TestChecksCatchALyingTable(t *testing.T) {
 				return tabletest.Accepted
 			}
 			return o
-		}},
+		}, race: true},
 		"a resolution reported as accepted": {outcome: func(_ int, _ tabletest.Submission, o tabletest.Outcome) tabletest.Outcome {
 			if o == tabletest.Resolved {
 				return tabletest.Accepted
@@ -208,13 +223,31 @@ func TestChecksCatchALyingTable(t *testing.T) {
 			return c
 		}},
 	}
+	// Each liar plays games until it has lied, and Play must catch that game.
 	for name, l := range cases {
-		tb, err := open(4, 21, 1)(t.Context(), nil)
-		if err != nil {
-			t.Fatal(err)
+		script := busy
+		if l.race {
+			script = racy
 		}
-		l.Table = tb
-		if _, err := tabletest.Play(t.Context(), l, tabletest.Config{Seats: 4, PickSeed: 1, ArrivalSeed: 1, Script: busy}); err == nil {
+		caught := false
+		for arrival := uint64(1); arrival <= 16 && !l.lied; arrival++ {
+			tb, err := open(4, 21, 1)(t.Context(), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			l.Table, l.n = tb, 0
+			_, err = tabletest.Play(t.Context(), l, tabletest.Config{Seats: 4, PickSeed: 1, ArrivalSeed: arrival, Script: script})
+			switch {
+			case l.lied:
+				caught = err != nil
+			case err != nil:
+				t.Fatalf("%s: Play failed before any lie: %v", name, err)
+			}
+		}
+		switch {
+		case !l.lied:
+			t.Errorf("%s: never had a chance to lie", name)
+		case !caught:
 			t.Errorf("%s: Play passed", name)
 		}
 	}

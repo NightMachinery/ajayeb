@@ -67,7 +67,9 @@ type Config struct {
 	// Creation allows creating tables. It is off in production until the
 	// lobby ships (flag -haftgane-tables); loading saved tables does not
 	// depend on it.
-	Creation    bool
+	Creation bool
+	// SeqClients bounds, for each user, the clients whose last accepted
+	// seq the table remembers.
 	SeqClients  int
 	MaxClients  int
 	IdleTimeout time.Duration

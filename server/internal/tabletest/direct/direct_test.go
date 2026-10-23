@@ -86,21 +86,27 @@ func TestAcceptanceRules(t *testing.T) {
 	}
 }
 
-// TestStaleOnceForgotten: with room for one client's seq, an old seq that
-// the table forgot is judged afresh and refused as stale, so it never
-// reverts the newer pick.
+// TestStaleOnceForgotten: the seq memory is per user, so another seat's
+// client never pushes a user's seq out. With room for one client per user,
+// a user's second tab does; the pick's floor still answers for the first:
+// the seq that last changed the pick is a duplicate, an older one is
+// stale, and neither reverts the newer pick. Seq 0 is a seq like any other.
 func TestStaleOnceForgotten(t *testing.T) {
 	h := newHarness(t, 3, 1)
-	a, b := tabletest.SeatClient(0), tabletest.SeatClient(1)
+	a, b, tab := tabletest.SeatClient(0), tabletest.SeatClient(1), tabletest.TabClient(0)
+	h.tb.Attach(tab, 0)
 	sa := h.snap(a)
-	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "a draft")
-	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "a change")
-	h.expect(h.send(b, 1, sa.Ref, h.snap(b).Legal[0], false), tabletest.Accepted, "another client, evicting the first")
-	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Stale, "the old draft again")
-	if sn := h.snap(a); sn.Pick != sa.Legal[1] {
-		t.Fatalf("a stale seq reverted the pick to %q", sn.Pick)
+	h.expect(h.send(a, 0, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "a draft at seq 0")
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "a change")
+	h.expect(h.send(b, 1, sa.Ref, h.snap(b).Legal[0], false), tabletest.Accepted, "another user's client")
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[1], false), tabletest.Duplicate, "the change again, still remembered")
+	h.expect(h.send(tab, 0, sa.Ref, sa.Legal[2], false), tabletest.Accepted, "the second tab, pushing the first out")
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[1], false), tabletest.Duplicate, "the forgotten last seq")
+	h.expect(h.send(a, 0, sa.Ref, sa.Legal[0], false), tabletest.Stale, "the forgotten older seq")
+	if sn := h.snap(a); sn.Pick != sa.Legal[2] {
+		t.Fatalf("a forgotten seq changed the pick to %q", sn.Pick)
 	}
-	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], true), tabletest.Accepted, "the newest seq, forgotten, is judged afresh")
+	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], true), tabletest.Accepted, "a newer seq")
 }
 
 // TestSecondTab: two tabs of one seat keep separate seqs; a lower seq from

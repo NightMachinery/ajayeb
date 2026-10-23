@@ -9,9 +9,10 @@
 // Acceptance checks run in the platform's order: membership; the client's
 // last applied seq (a seq not newer is a harmless duplicate); the open point
 // reference (else decision-closed); the seat being required, and the key
-// being offered to it (else illegal); a seq older than the one that last
-// changed the seat's pick from the same client (stale). Only an applied
-// submission uses up its seq. The confirmation that completes the required
+// being offered to it (else illegal); the seq that last changed the seat's
+// pick from the same client, when the first check forgot the client (the
+// same seq is a duplicate, an older one stale). Only an applied submission
+// uses up its seq. Each seat's user has their own bounded seq memory. The confirmation that completes the required
 // set resolves the point at once.
 //
 // Every change is a transaction: build the candidate, write it durably
@@ -34,7 +35,7 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 )
 
-// DefaultSeqClients is Duel's bound on remembered client seqs.
+// DefaultSeqClients bounds the remembered client seqs of each user.
 const DefaultSeqClients = 32
 
 // Store persists the table's record. Save writes atomically, or not at all.
@@ -55,14 +56,17 @@ type Work func(ctx context.Context, seat int, point string) error
 // Options configure a table.
 type Options struct {
 	Setup fakeengine.Setup
-	// SeqClients bounds the clients whose last applied seq is remembered
-	// (default DefaultSeqClients); a small value makes stale seqs reachable.
+	// SeqClients bounds, for each user (here, each seat), the clients whose
+	// last applied seq is remembered (default DefaultSeqClients); a small
+	// value makes stale seqs reachable.
 	SeqClients int
 	// Crashed reports whether a Store error means the process died (the
 	// table then refuses everything until restored). Nil: never.
 	Crashed func(error) bool
 	Store   Store
 	Logger  *slog.Logger
+	// Tabs attaches each human seat's second tab (tabletest.TabClient).
+	Tabs bool
 	// Bots are the seats a bot controls; RunBots picks for them.
 	Bots    []int
 	Permits Permits
@@ -105,6 +109,14 @@ type slot struct {
 
 // ClientSeq is one client's seq.
 type ClientSeq struct {
+	Client tabletest.ClientID `json:"client"`
+	Seq    uint64             `json:"seq"`
+}
+
+// AckSeq is one remembered client's last applied seq, with the seat whose
+// user it belongs to.
+type AckSeq struct {
+	Seat   int                `json:"seat"`
 	Client tabletest.ClientID `json:"client"`
 	Seq    uint64             `json:"seq"`
 }
@@ -159,6 +171,10 @@ func newTable(opts Options, v value) *Table {
 		if !slices.Contains(opts.Bots, s) {
 			t.members[tabletest.SeatClient(s)] = s
 			t.present[tabletest.SeatClient(s)] = true
+			if opts.Tabs {
+				t.members[tabletest.TabClient(s)] = s
+				t.present[tabletest.TabClient(s)] = true
+			}
 		}
 	}
 	return t
@@ -239,11 +255,15 @@ func (t *Table) Submit(ctx context.Context, c tabletest.ClientID, s tabletest.Su
 	if !p.Required.Has(fakeengine.Seat(seat)) || !t.offered(seat, s.Key) {
 		return t.answer("pick", seat, tabletest.Illegal), nil
 	}
-	if s.Seq < seqOf(t.v.slots[seat].seqs, c) {
+	floor, ok := seqOf(t.v.slots[seat].seqs, c)
+	switch {
+	case ok && s.Seq == floor:
+		return t.answer("pick", seat, tabletest.Duplicate), nil
+	case ok && s.Seq < floor:
 		return t.answer("pick", seat, tabletest.Stale), nil
 	}
 	seqs := t.seqs.clone()
-	seqs.put(c, s.Seq)
+	seqs.put(seat, c, s.Seq)
 	return t.transact(ctx, "pick", seat, s.Key, s.Confirm, &ClientSeq{Client: c, Seq: s.Seq}, seqs)
 }
 
@@ -398,7 +418,7 @@ type Record struct {
 	Revision  uint64            `json:"revision"`
 	Ref       string            `json:"ref"`
 	Pending   []PendingSlot     `json:"pending"`
-	Seqs      []ClientSeq       `json:"seqs"`
+	Seqs      []AckSeq          `json:"seqs"`
 }
 
 // PendingSlot is one required seat's unresolved pick.
@@ -420,7 +440,7 @@ func (t *Table) record(v value, seqs lru) Record {
 		Pending: []PendingSlot{}, Seqs: slices.Clone(seqs.entries),
 	}
 	if r.Seqs == nil {
-		r.Seqs = []ClientSeq{}
+		r.Seqs = []AckSeq{}
 	}
 	for s := range v.slots {
 		if v.slots[s].key != "" {
@@ -513,7 +533,7 @@ func RestoreRecord(opts Options, r Record) (*Table, error) {
 	}
 	t := newTable(opts, v)
 	for _, cs := range r.Seqs {
-		t.seqs.put(cs.Client, cs.Seq)
+		t.seqs.put(cs.Seat, cs.Client, cs.Seq)
 	}
 	return t, nil
 }
@@ -530,13 +550,14 @@ func engineBatches(bs []tabletest.Batch) []fakeengine.Batch {
 	return out
 }
 
-func seqOf(seqs []ClientSeq, c tabletest.ClientID) uint64 {
+// seqOf returns the client's seq and whether it is there (seq 0 is valid).
+func seqOf(seqs []ClientSeq, c tabletest.ClientID) (uint64, bool) {
 	for _, cs := range seqs {
 		if cs.Client == c {
-			return cs.Seq
+			return cs.Seq, true
 		}
 	}
-	return 0
+	return 0, false
 }
 
 func setSeq(seqs []ClientSeq, by ClientSeq) []ClientSeq {
@@ -549,14 +570,15 @@ func setSeq(seqs []ClientSeq, by ClientSeq) []ClientSeq {
 	return append(seqs, by)
 }
 
-// lru remembers the last applied seq of at most cap clients, the oldest
-// applied first. Unlike Duel's seqLRU, which lives only in memory, a lookup
+// lru remembers the last applied seq of at most cap clients per seat's
+// user, the oldest applied first; a user's new client pushes out only that
+// user's oldest. Unlike Duel's seqLRU, which lives only in memory, a lookup
 // is not a use: the record holds this list, so a duplicate must change
 // nothing, and a table restored from its record must forget the same
 // clients as one that never stopped.
 type lru struct {
 	cap     int
-	entries []ClientSeq
+	entries []AckSeq
 }
 
 func (l *lru) get(c tabletest.ClientID) (uint64, bool) {
@@ -568,16 +590,25 @@ func (l *lru) get(c tabletest.ClientID) (uint64, bool) {
 	return 0, false
 }
 
-func (l *lru) put(c tabletest.ClientID, seq uint64) {
+func (l *lru) put(seat int, c tabletest.ClientID, seq uint64) {
 	for i, e := range l.entries {
 		if e.Client == c {
 			l.entries = append(l.entries[:i:i], l.entries[i+1:]...)
 			break
 		}
 	}
-	l.entries = append(l.entries, ClientSeq{Client: c, Seq: seq})
-	if len(l.entries) > l.cap {
-		l.entries = l.entries[len(l.entries)-l.cap:]
+	l.entries = append(l.entries, AckSeq{Seat: seat, Client: c, Seq: seq})
+	n, first := 0, -1
+	for i, e := range l.entries {
+		if e.Seat == seat {
+			n++
+			if first < 0 {
+				first = i
+			}
+		}
+	}
+	if n > l.cap {
+		l.entries = append(l.entries[:first:first], l.entries[first+1:]...)
 	}
 }
 

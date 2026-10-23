@@ -953,19 +953,25 @@ one. Revisions never wrap or repeat. Only the logical id enters canonical
 batches and bot entropy.
 
 Sequence deduplication is per authenticated user/client. The actor
-remembers the latest accepted seq of a bounded number of user/client pairs,
-forgetting first the pair whose last accepted request is oldest. Only an
-accepted request records its seq; looking one up changes nothing, so a
-table restored from its record forgets the same pairs as one that never
-stopped. A seq at or below the remembered one answers a frame
+remembers the latest accepted seq of a bounded number of clients (32) for
+each user, and a user's new client pushes out only that user's client
+whose last accepted request is oldest. Users never push out each other's
+clients, so nothing another user does changes the answer a user gets.
+Only an accepted request records its seq; looking one up changes nothing,
+so a table restored from its record forgets the same clients as one that
+never stopped. A seq at or below the remembered one answers a frame
 acknowledging it and changes nothing (repeating an accepted seq is
-harmless). Each pending pick also remembers the seq that last changed it
-from each client, so a forgotten old seq still cannot overwrite a newer
-accepted pick: it answers `stale`. A request is judged in this order:
+harmless). Each pending pick also keeps a floor for every client that
+changed it: the seq that last did. For a client the memory has forgotten,
+that same seq again answers the acknowledging frame, and an older one
+answers `stale`, so a forgotten seq never overwrites a newer accepted pick.
+The floor is found by the client's presence, not compared with a default,
+because seq 0 is a valid seq. A request is judged in this order:
 `forbidden` (no seat), duplicate, `decision-closed` (another reference or
 the game over), `illegal` (the seat is not required or the key is not
-offered), `stale`. Other viewers receive neither the pending key nor any
-revision or metadata change that reveals private edit frequency.
+offered), then the pick's floor (duplicate or `stale`). Other viewers
+receive neither the pending key nor any revision or metadata change that
+reveals private edit frequency.
 
 `lobby-create` carries `t`, `seatCount` (2 through 7) and `options`. It creates
 a shared lobby, not a client-selected game. Start selects Duel for two seats,

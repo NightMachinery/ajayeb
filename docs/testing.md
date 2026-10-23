@@ -204,16 +204,22 @@ canonical history is the `ajayeb-log/2` download.
   `CompareSchedules` unchanged at 3 to 7 seats, with drafts, resends and
   races; every arrival seed gives the same canonical history.
 - `TestEveryArrivalOrderInProcess` runs `ExhaustPoint` on small points (90
-  and 2,520 orders, a one-seat salvage point, seq memories of 32 and 1) and
+  and 2,520 orders, a one-seat salvage point, seq memories of 32 and 1, each
+  seat submitting from two tabs) and
   the races of a change or withdrawn confirmation against the last
   confirmation (1,680 orders); `TestWebSocketEveryArrivalOrder` runs the
   90 orders over the socket.
-- `TestDifferentialAgainstDirect` delivers the same seeded scripts to the
-  reference model (`tabletest/direct`) and the actor, arrival by arrival,
-  at 3 to 7 seats with seq memories large and small: every outcome, every
-  snapshot and the final canonical bytes agree.
+- `TestDifferentialAgainstDirect` delivers the same seeded scripts, from
+  two tabs per seat, to the reference model (`tabletest/direct`) and the
+  actor, arrival by arrival, at 3 to 7 seats with seq memories of 32 and of
+  one client per user: every outcome, every snapshot and the final
+  canonical bytes agree, and duplicates and stale seqs both occur.
 - `actor_test.go` covers the refusal order, private edits that change no
-  other connection's frame (revision included), two tabs and forgotten seqs,
+  other connection's frame (revision included), two tabs and forgotten seqs
+  (the pick's floor answers a forgotten seq as a duplicate or stale, seq 0
+  included, before and after a restart), a seq memory per user (other
+  users' drafts from many tabs change neither a user's duplicate answer nor
+  their frames),
   a reload that restores a pick and its confirmation, storage errors and
   crashes before and after the rename (`tabletest/faults`), the restore of
   every pending subset (and an invalid pending block archiving as
@@ -2181,8 +2187,11 @@ the rules hash. A `Factory` opens a table at a prefix of batches.
   snapshot with a seeded pick stream: optional drafts (a different pick
   before the final one), optional **resends** (a copy with the same seq,
   delivered later), or, in race mode, a confirmation followed by a change or
-  a withdrawal. Last, it merges the scripts in a seeded **arrival order**
-  that keeps each client's own order.
+  a withdrawal. With **tabs**, a seat's submissions alternate between its
+  client and a second tab of the same user (`TabClient`), which a small
+  per-user seq memory needs before anything is forgotten. Last, it merges
+  the scripts in a seeded **arrival order** that keeps each client's own
+  order.
 - `CheckPoint` checks every reply against what the rules allow. A seq that
   is not newer is a duplicate, and a refusal uses up no seq. An older seq
   that changed nothing since is stale. Every arrival after the completing
@@ -2193,17 +2202,19 @@ the rules hash. A `Factory` opens a table at a prefix of batches.
 
 `internal/tabletest/direct` is the in-process adapter: a model actor over the
 fake that submits in the platform's acceptance order. The order is
-membership, then seq dedupe in a recency list (`SeqClients` bounds it, so
-small values make stale seqs), then the point reference, then the
-requirement and the offer, then staleness. Each change is cloned,
+membership, then seq dedupe in a recency list per user (`SeqClients`
+bounds each user's, so small values with two tabs make stale seqs), then
+the point reference, then the requirement and the offer, then the pick's
+floor (the same seq a duplicate, an older one stale). Each change is cloned,
 validated, persisted and only then swapped in. Its `Record` and `Restore`
 are the room file this harness assumes. A WebSocket adapter plugs in as
 another `Factory`.
 
 The tests prove that the same seeds give the same trace and canonical
 history. Games at three to seven seats under eight arrival seeds, with
-drafts, resends and a two-client seq memory, must give one history that
-replays to its hash. Every arrival order of small points must give one
+drafts, resends, two tabs per seat and a one-client seq memory per user,
+must give one history that replays to its hash. Played once more with
+races, the sweep must meet every outcome, stale included. Every arrival order of small points must give one
 batch: 90 at three seats, 2,520 at four seats, and a one-seat salvage
 point. Races must change the batch only through arrival. Six lying tables
 (a duplicate, a stale seq or a resolution reported as accepted, a false

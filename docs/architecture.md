@@ -115,7 +115,7 @@ runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
   assignment, seats, roles, undo policy, the complete canonical batches, the
   rules hash, the two revision counters, the open point's reference, the
   pending block (each required seat's key, confirmed flag and per-client
-  seqs), the bounded seq memory, the bots' work rows and the room log. Restore
+  seqs), the seq memory (bounded per user), the bots' work rows and the room log. Restore
   validates all of it and replays the batches; a hash mismatch alone is
   refreshed in place, a rules-version mismatch or a failed replay archives the
   file (D29), and an invalid pending block counts as a failed replay. Unknown

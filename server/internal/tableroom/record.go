@@ -72,8 +72,9 @@ type Record struct {
 	// pick and confirmed flag, with the seq per client that last set it.
 	Pending []PendingSlot `json:"pending"`
 
-	// Seqs are the bounded seq acknowledgements, the client whose last
-	// applied seq is oldest first.
+	// Seqs are the seq acknowledgements, oldest accepted first: at most
+	// Config.SeqClients clients for each user, so one user's clients never
+	// push out another's.
 	Seqs []SeqRecord `json:"seqs"`
 	// Work is the bot work ledger of the open point.
 	Work []WorkRow `json:"work"`
@@ -395,9 +396,7 @@ func restore(r *Record, seqCap int) (*state, bool, error) {
 	if !validSeqs(r.Seqs) {
 		return nil, false, invalid("the seq acknowledgements")
 	}
-	if len(st.rec.Seqs) > seqCap {
-		st.rec.Seqs = st.rec.Seqs[len(st.rec.Seqs)-seqCap:]
-	}
+	st.rec.Seqs = trimSeqs(st.rec.Seqs, seqCap)
 	if err := checkWork(r, &g); err != nil {
 		return nil, false, err
 	}
@@ -463,6 +462,22 @@ func checkWork(r *Record, g *game) error {
 		}
 	}
 	return nil
+}
+
+// trimSeqs keeps each user's newest capacity clients, in order. Only a
+// record written under a larger capacity has more; forgetting them is
+// safe, because each pending slot still keeps its own floors.
+func trimSeqs(xs []SeqRecord, capacity int) []SeqRecord {
+	kept := map[string]int{}
+	out := make([]SeqRecord, 0, len(xs))
+	for i := len(xs) - 1; i >= 0; i-- {
+		if kept[xs[i].User] < capacity {
+			kept[xs[i].User]++
+			out = append(out, xs[i])
+		}
+	}
+	slices.Reverse(out)
+	return out
 }
 
 func validSeqs(xs []SeqRecord) bool {

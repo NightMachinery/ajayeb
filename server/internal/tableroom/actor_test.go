@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -178,9 +179,12 @@ func TestPrivateEditsChangeNobodyElsesFrame(t *testing.T) {
 
 func (h *th) snapRef(c tabletest.ClientID) wire.PointRef { return parseRef(h.snap(c).Ref) }
 
-// TestTwoTabsAndForgottenSeqs: two tabs of a seat keep their own seqs; with
-// room for one client's seq, a forgotten old seq is stale and never
-// reverts a newer pick.
+// TestTwoTabsAndForgottenSeqs: two tabs of a seat keep their own seqs.
+// With room for one client per user, a tab pushes out the other tab's
+// acknowledgement, and the slot's floor still answers for it: the seq that
+// last changed the pick is acknowledged again, an older one is stale, and
+// neither reverts the newer pick, before or after a restart. Seq 0 is a
+// seq like any other.
 func TestTwoTabsAndForgottenSeqs(t *testing.T) {
 	h := newTH(t, Config{SeqClients: 1}, humans(3, 77))
 	a, b := tabletest.SeatClient(0), tabletest.SeatClient(1)
@@ -189,19 +193,107 @@ func TestTwoTabsAndForgottenSeqs(t *testing.T) {
 		t.Fatal(err)
 	}
 	sa := h.snap(a)
-	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "a draft")
-	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "a change")
-	h.expect(h.send(b, 1, sa.Ref, h.snap(b).Legal[0], false), tabletest.Accepted, "another client, evicting the first")
-	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Stale, "the old draft again")
-	if sn := h.snap(a); sn.Pick != sa.Legal[1] {
-		t.Fatalf("a stale seq reverted the pick to %q", sn.Pick)
+	h.expect(h.send(a, 0, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "a draft at seq 0")
+	h.expect(h.send(tab2, 0, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "tab two, forgetting tab one")
+	quiet := h.quiet(tab2, b, tabletest.SpectatorClient)
+	h.expect(h.send(a, 0, sa.Ref, sa.Legal[0], false), tabletest.Duplicate, "tab one's seq 0 again")
+	quiet()
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[2], false), tabletest.Accepted, "tab one changes it")
+	h.expect(h.send(tab2, 1, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "tab two changes it back")
+	for _, restart := range []bool{false, true} {
+		if restart {
+			h.f.restart()
+			h.rejoin()
+		}
+		quiet := h.quiet(tab2, b, tabletest.SpectatorClient)
+		h.expect(h.send(a, 1, sa.Ref, sa.Legal[2], false), tabletest.Duplicate, "tab one's last seq again")
+		h.expect(h.send(a, 0, sa.Ref, sa.Legal[0], false), tabletest.Stale, "tab one's older seq")
+		quiet()
+		if sn := h.snap(a); sn.Pick != sa.Legal[1] {
+			t.Fatalf("restart %v: a forgotten seq changed the pick to %q", restart, sn.Pick)
+		}
 	}
-	h.expect(h.send(tab2, 1, sa.Ref, sa.Legal[0], true), tabletest.Accepted, "tab two's lower seq is its own")
+	if r := h.p.rejects[a]; len(r) == 0 || r[len(r)-1].Code != "stale" {
+		t.Fatalf("rejects %+v", r)
+	}
+	if fr := h.latest(a); fr.Ack == nil || fr.Ack.Seq != 1 || fr.Ack.ClientID != string(a) {
+		t.Fatalf("the duplicate's acknowledgement: %+v", fr.Ack)
+	}
+	h.expect(h.send(tab2, 2, sa.Ref, sa.Legal[0], true), tabletest.Accepted, "tab two's newer seq")
 	if sn := h.snap(a); sn.Pick != sa.Legal[0] || !sn.Confirm {
 		t.Fatalf("tab one sees %+v", sn)
 	}
-	if h.p.rejects[a][0].Code != "stale" {
-		t.Fatalf("rejects %+v", h.p.rejects[a])
+}
+
+// TestSeqMemoryIsPerUser: other users' private drafts from many tabs
+// never push out a user's acknowledgements, so an unchanged retry from a
+// user's older tab is the same harmless duplicate with or without them,
+// before and after a restart, and never replaces the newer pick of the
+// user's other tab.
+func TestSeqMemoryIsPerUser(t *testing.T) {
+	for _, churn := range []bool{false, true} {
+		h := newTH(t, Config{}, humans(3, 2027))
+		a := tabletest.SeatClient(0)
+		own, other := h.snap(a), h.snap(tabletest.SeatClient(1))
+		h.expect(h.send(a, 0, own.Ref, own.Legal[0], false), tabletest.Accepted, "own draft")
+		if err := h.p.join(h.ctx, "own-newer", userOf(0), "P0"); err != nil {
+			t.Fatal(err)
+		}
+		h.expect(h.send("own-newer", 0, own.Ref, own.Legal[1], false), tabletest.Accepted, "a newer draft from a second tab")
+		revision := h.latest(a).Revision
+		if churn {
+			for _, s := range []int{1, 2} {
+				h.tabs(s, DefaultSeqClients+2, func(id tabletest.ClientID) {
+					h.expect(h.send(id, 0, other.Ref, h.snap(id).Legal[0], false), tabletest.Accepted, "another user's draft")
+				})
+			}
+		}
+		for _, restart := range []bool{false, true} {
+			if restart {
+				h.f.restart()
+				h.rejoin()
+			}
+			quiet := h.quiet("own-newer", tabletest.SeatClient(1), tabletest.SeatClient(2), tabletest.SpectatorClient)
+			h.expect(h.send(a, 0, own.Ref, own.Legal[0], false), tabletest.Duplicate,
+				fmt.Sprintf("churn %v restart %v: the first tab's unchanged retry", churn, restart))
+			quiet()
+			if fr := h.latest(a); fr.Pending == nil || fr.Pending.Key != own.Legal[1] || fr.Revision != revision {
+				t.Fatalf("churn %v restart %v: the retry changed seat 0's frame: %+v at %d, want %d",
+					churn, restart, fr.Pending, fr.Revision, revision)
+			}
+		}
+	}
+}
+
+// tabs opens n tabs of seat's user one after another, each a new client
+// that runs fn and closes before the next opens.
+func (h *th) tabs(seat, n int, fn func(id tabletest.ClientID)) {
+	h.t.Helper()
+	for i := range n {
+		id := tabletest.ClientID(fmt.Sprintf("seat-%d-new-tab-%d", seat, i))
+		if err := h.p.join(h.ctx, id, userOf(seat), fmt.Sprintf("P%d", seat)); err != nil {
+			h.t.Fatal(err)
+		}
+		fn(id)
+		h.f.m.Leave(h.p.clients[id], h.p.code)
+		delete(h.p.clients, id)
+	}
+}
+
+// quiet records the clients' frame counts; the returned check fails if any
+// of them received a frame since.
+func (h *th) quiet(cs ...tabletest.ClientID) func() {
+	before := make([]int, len(cs))
+	for i, c := range cs {
+		before[i] = h.frameCount(c)
+	}
+	return func() {
+		h.t.Helper()
+		for i, c := range cs {
+			if n := h.frameCount(c); n != before[i] {
+				h.t.Fatalf("%s received %d frames", c, n-before[i])
+			}
+		}
 	}
 }
 

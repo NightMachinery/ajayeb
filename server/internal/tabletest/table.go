@@ -14,6 +14,10 @@ type ClientID string
 // SeatClient is the driver's client for a seat; SpectatorClient watches.
 func SeatClient(seat int) ClientID { return ClientID("seat-" + strconv.Itoa(seat)) }
 
+// TabClient is a seat's second tab: another client of the user seated
+// there. A table that runs scripts with ScriptOptions.Tabs knows it.
+func TabClient(seat int) ClientID { return ClientID("seat-" + strconv.Itoa(seat) + "-tab-2") }
+
 // SpectatorClient is the driver's spectator.
 const SpectatorClient ClientID = "spectator"
 

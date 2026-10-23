@@ -130,6 +130,7 @@ type fixture struct {
 	cfg    Config
 	mem    bool      // keep tables in a memStore
 	ms     *memStore // that store, which outlives restarts
+	tabs   bool      // openInproc also joins each human seat's second tab
 }
 
 func newFixture(t testing.TB, cfg Config) *fixture {
@@ -251,14 +252,20 @@ func (f *fixture) openInproc(ctx context.Context, spec Spec) (*inproc, error) {
 		return nil, err
 	}
 	for s, sr := range seats {
+		user, name := sr.UserID, sr.Name
 		switch sr.Kind {
-		case SeatHuman:
-			err = p.join(ctx, tabletest.SeatClient(s), sr.UserID, sr.Name)
+		case SeatBot:
+			continue
 		case SeatOpen:
-			err = p.join(ctx, tabletest.SeatClient(s), userOf(s), "P"+strconv.Itoa(s))
+			user, name = userOf(s), "P"+strconv.Itoa(s)
 		}
-		if err != nil {
+		if err := p.join(ctx, tabletest.SeatClient(s), user, name); err != nil {
 			return nil, err
+		}
+		if f.tabs {
+			if err := p.join(ctx, tabletest.TabClient(s), user, name); err != nil {
+				return nil, err
+			}
 		}
 	}
 	if err := p.join(ctx, tabletest.SpectatorClient, "watcher", "Watcher"); err != nil {

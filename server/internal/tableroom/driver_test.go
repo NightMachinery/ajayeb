@@ -68,7 +68,9 @@ func TestEveryArrivalOrderInProcess(t *testing.T) {
 		}
 		for _, seqClients := range []int{32, 1} {
 			f := newFixtureOn(t, Config{SeqClients: seqClients}, true)
+			f.tabs = true
 			cfg := tabletest.Config{Seats: c.seats, PickSeed: 9, Script: c.opts}
+			cfg.Script.Tabs = true
 			n, distinct, err := tabletest.ExhaustPoint(ctx, f.factory(c.seats, seed, false), prefix, cfg, 200000)
 			if err != nil {
 				t.Fatalf("%s, seq memory %d: %v", c.name, seqClients, err)
@@ -128,30 +130,38 @@ func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 	return 0, nil
 }
 
-// TestDifferentialAgainstDirect: the same seeded scripts, delivered to the
-// reference model (tabletest/direct) and to the actor arrival by arrival,
-// give identical outcomes, batches and hashes, including with a seq
-// memory small enough for evictions and stale seqs.
+// TestDifferentialAgainstDirect: the same seeded scripts, sent from two
+// tabs per seat to the reference model (tabletest/direct) and to the actor
+// arrival by arrival, give identical outcomes, batches and hashes,
+// including with a seq memory of one client per user, small enough for
+// evictions and stale seqs.
 func TestDifferentialAgainstDirect(t *testing.T) {
 	ctx := testContext(t)
+	seen := map[tabletest.Outcome]int{}
 	for n := MinSeats; n <= MaxSeats; n++ {
-		for _, seqClients := range []int{32, 2} {
+		for _, seqClients := range []int{32, 1} {
 			for game := range uint64(3) {
-				differential(ctx, t, n, 300+game*7+uint64(n), seqClients, game)
+				differential(ctx, t, n, 300+game*7+uint64(n), seqClients, game, seen)
 			}
+		}
+	}
+	for _, o := range []tabletest.Outcome{tabletest.Accepted, tabletest.Resolved, tabletest.Duplicate, tabletest.Stale, tabletest.Closed} {
+		if seen[o] == 0 {
+			t.Errorf("no arrival met outcome %s: %v", o, seen)
 		}
 	}
 }
 
-func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClients int, salt uint64) {
+func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClients int, salt uint64, seen map[tabletest.Outcome]int) {
 	t.Helper()
 	where := fmt.Sprintf("%d seats, seed %d, seq memory %d", n, seed, seqClients)
 	// direct's setup uses the engine's default (random) seating.
-	ref, err := direct.New(ctx, direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: uint8(n)}, SeqClients: seqClients})
+	ref, err := direct.New(ctx, direct.Options{Setup: fakeengine.Setup{Seed: seed, Seats: uint8(n)}, SeqClients: seqClients, Tabs: true})
 	if err != nil {
 		t.Fatal(err)
 	}
 	f := newFixture(t, Config{SeqClients: seqClients})
+	f.tabs = true
 	sp := humans(n, seed)
 	sp.RandomSeating = true
 	act, err := f.openInproc(ctx, sp)
@@ -163,7 +173,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 		clients[s] = tabletest.SeatClient(s)
 	}
 	seqs := tabletest.Seqs{}
-	opts := []tabletest.ScriptOptions{{Drafts: 60, Resends: 40}, {Race: true, Resends: 40}, {Drafts: 100}}
+	opts := []tabletest.ScriptOptions{{Drafts: 60, Resends: 40, Tabs: true}, {Race: true, Resends: 40, Tabs: true}, {Drafts: 100, Tabs: true}}
 	for idx := 0; ; idx++ {
 		if idx > 100 {
 			t.Fatalf("%s: the game did not end", where)
@@ -206,6 +216,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 				t.Fatalf("%s, point %s, arrival %d (%s seq %d confirm=%t): direct %s, actor %s",
 					where, dsnaps[0].Point, i, op.Client, op.Sub.Seq, op.Sub.Confirm, do, ao)
 			}
+			seen[do]++
 		}
 	}
 	dc, _ := ref.Canonical(ctx)

@@ -386,6 +386,13 @@ func (a *actor) refuse(c *room.Client, seq int, op string, seat int, outcome str
 	return a.note(op, seat, outcome)
 }
 
+// duplicate answers a repeated seq with the submitter's current frame,
+// acknowledging it; nothing changes.
+func (a *actor) duplicate(c *room.Client, op string, seat int, seq int) string {
+	c.Out.Push(a.newBroadcast(false).frame(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq}, false))
+	return a.note(op, seat, outDuplicate)
+}
+
 func seqKey(c *room.Client) SeqRecord { return SeqRecord{User: c.UserID, Client: c.ClientID} }
 
 // submit applies one {seq, point, key, confirm} submission, checking in
@@ -400,8 +407,7 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	}
 	key := seqKey(c)
 	if last, ok := seqLast(r.Seqs, key); ok && p.Seq <= last {
-		c.Out.Push(a.newBroadcast(false).frame(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: p.Seq}, false))
-		return a.note("pick", seat, outDuplicate)
+		return a.duplicate(c, "pick", seat, p.Seq)
 	}
 	pt := a.st.game.Point()
 	if pointOver(pt) || r.Point == nil || p.Point != *r.Point {
@@ -410,8 +416,18 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	if !pt.Required.Has(seatNum(seat)) || !slices.Contains(legalKeys(&a.st.game, seat), p.Key) {
 		return a.refuse(c, p.Seq, "pick", seat, outIllegal)
 	}
-	if slot := pendingOf(r, seat); slot != nil && p.Seq < seqIn(slot.Seqs, key) {
-		return a.refuse(c, p.Seq, "pick", seat, outStale)
+	// The acknowledgements may have forgotten this client, but the slot
+	// keeps the seq that last changed it from each client: that same seq
+	// is acknowledged again, an older one is stale. A floor is looked up
+	// by presence, since seq 0 is valid.
+	if slot := pendingOf(r, seat); slot != nil {
+		floor, ok := seqLast(slot.Seqs, key)
+		switch {
+		case ok && p.Seq == floor:
+			return a.duplicate(c, "pick", seat, p.Seq)
+		case ok && p.Seq < floor:
+			return a.refuse(c, p.Seq, "pick", seat, outStale)
+		}
 	}
 	cand := r.clone()
 	key.Seq = p.Seq
@@ -535,8 +551,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	}
 	key := seqKey(c)
 	if last, ok := seqLast(r.Seqs, key); ok && u.Seq <= last {
-		c.Out.Push(a.newBroadcast(false).frame(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: u.Seq}, false))
-		return a.note("undo", seat, outDuplicate)
+		return a.duplicate(c, "undo", seat, u.Seq)
 	}
 	if !a.undoAllowed(c.UserID, seat) {
 		return a.refuse(c, u.Seq, "undo", seat, outForbidden)
@@ -591,15 +606,6 @@ func pendingOf(r *Record, seat int) *PendingSlot {
 
 func sameClient(a, b SeqRecord) bool { return a.User == b.User && a.Client == b.Client }
 
-func seqIn(xs []SeqRecord, k SeqRecord) int {
-	for _, x := range xs {
-		if sameClient(x, k) {
-			return x.Seq
-		}
-	}
-	return 0
-}
-
 func seqSet(xs []SeqRecord, k SeqRecord) []SeqRecord {
 	for i := range xs {
 		if sameClient(xs[i], k) {
@@ -610,10 +616,10 @@ func seqSet(xs []SeqRecord, k SeqRecord) []SeqRecord {
 	return append(xs, k)
 }
 
-// seqLast returns the client's last applied seq. A lookup never reorders
-// the list: a duplicate changes nothing, in memory or on disk, so a table
-// restarted from its record forgets the same clients as one that never
-// stopped.
+// seqLast returns the client's remembered seq and whether it is there at
+// all (seq 0 is a valid seq). A lookup never reorders the list: a
+// duplicate changes nothing, in memory or on disk, so a table restarted
+// from its record forgets the same clients as one that never stopped.
 func seqLast(xs []SeqRecord, k SeqRecord) (int, bool) {
 	for _, x := range xs {
 		if sameClient(x, k) {
@@ -623,9 +629,10 @@ func seqLast(xs []SeqRecord, k SeqRecord) (int, bool) {
 	return 0, false
 }
 
-// seqPut records k as the client's last applied seq, moving the client to
-// the end, and beyond capacity forgets the clients whose last applied seq
-// is the oldest.
+// seqPut records k as the client's last accepted seq, moving the client to
+// the end. Beyond capacity it forgets the client of the same user whose
+// last accepted seq is the oldest: each user has a partition of their own,
+// so no user's activity changes the answers another user gets.
 func seqPut(xs *[]SeqRecord, k SeqRecord, capacity int) {
 	for i, x := range *xs {
 		if sameClient(x, k) {
@@ -634,7 +641,19 @@ func seqPut(xs *[]SeqRecord, k SeqRecord, capacity int) {
 		}
 	}
 	*xs = append(*xs, k)
-	if len(*xs) > capacity {
-		*xs = slices.Clone((*xs)[len(*xs)-capacity:])
+	if seqUsers(*xs, k.User) > capacity {
+		i := slices.IndexFunc(*xs, func(x SeqRecord) bool { return x.User == k.User })
+		*xs = slices.Delete(*xs, i, i+1)
 	}
+}
+
+// seqUsers counts the user's clients in xs.
+func seqUsers(xs []SeqRecord, user string) int {
+	n := 0
+	for _, x := range xs {
+		if x.User == user {
+			n++
+		}
+	}
+	return n
 }
