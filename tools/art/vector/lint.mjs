@@ -15,8 +15,12 @@
 //
 // With no paths and no --set it lints web/src/lib/icons/svg, checks that the
 // files match web/src/lib/icons/names.ts, and checks the aggregate source-set budget
-// (40 KB raw, 10 KB gzipped in the tools' specimen SVG envelope). It needs no browser and runs in well under a
-// second, so it does not go through tools/heavy.py.
+// (40 KB raw, 10 KB gzipped in the tools' specimen SVG envelope). It then lints
+// the other games' icon directories (GAME_ICON_DIRS in lib.mjs) by the same rules,
+// and refuses a file there named like a Duel icon: a reused drawing is referenced,
+// not copied. Duel's names.ts and budget checks do not count those files.
+// It needs no browser and runs in well under a second, so it does not go through
+// tools/heavy.py.
 //
 // Rules (STYLE.md has the reasons): parse, root, prolog, comment, element,
 // attr, paint, raw-colour, convention, implicit-fill, halo, snap, feature,
@@ -28,6 +32,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import zlib from 'node:zlib';
 import {
+  GAME_ICON_DIRS,
   ICON_DIR,
   TOKENS_CSS,
   inherited,
@@ -384,7 +389,9 @@ export function lintFiles(items, { sets = loadSets().sets } = {}) {
     const doc = parseXml(src);
     for (const e of doc.errors) report(file, e.line, 'error', 'parse', e.message);
     if (!doc.root) continue;
-    const sprite = path.resolve(path.dirname(file)) === path.resolve(ICON_DIR);
+    const sprite = [ICON_DIR, ...GAME_ICON_DIRS].some(
+      (d) => path.resolve(path.dirname(file)) === path.resolve(d)
+    );
 
     // Root.
     const root = doc.root;
@@ -690,15 +697,29 @@ async function main() {
     } else items.push({ file: p });
   }
   const whole = o.set.length === 0 && positionals.length === 0;
+  const gameItems = [];
   if (whole) {
     for (const f of fs.readdirSync(ICON_DIR).sort())
       if (f.endsWith('.svg')) items.push({ file: path.join(ICON_DIR, f) });
+    for (const dir of GAME_ICON_DIRS.filter((d) => fs.existsSync(d)))
+      for (const f of fs.readdirSync(dir).sort())
+        if (f.endsWith('.svg')) gameItems.push({ file: path.join(dir, f) });
   }
 
-  const { problems } = lintFiles(items, { sets });
+  const { problems } = lintFiles([...items, ...gameItems], { sets });
   if (whole) {
     const names = readIconNames();
     const onDisk = new Set(items.map((i) => path.basename(i.file, '.svg')));
+    for (const { file } of gameItems) {
+      if (onDisk.has(path.basename(file, '.svg')))
+        problems.push({
+          file,
+          line: 0,
+          level: 'error',
+          rule: 'names',
+          message: `"${path.basename(file, '.svg')}" copies a Duel icon name; reference the Duel file from sets.json instead`
+        });
+    }
     for (const n of names) {
       if (!onDisk.has(n))
         problems.push({
@@ -760,7 +781,7 @@ async function main() {
   for (const p of problems) byRule[p.rule] = (byRule[p.rule] ?? 0) + 1;
   const filesWith = new Set(problems.filter((p) => p.level === 'error').map((p) => p.file)).size;
   console.error(
-    `lint: ${items.length} files, ${errors} errors in ${filesWith} files, ${warns} warnings` +
+    `lint: ${items.length + gameItems.length} files, ${errors} errors in ${filesWith} files, ${warns} warnings` +
       (problems.length
         ? ` (${Object.entries(byRule)
             .map(([r, n]) => `${r} ${n}`)

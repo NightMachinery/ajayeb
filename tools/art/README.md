@@ -292,7 +292,7 @@ substitutes both tones.
 Run from the repository root. Commands that launch Chrome must run inside the guard's browser lock (`python3 tools/heavy.py run --kind browser -- ...`), which keeps the machine to one headless Chrome; each of them starts one Chrome and closes it before it exits. The others need no lock.
 
 - `lint.mjs`: checks icon SVGs against STYLE.md and prints one line per problem, `path:line: error|warn rule: <element> #n: message`, then a summary on stderr. It exits 1 on any error (with `--strict`, on any warning too) and 2 when it cannot run.
-  - `node tools/art/vector/lint.mjs` lints the whole icon source directory, checks it against `names.ts`, and checks the aggregate icon source-set budget.
+  - `node tools/art/vector/lint.mjs` lints the whole icon source directory, checks it against `names.ts`, and checks the aggregate icon source-set budget. It then lints the other games' icon directories (`GAME_ICON_DIRS` in `lib.mjs`, today `web/src/lib/games/haftgane/icons/svg/`) by the same rules, and refuses a file there that is named like a Duel icon, since a reused Duel drawing is referenced from `sets.json`, not copied. Those files count toward neither `names.ts` nor Duel's budget.
   - The legacy constants `SPRITE_RAW_MAX` (40 KB) and `SPRITE_GZIP_MAX` (10 KB) bound the complete source set serialized in the vector tools' specimen SVG envelope, including its symbol wrappers. They do not bound the client bundle or each rendered icon: the client draws local SVG shapes directly.
   - `node tools/art/vector/lint.mjs --set chain` lints one set from `art/vector/sets.json`.
   - `node tools/art/vector/lint.mjs path/to/a.svg path/to/dir` lints files and directories.
@@ -314,7 +314,7 @@ Every script prints its usage with `--help`. A usage mistake or another expected
 
 These wrap the commands above in the guard:
 
-- `make vec-lint` runs `lint.mjs` over the whole icon source directory (guard kind `light`).
+- `make vec-lint` runs `lint.mjs` over the whole icon source directory and the other games' icon directories (guard kind `light`).
 - `make vec-shot SET=<set> [ITER=<n>]` runs `shoot.mjs` under `--kind browser`, then `peep.mjs`.
 - `make vec-blind SET=<set>` runs `blind.mjs make` under `--kind browser`. Scoring stays a plain `node tools/art/vector/blind.mjs score ...` call.
 - `make vec-family` runs `family.mjs` under `--kind browser`.

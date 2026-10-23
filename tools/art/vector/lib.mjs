@@ -13,6 +13,10 @@ import { fileURLToPath } from 'node:url';
 export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 export const ICON_DIR = path.join(REPO, 'web/src/lib/icons/svg');
 export const NAMES_TS = path.join(REPO, 'web/src/lib/icons/names.ts');
+/** Icon sources of games other than Duel. They live outside ICON_DIR so that
+ *  sources.ts, which globs only ICON_DIR, never ships them to Duel players.
+ *  A drawing reused from Duel is referenced from sets.json, never copied here. */
+export const GAME_ICON_DIRS = [path.join(REPO, 'web/src/lib/games/haftgane/icons/svg')];
 export const TOKENS_CSS = path.join(REPO, 'web/src/lib/styles/tokens.css');
 export const SETS_JSON = path.join(REPO, 'art/vector/sets.json');
 export const FONT_DIR = path.join(REPO, 'web/src/lib/fonts');
