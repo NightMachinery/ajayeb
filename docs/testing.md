@@ -242,7 +242,11 @@ canonical history is the `ajayeb-log/2` download.
   watches), undo turned off for good when a second human sits, roles under
   an injected clock (promotion and demotion limits, the temporary admin
   made after five minutes away, kept across a restart, passed on and
-  demoted when a real admin returns) and resignation. Each checks that
+  demoted when a real admin returns) and resignation.
+  `rolewrites_test.go` refuses the write of each temporary-admin change and
+  checks that the temporary role fails closed (no seat switch, no device
+  link of the creator's seat, no temporary admin in any frame) until a
+  retry saves it. Each checks that
   only admins see the previous-seat hint, every change reaches every
   viewer's log, and no viewer's revision goes back.
 - `links_test.go` covers device links (who may link a seat, a connection
@@ -337,6 +341,15 @@ opened and a failed write that leaves the lobby as it was.
 the unseated list across a restart, and lets the temporary admin start.
 `TestDetachAcrossStart` races a detach against Start twenty times: it is
 never lost. `TestRematch` checks the successor lobby a finished table makes.
+`TestLobbyRolesRefusedWrites` refuses the write of each temporary-admin
+change (the grant, a real admin's return, the passing on) and checks that
+the temporary role fails closed until a retry saves it.
+`TestRematchClaimsRevoked` revokes rematch claims by removal, release, an
+opened reservation and a cut seat count, and checks that seating the human
+again, a restart and Start never revive them, while an unbroken claim
+reaches its seat at the table. `TestRematchOneSuccessor` refuses each of a
+rematch's three writes, restarts and lets the other original human retry:
+the table always ends with one successor.
 Package `roles` has its own unit tests of the role policy and the
 five-minute rules at explicit times.
 

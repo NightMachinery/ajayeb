@@ -157,7 +157,13 @@ needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
   frame after its seat changes carries its whole history again.
 - **Roles, switches and resignation.** Package `roles` decides every role
   change and the temporary admin; a timer on the injected clock rechecks the
-  five-minute rule. An admin seats any spectator in any seat or gives a seat
+  five-minute rule. When the store refuses a role change, the actor keeps
+  the unsaved roles, starts its next check from them and retries after five
+  seconds, and the temporary role fails closed meanwhile: a temporary admin
+  has the powers (and frames show them as one) only while both the saved
+  roles and the rule, checked at that moment, name them. So a refused write
+  delays a change but never leaves a demoted or replaced temporary admin
+  their powers. An admin seats any spectator in any seat or gives a seat
   to a bot; the switch keeps the pending pick (a bot confirms it), rewrites
   the open point's work rows, stops or starts the bot, and logs a public
   entry. A resignation hands the sender's seat to a bot of the lowest level.
@@ -166,9 +172,16 @@ needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
   that seat's user. A claim's epoch is the public revision when the seat's
   human took it or relinked it, so a relink or a change of the seat's user
   revokes the claims before it, and their connections are detached. A
-  finished table's original human asks for its one rematch: package
-  `lobbyroom` makes the successor lobby through the `Successors` interface,
-  and the table keeps its code.
+  seat started from a lobby slot keeps epoch 0, the rematch's claim, only if
+  its human held that slot without a break; otherwise it starts at the
+  table's first public revision. A finished table's original human asks for
+  its one rematch in three writes: the table writes down a fresh code
+  (`room.Manager.FreshCode`) with the requester, package `lobbyroom` makes
+  the successor lobby under it through the `Successors` interface (the
+  lobby names the table as its parent), and the table records it as its
+  successor. A request after a refused write or a crash between them, by
+  any original human, goes on from the written code, so there is never a
+  second successor.
 - **Undo.** Only the original sole human, while still controlling their seat,
   with undo allowed at creation; it is off for good once a second human takes
   a seat. It cuts back before the latest batch holding that seat's decision
@@ -196,9 +209,14 @@ needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
 
 `internal/lobbyroom` is the `lobby` room kind (D60, M16.haftgane-lobby-and-roles):
 a small actor and a schema-2 record (format, seat count, options, slots that
-are open, reserved, human or bot, roles, the users who released or were
-removed, the seq memory and a role log), changed by the same clone, validate,
-write, publish transaction as the table. It knows no game rules. Start, by a
+are open, reserved, human or bot, each with its claim epoch, roles, the users
+who released or were removed, the seq memory, a role log and, for a rematch's
+lobby, the table it follows), changed by the same clone, validate, write,
+publish transaction as the table. The only claims a lobby honours are a
+rematch's, of epoch 0, while their human keeps the reservation or the slot it
+became; any other seating takes the revision of the change as its epoch, so a
+human who lost their slot and is seated again cannot be reached by the old
+claim, in the lobby or at the table. It knows no game rules. Start, by a
 seated admin, builds the table's spec from the slots and roles and calls
 `tableroom.Tables.StartTable`, which writes the table's record in place of the
 lobby's (`store.ReplaceGame`, which requires the lobby's live record under that
@@ -208,7 +226,10 @@ connection move together. A detach that reaches the lobby during the swap is
 forwarded to the table; a join that arrives after it is retried on the
 table, and a lobby request is refused, so nothing is lost or applied twice. Two seats are refused until Duel's create
 path exists (M18.shared-lobby). A table's rematch is a new lobby made here,
-with the original humans' slots reserved for them.
+with the original humans' slots reserved for them: `Lobbies.Rematch` writes
+it under the code the table reserved, finds it instead when an earlier
+attempt for the same table already did, and refuses a code another room
+took meanwhile.
 
 ## App shell
 
