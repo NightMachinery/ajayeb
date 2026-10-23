@@ -93,16 +93,24 @@ func (g *Game) walkRecord(visit recordVisitor) error {
 	return nil
 }
 
-// History preserves the live entitlement of every event, even after an end
-// reveal. Revelation is a separate view field, not a retroactive event filter.
+// HistoryStartPoint names the pre-game history entry, before batch 1.
+const HistoryStartPoint = "game-start"
+
+// History always starts with HistoryStartPoint at index 0 (batch 0). It carries
+// Age I's start for day/random sides and an empty event list for chosen sides.
+// Each following index i describes completed batch i, so successful histories
+// have State.Points+1 entries. Events retain their live entitlement after end
+// reveal; revelation is a separate view field, not a retroactive event filter.
 func (g *Game) History(viewer Seat) ([]view.HistoryEntry, error) {
 	out := make([]view.HistoryEntry, 0, MaxPoints+1)
 	if g == nil {
 		return out, fmt.Errorf("rules: nil history game")
 	}
+	initial := []view.Event{}
 	if g.State.Opts.Sides != SidesChoose {
-		out = append(out, view.HistoryEntry{Point: "age-1-start", Events: FilterEvents([]Event{{Kind: EvAgeStart, Age: 1}}, viewer)})
+		initial = FilterEvents([]Event{{Kind: EvAgeStart, Age: 1}}, viewer)
 	}
+	out = append(out, view.HistoryEntry{Point: HistoryStartPoint, Events: initial})
 	err := g.walkRecord(func(before *State, _ *[MaxSeats]Action, _ *State, evs []Event) {
 		out = append(out, view.HistoryEntry{Point: (&Game{State: *before}).Point().ID(), Events: FilterEvents(evs, viewer)})
 	})

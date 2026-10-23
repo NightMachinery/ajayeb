@@ -48,10 +48,11 @@ func TestHistoryEqualsLiveFilteredStreams(t *testing.T) {
 					if i == int(n) {
 						viewer = NoSeat
 					}
-					live[i] = make([]view.HistoryEntry, 0, MaxPoints+1)
+					initial := []view.Event{}
 					if g.State.Opts.Sides != SidesChoose {
-						live[i] = append(live[i], view.HistoryEntry{Point: "age-1-start", Events: FilterEvents([]Event{{Kind: EvAgeStart, Age: 1}}, viewer)})
+						initial = FilterEvents([]Event{{Kind: EvAgeStart, Age: 1}}, viewer)
 					}
+					live[i] = []view.HistoryEntry{{Point: HistoryStartPoint, Events: initial}}
 				}
 				for {
 					for i := 0; i <= int(n); i++ {
@@ -246,11 +247,47 @@ func TestHistorySkippedPileLook(t *testing.T) {
 			t.Fatal("skipped private look leaked")
 		}
 		h, err := g.History(0)
-		if err != nil || len(h) != 3 {
+		if err != nil || len(h) != 4 {
 			t.Fatal("skipped look history not replayable", err, h)
 		}
 		t.Logf("reachable empty-pile skip at seed %d", seed)
 		return
 	}
 	t.Fatal("no reachable empty-pile skip fixture")
+}
+
+// The platform's batch counter is the History index for every side option.
+// The initial entry is batch zero, before any accepted choice batch.
+func TestHistoryBatchZeroContract(t *testing.T) {
+	for side := SideRule(0); side < NumSideRules; side++ {
+		g, err := NewGame(Setup{Seed: 83, Seats: 3, Options: Options{Sides: side}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for {
+			for _, viewer := range []Seat{0, 1, 2, NoSeat} {
+				entries, err := g.History(viewer)
+				if err != nil || len(entries) != int(g.State.Points)+1 {
+					t.Fatalf("side %d batch %d history length %d: %v", side, g.State.Points, len(entries), err)
+				}
+				if entries[0].Point != HistoryStartPoint || entries[0].Events == nil {
+					t.Fatal("missing canonical batch zero", side, entries[0])
+				}
+				initial := []view.Event{}
+				if side != SidesChoose {
+					initial = FilterEvents([]Event{{Kind: EvAgeStart, Age: 1}}, viewer)
+				}
+				if !reflect.DeepEqual(entries[0].Events, initial) {
+					t.Fatal("batch zero events", side, entries[0].Events, initial)
+				}
+			}
+			if g.State.Phase == PhaseOver {
+				break
+			}
+			g, _, err = g.Resolve(salesBatch(g))
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
 }

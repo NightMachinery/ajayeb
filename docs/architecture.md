@@ -596,8 +596,12 @@ JSON name, and only pointer fields use `omitempty`.
 of the raw event's `Private` assertion; unknown kinds are dropped. `History`
 replays materialized entered packets and public setup facts, rebuilding every
 batch from the record without regenerating randomness from a seed. Its stream
-includes Age I's `age-start`, even for day/random setup, and preserves live
-privacy after the game ends. The same bounded walk builds Knowledge, latest
+always starts with `rules.HistoryStartPoint` (`"game-start"`) at index 0,
+representing batch 0. That entry carries Age I's `age-start` for day/random
+setup and an empty event list for chosen sides. Entry i is completed batch i,
+so the platform uses the index as its batch number and a successful history
+has `State.Points + 1` entries. It preserves live privacy after the game ends.
+The same bounded walk builds Knowledge, latest
 plays and view events using reusable scratch. Explicit scenarios with missing
 past picks have no reconstructable history: `History` returns an error and an
 empty list, while `Observe`/`ViewFor` keep current facts but omit historical

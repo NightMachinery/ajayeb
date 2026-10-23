@@ -393,7 +393,12 @@ Every category counts public things only (stages, buildings, coins, tokens), so 
 
 **Remembered information.** A player legitimately remembers every hand they held, what they did with each card, what was public and what they saw in the pile. They may deduce more (with five seats or fewer a packet comes round twice in an Age); the engine supplies facts, and deductions only in the notebook statistics, only when they are certain. A seat that changes controller keeps its knowledge: a former human controller becomes a spectator, and a human an admin seats in any seat receives that seat's knowledge (the platform's rules). Knowledge belongs to the seat, not the person: a former player seated in another seat gets only the new seat's knowledge from the engine, though they still remember the old seat's hands, which the owner accepts. The engine neither prevents nor models that memory.
 
-**History.** `History(viewer)` rebuilds the whole game's events for one viewer, filtered exactly as they were live. Every key can be rebuilt from the record (picks, public plays, discard builds, sides), so the engine resolves the game again from its own setup; no events are stored. Every list of cards in views, offers, notebooks and history is sorted by design id.
+**History.** `History(viewer)` always starts with `rules.HistoryStartPoint`
+(`"game-start"`) at index 0, representing batch 0. Its events contain Age I's
+start for day and random sides and are empty for chosen sides. Each following
+entry at index i represents completed batch i, so the platform maps the index
+directly to its batch counter. A successful history has `State.Points + 1`
+entries. `History(viewer)` rebuilds the whole game's events for one viewer, filtered exactly as they were live. Every key can be rebuilt from the record (picks, public plays, discard builds, sides), so the engine resolves the game again from its own setup; no events are stored. Every list of cards in views, offers, notebooks and history is sorted by design id.
 
 **Sizes.** A typical seat view is a few kilobytes; the extreme choice list (217 keys with breakdowns) is about 17 KB, so the worst view is about 24 KB. These are estimates for the views slice to measure and publish in `limits.go`, not transport caps.
 
@@ -510,6 +515,7 @@ Slice-specific tests are listed with each slice (section 14). Across all slices:
 - **Termination** within 25 points and 4 transitions between points; **coin conservation** per turn; **order independence** (the reversed seat loop).
 - **Redaction:** sweeps serialise every view, event stream, history and restored view for every seat and the spectator, under both end policies, and check them against an independent entitlement model built from the deal and the picks; negative fixtures with sentinels prove the check can fail; the seed appears nowhere.
 - **Noninterference:** changing hidden cards, or another seat's pending pick, leaves a seat's view bytes, observation and bot choice unchanged.
+- **History batch numbering:** every side option starts with the named `rules.HistoryStartPoint` entry at batch 0, containing only the initial Age I start for day/random sides and no events for chosen sides. At every live prefix, entry i is completed batch i, `len(History) == State.Points + 1`, and each viewer's history equals its live filtered stream.
 - **Sweeps** of 2000 seeded games per N under random and simple policies, all side options; every kind, condition, point kind and ability path reached or forced by a scenario.
 - **Fuzzers** `FuzzPlayout`, `FuzzKeys` and `FuzzPayment`, ten minutes each without a crasher; **oracles** for payment and science; **purity** (the shared import guard, depguard, forbidigo); **coverage** of at least 90% for `rules` and `catalog`, and a test that fails when any kind, condition, point kind or event kind lacks a scenario; a **rules-audit round** as in M2.
 
