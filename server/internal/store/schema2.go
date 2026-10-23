@@ -100,6 +100,22 @@ func (st *Store) LoadGame(code, game string, assess func(data []byte) (Assessmen
 // Save. A record whose status is
 // archived is moved to the archive folder after it is written.
 func (st *Store) SaveGame(code, game string, data []byte) error {
+	return st.saveGame(code, game, data, "")
+}
+
+// ReplaceGame atomically writes code's schema-2 record of game in place of
+// its live record of another game, from: the shared lobby's Start, which
+// writes the started game under the lobby's code. It checks data as
+// SaveGame does, and refuses unless a cleanly read, unarchived record of
+// from is in place, so a Start can never overwrite a game.
+func (st *Store) ReplaceGame(code, from, game string, data []byte) error {
+	if from == "" || from == game {
+		return fmt.Errorf("store: replace %s: %w: nothing to replace", code, ErrGame)
+	}
+	return st.saveGame(code, game, data, from)
+}
+
+func (st *Store) saveGame(code, game string, data []byte, from string) error {
 	path, err := st.path(code)
 	if err != nil {
 		return err
@@ -121,6 +137,17 @@ func (st *Store) SaveGame(code, game string, data []byte) error {
 	if existing, err := readCapped(path); err == nil {
 		schema, g, kerr := fileKind(existing)
 		switch {
+		case from != "":
+			if kerr != nil || schema != 2 || g != from {
+				return fmt.Errorf("store: replace %s: %w: no %s record is in place", code, ErrGame, from)
+			}
+			old, derr := st.codecs.decode(existing)
+			if derr != nil || old.Retention().Code != code {
+				return fmt.Errorf("store: replace %s: %w: the %s record does not decode", code, ErrGame, from)
+			}
+			if old.Retention().Status == StatusArchived {
+				return fmt.Errorf("store: replace %s: %w", code, ErrArchived)
+			}
 		case errors.Is(kerr, ErrSchema):
 			// A clean header of a schema this build does not know: a newer
 			// server's room, which must not be lost.
@@ -134,7 +161,7 @@ func (st *Store) SaveGame(code, game string, data []byte) error {
 				return fmt.Errorf("store: save %s: %w", code, ErrArchived)
 			}
 		}
-	} else if !errors.Is(err, fs.ErrNotExist) {
+	} else if !errors.Is(err, fs.ErrNotExist) || from != "" {
 		return fmt.Errorf("store: save %s: %w", code, err)
 	}
 	if err := writeBytes(path, data); err != nil {

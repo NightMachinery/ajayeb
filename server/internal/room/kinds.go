@@ -191,5 +191,35 @@ func (m *Manager) CreateHandle(kind string, build func(code string) (*Handle, er
 	return "", fmt.Errorf("%w: no free room code", ErrStorage)
 }
 
+// Swap hands old's code to next, a handle of another registered kind for
+// the same code: the shared lobby's Start, which writes the started game's
+// record in place of the lobby's and passes its connections on. Swap
+// registers next in old's place and starts it. old's actor must stop
+// afterwards; its Forget is then a no-op, since next holds the code. The
+// connections stay joined to the code, so their later requests and
+// detaches reach next; a detach already delivered to old is old's to
+// forward.
+func (m *Manager) Swap(old, next *Handle) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	switch {
+	case m.closed:
+		return ErrClosed
+	case old == nil || next == nil || old.owner != m || next.owner != m || next.code != old.code ||
+		m.rooms[old.code] != old || next.duel != nil || old == next:
+		return ErrInvalidSpec
+	}
+	if _, ok := m.cfg.Kinds.entries[next.kind]; !ok {
+		return ErrInvalidSpec
+	}
+	m.rooms[old.code] = next
+	next.start()
+	return nil
+}
+
+// Claims returns the device-link claims of Config.Claims for registered
+// kinds' actors, or nil when device links are off.
+func (m *Manager) Claims() Claims { return m.cfg.Claims }
+
 // post delivers an already decoded request to the concrete actor's inbox.
 func (h *Handle) post(ctx context.Context, msg any) error { return h.hooks.Deliver(ctx, msg) }

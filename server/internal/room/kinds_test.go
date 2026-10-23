@@ -401,3 +401,78 @@ func TestRoomKindsForeignLoadUsesRegisteredHandle(t *testing.T) {
 		t.Fatal("foreign fixture was rewritten")
 	}
 }
+
+// TestRoomKindsSwap: a running actor hands its code to a handle of another
+// kind. Joined connections keep the code; their requests and detaches
+// reach the new actor, the old actor's Forget leaves it registered, and
+// Swap refuses a handle for another code or a stale old handle.
+func TestRoomKindsSwap(t *testing.T) {
+	second := fixtureKind()
+	second.ID, second.Codec = "fixture2", &store.Codec{Game: "fixture2", Decode: second.Codec.Decode}
+	kinds, err := NewKinds(DuelKind(), fixtureKind(), second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.OpenWithCodecs(t.TempDir(), nil, kinds.Codecs())
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := NewManager(Config{Store: st, Kinds: kinds, KindOf: st.Game})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer m.Close()
+	type counts struct{ attach, detach, deliver atomic.Int32 }
+	handle := func(kind, code string, n *counts) (*Handle, context.CancelFunc) {
+		ctx, cancel := context.WithCancel(m.Context())
+		h, err := m.NewHandle(kind, code, HandleConfig{Run: func() { <-ctx.Done() }, Cancel: cancel,
+			Attach:  func(context.Context, *Client, *string) error { n.attach.Add(1); return nil },
+			Detach:  func(*Client) { n.detach.Add(1) },
+			Deliver: func(context.Context, any) error { n.deliver.Add(1); return nil },
+			Evict:   func(context.Context) error { return errors.New("busy") }})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return h, cancel
+	}
+	var a, b counts
+	var old *Handle
+	var stopOld context.CancelFunc
+	code, err := m.CreateHandle("fixture", func(code string) (*Handle, error) {
+		old, stopOld = handle("fixture", code, &a)
+		return old, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := NewClient("u", "c", "U")
+	c.ProtocolVersion = wire.PlatformProtocolVersion
+	if err := m.Join(context.Background(), c, code); err != nil {
+		t.Fatal(err)
+	}
+	next, stopNext := handle("fixture2", code, &b)
+	defer stopNext()
+	other, stopOther := handle("fixture2", "REGZZZ", &b)
+	defer stopOther()
+	if err := m.Swap(old, other); !errors.Is(err, ErrInvalidSpec) {
+		t.Fatalf("a swap to another code: %v", err)
+	}
+	if err := m.Swap(old, next); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.Swap(old, next); !errors.Is(err, ErrInvalidSpec) {
+		t.Fatalf("a second swap of the old handle: %v", err)
+	}
+	stopOld()
+	m.Forget(old)
+	if got, _ := m.lookup(code); got != next || m.Len() != 1 {
+		t.Fatal("the old actor's Forget removed its successor")
+	}
+	if err := m.Resync(context.Background(), c, code); err != nil {
+		t.Fatal(err)
+	}
+	m.Leave(c, code)
+	if a.attach.Load() != 1 || a.deliver.Load() != 0 || a.detach.Load() != 0 || b.deliver.Load() != 1 || b.detach.Load() != 1 {
+		t.Fatalf("after the swap: old %d/%d/%d, new %d/%d", a.attach.Load(), a.deliver.Load(), a.detach.Load(), b.deliver.Load(), b.detach.Load())
+	}
+}

@@ -240,3 +240,64 @@ func TestSaveGame(t *testing.T) {
 		t.Fatalf("PeekGame: %v %v %s", archived, err, data)
 	}
 }
+
+// TestReplaceGame: Start writes a game in place of a live lobby record of
+// the same code, and of nothing else: not over another game, an archive,
+// damaged bytes or a missing file, nor a record of another code.
+func TestReplaceGame(t *testing.T) {
+	codecs, err := store.NewCodecs(
+		store.Codec{Game: "fixture", Decode: func(raw []byte) (store.Inspection, error) {
+			var r gameRecord
+			err := json.Unmarshal(raw, &r)
+			return &r, err
+		}},
+		store.Codec{Game: "waiting", Decode: func(raw []byte) (store.Inspection, error) {
+			var r gameRecord
+			err := json.Unmarshal(raw, &r)
+			return &r, err
+		}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	st, err := store.OpenWithCodecs(t.TempDir(), func() time.Time { return gameNow }, codecs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	waiting := func(code, status string) []byte {
+		return []byte(`{"schema":2,"game":"waiting","code":"` + code + `","status":"` + status + `","updated":"2000-01-01T00:00:00Z"}` + "\n")
+	}
+	if err := st.SaveGame("GAMRAA", "waiting", waiting("GAMRAA", "lobby")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.ReplaceGame("GAMRAA", "waiting", "fixture", gameFile("GAMRAB", "playing")); err == nil {
+		t.Error("a record of another code replaced the lobby")
+	}
+	if err := st.ReplaceGame("GAMRAA", "fixture", "fixture", gameFile("GAMRAA", "playing")); err == nil {
+		t.Error("a replacement of a game by itself succeeded")
+	}
+	if err := st.ReplaceGame("GAMRAA", "waiting", "fixture", gameFile("GAMRAA", "playing")); err != nil {
+		t.Fatal(err)
+	}
+	if g, err := st.Game("GAMRAA"); err != nil || g != "fixture" {
+		t.Fatalf("after the replacement: %q %v", g, err)
+	}
+	// The started game is not a lobby: a second Start cannot overwrite it.
+	if err := st.ReplaceGame("GAMRAA", "waiting", "fixture", gameFile("GAMRAA", "playing")); !errors.Is(err, store.ErrGame) {
+		t.Errorf("replacing a game: %v", err)
+	}
+	if err := st.ReplaceGame("GAMRAC", "waiting", "fixture", gameFile("GAMRAC", "playing")); err == nil {
+		t.Error("a replacement with nothing in place succeeded")
+	}
+	place(t, st, "rooms/GAMRAD.json", []byte("not json"))
+	if err := st.ReplaceGame("GAMRAD", "waiting", "fixture", gameFile("GAMRAD", "playing")); err == nil {
+		t.Error("damaged bytes were replaced")
+	}
+	place(t, st, "rooms/GAMRAE.json", waiting("GAMRAE", "archived"))
+	if err := st.ReplaceGame("GAMRAE", "waiting", "fixture", gameFile("GAMRAE", "playing")); !errors.Is(err, store.ErrArchived) {
+		t.Errorf("replacing a live-folder archive: %v", err)
+	}
+	place(t, st, "rooms-archive/GAMRAF.json", waiting("GAMRAF", "archived"))
+	if err := st.ReplaceGame("GAMRAF", "waiting", "fixture", gameFile("GAMRAF", "playing")); !errors.Is(err, store.ErrArchived) {
+		t.Errorf("replacing an archive: %v", err)
+	}
+}
