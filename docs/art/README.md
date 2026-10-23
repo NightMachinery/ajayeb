@@ -20,6 +20,8 @@ The five original sets are `resources-economy-military`, `science`, `chain`, `ui
 
 Haftgane's own drawings (M19) live in `web/src/lib/games/haftgane/icons/svg/`, outside the directory that `sources.ts` imports, so they never ship to Duel players; `names.ts` and Duel's icon byte budget do not count them. A Duel drawing that Haftgane reuses is referenced from `sets.json` (an entry's `file` or `smFile`), never copied there. `make vec-lint` lints that directory by the same rules. `haftgane-resources-science` holds ore and cloth, the compass and the tablet with their `-sm` variants, and `science-gear-sm`, whose md is Duel's `chain-gear` under the science id.
 
+Haftgane's chain symbols are the set `haftgane-chain` (M19): 24 symbols, of which 14 are Duel drawings referenced from `sets.json` (eleven chain drawings and three science drawings under chain aliases) and 10 are new files in `web/src/lib/games/haftgane/icons/svg/`, outside Duel's bundle. Its spec and log are `art/vector/specs/haftgane-chain.md` and `art/vector/log/haftgane-chain.md`.
+
 The ornaments reached the app in M11 (slice `M11.ornament-integration`): the girih as a faint inlay behind the card structure, the track cells and the city gates on the military track's full bar, and the wordmark above Home's about footer and in the GameOver dialog. `web/README.md` (section Ornaments) says how each is drawn. In the same slice `crest-moon-sm` was redrawn as a plain tilted crescent, because at the 11 px of the compact track the crescent face read as the same round blob as `crest-sun-sm` without colour (log: `art/vector/log/tt2-glyphs.md`).
 
 ### How one set is drawn

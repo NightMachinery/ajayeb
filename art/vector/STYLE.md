@@ -9,6 +9,7 @@ The per-set briefs are in [specs/](specs/), the iteration logs in [log/](log/), 
 - One icon per file. The file name is the icon id, which is also the id in `web/src/lib/icons/names.ts` and the symbol id `i-<id>` in the sprite. Never rename an id that `names.ts` lists: the components refer to them.
 - A `-sm` file is the small-grid variant of the icon with the same stem (`resource-wood-sm` for `resource-wood`). The app uses it at 14 px and below.
 - Sprite icons live in `web/src/lib/icons/svg/`. Ornaments and track parts that are not sprite icons live in `web/src/lib/ornaments/svg/`, the wordmark in `web/src/lib/brand/`, and the favicon at `web/static/favicon.svg` (see [specs/ornaments-track-logo.md](specs/ornaments-track-logo.md)).
+- Icons that only another game uses live in that game's directory, `web/src/lib/games/<game>/icons/svg/` (today Haftgane's), never in `web/src/lib/icons/svg/`: `sources.ts` imports everything there, so a file there ships to every Duel player. A Duel drawing that another game reuses stays where it is and is referenced from that game's set in `sets.json` (`file`), never copied; `lint.mjs` refuses a file in a game directory that is named like a Duel icon.
 - A new sprite icon needs three things at once: its file, its line in `names.ts`, and its entry in `sets.json`. `sprite.ts` refuses a file that `names.ts` does not list, and the reverse.
 
 ## 2. Grid and geometry

@@ -65,6 +65,36 @@
         {"id": "chain-temple-facade", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"}
       ]
     },
+    "haftgane-chain": {
+      "title": "Haftgane chain symbols (14 reused Duel drawings, 10 new)",
+      "neighbours": ["chain-sword", "chain-sun", "chain-temple-facade", "science-globe", "category-yellow", "category-grey", "category-green", "resource-papyrus"],
+      "icons": [
+        {"id": "chain-barrel", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "chain-book", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-column", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-drop", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-helmet", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-horseshoe", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-lamp", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-lyre", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-mask", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-target", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-tower", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-mortar", "file": "web/src/lib/icons/svg/science-mortar.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-scales", "file": "web/src/lib/icons/svg/science-scales.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-quill", "file": "web/src/lib/icons/svg/science-quill.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-awning", "file": "web/src/lib/games/haftgane/icons/svg/chain-awning.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "chain-camel", "file": "web/src/lib/games/haftgane/icons/svg/chain-camel.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "yellow", "cardInk": "var(--card-ink)"},
+        {"id": "chain-hammer", "file": "web/src/lib/games/haftgane/icons/svg/chain-hammer.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"},
+        {"id": "chain-lighthouse", "file": "web/src/lib/games/haftgane/icons/svg/chain-lighthouse.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-lightning", "file": "web/src/lib/games/haftgane/icons/svg/chain-lightning.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-planet", "file": "web/src/lib/games/haftgane/icons/svg/chain-planet.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-saw", "file": "web/src/lib/games/haftgane/icons/svg/chain-saw.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "brown", "cardInk": "var(--card-ink)"},
+        {"id": "chain-scroll", "file": "web/src/lib/games/haftgane/icons/svg/chain-scroll.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "green", "cardInk": "var(--card-ink)"},
+        {"id": "chain-star", "file": "web/src/lib/games/haftgane/icons/svg/chain-star.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "blue", "cardInk": "var(--card-ink)"},
+        {"id": "chain-torch", "file": "web/src/lib/games/haftgane/icons/svg/chain-torch.svg", "ink": "var(--fg)", "i2": "var(--gold-deep)", "chip": true, "band": "red", "cardInk": "var(--card-ink)"}
+      ]
+    },
     "ui-category": {
       "title": "Category glyphs, badge glyphs, crests, laurel, wonder and token frame",
       "icons": [
