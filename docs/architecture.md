@@ -256,8 +256,12 @@ rng.go; the seeded generator will come from enginekit/rng. The shape guard
 checks fixed widths, comparability and independent State/Record/Game size
 limits. Science's timing mask includes continuous cache construction and
 end-game scoring. Wonder free-build effects apply to buildings, never stage
-actions. State, keys, events and catalog/types.go become single-writer files
-after this core slice merges.
+actions. The frozen single-writer files are `rules/state.go`, `rules/keys.go`
+(the Action type), `rules/events.go`, `rules/limits.go` (sizing constants),
+`rules/seats.go`, `rules/points.go` and `catalog/types.go`. Setup must initialize
+an inactive decider to `NoSeat`; ability exits restore it. Stage numbers in
+plays and events start at 1. Coin events cover only placement and sale income;
+play events carry payments, and neighbours' plays determine trade receipts.
 
 ## Saved room compatibility
 

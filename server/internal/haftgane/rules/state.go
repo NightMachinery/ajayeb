@@ -89,6 +89,10 @@ type City struct {
 	Chains           uint32
 	Abilities        uint8
 }
+
+// State{} is storage, not an initialized position: setup must set Decider to
+// NoSeat, and every transition leaving an ability point must restore NoSeat.
+// Canonical positions never encode an inactive decider as seat zero.
 type State struct {
 	Seed      uint64 // setup only; never in views or observations
 	Opts      Options
@@ -96,7 +100,7 @@ type State struct {
 	Phase     Phase
 	Age, Turn uint8
 	Points    uint16
-	Decider   Seat
+	Decider   Seat // NoSeat outside discard-build and last-card ability points.
 	Cities    [MaxSeats]City
 	Hands     [MaxSeats][HandSize]catalog.DesignID
 	Deals     [NumAges][MaxSeats][HandSize]catalog.DesignID
@@ -117,7 +121,7 @@ type Record struct {
 type Play struct {
 	Kind        ActionKind
 	Design      catalog.DesignID
-	Stage       uint8
+	Stage       uint8 // One-based stage number, zero unless Kind is ActStage.
 	Left, Right uint8
 }
 type Game struct {

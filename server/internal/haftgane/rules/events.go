@@ -12,7 +12,7 @@ const (
 	EvSideChosen                    // Seat, Side
 	EvMilitary                      // Seat, Other, Age, Outcome (one adjacent pair)
 	EvGameOver                      // result is in State.Result
-	EvCoins                         // Seat, Delta, Source; Design/Stage or Other identifies the source
+	EvCoins                         // Seat, Delta, Source; Design/Stage identifies placement or sale income
 	EvPlay                          // Seat, Action, Stage, Left/Right, Printed; Design is public only for build
 	EvLeftoverDiscarded             // Seat; Design private
 	EvCardKept                      // Seat; Design private
@@ -30,12 +30,13 @@ func (k EventKind) String() string {
 	return ""
 }
 
+// EvCoins reports only when-placed income (aggregated per placement) and sale
+// income. Printed and trade payments are already in EvPlay; trade receipts are
+// derived from neighbours' plays and never emit additional coin events.
 type CoinSource uint8
 
 const (
 	CoinNone CoinSource = iota
-	CoinPrinted
-	CoinTrade
 	CoinSale
 	CoinDesign
 	CoinStage
@@ -51,16 +52,18 @@ const (
 	NumConflictOutcomes
 )
 
-// Only fields documented on Kind are meaningful. Private marks a full variant
-// intended for Seat; the future filter constructs the public summary by
-// whitelist instead of ever copying this raw struct to another viewer.
+// Only fields documented on Kind are meaningful. The filter derives redaction
+// solely from Kind and Action, never Private. Private is an assertion equal to
+// "this event has a hidden field": a non-build EvPlay, EvLeftoverDiscarded or
+// EvCardKept. The full variant belongs to Seat; the filter builds the public
+// summary by whitelist, never by copying this raw struct to another viewer.
 type Event struct {
 	Kind                 EventKind
 	Seat, Other          Seat
 	Age, Turn            uint8
 	Action               ActionKind
 	Design               catalog.DesignID
-	Stage                uint8
+	Stage                uint8 // One-based stage number, zero when no stage is named.
 	Side                 catalog.Side
 	Left, Right, Printed uint8
 	Delta                int16
