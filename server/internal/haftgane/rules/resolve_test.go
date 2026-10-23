@@ -239,8 +239,8 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 }
 
 func TestResolveFrozenProductionAndPurse(t *testing.T) {
-	// Player 0 sells a card while player 2 builds a free stockade, buying an ore
-	// from 0. The receipt cannot pay for an otherwise unaffordable build by 0.
+	// Player 0 sells while player 1 buys its ore for Barracks and player 2
+	// builds Ore Vein. Neither the receipt nor that new production exists in F.
 	st := State{Seats: 3, Phase: PhaseTurn, Age: 1, Turn: 1, Decider: NoSeat}
 	for seat, board := range []catalog.BoardID{catalog.BoardRhodos, catalog.BoardGizah, catalog.BoardEphesos} {
 		c, err := cityCaches(City{Board: board, Side: catalog.Day, Coins: 0})
