@@ -242,13 +242,25 @@ complete counts and order. The existing Duel packages and data stay unchanged.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
 points. It contains the seat ring and canonical key grammar, with no setup,
-legality, payment solver, resolution, views or bots yet. Left is the next seat
+legality, resolution, views or bots yet. Left is the next seat
 modulo the seat count, and right is the previous. Public plays and private picks
 have separate record arrays. Events have typed source fields and no raw key.
 Point ids are computed from kind, Age and turn; pending choices stay in the room.
 Actions name design slugs and payment outcomes, never copies or seats. Parsing
 checks canonical syntax and the tagged union; only future offer membership can
 make an action legal. The rules version starts at 1.
+
+The ordinary payment solver uses frozen own production, neighbours' saleable
+production, per-side prices and the starting purse. It returns at most fifteen
+undominated `(left, right)` outcomes, ordered by total then left, each with a
+canonical physical-symbol witness. Fixed own symbols are used first; a proven
+maximum-own-coverage filter, bounded resource splits and separate choice-symbol
+matchings keep the hot path allocation-free. `QuoteState` and `Game.Quote`
+return the cheapest affordable ordinary total without building witnesses.
+Chains and free-build abilities bypass this solver per action; stages use their
+ordinary cost. An independent unit-by-unit oracle checks the small-universe
+sweep and 100,000 deterministic random inputs, and `FuzzPayment` checks outcomes
+and every witness against it.
 
 Both the shared `enginekit/puritycheck` and a dedicated depguard rule enforce
 the purity boundary. Haftgane cannot import either math/rand version, even in
