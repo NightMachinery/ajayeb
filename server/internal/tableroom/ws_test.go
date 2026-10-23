@@ -355,6 +355,8 @@ func (w *wsTable) Submit(ctx context.Context, id tabletest.ClientID, s tabletest
 				return tabletest.Stale, nil
 			case "forbidden":
 				return tabletest.Forbidden, nil
+			case "rate":
+				return tabletest.Rate, nil
 			case "storage":
 				return tabletest.StorageError, nil
 			}

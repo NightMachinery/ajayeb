@@ -275,7 +275,7 @@ func (i inspection) Check() (bool, error) {
 	if i.r.Rules != RulesVersion {
 		return false, fmt.Errorf("%w: rules %d, engine %d", store.ErrRulesVersion, i.r.Rules, RulesVersion)
 	}
-	_, hashOK, err := restore(i.r, DefaultSeqClients)
+	_, hashOK, err := restore(i.r, defaultBounds)
 	if err != nil {
 		return false, err
 	}
@@ -296,7 +296,7 @@ func Codec() *store.Codec {
 // assess is the store's load-time verdict on a live record: another rules
 // version archives as rules-version, an invalid replay or pending block as
 // replay-failed, and a hash-only mismatch refreshes the hash in place.
-func assess(data []byte, seqCap int) (store.Assessment, *state, error) {
+func assess(data []byte, b seqBounds) (store.Assessment, *state, error) {
 	r, err := decodeRecord(data)
 	if err != nil {
 		return store.Assessment{}, nil, err
@@ -304,7 +304,7 @@ func assess(data []byte, seqCap int) (store.Assessment, *state, error) {
 	if r.Rules != RulesVersion {
 		return store.Assessment{Archive: store.ArchiveRulesVersion, Cause: fmt.Errorf("rules %d, engine %d", r.Rules, RulesVersion)}, nil, nil
 	}
-	st, hashOK, err := restore(r, seqCap)
+	st, hashOK, err := restore(r, b)
 	if err != nil {
 		return store.Assessment{Archive: store.ArchiveReplayFailed, Cause: err}, nil, nil
 	}
@@ -323,36 +323,30 @@ func invalid(format string, args ...any) error {
 	return fmt.Errorf("%w: %s", errInvalid, fmt.Sprintf(format, args...))
 }
 
+// seqBounds are the per-user bounds of a record's seq acknowledgements
+// and of each pending pick's floors. Every write keeps them and restore
+// checks them, with the same values (Config.SeqClients and
+// Config.PickClients).
+type seqBounds struct{ acks, floors int }
+
+// defaultBounds are the bounds of a table with the default Config.
+var defaultBounds = seqBounds{acks: DefaultSeqClients, floors: DefaultPickClients}
+
 // restore rebuilds the engine value from a record and validates
 // everything the design lists: the setup and assignment, every complete
 // batch's point, required seats and key membership (by replay), the
 // controllers, the current point reference, each pending slot, the seq
 // acknowledgements and the work ledger. It reports whether the stored hash
 // matches the replay. Pending picks are never applied to the engine.
-func restore(r *Record, seqCap int) (*state, bool, error) {
+func restore(r *Record, b seqBounds) (*state, bool, error) {
 	n := r.Setup.Seats
 	if n < MinSeats || n > MaxSeats {
 		return nil, false, invalid("seat count %d", n)
 	}
-	su := makeSetup(r.Setup.Seed, n, r.Setup.RandomSeating, r.Setup.HideAtEnd)
-	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
-	if len(r.Assignment) != n || len(r.Original) != n || len(r.Seats) != n || len(r.Edits) != n {
-		return nil, false, invalid("per-seat fields do not hold %d seats", n)
-	}
-	for s := range n {
-		if r.Assignment[s] != int(order[s]) {
-			return nil, false, invalid("the assignment of seat %d", s)
-		}
-		if r.Edits[s] < 0 {
-			return nil, false, invalid("the edit count of seat %d", s)
-		}
-	}
-	if err := checkSeats(r); err != nil {
-		return nil, false, err
-	}
 	if len(r.Batches) > maxBatches {
 		return nil, false, invalid("%d batches", len(r.Batches))
 	}
+	su := makeSetup(r.Setup.Seed, n, r.Setup.RandomSeating, r.Setup.HideAtEnd)
 	g, err := replay(su, engineBatches(r.Batches))
 	if err != nil {
 		return nil, false, invalid("the batches do not replay")
@@ -360,30 +354,65 @@ func restore(r *Record, seqCap int) (*state, bool, error) {
 	if err := g.CheckInvariants(); err != nil {
 		return nil, false, invalid("the replayed game breaks an invariant")
 	}
+	if !validSeqs(r.Seqs) {
+		return nil, false, invalid("the seq acknowledgements")
+	}
+	st := &state{rec: r.clone(), game: g}
+	st.rec.Seqs = trimSeqs(st.rec.Seqs, b.acks)
+	if err := validate(&st.rec, &g, b); err != nil {
+		return nil, false, err
+	}
+	return st, g.Fingerprint() == r.Hash, nil
+}
+
+// validate checks a record against its engine value: everything restore
+// checks but the replay itself. A restart runs it on the replayed value
+// and every write on the value its transaction produced, so nothing is
+// saved that would not restore.
+func validate(r *Record, g *game, b seqBounds) error {
+	n := r.Setup.Seats
+	if n < MinSeats || n > MaxSeats {
+		return invalid("seat count %d", n)
+	}
+	su := makeSetup(r.Setup.Seed, n, r.Setup.RandomSeating, r.Setup.HideAtEnd)
+	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
+	if len(r.Assignment) != n || len(r.Original) != n || len(r.Seats) != n || len(r.Edits) != n {
+		return invalid("per-seat fields do not hold %d seats", n)
+	}
+	for s := range n {
+		if r.Assignment[s] != int(order[s]) {
+			return invalid("the assignment of seat %d", s)
+		}
+		if r.Edits[s] < 0 {
+			return invalid("the edit count of seat %d", s)
+		}
+	}
+	if err := checkSeats(r); err != nil {
+		return err
+	}
 	p := g.Point()
 	switch {
 	case pointOver(p) != (r.Status == store.StatusFinished):
-		return nil, false, invalid("the status does not match the game")
+		return invalid("the status does not match the game")
 	case r.Public < 0 || r.StartingHumans < 0 || r.StartingHumans > n:
-		return nil, false, invalid("a negative revision or a bad starting count")
+		return invalid("a negative revision or a bad starting count")
 	case pointOver(p) && (r.Point != nil || len(r.Pending) > 0 || len(r.Work) > 0):
-		return nil, false, invalid("a point, pending pick or work row after the end")
+		return invalid("a point, pending pick or work row after the end")
 	case !pointOver(p) && (r.Point == nil || r.Point.ID != p.ID || r.Point.Revision < 0 || r.Point.Revision > r.Public):
-		return nil, false, invalid("the point reference is not the open point")
+		return invalid("the point reference is not the open point")
 	}
-	st := &state{rec: r.clone(), game: g}
 	confirmed := 0
 	var seen [MaxSeats]bool
 	for _, ps := range r.Pending {
 		switch {
 		case ps.Seat < 0 || ps.Seat >= n || !p.Required.Has(seatNum(ps.Seat)):
-			return nil, false, invalid("a pending pick for a seat the point does not require")
+			return invalid("a pending pick for a seat the point does not require")
 		case seen[ps.Seat]:
-			return nil, false, invalid("two pending picks for seat %d", ps.Seat)
-		case !slices.Contains(legalKeys(&g, ps.Seat), ps.Key):
-			return nil, false, invalid("a pending key seat %d is not offered", ps.Seat)
-		case len(ps.Seqs) > seqCap+n || !validSeqs(ps.Seqs):
-			return nil, false, invalid("the seqs of seat %d's pending pick", ps.Seat)
+			return invalid("two pending picks for seat %d", ps.Seat)
+		case !slices.Contains(legalKeys(g, ps.Seat), ps.Key):
+			return invalid("a pending key seat %d is not offered", ps.Seat)
+		case !validSeqs(ps.Seqs) || !seqsBounded(ps.Seqs, b.floors, n):
+			return invalid("the seqs of seat %d's pending pick", ps.Seat)
 		}
 		seen[ps.Seat] = true
 		if ps.Confirmed {
@@ -391,16 +420,26 @@ func restore(r *Record, seqCap int) (*state, bool, error) {
 		}
 	}
 	if !pointOver(p) && confirmed == p.Required.Count() {
-		return nil, false, invalid("every required seat has confirmed, so the point should have resolved")
+		return invalid("every required seat has confirmed, so the point should have resolved")
 	}
-	if !validSeqs(r.Seqs) {
-		return nil, false, invalid("the seq acknowledgements")
+	if !validSeqs(r.Seqs) || !seqsBounded(r.Seqs, b.acks, n) {
+		return invalid("the seq acknowledgements")
 	}
-	st.rec.Seqs = trimSeqs(st.rec.Seqs, seqCap)
-	if err := checkWork(r, &g); err != nil {
-		return nil, false, err
+	return checkWork(r, g)
+}
+
+// seqsBounded reports whether xs holds at most capacity clients of each
+// user, and no more users than there are seats (only a seated user's
+// requests are accepted).
+func seqsBounded(xs []SeqRecord, capacity, users int) bool {
+	per := map[string]int{}
+	for _, x := range xs {
+		per[x.User]++
+		if per[x.User] > capacity {
+			return false
+		}
 	}
-	return st, g.Fingerprint() == r.Hash, nil
+	return len(per) <= users
 }
 
 func checkSeats(r *Record) error {
@@ -466,7 +505,7 @@ func checkWork(r *Record, g *game) error {
 
 // trimSeqs keeps each user's newest capacity clients, in order. Only a
 // record written under a larger capacity has more; forgetting them is
-// safe, because each pending slot still keeps its own floors.
+// safe, because each pending pick still keeps its own floors.
 func trimSeqs(xs []SeqRecord, capacity int) []SeqRecord {
 	kept := map[string]int{}
 	out := make([]SeqRecord, 0, len(xs))

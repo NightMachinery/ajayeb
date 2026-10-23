@@ -3,6 +3,7 @@ package tableroom
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"maps"
 	"math/rand/v2"
 	"slices"
@@ -11,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/fakeengine"
+	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 )
@@ -98,13 +100,17 @@ func blockBots(ctx context.Context, _ int, _ string) error {
 }
 
 // FuzzTableOps drives one table through fuzzed operations: picks, changes
-// and confirmations from every seat, a second tab and the spectator,
-// resends of earlier submissions, stale references, undo, bot picks,
-// detaches and restarts, opening at the start or at a salvage or
-// last-card point. After every operation the table in memory must equal
-// the stored record byte for byte, the stored record must restore with a
-// matching rules hash, no frame revision may go backwards, and a restart
-// must keep every client's pick, confirmation and reference.
+// and confirmations from every seat, a second tab and the spectator, new
+// tabs that open, pick and close (each a new client id, so the seq memory
+// and the picks' floors meet many clients of one user), resends of
+// earlier submissions (a closed tab reconnecting under its id to resend),
+// stale references, undo, bot picks, detaches and restarts, opening at the
+// start or at a salvage or last-card point, with small seq and floor
+// bounds. After every operation the table in memory must equal the stored
+// record byte for byte, the stored record must restore with a matching
+// rules hash, no frame revision may go backwards, and a restart must keep
+// every client's pick, confirmation and reference. A refusal or a
+// duplicate writes nothing.
 func FuzzTableOps(f *testing.F) {
 	f.Add(uint64(1), byte(0), byte(0), []byte{0, 1, 0, 3, 6, 0, 1, 0, 2, 0, 4, 0, 0, 5, 7, 9, 6, 0, 5, 2, 1, 3})
 	f.Add(uint64(2), byte(0x11), byte(2), []byte{0, 3, 7, 2, 6, 0, 0, 9, 4, 0, 1, 1, 6, 0, 2, 4})
@@ -118,6 +124,8 @@ func FuzzTableOps(f *testing.F) {
 	}
 	f.Add(uint64(7), byte(0x01), byte(1), finish)
 	f.Add(uint64(8), byte(0x14), byte(0), finish)
+	f.Add(uint64(9), byte(0x40), byte(0), []byte{0, 1, 8, 0, 8, 2, 8, 4, 1, 3, 8, 6, 1, 4, 6, 0, 8, 1, 1, 9, 4, 0, 8, 8, 1, 2})
+	f.Add(uint64(10), byte(0x01), byte(0), []byte{8, 0, 8, 8, 8, 16, 8, 24, 8, 32, 1, 1, 1, 2, 8, 40, 1, 4, 6, 0})
 	f.Fuzz(func(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 		if len(ops) > 200 {
 			ops = ops[:200]
@@ -135,7 +143,7 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	n := MinSeats + int(shape&0x0f)%(MaxSeats-MinSeats+1)
 	solo := mode&1 == 1
 	kind := boundaryKinds[int(mode>>1)%len(boundaryKinds)]
-	cfg := Config{SeqClients: 1 + int(shape>>4)%4}
+	cfg := Config{SeqClients: 1 + int(shape>>4)%4, PickClients: 1 + int(shape>>6)%4}
 	seed %= 64
 	sp := humans(n, seed)
 	if solo {
@@ -163,8 +171,10 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	next := func(id tabletest.ClientID) uint64 { seqs[id]++; return seqs[id] }
 	var sent []sentSub
 	refs := []string{"none@0"}
+	closed := map[tabletest.ClientID]*room.Client{} // tabs that opened and closed
 	submit := func(id tabletest.ClientID, s tabletest.Submission) {
 		t.Helper()
+		before, _, _ := fx.ms.PeekGame(p.code, Game)
 		o, err := p.Submit(ctx, id, s)
 		if err != nil {
 			t.Fatal(err)
@@ -172,8 +182,23 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 		if o == tabletest.StorageError || strings.HasPrefix(string(o), "unknown") {
 			t.Fatalf("%s %+v: %s", id, s, o)
 		}
+		if after, _, _ := fx.ms.PeekGame(p.code, Game); o != tabletest.Accepted && o != tabletest.Resolved && !bytes.Equal(before, after) {
+			t.Fatalf("%s %+v: %s changed the record", id, s, o)
+		}
 		sent = append(sent, sentSub{id, s})
 	}
+	// tab opens id for user, runs fn and closes it again.
+	tab := func(id tabletest.ClientID, user, name string, fn func()) {
+		t.Helper()
+		if err := p.join(ctx, id, user, name); err != nil {
+			t.Fatal(err)
+		}
+		fn()
+		closed[id] = p.clients[id]
+		fx.m.Leave(p.clients[id], p.code)
+		delete(p.clients, id)
+	}
+	tabs := 0
 	pickFrom := func(id tabletest.ClientID, arg int, ref string) {
 		sn := h.snap(id)
 		refs = append(refs, sn.Ref)
@@ -233,7 +258,7 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		st, hashOK, err := restore(r, fx.tables.cfg.SeqClients)
+		st, hashOK, err := restore(r, fx.tables.bounds())
 		if err != nil || !hashOK || st.game.Fingerprint() != fp || r.Hash != fp {
 			t.Fatalf("step %d: the stored record does not restore: %v, hash ok %t", step, err, hashOK)
 		}
@@ -253,15 +278,19 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 	check(-1)
 
 	for i := 0; i+1 < len(ops); i += 2 {
-		op, arg := ops[i]%8, int(ops[i+1])
+		op, arg := ops[i]%9, int(ops[i+1])
 		ids := slices.Sorted(maps.Keys(p.clients))
 		switch op {
 		case 0: // a pick, change or confirmation from any client
 			pickFrom(ids[arg%len(ids)], arg>>3, "")
-		case 1: // an earlier submission again
+		case 1: // an earlier submission again, a closed tab reconnecting to send it
 			if len(sent) > 0 {
 				s := sent[arg%len(sent)]
-				submit(s.id, s.sub)
+				if c := closed[s.id]; c != nil {
+					tab(s.id, c.UserID, c.Name, func() { submit(s.id, s.sub) })
+				} else {
+					submit(s.id, s.sub)
+				}
 			}
 		case 2: // a fresh seq for an old reference
 			pickFrom(ids[arg%len(ids)], arg>>3, refs[(arg>>2)%len(refs)])
@@ -305,6 +334,12 @@ func fuzzTable(t *testing.T, seed uint64, shape, mode byte, ops []byte) {
 				botAct(arg)
 			} else {
 				pickFrom(tabClient, arg, "")
+			}
+		case 8: // a new tab of a seat's user opens, picks and closes
+			if c := p.clients[tabletest.SeatClient(arg%n)]; c != nil {
+				tabs++
+				id := tabletest.ClientID(fmt.Sprintf("seat-%d-new-%d", arg%n, tabs))
+				tab(id, c.UserID, c.Name, func() { pickFrom(id, arg>>3, "") })
 			}
 		}
 		check(i / 2)

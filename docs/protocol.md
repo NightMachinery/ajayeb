@@ -966,10 +966,16 @@ changed it: the seq that last did. For a client the memory has forgotten,
 that same seq again answers the acknowledging frame, and an older one
 answers `stale`, so a forgotten seq never overwrites a newer accepted pick.
 The floor is found by the client's presence, not compared with a default,
-because seq 0 is a valid seq. A request is judged in this order:
+because seq 0 is a valid seq. A pick keeps floors for at most 32 clients of
+each user. Until the point resolves, a change of that pick from a further
+client answers `rate` and changes nothing: forgetting a floor instead would
+let an old seq overwrite a newer pick. The user's tabs that already have a
+floor can still change the pick. Every write is checked against the same
+bounds a restart checks, so the table never saves a record it could not
+restore. A request is judged in this order:
 `forbidden` (no seat), duplicate, `decision-closed` (another reference or
 the game over), `illegal` (the seat is not required or the key is not
-offered), then the pick's floor (duplicate or `stale`). Other viewers
+offered), then the pick's floor (duplicate, `stale` or `rate`). Other viewers
 receive neither the pending key nor any revision or metadata change that
 reveals private edit frequency.
 
@@ -1056,7 +1062,8 @@ Both snapshots use these fixed metadata shapes:
 `table-reject` and `lobby-reject` carry only `t`, `seq`, and `code`, and go
 only to the submitting connection. Table codes are `decision-closed` (old
 or resolved point), `illegal` (unoffered key), `stale` (old sequence),
-`bad-request`, `not-admin`, `forbidden`, `rate`, and `storage`.
+`bad-request`, `not-admin`, `forbidden`, `rate` (also a new tab past a
+pick's floor bound), and `storage`.
 Lobby codes are `bad-request`, `stale`, `not-admin`, `forbidden`, `rate`,
 and `storage`. A failed durable transaction reports storage without
 publishing the candidate or revealing another seat's information.

@@ -219,7 +219,10 @@ canonical history is the `ajayeb-log/2` download.
   (the pick's floor answers a forgotten seq as a duplicate or stale, seq 0
   included, before and after a restart), a seq memory per user (other
   users' drafts from many tabs change neither a user's duplicate answer nor
-  their frames),
+  their frames), tab churn (past a pick's floor bound a new tab is refused
+  with `rate` before anything is written, every accepted record restores,
+  a restart loses nothing), the shared write and restore bounds (a
+  candidate past them is refused before it is saved),
   a reload that restores a pick and its confirmation, storage errors and
   crashes before and after the rename (`tabletest/faults`), the restore of
   every pending subset (and an invalid pending block archiving as
@@ -241,11 +244,14 @@ canonical history is the `ajayeb-log/2` download.
   raw bytes each connection received.
 - `FuzzTableOps` (`fuzz_test.go`) drives one table through fuzzed picks,
   changes and confirmations from every seat, a second tab and the
-  spectator, resends, stale references, undo, bot picks, detaches and
-  restarts, from the start or a salvage or last-card point. After every
+  spectator, new tabs that open, pick and close under fresh client ids,
+  resends (a closed tab reconnecting under its id to send one), stale
+  references, undo, bot picks, detaches and restarts, from the start or a
+  salvage or last-card point, with small seq and floor bounds. After every
   operation the record in memory must equal the stored bytes, the stored
   record must restore with a matching rules hash, no frame revision may go
-  backwards, and a restart keeps every pick, confirmation and reference.
+  backwards, and a restart keeps every pick, confirmation and reference. A
+  refusal or a duplicate must leave the stored bytes alone.
 - `TestWebSocketRestart` restarts the server on the same data directory with
   a confirmed pick pending and finishes the game: the pick lands in the
   first batch of the downloaded log.

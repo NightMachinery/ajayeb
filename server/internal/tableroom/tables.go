@@ -40,6 +40,7 @@ import (
 // Defaults for the zero fields of Config.
 const (
 	DefaultSeqClients  = 32
+	DefaultPickClients = 32
 	DefaultMaxClients  = 32
 	DefaultIdleTimeout = 30 * time.Minute
 	DefaultInboxSize   = 64
@@ -70,7 +71,12 @@ type Config struct {
 	Creation bool
 	// SeqClients bounds, for each user, the clients whose last accepted
 	// seq the table remembers.
-	SeqClients  int
+	SeqClients int
+	// PickClients bounds, for each user, the clients whose floor a pending
+	// pick keeps (the seq that last changed it from that client). A new
+	// client past it is refused with rate until the point resolves, since
+	// forgetting a floor would let an old seq overwrite a newer pick.
+	PickClients int
 	MaxClients  int
 	IdleTimeout time.Duration
 	InboxSize   int
@@ -112,6 +118,9 @@ func New(cfg Config) *Tables {
 	}
 	if cfg.SeqClients <= 0 {
 		cfg.SeqClients = DefaultSeqClients
+	}
+	if cfg.PickClients <= 0 {
+		cfg.PickClients = DefaultPickClients
 	}
 	if cfg.MaxClients <= 0 {
 		cfg.MaxClients = DefaultMaxClients
@@ -205,12 +214,17 @@ func (t *Tables) check(_ *room.Manager, code string, _ *room.Client, claim *stri
 	return nil
 }
 
+// bounds are the seq bounds every write keeps and restore checks.
+func (t *Tables) bounds() seqBounds {
+	return seqBounds{acks: t.cfg.SeqClients, floors: t.cfg.PickClients}
+}
+
 // load restores a table: the store's assessment validates the record,
 // refreshes a stale hash or archives it durably.
 func (t *Tables) load(m *room.Manager, code string) (*room.Handle, error) {
 	var st *state
 	_, err := t.store().LoadGame(code, Game, func(data []byte) (store.Assessment, error) {
-		v, s, err := assess(data, t.cfg.SeqClients)
+		v, s, err := assess(data, t.bounds())
 		st = s
 		return v, err
 	})
@@ -323,6 +337,10 @@ func (t *Tables) CreateTable(spec Spec) (string, error) {
 		base.Seats[s] = sr
 	}
 	openPoint(&base, &g)
+	if err := validate(&base, &g, t.bounds()); err != nil {
+		t.log.Error("table create invalid", "err", err)
+		return "", room.ErrStorage
+	}
 	return m.CreateHandle(Game, func(code string) (*room.Handle, error) {
 		rec := base.clone()
 		rec.Code = code

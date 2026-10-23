@@ -394,6 +394,8 @@ func outcomeOf(out string) tabletest.Outcome {
 		return tabletest.Closed
 	case outForbidden:
 		return tabletest.Forbidden
+	case outRate:
+		return tabletest.Rate
 	case outStorage:
 		return tabletest.StorageError
 	}

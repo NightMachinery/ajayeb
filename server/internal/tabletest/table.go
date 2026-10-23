@@ -52,6 +52,9 @@ const (
 	Closed Outcome = "decision-closed"
 	// Forbidden: the client holds no seat.
 	Forbidden Outcome = "forbidden"
+	// Rate: a new client of a user whose clients already hold as many
+	// floors on this seat's pick as the table keeps; nothing changes.
+	Rate Outcome = "rate"
 	// StorageError: the durable write failed; nothing changed.
 	StorageError Outcome = "storage-error"
 )

@@ -345,6 +345,7 @@ const (
 	outIllegal   = "illegal"
 	outClosed    = "decision-closed"
 	outForbidden = "forbidden"
+	outRate      = "rate"
 	outStorage   = "storage"
 	outBad       = "bad-request"
 )
@@ -398,7 +399,8 @@ func seqKey(c *room.Client) SeqRecord { return SeqRecord{User: c.UserID, Client:
 // submit applies one {seq, point, key, confirm} submission, checking in
 // the design's order: membership, the client's seq acknowledgement, the
 // open point reference, the seat being required and the key offered, and
-// a seq older than the one that last changed the slot from this client.
+// the slot's floor for this client: a seq older than the one that last
+// changed the slot from it, or a new client past the slot's bound (rate).
 func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	r := &a.st.rec
 	seat := a.seatOf(c.UserID)
@@ -419,7 +421,9 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	// The acknowledgements may have forgotten this client, but the slot
 	// keeps the seq that last changed it from each client: that same seq
 	// is acknowledged again, an older one is stale. A floor is looked up
-	// by presence, since seq 0 is valid.
+	// by presence, since seq 0 is valid. The slot keeps a bounded number
+	// of each user's floors: past it a new client is refused, because
+	// dropping a floor would let a forgotten old seq overwrite this pick.
 	if slot := pendingOf(r, seat); slot != nil {
 		floor, ok := seqLast(slot.Seqs, key)
 		switch {
@@ -427,6 +431,8 @@ func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 			return a.duplicate(c, "pick", seat, p.Seq)
 		case ok && p.Seq < floor:
 			return a.refuse(c, p.Seq, "pick", seat, outStale)
+		case !ok && seqUsers(slot.Seqs, key.User) >= a.t.cfg.PickClients:
+			return a.refuse(c, p.Seq, "pick", seat, outRate)
 		}
 	}
 	cand := r.clone()
@@ -519,6 +525,12 @@ func (a *actor) transact(c *room.Client, op string, seat int, cand Record, key s
 // failed write leaves the committed state as it was.
 func (a *actor) commit(op string, cand Record, g game) error {
 	cand.Updated = a.now()
+	// The candidate must restore after a restart: the same checks, on the
+	// engine value this transaction produced instead of a replay.
+	if err := validate(&cand, &g, a.t.bounds()); err != nil {
+		a.t.log.Error("table candidate invalid", "room", a.code, "op", op, "err", err)
+		return err
+	}
 	data, err := cand.encode()
 	if err == nil {
 		err = a.t.store().SaveGame(a.code, Game, data)

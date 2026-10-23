@@ -109,6 +109,35 @@ func TestStaleOnceForgotten(t *testing.T) {
 	h.expect(h.send(a, 2, sa.Ref, sa.Legal[1], true), tabletest.Accepted, "a newer seq")
 }
 
+// TestPickFloorBound: a pick keeps floors for at most PickClients clients;
+// a further client is refused with rate and changes nothing, while a
+// client with a floor still changes the pick, and the next point starts
+// afresh.
+func TestPickFloorBound(t *testing.T) {
+	tb, err := direct.New(t.Context(), direct.Options{Setup: fakeengine.Setup{Seed: 77, Seats: 3}, PickClients: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := &harness{t, tb}
+	a, tab, third := tabletest.SeatClient(0), tabletest.TabClient(0), tabletest.ClientID("seat-0-tab-3")
+	h.tb.Attach(tab, 0)
+	h.tb.Attach(third, 0)
+	sa := h.snap(a)
+	h.expect(h.send(a, 1, sa.Ref, sa.Legal[0], false), tabletest.Accepted, "the first client")
+	h.expect(h.send(tab, 1, sa.Ref, sa.Legal[1], false), tabletest.Accepted, "the second client")
+	h.expect(h.send(third, 1, sa.Ref, sa.Legal[2], true), tabletest.Rate, "a third client")
+	if sn := h.snap(a); sn.Pick != sa.Legal[1] || sn.Confirm {
+		t.Fatalf("a refused client changed the pick: %+v", sn)
+	}
+	h.expect(h.send(a, 2, sa.Ref, sa.Legal[2], true), tabletest.Accepted, "a client with a floor")
+	for _, s := range []int{1, 2} {
+		o := h.snap(tabletest.SeatClient(s))
+		h.send(tabletest.SeatClient(s), 1, o.Ref, o.Legal[0], true)
+	}
+	next := h.snap(third)
+	h.expect(h.send(third, 1, next.Ref, next.Legal[0], false), tabletest.Accepted, "the third client at the next point")
+}
+
 // TestSecondTab: two tabs of one seat keep separate seqs; a lower seq from
 // the other tab is not stale.
 func TestSecondTab(t *testing.T) {

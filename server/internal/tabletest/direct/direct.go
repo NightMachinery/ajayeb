@@ -35,8 +35,12 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 )
 
-// DefaultSeqClients bounds the remembered client seqs of each user.
-const DefaultSeqClients = 32
+// DefaultSeqClients bounds the remembered client seqs of each user, and
+// DefaultPickClients the floors each user's clients keep on a pick.
+const (
+	DefaultSeqClients  = 32
+	DefaultPickClients = 32
+)
 
 // Store persists the table's record. Save writes atomically, or not at all.
 type Store interface {
@@ -60,6 +64,9 @@ type Options struct {
 	// last applied seq is remembered (default DefaultSeqClients); a small
 	// value makes stale seqs reachable.
 	SeqClients int
+	// PickClients bounds the clients with a floor on one seat's pick
+	// (default DefaultPickClients); a new client past it answers rate.
+	PickClients int
 	// Crashed reports whether a Store error means the process died (the
 	// table then refuses everything until restored). Nil: never.
 	Crashed func(error) bool
@@ -156,9 +163,19 @@ func Factory(opts Options) tabletest.Factory {
 	}
 }
 
+func pickClients(opts Options) int {
+	if opts.PickClients <= 0 {
+		return DefaultPickClients
+	}
+	return opts.PickClients
+}
+
 func newTable(opts Options, v value) *Table {
 	if opts.SeqClients <= 0 {
 		opts.SeqClients = DefaultSeqClients
+	}
+	if opts.PickClients <= 0 {
+		opts.PickClients = DefaultPickClients
 	}
 	t := &Table{
 		opts:    opts,
@@ -261,6 +278,8 @@ func (t *Table) Submit(ctx context.Context, c tabletest.ClientID, s tabletest.Su
 		return t.answer("pick", seat, tabletest.Duplicate), nil
 	case ok && s.Seq < floor:
 		return t.answer("pick", seat, tabletest.Stale), nil
+	case !ok && len(t.v.slots[seat].seqs) >= t.opts.PickClients:
+		return t.answer("pick", seat, tabletest.Rate), nil
 	}
 	seqs := t.seqs.clone()
 	seqs.put(seat, c, s.Seq)
@@ -515,6 +534,8 @@ func RestoreRecord(opts Options, r Record) (*Table, error) {
 			return nil, bad("two pending picks for one seat")
 		case ps.Key == "":
 			return nil, bad("a pending slot without a key")
+		case len(ps.Seqs) > pickClients(opts):
+			return nil, bad("more floors on a pending pick than a write keeps")
 		}
 		ok := false
 		for _, ch := range g.Legal(fakeengine.Seat(ps.Seat)) {

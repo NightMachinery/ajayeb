@@ -115,14 +115,17 @@ runs with `-haftgane-tables` (which needs `-dev` and `-dev-endpoints`).
   assignment, seats, roles, undo policy, the complete canonical batches, the
   rules hash, the two revision counters, the open point's reference, the
   pending block (each required seat's key, confirmed flag and per-client
-  seqs), the seq memory (bounded per user), the bots' work rows and the room log. Restore
+  seq floors, bounded per user), the seq memory (bounded per user), the
+  bots' work rows and the room log. Restore
   validates all of it and replays the batches; a hash mismatch alone is
   refreshed in place, a rules-version mismatch or a failed replay archives the
   file (D29), and an invalid pending block counts as a failed replay. Unknown
   schemas and games stay untouched.
 - **Transactions.** Every change clones the record, applies and validates the
-  change, writes the file durably, then swaps the new state in and publishes
-  frames. A failed write publishes nothing and answers `storage`, so no frame
+  change, checks the candidate with restore's own checks (against the engine
+  value it produced instead of a replay, and with the same per-user seq and
+  floor bounds), writes the file durably, then swaps the new state in and
+  publishes frames. A failed write publishes nothing and answers `storage`, so no frame
   ever shows a state, or a reveal, that is not on disk. The confirmation that
   completes a point's required set appends one sorted batch, resolves it and
   opens the next point in that same write.

@@ -1,6 +1,7 @@
 package tableroom
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -243,7 +244,9 @@ func TestSeqMemoryIsPerUser(t *testing.T) {
 		revision := h.latest(a).Revision
 		if churn {
 			for _, s := range []int{1, 2} {
-				h.tabs(s, DefaultSeqClients+2, func(id tabletest.ClientID) {
+				// 64 drafts in all: twice the old table-wide memory, and
+				// within each seat's floor bound.
+				h.tabs(s, DefaultPickClients, func(id tabletest.ClientID) {
 					h.expect(h.send(id, 0, other.Ref, h.snap(id).Legal[0], false), tabletest.Accepted, "another user's draft")
 				})
 			}
@@ -263,6 +266,127 @@ func TestSeqMemoryIsPerUser(t *testing.T) {
 			}
 		}
 	}
+}
+
+// TestTabChurnStaysRestorable: a pick keeps a floor for each client that
+// changed it, at most PickClients per user, and a new tab past that is
+// refused with rate before anything is written. Every accepted record
+// restores, a restart loses nothing, a tab that already has a floor can
+// still change the pick, and once the point resolves new tabs are welcome
+// again.
+func TestTabChurnStaysRestorable(t *testing.T) {
+	h := newTH(t, Config{}, humans(3, 2026))
+	sn := h.snap(tabletest.SeatClient(0))
+	accepted, refused := 0, 0
+	h.tabs(0, DefaultPickClients+4, func(id tabletest.ClientID) {
+		before := h.raw()
+		switch o := h.send(id, 1, sn.Ref, sn.Legal[0], false); o {
+		case tabletest.Accepted:
+			accepted++
+		case tabletest.Rate:
+			refused++
+			if !bytes.Equal(before, h.raw()) {
+				t.Fatal("a refused tab changed the record")
+			}
+		default:
+			t.Fatalf("a new tab: %s", o)
+		}
+		r := h.record()
+		if _, _, err := restore(&r, defaultBounds); err != nil {
+			t.Fatalf("after %d accepted tabs the record does not restore: %v", accepted, err)
+		}
+	})
+	if accepted != DefaultPickClients || refused != 4 {
+		t.Fatalf("%d tabs accepted, %d refused", accepted, refused)
+	}
+	h.f.restart()
+	h.rejoin()
+	first := tabletest.ClientID("seat-0-new-tab-0")
+	if err := h.p.join(h.ctx, first, userOf(0), "P0"); err != nil {
+		t.Fatalf("a join after the restart: %v", err)
+	}
+	h.expect(h.send(first, 1, sn.Ref, sn.Legal[0], false), tabletest.Duplicate, "the first tab's seq again")
+	h.expect(h.send(first, 2, sn.Ref, sn.Legal[1], true), tabletest.Accepted, "the first tab changes and confirms")
+	h.expect(h.send(tabletest.SeatClient(0), 1, sn.Ref, sn.Legal[0], false), tabletest.Rate, "a client without a floor")
+	if r := h.p.rejects[tabletest.SeatClient(0)]; len(r) != 1 || r[0].Code != "rate" || r[0].Seq != 1 {
+		t.Fatalf("rejects %+v", r)
+	}
+	for _, s := range []int{1, 2} {
+		o := h.snap(tabletest.SeatClient(s))
+		h.send(tabletest.SeatClient(s), 1, o.Ref, o.Legal[0], true)
+	}
+	next := h.snap(tabletest.SeatClient(0))
+	if next.Ref == sn.Ref {
+		t.Fatal("the point did not resolve")
+	}
+	h.expect(h.send(tabletest.SeatClient(0), 1, next.Ref, next.Legal[0], false), tabletest.Accepted, "the refused seq at the next point")
+}
+
+// TestWritesKeepRestoreBounds: restore and every write check the same
+// bounds. A record with one floor or acknowledgement more than a write
+// keeps does not restore, and a candidate past them is refused before it
+// is saved.
+func TestWritesKeepRestoreBounds(t *testing.T) {
+	h := newTH(t, Config{PickClients: 2, SeqClients: 2}, humans(3, 31))
+	sn := h.snap(tabletest.SeatClient(0))
+	h.expect(h.send(tabletest.SeatClient(0), 1, sn.Ref, sn.Legal[0], false), tabletest.Accepted, "a draft")
+	bounds := seqBounds{acks: 2, floors: 2}
+	many := func(n int) []SeqRecord {
+		var xs []SeqRecord
+		for i := range n {
+			xs = append(xs, SeqRecord{User: userOf(0), Client: fmt.Sprintf("tab-%d", i), Seq: 1})
+		}
+		return xs
+	}
+	for _, tc := range []struct {
+		name   string
+		mutate func(r *Record)
+		ok     bool
+	}{
+		{"floors at the bound", func(r *Record) { r.Pending[0].Seqs = many(2) }, true},
+		{"floors past the bound", func(r *Record) { r.Pending[0].Seqs = many(3) }, false},
+		{"acknowledgements at the bound", func(r *Record) { r.Seqs = many(2) }, true},
+		{"floors of more users than seats", func(r *Record) {
+			r.Pending[0].Seqs = nil
+			for u := range 4 {
+				r.Pending[0].Seqs = append(r.Pending[0].Seqs, SeqRecord{User: userOf(u), Client: "c", Seq: 1})
+			}
+		}, false},
+	} {
+		r := h.record()
+		tc.mutate(&r)
+		if _, _, err := restore(&r, bounds); (err == nil) != tc.ok {
+			t.Errorf("%s: restore: %v", tc.name, err)
+		}
+		a, err := h.p.actor()
+		if err != nil {
+			t.Fatal(err)
+		}
+		before := h.raw()
+		var cerr error
+		if err := a.call(h.ctx, func() {
+			cand := a.st.rec.clone()
+			tc.mutate(&cand)
+			if !tc.ok {
+				cerr = a.commit("probe", cand, a.st.game)
+			}
+		}); err != nil {
+			t.Fatal(err)
+		}
+		if !tc.ok && (cerr == nil || !bytes.Equal(before, h.raw())) {
+			t.Errorf("%s: the write was not refused (%v)", tc.name, cerr)
+		}
+	}
+}
+
+// raw is the table's stored record, byte for byte.
+func (h *th) raw() []byte {
+	h.t.Helper()
+	data, _, err := h.f.tables.store().PeekGame(h.p.code, Game)
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	return data
 }
 
 // tabs opens n tabs of seat's user one after another, each a new client
