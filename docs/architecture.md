@@ -362,7 +362,7 @@ hand sizes. It never invents missing cards or a play history. Scenarios may
 retain a partial history; the checker validates record shapes and placements,
 while full historical legality belongs to the later resolver and replay slice.
 `CheckInvariants` also checks city names, board and stage bounds, inactive
-slots, tokens, result shape and cache consistency. `Fingerprint` hashes an
+slots, tokens, real final-score consistency and cache consistency. `Fingerprint` hashes an
 explicit 2,157-byte little-endian encoding of every State and Record field in
 declaration order, with one-byte booleans and no memory padding, through the
 shared FNV-1a digest and hex helper.
@@ -400,15 +400,41 @@ required seats and offered keys, applies the engine's own actions, then writes
 private picks, public plays and newly dealt packets. `Replay` uses those same
 checked batches; an error changes no caller value.
 
-This turn engine is intermediate and must not be released. Card/stage coin
-effects, science/point scoring, Halikarnassos discard-build points and Babylon
-last-card points are deferred to the effects and wonder slices. Until then,
-sixth-turn leftovers are always discarded and end totals are zero; the closing
-result's coin tie-break only keeps invariant sweeps structurally complete.
-Olympia free conditions are already checked from the frozen city, with chain
-precedence and zero effective printed coins on every free build. Sweeps assert
-termination, conservation, record shape, replay/core equivalence and seat-order
-independence rather than complete game rules.
+`applyWhenPlaced` interprets fixed coins, coins per card and coins per stage
+once for the selected placement. It runs only after every city/cache reflects
+step 4, so Vineyard and Bazar include same-turn neighbour buildings. Counts sum
+the cities in the effect's scope; they never use a maximum. Each placement emits
+one aggregated coin event in step 5, in ascending seat order, naming the public
+building or stage. Stage income never names its tucked card. This income was
+not available to pay for the current action, and is credited before military
+and final scoring. Existing buildings' income is never replayed and the coin
+reserve imposes no cap.
+
+`scoreCity` computes the seven score-pad categories from the public cities:
+wonder, treasure (whole groups of three coins), military (Age victory counts
+worth 1/3/5 minus defeats), blue, yellow, green and purple. The point interpreter
+handles fixed points, points per card, points per stage and completion of the
+owner's wonder side. Points follow the holder's category, while science always
+scores in green, including the Scientists Guild and Babylon's stage. Science
+tries all distributions of choice symbols and maximises squares plus seven
+per complete set. Equal optima prefer compass, then gear; the derived assignment
+and final symbol counts are available to the later view layer. An independent
+oracle checks every ordered assignment for fixed counts 0 to 7 and up to seven
+choices (real cities have at most two).
+
+`finishScored` runs after Age III's military. It sums the categories, ranks by
+total then actual coins, and gives tied seats the same competition rank, with
+every rank-one seat in the winners mask. Final-score invariants recompute every
+category from the public cities. Literal card/stage scenarios and an independent
+raw-building score oracle check the results, with replay/core equivalence and
+reversed seat-loop order in the seeded sweep.
+
+This turn engine is still intermediate and must not be released. Halikarnassos
+discard-build and Babylon last-card scheduling remain for the wonder slice;
+until then, sixth-turn leftovers are always discarded. Olympia free checks are
+inherited, including chain precedence and zero effective printed coins. Sweeps
+now check real totals and ranks, conservation, record shape and determinism,
+while the remaining wonder timing is covered by the next slice.
 
 The ordinary payment solver uses frozen own production, neighbours' saleable
 production, per-side prices and the starting purse. It returns at most fifteen

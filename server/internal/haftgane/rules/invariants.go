@@ -213,7 +213,14 @@ func (g *Game) CheckInvariants() error {
 	if st.Phase == PhaseDiscardBuild && !hasDiscardChoice(st) {
 		return fmt.Errorf("rules: discard point has no choice or trigger")
 	}
-	return g.checkRecord(box)
+	if err := g.checkRecord(box); err != nil {
+		return err
+	}
+	// Public-city shapes and caches are validated above, so scoring is safe.
+	if st.Phase == PhaseOver && st.Result != scoreResult(st) {
+		return fmt.Errorf("rules: final scores differ from public cities")
+	}
+	return nil
 }
 
 func checkIDs(ids []catalog.DesignID, age uint8, want int) (int, error) {

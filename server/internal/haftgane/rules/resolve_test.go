@@ -186,8 +186,8 @@ func TestResolveMilitaryRing(t *testing.T) {
 }
 
 func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
-	// This intermediate engine deliberately omits coin/scoring/wonder effects.
-	// Sweep assertions are termination, conservation and invariants, not rules completeness.
+	// Wonder scheduling is the only deferred effect path. The sweep checks
+	// real categories/ranks independently, plus conservation and equivalence.
 	for n := uint8(3); n <= 7; n++ {
 		for seed := uint64(0); seed < 200; seed++ {
 			setup := Setup{Seats: n, Seed: seed, Options: Options{Sides: SideRule(seed % 3)}}
@@ -229,6 +229,9 @@ func TestResolveSweepsReplayCoreAndOrder(t *testing.T) {
 				}
 				batches = append(batches, b)
 				g = next
+			}
+			if want := referenceResult(&g.State); g.State.Result != want {
+				t.Fatalf("n%d seed%d real scores/ranks differ: got%+v want%+v", n, seed, g.State.Result, want)
 			}
 			replay, err := Replay(setup, batches)
 			if err != nil || replay != g || replay.Fingerprint() != g.Fingerprint() {

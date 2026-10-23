@@ -116,6 +116,7 @@ func scenarioPhases(t *testing.T) []Game {
 		}
 		over.State.Deals[age] = [MaxSeats][HandSize]catalog.DesignID{}
 	}
+	over.State.Result = scoreResult(&over.State)
 	if err := over.CheckInvariants(); err != nil {
 		t.Fatal("over fixture", err)
 	}

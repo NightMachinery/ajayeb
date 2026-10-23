@@ -47,7 +47,7 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 	}
 	next := *st
 	var terms [MaxSeats]construction
-	var choose, play, income [MaxSeats]Event
+	var choose, play, income, placedIncome [MaxSeats]Event
 	var delta [MaxSeats]int32
 	// 1. Choose. The chosen design leaves exactly once; sixth-turn leftovers
 	// enter the pile before placement. Babylon's kept-card path is a later slice.
@@ -100,7 +100,7 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 		play[seat] = Event{Kind: EvPlay, Seat: seat, Action: a.Kind, Design: a.Design, Stage: q.stage, Left: a.Left, Right: a.Right, Printed: printed, Private: a.Kind != ActBuild}
 	}
 	// 4. Place all cards before recomputing caches. Selling remains ordinary
-	// placement income, distinct from the deferred when-placed effect pipeline.
+	// placement income, distinct from the when-placed effect pipeline.
 	for _, seat := range order[:st.Seats] {
 		a := picks[seat]
 		c := &next.Cities[seat]
@@ -128,9 +128,36 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 		}
 		next.Cities[seat] = c
 	}
-	// 5. Card/stage when-placed effects and scoring are deliberately deferred to
-	// haftgane-effects-and-scoring. 6. Discard-build/last-card points are deferred
-	// to haftgane-wonder-abilities. This intermediate engine is not releasable.
+	// 5. Count the fully placed public cities, never the frozen or partially
+	// placed cities. Earlier coin effects cannot change card/stage counts.
+	for _, seat := range order[:st.Seats] {
+		a := picks[seat]
+		var effects []catalog.Effect
+		event := Event{Kind: EvCoins, Seat: seat}
+		switch a.Kind {
+		case ActBuild:
+			d, _ := catalog.DesignByID(a.Design)
+			effects = d.Effects
+			event.Source, event.Design = CoinDesign, a.Design
+		case ActStage:
+			c := &next.Cities[seat]
+			board, _ := catalog.BoardByID(c.Board)
+			effects = board.Sides[c.Side-1].Stages[c.Stages-1].Effects
+			event.Source, event.Stage = CoinStage, c.Stages
+		default:
+			continue
+		}
+		amount, err := applyWhenPlaced(&next, seat, effects)
+		if err != nil {
+			return *st, evs, err
+		}
+		if amount != 0 {
+			event.Delta = amount
+			placedIncome[seat] = event
+		}
+	}
+	// 6. Discard-build/last-card scheduling remains the wonder-abilities slice.
+	// This intermediate engine is not releasable until that slice lands.
 	var automatic [MaxSeats + 1]Event
 	count := 0
 	// 7. Pass or end the Age, then deal or close the game automatically.
@@ -175,13 +202,13 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 			next = transfer.State
 			automatic[count] = Event{Kind: EvAgeStart, Age: next.Age}
 		} else {
-			finishUnscored(&next)
+			finishScored(&next)
 			automatic[count] = Event{Kind: EvGameOver}
 		}
 		count++
 	}
 	next.Points++
-	for _, bucket := range [3][MaxSeats]Event{choose, play, income} {
+	for _, bucket := range [4][MaxSeats]Event{choose, play, income, placedIncome} {
 		for _, e := range bucket[:st.Seats] {
 			if e.Kind != EvNone {
 				evs = append(evs, e)
@@ -201,25 +228,4 @@ func takeCard(hand *[HandSize]catalog.DesignID, id catalog.DesignID) bool {
 		}
 	}
 	return false
-}
-
-// Until the scoring slice, totals are explicitly zero. Competition ranks and
-// the coin tie-break are structurally consistent so invariant sweeps can end;
-// these are not the final game's scores or winners.
-func finishUnscored(st *State) {
-	st.Phase = PhaseOver
-	st.Decider = NoSeat
-	st.Result = Result{Over: true}
-	for seat := uint8(0); seat < st.Seats; seat++ {
-		rank := uint8(1)
-		for other := uint8(0); other < st.Seats; other++ {
-			if st.Cities[other].Coins > st.Cities[seat].Coins {
-				rank++
-			}
-		}
-		st.Result.Rank[seat] = rank
-		if rank == 1 {
-			st.Result.Winners |= 1 << seat
-		}
-	}
 }
