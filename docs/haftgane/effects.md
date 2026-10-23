@@ -4,7 +4,7 @@
 
 This page inventories every distinct effect kind on the cards, wonder stages and guilds of Haftgane, the base game of 7 Wonders (second edition), says how many items use each kind and which, and compares each kind with Duel's effect language in `server/internal/engine/catalog/types.go`. It ends with the sizes the engine must hold and the counts that must check out. The rules behind each kind are in [rules.md](rules.md).
 
-Counts are of card **designs** (80: 27 in Age I, 23 in Age II, 20 in Age III, 10 guilds) and of wonder **stages** (41 over 14 sides), not of physical copies. Glassworks, Press and Loom are separate designs in Age I and Age II with the same name. The counts come from the reference verified in M13 ([data-rulings.md](data-rulings.md)), recounted by a script.
+Counts are of card **designs** (80: 27 in Age I, 23 in Age II, 20 in Age III, 10 guilds) and of wonder **stages** (41 over 14 sides), not of physical copies. Glassworks, Press and Loom are separate designs in Age I and Age II with the same name. The counts come from the reference verified in M13 ([data-rulings.md](data-rulings.md)), recounted by a script, and the catalog's structural tests (`base_test.go` in `server/internal/haftgane/catalog`) now pin them.
 
 **Provisional values.** One night side stays provisional, Q1 in [data-rulings.md](data-rulings.md#the-night-side-questions): the whole Babylon night side (its two stages, their costs and their effects) has no photo of the printed board; the owner accepted its corroborated values on 2026-10-22, and a clear photo would override them. Every item and size below that rests on it is marked "provisional (Q1)" or "rests on Q1". The other five night-side questions (Q2 to Q6) were confirmed by photos.
 

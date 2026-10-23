@@ -235,11 +235,34 @@ An online game, seat 0 builds the Baths:
 
 Haftgane's pure packages live under `server/internal/haftgane`, independently of
 Duel. `catalog` defines 80 design identities, 77 name identities, seven boards,
-resource/colour/science vocabularies and sixteen validated effect kinds. It
-currently has no card data: synthetic catalogs exercise validation and slug
-lookup. Registration checks field use, saleable production, copy markers,
-chains and twin semantics; the later data slice pins the verified edition's
-complete counts and order. The existing Duel packages and data stay unchanged.
+resource/colour/science vocabularies and sixteen validated effect kinds.
+Registration checks field use, saleable production, copy markers, chains and
+twin semantics; tests swap in small synthetic catalogs with `ReplaceForTest`.
+The existing Duel packages and data stay unchanged.
+
+The catalog holds the base game's verified data (M15.haftgane-catalog-data,
+from the M13 reference): the designs in `designs_age1.go`, `designs_age2.go`,
+`designs_age3.go` and `guilds.go`, the boards in `boards.go` and the 24 chain
+symbols in `chains.go`, written in the constructor language of `dsl.go` and
+registered by package-level initializers, so a data error panics at
+initialization. Design ids follow registration order: the Ages in turn with
+the guilds last, then colour in the enum's order, then English name. Chain
+symbols are numbered by the id of the one design each frees, so the Age II
+targets come first. Name ids number the names by their first design, so each
+Age I and Age II twin (Glassworks, Press, Loom) shares one, and `Twin` maps
+each to the other. `T` holds the compiled lookup tables: sets by Age, colour
+and name, each chain's target and providers, and each design's provided
+symbols. `CopiesAt` counts a design's copies for N players. `RecordTables`
+flattens the catalog into the notation of the M13 blind tables plus our ids;
+`testdata/*.golden.csv` pins it byte for byte (the row order is part of the
+rules version) and `testdata/catalog.golden.txt` pins the prose dump, both
+written by `ajayeb-gen catalog -game haftgane`. The catalog's tests check the
+edition's counts and shapes, diff it field by field against the two committed
+blind tables through `enginekit/catalogdiff`, pin every value of
+[edition-differences.md](haftgane/edition-differences.md), and list the
+fields no photo has confirmed (Babylon's night side, accepted by the owner)
+behind a release-gate test. [data-rulings.md](haftgane/data-rulings.md)
+records the rulings and the fixtures' normalisations.
 
 `rules` defines fixed-value State, Record, Game, actions, events and decision
 points. It contains the seat ring and canonical key grammar, with no setup,

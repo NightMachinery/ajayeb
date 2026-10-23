@@ -42,7 +42,7 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 13. [decisions.md](../dev/decisions.md), D30 to D61: the accepted decisions, each with its reasons, the options rejected and the earlier decision it extends or supersedes.
 14. [roadmap.md](../dev/roadmap.md), M12 to M23: the build plan, with slices, review levels, standing gates, parallel tracks and owner decision points.
 
-The effect inventory and the edition differences were held back as working notes until M13 had verified the data, and are now published with the verified values. The per-card values themselves are not in these pages: they stay in the private run directory until the catalog slice `M15.haftgane-catalog-data` commits them as the engine's catalog.
+The effect inventory and the edition differences were held back as working notes until M13 had verified the data, and are now published with the verified values. The per-card values themselves are not repeated in these pages: `M15.haftgane-catalog-data` committed them as the engine's catalog, `server/internal/haftgane/catalog`, whose golden tables (`testdata/*.golden.csv`) and prose dump (`testdata/catalog.golden.txt`) list every value.
 
 ## Points reconciled in this package
 

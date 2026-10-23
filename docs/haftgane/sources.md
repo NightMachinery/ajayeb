@@ -144,7 +144,7 @@ M13 built the reference from four tables: one built blind from the publisher's s
 - Edition check: every first-edition value listed in [edition-differences.md](edition-differences.md) was compared by script against the second-edition data.
 - Wording check: every page we publish was compared with the saved text of every source above that has text (the publisher's files, the fan wiki's pages and the fan reference files), and no run of 7 or more words is shared.
 
-The catalog slice (`M15.haftgane-catalog-data`) repeats Duel's approach: a catalog checked by structural tests, golden tables, and a three-way comparison with the verifier tables.
+The catalog (`M15.haftgane-catalog-data`) repeats Duel's approach: structural tests, golden tables, and a three-way comparison with the wiki and publisher tables, committed as test fixtures ([data-rulings.md](data-rulings.md#the-committed-verifier-tables)).
 
 ## Owner answers (2026-10-21)
 
