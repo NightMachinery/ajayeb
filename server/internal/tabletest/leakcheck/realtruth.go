@@ -144,6 +144,7 @@ func (t *Truth) addReal(g *rules.Game) {
 	stats := make([]rules.Statistics, t.Seats)
 	neighbours := make([][]realNeighbour, t.Seats)
 	science := make([]realScience, t.Seats)
+	disabled := make([][]realDisabled, t.Seats)
 	for s := 0; s < t.Seats; s++ {
 		c := &st.Cities[s]
 		m.Coins = append(m.Coins, int(c.Coins))
@@ -169,6 +170,7 @@ func (t *Truth) addReal(g *rules.Game) {
 		facts[s], _ = o.Now.Facts(rules.Seat(s))
 		stats[s] = o.Statistics()
 		neighbours[s] = publicNeighbours(st, rules.Seat(s))
+		disabled[s] = publicDisabled(st, rules.Seat(s), choices[s])
 		science[s] = scienceValue(facts[s].Science, facts[s].ScienceChoices)
 		t.Secrets = append(t.Secrets, Secret{fmt.Sprintf("seat %d's observation hash at moment %d", s, len(t.Moments)), o.Fingerprint()})
 	}
@@ -181,4 +183,5 @@ func (t *Truth) addReal(g *rules.Game) {
 	t.RealStatistics = append(t.RealStatistics, stats)
 	t.realNeighbours = append(t.realNeighbours, neighbours)
 	t.realScience = append(t.realScience, science)
+	t.realDisabled = append(t.realDisabled, disabled)
 }

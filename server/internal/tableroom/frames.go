@@ -52,7 +52,7 @@ func (b *broadcast) view(role int, withHistory bool) *roleView {
 		b.views[role] = v
 	}
 	if withHistory && v.history == nil {
-		h := history(g, vw)
+		h := history(g, vw, b.a.t.log, b.a.code)
 		v.history = &h
 	}
 	return v

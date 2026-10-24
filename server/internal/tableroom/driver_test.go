@@ -116,7 +116,7 @@ func TestEveryArrivalOrderInProcess(t *testing.T) {
 func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 	t.Helper()
 	for seed := uint64(0); seed < 500; seed++ {
-		g, _ := newGame(makeSetup(seed, seats, false, false))
+		g, _ := newGame(makeDaySetup(seed, seats, false, false))
 		rng := rand.New(rand.NewPCG(seed, 2))
 		var prefix []tabletest.Batch
 		for !pointOver(g.Point()) {
@@ -155,7 +155,7 @@ func TestDifferentialAgainstDirect(t *testing.T) {
 				// Each game has its own deadline, so a hang in one is caught
 				// however long the whole sweep takes (several times longer
 				// under the race detector).
-				differential(testContext(t), t, n, 300+game*7+uint64(n), seqClients, game, seen)
+				differential(testContextFor(t, 2*time.Minute), t, n, 300+game*7+uint64(n), seqClients, game, seen)
 			}
 		}
 	}
@@ -170,7 +170,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 	t.Helper()
 	where := fmt.Sprintf("%d seats, seed %d, seq memory %d", n, seed, seqClients)
 	// direct's setup uses the engine's default (random) seating.
-	ref, err := direct.New(ctx, direct.Options{Setup: makeSetup(seed, n, true, false), SeqClients: seqClients, Tabs: true})
+	ref, err := direct.New(ctx, direct.Options{Setup: makeDaySetup(seed, n, true, false), SeqClients: seqClients, Tabs: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -294,7 +294,7 @@ func TestDifferentialSwitches(t *testing.T) {
 func differentialSwitches(ctx context.Context, t *testing.T, n int, seed, salt uint64, kept *int) {
 	t.Helper()
 	where := fmt.Sprintf("%d seats, seed %d", n, seed)
-	ref, err := direct.New(ctx, direct.Options{Setup: makeSetup(seed, n, true, false), Tabs: true})
+	ref, err := direct.New(ctx, direct.Options{Setup: makeDaySetup(seed, n, true, false), Tabs: true})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -395,6 +395,9 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 		seed = *spec.Seed
 	}
 	sr := SetupRecord{Seed: seed, Seats: n, RandomSeating: spec.RandomSeating, HideAtEnd: spec.HideAtEnd, Sides: spec.Sides}
+	if sr.Sides == "" {
+		sr.Sides = "day"
+	}
 	su, err := recordSetup(sr)
 	if err != nil {
 		return Record{}, game{}, ErrSpec

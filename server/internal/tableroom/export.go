@@ -72,7 +72,11 @@ func (t *Tables) ReadTableLog(code string) (*Log, error) {
 	if n < MinSeats || n > MaxSeats || len(r.Batches) > maxBatches {
 		return nil, ErrLogReplay
 	}
-	g, err := replay(makeSetup(r.Setup.Seed, n, r.Setup.RandomSeating, r.Setup.HideAtEnd), engineBatches(r.Batches))
+	su, err := recordSetup(r.Setup)
+	if err != nil {
+		return nil, ErrLogReplay
+	}
+	g, err := replay(su, engineBatches(r.Batches))
 	if err != nil || !pointOver(g.Point()) || g.Fingerprint() != r.Hash {
 		return nil, ErrLogReplay
 	}

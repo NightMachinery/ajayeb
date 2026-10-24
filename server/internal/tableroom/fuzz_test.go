@@ -75,7 +75,7 @@ func boundaryPrefix(seats int, kind rules.PointKind, from uint64) boundary {
 
 func findBoundary(seats int, kind rules.PointKind, from uint64) boundary {
 	for seed := from; seed < from+64; seed++ {
-		su := makeSetup(seed, seats, false, false)
+		su := makeDaySetup(seed, seats, false, false)
 		sides := "day"
 		if kind == rules.PointLastCard {
 			su.Options.Sides = rules.SidesRandom

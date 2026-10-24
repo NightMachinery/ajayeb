@@ -3,6 +3,8 @@ package tableroom
 // The actor's concrete binding to the real engine. The small wrappers keep
 // transport point references outside rules, and never reconstruct an action.
 import (
+	"log/slog"
+
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
 	hview "github.com/NightMachinery/ajayeb/server/internal/haftgane/view"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -61,11 +63,11 @@ func seatingRule(random bool) rules.SeatingRule {
 	}
 	return rules.SeatingChosen
 }
-func makeSetup(seed uint64, seats int, random, hideAtEnd bool) setup {
+func makeDaySetup(seed uint64, seats int, random, hideAtEnd bool) setup {
 	return setup{Seed: seed, Seats: uint8(seats), Options: rules.Options{Sides: rules.SidesDay, Seating: seatingRule(random), HideAtEnd: hideAtEnd}}
 }
 func recordSetup(r SetupRecord) (setup, error) {
-	s := makeSetup(r.Seed, r.Seats, r.RandomSeating, r.HideAtEnd)
+	s := makeDaySetup(r.Seed, r.Seats, r.RandomSeating, r.HideAtEnd)
 	switch r.Sides {
 	case "", "day":
 	case "choose":
@@ -101,9 +103,16 @@ func project(g *game, v viewer) projection {
 
 // Entry i is batch i, including HistoryStartPoint at batch zero, for every
 // side rule. Restore and every transaction validate the full rules history.
-func history(g *game, v viewer) []wire.TableHistoryEntry {
+func history(g *game, v viewer, log *slog.Logger, room string) []wire.TableHistoryEntry {
 	h, err := g.History(v)
 	if err != nil {
+		if log != nil {
+			role := -1
+			if v != rules.NoSeat {
+				role = int(v)
+			}
+			log.Error("table history failed", "room", room, "viewer", role)
+		}
 		return []wire.TableHistoryEntry{}
 	}
 	out := make([]wire.TableHistoryEntry, 0, len(h))

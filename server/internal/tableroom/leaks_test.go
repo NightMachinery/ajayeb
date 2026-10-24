@@ -288,7 +288,7 @@ func TestPendingExtrasStayScanned(t *testing.T) {
 	h := newTH(t, Config{}, humans(3, 2029))
 	own := h.snap(tabletest.SeatClient(0))
 	h.expect(h.send(tabletest.SeatClient(0), 1, own.Ref, own.Legal[0], false), tabletest.Accepted, "own draft")
-	truth, err := leakcheck.FromReal(makeSetup(2029, 3, false, false), nil)
+	truth, err := leakcheck.FromReal(makeDaySetup(2029, 3, false, false), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -465,7 +465,7 @@ func truthFrom(t testing.TB, can tabletest.Canonical, n int, seed uint64, hide b
 		}
 		bs = append(bs, eb)
 	}
-	truth, err := leakcheck.FromReal(makeSetup(seed, n, false, hide), bs)
+	truth, err := leakcheck.FromReal(makeDaySetup(seed, n, false, hide), bs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -739,7 +739,7 @@ func TestPlantedLeaksInFrames(t *testing.T) {
 	if other < 0 {
 		t.Fatal("seat 1 holds no card seat 0 lacks")
 	}
-	g, _ := replay(makeSetup(77, 4, false, false), nil)
+	g, _ := replay(makeDaySetup(77, 4, false, false), nil)
 	for _, tc := range []struct {
 		name  string
 		plant func(st *wire.TableState, ev []wire.TableEvent) []wire.TableEvent
@@ -817,7 +817,7 @@ func TestLogCapture(t *testing.T) {
 	}
 	can, _ := p.Canonical(testContext(t))
 	sentinels := []string{strconv.FormatUint(seed, 10), strconv.FormatUint(seed, 16), can.Hash}
-	g, _ := replay(makeSetup(seed, 4, false, false), nil)
+	g, _ := replay(makeDaySetup(seed, 4, false, false), nil)
 	for s := range 4 {
 		sentinels = append(sentinels, observationHash(&g, s))
 	}
@@ -866,7 +866,7 @@ func TestGameLog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	g, err := replay(makeSetup(l.Setup.Seed, l.Setup.Seats, l.Setup.RandomSeating, l.Setup.HideAtEnd), engineBatches(l.Batches))
+	g, err := replay(makeDaySetup(l.Setup.Seed, l.Setup.Seats, l.Setup.RandomSeating, l.Setup.HideAtEnd), engineBatches(l.Batches))
 	if err != nil || g.Fingerprint() != l.Hash || l.Format != LogFormat || l.Game != Game || l.Rules != RulesVersion {
 		t.Fatalf("the log does not replay: %v", err)
 	}

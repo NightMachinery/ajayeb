@@ -298,7 +298,11 @@ func newTokens(t *testing.T, n int) []string {
 // open creates a table of n humans (chosen seating, so lobby slot s is
 // seat s) and joins each seat's client and a spectator.
 func (s *stack) open(ctx context.Context, tokens []string, n int, seed uint64, prefix []tabletest.Batch) (*wsTable, error) {
-	sp := tableroom.Spec{Seed: &seed}
+	return s.openSides(ctx, tokens, n, seed, prefix, "")
+}
+
+func (s *stack) openSides(ctx context.Context, tokens []string, n int, seed uint64, prefix []tabletest.Batch, sides string) (*wsTable, error) {
+	sp := tableroom.Spec{Seed: &seed, Sides: sides}
 	for i := range n {
 		user, _ := s.secret.UserID(tokens[i])
 		sp.Participants = append(sp.Participants, tableroom.Participant{UserID: user, Name: fmt.Sprintf("P%d", i)})
@@ -660,5 +664,47 @@ func finish(ctx context.Context, t *testing.T, w *wsTable, n int) {
 				t.Fatalf("point %s, seat %d: %s, want %s (%v)", sn.Point, s, o, want, err)
 			}
 		}
+	}
+}
+
+// Play compares accepted batches with the real HTTP canonical-log download.
+// Every setup variant must replay the same game advertised by its final frame.
+func TestWebSocketLogSideRules(t *testing.T) {
+	s := newStack(t, t.TempDir())
+	for _, sides := range []string{"", "day", "random", "choose"} {
+		t.Run("sides="+sides, func(t *testing.T) {
+			ctx := wsContext(t, 5*time.Minute)
+			tb, err := s.openSides(ctx, newTokens(t, 4), 3, 4242, nil, sides)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer tb.closeAll()
+			run, err := tabletest.Play(ctx, tb, tabletest.Config{Seats: 3, PickSeed: 4242})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(run.Canonical.Batches) < 18 {
+				t.Fatal("game did not complete")
+			}
+			fr := tb.clients[tabletest.SeatClient(0)].states
+			last := fr[len(fr)-1]
+			if last.Status != "finished" || !last.View.CanDownload {
+				t.Fatal("completed game did not offer its download")
+			}
+			l, status, err := s.download(ctx, tb.code)
+			if err != nil || status != http.StatusOK {
+				t.Fatalf("download status=%d: %v", status, err)
+			}
+			want := sides
+			if want == "" {
+				want = "day"
+			}
+			if l.Setup.Sides != want || l.Hash != run.Canonical.Hash {
+				t.Fatal("download changed effective setup/hash")
+			}
+			if sides == "choose" && l.Batches[0].Point != "sides" {
+				t.Fatalf("choose setup lost side batch: %s", l.Batches[0].Point)
+			}
+		})
 	}
 }

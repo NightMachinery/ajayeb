@@ -18,7 +18,10 @@ all three deals. Seat shuffling remains an independent stream.
 The real rules version is 1. Development fake records use 1000 and archive
 as `rules-version`; no fake batch is interpreted as real play. Compatible
 real records replay setup and canonical batches, then restore the unresolved
-private pending block without applying it. Hash-only refresh and unknown-field
+private pending block without applying it. The finished-game log download
+uses the same side-aware setup decoder as creation, restore, validation and
+undo. New records store the effective side rule explicitly, including `day`
+when the caller omits it. Hash-only refresh and unknown-field
 preservation retain the existing store policy.
 
 History entry i is always batch i. Entry zero is `game-start`, empty for
@@ -50,6 +53,15 @@ pending picks remain outside that cache. A resolution or undo invalidates it.
 The engine value itself is 2,208 bytes on the measured arm64 build.
 A sample on 2026-10-24 retained 75,656 heap bytes per new seven-seat table,
 averaged over 32 tables with eight attached clients and drained outboxes.
+A separate eight-table sample played seven-seat tables to completion, then
+resynced every role and drained the outboxes. It retained 656,173 heap bytes
+per table, including eight cached projections and histories. Those cached
+values serialized to an average 468,707 JSON bytes per table; the largest
+single role's view plus history was 61,513 bytes. These are distinct measures:
+heap includes the actor and connections, while JSON counts just the cached
+view and history values, without the full frame envelope. Finished caches stay
+resident until eviction because no later batch invalidates them. The capacity
+slice will decide whether histories should instead live only for a broadcast.
 One seven-seat game averaged 5.79 ms per resolved last-confirmation transaction
 across 19 batches, including storage, projections and driver overhead. Its
 largest observed offer had 34 keys; 217 is the proven ceiling, not that sample's

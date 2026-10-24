@@ -182,6 +182,7 @@ func (c *Checker) realExtras(r *report, d Doc, v *realTable) {
 			r.add(Mismatch, "disabled", "unknown kind or reason")
 		}
 	}
+	same("disabled", y.Disabled, c.Truth.realDisabled[d.Moment][d.Viewer])
 	// Memory and inference use the separately reviewed permitted observation,
 	// not ViewFor's DTO builder or its output. Current private cards and seen
 	// hands above are independently checked from deals and accepted batches.
@@ -308,6 +309,65 @@ func publicNeighbours(st *rules.State, seat rules.Seat) []realNeighbour {
 			n.Units = append(n.Units, u)
 		}
 		out = append(out, n)
+	}
+	return out
+}
+
+// Disabled explanations are reconstructed from held cards, public city facts
+// and the cost solver, never the production view. Offered constructions also
+// account for free-build abilities and chains without copying their policy.
+func publicDisabled(st *rules.State, seat rules.Seat, offered []rules.Choice) []realDisabled {
+	out := []realDisabled{}
+	if st.Phase != rules.PhaseTurn && st.Phase != rules.PhaseLastCard {
+		return out
+	}
+	if st.Phase == rules.PhaseLastCard && st.Decider != seat {
+		return out
+	}
+	held := st.Hands[seat]
+	if st.Phase == rules.PhaseLastCard {
+		held = [rules.HandSize]catalog.DesignID{st.Cities[seat].Kept}
+	}
+	city := &st.Cities[seat]
+	for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
+		if !slices.Contains(held[:], id) {
+			continue
+		}
+		for _, kind := range []rules.ActionKind{rules.ActBuild, rules.ActStage} {
+			if slices.ContainsFunc(offered, func(ch rules.Choice) bool { return ch.Kind == kind && ch.Design == id }) {
+				continue
+			}
+			d := realDisabled{Kind: actionKind(kind), Design: design(id)}
+			card, _ := catalog.DesignByID(id)
+			cost := card.Cost
+			if kind == rules.ActBuild {
+				if !city.Buildings.And(catalog.T.ByName[card.NameID]).Empty() {
+					d.Reason = "already-built"
+				}
+			} else {
+				board, ok := catalog.BoardByID(city.Board)
+				if !ok || city.Side < catalog.Day || city.Side > catalog.Night || city.Stages >= board.Sides[city.Side-1].NumStages {
+					d.Reason = "wonder-complete"
+				} else {
+					d.Stage = int(city.Stages) + 1
+					cost = board.Sides[city.Side-1].Stages[city.Stages].Cost
+				}
+			}
+			if d.Reason == "" {
+				status := rules.AssessCostState(st, seat, cost)
+				switch {
+				case !status.Coverable:
+					d.Reason = "cannot-cover"
+				case !status.Affordable:
+					d.Reason = "insufficient-coins"
+					d.Cheapest = int(status.Cheapest)
+					d.ShortBy = d.Cheapest - int(city.Coins)
+				}
+			}
+			if d.Reason != "" {
+				out = append(out, d)
+			}
+		}
 	}
 	return out
 }

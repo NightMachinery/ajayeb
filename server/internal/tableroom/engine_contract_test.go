@@ -84,7 +84,7 @@ func TestEngineContractSidesAndReplay(t *testing.T) {
 					if s >= 0 {
 						v = seatViewer(s)
 					}
-					if !reflect.DeepEqual(project(&a.st.game, v), project(&restored.game, v)) || !reflect.DeepEqual(history(&a.st.game, v), history(&restored.game, v)) {
+					if !reflect.DeepEqual(project(&a.st.game, v), project(&restored.game, v)) || !reflect.DeepEqual(history(&a.st.game, v, nil, ""), history(&restored.game, v, nil, "")) {
 						t.Fatal("replay frame or history changed")
 					}
 				}
@@ -226,7 +226,7 @@ func TestEngineContractAbilityOrder(t *testing.T) {
 	var seed uint64
 	found := false
 	for candidate := uint64(0); candidate < 128 && !found; candidate++ {
-		su := makeSetup(candidate, 7, false, false)
+		su := makeDaySetup(candidate, 7, false, false)
 		su.Options.Sides = rules.SidesChoose
 		g, err := newGame(su)
 		if err != nil {

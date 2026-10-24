@@ -188,6 +188,7 @@ type Truth struct {
 	RealStatistics   [][]rules.Statistics
 	realNeighbours   [][][]realNeighbour
 	realScience      [][]realScience
+	realDisabled     [][][]realDisabled
 	RealObservations [][]rules.Observation
 	RealChoices      [][][]rules.Choice
 	RealPublicFacts  [][]rules.PublicFacts
