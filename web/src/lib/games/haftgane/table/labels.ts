@@ -2,11 +2,32 @@
 // the turn bar's pending line say. Every number is the server's (the total,
 // the sale's gain, the stage); nothing is computed.
 
-import type { Choice } from '$lib/wire/haftgane.gen';
+import type { Choice, Play } from '$lib/wire/haftgane.gen';
 import { ht } from '../i18n/messages.svelte';
 
 export function cardName(slug: string): string {
   return ht(`hg.card.${slug}` as 'hg.card.forum');
+}
+
+/** A seat's last play in words ("built Baths", "built wonder stage II",
+ *  "sold a card"), or "" for none. */
+export function playText(p: Play | undefined): string {
+  if (!p) return '';
+  switch (p.kind) {
+    case 'build':
+      return ht('hg.city.last.build', { card: cardName(p.design) });
+    case 'build-discarded':
+      return ht('hg.city.last.build-discarded', { card: cardName(p.design) });
+    case 'stage':
+      return ht('hg.city.last.stage', {
+        stage: ht(
+          `hg.screen.stageNumeral.${Math.min(Math.max(p.stage, 1), 4)}` as 'hg.screen.stageNumeral.1'
+        )
+      });
+    case 'sell':
+      return ht('hg.city.last.sell');
+  }
+  return '';
 }
 
 /** The action alone, as a button under the card's own name says it. */

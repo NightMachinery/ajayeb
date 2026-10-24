@@ -19,7 +19,7 @@
   import SeatCrest from './SeatCrest.svelte';
   import StatPill from './StatPill.svelte';
   import StatusBadge from './StatusBadge.svelte';
-  import { cardName } from './labels';
+  import { cardName, playText } from './labels';
   import { makings, stagesOf, type SeatStatus } from './model';
 
   interface Props {
@@ -103,18 +103,7 @@
   const MINUS = '−';
   const signed = (n: number) => (n < 0 ? MINUS + formatNumber(-n) : formatNumber(n));
   const last = $derived.by(() => {
-    const p = seat.last;
-    if (!p) return '';
-    const what =
-      p.kind === 'build'
-        ? ht('hg.city.last.build', { card: cardName(p.design) })
-        : p.kind === 'build-discarded'
-          ? ht('hg.city.last.build-discarded', { card: cardName(p.design) })
-          : p.kind === 'stage'
-            ? ht('hg.city.last.stage', { stage: numeral(p.stage - 1) })
-            : p.kind === 'sell'
-              ? ht('hg.city.last.sell')
-              : '';
+    const what = playText(seat.last);
     return what ? ht('hg.city.last', { what }) : '';
   });
   const under = $derived(
