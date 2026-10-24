@@ -1,17 +1,19 @@
 <script lang="ts">
   // What a spectator sees in place of a hand (phone-layout.md, "Known
   // gaps": the spectator view). A row of seat buttons centres the table on
-  // the seat the spectator follows; the last turn lists what each seat did,
-  // from the public view; and the spectators are listed with their roles.
-  // A former player first reads who holds their seat now. Nothing private
-  // reaches a spectator, so nothing private is shown.
+  // the seat the spectator follows; the newest turn recap says what each
+  // seat did, in ring order from that seat, with the seat and role changes
+  // of the turn; and the spectators are listed with their roles. A former
+  // player first reads who holds their seat now. Nothing private reaches a
+  // spectator, so nothing private is shown.
   import type { Seat } from '$lib/wire/haftgane.gen';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
   import SeatCrest from './SeatCrest.svelte';
   import SpectatorList from './SpectatorList.svelte';
+  import TurnRecap from './TurnRecap.svelte';
   import type { SeatAction, SeatPerson } from './admin';
-  import { playText } from './labels';
+  import type { Recap } from './recap';
 
   interface Props {
     /** Every seat, in seat order. */
@@ -28,6 +30,10 @@
     onrole?: (action: Extract<SeatAction, { kind: 'promote' | 'demote' }>) => void;
     /** This viewer held a seat earlier: who plays it now. */
     former?: { seat: number; by: 'bot' | 'human'; name: string } | null;
+    /** The newest turn, recapped from the followed seat; null before the first. */
+    recap?: Recap | null;
+    /** A user's name, for the recap's seat and role changes. */
+    userName?: (userId: string | undefined) => string;
   }
 
   let {
@@ -41,11 +47,10 @@
     roles = {},
     disabled = false,
     onrole,
-    former = null
+    former = null,
+    recap = null,
+    userName = () => ''
   }: Props = $props();
-
-  const plays = $derived(seats.map((s) => ({ seat: s.seat, text: playText(s.last) })));
-  const anyPlay = $derived(plays.some((p) => p.text));
 </script>
 
 <section class="watch" data-spectator-panel aria-labelledby="hg-watch-title">
@@ -82,18 +87,11 @@
     {/each}
   </div>
 
-  <h3>{ht('hg.watch.last')}</h3>
-  {#if anyPlay}
-    <ul class="plays" data-last-plays>
-      {#each plays as p (p.seat)}
-        <li data-last-play={p.seat}>
-          <span class="who" dir="auto">{names[p.seat] ?? ''}</span>
-          <span class="what">{p.text || ht('hg.watch.last.waiting')}</span>
-        </li>
-      {/each}
-    </ul>
+  {#if recap}
+    <TurnRecap {recap} {names} {bots} you={null} {userName} level={3} />
   {:else}
-    <p class="note">{ht('hg.watch.last.none')}</p>
+    <h3>{ht('hg.watch.last')}</h3>
+    <p class="note">{ht('hg.recap.none')}</p>
   {/if}
 
   <h3>{ht('hg.admin.spectators.title')}</h3>
@@ -167,26 +165,6 @@
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .plays {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: 0.9rem;
-  }
-  .plays li {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-  .who {
-    font-weight: 600;
-  }
-  .what {
-    color: var(--fg-muted);
   }
   .note {
     margin: 0;

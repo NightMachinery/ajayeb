@@ -70,8 +70,6 @@ export const admin = {
   'hg.watch.follow': 'Follow a seat',
   'hg.watch.follow.tip': 'Centre the table on {name}',
   'hg.watch.last': 'Last turn',
-  'hg.watch.last.none': 'No turn has been played yet.',
-  'hg.watch.last.waiting': 'Not played yet',
   'hg.watch.former.bot': 'A bot is playing your seat. An admin can seat you again.',
   'hg.watch.former.human': '{name} plays your seat now. An admin can seat you again.'
 } as const satisfies Messages;
