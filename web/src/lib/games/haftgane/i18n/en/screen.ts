@@ -44,6 +44,8 @@ export const screen = {
   'hg.screen.menu.rules': 'Rules',
   'hg.screen.notice.dismiss': 'Dismiss',
   'hg.screen.age': 'Age {age}',
+  // Between a label and its detail, such as a wonder and its side.
+  'hg.screen.sep': ' · ',
   'hg.screen.turn': '{turn}/{of}',
   'hg.screen.turn.tip': 'Turn {turn} of {of} in this Age',
   'hg.screen.sides': 'Sides',

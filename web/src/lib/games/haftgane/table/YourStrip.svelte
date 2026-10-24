@@ -174,7 +174,10 @@
         <span class="wonder-name">{ht(`hg.board.${seat.board}` as 'hg.board.gizah')}</span>
         {#if sideName}
           <span class="wonder-side"
-            >{sideName} · {ht('hg.screen.stages', { built: seat.stages, of: stages.length })}</span
+            >{sideName}{ht('hg.screen.sep')}{ht('hg.screen.stages', {
+              built: seat.stages,
+              of: stages.length
+            })}</span
           >
         {/if}
       </span>

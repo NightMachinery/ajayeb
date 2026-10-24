@@ -177,7 +177,7 @@ export function recapSpeech(
     const mine = line.seat === you;
     const coins = line.coins.map((c) => coinText(c, nameOf));
     parts.push(
-      [actText(line, nameOf(line.seat), mine), ...coins].join(', ') + '.',
+      [actText(line, nameOf(line.seat), mine), ...coins].join(ht('hg.city.row.sep')) + '.',
       ...lastCardText(line, nameOf(line.seat), mine).map((s) => s + '.')
     );
   }

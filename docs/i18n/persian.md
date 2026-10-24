@@ -347,6 +347,7 @@ Haftgane's messages live with the game, in `web/src/lib/games/haftgane/i18n/fa/`
 - **resources**: wood چوب, clay خاک رس, stone سنگ, ore سنگ‌آهن, glass شیشه, papyrus پاپیروس, cloth پارچه. Raw resources: مواد خام. Manufactured resources: کالاهای ساخته‌شده.
 - **science symbols**: compass پرگار (the drafting compass), gear چرخ‌دنده, tablet لوح. A set of three different symbols: دسته.
 - **colour categories**: civic buildings ساختمان‌های مدنی, commercial buildings ساختمان‌های تجاری, military buildings ساختمان‌های نظامی, science buildings ساختمان‌های علمی, guilds انجمن‌ها, as in Duel.
+- **Separators.** A list of names is joined by «، » (`hg.city.row.sep`), and so is a label and its detail, such as a wonder and its side («رودس، شب»), where the English has a middle dot (`hg.screen.sep`). The middle dot looks just like the Persian zero «۰», so «شهر · ۰ ساختمان» read as «شهر ۰ ۰ ساختمان»; the city heading says «شهر: {count} ساختمان».
 
 ### Boards and wonders
 

@@ -138,7 +138,7 @@
     />
     <div class="who">
       <h2 id={titleId} dir="auto">{name}</h2>
-      <p class="where">{where} · {wonderLine}</p>
+      <p class="where">{where}{ht('hg.screen.sep')}{wonderLine}</p>
     </div>
     <StatusBadge {status} {name} />
     {@render actions?.()}

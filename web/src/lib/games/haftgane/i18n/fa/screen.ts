@@ -47,6 +47,8 @@ export const screen = {
   'hg.screen.menu.rules': 'قوانین',
   'hg.screen.notice.dismiss': 'بستن',
   'hg.screen.age': 'دوران {age}',
+  // Not the middle dot, which looks just like the Persian zero «۰».
+  'hg.screen.sep': '، ',
   'hg.screen.turn': '{turn}/{of}',
   'hg.screen.turn.tip': 'نوبت {turn} از {of} در این دوران',
   'hg.screen.sides': 'طرف‌ها',

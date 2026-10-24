@@ -191,7 +191,7 @@
         </div>
         {#if d}
           <p class="category">
-            {ht(`hg.screen.colourName.${d.colour}`)} · {ht('hg.screen.age', {
+            {ht(`hg.screen.colourName.${d.colour}`)}{ht('hg.screen.sep')}{ht('hg.screen.age', {
               age: ageLabel(d.age)
             })}
           </p>

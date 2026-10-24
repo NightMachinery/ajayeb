@@ -59,6 +59,12 @@
   const stages = $derived(stagesOf(seat));
   const crestTip = $derived(ht('hg.screen.crest.tip', { name, where }));
   const stagesTip = $derived(ht('hg.screen.stages.tip', { built: seat.stages, of: stages.length }));
+  // The board's name, and its side once chosen.
+  const caption = $derived.by(() => {
+    const board = ht(`hg.board.${seat.board}` as 'hg.board.gizah');
+    if (seat.side !== 'day' && seat.side !== 'night') return board;
+    return board + ht('hg.screen.sep') + ht(`hg.screen.side.${seat.side}`);
+  });
   const city = $derived(
     COLOURS.map((colour) => ({
       colour,
@@ -138,10 +144,7 @@
   {#if stages.length > 0}
     <div class="wide wonder">
       <span class="caption">
-        {ht(`hg.board.${seat.board}` as 'hg.board.gizah')}
-        {#if seat.side === 'day' || seat.side === 'night'}
-          · {ht(seat.side === 'day' ? 'hg.screen.side.day' : 'hg.screen.side.night')}
-        {/if}
+        {caption}
       </span>
       <StagePills {stages} built={seat.stages} />
     </div>
@@ -154,7 +157,7 @@
           <span class="glyph" role="img" aria-label={tip} {@attach tooltip({ text: tip })}>
             <HgGlyph name="category-{row.colour}-sm" />
           </span>
-          <span class="names">{row.names.join(', ')}</span>
+          <span class="names">{row.names.join(ht('hg.city.row.sep'))}</span>
           <span class="n">{formatNumber(row.names.length)}</span>
         </li>
       {/each}

@@ -135,7 +135,7 @@
           <span class="band"
             ><HgGlyph name="category-{design(r.design)?.colour ?? 'brown'}-sm" /></span
           >
-          <span>{cardName(r.design)} · {text}</span>
+          <span>{cardName(r.design)}{ht('hg.screen.sep')}{text}</span>
         </button>
       {/each}
     </div>

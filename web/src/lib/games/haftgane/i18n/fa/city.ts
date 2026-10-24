@@ -41,7 +41,7 @@ export const city = {
   'hg.city.production': 'تولید',
   'hg.city.production.own': 'دو همسایه‌ی شما می‌توانند آن را بخرند',
   'hg.city.production.other': 'فقط دو همسایه‌ی {name} می‌توانند آن را بخرند',
-  'hg.city.buildings': { other: 'شهر · {count} ساختمان' },
+  'hg.city.buildings': { other: 'شهر: {count} ساختمان' },
   'hg.city.row.none': 'هیچ',
   // In place of the colour rows, while a city has no building.
   'hg.city.row.nothing': 'هنوز چیزی ساخته نشده',
