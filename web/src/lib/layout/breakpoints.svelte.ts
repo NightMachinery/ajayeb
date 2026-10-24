@@ -24,7 +24,11 @@ export const QUERIES = {
   /** Wider than a phone in portrait. */
   tablet: '(min-width: 40rem)',
   /** A mouse or trackpad on a wide screen: popovers instead of sheets. */
-  finePointerWide: '(pointer: fine) and (min-width: 64rem)'
+  finePointerWide: '(pointer: fine) and (min-width: 64rem)',
+  /** Too little height for the stacked board's full rows, such as a phone
+   *  sharing its screen with a video call: the stacked layouts tighten
+   *  (M18.short-screen-status). */
+  shortStack: '(max-height: 40rem)'
 } as const;
 
 class Breakpoints {
@@ -32,6 +36,7 @@ class Breakpoints {
   #wide = new MediaQuery(QUERIES.wide, false);
   #tablet = new MediaQuery(QUERIES.tablet, false);
   #finePointerWide = new MediaQuery(QUERIES.finePointerWide, false);
+  #shortStack = new MediaQuery(QUERIES.shortStack, false);
 
   get phoneLandscape(): boolean {
     return this.#phoneLandscape.current;
@@ -39,6 +44,13 @@ class Breakpoints {
 
   get finePointerWide(): boolean {
     return this.#finePointerWide.current;
+  }
+
+  /** A stacked layout (phone portrait or tablet) with too little height for
+   *  its full rows (QUERIES.shortStack). */
+  get shortStack(): boolean {
+    const v = this.viewport;
+    return this.#shortStack.current && (v === 'phone-portrait' || v === 'tablet');
   }
 
   /** The viewport class right now. */

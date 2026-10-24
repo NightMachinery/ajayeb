@@ -10,6 +10,9 @@ export const game = {
   'game.title': 'بازی {code}',
   'game.loading': 'در انتظار بازی…',
   'game.board': 'صفحه‌ی بازی',
+  'game.tooShort.title': 'جا کافی نیست',
+  'game.tooShort.body':
+    'این پنجره برای بازی خیلی کوتاه است. آن را بلندتر کنید یا دستگاه را بچرخانید.',
   'game.openCity': 'نمایش شهر {name}',
 
   // The card sheet.

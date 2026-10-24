@@ -298,6 +298,10 @@
   const resignWinner = $derived<Seat>(resignSeat === 1 ? 0 : 1);
 
   const layout = $derived(breakpoints.viewport);
+  // A stacked layout with little height, such as a phone sharing its screen
+  // with a video call: the track and tokens share one compact row, and the
+  // structure, not the two strips, gives up height (M18.short-screen-status).
+  const short = $derived(breakpoints.shortStack);
   // Where the toasts sit in play. Above the turn bar by default (on a phone
   // that covers only this player's own strip). On a desktop they sit at the
   // foot of this player's own column, clear of the structure's takeable
@@ -1116,6 +1120,7 @@
     {@attach rememberShown(frame, presenter.idle, pageVisible, seenPly)}
     class="game-screen h-full w-full overflow-hidden"
     data-layout={layout}
+    data-short={short ? '' : undefined}
     data-draft={view?.phase === 'wonderDraft' ? '' : undefined}
     data-phase={view?.phase}
     data-home={home}
@@ -1205,8 +1210,11 @@
       </div>
 
       {#if layout !== 'phone-landscape'}
-        <div class="area-board flex min-w-0 flex-col items-center gap-2 px-1" dir={i18n.dir}>
-          {@render trackAndTokens(false)}
+        <div
+          class="area-board flex min-w-0 items-center gap-2 px-1 {short ? 'flex-row' : 'flex-col'}"
+          dir={i18n.dir}
+        >
+          {@render trackAndTokens(short)}
         </div>
       {/if}
 
@@ -1356,6 +1364,19 @@
           class="pb-[max(0.25rem,var(--safe-b))]"
         />
       {/if}
+    </div>
+  </div>
+  <!-- Below the floor a translated notice covers the screen instead of a
+       broken board (see .too-short). -->
+  <div
+    class="too-short fixed inset-0 z-40 place-items-center bg-table p-6 text-center"
+    dir={i18n.dir}
+    role="status"
+    data-too-short
+  >
+    <div class="flex max-w-xs flex-col gap-2">
+      <p class="font-semibold text-fg">{t('game.tooShort.title')}</p>
+      <p class="text-sm text-fg-muted">{t('game.tooShort.body')}</p>
     </div>
   </div>
 {/if}
@@ -1544,6 +1565,13 @@
   .game-screen[data-layout='tablet'] {
     row-gap: 0.375rem;
   }
+  /* Little height (data-short): both strips keep their full height, so each
+     player's status stays on screen, and the structure shrinks its cards to
+     what is left (CardStructure fits them to its box). Below the floor the
+     too-short notice covers the screen instead. */
+  .game-screen[data-short]:not([data-draft]):not(:has(> .area-main)) {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+  }
   .area-top {
     grid-area: top;
   }
@@ -1568,6 +1596,22 @@
   }
   .area-main {
     grid-area: main;
+  }
+
+  /* The floor (M18.short-screen-status), measured with
+     e2e/ux/short-screens.spec.ts: under 460 px of height in portrait the
+     Age III cards drop under 44 px tall, and under 512 px of width the
+     phone landscape layout's cards drop under 30 px wide. Pure CSS, so the
+     notice comes and goes as the window is resized; open dialogs stay
+     above it. */
+  .too-short {
+    display: none;
+  }
+  @media (orientation: portrait) and (max-height: 28.6875rem),
+    (orientation: landscape) and (max-height: 32rem) and (max-width: 31.9375rem) {
+    .too-short {
+      display: grid;
+    }
   }
 
   /* The pre-roll ring's colour: the bot's crest (StructureSlot and Draft draw

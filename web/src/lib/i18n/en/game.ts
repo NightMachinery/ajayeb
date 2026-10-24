@@ -9,6 +9,9 @@ export const game = {
   'game.title': 'Game {code}',
   'game.loading': 'Waiting for the game…',
   'game.board': 'Game board',
+  // The window is below the smallest size the board can be played at.
+  'game.tooShort.title': 'Not enough room',
+  'game.tooShort.body': 'This window is too short to play. Make it taller, or turn your device.',
   'game.openCity': "Show {name}'s city",
 
   // The card sheet.
