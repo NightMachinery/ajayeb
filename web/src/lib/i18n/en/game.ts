@@ -13,6 +13,8 @@ export const game = {
 
   // The card sheet.
   'game.card.meta': '{category} · Age {age}',
+  // Over the hint marks the card shows in its corner, each with what it means.
+  'game.card.marks': 'Hint marks on this card',
   'game.card.covered': {
     one: 'Covered by {count} card. It can be taken once nothing covers it.',
     other: 'Covered by {count} cards. It can be taken once nothing covers it.'

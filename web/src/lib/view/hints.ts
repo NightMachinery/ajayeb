@@ -660,6 +660,18 @@ export function denyPip(pip: CardPip | undefined): CardPip | undefined {
   return entries[0] ? { top: entries[0], entries, more: entries.length > 1 } : undefined;
 }
 
+/** The pip a card shows in its corner on the board: none while the local
+ *  hide keeps marks off the board, and in wonder-first mode (`marked`) only
+ *  the opponent's facts. The card sheet lists this same pip's lines. */
+export function cornerPip(
+  pip: CardPip | undefined,
+  boardMarks: boolean,
+  marked: boolean
+): CardPip | undefined {
+  if (!boardMarks) return undefined;
+  return marked ? denyPip(pip) : pip;
+}
+
 /** The parts of a Session a screen's hints read. */
 export interface HintSession {
   readonly view: View | null;

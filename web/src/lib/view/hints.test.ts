@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { render } from 'svelte/server';
+import HintPipLines from '$lib/components/card/HintPipLines.svelte';
 import { formatSigned, i18n, stripBidiMarks } from '$lib/i18n';
 import type { CardHints, CostView, HintFamily, RoomInfo, SlotView, View } from '$lib/wire';
 import { tokenHint, tokenValueText } from './board-hints';
@@ -7,6 +9,7 @@ import { HINT_FAMILIES } from '$lib/hints/families';
 import {
   PIP_PRIORITY,
   cardPip,
+  cornerPip,
   cardSections,
   denyNotes,
   denyPip,
@@ -539,5 +542,23 @@ describe('hint number formatting', () => {
     expect(lines[1]).toContain(formatSigned(-1));
     expect(stripBidiMarks(lines[1]!)).toBe('ارزش کنونی: ۰ سکه، −۱ امتیاز.');
     expect(shortByDiscard(2, ALL)).toContain(formatSigned(2, { signDisplay: 'exceptZero' }));
+  });
+});
+
+describe("the corner pip and the card sheet's list of it (M18.card-sheet-signals)", () => {
+  it('lists every line of the pip the corner shows, in its order', () => {
+    const pip = cardPip([PAIR, WIN], SEAT0, ALL, NAMES)!;
+    const corner = cornerPip(pip, true, false)!;
+    expect(corner).toBe(pip);
+    const body = render(HintPipLines, { props: { pip: corner } }).body;
+    const lines = [...body.matchAll(/data-hint-line="(\w+)" data-hint-side="(\w+)"/g)];
+    expect(lines.map((m) => [m[1], m[2]])).toEqual(corner.entries.map((e) => [e.code, e.side]));
+  });
+
+  it("shows none while the board hides marks, and only the opponent's in wonder-first mode", () => {
+    const pip = cardPip([PAIR, WIN], SEAT0, ALL, NAMES)!;
+    expect(cornerPip(pip, false, false)).toBeUndefined();
+    expect(cornerPip(pip, true, true)).toEqual(denyPip(pip));
+    expect(cornerPip(pip, true, true)!.entries.every((e) => e.side === 'opp')).toBe(true);
   });
 });

@@ -43,7 +43,13 @@
   import type { CostView, SlotView } from '$lib/wire';
   import { backTip, type CardTipContext } from '$lib/view/tips';
   import { hintHide } from '$lib/hints/local.svelte';
-  import { denyPip, pipLabel, sessionHintScreen, slotPip, type HintScreen } from '$lib/view/hints';
+  import {
+    cornerPip,
+    pipLabel,
+    sessionHintScreen,
+    slotPip,
+    type HintScreen
+  } from '$lib/view/hints';
   import { cardName } from '../card/effect-text';
   import CardBack from '../card/CardBack.svelte';
   import CardFace from '../card/CardFace.svelte';
@@ -121,7 +127,7 @@
     screen ? slotPip(slot, screen.perspective, screen.families, screen.names) : undefined
   );
   // Wonder-first mode: only the opponent's pip claims the corner.
-  const shownPip = $derived(screen?.boardMarks ? (marked ? denyPip(pip) : pip) : undefined);
+  const shownPip = $derived(cornerPip(pip, !!screen?.boardMarks, marked));
   const name = $derived(slot.state === 'faceUp' && slot.card ? cardName(slot.card) : '');
   const back = $derived(slot.back ?? 'age1');
   const backTooltip = $derived(slot.state === 'faceDown' ? backTip(back) : undefined);

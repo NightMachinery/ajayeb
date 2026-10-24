@@ -14,6 +14,7 @@ export const game = {
 
   // The card sheet.
   'game.card.meta': '{category} · دوران {age}',
+  'game.card.marks': 'نشانه‌های راهنمای این کارت',
   'game.card.covered': {
     other: 'زیر {count} کارت پوشیده است. وقتی هیچ کارتی رویش نماند، می‌توان برش داشت.'
   },

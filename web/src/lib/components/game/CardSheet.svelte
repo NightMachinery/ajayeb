@@ -57,10 +57,12 @@
   import { hintHide } from '$lib/hints/local.svelte';
   import {
     cardSections,
+    cornerPip,
     denyNotes,
     discardNotes,
     sessionHintScreen,
     shortByDiscard,
+    slotPip,
     type HintScreen
   } from '$lib/view/hints';
   import {
@@ -77,6 +79,7 @@
   import Sheet from '../shell/Sheet.svelte';
   import CardBack from '../card/CardBack.svelte';
   import CardFace from '../card/CardFace.svelte';
+  import HintPipLines from '../card/HintPipLines.svelte';
   import ActionButton from './ActionButton.svelte';
   import { cardActions, readyWonders, wonderChoicesByCard } from './card-actions';
   import AfterPickPanel from './AfterPickPanel.svelte';
@@ -195,6 +198,20 @@
     screen && slug && slot
       ? cardSections(slug, slot.hints, screen.perspective, screen.families, screen.names)
       : []
+  );
+  // The hint marks the card shows in its corner on the board, with what
+  // each means (M18.card-sheet-signals): on a phone the corner's tooltip
+  // needs a long-press, and the sheet is where a player already looks. In
+  // wonder-first mode the board marks the cards the wonder can take with
+  // the opponent's facts only, and so does this list.
+  const marks = $derived(
+    screen && slot
+      ? cornerPip(
+          slotPip(slot, screen.perspective, screen.families, screen.names),
+          screen.boardMarks,
+          !!(pickFor && pickChoice)
+        )
+      : undefined
   );
   const sheetSeat = $derived(seat === 1 ? 1 : 0);
   const notes = $derived(
@@ -457,6 +474,21 @@
                     card: cardName(card.chainTo)
                   })}
                 </p>
+              {/if}
+              {#if marks}
+                <section
+                  class="flex flex-col gap-1"
+                  aria-labelledby="card-sheet-marks"
+                  data-card-marks
+                >
+                  <h3
+                    id="card-sheet-marks"
+                    class="text-xs font-semibold tracking-wide text-fg-muted uppercase"
+                  >
+                    {t('game.card.marks')}
+                  </h3>
+                  <HintPipLines pip={marks} class="text-sm" />
+                </section>
               {/if}
             {:else}
               <h2 id={titleId} class="font-display text-xl leading-tight text-fg">

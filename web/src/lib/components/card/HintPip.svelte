@@ -16,8 +16,9 @@
   //
   // A second hint adds a hairline dot beside the pip, never a second glyph.
   // The pip's tooltip lists every hint on the card, one glyph per line, in
-  // priority order. The pip is aria-hidden: the card's accessible name
-  // carries the same words (view/hints.ts pipLabel).
+  // priority order (HintPipLines.svelte, which the card sheet shows too).
+  // The pip is aria-hidden: the card's accessible name carries the same
+  // words (view/hints.ts pipLabel).
   //
   // A plain leaf: it takes the pip model (view/hints.ts cardPip) and
   // positions itself absolutely; the parent must be positioned.
@@ -25,6 +26,7 @@
   import { t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { CardPip, PipEntry } from '$lib/view/hints';
+  import HintPipLines from './HintPipLines.svelte';
 
   interface Props {
     pip: CardPip;
@@ -57,18 +59,7 @@
   {/if}
 {/snippet}
 
-{#snippet lines()}
-  <ul class="flex flex-col gap-1 text-start text-[13px] text-fg" data-hint-lines>
-    {#each pip.entries as e (e.code + e.seat)}
-      <li class="flex items-start gap-1.5" data-hint-line={e.code} data-hint-side={e.side}>
-        <span class="hint-dot mt-0.5 shrink-0" data-style={e.style} data-tone={e.tone}>
-          {@render glyph(e, 'size-3')}
-        </span>
-        <span>{e.text}</span>
-      </li>
-    {/each}
-  </ul>
-{/snippet}
+{#snippet lines()}<HintPipLines {pip} />{/snippet}
 
 <span
   class="hint-pip pointer-events-auto z-10 grid place-items-center rounded-full {size === 'sm'
@@ -94,19 +85,10 @@
 <style>
   /* Fill carries the side. The colours sit on cards, which stay paper-
      coloured in both themes, so they are fixed. */
-  .hint-pip,
-  .hint-dot {
+  .hint-pip {
     --pip-crest: var(--gold);
     --pip-edge: var(--gold-deep);
     color: var(--card-ink);
-  }
-  .hint-dot {
-    display: inline-grid;
-    place-items: center;
-    width: 1.1rem;
-    height: 1.1rem;
-    border-radius: 999px;
-    border: 1.5px solid var(--pip-edge);
   }
   [data-tone='sun'] {
     --pip-crest: var(--sun);
