@@ -3,11 +3,12 @@
   // without a saved game to continue), the two new-game sheets, Settings,
   // the hot-seat pass-device interstitial, the sound board and the hint
   // settings (Hints.svelte), the rules references of both games
-  // (Rules.svelte, HaftganeRules.svelte), and the tutorial's components
-  // (Tutorial.svelte).
+  // (Rules.svelte, HaftganeRules.svelte), Haftgane's table screen leaves
+  // (HaftganeTable.svelte), and the tutorial's components (Tutorial.svelte).
   // No live connection: the
   // sheets' Start buttons are wired to a no-op here, same as the rest of
   // this gallery page's demo controls (see dev/gallery/+page.svelte).
+  import { onMount, type Component } from 'svelte';
   import { t } from '$lib/i18n';
   import Home from '$lib/components/screens/Home.svelte';
   import HotseatSheet from '$lib/components/screens/HotseatSheet.svelte';
@@ -21,6 +22,14 @@
   import SoundBoard from './SoundBoard.svelte';
   import Tutorial from './Tutorial.svelte';
   import type { SavedRoom } from '$lib/session/rooms.svelte';
+
+  // Haftgane's table leaves load with their section only: a static import
+  // would split them into a chunk shared with Haftgane's entry, whose name
+  // every page's route map then carries (docs/architecture.md, "Chunks").
+  let HaftganeTable = $state.raw<Component | null>(null);
+  onMount(() => {
+    void import('./HaftganeTable.svelte').then((m) => (HaftganeTable = m.default));
+  });
 
   const sampleRooms: readonly SavedRoom[] = [
     { code: 'ZAGROS41', mode: 'ai', lastSeen: Date.now() },
@@ -150,6 +159,8 @@
   <Rules />
 
   <HaftganeRules />
+
+  {#if HaftganeTable}<HaftganeTable />{/if}
 
   <Tutorial />
 </div>
