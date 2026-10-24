@@ -633,6 +633,48 @@ func (a *actor) charge(c *room.Client) { a.budget.Charge(a.userOf(c), a.now()) }
 // leaves memory, so loading it again does not fill a spent budget.
 func (a *actor) park() { a.l.budgets.Put(a.code, a.budget, 0, a.now()) }
 
+// fitWatchers closes connections of the users given while more than
+// MaxClients of the lobby's connections watch (their user holds no slot,
+// taken or reserved): each user's newest first, never a user's oldest,
+// each with error room-full, detached like a revoked claim. Admission
+// already keeps watchers to MaxClients; this keeps them there when an
+// edit takes slots from users, so their tabs do not stay on as watchers.
+// Each user who lost a slot keeps one connection, so watchers number at
+// most MaxClients plus seven less the players, and a lobby holds at most
+// MaxClients + 7 + 7 * (MaxUserClients - 1) connections, 88 by default.
+func (a *actor) fitWatchers(users []string) {
+	watching := func(c *room.Client) bool { return !a.holdsSlot(a.userOf(c)) }
+	n := 0
+	for _, c := range a.conns {
+		if watching(c) {
+			n++
+		}
+	}
+	for i := len(a.conns) - 1; i >= 0 && n > a.l.cfg.MaxClients; i-- {
+		c := a.conns[i]
+		u := a.userOf(c)
+		if !watching(c) || !slices.Contains(users, u) || !slices.ContainsFunc(a.conns[:i], func(o *room.Client) bool { return a.userOf(o) == u }) {
+			continue
+		}
+		a.conns = slices.Delete(a.conns, i, i+1)
+		delete(a.claims, c)
+		c.Out.Push(wire.NewError(wire.ErrorCodeRoomFull, "the room takes no more connections"))
+		n--
+	}
+}
+
+// lostSlots lists the users who hold a slot, taken or reserved, in prev
+// and none in next.
+func lostSlots(prev, next *Record) []string {
+	var out []string
+	for _, s := range prev.Slots {
+		if s.UserID != "" && !slices.ContainsFunc(next.Slots, func(x Slot) bool { return x.UserID == s.UserID }) {
+			out = append(out, s.UserID)
+		}
+	}
+	return out
+}
+
 // holdsSlot reports whether u holds a slot, taken or reserved for them.
 func (a *actor) holdsSlot(u string) bool {
 	return slices.ContainsFunc(a.rec.Slots, func(s Slot) bool { return s.UserID == u && s.UserID != "" })
@@ -651,6 +693,7 @@ func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)
 	appendLog(&cand, append(log, more...)...)
 	retire(&a.rec, &cand)
+	lost := lostSlots(&a.rec, &cand)
 	if err := a.commit(op, cand); err != nil {
 		return a.refuse(c, seq, op, outStorage)
 	}
@@ -658,6 +701,7 @@ func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
 	a.rolesAhead = nil
 	a.armRoles(next)
 	away := a.revokeClaims()
+	a.fitWatchers(lost)
 	a.publish(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})
 	if away {
 		a.checkRoles()

@@ -49,6 +49,8 @@ type fixture struct {
 	// maxRooms is the Manager's room limit (0: its default), so a test
 	// can evict a lobby by making another room.
 	maxRooms int
+	// burst is the lobbies' request burst (0: the default).
+	burst int
 }
 
 type saveFault struct{ pass, fail int }
@@ -165,7 +167,7 @@ func (s failingStore) ReplaceGame(code, from, game string, data []byte) error {
 func (f *fixture) start() {
 	f.t.Helper()
 	f.tables = tableroom.New(tableroom.Config{Clock: f.clock, Creation: !f.noCreation})
-	f.lobbies = New(Config{Clock: f.clock, Tables: f.tables, Creation: !f.noCreation})
+	f.lobbies = New(Config{Clock: f.clock, Tables: f.tables, Creation: !f.noCreation, RequestBurst: f.burst})
 	kinds, err := room.NewKinds(room.DuelKind(), f.tables.Kind(), f.lobbies.Kind())
 	if err != nil {
 		f.t.Fatal(err)

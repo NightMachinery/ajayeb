@@ -141,8 +141,10 @@ func (a *actor) run() {
 	a.emptySince = a.now()
 	if len(a.conns) > 0 {
 		// Handed over by the lobby's Start: everyone's first table frame,
-		// but for a claim that names no seat (none should).
+		// but for a claim that names no seat (none should), and for
+		// watchers past the bound the lobby kept (none should be).
 		a.revokeClaims()
+		a.fitWatchers(a.watchers(), a.t.cfg.MaxClients+MaxSeats-a.players())
 		b := a.newBroadcast(false)
 		b.history = true
 		a.publish(b, nil, nil)
@@ -401,6 +403,75 @@ func (a *actor) detach(c *room.Client) {
 		a.checkRoles()
 	}
 	a.dropped()
+}
+
+// fitWatchers closes connections of the users given while more than
+// limit of the table's connections watch (their user holds no seat):
+// each user's newest first, never a user's oldest, each with error
+// room-full, detached like a revoked claim. Admission keeps watchers to
+// MaxClients, and a seat switch or a resignation that leaves a user
+// without a seat calls it with that limit, so the user's tabs do not stay
+// on as watchers. Each user who lost a seat keeps one connection, so
+// watchers number at most MaxClients plus seven less the players, and a
+// table holds at most MaxClients + 7 + 7 * (MaxUserClients - 1)
+// connections, 88 by default. A lobby keeps the same bound, which Start
+// carries over. It returns the users who lost a connection.
+func (a *actor) fitWatchers(users []string, limit int) []string {
+	watching := func(c *room.Client) bool { return a.seatOf(a.userOf(c)) < 0 }
+	n := 0
+	for _, c := range a.conns {
+		if watching(c) {
+			n++
+		}
+	}
+	var gone []string
+	for i := len(a.conns) - 1; i >= 0 && n > limit; i-- {
+		c := a.conns[i]
+		u := a.userOf(c)
+		if !watching(c) || !slices.Contains(users, u) || !slices.ContainsFunc(a.conns[:i], func(o *room.Client) bool { return a.userOf(o) == u }) {
+			continue
+		}
+		a.conns = slices.Delete(a.conns, i, i+1)
+		delete(a.claims, c)
+		delete(a.shown, c)
+		c.Out.Push(wire.NewError(wire.ErrorCodeRoomFull, "the room takes no more connections"))
+		gone = append(gone, u)
+		n--
+	}
+	return gone
+}
+
+// players counts the seats a human holds.
+func (a *actor) players() int {
+	n := 0
+	for _, sr := range a.st.rec.Seats {
+		if sr.Kind == SeatHuman {
+			n++
+		}
+	}
+	return n
+}
+
+// watchers lists the users connected without a seat.
+func (a *actor) watchers() []string {
+	var out []string
+	for _, c := range a.conns {
+		if u := a.userOf(c); a.seatOf(u) < 0 && !slices.Contains(out, u) {
+			out = append(out, u)
+		}
+	}
+	return out
+}
+
+// lostSeats lists the users seated in prev and in no seat of next.
+func lostSeats(prev, next *Record) []string {
+	var out []string
+	for _, sr := range prev.Seats {
+		if sr.Kind == SeatHuman && seatIn(next, sr.UserID) < 0 {
+			out = append(out, sr.UserID)
+		}
+	}
+	return out
 }
 
 // dropped settles the bots and the idle clock after connections left.
@@ -1029,12 +1100,14 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), at)
 	appendLog(&cand, append(log, more...)...)
 	retire(&a.st.rec, &cand)
+	lost := lostSeats(&a.st.rec, &cand)
 	if err := a.commit(op, cand, g, c); err != nil {
 		return a.refuse(c, seq, op, seat, outStorage)
 	}
 	a.rolesAhead = nil
 	a.armRoles(next)
 	gone := a.revokeClaims()
+	gone = append(gone, a.fitWatchers(lost, a.t.cfg.MaxClients)...)
 	a.publish(a.newBroadcast(resolved), c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})
 	a.afterRevoke(gone)
 	if resolved || seat >= 0 && seat == a.botSeat {
