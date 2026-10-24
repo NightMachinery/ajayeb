@@ -61,6 +61,11 @@ func TestNoteOverflowCannotRefillAnOldPoint(t *testing.T) {
 	work.Release()
 	work.Release()
 	h.until(me, "the first batch", func(st wire.TableState) bool { return st.Batch == 1 })
+	// The first point's two searches and the second point's, which holds
+	// now, so the next search to start is the one after the undo.
+	for range 3 {
+		nextStart(t, work)
+	}
 	// The budget is full again at the second point: spend 13, then undo.
 	s := h.snap(me)
 	seqs := map[tabletest.ClientID]uint64{me: 1}
@@ -74,12 +79,11 @@ func TestNoteOverflowCannotRefillAnOldPoint(t *testing.T) {
 	// first point's search by the eviction, so both releases below go to
 	// the first point's searches once it is loaded again.
 	waitFor(t, "the cancelled search", func() bool { _, _, c := work.Counts(); return c > cancelled })
-	started, _, _ := work.Counts()
 	h.until(me, "the first point again", func(st wire.TableState) bool { return st.Batch == 0 && st.Point != nil })
 	// The first point's search starts only once the cancelled one has
 	// reported back, which may come after the state; evicted before it
 	// starts, the table would have no search to cancel.
-	waitFor(t, "the first point's search", func() bool { s, _, _ := work.Counts(); return s > started })
+	nextStart(t, work)
 	_, _, cancelled = work.Counts()
 	h.push(24)
 	// Every filler is due to refill after the table's entry, so the table's
@@ -111,5 +115,17 @@ func TestNoteOverflowCannotRefillAnOldPoint(t *testing.T) {
 	}
 	if accepted > 3 {
 		t.Fatalf("after the notes overflowed, the old point's refill allowed %d more requests; keeping the entry allows at most 3", accepted)
+	}
+}
+
+// nextStart is the next bot search to begin.
+func nextStart(t *testing.T, work *faults.Work) faults.Start {
+	t.Helper()
+	select {
+	case s := <-work.Started():
+		return s
+	case <-time.After(wait):
+		t.Fatal("waiting for a search to start")
+		return faults.Start{}
 	}
 }
