@@ -18,11 +18,17 @@ import (
 )
 
 // Real setup, side decisions and batch-zero history are checked at the actor,
-// with private drafts and restart, rather than only at the pure engine.
+// with private drafts and restart, rather than only at the pure engine. The
+// race build plays one seven-seat game, under choose, whose side point the
+// others lack; every rule at three seats keeps the restart under the race
+// detector, and every pair runs without it.
 func TestEngineContractSidesAndReplay(t *testing.T) {
 	for _, sides := range []string{"day", "random", "choose"} {
 		for _, n := range []int{3, 7} {
 			t.Run(sides+string(rune('0'+n)), func(t *testing.T) {
+				if RaceEnabled && n == 7 && sides != "choose" {
+					t.Skip("race build: seven seats under choose only")
+				}
 				seed := uint64(1000 + n)
 				sp := humans(n, seed)
 				sp.Sides = sides

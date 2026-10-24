@@ -137,10 +137,16 @@ func viewerAt(models []seatModel, log int, user, clientID string) tableroom.Fram
 // table's rematch reaches every connection, a device linked to the
 // creator's seat follows with its new claim into the reservation of the
 // creator's user, and the rematch, with the original humans back in their
-// reserved slots, starts again.
+// reserved slots, starts again. The race build plays 4 and 7 seats only.
 func TestWebSocketLobbyToTable(t *testing.T) {
 	s := newStack(t, t.TempDir())
-	for n := tableroom.MinSeats; n <= tableroom.MaxSeats; n++ {
+	seats := tableroom.SweepSeats()
+	if tableroom.RaceEnabled {
+		// Four seats and seven: an even and an odd count, so both end
+		// policies, and the largest table (SweepSeats has two odd ends).
+		seats = []int{tableroom.MinSeats + 1, tableroom.MaxSeats}
+	}
+	for _, n := range seats {
 		lobbyToTable(wsContext(t, 5*time.Minute), t, s, n)
 	}
 }

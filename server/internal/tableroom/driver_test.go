@@ -16,9 +16,10 @@ import (
 
 // TestDriverInProcess: Play and CompareSchedules pass unchanged over the
 // actor at 3 to 7 seats, with drafts, resends and races, and every arrival
-// seed gives the same canonical batches and hash.
+// seed gives the same canonical batches and hash. The race build plays 3
+// and 7 seats only (SweepSeats).
 func TestDriverInProcess(t *testing.T) {
-	for n := MinSeats; n <= MaxSeats; n++ {
+	for _, n := range SweepSeats() {
 		f := newFixture(t, Config{})
 		cfg := tabletest.Config{Seats: n, PickSeed: uint64(n), Script: tabletest.ScriptOptions{Drafts: 50, Resends: 30}}
 		// Every real game gets its own bounded context. Comparing all four
@@ -54,8 +55,11 @@ func TestDriverInProcess(t *testing.T) {
 
 // TestEveryArrivalOrderInProcess: ExhaustPoint over the actor, as over the
 // reference model: every arrival order of small points gives one batch.
+// Like -short, the race build skips it: thousands of tables add arrival
+// orders, not concurrency, and it runs without the race detector in
+// verify-quick and CI's go job.
 func TestEveryArrivalOrderInProcess(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || RaceEnabled {
 		t.Skip("thousands of tables")
 	}
 	ctx := testContextFor(t, 10*time.Minute)
@@ -146,10 +150,11 @@ func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 // including with a seq memory of one client per user, small enough for
 // evictions and stale seqs. After every arrival every viewer (each seat's
 // two tabs and the spectator) sees the same point, required and confirmed
-// seats, offer, pick and confirmation in both.
+// seats, offer, pick and confirmation in both. The race build plays 3 and
+// 7 seats only (SweepSeats).
 func TestDifferentialAgainstDirect(t *testing.T) {
 	seen := map[tabletest.Outcome]int{}
-	for n := MinSeats; n <= MaxSeats; n++ {
+	for _, n := range SweepSeats() {
 		for _, seqClients := range []int{32, 1} {
 			for game := range uint64(3) {
 				// Each game has its own deadline, so a hang in one is caught
@@ -276,10 +281,10 @@ func compareViews(ctx context.Context, t *testing.T, where string, ref, act tabl
 // remaining picks are forbidden or closed; after the arrivals it goes back
 // to its human. Every outcome, the switches' included, and every viewer's
 // snapshot agree after every arrival, and the canonical histories end
-// equal.
+// equal. The race build plays 3 and 7 seats only (SweepSeats).
 func TestDifferentialSwitches(t *testing.T) {
 	kept := 0
-	for n := MinSeats; n <= MaxSeats; n++ {
+	for _, n := range SweepSeats() {
 		for game := range uint64(2) {
 			// Each game has its own deadline, as in the differential.
 			differentialSwitches(testContext(t), t, n, 700+game*11+uint64(n), game, &kept)

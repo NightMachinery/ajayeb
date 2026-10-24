@@ -484,9 +484,9 @@ func viewerOf(id tabletest.ClientID) int {
 // over whole games at 3 to 7 seats, under both end policies, with live
 // events, history on join and resync, passes the oracle, each pending pick
 // checked against the pick the test saw its seat's accepted submissions
-// set.
+// set. The race build plays 3 and 7 seats only (SweepSeats).
 func TestFramesLeakNothing(t *testing.T) {
-	for n := MinSeats; n <= MaxSeats; n++ {
+	for _, n := range SweepSeats() {
 		for _, hide := range []bool{false, true} {
 			f := newFixture(t, Config{})
 			seed := uint64(500 + n)

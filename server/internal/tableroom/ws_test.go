@@ -472,12 +472,13 @@ func viewerOf(id tabletest.ClientID) int {
 // drafts, resends and races pass the driver over the real stack, every
 // arrival seed gives the same canonical history as the download, and
 // every frame every connection received, byte for byte, passes the leak
-// oracle; the log names no hidden value.
+// oracle; the log names no hidden value. The race build plays 3 and 7
+// seats only (SweepSeats).
 func TestWebSocketTables(t *testing.T) {
 	s := newStack(t, t.TempDir())
 	var truths []*leakcheck.Truth
 	var users []string
-	for n := tableroom.MinSeats; n <= tableroom.MaxSeats; n++ {
+	for _, n := range tableroom.SweepSeats() {
 		ctx := wsContext(t, 5*time.Minute)
 		tokens := newTokens(t, n+1)
 		for _, tok := range tokens {

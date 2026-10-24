@@ -21,7 +21,11 @@ import (
 // once failed under load on such a frame: 12 events, where the oracle
 // wanted the latest resolution's 2.)
 func TestMergedFramesPassTheOracle(t *testing.T) {
-	for _, n := range []int{MinSeats, 5, MaxSeats} {
+	seats := []int{MinSeats, 5, MaxSeats}
+	if RaceEnabled {
+		seats = SweepSeats() // the ends only: merging is the oracle's work, not concurrency
+	}
+	for _, n := range seats {
 		f := newFixture(t, Config{})
 		seed := uint64(600 + n)
 		p, truth := playForLeaks(t, f, n, seed, true)

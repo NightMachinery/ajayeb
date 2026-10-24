@@ -97,7 +97,12 @@ func TestHistoryErrorLogIsSeedless(t *testing.T) {
 func TestEngineContractFinishedMemory(t *testing.T) {
 	f := newFixture(t, Config{})
 	ctx := testContextFor(t, 5*time.Minute)
-	const count = 8
+	count := 8
+	if RaceEnabled {
+		// The measurement is the plain build's (the race detector's shadow
+		// memory inflates the heap); two tables keep the caches' checks.
+		count = 2
+	}
 	runtime.GC()
 	var before, after runtime.MemStats
 	runtime.ReadMemStats(&before)
@@ -152,5 +157,5 @@ func TestEngineContractFinishedMemory(t *testing.T) {
 	runtime.GC()
 	runtime.ReadMemStats(&after)
 	runtime.KeepAlive(keep)
-	t.Logf("finished seven-seat tables: %d retained heap bytes/table (%d tables, eight roles resynced, drained outboxes); cached JSON %d bytes/table; largest one-role view+history %d bytes", (int64(after.HeapAlloc)-int64(before.HeapAlloc))/count, count, cached/count, largest)
+	t.Logf("finished seven-seat tables: %d retained heap bytes/table (%d tables, eight roles resynced, drained outboxes); cached JSON %d bytes/table; largest one-role view+history %d bytes", (int64(after.HeapAlloc)-int64(before.HeapAlloc))/int64(count), count, cached/count, largest)
 }
