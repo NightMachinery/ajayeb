@@ -20,6 +20,16 @@
   // A spectator's ring centres on the seat they follow, and the spectator
   // panel takes the hand's place. An admin's seat menu opens from the game
   // menu or a city sheet; what each viewer may do comes from the frame.
+  //
+  // The reveal (phone-layout.md section 4): when a batch with plays is
+  // presented live, every seat gets its reveal tag at once, the Presenter
+  // holds the next frame for a short beat, and then the turn recap opens by
+  // itself (Settings, "Show opponent move", for a seated viewer; a
+  // spectator's panel shows it already) and the new hand slides in from the
+  // neighbour who passed it. The end of an Age's conflicts and the final
+  // scores wait until the recap is closed. With Animation off the beat is
+  // nothing and every step is instant; the tags stay until the viewer
+  // starts choosing again. A screen reader hears the recap.
   import '../theme.css';
   import type { Snippet } from 'svelte';
   import { goto } from '$app/navigation';
@@ -43,12 +53,16 @@
   import SeenHandsButton from './SeenHandsButton.svelte';
   import SeenHandsSheet from './SeenHandsSheet.svelte';
   import AgeMilitary from './AgeMilitary.svelte';
+  import RecapLayer from './RecapLayer.svelte';
+  import RevealTag from './RevealTag.svelte';
+  import TurnRecap from './TurnRecap.svelte';
   import EndActions from './EndActions.svelte';
   import FinalReveal from './FinalReveal.svelte';
   import ScoreSheet from './ScoreSheet.svelte';
   import { downloadTableLog } from './download';
   import { conflictsByAge } from './end';
   import { settings } from '$lib/ui/settings.svelte';
+  import { motion } from '$lib/ui/motion.svelte';
   import TableMenu from './TableMenu.svelte';
   import TableTopBar from './TableTopBar.svelte';
   import TurnBar from './TurnBar.svelte';
@@ -67,7 +81,9 @@
     TURNS_PER_AGE
   } from './model';
   import { formerOf, isAdmin, roleMap, watchers } from './admin';
-  import { isBot, seatName, where } from './seat-names';
+  import { dealOf, latestRecap, lineOf, recapWorthy } from './recap';
+  import { actText, coinText, recapSpeech } from './recap-text';
+  import { humanName, isBot, seatName, where } from './seat-names';
 
   interface Props {
     session: TableSession;
@@ -147,6 +163,7 @@
   function select(card: string): void {
     const point = decisionKey;
     if (!point) return;
+    tagsHidden = frame.batch;
     if (pending?.confirm) session.withdraw();
     selection = selected === card ? null : { point, card };
   }
@@ -180,37 +197,6 @@
   const admin = $derived(!finished && isAdmin(frame));
   const roleAt = (seat: number) => roleOf(humanAt(frame, seat));
 
-  // The end of an Age and of the game (phone-layout.md, section 6). The
-  // military dialog opens by itself while the newest conflicts are fresh,
-  // that is while the batch on screen is the one that reported them, also
-  // after a reload; closing it is local. The score sheet follows once the
-  // game is over, and a row opens that seat's city over it. Both reopen on
-  // request.
-  const ages = $derived(conflictsByAge(session.history, frame.batch));
-  const newest = $derived(ages.at(-1) ?? null);
-  const fresh = $derived(newest !== null && newest.batch === frame.batch);
-  let militaryClosed = $state<number | null>(null);
-  let militaryAsked = $state(false);
-  let militaryAge = $state<number | null>(null);
-  const militaryOpen = $derived(
-    newest !== null && (militaryAsked || (fresh && militaryClosed !== newest.batch))
-  );
-  const military = $derived(ages.find((a) => a.age === militaryAge) ?? newest);
-  let scoresClosed = $state(false);
-  const scoresOpen = $derived(finished && !!view.result && !militaryOpen && !scoresClosed);
-  let revealOpen = $state(false);
-
-  function openMilitary(): void {
-    menuOpen = false;
-    militaryAge = null;
-    militaryAsked = true;
-  }
-  function closeMilitary(): void {
-    militaryAsked = false;
-    militaryAge = null;
-    militaryClosed = newest?.batch ?? null;
-  }
-
   const nameOf = (seat: number) => seatName(frame, seat);
   const passTo = $derived(
     !around
@@ -230,6 +216,147 @@
           ? around.right
           : null
   );
+  // The reveal and the turn recap. The recap is the newest turn on screen,
+  // in ring order from the anchor. `revealBatch` is the batch this page saw
+  // revealed live (never one restated by a reload), whose tags show until
+  // the viewer starts choosing; `revealing` is the beat the Presenter waits.
+  const REVEAL_MS = 600;
+  const shown = $derived(session.history.filter((h) => h.batch <= frame.batch));
+  const recap = $derived(latestRecap(shown, n, around?.anchor.seat ?? 0, frame.roomLog));
+  let revealBatch = $state<number | null>(null);
+  let revealing = $state(false);
+  let recapOpen = $state(false);
+  let recapPop = $state(false);
+  let seenBatch = $state<number | null>(null);
+  let tagsHidden = $state<number | null>(null);
+  const tagsOn = $derived(
+    revealBatch !== null &&
+      revealBatch === frame.batch &&
+      recap?.batch === revealBatch &&
+      tagsHidden !== revealBatch &&
+      !(deciding && pending)
+  );
+  // A seated viewer's dot; a spectator's panel shows the recap already.
+  const recapUnseen = $derived(
+    mySeat !== null && recap !== null && revealBatch === recap.batch && seenBatch !== recap.batch
+  );
+  // How the hand on screen arrived, when this page saw it arrive: from the
+  // neighbour who passed it (hands going left come from the right), or
+  // dealt for a new Age. Keyed by Age and turn, so it plays once.
+  let dealt = $state<{ key: string; from: 'left' | 'right' | 'deal' } | null>(null);
+  const deal = $derived(dealt?.key === `${view.age}:${view.turn}` ? dealt.from : null);
+  const userName = (id: string | undefined) => {
+    const h = frame.humans.find((p) => p.userId === id);
+    return h ? humanName(h) : ht('hg.recap.someone');
+  };
+  const held = $derived(
+    recap?.pass && recap.batch === frame.batch && mine && passFrom
+      ? { name: nameOf(passFrom.seat), count: hand.length }
+      : null
+  );
+  const speech = $derived(
+    recap && revealBatch === recap.batch && revealBatch === frame.batch
+      ? recapSpeech(recap, nameOf, mySeat, userName, held)
+      : ''
+  );
+
+  // Ends the reveal's beat at once (the next reveal, a hurry, the screen
+  // going away); null while no beat runs.
+  let wake: (() => void) | null = null;
+  // The Presenter's capture hook, before it swaps the frame in: the tags
+  // and the hand's arrival are set for the frame about to show.
+  function prepare(next: TableState): void {
+    if (!recapWorthy(next.events)) return;
+    wake?.();
+    revealBatch = next.batch;
+    revealing = true;
+    recapOpen = false;
+    const from = dealOf(next.events);
+    dealt = from ? { key: `${next.view.age}:${next.view.turn}`, from } : null;
+    const end = () => {
+      if (wake !== end) return;
+      wake = null;
+      revealing = false;
+    };
+    wake = end;
+  }
+  // Its play hook, once the frame shows: wait the beat, then open the
+  // recap for a seated viewer who wants it. The beat always ends.
+  function reveal(next: TableState): Promise<void> | void {
+    if (!recapWorthy(next.events) || !wake) return;
+    return new Promise<void>((resolve) => {
+      const timer = setTimeout(() => done(), motion.ms(REVEAL_MS));
+      const done = () => {
+        clearTimeout(timer);
+        if (wake === done) {
+          wake = null;
+          revealing = false;
+          if (settings.value.showOpponentMove && next.you.seat !== undefined) {
+            recapPop = true;
+            recapOpen = true;
+            seenBatch = next.batch;
+          }
+        }
+        resolve();
+      };
+      wake = done;
+    });
+  }
+  // DOM-free wiring: the Presenter calls these while this screen shows it.
+  $effect(() => {
+    presenter.hooks = {
+      capture: (next) => prepare(next),
+      play: (next) => reveal(next),
+      finish: () => wake?.()
+    };
+    return () => {
+      wake?.();
+      presenter.hooks = {};
+    };
+  });
+  function openRecap(): void {
+    menuOpen = false;
+    recapPop = false;
+    recapOpen = true;
+    seenBatch = recap?.batch ?? null;
+  }
+
+  // The end of an Age and of the game (phone-layout.md, section 6). The
+  // military dialog opens by itself while the newest conflicts are fresh,
+  // that is while the batch on screen is the one that reported them, also
+  // after a reload; closing it is local. The score sheet follows once the
+  // game is over, and a row opens that seat's city over it. Both reopen on
+  // request.
+  const ages = $derived(conflictsByAge(session.history, frame.batch));
+  const newest = $derived(ages.at(-1) ?? null);
+  const fresh = $derived(newest !== null && newest.batch === frame.batch);
+  let militaryClosed = $state<number | null>(null);
+  let militaryAsked = $state(false);
+  let militaryAge = $state<number | null>(null);
+  const militaryOpen = $derived(
+    newest !== null &&
+      !revealing &&
+      !recapOpen &&
+      (militaryAsked || (fresh && militaryClosed !== newest.batch))
+  );
+  const military = $derived(ages.find((a) => a.age === militaryAge) ?? newest);
+  let scoresClosed = $state(false);
+  const scoresOpen = $derived(
+    finished && !!view.result && !militaryOpen && !scoresClosed && !revealing && !recapOpen
+  );
+  let revealOpen = $state(false);
+
+  function openMilitary(): void {
+    menuOpen = false;
+    militaryAge = null;
+    militaryAsked = true;
+  }
+  function closeMilitary(): void {
+    militaryAsked = false;
+    militaryAge = null;
+    militaryClosed = newest?.batch ?? null;
+  }
+
   const neighbourTrade = (direction: 'left' | 'right') =>
     mine?.neighbours.find((nb) => nb.direction === direction);
 
@@ -280,6 +407,8 @@
       onundo={ready && session.canUndo ? () => session.undo() : null}
       spectators={watchers(frame).length}
       onspectators={() => (menuOpen = true)}
+      onrecap={recap ? openRecap : null}
+      {recapUnseen}
     />
   </div>
 
@@ -322,6 +451,7 @@
                 role={roleAt(s.seat)}
                 onopen={() => (citySeat = s.seat)}
               />
+              {@render tag(s.seat)}
             </div>
           {/each}
         </div>
@@ -344,6 +474,7 @@
           role={roleAt(s.seat)}
           onopen={() => (citySeat = s.seat)}
         />
+        {@render tag(s.seat)}
       </div>
     {/each}
 
@@ -360,6 +491,7 @@
           role={roleAt(around.anchor.seat)}
           onopen={() => (citySeat = around.anchor.seat)}
         />
+        {@render tag(around.anchor.seat)}
       </div>
       {#if mine}
         <div class="hand-head">
@@ -377,26 +509,30 @@
           {#if view.phase === 'turn' && view.turn === TURNS_PER_AGE}
             <p class="special-note" data-sixth-turn>{ht('hg.special.sixth')}</p>
           {/if}
-          {#if mine.kept}
-            <KeptCard
-              card={mine.kept}
-              locked={!deciding || view.phase !== 'last-card'}
-              afford={afford(cardChoices(mine.kept, choices, mine.disabled))}
-              onselect={select}
-            />
-          {:else if hand.length > 0}
-            <HandGrid
-              {hand}
-              {choices}
-              disabled={mine.disabled}
-              {selected}
-              {picked}
-              locked={!deciding}
-              onselect={select}
-            />
-          {:else}
-            <p class="empty">{ht('hg.screen.hand.empty')}</p>
-          {/if}
+          {#key `${view.age}:${view.turn}`}
+            <div class="dealt" data-deal={deal ?? undefined}>
+              {#if mine.kept}
+                <KeptCard
+                  card={mine.kept}
+                  locked={!deciding || view.phase !== 'last-card'}
+                  afford={afford(cardChoices(mine.kept, choices, mine.disabled))}
+                  onselect={select}
+                />
+              {:else if hand.length > 0}
+                <HandGrid
+                  {hand}
+                  {choices}
+                  disabled={mine.disabled}
+                  {selected}
+                  {picked}
+                  locked={!deciding}
+                  onselect={select}
+                />
+              {:else}
+                <p class="empty">{ht('hg.screen.hand.empty')}</p>
+              {/if}
+            </div>
+          {/key}
         </div>
       {:else}
         <div class="hand">
@@ -412,6 +548,8 @@
             disabled={!ready || !session.canControl}
             onrole={(a) => session.role(a.kind, a.userId)}
             {former}
+            {recap}
+            {userName}
           />
         </div>
       {/if}
@@ -519,6 +657,25 @@
     />
   {/if}
 
+  {#if recapOpen && recap}
+    <div dir={i18n.dir}>
+      <RecapLayer labelledby="hg-recap-title" pop={recapPop} onclose={() => (recapOpen = false)}>
+        <TurnRecap
+          {recap}
+          {names}
+          bots={view.seats.filter((s) => isBot(frame, s.seat)).map((s) => s.seat)}
+          you={mySeat}
+          {userName}
+          {held}
+          titleId="hg-recap-title"
+        />
+      </RecapLayer>
+    </div>
+  {/if}
+  <div class="live" aria-live="polite" aria-atomic="true" dir={i18n.dir} data-recap-live>
+    {speech}
+  </div>
+
   {#if militaryOpen && military}
     <div dir={i18n.dir}>
       <AgeMilitary
@@ -583,6 +740,20 @@
   {/if}
 </div>
 
+{#snippet tag(seat: number)}
+  {@const line = tagsOn ? lineOf(recap, seat) : undefined}
+  {#if line?.act}
+    <span class="reveal" dir={i18n.dir} data-board-reveal={seat}>
+      <RevealTag
+        {line}
+        tip={actText(line, nameOf(seat), seat === mySeat)}
+        lines={line.coins.map((c) => coinText(c, nameOf))}
+        pop
+      />
+    </span>
+  {/if}
+{/snippet}
+
 <style>
   .screen {
     position: relative;
@@ -619,12 +790,14 @@
     display: contents;
   }
   .slot {
+    position: relative;
     display: flex;
     flex: 1 1 0;
     min-width: 0;
     max-width: 11rem;
   }
   .neighbour {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -649,7 +822,64 @@
     min-height: 0;
   }
   .strip {
+    position: relative;
     padding-inline: 0.4rem;
+  }
+  /* A reveal tag hangs from the bottom edge of its seat, over the gap. */
+  .reveal {
+    position: absolute;
+    inset-block-end: -0.7rem;
+    inset-inline: 0.25rem;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+    pointer-events: none;
+  }
+  .reveal > :global(*) {
+    pointer-events: auto;
+  }
+  .dealt {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+  /* Hands passed left come from the right neighbour, on the screen's right. */
+  .dealt[data-deal='left'] {
+    animation: deal-from-right calc(var(--dur-base) * 2) ease-out both;
+  }
+  .dealt[data-deal='right'] {
+    animation: deal-from-left calc(var(--dur-base) * 2) ease-out both;
+  }
+  .dealt[data-deal='deal'] {
+    animation: deal-rise calc(var(--dur-base) * 2) ease-out both;
+  }
+  @keyframes deal-from-right {
+    from {
+      opacity: 0;
+      transform: translateX(35%);
+    }
+  }
+  @keyframes deal-from-left {
+    from {
+      opacity: 0;
+      transform: translateX(-35%);
+    }
+  }
+  @keyframes deal-rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.5rem);
+    }
+  }
+  .live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .hand-head {
     display: flex;
