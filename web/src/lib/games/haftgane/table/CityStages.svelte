@@ -54,7 +54,7 @@
 {#if under && under.cards.length > 0}
   <p class="under" data-under={under.own ? 'own' : 'revealed'}>
     {ht(under.own ? 'hg.city.under.own' : 'hg.city.under.revealed', {
-      cards: under.cards.map(cardName).join(', ')
+      cards: under.cards.map(cardName).join(ht('hg.city.row.sep'))
     })}
   </p>
 {/if}

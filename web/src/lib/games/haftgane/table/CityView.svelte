@@ -360,8 +360,9 @@
     text-transform: uppercase;
   }
   .note {
-    font-family: inherit;
-    font-weight: 400;
+    display: block;
+    margin-block-start: 0.1rem;
+    font: 400 0.85rem/1.35 var(--type-ui);
     letter-spacing: 0;
     text-transform: none;
   }

@@ -45,7 +45,8 @@
               class="card"
               data-card={slug}
               {@attach tooltip({ text: cardTip(slug) })}>{cardName(slug)}</span
-            >{#if i < row.cards.length - 1}<span class="sep">, </span>{/if}{/each}
+            >{#if i < row.cards.length - 1}<span class="sep">{ht('hg.city.row.sep')}</span
+              >{/if}{/each}
         {/if}
       </span>
       <span class="n">{formatNumber(row.cards.length)}</span>

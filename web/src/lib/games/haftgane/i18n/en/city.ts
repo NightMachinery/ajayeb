@@ -51,6 +51,8 @@ export const city = {
     other: 'City · {count} buildings'
   },
   'hg.city.row.none': 'none',
+  // Between two card names in a list.
+  'hg.city.row.sep': ', ',
   'hg.city.last': 'Last turn: {what}',
   'hg.city.last.build': 'built {card}',
   'hg.city.last.build-discarded': 'built {card} from the discard pile',
