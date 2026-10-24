@@ -1,8 +1,9 @@
 // Shared helpers for the Haftgane table specs: the page's table hook, the
 // waits on it, choosing through the table screen (a choice of a hand card
-// appears once that card is selected; a seat control sits in the game
-// menu), and the pending-ownership oracle, which checks every table frame
-// a page received against the picks the page itself sent.
+// appears once that card is selected; a seat control sits in the seat's
+// admin menu, opened from the game menu, and asks first), and the
+// pending-ownership oracle, which checks every table frame a page received
+// against the picks the page itself sent.
 
 import { expect, type Page } from '@playwright/test';
 import type { LobbyState, PointRef, TableState } from '../../web/src/lib/wire/platform.gen';
@@ -37,6 +38,49 @@ export async function latest(page: Page): Promise<TableState> {
   return frame!;
 }
 
+/** Opens the game menu, unless it is open, closing an open military dialog first. */
+export async function openMenu(page: Page): Promise<void> {
+  if (!(await page.locator('[data-table-menu]').isVisible())) {
+    await dismissMilitary(page);
+    await page.locator('[data-act="table-menu"]').click();
+  }
+  await expect(page.locator('[data-table-menu]')).toBeVisible();
+}
+
+/**
+ * An admin's seat action, as an admin takes it: the seat's admin menu,
+ * opened from the game menu, then the action and its Confirm. `act` is
+ * `seat-bot:N:level`, `seat-user:N:userId`, `role-promote:userId` or
+ * `role-demote:userId` (for the human in seat N); a bare `seat-bot:N`
+ * means the easy bot. The game menu stays open, as after a tap.
+ */
+export async function seatAction(page: Page, seat: number, act: string): Promise<void> {
+  await ready(page);
+  const full = /^seat-bot:\d+$/.test(act) ? `${act}:easy` : act;
+  const menu = page.locator(`[data-seat-menu="${seat}"]`);
+  if (!(await menu.isVisible())) {
+    await openMenu(page);
+    await page.locator(`[data-act="seat-menu:${seat}"]`).click();
+  }
+  await menu.locator(`[data-act="${full}"]`).click();
+  await menu.locator('[data-act="admin-confirm"]').click();
+  await expect(menu).toBeHidden();
+  await ready(page);
+}
+
+/**
+ * An action of the game menu that asks first: `resign`, `step-down`, or
+ * a spectator's `role-promote:userId` or `role-demote:userId`.
+ */
+export async function menuAction(page: Page, act: string): Promise<void> {
+  await ready(page);
+  await openMenu(page);
+  const menu = page.locator('[data-table-menu]');
+  await menu.locator(`[data-act="${act}"]`).click();
+  await menu.locator('[data-act="admin-confirm"]').click();
+  await ready(page);
+}
+
 /**
  * Closes the end-of-Age military dialog when it is open. It opens by itself
  * at the end of each Age and is modal, so the next Age's first decision
@@ -66,11 +110,15 @@ export async function toFinalBoard(page: Page): Promise<void> {
 
 /**
  * Clicks the control with this data-act. A choice of a hand card shows in
- * the pick list once its card is selected, so the card is tapped first;
- * a seat control is in the game menu, so the menu is opened first. An open
- * military dialog is closed first.
+ * the pick list once its card is selected, so the card is tapped first.
+ * A seat control (`seat-bot:N`, `seat-user:N:userId`) goes through the
+ * seat's admin menu, and `resign` through the game menu, each with its
+ * Confirm. An open military dialog is closed first.
  */
 export async function choose(page: Page, act: string): Promise<void> {
+  const seat = /^seat-(?:bot|user):(\d+)/.exec(act);
+  if (seat) return seatAction(page, Number(seat[1]), act);
+  if (act === 'resign' || act === 'step-down') return menuAction(page, act);
   await ready(page);
   await dismissMilitary(page);
   const target = page.locator(`[data-act="${act}"]`).first();
@@ -96,8 +144,6 @@ export async function choose(page: Page, act: string): Promise<void> {
       !(await page.locator('[data-card-sheet]').isVisible())
     )
       await card.click();
-    else if (/^(seat-|undo$|resign$)/.test(act))
-      await page.locator('[data-act="table-menu"]').click();
   }
   const draft = page.locator(`[data-card-sheet] [data-pick="${act}"]`);
   if (await draft.isVisible()) {
@@ -153,14 +199,20 @@ interface OwnPick {
  * the page sent, never from the frames' pending field: each table-pick under
  * its hello's client id and seq, taken as the page's own pick when a frame
  * acknowledges that seq, and gone when the point changes or the page holds
- * no seat. Every table frame's pending must be exactly that pick, or absent
- * when there is none. It returns what disagrees.
+ * no seat. One pick comes from no request: a seat the page takes keeps the
+ * pick it had (an admin's seat switch leaves the seat's pending pick for
+ * its new player to change), so the frame that first gives the page a seat
+ * may carry a pick, which must be one of that seat's own choices. Every
+ * table frame's pending must be exactly the page's own pick, or absent when
+ * there is none. It returns what disagrees.
  */
 export function pendingOwnership(name: string, log: readonly Traffic[]): string[] {
   const problems: string[] = [];
   const sent = new Map<string, OwnPick>();
   let clientId = '';
   let own: OwnPick | null = null;
+  // The seat of the page's last table frame.
+  let held: number | undefined;
   log.forEach(({ dir, msg }, i) => {
     if (dir === 'sent') {
       if (msg.t === 'hello') clientId = String(msg.clientId);
@@ -181,6 +233,14 @@ export function pendingOwnership(name: string, log: readonly Traffic[]): string[
     }
     if (msg.t !== 'table-state') return;
     const f = msg as unknown as TableState;
+    if (f.you.seat !== undefined && f.you.seat !== held) {
+      const kept = f.pending;
+      own =
+        kept && f.point && f.view.you?.choices.some((c) => c.key === kept.key)
+          ? { key: kept.key, confirm: kept.confirm, point: f.point.ref }
+          : null;
+    }
+    held = f.you.seat;
     const acked = f.ack && sent.get(`${f.ack.clientId}:${f.ack.seq}`);
     if (acked) own = acked;
     const ref = f.point?.ref;
