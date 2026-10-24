@@ -188,6 +188,11 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
       await seatAction(a, seatB, `seat-bot:${seatB}:normal`);
       await expect(b.locator('[data-notice="watching"]')).toBeVisible();
       await expect(b.locator(`[data-former-seat="${seatB}"]`)).toBeVisible();
+      // Their ring centres on the seat they held.
+      await expect(b.locator(`[data-act="follow:${seatB}"]`)).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       expect((await frame(a)).seats[seatB]).toMatchObject({ kind: 'bot', bot: 'normal' });
 
       // The admin's seat menu names the seat the former player held; a
