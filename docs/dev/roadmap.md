@@ -371,6 +371,8 @@ Acceptance:
 
 ## M16: The Haftgane room and its protocol
 
+Status: done on 2026-10-24. All four slices landed, each FULL slice reviewed by the other model family, with the shared lobby and the roles of D42 built as `M16.haftgane-lobby-and-roles`. The security pass confirmed and fixed four findings: an optional seat on pick, undo and resign; only a seat's own user links it; cached views dropped when the last connection leaves; and records bounded under the store's read cap, with no write passing it. It deferred two denial-of-service findings, which `M16.table-request-budget` then fixed: a per-user request budget at tables and lobbies that survives unloads and cache pressure and is checked before any engine work, a cap of eight connections per user with a bounded watcher count through every reseat, and bot searches counted under the player whose point it is. `M16.tableroom-race-budget` brought the tableroom race suite back into CI's go job. Left for later, as stated in [protocol.md](../protocol.md): per-room pseudonyms for user ids, requiring the seat on table requests, and promoted ids each getting their own budget.
+
 Needs: M14 slices 2 to 4 for slices 1 and 2 (which run against a fake engine, beside M15); M15 complete for slice 3.
 
 Scope:
