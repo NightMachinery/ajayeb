@@ -93,7 +93,11 @@ fault.
   into the card; a hard rectangle or a drawn border fights that.
 - **Religious figures or scenes of worship as the subject.** A temple or an
   altar is shown as architecture and a quiet gathering, never a depicted
-  deity or a specific rite.
+  deity or a specific rite. No shape that forms a religious symbol by accident either:
+  a lone post with a short crossbar standing against the paper reads as a
+  cross. A vine trellis drew one in the Haftgane Vineyard
+  (M19.bitmaps-civic-and-commercial); posts that stop at a continuous beam
+  avoid it.
 - **Background buildings are palaces, domed garden pavilions and kiosks.**
   No minarets, no mosques, no religious buildings, unless the asset's own
   `subject` names one. A skyline filling the background of a scene is
