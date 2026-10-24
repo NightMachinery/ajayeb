@@ -276,6 +276,8 @@
       {finished}
       onmenu={() => (menuOpen = true)}
       onundo={ready && session.canUndo ? () => session.undo() : null}
+      spectators={watchers(frame).length}
+      onspectators={() => (menuOpen = true)}
     />
   </div>
 
