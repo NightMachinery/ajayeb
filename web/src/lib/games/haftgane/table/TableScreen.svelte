@@ -167,7 +167,8 @@
   // military dialog opens by itself while the newest conflicts are fresh,
   // that is while the batch on screen is the one that reported them, also
   // after a reload; closing it is local. The score sheet follows once the
-  // game is over. Both reopen on request.
+  // game is over, and a row opens that seat's city over it. Both reopen on
+  // request.
   const ages = $derived(conflictsByAge(session.history, frame.batch));
   const newest = $derived(ages.at(-1) ?? null);
   const fresh = $derived(newest !== null && newest.batch === frame.batch);
@@ -506,6 +507,7 @@
         ondownload={() => downloadTableLog(frame.code)}
         onhome={() => goto(resolve('/'))}
         onclose={() => (scoresClosed = true)}
+        onseat={(s) => (citySeat = s)}
         rematch={over}
       />
     </div>
