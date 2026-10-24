@@ -1,10 +1,11 @@
 // Haftgane's names, keyed by engine id: the seven boards (the city and its
-// wonder), the seven resources, the three science symbols, and the few
-// cards whose names the rules reference needs. Card ids are the catalog's
-// design slugs (docs/haftgane/engine-architecture.md, "Ids and slugs"):
-// kebab-case English names, with the Age on the three names printed in two
-// Ages (glassworks-age-1 and glassworks-age-2 share one name). The full card
-// list arrives with the catalog; names are added here as screens need them.
+// wonder), the seven resources, the three science symbols, and every card
+// design. Card ids are the catalog's design slugs
+// (docs/haftgane/engine-architecture.md, "Ids and slugs"): kebab-case
+// English names, with the Age on the three names printed in two Ages
+// (glassworks-age-1 and glassworks-age-2 share one name). The cards are in
+// catalog order (wire/haftgane-catalog.gen.ts), in the catalog's own
+// wording; a test checks the list against the catalog.
 
 import type { Messages } from '$lib/i18n';
 
@@ -37,30 +38,84 @@ export const names = {
   'hg.science.gear': 'Gear',
   'hg.science.tablet': 'Tablet',
 
+  'hg.card.clay-pit': 'Clay Pit',
+  'hg.card.clay-pool': 'Clay Pool',
+  'hg.card.excavation': 'Excavation',
+  'hg.card.forest-cave': 'Forest Cave',
+  'hg.card.lumber-yard': 'Lumber Yard',
+  'hg.card.mine': 'Mine',
+  'hg.card.ore-vein': 'Ore Vein',
+  'hg.card.stone-pit': 'Stone Pit',
+  'hg.card.timber-yard': 'Timber Yard',
+  'hg.card.tree-farm': 'Tree Farm',
   'hg.card.glassworks-age-1': 'Glassworks',
-  'hg.card.press-age-1': 'Press',
   'hg.card.loom-age-1': 'Loom',
-  'hg.card.tavern': 'Tavern',
-  'hg.card.west-trading-post': 'West Trading Post',
+  'hg.card.press-age-1': 'Press',
+  'hg.card.barracks': 'Barracks',
+  'hg.card.guard-tower': 'Guard Tower',
+  'hg.card.stockade': 'Stockade',
+  'hg.card.altar': 'Altar',
+  'hg.card.baths': 'Baths',
+  'hg.card.theater': 'Theater',
+  'hg.card.well': 'Well',
   'hg.card.east-trading-post': 'East Trading Post',
   'hg.card.marketplace': 'Marketplace',
+  'hg.card.tavern': 'Tavern',
+  'hg.card.west-trading-post': 'West Trading Post',
+  'hg.card.apothecary': 'Apothecary',
+  'hg.card.scriptorium': 'Scriptorium',
+  'hg.card.workshop': 'Workshop',
+  'hg.card.brickyard': 'Brickyard',
+  'hg.card.foundry': 'Foundry',
+  'hg.card.quarry': 'Quarry',
+  'hg.card.sawmill': 'Sawmill',
+  'hg.card.glassworks-age-2': 'Glassworks',
+  'hg.card.loom-age-2': 'Loom',
+  'hg.card.press-age-2': 'Press',
+  'hg.card.archery-range': 'Archery Range',
+  'hg.card.stables': 'Stables',
+  'hg.card.training-ground': 'Training Ground',
+  'hg.card.walls': 'Walls',
+  'hg.card.aqueduct': 'Aqueduct',
+  'hg.card.courthouse': 'Courthouse',
+  'hg.card.statue': 'Statue',
+  'hg.card.temple': 'Temple',
+  'hg.card.bazar': 'Bazar',
   'hg.card.caravansery': 'Caravansery',
   'hg.card.forum': 'Forum',
   'hg.card.vineyard': 'Vineyard',
-  'hg.card.bazar': 'Bazar',
-  'hg.card.lighthouse': 'Lighthouse',
-  'hg.card.haven': 'Haven',
-  'hg.card.chamber-of-commerce': 'Chamber of Commerce',
-  'hg.card.ludus': 'Ludus',
+  'hg.card.dispensary': 'Dispensary',
+  'hg.card.laboratory': 'Laboratory',
+  'hg.card.library': 'Library',
+  'hg.card.school': 'School',
+  'hg.card.arsenal': 'Arsenal',
+  'hg.card.castrum': 'Castrum',
+  'hg.card.circus': 'Circus',
+  'hg.card.fortifications': 'Fortifications',
+  'hg.card.siege-workshop': 'Siege Workshop',
+  'hg.card.gardens': 'Gardens',
+  'hg.card.palace': 'Palace',
+  'hg.card.pantheon': 'Pantheon',
+  'hg.card.senate': 'Senate',
+  'hg.card.town-hall': 'Town Hall',
   'hg.card.arena': 'Arena',
-  'hg.card.workers-guild': 'Workers Guild',
-  'hg.card.craftsmens-guild': 'Craftsmens Guild',
-  'hg.card.magistrates-guild': 'Magistrates Guild',
-  'hg.card.traders-guild': 'Traders Guild',
-  'hg.card.spies-guild': 'Spies Guild',
-  'hg.card.philosophers-guild': 'Philosophers Guild',
+  'hg.card.chamber-of-commerce': 'Chamber of Commerce',
+  'hg.card.haven': 'Haven',
+  'hg.card.lighthouse': 'Lighthouse',
+  'hg.card.ludus': 'Ludus',
+  'hg.card.academy': 'Academy',
+  'hg.card.lodge': 'Lodge',
+  'hg.card.observatory': 'Observatory',
+  'hg.card.study': 'Study',
+  'hg.card.university': 'University',
   'hg.card.builders-guild': 'Builders Guild',
-  'hg.card.shipowners-guild': 'Shipowners Guild',
+  'hg.card.craftsmens-guild': 'Craftsmens Guild',
   'hg.card.decorators-guild': 'Decorators Guild',
-  'hg.card.scientists-guild': 'Scientists Guild'
+  'hg.card.magistrates-guild': 'Magistrates Guild',
+  'hg.card.philosophers-guild': 'Philosophers Guild',
+  'hg.card.scientists-guild': 'Scientists Guild',
+  'hg.card.shipowners-guild': 'Shipowners Guild',
+  'hg.card.spies-guild': 'Spies Guild',
+  'hg.card.traders-guild': 'Traders Guild',
+  'hg.card.workers-guild': 'Workers Guild'
 } as const satisfies Messages;
