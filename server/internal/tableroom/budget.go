@@ -2,7 +2,7 @@ package tableroom
 
 import "time"
 
-// Defaults of a table's and a lobby's per-user request budget (Config).
+// Defaults of a table's and a lobby's per-user limits (Config).
 const (
 	// DefaultRequestBurst and DefaultRequestInterval are each user's
 	// request budget: 16 requests at once, then one a second. A table
@@ -13,6 +13,9 @@ const (
 	// nothing.
 	DefaultRequestBurst    = 16
 	DefaultRequestInterval = time.Second
+	// DefaultMaxUserClients bounds one user's connections to a table or
+	// a lobby, seated or watching.
+	DefaultMaxUserClients = 8
 )
 
 // Budget is a table's or a lobby's per-user request budget

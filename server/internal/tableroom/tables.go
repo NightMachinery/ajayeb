@@ -89,7 +89,12 @@ type Config struct {
 	// client past it is refused with rate until the point resolves, since
 	// forgetting a floor would let an old seq overwrite a newer pick.
 	PickClients int
-	MaxClients  int
+	// MaxClients bounds the connections a user without a seat may find
+	// at the table, and MaxUserClients every user's own connections,
+	// seated or not (error room-full beyond either). Defaults
+	// DefaultMaxClients and DefaultMaxUserClients.
+	MaxClients     int
+	MaxUserClients int
 	// RequestBurst and RequestInterval are each user's request budget
 	// (Budget). Defaults DefaultRequestBurst and DefaultRequestInterval.
 	RequestBurst    int
@@ -147,6 +152,9 @@ func New(cfg Config) *Tables {
 	}
 	if cfg.MaxClients <= 0 {
 		cfg.MaxClients = DefaultMaxClients
+	}
+	if cfg.MaxUserClients <= 0 {
+		cfg.MaxUserClients = DefaultMaxUserClients
 	}
 	if cfg.RequestBurst <= 0 {
 		cfg.RequestBurst = DefaultRequestBurst

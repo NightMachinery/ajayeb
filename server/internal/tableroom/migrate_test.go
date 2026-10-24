@@ -51,7 +51,9 @@ func (h *th) floorsOf(seat int) (out []SeqRecord) {
 // ninth tab is today, so none of its seqs can replace the pick. Before, the
 // table archived on load (found by the slice's re-check).
 func TestOldFloorsAreTrimmedOnLoad(t *testing.T) {
-	h := newTH(t, Config{SeqClients: 32, PickClients: 32, BotWork: blockBots}, humans(3, 309))
+	// The old build's bounds, and room for this test's ten connections of
+	// one user (M16.table-request-budget caps them at 8).
+	h := newTH(t, Config{SeqClients: 32, PickClients: 32, MaxUserClients: 32, BotWork: blockBots}, humans(3, 309))
 	s := h.snap(tabletest.SeatClient(1))
 	tab := func(i int) tabletest.ClientID { return tabletest.ClientID(fmt.Sprintf("old-tab-%d", i)) }
 	for i := range 9 {

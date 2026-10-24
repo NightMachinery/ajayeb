@@ -76,7 +76,12 @@ type Config struct {
 	// SeqClients bounds, for each user, the clients whose last accepted
 	// seq the lobby remembers.
 	SeqClients int
-	MaxClients int
+	// MaxClients bounds the connections a user without a slot may find in
+	// the lobby, and MaxUserClients every user's own connections (error
+	// room-full beyond either). Defaults 32 and
+	// tableroom.DefaultMaxUserClients.
+	MaxClients     int
+	MaxUserClients int
 	// RequestBurst and RequestInterval are each user's request budget
 	// (tableroom.Budget). Defaults tableroom.DefaultRequestBurst and
 	// tableroom.DefaultRequestInterval.
@@ -112,6 +117,9 @@ func New(cfg Config) *Lobbies {
 	}
 	if cfg.MaxClients <= 0 {
 		cfg.MaxClients = defaultMaxClients
+	}
+	if cfg.MaxUserClients <= 0 {
+		cfg.MaxUserClients = tableroom.DefaultMaxUserClients
 	}
 	if cfg.RequestBurst <= 0 {
 		cfg.RequestBurst = tableroom.DefaultRequestBurst

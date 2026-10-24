@@ -294,7 +294,17 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 	}
 	wasConnected := a.connected(user)
 	if !already {
-		if len(a.conns) >= a.l.cfg.MaxClients {
+		// Every user holds at most MaxUserClients connections, and a user
+		// without a slot (taken or reserved) finds room only while the
+		// lobby has fewer than MaxClients, so watchers cannot lock out a
+		// player who reconnects.
+		n := 0
+		for _, o := range a.conns {
+			if a.userOf(o) == user {
+				n++
+			}
+		}
+		if n >= a.l.cfg.MaxUserClients || !a.holdsSlot(user) && len(a.conns) >= a.l.cfg.MaxClients {
 			return room.ErrRoomFull
 		}
 		a.conns = append(a.conns, c)
@@ -611,6 +621,11 @@ func (a *actor) seen(c *room.Client, seq int) bool {
 // change the lobby, to its sender's user (tableroom.Budget); false means
 // refuse it with rate. Duplicates and refusals never reach it.
 func (a *actor) spend(c *room.Client) bool { return a.budget.Spend(a.userOf(c), a.now()) }
+
+// holdsSlot reports whether u holds a slot, taken or reserved for them.
+func (a *actor) holdsSlot(u string) bool {
+	return slices.ContainsFunc(a.rec.Slots, func(s Slot) bool { return s.UserID == u && s.UserID != "" })
+}
 
 // apply finishes an accepted request: it records the seq, advances the
 // revision, brings the roles up to date, retires users who lost all

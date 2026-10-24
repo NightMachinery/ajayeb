@@ -351,17 +351,16 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 	}
 	wasConnected := a.connected(user)
 	if !already {
-		if a.seatOf(user) >= 0 {
-			n := 0
-			for _, o := range a.conns {
-				if a.userOf(o) == user {
-					n++
-				}
+		// Every user holds at most MaxUserClients connections, and a user
+		// without a seat finds room only while the table has fewer than
+		// MaxClients, so watchers cannot lock a player out.
+		n := 0
+		for _, o := range a.conns {
+			if a.userOf(o) == user {
+				n++
 			}
-			if n >= a.t.cfg.MaxClients {
-				return room.ErrRoomFull
-			}
-		} else if len(a.conns) >= a.t.cfg.MaxClients {
+		}
+		if n >= a.t.cfg.MaxUserClients || a.seatOf(user) < 0 && len(a.conns) >= a.t.cfg.MaxClients {
 			return room.ErrRoomFull
 		}
 		a.conns = append(a.conns, c)
