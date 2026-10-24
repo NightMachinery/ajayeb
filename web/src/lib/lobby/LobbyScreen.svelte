@@ -165,7 +165,7 @@
         <h1 class="font-display text-2xl">
           {t(lobby.seatCount === 2 ? 'lobby.duelLobby' : 'lobby.title')}
         </h1>
-        <p class="font-mono text-sm text-fg-muted" data-room-code={lobby.code}>
+        <p class="text-sm text-fg-muted" data-room-code={lobby.code}>
           {t('lobby.code', { code: lobby.code })}
         </p>
       </div>
