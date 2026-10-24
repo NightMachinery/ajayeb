@@ -1,13 +1,16 @@
 <script lang="ts">
   // The table's top bar: the game menu, the Age and turn (or the side
-  // point, or the end), the pass chip, and Undo while the table allows it
+  // point, or the end), the pass chip, the count of spectators (it opens
+  // the game menu, which lists them), and Undo while the table allows it
   // (it goes for good once a second human sits down). The recap and log
   // buttons come with their slices (M18.reveal-and-recap). Undo is
-  // Lucide's `undo`, not Duel's `undo-2`, so the two games share no icon.
-  import { ageLabel } from '$lib/i18n';
+  // Lucide's `undo`, not Duel's `undo-2`, and the spectators' icon is
+  // `users-round`, not Home's `users`, so the games share no icon.
+  import { ageLabel, formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Undo from '@lucide/svelte/icons/undo';
+  import UsersRound from '@lucide/svelte/icons/users-round';
   import { ht } from '../i18n/messages.svelte';
   import PassChip from './PassChip.svelte';
 
@@ -24,9 +27,24 @@
     onmenu: () => void;
     /** Takes back the viewer's last turn; absent while undo is not allowed. */
     onundo?: (() => void) | null;
+    /** How many people watch; the count shows when there are any. */
+    spectators?: number;
+    onspectators?: () => void;
   }
 
-  let { phase, age, turn, turns, pass, passTo, finished, onmenu, onundo = null }: Props = $props();
+  let {
+    phase,
+    age,
+    turn,
+    turns,
+    pass,
+    passTo,
+    finished,
+    onmenu,
+    onundo = null,
+    spectators = 0,
+    onspectators
+  }: Props = $props();
 
   const turnTip = $derived(ht('hg.screen.turn.tip', { turn, of: turns }));
 </script>
@@ -60,6 +78,21 @@
   </div>
   {#if !finished && age > 0}
     <PassChip {pass} to={passTo} />
+  {/if}
+  {#if spectators > 0 && onspectators}
+    {@const tip = ht('hg.admin.spectators.open', { count: spectators })}
+    <button
+      type="button"
+      class="icon watchers"
+      aria-label={tip}
+      data-act="spectators"
+      data-spectators={spectators}
+      onclick={onspectators}
+      {@attach tooltip({ text: tip, actionable: true })}
+    >
+      <UsersRound aria-hidden="true" />
+      <span dir="ltr">{formatNumber(spectators)}</span>
+    </button>
   {/if}
   {#if onundo}
     <button
@@ -96,6 +129,19 @@
     background: transparent;
     color: var(--fg);
     cursor: pointer;
+  }
+  .watchers {
+    display: inline-flex;
+    gap: 0.15rem;
+    width: auto;
+    min-width: 2.75rem;
+    padding-inline: 0.3rem;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .watchers :global(svg) {
+    width: 1.1rem;
+    height: 1.1rem;
   }
   .where {
     display: flex;
