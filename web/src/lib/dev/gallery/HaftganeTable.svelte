@@ -19,6 +19,7 @@
   import HaftganeSpecial from './HaftganeSpecial.svelte';
   import HaftganeCardSheets from './HaftganeCardSheets.svelte';
   import HaftganeCity from './HaftganeCity.svelte';
+  import HaftganeAdmin from './HaftganeAdmin.svelte';
   import SeatCrest from '$lib/games/haftgane/table/SeatCrest.svelte';
   import StatPill from '$lib/games/haftgane/table/StatPill.svelte';
   import StatusBadge from '$lib/games/haftgane/table/StatusBadge.svelte';
@@ -150,6 +151,7 @@
 <div class="flex flex-col gap-6" data-testid="gallery-haftgane-table">
   <HaftganeCardSheets />
   <HaftganeCity />
+  <HaftganeAdmin />
   <HaftganeSpecial />
   <section class="flex flex-col gap-2">
     <h3 class="text-sm font-semibold text-fg-muted">
