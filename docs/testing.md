@@ -277,12 +277,16 @@ canonical history is the `ajayeb-log/2` download.
   dropping the entry that would expire first, and an overflow (a dropped
   entry's note giving every user of its room only what refilled since the
   deepest debt it held, the notes' own overflow doing the same for every
-  room, a refill clearing it). At the served size, 2048 other rooms'
-  entries leave an exhausted user exhausted, whether they are nearly full
-  or deeper. The table keeps a spent budget across three evictions under
-  memory pressure (`newTHRooms`, `evict`, `push`), an idle unload and an
-  eviction whose entry the cache then drops, and starts full after a
-  restart. `conns_test.go` refuses a user's
+  room, a refill filling nothing while the floor stands and everything once
+  it has passed). At the served size, 2048 other rooms' entries leave an
+  exhausted user exhausted, whether they are nearly full or deeper. The
+  table keeps a spent budget across three evictions under memory pressure
+  (`newTHRooms`, `evict`, `push`), an idle unload and an eviction whose
+  entry the cache then drops, and starts full after a restart.
+  `overflow_test.go` checks that an arriving entry that would expire first
+  is the one noted, and that after both overflows a table loaded again at an
+  old point, its mark lost, gives an undoing human no more requests than
+  keeping its entry would have. `conns_test.go` refuses a user's
   ninth connection, seated or watching, with `room-full`, and walks a
   seven-seat table through twelve reseatings, promotions, switches to bots
   and a resignation, checking after every step that each user holds at

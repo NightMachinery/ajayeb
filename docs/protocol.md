@@ -1454,22 +1454,27 @@ file cap is a constant of the store.
   that (its mark), to a cache of its kind (`tableroom.BudgetCache`), and its
   next load takes them back. An entry lasts until its last budget is full
   again (at most 16 seconds), or, if it holds a mark, at least 16 seconds.
-  The cache holds at most 4096 budgets and past that drops first the entries
-  that would expire first, so a nearly full budget never pushes out a spent
-  one. A dropped entry leaves a note of when its budgets would all have been
-  full, and the room's next load starts every user's budget, known or not,
-  full only from then. So after an overflow a returning user gets at most
-  the tokens they would have had if the cache had kept the entry, and at
-  least those that refilled since the drop; never a fresh burst. The cache
-  keeps at most 4096 notes, dropping first those that would expire first;
-  until the last dropped note would have expired (16 seconds at most), every
-  room loaded with neither an entry nor a note starts its budgets the same
-  way, which can slow users of other rooms but gives no one a token. Neither
-  an eviction nor an overflow fills a spent budget: only a restart of the
-  server starts every budget full, and no user can cause one. One loss
-  remains, past both overflows: a table whose note was dropped forgets its
-  mark, so at a table that allows undo (one human against bots) a point
-  reached again after an undo can fill that human's budget.
+  The cache holds at most 4096 budgets; past that it drops the entry that
+  would expire first, the arriving one included. A dropped entry leaves a
+  note of when its budgets would all have been full, with its mark, and the
+  room's next load starts every user's budget, known or not, full only from
+  then (its floor). The cache keeps at most 4096 notes and past that drops
+  the note that would expire first; until the last dropped note would have
+  expired (16 seconds at most), every room loaded with neither an entry nor
+  a note starts from that note's time, with its mark unknown, which can slow
+  users of other rooms. While a room's floor stands, a point the game
+  reaches fills no budget: with the mark unknown it may be an old point. So
+  until its floor has passed, a room loaded again after an overflow gives
+  each user at most the tokens that keeping its entry would have left them;
+  the floor is never more than 16 seconds after the drop. A table loses its
+  mark when its note is dropped too (which shows only once the floor has
+  passed), or when it is loaded again more than 16 seconds after it left
+  memory, once its entry has expired (its budgets have all filled by then).
+  It then treats each point between its batches and the lost mark as new
+  when the game reaches it again, so at a table that allows undo (one human
+  against bots) that human's budget can fill once for each such point.
+  Otherwise a room loaded again has the budgets and the mark it left with. A
+  restart of the server starts every budget full, and no user can cause one.
 - **Liveness:** a ping every 25 seconds; dropped at the tick after two pings
   in a row went unanswered.
 - **Writes:** each frame must be written within 10 seconds, or the socket is
