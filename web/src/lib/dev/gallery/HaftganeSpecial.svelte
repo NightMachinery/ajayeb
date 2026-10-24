@@ -53,6 +53,28 @@
   }
 </script>
 
+{#if !sample}
+  <section class="flex flex-col gap-2">
+    <h3 class="text-sm font-semibold text-fg-muted">Special decisions <!-- i18n-ok --></h3>
+    <div class="flex flex-wrap gap-2">
+      {#each samples.filter((s) => s.seats === 5) as s (s.kind)}
+        <button
+          type="button"
+          data-act={`gallery-special:${s.kind}`}
+          onclick={() => {
+            sample = s;
+            closed = false;
+            confirmed = false;
+            draft = null;
+            selected = null;
+          }}
+          class="inline-flex min-h-11 items-center rounded-control border border-rule bg-panel px-3 text-fg"
+          >{s.kind}</button
+        >
+      {/each}
+    </div>
+  </section>
+{/if}
 {#if view && mine && seat && sample}
   <main class="special" dir={i18n.dir} data-gallery-special={sample.kind} data-seats={sample.seats}>
     <TableTopBar

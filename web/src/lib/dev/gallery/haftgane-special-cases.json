@@ -2525,7 +2525,7 @@
     "view": {
       "point": "age-2-turn-6-discard-build",
       "kind": "discard-build",
-      "required": [2],
+      "required": [0],
       "phase": "discard-build",
       "age": 2,
       "turn": 6,
@@ -2534,20 +2534,66 @@
       "seats": [
         {
           "seat": 0,
-          "board": "olympia",
-          "side": "day",
-          "stages": 3,
+          "board": "halikarnassos",
+          "side": "night",
+          "stages": 2,
           "built": [
-            "clay-pool",
-            "timber-yard",
-            "press-age-1",
-            "baths",
+            "clay-pit",
+            "lumber-yard",
+            "loom-age-1",
+            "barracks",
+            "stockade",
             "west-trading-post",
-            "loom-age-2",
-            "statue",
+            "quarry",
+            "stables",
+            "aqueduct",
             "caravansery"
           ],
-          "coins": 3,
+          "coins": 0,
+          "victories": [2, 0, 0],
+          "defeats": 0,
+          "shields": 4,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 0,
+          "relation": "self",
+          "last": {
+            "kind": "stage",
+            "design": "",
+            "stage": 2,
+            "left": 2,
+            "right": 2,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 3,
+            "treasure": 0,
+            "military": 2,
+            "blue": 5,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 10
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 1,
+          "board": "olympia",
+          "side": "night",
+          "stages": 2,
+          "built": [
+            "ore-vein",
+            "timber-yard",
+            "press-age-1",
+            "altar",
+            "theater",
+            "brickyard",
+            "glassworks-age-2",
+            "statue",
+            "vineyard"
+          ],
+          "coins": 17,
           "victories": [0, 0, 0],
           "defeats": 2,
           "shields": 0,
@@ -2556,141 +2602,83 @@
           "relative": 1,
           "relation": "left",
           "last": {
-            "kind": "stage",
-            "design": "",
-            "stage": 3,
+            "kind": "build",
+            "design": "vineyard",
+            "stage": 0,
             "left": 0,
             "right": 0,
             "printed": 0
           },
           "score": {
-            "wonder": 10,
-            "treasure": 1,
+            "wonder": 5,
+            "treasure": 5,
             "military": -2,
-            "blue": 7,
+            "blue": 10,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 16
+            "total": 18
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
         {
-          "seat": 1,
-          "board": "ephesos",
+          "seat": 2,
+          "board": "gizah",
           "side": "night",
-          "stages": 2,
+          "stages": 0,
           "built": [
-            "clay-pit",
-            "lumber-yard",
-            "barracks",
+            "clay-pool",
+            "stone-pit",
+            "glassworks-age-1",
             "guard-tower",
-            "theater",
             "east-trading-post",
+            "marketplace",
+            "foundry",
             "sawmill",
-            "glassworks-age-2",
-            "walls",
-            "laboratory"
+            "archery-range",
+            "courthouse",
+            "temple",
+            "forum"
           ],
-          "coins": 7,
-          "victories": [2, 0, 0],
-          "defeats": 0,
-          "shields": 4,
+          "coins": 3,
+          "victories": [1, 0, 0],
+          "defeats": 1,
+          "shields": 3,
           "handSize": 0,
           "hasKept": false,
           "relative": 2,
           "relation": "right",
           "last": {
             "kind": "build",
-            "design": "laboratory",
-            "stage": 0,
-            "left": 0,
-            "right": 1,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 5,
-            "treasure": 2,
-            "military": 2,
-            "blue": 3,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 13
-          },
-          "science": { "counts": [0, 1, 0], "choices": [0, 0, 0], "points": 1 }
-        },
-        {
-          "seat": 2,
-          "board": "halikarnassos",
-          "side": "night",
-          "stages": 1,
-          "built": [
-            "ore-vein",
-            "stone-pit",
-            "glassworks-age-1",
-            "stockade",
-            "altar",
-            "apothecary",
-            "foundry",
-            "quarry",
-            "press-age-2",
-            "stables",
-            "vineyard"
-          ],
-          "coins": 14,
-          "victories": [1, 0, 0],
-          "defeats": 1,
-          "shields": 3,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 0,
-          "relation": "self",
-          "last": {
-            "kind": "stage",
-            "design": "",
-            "stage": 1,
-            "left": 2,
-            "right": 2,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 2,
-            "treasure": 4,
-            "military": 0,
-            "blue": 3,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 10
-          },
-          "science": { "counts": [1, 0, 0], "choices": [0, 0, 0], "points": 1 }
-        }
-      ],
-      "you": {
-        "seat": 2,
-        "hand": [],
-        "kept": "",
-        "tucked": ["forum"],
-        "choices": [
-          {
-            "key": "build-discarded:marketplace",
-            "kind": "build-discarded",
-            "design": "marketplace",
-            "side": "",
+            "design": "forum",
             "stage": 0,
             "left": 0,
             "right": 0,
-            "printed": 0,
-            "total": 0,
-            "gain": 0,
-            "free": "discard",
-            "witness": []
+            "printed": 0
           },
+          "score": {
+            "wonder": 0,
+            "treasure": 1,
+            "military": 0,
+            "blue": 8,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 9
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        }
+      ],
+      "you": {
+        "seat": 0,
+        "hand": [],
+        "kept": "",
+        "tucked": ["scriptorium", "laboratory"],
+        "choices": [
           {
-            "key": "build-discarded:scriptorium",
+            "key": "build-discarded:apothecary",
             "kind": "build-discarded",
-            "design": "scriptorium",
+            "design": "apothecary",
             "side": "",
             "stage": 0,
             "left": 0,
@@ -2716,9 +2704,9 @@
             "witness": []
           },
           {
-            "key": "build-discarded:brickyard",
+            "key": "build-discarded:walls",
             "kind": "build-discarded",
-            "design": "brickyard",
+            "design": "walls",
             "side": "",
             "stage": 0,
             "left": 0,
@@ -2774,10 +2762,10 @@
         ],
         "disabled": [],
         "offer": [
-          { "design": "marketplace", "count": 1, "legal": true },
-          { "design": "scriptorium", "count": 1, "legal": true },
+          { "design": "apothecary", "count": 1, "legal": true },
           { "design": "workshop", "count": 1, "legal": true },
-          { "design": "brickyard", "count": 1, "legal": true },
+          { "design": "loom-age-2", "count": 1, "legal": false },
+          { "design": "walls", "count": 1, "legal": true },
           { "design": "dispensary", "count": 1, "legal": true },
           { "design": "library", "count": 1, "legal": true },
           { "design": "school", "count": 1, "legal": true }
@@ -2787,63 +2775,56 @@
             {
               "point": "age-1-turn-1",
               "hand": [
-                "stone-pit",
+                "clay-pit",
                 "press-age-1",
-                "barracks",
+                "guard-tower",
                 "stockade",
-                "baths",
-                "east-trading-post",
-                "marketplace"
+                "theater",
+                "marketplace",
+                "west-trading-post"
               ],
-              "played": "stone-pit",
+              "played": "clay-pit",
               "action": "build"
             },
             {
               "point": "age-1-turn-2",
-              "hand": [
-                "ore-vein",
-                "timber-yard",
-                "guard-tower",
-                "altar",
-                "west-trading-post",
-                "scriptorium"
-              ],
-              "played": "ore-vein",
+              "hand": ["lumber-yard", "ore-vein", "stone-pit", "loom-age-1", "altar", "apothecary"],
+              "played": "lumber-yard",
               "action": "build"
             },
             {
               "point": "age-1-turn-3",
-              "hand": ["glassworks-age-1", "loom-age-1", "theater", "apothecary", "workshop"],
-              "played": "glassworks-age-1",
+              "hand": ["barracks", "baths", "east-trading-post", "scriptorium", "workshop"],
+              "played": "barracks",
               "action": "build"
             },
             {
               "point": "age-1-turn-4",
-              "hand": ["stockade", "baths", "east-trading-post", "marketplace"],
+              "hand": ["stockade", "theater", "marketplace", "west-trading-post"],
               "played": "stockade",
               "action": "build"
             },
             {
               "point": "age-1-turn-5",
-              "hand": ["altar", "west-trading-post", "scriptorium"],
-              "played": "altar",
+              "hand": ["loom-age-1", "altar", "apothecary"],
+              "played": "loom-age-1",
               "action": "build"
             },
             {
               "point": "age-1-turn-6",
-              "hand": ["apothecary", "workshop"],
-              "played": "apothecary",
-              "action": "build"
+              "hand": ["scriptorium", "workshop"],
+              "played": "scriptorium",
+              "action": "stage"
             },
             {
               "point": "age-2-turn-1",
               "hand": [
                 "quarry",
+                "sawmill",
                 "glassworks-age-2",
-                "loom-age-2",
-                "press-age-2",
-                "courthouse",
+                "aqueduct",
                 "temple",
+                "vineyard",
                 "dispensary"
               ],
               "played": "quarry",
@@ -2851,43 +2832,51 @@
             },
             {
               "point": "age-2-turn-2",
-              "hand": ["foundry", "aqueduct", "statue", "vineyard", "laboratory", "school"],
-              "played": "foundry",
-              "action": "build"
+              "hand": ["loom-age-2", "archery-range", "walls", "caravansery", "forum", "library"],
+              "played": "loom-age-2",
+              "action": "sell"
             },
             {
               "point": "age-2-turn-3",
-              "hand": ["stables", "walls", "caravansery", "forum", "library"],
+              "hand": ["stables", "courthouse", "statue", "laboratory", "school"],
               "played": "stables",
               "action": "build"
             },
             {
               "point": "age-2-turn-4",
-              "hand": ["press-age-2", "courthouse", "temple", "dispensary"],
-              "played": "press-age-2",
+              "hand": ["aqueduct", "temple", "vineyard", "dispensary"],
+              "played": "aqueduct",
               "action": "build"
             },
             {
               "point": "age-2-turn-5",
-              "hand": ["vineyard", "laboratory", "school"],
-              "played": "vineyard",
+              "hand": ["caravansery", "forum", "library"],
+              "played": "caravansery",
               "action": "build"
             },
             {
               "point": "age-2-turn-6",
-              "hand": ["forum", "library"],
-              "played": "forum",
+              "hand": ["laboratory", "school"],
+              "played": "laboratory",
               "action": "stage"
             }
           ],
           "pileLooks": [
             {
+              "point": "age-1-turn-6-discard-build",
+              "cards": [
+                { "design": "west-trading-post", "count": 1 },
+                { "design": "apothecary", "count": 1 },
+                { "design": "workshop", "count": 1 }
+              ]
+            },
+            {
               "point": "age-2-turn-6-discard-build",
               "cards": [
-                { "design": "marketplace", "count": 1 },
-                { "design": "scriptorium", "count": 1 },
+                { "design": "apothecary", "count": 1 },
                 { "design": "workshop", "count": 1 },
-                { "design": "brickyard", "count": 1 },
+                { "design": "loom-age-2", "count": 1 },
+                { "design": "walls", "count": 1 },
                 { "design": "dispensary", "count": 1 },
                 { "design": "library", "count": 1 },
                 { "design": "school", "count": 1 }
@@ -2905,53 +2894,37 @@
               { "colour": "purple", "bounds": { "certain": 0, "atMost": 0 } }
             ],
             "returning": [],
-            "neighbourPicks": [{ "point": "age-2-turn-3", "seat": 1, "design": "aqueduct" }]
+            "neighbourPicks": [{ "point": "age-2-turn-4", "seat": 1, "design": "walls" }]
           }
         },
         "neighbours": [
           {
-            "seat": 0,
+            "seat": 1,
             "direction": "left",
             "units": [
               {
                 "choice": false,
                 "producer": 0,
-                "count": 2,
-                "options": [{ "resource": "clay", "price": 2 }]
+                "count": 3,
+                "options": [
+                  {
+                    "resource": "clay",
+                    "price": 1,
+                    "discount": { "design": "west-trading-post", "stage": 0 }
+                  }
+                ]
               },
               {
                 "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "papyrus", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "cloth", "price": 2 }]
-              },
-              {
-                "choice": true,
                 "producer": 0,
                 "count": 1,
                 "options": [
-                  { "resource": "wood", "price": 2 },
-                  { "resource": "stone", "price": 2 }
+                  {
+                    "resource": "ore",
+                    "price": 1,
+                    "discount": { "design": "west-trading-post", "stage": 0 }
+                  }
                 ]
-              }
-            ],
-            "outlook": 3
-          },
-          {
-            "seat": 1,
-            "direction": "right",
-            "units": [
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 3,
-                "options": [{ "resource": "wood", "price": 2 }]
               },
               {
                 "choice": false,
@@ -2964,6 +2937,516 @@
                 "producer": 0,
                 "count": 1,
                 "options": [{ "resource": "papyrus", "price": 2 }]
+              },
+              {
+                "choice": true,
+                "producer": 0,
+                "count": 1,
+                "options": [
+                  {
+                    "resource": "wood",
+                    "price": 1,
+                    "discount": { "design": "west-trading-post", "stage": 0 }
+                  },
+                  {
+                    "resource": "stone",
+                    "price": 1,
+                    "discount": { "design": "west-trading-post", "stage": 0 }
+                  }
+                ]
+              }
+            ],
+            "outlook": 3
+          },
+          {
+            "seat": 2,
+            "direction": "right",
+            "units": [
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "wood", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "clay", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "stone", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "ore", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "glass", "price": 2 }]
+              }
+            ],
+            "outlook": 3
+          }
+        ]
+      },
+      "events": [
+        {
+          "kind": "leftover-discarded",
+          "seat": 0,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "",
+          "design": "school",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "leftover-discarded",
+          "seat": 1,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "",
+          "design": "",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "leftover-discarded",
+          "seat": 2,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "",
+          "design": "",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
+          "seat": 0,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "stage",
+          "design": "laboratory",
+          "stage": 2,
+          "side": "",
+          "left": 2,
+          "right": 2,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
+          "seat": 1,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "build",
+          "design": "vineyard",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
+          "seat": 2,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "build",
+          "design": "forum",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "coins",
+          "seat": 1,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "",
+          "design": "vineyard",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 10,
+          "source": "design",
+          "outcome": ""
+        }
+      ],
+      "canDownload": false
+    },
+    "waiting": {
+      "point": "age-2-turn-6-discard-build",
+      "kind": "discard-build",
+      "required": [0],
+      "phase": "discard-build",
+      "age": 2,
+      "turn": 6,
+      "pass": "right",
+      "pile": 7,
+      "seats": [
+        {
+          "seat": 0,
+          "board": "halikarnassos",
+          "side": "night",
+          "stages": 2,
+          "built": [
+            "clay-pit",
+            "lumber-yard",
+            "loom-age-1",
+            "barracks",
+            "stockade",
+            "west-trading-post",
+            "quarry",
+            "stables",
+            "aqueduct",
+            "caravansery"
+          ],
+          "coins": 0,
+          "victories": [2, 0, 0],
+          "defeats": 0,
+          "shields": 4,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 2,
+          "relation": "right",
+          "last": {
+            "kind": "stage",
+            "design": "",
+            "stage": 2,
+            "left": 2,
+            "right": 2,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 3,
+            "treasure": 0,
+            "military": 2,
+            "blue": 5,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 10
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 1,
+          "board": "olympia",
+          "side": "night",
+          "stages": 2,
+          "built": [
+            "ore-vein",
+            "timber-yard",
+            "press-age-1",
+            "altar",
+            "theater",
+            "brickyard",
+            "glassworks-age-2",
+            "statue",
+            "vineyard"
+          ],
+          "coins": 17,
+          "victories": [0, 0, 0],
+          "defeats": 2,
+          "shields": 0,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 0,
+          "relation": "self",
+          "last": {
+            "kind": "build",
+            "design": "vineyard",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 5,
+            "treasure": 5,
+            "military": -2,
+            "blue": 10,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 18
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 2,
+          "board": "gizah",
+          "side": "night",
+          "stages": 0,
+          "built": [
+            "clay-pool",
+            "stone-pit",
+            "glassworks-age-1",
+            "guard-tower",
+            "east-trading-post",
+            "marketplace",
+            "foundry",
+            "sawmill",
+            "archery-range",
+            "courthouse",
+            "temple",
+            "forum"
+          ],
+          "coins": 3,
+          "victories": [1, 0, 0],
+          "defeats": 1,
+          "shields": 3,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 1,
+          "relation": "left",
+          "last": {
+            "kind": "build",
+            "design": "forum",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 0,
+            "treasure": 1,
+            "military": 0,
+            "blue": 8,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 9
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        }
+      ],
+      "you": {
+        "seat": 1,
+        "hand": [],
+        "kept": "",
+        "tucked": ["baths", "press-age-2"],
+        "choices": [],
+        "disabled": [],
+        "offer": [],
+        "notebook": {
+          "seen": [
+            {
+              "point": "age-1-turn-1",
+              "hand": [
+                "timber-yard",
+                "glassworks-age-1",
+                "barracks",
+                "baths",
+                "east-trading-post",
+                "scriptorium",
+                "workshop"
+              ],
+              "played": "timber-yard",
+              "action": "build"
+            },
+            {
+              "point": "age-1-turn-2",
+              "hand": [
+                "press-age-1",
+                "guard-tower",
+                "stockade",
+                "theater",
+                "marketplace",
+                "west-trading-post"
+              ],
+              "played": "press-age-1",
+              "action": "build"
+            },
+            {
+              "point": "age-1-turn-3",
+              "hand": ["ore-vein", "stone-pit", "loom-age-1", "altar", "apothecary"],
+              "played": "ore-vein",
+              "action": "build"
+            },
+            {
+              "point": "age-1-turn-4",
+              "hand": ["baths", "east-trading-post", "scriptorium", "workshop"],
+              "played": "baths",
+              "action": "stage"
+            },
+            {
+              "point": "age-1-turn-5",
+              "hand": ["theater", "marketplace", "west-trading-post"],
+              "played": "theater",
+              "action": "build"
+            },
+            {
+              "point": "age-1-turn-6",
+              "hand": ["altar", "apothecary"],
+              "played": "altar",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-1",
+              "hand": [
+                "brickyard",
+                "loom-age-2",
+                "archery-range",
+                "walls",
+                "caravansery",
+                "forum",
+                "library"
+              ],
+              "played": "brickyard",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-2",
+              "hand": ["press-age-2", "stables", "courthouse", "statue", "laboratory", "school"],
+              "played": "press-age-2",
+              "action": "stage"
+            },
+            {
+              "point": "age-2-turn-3",
+              "hand": ["glassworks-age-2", "aqueduct", "temple", "vineyard", "dispensary"],
+              "played": "glassworks-age-2",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-4",
+              "hand": ["walls", "caravansery", "forum", "library"],
+              "played": "walls",
+              "action": "sell"
+            },
+            {
+              "point": "age-2-turn-5",
+              "hand": ["statue", "laboratory", "school"],
+              "played": "statue",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-6",
+              "hand": ["vineyard", "dispensary"],
+              "played": "vineyard",
+              "action": "build"
+            }
+          ],
+          "pileLooks": [],
+          "statistics": {
+            "circulating": [
+              { "colour": "brown", "bounds": { "certain": 0, "atMost": 0 } },
+              { "colour": "grey", "bounds": { "certain": 0, "atMost": 0 } },
+              { "colour": "red", "bounds": { "certain": 0, "atMost": 0 } },
+              { "colour": "blue", "bounds": { "certain": 0, "atMost": 0 } },
+              { "colour": "yellow", "bounds": { "certain": 0, "atMost": 0 } },
+              { "colour": "green", "bounds": { "certain": 0, "atMost": 0 } },
+              { "colour": "purple", "bounds": { "certain": 0, "atMost": 0 } }
+            ],
+            "returning": [],
+            "neighbourPicks": [{ "point": "age-2-turn-2", "seat": 0, "design": "loom-age-2" }]
+          }
+        },
+        "neighbours": [
+          {
+            "seat": 2,
+            "direction": "left",
+            "units": [
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "wood", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "clay", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "stone", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "ore", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "glass", "price": 2 }]
+              }
+            ],
+            "outlook": -1
+          },
+          {
+            "seat": 0,
+            "direction": "right",
+            "units": [
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "wood", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "stone", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "cloth", "price": 2 }]
               },
               {
                 "choice": true,
@@ -3004,452 +3487,6 @@
           "age": 0,
           "turn": 0,
           "play": "",
-          "design": "",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "leftover-discarded",
-          "seat": 2,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "library",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 0,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "stage",
-          "design": "",
-          "stage": 3,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 1,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "build",
-          "design": "laboratory",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 1,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 2,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "stage",
-          "design": "forum",
-          "stage": 1,
-          "side": "",
-          "left": 2,
-          "right": 2,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        }
-      ],
-      "canDownload": false
-    },
-    "waiting": {
-      "point": "age-2-turn-6-discard-build",
-      "kind": "discard-build",
-      "required": [2],
-      "phase": "discard-build",
-      "age": 2,
-      "turn": 6,
-      "pass": "right",
-      "pile": 7,
-      "seats": [
-        {
-          "seat": 0,
-          "board": "olympia",
-          "side": "day",
-          "stages": 3,
-          "built": [
-            "clay-pool",
-            "timber-yard",
-            "press-age-1",
-            "baths",
-            "west-trading-post",
-            "loom-age-2",
-            "statue",
-            "caravansery"
-          ],
-          "coins": 3,
-          "victories": [0, 0, 0],
-          "defeats": 2,
-          "shields": 0,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 0,
-          "relation": "self",
-          "last": {
-            "kind": "stage",
-            "design": "",
-            "stage": 3,
-            "left": 0,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 10,
-            "treasure": 1,
-            "military": -2,
-            "blue": 7,
-            "yellow": 0,
-            "green": 0,
-            "purple": 0,
-            "total": 16
-          },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
-        },
-        {
-          "seat": 1,
-          "board": "ephesos",
-          "side": "night",
-          "stages": 2,
-          "built": [
-            "clay-pit",
-            "lumber-yard",
-            "barracks",
-            "guard-tower",
-            "theater",
-            "east-trading-post",
-            "sawmill",
-            "glassworks-age-2",
-            "walls",
-            "laboratory"
-          ],
-          "coins": 7,
-          "victories": [2, 0, 0],
-          "defeats": 0,
-          "shields": 4,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 1,
-          "relation": "left",
-          "last": {
-            "kind": "build",
-            "design": "laboratory",
-            "stage": 0,
-            "left": 0,
-            "right": 1,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 5,
-            "treasure": 2,
-            "military": 2,
-            "blue": 3,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 13
-          },
-          "science": { "counts": [0, 1, 0], "choices": [0, 0, 0], "points": 1 }
-        },
-        {
-          "seat": 2,
-          "board": "halikarnassos",
-          "side": "night",
-          "stages": 1,
-          "built": [
-            "ore-vein",
-            "stone-pit",
-            "glassworks-age-1",
-            "stockade",
-            "altar",
-            "apothecary",
-            "foundry",
-            "quarry",
-            "press-age-2",
-            "stables",
-            "vineyard"
-          ],
-          "coins": 14,
-          "victories": [1, 0, 0],
-          "defeats": 1,
-          "shields": 3,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 2,
-          "relation": "right",
-          "last": {
-            "kind": "stage",
-            "design": "",
-            "stage": 1,
-            "left": 2,
-            "right": 2,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 2,
-            "treasure": 4,
-            "military": 0,
-            "blue": 3,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 10
-          },
-          "science": { "counts": [1, 0, 0], "choices": [0, 0, 0], "points": 1 }
-        }
-      ],
-      "you": {
-        "seat": 0,
-        "hand": [],
-        "kept": "",
-        "tucked": ["loom-age-1", "archery-range", "temple"],
-        "choices": [],
-        "disabled": [],
-        "offer": [],
-        "notebook": {
-          "seen": [
-            {
-              "point": "age-1-turn-1",
-              "hand": [
-                "clay-pool",
-                "lumber-yard",
-                "glassworks-age-1",
-                "loom-age-1",
-                "theater",
-                "apothecary",
-                "workshop"
-              ],
-              "played": "clay-pool",
-              "action": "build"
-            },
-            {
-              "point": "age-1-turn-2",
-              "hand": [
-                "press-age-1",
-                "barracks",
-                "stockade",
-                "baths",
-                "east-trading-post",
-                "marketplace"
-              ],
-              "played": "press-age-1",
-              "action": "build"
-            },
-            {
-              "point": "age-1-turn-3",
-              "hand": ["timber-yard", "guard-tower", "altar", "west-trading-post", "scriptorium"],
-              "played": "timber-yard",
-              "action": "build"
-            },
-            {
-              "point": "age-1-turn-4",
-              "hand": ["loom-age-1", "theater", "apothecary", "workshop"],
-              "played": "loom-age-1",
-              "action": "stage"
-            },
-            {
-              "point": "age-1-turn-5",
-              "hand": ["baths", "east-trading-post", "marketplace"],
-              "played": "baths",
-              "action": "build"
-            },
-            {
-              "point": "age-1-turn-6",
-              "hand": ["west-trading-post", "scriptorium"],
-              "played": "west-trading-post",
-              "action": "build"
-            },
-            {
-              "point": "age-2-turn-1",
-              "hand": [
-                "brickyard",
-                "foundry",
-                "aqueduct",
-                "statue",
-                "vineyard",
-                "laboratory",
-                "school"
-              ],
-              "played": "brickyard",
-              "action": "sell"
-            },
-            {
-              "point": "age-2-turn-2",
-              "hand": ["archery-range", "stables", "walls", "caravansery", "forum", "library"],
-              "played": "archery-range",
-              "action": "stage"
-            },
-            {
-              "point": "age-2-turn-3",
-              "hand": ["loom-age-2", "press-age-2", "courthouse", "temple", "dispensary"],
-              "played": "loom-age-2",
-              "action": "build"
-            },
-            {
-              "point": "age-2-turn-4",
-              "hand": ["statue", "vineyard", "laboratory", "school"],
-              "played": "statue",
-              "action": "build"
-            },
-            {
-              "point": "age-2-turn-5",
-              "hand": ["caravansery", "forum", "library"],
-              "played": "caravansery",
-              "action": "build"
-            },
-            {
-              "point": "age-2-turn-6",
-              "hand": ["temple", "dispensary"],
-              "played": "temple",
-              "action": "stage"
-            }
-          ],
-          "pileLooks": [],
-          "statistics": {
-            "circulating": [
-              { "colour": "brown", "bounds": { "certain": 0, "atMost": 0 } },
-              { "colour": "grey", "bounds": { "certain": 0, "atMost": 0 } },
-              { "colour": "red", "bounds": { "certain": 0, "atMost": 0 } },
-              { "colour": "blue", "bounds": { "certain": 0, "atMost": 0 } },
-              { "colour": "yellow", "bounds": { "certain": 0, "atMost": 0 } },
-              { "colour": "green", "bounds": { "certain": 0, "atMost": 0 } },
-              { "colour": "purple", "bounds": { "certain": 0, "atMost": 0 } }
-            ],
-            "returning": [],
-            "neighbourPicks": [
-              { "point": "age-2-turn-3", "seat": 1, "design": "aqueduct" },
-              { "point": "age-2-turn-5", "seat": 1, "design": "courthouse" }
-            ]
-          }
-        },
-        "neighbours": [
-          {
-            "seat": 1,
-            "direction": "left",
-            "units": [
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 3,
-                "options": [
-                  {
-                    "resource": "wood",
-                    "price": 1,
-                    "discount": { "design": "west-trading-post", "stage": 0 }
-                  }
-                ]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "glass", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "papyrus", "price": 2 }]
-              },
-              {
-                "choice": true,
-                "producer": 0,
-                "count": 1,
-                "options": [
-                  {
-                    "resource": "clay",
-                    "price": 1,
-                    "discount": { "design": "west-trading-post", "stage": 0 }
-                  },
-                  {
-                    "resource": "ore",
-                    "price": 1,
-                    "discount": { "design": "west-trading-post", "stage": 0 }
-                  }
-                ]
-              }
-            ],
-            "outlook": -1
-          },
-          {
-            "seat": 2,
-            "direction": "right",
-            "units": [
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 3,
-                "options": [{ "resource": "stone", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 3,
-                "options": [{ "resource": "ore", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "glass", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "papyrus", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "cloth", "price": 2 }]
-              }
-            ],
-            "outlook": -1
-          }
-        ]
-      },
-      "events": [
-        {
-          "kind": "leftover-discarded",
-          "seat": 0,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
           "design": "dispensary",
           "stage": 0,
           "side": "",
@@ -3462,23 +3499,6 @@
         },
         {
           "kind": "leftover-discarded",
-          "seat": 1,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "leftover-discarded",
           "seat": 2,
           "other": 0,
           "age": 0,
@@ -3501,11 +3521,11 @@
           "age": 0,
           "turn": 0,
           "play": "stage",
-          "design": "temple",
-          "stage": 3,
+          "design": "",
+          "stage": 2,
           "side": "",
-          "left": 0,
-          "right": 0,
+          "left": 2,
+          "right": 2,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -3518,11 +3538,11 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "laboratory",
+          "design": "vineyard",
           "stage": 0,
           "side": "",
           "left": 0,
-          "right": 1,
+          "right": 0,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -3534,15 +3554,32 @@
           "other": 0,
           "age": 0,
           "turn": 0,
-          "play": "stage",
-          "design": "",
-          "stage": 1,
+          "play": "build",
+          "design": "forum",
+          "stage": 0,
           "side": "",
-          "left": 2,
-          "right": 2,
+          "left": 0,
+          "right": 0,
           "printed": 0,
           "delta": 0,
           "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "coins",
+          "seat": 1,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "",
+          "design": "vineyard",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 10,
+          "source": "design",
           "outcome": ""
         }
       ],
@@ -8760,24 +8797,35 @@
     "kind": "discard",
     "seats": 5,
     "view": {
-      "point": "age-1-turn-6-discard-build",
+      "point": "age-2-turn-6-discard-build",
       "kind": "discard-build",
       "required": [2],
       "phase": "discard-build",
-      "age": 1,
+      "age": 2,
       "turn": 6,
-      "pass": "left",
-      "pile": 6,
+      "pass": "right",
+      "pile": 12,
       "seats": [
         {
           "seat": 0,
           "board": "olympia",
           "side": "day",
-          "stages": 0,
-          "built": ["clay-pool", "loom-age-1", "press-age-1", "guard-tower", "altar", "apothecary"],
-          "coins": 3,
-          "victories": [0, 0, 0],
-          "defeats": 0,
+          "stages": 1,
+          "built": [
+            "clay-pool",
+            "loom-age-1",
+            "press-age-1",
+            "guard-tower",
+            "altar",
+            "apothecary",
+            "brickyard",
+            "foundry",
+            "courthouse",
+            "dispensary"
+          ],
+          "coins": 0,
+          "victories": [1, 0, 0],
+          "defeats": 1,
           "shields": 1,
           "handSize": 0,
           "hasKept": false,
@@ -8785,7 +8833,52 @@
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "apothecary",
+            "design": "dispensary",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 3,
+            "treasure": 0,
+            "military": 0,
+            "blue": 7,
+            "yellow": 0,
+            "green": 4,
+            "purple": 0,
+            "total": 14
+          },
+          "science": { "counts": [2, 0, 0], "choices": [0, 0, 0], "points": 4 }
+        },
+        {
+          "seat": 1,
+          "board": "ephesos",
+          "side": "night",
+          "stages": 0,
+          "built": [
+            "clay-pit",
+            "forest-cave",
+            "barracks",
+            "guard-tower",
+            "altar",
+            "brickyard",
+            "glassworks-age-2",
+            "press-age-2",
+            "temple",
+            "caravansery"
+          ],
+          "coins": 10,
+          "victories": [2, 0, 0],
+          "defeats": 0,
+          "shields": 2,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 4,
+          "relation": "right",
+          "last": {
+            "kind": "build",
+            "design": "temple",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -8793,40 +8886,13 @@
           },
           "score": {
             "wonder": 0,
-            "treasure": 1,
-            "military": 0,
-            "blue": 3,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 5
-          },
-          "science": { "counts": [1, 0, 0], "choices": [0, 0, 0], "points": 1 }
-        },
-        {
-          "seat": 1,
-          "board": "ephesos",
-          "side": "night",
-          "stages": 0,
-          "built": ["clay-pit", "forest-cave", "barracks", "guard-tower", "altar"],
-          "coins": 6,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 2,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 4,
-          "relation": "right",
-          "last": { "kind": "sell", "design": "", "stage": 0, "left": 0, "right": 0, "printed": 0 },
-          "score": {
-            "wonder": 0,
-            "treasure": 2,
-            "military": 0,
-            "blue": 3,
+            "treasure": 3,
+            "military": 2,
+            "blue": 7,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 5
+            "total": 12
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
@@ -8834,11 +8900,23 @@
           "seat": 2,
           "board": "halikarnassos",
           "side": "night",
-          "stages": 1,
-          "built": ["excavation", "lumber-yard", "ore-vein", "stockade", "well"],
-          "coins": 2,
-          "victories": [0, 0, 0],
-          "defeats": 0,
+          "stages": 2,
+          "built": [
+            "excavation",
+            "lumber-yard",
+            "ore-vein",
+            "stockade",
+            "baths",
+            "well",
+            "foundry",
+            "sawmill",
+            "loom-age-2",
+            "aqueduct",
+            "caravansery"
+          ],
+          "coins": 3,
+          "victories": [1, 0, 0],
+          "defeats": 1,
           "shields": 1,
           "handSize": 0,
           "hasKept": false,
@@ -8847,20 +8925,20 @@
           "last": {
             "kind": "stage",
             "design": "",
-            "stage": 1,
+            "stage": 2,
             "left": 0,
-            "right": 2,
+            "right": 4,
             "printed": 0
           },
           "score": {
-            "wonder": 2,
-            "treasure": 0,
+            "wonder": 3,
+            "treasure": 1,
             "military": 0,
-            "blue": 3,
+            "blue": 11,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 5
+            "total": 15
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
@@ -8869,66 +8947,89 @@
           "board": "babylon",
           "side": "night",
           "stages": 1,
-          "built": ["clay-pool", "lumber-yard", "stone-pit", "east-trading-post"],
-          "coins": 4,
+          "built": [
+            "clay-pool",
+            "lumber-yard",
+            "stone-pit",
+            "east-trading-post",
+            "sawmill",
+            "glassworks-age-2",
+            "archery-range",
+            "stables",
+            "training-ground",
+            "laboratory"
+          ],
+          "coins": 1,
           "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 0,
+          "defeats": 1,
+          "shields": 6,
           "handSize": 0,
           "hasKept": true,
           "relative": 1,
           "relation": "left",
-          "last": { "kind": "sell", "design": "", "stage": 0, "left": 0, "right": 0, "printed": 0 },
+          "last": {
+            "kind": "build",
+            "design": "laboratory",
+            "stage": 0,
+            "left": 2,
+            "right": 1,
+            "printed": 0
+          },
           "score": {
             "wonder": 0,
-            "treasure": 1,
-            "military": 0,
+            "treasure": 0,
+            "military": -1,
             "blue": 0,
             "yellow": 0,
-            "green": 0,
+            "green": 1,
             "purple": 0,
-            "total": 1
+            "total": 0
           },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+          "science": { "counts": [0, 1, 0], "choices": [0, 0, 0], "points": 1 }
         },
         {
           "seat": 4,
           "board": "rhodos",
           "side": "night",
-          "stages": 0,
+          "stages": 1,
           "built": [
             "ore-vein",
             "stone-pit",
             "timber-yard",
             "glassworks-age-1",
             "marketplace",
-            "tavern"
+            "tavern",
+            "quarry",
+            "press-age-2",
+            "stables",
+            "statue",
+            "vineyard"
           ],
-          "coins": 7,
+          "coins": 24,
           "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 0,
+          "defeats": 1,
+          "shields": 3,
           "handSize": 0,
           "hasKept": false,
           "relative": 2,
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "marketplace",
+            "design": "statue",
             "stage": 0,
             "left": 0,
             "right": 0,
             "printed": 0
           },
           "score": {
-            "wonder": 0,
-            "treasure": 2,
-            "military": 0,
-            "blue": 0,
+            "wonder": 3,
+            "treasure": 8,
+            "military": -1,
+            "blue": 4,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 2
+            "total": 14
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         }
@@ -8937,22 +9038,8 @@
         "seat": 2,
         "hand": [],
         "kept": "",
-        "tucked": ["theater"],
+        "tucked": ["theater", "forum"],
         "choices": [
-          {
-            "key": "build-discarded:baths",
-            "kind": "build-discarded",
-            "design": "baths",
-            "side": "",
-            "stage": 0,
-            "left": 0,
-            "right": 0,
-            "printed": 0,
-            "total": 0,
-            "gain": 0,
-            "free": "discard",
-            "witness": []
-          },
           {
             "key": "build-discarded:tavern",
             "kind": "build-discarded",
@@ -9022,16 +9109,91 @@
             "gain": 0,
             "free": "discard",
             "witness": []
+          },
+          {
+            "key": "build-discarded:walls",
+            "kind": "build-discarded",
+            "design": "walls",
+            "side": "",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0,
+            "total": 0,
+            "gain": 0,
+            "free": "discard",
+            "witness": []
+          },
+          {
+            "key": "build-discarded:bazar",
+            "kind": "build-discarded",
+            "design": "bazar",
+            "side": "",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0,
+            "total": 0,
+            "gain": 0,
+            "free": "discard",
+            "witness": []
+          },
+          {
+            "key": "build-discarded:dispensary",
+            "kind": "build-discarded",
+            "design": "dispensary",
+            "side": "",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0,
+            "total": 0,
+            "gain": 0,
+            "free": "discard",
+            "witness": []
+          },
+          {
+            "key": "build-discarded:laboratory",
+            "kind": "build-discarded",
+            "design": "laboratory",
+            "side": "",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0,
+            "total": 0,
+            "gain": 0,
+            "free": "discard",
+            "witness": []
+          },
+          {
+            "key": "build-discarded:school",
+            "kind": "build-discarded",
+            "design": "school",
+            "side": "",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0,
+            "total": 0,
+            "gain": 0,
+            "free": "discard",
+            "witness": []
           }
         ],
         "disabled": [],
         "offer": [
-          { "design": "baths", "count": 1, "legal": true },
           { "design": "tavern", "count": 1, "legal": true },
           { "design": "west-trading-post", "count": 1, "legal": true },
           { "design": "apothecary", "count": 1, "legal": true },
-          { "design": "scriptorium", "count": 1, "legal": true },
-          { "design": "workshop", "count": 1, "legal": true }
+          { "design": "scriptorium", "count": 2, "legal": true },
+          { "design": "workshop", "count": 1, "legal": true },
+          { "design": "loom-age-2", "count": 1, "legal": false },
+          { "design": "walls", "count": 1, "legal": true },
+          { "design": "bazar", "count": 1, "legal": true },
+          { "design": "dispensary", "count": 1, "legal": true },
+          { "design": "laboratory", "count": 1, "legal": true },
+          { "design": "school", "count": 1, "legal": true }
         ],
         "notebook": {
           "seen": [
@@ -9085,6 +9247,50 @@
               "hand": ["theater", "tavern"],
               "played": "theater",
               "action": "stage"
+            },
+            {
+              "point": "age-2-turn-1",
+              "hand": [
+                "foundry",
+                "glassworks-age-2",
+                "loom-age-2",
+                "press-age-2",
+                "archery-range",
+                "forum",
+                "laboratory"
+              ],
+              "played": "foundry",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-2",
+              "hand": ["loom-age-2", "walls", "courthouse", "vineyard", "laboratory", "library"],
+              "played": "loom-age-2",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-3",
+              "hand": ["sawmill", "press-age-2", "courthouse", "statue", "dispensary"],
+              "played": "sawmill",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-4",
+              "hand": ["caravansery", "caravansery", "dispensary", "school"],
+              "played": "caravansery",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-5",
+              "hand": ["aqueduct", "temple", "bazar"],
+              "played": "aqueduct",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-6",
+              "hand": ["forum", "laboratory"],
+              "played": "forum",
+              "action": "stage"
             }
           ],
           "pileLooks": [
@@ -9097,6 +9303,22 @@
                 { "design": "apothecary", "count": 1 },
                 { "design": "scriptorium", "count": 1 },
                 { "design": "workshop", "count": 1 }
+              ]
+            },
+            {
+              "point": "age-2-turn-6-discard-build",
+              "cards": [
+                { "design": "tavern", "count": 1 },
+                { "design": "west-trading-post", "count": 1 },
+                { "design": "apothecary", "count": 1 },
+                { "design": "scriptorium", "count": 2 },
+                { "design": "workshop", "count": 1 },
+                { "design": "loom-age-2", "count": 1 },
+                { "design": "walls", "count": 1 },
+                { "design": "bazar", "count": 1 },
+                { "design": "dispensary", "count": 1 },
+                { "design": "laboratory", "count": 1 },
+                { "design": "school", "count": 1 }
               ]
             }
           ],
@@ -9122,7 +9344,7 @@
               {
                 "choice": false,
                 "producer": 0,
-                "count": 2,
+                "count": 4,
                 "options": [{ "resource": "wood", "price": 2 }]
               },
               {
@@ -9136,9 +9358,15 @@
                 "producer": 0,
                 "count": 1,
                 "options": [{ "resource": "stone", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "glass", "price": 2 }]
               }
             ],
-            "outlook": 1
+            "outlook": -1
           },
           {
             "seat": 1,
@@ -9147,7 +9375,19 @@
               {
                 "choice": false,
                 "producer": 0,
+                "count": 2,
+                "options": [{ "resource": "clay", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
                 "count": 1,
+                "options": [{ "resource": "glass", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 2,
                 "options": [{ "resource": "papyrus", "price": 2 }]
               },
               {
@@ -9215,7 +9455,7 @@
           "age": 0,
           "turn": 0,
           "play": "",
-          "design": "tavern",
+          "design": "laboratory",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9266,7 +9506,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "apothecary",
+          "design": "dispensary",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9282,8 +9522,8 @@
           "other": 0,
           "age": 0,
           "turn": 0,
-          "play": "sell",
-          "design": "",
+          "play": "build",
+          "design": "temple",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9300,11 +9540,11 @@
           "age": 0,
           "turn": 0,
           "play": "stage",
-          "design": "theater",
-          "stage": 1,
+          "design": "forum",
+          "stage": 2,
           "side": "",
           "left": 0,
-          "right": 2,
+          "right": 4,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -9316,12 +9556,12 @@
           "other": 0,
           "age": 0,
           "turn": 0,
-          "play": "sell",
-          "design": "",
+          "play": "build",
+          "design": "laboratory",
           "stage": 0,
           "side": "",
-          "left": 0,
-          "right": 0,
+          "left": 2,
+          "right": 1,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -9334,7 +9574,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "marketplace",
+          "design": "statue",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9343,63 +9583,40 @@
           "delta": 0,
           "source": "",
           "outcome": ""
-        },
-        {
-          "kind": "coins",
-          "seat": 1,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 3,
-          "source": "sale",
-          "outcome": ""
-        },
-        {
-          "kind": "coins",
-          "seat": 3,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 3,
-          "source": "sale",
-          "outcome": ""
         }
       ],
       "canDownload": false
     },
     "waiting": {
-      "point": "age-1-turn-6-discard-build",
+      "point": "age-2-turn-6-discard-build",
       "kind": "discard-build",
       "required": [2],
       "phase": "discard-build",
-      "age": 1,
+      "age": 2,
       "turn": 6,
-      "pass": "left",
-      "pile": 6,
+      "pass": "right",
+      "pile": 12,
       "seats": [
         {
           "seat": 0,
           "board": "olympia",
           "side": "day",
-          "stages": 0,
-          "built": ["clay-pool", "loom-age-1", "press-age-1", "guard-tower", "altar", "apothecary"],
-          "coins": 3,
-          "victories": [0, 0, 0],
-          "defeats": 0,
+          "stages": 1,
+          "built": [
+            "clay-pool",
+            "loom-age-1",
+            "press-age-1",
+            "guard-tower",
+            "altar",
+            "apothecary",
+            "brickyard",
+            "foundry",
+            "courthouse",
+            "dispensary"
+          ],
+          "coins": 0,
+          "victories": [1, 0, 0],
+          "defeats": 1,
           "shields": 1,
           "handSize": 0,
           "hasKept": false,
@@ -9407,7 +9624,52 @@
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "apothecary",
+            "design": "dispensary",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 3,
+            "treasure": 0,
+            "military": 0,
+            "blue": 7,
+            "yellow": 0,
+            "green": 4,
+            "purple": 0,
+            "total": 14
+          },
+          "science": { "counts": [2, 0, 0], "choices": [0, 0, 0], "points": 4 }
+        },
+        {
+          "seat": 1,
+          "board": "ephesos",
+          "side": "night",
+          "stages": 0,
+          "built": [
+            "clay-pit",
+            "forest-cave",
+            "barracks",
+            "guard-tower",
+            "altar",
+            "brickyard",
+            "glassworks-age-2",
+            "press-age-2",
+            "temple",
+            "caravansery"
+          ],
+          "coins": 10,
+          "victories": [2, 0, 0],
+          "defeats": 0,
+          "shields": 2,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 3,
+          "relation": "other",
+          "last": {
+            "kind": "build",
+            "design": "temple",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -9415,40 +9677,13 @@
           },
           "score": {
             "wonder": 0,
-            "treasure": 1,
-            "military": 0,
-            "blue": 3,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 5
-          },
-          "science": { "counts": [1, 0, 0], "choices": [0, 0, 0], "points": 1 }
-        },
-        {
-          "seat": 1,
-          "board": "ephesos",
-          "side": "night",
-          "stages": 0,
-          "built": ["clay-pit", "forest-cave", "barracks", "guard-tower", "altar"],
-          "coins": 6,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 2,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 3,
-          "relation": "other",
-          "last": { "kind": "sell", "design": "", "stage": 0, "left": 0, "right": 0, "printed": 0 },
-          "score": {
-            "wonder": 0,
-            "treasure": 2,
-            "military": 0,
-            "blue": 3,
+            "treasure": 3,
+            "military": 2,
+            "blue": 7,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 5
+            "total": 12
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
@@ -9456,11 +9691,23 @@
           "seat": 2,
           "board": "halikarnassos",
           "side": "night",
-          "stages": 1,
-          "built": ["excavation", "lumber-yard", "ore-vein", "stockade", "well"],
-          "coins": 2,
-          "victories": [0, 0, 0],
-          "defeats": 0,
+          "stages": 2,
+          "built": [
+            "excavation",
+            "lumber-yard",
+            "ore-vein",
+            "stockade",
+            "baths",
+            "well",
+            "foundry",
+            "sawmill",
+            "loom-age-2",
+            "aqueduct",
+            "caravansery"
+          ],
+          "coins": 3,
+          "victories": [1, 0, 0],
+          "defeats": 1,
           "shields": 1,
           "handSize": 0,
           "hasKept": false,
@@ -9469,20 +9716,20 @@
           "last": {
             "kind": "stage",
             "design": "",
-            "stage": 1,
+            "stage": 2,
             "left": 0,
-            "right": 2,
+            "right": 4,
             "printed": 0
           },
           "score": {
-            "wonder": 2,
-            "treasure": 0,
+            "wonder": 3,
+            "treasure": 1,
             "military": 0,
-            "blue": 3,
+            "blue": 11,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 5
+            "total": 15
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
@@ -9491,66 +9738,89 @@
           "board": "babylon",
           "side": "night",
           "stages": 1,
-          "built": ["clay-pool", "lumber-yard", "stone-pit", "east-trading-post"],
-          "coins": 4,
+          "built": [
+            "clay-pool",
+            "lumber-yard",
+            "stone-pit",
+            "east-trading-post",
+            "sawmill",
+            "glassworks-age-2",
+            "archery-range",
+            "stables",
+            "training-ground",
+            "laboratory"
+          ],
+          "coins": 1,
           "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 0,
+          "defeats": 1,
+          "shields": 6,
           "handSize": 0,
           "hasKept": true,
           "relative": 0,
           "relation": "self",
-          "last": { "kind": "sell", "design": "", "stage": 0, "left": 0, "right": 0, "printed": 0 },
+          "last": {
+            "kind": "build",
+            "design": "laboratory",
+            "stage": 0,
+            "left": 2,
+            "right": 1,
+            "printed": 0
+          },
           "score": {
             "wonder": 0,
-            "treasure": 1,
-            "military": 0,
+            "treasure": 0,
+            "military": -1,
             "blue": 0,
             "yellow": 0,
-            "green": 0,
+            "green": 1,
             "purple": 0,
-            "total": 1
+            "total": 0
           },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+          "science": { "counts": [0, 1, 0], "choices": [0, 0, 0], "points": 1 }
         },
         {
           "seat": 4,
           "board": "rhodos",
           "side": "night",
-          "stages": 0,
+          "stages": 1,
           "built": [
             "ore-vein",
             "stone-pit",
             "timber-yard",
             "glassworks-age-1",
             "marketplace",
-            "tavern"
+            "tavern",
+            "quarry",
+            "press-age-2",
+            "stables",
+            "statue",
+            "vineyard"
           ],
-          "coins": 7,
+          "coins": 24,
           "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 0,
+          "defeats": 1,
+          "shields": 3,
           "handSize": 0,
           "hasKept": false,
           "relative": 1,
           "relation": "left",
           "last": {
             "kind": "build",
-            "design": "marketplace",
+            "design": "statue",
             "stage": 0,
             "left": 0,
             "right": 0,
             "printed": 0
           },
           "score": {
-            "wonder": 0,
-            "treasure": 2,
-            "military": 0,
-            "blue": 0,
+            "wonder": 3,
+            "treasure": 8,
+            "military": -1,
+            "blue": 4,
             "yellow": 0,
             "green": 0,
             "purple": 0,
-            "total": 2
+            "total": 14
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         }
@@ -9558,7 +9828,7 @@
       "you": {
         "seat": 3,
         "hand": [],
-        "kept": "scriptorium",
+        "kept": "library",
         "tucked": ["barracks"],
         "choices": [],
         "disabled": [],
@@ -9615,6 +9885,63 @@
               "hand": ["apothecary", "scriptorium"],
               "played": "apothecary",
               "action": "sell"
+            },
+            {
+              "point": "age-1-last-card",
+              "hand": ["scriptorium"],
+              "played": "scriptorium",
+              "action": "sell"
+            },
+            {
+              "point": "age-2-turn-1",
+              "hand": [
+                "sawmill",
+                "loom-age-2",
+                "walls",
+                "courthouse",
+                "vineyard",
+                "laboratory",
+                "library"
+              ],
+              "played": "sawmill",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-2",
+              "hand": [
+                "sawmill",
+                "glassworks-age-2",
+                "press-age-2",
+                "courthouse",
+                "statue",
+                "dispensary"
+              ],
+              "played": "glassworks-age-2",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-3",
+              "hand": ["stables", "caravansery", "caravansery", "dispensary", "school"],
+              "played": "stables",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-4",
+              "hand": ["training-ground", "aqueduct", "temple", "bazar"],
+              "played": "training-ground",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-5",
+              "hand": ["archery-range", "forum", "laboratory"],
+              "played": "archery-range",
+              "action": "build"
+            },
+            {
+              "point": "age-2-turn-6",
+              "hand": ["laboratory", "library"],
+              "played": "laboratory",
+              "action": "build"
             }
           ],
           "pileLooks": [],
@@ -9640,7 +9967,7 @@
               {
                 "choice": false,
                 "producer": 0,
-                "count": 1,
+                "count": 3,
                 "options": [{ "resource": "stone", "price": 2 }]
               },
               {
@@ -9656,6 +9983,12 @@
                 "options": [{ "resource": "glass", "price": 2 }]
               },
               {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "papyrus", "price": 2 }]
+              },
+              {
                 "choice": true,
                 "producer": 0,
                 "count": 1,
@@ -9665,7 +9998,7 @@
                 ]
               }
             ],
-            "outlook": 0
+            "outlook": 3
           },
           {
             "seat": 2,
@@ -9674,7 +10007,7 @@
               {
                 "choice": false,
                 "producer": 0,
-                "count": 1,
+                "count": 3,
                 "options": [
                   {
                     "resource": "wood",
@@ -9686,7 +10019,7 @@
               {
                 "choice": false,
                 "producer": 0,
-                "count": 1,
+                "count": 3,
                 "options": [
                   {
                     "resource": "ore",
@@ -9698,7 +10031,7 @@
               {
                 "choice": false,
                 "producer": 0,
-                "count": 1,
+                "count": 2,
                 "options": [{ "resource": "cloth", "price": 2 }]
               },
               {
@@ -9719,7 +10052,7 @@
                 ]
               }
             ],
-            "outlook": -1
+            "outlook": 3
           }
         ]
       },
@@ -9782,7 +10115,7 @@
           "age": 0,
           "turn": 0,
           "play": "",
-          "design": "scriptorium",
+          "design": "library",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9816,7 +10149,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "apothecary",
+          "design": "dispensary",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9832,8 +10165,8 @@
           "other": 0,
           "age": 0,
           "turn": 0,
-          "play": "sell",
-          "design": "",
+          "play": "build",
+          "design": "temple",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9851,10 +10184,10 @@
           "turn": 0,
           "play": "stage",
           "design": "",
-          "stage": 1,
+          "stage": 2,
           "side": "",
           "left": 0,
-          "right": 2,
+          "right": 4,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -9866,12 +10199,12 @@
           "other": 0,
           "age": 0,
           "turn": 0,
-          "play": "sell",
-          "design": "apothecary",
+          "play": "build",
+          "design": "laboratory",
           "stage": 0,
           "side": "",
-          "left": 0,
-          "right": 0,
+          "left": 2,
+          "right": 1,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -9884,7 +10217,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "marketplace",
+          "design": "statue",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -9892,40 +10225,6 @@
           "printed": 0,
           "delta": 0,
           "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "coins",
-          "seat": 1,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 3,
-          "source": "sale",
-          "outcome": ""
-        },
-        {
-          "kind": "coins",
-          "seat": 3,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 3,
-          "source": "sale",
           "outcome": ""
         }
       ],
@@ -17754,127 +18053,32 @@
       "age": 1,
       "turn": 6,
       "pass": "left",
-      "pile": 7,
+      "pile": 9,
       "seats": [
         {
           "seat": 0,
-          "board": "olympia",
-          "side": "day",
+          "board": "rhodos",
+          "side": "night",
           "stages": 0,
-          "built": ["clay-pit", "loom-age-1", "barracks", "stockade", "tavern"],
-          "coins": 8,
+          "built": [
+            "ore-vein",
+            "stone-pit",
+            "glassworks-age-1",
+            "loom-age-1",
+            "altar",
+            "east-trading-post"
+          ],
+          "coins": 5,
           "victories": [0, 0, 0],
           "defeats": 0,
-          "shields": 2,
+          "shields": 0,
           "handSize": 0,
           "hasKept": false,
           "relative": 5,
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "tavern",
-            "stage": 0,
-            "left": 0,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 0,
-            "treasure": 2,
-            "military": 0,
-            "blue": 0,
-            "yellow": 0,
-            "green": 0,
-            "purple": 0,
-            "total": 2
-          },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
-        },
-        {
-          "seat": 1,
-          "board": "ephesos",
-          "side": "night",
-          "stages": 0,
-          "built": ["forest-cave", "glassworks-age-1", "barracks", "altar", "well", "scriptorium"],
-          "coins": 2,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 1,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 6,
-          "relation": "right",
-          "last": {
-            "kind": "build",
-            "design": "scriptorium",
-            "stage": 0,
-            "left": 0,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 0,
-            "treasure": 0,
-            "military": 0,
-            "blue": 6,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 7
-          },
-          "science": { "counts": [0, 0, 1], "choices": [0, 0, 0], "points": 1 }
-        },
-        {
-          "seat": 2,
-          "board": "halikarnassos",
-          "side": "night",
-          "stages": 1,
-          "built": ["excavation", "lumber-yard", "loom-age-1", "stockade", "altar"],
-          "coins": 2,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 1,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 0,
-          "relation": "self",
-          "last": {
-            "kind": "stage",
-            "design": "",
-            "stage": 1,
-            "left": 2,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 2,
-            "treasure": 0,
-            "military": 0,
-            "blue": 3,
-            "yellow": 0,
-            "green": 0,
-            "purple": 0,
-            "total": 5
-          },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
-        },
-        {
-          "seat": 3,
-          "board": "babylon",
-          "side": "night",
-          "stages": 1,
-          "built": ["clay-pool", "mine", "ore-vein", "baths", "marketplace"],
-          "coins": 4,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 0,
-          "handSize": 0,
-          "hasKept": true,
-          "relative": 1,
-          "relation": "left",
-          "last": {
-            "kind": "build",
-            "design": "baths",
+            "design": "east-trading-post",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -17893,16 +18097,16 @@
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
         {
-          "seat": 4,
-          "board": "rhodos",
+          "seat": 1,
+          "board": "olympia",
           "side": "night",
           "stages": 0,
           "built": [
             "lumber-yard",
-            "stone-pit",
+            "timber-yard",
             "press-age-1",
-            "guard-tower",
-            "theater",
+            "barracks",
+            "altar",
             "marketplace"
           ],
           "coins": 1,
@@ -17911,8 +18115,8 @@
           "shields": 1,
           "handSize": 0,
           "hasKept": false,
-          "relative": 2,
-          "relation": "other",
+          "relative": 6,
+          "relation": "right",
           "last": {
             "kind": "build",
             "design": "marketplace",
@@ -17934,22 +18138,90 @@
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
         {
-          "seat": 5,
-          "board": "alexandria",
+          "seat": 2,
+          "board": "halikarnassos",
+          "side": "night",
+          "stages": 1,
+          "built": ["stone-pit", "tree-farm", "guard-tower", "east-trading-post", "tavern"],
+          "coins": 8,
+          "victories": [0, 0, 0],
+          "defeats": 0,
+          "shields": 1,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 0,
+          "relation": "self",
+          "last": {
+            "kind": "stage",
+            "design": "",
+            "stage": 1,
+            "left": 0,
+            "right": 1,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 2,
+            "treasure": 2,
+            "military": 0,
+            "blue": 0,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 4
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 3,
+          "board": "ephesos",
           "side": "night",
           "stages": 0,
-          "built": ["clay-pool", "ore-vein", "stone-pit", "tree-farm", "baths", "tavern"],
-          "coins": 9,
+          "built": ["clay-pit", "glassworks-age-1", "press-age-1", "baths", "marketplace"],
+          "coins": 3,
           "victories": [0, 0, 0],
           "defeats": 0,
           "shields": 0,
           "handSize": 0,
           "hasKept": false,
-          "relative": 3,
+          "relative": 1,
+          "relation": "left",
+          "last": {
+            "kind": "build",
+            "design": "marketplace",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 0,
+            "treasure": 1,
+            "military": 0,
+            "blue": 3,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 4
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 4,
+          "board": "babylon",
+          "side": "night",
+          "stages": 0,
+          "built": ["clay-pool", "forest-cave", "loom-age-1", "stockade", "tavern", "apothecary"],
+          "coins": 9,
+          "victories": [0, 0, 0],
+          "defeats": 0,
+          "shields": 1,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 2,
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "baths",
+            "design": "apothecary",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -17959,38 +18231,38 @@
             "wonder": 0,
             "treasure": 3,
             "military": 0,
-            "blue": 3,
+            "blue": 0,
             "yellow": 0,
-            "green": 0,
+            "green": 1,
             "purple": 0,
-            "total": 6
+            "total": 4
           },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+          "science": { "counts": [1, 0, 0], "choices": [0, 0, 0], "points": 1 }
         },
         {
-          "seat": 6,
+          "seat": 5,
           "board": "gizah",
           "side": "night",
           "stages": 0,
           "built": [
-            "timber-yard",
-            "glassworks-age-1",
+            "clay-pool",
+            "lumber-yard",
+            "barracks",
             "guard-tower",
-            "well",
-            "east-trading-post",
+            "theater",
             "west-trading-post"
           ],
-          "coins": 2,
+          "coins": 1,
           "victories": [0, 0, 0],
           "defeats": 0,
-          "shields": 1,
+          "shields": 2,
           "handSize": 0,
           "hasKept": false,
-          "relative": 4,
+          "relative": 3,
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "east-trading-post",
+            "design": "west-trading-post",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -18007,18 +18279,52 @@
             "total": 3
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 6,
+          "board": "alexandria",
+          "side": "night",
+          "stages": 0,
+          "built": ["excavation", "mine", "ore-vein", "theater", "well"],
+          "coins": 4,
+          "victories": [0, 0, 0],
+          "defeats": 0,
+          "shields": 0,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 4,
+          "relation": "other",
+          "last": {
+            "kind": "build",
+            "design": "theater",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 0,
+            "treasure": 1,
+            "military": 0,
+            "blue": 6,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 7
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         }
       ],
       "you": {
         "seat": 2,
         "hand": [],
         "kept": "",
-        "tucked": ["east-trading-post"],
+        "tucked": ["baths"],
         "choices": [
           {
-            "key": "build-discarded:theater",
+            "key": "build-discarded:stockade",
             "kind": "build-discarded",
-            "design": "theater",
+            "design": "stockade",
             "side": "",
             "stage": 0,
             "left": 0,
@@ -18030,9 +18336,9 @@
             "witness": []
           },
           {
-            "key": "build-discarded:tavern",
+            "key": "build-discarded:well",
             "kind": "build-discarded",
-            "design": "tavern",
+            "design": "well",
             "side": "",
             "stage": 0,
             "left": 0,
@@ -18102,11 +18408,12 @@
         ],
         "disabled": [],
         "offer": [
-          { "design": "theater", "count": 1, "legal": true },
-          { "design": "tavern", "count": 1, "legal": true },
+          { "design": "stockade", "count": 1, "legal": true },
+          { "design": "well", "count": 1, "legal": true },
+          { "design": "tavern", "count": 1, "legal": false },
           { "design": "west-trading-post", "count": 1, "legal": true },
           { "design": "apothecary", "count": 1, "legal": true },
-          { "design": "scriptorium", "count": 1, "legal": true },
+          { "design": "scriptorium", "count": 2, "legal": true },
           { "design": "workshop", "count": 2, "legal": true }
         ],
         "notebook": {
@@ -18114,52 +18421,52 @@
             {
               "point": "age-1-turn-1",
               "hand": [
-                "excavation",
-                "ore-vein",
-                "stone-pit",
                 "tree-farm",
+                "press-age-1",
+                "stockade",
+                "theater",
                 "well",
-                "tavern",
-                "workshop"
+                "east-trading-post",
+                "scriptorium"
               ],
-              "played": "excavation",
+              "played": "tree-farm",
               "action": "build"
             },
             {
               "point": "age-1-turn-2",
               "hand": [
-                "lumber-yard",
-                "mine",
                 "stone-pit",
-                "press-age-1",
-                "east-trading-post",
-                "apothecary"
+                "glassworks-age-1",
+                "loom-age-1",
+                "guard-tower",
+                "theater",
+                "well"
               ],
-              "played": "lumber-yard",
+              "played": "stone-pit",
               "action": "build"
             },
             {
               "point": "age-1-turn-3",
-              "hand": ["loom-age-1", "press-age-1", "guard-tower", "baths", "theater"],
-              "played": "loom-age-1",
+              "hand": ["guard-tower", "baths", "tavern", "west-trading-post", "workshop"],
+              "played": "guard-tower",
               "action": "build"
             },
             {
               "point": "age-1-turn-4",
-              "hand": ["altar", "marketplace", "marketplace", "tavern"],
-              "played": "altar",
+              "hand": ["tavern", "apothecary", "apothecary", "workshop"],
+              "played": "tavern",
               "action": "build"
             },
             {
               "point": "age-1-turn-5",
-              "hand": ["stockade", "baths", "apothecary"],
-              "played": "stockade",
+              "hand": ["east-trading-post", "marketplace", "west-trading-post"],
+              "played": "east-trading-post",
               "action": "build"
             },
             {
               "point": "age-1-turn-6",
-              "hand": ["east-trading-post", "west-trading-post"],
-              "played": "east-trading-post",
+              "hand": ["baths", "scriptorium"],
+              "played": "baths",
               "action": "stage"
             }
           ],
@@ -18167,11 +18474,12 @@
             {
               "point": "age-1-turn-6-discard-build",
               "cards": [
-                { "design": "theater", "count": 1 },
+                { "design": "stockade", "count": 1 },
+                { "design": "well", "count": 1 },
                 { "design": "tavern", "count": 1 },
                 { "design": "west-trading-post", "count": 1 },
                 { "design": "apothecary", "count": 1 },
-                { "design": "scriptorium", "count": 1 },
+                { "design": "scriptorium", "count": 2 },
                 { "design": "workshop", "count": 2 }
               ]
             }
@@ -18199,26 +18507,20 @@
                 "choice": false,
                 "producer": 0,
                 "count": 1,
-                "options": [{ "resource": "wood", "price": 2 }]
+                "options": [{ "resource": "glass", "price": 2 }]
               },
               {
                 "choice": false,
                 "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "clay", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "ore", "price": 2 }]
+                "count": 2,
+                "options": [{ "resource": "papyrus", "price": 2 }]
               },
               {
                 "choice": true,
                 "producer": 0,
                 "count": 1,
                 "options": [
-                  { "resource": "stone", "price": 2 },
+                  { "resource": "clay", "price": 2 },
                   { "resource": "ore", "price": 2 }
                 ]
               }
@@ -18233,7 +18535,25 @@
                 "choice": false,
                 "producer": 0,
                 "count": 1,
-                "options": [{ "resource": "glass", "price": 2 }]
+                "options": [
+                  {
+                    "resource": "wood",
+                    "price": 1,
+                    "discount": { "design": "east-trading-post", "stage": 0 }
+                  }
+                ]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [
+                  {
+                    "resource": "clay",
+                    "price": 1,
+                    "discount": { "design": "east-trading-post", "stage": 0 }
+                  }
+                ]
               },
               {
                 "choice": false,
@@ -18246,8 +18566,16 @@
                 "producer": 0,
                 "count": 1,
                 "options": [
-                  { "resource": "wood", "price": 2 },
-                  { "resource": "ore", "price": 2 }
+                  {
+                    "resource": "wood",
+                    "price": 1,
+                    "discount": { "design": "east-trading-post", "stage": 0 }
+                  },
+                  {
+                    "resource": "stone",
+                    "price": 1,
+                    "discount": { "design": "east-trading-post", "stage": 0 }
+                  }
                 ]
               }
             ],
@@ -18297,7 +18625,7 @@
           "age": 0,
           "turn": 0,
           "play": "",
-          "design": "west-trading-post",
+          "design": "scriptorium",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -18308,7 +18636,7 @@
           "outcome": ""
         },
         {
-          "kind": "card-kept",
+          "kind": "leftover-discarded",
           "seat": 3,
           "other": 0,
           "age": 0,
@@ -18382,7 +18710,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "tavern",
+          "design": "east-trading-post",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -18395,57 +18723,6 @@
         {
           "kind": "play",
           "seat": 1,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "build",
-          "design": "scriptorium",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 2,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "stage",
-          "design": "east-trading-post",
-          "stage": 1,
-          "side": "",
-          "left": 2,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 3,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "build",
-          "design": "baths",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 4,
           "other": 0,
           "age": 0,
           "turn": 0,
@@ -18462,12 +18739,63 @@
         },
         {
           "kind": "play",
+          "seat": 2,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "stage",
+          "design": "baths",
+          "stage": 1,
+          "side": "",
+          "left": 0,
+          "right": 1,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
+          "seat": 3,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "build",
+          "design": "marketplace",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
+          "seat": 4,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "build",
+          "design": "apothecary",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
           "seat": 5,
           "other": 0,
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "baths",
+          "design": "west-trading-post",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -18484,7 +18812,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "east-trading-post",
+          "design": "theater",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -18492,23 +18820,6 @@
           "printed": 0,
           "delta": 0,
           "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "coins",
-          "seat": 0,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "tavern",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 5,
-          "source": "design",
           "outcome": ""
         }
       ],
@@ -18522,127 +18833,32 @@
       "age": 1,
       "turn": 6,
       "pass": "left",
-      "pile": 7,
+      "pile": 9,
       "seats": [
         {
           "seat": 0,
-          "board": "olympia",
-          "side": "day",
+          "board": "rhodos",
+          "side": "night",
           "stages": 0,
-          "built": ["clay-pit", "loom-age-1", "barracks", "stockade", "tavern"],
-          "coins": 8,
+          "built": [
+            "ore-vein",
+            "stone-pit",
+            "glassworks-age-1",
+            "loom-age-1",
+            "altar",
+            "east-trading-post"
+          ],
+          "coins": 5,
           "victories": [0, 0, 0],
           "defeats": 0,
-          "shields": 2,
+          "shields": 0,
           "handSize": 0,
           "hasKept": false,
           "relative": 4,
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "tavern",
-            "stage": 0,
-            "left": 0,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 0,
-            "treasure": 2,
-            "military": 0,
-            "blue": 0,
-            "yellow": 0,
-            "green": 0,
-            "purple": 0,
-            "total": 2
-          },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
-        },
-        {
-          "seat": 1,
-          "board": "ephesos",
-          "side": "night",
-          "stages": 0,
-          "built": ["forest-cave", "glassworks-age-1", "barracks", "altar", "well", "scriptorium"],
-          "coins": 2,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 1,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 5,
-          "relation": "other",
-          "last": {
-            "kind": "build",
-            "design": "scriptorium",
-            "stage": 0,
-            "left": 0,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 0,
-            "treasure": 0,
-            "military": 0,
-            "blue": 6,
-            "yellow": 0,
-            "green": 1,
-            "purple": 0,
-            "total": 7
-          },
-          "science": { "counts": [0, 0, 1], "choices": [0, 0, 0], "points": 1 }
-        },
-        {
-          "seat": 2,
-          "board": "halikarnassos",
-          "side": "night",
-          "stages": 1,
-          "built": ["excavation", "lumber-yard", "loom-age-1", "stockade", "altar"],
-          "coins": 2,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 1,
-          "handSize": 0,
-          "hasKept": false,
-          "relative": 6,
-          "relation": "right",
-          "last": {
-            "kind": "stage",
-            "design": "",
-            "stage": 1,
-            "left": 2,
-            "right": 0,
-            "printed": 0
-          },
-          "score": {
-            "wonder": 2,
-            "treasure": 0,
-            "military": 0,
-            "blue": 3,
-            "yellow": 0,
-            "green": 0,
-            "purple": 0,
-            "total": 5
-          },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
-        },
-        {
-          "seat": 3,
-          "board": "babylon",
-          "side": "night",
-          "stages": 1,
-          "built": ["clay-pool", "mine", "ore-vein", "baths", "marketplace"],
-          "coins": 4,
-          "victories": [0, 0, 0],
-          "defeats": 0,
-          "shields": 0,
-          "handSize": 0,
-          "hasKept": true,
-          "relative": 0,
-          "relation": "self",
-          "last": {
-            "kind": "build",
-            "design": "baths",
+            "design": "east-trading-post",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -18661,16 +18877,16 @@
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
         {
-          "seat": 4,
-          "board": "rhodos",
+          "seat": 1,
+          "board": "olympia",
           "side": "night",
           "stages": 0,
           "built": [
             "lumber-yard",
-            "stone-pit",
+            "timber-yard",
             "press-age-1",
-            "guard-tower",
-            "theater",
+            "barracks",
+            "altar",
             "marketplace"
           ],
           "coins": 1,
@@ -18679,8 +18895,8 @@
           "shields": 1,
           "handSize": 0,
           "hasKept": false,
-          "relative": 1,
-          "relation": "left",
+          "relative": 5,
+          "relation": "other",
           "last": {
             "kind": "build",
             "design": "marketplace",
@@ -18702,22 +18918,90 @@
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         },
         {
-          "seat": 5,
-          "board": "alexandria",
+          "seat": 2,
+          "board": "halikarnassos",
+          "side": "night",
+          "stages": 1,
+          "built": ["stone-pit", "tree-farm", "guard-tower", "east-trading-post", "tavern"],
+          "coins": 8,
+          "victories": [0, 0, 0],
+          "defeats": 0,
+          "shields": 1,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 6,
+          "relation": "right",
+          "last": {
+            "kind": "stage",
+            "design": "",
+            "stage": 1,
+            "left": 0,
+            "right": 1,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 2,
+            "treasure": 2,
+            "military": 0,
+            "blue": 0,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 4
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 3,
+          "board": "ephesos",
           "side": "night",
           "stages": 0,
-          "built": ["clay-pool", "ore-vein", "stone-pit", "tree-farm", "baths", "tavern"],
-          "coins": 9,
+          "built": ["clay-pit", "glassworks-age-1", "press-age-1", "baths", "marketplace"],
+          "coins": 3,
           "victories": [0, 0, 0],
           "defeats": 0,
           "shields": 0,
           "handSize": 0,
           "hasKept": false,
-          "relative": 2,
-          "relation": "other",
+          "relative": 0,
+          "relation": "self",
           "last": {
             "kind": "build",
-            "design": "baths",
+            "design": "marketplace",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 0,
+            "treasure": 1,
+            "military": 0,
+            "blue": 3,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 4
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 4,
+          "board": "babylon",
+          "side": "night",
+          "stages": 0,
+          "built": ["clay-pool", "forest-cave", "loom-age-1", "stockade", "tavern", "apothecary"],
+          "coins": 9,
+          "victories": [0, 0, 0],
+          "defeats": 0,
+          "shields": 1,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 1,
+          "relation": "left",
+          "last": {
+            "kind": "build",
+            "design": "apothecary",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -18727,38 +19011,38 @@
             "wonder": 0,
             "treasure": 3,
             "military": 0,
-            "blue": 3,
+            "blue": 0,
             "yellow": 0,
-            "green": 0,
+            "green": 1,
             "purple": 0,
-            "total": 6
+            "total": 4
           },
-          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+          "science": { "counts": [1, 0, 0], "choices": [0, 0, 0], "points": 1 }
         },
         {
-          "seat": 6,
+          "seat": 5,
           "board": "gizah",
           "side": "night",
           "stages": 0,
           "built": [
-            "timber-yard",
-            "glassworks-age-1",
+            "clay-pool",
+            "lumber-yard",
+            "barracks",
             "guard-tower",
-            "well",
-            "east-trading-post",
+            "theater",
             "west-trading-post"
           ],
-          "coins": 2,
+          "coins": 1,
           "victories": [0, 0, 0],
           "defeats": 0,
-          "shields": 1,
+          "shields": 2,
           "handSize": 0,
           "hasKept": false,
-          "relative": 3,
+          "relative": 2,
           "relation": "other",
           "last": {
             "kind": "build",
-            "design": "east-trading-post",
+            "design": "west-trading-post",
             "stage": 0,
             "left": 0,
             "right": 0,
@@ -18775,13 +19059,47 @@
             "total": 3
           },
           "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
+        },
+        {
+          "seat": 6,
+          "board": "alexandria",
+          "side": "night",
+          "stages": 0,
+          "built": ["excavation", "mine", "ore-vein", "theater", "well"],
+          "coins": 4,
+          "victories": [0, 0, 0],
+          "defeats": 0,
+          "shields": 0,
+          "handSize": 0,
+          "hasKept": false,
+          "relative": 3,
+          "relation": "other",
+          "last": {
+            "kind": "build",
+            "design": "theater",
+            "stage": 0,
+            "left": 0,
+            "right": 0,
+            "printed": 0
+          },
+          "score": {
+            "wonder": 0,
+            "treasure": 1,
+            "military": 0,
+            "blue": 6,
+            "yellow": 0,
+            "green": 0,
+            "purple": 0,
+            "total": 7
+          },
+          "science": { "counts": [0, 0, 0], "choices": [0, 0, 0], "points": 0 }
         }
       ],
       "you": {
         "seat": 3,
         "hand": [],
-        "kept": "apothecary",
-        "tucked": ["press-age-1"],
+        "kept": "",
+        "tucked": [],
         "choices": [],
         "disabled": [],
         "offer": [],
@@ -18790,45 +19108,52 @@
             {
               "point": "age-1-turn-1",
               "hand": [
+                "clay-pit",
                 "clay-pool",
-                "theater",
-                "tavern",
-                "west-trading-post",
-                "scriptorium",
-                "scriptorium",
-                "workshop"
+                "clay-pool",
+                "ore-vein",
+                "stone-pit",
+                "marketplace",
+                "tavern"
               ],
-              "played": "clay-pool",
+              "played": "clay-pit",
               "action": "build"
             },
             {
               "point": "age-1-turn-2",
-              "hand": ["ore-vein", "stone-pit", "tree-farm", "well", "tavern", "workshop"],
-              "played": "ore-vein",
+              "hand": [
+                "press-age-1",
+                "stockade",
+                "theater",
+                "well",
+                "east-trading-post",
+                "scriptorium"
+              ],
+              "played": "press-age-1",
               "action": "build"
             },
             {
               "point": "age-1-turn-3",
-              "hand": ["mine", "stone-pit", "press-age-1", "east-trading-post", "apothecary"],
-              "played": "mine",
+              "hand": ["glassworks-age-1", "loom-age-1", "guard-tower", "theater", "well"],
+              "played": "glassworks-age-1",
               "action": "build"
             },
             {
               "point": "age-1-turn-4",
-              "hand": ["press-age-1", "guard-tower", "baths", "theater"],
-              "played": "press-age-1",
-              "action": "stage"
-            },
-            {
-              "point": "age-1-turn-5",
-              "hand": ["marketplace", "marketplace", "tavern"],
-              "played": "marketplace",
+              "hand": ["baths", "tavern", "west-trading-post", "workshop"],
+              "played": "baths",
               "action": "build"
             },
             {
+              "point": "age-1-turn-5",
+              "hand": ["apothecary", "apothecary", "workshop"],
+              "played": "apothecary",
+              "action": "sell"
+            },
+            {
               "point": "age-1-turn-6",
-              "hand": ["baths", "apothecary"],
-              "played": "baths",
+              "hand": ["marketplace", "west-trading-post"],
+              "played": "marketplace",
               "action": "build"
             }
           ],
@@ -18862,43 +19187,12 @@
                 "choice": false,
                 "producer": 0,
                 "count": 1,
-                "options": [{ "resource": "stone", "price": 2 }]
+                "options": [{ "resource": "clay", "price": 2 }]
               },
               {
                 "choice": false,
                 "producer": 0,
                 "count": 1,
-                "options": [{ "resource": "ore", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [
-                  {
-                    "resource": "papyrus",
-                    "price": 1,
-                    "discount": { "design": "marketplace", "stage": 0 }
-                  }
-                ]
-              }
-            ],
-            "outlook": -1
-          },
-          {
-            "seat": 2,
-            "direction": "right",
-            "units": [
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 1,
-                "options": [{ "resource": "wood", "price": 2 }]
-              },
-              {
-                "choice": false,
-                "producer": 0,
-                "count": 2,
                 "options": [
                   {
                     "resource": "cloth",
@@ -18912,8 +19206,42 @@
                 "producer": 0,
                 "count": 1,
                 "options": [
-                  { "resource": "clay", "price": 2 },
-                  { "resource": "stone", "price": 2 }
+                  { "resource": "wood", "price": 2 },
+                  { "resource": "ore", "price": 2 }
+                ]
+              }
+            ],
+            "outlook": -1
+          },
+          {
+            "seat": 2,
+            "direction": "right",
+            "units": [
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [{ "resource": "stone", "price": 2 }]
+              },
+              {
+                "choice": false,
+                "producer": 0,
+                "count": 1,
+                "options": [
+                  {
+                    "resource": "cloth",
+                    "price": 1,
+                    "discount": { "design": "marketplace", "stage": 0 }
+                  }
+                ]
+              },
+              {
+                "choice": true,
+                "producer": 0,
+                "count": 1,
+                "options": [
+                  { "resource": "wood", "price": 2 },
+                  { "resource": "clay", "price": 2 }
                 ]
               }
             ],
@@ -18974,13 +19302,13 @@
           "outcome": ""
         },
         {
-          "kind": "card-kept",
+          "kind": "leftover-discarded",
           "seat": 3,
           "other": 0,
           "age": 0,
           "turn": 0,
           "play": "",
-          "design": "apothecary",
+          "design": "west-trading-post",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -19048,7 +19376,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "tavern",
+          "design": "east-trading-post",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -19065,7 +19393,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "scriptorium",
+          "design": "marketplace",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -19085,8 +19413,8 @@
           "design": "",
           "stage": 1,
           "side": "",
-          "left": 2,
-          "right": 0,
+          "left": 0,
+          "right": 1,
           "printed": 0,
           "delta": 0,
           "source": "",
@@ -19095,23 +19423,6 @@
         {
           "kind": "play",
           "seat": 3,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "build",
-          "design": "baths",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 0,
-          "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "play",
-          "seat": 4,
           "other": 0,
           "age": 0,
           "turn": 0,
@@ -19128,12 +19439,29 @@
         },
         {
           "kind": "play",
+          "seat": 4,
+          "other": 0,
+          "age": 0,
+          "turn": 0,
+          "play": "build",
+          "design": "apothecary",
+          "stage": 0,
+          "side": "",
+          "left": 0,
+          "right": 0,
+          "printed": 0,
+          "delta": 0,
+          "source": "",
+          "outcome": ""
+        },
+        {
+          "kind": "play",
           "seat": 5,
           "other": 0,
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "baths",
+          "design": "west-trading-post",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -19150,7 +19478,7 @@
           "age": 0,
           "turn": 0,
           "play": "build",
-          "design": "east-trading-post",
+          "design": "theater",
           "stage": 0,
           "side": "",
           "left": 0,
@@ -19158,23 +19486,6 @@
           "printed": 0,
           "delta": 0,
           "source": "",
-          "outcome": ""
-        },
-        {
-          "kind": "coins",
-          "seat": 0,
-          "other": 0,
-          "age": 0,
-          "turn": 0,
-          "play": "",
-          "design": "tavern",
-          "stage": 0,
-          "side": "",
-          "left": 0,
-          "right": 0,
-          "printed": 0,
-          "delta": 5,
-          "source": "design",
           "outcome": ""
         }
       ],

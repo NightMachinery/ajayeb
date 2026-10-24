@@ -38,3 +38,22 @@ resulting choosing and adjacent waiting views, without seed or setup data.
 `make shots PW_ARGS=--grep=special-decision` covers both roles at all four target
 viewports, three seat counts, English and Persian, and both themes. It checks
 44 px controls, tooltip coverage, overflow, browser hygiene and Animation off.
+
+## Browser privacy proof
+
+`make e2e GREP=@haftgane-special` creates two seven-seat tables through Home
+and their shared lobbies, with seven independent players and a spectator. The
+host's seating edit also carries the existing choose-side wire option until the
+parallel lobby control lands. The test plays actual offered keys through the
+side, discard and ordinary card-sheet controls. Its test policy funds
+Halikarnassos before the sixth turn, so a discard point and a locked kept card
+can overlap. Captures retain deciding and confirmed waiting views.
+
+The spec records every raw table frame and the server's canonical room record
+under `.cache/e2e/hg-special-live/`. Run `TestSpecialBrowserFrames` with
+`AJAYEB_SPECIAL_BROWSER_FRAMES` set to the two `frames-*.json` paths, separated
+by the operating system's path-list separator. It rebuilds independent truth
+from the stored setup and batches, runs the whole-frame leak oracle on every
+viewer stream, and requires that a planted pile in a waiting viewer's frame is
+rejected. The browser also checks pending-pick ownership for every frame.
+These recordings are private, ignored test output; they are never fixtures.
