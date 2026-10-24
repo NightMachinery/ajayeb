@@ -92,16 +92,26 @@ func humanIn(hs []wire.PlatformHuman, user string) (wire.PlatformHuman, bool) {
 }
 
 // seatModel is the test's own model of who sits where and who is an
-// admin, from the frame whose room log first has Log entries on.
+// admin, from the frame whose room log first has Log entries on. Former
+// holds the seat each user left last, kept when the user sits again.
 type seatModel struct {
-	Log   int
-	Seat  map[string]int
-	Admin map[string]bool
+	Log    int
+	Seat   map[string]int
+	Admin  map[string]bool
+	Former map[string]int
 }
 
 func (m seatModel) next(log int, change func(*seatModel)) seatModel {
-	n := seatModel{Log: log, Seat: maps.Clone(m.Seat), Admin: maps.Clone(m.Admin)}
+	n := seatModel{Log: log, Seat: maps.Clone(m.Seat), Admin: maps.Clone(m.Admin), Former: maps.Clone(m.Former)}
 	change(&n)
+	if n.Former == nil {
+		n.Former = map[string]int{}
+	}
+	for user, seat := range m.Seat {
+		if now, ok := n.Seat[user]; !ok || now != seat {
+			n.Former[user] = seat
+		}
+	}
 	return n
 }
 
@@ -117,6 +127,9 @@ func viewerAt(models []seatModel, log int, user, clientID string) tableroom.Fram
 	v := tableroom.FrameViewer{Seat: leakcheck.Spectator, Client: clientID, Admin: m.Admin[user]}
 	if s, ok := m.Seat[user]; ok {
 		v.Seat = s
+	}
+	if s, ok := m.Former[user]; ok {
+		v.Former = &s
 	}
 	return v
 }

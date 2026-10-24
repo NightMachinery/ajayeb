@@ -147,6 +147,7 @@ type TablePending struct {
 // visible to this viewer (private edits advance only their owner's frame).
 // Batch counts complete canonical batches; undo reduces it. StartingHumanCount
 // and AllowUndo are fixed at Start; UndoOff can only become true thereafter.
+// BotLevels are the levels the table froze at Start, the ones a seat accepts.
 type TableState struct {
 	T                  string               `json:"t" tstype:"'table-state'"`
 	Game               string               `json:"game" tstype:"'haftgane'"`
@@ -161,6 +162,7 @@ type TableState struct {
 	AllowUndo          bool                 `json:"allowUndo"`
 	UndoOff            bool                 `json:"undoOff"`
 	FinalReveal        bool                 `json:"finalReveal"`
+	BotLevels          []string             `json:"botLevels"`
 	Point              *TablePoint          `json:"point,omitempty"`
 	Pending            *TablePending        `json:"pending,omitempty"`
 	Ack                *PlatformAck         `json:"ack,omitempty"`

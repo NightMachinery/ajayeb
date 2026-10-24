@@ -88,7 +88,17 @@ func (b *broadcast) frame(c *room.Client, ack *wire.PlatformAck, withHistory boo
 	if a.isAdmin(user) {
 		st.You.PreviousSeats = b.hints()
 	}
+	if role < 0 && r.Status == store.StatusPlaying {
+		st.You.FormerSeat = formerSeat(r, user)
+	}
+	if r.Roles.Real(user) {
+		room := r.Roles.HasRoom()
+		st.You.CanPromote = &room
+	}
 	st.StartingHumanCount, st.AllowUndo, st.UndoOff, st.FinalReveal = r.StartingHumans, r.AllowUndo, r.UndoOff, !r.Setup.HideAtEnd
+	for _, p := range r.BotPresets {
+		st.BotLevels = append(st.BotLevels, p.Level)
+	}
 	if p := a.st.game.Point(); !pointOver(p) && r.Point != nil {
 		tp := &wire.TablePoint{Ref: *r.Point, Kind: pointKind(p), Required: []int{}, Confirmed: []int{}}
 		for _, s := range p.Required.Seats() {
@@ -129,6 +139,17 @@ func (b *broadcast) hints() *[]wire.PreviousSeat {
 	}
 	h := slices.Clone(*b.previous)
 	return &h
+}
+
+// formerSeat is the seat user held last, for that user's own frame only, so
+// a former player watching the game sees which seat was theirs on any tab.
+func formerSeat(r *Record, user string) *int {
+	i := slices.IndexFunc(r.Previous, func(p PreviousRecord) bool { return p.UserID == user })
+	if i < 0 {
+		return nil
+	}
+	seat := r.Previous[i].Seat
+	return &seat
 }
 
 // meta is the public room metadata: seats with their controllers, and the

@@ -149,12 +149,17 @@ export interface PreviousSeat {
 }
 /**
  * PlatformYou holds connection-specific metadata, including admin-only hints.
- * No previous-seat hint is sent to a non-admin, including former controllers.
+ * No previous-seat hint is sent to a non-admin. A former player gets only its
+ * own FormerSeat, the seat it held last, while it watches a playing table.
+ * CanPromote goes to a real admin of a table: whether the admin cap leaves
+ * room for another admin.
  */
 export interface PlatformYou {
   userId: string;
   seat?: number /* int */;
   previousSeats?: PreviousSeat[];
+  formerSeat?: number /* int */;
+  canPromote?: boolean;
 }
 /**
  * PlatformLogEntry describes public control changes, never submitted action
@@ -359,6 +364,7 @@ export interface TablePending {
  * visible to this viewer (private edits advance only their owner's frame).
  * Batch counts complete canonical batches; undo reduces it. StartingHumanCount
  * and AllowUndo are fixed at Start; UndoOff can only become true thereafter.
+ * BotLevels are the levels the table froze at Start, the ones a seat accepts.
  */
 export interface TableState {
   t: 'table-state';
@@ -374,6 +380,7 @@ export interface TableState {
   allowUndo: boolean;
   undoOff: boolean;
   finalReveal: boolean;
+  botLevels: string[];
   point?: TablePoint;
   pending?: TablePending;
   ack?: PlatformAck;

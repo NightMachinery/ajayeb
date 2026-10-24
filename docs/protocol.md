@@ -1153,12 +1153,13 @@ made with `create` keeps the rematch described there.
 
 `table-state` carries `t`, `game: "haftgane"`, `code`, `revision`, `batch`,
 `status` (`playing` or `finished`), `seats`, `humans`, `you`,
-`startingHumanCount`, `allowUndo`, `undoOff`, `finalReveal`, `events`,
-`roomLog` and `view`. Optional fields are `point`, `pending`, `ack` and
-`history`. `revision` orders changes visible to this viewer; private edits
-advance only their owner's frame. `batch` counts completed batches and goes
-back on undo. Starting human count and allowUndo freeze at Start; undoOff
-can only turn on afterward. `point` is `{ref: {id, revision}, kind, required,
+`startingHumanCount`, `allowUndo`, `undoOff`, `finalReveal`, `botLevels`,
+`events`, `roomLog` and `view`. Optional fields are `point`, `pending`, `ack`
+and `history`. `revision` orders changes visible to this viewer; private
+edits advance only their owner's frame. `batch` counts completed batches and
+goes back on undo. Starting human count and allowUndo freeze at Start; undoOff
+can only turn on afterward. `botLevels` lists, in order, the bot levels an
+admin may give a seat: the ones the table froze at Start. `point` is `{ref: {id, revision}, kind, required,
 confirmed}`, with sorted seat arrays. `pending` is `{key, confirm}`, sent
 only to its owning seat. A spectator receives neither pending nor private
 view fields. `ack` is `{clientId, seq}` in the submitting connection's frame.
@@ -1225,7 +1226,11 @@ Both snapshots use these fixed metadata shapes:
   `you` may also carry `previousSeats`, a list of `{userId, seat}` hints:
   each connected spectator who held a seat earlier in this game, with the
   seat they held last. Former controllers and ordinary spectators receive
-  no hints. A lobby frame never carries them.
+  no hints. A lobby frame never carries them. A table frame gives a real
+  admin's `you` `canPromote`, whether the admin cap has room for another
+  admin. While a game is in play, a viewer who holds no seat but held one
+  earlier in this game gets `formerSeat`, the seat they held last, in their
+  own frames only, on every tab and device.
 - `roomLog` is the bounded public log, with entries `{kind, at, by}` and
   optional `userId`, `seat`, `control`, `role`. Kind is `seat`, `role`,
   `resign` or `link`; `at` is a completed batch count (zero in the lobby),

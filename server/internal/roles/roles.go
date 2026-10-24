@@ -147,6 +147,9 @@ func entry(at int, by, user, role string) wire.PlatformLogEntry {
 	return wire.PlatformLogEntry{Kind: "role", At: at, By: by, UserID: &u, Role: &ro}
 }
 
+// HasRoom reports whether the admin cap leaves room for one more admin.
+func (r *Roles) HasRoom() bool { return len(r.Admins) < MaxAdmins }
+
 // Promote makes target a real admin, promoted by by. Only a real admin may
 // promote, and only a human in the room (seated or spectating).
 func (r *Roles) Promote(by, target string, inRoom bool, at int) (wire.PlatformLogEntry, error) {
@@ -155,7 +158,7 @@ func (r *Roles) Promote(by, target string, inRoom bool, at int) (wire.PlatformLo
 		return wire.PlatformLogEntry{}, ErrNotAdmin
 	case target == "" || !inRoom || r.Real(target):
 		return wire.PlatformLogEntry{}, ErrBadRequest
-	case len(r.Admins) >= MaxAdmins:
+	case !r.HasRoom():
 		return wire.PlatformLogEntry{}, ErrForbidden
 	}
 	p := by

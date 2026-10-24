@@ -300,7 +300,26 @@ canonical history is the `ajayeb-log/2` download.
   and requires a connection's first frame for a new seat to carry its
   history: `TestSwitchFramesLeakNothing` checks every frame across
   switches, role changes and a resignation against the viewer the test's
-  own model gives it, with planted cases for both rules.
+  own model gives it, with planted cases for both rules. The model also
+  remembers the seat each user held last, so the envelope requires
+  `you.formerSeat` in exactly the frames of an unseated viewer of a game in
+  play who held one, naming that seat, and `you.canPromote` only in a real
+  admin's frames; `TestPlantedEnvelopeLeaks` plants a former seat in a
+  seated viewer's frame, in a never-seated spectator's, and with the wrong
+  seat, and the cap's room in a non-admin's frame.
+- `TestPrivateViewFieldCanaries` (`viewfields_privacy_test.go`) finds, over
+  seeded seven-seat random-side games, a sixth turn whose choices preview a
+  kept card and a pile search with a card the searching city may not build,
+  opens a real table there and checks every seat's frame. The oracle's own
+  truth for a kept card comes from resolving the turn with that choice, and
+  for a pile reason from the pile and the city's names. Planted copies must
+  be reported: a neighbour's card as the preview, the preview copied into
+  the neighbour's frame, a dropped preview, a pile reason in a seat that is
+  not searching, a reason naming a card outside the pile, and a dropped
+  reason. The oracle also checks each `military` event's shields and token
+  worth against the resolved state and `result.tieBreak` and `result.tied`
+  against totals and coins, and `engine_privacy_test.go` plants a forged
+  tie, forged shields and a forged worth in a finished frame.
 - `FuzzTableOps` (`fuzz_test.go`) drives one table through fuzzed picks,
   changes and confirmations from every seat, a second tab and the
   spectator, new tabs that open, pick and close under fresh client ids,

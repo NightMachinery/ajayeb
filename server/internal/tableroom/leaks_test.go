@@ -28,13 +28,15 @@ var frameConfig = leakcheck.Config{
 }
 
 // frameViewer is who received a frame: a seat, or leakcheck.Spectator,
-// the connection's client id, which an acknowledgement must name, and
-// whether its user was an admin then, the only viewers the previous-seat
-// hint may reach.
+// the connection's client id, which an acknowledgement must name, whether
+// its user was an admin then, the only viewers the previous-seat hint may
+// reach, and the seat its user last held, if any, the only former seat its
+// frames may name.
 type frameViewer struct {
 	Seat   int
 	Client string
 	Admin  bool
+	Former *int
 }
 
 // pendingWant is the pending pick the test's own model says the viewer's
@@ -129,6 +131,16 @@ func envelope(where string, v frameViewer, fr wire.TableState, w pendingWant, tr
 				bad("you.previousSeats", "a seated user in the previous-seat hint")
 			}
 		}
+	}
+	var former *int
+	if v.Seat < 0 && fr.Status == "playing" {
+		former = v.Former
+	}
+	if (fr.You.FormerSeat == nil) != (former == nil) || (former != nil && *fr.You.FormerSeat != *former) {
+		bad("you.formerSeat", "not the seat this unseated viewer held last")
+	}
+	if fr.You.CanPromote != nil && !v.Admin {
+		bad("you.canPromote", "the admin cap in a non-admin's frame")
 	}
 	if pd := fr.Pending; pd != nil {
 		switch {
@@ -518,12 +530,14 @@ func TestFramesLeakNothing(t *testing.T) {
 // loses their seat sees no hand from then on, the spectator who takes a
 // seat sees that seat's, each connection's first frame for a new seat
 // carries the history redacted for it (planted: without it, the oracle
-// reports it), and the previous-seat hint reaches a user while, and only
-// while, they are an admin.
+// reports it), the previous-seat hint reaches a user while, and only
+// while, they are an admin, and a former player's own frames, and no one
+// else's, name the seat it held last.
 func TestSwitchFramesLeakNothing(t *testing.T) {
 	const n, seed = 4, 67
 	h := newTH(t, Config{BotWork: blockBots}, humans(n, seed))
 	p := h.p
+	p.former = map[string]int{}
 	admin, c1, c2 := tabletest.SeatClient(0), tabletest.SeatClient(1), tabletest.SeatClient(2)
 	seqs := map[tabletest.ClientID]int{}
 	seq := func(id tabletest.ClientID) int { seqs[id]++; return seqs[id] }
@@ -553,14 +567,17 @@ func TestSwitchFramesLeakNothing(t *testing.T) {
 		model()
 		h.want(id, f, outAccepted, what)
 	}
-	change("seat 1 to a bot", func() { delete(p.seats, userOf(1)) }, admin, toBot(seq(admin), 1, BotEasy))
+	change("seat 1 to a bot", func() { delete(p.seats, userOf(1)); p.former[userOf(1)] = 1 }, admin, toBot(seq(admin), 1, BotEasy))
+	if fs := h.latest(c1).You.FormerSeat; fs == nil || *fs != 1 {
+		t.Fatalf("the former player's own seat after the switch: %v", fs)
+	}
 	if ps := h.latest(admin).You.PreviousSeats; ps == nil || len(*ps) != 1 || (*ps)[0] != (wire.PreviousSeat{UserID: userOf(1), Seat: 1}) {
 		t.Fatalf("the admin's hint after the switch: %v", ps)
 	}
 	change("the watcher to seat 1", func() { p.seats["watcher"] = 1 }, admin, toHuman(seq(admin), 1, "watcher"))
 	change("user-1's promotion", func() { p.admins[userOf(1)] = true }, admin, roleOp(seq(admin), "promote", userOf(1)))
 	change("user-1 steps down", func() { p.admins[userOf(1)] = false }, c1, roleOp(seq(c1), "step-down", ""))
-	change("seat 2 resigns", func() { delete(p.seats, userOf(2)) }, c2, wire.TableResign{T: "table-resign", Seq: seq(c2), Confirm: true})
+	change("seat 2 resigns", func() { delete(p.seats, userOf(2)); p.former[userOf(2)] = 2 }, c2, wire.TableResign{T: "table-resign", Seq: seq(c2), Confirm: true})
 	change("user-2's promotion", func() { p.admins[userOf(2)] = true }, admin, roleOp(seq(admin), "promote", userOf(2)))
 	change("user-2's demotion", func() { p.admins[userOf(2)] = false }, admin, roleOp(seq(admin), "demote", userOf(2)))
 	for _, c := range p.clients {
@@ -576,7 +593,7 @@ func TestSwitchFramesLeakNothing(t *testing.T) {
 
 	c := leakcheck.New(truthOf(t, p, n, seed, false), frameConfig)
 	hinted := map[tabletest.ClientID]int{}
-	unseated := 0
+	unseated, formers := 0, 0
 	moved := 0
 	for id, frames := range p.frames {
 		vs := p.viewers[id]
@@ -601,10 +618,13 @@ func TestSwitchFramesLeakNothing(t *testing.T) {
 			if vs[i].Seat < 0 && id != tabletest.SpectatorClient {
 				unseated++
 			}
+			if fr.You.FormerSeat != nil {
+				formers++
+			}
 		}
 	}
-	if hinted[admin] == 0 || hinted[c1] == 0 || hinted[c2] == 0 || unseated == 0 || moved < 3 {
-		t.Fatalf("too little checked: hinted frames %v, %d frames of an unseated user, %d connections moved", hinted, unseated, moved)
+	if hinted[admin] == 0 || hinted[c1] == 0 || hinted[c2] == 0 || unseated == 0 || formers == 0 || moved < 3 {
+		t.Fatalf("too little checked: hinted frames %v, %d frames of an unseated user, %d naming a former seat, %d connections moved", hinted, unseated, formers, moved)
 	}
 }
 
@@ -615,10 +635,12 @@ func TestSwitchFramesLeakNothing(t *testing.T) {
 // the spectator, another seat's key as the viewer's pick, the viewer's own
 // key that is not its accepted pick, a confirmation the public list does
 // not show, another seat's you, another connection's acknowledgement, a
-// hidden card in the events of a history frame, and the previous-seat
-// hint where it does not belong: the admin's own frame given to a
-// non-admin, a hint planted in the spectator's frame, and a seated user in
-// the admin's hint.
+// hidden card in the events of a history frame, the previous-seat hint
+// where it does not belong (the admin's own frame given to a non-admin, a
+// hint planted in the spectator's frame, a seated user in the admin's
+// hint), a former seat sent to a seated viewer, to a spectator who held no
+// seat, or naming another seat than the viewer's own, and the admin cap
+// sent to a non-admin.
 func TestPlantedEnvelopeLeaks(t *testing.T) {
 	f := newFixture(t, Config{})
 	p, truth := playForLeaks(t, f, 3, 2028, false)
@@ -657,6 +679,18 @@ func TestPlantedEnvelopeLeaks(t *testing.T) {
 	hinted.You.PreviousSeats = &[]wire.PreviousSeat{}
 	seated := s0
 	seated.You.PreviousSeats = &[]wire.PreviousSeat{{UserID: *s0.Seats[1].UserID, Seat: 1}}
+	one, two := 1, 2
+	if s0.You.CanPromote == nil || !*s0.You.CanPromote || sf.You.CanPromote != nil || s0.You.FormerSeat != nil || sf.You.FormerSeat != nil {
+		t.Fatal("the admin cap is not in the admin's frame alone, or a former seat is sent")
+	}
+	formerSeated := s0
+	formerSeated.You.FormerSeat = &one
+	formerWatcher := sf
+	formerWatcher.You.FormerSeat = &one
+	formerOf2 := spec
+	formerOf2.Former = &two
+	capped := sf
+	capped.You.CanPromote = new(bool)
 
 	// A history frame whose own events name a card seat 0 may not see.
 	var hist wire.TableState
@@ -692,6 +726,10 @@ func TestPlantedEnvelopeLeaks(t *testing.T) {
 		{"the admin's frame given to a non-admin", notAdmin, s0, nil, []leakcheck.Rule{leakcheck.Envelope}},
 		{"a hint in the spectator's frame", spec, hinted, nil, []leakcheck.Rule{leakcheck.Envelope}},
 		{"a seated user in the admin's hint", seat0, seated, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"a former seat in a seated viewer's frame", seat0, formerSeated, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"another user's former seat sent to the spectator", spec, formerWatcher, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"a former seat that is not the viewer's own", formerOf2, formerWatcher, nil, []leakcheck.Rule{leakcheck.Envelope}},
+		{"the admin cap in a non-admin's frame", spec, capped, nil, []leakcheck.Rule{leakcheck.Envelope}},
 	} {
 		leaks := frameLeaks(t, c, tc.name, tc.v, []wire.TableState{tc.fr}, nil, tc.wants)
 		for _, rule := range tc.rules {

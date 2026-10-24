@@ -277,6 +277,7 @@ type inproc struct {
 	// change's frames are drained.
 	admins  map[string]bool
 	viewers map[tabletest.ClientID][]frameViewer
+	former  map[string]int // user -> the seat it held last, once unseated
 }
 
 func newClient(user, client, name string) *room.Client {
@@ -367,6 +368,9 @@ func (p *inproc) drain() {
 				v := frameViewer{Seat: leakcheck.Spectator, Client: string(id), Admin: p.admins[c.UserID]}
 				if seat, ok := p.seats[c.UserID]; ok {
 					v.Seat = seat
+				}
+				if seat, ok := p.former[c.UserID]; ok {
+					v.Former = &seat
 				}
 				p.viewers[id] = append(p.viewers[id], v)
 			case wire.TableReject:

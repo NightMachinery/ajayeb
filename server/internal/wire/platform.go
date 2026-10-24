@@ -40,11 +40,16 @@ type PreviousSeat struct {
 }
 
 // PlatformYou holds connection-specific metadata, including admin-only hints.
-// No previous-seat hint is sent to a non-admin, including former controllers.
+// No previous-seat hint is sent to a non-admin. A former player gets only its
+// own FormerSeat, the seat it held last, while it watches a playing table.
+// CanPromote goes to a real admin of a table: whether the admin cap leaves
+// room for another admin.
 type PlatformYou struct {
 	UserID        string          `json:"userId"`
 	Seat          *int            `json:"seat,omitempty"`
 	PreviousSeats *[]PreviousSeat `json:"previousSeats,omitempty"`
+	FormerSeat    *int            `json:"formerSeat,omitempty"`
+	CanPromote    *bool           `json:"canPromote,omitempty"`
 }
 
 // PlatformLogEntry describes public control changes, never submitted action
