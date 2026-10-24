@@ -1,7 +1,8 @@
 <script lang="ts">
   // The top bar's pass chip: which way hands travel this Age, with the
   // drawn pass-hand arrow mirrored for the left, and the receiving
-  // neighbour named in its tooltip.
+  // neighbour named in its tooltip. On a narrow phone it keeps the arrow
+  // alone, since its label and tooltip say the direction in words.
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
   import HgGlyph from './HgGlyph.svelte';
@@ -23,7 +24,9 @@
 {#if pass === 'left' || pass === 'right'}
   <span class="chip" data-pass={pass} role="img" aria-label={tip} {@attach tooltip({ text: tip })}>
     <span dir="ltr"><HgGlyph name="pass-hand" flip={pass === 'left'} /></span>
-    <span>{pass === 'left' ? ht('hg.screen.pass.left') : ht('hg.screen.pass.right')}</span>
+    <span class="word"
+      >{pass === 'left' ? ht('hg.screen.pass.left') : ht('hg.screen.pass.right')}</span
+    >
   </span>
 {/if}
 
@@ -42,5 +45,13 @@
   }
   .chip :global(svg) {
     font-size: 1.15rem;
+  }
+  @media (max-width: 26.99rem) {
+    .chip {
+      padding-inline: 0.5rem;
+    }
+    .word {
+      display: none;
+    }
   }
 </style>

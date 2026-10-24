@@ -4,7 +4,10 @@
   // while the newest recap is unseen), the count of spectators (it opens
   // the game menu, which lists them), and Undo while the table allows it
   // (it goes for good once a second human sits down). The log button comes
-  // with its slice. Undo is Lucide's `undo`, not Duel's `undo-2`, the
+  // with its slice. On a narrow phone the gaps tighten and the pass chip
+  // keeps its arrow alone, so the Age and turn keep their room; should
+  // they still not fit, the turn wraps under the Age rather than run into
+  // the chip. Undo is Lucide's `undo`, not Duel's `undo-2`, the
   // spectators' icon is `users-round`, not Home's `users`, and the recap's
   // is `clipboard-list`, not Duel's `eye` or `scroll-text`, so the games
   // share no icon.
@@ -58,7 +61,7 @@
   const turnTip = $derived(ht('hg.screen.turn.tip', { turn, of: turns }));
 </script>
 
-<header class="top">
+<header class="top" data-top-bar>
   <button
     type="button"
     class="icon"
@@ -183,9 +186,12 @@
   .where {
     display: flex;
     flex: 1 1 auto;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.4rem;
+    column-gap: 0.4rem;
     min-width: 0;
+    overflow-x: clip;
+    line-height: 1.2;
   }
   .age {
     font-family: var(--type-display);
@@ -196,5 +202,12 @@
   .turn {
     color: var(--fg-muted);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  @media (max-width: 26.99rem) {
+    .top {
+      gap: 0.25rem;
+      padding-inline-end: 0.25rem;
+    }
   }
 </style>
