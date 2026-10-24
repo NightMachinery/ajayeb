@@ -9,7 +9,12 @@
 //   comes back to find the changed pick still pending, and confirms it last,
 //   which resolves the point;
 // - the creator gives the second human's seat to a bot, and that tab
-//   becomes a spectator's view.
+//   becomes a spectator's view;
+// - the creator seats that human again, then seats the spectator in that
+//   human's seat, and the human watches instead;
+// - the creator, the last real admin, steps down, and the rule makes a
+//   temporary admin at once (the timed case, five minutes away, is in
+//   haftgane-playthrough.full.spec.ts).
 //
 // The client leak boundary: until the point resolves, neither pick the
 // second human drafted appears anywhere in the creator's or the
@@ -79,7 +84,7 @@ function consoleOf(page: Page): string[] {
   return lines;
 }
 
-test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
+test.describe('Haftgane table', { tag: ['@full', '@mobile', '@haftgane-table'] }, () => {
   test('picks change, survive a reload and a network blip, and stay private', async ({
     browser
   }, info) => {
@@ -205,6 +210,43 @@ test.describe('Haftgane table', { tag: ['@full', '@haftgane-table'] }, () => {
       expect(watched.view.you ?? null).toBeNull();
       expect(watched.seats[seatB]!.kind).toBe('bot');
       expect((await latest(a)).you.seat).toBe(seatA);
+
+      // The other direction: the creator seats the former player again.
+      const userB = startB.you.userId;
+      const userC = (await latest(c)).you.userId;
+      await choose(a, `seat-user:${seatB}:${userB}`);
+      await expect(b.locator('[data-notice="seated"]')).toBeVisible();
+      await expect.poll(async () => (await latest(b)).you.seat).toBe(seatB);
+      await expect(b.locator('[data-watching]')).toHaveCount(0);
+
+      // The spectator takes that human's seat, and the human watches.
+      await choose(a, `seat-user:${seatB}:${userC}`);
+      await expect.poll(async () => (await latest(c)).you.seat).toBe(seatB);
+      await expect(c.locator('[data-notice="seated"]')).toBeVisible();
+      await expect(c.locator('[data-watching]')).toHaveCount(0);
+      await expect(b.locator('[data-notice="watching"]')).toBeVisible();
+      await expect(b.locator(`[data-former-seat="${seatB}"]`)).toBeVisible();
+      expect((await latest(b)).you.seat).toBeUndefined();
+      expect((await latest(a)).seats[seatB]).toMatchObject({ kind: 'human', userId: userC });
+
+      // The last real admin steps down. With no real admin left, the rule
+      // makes a temporary admin at once: the connected human who has held
+      // a seat longest, the creator, with seat powers and no promotion.
+      const userA = startA.you.userId;
+      await choose(a, 'step-down');
+      await expect
+        .poll(async () => (await latest(a)).humans.find((h) => h.userId === userA))
+        .toMatchObject({ admin: false, temporary: true });
+      await expect(
+        a.locator(`[data-seat="${seatA}"] [data-role-tag="temporary"]`).first()
+      ).toBeVisible();
+      expect((await latest(a)).you.canPromote).toBeUndefined();
+      for (const page of [b, c])
+        await expect
+          .poll(async () =>
+            (await latest(page)).humans.filter((h) => h.temporary).map((h) => h.userId)
+          )
+          .toEqual([userA]);
 
       // Every frame of the whole game showed each page its own pick only.
       for (const [name, log] of [
