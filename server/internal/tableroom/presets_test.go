@@ -164,8 +164,12 @@ func TestBotEveryPendingSubsetRestarts(t *testing.T) {
 			if err := h.f.store.SaveGame(r.Code, Game, data); err != nil {
 				t.Fatal(err)
 			}
+			restartStart := time.Now()
 			h.f.start()
 			h.rejoin()
+			if evidenceEnabled() {
+				t.Logf("room-restore-evidence subset=%d cold_start_join_ns=%d", mask, time.Since(restartStart).Nanoseconds())
+			}
 			got := h.record()
 			if !reflect.DeepEqual(got.Pending, r.Pending) || !reflect.DeepEqual(got.Work, r.Work) {
 				t.Fatal("cold load changed accepted subset/row", mask)
