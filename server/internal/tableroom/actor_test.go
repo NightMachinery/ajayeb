@@ -323,9 +323,10 @@ func TestTabChurnStaysRestorable(t *testing.T) {
 }
 
 // TestWritesKeepRestoreBounds: restore and every write check the same
-// bounds. A record with one floor or acknowledgement more than a write
-// keeps does not restore, and a candidate past them is refused before it
-// is saved.
+// bounds. A candidate past them is refused before it is saved. Restore
+// trims floors and acknowledgements past them, as a record written under
+// larger bounds has (TestOldFloorsAreTrimmedOnLoad), to what a write would
+// keep; a record it cannot trim into the bounds does not restore.
 func TestWritesKeepRestoreBounds(t *testing.T) {
 	h := newTH(t, Config{PickClients: 2, SeqClients: 2}, humans(3, 31))
 	sn := h.snap(tabletest.SeatClient(0))
@@ -339,37 +340,43 @@ func TestWritesKeepRestoreBounds(t *testing.T) {
 		return xs
 	}
 	for _, tc := range []struct {
-		name   string
-		mutate func(r *Record)
-		ok     bool
+		name     string
+		mutate   func(r *Record)
+		ok       bool // a write keeps it
+		restores bool // restore takes it, trimmed to what a write keeps
 	}{
-		{"floors at the bound", func(r *Record) { r.Pending[0].Seqs = many(2) }, true},
-		{"floors past the bound", func(r *Record) { r.Pending[0].Seqs = many(3) }, false},
-		{"acknowledgements at the bound", func(r *Record) { r.Seqs = many(2) }, true},
+		{"floors at the bound", func(r *Record) { r.Pending[0].Seqs = many(2) }, true, true},
+		{"floors past the bound", func(r *Record) { r.Pending[0].Seqs = many(3) }, false, true},
+		{"acknowledgements at the bound", func(r *Record) { r.Seqs = many(2) }, true, true},
+		{"acknowledgements past the bound", func(r *Record) { r.Seqs = many(3) }, false, true},
 		{"floors of as many users as a slot keeps", func(r *Record) {
 			r.Pending[0].Seqs = nil
 			for u := range maxSlotUsers {
 				r.Pending[0].Seqs = append(r.Pending[0].Seqs, SeqRecord{User: userOf(u), Client: "c", Seq: 1})
 			}
-		}, true},
+		}, true, true},
 		{"floors of more users than a slot keeps", func(r *Record) {
 			r.Pending[0].Seqs = nil
 			for u := range maxSlotUsers + 1 {
 				r.Pending[0].Seqs = append(r.Pending[0].Seqs, SeqRecord{User: userOf(u), Client: "c", Seq: 1})
 			}
-		}, false},
+		}, false, true},
 		{"acknowledgements of a user with no authority", func(r *Record) {
 			r.Seqs = append(r.Seqs, SeqRecord{User: "watcher", Client: "c", Seq: 1})
-		}, false},
+		}, false, false},
 		{"acknowledgements of a retired user", func(r *Record) {
 			r.Seqs = append(r.Seqs, SeqRecord{User: "watcher", Client: "c", Seq: 1})
 			r.Retired = append(r.Retired, "watcher")
-		}, true},
+		}, true, true},
 	} {
 		r := h.record()
 		tc.mutate(&r)
-		if _, _, err := restore(&r, bounds); (err == nil) != tc.ok {
+		st, _, err := restore(&r, bounds)
+		if (err == nil) != tc.restores {
 			t.Errorf("%s: restore: %v", tc.name, err)
+		}
+		if err == nil && validate(&st.rec, &st.game, bounds) != nil {
+			t.Errorf("%s: restore kept what a write refuses", tc.name)
 		}
 		a, err := h.p.actor()
 		if err != nil {

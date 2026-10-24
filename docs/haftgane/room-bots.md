@@ -34,14 +34,17 @@ bounded pass, not one candidate. Apprentice uses the released fixed-point
 New points and switches copy the game's frozen row, never a default selected
 at restore time. Policy and preset versions also enter policy entropy.
 
-Schema 2 now writes table record format 2. It adds frozen `botPresets` and
-bounded `botFallbacks`; each open-point `work` row embeds its complete preset.
+Table record format 2 (schema 2) added frozen `botPresets` and bounded
+`botFallbacks`; each open-point `work` row embeds its complete preset.
 Unsupported versions, algorithms, allowances or bounds fail validation.
 Older development records without supported frozen presets archive as
 `replay-failed`; their old fallback rows are never interpreted as new bots.
 A reader that predates format 2 refuses it rather than reverting an all-human
 table's future bot switches to old defaults. Replay still uses accepted keys,
-not bot reruns. Unsupported future formats remain untouched.
+not bot reruns. Unsupported future formats remain untouched. Format 3
+(M16.haftgane-security-review) keeps format 2's presets and remembers each
+client by a bounded key; a format-2 record is re-keyed on load
+([protocol](../protocol.md), "Room files").
 
 Preset set `haftgane-bot-1`, the first one, mapped `easy` to Random, `normal`
 to Apprentice and `hard` to Greedy. Set 2 changed only that mapping. The bot

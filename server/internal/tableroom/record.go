@@ -207,7 +207,9 @@ type StartSlot struct {
 // upgrade reads explicitly.
 // Format 2 freezes algorithm/preset/bounds for future switches and points.
 // Older records without supported frozen presets fail closed on load.
-const recordFormat = 2
+// Format 3 remembers each client by its ClientKey; the formats before it
+// kept the id as sent, which upgrade re-keys once.
+const recordFormat = 3
 
 // BatchRecord is one complete batch: the logical point id and one key per
 // required seat, sorted by seat.
@@ -352,18 +354,35 @@ func decodeRecord(data []byte) (*Record, error) {
 	return &r, nil
 }
 
-// upgrade preserves format-1 metadata and reads a format-0 development record
-// from before the lobby: it had no previous seats, retired users, away
-// times, epochs or Start slots, and no switches had happened, so each
-// seat's Start slot is its original human or its current bot. A seat
-// still open stays open, which restore refuses. No bot presets are invented;
-// records without supported frozen configuration fail validation.
+// upgrade reads a record of an older format. Formats 0 to 2 kept each
+// client's id as sent, so it re-keys the seq acknowledgements and the
+// pending floors by ClientKey, which maps distinct ids to distinct keys;
+// it must run once only, since a key is itself an id that ClientKey may
+// hash again, so format 3 marks the keys. It preserves format-1 and
+// format-2 metadata, and reads a format-0 record (upgradeDev). No bot
+// presets are invented; records without supported frozen configuration
+// fail validation.
 func upgrade(r *Record) {
-	if r.Format == 1 {
-		r.Format = recordFormat
-		return
+	if r.Format == 0 {
+		upgradeDev(r)
+	}
+	for i := range r.Seqs {
+		r.Seqs[i].Client = ClientKey(r.Seqs[i].Client)
+	}
+	for i := range r.Pending {
+		for j := range r.Pending[i].Seqs {
+			r.Pending[i].Seqs[j].Client = ClientKey(r.Pending[i].Seqs[j].Client)
+		}
 	}
 	r.Format = recordFormat
+}
+
+// upgradeDev reads a format-0 development record from before the lobby: it
+// had no previous seats, retired users, away times, epochs or Start slots,
+// and no switches had happened, so each seat's Start slot is its original
+// human or its current bot. A seat still open stays open, which restore
+// refuses.
+func upgradeDev(r *Record) {
 	r.Previous, r.Retired = []PreviousRecord{}, []string{}
 	r.Roles = r.Roles.Clone()
 	if len(r.Assignment) != len(r.Seats) || len(r.Original) != len(r.Seats) {
@@ -483,8 +502,17 @@ func restore(r *Record, b seqBounds) (*state, bool, error) {
 	if !validSeqs(r.Seqs) {
 		return nil, false, invalid("the seq acknowledgements")
 	}
+	for _, ps := range r.Pending {
+		if !validSeqs(ps.Seqs) {
+			return nil, false, invalid("the seqs of seat %d's pending pick", ps.Seat)
+		}
+	}
 	st := &state{rec: r.clone(), game: g}
 	st.rec.Seqs = trimSeqs(st.rec.Seqs, b.acks)
+	for i := range st.rec.Pending {
+		ps := &st.rec.Pending[i]
+		ps.Seqs = trimFloors(ps.Seqs, b.floors, humanAt(&st.rec, ps.Seat))
+	}
 	if err := validate(&st.rec, &g, b); err != nil {
 		return nil, false, err
 	}
@@ -737,6 +765,42 @@ func trimSeqs(xs []SeqRecord, capacity int) []SeqRecord {
 	}
 	slices.Reverse(out)
 	return out
+}
+
+// trimFloors keeps, of one pending pick's floors, each user's capacity
+// most recently added clients, and then the maxSlotUsers users who added
+// one most recently, the seat's current user (keep) first. Only a record
+// written under larger bounds has more: until M16.haftgane-security-review
+// a pick kept 32 clients of each of 16 users. Forgetting floors this way
+// never lets an old seq replace the pick, because what is left is full: a
+// user left with capacity floors, or a pick left with maxSlotUsers users,
+// is refused with rate for any client it has no floor for (submit), so a
+// forgotten client is refused, as a new one would be, until the point
+// resolves.
+func trimFloors(xs []SeqRecord, capacity int, keep string) []SeqRecord {
+	xs = trimSeqs(xs, capacity)
+	var users []string
+	if keep != "" && slices.ContainsFunc(xs, func(x SeqRecord) bool { return x.User == keep }) {
+		users = append(users, keep)
+	}
+	for i := len(xs) - 1; i >= 0; i-- {
+		if !slices.Contains(users, xs[i].User) {
+			users = append(users, xs[i].User)
+		}
+	}
+	if len(users) <= maxSlotUsers {
+		return xs
+	}
+	users = users[:maxSlotUsers]
+	return slices.DeleteFunc(xs, func(x SeqRecord) bool { return !slices.Contains(users, x.User) })
+}
+
+// humanAt is the user who controls seat, or "" for a bot or no such seat.
+func humanAt(r *Record, seat int) string {
+	if seat < 0 || seat >= len(r.Seats) || r.Seats[seat].Kind != SeatHuman {
+		return ""
+	}
+	return r.Seats[seat].UserID
 }
 
 func validSeqs(xs []SeqRecord) bool {
