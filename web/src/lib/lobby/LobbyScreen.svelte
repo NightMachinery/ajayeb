@@ -31,6 +31,11 @@
     )
   );
   const opens = $derived(lobby.seats.some((s) => s.kind === 'open'));
+  // The server allows two seats only while Haftgane tables are off; a lobby
+  // made larger before that keeps its own count among the choices.
+  const seatChoices = $derived(
+    [2, 3, 4, 5, 6, 7].filter((n) => n <= lobby.maxSeats || n === lobby.seatCount)
+  );
   const reserved = $derived(lobby.seats.some((s) => s.kind === 'reserved'));
   const undoEligible = $derived(
     lobby.seats.filter((s) => s.kind === 'human').length === 1 && !!session.me?.creator
@@ -192,22 +197,24 @@
       >
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-display text-xl" id="lobby-seats">{t('lobby.seats')}</h2>
-          <label class="flex items-center gap-2 text-sm font-semibold">
-            <span class="sr-only">{t('lobby.seats')}</span>
-            <select
-              class="min-h-11 min-w-16 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
-              {@attach selectValue(lobby.seatCount)}
-              disabled={!ready || !session.admin}
-              onchange={(e) => {
-                const next = Number(e.currentTarget.value);
-                e.currentTarget.value = String(lobby.seatCount);
-                count(next);
-              }}
-              data-act="lobby-seats"
-            >
-              {#each [2, 3, 4, 5, 6, 7] as n (n)}<option value={n}>{formatNumber(n)}</option>{/each}
-            </select>
-          </label>
+          {#if seatChoices.length > 1}
+            <label class="flex items-center gap-2 text-sm font-semibold">
+              <span class="sr-only">{t('lobby.seats')}</span>
+              <select
+                class="min-h-11 min-w-16 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
+                {@attach selectValue(lobby.seatCount)}
+                disabled={!ready || !session.admin}
+                onchange={(e) => {
+                  const next = Number(e.currentTarget.value);
+                  e.currentTarget.value = String(lobby.seatCount);
+                  count(next);
+                }}
+                data-act="lobby-seats"
+              >
+                {#each seatChoices as n (n)}<option value={n}>{formatNumber(n)}</option>{/each}
+              </select>
+            </label>
+          {/if}
         </div>
         {#if lobby.seatCount > 2}<p class="mt-2 text-xs text-fg-muted">{t('lobby.order')}</p>{/if}
         <ol class="mt-4 flex flex-col gap-2">
