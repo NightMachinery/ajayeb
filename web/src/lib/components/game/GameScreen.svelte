@@ -129,7 +129,6 @@
   import GameOver from '../screens/GameOver.svelte';
   import Lobby from '../screens/Lobby.svelte';
   import PassDevice from '../screens/PassDevice.svelte';
-  import Settings from '../screens/Settings.svelte';
   import CitySheet from '../sheets/CitySheet.svelte';
   import LogSheet from '../sheets/LogSheet.svelte';
   import WonderListSheet from '../sheets/WonderListSheet.svelte';
@@ -183,6 +182,9 @@
   let { session, presenter, onhome }: Props = $props();
 
   const ui = new GameUi();
+  // Settings loads when its sheet first opens, as on Home, so the game's
+  // first load does not carry it (M18.installable-and-fullscreen).
+  let settingsSheet = $state.raw<Promise<typeof import('../screens/Settings.svelte')>>();
   const toasts = new Toasts();
   const seenMoves = new SeenMoves();
   const ageSummary = new AgeSummary();
@@ -1136,7 +1138,10 @@
         {undoReason}
         onOpenLog={() => ui.openLog()}
         onOpenSummary={moveSummary ? () => (summaryManual = true) : undefined}
-        onOpenSettings={() => ui.openSettings()}
+        onOpenSettings={() => {
+          settingsSheet ??= import('../screens/Settings.svelte');
+          ui.openSettings();
+        }}
         sound={settings.value.sound}
         onToggleSound={() => {
           settings.set('sound', !settings.value.sound);
@@ -1431,17 +1436,21 @@
   />
 {/if}
 
-<Sheet
-  bind:open={() => ui.isOpen('settings'), (v) => !v && ui.close('settings')}
-  titleId="game-settings-title"
->
-  <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
-    <h2 id="game-settings-title" class="font-display text-xl text-fg">
-      {t('game.settings.title')}
-    </h2>
-    <Settings />
-  </div>
-</Sheet>
+{#if settingsSheet}
+  {#await settingsSheet then { default: Settings }}
+    <Sheet
+      bind:open={() => ui.isOpen('settings'), (v) => !v && ui.close('settings')}
+      titleId="game-settings-title"
+    >
+      <div class="flex flex-col gap-4 px-5 pt-1 pb-5 split:pt-5">
+        <h2 id="game-settings-title" class="font-display text-xl text-fg">
+          {t('game.settings.title')}
+        </h2>
+        <Settings />
+      </div>
+    </Sheet>
+  {/await}
+{/if}
 
 {#if showPass && view && view.toMove !== undefined}
   {@const next = view.toMove === 1 ? 1 : 0}
