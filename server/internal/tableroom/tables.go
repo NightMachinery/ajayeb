@@ -135,6 +135,8 @@ type Tables struct {
 	st   Storage
 	live map[string]*actor
 	succ Successors
+	// budgets keeps the spent budgets of tables that left memory.
+	budgets *BudgetCache
 }
 
 // New returns the table kind with cfg's defaults filled in.
@@ -172,7 +174,8 @@ func New(cfg Config) *Tables {
 	if cfg.InboxSize <= 0 {
 		cfg.InboxSize = DefaultInboxSize
 	}
-	return &Tables{cfg: cfg, log: cfg.Logger, live: map[string]*actor{}}
+	return &Tables{cfg: cfg, log: cfg.Logger, live: map[string]*actor{},
+		budgets: NewBudgetCache(DefaultBudgetCacheSize, time.Duration(cfg.RequestBurst)*cfg.RequestInterval)}
 }
 
 func cryptoSeed() uint64 {

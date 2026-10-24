@@ -77,6 +77,7 @@ func (l *Lobbies) newActor(m *room.Manager, r Record) (*room.Handle, error) {
 	a := &actor{l: l, m: m, code: r.Code, rec: r, claims: map[*room.Client]claimed{},
 		wake: make(chan struct{}, 1), inbox: make(chan any, l.cfg.InboxSize), done: make(chan struct{}),
 		budget: tableroom.NewBudget(l.cfg.RequestBurst, l.cfg.RequestInterval)}
+	l.budgets.Take(a.code, a.budget, a.now())
 	a.ctx, a.cancel = context.WithCancel(m.Context())
 	h, err := m.NewHandle(Game, a.code, room.HandleConfig{
 		Run: a.run, Cancel: a.cancel, Attach: a.attachHook, Detach: a.detachHook, Deliver: a.post, Evict: a.evictHook,
@@ -101,6 +102,7 @@ func (a *actor) run() {
 		select {
 		case <-a.ctx.Done():
 			a.disarmIdle()
+			a.park()
 			return
 		case <-a.wake:
 			a.takeDetaches()
@@ -132,6 +134,7 @@ func (a *actor) handle(msg any) bool {
 		close(msg.reply)
 	case msgIdle:
 		if len(a.conns) == 0 && a.now().Sub(a.emptySince) >= a.l.cfg.IdleTimeout {
+			a.park()
 			a.m.Forget(a.h)
 			return true
 		}
@@ -139,6 +142,7 @@ func (a *actor) handle(msg any) bool {
 		a.armIdle()
 	case msgEvict:
 		if len(a.conns) == 0 {
+			a.park()
 			a.m.Forget(a.h)
 			msg.reply <- true
 			return true
@@ -624,6 +628,10 @@ func (a *actor) seen(c *room.Client, seq int) bool {
 func (a *actor) affords(c *room.Client) bool { return a.budget.Allows(a.userOf(c), a.now()) }
 
 func (a *actor) charge(c *room.Client) { a.budget.Charge(a.userOf(c), a.now()) }
+
+// park hands the budget to the kind's tableroom.BudgetCache as the lobby
+// leaves memory, so loading it again does not fill a spent budget.
+func (a *actor) park() { a.l.budgets.Put(a.code, a.budget, 0, a.now()) }
 
 // holdsSlot reports whether u holds a slot, taken or reserved for them.
 func (a *actor) holdsSlot(u string) bool {

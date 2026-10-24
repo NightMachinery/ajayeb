@@ -160,6 +160,9 @@ type fixture struct {
 	tabs   bool      // openInproc also joins each human seat's second tab
 	secret ident.Secret
 	succ   Successors // the rematch maker, kept across restarts
+	// maxRooms is the Manager's room limit (0: its default), so a test
+	// can evict a table by making another.
+	maxRooms int
 }
 
 func newFixture(t testing.TB, cfg Config) *fixture {
@@ -210,7 +213,7 @@ func (f *fixture) start() {
 			return st.Game(code)
 		}
 	}
-	f.m, err = room.NewManager(room.Config{Store: st, Kinds: kinds, KindOf: kindOf, Logger: cfg.Logger, Claims: f.secret})
+	f.m, err = room.NewManager(room.Config{Store: st, Kinds: kinds, KindOf: kindOf, Logger: cfg.Logger, Claims: f.secret, MaxRooms: f.maxRooms})
 	if err != nil {
 		f.t.Fatal(err)
 	}

@@ -2,9 +2,11 @@ package lobbyroom
 
 import (
 	"bytes"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/room/roomtest"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -39,14 +41,7 @@ func TestLobbyBudgetIsShared(t *testing.T) {
 	f.join(tab, code)
 	f.join(other, code)
 	// Seat 3 is open: the two tabs add a bot there and remove it in turn.
-	toggle := func(seq, i int) wire.LobbyEdit {
-		e := edit(code, seq, "remove-bot")
-		if i%2 == 0 {
-			e.Op, e.Bot = "add-bot", ptr(tableroom.BotEasy)
-		}
-		e.Seat = ptr(3)
-		return e
-	}
+	toggle := func(seq, i int) wire.LobbyEdit { return toggleBot(code, seq, i) }
 	ks := [2]*conn{admin, tab}
 	seqs := [2]int{}
 	for i := range tableroom.DefaultRequestBurst {
@@ -71,5 +66,77 @@ func TestLobbyBudgetIsShared(t *testing.T) {
 	f.send(admin, toggle(seqs[0]+1, tableroom.DefaultRequestBurst))
 	if st := admin.acked(seqs[0] + 1); st.Seats[3].Kind != SlotBot {
 		t.Fatalf("the refused edit a second later: %v", kinds(st))
+	}
+}
+
+// toggleBot is edit seq: the i-th of a series that adds a bot to seat 3
+// and removes it in turn.
+func toggleBot(code string, seq, i int) wire.LobbyEdit {
+	e := edit(code, seq, "remove-bot")
+	if i%2 == 0 {
+		e.Op, e.Bot = "add-bot", ptr(tableroom.BotEasy)
+	}
+	e.Seat = ptr(3)
+	return e
+}
+
+// TestLobbyEvictionKeepsTheBudget: a lobby pushed out of memory and
+// loaded again, twice, keeps its admin's spent budget, which refills with
+// time as before. Before, every load started every user full (found by
+// the slice's review).
+func TestLobbyEvictionKeepsTheBudget(t *testing.T) {
+	clk := roomtest.NewFakeClock(time.Date(2026, 10, 24, 15, 0, 0, 0, time.UTC))
+	f := newFixture(t, clk)
+	f.maxRooms = 1
+	f.restart()
+	admin := f.conn(user(0), "c0", "P0")
+	code := f.create(admin, 4, wire.LobbyOptions{Seating: ptr("lobby")})
+	for i := range tableroom.DefaultRequestBurst {
+		f.send(admin, toggleBot(code, i+1, i))
+		admin.acked(i + 1)
+	}
+	seq := tableroom.DefaultRequestBurst + 1
+	for cycle := range 2 {
+		f.send(admin, toggleBot(code, seq, seq-1))
+		if got := admin.reject(seq); got != outRate {
+			t.Fatalf("past the budget after %d evictions: %s", cycle, got)
+		}
+		f.m.Leave(admin.c, code)
+		f.settle(code)
+		other := tableroom.Spec{Creator: "x", Participants: []tableroom.Participant{{UserID: "x", Name: "X"}, {Bot: tableroom.BotEasy}, {Bot: tableroom.BotEasy}}}
+		if _, err := f.tables.CreateTable(other); err != nil {
+			t.Fatal(err)
+		}
+		if f.m.Loaded(code) {
+			t.Fatal("the lobby was not evicted")
+		}
+		admin = f.conn(user(0), "c0", "P0")
+		f.joinEvicting(admin, code)
+		admin.lobby("the lobby, loaded again", any2)
+	}
+	f.send(admin, toggleBot(code, seq, seq-1))
+	if got := admin.reject(seq); got != outRate {
+		t.Fatalf("past the budget after 2 evictions: %s", got)
+	}
+	clk.Advance(tableroom.DefaultRequestInterval)
+	f.send(admin, toggleBot(code, seq, seq-1))
+	admin.acked(seq)
+}
+
+// joinEvicting joins k to code, which pushes another room out of memory.
+// A room just made tells the Manager it may be evicted from its own
+// goroutine, so a join right after it can find no room to evict yet.
+func (f *fixture) joinEvicting(k *conn, code string) {
+	f.t.Helper()
+	deadline := time.Now().Add(wait)
+	for {
+		err := f.m.Join(f.ctx(), k.c, code)
+		if err == nil {
+			return
+		}
+		if !errors.Is(err, room.ErrTooManyRooms) || time.Now().After(deadline) {
+			f.t.Fatal(err)
+		}
+		time.Sleep(time.Millisecond)
 	}
 }

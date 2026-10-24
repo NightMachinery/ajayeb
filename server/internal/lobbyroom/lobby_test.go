@@ -46,6 +46,9 @@ type fixture struct {
 	codes []string
 	// duelSaveFails picks the Duel writes that fail (codeStore.Save).
 	duelSaveFails func(*store.File) bool
+	// maxRooms is the Manager's room limit (0: its default), so a test
+	// can evict a lobby by making another room.
+	maxRooms int
 }
 
 type saveFault struct{ pass, fail int }
@@ -170,7 +173,7 @@ func (f *fixture) start() {
 	if f.st, err = store.OpenWithCodecs(f.dir, nil, kinds.Codecs()); err != nil {
 		f.t.Fatal(err)
 	}
-	f.m, err = room.NewManager(room.Config{Store: codeStore{Store: f.st, f: f}, Kinds: kinds, KindOf: f.st.Game, Claims: f.secret, Clock: f.clock, Seed: f.duelSeed, NewBot: f.duelBot})
+	f.m, err = room.NewManager(room.Config{Store: codeStore{Store: f.st, f: f}, Kinds: kinds, KindOf: f.st.Game, Claims: f.secret, Clock: f.clock, Seed: f.duelSeed, NewBot: f.duelBot, MaxRooms: f.maxRooms})
 	if err != nil {
 		f.t.Fatal(err)
 	}

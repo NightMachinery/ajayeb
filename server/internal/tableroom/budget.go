@@ -2,6 +2,7 @@ package tableroom
 
 import (
 	"maps"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,9 @@ const (
 	// DefaultMaxUserClients bounds one user's connections to a table or
 	// a lobby, seated or watching.
 	DefaultMaxUserClients = 8
+	// DefaultBudgetCacheSize bounds the buckets, and rooms, a
+	// BudgetCache holds.
+	DefaultBudgetCacheSize = 4096
 )
 
 // Budget is a table's or a lobby's per-user request budget
@@ -31,9 +35,9 @@ const (
 // saved or sent to anyone else. A duplicate or a refusal costs nothing,
 // and bots and the room's own changes are never charged.
 //
-// Buckets live in memory only. A room loaded again (after a restart, or
-// an eviction, which needs it to have had no connection) starts every user
-// full: at most one more burst per load.
+// A room that leaves memory hands its buckets that are not full to its
+// kind's BudgetCache, and takes them back when it is loaded again, so
+// only a restart of the server starts every user full.
 type Budget struct {
 	burst    int
 	interval time.Duration
@@ -75,4 +79,102 @@ func (b *Budget) Refill() { clear(b.full) }
 
 func (b *Budget) prune(now time.Time) {
 	maps.DeleteFunc(b.full, func(_ string, at time.Time) bool { return !at.After(now) })
+}
+
+// BudgetCache keeps the budgets of rooms that left memory, so that
+// evicting a room and loading it again does not fill them. A room hands
+// over its buckets that are not full as it leaves memory, and a table
+// also the most batches it reached when an undo left it above its
+// batches, which a new point is measured against; the room's next load
+// takes them back. An entry lasts burst times interval from the moment
+// it was handed over, by when each of its buckets would have filled
+// anyway. Past size buckets in all (counting one for each room), the
+// entries that would expire first are dropped first. Tables and Lobbies
+// each own one for the life of the server, so a restart is the one thing
+// that starts every budget full.
+type BudgetCache struct {
+	mu    sync.Mutex
+	size  int
+	ttl   time.Duration
+	rooms map[string]budgetEntry
+	held  int
+}
+
+type budgetEntry struct {
+	until   time.Time
+	reached int
+	full    map[string]time.Time
+}
+
+// NewBudgetCache returns a cache of at most size buckets whose entries
+// last ttl.
+func NewBudgetCache(size int, ttl time.Duration) *BudgetCache {
+	return &BudgetCache{size: size, ttl: ttl, rooms: map[string]budgetEntry{}}
+}
+
+// Put keeps code's buckets that are not full at now, and reached, the
+// most batches the table reached (0 for none), as the room leaves memory.
+// A room with neither leaves nothing.
+func (c *BudgetCache) Put(code string, b *Budget, reached int, now time.Time) {
+	b.prune(now)
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.drop(code)
+	if len(b.full) == 0 && reached == 0 {
+		return
+	}
+	e := budgetEntry{until: now.Add(c.ttl), reached: reached, full: maps.Clone(b.full)}
+	for _, at := range e.full {
+		if at.After(e.until) {
+			e.until = at
+		}
+	}
+	n := len(e.full) + 1
+	if n > c.size {
+		return
+	}
+	for code, old := range c.rooms {
+		if !old.until.After(now) {
+			c.drop(code)
+		}
+	}
+	for c.held+n > c.size {
+		first := ""
+		for code, old := range c.rooms {
+			if first == "" || old.until.Before(c.rooms[first].until) {
+				first = code
+			}
+		}
+		c.drop(first)
+	}
+	c.rooms[code] = e
+	c.held += n
+}
+
+// Take moves code's entry, if it has not expired at now, into b, and
+// returns the most batches it reached (0 for none).
+func (c *BudgetCache) Take(code string, b *Budget, now time.Time) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	e, ok := c.rooms[code]
+	if !ok {
+		return 0
+	}
+	c.drop(code)
+	if !e.until.After(now) {
+		return 0
+	}
+	for u, at := range e.full {
+		if at.After(now) {
+			b.full[u] = at
+		}
+	}
+	return e.reached
+}
+
+func (c *BudgetCache) drop(code string) {
+	if e, ok := c.rooms[code]; ok {
+		c.held -= len(e.full) + 1
+		delete(c.rooms, code)
+	}
 }

@@ -51,6 +51,48 @@ func TestBudget(t *testing.T) {
 	}
 }
 
+// TestBudgetCache: a room's spent buckets and high-water mark come back
+// on its next load, once; what has refilled by then does not; an entry
+// lasts burst times interval; past its size the entry that would expire
+// first goes; a full budget with no mark leaves nothing.
+func TestBudgetCache(t *testing.T) {
+	c := NewBudgetCache(5, 3*time.Second)
+	spent := func(at time.Time, users ...string) *Budget {
+		b := NewBudget(3, time.Second)
+		for _, u := range users {
+			b.Charge(u, at)
+		}
+		return b
+	}
+	now := budgetT0
+	c.Put("A", spent(now, "u", "u", "u", "v"), 7, now)
+	// A second later v's bucket is full again and u's is not.
+	b := NewBudget(3, time.Second)
+	if got := c.Take("A", b, now.Add(time.Second)); got != 7 || len(b.full) != 1 || b.full["u"] != now.Add(3*time.Second) {
+		t.Fatalf("taken back: reached %d, buckets %v", got, b.full)
+	}
+	if got := c.Take("A", NewBudget(3, time.Second), now.Add(time.Second)); got != 0 {
+		t.Fatal("an entry taken twice")
+	}
+	c.Put("B", spent(now, "u"), 0, now)
+	b = NewBudget(3, time.Second)
+	if got := c.Take("B", b, now.Add(3*time.Second)); got != 0 || len(b.full) != 0 {
+		t.Fatal("an expired entry came back")
+	}
+	c.Put("C", NewBudget(3, time.Second), 0, now)
+	if len(c.rooms) != 0 {
+		t.Fatal("a full budget with no mark was kept")
+	}
+	// Size 5: C (two buckets and the room) and then D (one and the room)
+	// fit; E (one and the room) pushes out C, which expires first.
+	c.Put("C", spent(now, "u", "v"), 0, now)
+	c.Put("D", spent(now.Add(time.Second), "u"), 0, now.Add(time.Second))
+	c.Put("E", spent(now.Add(time.Second), "u"), 0, now.Add(time.Second))
+	if _, ok := c.rooms["C"]; ok || len(c.rooms) != 2 || c.held != 4 {
+		t.Fatalf("after the size bound: %d rooms, %d held", len(c.rooms), c.held)
+	}
+}
+
 // changes sends n private pick changes for seat's user, alternating
 // between two keys and between the clients ids, and expects each accepted.
 // It returns the next seq of each client.
@@ -154,10 +196,16 @@ func TestNewPointRefillsTheBudget(t *testing.T) {
 // TestUndoDoesNotRefillTheBudget: reaching a point again after an undo is
 // not a new point, so an undo and a pick cannot be cycled to refill the
 // budget.
-func TestUndoDoesNotRefillTheBudget(t *testing.T) {
+func TestUndoDoesNotRefillTheBudget(t *testing.T) { undoRefill(t, false) }
+
+// TestEvictionKeepsTheHighWaterMark: nor can an eviction between the undo
+// and the pick, which loads the table at fewer batches than it reached.
+func TestEvictionKeepsTheHighWaterMark(t *testing.T) { undoRefill(t, true) }
+
+func undoRefill(t *testing.T, evict bool) {
 	work := faults.NewWork(true)
 	clk := roomtest.NewFakeClock(budgetT0)
-	h := newTH(t, Config{Clock: clk, BotWork: work.Run}, soloSpec(3, 23, BotEasy))
+	h := newTHRooms(t, Config{Clock: clk, BotWork: work.Run}, soloSpec(3, 23, BotEasy), 1)
 	me := tabletest.SeatClient(0)
 	fr := h.until(me, "the first point", func(st wire.TableState) bool { return st.Point != nil })
 	h.pickSelf(1, fr.View.You.Choices[0].Key)
@@ -174,9 +222,16 @@ func TestUndoDoesNotRefillTheBudget(t *testing.T) {
 		t.Fatalf("the undo: %s", out)
 	}
 	// The second point's search is cancelled before any release, so both
-	// releases go to the first point's searches.
+	// releases go to the first point's searches; so is the first point's
+	// search, if the table is evicted.
 	waitFor(t, "the cancelled search", func() bool { _, _, c := work.Counts(); return c > cancelled })
 	fr = h.until(me, "the first point again", func(st wire.TableState) bool { return st.Batch == 0 && st.Point != nil })
+	if evict {
+		_, _, cancelled = work.Counts()
+		h.evict(24)
+		waitFor(t, "the search cancelled by the eviction", func() bool { _, _, c := work.Counts(); return c > cancelled })
+		fr = h.until(me, "the first point, loaded again", func(st wire.TableState) bool { return st.Batch == 0 && st.Point != nil })
+	}
 	seqs[me]++
 	h.pickSelf(int(seqs[me]), fr.View.You.Choices[0].Key)
 	work.Release()
@@ -185,6 +240,104 @@ func TestUndoDoesNotRefillTheBudget(t *testing.T) {
 	s = h.snap(me)
 	h.changes(1, s.Ref, [2]string{s.Legal[1], s.Legal[0]}, []tabletest.ClientID{me}, seqs, false)
 	h.expect(h.send(me, seqs[me]+1, s.Ref, s.Legal[1], false), tabletest.Rate, "past the budget after the undo")
+}
+
+// newTHRooms is newTH with the Manager holding at most maxRooms rooms, so
+// that making another table evicts this one (evict).
+func newTHRooms(t *testing.T, cfg Config, spec Spec, maxRooms int) *th {
+	t.Helper()
+	ctx := testContext(t)
+	f := newFixture(t, cfg)
+	f.maxRooms = maxRooms
+	f.restart()
+	p, err := f.openInproc(ctx, spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &th{t: t, ctx: ctx, f: f, p: p}
+}
+
+// evict detaches every client, makes another table, which pushes this
+// one out of memory (newTHRooms with 1), and joins the clients again,
+// which loads it back.
+func (h *th) evict(seed uint64) {
+	h.t.Helper()
+	h.away()
+	other, err := h.f.tables.CreateTable(humans(3, seed))
+	if err != nil {
+		h.t.Fatal(err)
+	}
+	// The new table tells the Manager it may be evicted from its own
+	// goroutine; until it has, the rejoin finds no room to evict.
+	if a := h.f.tables.lookup(other); a != nil {
+		_ = a.call(h.ctx, func() {})
+	}
+	if h.f.m.Loaded(h.p.code) {
+		h.t.Fatal("the table was not evicted")
+	}
+	h.rejoin()
+}
+
+// away detaches every client, keeping them for rejoin, and waits until
+// the actor has seen it, so the table is idle.
+func (h *th) away() {
+	h.t.Helper()
+	h.p.leave()
+	a, err := h.p.actor()
+	if err == nil {
+		err = a.call(h.ctx, func() {})
+	}
+	if err != nil {
+		h.t.Fatal(err)
+	}
+}
+
+// TestEvictionKeepsTheBudget: a table pushed out of memory and loaded
+// again, however often, keeps its users' spent budgets, which refill with
+// time as before; a restart of the server starts them full. Before, every
+// load started every user full, so a user past the budget had it all back
+// after an eviction, which needs only another room to be made (found by
+// the slice's review).
+func TestEvictionKeepsTheBudget(t *testing.T) {
+	clk := roomtest.NewFakeClock(budgetT0)
+	h := newTHRooms(t, Config{Clock: clk, BotWork: blockBots}, humans(3, 452), 1)
+	me := tabletest.SeatClient(0)
+	s := h.snap(me)
+	keys := [2]string{s.Legal[0], s.Legal[1]}
+	seqs := map[tabletest.ClientID]uint64{}
+	h.changes(DefaultRequestBurst, s.Ref, keys, []tabletest.ClientID{me}, seqs, false)
+	next := seqs[me] + 1
+	for i := range 3 {
+		h.expect(h.send(me, next, s.Ref, keys[0], false), tabletest.Rate, fmt.Sprintf("past the budget after %d evictions", i))
+		h.evict(uint64(460 + i))
+	}
+	h.expect(h.send(me, next, s.Ref, keys[0], false), tabletest.Rate, "past the budget after 3 evictions")
+	clk.Advance(DefaultRequestInterval)
+	h.expect(h.send(me, next, s.Ref, keys[0], false), tabletest.Accepted, "a second later")
+	h.expect(h.send(me, next+1, s.Ref, keys[1], false), tabletest.Rate, "with that token spent")
+	h.f.restart()
+	h.rejoin()
+	h.expect(h.send(me, next+1, s.Ref, keys[1], false), tabletest.Accepted, "after a restart")
+}
+
+// TestIdleUnloadKeepsTheBudget: a table that leaves memory when idle keeps
+// its spent budgets too, less what refilled meanwhile.
+func TestIdleUnloadKeepsTheBudget(t *testing.T) {
+	clk := roomtest.NewFakeClock(budgetT0)
+	h := newTH(t, Config{Clock: clk, BotWork: blockBots, IdleTimeout: 2 * DefaultRequestInterval}, humans(3, 456))
+	me := tabletest.SeatClient(0)
+	s := h.snap(me)
+	keys := [2]string{s.Legal[0], s.Legal[1]}
+	seqs := map[tabletest.ClientID]uint64{}
+	h.changes(DefaultRequestBurst, s.Ref, keys, []tabletest.ClientID{me}, seqs, false)
+	h.away()
+	clk.Advance(2 * DefaultRequestInterval)
+	waitFor(t, "the idle table to leave memory", func() bool { return !h.f.m.Loaded(h.p.code) })
+	h.rejoin()
+	next := seqs[me] + 1
+	h.expect(h.send(me, next, s.Ref, keys[0], false), tabletest.Accepted, "the first token back")
+	h.expect(h.send(me, next+1, s.Ref, keys[1], false), tabletest.Accepted, "the second token back")
+	h.expect(h.send(me, next+2, s.Ref, keys[0], false), tabletest.Rate, "a third, two seconds after the burst")
 }
 
 // TestRefusedRequestsResolveNothing: a request past the budget is refused

@@ -39,8 +39,9 @@ type actor struct {
 	// since the connection's events so far were redacted for its old role.
 	shown map[*room.Client]int
 	// budget is the users' request budget, and reached the most batches
-	// the game has had since this actor started: a commit past it opens
-	// a point not reached before, which fills every budget.
+	// the game has had since it was loaded, or before that while the
+	// kind's BudgetCache remembers: a commit past it opens a point not
+	// reached before, which fills every budget.
 	budget  *Budget
 	reached int
 
@@ -109,6 +110,9 @@ func (t *Tables) newActor(m *room.Manager, st *state, members []Member) (*room.H
 	a := &actor{t: t, m: m, code: st.rec.Code, st: st, claims: map[*room.Client]claimed{}, shown: map[*room.Client]int{},
 		budget: NewBudget(t.cfg.RequestBurst, t.cfg.RequestInterval), reached: len(st.rec.Batches),
 		inbox: make(chan any, t.cfg.InboxSize), done: make(chan struct{})}
+	if reached := t.budgets.Take(a.code, a.budget, a.now()); reached > a.reached {
+		a.reached = reached
+	}
 	for _, mb := range members {
 		a.conns = append(a.conns, mb.Client)
 		if mb.Claim != "" {
@@ -151,6 +155,7 @@ func (a *actor) run() {
 		select {
 		case <-a.ctx.Done():
 			a.disarmIdle()
+			a.park()
 			return
 		case msg := <-a.inbox:
 			if a.handle(msg) {
@@ -180,6 +185,7 @@ func (a *actor) handle(msg any) bool {
 		close(msg.reply)
 	case msgIdle:
 		if len(a.conns) == 0 && a.now().Sub(a.emptySince) >= a.t.cfg.IdleTimeout {
+			a.park()
 			a.m.Forget(a.h)
 			return true
 		}
@@ -187,6 +193,7 @@ func (a *actor) handle(msg any) bool {
 		a.armIdle()
 	case msgEvict:
 		if len(a.conns) == 0 {
+			a.park()
 			a.m.Forget(a.h)
 			msg.reply <- true
 			return true
@@ -685,6 +692,18 @@ func (a *actor) seqKey(c *room.Client) SeqRecord {
 // is applied. Duplicates and refusals never get this far, and bots and
 // the table's own changes are never charged.
 func (a *actor) affords(c *room.Client) bool { return a.budget.Allows(a.userOf(c), a.now()) }
+
+// park hands the budget, and the most batches reached when an undo left
+// the game below it, to the kind's BudgetCache as the table leaves
+// memory, so loading it again neither fills a spent budget nor makes an
+// old point new.
+func (a *actor) park() {
+	reached := 0
+	if a.reached > len(a.st.rec.Batches) {
+		reached = a.reached
+	}
+	a.t.budgets.Put(a.code, a.budget, reached, a.now())
+}
 
 // submit applies one {seq, point, key, confirm} submission, checking in
 // the design's order: membership (the sender controls a seat, the one the

@@ -101,6 +101,8 @@ type Lobbies struct {
 	m    *room.Manager
 	st   Storage
 	live map[string]*actor
+	// budgets keeps the spent budgets of lobbies that left memory.
+	budgets *tableroom.BudgetCache
 }
 
 // New returns the lobby kind with cfg's defaults filled in, and makes it
@@ -133,7 +135,8 @@ func New(cfg Config) *Lobbies {
 	if cfg.InboxSize <= 0 {
 		cfg.InboxSize = defaultInboxSize
 	}
-	l := &Lobbies{cfg: cfg, log: cfg.Logger, live: map[string]*actor{}}
+	l := &Lobbies{cfg: cfg, log: cfg.Logger, live: map[string]*actor{},
+		budgets: tableroom.NewBudgetCache(tableroom.DefaultBudgetCacheSize, time.Duration(cfg.RequestBurst)*cfg.RequestInterval)}
 	if cfg.Tables != nil {
 		cfg.Tables.SetSuccessors(l)
 	}
