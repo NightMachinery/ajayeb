@@ -66,6 +66,13 @@ for (const locale of ['en', 'fa'] as const)
             path: path.join(out, `duel-lobby-${width}x${height}-${locale}-${theme}.png`),
             fullPage: true
           });
+          // The lobby scrolls inside the app shell. Capture its settings
+          // separately so short screens show the actual two-seat panel too.
+          await page.locator('[data-duel-settings]').scrollIntoViewIfNeeded();
+          await page.screenshot({
+            path: path.join(out, `duel-panel-${width}x${height}-${locale}-${theme}.png`),
+            fullPage: true
+          });
         }
         writeFileSync(
           path.join(out, `probes-${locale}-${theme}.json`),

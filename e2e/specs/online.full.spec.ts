@@ -230,7 +230,8 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
           expect(await hook(page, () => window.__ajayeb?.you())).toEqual({
             seats: [],
             canAct: false,
-            admin: false
+            admin: false,
+            linkAdmin: false
           });
           expect(await hook(page, () => window.__ajayeb?.room()?.version)).toBe(now.version);
           await expect(turnBar(page)).toHaveAttribute('data-turn', 'spectating');
