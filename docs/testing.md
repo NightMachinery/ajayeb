@@ -1496,6 +1496,34 @@ AJAYEB_SCORES_BROWSER_FRAMES="$D/frames-revealed.json:$D/frames-hidden.json" \
   make test-go GO_PKGS=./internal/tableroom GO_RUN=TestScoresBrowserFrames
 ```
 
+### `haftgane-admin.full.spec.ts` (`@full @mobile @haftgane-admin`)
+
+The admin controls, resignation and spectator view over a live five-seat
+table, on three devices. The creator starts it alone with bots from Home's
+lobby (`openBotTable`), so undo is on, and plays a turn: the top bar shows
+Undo. Two friends open the running table and watch: their hand region is
+the spectator panel, with the last turn and the spectators, and one of
+them follows a seat, so the ring's neighbours become that seat's. A
+non-admin's game menu offers no seat. Through the seat's admin menu
+(`seatAction`: the game menu, Manage, the action, Confirm) the creator
+seats one friend in a bot's seat: that page is seated, and the creator's
+Undo disappears with the `undo-off` notice. The creator gives the seat to
+a bot: the former player reads that a bot plays their seat, and the
+creator's seat menu shows the previous-seat hint beside them, while the
+other spectator's menu shows none and none of that page's frames carries
+`previousSeats`. The creator seats the friend again, promotes and demotes
+them from the seat menu (the role tag follows), and promotes them again;
+the friend steps down and resigns to a bot from the game menu
+(`menuAction`), and the seat goes to the easy bot. The creator promotes
+and demotes the spectator from the game menu's list, and the spectator
+still follows the table as a turn resolves. Nothing depends on a deal:
+every seat used is read from the frames. Every table frame of each page
+passes the pending-ownership oracle (which owns the pick a seat keeps when
+a page takes it, if it is one of that seat's choices), gives no seat a
+field outside the public seat and no page another seat's private view,
+and carries `previousSeats` only when the same frame lists its viewer as
+an admin. No console error or failed request is allowed.
+
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
 `e2e/specs/prod.smoke.spec.ts` is the only spec that is ever allowed to run
@@ -1904,6 +1932,22 @@ request. Two more tests open the gallery's score sheet with each
 tie-break sentence (`/dev/gallery?hgEnd=tie|shared&seats=7`), which the
 live view cannot show yet. Screenshots and `probes-*.json` go to
 `HG_SCORES_SHOTS_DIR` (default `.cache/e2e/hg-scores-shots`).
+
+`ux/haftgane-admin.spec.ts` (filter `--grep "haftgane admin"`) does the same for the admin
+controls and the spectator view. One live table each of 3, 5 and 7 seats
+is started from Home's lobby by its creator with bots; a friend joins and
+is seated in a bot's seat, and a second friend watches and follows a seat,
+each on a device of their own. In English and Persian, in both themes,
+every page reloads, and the run captures the admin's table, game menu,
+seat menu on the player's seat with its confirmation and seat menu on a
+bot's seat; the player's table, game menu and resignation confirmation;
+and the spectator's table, spectator panel and game menu. At the end the
+player's seat goes to a bot and the former player's table is captured. At
+360x740, 390x844, 844x390 and 1280x800 the probe of
+`ux/haftgane-city.spec.ts`, without its title check, must find nothing.
+The screenshots and `probes-<seats>p.json` go to `HG_ADMIN_SHOTS_DIR`
+(default `.cache/e2e/hg-admin-shots`). A last test checks the dev
+gallery's admin leaves and opens both of its seat menus under the probe.
 
 Open `index.html` directly from disk. Its contact sheet groups the captures
 by screen, links each image at full size, and lists that capture's findings.

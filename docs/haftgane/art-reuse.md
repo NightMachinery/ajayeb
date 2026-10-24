@@ -227,6 +227,10 @@ Budget five new md glyphs so the art total covers the complete base game rather 
 
 Reuse `build-from-discard` with new timing/help text. Compose all other counting scopes, science choices, production choices and trade directions from shared glyphs and live text. These five ability drawings are included in the 27-file production total; they are not additional bitmaps.
 
+### Roles
+
+Reuse Duel's `hint-crown` unchanged for the role tag beside an admin's name (M18.admin-controls-resign-and-spectator). The tag's colour and border tell the roles apart: gold for the creator, lapis for an admin, and a dashed border with a faded crown for the temporary admin. The role itself is live, translated text, or a tooltip where the far chip shows the crown alone. No new drawing is needed.
+
 ## Totals and budgets
 
 ### Production counts

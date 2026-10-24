@@ -473,6 +473,34 @@ a reload mends a client and a server that disagree.
   board keeps buttons that reopen both, and the revealed cards
   (`FinalReveal`) when the end is revealed. `table/end.ts` only reads and
   orders what the view sent.
+- **The admin controls, resignation and the spectator view**
+  (M18.admin-controls-resign-and-spectator) are phone-layout.md's section
+  3. Each control appears only when the frame says this viewer may use it,
+  and the server checks every request again. `table/admin.ts` and the
+  roles section of `table/model.ts` read the frame: each human's role
+  (`RoleTag`: a crown and "creator", "admin" or "temporary admin", the
+  crown alone on a far chip), the spectators (the humans who hold no
+  seat), the previous-seat hint (`you.previousSeats`, sent to admins
+  only), and the role buttons, which follow the lobby's rule: a real admin
+  may promote anyone who is not an admin, and may demote an admin they
+  promoted, or, as the creator, any admin but the creator. An admin's game
+  menu (`TableMenu`) lists every seat with Manage, which opens the seat's
+  admin menu (`AdminSeatMenu`, connected by `SeatMenuLayer`) over it; the
+  city sheet offers Manage too. A human's seat goes to a bot at any of the
+  three levels every table freezes, and any seat takes a connected
+  spectator, with the hint beside a former player; a real admin also gets
+  the occupant's role buttons. The game menu lists the spectators
+  (`SpectatorList`) with their role buttons, and offers "Stop being admin"
+  to a real admin and "Resign to a bot" to a seated player. Every action
+  shows what it changes first (`AdminConfirm`). Undo moves to the top bar
+  while the table allows it, beside a count of the spectators that opens
+  the game menu; when a second human sits down, the Session's `undo-off`
+  notice says why it went. A spectator's hand region is the
+  `SpectatorPanel`: seat buttons that centre the ring on the seat followed
+  (`ring(seats, follow)`), the last turn as each seat's public `last`
+  play, and the spectators. A former player first reads who plays their
+  seat now, from the seat this page held (`TableSession.held`) or an
+  admin's own hint.
 - **The development screen** (`dev/TableDev.svelte`) now shows only what
   comes before a table's first frame.
 
