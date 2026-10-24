@@ -263,9 +263,13 @@ Duel hint settings can travel in `LobbyOptions.hints` for D23's device defaults.
 The engine, replay hash and old protocol fixtures are unchanged. A shared
 Duel rematch also returns to a two-seat lobby with original humans reserved
 and the requester its only initial admin; old one-tap rematches stay as they
-were. The parent saves its reserved successor code before the lobby is made,
-so a retry or restart finds the same successor. Another room that takes that
-code is preserved and a new code is reserved.
+were. As a table does with its reserved code and its successor, the parent
+saves the code first as `rematchReserved`, then has the lobby made under it,
+then keeps it as `rematch`. A retry or restart before that step finds the
+same lobby; another room that took the reserved code is preserved and a new
+code is reserved. Once the code is the `rematch`, every request answers it
+without asking the lobby again, also after that lobby has started its own
+game and holds no lobby any more.
 
 A table's rematch is a new lobby made here,
 with the original humans' slots reserved for them: `Lobbies.Rematch` makes

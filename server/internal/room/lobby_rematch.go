@@ -40,13 +40,23 @@ func (m *Manager) successors() DuelSuccessors {
 	return m.duelSuccessors
 }
 
+// rematchLobby is doRematch for a shared game: its rematch is a two-seat
+// lobby that the shared lobby makes (DuelSuccessors), as a table's is. The
+// game first stores a reserved code (reserved), then has the lobby made
+// under it, then keeps that code as its successor (rematch). From then on
+// every request answers that code without asking the lobby again, since
+// the lobby may have started its own game by then. Only a reservation that
+// another room took before the lobby was made is given up for a new one.
 func (r *Room) rematchLobby(c *Client, mem member) (string, error) {
 	maker := r.m.successors()
 	if maker == nil {
 		return "", ErrInvalidSpec
 	}
 	for range 3 {
-		if r.rematch == "" {
+		if r.rematch != "" {
+			break
+		}
+		if r.reserved == "" {
 			if c.AllowCreate != nil && !c.AllowCreate() {
 				return "", ErrRateLimited
 			}
@@ -54,28 +64,35 @@ func (r *Room) rematchLobby(c *Client, mem member) (string, error) {
 			if err != nil {
 				return "", err
 			}
-			r.rematch = code
+			r.reserved = code
 		}
 		// The parent owns the code durably before any successor can be created.
 		if err := r.save(r.m.cfg.Store.Save); err != nil {
 			return "", ErrStorage
 		}
 		request := DuelRematch{Parent: r.code, Creator: mem.user, Seats: r.file.Seats, FirstPlayer: r.file.Options.FirstPlayer, Hints: *r.file.Hints}
-		if err := maker.RematchDuel(r.m, r.rematch, request); err != nil {
+		if err := maker.RematchDuel(r.m, r.reserved, request); err != nil {
 			if errors.Is(err, store.ErrExists) {
-				r.rematch = ""
+				r.reserved = ""
 				continue
 			}
 			return "", fmt.Errorf("%w: %v", ErrStorage, err)
 		}
-		for cl, member := range r.clients {
-			cl.Out.Push(r.rematchCreated(cl, member))
-		}
-		return r.rematch, nil
+		r.rematch, r.reserved = r.reserved, ""
+		// As in doRematch, a failed write leaves the room dirty: it keeps
+		// the successor in memory and is not evicted until a write succeeds.
+		r.persist()
+		r.log.Info("rematch", "code", r.rematch)
 	}
-	// A final collision must not be persisted as a successor on the next save.
-	if err := r.save(r.m.cfg.Store.Save); err != nil {
+	if r.rematch == "" {
+		// A final collision must not be persisted as a successor on the next save.
+		if err := r.save(r.m.cfg.Store.Save); err != nil {
+			return "", ErrStorage
+		}
 		return "", ErrStorage
 	}
-	return "", ErrStorage
+	for cl, member := range r.clients {
+		cl.Out.Push(r.rematchCreated(cl, member))
+	}
+	return r.rematch, nil
 }

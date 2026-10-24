@@ -65,6 +65,7 @@ type Room struct {
 	bot        botTask
 	botGen     uint64 // the generation of the last search started (see botTask)
 	rematch    string // the code of the rematch room, once one exists (stored in the file)
+	reserved   string // a shared game's rematch code before its lobby exists (stored in the file)
 	dropped    int    // stale bot results dropped, for tests and diagnostics
 	shownIdle  bool   // what the actor last published as idle (see publishIdle)
 
@@ -160,6 +161,7 @@ func newRoom(m *Manager, f *store.File, s engine.State, hist []histEntry) *Room 
 		// before its actor starts (createRoom saves it first).
 		emptySince: m.cfg.Clock.Now(),
 	}
+	r.reserved = f.RematchReserved
 	r.seqs.load(f.LastSeq)
 	return r
 }
@@ -831,6 +833,7 @@ func (r *Room) save(write func(*store.File) error) error {
 	f.LastSeq = r.seqs.snapshot()
 	f.Version = r.version
 	f.Rematch = r.rematch
+	f.RematchReserved = r.reserved
 	f.Updated = r.m.cfg.Clock.Now()
 	if err := write(f); err != nil {
 		r.dirty = true

@@ -516,3 +516,55 @@ func TestSharedLobbyDuelWithoutTableCreation(t *testing.T) {
 func slotOf2(st wire.LobbyState, u string) bool {
 	return slices.ContainsFunc(st.Seats, func(s wire.PlatformSeat) bool { return s.Kind == SlotHuman && s.UserID != nil && *s.UserID == u })
 }
+
+// TestSharedLobbyDuelRematchAfterSuccessorStarted: once the successor
+// lobby has started its own Duel game, so that its code holds no lobby, a
+// later rematch request from the finished parent still answers that code,
+// loaded or after a restart (from the M18.shared-lobby review's probe).
+func TestSharedLobbyDuelRematchAfterSuccessorStarted(t *testing.T) {
+	for _, restart := range []bool{false, true} {
+		t.Run(map[bool]string{false: "loaded", true: "restart"}[restart], func(t *testing.T) {
+			f := newFixture(t, nil)
+			a := f.conn(user(0), "a", "A")
+			b := f.conn(user(1), "b", "B")
+			code := f.create(a, 2, wire.LobbyOptions{})
+			f.join(b, code)
+			f.send(a, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1})
+			duelFrame(a)
+			duelFrame(b)
+			finishDuel(t, f, code, []*conn{a, b})
+			next, err := f.m.Rematch(f.ctx(), b.c, code)
+			if err != nil {
+				t.Fatal(err)
+			}
+			saved, _, err := f.st.Load(code)
+			if err != nil || saved.Rematch != next || saved.RematchReserved != "" {
+				t.Fatalf("parent did not keep its confirmed successor: %+v %v", saved, err)
+			}
+			f.join(a, next)
+			f.join(b, next)
+			b.lobby("both seated in the successor", func(st wire.LobbyState) bool { return st.CanStart })
+			f.send(b, wire.LobbyStart{T: "lobby-start", Code: next, Seq: 1})
+			duelFrame(a)
+			duelFrame(b)
+			if g, _ := f.st.Game(next); g != room.Duel {
+				t.Fatalf("successor did not start: %s", g)
+			}
+			if restart {
+				f.m.Leave(a.c, next)
+				f.m.Leave(b.c, next)
+				f.restart()
+			}
+			a2 := f.conn(user(0), "a2", "A")
+			f.join(a2, code)
+			again, err := f.m.Rematch(f.ctx(), a2.c, code)
+			if err != nil || again != next {
+				t.Fatalf("after the successor started, rematch answered %q (%v), not %s", again, err, next)
+			}
+			a2.until("the successor's created frame", func(m any) bool { c, ok := m.(wire.Created); return ok && c.Code == next })
+			if g, _ := f.st.Game(next); g != room.Duel {
+				t.Fatalf("the started successor was replaced: %s", g)
+			}
+		})
+	}
+}

@@ -147,6 +147,12 @@ type File struct {
 	// rematch, once one exists, so that every later rematch request (also
 	// after the room was evicted and reloaded) leads to that same room.
 	Rematch string `json:"rematch,omitempty"`
+	// RematchReserved is the code a finished shared Duel game (one with
+	// HintAdmins) reserved for its rematch lobby before making it, so that
+	// no successor exists that the game does not own. Once the lobby is
+	// made, the code moves to Rematch for good: that lobby may start its own
+	// game and stop being a lobby, but it stays this game's one successor.
+	RematchReserved string `json:"rematchReserved,omitempty"`
 
 	// Admin is the user id of the game's admin, who may change Hints: the
 	// user who created the room. Empty in a file written before the field
