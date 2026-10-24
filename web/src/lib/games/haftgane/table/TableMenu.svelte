@@ -17,10 +17,12 @@
     session: TableSession;
     frame: TableState;
     ready: boolean;
+    /** Opens the newest end of Age's conflicts; absent before the first. */
+    onmilitary?: () => void;
     onclose: () => void;
   }
 
-  let { session, frame, ready, onclose }: Props = $props();
+  let { session, frame, ready, onmilitary, onclose }: Props = $props();
 
   const spectators = $derived(
     frame.humans.filter(
@@ -66,6 +68,11 @@
     >
       {ht('hg.screen.menu.rules')}
     </Button>
+    {#if onmilitary}
+      <Button variant="secondary" onclick={onmilitary} data-act="menu-military">
+        {ht('hg.end.open.military')}
+      </Button>
+    {/if}
     {#if session.canControl && ready}
       <ul class="seats">
         {#each frame.seats as s (s.seat)}
