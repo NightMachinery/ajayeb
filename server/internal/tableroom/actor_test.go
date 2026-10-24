@@ -388,7 +388,7 @@ func TestWritesKeepRestoreBounds(t *testing.T) {
 			cand := a.st.rec.clone()
 			tc.mutate(&cand)
 			if !tc.ok {
-				cerr = a.commit("probe", cand, a.st.game)
+				cerr = a.commit("probe", cand, a.st.game, nil)
 			}
 		}); err != nil {
 			t.Fatal(err)

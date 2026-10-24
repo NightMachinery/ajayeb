@@ -111,6 +111,9 @@ type Config struct {
 	// BotFinished receives seedless counters/timings, never keys or private facts.
 	// It runs on the worker goroutine and must return promptly.
 	BotFinished func(BotReport)
+	// Resolving, when set, runs on the actor just before a pick resolves a
+	// batch in the engine: the tests' count of engine resolutions.
+	Resolving func()
 }
 
 // Errors of the creation API.

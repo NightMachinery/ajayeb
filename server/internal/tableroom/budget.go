@@ -1,6 +1,9 @@
 package tableroom
 
-import "time"
+import (
+	"maps"
+	"time"
+)
 
 // Defaults of a table's and a lobby's per-user limits (Config).
 const (
@@ -21,11 +24,12 @@ const (
 // Budget is a table's or a lobby's per-user request budget
 // (M16.table-request-budget). Every request that would change the room
 // takes one token from its user's bucket, shared by all of that user's
-// connections: burst tokens, refilled one every interval. A request that
-// finds the bucket empty is refused with rate before anything is applied,
-// saved or sent to anyone else. Only requests that would change something
-// are charged: a duplicate or a refusal costs nothing, and bots and the
-// room's own changes are never charged.
+// connections: burst tokens, refilled one every interval. A request is
+// checked (Allows) once its cheap checks pass and before any other work,
+// and charged (Charge) only once it is applied, so a request that finds
+// the bucket empty is refused with rate before anything is computed,
+// saved or sent to anyone else. A duplicate or a refusal costs nothing,
+// and bots and the room's own changes are never charged.
 //
 // Buckets live in memory only. A room loaded again (after a restart, or
 // an eviction, which needs it to have had no connection) starts every user
@@ -45,26 +49,30 @@ func NewBudget(burst int, interval time.Duration) *Budget {
 	return &Budget{burst: burst, interval: interval, full: map[string]time.Time{}}
 }
 
-// Spend takes one of user's tokens at now, or takes nothing and reports
-// false when none is left. Full buckets are forgotten, so the budget holds
-// only users who spent in the last burst times interval.
-func (b *Budget) Spend(user string, now time.Time) bool {
-	for u, at := range b.full {
-		if !at.After(now) {
-			delete(b.full, u)
-		}
-	}
+// Allows reports whether user has a token at now. It takes nothing.
+// Buckets that are full are forgotten, so the budget holds only users who
+// spent in the last burst times interval.
+func (b *Budget) Allows(user string, now time.Time) bool {
+	b.prune(now)
 	at := b.full[user]
 	if at.Before(now) {
 		at = now
 	}
-	at = at.Add(b.interval)
-	if at.Sub(now) > time.Duration(b.burst)*b.interval {
-		return false
+	return at.Add(b.interval).Sub(now) <= time.Duration(b.burst)*b.interval
+}
+
+// Charge takes one of user's tokens at now, which Allows found.
+func (b *Budget) Charge(user string, now time.Time) {
+	at := b.full[user]
+	if at.Before(now) {
+		at = now
 	}
-	b.full[user] = at
-	return true
+	b.full[user] = at.Add(b.interval)
 }
 
 // Refill fills every user's bucket.
 func (b *Budget) Refill() { clear(b.full) }
+
+func (b *Budget) prune(now time.Time) {
+	maps.DeleteFunc(b.full, func(_ string, at time.Time) bool { return !at.After(now) })
+}

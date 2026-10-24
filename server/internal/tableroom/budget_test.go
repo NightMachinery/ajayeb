@@ -3,6 +3,7 @@ package tableroom
 import (
 	"bytes"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,29 +16,36 @@ import (
 var budgetT0 = time.Date(2026, 10, 24, 15, 0, 0, 0, time.UTC)
 
 // TestBudget: a user's burst is taken at once, then one token comes back
-// each interval; users do not share buckets; Refill fills every bucket;
-// full buckets are forgotten.
+// each interval; asking takes nothing; users do not share buckets; Refill
+// fills every bucket; full buckets are forgotten.
 func TestBudget(t *testing.T) {
 	b := NewBudget(3, time.Second)
 	now := budgetT0
+	spend := func(u string, at time.Time) bool {
+		if !b.Allows(u, at) {
+			return false
+		}
+		b.Charge(u, at)
+		return true
+	}
 	for i := range 3 {
-		if !b.Spend("u", now) {
+		if !b.Allows("u", now) || !spend("u", now) {
 			t.Fatalf("token %d of the burst refused", i)
 		}
 	}
-	if b.Spend("u", now) || !b.Spend("v", now) {
+	if spend("u", now) || !spend("v", now) {
 		t.Fatal("past the burst, or another user's bucket")
 	}
-	if b.Spend("u", now.Add(999*time.Millisecond)) || !b.Spend("u", now.Add(time.Second)) || b.Spend("u", now.Add(time.Second)) {
+	if spend("u", now.Add(999*time.Millisecond)) || !spend("u", now.Add(time.Second)) || spend("u", now.Add(time.Second)) {
 		t.Fatal("one token per interval")
 	}
 	b.Refill()
 	for i := range 3 {
-		if !b.Spend("u", now.Add(time.Second)) {
+		if !spend("u", now.Add(time.Second)) {
 			t.Fatalf("token %d after a refill refused", i)
 		}
 	}
-	b.Spend("w", now.Add(time.Hour))
+	spend("w", now.Add(time.Hour))
 	if len(b.full) != 1 {
 		t.Fatalf("%d buckets remembered, want only the one that is not full", len(b.full))
 	}
@@ -177,4 +185,61 @@ func TestUndoDoesNotRefillTheBudget(t *testing.T) {
 	s = h.snap(me)
 	h.changes(1, s.Ref, [2]string{s.Legal[1], s.Legal[0]}, []tabletest.ClientID{me}, seqs, false)
 	h.expect(h.send(me, seqs[me]+1, s.Ref, s.Legal[1], false), tabletest.Rate, "past the budget after the undo")
+}
+
+// TestRefusedRequestsResolveNothing: a request past the budget is refused
+// before the engine works on it. A seat switch that hands a bot a pick
+// completing the batch does not resolve it, and neither does a completing
+// confirmation; a second later each resolves. Before, both resolved the
+// batch and threw it away (found by the slice's review).
+func TestRefusedRequestsResolveNothing(t *testing.T) {
+	var resolved atomic.Int64
+	clk := roomtest.NewFakeClock(budgetT0)
+	h := newTH(t, Config{Clock: clk, BotWork: blockBots, Resolving: func() { resolved.Add(1) }}, humans(3, 454))
+	admin, c1, c2 := tabletest.SeatClient(0), tabletest.SeatClient(1), tabletest.SeatClient(2)
+	want := func(n int64, what string) {
+		t.Helper()
+		if got := resolved.Load(); got != n {
+			t.Fatalf("%s: %d resolutions, want %d", what, got, n)
+		}
+	}
+	seqs := map[tabletest.ClientID]uint64{}
+	next := func(id tabletest.ClientID) uint64 { seqs[id]++; return seqs[id] }
+
+	// Seat 1 confirms and seat 2 drafts; the admin spends the budget on its
+	// own pick, ending confirmed. A bot in seat 2 would confirm the draft.
+	s1, s2 := h.snap(c1), h.snap(c2)
+	h.expect(h.send(c1, next(c1), s1.Ref, s1.Legal[0], true), tabletest.Accepted, "seat 1 confirms")
+	h.expect(h.send(c2, next(c2), s2.Ref, s2.Legal[0], false), tabletest.Accepted, "seat 2's draft")
+	s := h.snap(admin)
+	h.changes(DefaultRequestBurst, s.Ref, [2]string{s.Legal[0], s.Legal[1]}, []tabletest.ClientID{admin}, seqs, true)
+	seq := int(seqs[admin]) + 1
+	for i := range 3 {
+		if out := h.do(admin, toBot(seq, 2, BotEasy)); out != outRate {
+			t.Fatalf("switch %d past the budget: %s", i, out)
+		}
+	}
+	want(0, "refused switches")
+	clk.Advance(DefaultRequestInterval)
+	if out := h.do(admin, toBot(seq, 2, BotEasy)); out != outResolved {
+		t.Fatalf("the switch a second later: %s", out)
+	}
+	want(1, "the accepted switch")
+	seqs[admin]++
+
+	// At the next point, every budget full again: user-2 back in seat 2,
+	// seats 1 and 2 confirm, and the admin's changes leave its
+	// confirmation, the completing one, past the budget.
+	h.want(admin, toHuman(int(next(admin)), 2, userOf(2)), outAccepted, "user-2 back in seat 2")
+	s1, s2, s = h.snap(c1), h.snap(c2), h.snap(admin)
+	h.expect(h.send(c1, next(c1), s1.Ref, s1.Legal[0], true), tabletest.Accepted, "seat 1 confirms")
+	h.expect(h.send(c2, next(c2), s2.Ref, s2.Legal[0], true), tabletest.Accepted, "seat 2 confirms")
+	h.changes(DefaultRequestBurst-1, s.Ref, [2]string{s.Legal[0], s.Legal[1]}, []tabletest.ClientID{admin}, seqs, false)
+	for i := range 3 {
+		h.expect(h.send(admin, seqs[admin]+1, s.Ref, s.Legal[0], true), tabletest.Rate, fmt.Sprintf("completing confirmation %d past the budget", i))
+	}
+	want(1, "refused confirmations")
+	clk.Advance(DefaultRequestInterval)
+	h.expect(h.send(admin, seqs[admin]+1, s.Ref, s.Legal[0], true), tabletest.Resolved, "the confirmation a second later")
+	want(2, "the accepted confirmation")
 }

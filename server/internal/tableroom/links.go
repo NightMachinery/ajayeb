@@ -50,10 +50,10 @@ func (a *actor) link(c *room.Client, seat int, reset bool) string {
 		cand.Seats[seat].Epoch = cand.Public
 		s := seat
 		appendLog(&cand, wire.PlatformLogEntry{Kind: "link", At: len(cand.Batches), By: user, Seat: &s})
-		if !a.spend(c) {
+		if !a.affords(c) {
 			return a.refuse(c, 0, op, seat, outRate)
 		}
-		if err := a.commit(op, cand, a.st.game); err != nil {
+		if err := a.commit(op, cand, a.st.game, c); err != nil {
 			return a.refuse(c, 0, op, seat, outStorage)
 		}
 	}
@@ -189,7 +189,7 @@ func (a *actor) rematch(c *room.Client) string {
 		}
 		cand := r.clone()
 		cand.Reserved, cand.Rematcher = code, user
-		if err := a.commit("rematch", cand, a.st.game); err != nil {
+		if err := a.commit("rematch", cand, a.st.game, nil); err != nil {
 			return a.refuse(c, 0, "rematch", -1, outStorage)
 		}
 		r = &a.st.rec
@@ -203,7 +203,7 @@ func (a *actor) rematch(c *room.Client) string {
 		// request reserves another.
 		cand := r.clone()
 		cand.Reserved, cand.Rematcher = "", ""
-		_ = a.commit("rematch", cand, a.st.game)
+		_ = a.commit("rematch", cand, a.st.game, nil)
 		a.t.log.Warn("table rematch code taken", "room", a.code)
 		return a.refuse(c, 0, "rematch", -1, outStorage)
 	case errors.Is(err, room.ErrForbidden):
@@ -214,7 +214,7 @@ func (a *actor) rematch(c *room.Client) string {
 	}
 	cand := r.clone()
 	cand.Successor, cand.Reserved, cand.Rematcher = code, "", ""
-	if err := a.commit("rematch", cand, a.st.game); err != nil {
+	if err := a.commit("rematch", cand, a.st.game, nil); err != nil {
 		return a.refuse(c, 0, "rematch", -1, outStorage)
 	}
 	for _, o := range a.conns {

@@ -441,7 +441,7 @@ func (a *actor) checkRoles() {
 		bumpPublic(&cand)
 		retire(&a.st.rec, &cand)
 	}
-	if err := a.commit("roles", cand, a.st.game); err != nil {
+	if err := a.commit("roles", cand, a.st.game, nil); err != nil {
 		ahead := cand.Roles.Clone()
 		a.rolesAhead = &ahead
 		if retry := a.now().Add(roles.Retry); next.IsZero() || retry.Before(next) {
@@ -679,10 +679,12 @@ func (a *actor) seqKey(c *room.Client) SeqRecord {
 	return SeqRecord{User: a.userOf(c), Client: ClientKey(c.ClientID)}
 }
 
-// spend charges a request that passed every other check, and is about to
-// change the table, to its sender's user (Budget); false means refuse it
-// with rate. Duplicates and refusals never reach it, nor do bots.
-func (a *actor) spend(c *room.Client) bool { return a.budget.Spend(a.userOf(c), a.now()) }
+// affords reports whether the sender's user has a token (Budget): a
+// request that passed its cheap checks asks before any engine work, and
+// is refused with rate when not. commit takes the token once the request
+// is applied. Duplicates and refusals never get this far, and bots and
+// the table's own changes are never charged.
+func (a *actor) affords(c *room.Client) bool { return a.budget.Allows(a.userOf(c), a.now()) }
 
 // submit applies one {seq, point, key, confirm} submission, checking in
 // the design's order: membership (the sender controls a seat, the one the
@@ -744,6 +746,9 @@ func (a *actor) transact(c *room.Client, op string, seat int, cand Record, key s
 		}
 		return a.note(op, seat, outcome)
 	}
+	if c != nil && !a.affords(c) {
+		return fail(outRate)
+	}
 	g, resolved, public, err := a.applyPick(&cand, a.st.game, seat, key, confirm, by)
 	switch {
 	case err != nil:
@@ -758,10 +763,7 @@ func (a *actor) transact(c *room.Client, op string, seat int, cand Record, key s
 	if resolved {
 		openPoint(&cand, &g)
 	}
-	if c != nil && !a.spend(c) {
-		return fail(outRate)
-	}
-	if err := a.commit(op, cand, g); err != nil {
+	if err := a.commit(op, cand, g, c); err != nil {
 		return fail(outStorage)
 	}
 	var ack *wire.PlatformAck
@@ -812,6 +814,9 @@ func (a *actor) applyPick(cand *Record, g game, seat int, key string, confirm bo
 	b := BatchRecord{Point: pt.ID, Picks: make([]PickRecord, 0, pt.Required.Count())}
 	for _, s := range pt.Required.Seats() {
 		b.Picks = append(b.Picks, PickRecord{Seat: int(s), Key: pendingOf(cand, int(s)).Key})
+	}
+	if a.t.cfg.Resolving != nil {
+		a.t.cfg.Resolving()
 	}
 	next, _, err := g.Resolve(engineBatches([]BatchRecord{b})[0])
 	if err != nil {
@@ -981,6 +986,9 @@ func (a *actor) resign(c *room.Client, f wire.TableResign) string {
 // all authority retire. Then it persists, publishes to everyone and starts
 // the bot job again. seat is -1 for a role change.
 func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq int) string {
+	if !a.affords(c) {
+		return a.refuse(c, seq, op, seat, outRate)
+	}
 	g := a.st.game
 	resolved := false
 	if seat >= 0 && cand.Seats[seat].Kind == SeatBot {
@@ -1002,10 +1010,7 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), at)
 	appendLog(&cand, append(log, more...)...)
 	retire(&a.st.rec, &cand)
-	if !a.spend(c) {
-		return a.refuse(c, seq, op, seat, outRate)
-	}
-	if err := a.commit(op, cand, g); err != nil {
+	if err := a.commit(op, cand, g, c); err != nil {
 		return a.refuse(c, seq, op, seat, outStorage)
 	}
 	a.rolesAhead = nil
@@ -1051,8 +1056,12 @@ func syncWork(r *Record, g *game) {
 }
 
 // commit writes cand durably, then swaps it in with its engine value. A
-// failed write leaves the committed state as it was.
-func (a *actor) commit(op string, cand Record, g game) error {
+// failed write leaves the committed state as it was. by, when not nil, is
+// the connection whose request this is: its user is charged once the write
+// succeeds, before a new point fills every budget, so the request that
+// completes a point is paid for at that point and the next one starts
+// full.
+func (a *actor) commit(op string, cand Record, g game, by *room.Client) error {
 	cand.Updated = a.now()
 	// The candidate must restore after a restart: the same checks, on the
 	// engine value this transaction produced instead of a replay.
@@ -1069,6 +1078,9 @@ func (a *actor) commit(op string, cand Record, g game) error {
 		return err
 	}
 	a.st = &state{rec: cand, game: g}
+	if by != nil {
+		a.budget.Charge(a.userOf(by), a.now())
+	}
 	// A point the game had not reached before is a new decision for every
 	// seat: every budget is full again. Reaching a point again after an
 	// undo is not new.
@@ -1117,7 +1129,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	if cut < 0 {
 		return a.refuse(c, u.Seq, "undo", seat, outIllegal)
 	}
-	if !a.spend(c) {
+	if !a.affords(c) {
 		return a.refuse(c, u.Seq, "undo", seat, outRate)
 	}
 	cand := r.clone()
@@ -1138,7 +1150,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	}
 	cand.Hash = g.Fingerprint()
 	openPoint(&cand, &g)
-	if err := a.commit("undo", cand, g); err != nil {
+	if err := a.commit("undo", cand, g, c); err != nil {
 		return a.refuse(c, u.Seq, "undo", seat, outStorage)
 	}
 	a.stopBots()

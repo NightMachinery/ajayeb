@@ -617,10 +617,13 @@ func (a *actor) seen(c *room.Client, seq int) bool {
 	return false
 }
 
-// spend charges a request that passed every other check, and is about to
-// change the lobby, to its sender's user (tableroom.Budget); false means
-// refuse it with rate. Duplicates and refusals never reach it.
-func (a *actor) spend(c *room.Client) bool { return a.budget.Spend(a.userOf(c), a.now()) }
+// affords reports whether the sender's user has a token
+// (tableroom.Budget): a request that passed its checks asks before it is
+// applied, and is refused with rate when not. charge takes the token once
+// the request is applied. Duplicates and refusals never get this far.
+func (a *actor) affords(c *room.Client) bool { return a.budget.Allows(a.userOf(c), a.now()) }
+
+func (a *actor) charge(c *room.Client) { a.budget.Charge(a.userOf(c), a.now()) }
 
 // holdsSlot reports whether u holds a slot, taken or reserved for them.
 func (a *actor) holdsSlot(u string) bool {
@@ -631,7 +634,7 @@ func (a *actor) holdsSlot(u string) bool {
 // revision, brings the roles up to date, retires users who lost all
 // authority, persists and publishes to everyone, the sender with an ack.
 func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
-	if !a.spend(c) {
+	if !a.affords(c) {
 		return a.refuse(c, seq, op, outRate)
 	}
 	seqPut(&cand.Seqs, SeqRecord{User: a.userOf(c), Client: tableroom.ClientKey(c.ClientID), Seq: seq}, a.l.cfg.SeqClients)
@@ -643,6 +646,7 @@ func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
 	if err := a.commit(op, cand); err != nil {
 		return a.refuse(c, seq, op, outStorage)
 	}
+	a.charge(c)
 	a.rolesAhead = nil
 	a.armRoles(next)
 	away := a.revokeClaims()
@@ -813,7 +817,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	case r.SeatCount >= tableroom.MinSeats && a.l.cfg.Tables == nil:
 		a.refuse(c, f.Seq, "start", outBad)
 		return false
-	case !a.spend(c):
+	case !a.affords(c):
 		a.refuse(c, f.Seq, "start", outRate)
 		return false
 	}
