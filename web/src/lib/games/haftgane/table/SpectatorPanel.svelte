@@ -103,9 +103,11 @@
 <style>
   .watch {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 0.5rem;
     min-width: 0;
+    min-height: 0;
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--rule);
     border-radius: var(--shape-panel);
@@ -129,8 +131,10 @@
     font-size: 0.9rem;
     line-height: 1.4;
   }
+  /* Seven seats need more than a narrow phone's row: they wrap. */
   .follow {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.25rem;
     min-width: 0;
   }
