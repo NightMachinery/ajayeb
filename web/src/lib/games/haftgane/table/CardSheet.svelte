@@ -322,11 +322,16 @@
       {#if !chosen}<Button disabled class="sheet-action">{ht('hg.sheet.cannotBuild')}</Button>{/if}
       {#each actions as c (c.key)}
         {@const label = c === chosen ? choiceLabel(c) : choiceAction(c)}
+        <!-- A stage the seat can build now stands out even when it is not the
+             drafted outcome (M18.card-sheet-signals), as Duel's wonder button does. -->
         <Button
           variant={c === chosen ? 'primary' : 'secondary'}
-          class="sheet-action relative isolate overflow-hidden"
+          class="sheet-action relative isolate overflow-hidden {c.kind === 'stage' && c !== chosen
+            ? 'border-2! border-accent! bg-accent-soft! text-accent-soft-fg!'
+            : ''}"
           data-act={c.key}
           data-kind={c.kind}
+          data-stage-ready={c.kind === 'stage' ? '' : undefined}
           data-armed={armedKey === c.key ? '' : undefined}
           disabled={locked}
           onclick={() => act(c)}
@@ -334,6 +339,7 @@
           {#if armedKey === c.key}
             <span class="confirm-ring" aria-hidden="true"></span>
           {/if}
+          {#if c.kind === 'stage'}<HgGlyph name="wonder" />{/if}
           {armedKey === c.key ? t('shell.confirmArmed', { label }) : label}
         </Button>
       {/each}

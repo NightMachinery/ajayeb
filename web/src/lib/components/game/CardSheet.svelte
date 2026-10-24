@@ -9,7 +9,9 @@
   //
   // Steps: the card itself, then (Build a wonder) the wonders it could go
   // under. In wonder-first mode the sheet instead asks to confirm placing
-  // this card under the chosen wonder.
+  // this card under the chosen wonder. The Build a wonder button stands out
+  // when the view's choices let this card go under a wonder now, and names
+  // it (WonderAction.svelte, M18.card-sheet-signals).
   //
   // A covered face-up card cannot be taken yet, but the cards and both
   // cities are public, so the server sends both seats' costs for it as if
@@ -76,12 +78,13 @@
   import CardBack from '../card/CardBack.svelte';
   import CardFace from '../card/CardFace.svelte';
   import ActionButton from './ActionButton.svelte';
-  import { cardActions, wonderChoicesByCard } from './card-actions';
+  import { cardActions, readyWonders, wonderChoicesByCard } from './card-actions';
   import AfterPickPanel from './AfterPickPanel.svelte';
   import CostBreakdown from './CostBreakdown.svelte';
   import HintLines from './HintLines.svelte';
   import OutcomeLine from './OutcomeLine.svelte';
   import { reasonText } from './reasons';
+  import WonderAction from './WonderAction.svelte';
   import WonderStep from './WonderStep.svelte';
   import CoachNote from '../tutorial/CoachNote.svelte';
   import type { CoachNoteView } from '$lib/tutorial/coach.svelte';
@@ -363,15 +366,7 @@
             </div>
           {/if}
           {#if actions.wonders.length > 0}
-            <Button
-              variant="secondary"
-              full
-              class="h-auto! min-h-12 py-2 leading-tight"
-              data-control="wonder-step"
-              onclick={onwonders}
-            >
-              {t('game.action.wonder')}
-            </Button>
+            <WonderAction ready={readyWonders(actions)} onclick={onwonders} />
           {/if}
         </div>
       </div>

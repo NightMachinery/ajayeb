@@ -11,6 +11,7 @@ import {
   passPending,
   pendingSlot,
   pickableSlots,
+  readyWonders,
   wonderChoicesByCard,
   wonderStatus
 } from './card-actions';
@@ -58,6 +59,19 @@ describe('cardActions', () => {
     const waiting = view('costs-seat1');
     expect(waiting.choices).toHaveLength(0);
     expect(hasActions(cardActions(waiting, 'courthouse'))).toBe(false);
+  });
+
+  it('names the wonders a card can go under now from the choices alone (M18.card-sheet-signals)', () => {
+    const costs = view('costs-seat0');
+    expect(readyWonders(cardActions(costs, 'courthouse'))).toEqual([
+      'pyramids',
+      'temple-of-artemis'
+    ]);
+    // The same card with only disabled wonder choices: none is ready.
+    const none = { ...costs, choices: costs.choices.filter((c) => c.kind !== 'wonder') };
+    const a = cardActions(none, 'courthouse');
+    expect(a.wonders.length).toBeGreaterThan(0);
+    expect(readyWonders(a)).toEqual([]);
   });
 
   it('offers no wonder once seven are built', () => {

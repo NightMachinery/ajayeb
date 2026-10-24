@@ -55,6 +55,12 @@ export const game = {
     other: 'Discard for {count} coins'
   },
   'game.action.wonder': 'Build a wonder',
+  // Under it, when this card can go under a wonder now (the view's choices).
+  'game.action.wonderReadyOne': 'Ready: {wonder}',
+  'game.action.wonderReadyMany': {
+    one: 'Ready: {count} wonder',
+    other: 'Ready: {count} wonders'
+  },
   'game.action.buildWonder': {
     '=0': 'Build {wonder} for free',
     one: 'Build {wonder} for {count} coin',

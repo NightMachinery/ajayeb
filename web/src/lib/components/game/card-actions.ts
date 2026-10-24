@@ -69,6 +69,12 @@ export function cardActions(view: Pick<View, 'choices' | 'disabled'>, card: stri
   return out;
 }
 
+/** The wonders this card can go under now: those of its wonder options
+ *  that are one of the view's legal choices, in their order. */
+export function readyWonders(actions: CardActions): string[] {
+  return actions.wonders.filter((w) => w.choice !== undefined).map((w) => w.wonder);
+}
+
 /** Whether the card offers the player anything to do now. */
 export function hasActions(actions: CardActions): boolean {
   return (

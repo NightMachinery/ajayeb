@@ -42,6 +42,8 @@ export const game = {
   'game.action.build': { '=0': 'ساخت رایگان', other: 'ساخت با {count} سکه' },
   'game.action.discard': { other: 'کنار گذاشتن برای {count} سکه' },
   'game.action.wonder': 'ساخت یک شگفتی',
+  'game.action.wonderReadyOne': 'آماده: {wonder}',
+  'game.action.wonderReadyMany': { other: 'آماده: {count} شگفتی' },
   'game.action.buildWonder': {
     '=0': 'ساخت رایگان {wonder}',
     other: 'ساخت {wonder} با {count} سکه'
