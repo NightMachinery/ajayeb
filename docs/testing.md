@@ -1933,8 +1933,8 @@ tie-break sentence (`/dev/gallery?hgEnd=tie|shared&seats=7`), which the
 live view cannot show yet. Screenshots and `probes-*.json` go to
 `HG_SCORES_SHOTS_DIR` (default `.cache/e2e/hg-scores-shots`).
 
-`ux/haftgane-admin.spec.ts` (filter `--grep "haftgane admin"`) does the same for the admin
-controls and the spectator view. One live table each of 3, 5 and 7 seats
+`ux/haftgane-admin.spec.ts` (filter `--grep "haftgane admin"`) captures the admin controls
+and the spectator view. One live table each of 3, 5 and 7 seats
 is started from Home's lobby by its creator with bots; a friend joins and
 is seated in a bot's seat, and a second friend watches and follows a seat,
 each on a device of their own. In English and Persian, in both themes,
