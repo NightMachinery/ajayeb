@@ -422,12 +422,23 @@ async function encodeAvif(pngPath, outPath, budgetBytes, qualities) {
   return { bytes: lastSize, quality: qualities[qualities.length - 1], overBudget: true };
 }
 
-/** The PNG app icons: file name and square size, under web/static/icons/. */
+/**
+ * The PNG app icons: file name and square size, under web/static/icons/.
+ * A maskable icon draws the art at MASKABLE_ART of its size, centred on
+ * paper, so the whole roundel sits inside the safe zone (the centred
+ * circle of 80% diameter) that every launcher mask keeps. The roundel
+ * spans about 96% of the art; outside a circle of MASKABLE_KEEP of the
+ * art (as a radius) the grained paper fades into flat PAPER_HEX, so the
+ * padding shows no seam.
+ */
 const APP_ICON_PNGS = [
   { file: 'apple-touch-icon.png', size: 180 },
   { file: 'icon-192.png', size: 192 },
   { file: 'icon-512.png', size: 512 },
+  { file: 'icon-maskable-512.png', size: 512, maskable: true },
 ];
+const MASKABLE_ART = 0.8;
+const MASKABLE_KEEP = 0.49;
 const APP_ICON_ID = 'icon/app';
 
 /**
@@ -437,6 +448,7 @@ const APP_ICON_ID = 'icon/app';
  * truecolour PNG huge (408 KB at 512 px), so each is quantised to a 256
  * colour palette with Floyd-Steinberg dithering (93 KB at 512 px, 12 KB at
  * 180 px, no visible change at icon sizes) and written with no metadata.
+ * The maskable one pads the art with PAPER_HEX, the paper it was mapped to.
  */
 async function appIcons(args) {
   const manifest = await loadManifest();
@@ -451,14 +463,16 @@ async function appIcons(args) {
   await mkdir(outDir, { recursive: true });
   const targetPaperRgb = hexToRgb(PAPER_HEX);
   try {
-    for (const { file, size } of APP_ICON_PNGS) {
-      const { buf, w, h } = await cropToRawRgb(src, size, size);
+    for (const { file, size, maskable } of APP_ICON_PNGS) {
+      const art = maskable ? Math.round(size * MASKABLE_ART) : size;
+      const { buf, w, h } = await cropToRawRgb(src, art, art);
       mapPaperTone(buf, w, h, cornerPaperColor(buf, w, h), targetPaperRgb);
       const raw = path.join(scratch, file);
       await rawRgbToPng(buf, w, h, raw);
       const outPath = path.join(outDir, file);
       await run('magick', [
         raw,
+        ...(maskable ? maskablePadding(art, size) : []),
         '-dither',
         'FloydSteinberg',
         '-colors',
@@ -474,6 +488,18 @@ async function appIcons(args) {
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
+}
+
+/** magick arguments that pad an art-sized icon onto a size-sized paper square. */
+function maskablePadding(art, size) {
+  const c = art / 2;
+  const keep = `circle ${c},${c} ${c},${c - Math.round(art * MASKABLE_KEEP)}`;
+  return [
+    '(', '+clone', '-fill', 'black', '-colorize', '100', '-fill', 'white', '-draw', keep, '-blur', '0x2', ')',
+    '-alpha', 'off', '-compose', 'CopyOpacity', '-composite',
+    '-background', PAPER_HEX, '-compose', 'Over', '-flatten',
+    '-gravity', 'center', '-extent', `${size}x${size}`,
+  ];
 }
 
 /**

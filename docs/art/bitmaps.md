@@ -22,7 +22,8 @@ everything else.
 **One exception to "AVIF only": the app icon PNGs.** iOS reads its home
 screen icon from `<link rel="apple-touch-icon">` and the web app manifest
 lists its icons, and both need PNG. So `web/static/icons/` holds
-`apple-touch-icon.png` (180 px), `icon-192.png` and `icon-512.png`, made
+`apple-touch-icon.png` (180 px), `icon-192.png`, `icon-512.png` and
+`icon-maskable-512.png` (for launchers that crop icons to a shape), made
 from the approved `icon/app` original by
 `node tools/art/process.mjs --app-icons` (see step 7) and linked from
 `web/src/app.html` and `web/static/manifest.webmanifest`. Everything else
@@ -482,11 +483,19 @@ yet.
    the committed original `art/originals/icon/app.webp` (the manifest must
    have `icon/app` approved), crops and paper-maps it exactly as the AVIF
    sizes are, and writes `web/static/icons/apple-touch-icon.png` (180 px),
-   `icon-192.png` and `icon-512.png`, or the same names under `--out DIR`.
+   `icon-192.png`, `icon-512.png` and `icon-maskable-512.png`, or the same
+   names under `--out DIR`. The maskable icon is the manifest's
+   `"purpose": "maskable"` entry: Android launchers crop it to a circle or
+   a rounded square, and keep only the centred circle of 80% diameter for
+   sure. So it draws the art at 80% of its size, which puts the roundel
+   (about 96% of the art) inside that circle, and pads it with flat
+   `PAPER_HEX`; the grained paper fades into the flat paper just outside
+   the roundel's gold ring, so the padding shows no seam.
    The gouache grain makes a truecolour PNG large (408 KB at 512 px), so
    each is quantised to a 256-colour palette with Floyd-Steinberg
-   dithering (91 KB at 512 px, 11 KB at 180 px, no visible change at icon
-   sizes). It touches neither the manifest nor `web/static/art/`.
+   dithering (91 KB at 512 px, 49 KB for the maskable one, 11 KB at
+   180 px, no visible change at icon sizes). It touches neither the
+   manifest nor `web/static/art/`.
 
    **Own ground: the night texture.** The paper-tone mapping moves every
    image's own ground (its corner colour) onto `PAPER_HEX`. The ground of
