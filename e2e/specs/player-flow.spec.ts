@@ -6,6 +6,7 @@ import { FrameLog, joinByLink, newDeviceContext } from '../fixtures/online';
 
 const POPUP = '[data-move-summary]';
 const TIP_IDS = [
+  'longPress',
   'win',
   'pair',
   'denyPair',
@@ -209,10 +210,11 @@ test.describe('touch flow', { tag: ['@mobile'] }, () => {
     page
   }) => {
     await configure(page, false, true);
+    // The touch screen's long-press tip (M18.card-sheet-signals) would come first.
     await page.addInitScript(() => {
       localStorage.setItem(
         'ajayeb:tips',
-        JSON.stringify({ off: false, seen: ['pair'], tutorial: { offer: 'declined' } })
+        JSON.stringify({ off: false, seen: ['longPress', 'pair'], tutorial: { offer: 'declined' } })
       );
     });
     await page.goto('/dev/new?mode=hotseat&seed=7&scenario=science-pair');
@@ -243,7 +245,7 @@ test.describe('touch flow', { tag: ['@mobile'] }, () => {
         'ajayeb:tips',
         JSON.stringify({
           off: false,
-          seen: ['win', 'guildBack'],
+          seen: ['longPress', 'win', 'guildBack'],
           tutorial: { offer: 'declined' }
         })
       );

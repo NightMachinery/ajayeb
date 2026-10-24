@@ -55,17 +55,17 @@ async function summaryOn(page: Page): Promise<void> {
   });
 }
 
-/** Turns the first-time tips on, with none seen, once per tab (a reload keeps what the page saved). */
-async function tipsOn(page: Page): Promise<void> {
-  await page.addInitScript(() => {
+/** Turns the first-time tips on, with `seen` seen (none by default), once per tab (a reload keeps what the page saved). */
+async function tipsOn(page: Page, seen: readonly string[] = []): Promise<void> {
+  await page.addInitScript((seen) => {
     try {
       if (sessionStorage.getItem('ajayeb:e2e-tips-on')) return;
       sessionStorage.setItem('ajayeb:e2e-tips-on', '1');
-      localStorage.setItem('ajayeb:tips', JSON.stringify({ off: false, seen: [] }));
+      localStorage.setItem('ajayeb:tips', JSON.stringify({ off: false, seen }));
     } catch {
       // Storage may be blocked; the default is on anyway.
     }
-  });
+  }, seen);
 }
 
 test.describe('move review', () => {
@@ -402,7 +402,8 @@ test.describe('first-time tips', () => {
     async ({ page }) => {
       test.setTimeout(90_000);
       const problems = watchHygiene(page);
-      await tipsOn(page);
+      // On a phone the long-press tip (M18.card-sheet-signals) would come before the pair's.
+      await tipsOn(page, ['longPress']);
       const driver = await openHotseatRoom(page, 'science-pair');
       await driver.nextTurn();
 
