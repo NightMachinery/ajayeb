@@ -19,7 +19,7 @@ import type { TableState } from '../../web/src/lib/wire/platform.gen';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { quiet } from '../fixtures/layout-probes';
-import { choose, latest, openBotTable, ready } from '../fixtures/table';
+import { choose, latest, openBotTable, ready, toFinalBoard } from '../fixtures/table';
 
 const sizes = [
   [360, 740],
@@ -208,6 +208,7 @@ for (const seats of [3, 5, 7] as const) {
           await page.setViewportSize({ width: 390, height: 844 });
           await page.reload();
           await ready(page);
+          if ((await latest(page)).status === 'finished') await toFinalBoard(page);
           await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
           await expect(page.locator('html')).toHaveAttribute(
             'dir',

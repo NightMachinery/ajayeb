@@ -7,7 +7,14 @@ import path from 'node:path';
 import { test } from '../fixtures/base';
 import { newDeviceContext } from '../fixtures/online';
 import { createTableFromHome, lobbyReady } from '../fixtures/lobby';
-import { latest, pendingOwnership, ready, traffic, type Traffic } from '../fixtures/table';
+import {
+  dismissMilitary,
+  latest,
+  pendingOwnership,
+  ready,
+  traffic,
+  type Traffic
+} from '../fixtures/table';
 import { dataDir } from '../fixtures/global-setup';
 import { watchHygiene } from '../fixtures/hygiene';
 import { quiet } from '../fixtures/layout-probes';
@@ -143,6 +150,8 @@ test('special decisions reached from Home keep each frame private @full @haftgan
           if (before.status === 'finished') break;
           for (const p of pages.slice(0, 7)) {
             const f = await latest(p);
+            // The end of an Age opens the conflicts over the next decision.
+            await dismissMilitary(p);
             const seat = f.you.seat!;
             if (f.view.you?.kept && f.view.phase === 'discard-build') {
               found.add('kept');
@@ -216,9 +225,10 @@ test('special decisions reached from Home keep each frame private @full @haftgan
                   break;
                 }
               }
-              if (waiting)
+              if (waiting) {
+                await dismissMilitary(waiting);
                 await waiting.screenshot({ path: path.join(out, `${captureId}-waiting.png`) });
-              else confirmedCapture = captureId;
+              } else confirmedCapture = captureId;
               evidence.push({ id: captureId, phase: f.view.phase, point: f.point.ref.id, seat });
             }
             await submit(p, c);

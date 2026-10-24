@@ -51,6 +51,20 @@ export async function dismissMilitary(page: Page): Promise<void> {
 }
 
 /**
+ * Leaves a finished game on its final board: the last conflicts and then
+ * the score sheet open by themselves at the end (and again after a
+ * reload), both modal, so a spec that works on the board closes them.
+ */
+export async function toFinalBoard(page: Page): Promise<void> {
+  await ready(page);
+  await dismissMilitary(page);
+  const sheet = page.locator('[data-score-sheet]');
+  await expect(sheet).toBeVisible();
+  await sheet.locator('[data-act="final-board"]').click();
+  await expect(sheet).toHaveCount(0);
+}
+
+/**
  * Clicks the control with this data-act. A choice of a hand card shows in
  * the pick list once its card is selected, so the card is tapped first;
  * a seat control is in the game menu, so the menu is opened first. An open
