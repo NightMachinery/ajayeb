@@ -1815,6 +1815,43 @@ server's seed counter deals.
   hint admins), and `shared-lobby.full.spec.ts`, where no lobby and no
   role tags show once the game starts.
 
+### `app-controls.spec.ts` (`@mobile`): installing and fullscreen
+
+M18.installable-and-fullscreen. With the service worker allowed:
+
+- The manifest the Go binary serves parses and has `id`, `name`,
+  `short_name`, `start_url`, `scope`, `display: standalone`, both colours,
+  and the 192 and 512 px icons plus the maskable 512, each served as a PNG
+  of its stated size.
+- Chromium's own check, through CDP: `Page.getAppManifest` reports no
+  manifest error, and `Page.getInstallabilityErrors` reports nothing but
+  `in-incognito`. Every Playwright context is off the record, which
+  Chromium never installs from, so that one error is always there and is
+  the only one allowed.
+- Settings shows no Install row while the browser offers nothing; with a
+  stand-in for Chrome's `beforeinstallprompt` (as app.html keeps it) the
+  Install button prompts once and hides; made to look like iPhone Safari
+  (`navigator.standalone`, a touch screen, no element fullscreen) it shows
+  the two Add to Home Screen steps and no Fullscreen switch, and nothing
+  once launched from the home screen.
+- The Duel menu's Fullscreen item enters fullscreen, says "Exit full
+  screen" while on, keeps it through the menu's Home, and Settings'
+  switch, checked, leaves it. Where `fullscreenEnabled` is false neither
+  Settings nor the menu offers it.
+
+A real profile is the only place Chromium fires `beforeinstallprompt`,
+and a second browser is not allowed beside the worker's own, so that
+probe is opt-in and must run alone:
+`AJAYEB_INSTALL_PROBE=1 make e2e GREP=install-probe`. It launches a
+persistent headless Chromium with `--bypass-app-banner-engagement-checks`,
+waits for the event, expects no installability error, and finds the
+Install button in Settings.
+
+`ux/app-controls.spec.ts` captures the Install row, the iOS steps and the
+Fullscreen item of both game menus at 390x844 and 1280x800, light and
+dark, and once in Persian, into `APP_SHOTS_DIR`
+(`make shots PW_ARGS='--grep "app controls"'`).
+
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
 `e2e/specs/prod.smoke.spec.ts` is the only spec that is ever allowed to run
