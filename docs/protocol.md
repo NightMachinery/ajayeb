@@ -996,8 +996,13 @@ a shared lobby, not a client-selected game. Start selects Duel for two seats,
 Haftgane for three through seven. Options replace the complete platform
 options object: optional `seating` (`random` or `lobby`, default random),
 `firstPlayer` (Duel seat 0/1, absent means random), `allowUndo` (default true),
-and `finalReveal` (default true). Disabling final reveal also disables the
-finished game's log download. Game-specific options await their own contract.
+`finalReveal` (default true), and `sides` (`choose`, `day` or `random`,
+default day). `sides` applies to Haftgane; a two-seat Duel start ignores it.
+`choose` opens a simultaneous side point before Age I is dealt; `day` and
+`random` open Age I directly, with random sides determined by the setup seed.
+Absent side rules in older lobby records retain the day default. Start
+persists the effective rule in the table setup; rematch preserves it.
+Disabling final reveal also disables the finished game's log download.
 
 Other lobby requests carry `t`, `code` and nonnegative `seq`:
 
@@ -1072,29 +1077,33 @@ confirmed}`, with sorted seat arrays. `pending` is `{key, confirm}`, sent
 only to its owning seat. A spectator receives neither pending nor private
 view fields. `ack` is `{clientId, seq}` in the submitting connection's frame.
 
-`view` is the viewer's whitelist projection of the engine's view: `phase`,
-`age`, `turn`, `pass`, `pile` (a count), `seats` and optional `you`, `result`
-and `reveal`. Each of `seats` is one city's public `{seat, board, coins,
-built, stages, handSize, hasKept}` and optional `last` play. `you`, only for a
-seated viewer, holds that seat's own `seat`, `hand`, `kept`, `tucked`,
-`choices` (each with its `key`), `offer` and `seen`. `result` appears once the
-game is over and `reveal` once it is over with the final reveal on. Card lists
-are catalog ids in catalog order, never deal order. Until
-M16.haftgane-engine-contract links the real engine these are the fake
-engine's fields; the frame around them stays. `view` never becomes arbitrary
-JSON or serializes engine state.
+`view` carries the real Haftgane engine's whitelist projection: `phase`,
+`age`, `turn`, `pass`, `pile` (a count), `seats`, `canDownload`, and optional
+`you`, `result` and `reveal`. Nested city, choice, payment witness, notebook,
+neighbour, score and reveal shapes are the released Haftgane view DTOs
+generated in `haftgane.gen.ts` and referenced by `platform.gen.ts`. Private
+seen hands are under `you.notebook.seen`, alongside permitted pile looks and
+inference statistics. Only a seat's controller receives its `you` section.
+Results are public under either end policy; reveal and log download require
+the enabled final reveal. Card ids are catalog design slugs, never copy or
+deal ids, and card lists follow catalog order. The frame never serializes
+engine state or observation fingerprints.
 
 `events` holds the public outcomes of the resolution this frame announces,
 and is empty in any other frame. `history`, sent in join, resync and undo
 frames, and in a connection's first frame after its seat changes (a switch
 or a resignation moves it to another seat or to watching), is the complete
-list of `{batch, events}` entries, one per resolved batch, redacted for the
-frame's viewer. The events a connection received before a seat change were
-redacted for its old seat, so it replaces them. An event is `{kind, seat, play, design, stage, left, right, age, pass}`.
-Its `design` names a card only when this viewer may know it: anyone for a
-build or a salvage, only the seat itself for its own tuck, sale, leftover or
-kept card. Events never carry submitted keys. Collections are JSON arrays,
-never null.
+list of `{batch, events}` entries, redacted for the frame's viewer. History
+entry i is batch i, beginning with pre-game batch 0 (`game-start`) for every
+side rule. Chosen sides have no events in this entry; day and random sides
+carry Age I's start. Each later entry is one resolved side, turn or ability
+point. The events a connection received before a seat change were redacted
+for its old seat, so it replaces them. An event carries `{kind, seat, other,
+age, turn, play, design, stage, side, left, right, printed, delta, source,
+outcome, pass}`; `pass` is set only for `hands-passed`. A design is present
+only when this viewer may know it, and the end reveal never retroactively
+reveals hidden events in history. Events never carry submitted keys.
+Collections are JSON arrays, never null.
 
 `lobby-state` carries `t`, `game: "lobby"`, `code`, `revision`, `seatCount`,
 `options`, `seats`, `humans`, `you`, `canStart`, `roomLog`, and optional `ack`.
@@ -1522,7 +1531,7 @@ user id their `welcome` frame named, and `{"bot": "easy"}` (or `normal`,
 `hard`) a bot. `creator`, a seated human's user id, makes that human the
 table's one real admin; without it the table has no real admin, so the
 temporary-admin rule applies at once. `seed`, `randomSeating`, `hideAtEnd`,
-`allowUndo` and `prefix` (complete batches `{point, picks: [{seat, key}]}`
+`allowUndo`, `sides` (`day` by default, `choose` or `random`) and `prefix` (complete batches `{point, picks: [{seat, key}]}`
 resolved before the table opens, checked by a replay) are optional. A seat
 list or prefix the table refuses answers 400 `invalid-table`.
 
@@ -1771,10 +1780,10 @@ A Haftgane table's code answers its `ajayeb-log/2` under the same rules and
 refusals, its `hideAtEnd` being the table's final reveal turned off:
 
 ```json
-{"format": "ajayeb-log/2", "game": "haftgane", "rules": 1000,
- "setup": {"seed": 7, "seats": 3, "randomSeating": false, "hideAtEnd": false},
- "batches": [{"point": "age-1-turn-1", "picks": [{"seat": 0, "key": "build:amber:0:0"},
-   {"seat": 1, "key": "tuck:dune"}, {"seat": 2, "key": "sell:cedar"}]}],
+{"format": "ajayeb-log/2", "game": "haftgane", "rules": 1,
+ "setup": {"seed": 7, "seats": 3, "randomSeating": false, "hideAtEnd": false, "sides": "day"},
+ "batches": [{"point": "age-1-turn-1", "picks": [{"seat": 0, "key": "build:lumber-yard:0:0"},
+   {"seat": 1, "key": "build:clay-pit:0:0"}, {"seat": 2, "key": "sell:stone-pit"}]}],
  "hash": "..."}
 ```
 
@@ -1782,7 +1791,8 @@ It holds the setup, every complete batch in order and the rules hash the
 server checked by a strict replay before answering, and no seqs, arrivals,
 pending picks, bot work or point references. The server refuses to serve a
 table whose record does not replay to its hash. No command-line replay reads
-it yet.
+it yet. Development fake records with rules 1000 archive as `rules-version`
+and are never replayed as real games.
 
 To replay a downloaded Duel log and check its final hash, run
 `go -C server run ./cmd/ajayeb-sim replay ajayeb-K7QX2M-2026-10-01.json` (or a built
