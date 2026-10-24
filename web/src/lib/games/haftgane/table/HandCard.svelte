@@ -79,9 +79,13 @@
       </span>
     {/if}
     {#if keeps}
-      <span class="keep-tag" data-keeps-preview={slug}>
+      <span
+        class="keep-tag"
+        data-keeps-preview={slug}
+        {@attach tooltip({ text: ht('hg.special.kept.preview.tip') })}
+      >
         <HgGlyph name="wonder" />
-        <span>{ht('hg.special.kept.preview.tag')}</span>
+        <span class="keep-text">{ht('hg.special.kept.preview.tag')}</span>
       </span>
     {/if}
   </span>
@@ -221,6 +225,18 @@
     font-size: max(10px, 10cqi);
     font-weight: 700;
     white-space: nowrap;
+  }
+  /* On a card too narrow for the word, the wonder glyph alone marks it;
+     the word stays for screen readers and the tooltip explains it. */
+  @container (max-width: 4.5rem) {
+    .keep-text {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
   }
   .pick-tag {
     z-index: 1;
