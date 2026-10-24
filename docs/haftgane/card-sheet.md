@@ -66,6 +66,7 @@ engine state or invent payment witnesses.
 `e2e/ux/haftgane-card-sheet.spec.ts` captures all six variants at all three
 seat counts, four viewports, both themes and both directions. It checks
 horizontal overflow, 44 px controls, tooltip anchors, on-screen footer,
+readable title width, blocked-message text contrast of at least 4.5:1,
 Animation off, console errors and failed requests. The confirmation test
 checks the two-tap guard and resets it by changing payments.
 `e2e/specs/haftgane-card-sheet.full.spec.ts` plays several turns at five

@@ -424,7 +424,7 @@
     padding: 0.6rem;
     border-inline-start: 3px solid var(--cinnabar);
     background: var(--afford-short-bg);
-    color: var(--cinnabar-ink);
+    color: var(--cinnabar-paper-ink);
   }
   .actions {
     display: grid;

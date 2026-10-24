@@ -64,8 +64,27 @@ for (const locale of ['en', 'fa'] as const)
                       e.checkVisibility()
                   )
                   .map((e) => e.outerHTML.slice(0, 100));
+                const blocked = root.querySelector('[data-cannot-build]');
+                let lowContrast = false;
+                if (blocked) {
+                  const ctx = document.createElement('canvas').getContext('2d')!;
+                  const luminance = (colour: string) => {
+                    ctx.fillStyle = colour;
+                    ctx.fillRect(0, 0, 1, 1);
+                    const rgb = [...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3).map((v) => {
+                      const c = v / 255;
+                      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+                    });
+                    return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
+                  };
+                  const style = getComputedStyle(blocked);
+                  const ink = luminance(style.color),
+                    paper = luminance(style.backgroundColor);
+                  lowContrast = (Math.max(ink, paper) + 0.05) / (Math.min(ink, paper) + 0.05) < 4.5;
+                }
                 const footer = root.querySelector('.sheet-footer')!.getBoundingClientRect();
                 return {
+                  lowContrast,
                   crampedTitle: root.querySelector('h2')!.getBoundingClientRect().width < 100,
                   overflow:
                     document.documentElement.scrollWidth > innerWidth + 1 ||
@@ -89,6 +108,7 @@ for (const locale of ['en', 'fa'] as const)
                 path: path.join(out, `${seats}p-${state}-${width}x${height}-${locale}-${theme}.png`)
               });
               expect(p).toEqual({
+                lowContrast: false,
                 crampedTitle: false,
                 overflow: false,
                 small: [],
