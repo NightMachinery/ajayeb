@@ -29,6 +29,8 @@
     pass: string;
     /** Who receives the viewer's hand this Age. */
     passTo: string;
+    /** This page just saw a new Age dealt: the pass chip sweeps once. */
+    passFresh?: boolean;
     finished: boolean;
     onmenu: () => void;
     /** Takes back the viewer's last turn; absent while undo is not allowed. */
@@ -49,6 +51,7 @@
     turns,
     pass,
     passTo,
+    passFresh = false,
     finished,
     onmenu,
     onundo = null,
@@ -89,7 +92,7 @@
     {/if}
   </div>
   {#if !finished && age > 0}
-    <PassChip {pass} to={passTo} />
+    <PassChip {pass} to={passTo} fresh={passFresh} />
   {/if}
   {#if onrecap}
     {@const tip = recapUnseen ? ht('hg.recap.open.unseen') : ht('hg.recap.open')}
