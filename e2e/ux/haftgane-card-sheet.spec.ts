@@ -111,8 +111,8 @@ test('Haftgane card-sheet confirmation guards double taps and expires', async ({
   const sheet = page.locator('[data-card-sheet]');
   const action = sheet.locator('.sheet-footer [data-act^="build:"]');
   await action.evaluate((button) => {
-    button.click();
-    button.click();
+    (button as HTMLButtonElement).click();
+    (button as HTMLButtonElement).click();
   });
   await expect(sheet).toBeVisible();
   await expect(action).toHaveAttribute('data-armed', '');
