@@ -2048,6 +2048,20 @@ something. The page may log no console error or failed request. Its
 screenshots and `probes-*.json` go to `HG_TABLE_SHOTS_DIR` (default
 `.cache/e2e/hg-table-shots`).
 
+`ux/haftgane-polish.spec.ts` (filter `--grep "haftgane table polish"`)
+captures the M18.table-polish fixes over live tables from Home: tables of
+3, 5 and 7 seats in English and one of 7 in Persian, both themes. On the
+7-seat tables it checks, at 360x740 and 1280x800, that the card sheet's
+primary button is the drafted outcome, that an empty own city says so
+once and counts no empty colour, that a bot seat's admin menu offers the
+other bot levels, and that no name in the conflicts list breaks inside a
+word and each has a tooltip. On every table, at Age II's last turn with a
+card drafted, each hand card is at least 4.5rem wide (44 px on a short
+landscape screen) with its pick tag inside it, at all four sizes. Its
+checks are soft, so a run on an older build captures every state and
+reports each problem; screenshots and `report-*.json` go to
+`HG_POLISH_SHOTS_DIR` (default `.cache/e2e/hg-polish-shots`).
+
 `ux/haftgane-city.spec.ts` (filter `--grep "haftgane city"`) does the same for the city sheet and Seen hands. One
 live table each of 3, 5 and 7 seats is played to three moments: the first
 turn (Seen hands empty), Age II's second turn (Seen hands with two Ages of
