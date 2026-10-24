@@ -16,7 +16,7 @@ constants, softmax temperature and fixed work. Apprentice's temperature is
 choices, 12 cost probes and 2,616 quote calls. An allowance is per bot, never
 shared or divided among six bots.
 
-Rooms persist policy family `haftgane-bot-1`, both numeric versions, algorithm,
+Rooms persist preset set `haftgane-bot-2`, both numeric versions, algorithm,
 room code, exact allowance and bounds in each effective row. They also freeze
 all three level mappings at Start. Changing semantics requires a new relevant
 version, explicit support or rejection of persisted rows, determinism/privacy
@@ -25,21 +25,30 @@ constant or mapping change cannot silently take over an existing game's rows.
 Rules version 1 and table record format 2 are separate compatibility identities.
 Unsupported development records archive rather than acquire current defaults.
 
-The internal wire levels are:
+The internal wire levels, under preset set 2, are:
 
-- `easy`, visible persona Apprentice: Random.
-- `normal`, visible persona Scholar: Apprentice.
-- `hard`, visible persona Master: Greedy.
+- `easy`, visible persona Apprentice: Apprentice.
+- `normal`, visible persona Scholar: Greedy, a stand-in until Scholar.
+- `hard`, visible persona Master: Greedy, a stand-in until Scholar.
 
-The visible persona labels Apprentice, Scholar and Master are product labels,
-not the algorithms selected by these internal codes. In particular, this
-milestone implements neither a Scholar policy nor a Master policy. Public
-release remains gated on the sampler and Scholar. The order is supported by
-the published held-out results: both informed policies beat Random at every
-seat count, and replacing Apprentice with Greedy improves paired rank in mixed
-fields with the complete interval above zero. The complete means, intervals,
-inverse comparisons and self-play checks remain in [AI](ai.md#first-held-out-tournament).
-The room row uses the same full policy work as that tournament.
+The Apprentice label now plays the policy of that name. This milestone
+implements neither a Scholar policy nor a Master policy, so those labels
+play Greedy and are equally strong for now. Random is a simulator baseline
+only (D46) and no room level. Public release remains gated on the sampler and
+Scholar. The order is supported by the published held-out results: replacing
+Apprentice with Greedy improves paired rank in mixed fields with the complete
+interval above zero. The complete means, intervals, inverse comparisons and
+self-play checks remain in [AI](ai.md#first-held-out-tournament). The room
+row uses the same full policy work as that tournament.
+
+Preset set 1 (`haftgane-bot-1`) mapped `easy` to Random, `normal` to
+Apprentice and `hard` to Greedy. The room measurements below ran under set 1
+and were not rerun for set 2. Set 2 changed only the room mapping, not any
+policy, allowance or bound, and the tournament results are unchanged. So the
+evidence still covers every live preset: set 1 already measured six-Apprentice
+and six-Greedy tables with the same allowance and bounds. A table
+frozen under set 1 archives as `replay-failed` when it loads
+([room bots](room-bots.md#levels-and-frozen-work)).
 
 ## Rerun the measurements
 
@@ -143,6 +152,12 @@ Within each item, active and accepted-to-receipt triplets are p50/p95/p99 in
 milliseconds. Pool wait p95 is in microseconds. Hold and serialization figures
 use their explicitly defined brackets above. A case's final cold load is one
 observation. These observations do not establish a policy latency ordering.
+
+These cases ran under preset set 1, when the first three were named for the
+policy their level played. They are now named for their levels: `six-easy`
+plays Apprentice, and `six-normal` and `six-hard` play Greedy. The mixed
+cases rotate the three levels across seats, so under set 1 they included
+Random seats; under set 2 every seat is Apprentice or Greedy.
 
 - `six-random`: 108 ordinary bot decisions; active 0.029/0.081/0.220 ms.
   Pool wait p95 7.292 microseconds;

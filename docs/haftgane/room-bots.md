@@ -7,16 +7,27 @@ internal baseline policies; public release still waits for Scholar.
 
 ## Levels and frozen work
 
-The existing room codes have this internal mapping, ordered by measured
-baseline strength: `easy` is Random, `normal` is Apprentice, and `hard` is
-Greedy. They do not claim to implement the later Scholar or Master policies.
-An admin explicitly chooses the level when switching a seat to a bot.
-Resignation uses the lowest internal level, `easy`. A switch retains and
+Each room code plays the policy its persona names, where that policy exists:
+
+- `easy`, shown as Apprentice, plays the Apprentice policy (Greedy with
+  softmax noise, D46).
+- `normal`, shown as Scholar, plays deterministic Greedy as a stand-in until
+  the Scholar policy exists.
+- `hard`, shown as Master, also plays Greedy for now.
+
+So normal and hard are equally strong until Scholar lands, and there is no
+very weak room opponent. Random stays a simulator baseline only (D46). The
+order is still monotone: in the held-out tournament Greedy beats Apprentice
+in mixed fields at every seat count ([AI](ai.md#first-held-out-tournament)).
+
+An admin explicitly chooses the level when switching a seat to a bot, and
+the switch is refused unless the table froze that level. Resignation, and a
+lobby's empty slot, use the lowest level, `easy`. A switch retains and
 confirms any existing pick. Without a pick, its bot gets the full preset.
 
 Each table freezes all three presets at creation, including levels not yet
-seated. Each row contains policy family `haftgane-bot-1`, numeric policy
-version 1, preset version 1, algorithm, room level, allowance 1, maximum 217
+seated. Each row contains preset set `haftgane-bot-2` (the `policy` field),
+numeric policy version 1, preset version 1, algorithm, room level, allowance 1, maximum 217
 choices, 12 probes and 2,616 quote calls. Allowance 1 means one complete
 bounded pass, not one candidate. Apprentice uses the released fixed-point
 1.5 VP temperature. There is no reduced six-bot allowance or donated work.
@@ -31,6 +42,37 @@ Older development records without supported frozen presets archive as
 A reader that predates format 2 refuses it rather than reverting an all-human
 table's future bot switches to old defaults. Replay still uses accepted keys,
 not bot reruns. Unsupported future formats remain untouched.
+
+Preset set `haftgane-bot-1`, the first one, mapped `easy` to Random, `normal`
+to Apprentice and `hard` to Greedy. Set 2 changed only that mapping. The bot
+package's numeric policy and preset versions stay 1, because each policy's
+behaviour and the published tournament are unchanged. A table frozen under
+set 1 fails validation when it loads, so it archives as `replay-failed`
+and is never replayed under set 2. That includes all-human tables. Only
+development tables existed, so this was accepted before release.
+
+### The cost of the next preset change
+
+The frozen presets are an equality check against the build, not a second
+copy that old tables keep playing. On every restore and every commit,
+`checkWork` requires the record's presets to equal this build's. A restored
+table keeps the same bot behaviour only within one build. The next preset
+change, such as adding Scholar or retuning Apprentice, therefore archives
+every live Haftgane table, including all-human tables that never seated a
+bot, unless the slice making it changes this. That slice must choose one of
+two options:
+
+- Add a small registry of supported preset sets. An old table keeps its
+  frozen rows and plays on with its old policy under the new build, and the
+  registry drops a set only when no live table needs it.
+- Accept that every live table archives at that deploy, and say so in the
+  release notes. A softer form skips the check for all-human tables until a
+  bot seat is first needed, at the cost of the guarantee that every table's
+  presets are fixed at its start.
+
+Seat switches and seat records are already checked against the table's
+frozen presets rather than the build's, so a registry would not let a switch
+pick a level its table never froze.
 
 ## Admission, cancellation and privacy
 
@@ -96,12 +138,15 @@ Run it with `make test-go GO_PKGS=./internal/tableroom
 GO_RUN=TestSixBotPresetWaitMeasurements GOFLAGS=-count=1`.
 
 A non-race sample on 2026-10-24, one permit and one seven-seat game per
-preset (18 human-point waits and 109 completed decisions each), measured:
+preset (18 human-point waits and 109 completed decisions each), measured the
+following. It ran under preset set 1, so each item names the policy that
+played; under set 2 `easy` plays Apprentice and `normal` plays Greedy. It
+was not rerun for the remapping, which changed no policy or allowance.
 
-- Random (`easy`): 38.95 ms mean wait, 63.91 ms maximum; 1.66 ms total
-  active search and 0.050 ms total pool wait.
-- Apprentice (`normal`): 36.36 ms mean, 41.00 ms maximum; 15.99 ms active
-  and 0.024 ms pool wait.
+- Random (`easy` under set 1): 38.95 ms mean wait, 63.91 ms maximum; 1.66 ms
+  total active search and 0.050 ms total pool wait.
+- Apprentice (`normal` under set 1): 36.36 ms mean, 41.00 ms maximum;
+  15.99 ms active and 0.024 ms pool wait.
 - Greedy (`hard`): 39.60 ms mean, 68.37 ms maximum; 17.33 ms active
   and 0.032 ms pool wait.
 
@@ -113,5 +158,5 @@ changed between the two runs.
 
 For the complete version/mapping contract, retained-cache and allocation
 figures, phase and mixed-Duel latency evidence, restore times and guarded
-reruns, see [internal simple-bot evidence](simple-bots-evidence.md). The visible
-persona labels are not claims that Scholar or Master policies exist.
+reruns, see [internal simple-bot evidence](simple-bots-evidence.md). The Scholar
+and Master labels are not claims that those policies exist; both play Greedy.
