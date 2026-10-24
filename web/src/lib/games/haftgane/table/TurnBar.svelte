@@ -2,7 +2,9 @@
   // The turn bar: what the table waits for, the seat's pending pick with
   // Confirm or Change, and the chosen count (one dot per seat the point
   // asks, filled once it confirmed). The dots and count come from the
-  // frame's point.
+  // frame's point. A confirmed pick shows a check that pops in, and a dot
+  // fills smoothly as its seat confirms; with Animation off both are
+  // simply there.
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
@@ -43,7 +45,9 @@
         class="pending"
         data-pending={pending.key}
         data-pending-confirm={String(pending.confirm)}
-        dir="auto">{pendingLabel}</span
+        dir="auto"
+        >{#if pending.confirm}<span class="check" aria-hidden="true">✓</span
+          >{/if}{pendingLabel}</span
       >
     {/if}
   </div>
@@ -151,8 +155,22 @@
     height: 0.55rem;
     border: 1.5px solid var(--afford-ok);
     border-radius: 9999px;
+    transition: background-color var(--dur-base) ease-out;
   }
   .dots i.on {
     background: var(--afford-ok);
+  }
+  .check {
+    display: inline-block;
+    margin-inline-end: 0.25rem;
+    color: var(--afford-ok);
+    font-weight: 700;
+    animation: check-pop var(--dur-slow) cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  @keyframes check-pop {
+    from {
+      opacity: 0;
+      scale: 0.4;
+    }
   }
 </style>
