@@ -18,6 +18,8 @@
   // direction, as Duel's areas do.
   import '../theme.css';
   import type { Snippet } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { i18n } from '$lib/i18n';
   import type { TableState } from '$lib/wire/platform.gen';
   import { ht } from '../i18n/messages.svelte';
@@ -34,6 +36,12 @@
   import CitySheet from './CitySheet.svelte';
   import SeenHandsButton from './SeenHandsButton.svelte';
   import SeenHandsSheet from './SeenHandsSheet.svelte';
+  import AgeMilitary from './AgeMilitary.svelte';
+  import EndActions from './EndActions.svelte';
+  import FinalReveal from './FinalReveal.svelte';
+  import ScoreSheet from './ScoreSheet.svelte';
+  import { downloadTableLog } from './download';
+  import { conflictsByAge } from './end';
   import { settings } from '$lib/ui/settings.svelte';
   import TableMenu from './TableMenu.svelte';
   import TableTopBar from './TableTopBar.svelte';
@@ -154,6 +162,36 @@
   // The city sheet's seat, and whether the Seen hands sheet is open.
   let citySeat = $state<number | null>(null);
   let seenOpen = $state(false);
+
+  // The end of an Age and of the game (phone-layout.md, section 6). The
+  // military dialog opens by itself while the newest conflicts are fresh,
+  // that is while the batch on screen is the one that reported them, also
+  // after a reload; closing it is local. The score sheet follows once the
+  // game is over. Both reopen on request.
+  const ages = $derived(conflictsByAge(session.history, frame.batch));
+  const newest = $derived(ages.at(-1) ?? null);
+  const fresh = $derived(newest !== null && newest.batch === frame.batch);
+  let militaryClosed = $state<number | null>(null);
+  let militaryAsked = $state(false);
+  let militaryAge = $state<number | null>(null);
+  const militaryOpen = $derived(
+    newest !== null && (militaryAsked || (fresh && militaryClosed !== newest.batch))
+  );
+  const military = $derived(ages.find((a) => a.age === militaryAge) ?? newest);
+  let scoresClosed = $state(false);
+  const scoresOpen = $derived(finished && !!view.result && !militaryOpen && !scoresClosed);
+  let revealOpen = $state(false);
+
+  function openMilitary(): void {
+    menuOpen = false;
+    militaryAge = null;
+    militaryAsked = true;
+  }
+  function closeMilitary(): void {
+    militaryAsked = false;
+    militaryAge = null;
+    militaryClosed = newest?.batch ?? null;
+  }
 
   const nameOf = (seat: number) => seatName(frame, seat);
   const passTo = $derived(
@@ -359,8 +397,15 @@
           onconfirm={confirm}
           onwithdraw={change}
         />
-        {#if finished && over}
+        {#if finished && over && !scoresOpen}
           {@render over()}
+        {/if}
+        {#if finished && view.result}
+          <EndActions
+            onscores={() => (scoresClosed = false)}
+            onconflicts={newest ? openMilitary : undefined}
+            onreveal={view.reveal ? () => (revealOpen = true) : undefined}
+          />
         {/if}
       </div>
     </div>
@@ -433,9 +478,59 @@
     />
   {/if}
 
+  {#if militaryOpen && military}
+    <div dir={i18n.dir}>
+      <AgeMilitary
+        age={military.age}
+        ages={ages.map((a) => a.age)}
+        conflicts={military.conflicts}
+        seats={view.seats}
+        {names}
+        you={mySeat}
+        shieldsKnown={military.batch === frame.batch}
+        latest={military.batch === newest?.batch}
+        onage={(age) => (militaryAge = age)}
+        onclose={closeMilitary}
+      />
+    </div>
+  {/if}
+
+  {#if scoresOpen && view.result}
+    <div dir={i18n.dir}>
+      <ScoreSheet
+        result={view.result}
+        seats={view.seats}
+        {names}
+        you={mySeat}
+        canDownload={view.canDownload}
+        ondownload={() => downloadTableLog(frame.code)}
+        onhome={() => goto(resolve('/'))}
+        onclose={() => (scoresClosed = true)}
+        rematch={over}
+      />
+    </div>
+  {/if}
+
+  {#if revealOpen && view.reveal}
+    <div dir={i18n.dir}>
+      <FinalReveal
+        reveal={view.reveal}
+        seats={view.seats}
+        {names}
+        onclose={() => (revealOpen = false)}
+      />
+    </div>
+  {/if}
+
   {#if menuOpen}
     <div dir={i18n.dir}>
-      <TableMenu {session} {frame} {ready} onclose={() => (menuOpen = false)} />
+      <TableMenu
+        {session}
+        {frame}
+        {ready}
+        onmilitary={newest ? openMilitary : undefined}
+        onclose={() => (menuOpen = false)}
+      />
     </div>
   {/if}
 </div>
