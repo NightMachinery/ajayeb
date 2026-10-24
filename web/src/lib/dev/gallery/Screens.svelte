@@ -27,8 +27,10 @@
   // would split them into a chunk shared with Haftgane's entry, whose name
   // every page's route map then carries (docs/architecture.md, "Chunks").
   let HaftganeTable = $state.raw<Component | null>(null);
+  let HaftganeEnd = $state.raw<Component | null>(null);
   onMount(() => {
     void import('./HaftganeTable.svelte').then((m) => (HaftganeTable = m.default));
+    void import('./HaftganeEnd.svelte').then((m) => (HaftganeEnd = m.default));
   });
 
   const sampleRooms: readonly SavedRoom[] = [
@@ -161,6 +163,8 @@
   <HaftganeRules />
 
   {#if HaftganeTable}<HaftganeTable />{/if}
+
+  {#if HaftganeEnd}<HaftganeEnd />{/if}
 
   <Tutorial />
 </div>

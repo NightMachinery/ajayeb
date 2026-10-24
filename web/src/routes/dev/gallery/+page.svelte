@@ -31,6 +31,7 @@
   // traces, especially the hundreds of icon specimens. The ordinary
   // gallery below still contains each leaf's standalone examples.
   let CardSheets = $state.raw<Component | null>(null);
+  let EndDialogs = $state.raw<Component | null>(null);
   onMount(() => {
     if (page.url.searchParams.has('hgSpecial'))
       void import('$lib/dev/gallery/HaftganeSpecial.svelte').then((m) => (CardSheets = m.default));
@@ -38,6 +39,8 @@
       void import('$lib/dev/gallery/HaftganeCardSheets.svelte').then(
         (m) => (CardSheets = m.default)
       );
+    if (page.url.searchParams.has('hgEnd'))
+      void import('$lib/dev/gallery/HaftganeEnd.svelte').then((m) => (EndDialogs = m.default));
   });
   const toasts = new Toasts();
 
@@ -49,6 +52,11 @@
 
 {#if page.url.searchParams.has('hgSheet') || page.url.searchParams.has('hgSpecial')}
   {#if CardSheets}<CardSheets />{/if}
+{:else if page.url.searchParams.has('hgEnd')}
+  {#if EndDialogs}<EndDialogs
+      focus={page.url.searchParams.get('hgEnd')}
+      seatCount={Number(page.url.searchParams.get('seats') ?? 7)}
+    />{/if}
 {:else}
   <main class="mx-auto flex h-full max-w-3xl flex-col gap-10 overflow-y-auto px-4 py-6 pb-16">
     <header class="flex flex-wrap items-center justify-between gap-3">
