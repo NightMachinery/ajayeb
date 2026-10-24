@@ -57,11 +57,14 @@ func TestDriverInProcess(t *testing.T) {
 // reference model: every arrival order of small points gives one batch.
 // Like -short, the race build skips it: thousands of tables add arrival
 // orders, not concurrency, and it runs without the race detector in
-// verify-quick and CI's go job.
+// verify-quick and CI's go job. It runs in parallel with
+// TestDifferentialAgainstDirect: each has its own fixtures, and their
+// deadlines are minutes, not seconds.
 func TestEveryArrivalOrderInProcess(t *testing.T) {
 	if testing.Short() || RaceEnabled {
 		t.Skip("thousands of tables")
 	}
+	t.Parallel()
 	ctx := testContextFor(t, 10*time.Minute)
 	cases := []struct {
 		name  string
@@ -151,8 +154,10 @@ func salvagePrefix(t *testing.T, seats int) (uint64, []tabletest.Batch) {
 // evictions and stale seqs. After every arrival every viewer (each seat's
 // two tabs and the spectator) sees the same point, required and confirmed
 // seats, offer, pick and confirmation in both. The race build plays 3 and
-// 7 seats only (SweepSeats).
+// 7 seats only (SweepSeats). It runs in parallel (see
+// TestEveryArrivalOrderInProcess).
 func TestDifferentialAgainstDirect(t *testing.T) {
+	t.Parallel()
 	seen := map[tabletest.Outcome]int{}
 	for _, n := range SweepSeats() {
 		for _, seqClients := range []int{32, 1} {
