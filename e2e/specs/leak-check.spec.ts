@@ -16,6 +16,7 @@ import {
   checkLeaks,
   describeLeaks,
   mentions,
+  withoutHintNames,
   type CapturedFrame,
   type LeakRule,
   type ViewerStream
@@ -256,3 +257,18 @@ function ageCards(game: RecordedOnlineGame, age: number): Set<string> {
   }
   return out;
 }
+
+test('the shared lobby hint vocabulary exemption preserves every other name', () => {
+  const msg = { t: 'lobby-state', options: { hints: { economy: true }, sides: 'day' } };
+  const filtered = withoutHintNames(msg);
+  expect(mentions(filtered).has('economy')).toBe(false);
+  expect(filtered).toEqual({ t: 'lobby-state', options: { sides: 'day' } });
+  expect(msg.options.hints.economy).toBe(true);
+  expect(mentions(withoutHintNames({ ...msg, planted: 'economy' })).has('economy')).toBe(true);
+  expect(
+    mentions(withoutHintNames({ ...msg, options: { ...msg.options, planted: 'economy' } })).has(
+      'economy'
+    )
+  ).toBe(true);
+  expect(withoutHintNames({ ...msg, t: 'unknown' })).toEqual({ ...msg, t: 'unknown' });
+});

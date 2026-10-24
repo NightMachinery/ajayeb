@@ -171,11 +171,19 @@ export function mentions(value: unknown): Set<string> {
  * A state frame without its hint settings (room.hints) and its room log,
  * whose fixed vocabulary of hint family names includes "economy", also the
  * id of a progress token. The server's decoder and wire tests pin that
- * vocabulary, so nothing hidden travels there. Other frames are returned as
- * they are.
+ * vocabulary, so nothing hidden travels there. Shared lobby frames carry
+ * the same fixed settings at options.hints. Only that field is removed;
+ * every other lobby field still goes through the name scan.
  */
 export function withoutHintNames<T>(msg: T): T {
-  if (!msg || typeof msg !== 'object' || (msg as { t?: unknown }).t !== 'state') return msg;
+  if (!msg || typeof msg !== 'object') return msg;
+  if ((msg as { t?: unknown }).t === 'lobby-state') {
+    const rest = { ...msg } as Record<string, unknown>;
+    const options = rest['options'];
+    if (options && typeof options === 'object') rest['options'] = withoutKeys(options, ['hints']);
+    return rest as T;
+  }
+  if ((msg as { t?: unknown }).t !== 'state') return msg;
   const { roomLog: _log, ...rest } = msg as Record<string, unknown>;
   const room = rest['room'];
   if (room && typeof room === 'object') {

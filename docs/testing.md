@@ -553,6 +553,10 @@ D61 and legacy device-link regressions use the explicit
 `createLegacyOnlineGame` compatibility fixture through `/dev/new`, so stored
 legacy rooms retain their original v1 entry and creator link permissions.
 The online playthrough and production smoke use Home's new shared lobby.
+The leak checker removes only the lobby's fixed `options.hints` vocabulary,
+like Duel's `room.hints`, because `economy` also names a progress token.
+A negative canary preserves a planted token name in every other lobby field;
+whole-game checks continue scanning all lobby and game frames.
 
 ### Home and the Haftgane lobby
 
