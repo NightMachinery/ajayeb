@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { ageLabel, i18n } from '$lib/i18n';
+  import { ageLabel, i18n, t } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import Sheet from '$lib/components/shell/Sheet.svelte';
   import Button from '$lib/components/shell/Button.svelte';
-  import ConfirmButton from '$lib/components/shell/ConfirmButton.svelte';
   import type { Choice, Disabled, Neighbour, Seat } from '$lib/wire/haftgane.gen';
   import { hgDesignSlugs } from '$lib/wire/haftgane-catalog.gen';
   import { ht } from '../i18n/messages.svelte';
@@ -87,7 +86,39 @@
     )
   );
 
+  // Keep the sheet's arming state in this lazy entry. Importing the
+  // shared ConfirmButton extracts it from Duel's existing PlayerStrip
+  // chunk and makes hot-seat Duel fetch it even though it never renders.
+  // Match that control's 3 s window and 350 ms accidental-double-tap guard.
+  let armedKey = $state<string | null>(null);
+  let armedAt = 0;
+  let resetTimer: ReturnType<typeof setTimeout> | undefined;
+  function disarm(): void {
+    clearTimeout(resetTimer);
+    resetTimer = undefined;
+    armedKey = null;
+  }
+  function act(c: Choice): void {
+    if (!confirmMoves) {
+      onconfirm(c.key);
+      return;
+    }
+    const now = Date.now();
+    if (armedKey !== c.key) {
+      disarm();
+      armedKey = c.key;
+      armedAt = now;
+      resetTimer = setTimeout(disarm, 3000);
+      return;
+    }
+    if (now - armedAt < 350) return;
+    disarm();
+    onconfirm(c.key);
+  }
+  $effect(() => () => clearTimeout(resetTimer));
+
   function draft(key: string): void {
+    disarm();
     const c = choices.find((x) => x.key === key);
     if (c?.kind === 'build') buildKey = key;
     if (c?.kind === 'stage') stageKey = key;
@@ -260,30 +291,24 @@
     <div class="actions" dir={i18n.dir}>
       {#each [build, stage, sale] as c, i (i)}
         {#if c}
-          {#key c.key}
-            {#if confirmMoves}
-              <ConfirmButton
-                label={i === 0 ? choiceLabel(c) : choiceAction(c)}
-                variant={i === 0 ? 'primary' : 'secondary'}
-                class="sheet-action"
-                data-act={c.key}
-                data-kind={c.kind}
-                disabled={locked}
-                onConfirm={() => onconfirm(c.key)}
-              />
-            {:else}
-              <Button
-                variant={i === 0 ? 'primary' : 'secondary'}
-                class="sheet-action"
-                data-act={c.key}
-                data-kind={c.kind}
-                disabled={locked}
-                onclick={() => onconfirm(c.key)}
-              >
-                {i === 0 ? choiceLabel(c) : choiceAction(c)}
-              </Button>
+          <Button
+            variant={i === 0 ? 'primary' : 'secondary'}
+            class="sheet-action relative isolate overflow-hidden"
+            data-act={c.key}
+            data-kind={c.kind}
+            data-armed={armedKey === c.key ? '' : undefined}
+            disabled={locked}
+            onclick={() => act(c)}
+          >
+            {#if armedKey === c.key}
+              <span class="confirm-ring" aria-hidden="true"></span>
             {/if}
-          {/key}
+            {armedKey === c.key
+              ? t('shell.confirmArmed', { label: i === 0 ? choiceLabel(c) : choiceAction(c) })
+              : i === 0
+                ? choiceLabel(c)
+                : choiceAction(c)}
+          </Button>
         {:else if i === 0}<Button disabled class="sheet-action">{ht('hg.sheet.cannotBuild')}</Button
           >{/if}
       {/each}
@@ -426,6 +451,26 @@
     background: var(--afford-short-bg);
     color: var(--cinnabar-paper-ink);
   }
+  .confirm-ring {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: color-mix(in oklch, var(--on-accent) 20%, transparent);
+    transform-origin: left; /* physical-ok */
+    animation: sheet-confirm-shrink 3000ms linear forwards;
+  }
+  .confirm-ring:dir(rtl) {
+    transform-origin: right; /* physical-ok */
+  }
+  @keyframes sheet-confirm-shrink {
+    from {
+      scale: 1 1;
+    }
+    to {
+      scale: 0 1;
+    }
+  }
   .actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -453,6 +498,26 @@
     .face {
       flex-basis: 6rem;
       height: 9rem;
+    }
+    .confirm-ring {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: color-mix(in oklch, var(--on-accent) 20%, transparent);
+      transform-origin: left; /* physical-ok */
+      animation: sheet-confirm-shrink 3000ms linear forwards;
+    }
+    .confirm-ring:dir(rtl) {
+      transform-origin: right; /* physical-ok */
+    }
+    @keyframes sheet-confirm-shrink {
+      from {
+        scale: 1 1;
+      }
+      to {
+        scale: 0 1;
+      }
     }
     .actions {
       grid-template-columns: 2fr 1fr 1fr;

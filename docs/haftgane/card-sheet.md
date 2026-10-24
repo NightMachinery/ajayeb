@@ -19,8 +19,12 @@ payment list calculates a quote, affordability or legal action.
 
 Selecting a radio saves a private, unconfirmed draft through TableSession.
 Closing the sheet keeps that draft. Build, Stage and Sell confirm their own
-selected offered key. They use the existing two-tap confirmation control
+selected offered key. They follow the shell's two-tap confirmation behavior
 when Confirm moves is Always or Online only; Never sends on the first tap.
+The sheet keeps its arming state local (a 3-second window and a 350 ms
+double-tap guard) and reuses the shell Button and confirmation label.
+Importing ConfirmButton itself would extract it from Duel's existing cold
+chunk, adding a request and compressed bytes despite this sheet being lazy.
 Changing the selected payment resets an armed button. Stage payments use
 the same radio list, and the sale displays the server's gain. The footer
 stays visible while the details scroll. Short landscape and desktop place
@@ -68,7 +72,12 @@ seat counts, four viewports, both themes and both directions. It checks
 horizontal overflow, 44 px controls, tooltip anchors, on-screen footer,
 readable title width, blocked-message text contrast of at least 4.5:1,
 Animation off, console errors and failed requests. The confirmation test
-checks the two-tap guard and resets it by changing payments.
+checks the two-tap guard, expiry and resetting by changing payments.
+`e2e/ux/haftgane-card-sheet-live.spec.ts` reaches a five-seat table through
+Home and the production lobby, then captures a paid trade build and an
+offered stage or sale over that live table at all four viewports in English
+light and Persian dark. It uses the same geometry and tooltip probe as the
+standalone matrix.
 `e2e/specs/haftgane-card-sheet.full.spec.ts` plays several turns at five
 seats through real sheet controls, including a non-default payment, a stage,
 a sale and Change. Every received frame still passes the independent
