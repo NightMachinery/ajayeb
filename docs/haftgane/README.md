@@ -57,7 +57,7 @@ The design documents are kept as they were reviewed, so a few points are settled
 - Greedy is the bots' fallback and the simulator's baseline, never a level offered to players.
 - The reuse audit's `M13.*` slices are not the plan. The roadmap's M13 to M23 are.
 - The sun and moon cannot mean both a seat (as Duel's crests do) and a wonder side (as the art plan's side marker does). The art milestone settled it: seven new crests, so the sun and moon keep their day and night meaning (Open items, call 8).
-- The service worker keeps precaching the whole build, so a Duel player's browser fetches Haftgane code in the background. Art is never precached, and Home and Duel never run Haftgane code.
+- The service worker keeps precaching the whole build but the `/dev` pages' own files, so a Duel player's browser fetches Haftgane code in the background. Art is never precached, and Home and Duel never run Haftgane code.
 
 ## Decided by the owner (2026-10-21)
 

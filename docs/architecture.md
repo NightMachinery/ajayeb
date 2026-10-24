@@ -284,7 +284,7 @@ holds, whose bytes stay as they were.
 
 ## App shell
 
-The client ships with a service worker, `web/src/service-worker.ts`, served as `/service-worker.js`. It precaches the build of its version (the `_app/immutable/` files, the content-hashed fonts among them, the shell `index.html`, and the favicon, manifest and app icons), answers page loads network first with the cached shell as the offline fallback, caches `?v=`-hashed art at runtime in a bounded cache, and never touches `/ws`, `/api/*` or `/health`. Art-cache lookups and LRU refreshes share a transaction queue, so an offline request cannot mistake an entry being reordered for an uncached file. The app opens without a network and shows its own offline state; playing still needs the server. A new version waits while a game page is open. The server's headers above already fit it, so nothing on the server or a reverse proxy changes: the hashed files are immutable for a year, while the shell, `/service-worker.js`, the manifest, the favicon and the icons keep stable names and are revalidated on every load. [web/README.md](../web/README.md#app-shell) has the details.
+The client ships with a service worker, `web/src/service-worker.ts`, served as `/service-worker.js`. It precaches the build of its version (the `_app/immutable/` files, the content-hashed fonts among them, but not the files only the `/dev` pages load; the generic shell `shell.html`; and the favicon, manifest and app icons), answers page loads network first with the cached shell as the offline fallback, caches `?v=`-hashed art at runtime in a bounded cache, and never touches `/ws`, `/api/*` or `/health`. Art-cache lookups and LRU refreshes share a transaction queue, so an offline request cannot mistake an entry being reordered for an uncached file. The app opens without a network and shows its own offline state; playing still needs the server. A new version waits while a game page is open. The server's headers above already fit it, so nothing on the server or a reverse proxy changes: the hashed files are immutable for a year, while the shell, `/service-worker.js`, the manifest, the favicon and the icons keep stable names and are revalidated on every load. [web/README.md](../web/README.md#app-shell) has the details.
 
 ## Actions and views
 
@@ -579,8 +579,9 @@ the room and drops the unknown game field; the next current tab rediscovers it.
 No hidden view data is stored. Card tooltip previews now load on demand; shared
 gestures and translation lookup stay in the root. The separate optional English
 message-table split has not changed the existing translation contract here.
-The worker still precaches all build chunks so an open page keeps its lazy
-chunks across deploys. Install transfer is measured separately from cold JS.
+The worker still precaches every build chunk a real route can load, so an open
+page keeps its lazy chunks across deploys; only the `/dev` pages' own files stay
+out of install. Install transfer is measured separately from cold JS.
 
 ## The client: Transport, Session, Presenter
 

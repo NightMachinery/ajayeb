@@ -2296,7 +2296,9 @@ runs `app.html`'s inline bootstrap against the app's own storage parsing, so its
 copy of the tutorial offer test cannot drift.
 
 When changing rendering or fallback filenames, also run `shell.spec.ts` for
-worker installation and real offline Home and game deep links. The Go static
+worker installation and real offline Home and game deep links. Its install case
+also checks that install leaves out only the files the `/dev` pages alone load
+(web/README.md, "App shell"). The Go static
 handler tests keep prerendered Home separate from the generic shell, preserve
 legacy builds and retain missing-asset 404 behavior. Use the unchanged UX budget
 test for timing evidence: it reports measurements without asserting its limits,
