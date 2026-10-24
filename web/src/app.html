@@ -91,6 +91,17 @@
         }
       })();
     </script>
+    <script>
+      // Keeps Chrome's install offer for Settings' Install button, whose
+      // lazy chunk may load after the event (src/lib/ui/install.svelte.ts).
+      // No preventDefault, so the browser's own install prompts stay.
+      addEventListener('beforeinstallprompt', function (e) {
+        window.__ajayebInstall = e;
+      });
+      addEventListener('appinstalled', function () {
+        window.__ajayebInstall = null;
+      });
+    </script>
     <!-- Language stays English until the requested locale's messages have
          loaded. The root layout changes text, digits and direction together. -->
     %sveltekit.head%

@@ -25,6 +25,7 @@
   import { tips } from '$lib/ui/tips.svelte';
   import { hintHide } from '$lib/hints/local.svelte';
   import HintLocalHide from '$lib/components/hints/HintLocalHide.svelte';
+  import AppSettings from './AppSettings.svelte';
 
   // as const satisfies (not a type annotation) so each entry keeps its own
   // literal key type; t() needs that to know no params are required for it
@@ -133,6 +134,8 @@
       bind:value={() => theme.pref, (v) => theme.set(v as ThemePref)}
     />
   </div>
+
+  <AppSettings />
 
   <div class="flex flex-col gap-1.5">
     <span class="text-sm font-medium text-fg-muted" aria-hidden="true">

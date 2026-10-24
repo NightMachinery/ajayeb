@@ -1,6 +1,6 @@
 <script lang="ts">
   // The game menu (phone-layout.md section 3): the rules, the app's Sound
-  // switch and the connection; for an admin, every seat with its
+  // and Fullscreen switches and the connection; for an admin, every seat with its
   // occupant's role and a Manage button that opens the seat's admin menu
   // over this one; the spectators, with a real admin's role buttons; "Stop
   // being admin" for a real admin; and "Resign to a bot" for a seated
@@ -9,6 +9,7 @@
   // decides.
   import { t } from '$lib/i18n';
   import Button from '$lib/components/shell/Button.svelte';
+  import { fullscreen } from '$lib/ui/fullscreen.svelte';
   import { settings } from '$lib/ui/settings.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { TableState } from '$lib/wire/platform.gen';
@@ -88,6 +89,16 @@
     >
       {t(settings.value.sound ? 'game.sound.turnOff' : 'game.sound.turnOn')}
     </Button>
+    {#if fullscreen.shown}
+      <Button
+        variant="secondary"
+        onclick={() => void fullscreen.toggle()}
+        data-act="fullscreen"
+        data-fullscreen={fullscreen.active ? 'on' : 'off'}
+      >
+        {t(fullscreen.active ? 'fullscreen.exit' : 'fullscreen.enter')}
+      </Button>
+    {/if}
     {#if onmilitary}
       <Button variant="secondary" onclick={onmilitary} data-act="menu-military">
         {ht('hg.end.open.military')}

@@ -96,6 +96,13 @@ export const home = {
     'پس از حرکت حریف، پنجره‌ای کارهایش را فهرست می‌کند. با هر ضربه بسته می‌شود.',
   'home.settings.haptics': 'لرزش',
   'home.settings.hapticsHint': 'لرزشی سبک هنگام برداشتن کارت، و قوی‌تر برای کارت‌های نظامی.',
+  // The app rows: Fullscreen, and Install (a button, or iOS's steps).
+  'home.settings.fullscreenHint': 'نوارهای مرورگر را پنهان می‌کند تا وقتی از آن بیرون بیایید.',
+  'home.settings.install': 'نصب برنامه',
+  'home.settings.installHint': 'از صفحهٔ اصلی گوشی باز می‌شود، بدون نوارهای مرورگر.',
+  'home.settings.installIos1':
+    'در Safari دکمهٔ اشتراک‌گذاری (Share) را بزنید (اگر پیدا نیست، زیر ···).',
+  'home.settings.installIos2': 'گزینهٔ Add to Home Screen را انتخاب کنید.',
   // The language row. Each language is named in itself, in every locale.
   'home.settings.languageLegend': 'زبان',
   'home.settings.languageEn': 'English',

@@ -42,6 +42,10 @@ export const common = {
   'theme.light': 'Light',
   'theme.dark': 'Dark',
 
+  // The Fullscreen toggle of the game menus and Settings.
+  'fullscreen.enter': 'Full screen',
+  'fullscreen.exit': 'Exit full screen',
+
   'turn.player': "{name}'s turn",
   'cards.left.compact': '{count}',
   'cards.left': {

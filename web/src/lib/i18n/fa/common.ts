@@ -38,6 +38,10 @@ export const common = {
   'theme.light': 'روشن',
   'theme.dark': 'تیره',
 
+  // The Fullscreen toggle of the game menus and Settings.
+  'fullscreen.enter': 'تمام‌صفحه',
+  'fullscreen.exit': 'خروج از تمام‌صفحه',
+
   'turn.player': 'نوبت {name}',
   // Persian keeps the noun singular after a number, so one form serves all.
   'cards.left.compact': '{count}',

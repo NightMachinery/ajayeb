@@ -93,6 +93,12 @@ export const home = {
     'After their move, a popup lists what they did. Any tap closes it.',
   'home.settings.haptics': 'Vibration',
   'home.settings.hapticsHint': 'A light buzz when a card is taken, more for military.',
+  // The app rows: Fullscreen, and Install (a button, or iOS's steps).
+  'home.settings.fullscreenHint': "Hides the browser's bars until you leave it.",
+  'home.settings.install': 'Install the app',
+  'home.settings.installHint': "Opens from your home screen, without the browser's bars.",
+  'home.settings.installIos1': 'Tap Share in Safari (under ··· if you cannot see it).',
+  'home.settings.installIos2': 'Choose Add to Home Screen.',
   // The language row. Each language is named in itself, in every locale.
   'home.settings.languageLegend': 'Language',
   'home.settings.languageEn': 'English',

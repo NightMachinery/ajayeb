@@ -39,6 +39,8 @@
   import { restoreFocus } from '$lib/ui/dismiss';
   import BookOpen from '@lucide/svelte/icons/book-open';
   import GraduationCap from '@lucide/svelte/icons/graduation-cap';
+  import Maximize from '@lucide/svelte/icons/maximize';
+  import { fullscreen } from '$lib/ui/fullscreen.svelte';
   import { openRules } from '../rules/rules-overlay.svelte';
 
   interface Props {
@@ -294,6 +296,17 @@
       >
         <Settings class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
         {t('game.menu.settings')}
+      </button>
+    {/if}
+    {#if fullscreen.shown}
+      <button
+        type="button"
+        class={menuItem}
+        data-control="menu-fullscreen"
+        onclick={() => choose(() => void fullscreen.toggle())}
+      >
+        <Maximize class="size-5 shrink-0 text-fg-muted" aria-hidden="true" />
+        {fullscreen.active ? t('fullscreen.exit') : t('fullscreen.enter')}
       </button>
     {/if}
     <HintsMenuItem class={menuItem} onclose={() => choose(undefined)} />
