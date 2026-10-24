@@ -11,6 +11,37 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
+// TestArrivingEntryExpiringFirstIsNoted: when the cache is full, an
+// arriving entry that would expire before every cached one is the one
+// noted; it does not push out a deeper entry. Before, only cached entries
+// were compared (found by the slice's second re-check).
+func TestArrivingEntryExpiringFirstIsNoted(t *testing.T) {
+	now := budgetT0
+	c := NewBudgetCache(2, 16*time.Second)
+	deep := NewBudget(16, time.Second)
+	for range 16 {
+		deep.Charge("u", now)
+	}
+	c.Put("deep", deep, 0, now)
+	later := now.Add(time.Millisecond)
+	shallow := NewBudget(16, time.Second)
+	shallow.Charge("u", later)
+	c.Put("shallow", shallow, 0, later)
+	if _, ok := c.rooms["deep"]; !ok {
+		t.Fatal("an arriving one-token entry pushed out a sixteen-token one")
+	}
+	b := NewBudget(16, time.Second)
+	c.Take("shallow", b, later)
+	n := 0
+	for b.Allows("u", later) {
+		b.Charge("u", later)
+		n++
+	}
+	if n != 15 {
+		t.Fatalf("the noted room's user, who spent one token: %d tokens, want 15", n)
+	}
+}
+
 // TestNoteOverflowCannotRefillAnOldPoint: at a table with undo, the human
 // spends 13 tokens and undoes (14). The table is evicted, and the cache
 // overflows its entries and then its notes, so the table's note, and with

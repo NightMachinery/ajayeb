@@ -106,7 +106,8 @@ func (b *Budget) prune(now time.Time) {
 // takes them back. An entry lasts until its last bucket is full, or, with
 // a high-water mark, at least ttl (burst times interval) from the moment
 // it was handed over. Past size buckets in all (counting one for each
-// room), the entries that would expire first are dropped first.
+// room), the entry that would expire first, the arriving one included, is
+// dropped.
 //
 // A dropped entry leaves a note of when its buckets would all have been
 // full (and its high-water mark), and the room's next load starts every
@@ -184,10 +185,15 @@ func (c *BudgetCache) Put(code string, b *Budget, reached int, now time.Time) {
 	}
 	for c.held+n > c.size {
 		first := ""
-		for code, old := range c.rooms {
+		for k, old := range c.rooms {
 			if first == "" || old.until.Before(c.rooms[first].until) {
-				first = code
+				first = k
 			}
+		}
+		if first == "" || !c.rooms[first].until.Before(e.until) {
+			// The arriving entry would expire first: it is the one noted.
+			c.note(code, e, now)
+			return
 		}
 		c.note(first, c.rooms[first], now)
 		c.drop(first)
