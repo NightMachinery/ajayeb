@@ -21,7 +21,7 @@ const (
 	// a lobby, seated or watching.
 	DefaultMaxUserClients = 8
 	// DefaultBudgetCacheSize bounds the buckets, and rooms, a
-	// BudgetCache holds.
+	// BudgetCache holds, and separately the rooms it remembers dropping.
 	DefaultBudgetCacheSize = 4096
 )
 
@@ -43,8 +43,12 @@ type Budget struct {
 	interval time.Duration
 	// full holds, for each user who spent tokens, when their bucket is full
 	// again (the theoretical arrival time of the generic cell rate
-	// algorithm). A user not in it is full.
+	// algorithm). A user not in it is full, or full at floor.
 	full map[string]time.Time
+	// floor, while after now, is when every bucket is full at the latest:
+	// the room's buckets that the BudgetCache had to drop, unknown user by
+	// unknown user, were all full by then.
+	floor time.Time
 }
 
 // NewBudget returns a budget of burst tokens for each user, refilling one
@@ -58,24 +62,31 @@ func NewBudget(burst int, interval time.Duration) *Budget {
 // spent in the last burst times interval.
 func (b *Budget) Allows(user string, now time.Time) bool {
 	b.prune(now)
-	at := b.full[user]
-	if at.Before(now) {
-		at = now
-	}
-	return at.Add(b.interval).Sub(now) <= time.Duration(b.burst)*b.interval
+	return b.fullAt(user, now).Add(b.interval).Sub(now) <= time.Duration(b.burst)*b.interval
 }
 
 // Charge takes one of user's tokens at now, which Allows found.
 func (b *Budget) Charge(user string, now time.Time) {
+	b.full[user] = b.fullAt(user, now).Add(b.interval)
+}
+
+// fullAt is when user's bucket is full, now if it is.
+func (b *Budget) fullAt(user string, now time.Time) time.Time {
 	at := b.full[user]
+	if at.Before(b.floor) {
+		at = b.floor
+	}
 	if at.Before(now) {
 		at = now
 	}
-	b.full[user] = at.Add(b.interval)
+	return at
 }
 
 // Refill fills every user's bucket.
-func (b *Budget) Refill() { clear(b.full) }
+func (b *Budget) Refill() {
+	clear(b.full)
+	b.floor = time.Time{}
+}
 
 func (b *Budget) prune(now time.Time) {
 	maps.DeleteFunc(b.full, func(_ string, at time.Time) bool { return !at.After(now) })
@@ -86,30 +97,47 @@ func (b *Budget) prune(now time.Time) {
 // over its buckets that are not full as it leaves memory, and a table
 // also the most batches it reached when an undo left it above its
 // batches, which a new point is measured against; the room's next load
-// takes them back. An entry lasts burst times interval from the moment
-// it was handed over, by when each of its buckets would have filled
-// anyway. Past size buckets in all (counting one for each room), the
-// entries that would expire first are dropped first. Tables and Lobbies
-// each own one for the life of the server, so a restart is the one thing
-// that starts every budget full.
+// takes them back. An entry lasts until its last bucket is full, or, with
+// a high-water mark, at least ttl (burst times interval) from the moment
+// it was handed over. Past size buckets in all (counting one for each
+// room), the entries that would expire first are dropped first.
+//
+// A dropped entry leaves a note of when its buckets would all have been
+// full (and its high-water mark), and the room's next load starts every
+// user's bucket full only from then: no one gets back a token they would
+// not have had. Past size notes, the notes that would expire first are
+// dropped, and until the last of them would have expired every load that
+// finds neither an entry nor a note starts from its time. Tables and
+// Lobbies each own a cache for the life of the server, so a restart is
+// the one thing that starts every budget full.
 type BudgetCache struct {
 	mu    sync.Mutex
 	size  int
 	ttl   time.Duration
 	rooms map[string]budgetEntry
 	held  int
+	// lost holds the notes of dropped entries, and blind the latest time a
+	// dropped note was until.
+	lost  map[string]budgetNote
+	blind time.Time
 }
 
 type budgetEntry struct {
 	until   time.Time
 	reached int
+	floor   time.Time
 	full    map[string]time.Time
 }
 
-// NewBudgetCache returns a cache of at most size buckets whose entries
-// last ttl.
+type budgetNote struct {
+	until   time.Time
+	reached int
+}
+
+// NewBudgetCache returns a cache of at most size buckets, and size notes,
+// that keeps a high-water mark at least ttl.
 func NewBudgetCache(size int, ttl time.Duration) *BudgetCache {
-	return &BudgetCache{size: size, ttl: ttl, rooms: map[string]budgetEntry{}}
+	return &BudgetCache{size: size, ttl: ttl, rooms: map[string]budgetEntry{}, lost: map[string]budgetNote{}}
 }
 
 // Put keeps code's buckets that are not full at now, and reached, the
@@ -120,23 +148,32 @@ func (c *BudgetCache) Put(code string, b *Budget, reached int, now time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.drop(code)
-	if len(b.full) == 0 && reached == 0 {
+	delete(c.lost, code)
+	e := budgetEntry{reached: reached, full: maps.Clone(b.full)}
+	if b.floor.After(now) {
+		e.floor = b.floor
+	}
+	if len(e.full) == 0 && e.floor.IsZero() && reached == 0 {
 		return
 	}
-	e := budgetEntry{until: now.Add(c.ttl), reached: reached, full: maps.Clone(b.full)}
+	e.until = e.floor
 	for _, at := range e.full {
 		if at.After(e.until) {
 			e.until = at
 		}
 	}
-	n := len(e.full) + 1
-	if n > c.size {
-		return
+	if reached > 0 && e.until.Before(now.Add(c.ttl)) {
+		e.until = now.Add(c.ttl)
 	}
 	for code, old := range c.rooms {
 		if !old.until.After(now) {
 			c.drop(code)
 		}
+	}
+	n := len(e.full) + 1
+	if n > c.size {
+		c.note(code, e, now)
+		return
 	}
 	for c.held+n > c.size {
 		first := ""
@@ -145,6 +182,7 @@ func (c *BudgetCache) Put(code string, b *Budget, reached int, now time.Time) {
 				first = code
 			}
 		}
+		c.note(first, c.rooms[first], now)
 		c.drop(first)
 	}
 	c.rooms[code] = e
@@ -152,24 +190,38 @@ func (c *BudgetCache) Put(code string, b *Budget, reached int, now time.Time) {
 }
 
 // Take moves code's entry, if it has not expired at now, into b, and
-// returns the most batches it reached (0 for none).
+// returns the most batches it reached (0 for none). Without an entry, a
+// note of a dropped one, or a dropped note, makes b's buckets full only
+// from when the dropped ones would have been.
 func (c *BudgetCache) Take(code string, b *Budget, now time.Time) int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	e, ok := c.rooms[code]
-	if !ok {
-		return 0
-	}
-	c.drop(code)
-	if !e.until.After(now) {
-		return 0
-	}
-	for u, at := range e.full {
-		if at.After(now) {
-			b.full[u] = at
+	if e, ok := c.rooms[code]; ok {
+		c.drop(code)
+		if !e.until.After(now) {
+			return 0
 		}
+		for u, at := range e.full {
+			if at.After(now) {
+				b.full[u] = at
+			}
+		}
+		if e.floor.After(now) {
+			b.floor = e.floor
+		}
+		return e.reached
 	}
-	return e.reached
+	n, ok := c.lost[code]
+	if ok {
+		delete(c.lost, code)
+	} else {
+		n.until = c.blind
+	}
+	if !n.until.After(now) {
+		return 0
+	}
+	b.floor = n.until
+	return n.reached
 }
 
 func (c *BudgetCache) drop(code string) {
@@ -177,4 +229,30 @@ func (c *BudgetCache) drop(code string) {
 		c.held -= len(e.full) + 1
 		delete(c.rooms, code)
 	}
+}
+
+// note remembers that code's entry e was dropped at now, dropping the
+// notes that would expire first when there are size of them.
+func (c *BudgetCache) note(code string, e budgetEntry, now time.Time) {
+	for code, old := range c.lost {
+		if !old.until.After(now) {
+			delete(c.lost, code)
+		}
+	}
+	if !e.until.After(now) {
+		return
+	}
+	for len(c.lost) >= c.size {
+		first := ""
+		for code, old := range c.lost {
+			if first == "" || old.until.Before(c.lost[first].until) {
+				first = code
+			}
+		}
+		if c.lost[first].until.After(c.blind) {
+			c.blind = c.lost[first].until
+		}
+		delete(c.lost, first)
+	}
+	c.lost[code] = budgetNote{until: e.until, reached: e.reached}
 }

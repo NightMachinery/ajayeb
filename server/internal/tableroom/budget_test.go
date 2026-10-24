@@ -53,8 +53,10 @@ func TestBudget(t *testing.T) {
 
 // TestBudgetCache: a room's spent buckets and high-water mark come back
 // on its next load, once; what has refilled by then does not; an entry
-// lasts burst times interval; past its size the entry that would expire
-// first goes; a full budget with no mark leaves nothing.
+// lasts until its last bucket is full, or ttl with a mark; a full budget
+// with no mark leaves nothing; past its size the entry that would expire
+// first goes, however late it came, so a nearly full entry cannot push
+// out a deeply spent one.
 func TestBudgetCache(t *testing.T) {
 	c := NewBudgetCache(5, 3*time.Second)
 	spent := func(at time.Time, users ...string) *Budget {
@@ -74,22 +76,162 @@ func TestBudgetCache(t *testing.T) {
 	if got := c.Take("A", NewBudget(3, time.Second), now.Add(time.Second)); got != 0 {
 		t.Fatal("an entry taken twice")
 	}
+	// One token spent: gone once it is back, a second later.
 	c.Put("B", spent(now, "u"), 0, now)
-	b = NewBudget(3, time.Second)
-	if got := c.Take("B", b, now.Add(3*time.Second)); got != 0 || len(b.full) != 0 {
-		t.Fatal("an expired entry came back")
+	if len(c.rooms) != 1 {
+		t.Fatal("a spent budget was not kept")
+	}
+	c.Put("C", spent(now.Add(time.Second), "u"), 0, now.Add(time.Second))
+	if _, ok := c.rooms["B"]; ok {
+		t.Fatal("an entry outlived its last bucket")
 	}
 	c.Put("C", NewBudget(3, time.Second), 0, now)
 	if len(c.rooms) != 0 {
 		t.Fatal("a full budget with no mark was kept")
 	}
-	// Size 5: C (two buckets and the room) and then D (one and the room)
-	// fit; E (one and the room) pushes out C, which expires first.
-	c.Put("C", spent(now, "u", "v"), 0, now)
-	c.Put("D", spent(now.Add(time.Second), "u"), 0, now.Add(time.Second))
-	c.Put("E", spent(now.Add(time.Second), "u"), 0, now.Add(time.Second))
-	if _, ok := c.rooms["C"]; ok || len(c.rooms) != 2 || c.held != 4 {
-		t.Fatalf("after the size bound: %d rooms, %d held", len(c.rooms), c.held)
+	// A mark alone lasts ttl.
+	c.Put("M", NewBudget(3, time.Second), 4, now)
+	if got := c.Take("M", NewBudget(3, time.Second), now.Add(2*time.Second)); got != 4 {
+		t.Fatalf("the mark two seconds later: %d", got)
+	}
+	// Size 5: D (two buckets and the room, full in three seconds) and E
+	// (one, full in a second, though handed over later) fit; F (one, full
+	// in two) pushes out E, which would expire first, not D.
+	c.Put("D", spent(now, "u", "u", "u", "v"), 0, now)
+	later := now.Add(500 * time.Millisecond)
+	c.Put("E", spent(later, "u"), 0, later)
+	c.Put("F", spent(later, "u", "u"), 0, later)
+	_, d := c.rooms["D"]
+	_, e := c.rooms["E"]
+	if !d || e || c.held != 5 {
+		t.Fatalf("after the size bound: D kept %v, E kept %v, %d held", d, e, c.held)
+	}
+}
+
+// TestBudgetCacheOverflow: a room whose entry the cache dropped to keep
+// within its size starts every user's bucket, known or not, full only
+// from when the dropped buckets would all have been: the deepest debt it
+// held. Once the notes of dropped entries overflow too, every room
+// without an entry or a note starts from the latest dropped note. A new
+// point's refill fills it all.
+func TestBudgetCacheOverflow(t *testing.T) {
+	const burst = 4
+	c := NewBudgetCache(3, burst*time.Second)
+	spent := func(at time.Time, n int, users ...string) *Budget {
+		b := NewBudget(burst, time.Second)
+		for _, u := range users {
+			for range n {
+				b.Charge(u, at)
+			}
+		}
+		return b
+	}
+	tokens := func(b *Budget, u string, at time.Time) int {
+		n := 0
+		for b.Allows(u, at) {
+			b.Charge(u, at)
+			n++
+		}
+		return n
+	}
+	t0 := budgetT0
+	// V: u spent its burst and v one token; W, spent later, pushes it out.
+	v := spent(t0, burst, "u")
+	v.Charge("v", t0)
+	c.Put("V", v, 3, t0)
+	c.Put("W", spent(t0.Add(time.Millisecond), burst, "w"), 0, t0.Add(time.Millisecond))
+	if _, ok := c.rooms["V"]; ok {
+		t.Fatal("V was not dropped")
+	}
+	at := t0.Add(time.Second)
+	b := NewBudget(burst, time.Second)
+	if got := c.Take("V", b, at); got != 3 {
+		t.Fatalf("V's mark after the drop: %d", got)
+	}
+	for _, u := range []string{"u", "v", "x"} {
+		if got := tokens(b, u, at); got != 1 {
+			t.Fatalf("%s a second after V's whole burst: %d tokens, want 1", u, got)
+		}
+	}
+	b = NewBudget(burst, time.Second)
+	c.Take("V", b, at)
+	if got := tokens(b, "u", at); got != burst {
+		t.Fatalf("a note taken twice: %d tokens", got)
+	}
+	// Notes past the size: R0 to R2 are dropped in turn and noted, then R3
+	// drops the note of W, which would have expired first.
+	for i := range 4 {
+		at := t0.Add(time.Duration(2+i) * time.Millisecond)
+		c.Put(fmt.Sprintf("R%d", i), spent(at, burst, "u"), 0, at)
+	}
+	// W was full at t0 + 1 ms + burst seconds, so one token is back by a
+	// second and 1 ms after its burst.
+	late := t0.Add(time.Second + 2*time.Millisecond)
+	for _, code := range []string{"W", "a room never seen"} {
+		b := NewBudget(burst, time.Second)
+		c.Take(code, b, late)
+		if got := tokens(b, "u", late); got != 1 {
+			t.Fatalf("%s after the notes overflowed: %d tokens, want 1", code, got)
+		}
+	}
+	b = NewBudget(burst, time.Second)
+	c.Take("a room never seen", b, t0.Add(burst*time.Second+time.Millisecond))
+	if got := tokens(b, "u", t0.Add(burst*time.Second+time.Millisecond)); got != burst {
+		t.Fatalf("once the dropped note would have expired: %d tokens", got)
+	}
+	b = NewBudget(burst, time.Second)
+	c.Take("R0", b, at)
+	b.Refill()
+	if got := tokens(b, "u", at); got != burst {
+		t.Fatalf("after a refill: %d tokens", got)
+	}
+}
+
+// TestCachePressureKeepsDebt: a user who spent their whole burst at a
+// room that left memory keeps that debt however many other rooms' entries
+// arrive (DefaultBudgetCacheSize, as served). Entries that are nearly full
+// expire first and leave first; entries deeper than it push it out, and
+// its note keeps the debt. Before, every entry lasted burst times interval
+// from its hand-over, so 2048 later one-token entries pushed it out, and
+// the load that missed started full (found by the slice's re-check).
+func TestCachePressureKeepsDebt(t *testing.T) {
+	for _, depth := range []int{1, DefaultRequestBurst} {
+		t.Run(fmt.Sprintf("others spent %d", depth), func(t *testing.T) {
+			now := budgetT0
+			c := NewBudgetCache(DefaultBudgetCacheSize, DefaultRequestBurst*DefaultRequestInterval)
+			b := NewBudget(DefaultRequestBurst, DefaultRequestInterval)
+			for range DefaultRequestBurst {
+				b.Charge("u", now)
+			}
+			c.Put("victim", b, 0, now)
+			later := now.Add(time.Millisecond)
+			crowd(c, DefaultBudgetCacheSize/2, depth, later)
+			restored := NewBudget(DefaultRequestBurst, DefaultRequestInterval)
+			c.Take("victim", restored, later)
+			if restored.Allows("u", later) {
+				t.Fatal("other rooms' entries gave an exhausted user a token")
+			}
+			second := now.Add(DefaultRequestInterval)
+			if !restored.Allows("u", second) {
+				t.Fatal("no token a second after the burst")
+			}
+			restored.Charge("u", second)
+			if restored.Allows("u", second) {
+				t.Fatal("two tokens a second after the burst")
+			}
+		})
+	}
+}
+
+// crowd hands c n other rooms' entries, each one user's depth tokens
+// spent at now.
+func crowd(c *BudgetCache, n, depth int, now time.Time) {
+	for i := range n {
+		b := NewBudget(DefaultRequestBurst, DefaultRequestInterval)
+		for range depth {
+			b.Charge("u", now)
+		}
+		c.Put(fmt.Sprintf("crowd-%d", i), b, 0, now)
 	}
 }
 
@@ -257,10 +399,17 @@ func newTHRooms(t *testing.T, cfg Config, spec Spec, maxRooms int) *th {
 	return &th{t: t, ctx: ctx, f: f, p: p}
 }
 
-// evict detaches every client, makes another table, which pushes this
-// one out of memory (newTHRooms with 1), and joins the clients again,
+// evict pushes the table out of memory and joins the clients again,
 // which loads it back.
 func (h *th) evict(seed uint64) {
+	h.t.Helper()
+	h.push(seed)
+	h.rejoin()
+}
+
+// push detaches every client and makes another table, which pushes this
+// one out of memory (newTHRooms with 1).
+func (h *th) push(seed uint64) {
 	h.t.Helper()
 	h.away()
 	other, err := h.f.tables.CreateTable(humans(3, seed))
@@ -275,7 +424,6 @@ func (h *th) evict(seed uint64) {
 	if h.f.m.Loaded(h.p.code) {
 		h.t.Fatal("the table was not evicted")
 	}
-	h.rejoin()
 }
 
 // away detaches every client, keeping them for rejoin, and waits until
@@ -318,6 +466,30 @@ func TestEvictionKeepsTheBudget(t *testing.T) {
 	h.f.restart()
 	h.rejoin()
 	h.expect(h.send(me, next+1, s.Ref, keys[1], false), tabletest.Accepted, "after a restart")
+}
+
+// TestCachePressureKeepsTheBudget: a table evicted with a user past the
+// budget, whose entry the cache then drops for 2048 other rooms' deeper
+// debts, still refuses that user when loaded again, and gives back one
+// token a second as before. Before, the load that found no entry started
+// every user full (found by the slice's re-check).
+func TestCachePressureKeepsTheBudget(t *testing.T) {
+	clk := roomtest.NewFakeClock(budgetT0)
+	h := newTHRooms(t, Config{Clock: clk, BotWork: blockBots}, humans(3, 457), 1)
+	me := tabletest.SeatClient(0)
+	s := h.snap(me)
+	keys := [2]string{s.Legal[0], s.Legal[1]}
+	seqs := map[tabletest.ClientID]uint64{}
+	h.changes(DefaultRequestBurst, s.Ref, keys, []tabletest.ClientID{me}, seqs, false)
+	next := seqs[me] + 1
+	h.push(458)
+	clk.Advance(time.Millisecond)
+	crowd(h.f.tables.budgets, DefaultBudgetCacheSize/2, DefaultRequestBurst, clk.Now())
+	h.rejoin()
+	h.expect(h.send(me, next, s.Ref, keys[0], false), tabletest.Rate, "past the budget after the cache overflowed")
+	clk.Advance(DefaultRequestInterval)
+	h.expect(h.send(me, next, s.Ref, keys[0], false), tabletest.Accepted, "a second later")
+	h.expect(h.send(me, next+1, s.Ref, keys[1], false), tabletest.Rate, "with that token spent")
 }
 
 // TestIdleUnloadKeepsTheBudget: a table that leaves memory when idle keeps

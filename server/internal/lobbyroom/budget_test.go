@@ -3,6 +3,7 @@ package lobbyroom
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -121,6 +122,56 @@ func TestLobbyEvictionKeepsTheBudget(t *testing.T) {
 	clk.Advance(tableroom.DefaultRequestInterval)
 	f.send(admin, toggleBot(code, seq, seq-1))
 	admin.acked(seq)
+}
+
+// TestLobbyCachePressureKeepsTheBudget: a lobby evicted with its admin
+// past the budget, whose entry the cache then drops for 2048 other rooms'
+// deeper debts, still refuses the admin when loaded again, and gives back
+// one token a second as before. Before, the load that found no entry
+// started every user full (found by the slice's re-check).
+func TestLobbyCachePressureKeepsTheBudget(t *testing.T) {
+	clk := roomtest.NewFakeClock(time.Date(2026, 10, 24, 15, 0, 0, 0, time.UTC))
+	f := newFixture(t, clk)
+	f.maxRooms = 1
+	f.restart()
+	admin := f.conn(user(0), "c0", "P0")
+	code := f.create(admin, 4, wire.LobbyOptions{Seating: ptr("lobby")})
+	for i := range tableroom.DefaultRequestBurst {
+		f.send(admin, toggleBot(code, i+1, i))
+		admin.acked(i + 1)
+	}
+	seq := tableroom.DefaultRequestBurst + 1
+	f.m.Leave(admin.c, code)
+	f.settle(code)
+	other := tableroom.Spec{Creator: "x", Participants: []tableroom.Participant{{UserID: "x", Name: "X"}, {Bot: tableroom.BotEasy}, {Bot: tableroom.BotEasy}}}
+	if _, err := f.tables.CreateTable(other); err != nil {
+		t.Fatal(err)
+	}
+	if f.m.Loaded(code) {
+		t.Fatal("the lobby was not evicted")
+	}
+	clk.Advance(time.Millisecond)
+	for i := range tableroom.DefaultBudgetCacheSize / 2 {
+		b := tableroom.NewBudget(tableroom.DefaultRequestBurst, tableroom.DefaultRequestInterval)
+		for range tableroom.DefaultRequestBurst {
+			b.Charge("u", clk.Now())
+		}
+		f.lobbies.budgets.Put(fmt.Sprintf("crowd-%d", i), b, 0, clk.Now())
+	}
+	admin = f.conn(user(0), "c0", "P0")
+	f.joinEvicting(admin, code)
+	admin.lobby("the lobby, loaded again", any2)
+	f.send(admin, toggleBot(code, seq, seq-1))
+	if got := admin.reject(seq); got != outRate {
+		t.Fatalf("past the budget after the cache overflowed: %s", got)
+	}
+	clk.Advance(tableroom.DefaultRequestInterval)
+	f.send(admin, toggleBot(code, seq, seq-1))
+	admin.acked(seq)
+	f.send(admin, toggleBot(code, seq+1, seq))
+	if got := admin.reject(seq + 1); got != outRate {
+		t.Fatalf("with that token spent: %s", got)
+	}
 }
 
 // joinEvicting joins k to code, which pushes another room out of memory.
