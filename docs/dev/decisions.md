@@ -561,6 +561,8 @@ Source: [bot-plan.md](../haftgane/bot-plan.md), "Defer hints and private post-ro
 
 **Relation.** The client that hosts both games; Duel behaves exactly as before. Keeps D05 and D24 as they are; adds the two cold-entry budgets.
 
+**Amendment (2026-10-24).** The install-transfer evidence now exists: the install had grown to about 2.95 MB of body, 1.09 MB of it files that only the `/dev` pages load. The worker now leaves out exactly those files (M18.precache-without-dev-pages). A file is left out only when no real route can reach it, as read from Vite's client manifest and the route-to-node map, so every real page keeps its lazy chunks across a deploy. Dev pages no longer open offline. The rest of this decision stands.
+
 Source: [platform-architecture.md](../haftgane/platform-architecture.md), "Protocol and lazy client entry" and "Capacity and acceptance".
 
 ## D52. The seat ring is drawn left to right in every language
