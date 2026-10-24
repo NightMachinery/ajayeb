@@ -10,8 +10,9 @@
 // ("App shell") explains it.
 //
 // - Install precaches this version: every _app/immutable file (code, CSS,
-//   the content-hashed fonts), the stable-named statics svelte.config.js
-//   lets through (favicon, manifest, app icons) and the generic shell, shell.html.
+//   the content-hashed fonts) except those only the /dev pages load, the
+//   stable-named statics svelte.config.js lets through (favicon, manifest,
+//   app icons) and the generic shell, shell.html.
 // - Page loads go network first. The cached shell answers only when the
 //   network fails or takes longer than NAVIGATION_TIMEOUT_MS; a network response is never replaced by it.
 // - Art is cached as it is shown, by its ?v= URL, in a bounded cache that
@@ -27,9 +28,10 @@
 //   back hands over to it (updateHeldBack in the policy). Game pages say
 //   so by holding a shared Web Lock (lib/sw/game-lock.ts).
 
-import { build, files, version } from '$service-worker';
+import { base, build, files, version } from '$service-worker';
 import { networkFirst } from '$lib/sw/navigation';
 import { artCache } from '$lib/sw/art-cache';
+import { DEV_ONLY_MARK } from '$lib/sw/dev-only';
 import {
   ART_CACHE,
   ART_CACHE_MAX_ENTRIES,
@@ -49,6 +51,17 @@ import {
 const sw = self as unknown as ServiceWorkerGlobalScope;
 const SHELL_CACHE = shellCacheName(version);
 const PRECACHED = new Set(files);
+
+// The build files only the /dev pages load (lib/sw/dev-only.ts) stay out of
+// install; a dev page fetches them from the network. vite.config.ts writes
+// their list, as JSON, over the mark in the built worker. Under `vite dev`
+// the build list is empty, so there is nothing to leave out.
+const DEV_ONLY = new Set(
+  (import.meta.env.DEV ? [] : (JSON.parse(DEV_ONLY_MARK) as string[])).map(
+    (file) => `${base}/${file}`
+  )
+);
+const INSTALL = build.filter((path) => !DEV_ONLY.has(path));
 
 /** The app's open windows, controlled by any version or none. When locks
  *  cannot be queried, every open window holds updates back: its load URL
@@ -73,7 +86,7 @@ sw.addEventListener('install', (event) => {
       const cache = await caches.open(SHELL_CACHE);
       // Hashed build files may come from the HTTP cache; the stable names
       // and the shell are revalidated, so they match this version.
-      await cache.addAll(build);
+      await cache.addAll(INSTALL);
       await cache.addAll(files.map((path) => new Request(path, { cache: 'no-cache' })));
       await cache.add(new Request(SHELL_KEY, { cache: 'no-cache' }));
       // First installs activate normally. Updates wait for a full load.
