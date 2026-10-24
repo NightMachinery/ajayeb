@@ -1,7 +1,8 @@
 <script lang="ts">
   // A city's buildings by colour, one row per colour in the order the table
   // screen counts them: the category glyph, the card names and the count,
-  // with an empty colour dimmed. Each name carries the card's tooltip (what
+  // with an empty colour dimmed and uncounted. A city with no building yet
+  // says so in one line instead. Each name carries the card's tooltip (what
   // the card does), so a row can be read without opening anything.
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -26,7 +27,8 @@
 </script>
 
 <ul class="rows" data-city-rows>
-  {#each rows as row (row.colour)}
+  {#if built.length === 0}<li class="nothing" data-city-empty>{ht('hg.city.row.nothing')}</li>{/if}
+  {#each built.length === 0 ? [] : rows as row (row.colour)}
     {@const tip = `${ht(`hg.screen.colourName.${row.colour}`)}: ${ht(`hg.screen.colour.${row.colour}`, { count: row.cards.length })}`}
     <li
       class="row"
@@ -49,7 +51,7 @@
               >{/if}{/each}
         {/if}
       </span>
-      <span class="n">{formatNumber(row.cards.length)}</span>
+      {#if row.cards.length > 0}<span class="n">{formatNumber(row.cards.length)}</span>{/if}
     </li>
   {/each}
 </ul>
@@ -101,6 +103,10 @@
   }
   .empty {
     border-color: var(--rule);
+    color: var(--fg-muted);
+  }
+  .nothing {
+    padding: 0.5rem 0.3rem;
     color: var(--fg-muted);
   }
   .empty .glyph {

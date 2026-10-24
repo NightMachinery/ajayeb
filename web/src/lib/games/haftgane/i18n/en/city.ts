@@ -51,6 +51,8 @@ export const city = {
     other: 'City · {count} buildings'
   },
   'hg.city.row.none': 'none',
+  // In place of the colour rows, while a city has no building.
+  'hg.city.row.nothing': 'Nothing built yet',
   // Between two card names in a list.
   'hg.city.row.sep': ', ',
   'hg.city.last': 'Last turn: {what}',
