@@ -1,13 +1,16 @@
 <script lang="ts">
   // The table's top bar: the game menu, the Age and turn (or the side
-  // point, or the end), the pass chip, the count of spectators (it opens
+  // point, or the end), the pass chip, the turn recap's button (with a dot
+  // while the newest recap is unseen), the count of spectators (it opens
   // the game menu, which lists them), and Undo while the table allows it
-  // (it goes for good once a second human sits down). The recap and log
-  // buttons come with their slices (M18.reveal-and-recap). Undo is
-  // Lucide's `undo`, not Duel's `undo-2`, and the spectators' icon is
-  // `users-round`, not Home's `users`, so the games share no icon.
+  // (it goes for good once a second human sits down). The log button comes
+  // with its slice. Undo is Lucide's `undo`, not Duel's `undo-2`, the
+  // spectators' icon is `users-round`, not Home's `users`, and the recap's
+  // is `clipboard-list`, not Duel's `eye` or `scroll-text`, so the games
+  // share no icon.
   import { ageLabel, formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import ClipboardList from '@lucide/svelte/icons/clipboard-list';
   import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
   import Undo from '@lucide/svelte/icons/undo';
   import UsersRound from '@lucide/svelte/icons/users-round';
@@ -30,6 +33,10 @@
     /** How many people watch; the count shows when there are any. */
     spectators?: number;
     onspectators?: () => void;
+    /** Opens the newest turn recap; absent before the first turn. */
+    onrecap?: (() => void) | null;
+    /** The newest recap has not been opened yet. */
+    recapUnseen?: boolean;
   }
 
   let {
@@ -43,7 +50,9 @@
     onmenu,
     onundo = null,
     spectators = 0,
-    onspectators
+    onspectators,
+    onrecap = null,
+    recapUnseen = false
   }: Props = $props();
 
   const turnTip = $derived(ht('hg.screen.turn.tip', { turn, of: turns }));
@@ -78,6 +87,21 @@
   </div>
   {#if !finished && age > 0}
     <PassChip {pass} to={passTo} />
+  {/if}
+  {#if onrecap}
+    {@const tip = recapUnseen ? ht('hg.recap.open.unseen') : ht('hg.recap.open')}
+    <button
+      type="button"
+      class="icon recap"
+      aria-label={tip}
+      data-act="recap"
+      data-unseen={recapUnseen ? '' : undefined}
+      onclick={onrecap}
+      {@attach tooltip({ text: tip, actionable: true })}
+    >
+      <ClipboardList aria-hidden="true" />
+      {#if recapUnseen}<span class="dot" aria-hidden="true"></span>{/if}
+    </button>
   {/if}
   {#if spectators > 0 && onspectators}
     {@const tip = ht('hg.admin.spectators.open', { count: spectators })}
@@ -138,6 +162,19 @@
     padding-inline: 0.3rem;
     color: var(--fg-muted);
     font-variant-numeric: tabular-nums;
+  }
+  .recap {
+    position: relative;
+  }
+  .dot {
+    position: absolute;
+    inset-block-start: 0.55rem;
+    inset-inline-end: 0.45rem;
+    width: 0.55rem;
+    height: 0.55rem;
+    border: 1.5px solid var(--panel);
+    border-radius: 9999px;
+    background: var(--accent);
   }
   .watchers :global(svg) {
     width: 1.1rem;
