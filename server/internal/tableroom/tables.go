@@ -90,8 +90,12 @@ type Config struct {
 	// forgetting a floor would let an old seq overwrite a newer pick.
 	PickClients int
 	MaxClients  int
-	IdleTimeout time.Duration
-	InboxSize   int
+	// RequestBurst and RequestInterval are each user's request budget
+	// (Budget). Defaults DefaultRequestBurst and DefaultRequestInterval.
+	RequestBurst    int
+	RequestInterval time.Duration
+	IdleTimeout     time.Duration
+	InboxSize       int
 	// BotWork, when set, runs inside each bot search, holding its pool
 	// permit: the tests' stand-in for search time and cancellation.
 	BotWork func(ctx context.Context, seat int, point string) error
@@ -143,6 +147,12 @@ func New(cfg Config) *Tables {
 	}
 	if cfg.MaxClients <= 0 {
 		cfg.MaxClients = DefaultMaxClients
+	}
+	if cfg.RequestBurst <= 0 {
+		cfg.RequestBurst = DefaultRequestBurst
+	}
+	if cfg.RequestInterval <= 0 {
+		cfg.RequestInterval = DefaultRequestInterval
 	}
 	if cfg.IdleTimeout <= 0 {
 		cfg.IdleTimeout = DefaultIdleTimeout

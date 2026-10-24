@@ -38,6 +38,11 @@ type actor struct {
 	// connection got. A frame for another role carries the whole history,
 	// since the connection's events so far were redacted for its old role.
 	shown map[*room.Client]int
+	// budget is the users' request budget, and reached the most batches
+	// the game has had since this actor started: a commit past it opens
+	// a point not reached before, which fills every budget.
+	budget  *Budget
+	reached int
 
 	inbox  chan any
 	ctx    context.Context
@@ -102,6 +107,7 @@ type msgBotResult struct {
 // hands over at Start: the actor sends each its first frame when it runs.
 func (t *Tables) newActor(m *room.Manager, st *state, members []Member) (*room.Handle, error) {
 	a := &actor{t: t, m: m, code: st.rec.Code, st: st, claims: map[*room.Client]claimed{}, shown: map[*room.Client]int{},
+		budget: NewBudget(t.cfg.RequestBurst, t.cfg.RequestInterval), reached: len(st.rec.Batches),
 		inbox: make(chan any, t.cfg.InboxSize), done: make(chan struct{})}
 	for _, mb := range members {
 		a.conns = append(a.conns, mb.Client)
@@ -674,6 +680,11 @@ func (a *actor) seqKey(c *room.Client) SeqRecord {
 	return SeqRecord{User: a.userOf(c), Client: ClientKey(c.ClientID)}
 }
 
+// spend charges a request that passed every other check, and is about to
+// change the table, to its sender's user (Budget); false means refuse it
+// with rate. Duplicates and refusals never reach it, nor do bots.
+func (a *actor) spend(c *room.Client) bool { return a.budget.Spend(a.userOf(c), a.now()) }
+
 // submit applies one {seq, point, key, confirm} submission, checking in
 // the design's order: membership (the sender controls a seat, the one the
 // request names if it names one), the client's seq acknowledgement, the
@@ -747,6 +758,9 @@ func (a *actor) transact(c *room.Client, op string, seat int, cand Record, key s
 	}
 	if resolved {
 		openPoint(&cand, &g)
+	}
+	if c != nil && !a.spend(c) {
+		return fail(outRate)
 	}
 	if err := a.commit(op, cand, g); err != nil {
 		return fail(outStorage)
@@ -989,6 +1003,9 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), at)
 	appendLog(&cand, append(log, more...)...)
 	retire(&a.st.rec, &cand)
+	if !a.spend(c) {
+		return a.refuse(c, seq, op, seat, outRate)
+	}
 	if err := a.commit(op, cand, g); err != nil {
 		return a.refuse(c, seq, op, seat, outStorage)
 	}
@@ -1053,6 +1070,13 @@ func (a *actor) commit(op string, cand Record, g game) error {
 		return err
 	}
 	a.st = &state{rec: cand, game: g}
+	// A point the game had not reached before is a new decision for every
+	// seat: every budget is full again. Reaching a point again after an
+	// undo is not new.
+	if n := len(cand.Batches); n > a.reached {
+		a.reached = n
+		a.budget.Refill()
+	}
 	return nil
 }
 
@@ -1093,6 +1117,9 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	}
 	if cut < 0 {
 		return a.refuse(c, u.Seq, "undo", seat, outIllegal)
+	}
+	if !a.spend(c) {
+		return a.refuse(c, u.Seq, "undo", seat, outRate)
 	}
 	cand := r.clone()
 	key.Seq = u.Seq

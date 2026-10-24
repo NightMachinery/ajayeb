@@ -50,6 +50,9 @@ func (a *actor) link(c *room.Client, seat int, reset bool) string {
 		cand.Seats[seat].Epoch = cand.Public
 		s := seat
 		appendLog(&cand, wire.PlatformLogEntry{Kind: "link", At: len(cand.Batches), By: user, Seat: &s})
+		if !a.spend(c) {
+			return a.refuse(c, 0, op, seat, outRate)
+		}
 		if err := a.commit(op, cand, a.st.game); err != nil {
 			return a.refuse(c, 0, op, seat, outStorage)
 		}

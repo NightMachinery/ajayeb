@@ -34,6 +34,8 @@ type actor struct {
 	rec    Record
 	conns  []*room.Client
 	claims map[*room.Client]claimed
+	// budget is the users' request budget.
+	budget *tableroom.Budget
 
 	inbox  chan any
 	ctx    context.Context
@@ -73,7 +75,8 @@ type msgCall struct {
 
 func (l *Lobbies) newActor(m *room.Manager, r Record) (*room.Handle, error) {
 	a := &actor{l: l, m: m, code: r.Code, rec: r, claims: map[*room.Client]claimed{},
-		wake: make(chan struct{}, 1), inbox: make(chan any, l.cfg.InboxSize), done: make(chan struct{})}
+		wake: make(chan struct{}, 1), inbox: make(chan any, l.cfg.InboxSize), done: make(chan struct{}),
+		budget: tableroom.NewBudget(l.cfg.RequestBurst, l.cfg.RequestInterval)}
 	a.ctx, a.cancel = context.WithCancel(m.Context())
 	h, err := m.NewHandle(Game, a.code, room.HandleConfig{
 		Run: a.run, Cancel: a.cancel, Attach: a.attachHook, Detach: a.detachHook, Deliver: a.post, Evict: a.evictHook,
@@ -548,6 +551,7 @@ const (
 	outForbidden = "forbidden"
 	outNotAdmin  = "not-admin"
 	outStorage   = "storage"
+	outRate      = "rate"
 	outBad       = "bad-request"
 	outStarted   = "started"
 )
@@ -603,10 +607,18 @@ func (a *actor) seen(c *room.Client, seq int) bool {
 	return false
 }
 
+// spend charges a request that passed every other check, and is about to
+// change the lobby, to its sender's user (tableroom.Budget); false means
+// refuse it with rate. Duplicates and refusals never reach it.
+func (a *actor) spend(c *room.Client) bool { return a.budget.Spend(a.userOf(c), a.now()) }
+
 // apply finishes an accepted request: it records the seq, advances the
 // revision, brings the roles up to date, retires users who lost all
 // authority, persists and publishes to everyone, the sender with an ack.
 func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
+	if !a.spend(c) {
+		return a.refuse(c, seq, op, outRate)
+	}
 	seqPut(&cand.Seqs, SeqRecord{User: a.userOf(c), Client: tableroom.ClientKey(c.ClientID), Seq: seq}, a.l.cfg.SeqClients)
 	cand.Revision++
 	log := cand.Roles.Carry(a.rolesAhead, 0)
@@ -785,6 +797,9 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		return false
 	case r.SeatCount >= tableroom.MinSeats && a.l.cfg.Tables == nil:
 		a.refuse(c, f.Seq, "start", outBad)
+		return false
+	case !a.spend(c):
+		a.refuse(c, f.Seq, "start", outRate)
 		return false
 	}
 	sides := "day"

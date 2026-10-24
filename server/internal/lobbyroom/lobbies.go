@@ -75,10 +75,15 @@ type Config struct {
 	Creation bool
 	// SeqClients bounds, for each user, the clients whose last accepted
 	// seq the lobby remembers.
-	SeqClients  int
-	MaxClients  int
-	IdleTimeout time.Duration
-	InboxSize   int
+	SeqClients int
+	MaxClients int
+	// RequestBurst and RequestInterval are each user's request budget
+	// (tableroom.Budget). Defaults tableroom.DefaultRequestBurst and
+	// tableroom.DefaultRequestInterval.
+	RequestBurst    int
+	RequestInterval time.Duration
+	IdleTimeout     time.Duration
+	InboxSize       int
 }
 
 // Lobbies is the lobby kind: its registration, creation and rematches.
@@ -107,6 +112,12 @@ func New(cfg Config) *Lobbies {
 	}
 	if cfg.MaxClients <= 0 {
 		cfg.MaxClients = defaultMaxClients
+	}
+	if cfg.RequestBurst <= 0 {
+		cfg.RequestBurst = tableroom.DefaultRequestBurst
+	}
+	if cfg.RequestInterval <= 0 {
+		cfg.RequestInterval = tableroom.DefaultRequestInterval
 	}
 	if cfg.IdleTimeout <= 0 {
 		cfg.IdleTimeout = defaultIdleTimeout
