@@ -50,8 +50,8 @@ viewports, three seat counts, English and Persian, and both themes. It checks
 
 ## Browser privacy proof
 
-`make e2e GREP=@haftgane-special` creates seven-seat tables through Home
-and their shared lobbies, with seven independent players and a spectator. The
+`make e2e GREP=@haftgane-special` creates seven-seat tables through Home,
+on desktop and mobile, and their shared lobbies, with seven independent players and a spectator. The
 host's seating edit also carries the existing choose-side wire option until the
 parallel lobby control lands. It funds the ability stages, tries at most four
 Home tables per side until the required decisions are covered, and logs each

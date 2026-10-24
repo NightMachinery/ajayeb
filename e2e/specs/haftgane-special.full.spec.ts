@@ -114,7 +114,7 @@ async function submit(page: Page, c: Choice, choices: readonly Choice[]): Promis
   return previewed;
 }
 
-test('special decisions reached from Home keep each frame private @full @haftgane-special', async ({
+test('special decisions reached from Home keep each frame private @full @mobile @haftgane-special', async ({
   browser
 }, info) => {
   test.setTimeout(1_500_000);
