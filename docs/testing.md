@@ -1537,7 +1537,7 @@ The admin controls, resignation and spectator view over a live five-seat
 table, on three devices. The creator starts it alone with bots from Home's
 lobby (`openBotTable`), so undo is on, and plays a turn: the top bar shows
 Undo. Two friends open the running table and watch: their hand region is
-the spectator panel, with the last turn and the spectators, and one of
+the spectator panel, with the turn recap and the spectators, and one of
 them follows a seat, so the ring's neighbours become that seat's. A
 non-admin's game menu offers no seat. Through the seat's admin menu
 (`seatAction`: the game menu, Manage, the action, Confirm) the creator
@@ -1558,6 +1558,32 @@ a page takes it, if it is one of that seat's choices), gives no seat a
 field outside the public seat and no page another seat's private view,
 and carries `previousSeats` only when the same frame lists its viewer as
 an admin. No console error or failed request is allowed.
+
+### `haftgane-recap.full.spec.ts` (`@full @mobile @haftgane-recap`)
+
+The reveal, the turn recap and the hand pass over a live three-seat table
+from Home's lobby, for a seated player and a spectator. The creator, with
+Settings' "Show opponent move" on, starts the table alone with bots, a
+friend watches, and the creator builds, sells and stages in turn through
+the end of Age I and two turns of Age II. After every batch the spec reads
+that batch's events from each page's history and checks, with its own
+reading of the events: the creator's recap opens by itself, with one line
+per seat that acted, its act, its card where the page may know it and
+every signed coin change, in ring order from the creator, where hands
+went, the creator's own discarded last card, and a spoken live region;
+once it closes, every seat's reveal tag is on the board, the new hand
+carries the side it came from, and the top bar's button reopens the
+recap. Choosing a card takes the tags off the board. The spectator's panel
+shows the same lines with no card named for a sale or a stage, and the
+spectator's board shows a tag per seat. At the end of the Age the recap
+comes first and the military dialog only after it closes. The creator
+makes the spectator an admin between two turns, and the next turn's recap
+lists the change on both pages. Every table frame each page received
+passes the pending-ownership oracle, names no other seat's face-down card
+in its events, its history or a seat's `last` play, gives no seat a field
+outside the public seat and no page another seat's private view. Nothing
+animates with Animation off, nothing depends on a deal, and no console
+error or failed request is allowed.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
@@ -1983,6 +2009,21 @@ player's seat goes to a bot and the former player's table is captured. At
 The screenshots and `probes-<seats>p.json` go to `HG_ADMIN_SHOTS_DIR`
 (default `.cache/e2e/hg-admin-shots`). A last test checks the dev
 gallery's admin leaves and opens both of its seat menus under the probe.
+
+`ux/haftgane-recap.spec.ts` (filter `--grep "haftgane recap"`) captures the
+reveal and the turn recap. One live table each of 3, 5 and 7 seats is
+started from Home's lobby by its creator with bots and Settings' "Show
+opponent move" on, and a friend watches on a device of their own. In
+English and Persian, in both themes, both pages reload and the creator
+plays a turn, preferring a card bought from a neighbour, so that every
+variant reveals one turn live (a reload restates none). The run captures
+the player's recap as it opens by itself and the board with every seat's
+reveal tag once it closes, and the spectator's tagged board and spectator
+panel. At 360x740, 390x844, 844x390 and 1280x800 the probe of
+`ux/haftgane-admin.spec.ts` must find nothing. The screenshots and
+`probes-<seats>p.json` go to `HG_RECAP_SHOTS_DIR` (default
+`.cache/e2e/hg-recap-shots`). A last test checks the dev gallery's reveal
+leaves and opens its recap overlay under the probe.
 
 Open `index.html` directly from disk. Its contact sheet groups the captures
 by screen, links each image at full size, and lists that capture's findings.

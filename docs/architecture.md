@@ -497,12 +497,31 @@ a reload mends a client and a server that disagree.
   the game menu; when a second human sits down, the Session's `undo-off`
   notice says why it went. A spectator's hand region is the
   `SpectatorPanel`: seat buttons that centre the ring on the seat followed
-  (`ring(seats, follow)`), the last turn as each seat's public `last`
-  play, and the spectators. A former player first reads who plays their
+  (`ring(seats, follow)`), the turn recap, and the spectators. A former player first reads who plays their
   seat now, and their ring centres on that seat until they follow another.
   The seat comes from an admin's own hint or from what this tab held
   (`TableSession.held`, kept across a reload in sessionStorage by
   `session/held-seats.ts`), since no other frame names it.
+- **The reveal, the turn recap and the hand pass** (M18.reveal-and-recap)
+  are phone-layout.md's section 4. `table/recap.ts` reads one resolved
+  batch from the Session's `history`, as the server filtered it for this
+  viewer: each seat's act (a building, a building from the discard pile, a
+  stage, a sale, an empty discard build or a side), each coin change as
+  one event states it (the printed cost and the trades from the seat's
+  play, the receipts from its neighbours' plays, a sale's or a card's
+  income from its `coins` event), a kept or discarded last card, where
+  hands went, and the room log's seat switches and role changes dated to
+  the turn (`at` from the previous turn up to this one). It adds nothing
+  up, and a card the server left unnamed stays unnamed. `recap-text.ts`
+  words it. The table screen hooks the Presenter: on the frame that
+  resolves a turn it sets the reveal tags (`RevealTag`, hanging from each
+  chip, panel and the strip) and the hand's arrival before the swap, then
+  waits a short beat (none with Animation off) and opens the recap
+  (`RecapLayer` around `TurnRecap`, with `CoinDelta` chips) for a seated
+  viewer whose "Show opponent move" setting is on. The military dialog
+  and the scores wait until the recap closes. The top bar's recap button
+  reopens it, the spectator panel shows it inline, and a polite live
+  region speaks it. A reload restates no reveal.
 - **The development screen** (`dev/TableDev.svelte`) now shows only what
   comes before a table's first frame.
 
