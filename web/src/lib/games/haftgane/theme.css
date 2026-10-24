@@ -2,9 +2,9 @@
  * Haftgane's own colour tokens: the seven seat colours and the ore and cloth
  * resources, in OKLCH like web/src/lib/styles/tokens.css.
  *
- * Haftgane-only. Nothing imports this file yet (M19.art-wiring wires it into
- * Haftgane's entry), so Duel's tokens.css and app.css, which every Duel
- * player downloads, stay as they are. The vector specimens inline it after
+ * Haftgane-only. The table screen (table/TableScreen.svelte) imports it, so it
+ * ships in Haftgane's lazy chunk, and Duel's tokens.css and app.css, which
+ * every Duel player downloads, stay as they are. The vector specimens inline it after
  * tokens.css. Why each value was chosen, and its contrast ratios, are in
  * art/vector/specs/haftgane-seat-crests.md and art/vector/log/haftgane-seat-crests.md.
  */
