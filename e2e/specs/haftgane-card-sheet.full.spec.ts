@@ -10,7 +10,7 @@ import type { Choice } from '../../web/src/lib/wire/haftgane.gen';
 
 async function open(page: Page, c: Choice): Promise<void> {
   await ready(page);
-  await page.locator(`[data-act="hand:${c.design}"]`).click();
+  await page.locator(`[data-act="hand:${c.design}"]`).first().click();
   await expect(page.locator('[data-card-sheet]')).toBeVisible();
   if (c.kind === 'build') {
     const options = page.locator('[data-card-sheet] [data-pick^="build:"]');

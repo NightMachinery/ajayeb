@@ -50,7 +50,7 @@ for (const [locale, theme] of [
       mkdirSync(out, { recursive: true });
       const probes = [];
       for (const choice of [trade!, alternate!]) {
-        await page.locator(`[data-act="hand:${choice.design}"]`).click();
+        await page.locator(`[data-act="hand:${choice.design}"]`).first().click();
         await page.locator(`[data-card-sheet] [data-pick="${choice.key}"]`).click();
         await ready(page);
         for (const [width, height] of [
