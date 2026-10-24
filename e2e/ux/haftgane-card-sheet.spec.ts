@@ -7,6 +7,7 @@ import path from 'node:path';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { quiet } from '../fixtures/layout-probes';
+import { probeCardSheet } from '../fixtures/card-sheet-probe';
 
 for (const locale of ['en', 'fa'] as const)
   for (const theme of ['light', 'dark'] as const) {
@@ -42,67 +43,7 @@ for (const locale of ['en', 'fa'] as const)
                   .scrollIntoViewIfNeeded();
               else await sheet.locator('[data-sheet-body]').evaluate((body) => body.scrollTo(0, 0));
               await quiet(page);
-              const p = await sheet.evaluate((root) => {
-                const dialog = root.closest('dialog')!;
-                const r = dialog.getBoundingClientRect();
-                const small = [
-                  ...root.querySelectorAll<HTMLElement>('button:not(:disabled), [role="radio"]')
-                ]
-                  .filter((e) => !e.closest('[inert]') && e.checkVisibility())
-                  .map((e) => ({
-                    key: e.dataset['act'] ?? e.dataset['pick'],
-                    w: e.getBoundingClientRect().width,
-                    h: e.getBoundingClientRect().height
-                  }))
-                  .filter((e) => e.w < 43.9 || e.h < 43.9);
-                const untipped = [...root.querySelectorAll('svg, [role="img"]')]
-                  .filter(
-                    (e) =>
-                      !e.parentElement?.closest('svg') &&
-                      !e.closest('[data-tooltip]') &&
-                      !e.closest('[inert]') &&
-                      e.checkVisibility()
-                  )
-                  .map((e) => e.outerHTML.slice(0, 100));
-                const blocked = root.querySelector('[data-cannot-build]');
-                let lowContrast = false;
-                if (blocked) {
-                  const ctx = document.createElement('canvas').getContext('2d')!;
-                  const luminance = (colour: string) => {
-                    ctx.fillStyle = colour;
-                    ctx.fillRect(0, 0, 1, 1);
-                    const rgb = [...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3).map((v) => {
-                      const c = v / 255;
-                      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-                    });
-                    return rgb[0]! * 0.2126 + rgb[1]! * 0.7152 + rgb[2]! * 0.0722;
-                  };
-                  const style = getComputedStyle(blocked);
-                  const ink = luminance(style.color),
-                    paper = luminance(style.backgroundColor);
-                  lowContrast = (Math.max(ink, paper) + 0.05) / (Math.min(ink, paper) + 0.05) < 4.5;
-                }
-                const footer = root.querySelector('.sheet-footer')!.getBoundingClientRect();
-                return {
-                  lowContrast,
-                  crampedTitle: root.querySelector('h2')!.getBoundingClientRect().width < 100,
-                  overflow:
-                    document.documentElement.scrollWidth > innerWidth + 1 ||
-                    root.scrollWidth > root.clientWidth + 1,
-                  small,
-                  untipped,
-                  outside:
-                    r.x < -1 || r.y < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1,
-                  footerOutside: footer.bottom > innerHeight + 1 || footer.top < 0,
-                  animated: document
-                    .getAnimations()
-                    .filter(
-                      (a) =>
-                        a.playState === 'running' &&
-                        Number(a.effect?.getComputedTiming().duration) > 1
-                    ).length
-                };
-              });
+              const p = await probeCardSheet(page);
               probes.push({ seats, state, width, height, locale, theme, ...p });
               await page.screenshot({
                 path: path.join(out, `${seats}p-${state}-${width}x${height}-${locale}-${theme}.png`)
@@ -163,4 +104,21 @@ test('card-sheet confirmation resets when the payment changes', async ({ page })
   await action.click();
   await expect(sheet).toHaveCount(0);
   await expect(page.locator('[data-gallery-confirmed]')).toBeVisible();
+});
+
+test('Haftgane card-sheet confirmation guards double taps and expires', async ({ page }) => {
+  await page.goto('/dev/gallery?hgSheet=trade&seats=5');
+  const sheet = page.locator('[data-card-sheet]');
+  const action = sheet.locator('.sheet-footer [data-act^="build:"]');
+  await action.evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  await expect(sheet).toBeVisible();
+  await expect(action).toHaveAttribute('data-armed', '');
+  await expect(action).not.toHaveAttribute('data-armed', { timeout: 4500 });
+  await action.click();
+  await page.waitForTimeout(360); // the existing deliberate double-tap guard
+  await action.click();
+  await expect(sheet).toHaveCount(0);
 });
