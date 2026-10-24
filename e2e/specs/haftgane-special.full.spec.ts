@@ -60,7 +60,7 @@ function chooseKey(f: TableState, olympiaNight: boolean): Choice {
 }
 /** The phone and desktop captures in both themes, for the screens that show
  *  the view's own new fields, with `focus` scrolled into view. The theme
- *  follows the emulated system. */
+ *  follows the emulated system (each context stores 'system'). */
 async function themedShots(p: Page, out: string, id: string, focus?: string): Promise<void> {
   for (const scheme of ['light', 'dark'] as const) {
     await p.emulateMedia({ colorScheme: scheme });
@@ -138,6 +138,7 @@ test('special decisions reached from Home keep each frame private @full @mobile 
         for (const [i, ctx] of contexts.entries())
           await ctx.addInitScript((n) => {
             localStorage.setItem('ajayeb:name', `Player ${n}`);
+            localStorage.setItem('ajayeb:theme', 'system');
             const s = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
             localStorage.setItem(
               'ajayeb:settings',

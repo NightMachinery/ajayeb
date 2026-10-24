@@ -95,7 +95,8 @@ test.describe('production smoke', { tag: ['@prod'] }, () => {
         const problems = watchHygiene(page);
         await page.goto('/');
         await expect(page.getByRole('heading', { level: 1, name: 'Ajayeb' })).toBeVisible();
-        await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
+        // A new visitor gets light whatever the system scheme.
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
         await page.evaluate(async () => {
           await document.fonts.ready;
         });

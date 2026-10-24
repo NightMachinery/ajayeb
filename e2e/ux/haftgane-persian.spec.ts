@@ -119,7 +119,11 @@ test.describe('haftgane in Persian', () => {
     const report: { id: string; latin: string[] }[] = [];
     const seen = new Set<string>();
     const player = 'روشن';
-    await page.addInitScript((n) => localStorage.setItem('ajayeb:name', n), player);
+    await page.addInitScript((n) => {
+      localStorage.setItem('ajayeb:name', n);
+      // The shots switch themes through the emulated system scheme.
+      localStorage.setItem('ajayeb:theme', 'system');
+    }, player);
     await page.setViewportSize({ width: 390, height: 844 });
     let code = '';
 
@@ -234,6 +238,7 @@ test.describe('haftgane in Persian', () => {
       const s = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
       localStorage.setItem('ajayeb:settings', JSON.stringify({ ...s, locale: 'fa' }));
       localStorage.setItem('ajayeb:name', 'مهمان');
+      localStorage.setItem('ajayeb:theme', 'system');
     });
     const spectator = await watcher.newPage();
     const spectatorProblems = watchHygiene(spectator);

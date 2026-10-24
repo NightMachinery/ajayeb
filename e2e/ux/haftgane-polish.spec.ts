@@ -89,7 +89,11 @@ for (const [locale, tables] of [
         const problems = watchHygiene(page);
         const report: Record<string, unknown>[] = [];
         const player = locale === 'fa' ? 'روشن' : 'Roshan';
-        await page.addInitScript((n) => localStorage.setItem('ajayeb:name', n), player);
+        await page.addInitScript((n) => {
+          localStorage.setItem('ajayeb:name', n);
+          // The shots switch themes through the emulated system scheme.
+          localStorage.setItem('ajayeb:theme', 'system');
+        }, player);
         await page.setViewportSize({ width: 390, height: 844 });
         await openBotTable(page, seats, player);
         await expect(page.locator('html')).toHaveAttribute('dir', locale === 'fa' ? 'rtl' : 'ltr');

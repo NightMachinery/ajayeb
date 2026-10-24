@@ -59,8 +59,9 @@ test.describe('smoke', { tag: ['@smoke', '@mobile'] }, () => {
         await page.goto('/');
         await expect(page).toHaveTitle(/Ajayeb/);
         await expect(page.getByRole('heading', { level: 1, name: 'Ajayeb' })).toBeVisible();
-        // The theme bootstrap in app.html follows the system scheme by default.
-        await expect(page.locator('html')).toHaveAttribute('data-theme', colorScheme);
+        // A new visitor gets light whatever the system scheme
+        // (M18.installable-and-fullscreen).
+        await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
         await page.evaluate(async () => {
           await document.fonts.ready;
         });
