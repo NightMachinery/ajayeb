@@ -677,3 +677,82 @@ func TestSharedLobbyDuelBotGameToEnd(t *testing.T) {
 		t.Fatalf("rematch game: %+v", again.Room.Seats)
 	}
 }
+
+// TestSharedLobbyDuelRematchFailedPersist: when the finished game cannot
+// write its confirmed successor, the code is not handed out: the request
+// answers storage and no created frame goes out, so nobody can start that
+// lobby. After a crash (the exit flush fails too), the next request finds
+// the lobby by its parent and answers the same code; it is started, and a
+// later request still answers it (the M18.shared-lobby re-check's
+// shared-started scenario). Without a crash, the next request writes the
+// successor again before it answers.
+func TestSharedLobbyDuelRematchFailedPersist(t *testing.T) {
+	for _, crash := range []bool{true, false} {
+		t.Run(map[bool]string{true: "crash", false: "retry"}[crash], func(t *testing.T) {
+			f := newFixture(t, nil)
+			a := f.conn(user(0), "a", "A")
+			b := f.conn(user(1), "b", "B")
+			code := f.create(a, 2, wire.LobbyOptions{})
+			f.join(b, code)
+			f.send(a, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1})
+			duelFrame(a)
+			duelFrame(b)
+			finishDuel(t, f, code, []*conn{a, b})
+			f.failDuelSaves(func(file *store.File) bool { return file.Code == code && file.Rematch != "" })
+			if _, err := f.m.Rematch(f.ctx(), b.c, code); !errors.Is(err, room.ErrStorage) {
+				t.Fatalf("rematch with the confirming write failing: %v", err)
+			}
+			for _, k := range []*conn{a, b} {
+				k.drain()
+				for _, m := range k.frames {
+					if c, ok := m.(wire.Created); ok {
+						t.Fatalf("successor %s went out before the game held it", c.Code)
+					}
+				}
+			}
+			saved, _, err := f.st.Load(code)
+			if err != nil || saved.Rematch != "" || saved.RematchReserved == "" {
+				t.Fatalf("parent before the retry: %+v %v", saved, err)
+			}
+			next := saved.RematchReserved
+			if g, _ := f.st.Game(next); g != Game {
+				t.Fatalf("the successor lobby was not made: %q", g)
+			}
+			if crash {
+				f.close()
+				f.failDuelSaves(nil)
+				f.start()
+				a = f.conn(user(0), "a2", "A")
+				b = f.conn(user(1), "b2", "B")
+				f.join(a, code)
+				f.join(b, code)
+			} else {
+				f.failDuelSaves(nil)
+			}
+			again, err := f.m.Rematch(f.ctx(), a.c, code)
+			if err != nil || again != next {
+				t.Fatalf("after the failed write, rematch answered %q (%v), not %s", again, err, next)
+			}
+			b.until("the successor's created frame", func(m any) bool { c, ok := m.(wire.Created); return ok && c.Code == next })
+			if saved, _, err = f.st.Load(code); err != nil || saved.Rematch != next || saved.RematchReserved != "" {
+				t.Fatalf("parent after the retry: %+v %v", saved, err)
+			}
+			f.join(a, next)
+			f.join(b, next)
+			b.lobby("both seated in the successor", func(st wire.LobbyState) bool { return st.CanStart })
+			f.send(b, wire.LobbyStart{T: "lobby-start", Code: next, Seq: 1})
+			duelFrame(a)
+			duelFrame(b)
+			if crash {
+				f.m.Leave(a.c, next)
+				f.m.Leave(b.c, next)
+				f.restart()
+			}
+			a3 := f.conn(user(0), "a3", "A")
+			f.join(a3, code)
+			if third, err := f.m.Rematch(f.ctx(), a3.c, code); err != nil || third != next {
+				t.Fatalf("after the successor started, rematch answered %q (%v), not %s", third, err, next)
+			}
+		})
+	}
+}

@@ -47,6 +47,13 @@ func (m *Manager) successors() DuelSuccessors {
 // every request answers that code without asking the lobby again, since
 // the lobby may have started its own game by then. Only a reservation that
 // another room took before the lobby was made is given up for a new one.
+//
+// The code goes out (created frames, the answer) only once the file holds
+// it as the successor, as a table commits its Successor first: a code
+// handed out and then lost to a crash would let the lobby start under it
+// while the reloaded game, finding no lobby there, made a second one. A
+// failed write keeps the successor in memory and answers storage; the next
+// request writes again before answering.
 func (r *Room) rematchLobby(c *Client, mem member) (string, error) {
 	maker := r.m.successors()
 	if maker == nil {
@@ -79,9 +86,7 @@ func (r *Room) rematchLobby(c *Client, mem member) (string, error) {
 			return "", fmt.Errorf("%w: %v", ErrStorage, err)
 		}
 		r.rematch, r.reserved = r.reserved, ""
-		// As in doRematch, a failed write leaves the room dirty: it keeps
-		// the successor in memory and is not evicted until a write succeeds.
-		r.persist()
+		r.dirty = true // the successor is not in the file yet
 		r.log.Info("rematch", "code", r.rematch)
 	}
 	if r.rematch == "" {
@@ -90,6 +95,11 @@ func (r *Room) rematchLobby(c *Client, mem member) (string, error) {
 			return "", ErrStorage
 		}
 		return "", ErrStorage
+	}
+	if r.dirty {
+		if err := r.save(r.m.cfg.Store.Save); err != nil {
+			return "", ErrStorage
+		}
 	}
 	for cl, member := range r.clients {
 		cl.Out.Push(r.rematchCreated(cl, member))

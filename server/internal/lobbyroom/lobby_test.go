@@ -44,6 +44,8 @@ type fixture struct {
 	saves map[string]*saveFault
 	// codes are the Manager's next NewCode answers (codeStore).
 	codes []string
+	// duelSaveFails picks the Duel writes that fail (codeStore.Save).
+	duelSaveFails func(*store.File) bool
 }
 
 type saveFault struct{ pass, fail int }
@@ -85,6 +87,24 @@ func (s codeStore) ReplaceDuel(from string, f *store.File) error {
 		return errors.New("injected Duel replacement failure")
 	}
 	return s.Store.ReplaceDuel(from, f)
+}
+
+// Save fails the Duel writes the fixture's duelSaveFails picks.
+func (s codeStore) Save(file *store.File) error {
+	s.f.mu.Lock()
+	fail := s.f.duelSaveFails
+	s.f.mu.Unlock()
+	if fail != nil && fail(file) {
+		return errors.New("injected Duel save failure")
+	}
+	return s.Store.Save(file)
+}
+
+// failDuelSaves makes the Duel writes fn picks fail; nil lets all through.
+func (f *fixture) failDuelSaves(fn func(*store.File) bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.duelSaveFails = fn
 }
 
 func (s codeStore) NewCode() (string, error) {
