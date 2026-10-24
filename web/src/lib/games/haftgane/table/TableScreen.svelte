@@ -29,6 +29,9 @@
   import PassFlow from './PassFlow.svelte';
   import PickPanel from './PickPanel.svelte';
   import CardSheet from './CardSheet.svelte';
+  import CitySheet from './CitySheet.svelte';
+  import SeenHandsButton from './SeenHandsButton.svelte';
+  import SeenHandsSheet from './SeenHandsSheet.svelte';
   import { settings } from '$lib/ui/settings.svelte';
   import TableMenu from './TableMenu.svelte';
   import TableTopBar from './TableTopBar.svelte';
@@ -126,6 +129,9 @@
   }
 
   let menuOpen = $state(false);
+  // The city sheet's seat, and whether the Seen hands sheet is open.
+  let citySeat = $state<number | null>(null);
+  let seenOpen = $state(false);
 
   const nameOf = (seat: number) => seatName(frame, seat);
   const passTo = $derived(
@@ -230,6 +236,7 @@
                 where={where(s, n)}
                 bot={isBot(frame, s.seat)}
                 status={seatStatus(frame, s.seat)}
+                onopen={() => (citySeat = s.seat)}
               />
             </div>
           {/each}
@@ -250,6 +257,7 @@
           trade={neighbourTrade(side)}
           yourShields={around.own ? around.anchor.shields : 0}
           pass={view.pass}
+          onopen={() => (citySeat = s.seat)}
         />
       </div>
     {/each}
@@ -264,6 +272,7 @@
           bot={isBot(frame, around.anchor.seat)}
           status={seatStatus(frame, around.anchor.seat)}
           stageOpen={deciding && stageOpen(choices)}
+          onopen={() => (citySeat = around.anchor.seat)}
         />
       </div>
       {#if mine}
@@ -276,6 +285,7 @@
               handSize={hand.length}
             />
           {/if}
+          <SeenHandsButton onopen={() => (seenOpen = true)} />
         </div>
         <div class="hand">
           {#if hand.length > 0}
@@ -341,6 +351,28 @@
         onclose={() => (selection = null)}
       />
     {/key}
+  {/if}
+
+  {#if citySeat !== null}
+    <CitySheet
+      seats={view.seats}
+      {names}
+      bots={view.seats.filter((s) => isBot(frame, s.seat)).map((s) => s.seat)}
+      statuses={Object.fromEntries(view.seats.map((s) => [s.seat, seatStatus(frame, s.seat)]))}
+      own={mine ? { seat: mine.seat, tucked: mine.tucked, kept: mine.kept } : null}
+      revealed={view.reveal?.tucked ?? null}
+      active={citySeat}
+      onselect={(s) => (citySeat = s)}
+      onclose={() => (citySeat = null)}
+    />
+  {/if}
+  {#if seenOpen && mine}
+    <SeenHandsSheet
+      notebook={mine.notebook}
+      age={view.age}
+      {names}
+      onclose={() => (seenOpen = false)}
+    />
   {/if}
 
   {#if menuOpen}
