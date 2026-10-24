@@ -102,6 +102,9 @@ func DecodeClientVersion(raw []byte, version int) (ClientMessage, error) {
 			if err := checkNonEmptyBounded("point.id", m.Point.ID, maxActionKeyLen); err != nil {
 				return err
 			}
+			if err := requestSeat(m.Seat); err != nil {
+				return err
+			}
 			return checkNonEmptyBounded("key", m.Key, maxActionKeyLen)
 		})
 	case "table-undo":
@@ -109,7 +112,7 @@ func DecodeClientVersion(raw []byte, version int) (ClientMessage, error) {
 			if m.Base < 0 {
 				return fmt.Errorf("negative base")
 			}
-			return nil
+			return requestSeat(m.Seat)
 		})
 	case "table-seat":
 		return decodePlatform[TableSeat](raw, t, func(m TableSeat) error {
@@ -138,7 +141,7 @@ func DecodeClientVersion(raw []byte, version int) (ClientMessage, error) {
 			if !m.Confirm {
 				return fmt.Errorf("resignation requires confirm true")
 			}
-			return nil
+			return requestSeat(m.Seat)
 		})
 	case "lobby-create":
 		return decodePlatform[LobbyCreate](raw, t, func(m LobbyCreate) error {
@@ -363,4 +366,13 @@ func NewTableReject(seq int, code string) TableReject {
 // NewLobbyReject builds a private lobby rejection.
 func NewLobbyReject(seq int, code string) LobbyReject {
 	return LobbyReject{T: "lobby-reject", Seq: seq, Code: code}
+}
+
+// requestSeat checks the optional seat a pick, an undo or a resignation
+// names.
+func requestSeat(seat *int) error {
+	if seat != nil && !platformSeat(*seat) {
+		return fmt.Errorf("seat outside 0..6")
+	}
+	return nil
 }

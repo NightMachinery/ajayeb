@@ -937,13 +937,24 @@ must be nonempty and bounded; control/invisible formatting characters are
 refused. Bot difficulty is `easy`, `normal` or `hard`. The actor separately
 checks authorization and membership in its own offered legal set.
 
-All table requests carry `t`, `code` and nonnegative `seq`:
+All table requests carry `t`, `code` and nonnegative `seq`.
+
+`table-pick`, `table-undo` and `table-resign` act on the seat the sender
+controls when the request arrives. Each may also carry an optional `seat`
+(0 through 6), the seat it was made for: when the sender no longer controls
+that seat on arrival, because an admin moved them while the request was on
+its way, the table refuses it with `forbidden` and changes nothing. Without
+`seat`, such a request would act on the sender's new seat: a resignation
+meant for one seat would resign another, and a pick would land on the new
+seat whenever its key is offered there too. `seat` never selects a seat to
+act for; it only lets a request fail when its seat changed. A request
+without it is judged as before.
 
 - `table-pick` adds `point: {id, revision}`, `key` and `confirm`. `id` is the
   logical point's string id, such as `age-1-turn-1`; `revision` is the table's
-  public revision when the point opened (below). The connection's current seat supplies the actor,
-  with no client seat override. Sending the same key with false withdraws a
-  confirmation. The last required confirmation resolves the point once.
+  public revision when the point opened (below). Sending the same key with
+  false withdraws a confirmation. The last required confirmation resolves
+  the point once.
 - `table-undo` adds nonnegative `base`, the last received transport revision.
   Only the original sole human while still controlling their seat can undo,
   if the Start policy allowed it and no second human has since taken a seat.
@@ -1002,7 +1013,8 @@ let an old seq overwrite a newer pick. The user's tabs that already have a
 floor can still change the pick. Every write is checked against the same
 bounds a restart checks, so the table never saves a record it could not
 restore. A request is judged in this order:
-`forbidden` (no seat), duplicate, `decision-closed` (another reference or
+`forbidden` (no seat, or not the one the pick names), duplicate,
+`decision-closed` (another reference or
 the game over), `illegal` (the seat is not required or the key is not
 offered), then the pick's floor (duplicate, `stale` or `rate`). Other viewers
 receive neither the pending key nor any revision or metadata change that

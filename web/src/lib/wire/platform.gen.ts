@@ -217,6 +217,13 @@ export interface TablePick {
   point: PointRef;
   key: string;
   confirm: boolean;
+  /**
+   * Seat is the seat the request was made for. A table refuses it with
+   * forbidden when the sender no longer controls that seat (an admin moved
+   * them while it was on its way); without it, the request acts on
+   * whatever seat the sender controls when it arrives.
+   */
+  seat?: number /* int */;
 }
 /**
  * TableUndo requests rollback before the last completed batch containing the
@@ -227,6 +234,13 @@ export interface TableUndo {
   code: string;
   seq: number /* int */;
   base: number /* int */;
+  /**
+   * Seat is the seat the request was made for. A table refuses it with
+   * forbidden when the sender no longer controls that seat (an admin moved
+   * them while it was on its way); without it, the request acts on
+   * whatever seat the sender controls when it arrives.
+   */
+  seat?: number /* int */;
 }
 /**
  * TableSeat requests an admin's controller switch. Human requires UserID (a
@@ -261,6 +275,13 @@ export interface TableResign {
   code: string;
   seq: number /* int */;
   confirm: boolean;
+  /**
+   * Seat is the seat the request was made for. A table refuses it with
+   * forbidden when the sender no longer controls that seat (an admin moved
+   * them while it was on its way); without it, the request acts on
+   * whatever seat the sender controls when it arrives.
+   */
+  seat?: number /* int */;
 }
 /**
  * TableView is the real engine's whitelisted screen facts beside the

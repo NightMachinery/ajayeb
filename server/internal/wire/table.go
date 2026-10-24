@@ -19,6 +19,11 @@ type TablePick struct {
 	Point   PointRef `json:"point"`
 	Key     string   `json:"key"`
 	Confirm bool     `json:"confirm"`
+	// Seat is the seat the request was made for. A table refuses it with
+	// forbidden when the sender no longer controls that seat (an admin moved
+	// them while it was on its way); without it, the request acts on
+	// whatever seat the sender controls when it arrives.
+	Seat *int `json:"seat,omitempty"`
 }
 
 // TableUndo requests rollback before the last completed batch containing the
@@ -28,6 +33,11 @@ type TableUndo struct {
 	Code string `json:"code"`
 	Seq  int    `json:"seq"`
 	Base int    `json:"base"`
+	// Seat is the seat the request was made for. A table refuses it with
+	// forbidden when the sender no longer controls that seat (an admin moved
+	// them while it was on its way); without it, the request acts on
+	// whatever seat the sender controls when it arrives.
+	Seat *int `json:"seat,omitempty"`
 }
 
 // TableSeat requests an admin's controller switch. Human requires UserID (a
@@ -59,6 +69,11 @@ type TableResign struct {
 	Code    string `json:"code"`
 	Seq     int    `json:"seq"`
 	Confirm bool   `json:"confirm"`
+	// Seat is the seat the request was made for. A table refuses it with
+	// forbidden when the sender no longer controls that seat (an admin moved
+	// them while it was on its way); without it, the request acts on
+	// whatever seat the sender controls when it arrives.
+	Seat *int `json:"seat,omitempty"`
 }
 
 // TableView is the real engine's whitelisted screen facts beside the

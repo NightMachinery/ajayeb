@@ -657,19 +657,28 @@ func (a *actor) duplicate(c *room.Client, op string, seat int, seq int) string {
 	return a.note(op, seat, outDuplicate)
 }
 
+// namesSeat reports whether a request that may name the seat it was made
+// for (a pick, an undo, a resignation) fits the sender's current seat. One
+// sent before an admin moved the sender, and arriving after, names the old
+// seat and is refused with forbidden rather than acting on the new one. A
+// request naming no seat acts on the current seat, as older clients'
+// requests always did.
+func namesSeat(named *int, seat int) bool { return named == nil || *named == seat }
+
 func (a *actor) seqKey(c *room.Client) SeqRecord {
 	return SeqRecord{User: a.userOf(c), Client: ClientKey(c.ClientID)}
 }
 
 // submit applies one {seq, point, key, confirm} submission, checking in
-// the design's order: membership, the client's seq acknowledgement, the
+// the design's order: membership (the sender controls a seat, the one the
+// request names if it names one), the client's seq acknowledgement, the
 // open point reference, the seat being required and the key offered, and
 // the slot's floor for this client: a seq older than the one that last
 // changed the slot from it, or a new client past the slot's bound (rate).
 func (a *actor) submit(c *room.Client, p wire.TablePick) string {
 	r := &a.st.rec
 	seat := a.seatOf(a.userOf(c))
-	if seat < 0 {
+	if seat < 0 || !namesSeat(p.Seat, seat) {
 		return a.refuse(c, p.Seq, "pick", seat, outForbidden)
 	}
 	key := a.seqKey(c)
@@ -933,7 +942,7 @@ func (a *actor) resign(c *room.Client, f wire.TableResign) string {
 	switch {
 	case !f.Confirm:
 		return a.refuse(c, f.Seq, "resign", seat, outBad)
-	case seat < 0 || r.Status != store.StatusPlaying:
+	case seat < 0 || !namesSeat(f.Seat, seat) || r.Status != store.StatusPlaying:
 		return a.refuse(c, f.Seq, "resign", seat, outForbidden)
 	}
 	cand := r.clone()
@@ -1058,7 +1067,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	r := &a.st.rec
 	user := a.userOf(c)
 	seat := a.seatOf(user)
-	if seat < 0 {
+	if seat < 0 || !namesSeat(u.Seat, seat) {
 		return a.refuse(c, u.Seq, "undo", seat, outForbidden)
 	}
 	key := a.seqKey(c)
