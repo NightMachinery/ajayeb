@@ -499,8 +499,10 @@ a reload mends a client and a server that disagree.
   `SpectatorPanel`: seat buttons that centre the ring on the seat followed
   (`ring(seats, follow)`), the last turn as each seat's public `last`
   play, and the spectators. A former player first reads who plays their
-  seat now, from the seat this page held (`TableSession.held`) or an
-  admin's own hint.
+  seat now, and their ring centres on that seat until they follow another.
+  The seat comes from an admin's own hint or from what this tab held
+  (`TableSession.held`, kept across a reload in sessionStorage by
+  `session/held-seats.ts`), since no other frame names it.
 - **The development screen** (`dev/TableDev.svelte`) now shows only what
   comes before a table's first frame.
 
