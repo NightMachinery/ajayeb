@@ -12,8 +12,9 @@
 //
 // At 360x740, 390x844, 844x390 and 1280x800 the probe finds no
 // horizontal overflow or scroller, no control under 44 px, the recap
-// inside the screen, no glyph without a tooltip and nothing animating with
-// Animation off; and no page logs a console error or failed request. Each
+// inside the screen, no glyph without a tooltip, nothing animating with
+// Animation off and nothing in the top bar running into its neighbour
+// (each child's box and content against the others'); and no page logs a console error or failed request. Each
 // state is saved as a screenshot for the contact sheet, in
 // HG_RECAP_SHOTS_DIR. A last test checks the dev gallery's leaves.
 import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
@@ -52,9 +53,17 @@ interface Probe {
   outside: boolean;
   untipped: string[];
   animated: number;
+  crowded: string[];
 }
 
-const clean: Probe = { overflow: [], small: [], outside: false, untipped: [], animated: 0 };
+const clean: Probe = {
+  overflow: [],
+  small: [],
+  outside: false,
+  untipped: [],
+  animated: 0,
+  crowded: []
+};
 
 async function probe(page: Page, selector: string): Promise<Probe> {
   return page.locator(selector).evaluate((root) => {
@@ -103,6 +112,35 @@ async function probe(page: Page, selector: string): Promise<Probe> {
           shown(el)
       )
       .map((el) => describe(el.parentElement ?? el));
+    // The top bar (the root's, else the page's): no child, with all of its
+    // content, may reach into another, so a label that runs past its own
+    // box (or is clipped there) counts too.
+    const crowded: string[] = [];
+    const bar = root.querySelector('[data-top-bar]') ?? document.querySelector('[data-top-bar]');
+    if (bar && shown(bar)) {
+      const name = (el: Element) =>
+        el.getAttribute('data-act') ?? (el.className || el.tagName.toLowerCase());
+      const extent = (el: Element) => {
+        const r = el.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const c = range.getBoundingClientRect();
+        if (c.width === 0 || c.height === 0) return r;
+        return {
+          left: Math.min(r.left, c.left),
+          right: Math.max(r.right, c.right),
+          top: Math.min(r.top, c.top),
+          bottom: Math.max(r.bottom, c.bottom)
+        };
+      };
+      const kids = [...bar.children].filter(shown).map((el) => ({ el, box: extent(el) }));
+      for (const [i, a] of kids.entries())
+        for (const b of kids.slice(i + 1)) {
+          const across = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+          const down = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+          if (across > 0.5 && down > 0.5) crowded.push(`${name(a.el)} over ${name(b.el)}`);
+        }
+    }
     return {
       overflow: overflow.slice(0, 10),
       small,
@@ -113,7 +151,8 @@ async function probe(page: Page, selector: string): Promise<Probe> {
         .getAnimations()
         .filter(
           (a) => a.playState === 'running' && Number(a.effect?.getComputedTiming().duration) > 1
-        ).length
+        ).length,
+      crowded
     };
   });
 }
