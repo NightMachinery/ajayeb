@@ -7,14 +7,17 @@
   //      owned progress tokens, coins, victory points, and the wonder
   //      button ("1/4", glowing when a wonder can be built now)
   //   2. the five resource chips (production, then the price as a coin)
-  //      and the science count
+  //      and the science symbols the seat owns, with the count
   //
   // The two strips have the same layout. Everything else (the science
   // slots, the city by colour, each wonder) is in the city sheet and the
-  // wonder sheet. In phone landscape, where the strip is a narrow column,
-  // the rows wrap: the first always breaks after the name and puts the
-  // owned tokens last, so both strips have their tallies and wonder button
-  // on one line of their own.
+  // wonder sheet. Where the strip is a narrow column (phone landscape; a
+  // container query on the strip's own width, so a short portrait screen
+  // keeps the two rows), the rows wrap: the first always breaks after the
+  // name and puts the owned tokens last, so both strips have their tallies
+  // and wonder button on one line of their own. The root carries
+  // data-player-status with the seat, the hook for checks that a player's
+  // status is on screen.
   //
   // Glows when this seat is in military or scientific danger
   // (lib/view/threats.ts), never once the game has ended. A leaf
@@ -188,7 +191,7 @@
 {/snippet}
 
 <div
-  class="player-strip flex flex-col gap-1 rounded-panel border px-2 py-1.5
+  class="player-strip @container flex flex-col gap-1 rounded-panel border px-2 py-1.5
     {glow === 'strong'
     ? 'border-cinnabar ring-[3px] ring-cinnabar/45'
     : danger
@@ -198,8 +201,9 @@
         : 'border-rule'} {className}"
   data-danger={danger ? '' : undefined}
   data-glow={glow}
+  data-player-status={seat}
 >
-  <div class="strip-row flex min-w-0 items-center gap-x-1 gap-y-1 short:flex-wrap">
+  <div class="strip-row flex min-w-0 items-center gap-x-1 gap-y-1 @max-xs:flex-wrap">
     {#if onopen}
       <button
         type="button"
@@ -242,11 +246,11 @@
       </span>
     {/if}
 
-    <span class="flex-1 short:h-0 short:basis-full" aria-hidden="true"></span>
+    <span class="flex-1 @max-xs:h-0 @max-xs:basis-full" aria-hidden="true"></span>
 
     {#if player.tokens.length > 0}
       <ul
-        class="flex shrink-0 items-center ps-1.5 short:order-last"
+        class="flex shrink-0 items-center ps-1.5 @max-xs:order-last"
         aria-label={t('board.citySheet.tokens')}
         data-fx-tokens
       >
@@ -287,14 +291,12 @@
     />
   </div>
 
-  <div
-    class="strip-row flex min-w-0 items-center justify-between gap-x-1.5 gap-y-1 short:flex-wrap"
-  >
+  <div class="strip-row flex min-w-0 flex-wrap items-center justify-between gap-x-1.5 gap-y-1">
     <ResourceChips
       production={player.production}
       tradePrices={player.tradePrices}
       compact
-      class="flex-nowrap! short:flex-wrap!"
+      class="flex-nowrap! @max-xs:flex-wrap!"
     />
     <ScienceTracker science={player.science} pill {ended} {seat} glow={scienceLevel} />
   </div>

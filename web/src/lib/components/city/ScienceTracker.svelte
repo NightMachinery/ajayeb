@@ -3,9 +3,10 @@
   // of 6 and a danger ring at 5 (lib/view/threats.scienceDanger; none once
   // the game has ended). Pairs (count >= 2 of the same symbol) get a small
   // ring of their own, since a pair is what lets the player take a progress
-  // token. The `pill` form is the phone strip's: the green building's
-  // glyph (the science category) and the count out of 6, nothing more; the
-  // city sheet has the slots.
+  // token. The `pill` form is the phone strip's: the symbols the seat owns,
+  // each with its own tooltip and a pair ringed, then the count out of 6
+  // (the green building's glyph, the science category, while it owns none);
+  // the city sheet has every slot.
   //
   // Hints (M10.HS4, symbol-status and science-reach): with the science
   // hints, each slot shows where the seat stands on its symbol (the
@@ -143,6 +144,7 @@
   function slotTip(symbol: ScienceSymbol): string {
     return sh?.slots[symbol]?.tip ?? t(labelKey(symbol));
   }
+  const owned = $derived(SYMBOLS.filter((symbol) => countOf(symbol) > 0));
 </script>
 
 {#snippet diagram()}
@@ -159,15 +161,32 @@
         : 'border-rule bg-panel text-fg'} {level === 'strong'
       ? 'ring-2 ring-cinnabar/45'
       : ''} {className}"
-    role="img"
+    role="group"
     aria-label={label}
     data-science={science.distinct}
+    data-science-symbols
     data-fx-science-pill
     data-danger={danger ? '' : undefined}
     data-glow={level}
     {@attach tooltip(counterTip)}
   >
-    <Icon name="category-green-sm" class="text-xs {danger ? '' : 'text-card-green-ink'}" />
+    {#each owned as symbol (symbol)}
+      {@const paired = countOf(symbol) >= 2}
+      <span
+        class="grid size-4 shrink-0 place-items-center rounded-full {paired
+          ? 'bg-accent-soft text-accent-soft-fg ring-1 ring-gild'
+          : ''}"
+        role="img"
+        aria-label={t(labelKey(symbol))}
+        data-symbol={symbol}
+        data-paired={paired ? '' : undefined}
+        {@attach tooltip({ text: slotTip(symbol), rulesId: 'science' })}
+      >
+        <Icon name={`${SYMBOL_ICON[symbol]}-sm`} class="text-xs" />
+      </span>
+    {:else}
+      <Icon name="category-green-sm" class="text-xs {danger ? '' : 'text-card-green-ink'}" />
+    {/each}
     <span data-must-fit>{formatNumber(science.distinct)}/{formatNumber(6)}</span>
   </span>
 {:else}
