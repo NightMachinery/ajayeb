@@ -154,7 +154,8 @@ func TestDifferentialAgainstDirect(t *testing.T) {
 			for game := range uint64(3) {
 				// Each game has its own deadline, so a hang in one is caught
 				// however long the whole sweep takes (several times longer
-				// under the race detector).
+				// under the race detector). Real views get a two-minute budget
+				// under memory pressure; assertion coverage is unchanged.
 				differential(testContextFor(t, 2*time.Minute), t, n, 300+game*7+uint64(n), seqClients, game, seen)
 			}
 		}
@@ -172,7 +173,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 	// direct's setup uses the engine's default (random) seating.
 	ref, err := direct.New(ctx, direct.Options{Setup: makeDaySetup(seed, n, true, false), SeqClients: seqClients, Tabs: true})
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%s: %v", where, err)
 	}
 	f := newFixture(t, Config{SeqClients: seqClients})
 	f.tabs = true
@@ -180,7 +181,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 	sp.RandomSeating = true
 	act, err := f.openInproc(ctx, sp)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%s: %v", where, err)
 	}
 	clients := make([]tabletest.ClientID, n)
 	viewers := []tabletest.ClientID{tabletest.SpectatorClient}
@@ -198,10 +199,10 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 		asnaps := make([]tabletest.Snapshot, n)
 		for s, c := range clients {
 			if dsnaps[s], err = ref.Snapshot(ctx, c); err != nil {
-				t.Fatal(err)
+				t.Fatalf("%s: %v", where, err)
 			}
 			if asnaps[s], err = act.Snapshot(ctx, c); err != nil {
-				t.Fatal(err)
+				t.Fatalf("%s: %v", where, err)
 			}
 		}
 		compareViews(ctx, t, fmt.Sprintf("%s, point %d", where, idx), ref, act, viewers, dsnaps[0].Ref, asnaps[0].Ref)
@@ -210,12 +211,12 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 		}
 		scripts, err := tabletest.Scripts(dsnaps, clients, seed*31+uint64(idx)+salt, opts[(idx+int(salt))%len(opts)], seqs)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("%s: %v", where, err)
 		}
 		for i, op := range tabletest.Interleave(scripts, seed+uint64(idx)*17) {
 			do, err := ref.Submit(ctx, op.Client, op.Sub)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("%s: %v", where, err)
 			}
 			sub := op.Sub
 			if sub.Ref == dsnaps[0].Ref {
@@ -223,7 +224,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 			}
 			ao, err := act.Submit(ctx, op.Client, sub)
 			if err != nil {
-				t.Fatal(err)
+				t.Fatalf("%s: %v", where, err)
 			}
 			if do != ao {
 				t.Fatalf("%s, point %s, arrival %d (%s seq %d confirm=%t): direct %s, actor %s",
@@ -236,7 +237,7 @@ func differential(ctx context.Context, t *testing.T, n int, seed uint64, seqClie
 	dc, _ := ref.Canonical(ctx)
 	ac, err := act.Canonical(ctx)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("%s: %v", where, err)
 	}
 	if !bytes.Equal(dc.Bytes(), ac.Bytes()) {
 		t.Fatalf("%s: canonical histories differ:\n%s\n%s", where, dc.Bytes(), ac.Bytes())

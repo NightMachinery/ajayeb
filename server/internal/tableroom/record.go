@@ -104,7 +104,9 @@ type Record struct {
 	// push out another's.
 	Seqs []SeqRecord `json:"seqs"`
 	// Work is the bot work ledger of the open point.
-	Work []WorkRow `json:"work"`
+	Work         []WorkRow     `json:"work"`
+	BotPresets   []BotPreset   `json:"botPresets"`
+	BotFallbacks []BotFallback `json:"botFallbacks"`
 	// RoomLog is the public log of seat switches, resignations, role
 	// changes and device-link resets, oldest first and at most maxRoomLog.
 	RoomLog []wire.PlatformLogEntry `json:"roomLog"`
@@ -203,7 +205,9 @@ type StartSlot struct {
 // recordFormat is the format this build writes. Format 0 (no field) is
 // the room actor's development record from before the lobby, which
 // upgrade reads explicitly.
-const recordFormat = 1
+// Format 2 freezes algorithm/preset/bounds for future switches and points.
+// Older records without supported frozen presets fail closed on load.
+const recordFormat = 2
 
 // BatchRecord is one complete batch: the logical point id and one key per
 // required seat, sorted by seat.
@@ -237,34 +241,19 @@ type SeqRecord struct {
 // starts and frozen through restart: the policy version, the level and
 // the fixed deterministic allowance.
 type WorkRow struct {
-	Seat      int    `json:"seat"`
-	Point     string `json:"point"`
-	Policy    string `json:"policy"`
-	Level     string `json:"level"`
-	Allowance int    `json:"allowance"`
+	Seat  int    `json:"seat"`
+	Point string `json:"point"`
+	BotPreset
 }
 
-// Bot levels. The lowest released level is the default for a bot seat.
+// The lowest internal level is the resignation default; an admin explicitly
+// selects the level for a switch. Both use the table's frozen preset row.
 const (
-	BotEasy   = "easy"
-	BotNormal = "normal"
-	BotHard   = "hard"
-	// DefaultBotLevel is the lowest released level.
+	BotEasy         = "easy"
+	BotNormal       = "normal"
+	BotHard         = "hard"
 	DefaultBotLevel = BotEasy
 )
-
-// allowance is a level's fixed deterministic work allowance.
-func allowance(level string) (int, bool) {
-	switch level {
-	case BotEasy:
-		return 1, true
-	case BotNormal:
-		return 2, true
-	case BotHard:
-		return 4, true
-	}
-	return 0, false
-}
 
 // clone returns a deep copy, so a transaction never shares a slice with
 // the committed record.
@@ -297,6 +286,8 @@ func (r *Record) clone() Record {
 	}
 	c.Seqs = slices.Clone(r.Seqs)
 	c.Work = slices.Clone(r.Work)
+	c.BotPresets = slices.Clone(r.BotPresets)
+	c.BotFallbacks = slices.Clone(r.BotFallbacks)
 	c.RoomLog = slices.Clone(r.RoomLog)
 	return c
 }
@@ -314,6 +305,12 @@ func (r *Record) encode() ([]byte, error) {
 	}
 	if c.Retired == nil {
 		c.Retired = []string{}
+	}
+	if c.BotPresets == nil {
+		c.BotPresets = []BotPreset{}
+	}
+	if c.BotFallbacks == nil {
+		c.BotFallbacks = []BotFallback{}
 	}
 	if c.Start == nil {
 		c.Start = []StartSlot{}
@@ -355,12 +352,17 @@ func decodeRecord(data []byte) (*Record, error) {
 	return &r, nil
 }
 
-// upgrade reads a format-0 record, the room actor's development record
+// upgrade preserves format-1 metadata and reads a format-0 development record
 // from before the lobby: it had no previous seats, retired users, away
 // times, epochs or Start slots, and no switches had happened, so each
 // seat's Start slot is its original human or its current bot. A seat
-// still open (the old dev path's) stays open, which restore refuses.
+// still open stays open, which restore refuses. No bot presets are invented;
+// records without supported frozen configuration fail validation.
 func upgrade(r *Record) {
+	if r.Format == 1 {
+		r.Format = recordFormat
+		return
+	}
 	r.Format = recordFormat
 	r.Previous, r.Retired = []PreviousRecord{}, []string{}
 	r.Roles = r.Roles.Clone()
@@ -679,7 +681,25 @@ func checkStart(r *Record) error {
 // checkWork requires exactly one current-policy row for each required bot
 // seat of the open point, and none for anything else.
 func checkWork(r *Record, g *game) error {
+	if !slices.Equal(r.BotPresets, releasedPresets()) {
+		return invalid("unsupported frozen bot presets")
+	}
 	p := g.Point()
+	if len(r.BotFallbacks) > maxRoomLog {
+		return invalid("too many bot diagnostics")
+	}
+	for _, f := range r.BotFallbacks {
+		if f.At < 0 || f.At > len(r.Batches) || f.Point == "" || f.Seat < 0 || f.Seat >= len(r.Seats) || f.Reason != "watchdog" {
+			return invalid("a bot diagnostic")
+		}
+		if f.At < len(r.Batches) {
+			if f.Point != r.Batches[f.At].Point || !slices.ContainsFunc(r.Batches[f.At].Picks, func(p PickRecord) bool { return p.Seat == f.Seat }) {
+				return invalid("a bot diagnostic for another batch")
+			}
+		} else if pointOver(p) || f.Point != p.ID || !p.Required.Has(seatNum(f.Seat)) {
+			return invalid("a bot diagnostic for another point")
+		}
+	}
 	var rows [MaxSeats]bool
 	for _, w := range r.Work {
 		switch {
@@ -690,7 +710,7 @@ func checkWork(r *Record, g *game) error {
 		case w.Policy != policyVersion:
 			return invalid("work row of seat %d has an unsupported policy", w.Seat)
 		}
-		if a, ok := allowance(w.Level); !ok || a != w.Allowance {
+		if preset, ok := frozenPreset(r, r.Seats[w.Seat].Bot); !ok || w.BotPreset != preset {
 			return invalid("work row of seat %d has a bad level or allowance", w.Seat)
 		}
 		rows[w.Seat] = true

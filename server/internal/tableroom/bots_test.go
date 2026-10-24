@@ -160,7 +160,7 @@ func TestNoHumanPause(t *testing.T) {
 	})
 	<-work.Started() // the second bot's search holds now
 	rows := h.record().Work
-	if len(rows) != 3 || rows[0].Level != BotNormal || rows[0].Allowance != 2 || rows[0].Policy != policyVersion {
+	if len(rows) != 3 || rows[0].Level != BotNormal || rows[0].Allowance != 1 || rows[0].Policy != policyVersion {
 		t.Fatalf("work rows %+v", rows)
 	}
 	f.restart()

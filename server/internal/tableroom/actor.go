@@ -57,6 +57,11 @@ type actor struct {
 	botBusy   bool
 	botCancel context.CancelFunc
 	botWG     sync.WaitGroup
+	// botBusy marks a valid task; botRunning also covers cancelled cleanup.
+	botRunning bool
+	botRunID   uint64
+	botSeat    int
+	botPoint   string
 }
 
 // claimed is a connection's device-link claim and the user it acts as.
@@ -84,11 +89,13 @@ type msgCall struct {
 }
 
 type msgBotResult struct {
-	gen   uint64
-	point string
-	seat  int
-	key   string
-	err   error
+	owner    *actor
+	gen      uint64
+	point    string
+	seat     int
+	key      string
+	err      error
+	fallback string
 }
 
 // newActor builds a table's actor. members are connections the lobby
@@ -975,7 +982,9 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 	gone := a.revokeClaims()
 	a.publish(a.newBroadcast(resolved), c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq})
 	a.afterRevoke(gone)
-	a.stopBots()
+	if resolved || seat >= 0 && seat == a.botSeat {
+		a.stopBots()
+	}
 	a.kickBots()
 	outcome := outAccepted
 	if resolved {
@@ -1001,8 +1010,7 @@ func syncWork(r *Record, g *game) {
 				out = append(out, r.Work[i])
 				continue
 			}
-			al, _ := allowance(sr.Bot)
-			out = append(out, WorkRow{Seat: int(s), Point: p.ID, Policy: policyVersion, Level: sr.Bot, Allowance: al})
+			out = append(out, workRow(r, p.ID, int(s)))
 		}
 	}
 	r.Work = out
@@ -1072,6 +1080,7 @@ func (a *actor) undo(c *room.Client, u wire.TableUndo) string {
 	key.Seq = u.Seq
 	seqPut(&cand.Seqs, key, a.t.cfg.SeqClients)
 	cand.Batches = cand.Batches[:cut]
+	cand.BotFallbacks = slices.DeleteFunc(cand.BotFallbacks, func(f BotFallback) bool { return f.At >= cut })
 	cand.Pending = []PendingSlot{}
 	bumpPublic(&cand)
 	su, err := recordSetup(cand.Setup)

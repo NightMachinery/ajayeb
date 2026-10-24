@@ -92,6 +92,12 @@ type Config struct {
 	// BotWork, when set, runs inside each bot search, holding its pool
 	// permit: the tests' stand-in for search time and cancellation.
 	BotWork func(ctx context.Context, seat int, point string) error
+	// BotWatchdog bounds an exceptional stalled search after pool admission.
+	// Zero uses 30 seconds; queue wait never consumes it.
+	BotWatchdog time.Duration
+	// BotFinished receives seedless counters/timings, never keys or private facts.
+	// It runs on the worker goroutine and must return promptly.
+	BotFinished func(BotReport)
 }
 
 // Errors of the creation API.
@@ -409,6 +415,7 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	order := seatOrder(su.Seed, su.Seats, su.Options.Seating)
 	base := Record{
 		Schema: Schema, Game: Game, Rules: RulesVersion, Format: recordFormat,
+		BotPresets: releasedPresets(), BotFallbacks: []BotFallback{},
 		Setup:      sr,
 		Assignment: make([]int, n), Original: make([]string, n), Seats: make([]SeatRecord, n), Start: make([]StartSlot, n),
 		Roles: rs, Previous: []PreviousRecord{}, Retired: []string{},
@@ -463,8 +470,7 @@ func openPoint(r *Record, g *game) {
 	r.Point, r.Status = &wire.PointRef{ID: p.ID, Revision: r.Public}, store.StatusPlaying
 	for _, s := range p.Required.Seats() {
 		if sr := r.Seats[s]; sr.Kind == SeatBot {
-			a, _ := allowance(sr.Bot)
-			r.Work = append(r.Work, WorkRow{Seat: int(s), Point: p.ID, Policy: policyVersion, Level: sr.Bot, Allowance: a})
+			r.Work = append(r.Work, workRow(r, p.ID, int(s)))
 		}
 	}
 }

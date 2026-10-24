@@ -49,9 +49,6 @@ const (
 	MinSeats     = rules.MinSeats
 	MaxSeats     = rules.MaxSeats
 	maxBatches   = rules.MaxPoints
-	// Exact offered-key fallback only. M17.fixed-preset-room-bots replaces
-	// this policy and versions the persisted work rows.
-	policyVersion = "offered-key-1"
 )
 
 var seatOrder = rules.SeatOrder
@@ -89,6 +86,7 @@ func legalKeys(g *game, s int) []string {
 	}
 	return out
 }
+
 func observationHash(g *game, s int) string { return g.Observe(seatNum(s)).Fingerprint() }
 
 type projection struct {
