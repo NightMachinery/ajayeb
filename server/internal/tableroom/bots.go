@@ -17,8 +17,8 @@ import (
 // queued or active, a human participant is attached, and the open point
 // requires a bot seat that has not confirmed. The job picks for that one
 // seat; its result starts the next. The job holds a pool permit only while
-// it searches, under the smallest attached human participant's address,
-// as Duel's bots do.
+// it searches, under the address of the player whose point it is
+// (poolKey), as a Duel bot's search counts under its player's.
 func (a *actor) kickBots() {
 	if a.botRunning || a.botBusy || a.ctx.Err() != nil || !a.humanAttached() {
 		return
@@ -176,15 +176,39 @@ func (a *actor) botResult(res msgBotResult) {
 	a.transact(nil, "bot-pick", res.seat, cand, res.key, true, nil, 0)
 }
 
-// poolKey is the smallest attached participant's address.
+// poolKey is the address a bot search counts under in the pool: that of
+// the player whose point it is, the human of the lowest seat the open
+// point requires that has a connection; failing that, the table
+// creator's; failing that, the smallest attached participant's. Of one
+// user's connections the smallest address counts.
 func (a *actor) poolKey() string {
+	r := &a.st.rec
+	if p := a.st.game.Point(); !pointOver(p) {
+		for _, s := range p.Required.Seats() {
+			if sr := r.Seats[s]; sr.Kind == SeatHuman {
+				if key, ok := a.addrOf(func(u string) bool { return u == sr.UserID }); ok {
+					return key
+				}
+			}
+		}
+	}
+	if key, ok := a.addrOf(func(u string) bool { return u == r.Roles.Creator }); ok {
+		return key
+	}
+	key, _ := a.addrOf(a.participant)
+	return key
+}
+
+// addrOf is the smallest address among the connections of the users
+// match accepts.
+func (a *actor) addrOf(match func(string) bool) (string, bool) {
 	key, found := "", false
 	for _, c := range a.conns {
-		if a.participant(a.userOf(c)) && (!found || c.Addr < key) {
+		if match(a.userOf(c)) && (!found || c.Addr < key) {
 			key, found = c.Addr, true
 		}
 	}
-	return key
+	return key, found
 }
 
 // policyRoot derives the bots' entropy root from the setup root under its

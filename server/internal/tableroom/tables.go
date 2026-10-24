@@ -72,7 +72,8 @@ type Config struct {
 	Clock  room.Clock   // default room.SystemClock
 	Logger *slog.Logger // default: discard
 	// Pool bounds bot searches across every room (ai.Pool, keyed by the
-	// smallest attached human participant's address). Nil: no bound.
+	// address of the player whose point it is, actor.poolKey). Nil: no
+	// bound.
 	Pool *ai.Pool
 	// Seed returns a new table's seed. Default: crypto/rand.
 	Seed func() uint64
