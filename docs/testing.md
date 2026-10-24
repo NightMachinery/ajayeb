@@ -1199,13 +1199,27 @@ game's last card (`civilian-end`).
   in ms: read the worst overlapping one against the 50 ms limit, and the
   overall one for how loaded the machine was. It ends with the frame
   measure at 4x (see f). Every run also attaches `perf rooms`, with the
-  room-specific task and animation records, including unprofiled failures.
+  room-specific task, long animation frame and animation records,
+  including unprofiled failures. Each overlapping task gets a
+  `perf overlap` annotation, and all of them a `perf overlaps` attachment:
+  its room, the frames whose animations it overlapped, its length, and
+  what ran in it, from the Long Animation Frames API (`explainLongTask`
+  in `fixtures/anim.ts`): each long frame's script entry points (invoker,
+  file, position and function, the longest three) and its rendering time.
   The case uses the configured retry policy. Repeated acceptance runs use
-  `--retries=0 --repeat-each=10`; every first attempt must pass. On CI it runs in its own job,
-  `e2e-perf`, once per project with no retries, and writes each run's
-  `perf` annotation to the run summary. That job does not fail the
-  workflow: GitHub's runners do not meet the 50 ms limit yet, which M10
-  closed as an open criterion carried into M11 (see the roadmap).
+  `--retries=0 --repeat-each=10`; every first attempt must pass. On CI it
+  runs in its own job, `e2e-perf`, five times per project with no retries.
+  There a native stall of the shared runner (a major GC, a compositor
+  commit) sometimes lands in an animation, in a different place each time
+  ([master-e2e-failures.md](dev/master-e2e-failures.md)), so
+  `tools/perf_report.py` judges the attempts together: a place (a room and
+  its frames) where a long task overlaps an animation in more than half of
+  a project's attempts fails the job, and one that does so in fewer is
+  listed as flaky. Any other failure of an attempt fails it too. The script
+  writes the verdict, each project's median worst overlapping task, every
+  overlap with its attribution and each attempt's `perf` annotation to the
+  run summary; `tests/test_perf_report.py` covers it. The job does not fail
+  the workflow.
 - **e. Replay last move.** With Animation off the log sheet's control is
   disabled and its tooltip (keyboard focus on desktop, a tap on the
   phone) says to turn Animation on. At normal speed it is disabled before
@@ -1216,7 +1230,8 @@ game's last card (`civilian-end`).
 - **f. Frame gaps at full speed (`@perf`, information only).** Stutter at
   normal CPU speed is not the same thing as long tasks at 4x, so the run of
   d is played again unthrottled while `recordFrames` notes every
-  `requestAnimationFrame` time. Its `perf` annotation gives the gaps between
+  `requestAnimationFrame` time. It runs once per run, skipping the repeats
+  of `--repeat-each`. Its `perf` annotation gives the gaps between
   two frames that overlap an animation's window: how many, the share over
   34 ms (at least one frame missed at 60 Hz) and the worst gap. Case d
   reports the same at 4x. Neither has a threshold; CI's `e2e-perf` job

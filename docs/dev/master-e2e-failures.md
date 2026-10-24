@@ -147,3 +147,40 @@ under the frame pipeline). The application callbacks inside them took under
 follows from this evidence. Case d passes as a single attempt per project on
 push CI, the `e2e-perf` job stays non-gating, and the 50 ms limit, the 4x
 throttle and zero retries are unchanged.
+
+## The perf report judges repeated attempts (M18)
+
+Between 2026-10-23 and 2026-10-24 the `e2e-perf` job failed on 5 of 13
+master pushes (b123bde, c21c29d, 9a7d089, 36583e9 and 0f74357) and passed on
+the other 8. The room records attached to the five failures show:
+
+- Every failure but one is on desktop; b123bde also failed on mobile.
+- The overlapping tasks take 50 to 78 ms and fall in a different place
+  each time:
+  - the first Age I move's coins (c21c29d on desktop; b123bde on mobile,
+    three tasks of 60 to 78 ms);
+  - later Age I coins, at frames 8 and 9 (b123bde, 9a7d089);
+  - the age change's deal (36583e9, 72 ms; 0f74357, 62 ms).
+- Once, 0f74357's game end room had four tasks of 50 to 151 ms during the
+  victory banner, about 800 ms after it began. Its Playwright trace shows one
+  pending `waitForFunction` and no trace snapshot in that window, so the test
+  harness did not cause them.
+- Each move brings three long tasks on the runners at 4x (the tap, the
+  confirmation and the frame swap, 60 to 220 ms each), which normally end
+  before the move's animations start. A local run of the same case has 8 to
+  18 long tasks per attempt against 45 to 61 on the runners. Six local
+  attempts, three per project, had no overlap. The Long Animation Frames API
+  names those local tasks: the swap's `WebSocket.onmessage` (up to 178 ms),
+  a `pointerdown` (up to 165 ms) and a card's click handler.
+
+This fits the profiled attribution above: the tasks that land in an
+animation are native stalls of the shared runner, in no fixed place. Raising
+the limit would hide a real regression, and so would counting only script
+time, since style and layout work comes from our own DOM and CSS. Instead the
+job now runs case d five times per project, and `tools/perf_report.py` fails
+it only for a place (a room and its frames) where a long task overlaps an
+animation in at least three attempts. Every other overlap is listed as
+flaky, with what the long animation frames say it ran (docs/testing.md,
+case d). A place that overlapped in 2 of 13 runs, as the deal did, fails a
+five-attempt job by chance about 3% of the time. The 50 ms limit, the 4x
+throttle, zero retries and each attempt's own assertion are unchanged.
