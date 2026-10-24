@@ -397,19 +397,59 @@ export async function inputAt(page: Page): Promise<Record<number, number>> {
 }
 
 /**
- * Installs, before any app script, a PerformanceObserver that keeps every
- * long task (over 50 ms) in window.__longTasks.
+ * Installs, before any app script, PerformanceObservers that keep every
+ * long task (over 50 ms) in window.__longTasks and every long animation
+ * frame (a frame over 50 ms, with the scripts that ran in it) in
+ * window.__longFrames, which says what a long task was.
  */
 export async function recordLongTasks(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const tasks: { start: number; duration: number }[] = [];
-    (window as unknown as { __longTasks: typeof tasks }).__longTasks = tasks;
+    const frames: unknown[] = [];
+    const w = window as unknown as { __longTasks: typeof tasks; __longFrames: typeof frames };
+    w.__longTasks = tasks;
+    w.__longFrames = frames;
     try {
       new PerformanceObserver((list) => {
         for (const e of list.getEntries()) tasks.push({ start: e.startTime, duration: e.duration });
       }).observe({ type: 'longtask', buffered: true });
     } catch {
       // No long task timing in this browser: the test says so.
+    }
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          // PerformanceLongAnimationFrameTiming, which lib.dom lacks so far.
+          const f = e as PerformanceEntry & {
+            renderStart: number;
+            styleAndLayoutStart: number;
+            scripts: {
+              invoker: string;
+              invokerType: string;
+              sourceURL: string;
+              sourceFunctionName: string;
+              sourceCharPosition: number;
+              duration: number;
+              forcedStyleAndLayoutDuration: number;
+            }[];
+          };
+          frames.push({
+            start: f.startTime,
+            duration: f.duration,
+            renderStart: f.renderStart,
+            styleAndLayoutStart: f.styleAndLayoutStart,
+            scripts: f.scripts.map((sc) => ({
+              invoker: sc.invoker,
+              type: sc.invokerType,
+              source: `${new URL(sc.sourceURL || 'about:blank').pathname}:${sc.sourceCharPosition} ${sc.sourceFunctionName}`,
+              duration: sc.duration,
+              forcedLayout: sc.forcedStyleAndLayoutDuration
+            }))
+          });
+        }
+      }).observe({ type: 'long-animation-frame', buffered: true });
+    } catch {
+      // No long animation frame timing: tasks go unexplained.
     }
   });
 }
@@ -426,6 +466,60 @@ export async function longTasks(page: Page): Promise<LongTask[]> {
       (window as unknown as { __longTasks?: { start: number; duration: number }[] }).__longTasks ??
       []
   );
+}
+
+/** A long animation frame the page recorded (recordLongTasks). */
+export interface LongFrame {
+  start: number;
+  duration: number;
+  /** When the frame's rendering began (0: no rendering in it). */
+  renderStart: number;
+  /** When its style and layout began (0: none). */
+  styleAndLayoutStart: number;
+  scripts: {
+    invoker: string;
+    type: string;
+    /** Path, character position and function name of the script's entry. */
+    source: string;
+    duration: number;
+    forcedLayout: number;
+  }[];
+}
+
+export async function longFrames(page: Page): Promise<LongFrame[]> {
+  return page.evaluate(
+    () => (window as unknown as { __longFrames?: LongFrame[] }).__longFrames ?? []
+  );
+}
+
+/**
+ * What a long task was, from the long animation frames around it: each
+ * frame's length, its script time by entry point (the longest three) and
+ * its rendering time, for the perf report.
+ */
+export function explainLongTask(task: LongTask, frames: LongFrame[]): string {
+  const end = task.start + task.duration;
+  const around = frames.filter((f) => f.start < end && f.start + f.duration > task.start);
+  if (around.length === 0) return 'no long animation frame recorded';
+  return around
+    .map((f) => {
+      const ms = (n: number) => `${Math.round(n)} ms`;
+      const render = f.renderStart > 0 ? f.start + f.duration - f.renderStart : 0;
+      const layout = f.styleAndLayoutStart > 0 ? f.start + f.duration - f.styleAndLayoutStart : 0;
+      const scripts = [...f.scripts]
+        .sort((a, b) => b.duration - a.duration)
+        .slice(0, 3)
+        .map(
+          (sc) =>
+            `${sc.type} ${sc.invoker} (${sc.source.trim()}) ${ms(sc.duration)}` +
+            (sc.forcedLayout > 0 ? `, forced layout ${ms(sc.forcedLayout)}` : '')
+        );
+      return (
+        `frame ${ms(f.duration)} at ${ms(f.start)}: render ${ms(render)} ` +
+        `(style and layout ${ms(layout)}); scripts ${scripts.join('; ') || 'none'}`
+      );
+    })
+    .join(' | ');
 }
 
 /**

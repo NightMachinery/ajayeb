@@ -38,7 +38,9 @@ import {
   fxRecords,
   fxCues,
   frameTimes,
+  explainLongTask,
   inputAt,
+  longFrames,
   longTasks,
   motionLog,
   openPosition,
@@ -53,6 +55,7 @@ import {
   viewOf,
   waitSettled,
   type AnimRecord,
+  type LongFrame,
   type LongTask,
   type Position,
   type Speed
@@ -221,6 +224,8 @@ interface PerfRoom {
   markAt: number;
   anims: AnimRecord[];
   tasks: LongTask[];
+  /** The long animation frames, which say what each long task ran. */
+  longFrames: LongFrame[];
   frames: number[];
 }
 
@@ -251,6 +256,7 @@ async function perfRun(
       markAt,
       anims: (await fxRecords(page)).anims,
       tasks: await longTasks(page),
+      longFrames: await longFrames(page),
       frames: await frameTimes(page)
     });
   };
@@ -643,15 +649,28 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
         const { moves, rooms } = await perfRun(page, baseURL, 4);
         const anims = rooms.flatMap((r) => r.anims);
         const tasks = rooms.flatMap((r) => r.tasks);
+        // Each long task that overlaps an animation: where (the room and the
+        // frames whose animations it overlaps) and what it ran.
         const overlapping = rooms.flatMap((r) =>
-          r.tasks.filter((task) =>
-            r.anims.some(
+          r.tasks.flatMap((task) => {
+            const during = r.anims.filter(
               (a) =>
                 a.endAt !== null && task.start < a.endAt && task.start + task.duration > a.startAt
-            )
-          )
+            );
+            if (during.length === 0) return [];
+            return [
+              {
+                room: r.name,
+                versions: [...new Set(during.map((a) => a.version))].sort((a, b) => a - b),
+                kinds: [...new Set(during.map((a) => a.kind))].sort(),
+                start: Math.round(task.start),
+                duration: Math.round(task.duration),
+                explained: explainLongTask(task, r.longFrames)
+              }
+            ];
+          })
         );
-        const worst = Math.max(0, ...overlapping.map((t) => Math.round(t.duration)));
+        const worst = Math.max(0, ...overlapping.map((t) => t.duration));
         test.info().annotations.push({
           type: 'perf',
           description:
@@ -660,6 +679,18 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
             `worst overlapping ${worst} ms, ` +
             `worst overall ${Math.max(0, ...tasks.map((t) => Math.round(t.duration)))} ms; ` +
             `at 4x: ${describeFrameGaps(rooms.flatMap((r) => animationFrameGaps(r.frames, r.anims)))}`
+        });
+        for (const o of overlapping)
+          test.info().annotations.push({
+            type: 'perf overlap',
+            description:
+              `${o.room} v${o.versions.join(', v')} (${o.kinds.join(', ')}): ` +
+              `${o.duration} ms task at ${o.start} ms; ${o.explained}`
+          });
+        // tools/perf_report.py judges CI's repeated attempts from these.
+        await test.info().attach('perf overlaps', {
+          body: JSON.stringify(overlapping),
+          contentType: 'application/json'
         });
         expectPerfRun(moves, anims);
         expect(overlapping, `long tasks during animations (worst ${worst} ms)`).toEqual([]);
@@ -674,6 +705,8 @@ test.describe('animations', { tag: ['@mobile'] }, () => {
     'f. frame gaps during animations at 1x CPU',
     { tag: ['@perf'] },
     async ({ page, baseURL }) => {
+      // Information only, so a repeated run (CI repeats case d) reports it once.
+      test.skip(test.info().repeatEachIndex > 0, 'frame gaps are reported once per run');
       test.setTimeout(300_000);
       if (!baseURL) throw new Error('no baseURL');
       const problems = watchHygiene(page);
