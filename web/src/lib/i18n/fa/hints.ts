@@ -1,6 +1,6 @@
 // Persian messages for the hints: the families and the settings editor, the
 // per-card, outcome and board-level hints, the advisor's move review, the
-// recap, the first-time tips, and the rules reference's "Hint glyphs"
+// recap, the first-time tips, and the rules reference's "Hint marks"
 // section. Complete: every key of ../en/hints.ts is translated. A few
 // patterns hold no words and so read as in English: hints.badge.bonus
 // ('+{count}'), hints.cardWith, hints.after.byMove, hints.science.symbol
@@ -595,7 +595,7 @@ export const hints = {
   'hints.status.setByYou': 'می‌توانید از منوی بازی آن‌ها را تغییر دهید.',
   'hints.status.setByCreator': 'مدیران بازی آن‌ها را تنظیم می‌کنند.',
 
-  // The rules reference's "Hint glyphs" section (rules/sections.ts,
+  // The rules reference's "Hint marks" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules
   // sections can name it; it lives here with the other hint words.
   'rules.hints.title': 'نشانه‌های راهنما',

@@ -630,10 +630,10 @@ export const hints = {
   'hints.status.setByYou': 'You can change them in the game menu.',
   'hints.status.setByCreator': 'Game admins set them.',
 
-  // The rules reference's "Hint glyphs" section (rules/sections.ts,
+  // The rules reference's "Hint marks" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules
   // sections can name it; it lives here with the other hint words.
-  'rules.hints.title': 'Hint glyphs',
+  'rules.hints.title': 'Hint marks',
   'rules.hints.intro':
     'Hint marks state facts about a card as the board stands now, never advice. Each card shows at most one mark at its top corner. Point at a mark to read it; on a touch screen, press and hold it, or tap the card, whose sheet lists its marks.',
   'rules.hints.win': 'Crown: building this card wins the game.',

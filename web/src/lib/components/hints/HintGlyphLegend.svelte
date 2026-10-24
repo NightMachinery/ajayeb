@@ -1,5 +1,5 @@
 <script lang="ts">
-  // The rules reference's "Hint glyphs" legend (the hints design,
+  // The rules reference's "Hint marks" legend (the hints design,
   // hint-explainer-tooltip, M10.HS5): each board hint mark drawn as the
   // board draws it (HintPip), with what it means, then how its fill tells
   // whose fact it is, the dot for more hints, and the advisor's review.
@@ -46,7 +46,7 @@
   <ul class="flex flex-col divide-y divide-rule rounded-panel border border-rule bg-panel">
     {#each marks as m (m.id)}
       <li class="flex items-start gap-3 px-3 py-2" data-hint-legend-row={m.id}>
-        <span class="legend-card relative mt-0.5 shrink-0">
+        <span class="legend-card relative isolate mt-0.5 shrink-0">
           <HintPip pip={m.pip} {card} class="absolute -end-1.5 -top-1.5" />
         </span>
         <span class="text-sm leading-snug text-fg">{t(m.key as 'rules.hints.win')}</span>
@@ -58,7 +58,7 @@
       <li class="flex items-start gap-3 px-3 py-2" data-hint-legend-row={s.id}>
         <span class="flex shrink-0 gap-2">
           {#each s.pips as p, i (i)}
-            <span class="legend-card relative mt-0.5">
+            <span class="legend-card relative isolate mt-0.5">
               <HintPip pip={p} {card} class="absolute -end-1.5 -top-1.5" />
             </span>
           {/each}
@@ -76,7 +76,9 @@
 </div>
 
 <style>
-  /* A small paper corner standing for the card the mark sits on. */
+  /* A small paper corner standing for the card the mark sits on. Isolated,
+     so the mark's own z-index stays inside it and a sticky header above
+     the legend (the rules sheet's) still covers it while it scrolls. */
   .legend-card {
     display: block;
     width: 1.75rem;
