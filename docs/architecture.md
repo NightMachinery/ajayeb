@@ -460,6 +460,19 @@ a reload mends a client and a server that disagree.
   and the notebook, and reads the Age and turn from the point id
   (`age-N-turn-M`, `-discard-build`, `age-N-last-card`); nothing on these
   sheets is computed beyond counting and grouping what the view sent.
+- **The end of an Age and the final scores** (`table/AgeMilitary.svelte`,
+  `table/ScoreSheet.svelte`, M18.age-military-and-scores) are
+  [phone-layout.md](haftgane/phone-layout.md)'s section 6, described in
+  [end-of-age-and-scores.md](haftgane/end-of-age-and-scores.md). The
+  military dialog opens by itself on the batch whose `military` events
+  ended an Age (read from the session history, so a reload opens it
+  again) and lists each conflict, its tokens, and the shields only on that
+  batch. The score sheet follows at the end, with the verdict from
+  `result.winners`, the rows in `result.rank` order, a row opening its
+  city, and the log download when `canDownload` allows it. The final
+  board keeps buttons that reopen both, and the revealed cards
+  (`FinalReveal`) when the end is revealed. `table/end.ts` only reads and
+  orders what the view sent.
 - **The development screen** (`dev/TableDev.svelte`) now shows only what
   comes before a table's first frame.
 

@@ -1457,6 +1457,45 @@ pending-ownership oracle, no frame gives a seat a field outside the public
 seat or the page another seat's private view, and no console error or
 failed request is allowed.
 
+### `haftgane-scores.full.spec.ts` (`@full @haftgane-scores`)
+
+The end of each Age and of the game over a live three-seat table, once
+with the end revealed and once with it hidden (the lobby's reveal
+control). One human opens the table from Home, Start gives the other
+seats bots, and a spectator joins the running table. The human sells a
+card every turn. At each end of Age, the military dialog of the player
+and of the spectator must list exactly the military events of the batch
+that ended the Age (read from the page's own socket traffic, since only
+the resolving frame carries events), with each outcome, the shields from
+the frame's seats, the player's two conflicts and every seat's military
+points. A reload at that moment must open it again. At the end, the
+score sheet follows the last conflicts: its verdict, its rows in the
+result's rank order and every category of every seat must match the
+result, and a row opens that seat's city over it. Under the revealed end
+the log downloads as `ajayeb-log/2`; under the hidden end there is no
+Download, the note shows, and the endpoint answers 403 `log-hidden`. The
+final board's buttons reopen the revealed cards (the pile and box counts
+match the view), the conflicts and the scores. Every frame passes the
+pending-ownership oracle, nothing animates, and no console error or
+failed request is allowed. Run it with `make e2e GREP=@haftgane-scores`.
+
+The spec writes each policy's frames (the player's and the spectator's
+socket traffic) and the room record to
+`HG_SCORES_LIVE_DIR` (default `.cache/e2e/hg-scores-live`) as
+`frames-revealed.json` and `frames-hidden.json`.
+`TestScoresBrowserFrames` in `server/internal/tableroom` reads them from
+`AJAYEB_SCORES_BROWSER_FRAMES` (a path list) and runs the leak oracle
+over every frame against the truth replayed from the record; it skips
+when the variable is unset. Three canaries replace the last frame with a
+changed total, a download flag the policy does not grant and, under the
+hidden end, a revealed box, and each must fail:
+
+```sh
+D=$PWD/.cache/e2e/hg-scores-live
+AJAYEB_SCORES_BROWSER_FRAMES="$D/frames-revealed.json:$D/frames-hidden.json" \
+  make test-go GO_PKGS=./internal/tableroom GO_RUN=TestScoresBrowserFrames
+```
+
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
 `e2e/specs/prod.smoke.spec.ts` is the only spec that is ever allowed to run
@@ -1851,6 +1890,20 @@ is saved, and at 390x844 again scrolled to the sheet's end, with
 city and notebook leaves (three cities, seven ring tabs, the cards under
 a wonder both as the owner's and as revealed, a neighbour's pick), and
 opens both sheets from it under the same probe.
+
+`ux/haftgane-scores.spec.ts` (filter `--grep=Haftgane.end`) captures the
+end of an Age and of the game. One live table each of 3, 5 and 7 seats,
+in English light and in Persian dark, is played from Home to the end of
+Age I (the military dialog, at its top and scrolled to its end) and to
+the end of the game (the score sheet, the final board and the revealed
+cards), each at 360x740, 390x844, 844x390 and 1280x800. Its probe
+requires no horizontal overflow of the page or the sheet, no control
+under 44 px, no glyph without a tooltip, the panel inside the screen and
+nothing animating, and the page may log no console error or failed
+request. Two more tests open the gallery's score sheet with each
+tie-break sentence (`/dev/gallery?hgEnd=tie|shared&seats=7`), which the
+live view cannot show yet. Screenshots and `probes-*.json` go to
+`HG_SCORES_SHOTS_DIR` (default `.cache/e2e/hg-scores-shots`).
 
 Open `index.html` directly from disk. Its contact sheet groups the captures
 by screen, links each image at full size, and lists that capture's findings.
