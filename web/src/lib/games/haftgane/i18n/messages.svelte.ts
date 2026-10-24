@@ -123,9 +123,20 @@ function selectPlural(forms: PluralForms, count: number, locale: string): string
 
 // Built from code points: the Svelte compiler warns on a bidirectional
 // control character in a .svelte.ts string literal, escaped or not.
-/** U+2068 FIRST STRONG ISOLATE and U+2069 POP DIRECTIONAL ISOLATE. */
+/** U+2068 FIRST STRONG ISOLATE, U+2067 RIGHT-TO-LEFT ISOLATE and U+2069
+ *  POP DIRECTIONAL ISOLATE. */
 const FSI = String.fromCharCode(0x2068);
+const RLI = String.fromCharCode(0x2067);
 const PDI = String.fromCharCode(0x2069);
+
+/** Whether a string holds an isolate (U+2066 to U+2069). */
+function nested(value: string): boolean {
+  for (let i = 0; i < value.length; i++) {
+    const c = value.charCodeAt(i);
+    if (c >= 0x2066 && c <= 0x2069) return true;
+  }
+  return false;
+}
 
 /** An English fallback in right-to-left text: a left-to-right isolate
  *  between two LEFT-TO-RIGHT MARKs, as the root t() writes it. */
@@ -133,14 +144,16 @@ const FALLBACK_START = String.fromCharCode(0x200e, 0x2066);
 const FALLBACK_END = String.fromCharCode(0x2069, 0x200e);
 
 /** Replaces each {name} with its param: numbers through Intl, and a string
- *  isolated with its own direction in a right-to-left locale. */
+ *  isolated with its own direction in a right-to-left locale, or right to
+ *  left when it is a message composed already (it holds isolates). */
 export function hgInterpolate(text: string, params: AnyParams | undefined, rtl: boolean): string {
   if (!params) return text;
   return text.replace(/\{(\w+)\}/g, (placeholder, name: string) => {
     const value = params[name];
     if (value === undefined) return placeholder;
     if (typeof value === 'number') return formatNumber(value);
-    return rtl ? FSI + value + PDI : value;
+    if (!rtl) return value;
+    return (nested(value) ? RLI : FSI) + value + PDI;
   });
 }
 

@@ -111,6 +111,14 @@ describe('interpolate', () => {
   it('returns the text unchanged without params', () => {
     expect(interpolate('{a}', undefined, 'en')).toBe('{a}');
   });
+
+  it('isolates a name by its first strong letter, and a composed message right to left', () => {
+    expect(interpolate('{a}', { a: 'Omid!' }, 'fa')).toBe('\u2068Omid!\u2069');
+    // Two isolated params and a colon: no letter outside the inner isolates.
+    const named = interpolate('{card}: {action}', { card: 'گودال رس', action: 'ساختن' }, 'fa');
+    expect(interpolate('{x}', { x: named }, 'fa')).toBe('\u2067' + named + '\u2069');
+    expect(interpolate('{x}', { x: named }, 'en')).toBe(named);
+  });
 });
 
 describe('plural helpers', () => {

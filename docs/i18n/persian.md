@@ -14,7 +14,7 @@ These are our own translations, made from our English text. Nothing was taken fr
 - **Signed changes.** Use `formatSigned()` for coin and point changes, preserving Persian digits and direction marks. Summary gains request a plus sign; losses use the typographic minus sign −. Price-change plurals follow the destination price.
 - **Plurals.** Persian keeps the noun singular after a number ("۳ سکه"), so a plural message usually has only the `other` form. A `=0` form is added where zero reads better as words ("کارتی نمانده").
 - **Quotation marks.** Guillemets: «ساخت یک شگفتی».
-- **Names.** Player names, card names and the like arrive as `{placeholders}`, and the i18n code isolates them, so a Latin player name never reorders the Persian around it.
+- **Names.** Player names, card names and the like arrive as `{placeholders}`, and the i18n code isolates them, so a Latin player name never reorders the Persian around it. A placeholder that holds a message composed already («{card}: {action}», a list joined by «، ») is isolated right to left: the first-strong rule skips nested isolates, finds no letter and would otherwise lay the parts out left to right, card and action swapped.
 - **Possessives.** "{name}'s city" becomes "شهر {name}"; "your city" becomes "شهر شما".
 
 ## House terms

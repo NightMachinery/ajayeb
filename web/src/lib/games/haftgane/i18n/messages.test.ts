@@ -79,6 +79,12 @@ describe('ht in Persian', () => {
     expect(hgInterpolate(text, params, false)).toBe(interpolate(text, params, 'en'));
     await i18n.set('fa');
     expect(hgInterpolate(text, params, true)).toBe(interpolate(text, params, 'fa'));
+    // A message composed already reads right to left.
+    const named = interpolate('{card}: {action}', { card: 'گودال رس', action: 'ساختن' }, 'fa');
+    expect(hgInterpolate('{action}', { action: named }, true)).toBe(
+      interpolate('{action}', { action: named }, 'fa')
+    );
+    expect(hgInterpolate('{action}', { action: named }, true).startsWith('\u2067')).toBe(true);
   });
 
   it('loads its Persian table on first use and then uses it', async () => {

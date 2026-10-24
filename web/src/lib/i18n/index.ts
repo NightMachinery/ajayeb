@@ -159,15 +159,20 @@ export function selectPlural(
   return forms[pluralCategory(count, locale)] ?? forms.other;
 }
 
-/** U+2068 FIRST STRONG ISOLATE and U+2069 POP DIRECTIONAL ISOLATE. */
+/** U+2068 FIRST STRONG ISOLATE, U+2067 RIGHT-TO-LEFT ISOLATE and U+2069
+ *  POP DIRECTIONAL ISOLATE. */
 const FSI = '\u2068';
+const RLI = '\u2067';
 const PDI = '\u2069';
 
 /**
  * Replaces each {name} with its param, formatting numbers for the locale.
  * In a right-to-left locale a string param (a player's name, a card name)
  * is isolated with its own direction, so a Latin name's punctuation or
- * digits never trade places with the Persian words around it.
+ * digits never trade places with the Persian words around it. A param that
+ * already holds isolates is a message composed in this locale (a card and
+ * an action, a list of names): the first-strong rule does not look inside
+ * nested isolates and would find no letter, so it is isolated right to left.
  * A placeholder without a param is left as it is, so the gap shows.
  */
 export function interpolate(
@@ -181,7 +186,8 @@ export function interpolate(
     const value = params[name];
     if (value === undefined) return placeholder;
     if (typeof value === 'number') return formatNumber(value, undefined, locale);
-    return isolate ? FSI + value + PDI : value;
+    if (!isolate) return value;
+    return (/[\u2066-\u2069]/.test(value) ? RLI : FSI) + value + PDI;
   });
 }
 
