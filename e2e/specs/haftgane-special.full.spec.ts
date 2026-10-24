@@ -1,4 +1,8 @@
 // Home-created production lobbies, legal offered keys and per-frame privacy.
+// The discard search shows the server's reason for each pile card it does
+// not offer, and on the sixth turn a card's sheet and the hand show the
+// card each choice keeps, both read from the searching or choosing seat's
+// own frame.
 // Until the parallel lobby control lands, the test adds the already-supported
 // sides option to the host's ordinary seating edit, through its real socket.
 import { expect, type Page } from '@playwright/test';
@@ -54,8 +58,34 @@ function chooseKey(f: TableState, olympiaNight: boolean): Choice {
     cs[0]!
   );
 }
-async function submit(page: Page, c: Choice): Promise<void> {
+/**
+ * Plays the choice through the screen. A card's sheet names the card each
+ * of its choices keeps on the sixth turn (the choices' `kept`), and once
+ * the choice is drafted the hand marks that card. Returns whether the
+ * sheet showed a kept card.
+ */
+/** The phone and desktop captures in both themes, for the screens that show
+ *  the view's own new fields, with `focus` scrolled into view. The theme
+ *  follows the emulated system. */
+async function themedShots(p: Page, out: string, id: string, focus?: string): Promise<void> {
+  for (const scheme of ['light', 'dark'] as const) {
+    await p.emulateMedia({ colorScheme: scheme });
+    for (const [w, h] of [
+      [360, 740],
+      [1280, 800]
+    ] as const) {
+      await p.setViewportSize({ width: w, height: h });
+      if (focus) await p.locator(focus).first().scrollIntoViewIfNeeded();
+      await quiet(p);
+      await p.screenshot({ path: path.join(out, `${id}-${scheme}-${w}x${h}.png`) });
+    }
+  }
+  await p.emulateMedia({ colorScheme: 'light' });
+}
+
+async function submit(page: Page, c: Choice, choices: readonly Choice[]): Promise<boolean> {
   const special = c.kind === 'side' || c.kind === 'build-discarded';
+  let previewed = false;
   if (special) {
     await page.locator(`[data-act="${c.key}"]`).first().click();
     await ready(page);
@@ -63,14 +93,25 @@ async function submit(page: Page, c: Choice): Promise<void> {
   } else {
     await page.locator(`[data-act="hand:${c.design}"]`).first().click();
     await expect(page.locator('[data-card-sheet]')).toBeVisible();
+    const keeps = [
+      ...new Set(choices.filter((x) => x.design === c.design && x.kept).map((x) => x.kept!))
+    ].sort();
+    const shown = await page
+      .locator('[data-card-sheet] [data-kept-preview]')
+      .evaluateAll((els) => els.map((el) => el.getAttribute('data-kept-preview')!));
+    expect([...new Set(shown)].sort()).toEqual(keeps);
+    previewed = keeps.length > 0;
     const draft = page.locator(`[data-card-sheet] [data-pick="${c.key}"]`);
     if (await draft.isVisible()) {
       await draft.click();
       await ready(page);
+      await expect(page.locator('[data-keeps-preview]')).toHaveCount(c.kept ? 1 : 0);
+      if (c.kept) await expect(page.locator(`[data-keeps-preview="${c.kept}"]`)).toHaveCount(1);
     }
     await page.locator(`[data-card-sheet] .sheet-footer [data-act="${c.key}"]`).click();
   }
   await ready(page);
+  return previewed;
 }
 
 test('special decisions reached from Home keep each frame private @full @haftgane-special', async ({
@@ -84,7 +125,7 @@ test('special decisions reached from Home keep each frame private @full @haftgan
   const attempts: { side: string; attempt: number; seed: number; found: string[] }[] = [];
   for (const olympiaNight of [false, true]) {
     const required = olympiaNight
-      ? ['first-turn', 'last-turn', 'discard', 'kept', 'last', 'side', 'sixth']
+      ? ['first-turn', 'last-turn', 'discard', 'kept', 'kept-preview', 'last', 'side', 'sixth']
       : ['first-colour'];
     // Seeds are assigned by the shared server counter. A deal can lack the
     // production needed for an ability under this test policy, so try another
@@ -187,6 +228,47 @@ test('special decisions reached from Home keep each frame private @full @haftgan
                       ? 'sixth'
                       : '';
             if (kind) found.add(kind);
+            if (kind === 'discard') {
+              // The searching seat reads why each pile card it cannot
+              // build is not offered: the city already has its name.
+              const you = f.view.you!;
+              const barred = you.offer.filter((o) => !o.legal).map((o) => o.design);
+              expect(you.disabled.map((d) => `${d.kind}:${d.design}:${d.reason}`).sort()).toEqual(
+                barred.map((d) => `build-discarded:${d}:already-built`).sort()
+              );
+              const picker = p.locator('[data-discard-picker]');
+              await expect(picker.locator('[data-blocked-reason="already-built"]')).toHaveCount(
+                barred.length
+              );
+              await expect(picker.locator('[data-blocked-reason=""]')).toHaveCount(0);
+              const id = `${olympiaNight}-discard-reasons`;
+              if (barred.length > 0 && !evidence.some((x) => x.id === id)) {
+                await themedShots(p, out, id, '[data-blocked-reason="already-built"]');
+                evidence.push({ id, phase: f.view.phase, point: f.point!.ref.id, seat });
+              }
+            }
+            const keepsHere = f.view.you!.choices.some((x) => x.design === c.design && x.kept);
+            const keptId = `${olympiaNight}-kept-preview`;
+            if (kind === 'sixth' && keepsHere && !evidence.some((x) => x.id === keptId)) {
+              await p.locator(`[data-act="hand:${c.design}"]`).first().click();
+              await expect(
+                p.locator('[data-card-sheet] [data-kept-preview]').first()
+              ).toBeVisible();
+              await themedShots(p, out, keptId);
+              // Drafted, the choice's kept card is tagged in the hand.
+              const draft = p.locator(`[data-card-sheet] [data-pick="${c.key}"]`);
+              const tagged = c.kept !== undefined && (await draft.isVisible());
+              if (tagged) {
+                await draft.click();
+                await ready(p);
+              }
+              await p.locator('[data-act="pick-close"]').click();
+              if (tagged) {
+                await expect(p.locator(`[data-keeps-preview="${c.kept}"]`)).toBeVisible();
+                await themedShots(p, out, `${keptId}-hand`, '[data-keeps-preview]');
+              }
+              evidence.push({ id: keptId, phase: f.view.phase, point: f.point!.ref.id, seat });
+            }
             for (const x of f.view.you!.choices)
               if (['first-colour', 'first-turn', 'last-turn'].includes(x.free)) found.add(x.free);
             const capture =
@@ -231,7 +313,7 @@ test('special decisions reached from Home keep each frame private @full @haftgan
               } else confirmedCapture = captureId;
               evidence.push({ id: captureId, phase: f.view.phase, point: f.point.ref.id, seat });
             }
-            await submit(p, c);
+            if (await submit(p, c, f.view.you!.choices)) found.add('kept-preview');
             if ((await latest(host)).view.phase === 'discard-build' && !found.has('kept')) {
               for (const q of pages.slice(0, 7)) {
                 const kept = await latest(q);
@@ -280,8 +362,15 @@ test('special decisions reached from Home keep each frame private @full @haftgan
             if (dir === 'recv' && msg['t'] === 'table-state') {
               const f = msg as unknown as TableState;
               if (f.you.seat === undefined) expect(f.view.you).toBeUndefined();
-              if (f.view.phase === 'discard-build' && !f.point?.required.includes(f.you.seat!))
+              if (f.view.phase === 'discard-build' && !f.point?.required.includes(f.you.seat!)) {
                 expect(f.view.you?.offer ?? []).toEqual([]);
+                expect(
+                  f.view.you?.disabled.filter((d) => d.kind === 'build-discarded') ?? []
+                ).toEqual([]);
+              }
+              // A kept-card preview names a card in the viewer's own hand.
+              for (const c of f.view.you?.choices ?? [])
+                if (c.kept) expect(f.view.you!.hand).toContain(c.kept);
             }
           expect(hygiene[i]).toEqual([]);
         }
@@ -323,6 +412,7 @@ test('special decisions reached from Home keep each frame private @full @haftgan
     'first-colour',
     'first-turn',
     'kept',
+    'kept-preview',
     'last',
     'last-turn',
     'side',

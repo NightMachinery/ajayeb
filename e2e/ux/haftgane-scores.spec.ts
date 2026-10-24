@@ -7,7 +7,8 @@
 // viewports. Every capture is probed: no horizontal scroll, no control
 // under 44 px, no glyph without a tooltip, the panel inside the viewport,
 // and nothing animating with Animation off. The gallery's focused end
-// dialogs add the tie-break sentences the live view cannot show yet.
+// dialogs add the tie-break sentences, since a tie at the top is rare in a
+// live game.
 import { expect, type Page } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -163,8 +164,8 @@ for (const seats of [3, 5, 7]) {
   }
 }
 
-// The tie-break sentences need the field requested from the server
-// (result.tieBreak), so only the gallery shows them, with made-up data.
+// A tie at the top (result.tieBreak) is rare in a live game, so the gallery
+// shows the tie-break sentences, with made-up data.
 for (const [locale, theme] of [
   ['en', 'light'],
   ['fa', 'dark']

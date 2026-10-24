@@ -1532,10 +1532,12 @@ seats bots, and a spectator joins the running table. The human sells a
 card every turn. At each end of Age, the military dialog of the player
 and of the spectator must list exactly the military events of the batch
 that ended the Age (read from the page's own socket traffic, since only
-the resolving frame carries events), with each outcome, the shields from
-the frame's seats, the player's two conflicts and every seat's military
-points. A reload at that moment must open it again. At the end, the
-score sheet follows the last conflicts: its verdict, its rows in the
+the resolving frame carries events), with each outcome, both shields and
+the victory token's worth as each event states them (the shields agree
+with the frame's seats), the player's two conflicts and every seat's
+military points. A reload at that moment must open it again. At the end,
+the score sheet follows the last conflicts: its verdict, the tie-break
+sentence exactly when `result.tieBreak` states a tie, its rows in the
 result's rank order and every category of every seat must match the
 result, and a row opens that seat's city over it. Under the revealed end
 the log downloads as `ajayeb-log/2`; under the hidden end there is no
@@ -1577,7 +1579,11 @@ Undo disappears with the `undo-off` notice. The creator gives the seat to
 a bot: the former player reads that a bot plays their seat, and the
 creator's seat menu shows the previous-seat hint beside them, while the
 other spectator's menu shows none and none of that page's frames carries
-`previousSeats`. The creator seats the friend again, promotes and demotes
+`previousSeats`. Before that, the creator's seat menu offers exactly the
+frame's `botLevels`, in order, and the role button its `canPromote`
+allows; after it, the former player's frame names the seat in
+`you.formerSeat`, and a fresh tab of theirs, which shares no session
+memory, shows it too. The creator seats the friend again, promotes and demotes
 them from the seat menu (the role tag follows), and promotes them again;
 the friend steps down and resigns to a bot from the game menu
 (`menuAction`), and the seat goes to the easy bot. The creator promotes
@@ -1588,7 +1594,9 @@ passes the pending-ownership oracle (which owns the pick a seat keeps when
 a page takes it, if it is one of that seat's choices), gives no seat a
 field outside the public seat and no page another seat's private view,
 and carries `previousSeats` only when the same frame lists its viewer as
-an admin. No console error or failed request is allowed.
+an admin, `canPromote` only to a real admin, and `formerSeat` only to an
+unseated viewer while the game is in play; the never-seated spectator
+receives none. No console error or failed request is allowed.
 
 ### `haftgane-recap.full.spec.ts` (`@full @mobile @haftgane-recap`)
 

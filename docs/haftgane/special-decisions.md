@@ -52,7 +52,14 @@ actual seed in `attempts.json`. It does not assume a particular server seed
 counter value. The test plays actual offered keys through the
 side, discard and ordinary card-sheet controls. Its test policy funds
 Halikarnassos before the sixth turn, so a discard point and a locked kept card
-can overlap. Captures retain deciding and confirmed waiting views.
+can overlap. Captures retain deciding and confirmed waiting views. At a discard
+point the searching seat's frame must give `already-built` exactly for the pile
+cards it may not build, and the grid must show that reason for each; no other
+seat's frame carries a pile reason. On the sixth turn each card sheet must show
+the kept cards its choices name (the night tables must reach at least one), the
+hand must mark the drafted choice's kept card, and every `kept` must be a card
+in the viewer's own hand. The pile reasons and the kept preview (the sheet,
+then the hand's tag) are also captured at 360x740 and 1280x800 in both themes.
 
 The spec records every raw table frame and the server's canonical room record
 under `.cache/e2e/hg-special-live/`. Run `TestSpecialBrowserFrames` with

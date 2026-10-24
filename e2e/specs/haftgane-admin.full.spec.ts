@@ -8,17 +8,20 @@
 // - the creator seats a spectator in a bot's seat through the seat's
 //   admin menu, and the creator's undo button disappears with a notice
 //   that says why;
-// - the creator gives that seat back to a bot: the former player reads
-//   that a bot plays their seat, and the creator's seat menu names the
-//   seat they held, while a non-admin's menu offers no seat and no hint;
+// - the creator's seat menu offers the bot levels the frame lists, and
+//   gives that seat back to a bot: the former player reads that a bot
+//   plays their seat (the frame names the seat, so a fresh tab reads it
+//   too), and the creator's seat menu names the seat they held, while a
+//   non-admin's menu offers no seat and no hint;
 // - the creator seats them again, promotes and demotes them (the role
 //   tag follows), promotes them again; they step down, then resign to a
 //   bot from the game menu;
 // - the creator promotes and demotes a spectator from the game menu;
 // - every table frame each page received passes the pending-ownership
 //   oracle, gives no seat a private field and no page another seat's
-//   private view, and carries the previous-seat hint only when its viewer
-//   is an admin;
+//   private view, carries the previous-seat hint and the admin cap's room
+//   only when its viewer is an admin, and names a former seat only while
+//   its viewer watches a game in play;
 // - no console error or failed request happens.
 //
 // Nothing depends on a particular deal: the creator's seat is random, and
@@ -64,8 +67,10 @@ const PUBLIC_SEAT = new Set([
 
 /**
  * The per-frame leak oracle: no seat carries a private field, the private
- * view is the viewer's own seat's, and the previous-seat hint reaches only
- * a frame whose viewer the same frame lists as an admin.
+ * view is the viewer's own seat's, the previous-seat hint reaches only a
+ * frame whose viewer the same frame lists as an admin, the admin cap's room
+ * only a real admin, and the viewer's former seat only an unseated viewer
+ * of a game in play.
  */
 function frameLeaks(name: string, log: readonly Traffic[]): string[] {
   const out: string[] = [];
@@ -80,6 +85,10 @@ function frameLeaks(name: string, log: readonly Traffic[]): string[] {
     const me = f.humans.find((h) => h.userId === f.you.userId);
     if (f.you.previousSeats !== undefined && !(me?.admin || me?.temporary))
       out.push(`${name} ${i}: previous seats sent to a non-admin`);
+    if (f.you.canPromote !== undefined && !me?.admin)
+      out.push(`${name} ${i}: the admin cap sent to a viewer who is no real admin`);
+    if (f.you.formerSeat !== undefined && (f.you.seat !== undefined || f.status !== 'playing'))
+      out.push(`${name} ${i}: a former seat sent to a seated viewer or after play`);
   }
   return out;
 }
@@ -88,6 +97,13 @@ function frameLeaks(name: string, log: readonly Traffic[]): string[] {
 function hinted(log: readonly Traffic[]): number {
   return tableStates(log).filter(
     (i) => (log[i]!.msg as unknown as TableState).you.previousSeats !== undefined
+  ).length;
+}
+
+/** The frames a page received that named its viewer's former seat. */
+function formers(log: readonly Traffic[]): number {
+  return tableStates(log).filter(
+    (i) => (log[i]!.msg as unknown as TableState).you.formerSeat !== undefined
   ).length;
 }
 
@@ -183,11 +199,33 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
       expect((await frame(a)).undoOff).toBe(true);
       await a.locator('[data-act="menu-close"]').click();
 
+      // The seat menu offers the bot levels the frame lists, in order. As a
+      // real admin with room under the cap, the creator may promote.
+      const levels = (await frame(a)).botLevels;
+      expect(levels).toEqual(expect.arrayContaining(['easy', 'normal']));
+      expect((await frame(a)).you.canPromote).toBe(true);
+      await openMenu(a);
+      await a.locator(`[data-act="seat-menu:${seatB}"]`).click();
+      const seatMenu = a.locator(`[data-seat-menu="${seatB}"]`);
+      await expect(seatMenu.locator(`[data-act="role-promote:${userB}"]`)).toBeVisible();
+      expect(
+        await seatMenu
+          .locator(`[data-act^="seat-bot:${seatB}:"]`)
+          .evaluateAll((els) => els.map((el) => el.getAttribute('data-act')))
+      ).toEqual(levels.map((l) => `seat-bot:${seatB}:${l}`));
+
       // The creator gives the seat back to a bot: the former player
       // watches and reads who plays their seat.
       await seatAction(a, seatB, `seat-bot:${seatB}:normal`);
       await expect(b.locator('[data-notice="watching"]')).toBeVisible();
       await expect(b.locator(`[data-former-seat="${seatB}"]`)).toBeVisible();
+      expect((await frame(b)).you.formerSeat).toBe(seatB);
+      // The frame names the seat, so a fresh tab, which shares no session
+      // memory with the first, reads it too.
+      const tab = await contexts[1]!.newPage();
+      await tab.goto(`/play/${code}`);
+      await expect(tab.locator(`[data-former-seat="${seatB}"]`)).toBeVisible();
+      await tab.close();
       // Their ring centres on the seat they held.
       await expect(b.locator(`[data-act="follow:${seatB}"]`)).toHaveAttribute(
         'aria-pressed',
@@ -264,6 +302,8 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
         expect(frameLeaks(names[i]!, log)).toEqual([]);
       }
       expect(hinted(logs[0]!), 'the creator saw the hint').toBeGreaterThan(0);
+      expect(formers(logs[1]!), 'the former player read their seat').toBeGreaterThan(0);
+      expect(formers(logs[2]!), 'a former seat sent to one who never sat').toBe(0);
       for (const problems of hygiene) expect(problems).toEqual([]);
     } finally {
       for (const ctx of contexts) await ctx.close();

@@ -5,12 +5,14 @@
 // fastest, and the spec checks, against the server's own frames:
 //
 // - at each end of Age, the military dialog of the human and the spectator:
-//   every conflict and its outcome from the frame's military events, the
-//   shields from the frame's seats, the human's own two conflicts, and each
-//   seat's military points; after a reload it opens again;
+//   every conflict, its outcome, both strengths and the victory token's
+//   worth from the frame's military events (the strengths agree with the
+//   frame's seats), the human's own two conflicts, and each seat's military
+//   points; after a reload it opens again;
 // - at the end, the score sheet after the last conflicts: the verdict, the
-//   rows in the server's rank order, and every category of every seat; a
-//   row opens that seat's city over it;
+//   tie-break sentence only when the result states a tie, the rows in the
+//   server's rank order, and every category of every seat; a row opens that
+//   seat's city over it;
 // - the log download: the file under the revealed end, and under the hidden
 //   end no button, the note, and the endpoint's refusal;
 // - the final board with its buttons, and the revealed cards when shown;
@@ -41,6 +43,8 @@ import {
 import type { TableEvent, TableState } from '../../web/src/lib/wire/platform.gen';
 
 const SEATS = 3;
+/** A victory token's worth in each Age (docs/rules: military conflicts). */
+const WORTH = [1, 3, 5];
 const COLUMNS = [
   'wonder',
   'treasure',
@@ -103,12 +107,19 @@ async function checkMilitary(page: Page, { frame: f, events }: AgeEnd): Promise<
   await expect(dialog.locator('[data-conflict]')).toHaveCount(events.length);
   const seat = (n: number) => f.view.seats[n]!;
   for (const e of events) {
+    // The event states both strengths and the token's worth.
+    expect([e.left, e.right]).toEqual([seat(e.seat).shields, seat(e.other).shields]);
+    expect(e.delta).toBe(e.outcome === 'tie' ? 0 : WORTH[e.age - 1]);
     const row = dialog.locator(`[data-conflict="${e.seat}:${e.other}"]`);
     await expect(row).toHaveAttribute('data-outcome', e.outcome);
     await expect(row.locator('[data-shields]')).toHaveAttribute(
       'data-shields',
-      `${seat(e.seat).shields}:${seat(e.other).shields}`
+      `${e.left}:${e.right}`
     );
+    const victory = row.locator('[data-token="victory"]');
+    await expect(victory).toHaveCount(e.outcome === 'tie' ? 0 : 1);
+    if (e.outcome !== 'tie') await expect(victory).toHaveAttribute('data-value', String(e.delta));
+    await expect(row.locator('[data-token="defeat"][data-value]')).toHaveCount(0);
   }
   for (const s of f.view.seats) {
     await expect(dialog.locator(`[data-military-total="${s.seat}"]`)).toHaveAttribute(
@@ -128,10 +139,16 @@ async function checkMilitary(page: Page, { frame: f, events }: AgeEnd): Promise<
       )!;
       const card = dialog.locator(`[data-my-conflict="${relation}"]`);
       await expect(card).toHaveAttribute('data-result', sideOf(e, me));
+      const [own, theirs] = e.seat === me ? [e.left, e.right] : [e.right, e.left];
       await expect(card.locator('[data-shields]')).toHaveAttribute(
         'data-shields',
-        `${seat(me).shields}:${seat(them).shields}`
+        `${own}:${theirs}`
       );
+      if (sideOf(e, me) === 'victory')
+        await expect(card.locator('[data-token="victory"]')).toHaveAttribute(
+          'data-value',
+          String(e.delta)
+        );
     }
     await expect(dialog.locator('[data-my-military]')).toHaveAttribute(
       'data-my-military',
@@ -156,6 +173,14 @@ async function checkScores(page: Page, f: TableState): Promise<Locator> {
         ? 'one'
         : 'shared';
   await expect(sheet.locator('[data-verdict]')).toHaveAttribute('data-verdict', verdict);
+  // The tie-break sentence follows the result's tie, and only a tie.
+  expect(r.tied.length > 1).toBe(r.tieBreak !== '');
+  const tie = sheet.locator('[data-tie-break]');
+  if (r.tieBreak === '') await expect(tie).toHaveCount(0);
+  else {
+    await expect(tie).toHaveAttribute('data-tie-break', r.tieBreak);
+    await expect(tie).toHaveAttribute('data-tied', r.tied.join(' '));
+  }
   const rows = sheet.locator('[data-score-row]');
   await expect(rows).toHaveCount(SEATS);
   const order = r.rank
