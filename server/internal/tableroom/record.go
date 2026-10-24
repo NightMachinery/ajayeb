@@ -633,7 +633,7 @@ func checkSeats(r *Record) error {
 			}
 			users[sr.UserID] = true
 		case SeatBot:
-			if _, ok := allowance(sr.Bot); !ok || sr.UserID != "" {
+			if _, ok := frozenPreset(r, sr.Bot); !ok || sr.UserID != "" {
 				return invalid("bot seat %d", s)
 			}
 		default:
@@ -660,7 +660,7 @@ func checkStart(r *Record) error {
 			}
 			humans++
 		default:
-			if _, ok := allowance(slot.Bot); !ok || slot.UserID != "" || slot.Name != "" {
+			if _, ok := frozenPreset(r, slot.Bot); !ok || slot.UserID != "" || slot.Name != "" {
 				return invalid("the Start slot of seat %d", s)
 			}
 		}

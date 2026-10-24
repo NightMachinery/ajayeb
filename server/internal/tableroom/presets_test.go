@@ -14,13 +14,17 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/bot"
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/rules"
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest"
 	"github.com/NightMachinery/ajayeb/server/internal/tabletest/faults"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
 func policyInput(r *Record, g *game, seat int) botInput {
-	row := workRow(r, g.Point().ID, seat)
+	row, ok := workRow(r, g.Point().ID, seat)
+	if !ok {
+		panic("seat has no frozen preset")
+	}
 	o := g.Observe(seatNum(seat))
 	return botInput{row: row, observation: o, offered: g.Legal(seatNum(seat)), entropy: botTape(r.Setup.Seed, g.Point().ID, seat, o.Fingerprint(), row.BotPreset)}
 }
@@ -57,7 +61,21 @@ func TestFixedPresetsRejectUnsupportedWork(t *testing.T) {
 			}
 		})
 	}
-	data, _ := base.encode()
+	// A table frozen under preset set 1 (easy Random, normal Apprentice)
+	// archives on load rather than playing on under set 2.
+	v1 := base.clone()
+	for i := range v1.BotPresets {
+		v1.BotPresets[i].Policy = "haftgane-bot-1"
+	}
+	v1.BotPresets[0].Algorithm, v1.BotPresets[1].Algorithm = bot.Random.String(), bot.Apprentice.String()
+	for i := range v1.Work {
+		v1.Work[i].Policy = "haftgane-bot-1"
+	}
+	data, _ := v1.encode()
+	if verdict, _, err := assess(data, defaultBounds); err != nil || verdict.Archive != store.ArchiveReplayFailed {
+		t.Fatal("preset set 1 was not archived", verdict, err)
+	}
+	data, _ = base.encode()
 	var old map[string]any
 	_ = json.Unmarshal(data, &old)
 	old["format"] = 1
@@ -66,6 +84,37 @@ func TestFixedPresetsRejectUnsupportedWork(t *testing.T) {
 	verdict, _, err := assess(data, defaultBounds)
 	if err != nil || verdict.Archive == "" {
 		t.Fatal("old fallback configuration silently upgraded", verdict, err)
+	}
+}
+
+// Each room code plays its persona's policy where one exists; normal and hard
+// share Greedy until Scholar, and Random is never a room level (D46).
+func TestRoomPresetMapping(t *testing.T) {
+	got := map[string]string{}
+	for _, p := range releasedPresets() {
+		if p.Policy != "haftgane-bot-2" {
+			t.Fatal("preset set", p)
+		}
+		got[p.Level] = p.Algorithm
+	}
+	want := map[string]string{BotEasy: "apprentice", BotNormal: "greedy", BotHard: "greedy"}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatal("room mapping", got)
+	}
+}
+
+// Levels are checked against the table's frozen presets, not the build's:
+// a level the table never froze gets no work row and no seat.
+func TestLevelsComeFromFrozenPresets(t *testing.T) {
+	r := Record{BotPresets: releasedPresets()[:1], Seats: []SeatRecord{{Seat: 0, Kind: SeatBot, Bot: BotEasy}, {Seat: 1, Kind: SeatBot, Bot: BotHard}}}
+	if row, ok := workRow(&r, "p", 0); !ok || row.Seat != 0 || row.BotPreset != r.BotPresets[0] {
+		t.Fatal("frozen level", row)
+	}
+	if _, ok := workRow(&r, "p", 1); ok {
+		t.Fatal("unfrozen level got a work row")
+	}
+	if checkSeats(&r) == nil {
+		t.Fatal("unfrozen level kept a seat")
 	}
 }
 

@@ -282,7 +282,7 @@ func TestRoomEvidence(t *testing.T) {
 		mix, all    bool
 		kind        string
 	}{
-		{name: "six-random", level: BotEasy}, {name: "six-apprentice", level: BotNormal}, {name: "six-greedy", level: BotHard},
+		{name: "six-easy", level: BotEasy}, {name: "six-normal", level: BotNormal}, {name: "six-hard", level: BotHard},
 		{name: "six-mixed-choose", level: BotHard, mix: true, kind: "sides"}, {name: "all-bot-continuation", level: BotHard, mix: true, all: true},
 		{name: "discard-build", level: BotHard, mix: true, kind: "discard-build"}, {name: "last-card", level: BotHard, mix: true, kind: "last-card"},
 	}

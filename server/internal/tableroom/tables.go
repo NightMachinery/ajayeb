@@ -470,7 +470,9 @@ func openPoint(r *Record, g *game) {
 	r.Point, r.Status = &wire.PointRef{ID: p.ID, Revision: r.Public}, store.StatusPlaying
 	for _, s := range p.Required.Seats() {
 		if sr := r.Seats[s]; sr.Kind == SeatBot {
-			r.Work = append(r.Work, workRow(r, p.ID, int(s)))
+			if row, ok := workRow(r, p.ID, int(s)); ok {
+				r.Work = append(r.Work, row)
+			}
 		}
 	}
 }

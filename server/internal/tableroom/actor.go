@@ -802,7 +802,8 @@ func (a *actor) applyPick(cand *Record, g game, seat int, key string, confirm bo
 // --- seat switches, roles and resignation -----------------------------------
 
 // switchSeat handles table-seat: an admin gives a seat to a bot (at the
-// level the request names) or seats a spectator in it. A human replaced
+// level the request names, which the table must have frozen) or seats a
+// spectator in it. A human replaced
 // becomes a spectator. The seat's pending pick stays: a bot taking the
 // seat confirms it, a human may still change it.
 func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
@@ -826,7 +827,7 @@ func (a *actor) switchSeat(c *room.Client, f wire.TableSeat) string {
 	entry := wire.PlatformLogEntry{Kind: "seat", At: len(r.Batches), By: user, Seat: &seat, Control: &control}
 	switch {
 	case f.Control == SeatBot && f.Bot != nil && f.UserID == nil:
-		if _, ok := allowance(*f.Bot); !ok || (cur.Kind == SeatBot && cur.Bot == *f.Bot) {
+		if _, ok := frozenPreset(r, *f.Bot); !ok || (cur.Kind == SeatBot && cur.Bot == *f.Bot) {
 			return a.refuse(c, f.Seq, "seat", f.Seat, outBad)
 		}
 		cand.Seats[f.Seat] = SeatRecord{Seat: f.Seat, Kind: SeatBot, Bot: *f.Bot}
@@ -996,7 +997,8 @@ func (a *actor) control(c *room.Client, op string, seat int, cand Record, seq in
 // syncWork makes the open point's work rows follow the seats: one for each
 // required bot seat (a bot new to the seat, or at a new level, gets its
 // level's fixed allowance, persisted before its work starts), none for a
-// seat a human now controls.
+// seat a human now controls. A level the table never froze gets no row, so
+// the commit refuses it.
 func syncWork(r *Record, g *game) {
 	p := g.Point()
 	out := []WorkRow{}
@@ -1010,7 +1012,9 @@ func syncWork(r *Record, g *game) {
 				out = append(out, r.Work[i])
 				continue
 			}
-			out = append(out, workRow(r, p.ID, int(s)))
+			if row, ok := workRow(r, p.ID, int(s)); ok {
+				out = append(out, row)
+			}
 		}
 	}
 	r.Work = out
