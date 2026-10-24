@@ -27,7 +27,9 @@
   import HandGrid from './HandGrid.svelte';
   import NeighbourPanel from './NeighbourPanel.svelte';
   import PassFlow from './PassFlow.svelte';
-  import PickPanel from './PickPanel.svelte';
+  import SidePicker from './SidePicker.svelte';
+  import DiscardPicker from './DiscardPicker.svelte';
+  import KeptCard from './KeptCard.svelte';
   import CardSheet from './CardSheet.svelte';
   import CitySheet from './CitySheet.svelte';
   import SeenHandsButton from './SeenHandsButton.svelte';
@@ -38,7 +40,16 @@
   import TurnBar from './TurnBar.svelte';
   import YourStrip from './YourStrip.svelte';
   import { choiceLabel } from './labels';
-  import { chosenCount, farColumns, ring, seatStatus, stageOpen, TURNS_PER_AGE } from './model';
+  import {
+    chosenCount,
+    farColumns,
+    ring,
+    seatStatus,
+    stageOpen,
+    afford,
+    cardChoices,
+    TURNS_PER_AGE
+  } from './model';
   import { isBot, seatName, where } from './seat-names';
 
   interface Props {
@@ -65,7 +76,9 @@
     !finished && !!frame.point && mySeat !== null && frame.point.required.includes(mySeat)
   );
   const canAct = $derived(ready && session.canPick);
-  const hand = $derived(mine?.hand ?? []);
+  const hand = $derived(
+    view.phase === 'last-card' && mine?.kept ? [mine.kept] : (mine?.hand ?? [])
+  );
   const choices = $derived(mine?.choices ?? []);
   const pending = $derived(frame.pending ?? null);
   const pendingChoice = $derived(pending ? choices.find((c) => c.key === pending.key) : undefined);
@@ -74,14 +87,6 @@
       ? { design: pendingChoice.design, confirmed: pending.confirm }
       : null
   );
-  // Choices that belong to no card of the hand: the wonder side, a card
-  // from the discard pile.
-  const loose = $derived(
-    choices.filter(
-      (c) => c.kind === 'side' || c.kind === 'build-discarded' || !hand.includes(c.design)
-    )
-  );
-
   // Bind local selection and any armed confirmation to this exact point
   // incarnation and seat, including a control change that keeps its id.
   const decisionKey = $derived(
@@ -96,7 +101,23 @@
       ? selection.card
       : null
   );
-  const showPick = $derived(deciding && selected === null && loose.length > 0);
+  let dismissedSpecial = $state<string | null>(null);
+  const special = $derived(view.phase === 'sides' || view.phase === 'discard-build');
+  const showSpecial = $derived(
+    deciding && special && !pending?.confirm && dismissedSpecial !== decisionKey
+  );
+  const publicDecider = $derived(frame.point?.required[0]);
+  const specialWaiting = $derived(
+    !deciding &&
+      (view.phase === 'discard-build' || view.phase === 'last-card') &&
+      publicDecider !== undefined
+      ? ht(view.phase === 'discard-build' ? 'hg.special.wait.discard' : 'hg.special.wait.last', {
+          name: seatName(frame, publicDecider)
+        })
+      : view.phase === 'sides'
+        ? ht('hg.special.wait.sides')
+        : ''
+  );
   const names = $derived(
     Object.fromEntries(view.seats.map((s) => [s.seat, seatName(frame, s.seat)]))
   );
@@ -119,6 +140,7 @@
   }
 
   function change(): void {
+    if (special) dismissedSpecial = null;
     if (session.withdraw() && pendingChoice && frame.point) {
       selection = { point: decisionKey!, card: pendingChoice.design };
     }
@@ -277,7 +299,7 @@
       </div>
       {#if mine}
         <div class="hand-head">
-          <h2>{ht('hg.screen.hand')}</h2>
+          <h2>{ht(view.phase === 'last-card' ? 'hg.special.extra' : 'hg.screen.hand')}</h2>
           {#if passFrom && passTo && !finished}
             <PassFlow
               from={{ seat: passFrom.seat, name: nameOf(passFrom.seat) }}
@@ -288,7 +310,17 @@
           <SeenHandsButton onopen={() => (seenOpen = true)} />
         </div>
         <div class="hand">
-          {#if hand.length > 0}
+          {#if view.phase === 'turn' && view.turn === TURNS_PER_AGE}
+            <p class="special-note" data-sixth-turn>{ht('hg.special.sixth')}</p>
+          {/if}
+          {#if mine.kept}
+            <KeptCard
+              card={mine.kept}
+              locked={!deciding || view.phase !== 'last-card'}
+              afford={afford(cardChoices(mine.kept, choices, mine.disabled))}
+              onselect={select}
+            />
+          {:else if hand.length > 0}
             <HandGrid
               {hand}
               {choices}
@@ -305,16 +337,16 @@
       {:else}
         <div class="hand"><p class="empty" data-watching-note>{ht('hg.screen.watching')}</p></div>
       {/if}
-      {#if showPick}
-        <div class="pick">
-          <PickPanel
-            card={null}
-            choices={loose}
-            pendingKey={pending?.key ?? null}
-            locked={!canAct || !!pending?.confirm}
-            onpick={pick}
-          />
-        </div>
+      {#if specialWaiting}<p class="special-note" role="status" data-special-wait>
+          {specialWaiting}
+        </p>{/if}
+      {#if deciding && special && !showSpecial && !pending?.confirm}
+        <button
+          type="button"
+          class="dismiss"
+          data-act="special-open"
+          onclick={() => (dismissedSpecial = null)}>{ht('hg.special.reopen')}</button
+        >
       {/if}
       <div class="foot">
         <TurnBar
@@ -334,6 +366,32 @@
     </div>
   {/if}
 
+  {#if showSpecial && mine && around}
+    {#key decisionKey}
+      {#if view.phase === 'sides'}
+        <SidePicker
+          boardId={around.anchor.board}
+          {choices}
+          pendingKey={pending?.key ?? null}
+          locked={!canAct}
+          ondraft={pick}
+          onconfirm={confirmCard}
+          onclose={() => (dismissedSpecial = decisionKey)}
+        />
+      {:else}
+        <DiscardPicker
+          offer={mine.offer}
+          {choices}
+          disabled={mine.disabled}
+          pendingKey={pending?.key ?? null}
+          locked={!canAct}
+          ondraft={pick}
+          onconfirm={confirmCard}
+          onclose={() => (dismissedSpecial = decisionKey)}
+        />
+      {/if}
+    {/key}
+  {/if}
   {#if selected && mine && around}
     {#key `${decisionKey}:${selected}`}
       <CardSheet
@@ -469,6 +527,13 @@
     flex-direction: column;
     min-height: 0;
     padding-inline: 0.4rem;
+  }
+  .special-note {
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    color: var(--fg-muted);
+    font-size: 0.8rem;
+    line-height: 1.3;
   }
   .empty {
     margin: auto;
