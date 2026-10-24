@@ -1,7 +1,8 @@
 <script lang="ts">
   // A seat beyond the viewer's neighbours: crest, name, points, coins and
   // shields, with its status badge on the top corner. The desktop layout
-  // adds the colours it holds.
+  // adds the colours it holds. With `onopen` the whole chip is a button
+  // that opens the seat's city.
   import type { Seat } from '$lib/wire/haftgane.gen';
   import { ht } from '../i18n/messages.svelte';
   import ColourCounts from './ColourCounts.svelte';
@@ -17,9 +18,11 @@
     where: string;
     bot: boolean;
     status: SeatStatus;
+    /** Opens this seat's city. */
+    onopen?: () => void;
   }
 
-  let { seat, name, where, bot, status }: Props = $props();
+  let { seat, name, where, bot, status, onopen }: Props = $props();
 </script>
 
 <article
@@ -29,7 +32,22 @@
   data-relation={seat.relation}
   aria-label={ht('hg.screen.crest.tip', { name, where })}
 >
-  <div class="head">
+  {#if onopen}
+    <button
+      type="button"
+      class="body open"
+      data-act="city:{seat.seat}"
+      aria-label={ht('hg.city.open', { name })}
+      onclick={onopen}>{@render body()}</button
+    >
+  {:else}
+    <span class="body">{@render body()}</span>
+  {/if}
+  <span class="status"><StatusBadge {status} {name} /></span>
+</article>
+
+{#snippet body()}
+  <span class="head">
     <SeatCrest
       seat={seat.seat}
       tip={ht('hg.screen.crest.tip', { name, where })}
@@ -37,8 +55,8 @@
       botTip={ht('hg.screen.botBadge')}
     />
     <span class="name" dir="auto">{name}</span>
-  </div>
-  <div class="stats">
+  </span>
+  <span class="stats">
     <StatPill
       kind="points"
       size="xs"
@@ -57,24 +75,41 @@
       value={seat.shields}
       tip={ht('hg.screen.shields.tip', { count: seat.shields })}
     />
-  </div>
-  <div class="colours"><ColourCounts built={seat.built} hideZero /></div>
-  <span class="status"><StatusBadge {status} {name} /></span>
-</article>
+  </span>
+  <span class="colours"><ColourCounts built={seat.built} hideZero /></span>
+{/snippet}
 
 <style>
   .far {
     position: relative;
     display: flex;
     flex: 1 1 0;
-    flex-direction: column;
-    gap: 0.15rem;
     min-width: 0;
-    padding: 0.25rem 0.35rem;
     border: 1px solid var(--rule);
     border-radius: var(--shape-panel);
     background: var(--panel);
     box-shadow: var(--shadow);
+  }
+  .body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+    padding: 0.25rem 0.35rem;
+  }
+  .open {
+    min-height: 44px;
+    border: 0;
+    border-radius: inherit;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .open:hover {
+    background: var(--panel-sunken);
   }
   .head {
     display: flex;

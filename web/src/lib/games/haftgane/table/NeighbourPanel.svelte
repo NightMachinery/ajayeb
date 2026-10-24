@@ -6,6 +6,7 @@
   // inner bottom corner. The desktop layout adds the "sells you" caption,
   // the wonder's stage pills and the city's card names by colour.
   // A spectator's view carries no trading facts, so those parts stay empty.
+  // With `onopen` the crest and name form a button that opens the city.
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Neighbour, Seat } from '$lib/wire/haftgane.gen';
@@ -33,9 +34,22 @@
     /** The viewer's own shields, for the outlook's tooltip. */
     yourShields?: number;
     pass: string;
+    /** Opens this seat's city. */
+    onopen?: () => void;
   }
 
-  let { seat, side, name, where, bot, status, trade, yourShields = 0, pass }: Props = $props();
+  let {
+    seat,
+    side,
+    name,
+    where,
+    bot,
+    status,
+    trade,
+    yourShields = 0,
+    pass,
+    onopen
+  }: Props = $props();
 
   const stages = $derived(stagesOf(seat));
   const crestTip = $derived(ht('hg.screen.crest.tip', { name, where }));
@@ -59,8 +73,17 @@
   aria-label={crestTip}
 >
   <div class="head">
-    <SeatCrest seat={seat.seat} tip={crestTip} {bot} botTip={ht('hg.screen.botBadge')} size="md" />
-    <span class="name" dir="auto">{name}</span>
+    {#if onopen}
+      <button
+        type="button"
+        class="who open"
+        data-act="city:{seat.seat}"
+        aria-label={ht('hg.city.open', { name })}
+        onclick={onopen}>{@render who()}</button
+      >
+    {:else}
+      <span class="who">{@render who()}</span>
+    {/if}
     <StatusBadge {status} {name} />
   </div>
   <div class="stats">
@@ -134,6 +157,11 @@
   <PassMark {side} {pass} {name} />
 </article>
 
+{#snippet who()}
+  <SeatCrest seat={seat.seat} tip={crestTip} {bot} botTip={ht('hg.screen.botBadge')} size="md" />
+  <span class="name" dir="auto">{name}</span>
+{/snippet}
+
 <style>
   .panel {
     position: relative;
@@ -152,6 +180,29 @@
     align-items: center;
     gap: 0.35rem;
     min-width: 0;
+  }
+  .who {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+  .open {
+    min-height: 44px;
+    margin-block: -0.35rem;
+    margin-inline-start: -0.3rem;
+    padding-inline: 0.3rem;
+    border: 0;
+    border-radius: var(--shape-control);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .open:hover {
+    background: var(--panel-sunken);
   }
   .name {
     flex: 1 1 auto;

@@ -3,7 +3,8 @@
   // points, coins, shields and the sum of its conflict tokens; one chip for
   // everything the city makes and one for its science symbols; its colour
   // counts (the colours it holds); and its wonder with one pill per stage.
-  // For a spectator it is seat 0's city, without the "You" tag.
+  // For a spectator it is seat 0's city, without the "You" tag. With
+  // `onopen` the crest and name form a button that opens the city.
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Seat } from '$lib/wire/haftgane.gen';
@@ -26,9 +27,11 @@
     status: SeatStatus;
     /** The next stage may be built this turn (the view offers a stage). */
     stageOpen?: boolean;
+    /** Opens this seat's city. */
+    onopen?: () => void;
   }
 
-  let { seat, name, where, own, bot, status, stageOpen = false }: Props = $props();
+  let { seat, name, where, own, bot, status, stageOpen = false, onopen }: Props = $props();
 
   const stages = $derived(stagesOf(seat));
   const made = $derived(makings(seat));
@@ -80,15 +83,17 @@
   aria-label={ht('hg.screen.crest.tip', { name, where })}
 >
   <div class="row head">
-    <SeatCrest
-      seat={seat.seat}
-      tip={ht('hg.screen.crest.tip', { name, where })}
-      {bot}
-      botTip={ht('hg.screen.botBadge')}
-      size="md"
-    />
-    <span class="name" dir="auto">{name}</span>
-    {#if own}<span class="you">{ht('hg.screen.you')}</span>{/if}
+    {#if onopen}
+      <button
+        type="button"
+        class="who open"
+        data-act="city:{seat.seat}"
+        aria-label={ht('hg.city.open', { name })}
+        onclick={onopen}>{@render who()}</button
+      >
+    {:else}
+      <span class="who">{@render who()}</span>
+    {/if}
     <StatusBadge {status} {name} />
     <span class="pills">
       <StatPill
@@ -163,6 +168,18 @@
   </div>
 </section>
 
+{#snippet who()}
+  <SeatCrest
+    seat={seat.seat}
+    tip={ht('hg.screen.crest.tip', { name, where })}
+    {bot}
+    botTip={ht('hg.screen.botBadge')}
+    size="md"
+  />
+  <span class="name" dir="auto">{name}</span>
+  {#if own}<span class="you">{ht('hg.screen.you')}</span>{/if}
+{/snippet}
+
 <style>
   /* The rows group the markup; on screen their pieces flow together and
      wrap, so the strip takes as few lines as its width allows. */
@@ -183,6 +200,28 @@
   }
   .row {
     display: contents;
+  }
+  .who {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+  .open {
+    min-height: 44px;
+    margin-block: -0.35rem;
+    margin-inline-start: -0.3rem;
+    padding-inline: 0.3rem;
+    border: 0;
+    border-radius: var(--shape-control);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .open:hover {
+    background: var(--panel-sunken);
   }
   .name {
     min-width: 0;
