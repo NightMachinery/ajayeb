@@ -3,6 +3,7 @@ package lobbyroom
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -61,10 +62,29 @@ func (f *fixture) finished() (string, *conn, *conn) {
 			acted = true
 		}
 		if !acted && cur[k0].Status != "finished" {
+			// Shown only if the wait fails: what each player saw then.
+			for i, k := range ks {
+				f.t.Logf("player %d before the wait: %s", i, tableSummary(cur[k]))
+			}
 			cur[k0] = k0.table("the next frame", func(wire.TableState) bool { return true })
 		}
 	}
 	return code, k0, k1
+}
+
+// tableSummary is the part of a table frame that says who must act.
+func tableSummary(st wire.TableState) string {
+	out := fmt.Sprintf("status=%s batch=%d", st.Status, st.Batch)
+	if st.Point != nil {
+		out += fmt.Sprintf(" point=%s required=%v confirmed=%v", st.Point.Kind, st.Point.Required, st.Point.Confirmed)
+	}
+	if st.You.Seat != nil {
+		out += fmt.Sprintf(" seat=%d", *st.You.Seat)
+	}
+	if st.View.You != nil {
+		out += fmt.Sprintf(" choices=%d", len(st.View.You.Choices))
+	}
+	return out
 }
 
 // tableRecord reads the table record of code from the store.
