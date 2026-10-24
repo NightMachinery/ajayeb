@@ -2,7 +2,10 @@
 // installs and controls the page, the fonts load from content-hashed URLs,
 // install leaves out only the files the /dev pages alone load, the app opens
 // offline from its cache with its own offline state, the server's endpoints
-// never come from a cache, and the stable names stay stable. Every other
+// never come from a cache, the stable names stay stable, and a deploy in
+// mid-game (a new worker, the old build's files gone from the server)
+// leaves an open table every file it may still import, from the old
+// worker's cache, while the new worker waits. Every other
 // spec blocks the worker (fixtures/base.ts); this one allows it. Each test
 // gets a fresh context, so a fresh registration.
 
@@ -12,6 +15,7 @@ import { devOnlyFiles, type Manifest } from '../../web/src/lib/sw/dev-only';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { openHotseatRoom } from '../fixtures/scenario';
+import { openBotTable } from '../fixtures/table';
 
 test.use({ serviceWorkers: 'allow' });
 
@@ -214,6 +218,99 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     );
     expect(left.length, 'the dev layout and the gallery page nodes').toBeGreaterThanOrEqual(2);
     for (const path of left) expect(build.devOnly.has(path.slice(1)), path).toBe(true);
+  });
+
+  test('a deploy in mid-game leaves the open table every lazy import it may need', async ({
+    page,
+    context
+  }) => {
+    test.setTimeout(120_000);
+    const build = clientBuild();
+    await installWorker(page);
+    const old = context.serviceWorkers()[0]!;
+    await openBotTable(page, 3, 'Ana');
+    await expect
+      .poll(() => page.evaluate(() => navigator.serviceWorker.controller?.state ?? null))
+      .toBe('activated');
+
+    // The deploy: the server now has another build, with a new version,
+    // and none of this build's files any more, for the page or the worker
+    // that installed it. Only the next worker fetches what it installs.
+    const reached: string[] = [];
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const path = new URL(request.url()).pathname;
+      const worker = request.serviceWorker();
+      if (path === '/_app/version.json')
+        return route.fulfill({ contentType: 'application/json', body: '{"version":"next"}' });
+      if (path.startsWith('/_app/') && (worker === null || worker === old)) {
+        reached.push(`${worker ? 'worker' : 'page'} ${path}`);
+        return route.fulfill({ status: 404, body: 'gone' });
+      }
+      return route.fallback();
+    });
+    const loaded: string[] = [];
+    page.on('response', (res) => {
+      const path = new URL(res.url()).pathname;
+      if (path.startsWith('/_app/immutable/') && res.ok() && res.fromServiceWorker())
+        loaded.push(path);
+    });
+
+    // The control: a file this build never had misses the cache, and the
+    // worker's own fetch meets the server that no longer has the old build.
+    const probe = '/_app/immutable/chunks/not-in-this-build.js';
+    expect(await page.evaluate(async (p) => (await fetch(p)).status, probe)).toBe(404);
+    expect(reached).toEqual([`worker ${probe}`]);
+    reached.length = 0;
+
+    // The next worker installs and waits: the open game page holds it back,
+    // so the old one, and its cache, stay. (The browser fetches a worker
+    // script outside the test's routing, so the next worker is this build's
+    // script under a new URL, which the browser installs as a new version.)
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.register('/service-worker.js?build=next');
+    });
+    await expect
+      .poll(() =>
+        page.evaluate(
+          async () => (await navigator.serviceWorker.getRegistration())?.waiting?.state ?? null
+        )
+      )
+      .toBe('installed');
+    expect(
+      await page.evaluate(
+        async () => (await navigator.serviceWorker.getRegistration())?.waiting?.scriptURL ?? null
+      )
+    ).toMatch(/\/service-worker\.js\?build=next$/);
+
+    // A lazy import the table makes on demand: the rules overlay.
+    loaded.length = 0;
+    await page.locator('[data-act="table-menu"]').click();
+    await page.locator('[data-act="rules"]').click();
+    const overlay = page.locator('[data-rules-overlay]');
+    await expect(overlay.locator('[data-rules-panel="haftgane"]')).toBeVisible();
+    expect(loaded.length, 'the overlay loads its own files').toBeGreaterThan(0);
+    await overlay.locator('[data-control="rules-close"]').click();
+
+    // And every file of the build a real route could still import.
+    const missing = await page.evaluate(
+      async (files) => {
+        const out: string[] = [];
+        for (const file of files) {
+          const res = await fetch(`/${file}`);
+          if (!res.ok) out.push(`${file} ${res.status}`);
+        }
+        return out;
+      },
+      build.files.filter((file) => !build.devOnly.has(file))
+    );
+    expect(missing, 'build files the open page could not load after the deploy').toEqual([]);
+    expect(reached, 'requests for the old build that reached the server').toEqual([]);
+    expect(
+      await page.evaluate(() => navigator.serviceWorker.controller?.scriptURL ?? null)
+    ).toMatch(/\/service-worker\.js$/);
+    await expect(page.locator('[data-table-screen]')).toBeVisible();
+    await context.unrouteAll({ behavior: 'ignoreErrors' });
   });
 
   test('offline, Home and a room page open from the cache with their offline state', async ({
