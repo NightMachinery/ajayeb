@@ -22,6 +22,7 @@
 // root's does; until a key is translated it falls back to English.
 
 import { formatNumber, i18n, type Locale, type Messages, type PluralForms } from '$lib/i18n';
+import { admin } from './en/admin';
 import { city } from './en/city';
 import { end } from './en/end';
 import { names } from './en/names';
@@ -31,6 +32,7 @@ import { table } from './en/table';
 
 /** Haftgane's English message set. */
 export const hgEn = {
+  ...admin,
   ...city,
   ...end,
   ...names,

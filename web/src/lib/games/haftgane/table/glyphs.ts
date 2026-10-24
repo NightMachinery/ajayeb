@@ -26,6 +26,7 @@ const duel = import.meta.glob<string>(
     '../../../icons/svg/badge-lock.svg',
     '../../../icons/svg/badge-chain.svg',
     '../../../icons/svg/build-from-discard.svg',
+    '../../../icons/svg/hint-crown.svg',
     '../../../icons/svg/resource-*.svg',
     '../../../icons/svg/category-*.svg',
     '../../../icons/svg/chain-{barrel,book,column,drop,helmet,horseshoe,lamp,lyre,mask,target,tower}.svg',
