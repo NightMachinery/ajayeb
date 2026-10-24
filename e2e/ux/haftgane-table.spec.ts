@@ -1,4 +1,4 @@
-// Haftgane's table screen geometry (M18.table-screen): tables of 3, 5 and 7
+// Haftgane's table screen geometry (M18.table-screen): tables of 3 to 7
 // seats, the page's user and bots, at 360x740, 390x844, 844x390 and
 // 1280x800, in both themes, left to right and right to left. At each size,
 // with a full hand and nothing selected, two frames after the resize, the
@@ -151,8 +151,8 @@ for (const locale of ['en', 'fa'] as const)
   for (const theme of ['light', 'dark'] as const) {
     test.describe(`haftgane table geometry ${locale} ${theme}`, () => {
       test.use({ appLocale: locale });
-      test('3, 5 and 7 seats at four viewports', async ({ page }) => {
-        test.setTimeout(240_000);
+      test('3 to 7 seats at four viewports', async ({ page }) => {
+        test.setTimeout(400_000);
         const out = process.env.HG_TABLE_SHOTS_DIR ?? '../.cache/e2e/hg-table-shots';
         mkdirSync(out, { recursive: true });
         const problems = watchHygiene(page);
@@ -165,7 +165,7 @@ for (const locale of ['en', 'fa'] as const)
           { t: theme, name: player }
         );
         const probes = [];
-        for (const seats of [3, 5, 7]) {
+        for (const seats of [3, 4, 5, 6, 7]) {
           await page.setViewportSize({ width: 390, height: 844 });
           await openBotTable(page, seats, player);
           await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
