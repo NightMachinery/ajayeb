@@ -22,13 +22,19 @@
 // batch sounds again; the spectator turns Sound off in the table menu, and
 // the next batch records nothing for them while the creator still hears it,
 // until they turn it back on; and with Sound off in Settings the creator's
-// table never loads the player. Nothing depends on a particular deal.
+// table never loads the player. A new Age's deal sweeps the pass cues.
+//
+// A second table seats two people with bots, who decide at once. Each
+// person in turn confirms first: they see the check and hear one tick, and
+// the other, now the only one the table waits on, hears their turn once.
+// Nothing depends on a particular deal.
 import { readFileSync } from 'node:fs';
 import { expect, type BrowserContext, type Page } from '@playwright/test';
 import type { TableEvent } from '../../web/src/lib/wire/platform.gen';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { newDeviceContext } from '../fixtures/online';
+import { createTableFromHome } from '../fixtures/lobby';
 import { choose, latest, openBotTable, openMenu, ready } from '../fixtures/table';
 
 const manifest = JSON.parse(
@@ -216,6 +222,10 @@ test.describe('Haftgane sound', { tag: ['@full', '@mobile', '@haftgane-sound'] }
         const creator = await checkBatch(a, b, me, batch);
         const events = await batchEvents(a, batch);
         ageEnd = events.some((e) => e.kind === 'military');
+        // A new Age's deal sweeps the pass chip and the pass flow once.
+        const dealt = events.some((e) => e.kind === 'age-start') ? 1 : 0;
+        await expect(a.locator('[data-top-bar] [data-pass][data-fresh]')).toHaveCount(dealt);
+        await expect(a.locator('[data-pass-flow][data-fresh]')).toHaveCount(dealt);
         if (creator.some((c) => ['slide', 'wonder', 'coin'].includes(c))) ownPlays++;
       }
       expect(ownPlays, 'the creator heard their own plays').toBeGreaterThan(0);
@@ -267,6 +277,72 @@ test.describe('Haftgane sound', { tag: ['@full', '@mobile', '@haftgane-sound'] }
       expect(await recorded(a)).toEqual([]);
       expect(requested).not.toContain(PLAYER);
 
+      for (const problems of hygiene) expect(problems).toEqual([]);
+    } finally {
+      for (const ctx of contexts) await ctx.close();
+    }
+  });
+
+  test('two players: a confirmation ticks, and the last person to choose hears their turn', async ({
+    browser
+  }, info) => {
+    test.setTimeout(240_000);
+    const contexts: BrowserContext[] = [];
+    try {
+      for (let i = 0; i < 2; i++) contexts.push(await newDeviceContext(browser, info));
+      const a = await named(contexts[0]!, 'Ana');
+      const b = await named(contexts[1]!, 'Bo');
+      const hygiene = [a, b].map(watchHygiene);
+      const code = await createTableFromHome(a, 'Ana');
+      await b.goto(`/play/${code}`);
+      await expect
+        .poll(() =>
+          a.evaluate(
+            () => window.__ajayebTable?.lobby()?.seats.filter((s) => s.kind === 'human').length
+          )
+        )
+        .toBe(2);
+      await choose(a, 'lobby-start');
+      for (const page of [a, b]) {
+        await expect(page.locator('[data-table-screen]')).toBeVisible();
+        await ready(page);
+        await expect.poll(() => armed(page)).toBe(true);
+      }
+
+      for (const [first, last] of [
+        [a, b],
+        [b, a]
+      ] as const) {
+        // The bots decide at once; once they have, the two people decide last.
+        const f = await latest(a);
+        const bots = f.seats.filter((s) => s.kind === 'bot').map((s) => s.seat);
+        await expect
+          .poll(async () => {
+            const p = (await latest(a)).point;
+            return bots.every((s) => p?.confirmed.includes(s));
+          })
+          .toBe(true);
+        await clearRecorded(a);
+        await clearRecorded(b);
+        await choose(first, (await latest(first)).view.you!.choices[0]!.key);
+        await choose(first, 'confirm');
+        await expect(first.locator('[data-pending-confirm="true"] .check')).toBeVisible();
+        await expect.poll(async () => (await recorded(first)).map((c) => c.cue)).toEqual(['tick']);
+        await expect
+          .poll(async () => (await recorded(last)).map((c) => c.cue))
+          .toEqual(['yourTurn']);
+        await choose(last, (await latest(last)).view.you!.choices[0]!.key);
+        await choose(last, 'confirm');
+        await expect.poll(async () => (await latest(a)).batch).toBeGreaterThan(f.batch);
+        const batch = (await latest(a)).batch;
+        for (const page of [a, b]) {
+          await caughtUp(page, batch);
+          expect((await batchCues(page, batch)).filter((c) => c === 'flip')).toHaveLength(1);
+        }
+        // The notices of the decision came once each.
+        expect((await recorded(first)).filter((c) => c.cue === 'tick')).toHaveLength(1);
+        expect((await recorded(last)).filter((c) => c.cue === 'yourTurn')).toHaveLength(1);
+      }
       for (const problems of hygiene) expect(problems).toEqual([]);
     } finally {
       for (const ctx of contexts) await ctx.close();
