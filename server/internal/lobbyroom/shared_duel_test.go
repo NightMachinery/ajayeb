@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -566,5 +567,113 @@ func TestSharedLobbyDuelRematchAfterSuccessorStarted(t *testing.T) {
 				t.Fatalf("the started successor was replaced: %s", g)
 			}
 		})
+	}
+}
+
+// stalledBot searches until its room stops: a bot caught mid-turn by a
+// restart.
+type stalledBot struct{ searching chan<- struct{} }
+
+func (s stalledBot) Choose(ctx context.Context, _ engine.Observation, _ ai.Budget, _ func(ai.Progress)) (engine.Action, error) {
+	s.searching <- struct{}{}
+	<-ctx.Done()
+	return engine.Action{}, ctx.Err()
+}
+
+// TestSharedLobbyDuelBotGameToEnd: an online Duel game with a bot seat,
+// which no legacy room has, plays to its end. A restart in the middle of
+// the bot's turn loses nothing: the bot resumes when its player attaches.
+// Its rematch lobby keeps the bot's slot and level, and starts the same
+// kind of game.
+func TestSharedLobbyDuelBotGameToEnd(t *testing.T) {
+	f := newFixture(t, nil)
+	f.close()
+	f.duelSeed = func() uint64 { return 23 }
+	var mu sync.Mutex
+	hold := false
+	searching := make(chan struct{}, 8)
+	f.duelBot = func(level store.BotLevel, seed uint64) room.Bot {
+		mu.Lock()
+		defer mu.Unlock()
+		if level != store.BotHard {
+			t.Errorf("bot level %s, want hard", level)
+		}
+		if hold {
+			return stalledBot{searching}
+		}
+		return ai.NewGreedy(seed, ai.GreedyConfig{})
+	}
+	f.start()
+	a := f.conn(user(0), "a", "A")
+	code := f.create(a, 2, wire.LobbyOptions{})
+	ab := edit(code, 1, "add-bot")
+	ab.Seat = ptr(1)
+	ab.Bot = ptr("hard")
+	f.send(a, ab)
+	a.acked(1)
+	f.send(a, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 2})
+	duelFrame(a)
+	// holding: the human moved while the bot's next search was held.
+	holding, restarted := false, false
+	botMoves := 0
+	for seq := 100; ; seq++ {
+		if seq > 600 {
+			t.Fatal("Duel did not finish")
+		}
+		snap, err := f.m.Snapshot(f.ctx(), code)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if snap.Status == store.StatusFinished {
+			break
+		}
+		if snap.State.ToMove == 1 {
+			if holding && !restarted {
+				select {
+				case <-searching:
+				case <-time.After(wait):
+					t.Fatal("the held bot did not start its search")
+				}
+				f.m.Leave(a.c, code)
+				f.restart()
+				mu.Lock()
+				hold = false
+				mu.Unlock()
+				restarted = true
+				a = f.conn(user(0), "a2", "A")
+				f.join(a, code)
+			}
+			a.until("the bot's move", func(m any) bool { v, ok := m.(wire.State); return ok && v.Version > snap.Version })
+			botMoves++
+			continue
+		}
+		if !holding && snap.Version >= 6 {
+			mu.Lock()
+			hold = true
+			mu.Unlock()
+			holding = true
+		}
+		keys := engine.LegalActions(&snap.State, nil)
+		if err := f.m.Act(f.ctx(), a.c, wire.NewAct(code, seq, snap.Version, keys[0].Key(), nil)); err != nil {
+			t.Fatal(err)
+		}
+		duelAck(a, seq)
+	}
+	if !restarted || botMoves == 0 {
+		t.Fatalf("restarted %v, bot moves %d", restarted, botMoves)
+	}
+	next, err := f.m.Rematch(f.ctx(), a.c, code)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.join(a, next)
+	st := a.lobby("the rematch lobby", func(st wire.LobbyState) bool { return st.Code == next })
+	if st.SeatCount != 2 || st.Seats[0].Kind != SlotHuman || st.Seats[1].Kind != SlotBot || st.Seats[1].Bot == nil || *st.Seats[1].Bot != "hard" || !st.CanStart {
+		t.Fatalf("rematch lobby lost the bot slot: %+v", st.Seats)
+	}
+	f.send(a, wire.LobbyStart{T: "lobby-start", Code: next, Seq: 1})
+	again := duelFrame(a)
+	if again.Room.Mode != wire.ModeOnline || again.Room.Seats[1].Kind != wire.SeatKindBot || again.Room.Seats[1].Bot == nil || *again.Room.Seats[1].Bot != wire.BotLevelHard {
+		t.Fatalf("rematch game: %+v", again.Room.Seats)
 	}
 }
