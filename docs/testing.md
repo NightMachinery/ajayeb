@@ -1615,8 +1615,13 @@ again; the spectator's table menu turns Sound off, the next batch records
 nothing for them while the creator hears it, the switch survives a
 reload, and turning it back on brings the cues back; and with Sound off
 in Settings the creator's table never requests the lazy player chunk and
-records nothing. A mutation probe that removes the table's sound call
-fails it. Nothing depends on a deal, and no console error or failed
+records nothing. Each new Age's deal marks the pass chip and the pass
+flow for their one-shot sweep. A second test seats two people with bots,
+who decide at once: each person in turn confirms first, sees the check
+on their pick and hears one tick, and the other, now the only one the
+table waits on, hears their turn once; the batch then sounds one flip on
+both pages. A mutation probe that removes the table's sound call fails
+the spec. Nothing depends on a deal, and no console error or failed
 request is allowed.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
