@@ -5,8 +5,11 @@
   // entry's own control), Download, Final board and Home. Every number is
   // the server's result; the client adds nothing up and decides no winner.
   // Download shows only when the view allows it: with the end kept hidden,
-  // a note says why instead. In a short landscape screen the table takes
-  // the start column and the verdict the end column.
+  // a note says why instead. A phone in portrait gets a bottom sheet the
+  // full width of the screen, so the names keep room beside eight number
+  // columns; a short landscape screen gives the table the start column and
+  // the verdict with the actions the end column. A tapped row opens that
+  // seat's city when the screen offers it.
   import type { Snippet } from 'svelte';
   import { formatNumber, i18n } from '$lib/i18n';
   import Sheet from '$lib/components/shell/Sheet.svelte';
@@ -32,6 +35,8 @@
     onclose: () => void;
     /** The rematch control, which the entry owns. */
     rematch?: Snippet;
+    /** Opens a seat's city from its row. */
+    onseat?: (seat: number) => void;
   }
 
   let {
@@ -44,7 +49,8 @@
     ondownload,
     onhome,
     onclose,
-    rematch
+    rematch,
+    onseat
   }: Props = $props();
 
   let open = $state(true);
@@ -105,10 +111,18 @@
   }
   titleId="hg-score-title"
   class="hg-scores"
-  centered
   panelData={{ 'data-score-sheet': '' }}
 >
-  {#snippet footer()}
+  <div class="body">
+    <header class="verdict">
+      <h2 id="hg-score-title" data-verdict={verdict?.kind ?? 'none'}>{title}</h2>
+      {#if tieText}
+        <p class="tie" data-tie-break={tieBreak?.kind}>{tieText}</p>
+      {/if}
+    </header>
+    <div class="table">
+      <ScoreTable {rows} {names} {you} {coins} {onseat} />
+    </div>
     <div class="actions">
       {#if rematch}
         <div class="rematch">{@render rematch()}</div>
@@ -130,17 +144,6 @@
         <p class="note" data-log-hidden>{ht('hg.end.download.hidden')}</p>
       {/if}
     </div>
-  {/snippet}
-  <div class="body">
-    <header class="verdict">
-      <h2 id="hg-score-title" data-verdict={verdict?.kind ?? 'none'}>{title}</h2>
-      {#if tieText}
-        <p class="tie" data-tie-break={tieBreak?.kind}>{tieText}</p>
-      {/if}
-    </header>
-    <div class="table">
-      <ScoreTable {rows} {names} {you} {coins} />
-    </div>
   </div>
 </Sheet>
 
@@ -152,9 +155,11 @@
     display: grid;
     grid-template-areas:
       'verdict'
-      'table';
+      'table'
+      'actions';
     gap: 0.75rem;
-    padding: 0.5rem 0.75rem 0.5rem;
+    padding-block: 0.25rem 0;
+    padding-inline: 0.75rem;
     color: var(--fg);
   }
   .verdict {
@@ -179,6 +184,7 @@
     line-height: 1.4;
   }
   .actions {
+    grid-area: actions;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -209,9 +215,19 @@
       width: min(100%, 52rem);
     }
     .body {
-      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-      grid-template-areas: 'table verdict';
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'table verdict'
+        'table actions';
       align-items: start;
+      padding-block-start: 0.75rem;
+    }
+    h2 {
+      font-size: 1.35rem;
+    }
+    .row {
+      grid-auto-flow: row;
     }
   }
 </style>

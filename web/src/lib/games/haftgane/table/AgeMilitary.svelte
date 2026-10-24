@@ -109,7 +109,7 @@
     {/if}
 
     {#if neighbours.length > 0}
-      <section aria-labelledby="hg-military-yours">
+      <section class="yours-part" aria-labelledby="hg-military-yours">
         <h3 id="hg-military-yours">{ht('hg.end.military.yours')}</h3>
         <div class="yours">
           {#each neighbours as nb (nb.side)}
@@ -132,11 +132,7 @@
               </div>
               {#if shieldsKnown && mine}
                 <p class="shields" data-shields={`${mine.shields}:${nb.seat.shields}`}>
-                  {ht('hg.end.military.shields', {
-                    you: mine.shields,
-                    name: them,
-                    them: nb.seat.shields
-                  })}
+                  {ht('hg.end.military.shields', { you: mine.shields, them: nb.seat.shields })}
                 </p>
               {/if}
             </div>
@@ -145,7 +141,7 @@
       </section>
     {/if}
 
-    <section aria-labelledby="hg-military-all">
+    <section class="all-part" aria-labelledby="hg-military-all">
       <h3 id="hg-military-all">{ht('hg.end.military.all')}</h3>
       <ul class="pairs">
         {#each conflicts as c (c.seat)}
@@ -161,7 +157,7 @@
     </section>
 
     {#if latest}
-      <section aria-labelledby="hg-military-points">
+      <section class="points-part" aria-labelledby="hg-military-points">
         <h3 id="hg-military-points">{ht('hg.end.military.points')}</h3>
         <ul class="totals">
           {#each seats as s (s.seat)}
@@ -340,5 +336,39 @@
     margin: 0;
     font-weight: 600;
     text-align: center;
+  }
+  /* A short landscape screen: your conflicts and the points at the start,
+     every conflict at the end, and a footer of one line. */
+  @media (orientation: landscape) and (max-height: 32rem) {
+    :global(dialog.sheet.hg-military) {
+      width: min(100%, 52rem);
+    }
+    .body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      grid-auto-flow: row dense;
+      align-content: start;
+      gap: 0.6rem 1rem;
+      padding-block-start: 0.75rem;
+    }
+    .body > * {
+      grid-column: 1;
+    }
+    .body > .all-part {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+    }
+    .foot {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .mine {
+      text-align: start;
+    }
+    .foot :global(button) {
+      min-width: 12rem;
+    }
   }
 </style>

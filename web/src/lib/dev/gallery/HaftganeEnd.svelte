@@ -166,6 +166,7 @@
         {names}
         you={0}
         coins={Object.fromEntries(seats.map((s) => [s.seat, s.coins]))}
+        onseat={noop}
       />
     </div>
     <EndActions onscores={noop} onconflicts={noop} onreveal={noop} />
@@ -205,6 +206,7 @@
     canDownload={shown !== 'shared'}
     ondownload={noop}
     onhome={noop}
+    onseat={noop}
     onclose={() => (shown = null)}
   />
 {:else if shown === 'reveal'}

@@ -19,9 +19,11 @@
     you: number | null;
     /** Each seat's final coins, the tie-break's measure, for the total's tooltip. */
     coins: Readonly<Record<number, number>>;
+    /** Opens a seat's city; a row's name becomes its button. */
+    onseat?: (seat: number) => void;
   }
 
-  let { rows, names, you, coins }: Props = $props();
+  let { rows, names, you, coins, onseat }: Props = $props();
 
   const MINUS = '−';
   const shown = (n: number) => (n < 0 ? MINUS + formatNumber(-n) : formatNumber(n));
@@ -65,8 +67,21 @@
               {@attach tooltip({ text: ht('hg.end.score.rank', { rank: row.rank }) })}
               >{formatNumber(row.rank)}</span
             >
-            <SeatCrest seat={row.seat} tip={name} />
-            <span class="name" dir="auto">{name}</span>
+            {#if onseat}
+              <button
+                type="button"
+                class="open"
+                data-act={`score-city:${row.seat}`}
+                onclick={() => onseat(row.seat)}
+                {@attach tooltip({ text: ht('hg.end.score.city', { name }) })}
+              >
+                <SeatCrest seat={row.seat} tip={name} />
+                <span class="name" dir="auto">{name}</span>
+              </button>
+            {:else}
+              <SeatCrest seat={row.seat} tip={name} />
+              <span class="name" dir="auto">{name}</span>
+            {/if}
           </span>
         </th>
         {#each SCORE_COLUMNS as col (col.key)}
@@ -112,16 +127,27 @@
     width: auto;
     text-align: start;
   }
+  tbody .who:has(.open) {
+    padding-block: 0;
+  }
   thead .who {
     font-size: 0.75rem;
   }
   .num {
-    width: 1.85rem;
+    width: 1.6rem;
     text-align: center;
   }
   .num.total {
-    width: 2.3rem;
+    width: 2.1rem;
     font-weight: 700;
+  }
+  @media (min-width: 30rem) {
+    .num {
+      width: 1.85rem;
+    }
+    .num.total {
+      width: 2.3rem;
+    }
   }
   .head {
     display: inline-grid;
@@ -157,6 +183,25 @@
   .winner .rank {
     background: var(--accent);
     color: var(--on-accent);
+  }
+  .open {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+  .open:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
   .name {
     min-width: 0;

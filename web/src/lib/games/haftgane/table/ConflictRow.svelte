@@ -126,12 +126,17 @@
   .who:not(.end) {
     grid-column: 1;
   }
+  /* Two lines before the cut, so a numbered name keeps its number. */
   .name {
+    display: -webkit-box;
     min-width: 0;
     overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     font-size: 0.875rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.2;
+    overflow-wrap: break-word;
   }
   .who.end .name {
     text-align: end;
