@@ -3,7 +3,8 @@
   // column per scoring category headed by its glyph (wonder, coins,
   // military, civic, commerce, science, guilds, total). Every number is
   // the server's; the viewer's row is highlighted and a negative value is
-  // red with a minus sign, so colour is never the only cue. Seven rows and
+  // red with a minus sign, so colour is never the only cue; each number is
+  // set left to right, so in Persian the sign stays before it. Seven rows and
   // eight number columns fit at 360 px: the name truncates and the numbers
   // use tabular figures.
   import { formatNumber } from '$lib/i18n';
@@ -94,9 +95,9 @@
             data-value={value}
           >
             {#if col.key === 'total'}
-              <span {@attach tooltip({ text: totalTip })}>{shown(value)}</span>
+              <span dir="ltr" {@attach tooltip({ text: totalTip })}>{shown(value)}</span>
             {:else}
-              {shown(value)}
+              <span dir="ltr">{shown(value)}</span>
             {/if}
           </td>
         {/each}
