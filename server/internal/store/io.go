@@ -17,8 +17,11 @@ import (
 // such a file was not written by it (or not by it alone); it is refused
 // before it is read, so a planted file cannot make the server read or
 // decode an unbounded amount of data. The file is left as it is.
-// SaveGame, ReplaceGame and CreateGame wrap it too, for a record over the
-// cap, which they refuse to write.
+// Every write wraps it too, for data over the cap, which it refuses to
+// write (writeBytes): SaveGame, ReplaceGame and CreateGame before anything
+// is read or locked, and a load's hash refresh or archive mark, Duel's or
+// a schema-2 record's, in place of the write. So the store never leaves a
+// file it would then refuse to read.
 var ErrTooLarge = errors.New("store: room file too large")
 
 // MaxFileBytes is the largest room file the store reads. It is derived from
@@ -82,8 +85,15 @@ func rewriteFields(path string, data []byte, changes map[string]any) error {
 	return writeBytes(path, append(encoded, '\n'))
 }
 
+// writeBytes atomically replaces the file at path with data, as writeFile
+// describes. Data over MaxFileBytes is refused with ErrTooLarge before
+// anything is touched, and the file in place stays as it is: every write
+// of the store comes through here, the load-time patches included, which
+// can grow a file that was just under the cap.
 func writeBytes(path string, data []byte) error {
-
+	if len(data) > MaxFileBytes {
+		return fmt.Errorf("store: writing %s: %w: %d bytes, at most %d are read", path, ErrTooLarge, len(data), MaxFileBytes)
+	}
 	dir := filepath.Dir(path)
 	tmp, err := os.CreateTemp(dir, ".room-*.tmp")
 	if err != nil {

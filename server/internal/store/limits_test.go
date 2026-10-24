@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -162,5 +163,55 @@ func TestOversizedRecordIsNotWritten(t *testing.T) {
 		if strings.HasSuffix(e.Name(), ".tmp") {
 			t.Errorf("a refused write left %s", e.Name())
 		}
+	}
+}
+
+// TestLoadTimeWritesKeepTheCap: a load's hash refresh or archive mark that
+// would take a record over MaxFileBytes is not written. LoadGame answers an
+// error wrapping ErrRestoreWrite and ErrTooLarge, the record stays as it
+// was, byte for byte and readable, and no temporary file is left. Before,
+// a record exactly at the cap came out a little larger, and the store then
+// refused to read it (M16.haftgane-security-review, from its re-check).
+func TestLoadTimeWritesKeepTheCap(t *testing.T) {
+	for _, archive := range []bool{false, true} {
+		t.Run(map[bool]string{false: "refresh", true: "archive"}[archive], func(t *testing.T) {
+			st := gameStore(t)
+			var m map[string]any
+			if err := json.Unmarshal(gameFile("CAPAAA", "playing"), &m); err != nil {
+				t.Fatal(err)
+			}
+			m["pad"] = ""
+			raw, _ := json.Marshal(m)
+			m["pad"] = strings.Repeat("x", store.MaxFileBytes-len(raw))
+			raw, _ = json.Marshal(m)
+			if len(raw) != store.MaxFileBytes {
+				t.Fatalf("the record takes %d bytes, want the cap", len(raw))
+			}
+			if err := st.SaveGame("CAPAAA", "fixture", raw); err != nil {
+				t.Fatal(err)
+			}
+			_, err := st.LoadGame("CAPAAA", "fixture", func([]byte) (store.Assessment, error) {
+				if archive {
+					return store.Assessment{Archive: store.ArchiveReplayFailed}, nil
+				}
+				return store.Assessment{Refresh: map[string]any{"hash": strings.Repeat("a", 64)}}, nil
+			})
+			if !errors.Is(err, store.ErrRestoreWrite) || !errors.Is(err, store.ErrTooLarge) {
+				t.Fatalf("LoadGame: %v, want ErrRestoreWrite and ErrTooLarge", err)
+			}
+			got, _, err := st.PeekGame("CAPAAA", "fixture")
+			if err != nil || !bytes.Equal(got, raw) {
+				t.Fatalf("the record after the refused write: %d bytes, %v", len(got), err)
+			}
+			entries, err := os.ReadDir(st.Dir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, e := range entries {
+				if strings.HasSuffix(e.Name(), ".tmp") {
+					t.Fatalf("a temporary file was left: %s", e.Name())
+				}
+			}
+		})
 	}
 }

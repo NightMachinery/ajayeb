@@ -34,7 +34,9 @@ type Assessment struct {
 // asked for one. An archived record returns an *ArchivedError (a live-folder
 // archive is first moved, as Load does); a record assess archives is marked
 // and moved durably first. A file of another schema or game, or one its
-// codec cannot decode, is refused and left untouched, byte for byte.
+// codec cannot decode, is refused and left untouched, byte for byte. So is
+// a file that the refresh or the archive mark would take over MaxFileBytes:
+// the error wraps ErrRestoreWrite and ErrTooLarge.
 func (st *Store) LoadGame(code, game string, assess func(data []byte) (Assessment, error)) ([]byte, error) {
 	path, err := st.path(code)
 	if err != nil {
