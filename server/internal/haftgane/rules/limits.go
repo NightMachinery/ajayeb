@@ -55,5 +55,5 @@ const (
 // conservative ceiling is not a transport cap or a reachable-view claim.
 const (
 	MaxViewStringBytes = MaxKeyBytes
-	MaxViewJSONBytes   = 570406
+	MaxViewJSONBytes   = 604948
 )

@@ -109,12 +109,12 @@ func TestRulesGateDimensions(t *testing.T) {
 var gateSliceBounds = map[string]int{
 	"Table.Required": MaxSeats, "Table.Seats": MaxSeats, "Table.Events": MaxResolutionEvents,
 	"Seat.Built": catalog.NumDesigns, "Seat.Victories": NumAges,
-	"Private.Hand": HandSize, "Private.Tucked": MaxStages, "Private.Choices": MaxTurnChoices, "Private.Disabled": 2 * HandSize, "Private.Offer": catalog.NumDesigns, "Private.Neighbours": 2,
+	"Private.Hand": HandSize, "Private.Tucked": MaxStages, "Private.Choices": MaxTurnChoices, "Private.Disabled": max(2*HandSize, catalog.NumDesigns), "Private.Offer": catalog.NumDesigns, "Private.Neighbours": 2,
 	"Notebook.Seen": MaxKnownHands, "Notebook.PileLooks": MaxPileLooks, "SeenEntry.Hand": HandSize, "PileLook.Cards": catalog.NumDesigns,
 	"Statistics.Circulating": int(catalog.NumColors) - 1, "Statistics.Returning": catalog.NumDesigns, "Statistics.NeighbourPicks": 2 * MaxTurns,
 	"Neighbour.Units": int(catalog.NumResources) + MaxForSaleChoice, "TradeUnit.Options": int(catalog.NumResources), "Choice.Witness": catalog.MaxCostUnits,
 	"Science.Counts": int(catalog.NumSymbols) - 1, "Science.Choices": int(catalog.NumSymbols) - 1,
-	"Result.Scores": MaxSeats, "Result.Rank": MaxSeats, "Result.Winners": MaxSeats,
+	"Result.Scores": MaxSeats, "Result.Rank": MaxSeats, "Result.Winners": MaxSeats, "Result.Tied": MaxSeats,
 	"Reveal.Tucked": MaxSeats, "Reveal.Tucked[]": MaxStages, "Reveal.Leftovers": NumAges * MaxSeats, "Reveal.Pile": MaxPileCards, "Reveal.Box": MaxBoxGuilds,
 }
 

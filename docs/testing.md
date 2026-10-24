@@ -3027,7 +3027,7 @@ Measure rules/catalog statement coverage with a guarded `go test -count=1
 seven-seat and payment benchmarks with `-benchmem`, then compare with the
 published targets in [architecture](architecture.md). Timings are recorded,
 not flaky unit-test thresholds. `TestRulesGateViewByteBound` fills every DTO
-section at once, checks the conservative 570,406-byte JSON ceiling, and rejects
+section at once, checks the conservative 604,948-byte JSON ceiling, and rejects
 unknown dimensions or widths. It is not a transport cap or a reachable-view
 claim. The view redaction, history and noninterference suite remains mandatory.
 

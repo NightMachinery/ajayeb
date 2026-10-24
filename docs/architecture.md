@@ -896,9 +896,12 @@ largest reachable JSON view is 25,789 bytes across 7,204 views. A deliberately
 unreachable serialization stress combines 217 keys, seven witness units per
 key, a full notebook and three full pile looks, and measures 185,536 bytes.
 The earlier 24 KB design estimate is not a bound or a transport cap. The
-rules gate publishes a separate conservative structural bound of 570,406 bytes:
+rules gate publishes a separate conservative structural bound of 604,948 bytes:
 every optional DTO section and list at its proven capacity, all safe-ASCII
-strings at 64 bytes and all integers at their widest emitted width. Its test
+strings at 64 bytes and all integers at their widest emitted width.
+`Private.Disabled` is bounded by the catalog: on a turn it holds at most two
+entries per hand card, and during a pile search it explains only barred pile
+cards, a subset of `Offer`, so its proof is the larger of the two. Its test
 covers partial-history scenarios as well as natural games, and rejects unknown
 slice dimensions, unsafe strings and overflowing dimensions. This bound does
 not assert that the mutually exclusive sections can occur together.
