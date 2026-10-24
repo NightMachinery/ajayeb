@@ -1,10 +1,9 @@
 <script lang="ts">
   // One conflict token as the end-of-Age dialog draws it: the victory
-  // pennant with its Age's numeral, the broken defeat pennant, or "=" for a
-  // tie, which gives no token. A token's points show only when the server
-  // sends them (`value`); the view does not carry them yet, so the Age
-  // numeral names the token instead. Shape, never colour alone, tells them
-  // apart.
+  // pennant with its points, the broken defeat pennant, or "=" for a tie,
+  // which gives no token. The points are the worth the server's `military`
+  // event states (`value`); without one, the victory pennant shows its
+  // Age's numeral instead. Shape, never colour alone, tells them apart.
   import { ageLabel, formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import HgGlyph from './HgGlyph.svelte';
@@ -35,6 +34,7 @@
 <span
   class="token {kind}"
   data-token={kind}
+  data-value={value}
   role="img"
   aria-label={tip}
   {@attach tooltip({ text: tip })}

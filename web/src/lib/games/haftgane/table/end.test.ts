@@ -12,6 +12,8 @@ import {
   conflictsIn,
   resultFor,
   scoreRows,
+  shieldsFor,
+  tieBreakOf,
   tokensTaken,
   verdictOf,
   winnerOf
@@ -65,6 +67,14 @@ describe('conflicts', () => {
     expect(winnerOf(tie)).toBeNull();
   });
 
+  it('carries the shields each side compared and the victory token worth', () => {
+    const cs = conflictsIn(asTable(over.events));
+    expect(cs[0]).toMatchObject({ seatShields: 3, otherShields: 0, worth: 5 });
+    expect(shieldsFor(cs[0]!, 1)).toEqual({ own: 0, them: 3 });
+    expect(shieldsFor(cs[0]!, 0)).toEqual({ own: 3, them: 0 });
+    expect(cs[5]).toMatchObject({ outcome: 'tie', seatShields: 2, otherShields: 2, worth: 0 });
+  });
+
   it('counts the tokens a seat took, not their points', () => {
     const cs = conflictsIn(asTable(over.events));
     expect(tokensTaken(cs, 0)).toEqual({ victories: 2, defeats: 0 });
@@ -116,5 +126,18 @@ describe('score sheet', () => {
     expect(verdictOf(shared, 2)).toEqual({ kind: 'shared', seats: [4], you: true });
     expect(verdictOf(shared, 0)).toEqual({ kind: 'shared', seats: [2, 4], you: false });
     expect(verdictOf({ ...result, winners: [] }, 0)).toBeNull();
+  });
+
+  it('states the tie at the top only as the server sends it', () => {
+    expect(result.tieBreak).toBe('');
+    expect(tieBreakOf(result)).toBeUndefined();
+    expect(tieBreakOf({ ...result, tieBreak: 'coins', tied: [2, 4] })).toEqual({
+      kind: 'coins',
+      seats: [2, 4]
+    });
+    expect(tieBreakOf({ ...result, tieBreak: 'shared', tied: [0, 2, 4] })).toEqual({
+      kind: 'shared',
+      seats: [0, 2, 4]
+    });
   });
 });

@@ -35,16 +35,10 @@ A row's name is a button that opens that seat's city sheet over the score sheet;
 
 - **The conflicts of each Age** are the `military` events of the batch that ended it, taken from `session.history` and cut at the batch on screen, so a lagging presenter never shows an Age early. Each event names a seat, its left neighbour and the outcome.
 - **A seat's side of a conflict and its tokens** are read from those outcomes (victory, defeat, tie), never from points.
-- **Shields** are the seats' `shields` in the view. They show only on the batch that resolved the conflicts. Shields never change inside a batch, so they are then exactly the counts the conflicts compared. An older Age's conflicts show without shields.
+- **Shields and token values** come from each `military` event: `left` and `right` are the two cities' shields in that conflict, and `delta` is the victory token's worth (1, 3 or 5 by Age, 0 on a tie). A victory token shows "+3"; a defeat token shows its broken pennant. Every Age's conflicts show their shields, an older Age's included.
 - **Military points so far** are each seat's `score.military`, shown only for the newest conflicts.
 - **The verdict** comes from `result.winners`, and the row order from `result.rank`, with seat order inside a shared rank. Every cell is `result.scores`. The total's tooltip adds the seat's final coins from the view.
-
-## Waiting on the server
-
-Two things phone-layout.md asks for are not in the view, and the client does not derive them:
-
-- **The token value and the shields of a conflict.** A victory token shows its Age numeral instead of "+3". The request is that `rules/abilities.go` set the military event's existing `Left`, `Right` and `Delta` fields (the seat's shields, the neighbour's shields, and the victory token's value, or 0 on a tie), and that `rules/eventfilter.go` copy them into the public event. The wire event already has `left`, `right` and `delta`.
-- **The tie-break sentence.** `ScoreSheet` takes a `tieBreak` and renders both sentences (the coins that broke a tie on points, or a shared victory), and the gallery shows them. The live table passes nothing until the view's `Result` carries `tieBreak` ("", "coins" or "shared") and `tied` (the seats level on points at the top), filled where `rules/view.go` builds the result.
+- **The tie-break sentence** comes from `result.tieBreak` and `result.tied`: "coins" says the seats level on points at the top and the coins that split them, "shared" says they share the victory, and an empty `tieBreak` shows no sentence.
 
 ## Visual and end-to-end checks
 

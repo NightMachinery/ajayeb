@@ -1,9 +1,8 @@
 <script lang="ts">
   // One adjacent pair's conflict at the end of an Age: both seats, the
-  // token each took (the winner's victory, the loser's defeat, or "=" for a
-  // tie) and, when the dialog knows them, both shield counts. The outcome
-  // is the server's `military` event; the shields are the view's own counts
-  // and are passed only while they are the ones the conflict compared.
+  // token each took (the winner's victory with its points, the loser's
+  // defeat, or "=" for a tie) and both shield counts, all from the server's
+  // `military` event.
   import { ageLabel, formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
@@ -14,8 +13,8 @@
   interface Side {
     seat: number;
     name: string;
-    /** Shields at the conflict, when known. */
-    shields?: number;
+    /** Shields at the conflict. */
+    shields: number;
   }
 
   interface Props {
@@ -32,22 +31,19 @@
   function tokenTip(side: Side): string {
     const r = resultFor(conflict, side.seat);
     return r === 'victory'
-      ? ht('hg.end.token.victory', { name: side.name, age: numeral })
+      ? ht('hg.end.token.victory', { name: side.name, age: numeral, count: conflict.worth })
       : r === 'defeat'
         ? ht('hg.end.token.defeat', { name: side.name })
         : ht('hg.end.token.tie', { a: a.name, b: b.name });
   }
-  const known = $derived(a.shields !== undefined && b.shields !== undefined);
   const shieldsTip = $derived(
-    known
-      ? ht('hg.end.pair.shields', {
-          a: a.name,
-          b: b.name,
-          aCount: a.shields!,
-          bCount: b.shields!,
-          age: numeral
-        })
-      : ''
+    ht('hg.end.pair.shields', {
+      a: a.name,
+      b: b.name,
+      aCount: a.shields,
+      bCount: b.shields,
+      age: numeral
+    })
   );
 </script>
 
@@ -65,24 +61,23 @@
     </span>
     <span class="tok" class:end={i === 1}>
       {#if r !== 'tie'}
-        <ConflictToken kind={r} {age} tip={tokenTip(side)} />
+        <ConflictToken
+          kind={r}
+          {age}
+          tip={tokenTip(side)}
+          value={r === 'victory' ? conflict.worth : undefined}
+        />
       {/if}
     </span>
     {#if i === 0}
       <span
         class="mid"
         role="img"
-        aria-label={known ? shieldsTip : tokenTip(a)}
-        data-shields={known ? `${a.shields}:${b.shields}` : undefined}
-        {@attach tooltip({ text: known ? shieldsTip : tokenTip(a) })}
+        aria-label={shieldsTip}
+        data-shields={`${a.shields}:${b.shields}`}
+        {@attach tooltip({ text: shieldsTip })}
       >
-        {#if known}
-          <span dir="ltr">{formatNumber(a.shields!)} : {formatNumber(b.shields!)}</span>
-        {:else if conflict.outcome === 'tie'}
-          =
-        {:else}
-          ·
-        {/if}
+        <span dir="ltr">{formatNumber(a.shields)} : {formatNumber(b.shields)}</span>
       </span>
     {/if}
   {/each}

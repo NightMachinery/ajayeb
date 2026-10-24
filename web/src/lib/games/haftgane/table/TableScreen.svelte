@@ -61,7 +61,7 @@
   import ScoreSheet from './ScoreSheet.svelte';
   import { downloadTableLog } from './download';
   import { armTableSound, playTableSound } from './sound';
-  import { conflictsByAge } from './end';
+  import { conflictsByAge, tieBreakOf } from './end';
   import { settings } from '$lib/ui/settings.svelte';
   import { motion } from '$lib/ui/motion.svelte';
   import TableMenu from './TableMenu.svelte';
@@ -698,7 +698,6 @@
         seats={view.seats}
         {names}
         you={mySeat}
-        shieldsKnown={military.batch === frame.batch}
         latest={military.batch === newest?.batch}
         onage={(age) => (militaryAge = age)}
         onclose={closeMilitary}
@@ -710,6 +709,7 @@
     <div dir={i18n.dir}>
       <ScoreSheet
         result={view.result}
+        tieBreak={tieBreakOf(view.result)}
         seats={view.seats}
         {names}
         you={mySeat}

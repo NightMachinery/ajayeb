@@ -72,7 +72,10 @@
       return {
         seat: s.seat,
         other,
-        outcome: a > b ? 'seat-wins' : a < b ? 'other-wins' : 'tie'
+        outcome: a > b ? 'seat-wins' : a < b ? 'other-wins' : 'tie',
+        seatShields: a,
+        otherShields: b,
+        worth: a === b ? 0 : 3
       };
     })
   );
@@ -87,7 +90,13 @@
             o.score.total > s.score.total || (o.score.total === s.score.total && o.coins > s.coins)
         ).length
     );
-    return { scores, rank, winners: rank.flatMap((r, i) => (r === 1 ? [i] : [])) };
+    return {
+      scores,
+      rank,
+      winners: rank.flatMap((r, i) => (r === 1 ? [i] : [])),
+      tieBreak: '',
+      tied: []
+    };
   });
   // Lena (13 coins) and Master (13 coins) both have 43: a shared victory
   // at five seats or more; at three or four, Lena alone has 43.
@@ -141,23 +150,37 @@
     </div>
     <ul class="pairs">
       <ConflictRow
-        conflict={{ seat: 0, other: 1, outcome: 'seat-wins' }}
+        conflict={{
+          seat: 0,
+          other: 1,
+          outcome: 'seat-wins',
+          seatShields: 3,
+          otherShields: 1,
+          worth: 3
+        }}
         age={2}
         you={0}
         a={{ seat: 0, name: 'Roshan', shields: 3 }}
         b={{ seat: 1, name: 'Lena', shields: 1 }}
       />
       <ConflictRow
-        conflict={{ seat: 5, other: 6, outcome: 'tie' }}
+        conflict={{ seat: 5, other: 6, outcome: 'tie', seatShields: 2, otherShields: 2, worth: 0 }}
         age={2}
         a={{ seat: 5, name: 'Scholar', shields: 2 }}
         b={{ seat: 6, name: 'A very long player name indeed', shields: 2 }}
       />
       <ConflictRow
-        conflict={{ seat: 3, other: 4, outcome: 'other-wins' }}
+        conflict={{
+          seat: 3,
+          other: 4,
+          outcome: 'other-wins',
+          seatShields: 0,
+          otherShields: 4,
+          worth: 1
+        }}
         age={1}
-        a={{ seat: 3, name: 'Darius' }}
-        b={{ seat: 4, name: 'Master' }}
+        a={{ seat: 3, name: 'Darius', shields: 0 }}
+        b={{ seat: 4, name: 'Master', shields: 4 }}
       />
     </ul>
     <div class="table-box">
@@ -191,7 +214,6 @@
     {seats}
     {names}
     you={0}
-    shieldsKnown
     latest
     onage={noop}
     onclose={() => (shown = null)}

@@ -1,9 +1,10 @@
 // What the end-of-Age military dialog and the score sheet read from a
-// frame, without rules: the conflicts each end of Age reported, a seat's
-// side of one, how many tokens a seat took in them, the score rows in the
-// server's rank order and the verdict's winners. Every shield count, token
-// and score comes from the server; nothing here adds up a total, compares
-// shields or decides a winner.
+// frame, without rules: the conflicts each end of Age reported, with the
+// shields each side compared and the victory token's worth, a seat's side
+// of one, how many tokens a seat took in them, the score rows in the
+// server's rank order, the verdict's winners and the tie at the top. Every
+// shield count, token and score comes from the server; nothing here adds
+// up a total, compares shields or decides a winner.
 
 import type { Result, Score, Seat } from '$lib/wire/haftgane.gen';
 import type { TableEvent, TableHistoryEntry } from '$lib/wire/platform.gen';
@@ -16,6 +17,11 @@ export interface Conflict {
   seat: number;
   other: number;
   outcome: ConflictOutcome;
+  /** The shields `seat` and `other` compared. */
+  seatShields: number;
+  otherShields: number;
+  /** The victory token's points, 0 on a tie. */
+  worth: number;
 }
 
 /** The conflicts of one end of Age, in seat order. */
@@ -37,7 +43,15 @@ export function conflictsIn(events: readonly TableEvent[]): Conflict[] {
   const out: Conflict[] = [];
   for (const e of events) {
     const outcome = e.kind === 'military' ? outcomeOf(e) : null;
-    if (outcome) out.push({ seat: e.seat, other: e.other, outcome });
+    if (outcome)
+      out.push({
+        seat: e.seat,
+        other: e.other,
+        outcome,
+        seatShields: e.left,
+        otherShields: e.right,
+        worth: e.delta
+      });
   }
   return out.sort((a, b) => a.seat - b.seat);
 }
@@ -78,6 +92,13 @@ export function conflictBetween(
   b: number
 ): Conflict | undefined {
   return conflicts.find((c) => (c.seat === a && c.other === b) || (c.seat === b && c.other === a));
+}
+
+/** The shields a conflict compared, the given seat's first. */
+export function shieldsFor(c: Conflict, seat: number): { own: number; them: number } {
+  return seat === c.seat
+    ? { own: c.seatShields, them: c.otherShields }
+    : { own: c.otherShields, them: c.seatShields };
 }
 
 /** The seat that won a conflict, or null for a tie. */
@@ -161,14 +182,22 @@ export function verdictOf(result: Result, you: number | null): Verdict | null {
 }
 
 /**
- * A tie at the top, as the score sheet's sentence states it. The view does
- * not carry it yet (requested as `result.tieBreak`): `coins` when coins
- * decided between equal totals, `shared` when coins were equal too, with
- * the seats that tied on total.
+ * A tie at the top, as the score sheet's sentence states it: `coins` when
+ * coins decided between equal totals, `shared` when coins were equal too,
+ * with the seats that tied on total.
  */
 export interface TieBreak {
   kind: 'coins' | 'shared';
   seats: number[];
+}
+
+/** The server's tie at the top of a finished game, or undefined when one
+ *  seat alone had the top total. */
+export function tieBreakOf(result: Result): TieBreak | undefined {
+  const kind = result.tieBreak;
+  return (kind === 'coins' || kind === 'shared') && result.tied.length > 1
+    ? { kind, seats: [...result.tied] }
+    : undefined;
 }
 
 /** A seat's final coins, from its public city. */

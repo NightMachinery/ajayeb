@@ -24,10 +24,16 @@ export const end = {
   'hg.end.result.victory': 'Victory',
   'hg.end.result.defeat': 'Defeat',
   'hg.end.result.tie': 'Tie',
-  'hg.end.token.victory': '{name} takes a victory token of Age {age}.',
+  'hg.end.token.victory': {
+    one: '{name} takes a victory token of Age {age}, worth {count} point.',
+    other: '{name} takes a victory token of Age {age}, worth {count} points.'
+  },
   'hg.end.token.defeat': '{name} takes a defeat token.',
   'hg.end.token.tie': '{a} and {b} have equal shields: no token.',
-  'hg.end.token.youWin': 'You beat {name} and take a victory token of Age {age}.',
+  'hg.end.token.youWin': {
+    one: 'You beat {name} and take a victory token of Age {age}, worth {count} point.',
+    other: 'You beat {name} and take a victory token of Age {age}, worth {count} points.'
+  },
   'hg.end.token.youLose': '{name} beats you: you take a defeat token.',
   'hg.end.token.youTie': 'You and {name} have equal shields: no token.',
   'hg.end.pair.shields': 'Shields at the end of Age {age}: {a} {aCount}, {b} {bCount}.',

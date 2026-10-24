@@ -2,11 +2,10 @@
   // The end-of-Age military dialog (docs/haftgane/phone-layout.md, section
   // 6): first the viewer's two conflicts side by side, then every conflict
   // around the table, one line per adjacent pair, then each seat's military
-  // points so far. Every outcome is a `military` event the server sent; the
-  // shield counts show only while they are the ones those conflicts
-  // compared (the newest end of Age, nothing resolved since), and the points
-  // are each seat's score from the view. Closing it is local: the next
-  // Age's first decision is already open behind it.
+  // points so far. Every outcome, shield count and token worth is a
+  // `military` event the server sent, and the points are each seat's score
+  // from the view. Closing it is local: the next Age's first decision is
+  // already open behind it.
   import { ageLabel, formatNumber } from '$lib/i18n';
   import Sheet from '$lib/components/shell/Sheet.svelte';
   import Button from '$lib/components/shell/Button.svelte';
@@ -16,7 +15,7 @@
   import ConflictRow from './ConflictRow.svelte';
   import ConflictToken from './ConflictToken.svelte';
   import SeatCrest from './SeatCrest.svelte';
-  import { conflictBetween, resultFor, type Conflict } from './end';
+  import { conflictBetween, resultFor, shieldsFor, type Conflict } from './end';
 
   interface Props {
     age: number;
@@ -27,8 +26,6 @@
     names: Readonly<Record<number, string>>;
     /** The viewer's seat, or null for a spectator. */
     you: number | null;
-    /** The seats' shields are still the ones these conflicts compared. */
-    shieldsKnown: boolean;
     /** These are the newest conflicts, so each seat's military score is its
      *  total right after them. */
     latest: boolean;
@@ -36,8 +33,7 @@
     onclose: () => void;
   }
 
-  let { age, ages, conflicts, seats, names, you, shieldsKnown, latest, onage, onclose }: Props =
-    $props();
+  let { age, ages, conflicts, seats, names, you, latest, onage, onclose }: Props = $props();
 
   let open = $state(true);
   const MINUS = '−';
@@ -45,7 +41,6 @@
     n > 0 ? `+${formatNumber(n)}` : n < 0 ? MINUS + formatNumber(-n) : formatNumber(0);
   const numeral = $derived(ageLabel(age));
   const seatOf = (n: number) => seats.find((s) => s.seat === n);
-  const shieldsOf = (n: number) => (shieldsKnown ? seatOf(n)?.shields : undefined);
   const nameOf = (n: number) => names[n] ?? '';
   const mine = $derived(you === null ? undefined : seatOf(you));
   const neighbours = $derived(
@@ -54,12 +49,22 @@
       : (['left', 'right'] as const).flatMap((side) => {
           const s = seats.find((x) => x.relation === side);
           const c = s ? conflictBetween(conflicts, you, s.seat) : undefined;
-          return s && c ? [{ side, seat: s, conflict: c, result: resultFor(c, you)! }] : [];
+          return s && c
+            ? [
+                {
+                  side,
+                  seat: s,
+                  conflict: c,
+                  result: resultFor(c, you)!,
+                  shields: shieldsFor(c, you)
+                }
+              ]
+            : [];
         })
   );
-  function resultTip(result: 'victory' | 'defeat' | 'tie', them: string): string {
+  function resultTip(result: 'victory' | 'defeat' | 'tie', them: string, worth: number): string {
     return result === 'victory'
-      ? ht('hg.end.token.youWin', { name: them, age: numeral })
+      ? ht('hg.end.token.youWin', { name: them, age: numeral, count: worth })
       : result === 'defeat'
         ? ht('hg.end.token.youLose', { name: them })
         : ht('hg.end.token.youTie', { name: them });
@@ -127,14 +132,17 @@
                 </span>
               </div>
               <div class="outcome">
-                <ConflictToken kind={nb.result} {age} tip={resultTip(nb.result, them)} />
+                <ConflictToken
+                  kind={nb.result}
+                  {age}
+                  tip={resultTip(nb.result, them, nb.conflict.worth)}
+                  value={nb.result === 'victory' ? nb.conflict.worth : undefined}
+                />
                 <span class="word">{ht(`hg.end.result.${nb.result}`)}</span>
               </div>
-              {#if shieldsKnown && mine}
-                <p class="shields" data-shields={`${mine.shields}:${nb.seat.shields}`}>
-                  {ht('hg.end.military.shields', { you: mine.shields, them: nb.seat.shields })}
-                </p>
-              {/if}
+              <p class="shields" data-shields={`${nb.shields.own}:${nb.shields.them}`}>
+                {ht('hg.end.military.shields', { you: nb.shields.own, them: nb.shields.them })}
+              </p>
             </div>
           {/each}
         </div>
@@ -149,8 +157,8 @@
             conflict={c}
             {age}
             {you}
-            a={{ seat: c.seat, name: nameOf(c.seat), shields: shieldsOf(c.seat) }}
-            b={{ seat: c.other, name: nameOf(c.other), shields: shieldsOf(c.other) }}
+            a={{ seat: c.seat, name: nameOf(c.seat), shields: c.seatShields }}
+            b={{ seat: c.other, name: nameOf(c.other), shields: c.otherShields }}
           />
         {/each}
       </ul>

@@ -25,8 +25,8 @@
     names: Readonly<Record<number, string>>;
     /** The viewer's seat, or null for a spectator. */
     you: number | null;
-    /** The tie at the top, once the view states it (requested as
-     *  `result.tieBreak`); absent today. */
+    /** The tie at the top, as the server's result states it (tieBreakOf);
+     *  absent when one seat alone had the top total. */
     tieBreak?: TieBreak;
     canDownload: boolean;
     ondownload: () => void;
@@ -117,7 +117,9 @@
     <header class="verdict">
       <h2 id="hg-score-title" data-verdict={verdict?.kind ?? 'none'}>{title}</h2>
       {#if tieText}
-        <p class="tie" data-tie-break={tieBreak?.kind}>{tieText}</p>
+        <p class="tie" data-tie-break={tieBreak?.kind} data-tied={tieBreak?.seats.join(' ')}>
+          {tieText}
+        </p>
       {/if}
     </header>
     <div class="table">
