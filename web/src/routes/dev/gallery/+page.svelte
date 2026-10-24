@@ -32,7 +32,9 @@
   // gallery below still contains each leaf's standalone examples.
   let CardSheets = $state.raw<Component | null>(null);
   onMount(() => {
-    if (page.url.searchParams.has('hgSheet'))
+    if (page.url.searchParams.has('hgSpecial'))
+      void import('$lib/dev/gallery/HaftganeSpecial.svelte').then((m) => (CardSheets = m.default));
+    else if (page.url.searchParams.has('hgSheet'))
       void import('$lib/dev/gallery/HaftganeCardSheets.svelte').then(
         (m) => (CardSheets = m.default)
       );
@@ -45,7 +47,7 @@
   let announceCount = 0;
 </script>
 
-{#if page.url.searchParams.has('hgSheet')}
+{#if page.url.searchParams.has('hgSheet') || page.url.searchParams.has('hgSpecial')}
   {#if CardSheets}<CardSheets />{/if}
 {:else}
   <main class="mx-auto flex h-full max-w-3xl flex-col gap-10 overflow-y-auto px-4 py-6 pb-16">
