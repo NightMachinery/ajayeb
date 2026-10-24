@@ -110,3 +110,8 @@ These short host samples include filesystem and scheduling noise; they do
 not establish an ordering of preset latency or a mixed-load capacity limit.
 A race-instrumented run measured means of 127 to 138 ms. No policy allowance
 changed between the two runs.
+
+For the complete version/mapping contract, retained-cache and allocation
+figures, phase and mixed-Duel latency evidence, restore times and guarded
+reruns, see [internal simple-bot evidence](simple-bots-evidence.md). The visible
+persona labels are not claims that Scholar or Master policies exist.

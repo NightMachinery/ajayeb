@@ -1,8 +1,8 @@
 # Haftgane baseline bots
 
-Random, Greedy and Apprentice live in `internal/haftgane/bot`. They are
-simulator policies for the internal milestone. Room integration and the
-public release follow the sequence in [the bot plan](bot-plan.md).
+Random, Greedy and Apprentice live in `internal/haftgane/bot`. They serve the
+simulator and table actor for the internal milestone. The public release
+follows the sequence in [the bot plan](bot-plan.md).
 Duel's bots and difficulty presets remain in `internal/ai`.
 
 ## Inputs and exact rules facts
@@ -95,16 +95,18 @@ legally reached hidden tucks.
 Run the focused suite through the guard:
 
 ```sh
-make test-go GO_PKGS='./internal/haftgane/bot ./internal/haftgane/rules'
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind light -- \
+  make test-go GO_PKGS='./internal/haftgane/bot ./internal/haftgane/rules'
 ```
 
 The opt-in development smoke and allocation benchmark also go through the
 guard (detach long runs with `HEAVY_NOTIFY=auto`):
 
 ```sh
-M17_BOT_SMOKE=1 python3 tools/heavy.py run --kind test -- \
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind test -- \
+  env M17_BOT_SMOKE=1 \
   go -C server test ./internal/haftgane/bot -run '^TestStrengthSmoke$' -v
-python3 tools/heavy.py run --kind bench -- \
+HEAVY_NOTIFY=auto python3 tools/heavy.py run --kind bench -- \
   go -C server test ./internal/haftgane/bot -run '^$' \
   -bench '^BenchmarkSevenSeatPolicy$' -benchmem
 ```
@@ -129,9 +131,10 @@ measured Greedy at 0.673 to 0.916 ms, Apprentice at 0.281 to 0.397 ms and
 Random at 0.0115 to 0.0202 ms. All allocated 2,144 bytes in 17 allocations,
 including the canonical observation fingerprint and offered-key strings.
 The sequential runs experienced different host load; their relative timing
-does not imply Apprentice's identical ranking pass is faster. Room queueing,
-presentation and full-table scheduling are outside this simulator slice.
-Seat-balanced held-out release gates belong to the next simulator slice.
+does not imply Apprentice's identical ranking pass is faster. These policy
+microbenchmarks exclude room queueing and presentation.
+The held-out experiment below tests the frozen strength gates;
+[room evidence](simple-bots-evidence.md) measures the actor separately.
 
 
 ## Seat-balanced simulator
@@ -310,5 +313,8 @@ a room latency claim.
 Maximum heap allocation sampled after a block was 17,610,736 bytes. The five
 gzip reports totalled 33670927 bytes and stay in private experiment storage;
 no large measured-data fixture is committed. Header/source/binary and report
-digests retain the reproduction inputs. The sampler, Scholar and room
-scheduling gates remain later work in the bot plan.
+digests retain the reproduction inputs. The sampler, Scholar and
+capacity-release gates remain later work in the
+bot plan. [Internal room evidence](simple-bots-evidence.md) records frozen
+version meanings, the actual easy/normal/hard mapping, full-table and
+mixed-load measurements, limits and guarded rerun commands.
