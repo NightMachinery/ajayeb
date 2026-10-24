@@ -269,7 +269,10 @@ then keeps it as `rematch`. A retry or restart before that step finds the
 same lobby; another room that took the reserved code is preserved and a new
 code is reserved. Once the code is the `rematch`, every request answers it
 without asking the lobby again, also after that lobby has started its own
-game and holds no lobby any more.
+game and holds no lobby any more. The code goes out, in `created` frames and
+the answer, only after the file holds it as `rematch`: a failed write keeps
+it in memory, answers `busy` and sends nothing, and the next request writes
+it again before answering, so nobody can start a lobby the game would forget.
 
 A table's rematch is a new lobby made here,
 with the original humans' slots reserved for them: `Lobbies.Rematch` makes

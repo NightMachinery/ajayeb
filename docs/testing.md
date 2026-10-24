@@ -361,10 +361,15 @@ covers promoted spectators, a creator who stepped down, D23 hint preferences,
 other-seat link refusals and persistence. A complete-game rematch checks
 reservations, fresh roles, a reserved-code collision and restart idempotency.
 Another asks for the rematch again after its lobby has started its own game,
-loaded and after a restart, and gets the same code. A complete online game
-with a bot seat survives a restart in the middle of the bot's turn (the bot
-resumes when its player attaches), and its rematch lobby keeps the bot's
-slot and level. `TestSharedLobbyDuelWithoutTableCreation` runs the lobbies as
+loaded and after a restart, and gets the same code.
+`TestSharedLobbyDuelRematchFailedPersist` fails the write that confirms the
+successor: no `created` frame goes out, and after a crash or a plain retry the
+next request answers the same code, whose lobby then starts and is still the
+answer afterwards. `TestHintAdminBoundFollowsRoles` keeps the store's bound on
+the frozen admin set equal to the roles' admins plus the temporary one. A
+complete online game with a bot seat survives a restart in the middle of the
+bot's turn (the bot resumes when its player attaches), and its rematch lobby
+keeps the bot's slot and level. `TestSharedLobbyDuelWithoutTableCreation` runs the lobbies as
 production does, without `-haftgane-tables`: a two-seat lobby is created,
 started, played and rematched, `maxSeats` is 2, and creating, editing to or
 starting three or more seats is refused, including a lobby made larger while
