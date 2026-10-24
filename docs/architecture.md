@@ -395,6 +395,29 @@ a reload mends a client and a server that disagree.
   printed facts; it groups the server's choices but never adds a cost.
   Each leaf takes plain props, and the dev gallery shows them all. Once
   the game is over, the entry's rematch actions follow the turn bar.
+- **The city sheet and Seen hands** (`table/CitySheet.svelte`,
+  `table/SeenHandsSheet.svelte`, M18.city-sheet-and-notebook) are
+  [phone-layout.md](haftgane/phone-layout.md)'s section 8. A far chip, the
+  crest and name of a neighbour panel or of the viewer's strip open the
+  city sheet on that seat; ring tabs (`RingTabs`, the anchor first, then
+  round the table from its left) switch seats inside it. `CityView` shows
+  what the seat's public view holds: wonder and side, points, coins,
+  shields, victory tokens by Age, defeats, stages, science, the score by
+  category, the last play, each stage with its effect and built state
+  (`CityStages`), production with its note, and the buildings by colour
+  (`CityRows`). The cards under a wonder are known only as a set, never
+  by stage, so the viewer's own city lists `you.tucked` after the stages,
+  and other cities list theirs only once the end reveals them
+  (`view.reveal.tucked`); the kept card is named only in the viewer's own
+  city. The Seen hands sheet opens from the hand header and shows
+  `you.notebook`: the statistics (`SeenHandsSummary`: circulating colours
+  as exact, at most or a range, neighbours' certain picks and the cards
+  that can come back), then tabs by Age listing each turn's hand with the
+  played card marked and each pile look (`MiniCard`). A tapped figure
+  filters the list. `table/city.ts` orders the tabs, groups a city's rows
+  and the notebook, and reads the Age and turn from the point id
+  (`age-N-turn-M`, `-discard-build`, `age-N-last-card`); nothing on these
+  sheets is computed beyond counting and grouping what the view sent.
 - **The development screen** (`dev/TableDev.svelte`) now shows only what
   comes before a table's first frame.
 

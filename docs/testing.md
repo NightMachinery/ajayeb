@@ -1372,6 +1372,28 @@ turn, the pending-ownership oracle passes over every table frame the page
 received, and three contaminated copies must fail it. No console error or
 failed request is allowed. Run it with `make e2e GREP=@haftgane-table`.
 
+### `haftgane-city-notebook.full.spec.ts` (`@full @haftgane-table`)
+
+The city sheet and the Seen hands sheet over a live five-seat table, one
+human and four bots started from Home's lobby (`openBotTable`). Seen hands
+first opens empty. The page then plays three turns, building a wonder
+stage when one is offered, and reopens it: each hand the view's notebook
+holds is listed under its point with exactly that hand's cards and the
+played card marked, the pile looks likewise, no card outside the notebook
+appears, and each circulating colour carries the view's bounds; a figure
+filters the list and Show all clears it. The city sheet opens from a far
+chip, and its ring tabs list the seats from the viewer round the table;
+each tab, and the arrow keys, show that seat's city with exactly its
+buildings, stages and points by category. The leak oracle: a city other
+than the viewer's own has no line about the cards under a wonder, no card
+element but its own buildings, and no name of a card the viewer holds,
+kept or tucked (unless that city has built a card of the same name). The
+viewer's own city names its tucked and kept cards. The neighbour panel
+and the strip open their cities too. Every table frame passes the
+pending-ownership oracle, no frame gives a seat a field outside the public
+seat or the page another seat's private view, and no console error or
+failed request is allowed.
+
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
 `e2e/specs/prod.smoke.spec.ts` is the only spec that is ever allowed to run
@@ -1748,6 +1770,24 @@ no seat, hand card, bar or control cut off by the screen's edges, no
 glyph without a tooltip and nothing animating, and the page may log no
 console error or failed request. Its screenshots and `probes-*.json` go
 to `HG_TABLE_SHOTS_DIR` (default `.cache/e2e/hg-table-shots`).
+
+`ux/haftgane-city.spec.ts` (filter `--grep "haftgane city"`) does the same for the city sheet and Seen hands. One
+live table each of 3, 5 and 7 seats is played to three moments: the first
+turn (Seen hands empty), Age II's second turn (Seen hands with two Ages of
+memory, and the city sheet on the viewer's own city, the left neighbour
+and a far seat) and the end (the three cities again). At each moment the
+page switches through English and Persian in both themes by setting the
+settings and theme in local storage and reloading the table. At 360x740,
+390x844, 844x390 and 1280x800 its probe requires no horizontal overflow
+of the page, the table or the sheet, no horizontal scroller and nothing
+past the sheet's sides, no button or tab under 44 px, the sheet inside
+the screen, no glyph without a tooltip and nothing animating. Each state
+is saved, and at 390x844 again scrolled to the sheet's end, with
+`probes-<seats>p.json`, in `HG_CITY_SHOTS_DIR` (default
+`.cache/e2e/hg-city-shots`). A last test loads the dev gallery, checks its
+city and notebook leaves (three cities, seven ring tabs, the cards under
+a wonder both as the owner's and as revealed, a neighbour's pick), and
+opens both sheets from it under the same probe.
 
 Open `index.html` directly from disk. Its contact sheet groups the captures
 by screen, links each image at full size, and lists that capture's findings.
