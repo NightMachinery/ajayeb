@@ -14,6 +14,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
+	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/room/roomtest"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -754,5 +755,14 @@ func TestSharedLobbyDuelRematchFailedPersist(t *testing.T) {
 				t.Fatalf("after the successor started, rematch answered %q (%v), not %s", third, err, next)
 			}
 		})
+	}
+}
+
+// StartDuel freezes a lobby's real admins and its temporary one as the
+// game's hint admins, so the store's bound on that set must follow the
+// roles' bound, or a lobby with every admin could not start.
+func TestHintAdminBoundFollowsRoles(t *testing.T) {
+	if bound, admins := store.MaxHintAdmins, roles.MaxAdmins+1; bound != admins {
+		t.Fatalf("store.MaxHintAdmins is %d; roles allow %d real admins and a temporary one", bound, roles.MaxAdmins)
 	}
 }
