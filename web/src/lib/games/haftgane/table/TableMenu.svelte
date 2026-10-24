@@ -1,13 +1,15 @@
 <script lang="ts">
-  // The game menu (phone-layout.md section 3): the rules and the
-  // connection; for an admin, every seat with its occupant's role and a
-  // Manage button that opens the seat's admin menu over this one; the
-  // spectators, with a real admin's role buttons; "Stop being admin" for a
-  // real admin; and "Resign to a bot" for a seated player. Every action
-  // asks first, and each appears only when the frame says this viewer may
-  // take it; the Session sends it and the server decides.
+  // The game menu (phone-layout.md section 3): the rules, the app's Sound
+  // switch and the connection; for an admin, every seat with its
+  // occupant's role and a Manage button that opens the seat's admin menu
+  // over this one; the spectators, with a real admin's role buttons; "Stop
+  // being admin" for a real admin; and "Resign to a bot" for a seated
+  // player. Every action asks first, and each appears only when the frame
+  // says this viewer may take it; the Session sends it and the server
+  // decides.
   import { t } from '$lib/i18n';
   import Button from '$lib/components/shell/Button.svelte';
+  import { settings } from '$lib/ui/settings.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { TableState } from '$lib/wire/platform.gen';
   import { ht } from '../i18n/messages.svelte';
@@ -19,6 +21,7 @@
   import SpectatorList from './SpectatorList.svelte';
   import { isAdmin, occupant, roleMap, watchers } from './admin';
   import { seatName, where } from './seat-names';
+  import { setTableSound } from './sound';
 
   interface Props {
     session: TableSession;
@@ -76,6 +79,14 @@
       data-act="rules"
     >
       {ht('hg.screen.menu.rules')}
+    </Button>
+    <Button
+      variant="secondary"
+      onclick={() => setTableSound(!settings.value.sound)}
+      data-act="sound"
+      data-sound={settings.value.sound ? 'on' : 'off'}
+    >
+      {t(settings.value.sound ? 'game.sound.turnOff' : 'game.sound.turnOn')}
     </Button>
     {#if onmilitary}
       <Button variant="secondary" onclick={onmilitary} data-act="menu-military">
