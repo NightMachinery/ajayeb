@@ -491,8 +491,9 @@ bad-request`) and is not a spectator (else `reject not-admin`); device
 links are on for this server (else `reject bad-request`); a human holds the
 seat (else `reject bad-request`: the seat is open or a bot's); the
 connection acts as that seat's user or as the game's admin (else `reject
-not-admin`). In a game started from a shared lobby, only the seat's own user
-may: no admin has another seat's link there. All these rejects carry seq 0.
+not-admin`). In a game started from a shared lobby, and at a Haftgane
+table, only the seat's own user may: no admin has another seat's link
+there. All these rejects carry seq 0.
 The answer is a `linked` frame, to this connection alone. Nothing else
 changes: no other connection hears of it, and the room version stays.
 
@@ -1309,8 +1310,15 @@ check is constant-time.
 In a Haftgane table (protocol 2), seats 0 through 6 have links. A seat's
 epoch is the table's public revision when its current human took it or last
 relinked it, and 0 for the seats filled at Start, so one user's claims for
-two seatings never coincide. Only the seat's own user or an admin, real or
-temporary, may `link` or `relink` it, and `linked` goes to the sender alone.
+two seatings never coincide. Only the seat's own user may `link` or `relink`
+it (else `reject not-admin`), and `linked` goes to the sender alone. No
+admin, real or temporary, has another seat's link at a table: a claim lets
+a device play as the seat's user, seeing its hand and pending pick, and
+getting one changed nothing anyone could see, while every seat switch is in
+everyone's log. An admin who needs another seat seats someone there with
+`table-seat`, publicly. (Before M16.haftgane-security-review an admin could;
+the creator, or a seated player made temporary admin while the real admins
+were away, could then watch another player's hand unseen.)
 A relink adds a `link` entry to the room log. A switch or a resignation that
 takes the seat from its user revokes that user's claims for it in the same
 way: each connection using one receives `error` with `bad-claim` and is
@@ -1327,7 +1335,8 @@ whoever holds it plays as that player there (as the admin too, for the
 admin's seat), until the seat's link is reset. It gives nothing outside the
 room. Share it like a password, and reset it when it may have leaked. Only
 the seat's own user and the game's admin may see or reset a seat's link (in
-a Duel game started from a shared lobby, only the seat's own user).
+a Duel game started from a shared lobby, and at a Haftgane table, only the
+seat's own user).
 
 ## Limits
 

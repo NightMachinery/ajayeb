@@ -20,7 +20,11 @@ type Member struct {
 
 // link answers link, or with reset relink, in the protocol's order:
 // device links must be on, a human must hold the seat, and the sender must
-// act as that seat's user or be an admin (real or temporary). A reset
+// act as that seat's user. An admin, real or temporary, has no other
+// seat's link: a claim lets a device play as the seat's user, seeing its
+// hand and pending pick, and nothing would show it, while every seat switch
+// is in everyone's log. An admin who needs another seat seats someone
+// there, publicly. A reset
 // raises the seat's epoch to the next public revision, which revokes every
 // claim made for it before, logs the reset for everyone and ends the
 // connections that joined with a revoked claim. Either way the sender
@@ -37,7 +41,7 @@ func (a *actor) link(c *room.Client, seat int, reset bool) string {
 		return a.refuse(c, 0, op, seat, outBad)
 	}
 	user, target := a.userOf(c), r.Seats[seat].UserID
-	if user != target && !a.isAdmin(user) {
+	if user != target {
 		return a.refuse(c, 0, op, seat, outNotAdmin)
 	}
 	if reset {

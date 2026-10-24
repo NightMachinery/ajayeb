@@ -55,12 +55,12 @@
 // seq) when still valid, else it was applied or overtaken, and the frame's
 // own pending pick says which.
 //
-// Seat changes (former-controller tabs): a switch, a resignation or a
-// relink by an admin moves this connection to watching, or to another
-// seat. Its next frame carries the whole history again, redacted for its
-// new place, which replaces what it held. A revoked device link ends the
-// connection with error bad-claim, which the bootstrap turns into the room
-// error.
+// Seat changes (former-controller tabs): a switch or a resignation moves
+// this connection to watching, or to another seat. Its next frame carries
+// the whole history again, redacted for its new place, which replaces what
+// it held. A revoked device link (the seat's own user relinked it, or the
+// seat changed hands) ends the connection with error bad-claim, which the
+// bootstrap turns into the room error.
 
 import { entrySeqs, rememberEntryGame, type SeqCounters } from '$lib/entry/identity';
 import type { RoomListener } from '$lib/entry/bootstrap';
@@ -454,7 +454,7 @@ export class TableSession {
   }
 
   /**
-   * Asks for a seat's device link (its own user or an admin may) and
+   * Asks for a seat's device link (only its own user may) and
    * resolves with its claim; with reset, the seat's old links stop working
    * first. Rejects when refused, when the link drops or when no answer comes.
    */

@@ -54,7 +54,7 @@ func (h *th) revoked(id tabletest.ClientID) bool {
 	})
 }
 
-// TestDeviceLinks: a seat's user or an admin gets the seat's claim; a
+// TestDeviceLinks: a seat's user, and no one else, gets the seat's claim; a
 // connection joining with it acts as that seat's user, admin powers
 // included; a relink revokes it (the connection gets bad-claim and is
 // detached, except the sender, which keeps its place under the new
@@ -77,8 +77,8 @@ func TestDeviceLinks(t *testing.T) {
 	if claim1 != h.f.secret.Claim(h.p.code, userOf(1), 0) || h.latest(spec).Revision != rev {
 		t.Fatal("a link changed the table or gave the wrong claim")
 	}
-	if _, claim := h.linkOf(admin, 1, false); claim != claim1 {
-		t.Fatal("the admin got another claim")
+	if out, _ := h.linkOf(admin, 1, false); out != outNotAdmin {
+		t.Fatalf("the admin's link of another seat: %s", out)
 	}
 	if err := h.joinClaim("device-1", "phone", "not-a-claim"); !errors.Is(err, room.ErrBadClaim) {
 		t.Fatalf("a bad claim: %v", err)
