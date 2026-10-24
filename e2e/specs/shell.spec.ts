@@ -1,11 +1,14 @@
 // The app-shell service worker (M10.SH1, web/src/service-worker.ts): it
 // installs and controls the page, the fonts load from content-hashed URLs,
-// the app opens offline from its cache with its own offline state, the
-// server's endpoints never come from a cache, and the stable names stay
-// stable. Every other spec blocks the worker (fixtures/base.ts); this one
-// allows it. Each test gets a fresh context, so a fresh registration.
+// install leaves out only the files the /dev pages alone load, the app opens
+// offline from its cache with its own offline state, the server's endpoints
+// never come from a cache, and the stable names stay stable. Every other
+// spec blocks the worker (fixtures/base.ts); this one allows it. Each test
+// gets a fresh context, so a fresh registration.
 
+import { existsSync, readFileSync } from 'node:fs';
 import { expect, type Page } from '@playwright/test';
+import { devOnlyFiles, type Manifest } from '../../web/src/lib/sw/dev-only';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { openHotseatRoom } from '../fixtures/scenario';
@@ -53,6 +56,34 @@ async function cachedPaths(page: Page): Promise<Record<string, string[]>> {
 }
 
 const HASHED_FONT = /\/_app\/immutable\/assets\/(inter|fraunces|vazirmatn)-\d00\.[\w-]+\.woff2$/;
+
+const WEB = new URL('../../web/', import.meta.url);
+
+/** The served build's files (the worker's `build` list) and those only the
+ *  /dev pages load, from the client manifest SvelteKit leaves beside the
+ *  build, the same way vite.config.ts computes the list for the worker. */
+function clientBuild(): { files: string[]; devOnly: Set<string> } {
+  const at = (path: string) => new URL(path, WEB);
+  const manifest = JSON.parse(
+    readFileSync(at('.svelte-kit/output/client/.vite/manifest.json'), 'utf8')
+  ) as Manifest;
+  const files = [
+    ...new Set(
+      Object.values(manifest).flatMap((chunk) => [
+        chunk.file,
+        ...(chunk.css ?? []),
+        ...(chunk.assets ?? [])
+      ])
+    )
+  ].sort();
+  // Another build's manifest names hashed files this build does not have.
+  expect(
+    files.filter((file) => !existsSync(at(`build/${file}`))),
+    'the client manifest belongs to the served build; rebuild web'
+  ).toEqual([]);
+  const devOnly = devOnlyFiles(manifest, (key) => readFileSync(at(key), 'utf8'));
+  return { files, devOnly: new Set(devOnly.map((entry) => entry.file)) };
+}
 
 test.describe('app shell', { tag: '@mobile' }, () => {
   test('the worker installs, controls the page after one reload and serves the fonts by hashed URL', async ({
@@ -116,6 +147,73 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     expect(keys.filter((k) => k.startsWith('/art/') || k.startsWith('/fonts/'))).toEqual([]);
 
     expect(problems, 'console errors, page errors or failed requests').toEqual([]);
+  });
+
+  test('install leaves out the files only the /dev pages load, and nothing a real route loads', async ({
+    page
+  }) => {
+    const build = clientBuild();
+    await installWorker(page);
+    const shell = Object.entries(await cachedPaths(page)).find(([name]) =>
+      name.startsWith('ajayeb-shell-')
+    );
+    const precached = new Set(shell?.[1] ?? []);
+    console.log(
+      'precache-plan',
+      JSON.stringify({
+        buildFiles: build.files.length,
+        devOnly: build.devOnly.size,
+        precached: precached.size
+      })
+    );
+
+    // Every build file a real route can load, statically or lazily, is
+    // installed, including those a dev page shares.
+    expect(
+      build.files.filter((file) => !build.devOnly.has(file) && !precached.has(`/${file}`)),
+      'build files a real route loads that install left out'
+    ).toEqual([]);
+    // No file only the dev pages load is.
+    expect(
+      [...build.devOnly].filter((file) => precached.has(`/${file}`)),
+      'files only the /dev pages load, installed anyway'
+    ).toEqual([]);
+
+    // Independently of the manifest: every build file the real routes load
+    // on a full page load comes from the install precache.
+    const loaded = new Set<string>();
+    page.on('response', (res) => {
+      const path = new URL(res.url()).pathname;
+      if (path.startsWith('/_app/immutable/')) loaded.add(path);
+    });
+    for (const path of ['/', '/rules', '/settings']) {
+      await page.goto(path);
+      await expect(page.locator('h1')).toBeVisible();
+    }
+    // A dev page opens the room; its own load is the one measured.
+    await openHotseatRoom(page, null);
+    const room = new URL(page.url()).pathname;
+    loaded.clear();
+    await page.goto(room);
+    await page.waitForFunction(() => window.__ajayeb?.ready() === true);
+    await page.waitForLoadState('networkidle');
+    expect(loaded.size, 'the room page loads build files').toBeGreaterThan(0);
+    const real = [...loaded];
+    expect(
+      real.filter((path) => !precached.has(path)),
+      'build files a real route loaded that install left out'
+    ).toEqual([]);
+
+    // The gallery's own route nodes are left out, and the page still opens
+    // through the worker, which fetches them from the network.
+    loaded.clear();
+    await page.goto('/dev/gallery');
+    await expect(page.getByTestId('gallery-viewport')).toBeVisible();
+    const left = [...loaded].filter(
+      (path) => path.startsWith('/_app/immutable/nodes/') && !precached.has(path)
+    );
+    expect(left.length, 'the dev layout and the gallery page nodes').toBeGreaterThanOrEqual(2);
+    for (const path of left) expect(build.devOnly.has(path.slice(1)), path).toBe(true);
   });
 
   test('offline, Home and a room page open from the cache with their offline state', async ({
