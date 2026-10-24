@@ -77,7 +77,7 @@ func FromReal(setup rules.Setup, bs []rules.Batch) (*Truth, error) {
 			return nil, fmt.Errorf("batch %d: %w", k, e)
 		}
 		for _, e := range events {
-			res.Events = append(res.Events, truthEvent(e))
+			res.Events = append(res.Events, truthEvent(e, &n.State))
 		}
 		t.Resolutions = append(t.Resolutions, res)
 		g = n
@@ -85,7 +85,11 @@ func FromReal(setup rules.Setup, bs []rules.Batch) (*Truth, error) {
 	t.addReal(&g)
 	return t, nil
 }
-func truthEvent(e rules.Event) Event {
+
+// truthEvent copies an engine event's identity. A conflict's shields and
+// token worth come from the resolved state instead: shields stand still
+// from the comparison to the next Age, and a victory is worth 1, 3 or 5.
+func truthEvent(e rules.Event, after *rules.State) Event {
 	v := Event{Kind: e.Kind.String()}
 	switch e.Kind {
 	case rules.EvAgeStart:
@@ -101,6 +105,10 @@ func truthEvent(e rules.Event) Event {
 	case rules.EvMilitary:
 		v.Seat, v.Other, v.Age = int(e.Seat), int(e.Other), int(e.Age)
 		v.Outcome = [...]string{"tie", "seat-wins", "other-wins"}[e.Outcome]
+		v.Left, v.Right = int(after.Cities[e.Seat].Shields), int(after.Cities[e.Other].Shields)
+		if v.Left != v.Right {
+			v.Delta = [...]int{1, 3, 5}[e.Age-1]
+		}
 	case rules.EvCoins:
 		v.Seat, v.Delta = int(e.Seat), int(e.Delta)
 		v.Source = [...]string{"", "sale", "design", "stage"}[e.Source]

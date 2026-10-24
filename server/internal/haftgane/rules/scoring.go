@@ -59,12 +59,15 @@ func endPoints(st *State, seat Seat, e catalog.Effect) int16 {
 	}
 }
 
+// victoryPoints is a victory token's worth by Age; a defeat token is -1.
+var victoryPoints = [NumAges]int16{1, 3, 5}
+
 // scoreCity follows score-pad order. Continuous caches provide science; the
 // public holders provide their end points. No tucked card contributes a card
 // effect, and scoring never repeats a when-placed income effect.
 func scoreCity(st *State, seat Seat) Score {
 	c := &st.Cities[seat]
-	score := Score{Treasure: c.Coins / 3, Military: int16(c.Victories[0]) + 3*int16(c.Victories[1]) + 5*int16(c.Victories[2]) - int16(c.Defeats)}
+	score := Score{Treasure: c.Coins / 3, Military: victoryPoints[0]*int16(c.Victories[0]) + victoryPoints[1]*int16(c.Victories[1]) + victoryPoints[2]*int16(c.Victories[2]) - int16(c.Defeats)}
 	if c.Stages != 0 {
 		board, _ := catalog.BoardByID(c.Board)
 		for stage := uint8(0); stage < c.Stages; stage++ {

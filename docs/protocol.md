@@ -1186,7 +1186,10 @@ carry Age I's start. Each later entry is one resolved side, turn or ability
 point. The events a connection received before a seat change were redacted
 for its old seat, so it replaces them. An event carries `{kind, seat, other,
 age, turn, play, design, stage, side, left, right, printed, delta, source,
-outcome, pass}`; `pass` is set only for `hands-passed`. A design is present
+outcome, pass}`; `pass` is set only for `hands-passed`. A `military`
+event's `left` and `right` are the shields of `seat` and of `other` in that
+conflict, and its `delta` is the victory token's worth (1, 3 or 5 by Age;
+0 on a tie). A design is present
 only when this viewer may know it, and the end reveal never retroactively
 reveals hidden events in history. Events never carry submitted keys.
 Collections are JSON arrays, never null.

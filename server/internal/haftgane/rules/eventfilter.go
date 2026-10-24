@@ -49,6 +49,7 @@ func filterEvent(e Event, viewer Seat) (view.Event, bool) {
 			return view.Event{}, false
 		}
 		v.Seat, v.Other, v.Age = int(e.Seat), int(e.Other), int(e.Age)
+		v.Left, v.Right, v.Delta = int(e.Left), int(e.Right), int(e.Delta)
 		v.Outcome = ([NumConflictOutcomes]string{"tie", "seat-wins", "other-wins"})[e.Outcome]
 	case EvCoins:
 		if e.Seat >= MaxSeats {

@@ -118,7 +118,12 @@ func advanceAfterTurn(st *State, evs []Event, reverse bool) ([]Event, error) {
 			seat = Seat(st.Seats - 1 - i)
 		}
 		other := seat.Left(st.Seats)
-		e := Event{Kind: EvMilitary, Seat: seat, Other: other, Age: st.Age}
+		// Left and Right are the compared shields of Seat and Other; Delta is
+		// the victory token's worth, zero on a tie.
+		e := Event{Kind: EvMilitary, Seat: seat, Other: other, Age: st.Age, Left: st.Cities[seat].Shields, Right: st.Cities[other].Shields}
+		if e.Left != e.Right {
+			e.Delta = victoryPoints[st.Age-1]
+		}
 		switch {
 		case st.Cities[seat].Shields > st.Cities[other].Shields:
 			e.Outcome = ConflictSeatWins
