@@ -3,6 +3,7 @@ package store
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/NightMachinery/ajayeb/server/internal/engine"
 )
@@ -110,10 +111,34 @@ func (e *ArchivedError) Error() string {
 func (e *ArchivedError) Unwrap() error        { return e.Cause }
 func (e *ArchivedError) Is(target error) bool { return target == ErrArchived }
 
+// MaxHintAdmins bounds a shared Duel game's frozen HintAdmins: the lobby's
+// real admins (package roles allows 32) and its one temporary admin.
+const MaxHintAdmins = 33
+
+// ValidHintAdmins reports whether ids can be a File's HintAdmins: at most
+// MaxHintAdmins user ids, none empty, longer than 64 bytes or there twice.
+// An empty set is a legacy room's.
+func ValidHintAdmins(ids []string) bool {
+	if len(ids) > MaxHintAdmins {
+		return false
+	}
+	sorted := slices.Sorted(slices.Values(ids))
+	for i, id := range sorted {
+		if id == "" || len(id) > 64 || i > 0 && sorted[i-1] == id {
+			return false
+		}
+	}
+	return true
+}
+
 // assess is shared by restoration and read-only deployment checks. It never writes.
 func assess(f *File) (engine.State, ArchiveReason, error) {
 	if f.Rules != engine.RulesVersion {
 		return engine.State{}, ArchiveRulesVersion, fmt.Errorf("%w: file %d, engine %d", ErrRulesVersion, f.Rules, engine.RulesVersion)
+	}
+	if !ValidHintAdmins(f.HintAdmins) {
+		// Not replay data, but no build wrote it, so the file is damaged.
+		return engine.State{}, ArchiveReplayFailed, fmt.Errorf("store: room %s: invalid hint admins", f.Code)
 	}
 	s, err := replay(f)
 	if err != nil {

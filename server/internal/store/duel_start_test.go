@@ -3,8 +3,11 @@ package store_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -116,5 +119,64 @@ func TestSharedLobbyDuelReplacementConcurrent(t *testing.T) {
 	}
 	if wins != 1 {
 		t.Fatalf("concurrent Start winners %d, want 1", wins)
+	}
+}
+
+// A shared Duel game's frozen hint admins follow the rules Start writes
+// them under (store.ValidHintAdmins): no save writes a damaged set, and a
+// file holding one (hand-edited or damaged) archives as replay-failed on
+// load, which the deployment check reports first.
+func TestHintAdminsChecked(t *testing.T) {
+	many := make([]string, store.MaxHintAdmins+1)
+	for i := range many {
+		many[i] = fmt.Sprintf("u%d", i)
+	}
+	for _, tc := range []struct {
+		name   string
+		admins []string
+	}{{"empty id", []string{"a", ""}}, {"repeated", []string{"a", "b", "a"}}, {"too many", many}, {"too long", []string{strings.Repeat("x", 65)}}} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			st, err := store.Open(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			f := store.New("HADMAA", store.ModeOnline, engine.Options{}, 11, gameNow)
+			f.Seats = [2]store.Seat{{Kind: store.SeatKindHuman, UserID: "a", Name: "A"}, {Kind: store.SeatKindHuman, UserID: "b", Name: "B"}}
+			f.Status = store.StatusPlaying
+			f.HintAdmins = []string{"a", "b"}
+			if err := st.Save(f); err != nil {
+				t.Fatal(err)
+			}
+			bad := *f
+			bad.HintAdmins = tc.admins
+			if err := st.Save(&bad); err == nil {
+				t.Fatal("saved a damaged hint-admin set")
+			}
+			path := filepath.Join(st.Dir(), "HADMAA.json")
+			raw, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var doc map[string]any
+			if err := json.Unmarshal(raw, &doc); err != nil {
+				t.Fatal(err)
+			}
+			doc["hintAdmins"] = tc.admins
+			if raw, err = json.Marshal(doc); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(path, raw, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if r := store.CheckDataDir(dir); r.LiveWouldArchive != 1 || r.Playable != 0 {
+				t.Fatalf("deployment check: %+v", r)
+			}
+			_, _, err = st.Load("HADMAA")
+			var archived *store.ArchivedError
+			if !errors.As(err, &archived) || archived.Reason != store.ArchiveReplayFailed {
+				t.Fatalf("damaged hint admins loaded: %v", err)
+			}
+		})
 	}
 }

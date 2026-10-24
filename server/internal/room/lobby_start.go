@@ -62,16 +62,10 @@ func (m *Manager) StartDuel(code, from string, spec DuelStart, members []StartMe
 			return StartedDuel{}, ErrInvalidSpec
 		}
 	}
-	if humans == 0 || len(spec.HintAdmins) == 0 || len(spec.HintAdmins) > 33 || spec.Creator == "" {
+	if humans == 0 || len(spec.HintAdmins) == 0 || !store.ValidHintAdmins(spec.HintAdmins) || spec.Creator == "" {
 		return StartedDuel{}, ErrInvalidSpec
 	}
-	admins := slices.Clone(spec.HintAdmins)
-	slices.Sort(admins)
-	for i, user := range admins {
-		if user == "" || len(user) > 64 || i > 0 && admins[i-1] == user {
-			return StartedDuel{}, ErrInvalidSpec
-		}
-	}
+	admins := slices.Sorted(slices.Values(spec.HintAdmins))
 	opts := engine.Options{}
 	if spec.FirstPlayer != nil {
 		switch *spec.FirstPlayer {

@@ -163,6 +163,9 @@ func (st *Store) save(f *File, create bool, from string) error {
 	} else if foreign, ferr := foreignRoomFile(path); ferr == nil && foreign {
 		return fmt.Errorf("store: save %s: %w", f.Code, err)
 	}
+	if !ValidHintAdmins(f.HintAdmins) {
+		return fmt.Errorf("store: save %s: invalid hint admins", f.Code)
+	}
 	s, err := replay(f)
 	if err != nil {
 		return fmt.Errorf("store: save %s: %w", f.Code, err)
