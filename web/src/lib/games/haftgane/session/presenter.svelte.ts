@@ -20,9 +20,12 @@
 //     presence change), which replaces the frame on screen in place.
 //
 // When more frames than fastForwardAfter wait (after a reconnect, say),
-// the queue jumps to the newest. The hooks come with the reveal and motion
-// slices (M18.reveal-and-recap, M18.sound-and-motion); without them frames
-// show as they arrive. The UI takes input only while `idle`.
+// the queue jumps to the newest. A change without events (a seat
+// confirming, a pick withdrawn) is no restatement but has nothing to play:
+// a `still` hook hears of it after the swap, and nothing waits for it. The
+// hooks come with the reveal and motion slices (M18.reveal-and-recap,
+// M18.sound-and-motion); without them frames show as they arrive. The UI
+// takes input only while `idle`.
 
 import { tick } from 'svelte';
 import type { Unsubscribe } from '$lib/session/transport';
@@ -33,6 +36,8 @@ export interface TablePresenterHooks {
   capture?(next: TableState, prev: TableState | null): unknown;
   /** After the swap and a tick: animate. The next frame waits for it. */
   play?(next: TableState, prev: TableState | null, captured: unknown): void | Promise<void>;
+  /** After the swap of a change without events (a seat confirming): nothing waits for it. */
+  still?(next: TableState, prev: TableState | null): void;
   /** Ends every running animation at once (hurry, clear, destroy). */
   finish?(): void;
 }
@@ -171,6 +176,7 @@ export class TablePresenter {
         this.frame = next;
         this.shownEvents = restating ? [] : effects.events;
         await this.#afterSwap();
+        if (!restating && effects.events.length === 0 && live()) this.hooks.still?.(effects, prev);
         if (!quiet && this.hooks.play && live()) {
           try {
             await this.hooks.play(effects, prev, captured);

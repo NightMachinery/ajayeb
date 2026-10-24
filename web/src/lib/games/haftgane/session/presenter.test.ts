@@ -1,6 +1,7 @@
 // The Haftgane Presenter over synthetic frames: changes play in order, and
 // frames that restate the game (a history, a seat change, a skipped
-// backlog) or only refresh it are shown without playing anything.
+// backlog) or only refresh it are shown without playing anything; a change
+// without events reaches only the still hook.
 import { describe, expect, it, vi } from 'vitest';
 import type { TableEvent, TableState } from '$lib/wire/platform.gen';
 import { TablePresenter, cosmetic, restates } from './presenter.svelte';
@@ -146,6 +147,30 @@ describe('TablePresenter', () => {
     await settle(p);
     expect(p.frame).toBe(newest);
     expect(p.shownEvents).toEqual([]);
+    expect(played).toHaveLength(1);
+  });
+
+  it('tells the still hook of a change without events, never of a restatement or a refresh', async () => {
+    const { p, played } = presenter();
+    const still: [TableState, TableState | null][] = [];
+    p.hooks.still = (next, prev) => void still.push([next, prev]);
+    const first = tableFrame({ history: [] });
+    p.enqueue(first);
+    await settle(p);
+    // A presence refresh: the same revision and no events.
+    p.enqueue({ ...first, history: undefined });
+    await settle(p);
+    expect(still).toEqual([]);
+    // Another seat confirms: a new revision and no events.
+    const confirmed = tableFrame({ revision: 2 << 20 });
+    p.enqueue(confirmed);
+    await settle(p);
+    expect(still).toEqual([[confirmed, { ...first, history: undefined }]]);
+    // A change with events plays instead; a history frame does neither.
+    p.enqueue(resolution(2));
+    p.enqueue(tableFrame({ revision: 4 << 20, history: [] }));
+    await settle(p);
+    expect(still).toHaveLength(1);
     expect(played).toHaveLength(1);
   });
 
