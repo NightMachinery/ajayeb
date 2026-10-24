@@ -44,7 +44,7 @@ export async function latest(page: Page): Promise<TableState> {
  */
 export async function choose(page: Page, act: string): Promise<void> {
   await ready(page);
-  const target = page.locator(`[data-act="${act}"]`);
+  const target = page.locator(`[data-act="${act}"]`).first();
   if (!(await target.isVisible())) {
     const design = await page.evaluate(
       (key) =>

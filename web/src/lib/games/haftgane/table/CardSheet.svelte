@@ -176,6 +176,7 @@
             <button
               type="button"
               class="free-pick"
+              data-act={build.key}
               data-pick={build.key}
               disabled={locked}
               onclick={() => draft(build.key)}>{choiceAction(build)}</button

@@ -21,7 +21,7 @@ async function open(page: Page, c: Choice): Promise<void> {
   await ready(page);
 }
 async function commit(page: Page, key: string): Promise<void> {
-  await page.locator(`[data-card-sheet] [data-act="${key}"]`).click();
+  await page.locator(`[data-card-sheet] .sheet-footer [data-act="${key}"]`).click();
   await expect(page.locator('[data-card-sheet]')).toHaveCount(0);
   await ready(page);
 }
@@ -107,7 +107,7 @@ test('five seats play payments, stages, sales and Change through the sheet @full
         await open(page, pick!);
         if (multi) {
           const defaultKey = await page
-            .locator('[data-card-sheet] [data-act^="build:"]')
+            .locator('[data-card-sheet] .sheet-footer [data-act^="build:"]')
             .getAttribute('data-act');
           expect(defaultKey).toBe(pick!.key);
           nonDefault = true;

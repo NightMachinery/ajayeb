@@ -72,7 +72,7 @@
       role="radio"
       aria-checked={selected === c.key}
       disabled={locked}
-      aria-label={ht('hg.sheet.payment', { number: index + 1, action: choiceAction(c) })}
+      data-act={c.key}
       data-pick={c.key}
       data-kind={c.kind}
       onclick={() => onselect(c.key)}

@@ -116,7 +116,7 @@ for (const locale of ['en', 'fa'] as const)
             await sheet
               .locator('[data-sheet-body]')
               .evaluate((body) => body.scrollTo(0, body.scrollHeight));
-            await expect(sheet.locator('[data-act^="sell:"]')).toBeVisible();
+            await expect(sheet.locator('.sheet-footer [data-act^="sell:"]')).toBeVisible();
           }
         }
         writeFileSync(
@@ -131,7 +131,7 @@ for (const locale of ['en', 'fa'] as const)
 test('card-sheet confirmation resets when the payment changes', async ({ page }) => {
   await page.goto('/dev/gallery?hgSheet=trade&seats=5');
   const sheet = page.locator('[data-card-sheet]');
-  const action = sheet.locator('[data-act^="build:"]');
+  const action = sheet.locator('.sheet-footer [data-act^="build:"]');
   const original = await action.getAttribute('data-act');
   await action.click();
   await expect(action).toHaveAttribute('data-armed', '');
