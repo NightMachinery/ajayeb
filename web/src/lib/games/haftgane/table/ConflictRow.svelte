@@ -57,7 +57,11 @@
     {@const r = resultFor(conflict, side.seat) ?? 'tie'}
     <span class="who" class:end={i === 1}>
       <SeatCrest seat={side.seat} tip={side.name} />
-      <span class="name" dir="auto">{side.name}</span>
+      <span class="name" dir="auto" {@attach tooltip({ text: side.name })}
+        >{#each side.name.split(/\s+/).filter(Boolean) as word, j (j)}{j > 0 ? ' ' : ''}<span
+            class="word">{word}</span
+          >{/each}</span
+      >
     </span>
     <span class="tok" class:end={i === 1}>
       {#if r !== 'tie'}
@@ -121,7 +125,9 @@
   .who:not(.end) {
     grid-column: 1;
   }
-  /* Two lines before the cut, so a numbered name keeps its number. */
+  /* Two lines before the cut, so a numbered name keeps its number. The
+     name breaks only between words: a word too long for the column ends
+     in an ellipsis, and the tooltip gives the whole name. */
   .name {
     display: -webkit-box;
     min-width: 0;
@@ -131,7 +137,14 @@
     line-clamp: 2;
     font-size: 0.875rem;
     line-height: 1.2;
-    overflow-wrap: break-word;
+  }
+  .word {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
   }
   .who.end .name {
     text-align: end;

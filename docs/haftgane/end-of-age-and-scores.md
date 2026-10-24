@@ -7,7 +7,7 @@
 **The military dialog** (`AgeMilitary`) opens by itself at the end of each Age. It is modal, and the next Age's first decision is already open behind it. It lists:
 
 - your two conflicts side by side (left and right neighbour), each with its result and token;
-- every conflict around the table, one line per adjacent pair (`ConflictRow`), with the winner's token on the winner's side;
+- every conflict around the table, one line per adjacent pair (`ConflictRow`), with the winner's token on the winner's side; a name takes up to two lines, broken only between words, a word too long for its column ends in an ellipsis, and the name's tooltip gives it whole;
 - each seat's military points so far, and yours again in the footer.
 
 Closing it is local. It opens again after a reload while the table still shows the batch that resolved those conflicts. The table menu's Conflicts item, and the final board's Conflicts button, reopen it. Once two or more Ages have ended, buttons switch between their conflicts.
