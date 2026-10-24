@@ -124,3 +124,43 @@ func sizeAfterSave(t *testing.T, st *store.Store, f *store.File) int {
 	}
 	return int(info.Size())
 }
+
+// The store never writes a room file it would refuse to read: SaveGame,
+// CreateGame and ReplaceGame refuse a record larger than MaxFileBytes with
+// ErrTooLarge and leave the file as it was. Before, such a write landed,
+// and the room it belonged to could no longer be saved over or loaded
+// (M16.haftgane-security-review).
+func TestOversizedRecordIsNotWritten(t *testing.T) {
+	st := gameStore(t)
+	big := func(code string) []byte {
+		return []byte(`{"schema":2,"game":"fixture","code":"` + code + `","status":"playing","updated":"2000-01-01T00:00:00Z","hash":"old","pad":"` +
+			strings.Repeat("x", store.MaxFileBytes) + `"}` + "\n")
+	}
+	if err := st.SaveGame("GAMBAA", "fixture", gameFile("GAMBAA", "playing")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.SaveGame("GAMBAA", "fixture", big("GAMBAA")); !errors.Is(err, store.ErrTooLarge) {
+		t.Errorf("SaveGame of an oversized record: %v", err)
+	}
+	if data, _, err := st.PeekGame("GAMBAA", "fixture"); err != nil || !bytes.Equal(data, gameFile("GAMBAA", "playing")) {
+		t.Errorf("the record in place after a refused save: %v %.80s", err, data)
+	}
+	if _, err := st.CreateGame("GAMBAB", "fixture", big("GAMBAB")); !errors.Is(err, store.ErrTooLarge) {
+		t.Errorf("CreateGame of an oversized record: %v", err)
+	}
+	if _, _, err := st.PeekGame("GAMBAB", "fixture"); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("a refused create left a file: %v", err)
+	}
+	if err := st.ReplaceGame("GAMBAA", "other", "fixture", big("GAMBAA")); !errors.Is(err, store.ErrTooLarge) {
+		t.Errorf("ReplaceGame of an oversized record: %v", err)
+	}
+	entries, err := os.ReadDir(st.Dir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".tmp") {
+			t.Errorf("a refused write left %s", e.Name())
+		}
+	}
+}

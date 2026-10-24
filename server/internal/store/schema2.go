@@ -150,13 +150,18 @@ func (st *Store) CreateGame(code, game string, data []byte) ([]byte, error) {
 	return nil, nil
 }
 
-// checkGame validates code and checks that data decodes through game's
-// codec as a record of code, so the store never writes a file it cannot
-// read back.
+// checkGame validates code and checks that data fits the read cap and
+// decodes through game's codec as a record of code, so the store never
+// writes a file it cannot read back. A record over the cap is refused with
+// ErrTooLarge before anything is read or locked; the file in place stays
+// as it was.
 func (st *Store) checkGame(code, game string, data []byte) (string, Inspection, error) {
 	path, err := st.path(code)
 	if err != nil {
 		return "", nil, err
+	}
+	if len(data) > MaxFileBytes {
+		return "", nil, fmt.Errorf("store: save %s: %w: %d bytes, at most %d are read", code, ErrTooLarge, len(data), MaxFileBytes)
 	}
 	record, err := st.codecs.decode(data)
 	if err != nil {

@@ -17,6 +17,8 @@ import (
 // such a file was not written by it (or not by it alone); it is refused
 // before it is read, so a planted file cannot make the server read or
 // decode an unbounded amount of data. The file is left as it is.
+// SaveGame, ReplaceGame and CreateGame wrap it too, for a record over the
+// cap, which they refuse to write.
 var ErrTooLarge = errors.New("store: room file too large")
 
 // MaxFileBytes is the largest room file the store reads. It is derived from
