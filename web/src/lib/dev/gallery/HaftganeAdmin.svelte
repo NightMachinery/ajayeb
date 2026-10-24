@@ -175,8 +175,11 @@
     border-radius: var(--shape-panel);
     background: var(--panel);
   }
+  /* As tall as a phone's hand region, so the panel scrolls as it does there. */
   .panel {
+    display: flex;
     max-width: 32rem;
+    height: 28rem;
   }
   @media (min-width: 48rem) {
     .grid {
