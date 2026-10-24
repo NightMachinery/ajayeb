@@ -419,4 +419,5 @@ The first Haftgane strings were drafted by an agent, like Duel's, and wait for t
 - **Deck**: دسته‌ی کارت in the rules, while a set of three science symbols is a دسته too. بسته‌ی کارت would separate them.
 - **Recap lines**: a coin line under a seat's name is a noun of action («پرداخت ۲ سکه به بانک»), because it stands under any seat, the viewer's own included. Does it read naturally next to the full sentences above it?
 - **Stage numerals**: the stage pills show یکم to چهارم, the way the Ages do. Some screens pass the stage as a number instead, so «مرحله‌ی ۲» and «مرحله‌ی دوم» can both appear. Is that acceptable, or should every stage be an ordinal?
+- **Separators**: «، » joins a label and its detail («رودس، شب», «قهوه‌ای، دوران یکم») where English has a middle dot, because the dot looks like the Persian zero. Would a slash or parentheses read better in these short captions?
 - **The outlook tooltip** names a victory token's worth in words, «نشان پیروزی ۳ امتیازی», where English writes "+3 token", so no signed number sits inside a Persian sentence.
