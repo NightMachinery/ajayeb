@@ -2994,6 +2994,10 @@ sides, ordinary seat/spectator, discard build, kept card and both end policies.
 It also decodes them into the exported DTOs for platform consumption. After
 reviewing an intentional shape change, regenerate through the guard with
 `UPDATE_HAFTGANE_VIEWS=1 make test-go GO_PKGS=./internal/haftgane/rules GO_RUN=TestHaftganeViewFixtures`.
+`TestGallerySpecialCases` does the same for the dev gallery's special-decision
+samples (`web/src/lib/dev/gallery/haftgane-special-cases.json`), comparing by
+value because Prettier formats that file
+([special-decisions.md](haftgane/special-decisions.md) has the recipe).
 `make gen` generates the separate Haftgane TypeScript DTO file. Package-local
 view and bot import/shape guards have explicit negative cases; the bot package
 currently reserves its observation-only boundary, with policies added later.

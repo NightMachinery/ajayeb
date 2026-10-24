@@ -32,10 +32,17 @@ The focused gallery accepts `hgSpecial=side`, `discard`, `sixth`, `kept`, `last`
 `first-colour`, `first-turn` or `last-turn`, plus `seats=3`, `5` or `7` and
 `waiting=1`. Its samples are captured with `ViewFor` from legal seeded games;
 no scenario state, invented payment or inferred hidden card enters the samples.
-The capture policy chooses night sides (alternating Olympia's side between
-games), builds production, builds Babylon's first stage, Olympia's first two
-stages, and a Halikarnassos stage at the sixth turn. The fixture keeps the
-resulting choosing and adjacent waiting views, without seed or setup data.
+`TestGallerySpecialCases` (in the rules package) generates them: it plays games
+with sides chosen under the rules tests' seeded policy, which prefers wonder
+stages on even seeds, and keeps the first point at which a seat faces each
+decision, for each table size, scanning seats in order. A sixth turn counts
+only when a choice previews a kept card, and a discard search only when the
+pile holds a card the city may not build, so the samples show both. The
+fixture keeps the deciding seat's view and that of the next seat the point
+does not wait for, without seed or setup data. The test fails on any view
+change until the samples are regenerated with
+`UPDATE_HAFTGANE_GALLERY=1 make test-go GO_PKGS=./internal/haftgane/rules GO_RUN=TestGallerySpecialCases`,
+followed by Prettier on the JSON file.
 
 `make shots PW_ARGS=--grep=special-decision` covers both roles at all four target
 viewports, three seat counts, English and Persian, and both themes. It checks
