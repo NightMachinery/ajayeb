@@ -72,6 +72,14 @@ func TestPlatformV1TranscriptBaseline(t *testing.T) {
 			if got := c.untilReject(staleSeq); got.Code != wire.RejectCodeStale {
 				t.Fatalf("stale reject: %+v", got)
 			}
+			// The reject is followed by the current state. Read it before
+			// asking to resync: the outbox replaces a pending state frame
+			// with a newer one, so a slow writer would otherwise send only
+			// the resync's state and the transcript would differ.
+			c.until("the state after the stale reject", func(f any) bool {
+				_, ok := f.(wire.State)
+				return ok
+			})
 			c.resync()
 		}
 	}
