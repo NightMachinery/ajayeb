@@ -793,7 +793,7 @@ and the test-mode web build, which the Playwright config starts itself
 --seed-base 1000` on port 38954, with a fresh data directory under `.cache/e2e/`), in
 Playwright's own Chromium (Chrome for Testing, `channel: 'chromium'`) both
 locally and on CI, never the installed Google Chrome (D26). CI splits the
-suite into three shards (`--shard=1/3` to `--shard=3/3`), each a job with its
+suite into four shards (`--shard=1/4` to `--shard=4/4`), each a job with its
 own server, and keeps each shard's report and traces when it fails or runs
 out of time. The shards leave out the `@perf` case, which runs in its own
 job, `e2e-perf`, described under `animation.spec.ts` below, and the

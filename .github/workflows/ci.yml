@@ -105,18 +105,19 @@ jobs:
         run: pnpm -C e2e lint
 
   e2e:
-    # Three shards, each with its own server: the whole suite (278 tests, about
-    # 31 minutes on one runner) outgrew one 30-minute job in M10, and two
-    # shards outgrew it in M14, when a slow package mirror added minutes to
-    # the browser install.
-    name: e2e (Playwright, bundled Chromium, shard ${{ matrix.shard }} of 3)
+    # Four shards, each with its own server: the whole suite (278 tests, about
+    # 31 minutes on one runner) outgrew one 30-minute job in M10, two shards
+    # outgrew it in M14, when a slow package mirror added minutes to the
+    # browser install, and three in M18, when the seven-seat table
+    # playthroughs pushed the first shard past 30 minutes.
+    name: e2e (Playwright, bundled Chromium, shard ${{ matrix.shard }} of 4)
     needs: [go, web]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -143,7 +144,7 @@ jobs:
         # The @perf case runs in e2e-perf below, which reports without gating.
         # A @slow case waits out a real server limit (the temporary admin's
         # five minutes away); it runs locally, with make e2e GREP=@slow.
-        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/3 --grep-invert '@perf|@slow'
+        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/4 --grep-invert '@perf|@slow'
       - name: Keep the report and traces
         if: failure() || cancelled()
         uses: actions/upload-artifact@v7
