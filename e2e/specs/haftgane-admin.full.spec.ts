@@ -3,6 +3,9 @@
 // with bots (so undo is on), two friends join the running table as
 // spectators, and then, checked as it goes:
 //
+// - the creator plays a turn and undoes it: the turn's point reopens under
+//   a fresh reference with the creator's hand whole again, and the undo
+//   button goes until another turn is played;
 // - a spectator's hand region is the spectator panel, and following a
 //   seat centres the ring on it (its neighbours are that seat's);
 // - the creator seats a spectator in a bot's seat through the seat's
@@ -147,6 +150,17 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
       expect(start.startingHumanCount).toBe(1);
       expect(start.allowUndo).toBe(true);
       const seatA = start.you.seat!;
+      await expect(a.locator('[data-act="undo"]')).toHaveCount(0);
+      await playTurn(a);
+      await expect(a.locator('[data-act="undo"]')).toBeVisible();
+
+      // The undo takes the turn back: the same hand at a reopened point.
+      await a.locator('[data-act="undo"]').click();
+      await expect.poll(async () => (await frame(a)).batch).toBe(start.batch);
+      const undone = await frame(a);
+      expect(undone.view.you!.hand).toEqual(start.view.you!.hand);
+      expect(undone.point!.ref).not.toEqual(start.point!.ref);
+      expect(undone.pending ?? null).toBeNull();
       await expect(a.locator('[data-act="undo"]')).toHaveCount(0);
       await playTurn(a);
       await expect(a.locator('[data-act="undo"]')).toBeVisible();
