@@ -1013,7 +1013,13 @@ that pick from a further client or user answers `rate` and changes nothing: forg
 let an old seq overwrite a newer pick. The user's tabs that already have a
 floor can still change the pick. Every write is checked against the same
 bounds a restart checks, so the table never saves a record it could not
-restore. A request is judged in this order:
+restore. A record written under larger bounds (until
+M16.haftgane-security-review a pick kept 32 clients of each of 16 users)
+loads with each user's 8 most recently added floors, and those of the
+seat's current user and the 7 other users who added one most recently.
+What is left is full, so a client whose floor was dropped answers `rate`,
+as a further client does, and its old seqs still cannot overwrite the
+pick. A request is judged in this order:
 `forbidden` (no seat, or not the one the pick names), duplicate,
 `decision-closed` (another reference or
 the game over), `illegal` (the seat is not required or the key is not
@@ -1444,8 +1450,13 @@ file cap is a constant of the store.
   lobby and a table remember a client id of more than 40 characters, or
   one with a character outside `A-Z`, `a-z`, `0-9`, `-` and `_`, by a
   digest of 44 characters; the web client's ids (UUIDs) are kept as they
-  are. Before, an admin with puppet users could grow a table or a lobby
-  past the cap, after which it could not be saved again or loaded.
+  are. Record format 3 marks these keys: a table or lobby record of an
+  older format kept each id as sent, and is re-keyed once on load, so its
+  remembered seqs still hold. Before, an admin with puppet users could
+  grow a table or a lobby past the cap, after which it could not be saved
+  again or loaded. Every write of the store, a load's hash refresh and
+  archive mark included, refuses data over the cap (`store.ErrTooLarge`)
+  and leaves the file as it was.
 - **The identity secret:** `<data>/secret.key` must be a regular file (a
   symbolic link is refused, not followed) of exactly 32 bytes. If its
   group or other users may read or write it, the server sets its mode to
