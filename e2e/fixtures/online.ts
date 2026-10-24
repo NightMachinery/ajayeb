@@ -207,7 +207,11 @@ export async function createOnlineGame(page: Page, name: string, starter?: Crest
   await page.waitForURL(/\/play\/[A-Z0-9]+$/);
   await expect(page.locator('[data-lobby]')).toBeVisible();
   await lobbyReady(page);
-  await expect(page.locator('[data-act="lobby-seats"]')).toHaveValue('2');
+  // Two seats. A server without Haftgane tables (production until M22, the
+  // lobby frame's maxSeats 2) shows no seat-count choice; a local one offers 2 to 7.
+  await expect(page.locator('[data-lobby] li[data-seat]')).toHaveCount(2);
+  const seats = page.locator('[data-act="lobby-seats"]');
+  if ((await seats.count()) > 0) await expect(seats).toHaveValue('2');
   if (starter) {
     await page
       .locator('[data-act="lobby-first-player"]')
