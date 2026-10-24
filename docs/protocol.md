@@ -1170,6 +1170,17 @@ neighbour, score and reveal shapes are the released Haftgane view DTOs
 generated in `haftgane.gen.ts` and referenced by `platform.gen.ts`. Private
 seen hands are under `you.notebook.seen`, alongside permitted pile looks and
 inference statistics. Only a seat's controller receives its `you` section.
+On the sixth turn of an Age, a choice in `you.choices` carries `kept`, the
+card the seat's wonder keeps for an extra turn if it takes that choice
+(the last-card ability, held or built by that very stage); it is absent
+otherwise. During a pile search, the searching seat's `you.disabled` lists
+each pile card it may not build as `{kind: "build-discarded", design,
+reason: "already-built"}`, because its city already has a building of that
+name; no other seat gets a pile reason. `result` adds `tieBreak` and `tied`:
+when two or more seats share the top total, `tied` lists them in seat order
+and `tieBreak` is `coins` if coins then decided among them or `shared` if
+they still share the victory; otherwise `tieBreak` is empty and `tied` is
+an empty list.
 Results are public under either end policy; reveal and log download require
 the enabled final reveal. Card ids are catalog design slugs, never copy or
 deal ids, and card lists follow catalog order. The frame never serializes

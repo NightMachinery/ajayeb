@@ -67,6 +67,7 @@ type realChoice struct {
 	Gain    int               `json:"gain"`
 	Free    string            `json:"free"`
 	Witness []realPaymentUnit `json:"witness"`
+	Kept    *string           `json:"kept,omitempty"`
 }
 type realPaymentUnit struct {
 	Resource string `json:"resource"`
@@ -169,9 +170,11 @@ type realScore struct {
 	Total    int `json:"total"`
 }
 type realResult struct {
-	Scores  []realScore `json:"scores"`
-	Rank    []int       `json:"rank"`
-	Winners []int       `json:"winners"`
+	Scores   []realScore `json:"scores"`
+	Rank     []int       `json:"rank"`
+	Winners  []int       `json:"winners"`
+	TieBreak string      `json:"tieBreak"`
+	Tied     []int       `json:"tied"`
 }
 type realReveal struct {
 	Tucked    [][]string     `json:"tucked"`

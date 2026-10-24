@@ -93,7 +93,7 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 				if leftover == 0 || next.Hands[seat][1] != 0 {
 					return *st, evs, fmt.Errorf("rules: invalid sixth-turn hand")
 				}
-				keep := st.Cities[seat].Abilities&AbilityPlayLastCard != 0 || a.Kind == ActStage && stageHasEffect(&st.Cities[seat], terms[seat].stage, catalog.EffPlayLastCard)
+				keep := keepsLeftover(st, seat, a.Kind, terms[seat].stage)
 				event := Event{Kind: EvLeftoverDiscarded, Seat: seat, Design: leftover, Private: true}
 				if keep {
 					next.Cities[seat].Kept = leftover
@@ -220,6 +220,26 @@ func resolveStateOrder(st *State, picks *[MaxSeats]Action, evs []Event, reverse 
 	}
 	evs = append(evs, tail...)
 	return next, evs, nil
+}
+
+// keepsLeftover says whether a sixth-turn action keeps the hand's other card:
+// the city already holds the ability, or this very action builds the stage
+// that grants it. The resolver and the chooser's preview share it.
+func keepsLeftover(st *State, seat Seat, kind ActionKind, stage uint8) bool {
+	return st.Cities[seat].Abilities&AbilityPlayLastCard != 0 || kind == ActStage && stageHasEffect(&st.Cities[seat], stage, catalog.EffPlayLastCard)
+}
+
+// keptBy is the design a sixth-turn choice would keep, or zero when that
+// choice discards the leftover or the point is not a sixth turn.
+func keptBy(st *State, seat Seat, ch Choice) catalog.DesignID {
+	if st.Phase != PhaseTurn || st.Turn != TurnsPerAge || (ch.Kind != ActBuild && ch.Kind != ActStage && ch.Kind != ActSell) || !keepsLeftover(st, seat, ch.Kind, ch.Stage) {
+		return 0
+	}
+	hand := st.Hands[seat]
+	if !takeCard(&hand, ch.Design) || hand[1] != 0 {
+		return 0
+	}
+	return hand[0]
 }
 
 func takeCard(hand *[HandSize]catalog.DesignID, id catalog.DesignID) bool {

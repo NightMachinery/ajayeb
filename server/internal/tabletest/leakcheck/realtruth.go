@@ -182,6 +182,10 @@ func (t *Truth) addReal(g *rules.Game) {
 		science[s] = scienceValue(facts[s].Science, facts[s].ScienceChoices)
 		t.Secrets = append(t.Secrets, Secret{fmt.Sprintf("seat %d's observation hash at moment %d", s, len(t.Moments)), o.Fingerprint()})
 	}
+	kept := make([][]string, t.Seats)
+	for s := 0; s < t.Seats; s++ {
+		kept[s] = trialKept(st, rules.Seat(s), choices)
+	}
 	t.Secrets = append(t.Secrets, Secret{"game fingerprint", g.Fingerprint()})
 	t.Moments = append(t.Moments, m)
 	t.RealGames = append(t.RealGames, *g)
@@ -192,4 +196,40 @@ func (t *Truth) addReal(g *rules.Game) {
 	t.realNeighbours = append(t.realNeighbours, neighbours)
 	t.realScience = append(t.realScience, science)
 	t.realDisabled = append(t.realDisabled, disabled)
+	t.realKept = append(t.realKept, kept)
+}
+
+// trialKept is, for each choice offered to seat at a sixth turn, the card the
+// seat keeps once the turn resolves with that choice (every other seat taking
+// its first offer), or "". It resolves the turn, never reading the preview.
+func trialKept(st *rules.State, seat rules.Seat, choices [][]rules.Choice) []string {
+	out := make([]string, len(choices[seat]))
+	if st.Phase != rules.PhaseTurn || st.Turn != rules.TurnsPerAge {
+		return out
+	}
+	var picks [rules.MaxSeats]rules.Action
+	for s := range choices {
+		if len(choices[s]) == 0 {
+			return out
+		}
+		picks[s] = choices[s][0].Action
+	}
+	type move struct {
+		kind rules.ActionKind
+		id   catalog.DesignID
+	}
+	tried := map[move]string{}
+	for i, ch := range choices[seat] {
+		m := move{ch.Kind, ch.Design}
+		if kept, ok := tried[m]; ok {
+			out[i] = kept
+			continue
+		}
+		picks[seat] = ch.Action
+		if next, _, err := rules.ResolveState(st, &picks, nil); err == nil && next.Cities[seat].Kept != 0 {
+			out[i] = design(next.Cities[seat].Kept)
+		}
+		tried[m] = out[i]
+	}
+	return out
 }

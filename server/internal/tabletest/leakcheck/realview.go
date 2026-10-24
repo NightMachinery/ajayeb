@@ -124,6 +124,30 @@ func (c *Checker) realExtras(r *report, d Doc, v *realTable) {
 		same("result.scores", v.Result.Scores, want)
 		same("result.rank", v.Result.Rank, rank)
 		same("result.winners", v.Result.Winners, winners)
+		// The tie at the top, from totals and coins alone: coins decide when
+		// they split the tied seats, and equal coins share the victory.
+		top := want[0].Total
+		for _, s := range want {
+			top = max(top, s.Total)
+		}
+		tied, coins := []int{}, -1
+		for s, sc := range want {
+			if sc.Total == top {
+				tied = append(tied, s)
+				coins = max(coins, int(st.Cities[s].Coins))
+			}
+		}
+		tieBreak := ""
+		switch {
+		case len(tied) < 2:
+			tied = []int{}
+		case slices.ContainsFunc(tied, func(s int) bool { return int(st.Cities[s].Coins) != coins }):
+			tieBreak = "coins"
+		default:
+			tieBreak = "shared"
+		}
+		same("result.tieBreak", v.Result.TieBreak, tieBreak)
+		same("result.tied", v.Result.Tied, tied)
 	}
 	if v.Reveal != nil {
 		left := []realLeftover{}
@@ -144,11 +168,20 @@ func (c *Checker) realExtras(r *report, d Doc, v *realTable) {
 	}
 	y := v.You
 	choices := c.Truth.RealChoices[d.Moment][d.Viewer]
+	hand := c.Truth.Moments[d.Moment].Hands[d.Viewer]
 	for i, ch := range y.Choices {
+		if ch.Kept != nil && !slices.Contains(hand, *ch.Kept) {
+			r.add(HiddenCard, "choice.kept", "not a card held by this seat")
+		}
 		if i >= len(choices) {
 			break
 		}
 		w := choices[i]
+		var kept *string
+		if k := c.Truth.realKept[d.Moment][d.Viewer][i]; k != "" {
+			kept = &k
+		}
+		same("choice.kept", ch.Kept, kept)
 		same("choice.side", ch.Side, func() string {
 			if w.Kind == rules.ActSide {
 				return w.Side.String()
@@ -171,14 +204,19 @@ func (c *Checker) realExtras(r *report, d Doc, v *realTable) {
 		same("choice.witness", ch.Witness, witness)
 	}
 	allowed := c.Truth.Moments[d.Moment].Hands[d.Viewer]
-	if st.Phase == rules.PhaseLastCard {
+	kinds := []string{"build", "stage"}
+	switch {
+	case st.Phase == rules.PhaseLastCard:
 		allowed = []string{c.Truth.Moments[d.Moment].Kept[d.Viewer]}
+	case st.Phase == rules.PhaseDiscardBuild && int(st.Decider) == d.Viewer:
+		// The searching seat sees the pile, and nobody else does.
+		allowed, kinds = c.Truth.Moments[d.Moment].Pile, []string{"build-discarded"}
 	}
 	for _, x := range y.Disabled {
 		if !slices.Contains(allowed, x.Design) {
 			r.add(HiddenCard, "disabled.design", "not a card held by this seat")
 		}
-		if !slices.Contains([]string{"build", "stage"}, x.Kind) || !slices.Contains([]string{"already-built", "wonder-complete", "cannot-cover", "insufficient-coins"}, x.Reason) {
+		if !slices.Contains(kinds, x.Kind) || !slices.Contains([]string{"already-built", "wonder-complete", "cannot-cover", "insufficient-coins"}, x.Reason) {
 			r.add(Mismatch, "disabled", "unknown kind or reason")
 		}
 	}
@@ -318,6 +356,20 @@ func publicNeighbours(st *rules.State, seat rules.Seat) []realNeighbour {
 // account for free-build abilities and chains without copying their policy.
 func publicDisabled(st *rules.State, seat rules.Seat, offered []rules.Choice) []realDisabled {
 	out := []realDisabled{}
+	if st.Phase == rules.PhaseDiscardBuild && st.Decider == seat {
+		// The searching seat is told why a pile card is not offered: the
+		// city already has a building of that name.
+		city := &st.Cities[seat]
+		for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
+			if st.Discard[id] == 0 || slices.ContainsFunc(offered, func(ch rules.Choice) bool { return ch.Design == id }) {
+				continue
+			}
+			if card, _ := catalog.DesignByID(id); !city.Buildings.And(catalog.T.ByName[card.NameID]).Empty() {
+				out = append(out, realDisabled{Kind: "build-discarded", Design: design(id), Reason: "already-built"})
+			}
+		}
+		return out
+	}
 	if st.Phase != rules.PhaseTurn && st.Phase != rules.PhaseLastCard {
 		return out
 	}

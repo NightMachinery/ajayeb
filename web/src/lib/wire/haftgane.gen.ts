@@ -106,6 +106,11 @@ export interface Choice {
   gain: number /* int */;
   free: string;
   witness: PaymentUnit[];
+  /**
+   * Kept is the own-hand design this sixth-turn choice keeps for the last
+   * card, including through a stage built by the choice itself.
+   */
+  kept?: string;
 }
 export interface PaymentUnit {
   resource: string;
@@ -208,10 +213,17 @@ export interface Score {
   purple: number /* int */;
   total: number /* int */;
 }
+/**
+ * TieBreak is "" when one seat has the top total, "coins" when coins split
+ * the seats tied on it, and "shared" when they hold equal coins too. Tied
+ * lists those seats in seat order, and is empty when TieBreak is "".
+ */
 export interface Result {
   scores: Score[];
   rank: number /* int */[];
   winners: number /* int */[];
+  tieBreak: string;
+  tied: number /* int */[];
 }
 export interface Reveal {
   tucked: string[][];

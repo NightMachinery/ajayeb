@@ -68,6 +68,9 @@ type Choice struct {
 	Gain    int           `json:"gain"`
 	Free    string        `json:"free"`
 	Witness []PaymentUnit `json:"witness"`
+	// Kept is the own-hand design this sixth-turn choice keeps for the last
+	// card, including through a stage built by the choice itself.
+	Kept *string `json:"kept,omitempty"`
 }
 type PaymentUnit struct {
 	Resource string `json:"resource"`
@@ -169,10 +172,16 @@ type Score struct {
 	Purple   int `json:"purple"`
 	Total    int `json:"total"`
 }
+
+// TieBreak is "" when one seat has the top total, "coins" when coins split
+// the seats tied on it, and "shared" when they hold equal coins too. Tied
+// lists those seats in seat order, and is empty when TieBreak is "".
 type Result struct {
-	Scores  []Score `json:"scores"`
-	Rank    []int   `json:"rank"`
-	Winners []int   `json:"winners"`
+	Scores   []Score `json:"scores"`
+	Rank     []int   `json:"rank"`
+	Winners  []int   `json:"winners"`
+	TieBreak string  `json:"tieBreak"`
+	Tied     []int   `json:"tied"`
 }
 type Reveal struct {
 	Tucked    [][]string `json:"tucked"`

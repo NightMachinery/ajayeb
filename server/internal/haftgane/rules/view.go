@@ -104,12 +104,16 @@ func (g *Game) ViewFor(viewer Seat) view.Table {
 		out.You = g.privateView(&o, &public)
 	}
 	if current.Phase == PhaseOver {
-		out.Result = &view.Result{Scores: make([]view.Score, 0, current.Seats), Rank: make([]int, 0, current.Seats), Winners: []int{}}
+		tieBreak, tied := topTie(&current.Result, current.Seats)
+		out.Result = &view.Result{Scores: make([]view.Score, 0, current.Seats), Rank: make([]int, 0, current.Seats), Winners: []int{}, TieBreak: tieBreak, Tied: []int{}}
 		for seat := Seat(0); seat < Seat(current.Seats); seat++ {
 			out.Result.Scores = append(out.Result.Scores, scoreDTO(current.Result.Scores[seat]))
 			out.Result.Rank = append(out.Result.Rank, int(current.Result.Rank[seat]))
 			if current.Result.Winners&uint8(seat.Mask()) != 0 {
 				out.Result.Winners = append(out.Result.Winners, int(seat))
+			}
+			if tied.Has(seat) {
+				out.Result.Tied = append(out.Result.Tied, int(seat))
 			}
 		}
 		out.CanDownload = !current.Opts.HideAtEnd
@@ -187,13 +191,22 @@ func (g *Game) privateView(o *Observation, public *State) *view.Private {
 	v := &view.Private{Seat: int(seat), Hand: designSlugs(c.Hand[:]), Kept: designSlug(c.Kept), Tucked: designSlugs(c.Tucked[:]), Choices: []view.Choice{}, Disabled: []view.Disabled{}, Offer: []view.OfferEntry{}, Notebook: notebookDTO(o), Neighbours: neighbourDTO(public, seat)}
 	choices := g.Legal(seat)
 	for _, ch := range choices {
-		v.Choices = append(v.Choices, choiceDTO(ch))
+		dto := choiceDTO(ch)
+		if kept := keptBy(&g.State, seat, ch); kept != 0 {
+			slug := designSlug(kept)
+			dto.Kept = &slug
+		}
+		v.Choices = append(v.Choices, dto)
 	}
 	if c.Phase == PhaseDiscardBuild && c.Decider == seat {
 		legal := discardBuilds(&g.State, seat)
 		for id := catalog.DesignID(1); id <= catalog.NumDesigns; id++ {
 			if c.Offer[id] > 0 {
 				v.Offer = append(v.Offer, view.OfferEntry{Design: designSlug(id), Count: int(c.Offer[id]), Legal: legal.Has(id)})
+				// The search fired, so only the name rule bars a pile card.
+				if !legal.Has(id) {
+					v.Disabled = append(v.Disabled, view.Disabled{Kind: actionName(ActBuildDiscarded), Design: designSlug(id), Reason: "already-built"})
+				}
 			}
 		}
 	}

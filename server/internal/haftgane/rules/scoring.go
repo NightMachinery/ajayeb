@@ -123,6 +123,33 @@ func scoreResult(st *State) Result {
 	return result
 }
 
+// topTie reads a finished ranking: how a tie on the top total ended, and the
+// seats in it. Every winner holds the top total, so coins decided ("coins")
+// exactly when fewer seats won than tied, and otherwise the tied seats share
+// the victory ("shared"). One seat alone at the top is no tie: "" and none.
+func topTie(r *Result, seats uint8) (string, SeatSet) {
+	var top int16
+	for seat := Seat(0); seat < Seat(seats); seat++ {
+		if seat == 0 || r.Scores[seat].Total > top {
+			top = r.Scores[seat].Total
+		}
+	}
+	var tied SeatSet
+	for seat := Seat(0); seat < Seat(seats); seat++ {
+		if r.Scores[seat].Total == top {
+			tied |= seat.Mask()
+		}
+	}
+	switch {
+	case tied.Count() < 2:
+		return "", 0
+	case SeatSet(r.Winners).Count() < tied.Count():
+		return "coins", tied
+	default:
+		return "shared", tied
+	}
+}
+
 func finishScored(st *State) {
 	st.Phase = PhaseOver
 	st.Decider = NoSeat

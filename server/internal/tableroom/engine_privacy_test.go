@@ -2,6 +2,7 @@ package tableroom
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"testing"
 
@@ -146,6 +147,28 @@ func TestRealViewExtraCanaries(t *testing.T) {
 				}
 				cases = append(cases, canary{"forged revealed leftover", leakcheck.Mismatch, "reveal.leftovers", func(v map[string]any) {
 					v["reveal"].(map[string]any)["leftovers"].([]any)[0].(map[string]any)["age"] = 9
+				}})
+				// The tie at the top and the last conflicts are public, but
+				// each must match the truth's own reading of the scores.
+				forged := "shared"
+				if fr.View.Result.TieBreak == "shared" {
+					forged = "coins"
+				}
+				cases = append(cases, canary{"forged tie-break", leakcheck.Mismatch, "result.tieBreak", func(v map[string]any) {
+					v["result"].(map[string]any)["tieBreak"] = forged
+				}}, canary{"a tie list naming every seat", leakcheck.Mismatch, "result.tied", func(v map[string]any) {
+					v["result"].(map[string]any)["tied"] = []int{0, 1, 2, 3, 4, 5, 6}
+				}})
+				conflict := slices.IndexFunc(lastEvents(fr), func(e wire.TableEvent) bool { return e.Kind == "military" })
+				if conflict < 0 {
+					t.Fatal("the last batch reports no conflict")
+				}
+				cases = append(cases, canary{"forged conflict shields", leakcheck.Mismatch, fmt.Sprintf("events[%d]", conflict), func(v map[string]any) {
+					e := v["events"].([]any)[conflict].(map[string]any)
+					e["left"] = e["left"].(float64) + 1
+				}}, canary{"forged token worth", leakcheck.Mismatch, fmt.Sprintf("events[%d]", conflict), func(v map[string]any) {
+					e := v["events"].([]any)[conflict].(map[string]any)
+					e["delta"] = e["delta"].(float64) + 2
 				}})
 			}
 			for _, tc := range cases {
