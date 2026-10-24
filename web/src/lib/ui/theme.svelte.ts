@@ -2,12 +2,15 @@
 // theme it resolves to. The inline bootstrap in src/app.html applies the
 // stored preference before the first paint; this class takes over after
 // start-up, follows the system setting while the preference is 'system', and
-// keeps <html> in step (see apply()).
+// keeps <html> in step (see apply()). Without a stored choice the
+// preference is light (DEFAULT_THEME_PREF; app.html uses the same).
 
 import { MediaQuery } from 'svelte/reactivity';
 
 export const THEME_PREFS = ['system', 'light', 'dark'] as const;
 export type ThemePref = (typeof THEME_PREFS)[number];
+/** The preference of someone who never chose (M18.installable-and-fullscreen). */
+export const DEFAULT_THEME_PREF: ThemePref = 'light';
 export type ResolvedTheme = 'light' | 'dark';
 
 /** The localStorage key. src/app.html reads the same key. */
@@ -24,12 +27,12 @@ export function isThemePref(value: unknown): value is ThemePref {
   return typeof value === 'string' && (THEME_PREFS as readonly string[]).includes(value);
 }
 
-function readStoredPref(): ThemePref {
+export function readStoredPref(): ThemePref {
   try {
     const stored = globalThis.localStorage?.getItem(THEME_STORAGE_KEY);
-    return isThemePref(stored) ? stored : 'system';
+    return isThemePref(stored) ? stored : DEFAULT_THEME_PREF;
   } catch {
-    return 'system'; // storage blocked: private mode or a sandboxed frame
+    return DEFAULT_THEME_PREF; // storage blocked: private mode or a sandboxed frame
   }
 }
 

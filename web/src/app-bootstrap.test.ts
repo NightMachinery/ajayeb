@@ -22,8 +22,9 @@ function storage(stored: Stored | 'blocked') {
   };
 }
 
-/** The root's attributes after the bootstrap runs on this storage. */
-function boot(stored: Stored | 'blocked'): Map<string, string> {
+/** The root's attributes after the bootstrap runs on this storage, with
+ *  the system's colour scheme dark or not. */
+function boot(stored: Stored | 'blocked', systemDark = false): Map<string, string> {
   const attributes = new Map<string, string>();
   const root = {
     setAttribute: (name: string, value: string) => attributes.set(name, value),
@@ -33,7 +34,7 @@ function boot(stored: Stored | 'blocked'): Map<string, string> {
   };
   const run = new Function('window', 'document', 'localStorage', 'setTimeout', script);
   run(
-    { matchMedia: () => ({ matches: false }) },
+    { matchMedia: (q: string) => ({ matches: systemDark && q.includes('dark') }) },
     { documentElement: root, querySelectorAll: () => [] },
     storage(stored),
     () => 0
@@ -90,5 +91,26 @@ describe('the bootstrap tutorial offer', () => {
     expect(
       boot({ 'ajayeb:settings': JSON.stringify({ locale: 'en' }) }).has('data-locale-pending')
     ).toBe(false);
+  });
+});
+
+describe('the bootstrap theme', () => {
+  const themed = (stored: Stored | 'blocked', systemDark: boolean) => {
+    const a = boot(stored, systemDark);
+    return [a.get('data-theme'), a.get('data-theme-pref')];
+  };
+
+  it('gives a new visitor light, whatever the system scheme', () => {
+    expect(themed({}, true)).toEqual(['light', 'light']);
+    expect(themed({}, false)).toEqual(['light', 'light']);
+    expect(themed('blocked', true)).toEqual(['light', 'light']);
+    expect(themed({ 'ajayeb:theme': 'sepia' }, true)).toEqual(['light', 'light']);
+  });
+
+  it('keeps a stored choice', () => {
+    expect(themed({ 'ajayeb:theme': 'dark' }, false)).toEqual(['dark', 'dark']);
+    expect(themed({ 'ajayeb:theme': 'light' }, true)).toEqual(['light', 'light']);
+    expect(themed({ 'ajayeb:theme': 'system' }, true)).toEqual(['dark', 'system']);
+    expect(themed({ 'ajayeb:theme': 'system' }, false)).toEqual(['light', 'system']);
   });
 });

@@ -28,9 +28,9 @@
       // Theme and Home bootstrap. It runs before the first paint, so the
       // page never flashes the wrong theme. src/lib/ui/theme.svelte.ts owns
       // the theme after the app starts and uses the same storage key and
-      // attributes.
+      // attributes. Someone who never chose gets light (M18).
       (function () {
-        var pref = 'system';
+        var pref = 'light';
         try {
           var stored = localStorage.getItem('ajayeb:theme');
           if (stored === 'light' || stored === 'dark' || stored === 'system') pref = stored;
