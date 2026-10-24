@@ -80,7 +80,9 @@ pick a level its table never froze.
 ## Admission, cancellation and privacy
 
 At most one job is queued or executing for a room. It takes the existing
-`ai.Pool` permit under the smallest attached human participant address,
+`ai.Pool` permit under the address of the player whose point it is: the lowest
+required seat whose human player has a connection, else the table creator's,
+else the smallest attached human participant's (the protocol's Limits). It
 searches one seat, releases, then queues the next seat. Queue waiting consumes
 no fixed policy allowance and no watchdog time. No new deployment-wide
 scheduler or speculative capacity reservation is introduced; host-wide

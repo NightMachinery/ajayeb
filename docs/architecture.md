@@ -207,7 +207,9 @@ counts to offer.
   and reopens that point under a fresh reference.
 - **Bots.** One bot job per table at a time, for the first required bot seat
   that has not confirmed. It searches under a permit from the server's shared
-  `ai.Pool`, keyed by the smallest attached human participant's address, and
+  `ai.Pool`, keyed by the address of the point's player (the lowest required
+  human seat with a connection, else the creator, else the smallest attached
+  human participant), and
   confirms its pick through the same transaction as a human's. A durable work
   row per required bot seat freezes the policy version, level and allowance
   when the point opens, so a restart resumes the same work. No bot runs while

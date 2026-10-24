@@ -262,6 +262,21 @@ canonical history is the `ajayeb-log/2` download.
   `ai.Pool`, checks the no-human pause (a spectator alone starts nothing,
   the last human leaving cancels the job and frees its permit, a restart
   resumes from the durable work rows) and undo's policy and refusals.
+- `budget_test.go` (M16.table-request-budget) covers the per-user request
+  budget: its bucket arithmetic; two tabs of one user sharing it, a
+  request past it refused with `rate` while the record's bytes, the pick
+  and every other connection's frames stay as they were, and the same seq
+  accepted a second later; a relink, seat switches, a role change and a
+  pick drawing on one budget; a new point filling every budget; and an
+  undo followed by the same point again filling nothing. `conns_test.go`
+  refuses a user's ninth connection, seated or watching, with
+  `room-full`. `poolkey_test.go` holds the point's player's address in
+  the pool and checks that the bot's search waits for it, then that the
+  key falls back to the next attached player, the creator and the
+  smallest attached participant. In `lobbyroom`, `budget_test.go` covers
+  the same budget for lobby edits, and `conns_test.go` the ninth
+  connection and a player with a slot getting into a lobby that watchers
+  have filled, while a new watcher is refused.
 - `leaks_test.go` passes every frame of whole games, for every seat and the
   spectator under both end policies, to the leak oracle
   (`tabletest/leakcheck`). First each frame's **envelope** is checked

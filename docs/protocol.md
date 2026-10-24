@@ -861,6 +861,9 @@ it again with the same `seq`.
 - `room-full`: the room takes no more connections of this kind: a new
   spectator once the room has 32 connections, or one more connection of a
   user who already has 32 there. Spectators can never lock a player out.
+  A table or a lobby takes at most 8 connections of one user, seated or
+  watching, and a user without a seat (at a lobby, without a slot taken or
+  reserved for them) only while it has fewer than 32.
 - `forbidden`: this user may not do that in this room: join another user's
   hot-seat or `ai` room, ask for a rematch as a spectator, or create a room
   with settings the server refuses.
@@ -1023,7 +1026,8 @@ pick. A request is judged in this order:
 `forbidden` (no seat, or not the one the pick names), duplicate,
 `decision-closed` (another reference or
 the game over), `illegal` (the seat is not required or the key is not
-offered), then the pick's floor (duplicate, `stale` or `rate`). Other viewers
+offered), then the pick's floor (duplicate, `stale` or `rate`), then the
+sender's request budget (`rate`, under Limits). Other viewers
 receive neither the pending key nor any revision or metadata change that
 reveals private edit frequency.
 
@@ -1241,11 +1245,12 @@ Both snapshots use these fixed metadata shapes:
 `table-reject` and `lobby-reject` carry only `t`, `seq`, and `code`, and go
 only to the submitting connection. Table codes are `decision-closed` (old
 or resolved point), `illegal` (unoffered key), `stale` (old sequence),
-`bad-request`, `not-admin`, `forbidden`, `rate` (also a new tab past a
-pick's floor bound), and `storage`.
-Lobby codes are `bad-request`, `stale`, `not-admin`, `forbidden`, `rate`,
-and `storage`. A failed durable transaction reports storage without
-publishing the candidate or revealing another seat's information.
+`bad-request`, `not-admin`, `forbidden`, `rate` (past the sender's
+request budget, or a new tab past a pick's floor bound), and `storage`.
+Lobby codes are `bad-request`, `stale`, `not-admin`, `forbidden`, `rate`
+(past the sender's request budget), and `storage`. A failed durable
+transaction reports storage without publishing the candidate or revealing
+another seat's information.
 
 ## Versions, idempotency and reconnecting
 
@@ -1420,6 +1425,27 @@ file cap is a constant of the store.
 - **Undo:** 60 per minute per client address, as a token bucket of 60; an
   `undo` over it gets `reject rate` with its `seq`. Every applied undo
   replays and rewrites the room file.
+- **Requests at tables and lobbies:** each user has a budget of 16
+  requests that change the room, shared by all of their connections there,
+  refilled one a second (`tableroom.Budget`). A table also fills every
+  budget when its game reaches a point it had not reached before; reaching
+  a point again after an undo does not. A request past the budget gets
+  `table-reject rate` or `lobby-reject rate` with its seq and changes
+  nothing: nothing is applied, saved or sent to anyone else, and its seq is
+  not used up, so the web client sends it again (after 250, 500 and 750
+  ms). At a table, what is charged is an accepted pick (a changed key or a
+  confirmation turning on or off), an undo, a seat switch, a role change, a
+  resignation and a relink that resets a seat's claim; at a lobby, every
+  accepted edit and Start. A duplicate, a refused request, a bot's pick and
+  the room's own changes (its timers, a bot confirming a pick it inherited)
+  cost nothing. A `rematch` is not charged: the room creation limits bound
+  it, and a game has at most one successor. The numbers fit real play: a
+  player changing and confirming a pick spends a few tokens at each point,
+  an admin reseating all seven seats spends seven, and the requests a
+  reconnecting tab sends again are duplicates. Budgets live in memory only:
+  a room loaded again (after a restart, or after it left memory, which
+  needs it to have had no connection) starts every user full, at most one
+  more burst per load.
 - **Liveness:** a ping every 25 seconds; dropped at the tick after two pings
   in a row went unanswered.
 - **Writes:** each frame must be written within 10 seconds, or the socket is
@@ -1436,21 +1462,29 @@ file cap is a constant of the store.
   `join`); only when every room in memory has a connection is the answer
   `error busy`. A room admits a new spectator only while it has fewer than
   32 connections, and a seated user only while that user has fewer than 32
-  connections there (`error room-full`). A table admits them the same
-  way, so it holds at most 256 connections (32 spectators admitted before
-  the seats filled, and 32 for each of seven seated users); a lobby admits
-  anyone only while it has fewer than 32. Each room's inbox holds 64
-  messages; a room with no connection for 30 minutes leaves memory and is
-  reloaded from disk on the next `join`. A bot searches only while its
-  room has a connection: the last connection to leave cancels the search,
-  and the next one to join starts it again.
+  connections there (`error room-full`). A table or a lobby admits at most 8
+  connections of one user, seated or watching, and a user without a seat (at
+  a lobby, without a slot taken or reserved for them) only while it has
+  fewer than 32 connections, so a player who reconnects is never locked out
+  by watchers. Either holds at most 88 connections: 32 watchers admitted
+  before the players connected, and 8 for each of seven players. Each room's
+  inbox holds 64 messages; a room with no connection for 30 minutes leaves
+  memory and is reloaded from disk on the next `join`. A bot searches only
+  while its room has a connection: the last connection to leave cancels the
+  search, and the next one to join starts it again.
 - **Bot searches:** at most 2 run at once across the server
-  (`-bot-searches`), and one client address (an IPv4 address or an IPv6
-  /64, the key of the limits above) holds at most 2 of them at once
+  (`-bot-searches`), and one client address (an IPv4 address or an IPv6 /64,
+  the key of the limits above) holds at most 2 of them at once
   (`-bot-searches-per-address`). A bot room's search counts under the
-  address of the person playing it, and a table's under the smallest
-  address among its attached human players, which need not be the address
-  of the player whose move the bot answers. Further searches wait without
+  address of the person playing it. A table's counts under the address of
+  the player whose point it is: the lowest seat the point requires whose
+  human player has a connection there. When there is none (every required
+  seat is a bot's, or its player has left), it counts under the table
+  creator's address, and when the creator has no connection either, under
+  the smallest address among the table's attached human participants. Among
+  one user's connections the smallest address counts. Until
+  M16.table-request-budget the smallest address among the attached players
+  always paid, whoever was playing the point. Further searches wait without
   holding a slot, and a search whose room is left, evicted or undone leaves
   the queue at once. When a slot frees up it goes to a waiting search whose
   address holds the fewest slots, and among those to the address that got
@@ -1496,18 +1530,20 @@ Known gaps, each left for a larger design change:
 - **Room codes:** guessable from many addresses, as described under joins
   above.
 - **Table and lobby writes and fan-out:** a table or a lobby saves its
-  record after every applied request, a private pick change included, and
-  a confirmation turning on or off, a seat switch and a role change each
-  send a new frame to every connection. Nothing bounds this per user
-  beyond each connection's frame rate, and a seated user may hold 32
-  connections, so one player can drive a record write and a fan-out per
-  frame, up to 320 a second from two addresses. Unlike a Duel room's acts,
-  which end with the game, a table's confirmations and pick changes are
-  never used up, so no rooms need to be banked. Measured
-  (M16.haftgane-security-review): at a seven-seat table with 225
-  connections one public change sends 225 frames, about 1.6 MB in all,
-  and takes about 17 ms under the race detector. A request budget per user
-  across connections, and coalesced writes, are left to a later decision.
+  record after every applied request, a private pick change included, and a
+  confirmation turning on or off, a seat switch and a role change each send
+  a new frame to every connection. The request budget bounds this per user,
+  whatever their connections: 16 at a new point and then one a second. Only
+  a player (with a seat, or at a lobby a slot) or an admin has anything to
+  spend it on, so a room's writes are bounded by its seven players and at
+  most 32 admins, who need an admin to promote them, and each public change
+  reaches at most 88 connections (measured before the cap, by
+  M16.haftgane-security-review: 225 connections took about 1.6 MB and 17 ms
+  under the race detector per change). Writes are not coalesced. An
+  acknowledged request must survive a restart, so a burst of private pick
+  changes could share one write only by holding every acknowledgement until
+  a group write, which the actor does not do; acknowledging first would lose
+  an acknowledged pick in a crash.
 - **Admins see the seats they take:** an admin may seat any spectator,
   themselves included, in any seat (D42), and then sees that seat's hand,
   pending pick and remembered knowledge, as its player would. The switch
