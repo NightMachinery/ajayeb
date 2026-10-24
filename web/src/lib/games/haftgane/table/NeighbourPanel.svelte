@@ -291,6 +291,15 @@
   .city .n {
     font-weight: 700;
   }
+  /* The stacked layout with little height keeps each neighbour's status and leaves what
+     they sell and their wonder to the city view, one tap away, and to each
+     card's cost (M18.short-screen-status). */
+  @media (orientation: portrait) and (max-height: 40rem),
+    (min-height: 32.01rem) and (max-height: 40rem) {
+    .goods {
+      display: none;
+    }
+  }
   /* Desktop: full side panels (phone-layout.md, "Desktop"). */
   @media (min-width: 64rem) and (min-height: 32.01rem) {
     .wide {

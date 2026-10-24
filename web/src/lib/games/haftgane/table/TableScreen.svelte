@@ -753,6 +753,14 @@
     </div>
   {/if}
 </div>
+<!-- Below the floor a translated notice covers the screen instead of a
+     broken table (see .too-short). -->
+<div class="too-short" dir={i18n.dir} role="status" data-too-short>
+  <div>
+    <p class="too-short-title">{ht('hg.screen.tooShort.title')}</p>
+    <p>{ht('hg.screen.tooShort.body')}</p>
+  </div>
+</div>
 
 {#snippet tag(seat: number)}
   {@const line = tagsOn ? lineOf(recap, seat) : undefined}
@@ -985,6 +993,56 @@
     font: inherit;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  /* The stacked layout with little height, such as a phone sharing its
+     screen with a video call (M18.short-screen-status): every seat keeps its
+     whole panel, and the hand gives up height instead, one row of smaller
+     cards (HandGrid). Below the floor the too-short notice covers the
+     screen (.too-short). */
+  @media (orientation: portrait) and (max-height: 40rem),
+    (min-height: 32.01rem) and (max-height: 40rem) {
+    .screen {
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 0.3rem;
+    }
+    .mid {
+      gap: 0.2rem;
+    }
+  }
+
+  /* The floor (M18.short-screen-status), measured with
+     e2e/ux/short-screens.spec.ts: under 480 px of height in portrait a
+     table of seven cannot keep every seat, a 44 px wide hand and the turn
+     bar; in landscape the turn bar covers the hand under 667 px of width
+     or 340 px of height. Pure CSS; open dialogs stay above it. */
+  .too-short {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: none;
+    place-items: center;
+    padding: 1.5rem;
+    background: var(--table);
+    color: var(--fg-muted);
+    font-size: 0.875rem;
+    text-align: center;
+  }
+  .too-short > div {
+    max-width: 20rem;
+  }
+  .too-short-title {
+    margin-block-end: 0.5rem;
+    color: var(--fg);
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  @media (orientation: portrait) and (max-height: 29.9375rem),
+    (orientation: landscape) and (max-height: 32rem) and (max-width: 41.625rem),
+    (orientation: landscape) and (max-height: 21.1875rem) {
+    .too-short {
+      display: grid;
+    }
   }
 
   /* A short landscape screen (Duel's short: variant): side columns. */

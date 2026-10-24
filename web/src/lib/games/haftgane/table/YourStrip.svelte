@@ -92,6 +92,7 @@
   class:own
   style:--seat="var(--seat-{seat.seat})"
   data-seat={seat.seat}
+  data-player-status={seat.seat}
   data-confirmed={status === 'confirmed' ? 'true' : 'false'}
   data-relation={seat.relation}
   aria-label={ht('hg.screen.crest.tip', { name, where })}
@@ -155,6 +156,7 @@
     <span
       class="chip"
       data-science
+      data-science-symbols
       role="img"
       aria-label={scienceTip}
       {@attach tooltip({ text: scienceTip })}
@@ -314,8 +316,9 @@
     color: var(--fg-muted);
     font-size: 0.75rem;
   }
-  /* A short landscape screen leaves the colour counts to the city view. */
-  @media (orientation: landscape) and (max-height: 32rem) {
+  /* A short screen (under 40rem high) leaves the colour counts to the
+     city view. */
+  @media (max-height: 40rem) {
     .strip {
       padding: 0.3rem 0.4rem;
     }

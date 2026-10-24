@@ -46,6 +46,9 @@ export const screen = {
   'hg.screen.menu.close': 'بستن منو',
   'hg.screen.menu.rules': 'قوانین',
   'hg.screen.notice.dismiss': 'بستن',
+  'hg.screen.tooShort.title': 'جا کافی نیست',
+  'hg.screen.tooShort.body':
+    'این پنجره برای بازی خیلی کوتاه است. آن را بلندتر کنید یا دستگاه را بچرخانید.',
   'hg.screen.age': 'دوران {age}',
   // Not the middle dot, which looks just like the Persian zero «۰».
   'hg.screen.sep': '، ',

@@ -1,7 +1,7 @@
 <script lang="ts">
   // The viewer's hand: four columns and up to two rows on a phone in
   // portrait and on a desktop (capped at 38rem), one row of up to seven on
-  // a short landscape screen. Card sizes come from the space the grid has,
+  // a short screen (under 40rem high). Card sizes come from the space the grid has,
   // by container query units, so the hand never scrolls and never
   // overflows. The hand asks the screen for room for its rows at a usable
   // card (4.5rem wide, its tags readable) in portrait and on a desktop,
@@ -88,7 +88,7 @@
     align-content: start;
     gap: var(--gap);
   }
-  @media (orientation: landscape) and (max-height: 32rem) {
+  @media (max-height: 40rem) {
     .hand {
       --rows: 1;
       --min-cw: 2.75rem;
