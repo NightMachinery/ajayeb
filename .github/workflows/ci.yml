@@ -141,7 +141,9 @@ jobs:
         env:
           CI: 'true'
         # The @perf case runs in e2e-perf below, which reports without gating.
-        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/3 --grep-invert @perf
+        # A @slow case waits out a real server limit (the temporary admin's
+        # five minutes away); it runs locally, with make e2e GREP=@slow.
+        run: pnpm -C e2e exec playwright test --shard=${{ matrix.shard }}/3 --grep-invert '@perf|@slow'
       - name: Keep the report and traces
         if: failure() || cancelled()
         uses: actions/upload-artifact@v7

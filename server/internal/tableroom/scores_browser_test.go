@@ -1,8 +1,9 @@
 package tableroom
 
 // The raw browser recording is private test output, not a persisted fixture.
-// Run this after the end-of-game spec (e2e/specs/haftgane-scores.full.spec.ts),
-// passing its frames-*.json files, one per end policy, in
+// Run this after the end-of-game spec (e2e/specs/haftgane-scores.full.spec.ts)
+// or the seven-seat playthrough (e2e/specs/haftgane-playthrough.full.spec.ts),
+// passing their frames-*.json files, one per end policy, in
 // AJAYEB_SCORES_BROWSER_FRAMES (the operating system's path-list separator).
 import (
 	"encoding/json"
