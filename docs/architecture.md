@@ -383,8 +383,9 @@ a reload mends a client and a server that disagree.
   online sheet is retired. Joining fills a seat but never starts a game. Its edits and role changes use the Session's existing sequenced
   retry lane; Start uses the server's `canStart` and explicitly fills open
   seats with Apprentice bots. Reservations block Start until their humans
-  return or an admin opens them. Side selection awaits the engine-contract
-  wire option; the source marks its control slot. The current protocol has no
+  return or an admin opens them. Haftgane's wonder-side control offers Each
+  picks, Day (the absent default) and Random, and replaces options by spreading
+  the complete current object, preserving Duel preferences across count changes. The current protocol has no
   atomic seat-order edit, so seat numbers show the listed order without fake
   drag handles. A finished participant can request the rematch lobby; its
   private device claim stays in the successor URL fragment. Saved lobbies

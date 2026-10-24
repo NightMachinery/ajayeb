@@ -538,8 +538,9 @@ lobby remains a lobby until Start. Two tabs of one guest and a promoted
 spectator follow the same-code Duel handoff; frozen admins can change shared
 hints, including a spectator, but cannot mint the other seat's device link.
 Reload preserves the guest's seat and hint permission. A separate case
-switches two/three-seat panels, preserves the starter, changes an existing
-bot's Duel level and starts its online game without Undo. The bootstrap unit
+switches two/three-seat panels, round-trips Each picks, Day and Random in
+Haftgane's side-rule control while preserving the starter and hint settings,
+hides that control at two seats, changes an existing bot's Duel level and starts its online game without Undo. The bootstrap unit
 regression verifies that Duel snapshots return to discovery without reaching
 the old lobby Session; the v2 membership stays until the v1 state arrives.
 

@@ -399,8 +399,21 @@
                     ></select
                   >
                 </label>
-                <!-- SIDES CONTROL SLOT: engine-contract owns LobbyOptions.sides and the
-                 Start setup mapping. Wire Each picks / Day / Random here once it lands. -->
+                <label class="flex flex-wrap items-center justify-between gap-2 font-semibold">
+                  <span>{t('lobby.sides')}</span>
+                  <select
+                    class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
+                    data-act="lobby-sides"
+                    disabled={!ready || !session.admin}
+                    {@attach selectValue(lobby.options.sides ?? 'day')}
+                    onchange={(e) =>
+                      option({ sides: e.currentTarget.value as 'choose' | 'day' | 'random' })}
+                  >
+                    <option value="choose">{t('lobby.sidesChoose')}</option>
+                    <option value="day">{t('lobby.sidesDay')}</option>
+                    <option value="random">{t('lobby.random')}</option>
+                  </select>
+                </label>
                 <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
                   ><span>{t('lobby.end')}</span>
                   <select

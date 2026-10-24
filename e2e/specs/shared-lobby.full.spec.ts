@@ -121,11 +121,24 @@ test.describe('shared online lobby', { tag: ['@full', '@mobile'] }, () => {
     await page.locator('[data-act="lobby-seats"]').selectOption('3');
     await lobbyReady(page);
     await expect(page.locator('[data-haftgane-settings]')).toBeVisible();
+    await expect(page.locator('[data-act="lobby-sides"]')).toHaveValue('day');
+    const hints = await page.evaluate(() => window.__ajayebTable!.lobby()!.options.hints);
+    for (const sides of ['choose', 'day', 'random']) {
+      await page.locator('[data-act="lobby-sides"]').selectOption(sides);
+      await lobbyReady(page);
+      await expect(page.locator('[data-act="lobby-sides"]')).toHaveValue(sides);
+      const options = await page.evaluate(() => window.__ajayebTable!.lobby()!.options);
+      expect(options.sides).toBe(sides);
+      expect(options.firstPlayer).toBe(1);
+      expect(options.hints).toEqual(hints);
+    }
     await expect(page.locator('[data-duel-settings]')).toHaveCount(0);
     await page.locator('[data-act="lobby-seats"]').selectOption('2');
     await lobbyReady(page);
     await expect(page.locator('[data-duel-settings]')).toBeVisible();
     await expect(page.locator('[data-haftgane-settings]')).toHaveCount(0);
+    await expect(page.locator('[data-act="lobby-sides"]')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__ajayebTable!.lobby()!.options.sides)).toBe('random');
     await expect(page.locator('[data-act="lobby-first-player"]')).toHaveValue('1');
     await menu(page, 1);
     await page.locator('[data-act="lobby-bot-level:1"]').selectOption('hard');

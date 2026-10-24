@@ -1,4 +1,7 @@
 export const lobby = {
+  'lobby.sides': 'Wonder sides',
+  'lobby.sidesChoose': 'Each picks',
+  'lobby.sidesDay': 'Day',
   'lobby.duelLobby': 'Duel lobby',
   'lobby.firstPlayer': 'Who starts',
 
