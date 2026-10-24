@@ -23,9 +23,10 @@ const Game = "lobby"
 const Schema = 2
 
 // recordFormat is the format this build writes. decodeRecord upgrades
-// format 1 (before slots had claim epochs) and refuses any other, so a
+// format 1 (before slots had claim epochs) and format 2 (before clients
+// were remembered by tableroom.ClientKey) and refuses any other, so a
 // newer build's lobby is left as it is.
-const recordFormat = 2
+const recordFormat = 3
 
 // Seat counts: two seats start Duel (M18.shared-lobby), three to seven
 // Haftgane.
@@ -187,7 +188,7 @@ func decodeRecord(data []byte) (*Record, error) {
 	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, fmt.Errorf("lobbyroom: decoding the record: %w", err)
 	}
-	if r.Format == 1 {
+	if r.Format == 1 || r.Format == 2 {
 		upgrade(&r)
 	}
 	switch {
@@ -203,15 +204,22 @@ func decodeRecord(data []byte) (*Record, error) {
 	return &r, nil
 }
 
-// upgrade reads a format-1 record, whose slots had no claim epochs: a
-// reservation keeps epoch 0, and a human the epoch of the revision they
-// took their slot at, so a rematch claim from before fails closed rather
-// than outliving a removal.
+// upgrade reads a format-1 or format-2 record. Format 1's slots had no
+// claim epochs: a reservation keeps epoch 0, and a human the epoch of the
+// revision they took their slot at, so a rematch claim from before fails
+// closed rather than outliving a removal. Both kept each client's id as
+// sent, so the seq acknowledgements are re-keyed by tableroom.ClientKey,
+// once: format 3 marks the keys, which ClientKey must not see again.
 func upgrade(r *Record) {
-	for i := range r.Slots {
-		if r.Slots[i].Kind == SlotHuman {
-			r.Slots[i].Epoch = r.Slots[i].Taken
+	if r.Format == 1 {
+		for i := range r.Slots {
+			if r.Slots[i].Kind == SlotHuman {
+				r.Slots[i].Epoch = r.Slots[i].Taken
+			}
 		}
+	}
+	for i := range r.Seqs {
+		r.Seqs[i].Client = tableroom.ClientKey(r.Seqs[i].Client)
 	}
 	r.Format = recordFormat
 }
