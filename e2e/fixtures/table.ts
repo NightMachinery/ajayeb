@@ -204,10 +204,16 @@ export function tableStates(log: readonly Traffic[]): number[] {
 /**
  * Opens a table of this many seats for the page's user alone, the way a
  * player does: Home's New table form under this name, the lobby set to
- * the seat count, and Start, which gives every open seat a bot. Returns
- * the room code once the first table frame is on screen.
+ * the seat count, any further lobby settings `before` makes, and Start,
+ * which gives every open seat a bot. Returns the room code once the first
+ * table frame is on screen.
  */
-export async function openBotTable(page: Page, seats: number, name = 'Host'): Promise<string> {
+export async function openBotTable(
+  page: Page,
+  seats: number,
+  name = 'Host',
+  before?: () => Promise<void>
+): Promise<string> {
   const code = await createTableFromHome(page, name);
   const count = page.locator('[data-act="lobby-seats"]');
   if ((await count.inputValue()) !== String(seats)) {
@@ -215,6 +221,7 @@ export async function openBotTable(page: Page, seats: number, name = 'Host'): Pr
     await lobbyReady(page);
   }
   await expect(page.locator('[data-lobby] [data-seat]')).toHaveCount(seats);
+  if (before) await before();
   await choose(page, 'lobby-start');
   await expect(page.locator('[data-table-screen]')).toBeVisible();
   await ready(page);
