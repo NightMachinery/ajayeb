@@ -62,12 +62,14 @@
         data-recap-act={line.act?.kind ?? 'none'}
         data-recap-card={card || undefined}
       >
-        <SeatCrest
-          seat={line.seat}
-          tip={name}
-          bot={bots.includes(line.seat)}
-          botTip={ht('hg.screen.botBadge')}
-        />
+        <span class="crest">
+          <SeatCrest
+            seat={line.seat}
+            tip={name}
+            bot={bots.includes(line.seat)}
+            botTip={ht('hg.screen.botBadge')}
+          />
+        </span>
         <span class="text">
           <span class="what">{what}</span>
           {#each lastCardText(line, name, mine) as extra, i (i)}
@@ -122,15 +124,29 @@
     padding: 0;
     list-style: none;
   }
+  /* On a phone the tag and the coins wrap under the sentence; a wide
+     recap gives them a column at the end. */
+  .recap {
+    container-type: inline-size;
+  }
   .lines li {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'crest text'
+      'crest side';
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.2rem 0.45rem;
     padding-block: 0.35rem;
     border-block-start: 1px solid var(--rule);
   }
+  .crest {
+    grid-area: crest;
+    align-self: start;
+    display: flex;
+  }
   .text {
+    grid-area: text;
     display: flex;
     flex-direction: column;
     gap: 0.1rem;
@@ -143,18 +159,38 @@
     font-size: 0.8rem;
   }
   .side {
+    grid-area: side;
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.2rem;
-    max-width: 8.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
     min-width: 0;
+  }
+  .side:empty {
+    display: none;
   }
   .coins {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
     gap: 0.2rem;
+  }
+  @container (min-width: 30rem) {
+    .lines li {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: 'crest text side';
+    }
+    .crest {
+      align-self: center;
+    }
+    .side {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: flex-end;
+      max-width: 12rem;
+    }
+    .coins {
+      justify-content: flex-end;
+    }
   }
   .changes li {
     padding-block: 0.3rem;

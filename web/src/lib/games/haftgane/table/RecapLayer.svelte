@@ -7,7 +7,8 @@
   // manual popover, so it shows above the board's own layers, and it keeps
   // the keyboard focus inside while open. It sits under the top bar on a
   // phone and over the middle column on wider screens, and scrolls inside
-  // when the turn is longer than the room.
+  // when the turn is longer than the room. A hint at its foot says how to
+  // close it.
   //
   // It uses the root's dismiss and focus helpers ($lib/ui/dismiss), which
   // the root chunk already shares, rather than Duel's DismissLayer, so
@@ -51,8 +52,8 @@
   data-tooltip-actionable=""
   {@attach layer}
 >
-  <p class="hint">{ht('hg.recap.close')}</p>
   {@render children()}
+  <p class="hint">{ht('hg.recap.close')}</p>
 </div>
 
 <style>
@@ -79,10 +80,10 @@
     animation: recap-in var(--dur-base) ease-out both;
   }
   .hint {
-    float: inline-end;
-    margin: 0.15rem 0 0 0.5rem;
+    margin: 0.4rem 0 0;
     color: var(--fg-muted);
     font-size: 0.75rem;
+    text-align: center;
   }
   @keyframes recap-in {
     from {
