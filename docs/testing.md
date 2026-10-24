@@ -2036,12 +2036,17 @@ separate directories to preserve before and after evidence. Never point
 `ux/haftgane-table.spec.ts` (filter `--grep haftgane`) checks the
 Haftgane table screen's geometry outside that matrix: tables of 3, 5 and 7
 seats at 360x740, 390x844, 844x390 and 1280x800, light and dark, English
-and Persian, each with nothing selected and with a hand card's pick list
-open. Its probe requires no horizontal overflow, no control under 44 px,
-no seat, hand card, bar or control cut off by the screen's edges, no
-glyph without a tooltip and nothing animating, and the page may log no
-console error or failed request. Its screenshots and `probes-*.json` go
-to `HG_TABLE_SHOTS_DIR` (default `.cache/e2e/hg-table-shots`).
+and Persian, each with a full hand and nothing selected. Its probe runs
+two frames after each resize, without waiting for motion to end, and
+requires no horizontal overflow, no control under 44 px, no seat, hand
+card, bar or control cut off by the screen's edges, no glyph without a
+tooltip and nothing animating. Then the page plays a turn and counts the
+running animations in the first frame that shows the next hand: none with
+Animation off. A last test is the positive control: the same count with
+Animation on (relaxed) must find the deal, so a zero above means
+something. The page may log no console error or failed request. Its
+screenshots and `probes-*.json` go to `HG_TABLE_SHOTS_DIR` (default
+`.cache/e2e/hg-table-shots`).
 
 `ux/haftgane-city.spec.ts` (filter `--grep "haftgane city"`) does the same for the city sheet and Seen hands. One
 live table each of 3, 5 and 7 seats is played to three moments: the first

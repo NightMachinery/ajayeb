@@ -1,18 +1,21 @@
 // Haftgane's table screen geometry (M18.table-screen): tables of 3, 5 and 7
 // seats, the page's user and bots, at 360x740, 390x844, 844x390 and
 // 1280x800, in both themes, left to right and right to left. At each size,
-// with nothing selected and with a hand card selected (its pick list
-// open), the probe finds no horizontal overflow, no control under 44 px,
-// no seat, hand card or bar cut off by the screen's edges, no glyph
-// without a tooltip and nothing animating with Animation off; and the
-// page logs no console error or failed request. Each state is saved as a
-// screenshot for the contact sheet, in HG_TABLE_SHOTS_DIR.
+// with a full hand and nothing selected, two frames after the resize, the
+// probe finds no horizontal overflow, no control under 44 px, no seat,
+// hand card or bar cut off by the screen's edges, no glyph without a
+// tooltip and nothing animating with Animation off. Then the page plays a
+// turn, and the moment the next hand is on screen nothing animates; a last
+// test is the positive control, where the same moment with Animation on
+// counts the hand's deal. The page logs no console error or failed
+// request. Each state is saved as a screenshot for the contact sheet, in
+// HG_TABLE_SHOTS_DIR.
 import { expect, type Page } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
-import { quiet } from '../fixtures/layout-probes';
+import { useSettings } from '../fixtures/anim';
 import { choose, latest, openBotTable, ready } from '../fixtures/table';
 
 const sizes = [
@@ -100,6 +103,50 @@ async function probe(page: Page): Promise<Probe> {
   });
 }
 
+/** Past a side point, if the table has one, to a turn with a full hand. */
+async function pastSides(page: Page): Promise<void> {
+  const sides = await latest(page);
+  if (sides.view.phase !== 'sides') return;
+  await choose(page, 'side:day');
+  await choose(page, 'confirm');
+  await expect.poll(async () => (await latest(page)).point?.ref.id).not.toBe(sides.point!.ref.id);
+}
+
+/**
+ * Plays the page's first offered choice of the turn and, in the first
+ * frame that shows the next hand (the bots decide at once), counts what is
+ * still animating: measured at once, not after the motion has settled.
+ */
+async function animatedAfterTurn(page: Page): Promise<number> {
+  const f = await latest(page);
+  await choose(page, f.view.you!.choices[0]!.key);
+  const hand = await page.locator('[data-hand]').elementHandle();
+  await page.locator('[data-act="confirm"]').click();
+  return page.evaluate(
+    (old) =>
+      new Promise<number>((resolve) => {
+        const tick = () => {
+          const now = document.querySelector('[data-hand]');
+          if (!now || now === old) return requestAnimationFrame(tick);
+          requestAnimationFrame(() =>
+            resolve(
+              document.getAnimations().filter((a) => {
+                const timing = a.effect?.getComputedTiming();
+                return (
+                  a.playState === 'running' &&
+                  typeof timing?.duration === 'number' &&
+                  timing.duration > 1
+                );
+              }).length
+            )
+          );
+        };
+        tick();
+      }),
+    hand
+  );
+}
+
 for (const locale of ['en', 'fa'] as const)
   for (const theme of ['light', 'dark'] as const) {
     test.describe(`haftgane table geometry ${locale} ${theme}`, () => {
@@ -126,15 +173,7 @@ for (const locale of ['en', 'fa'] as const)
             'dir',
             locale === 'fa' ? 'rtl' : 'ltr'
           );
-          // Past a side point, if the table has one, to a turn with a full hand.
-          const sides = await latest(page);
-          if (sides.view.phase === 'sides') {
-            await choose(page, 'side:day');
-            await choose(page, 'confirm');
-            await expect
-              .poll(async () => (await latest(page)).point?.ref.id)
-              .not.toBe(sides.point!.ref.id);
-          }
+          await pastSides(page);
           const turn = await latest(page);
           const design = turn.view.you!.hand[0]!;
           for (const [width, height] of sizes) {
@@ -146,7 +185,14 @@ for (const locale of ['en', 'fa'] as const)
               if (state === 'hand' && pressed)
                 await page.locator('[data-act="pick-close"]').click();
               await ready(page);
-              await quiet(page);
+              // Two frames, so the layout has followed the new size; no
+              // wait for motion to end, which would hide it.
+              await page.evaluate(
+                () =>
+                  new Promise<void>((resolve) =>
+                    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+                  )
+              );
               const p = await probe(page);
               probes.push({ seats, width, height, locale, theme, state, ...p });
               const name = `table-${seats}p-${state}-${width}x${height}-${locale}-${theme}.png`;
@@ -160,6 +206,7 @@ for (const locale of ['en', 'fa'] as const)
               });
             }
           }
+          expect(await animatedAfterTurn(page), `${seats} seats, the next hand`).toBe(0);
         }
         writeFileSync(
           path.join(out, `probes-${locale}-${theme}.json`),
@@ -169,3 +216,16 @@ for (const locale of ['en', 'fa'] as const)
       });
     });
   }
+
+test.describe('haftgane table motion control', () => {
+  test('with Animation on, the next hand is counted the moment it lands', async ({ page }) => {
+    test.setTimeout(120_000);
+    const problems = watchHygiene(page);
+    await useSettings(page, 'relaxed');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openBotTable(page, 3, 'Roshan');
+    await pastSides(page);
+    expect(await animatedAfterTurn(page)).toBeGreaterThan(0);
+    expect(problems).toEqual([]);
+  });
+});
