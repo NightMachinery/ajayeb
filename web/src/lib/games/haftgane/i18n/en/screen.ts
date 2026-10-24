@@ -6,6 +6,33 @@
 import type { Messages } from '$lib/i18n';
 
 export const screen = {
+  'hg.special.side.title': 'Choose a side of {wonder}',
+  'hg.special.side.private':
+    'Your choice stays private until everyone confirms. Compare both sides, then confirm below.',
+  'hg.special.side.start': 'Starting resource:',
+  'hg.special.side.stage': 'Stage {stage}',
+  'hg.special.side.confirm': 'Confirm {side} side',
+  'hg.special.discard.title': 'Build from the discard pile',
+  'hg.special.discard.private':
+    'Only you can see this pile. Choose an offered building to build for free.',
+  'hg.special.discard.filter': 'Filter the discard pile by colour',
+  'hg.special.discard.all': 'All',
+  'hg.special.discard.unavailable': 'Not offered by the server.',
+  'hg.special.discard.empty': 'No cards of this colour.',
+  'hg.special.discard.copies': { one: '{count} copy', other: '{count} copies' },
+  'hg.special.discard.confirm': 'Build {card} for free',
+  'hg.special.kept.locked': 'Kept for later',
+  'hg.special.kept.play': 'Play your kept card',
+  'hg.special.kept.tip': 'Your wonder kept this card for an extra turn. Only you can see it.',
+  'hg.special.sixth':
+    'Last ordinary turn: choose a card. The other is discarded unless your wonder keeps it.',
+  'hg.special.extra': 'Extra turn',
+  'hg.special.wait.discard':
+    '{name} is choosing a building from the discard pile. Only that player sees the pile.',
+  'hg.special.wait.last':
+    '{name} is playing a kept card. Military waits until the extra decisions finish.',
+  'hg.special.wait.sides': 'Wonder sides are revealed once everyone confirms.',
+  'hg.special.reopen': 'Open this decision',
   'hg.screen.menu': 'Game menu',
   'hg.screen.menu.title': 'Table {code}',
   'hg.screen.menu.close': 'Close the menu',

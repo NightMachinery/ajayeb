@@ -44,7 +44,13 @@
     {@attach tooltip({ text: tip })}
   >
     {#if afford.kind === 'free'}
-      <HgGlyph name="badge-chain" /><span>{ht('hg.screen.afford.freeWord')}</span>
+      <HgGlyph
+        name={afford.via === 'chain'
+          ? 'badge-chain'
+          : afford.via === 'discard'
+            ? 'build-from-discard'
+            : 'wonder'}
+      /><span>{ht('hg.screen.afford.freeWord')}</span>
     {:else if afford.kind === 'paid'}
       {#if afford.trade}<HgGlyph name="trade" />{/if}
       <span class="coin">{formatNumber(afford.total)}</span>

@@ -46,9 +46,11 @@
       >
     {:else}
       <span class="age">{ht('hg.screen.age', { age: ageLabel(age) })}</span>
-      <span class="turn" dir="ltr" {@attach tooltip({ text: turnTip })}
-        >{ht('hg.screen.turn', { turn, of: turns })}</span
-      >
+      {#if phase === 'last-card'}<span class="turn">{ht('hg.special.extra')}</span>{:else}
+        <span class="turn" dir="ltr" {@attach tooltip({ text: turnTip })}
+          >{ht('hg.screen.turn', { turn, of: turns })}</span
+        >
+      {/if}
     {/if}
   </div>
   {#if !finished && age > 0}

@@ -25,6 +25,8 @@
     onselect?: (slug: string) => void;
     /** Non-actionable enlarged face, retaining every micro-tooltip. */
     preview?: boolean;
+    /** A server key when this face belongs to an offered special decision. */
+    actKey?: string;
   }
 
   let {
@@ -34,7 +36,8 @@
     picked = null,
     disabled = false,
     onselect,
-    preview = false
+    preview = false,
+    actKey
   }: Props = $props();
 
   const d = $derived(design(slug));
@@ -94,7 +97,7 @@
     class:picked={picked !== null}
     style:--band="var(--card-{d?.colour ?? 'grey'})"
     data-card={slug}
-    data-act="hand:{slug}"
+    data-act={actKey ?? `hand:${slug}`}
     data-picked={picked ?? undefined}
     aria-pressed={selected}
     aria-label={name}
