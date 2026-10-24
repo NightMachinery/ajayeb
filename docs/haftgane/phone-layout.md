@@ -142,6 +142,7 @@ As built (M18.reveal-and-recap), these choices differ from the mockups or settle
 - The order at the end of an Age is the reveal, then the recap, then the military dialog, then the scores. The reveal's beat is 600 ms at normal speed and none with Animation off.
 - Seat switches, resignations and role changes made between two turns are listed under the next turn's lines. The room log names who made them by user id only, so a person who left the table reads as "A player who left".
 - The live region is the table's own, so Duel's `LiveRegion` stays out of Haftgane's chunk.
+- With the recap button, Undo and the spectator count, the top bar is full on a phone. Below 27rem its gaps tighten and the pass chip shows its arrow alone (its tooltip says the direction and who receives your hand), and the Age and turn wrap rather than run into the chip.
 
 ## 5. Special decisions
 

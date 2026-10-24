@@ -2005,8 +2005,13 @@ bot's seat; the player's table, game menu and resignation confirmation;
 and the spectator's table, spectator panel and game menu. At the end the
 player's seat goes to a bot and the former player's table is captured. At
 360x740, 390x844, 844x390 and 1280x800 the probe of
-`ux/haftgane-city.spec.ts`, without its title check, must find nothing.
-The screenshots and `probes-<seats>p.json` go to `HG_ADMIN_SHOTS_DIR`
+`ux/haftgane-city.spec.ts`, without its title check, must find nothing,
+and nothing in the table's top bar (`data-top-bar`) may run into its
+neighbour: each direct child's box, widened to all of its content, must
+not meet another's, so a label spilling past its own box counts (a check
+added after the Age and turn ran under the pass chip at 360 px, which the
+other checks could not see). The screenshots and `probes-<seats>p.json`
+go to `HG_ADMIN_SHOTS_DIR`
 (default `.cache/e2e/hg-admin-shots`). A last test checks the dev
 gallery's admin leaves and opens both of its seat menus under the probe.
 
