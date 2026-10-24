@@ -139,10 +139,10 @@ for (const locale of ['en', 'fa'] as const)
           const design = turn.view.you!.hand[0]!;
           for (const [width, height] of sizes) {
             await page.setViewportSize({ width, height });
-            for (const state of ['hand', 'picking'] as const) {
+            // The sheet's complete variant matrix lives in haftgane-card-sheet.spec.ts.
+            for (const state of ['hand'] as const) {
               const card = page.locator(`[data-act="hand:${design}"]`).first();
               const pressed = (await card.getAttribute('aria-pressed')) === 'true';
-              if (state === 'picking' && !pressed) await card.click();
               if (state === 'hand' && pressed)
                 await page.locator('[data-act="pick-close"]').click();
               await ready(page);

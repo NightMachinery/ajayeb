@@ -23,6 +23,8 @@
     picked?: 'draft' | 'confirmed' | null;
     disabled?: boolean;
     onselect?: (slug: string) => void;
+    /** Non-actionable enlarged face, retaining every micro-tooltip. */
+    preview?: boolean;
   }
 
   let {
@@ -31,7 +33,8 @@
     selected = false,
     picked = null,
     disabled = false,
-    onselect
+    onselect,
+    preview = false
   }: Props = $props();
 
   const d = $derived(design(slug));
@@ -47,23 +50,7 @@
   );
 </script>
 
-<button
-  type="button"
-  class="card"
-  class:selected
-  class:picked={picked !== null}
-  style:--band="var(--card-{d?.colour ?? 'grey'})"
-  data-card={slug}
-  data-act="hand:{slug}"
-  data-picked={picked ?? undefined}
-  aria-pressed={selected}
-  aria-label={name}
-  aria-disabled={disabled}
-  onclick={() => {
-    if (!disabled) onselect?.(slug);
-  }}
-  {@attach tooltip({ text: tipText, actionable: true })}
->
+{#snippet face()}
   <span class="top">
     {#if d}
       <span class="cost"><CostPips cost={d.cost} /></span>
@@ -87,7 +74,39 @@
     {/if}
   </span>
   <span class="name">{name}</span>
-</button>
+{/snippet}
+{#if preview}
+  <div
+    class="card preview"
+    style:--band="var(--card-{d?.colour ?? 'grey'})"
+    data-card={slug}
+    role="img"
+    aria-label={tipText}
+    {@attach tooltip({ text: tipText })}
+  >
+    {@render face()}
+  </div>
+{:else}
+  <button
+    type="button"
+    class="card"
+    class:selected
+    class:picked={picked !== null}
+    style:--band="var(--card-{d?.colour ?? 'grey'})"
+    data-card={slug}
+    data-act="hand:{slug}"
+    data-picked={picked ?? undefined}
+    aria-pressed={selected}
+    aria-label={name}
+    aria-disabled={disabled}
+    onclick={() => {
+      if (!disabled) onselect?.(slug);
+    }}
+    {@attach tooltip({ text: tipText, actionable: true })}
+  >
+    {@render face()}
+  </button>
+{/if}
 
 <style>
   .card {
@@ -108,6 +127,7 @@
     text-align: start;
     cursor: pointer;
   }
+  .card.preview,
   .card[aria-disabled='true'] {
     cursor: default;
   }

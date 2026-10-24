@@ -1,0 +1,2275 @@
+[
+  {
+    "kind": "blocked",
+    "seats": 3,
+    "card": "stockade",
+    "seat": {
+      "seat": 0,
+      "board": "rhodos",
+      "side": "night",
+      "stages": 0,
+      "built": [],
+      "coins": 3,
+      "victories": [0, 0, 0],
+      "defeats": 0,
+      "shields": 0,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 0,
+        "blue": 0,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 1
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "sell:stockade",
+        "kind": "sell",
+        "design": "stockade",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "build",
+        "design": "stockade",
+        "stage": 0,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      },
+      {
+        "kind": "stage",
+        "design": "stockade",
+        "stage": 1,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 1,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      },
+      {
+        "seat": 2,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      }
+    ]
+  },
+  {
+    "kind": "chain",
+    "seats": 3,
+    "card": "aqueduct",
+    "seat": {
+      "seat": 0,
+      "board": "rhodos",
+      "side": "night",
+      "stages": 0,
+      "built": ["clay-pit", "stone-pit", "glassworks-age-1", "altar", "baths", "marketplace"],
+      "coins": 2,
+      "victories": [0, 0, 0],
+      "defeats": 2,
+      "shields": 0,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "clay-pit",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 1
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 0,
+        "military": -2,
+        "blue": 6,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 4
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "build:aqueduct:0:0",
+        "kind": "build",
+        "design": "aqueduct",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "chain",
+        "witness": []
+      },
+      {
+        "key": "sell:aqueduct",
+        "kind": "sell",
+        "design": "aqueduct",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "stage",
+        "design": "aqueduct",
+        "stage": 1,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 1,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 1,
+                "discount": {
+                  "design": "marketplace",
+                  "stage": 0
+                }
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 1,
+                "discount": {
+                  "design": "marketplace",
+                  "stage": 0
+                }
+              }
+            ]
+          }
+        ],
+        "outlook": -1
+      },
+      {
+        "seat": 2,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 1,
+                "discount": {
+                  "design": "marketplace",
+                  "stage": 0
+                }
+              }
+            ]
+          }
+        ],
+        "outlook": -1
+      }
+    ]
+  },
+  {
+    "kind": "trade",
+    "seats": 3,
+    "card": "temple",
+    "seat": {
+      "seat": 2,
+      "board": "halikarnassos",
+      "side": "day",
+      "stages": 0,
+      "built": [
+        "clay-pool",
+        "ore-vein",
+        "barracks",
+        "theater",
+        "east-trading-post",
+        "apothecary",
+        "loom-age-2"
+      ],
+      "coins": 3,
+      "victories": [1, 0, 0],
+      "defeats": 1,
+      "shields": 1,
+      "handSize": 6,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "loom-age-2",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 0,
+        "blue": 3,
+        "yellow": 0,
+        "green": 1,
+        "purple": 0,
+        "total": 5
+      },
+      "science": {
+        "counts": [1, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 1
+      }
+    },
+    "choices": [
+      {
+        "key": "build:temple:0:3",
+        "kind": "build",
+        "design": "temple",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 3,
+        "printed": 0,
+        "total": 3,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "wood",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 1
+          },
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "glass",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "build:temple:2:1",
+        "kind": "build",
+        "design": "temple",
+        "side": "",
+        "stage": 0,
+        "left": 2,
+        "right": 1,
+        "printed": 0,
+        "total": 3,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "wood",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 1
+          },
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "glass",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "stage:temple:2:0",
+        "kind": "stage",
+        "design": "temple",
+        "side": "",
+        "stage": 1,
+        "left": 2,
+        "right": 0,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "ore",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "ore",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "sell:temple",
+        "kind": "sell",
+        "design": "temple",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [],
+    "neighbours": [
+      {
+        "seat": 0,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 3
+      },
+      {
+        "seat": 1,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 1,
+                "discount": {
+                  "design": "east-trading-post",
+                  "stage": 0
+                }
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 1,
+                "discount": {
+                  "design": "east-trading-post",
+                  "stage": 0
+                }
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": -1
+      }
+    ]
+  },
+  {
+    "kind": "free",
+    "seats": 3,
+    "card": "glassworks-age-2",
+    "seat": {
+      "seat": 0,
+      "board": "olympia",
+      "side": "night",
+      "stages": 1,
+      "built": ["lumber-yard", "ore-vein", "guard-tower", "stockade"],
+      "coins": 4,
+      "victories": [2, 0, 0],
+      "defeats": 0,
+      "shields": 2,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "sell",
+        "design": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 2,
+        "treasure": 1,
+        "military": 2,
+        "blue": 0,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 5
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "build:glassworks-age-2:0:0",
+        "kind": "build",
+        "design": "glassworks-age-2",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "first-turn",
+        "witness": []
+      },
+      {
+        "key": "stage:glassworks-age-2:0:4",
+        "kind": "stage",
+        "design": "glassworks-age-2",
+        "side": "",
+        "stage": 2,
+        "left": 0,
+        "right": 4,
+        "printed": 0,
+        "total": 4,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "clay",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 2
+          },
+          {
+            "resource": "clay",
+            "source": "right-choice",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "sell:glassworks-age-2",
+        "kind": "sell",
+        "design": "glassworks-age-2",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [],
+    "neighbours": [
+      {
+        "seat": 1,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 3
+      },
+      {
+        "seat": 2,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 3
+      }
+    ]
+  },
+  {
+    "kind": "blocked",
+    "seats": 5,
+    "card": "stockade",
+    "seat": {
+      "seat": 1,
+      "board": "olympia",
+      "side": "day",
+      "stages": 0,
+      "built": [],
+      "coins": 3,
+      "victories": [0, 0, 0],
+      "defeats": 0,
+      "shields": 0,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 0,
+        "blue": 0,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 1
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "sell:stockade",
+        "kind": "sell",
+        "design": "stockade",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "build",
+        "design": "stockade",
+        "stage": 0,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      },
+      {
+        "kind": "stage",
+        "design": "stockade",
+        "stage": 1,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 2,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      },
+      {
+        "seat": 0,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      }
+    ]
+  },
+  {
+    "kind": "trade",
+    "seats": 5,
+    "card": "baths",
+    "seat": {
+      "seat": 2,
+      "board": "halikarnassos",
+      "side": "day",
+      "stages": 0,
+      "built": ["lumber-yard", "ore-vein", "barracks", "west-trading-post"],
+      "coins": 3,
+      "victories": [0, 0, 0],
+      "defeats": 0,
+      "shields": 1,
+      "handSize": 3,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "west-trading-post",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 0,
+        "blue": 0,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 1
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "build:baths:1:0",
+        "kind": "build",
+        "design": "baths",
+        "side": "",
+        "stage": 0,
+        "left": 1,
+        "right": 0,
+        "printed": 0,
+        "total": 1,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "stone",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 1
+          }
+        ]
+      },
+      {
+        "key": "build:baths:0:2",
+        "kind": "build",
+        "design": "baths",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 2,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "stone",
+            "source": "right-choice",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "stage:baths:0:2",
+        "kind": "stage",
+        "design": "baths",
+        "side": "",
+        "stage": 1,
+        "left": 0,
+        "right": 2,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "ore",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "ore",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "sell:baths",
+        "kind": "sell",
+        "design": "baths",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [],
+    "neighbours": [
+      {
+        "seat": 3,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 1,
+                "discount": {
+                  "design": "west-trading-post",
+                  "stage": 0
+                }
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 1
+      },
+      {
+        "seat": 1,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 1
+      }
+    ]
+  },
+  {
+    "kind": "chain",
+    "seats": 5,
+    "card": "courthouse",
+    "seat": {
+      "seat": 0,
+      "board": "rhodos",
+      "side": "night",
+      "stages": 0,
+      "built": ["lumber-yard", "press-age-1", "barracks", "stockade", "altar", "scriptorium"],
+      "coins": 3,
+      "victories": [2, 0, 0],
+      "defeats": 0,
+      "shields": 2,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "altar",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 2,
+        "blue": 3,
+        "yellow": 0,
+        "green": 1,
+        "purple": 0,
+        "total": 7
+      },
+      "science": {
+        "counts": [0, 0, 1],
+        "choices": [0, 0, 0],
+        "points": 1
+      }
+    },
+    "choices": [
+      {
+        "key": "build:courthouse:0:0",
+        "kind": "build",
+        "design": "courthouse",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "chain",
+        "witness": []
+      },
+      {
+        "key": "sell:courthouse",
+        "kind": "sell",
+        "design": "courthouse",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "stage",
+        "design": "courthouse",
+        "stage": 1,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 1,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 3
+      },
+      {
+        "seat": 4,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 3
+      }
+    ]
+  },
+  {
+    "kind": "free",
+    "seats": 5,
+    "card": "sawmill",
+    "seat": {
+      "seat": 3,
+      "board": "olympia",
+      "side": "night",
+      "stages": 1,
+      "built": ["clay-pool", "ore-vein", "theater", "tavern", "scriptorium"],
+      "coins": 4,
+      "victories": [0, 0, 0],
+      "defeats": 2,
+      "shields": 0,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "scriptorium",
+        "stage": 0,
+        "left": 0,
+        "right": 2,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 2,
+        "treasure": 1,
+        "military": -2,
+        "blue": 3,
+        "yellow": 0,
+        "green": 1,
+        "purple": 0,
+        "total": 5
+      },
+      "science": {
+        "counts": [0, 0, 1],
+        "choices": [0, 0, 0],
+        "points": 1
+      }
+    },
+    "choices": [
+      {
+        "key": "build:sawmill:0:0",
+        "kind": "build",
+        "design": "sawmill",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "first-turn",
+        "witness": []
+      },
+      {
+        "key": "stage:sawmill:0:2",
+        "kind": "stage",
+        "design": "sawmill",
+        "side": "",
+        "stage": 2,
+        "left": 0,
+        "right": 2,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 1,
+            "price": 0
+          },
+          {
+            "resource": "clay",
+            "source": "right-choice",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "stage:sawmill:2:0",
+        "kind": "stage",
+        "design": "sawmill",
+        "side": "",
+        "stage": 2,
+        "left": 2,
+        "right": 0,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 1,
+            "price": 0
+          },
+          {
+            "resource": "clay",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "sell:sawmill",
+        "kind": "sell",
+        "design": "sawmill",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [],
+    "neighbours": [
+      {
+        "seat": 4,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": -1
+      },
+      {
+        "seat": 2,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": -1
+      }
+    ]
+  },
+  {
+    "kind": "blocked",
+    "seats": 7,
+    "card": "baths",
+    "seat": {
+      "seat": 0,
+      "board": "rhodos",
+      "side": "night",
+      "stages": 0,
+      "built": [],
+      "coins": 3,
+      "victories": [0, 0, 0],
+      "defeats": 0,
+      "shields": 0,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 0,
+        "blue": 0,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 1
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "sell:baths",
+        "kind": "sell",
+        "design": "baths",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "build",
+        "design": "baths",
+        "stage": 0,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      },
+      {
+        "kind": "stage",
+        "design": "baths",
+        "stage": 1,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 1,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      },
+      {
+        "seat": 6,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      }
+    ]
+  },
+  {
+    "kind": "trade",
+    "seats": 7,
+    "card": "apothecary",
+    "seat": {
+      "seat": 3,
+      "board": "ephesos",
+      "side": "day",
+      "stages": 0,
+      "built": ["clay-pool", "glassworks-age-1", "theater", "tavern"],
+      "coins": 8,
+      "victories": [0, 0, 0],
+      "defeats": 0,
+      "shields": 0,
+      "handSize": 3,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "tavern",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 2,
+        "military": 0,
+        "blue": 3,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 5
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "build:apothecary:0:2",
+        "kind": "build",
+        "design": "apothecary",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 2,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "cloth",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "build:apothecary:2:0",
+        "kind": "build",
+        "design": "apothecary",
+        "side": "",
+        "stage": 0,
+        "left": 2,
+        "right": 0,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "cloth",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "stage:apothecary:2:0",
+        "kind": "stage",
+        "design": "apothecary",
+        "side": "",
+        "stage": 1,
+        "left": 2,
+        "right": 0,
+        "printed": 0,
+        "total": 2,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "clay",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          },
+          {
+            "resource": "clay",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 2
+          }
+        ]
+      },
+      {
+        "key": "sell:apothecary",
+        "kind": "sell",
+        "design": "apothecary",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [],
+    "neighbours": [
+      {
+        "seat": 4,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": -1
+      },
+      {
+        "seat": 2,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      }
+    ]
+  },
+  {
+    "kind": "chain",
+    "seats": 7,
+    "card": "library",
+    "seat": {
+      "seat": 0,
+      "board": "rhodos",
+      "side": "night",
+      "stages": 0,
+      "built": ["ore-vein", "tree-farm", "press-age-1", "barracks", "marketplace", "scriptorium"],
+      "coins": 2,
+      "victories": [1, 0, 0],
+      "defeats": 0,
+      "shields": 1,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "tree-farm",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 1
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 0,
+        "military": 1,
+        "blue": 0,
+        "yellow": 0,
+        "green": 1,
+        "purple": 0,
+        "total": 2
+      },
+      "science": {
+        "counts": [0, 0, 1],
+        "choices": [0, 0, 0],
+        "points": 1
+      }
+    },
+    "choices": [
+      {
+        "key": "build:library:0:0",
+        "kind": "build",
+        "design": "library",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "chain",
+        "witness": []
+      },
+      {
+        "key": "sell:library",
+        "kind": "sell",
+        "design": "library",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "stage",
+        "design": "library",
+        "stage": 1,
+        "reason": "cannot-cover",
+        "cheapest": 0,
+        "shortBy": 0
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 1,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 1,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              },
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      },
+      {
+        "seat": 6,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 1,
+                "discount": {
+                  "design": "marketplace",
+                  "stage": 0
+                }
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 1,
+                "discount": {
+                  "design": "marketplace",
+                  "stage": 0
+                }
+              }
+            ]
+          }
+        ],
+        "outlook": 3
+      }
+    ]
+  },
+  {
+    "kind": "free",
+    "seats": 7,
+    "card": "castrum",
+    "seat": {
+      "seat": 5,
+      "board": "olympia",
+      "side": "night",
+      "stages": 2,
+      "built": [
+        "clay-pit",
+        "ore-vein",
+        "loom-age-1",
+        "barracks",
+        "well",
+        "tavern",
+        "brickyard",
+        "statue",
+        "bazar",
+        "vineyard"
+      ],
+      "coins": 23,
+      "victories": [2, 2, 0],
+      "defeats": 0,
+      "shields": 1,
+      "handSize": 7,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "stage",
+        "design": "",
+        "stage": 2,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 5,
+        "treasure": 7,
+        "military": 8,
+        "blue": 7,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 27
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "build:castrum:0:0",
+        "kind": "build",
+        "design": "castrum",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "first-turn",
+        "witness": []
+      },
+      {
+        "key": "stage:castrum:2:2",
+        "kind": "stage",
+        "design": "castrum",
+        "side": "",
+        "stage": 3,
+        "left": 2,
+        "right": 2,
+        "printed": 0,
+        "total": 4,
+        "gain": 0,
+        "free": "",
+        "witness": [
+          {
+            "resource": "glass",
+            "source": "right-fixed",
+            "producer": 0,
+            "price": 2
+          },
+          {
+            "resource": "papyrus",
+            "source": "left-fixed",
+            "producer": 0,
+            "price": 2
+          },
+          {
+            "resource": "cloth",
+            "source": "own-fixed",
+            "producer": 0,
+            "price": 0
+          }
+        ]
+      },
+      {
+        "key": "sell:castrum",
+        "kind": "sell",
+        "design": "castrum",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [],
+    "neighbours": [
+      {
+        "seat": 6,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 5
+      },
+      {
+        "seat": 4,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "wood",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "stone",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "glass",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 2,
+            "options": [
+              {
+                "resource": "cloth",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 5
+      }
+    ]
+  }
+]

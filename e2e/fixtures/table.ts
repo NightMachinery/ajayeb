@@ -54,12 +54,28 @@ export async function choose(page: Page, act: string): Promise<void> {
         '',
       act
     );
+    const openSheet = page.locator('[data-card-sheet]');
+    if (
+      (await openSheet.isVisible()) &&
+      (await openSheet.getAttribute('data-card-sheet')) !== design
+    )
+      await page.locator('[data-act="pick-close"]').click();
     const card = page.locator(`[data-act="hand:${design}"]`).first();
-    if (design && (await card.isVisible())) await card.click();
+    if (
+      design &&
+      (await card.isVisible()) &&
+      !(await page.locator('[data-card-sheet]').isVisible())
+    )
+      await card.click();
     else if (/^(seat-|undo$|resign$)/.test(act))
       await page.locator('[data-act="table-menu"]').click();
   }
-  await target.click();
+  const draft = page.locator(`[data-card-sheet] [data-pick="${act}"]`);
+  if (await draft.isVisible()) {
+    await draft.click();
+    await ready(page);
+    await page.locator('[data-act="pick-close"]').click();
+  } else await target.click();
   await ready(page);
 }
 

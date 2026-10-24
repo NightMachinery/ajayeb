@@ -28,6 +28,8 @@
   import NeighbourPanel from './NeighbourPanel.svelte';
   import PassFlow from './PassFlow.svelte';
   import PickPanel from './PickPanel.svelte';
+  import CardSheet from './CardSheet.svelte';
+  import { settings } from '$lib/ui/settings.svelte';
   import TableMenu from './TableMenu.svelte';
   import TableTopBar from './TableTopBar.svelte';
   import TurnBar from './TurnBar.svelte';
@@ -77,30 +79,46 @@
     )
   );
 
+  // Bind local selection and any armed confirmation to this exact point
+  // incarnation and seat, including a control change that keeps its id.
+  const decisionKey = $derived(
+    frame.point && mySeat !== null
+      ? `${frame.point.ref.id}@${frame.point.ref.revision}:${mySeat}`
+      : null
+  );
   // The selected hand card, for the decision it was chosen in only.
   let selection = $state<{ point: string; card: string } | null>(null);
   const selected = $derived(
-    deciding &&
-      selection &&
-      selection.point === frame.point?.ref.id &&
-      hand.includes(selection.card)
+    deciding && selection && selection.point === decisionKey && hand.includes(selection.card)
       ? selection.card
       : null
   );
-  const cardOptions = $derived(
-    selected ? choices.filter((c) => c.design === selected && c.kind !== 'build-discarded') : []
+  const showPick = $derived(deciding && selected === null && loose.length > 0);
+  const names = $derived(
+    Object.fromEntries(view.seats.map((s) => [s.seat, seatName(frame, s.seat)]))
   );
-  const showPick = $derived(deciding && (selected !== null || loose.length > 0));
+  const confirmMoves = $derived(settings.value.confirmMoves !== 'never');
 
   function select(card: string): void {
-    const point = frame.point?.ref.id;
+    const point = decisionKey;
     if (!point) return;
+    if (pending?.confirm) session.withdraw();
     selection = selected === card ? null : { point, card };
   }
 
   function pick(key: string): void {
     if (pending?.key === key) return;
     session.pick(key);
+  }
+
+  function confirmCard(key: string): void {
+    if (session.pick(key, true)) selection = null;
+  }
+
+  function change(): void {
+    if (session.withdraw() && pendingChoice && frame.point) {
+      selection = { point: decisionKey!, card: pendingChoice.design };
+    }
   }
 
   function confirm(): void {
@@ -280,12 +298,11 @@
       {#if showPick}
         <div class="pick">
           <PickPanel
-            card={selected}
-            choices={selected ? cardOptions : loose}
+            card={null}
+            choices={loose}
             pendingKey={pending?.key ?? null}
             locked={!canAct || !!pending?.confirm}
             onpick={pick}
-            onclose={selected ? () => (selection = null) : undefined}
           />
         </div>
       {/if}
@@ -298,13 +315,32 @@
           {canAct}
           watching={mySeat === null}
           onconfirm={confirm}
-          onwithdraw={() => session.withdraw()}
+          onwithdraw={change}
         />
         {#if finished && over}
           {@render over()}
         {/if}
       </div>
     </div>
+  {/if}
+
+  {#if selected && mine && around}
+    {#key `${decisionKey}:${selected}`}
+      <CardSheet
+        card={selected}
+        {choices}
+        disabled={mine.disabled}
+        seat={around.anchor}
+        neighbours={mine.neighbours}
+        {names}
+        pendingKey={pending?.key ?? null}
+        locked={!canAct || !!pending?.confirm}
+        {confirmMoves}
+        ondraft={pick}
+        onconfirm={confirmCard}
+        onclose={() => (selection = null)}
+      />
+    {/key}
   {/if}
 
   {#if menuOpen}

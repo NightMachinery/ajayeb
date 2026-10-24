@@ -16,6 +16,7 @@
   import PassChip from '$lib/games/haftgane/table/PassChip.svelte';
   import PassFlow from '$lib/games/haftgane/table/PassFlow.svelte';
   import PickPanel from '$lib/games/haftgane/table/PickPanel.svelte';
+  import HaftganeCardSheets from './HaftganeCardSheets.svelte';
   import SeatCrest from '$lib/games/haftgane/table/SeatCrest.svelte';
   import StatPill from '$lib/games/haftgane/table/StatPill.svelte';
   import StatusBadge from '$lib/games/haftgane/table/StatusBadge.svelte';
@@ -145,6 +146,7 @@
 </script>
 
 <div class="flex flex-col gap-6" data-testid="gallery-haftgane-table">
+  <HaftganeCardSheets />
   <section class="flex flex-col gap-2">
     <h3 class="text-sm font-semibold text-fg-muted">
       Haftgane table: crests, pills, badges <!-- i18n-ok -->

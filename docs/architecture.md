@@ -377,12 +377,12 @@ a reload mends a client and a server that disagree.
   `dir="ltr"`. The layout is CSS only: a phone in portrait stacks the
   pieces, a short landscape screen moves the neighbours and far chips into
   side columns, and a desktop gives the neighbours full side panels. A
-  tap on a hand card selects it, and a minimal pick list shows that
-  card's choices (or, for a decision with no hand card such as the wonder
-  side, every choice), each a button with its key in `data-act`; Confirm
-  and Change in the turn bar confirm and withdraw through the Session. The
-  card sheet with its payment list replaces the pick list in
-  M18.card-sheet-and-payments. The game menu holds the rules and, until
+  tap on a hand card opens its [card sheet](haftgane/card-sheet.md), with
+  its printed facts, build and stage payment witnesses, sale and action
+  buttons carrying the server's keys. Payment radios save private drafts;
+  the actions confirm through the Session with the existing confirmation
+  preference. Change withdraws confirmation and reopens the card. Wonder
+  sides and discard-pile decisions retain a separate choice panel. The game menu holds the rules and, until
   the admin slice, the development screen's seat, undo and resign
   controls. `table/model.ts` derives the seat ring, the badges and the
   printed facts; it groups the server's choices but never adds a cost.

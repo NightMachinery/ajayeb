@@ -1,6 +1,6 @@
 // The table screen at five seats over the real server: one human and four
 // bots play the first turns of Age I through the screen alone (a hand card,
-// its pick list, Confirm), changing a pick on the way. The bots confirm at
+// its card sheet, Confirm), changing a pick on the way. The bots confirm at
 // once, so this seat's confirmation is always the last and resolves the
 // turn; withdrawing one needs a second human (haftgane-table.full.spec.ts).
 // Checked as it goes:
@@ -10,7 +10,7 @@
 //   contaminated frame);
 // - the board shows each seat once: the viewer's strip, two neighbour
 //   panels and two far chips, each with its status;
-// - the hand card of the pending pick is pressed and carries the drafted
+// - the hand card of the pending pick carries the drafted
 //   pick tag;
 // - every glyph and image on the board sits inside a tooltip anchor, or in
 //   a button whose visible label already says what it is, and a trade
@@ -123,7 +123,8 @@ test.describe('Haftgane table screen', { tag: ['@full', '@haftgane-table'] }, ()
       await expectPending(page, pick.key, false);
       const card = page.locator(`[data-act="hand:${pick.design}"]`).first();
       await expect(card).toHaveAttribute('data-picked', 'draft');
-      await expect(card).toHaveAttribute('aria-pressed', 'true');
+      // Closing the sheet leaves the server draft tagged, with no card sheet selected.
+      await expect(card).toHaveAttribute('aria-pressed', 'false');
       if (turn === 1) {
         // A trade chip's tooltip on a fine pointer: hover shows the price.
         const chip = page.locator('[data-trade]').first();
