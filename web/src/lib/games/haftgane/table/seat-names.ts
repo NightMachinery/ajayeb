@@ -8,7 +8,8 @@ import type { TableState } from '$lib/wire/platform.gen';
 import { ht } from '../i18n/messages.svelte';
 import { humanAt } from './model';
 
-function persona(level: string | undefined): string {
+/** A bot level's persona name. */
+export function persona(level: string | undefined): string {
   switch (level) {
     case 'easy':
       return t('game.persona.easy');
@@ -26,6 +27,11 @@ function numbered(name: string, n: number): string {
   return n > 1 ? `${name} ${formatNumber(n)}` : name;
 }
 
+/** A human's display name, numbered among those who share it. */
+export function humanName(h: { name: string; nameNo: number }): string {
+  return numbered(h.name, h.nameNo);
+}
+
 /** A seat's display name. Bots of one level share a persona name, so each
  *  after the first in seat order takes a number, as humans' names do. */
 export function seatName(frame: TableState, seat: number): string {
@@ -35,7 +41,7 @@ export function seatName(frame: TableState, seat: number): string {
     return numbered(persona(p.bot), same.length);
   }
   const h = humanAt(frame, seat);
-  if (h) return numbered(h.name, h.nameNo);
+  if (h) return humanName(h);
   return ht('hg.screen.seat', { seat: seat + 1 });
 }
 

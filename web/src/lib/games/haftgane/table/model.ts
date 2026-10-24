@@ -53,8 +53,8 @@ export function stagesOf(seat: Pick<Seat, 'board' | 'side'>): readonly HgStage[]
 // The seat ring ---------------------------------------------------------------
 
 /**
- * The seats around the anchor: the viewer's own seat, or seat 0 for a
- * spectator. Left is the next seat (the one hands pass to in Ages I and
+ * The seats around the anchor: the viewer's own seat, or for a spectator
+ * the seat they follow (seat 0 until they pick one). Left is the next seat (the one hands pass to in Ages I and
  * III), right the previous one, and far lists the rest from the left
  * neighbour's side to the right neighbour's (relative 2 up to n - 2).
  */
@@ -67,11 +67,11 @@ export interface Ring {
   own: boolean;
 }
 
-export function ring(seats: readonly Seat[]): Ring | null {
+export function ring(seats: readonly Seat[], follow: number | null = null): Ring | null {
   const n = seats.length;
   if (n < 3) return null;
   const self = seats.find((s) => s.relation === 'self');
-  const anchor = self ?? seats[0]!;
+  const anchor = self ?? seats.find((s) => s.seat === follow) ?? seats[0]!;
   const rel = (s: Seat) => (self ? s.relative : (s.seat - anchor.seat + n) % n);
   const at = (r: number) => seats.find((s) => rel(s) === r)!;
   const far = seats.filter((s) => rel(s) >= 2 && rel(s) <= n - 2).sort((a, b) => rel(a) - rel(b));
@@ -107,6 +107,52 @@ export function seatStatus(frame: TableState, seat: number): SeatStatus {
 export function humanAt(frame: TableState, seat: number): PlatformHuman | undefined {
   const p = frame.seats[seat];
   return p?.kind === 'human' ? frame.humans.find((h) => h.userId === p.userId) : undefined;
+}
+
+// Roles and spectators ---------------------------------------------------------
+
+/** The role tag a human carries: "creator" for the creator while an admin,
+ *  "admin" for any other admin, "temporary" for the temporary admin. */
+export type Role = 'creator' | 'admin' | 'temporary';
+
+export function roleOf(h: PlatformHuman | undefined): Role | null {
+  if (!h) return null;
+  if (h.admin) return h.creator ? 'creator' : 'admin';
+  return h.temporary ? 'temporary' : null;
+}
+
+/** The humans in the room who hold no seat, in the frame's order. */
+export function spectatorsOf(frame: TableState): PlatformHuman[] {
+  return frame.humans.filter(
+    (h) => !frame.seats.some((s) => s.kind === 'human' && s.userId === h.userId)
+  );
+}
+
+/** The seat a user held earlier in this game. The frame names it only to
+ *  an admin (you.previousSeats), so for anyone else this is always null. */
+export function previousSeatOf(frame: TableState, userId: string): number | null {
+  return frame.you.previousSeats?.find((p) => p.userId === userId)?.seat ?? null;
+}
+
+/**
+ * The role buttons this viewer gets for another user, read from the roles
+ * the frame lists, as the lobby reads them: a real admin may make any human
+ * who is not one an admin, and may remove an admin they promoted, or, as
+ * the creator, any admin but the creator. A temporary admin gets none. The
+ * server checks every request again.
+ */
+export function roleActions(
+  frame: TableState,
+  userId: string
+): { promote: boolean; demote: boolean } {
+  const me = frame.humans.find((h) => h.userId === frame.you.userId);
+  const them = frame.humans.find((h) => h.userId === userId);
+  if (!me?.admin || !them || them.userId === me.userId || frame.status !== 'playing')
+    return { promote: false, demote: false };
+  return {
+    promote: !them.admin,
+    demote: them.admin && !them.creator && (me.creator || them.promotedBy === me.userId)
+  };
 }
 
 /** How many of the seats this point asks have confirmed. */
