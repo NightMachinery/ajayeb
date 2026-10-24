@@ -57,7 +57,8 @@ describe('admin reads', () => {
     expect(formerOf(watching, 1)).toEqual({ seat: 1, by: 'human', name: 'Bo' });
     const admin = { ...watching, you: { userId: 'w', previousSeats: [{ userId: 'w', seat: 2 }] } };
     expect(formerOf(admin, null)).toEqual({ seat: 2, by: 'bot', name: '' });
-    // A seated viewer is no former player.
+    // A seated viewer is no former player, and a finished game has none.
     expect(formerOf(tableFrame({}, 0), 1)).toBeNull();
+    expect(formerOf({ ...watching, status: 'finished' }, 2)).toBeNull();
   });
 });

@@ -70,7 +70,8 @@ export function roleMap(frame: TableState): Record<string, { promote: boolean; d
 }
 
 /**
- * Who plays the seat this viewer held, while the viewer watches. `held` is
+ * Who plays the seat this viewer held, while the viewer watches a game in
+ * play (once it is over, nobody can seat them again). `held` is
  * the seat this connection last held (the Session's memory); an admin's
  * frame also names it (you.previousSeats). Null while the viewer is seated
  * or never held a seat that this page knows of.
@@ -79,6 +80,7 @@ export function formerOf(
   frame: TableState,
   held: number | null
 ): { seat: number; by: 'bot' | 'human'; name: string } | null {
+  if (frame.status !== 'playing') return null;
   if (frame.you.seat !== undefined && frame.you.seat !== null) return null;
   const seat = previousSeatOf(frame, frame.you.userId) ?? held;
   if (seat === null) return null;
