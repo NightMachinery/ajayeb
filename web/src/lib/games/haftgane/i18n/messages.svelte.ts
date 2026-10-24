@@ -26,6 +26,7 @@ import { admin } from './en/admin';
 import { city } from './en/city';
 import { end } from './en/end';
 import { names } from './en/names';
+import { recap } from './en/recap';
 import { rules } from './en/rules';
 import { screen } from './en/screen';
 import { table } from './en/table';
@@ -36,6 +37,7 @@ export const hgEn = {
   ...city,
   ...end,
   ...names,
+  ...recap,
   ...rules,
   ...screen,
   ...table
