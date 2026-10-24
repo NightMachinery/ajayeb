@@ -391,6 +391,8 @@ Acceptance:
 
 ## M17: Simple bots (internal milestone)
 
+Status: done on 2026-10-24. All four slices landed, and the FULL slice, `M17.fixed-preset-room-bots`, was approved by the other model family on its first round. The held-out release tournament played 500 deal blocks (30,600 games) and passed all 25 strength gates: against Random, Greedy's rank reward was 0.98 to 0.99 and its win credit 0.93 to 0.98, and Apprentice's 0.86 to 0.94 and 0.63 to 0.89; Greedy beat Apprentice in the paired comparison at every player count. The room bots' acceptance suite passes (repeatability with forbidden information changed, all 64 pending subsets across restarts, schedules, seat switches, undo and late results), and the six-bot wait is measured in [simple-bots-evidence.md](../haftgane/simple-bots-evidence.md). The review found that the room levels did not play the policies their persona names promise, so a follow-up, `M17.persona-level-mapping`, now maps easy (Apprentice) to the Apprentice policy, with normal and hard playing Greedy until the Scholar policy exists (M21). Frozen presets are an equality check against the build, so the next preset change archives every live table unless that slice adds a registry of supported preset sets; [room-bots.md](../haftgane/room-bots.md) describes both options.
+
 Needs: M15 for slices 1 and 2 (beside M16); M16 slice 3 for slice 3.
 
 Scope (the bot plan's slices 2, 3, 4 and the internal part of 9):
