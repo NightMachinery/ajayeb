@@ -1,10 +1,11 @@
 // Haftgane's message tables and ht() (messages.svelte.ts): the English
-// tables, the per-key English fallback in Persian, the lazily loaded
-// Persian table, and parity with the root t() whose few helpers ht()
-// repeats instead of importing.
+// tables, the complete Persian table, the per-key English fallback in
+// Persian, the lazily loaded Persian table, and parity with the root t()
+// whose few helpers ht() repeats instead of importing.
 import { afterEach, describe, expect, it } from 'vitest';
 import { en, i18n, interpolate, t } from '$lib/i18n';
 import { fa as rootFa } from '$lib/i18n/fa';
+import { fa } from './fa';
 import {
   hgEn,
   hgInterpolate,
@@ -48,6 +49,7 @@ describe('ht', () => {
 
 describe('ht in Persian', () => {
   it('falls back to English per key, marked left to right exactly as t() marks it', async () => {
+    setHgPersianLoader(async () => ({}));
     await i18n.set('fa');
     await loadHgMessages('fa');
     // The root's Persian table translates 'rules.toc'; take it out, as an
@@ -65,7 +67,9 @@ describe('ht in Persian', () => {
   });
 
   it('chooses an English fallback plural by English rules, with Persian digits', async () => {
+    setHgPersianLoader(async () => ({}));
     await i18n.set('fa');
+    await loadHgMessages('fa');
     expect(ht('hg.rules.diagram.shields', { count: 1 })).toContain('۱ shield');
   });
 
@@ -99,5 +103,46 @@ describe('ht in Persian', () => {
     await loadHgMessages('fa');
     expect(ht('hg.rules.toc')).toBe('فهرست');
     expect(calls).toBe(2);
+  });
+});
+
+describe('the Persian table', () => {
+  // The only Latin a Persian message may hold: a URL parameter, typed as it is.
+  const latin = new Set<string>(['hg.table.dev.create.badSeats']);
+  const forms = (m: unknown) =>
+    typeof m === 'string' ? [m] : Object.values(m as Record<string, string>);
+  const slots = (texts: string[]) =>
+    [...new Set(texts.flatMap((x) => [...x.matchAll(/\{(\w+)\}/g)].map((m) => m[1])))].sort();
+
+  it('translates every key, and nothing English lacks', () => {
+    const missing = Object.keys(hgEn).filter((k) => !(k in fa));
+    expect(missing).toEqual([]);
+    expect(Object.keys(fa).filter((k) => !(k in hgEn))).toEqual([]);
+  });
+
+  it('keeps each message plain or plural, as English has it, with every placeholder', () => {
+    for (const [key, english] of Object.entries(hgEn)) {
+      const persian = (fa as Record<string, unknown>)[key];
+      expect(typeof persian, key).toBe(typeof english);
+      if (typeof persian === 'object') expect(persian, key).toHaveProperty('other');
+      expect(slots(forms(persian)), key).toEqual(slots(forms(english)));
+    }
+  });
+
+  it('writes Persian: no Latin letters, no typed digits, no em or en dash', () => {
+    for (const [key, message] of Object.entries(fa)) {
+      for (const form of forms(message)) {
+        const text = form.replace(/\{\w+\}/g, '');
+        if (!latin.has(key)) expect(text, key).not.toMatch(/[A-Za-z0-9۰-۹]/);
+        expect(text, key).not.toMatch(/[–—]/);
+      }
+    }
+  });
+
+  it('is the table ht() loads in Persian', async () => {
+    await i18n.set('fa');
+    await loadHgMessages('fa');
+    expect(ht('hg.screen.hand')).toBe(fa['hg.screen.hand']);
+    expect(ht('hg.screen.hand.size', { count: 3 })).toBe('۳ کارت');
   });
 });

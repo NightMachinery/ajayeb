@@ -316,3 +316,106 @@ Everything else is translated, the `/dev/gallery` and demo strings included.
 - Result actions retain their existing full Persian labels in the reserved
   footer. They may wrap within their buttons on a short screen rather than
   being shortened or moved below the score details.
+
+## Haftgane (M18.persian-messages)
+
+Haftgane's messages live with the game, in `web/src/lib/games/haftgane/i18n/fa/`, one file per area beside the English ones in `../en/`, and load only with Haftgane's lazy chunks. The lobby's live in `web/src/lib/lobby/i18n/fa.ts` and `picker-fa.ts`. Every convention and house term above applies. The terms below are the ones Duel never needed, and they are fixed in the same way.
+
+### House terms for Haftgane
+
+- **Haftgane**: هفتگانه. **table** (a game of three to seven): میز. **lobby**: لابی.
+- **seat**: جایگاه, as in Duel, in the lobby too ("Seat {seat}": جایگاه {seat}).
+- **neighbour**: همسایه. Left neighbour: همسایه‌ی چپ. Right neighbour: همسایه‌ی راست. Both neighbours: هر دو همسایه. "Your neighbours' cities": شهرهای همسایه‌هایتان.
+- **left, right** (a passing direction or a seat's side): چپ, راست. "To the left": به چپ.
+- **hand** (the cards a player holds): دست. "Your hand": دست شما. To pass a hand: دادن ("you pass your hand to {name}": دستتان را به {name} می‌دهید). "Hands pass left": دست‌ها به چپ می‌روند.
+- **wonder board**: صفحه‌ی شگفتی. A board's own name (Alexandria) is the city's: اسکندریه.
+- **side** of a board: طرف. Day side: طرف روز. Night side: طرف شب. رو was rejected, because «روی روز» also reads "on the day".
+- **stage** (of a wonder): مرحله; in full مرحله‌ی شگفتی. The stage numerals I to IV are the ordinals یکم, دوم, سوم and چهارم, as the Ages are. A stage card is tucked under the stage: زیر مرحله گذاشتن.
+- **construct** (a building): ساختن, as in Duel. **build a stage**: ساختن مرحله.
+- **sell** (a card for three coins): فروختن. Duel's card goes "to the discard pile" (کنار گذاشتن); Haftgane's English says sell, and so does its Persian. The pile itself keeps Duel's name, کارت‌های کنارگذاشته.
+- **the reserve** (where coins come from and go to): بانک, as in Duel. **treasure** (the coins a player holds): خزانه.
+- **production**: تولید. A choice producer: تولید انتخابی.
+- **trade** (buying from a neighbour): خرید از همسایه. A trading discount: تخفیف خرید. A split of coins between the two neighbours: تقسیم سکه‌ها.
+- **military strength**: قدرت نظامی. **conflict**: نبرد. The military conflicts at the end of an Age: نبردهای نظامی. **conflict token**: نشان نبرد; a victory token نشان پیروزی; a defeat token نشان شکست. Haftgane has no progress tokens, so نشان keeps meaning a token.
+- **pick** (the card and action a player chooses for the turn): انتخاب. "Your pick": انتخاب شما.
+- **keep** (a card for an extra turn, Babylon): نگه داشتن. The kept card: کارت نگه‌داشته. An extra turn: نوبت اضافه. The sixth turn: نوبت ششم. The last card: کارت آخر.
+- **admin**: مدیر. The table's creator: سازنده. A temporary admin: مدیر موقت. Make admin: مدیر کردن. Remove admin: گرفتن نقش مدیر. Stop being admin: کناره‌گیری از مدیری.
+- **spectator**: تماشاگر. To watch: تماشا کردن. **away** (not connected): غایب.
+- **resign to a bot**: واگذاری به ربات, after Duel's واگذاری (forfeit).
+- **the recap** (what the last turn did): نوبت گذشته.
+- **Seen hands** (the private notebook): دست‌های دیده‌شده. The notebook: دفترچه.
+- **resources**: wood چوب, clay خاک رس, stone سنگ, ore سنگ‌آهن, glass شیشه, papyrus پاپیروس, cloth پارچه. Raw resources: مواد خام. Manufactured resources: کالاهای ساخته‌شده.
+- **science symbols**: compass پرگار (the drafting compass), gear چرخ‌دنده, tablet لوح. A set of three different symbols: دسته.
+- **colour categories**: civic buildings ساختمان‌های مدنی, commercial buildings ساختمان‌های تجاری, military buildings ساختمان‌های نظامی, science buildings ساختمان‌های علمی, guilds انجمن‌ها, as in Duel.
+
+### Boards and wonders
+
+The cities take their usual Persian names, and a wonder Duel also has keeps Duel's name for it.
+
+- Alexandria اسکندریه: فانوس دریایی اسکندریه
+- Babylon بابل: باغ‌های معلق بابل
+- Ephesos افسس: معبد آرتمیس
+- Gizah جیزه: هرم‌های بزرگ
+- Halikarnassos هالیکارناسوس: آرامگاه هالیکارناسوس
+- Olympia المپیا: تندیس زئوس
+- Rhodos رودس: غول‌پیکر رودس
+
+### Haftgane card names
+
+A card Duel also has keeps Duel's Persian name. The new ones:
+
+- Excavation: کاوشگاه
+- Forest Cave: غار جنگلی
+- Mine: معدن
+- Ore Vein: رگه‌ی سنگ‌آهن
+- Timber Yard: چوب‌انبار
+- Tree Farm: نهالستان
+- Loom: پارچه‌بافی
+- Stockade: حصار چوبی (Duel's Palisade, which Haftgane does not have)
+- Well: چاه
+- East Trading Post: تجارتخانه‌ی شرقی
+- West Trading Post: تجارتخانه‌ی غربی
+- Marketplace: بازارچه
+- Foundry: ریخته‌گری
+- Stables: اصطبل (Duel's Stable)
+- Training Ground: میدان مشق
+- Bazar: بازار
+- Vineyard: تاکستان
+- Castrum: اردوگاه
+- Haven: لنگرگاه
+- Ludus: زورخانه
+- Lodge: لژ
+- Craftsmens Guild: انجمن پیشه‌وران
+- Decorators Guild: انجمن آذین‌گران
+- Philosophers Guild: انجمن فیلسوفان
+- Spies Guild: انجمن جاسوسان
+- Traders Guild: انجمن بازرگانان (Duel's Merchants Guild, which Haftgane does not have)
+- Workers Guild: انجمن کارگران
+
+The cards printed in two Ages (Glassworks, Loom, Press) share one name, as in English.
+
+### Kept as in English (Haftgane)
+
+- The counters with no words keep their English form: `{turn}/{of}` and the other `/` counters, `{count} × {resource}`, and the rules diagrams' signs (`−{count}`, `+{count}`, and the science sums). They are still in the Persian table.
+- `hg.table.dev.create.badSeats` names the URL parameter `seats=3`, typed as it is.
+- A test (`web/src/lib/games/haftgane/i18n/messages.test.ts`) fails on any English key the Persian table lacks, on a lost placeholder, and on Latin letters or typed digits anywhere else in it.
+
+### Open questions for the native check (Haftgane)
+
+The first Haftgane strings were drafted by an agent, like Duel's, and wait for the same native check. What it should look at first:
+
+- **Seat**: جایگاه, after Duel's glossary; the lobby said صندلی until this pass. صندلی is what players say at a real table ("صندلی سوم"), and جایگاه reads more formal. Which should both games use?
+- **Side**: طرف روز and طرف شب. Is وجه or رو (with the ambiguity of «روی روز») more natural for the two faces of a board?
+- **Ore**: سنگ‌آهن, the familiar word, though it names iron ore only and sits next to سنگ (stone) on the chips. فلز (metal) and کانه (ore, technical) are the alternatives.
+- **Compass**: پرگار, the drafting tool the symbol shows, not قطب‌نما (the magnetic compass).
+- **Mine and Quarry**: معدن and معدن سنگ are close. Is کان better for Mine?
+- **Timber Yard and Lumber Yard**: چوب‌انبار and انبار الوار are close too. A clearer pair is welcome.
+- **Ludus**: زورخانه, the traditional Iranian house of strength, for a Roman gladiator school. It is short and warm, but it is a liberty; مدرسه‌ی گلادیاتورها is exact and long.
+- **Lodge**: لژ, the loan word for a masonic lodge, which is what the card shows. خانقاه (a Sufi lodge) was rejected as too religious.
+- **Castrum**: اردوگاه (a camp), or دژ (a fort), which reads close to استحکامات (Fortifications)?
+- **Decorators Guild**: انجمن آذین‌گران. آذین‌گر is a rare word; is انجمن نقاشان or انجمن هنرمندان better?
+- **Ephesos**: افسس, the usual Persian name; اِفِسوس follows the Greek.
+- **Deck**: دسته‌ی کارت in the rules, while a set of three science symbols is a دسته too. بسته‌ی کارت would separate them.
+- **Recap lines**: a coin line under a seat's name is a noun of action («پرداخت ۲ سکه به بانک»), because it stands under any seat, the viewer's own included. Does it read naturally next to the full sentences above it?
+- **Stage numerals**: the stage pills show یکم to چهارم, the way the Ages do. Some screens pass the stage as a number instead, so «مرحله‌ی ۲» and «مرحله‌ی دوم» can both appear. Is that acceptable, or should every stage be an ordinal?
+- **The outlook tooltip** names a victory token's worth in words, «نشان پیروزی ۳ امتیازی», where English writes "+3 token", so no signed number sits inside a Persian sentence.
