@@ -203,12 +203,17 @@
     outline: 2px solid var(--accent);
     outline-offset: -2px;
   }
+  /* Two lines before the cut, so a numbered name keeps its number. */
   .name {
+    display: -webkit-box;
     min-width: 0;
     overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.2;
+    overflow-wrap: break-word;
   }
   .negative {
     color: var(--cinnabar-ink);

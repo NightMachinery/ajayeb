@@ -341,6 +341,7 @@
      every conflict at the end, and a footer of one line. */
   @media (orientation: landscape) and (max-height: 32rem) {
     :global(dialog.sheet.hg-military) {
+      --sheet-max-height: calc(100dvh - 1rem);
       width: min(100%, 52rem);
     }
     .body {
