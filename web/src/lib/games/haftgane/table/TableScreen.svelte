@@ -60,6 +60,7 @@
   import FinalReveal from './FinalReveal.svelte';
   import ScoreSheet from './ScoreSheet.svelte';
   import { downloadTableLog } from './download';
+  import { armTableSound, playTableSound } from './sound';
   import { conflictsByAge } from './end';
   import { settings } from '$lib/ui/settings.svelte';
   import { motion } from '$lib/ui/motion.svelte';
@@ -242,7 +243,8 @@
   );
   // How the hand on screen arrived, when this page saw it arrive: from the
   // neighbour who passed it (hands going left come from the right), or
-  // dealt for a new Age. Keyed by Age and turn, so it plays once.
+  // dealt for a new Age, when the pass chip and the pass flow also sweep
+  // the way hands now travel. Keyed by Age and turn, so it plays once.
   let dealt = $state<{ key: string; from: 'left' | 'right' | 'deal' } | null>(null);
   const deal = $derived(dealt?.key === `${view.age}:${view.turn}` ? dealt.from : null);
   const userName = (id: string | undefined) => {
@@ -302,11 +304,18 @@
       wake = done;
     });
   }
+  // The player loads once Sound is on (now, or later from Settings).
+  $effect(() => armTableSound());
   // DOM-free wiring: the Presenter calls these while this screen shows it.
+  // A live change sounds as it shows (sound.ts), the reveal's with its tags.
   $effect(() => {
     presenter.hooks = {
       capture: (next) => prepare(next),
-      play: (next) => reveal(next),
+      play: (next, prev) => {
+        playTableSound(next, prev);
+        return reveal(next);
+      },
+      still: (next, prev) => playTableSound(next, prev),
       finish: () => wake?.()
     };
     return () => {
@@ -402,6 +411,7 @@
       turns={TURNS_PER_AGE}
       pass={view.pass}
       passTo={passTo ? nameOf(passTo.seat) : ''}
+      passFresh={deal === 'deal'}
       {finished}
       onmenu={() => (menuOpen = true)}
       onundo={ready && session.canUndo ? () => session.undo() : null}
@@ -503,6 +513,7 @@
               from={{ seat: passFrom.seat, name: nameOf(passFrom.seat) }}
               to={{ seat: passTo.seat, name: nameOf(passTo.seat) }}
               handSize={hand.length}
+              fresh={deal === 'deal'}
             />
           {/if}
           <SeenHandsButton onopen={() => (seenOpen = true)} />
