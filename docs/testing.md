@@ -2182,6 +2182,21 @@ replaces its report and known matrix PNGs in its output directory, so use
 separate directories to preserve before and after evidence. Never point
 `SHOTS_DIR` at a directory holding other screenshot runs you need to keep.
 
+`ux/card-sheet-signals.spec.ts` (filter `--grep "card sheet signals"`,
+M18.card-sheet-signals) works over live Duel rooms against a bot. It captures,
+in both themes at 390x844 and 1280x800:
+- the card sheet whose Build a wonder button stands out and names the
+  wonder (science-pair's Library), and the same button plain where every
+  wonder choice for the card is disabled;
+- the sheet's list of the card's hint marks (the Library's pair,
+  looting-double's Arsenal loot), checked against the board mark's tooltip;
+- the rules' hint legend.
+In a touch context at 390x844 it captures the one-time long-press tip, in
+English in both themes and once in Persian, opens the legend from the tip's
+More in Rules, and checks that after a reload the pair's own tip shows
+instead. A fine pointer gets the pair's tip and never the long-press one.
+Screenshots go to `CARD_SIGNALS_SHOTS_DIR`, or the test's output directory.
+
 `ux/haftgane-table.spec.ts` (filter `--grep haftgane`) checks the
 Haftgane table screen's geometry outside that matrix: tables of 3, 4, 5,
 6 and 7 seats at 360x740, 390x844, 844x390 and 1280x800, light and dark, English
