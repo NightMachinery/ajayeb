@@ -1,6 +1,8 @@
 # Phone layout for Haftgane
 
-@Opus5.5 [2026-10-21 Wed]. Design proposal with rendered mockups, which stay private (see [The mockups](#the-mockups)). Nothing here is built. Paths starting with `web/`, `e2e/`, `server/` or `docs/` are repository paths.
+@Opus5.5 [2026-10-21 Wed]. Design proposal with rendered mockups, which stay private (see [The mockups](#the-mockups)). Paths starting with `web/`, `e2e/`, `server/` or `docs/` are repository paths.
+
+Built so far (@Opus5.5 [2026-10-24 Sat]): the main screen of section 1, by M18.table-screen, in `web/src/lib/games/haftgane/table/` ([architecture.md](../architecture.md) describes it). Until the card sheet of section 2 arrives (M18.card-sheet-and-payments), a tap on a hand card opens a minimal pick list of that card's choices. The reveal, the recap, the special decisions, the city view and Seen hands follow in their own slices. The new components carry the names proposed under [Components](#components), except that the seat ring is the table screen's own grid rather than a `SeatRing` component, and the leaves are written for this game instead of extending Duel's (Duel's components stay out of Haftgane's chunk, see "Chunks" in architecture.md).
 
 ## Summary
 

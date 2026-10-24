@@ -520,7 +520,9 @@ browser and no server:
 checks the production Home flow, named creation, adding and removing released
 bots, a second isolated human, spectating, promote/demote/step-down, settings,
 Start and a finished game's rematch reservations, including an original human
-who became a spectator after a controller switch. These cases carry `@full`
+who became a spectator after a controller switch; that game is played
+through the table screen with `choose()` from `fixtures/table.ts`, and its
+rematch button follows the turn bar. These cases carry `@full`
 and `@mobile`. A cold invite sends no hello or join until its name is
 submitted. The count regression exercises three through seven seats and
 requires confirmation before a decrease displaces a human; cancel keeps both
@@ -1313,9 +1315,13 @@ subsequent batches may use `E2E_BUILD=0` while those build inputs stay unchanged
 
 ### `haftgane-table.full.spec.ts` (`@full @haftgane-table`)
 
-A Haftgane table over the real server and the development screen, on
-desktop only, in three browser contexts. The creator opens
-Home’s Haftgane picker and New table form, a second human joins the lobby from its own context,
+A Haftgane table over the real server and the table screen, on desktop
+only, in three browser contexts. A choice of a hand card is clicked after
+its card (the pick list shows a selected card's choices), and the admin's
+seat controls are in the game menu; `fixtures/table.ts` holds these steps,
+the table hook's waits and the oracle below, shared with the next spec.
+The creator opens Home's Haftgane picker and New table form, a second
+human joins the lobby from its own context,
 and the creator starts it with bots in the two empty seats; a spectator
 joins the running table. The creator confirms a pick and reloads, and the
 pick comes back confirmed; it withdraws, changes and confirms again. The
@@ -1347,6 +1353,24 @@ two picks carry three rising seqs.
 
 Both run in CI's shards but not in `make e2e-smoke`; run them alone with
 `make e2e GREP=@haftgane-table`.
+
+### `haftgane-table-screen.full.spec.ts` (`@full @haftgane-table`)
+
+The table screen at five seats, one human and four bots, played through
+the screen alone. The page creates the table from Home's lobby, sets five
+seats and starts it, so the four open seats take bots (`openBotTable` in
+`fixtures/table.ts`, which the geometry spec below shares). The board
+shows each seat once (the strip, two neighbour panels, two far chips).
+When the table lets each seat choose a wonder side, the page picks day,
+changes to night and confirms; then three turns of Age I each pick a
+card through its hand card and the pick list and confirm, the second turn
+changing its pick first. The pick's hand card carries the drafted tag and
+is pressed; a trade chip's tooltip shows its price on hover; every glyph
+and image on the board sits inside a tooltip anchor or a labelled button;
+nothing animates with Animation off. After the side point and after every
+turn, the pending-ownership oracle passes over every table frame the page
+received, and three contaminated copies must fail it. No console error or
+failed request is allowed. Run it with `make e2e GREP=@haftgane-table`.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
@@ -1714,6 +1738,16 @@ skips rebuilding when the existing test build is current. Each invocation
 replaces its report and known matrix PNGs in its output directory, so use
 separate directories to preserve before and after evidence. Never point
 `SHOTS_DIR` at a directory holding other screenshot runs you need to keep.
+
+`ux/haftgane-table.spec.ts` (filter `--grep haftgane`) checks the
+Haftgane table screen's geometry outside that matrix: tables of 3, 5 and 7
+seats at 360x740, 390x844, 844x390 and 1280x800, light and dark, English
+and Persian, each with nothing selected and with a hand card's pick list
+open. Its probe requires no horizontal overflow, no control under 44 px,
+no seat, hand card, bar or control cut off by the screen's edges, no
+glyph without a tooltip and nothing animating, and the page may log no
+console error or failed request. Its screenshots and `probes-*.json` go
+to `HG_TABLE_SHOTS_DIR` (default `.cache/e2e/hg-table-shots`).
 
 Open `index.html` directly from disk. Its contact sheet groups the captures
 by screen, links each image at full size, and lists that capture's findings.

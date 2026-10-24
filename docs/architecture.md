@@ -272,7 +272,7 @@ The engine produces each key from its own action value and parses keys strictly.
 The TypeScript types in the client are generated from the Go structs, never written twice:
 
 1. **Types.** `tygo` turns `internal/view` into `web/src/lib/wire/view.gen.ts` and `internal/wire` into `web/src/lib/wire/types.gen.ts`. tygo writes one file per package, and `types.gen.ts` imports `view.gen.ts` as `view`; every view type that a wire struct references needs a `type_mappings` entry in `server/tygo.yaml`, or it comes out as `never`. A hand-written `index.ts` next to them re-exports both and defines the message unions.
-2. **Data.** `ajayeb-gen` writes `catalog.gen.ts`: typed slug lists and display data such as colour, cost, effects and chain links. The slug unions make incomplete translation tables fail to compile, and the gallery can draw cards without a server. There is no separate `ids.gen.ts`.
+2. **Data.** `ajayeb-gen` writes `catalog.gen.ts`: typed slug lists and display data such as colour, cost, effects and chain links. The slug unions make incomplete translation tables fail to compile, and the gallery can draw cards without a server. There is no separate `ids.gen.ts`. For Haftgane it also writes `haftgane-catalog.gen.ts` (the same file as `ajayeb-gen catalog -game haftgane -format ts`): the 80 design slugs and 7 board slugs, each design's Age, colour, printed cost, the chain symbols it takes in and gives out and its effects, and each board's starting resource and the stages of both sides. It holds codes and numbers only, never prose: names come from the translation tables. Only Haftgane's lazy chunk imports it (about 3.7 KB gzip), and the table screen reads it for printed facts, never for a price or a legality, which come from the view.
 3. **Contract fixtures.** Go tests record wire messages under `internal/wire/testdata/messages/` and per-viewer protocol views under `internal/engine/testdata/protocol/`. `ajayeb-gen fixtures` turns them into `fixtures.gen.ts`, checked with `satisfies` against `ServerMessage[]` and `View[]`, so `svelte-check` fails if recorded server JSON does not fit the TypeScript types (a stray `null`, a missing field or a wrong enum string).
 4. **Hygiene.** A Go reflection test walks every outgoing type: each field has an explicit `json` tag, `omitempty` appears only on pointers, and recorded messages contain no `null` arrays.
 
@@ -364,8 +364,52 @@ a reload mends a client and a server that disagree.
   set their fixed-option values through local attachments. This avoids extra
   shared Svelte runtime exports whose import aliases otherwise increase Duel's
   compressed chunks despite an unchanged eager module set. The development
-  creation route `/dev/table` is retired. Running tables still use
-  `dev/TableDev.svelte` until the parallel table-screen slice lands.
+  creation route `/dev/table` is retired.
+- **The table screen** (`table/TableScreen.svelte`, M18.table-screen)
+  draws [phone-layout.md](haftgane/phone-layout.md)'s main screen from the
+  Presenter's frame: the top bar with the game menu, the Age and turn and
+  the pass chip; the far chips; the two neighbour panels with their trade
+  chips (units, price per unit and the discount's source, all from
+  `view.you.neighbours`), the military outlook and the pass mark; the
+  anchor's strip with its stage pills; the hand with each card's
+  affordability badge; and the turn bar with the chosen count. The anchor
+  is the viewer's seat, or seat 0 for a spectator, and the board is
+  `dir="ltr"`. The layout is CSS only: a phone in portrait stacks the
+  pieces, a short landscape screen moves the neighbours and far chips into
+  side columns, and a desktop gives the neighbours full side panels. A
+  tap on a hand card selects it, and a minimal pick list shows that
+  card's choices (or, for a decision with no hand card such as the wonder
+  side, every choice), each a button with its key in `data-act`; Confirm
+  and Change in the turn bar confirm and withdraw through the Session. The
+  card sheet with its payment list replaces the pick list in
+  M18.card-sheet-and-payments. The game menu holds the rules and, until
+  the admin slice, the development screen's seat, undo and resign
+  controls. `table/model.ts` derives the seat ring, the badges and the
+  printed facts; it groups the server's choices but never adds a cost.
+  Each leaf takes plain props, and the dev gallery shows them all. Once
+  the game is over, the entry's rematch actions follow the turn bar.
+- **The development screen** (`dev/TableDev.svelte`) now shows only what
+  comes before a table's first frame.
+
+**Chunks.** Haftgane's code must not change what Home and Duel download.
+Its modules import from the root only what the root already loads (the
+shell `Button`, the tooltip helper, the translation helpers, motion and
+theme), and never a Duel component, Duel's icon module or a Lucide icon a
+Duel or Home route uses: a module shared with Duel moves into a chunk
+Duel loads, or makes an existing chunk export another name. The Duel
+drawings the table reuses are imported raw under a `?hg&raw` query
+(`table/glyphs.ts`), which gives them module ids of their own. The table
+styles itself with scoped `<style>` blocks and the theme's custom
+properties, not new Tailwind utilities, which would grow the stylesheet
+every page loads, and `theme.css` (the seat and resource colours) ships
+in Haftgane's chunk. It adds no Svelte feature that Duel and the
+entry do not already use (such as transitions, a `<select>` value or
+`bind:group`), whose runtime helpers would join the shared runtime chunk
+and rename Duel's imports. A module Haftgane shares with another lazy route becomes a chunk
+of its own, whose name the app's route map and the play page's preload
+list carry, so the gallery imports the table's leaves dynamically.
+`make shots PW_ARGS=--grep=platform` measures Home and Duel cold bytes
+against the committed baseline.
 
 Loader functions stay separate in a frozen table: combining dynamic imports
 in a conditional lets the bundler associate preloads with the wrong entry.
