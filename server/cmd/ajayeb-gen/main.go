@@ -10,9 +10,11 @@
 // that make gen is responsible for, after tygo has already written the
 // types themselves: the fixtures subcommand with its defaults
 // (fixtures.gen.ts), and the presentation catalog as a TypeScript module
-// (catalog.gen.ts, the same as catalog -format ts). A later generator that
-// also belongs in that default sweep gets a call here alongside them. The
-// separate platform DTO pass writes platform.gen.ts without changing Duel output.
+// (catalog.gen.ts, the same as catalog -format ts), and Haftgane's
+// presentation catalog (haftgane-catalog.gen.ts, the same as catalog -game
+// haftgane -format ts). A later generator that also belongs in that default
+// sweep gets a call here alongside them. The separate platform DTO pass
+// writes platform.gen.ts without changing Duel output.
 //
 // fixtures turns real recorded server output into a TypeScript fixture file
 // that make check-web type-checks against the generated wire types:
@@ -46,8 +48,10 @@
 // above) or haftgane, whose csv format writes the record tables cards,
 // wonders and boards, byte for byte the goldens in
 // internal/haftgane/catalog/testdata/*.golden.csv, and whose prose format
-// writes every design and wonder stage in plain English (haftgane.go).
-// Haftgane has no json or ts format yet.
+// writes every design and wonder stage in plain English (haftgane.go), and
+// whose ts format writes the client's presentation catalog
+// (haftganets.go), which make gen writes to
+// web/src/lib/wire/haftgane-catalog.gen.ts. Haftgane has no json format.
 package main
 
 import (
@@ -115,7 +119,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 // genPaths are the inputs and outputs of the default run.
 type genPaths struct {
 	fixturesOut, catalogOut, messagesDir, protocolDir string
-	platformOut                                       string
+	platformOut, haftganeCatalogOut                   string
 }
 
 // defaultPaths are relative to server/, where make gen runs this command.
@@ -125,6 +129,8 @@ var defaultPaths = genPaths{
 	catalogOut:  defaultCatalogTSOut,
 	messagesDir: defaultMessagesDir,
 	protocolDir: defaultProtocolDir,
+
+	haftganeCatalogOut: defaultHaftganeCatalogTSOut,
 }
 
 // runDefault runs every generator of the default sweep.
@@ -137,6 +143,12 @@ func runDefault(stdout io.Writer, p genPaths) error {
 		return err
 	}
 	fmt.Fprintf(stdout, "wrote %s\n", p.catalogOut)
+	if p.haftganeCatalogOut != "" {
+		if err := writeHaftganeCatalogTS(p.haftganeCatalogOut); err != nil {
+			return err
+		}
+		fmt.Fprintf(stdout, "wrote %s\n", p.haftganeCatalogOut)
+	}
 	if p.platformOut != "" {
 		if err := generatePlatform(p.platformOut); err != nil {
 			return err
@@ -165,7 +177,7 @@ func parseCatalogFlags(args []string, stderr io.Writer) (catalogOptions, error) 
 	fs := flag.NewFlagSet("ajayeb-gen catalog", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.StringVar(&o.game, "game", "duel", "the game whose catalog to dump: "+strings.Join(games, ", "))
-	fs.StringVar(&o.format, "format", "csv", "output format: "+strings.Join(formats, ", ")+" (haftgane: csv, prose)")
+	fs.StringVar(&o.format, "format", "csv", "output format: "+strings.Join(formats, ", ")+" (haftgane: csv, prose, ts)")
 	fs.StringVar(&o.out, "out", "", "write files into this directory (created if needed) instead of stdout")
 	fs.StringVar(&o.table, "table", "", "csv only: write just this table ("+strings.Join(tables, ", ")+"; haftgane: "+strings.Join(haftganeTables, ", ")+")")
 	fs.Usage = func() {

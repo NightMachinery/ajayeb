@@ -9,11 +9,11 @@ import (
 	haftganecatalog "github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 )
 
-// Haftgane's catalog dumps: the record tables (csv) and the prose review
-// text. Its presentation catalog for the client comes with its views, so
-// json and ts are Duel's only.
+// Haftgane's catalog dumps: the record tables (csv), the prose review text
+// and the client's presentation catalog (ts, haftganets.go). json is Duel's
+// only.
 var (
-	haftganeFormats = []string{"csv", "prose"}
+	haftganeFormats = []string{"csv", "prose", "ts"}
 	haftganeTables  = []string{"cards", "wonders", "boards"}
 )
 
@@ -39,6 +39,12 @@ func haftganeOutputs(o catalogOptions) ([]output, error) {
 		return outs, nil
 	case "prose":
 		return []output{{"catalog.txt", haftganeProse()}}, nil
+	case "ts":
+		data, err := haftganeCatalogTS()
+		if err != nil {
+			return nil, err
+		}
+		return []output{{"haftgane-catalog.gen.ts", data}}, nil
 	}
 	return nil, fmt.Errorf("format %q is not available for haftgane", o.format)
 }

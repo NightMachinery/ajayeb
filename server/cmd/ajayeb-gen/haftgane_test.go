@@ -117,7 +117,6 @@ func TestHaftganeCommandLine(t *testing.T) {
 	}{
 		{[]string{"catalog", "-game", "chess"}, 2, `unknown game "chess"`},
 		{[]string{"catalog", "-game", "haftgane", "-format", "json"}, 2, `format "json" is not available for -game haftgane`},
-		{[]string{"catalog", "-game", "haftgane", "-format", "ts"}, 2, `format "ts" is not available for -game haftgane`},
 		{[]string{"catalog", "-game", "haftgane", "-table", "tokens"}, 2, `unknown table "tokens" (want cards, wonders, boards)`},
 		{[]string{"catalog", "-game", "haftgane", "-format", "prose", "-table", "cards"}, 2, "-table applies only to -format csv"},
 		{[]string{"catalog", "-table", "boards"}, 2, `unknown table "boards" (want cards, wonders, tokens)`},

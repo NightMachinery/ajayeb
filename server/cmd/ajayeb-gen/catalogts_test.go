@@ -209,12 +209,14 @@ func TestDefaultRunWritesAllFiles(t *testing.T) {
 		catalogOut:  filepath.Join(dir, "a", "catalog.gen.ts"),
 		messagesDir: messagesDir,
 		protocolDir: protocolDir,
+
+		haftganeCatalogOut: filepath.Join(dir, "a", "haftgane-catalog.gen.ts"),
 	}
 	var out bytes.Buffer
 	if err := runDefault(&out, p); err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range []string{p.fixturesOut, p.catalogOut, p.platformOut} {
+	for _, f := range []string{p.fixturesOut, p.catalogOut, p.platformOut, p.haftganeCatalogOut} {
 		if _, err := os.Stat(f); err != nil {
 			t.Error(err)
 		}

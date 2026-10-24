@@ -215,6 +215,12 @@ func writeCatalogTS(out string) error {
 	if err != nil {
 		return err
 	}
+	return writeIfChanged(out, data)
+}
+
+// writeIfChanged writes data to out, creating its directory, and leaves a
+// file that already holds exactly data untouched.
+func writeIfChanged(out string, data []byte) error {
 	if old, err := os.ReadFile(out); err == nil && bytes.Equal(old, data) {
 		return nil
 	}
