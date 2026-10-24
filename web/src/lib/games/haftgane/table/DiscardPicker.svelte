@@ -28,11 +28,14 @@
   const selected = $derived(
     choices.find((c) => c.kind === 'build-discarded' && c.key === pendingKey)
   );
-  function reason(slug: string): string {
-    const why = disabled.find((d) => d.kind === 'build-discarded' && d.design === slug);
-    return why?.reason === 'already-built'
+  /** The server's reason a pile card is not offered. */
+  function why(slug: string): Disabled | undefined {
+    return disabled.find((d) => d.kind === 'build-discarded' && d.design === slug);
+  }
+  function reason(d: Disabled | undefined): string {
+    return d?.reason === 'already-built'
       ? ht('hg.sheet.blocked.already-built')
-      : ht('hg.special.discard.unavailable');
+      : ht('hg.sheet.blocked.other');
   }
 </script>
 
@@ -76,7 +79,10 @@
               }}
             />
           </div>
-          {#if !o.legal || !c}<p>{reason(o.design)}</p>{/if}
+          {#if !o.legal || !c}
+            {@const d = why(o.design)}
+            <p data-blocked-reason={d?.reason ?? ''}>{reason(d)}</p>
+          {/if}
           {#if o.count > 1}<p>{ht('hg.special.discard.copies', { count: o.count })}</p>{/if}
         </div>
       {/each}

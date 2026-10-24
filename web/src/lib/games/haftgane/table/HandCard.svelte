@@ -21,6 +21,8 @@
     selected?: boolean;
     /** This card is the seat's pending pick: drafted, or confirmed. */
     picked?: 'draft' | 'confirmed' | null;
+    /** The server says the pending pick keeps this card for an extra turn. */
+    keeps?: boolean;
     disabled?: boolean;
     onselect?: (slug: string) => void;
     /** Non-actionable enlarged face, retaining every micro-tooltip. */
@@ -34,6 +36,7 @@
     afford,
     selected = false,
     picked = null,
+    keeps = false,
     disabled = false,
     onselect,
     preview = false,
@@ -73,6 +76,12 @@
       <span class="pick-tag" data-pick-tag={picked}>
         {#if picked === 'confirmed'}<HgGlyph name="badge-check" />{/if}
         <span>{ht('hg.screen.pick.tag')}</span>
+      </span>
+    {/if}
+    {#if keeps}
+      <span class="keep-tag" data-keeps-preview={slug}>
+        <HgGlyph name="wonder" />
+        <span>{ht('hg.special.kept.preview.tag')}</span>
       </span>
     {/if}
   </span>
@@ -192,6 +201,26 @@
     justify-self: center;
     margin-block-end: 3cqi;
     font-size: max(10px, 12cqi);
+  }
+  .keep-tag {
+    z-index: 1;
+    display: inline-flex;
+    grid-area: 1 / 1;
+    align-items: center;
+    /* Where the pick tag sits: the kept card is never the picked one, and
+       the affordability badge holds the bottom. */
+    align-self: start;
+    justify-self: center;
+    gap: 0.2em;
+    margin-block-start: 3cqi;
+    padding: 0.15em 0.45em;
+    border: 1px solid var(--rule-strong);
+    border-radius: 9999px;
+    background: var(--panel);
+    color: var(--fg);
+    font-size: max(10px, 10cqi);
+    font-weight: 700;
+    white-space: nowrap;
   }
   .pick-tag {
     z-index: 1;

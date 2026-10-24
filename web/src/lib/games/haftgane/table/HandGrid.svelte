@@ -14,11 +14,28 @@
     selected: string | null;
     /** The design of the pending pick and whether it is confirmed. */
     picked: { design: string; confirmed: boolean } | null;
+    /** The design the pending pick keeps for an extra turn (its `kept`). */
+    keeps?: string | null;
     locked?: boolean;
     onselect?: (slug: string) => void;
   }
 
-  let { hand, choices, disabled, selected, picked, locked = false, onselect }: Props = $props();
+  let {
+    hand,
+    choices,
+    disabled,
+    selected,
+    picked,
+    keeps = null,
+    locked = false,
+    onselect
+  }: Props = $props();
+  // The card that stays: with two copies of one design, the one not picked.
+  const keepAt = $derived.by(() => {
+    if (!keeps) return -1;
+    const first = hand.indexOf(keeps);
+    return keeps === picked?.design ? hand.indexOf(keeps, first + 1) : first;
+  });
 </script>
 
 <div class="hand" data-hand>
@@ -28,7 +45,12 @@
         {slug}
         afford={afford(cardChoices(slug, choices, disabled))}
         selected={selected === slug}
-        picked={picked?.design === slug ? (picked.confirmed ? 'confirmed' : 'draft') : null}
+        picked={picked?.design === slug && i !== keepAt
+          ? picked.confirmed
+            ? 'confirmed'
+            : 'draft'
+          : null}
+        keeps={i === keepAt}
         disabled={locked}
         {onselect}
       />

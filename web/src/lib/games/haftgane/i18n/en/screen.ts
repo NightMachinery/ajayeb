@@ -17,13 +17,18 @@ export const screen = {
     'Only you can see this pile. Choose an offered building to build for free.',
   'hg.special.discard.filter': 'Filter the discard pile by colour',
   'hg.special.discard.all': 'All',
-  'hg.special.discard.unavailable': 'Not offered by the server.',
   'hg.special.discard.empty': 'No cards of this colour.',
   'hg.special.discard.copies': { one: '{count} copy', other: '{count} copies' },
   'hg.special.discard.confirm': 'Build {card} for free',
   'hg.special.kept.locked': 'Kept for later',
   'hg.special.kept.play': 'Play your kept card',
   'hg.special.kept.tip': 'Your wonder kept this card for an extra turn. Only you can see it.',
+  'hg.special.kept.preview.tag': 'Kept',
+  'hg.special.kept.preview.all':
+    'Whatever you do with this card, your wonder keeps {card} for an extra turn.',
+  'hg.special.kept.preview.this': 'Choosing this keeps {card} for an extra turn.',
+  'hg.special.kept.preview.tip':
+    'Your wonder keeps your other card and plays it after this turn. Only you can see which.',
   'hg.special.sixth':
     'Last ordinary turn: choose a card. The other is discarded unless your wonder keeps it.',
   'hg.special.extra': 'Extra turn',

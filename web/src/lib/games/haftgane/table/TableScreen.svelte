@@ -538,6 +538,7 @@
                   disabled={mine.disabled}
                   {selected}
                   {picked}
+                  keeps={pendingChoice?.kept ?? null}
                   locked={!deciding}
                   onselect={select}
                 />

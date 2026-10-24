@@ -10,6 +10,7 @@
   import { afford, cardChoices, cheapest, design, stagesOf } from './model';
   import { effectText } from './effect-text';
   import HandCard from './HandCard.svelte';
+  import HgGlyph from './HgGlyph.svelte';
   import ChainIcon from './ChainIcon.svelte';
   import CostPips from './CostPips.svelte';
   import ResourceTile from './ResourceTile.svelte';
@@ -59,6 +60,14 @@
       cheapest(cc.stages)
   );
   const sale = $derived(cc.sells[0]);
+  // The server's sixth-turn preview: the card each action keeps for an
+  // extra turn. Said once when every action here keeps the same card.
+  const offered = $derived([build, stage, sale].filter((c) => c !== undefined));
+  const keptByAll = $derived(
+    offered.length > 0 && offered.every((c) => c.kept && c.kept === offered[0]!.kept)
+      ? offered[0]!.kept!
+      : null
+  );
   const why = $derived(cc.disabled.find((x) => x.kind === 'build'));
   const stageCost = $derived(stage ? stagesOf(seat)[stage.stage - 1]?.cost : undefined);
   const chainSources = $derived(
@@ -136,6 +145,18 @@
   }
 </script>
 
+{#snippet keptNote(card: string, all: boolean)}
+  <p class="kept-preview" data-kept-preview={card}>
+    <span
+      role="img"
+      aria-label={ht('hg.special.kept.preview.tip')}
+      {@attach tooltip({ text: ht('hg.special.kept.preview.tip') })}><HgGlyph name="wonder" /></span
+    >{ht(all ? 'hg.special.kept.preview.all' : 'hg.special.kept.preview.this', {
+      card: cardName(card)
+    })}
+  </p>
+{/snippet}
+
 <Sheet
   bind:open={
     () => open,
@@ -193,6 +214,7 @@
       </div>
     </header>
     <div class="options">
+      {#if keptByAll}{@render keptNote(keptByAll, true)}{/if}
       <section aria-labelledby="hg-build-title">
         <h3 id="hg-build-title">{ht('hg.sheet.build')}</h3>
         <div class="cost">
@@ -243,6 +265,7 @@
             />
           {/if}
         {:else}<p class="blocked" data-cannot-build>{blocked()}</p>{/if}
+        {#if build?.kept && !keptByAll}{@render keptNote(build.kept, false)}{/if}
         <p class="note">{ht('hg.sheet.coins', { count: seat.coins })} {discounts.join(' ')}</p>
       </section>
       <section aria-labelledby="hg-stage-title">
@@ -263,6 +286,7 @@
             onselect={draft}
           />
           <p class="note">{ht('hg.sheet.hiddenStage')}</p>
+          {#if stage.kept && !keptByAll}{@render keptNote(stage.kept, false)}{/if}
         {/if}
       </section>
       {#if sale}
@@ -278,6 +302,7 @@
             onselect={draft}
           />
           <p class="note">{ht('hg.sheet.hiddenSale')}</p>
+          {#if sale.kept && !keptByAll}{@render keptNote(sale.kept, false)}{/if}
         </section>
       {/if}
       {#if choices.some((c) => c.key === pendingKey)}<p class="note" role="status">
@@ -317,6 +342,15 @@
 </Sheet>
 
 <style>
+  .kept-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
   :global(dialog.sheet.hg-card-sheet) {
     width: min(100%, 48rem);
     --sheet-max-height: calc(100dvh - 0.5rem);

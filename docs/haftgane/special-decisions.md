@@ -8,16 +8,18 @@ the sheet keeps the draft, and the table offers a button to reopen it.
 Halikarnassos gets a tall discard sheet, filtered by the printed card colour.
 Only the choosing seat receives the pile. Legal offers can be drafted and then
 confirmed; unavailable offers stay dimmed. Waiting players and spectators see
-the public choosing status without a pile grid. The engine currently omits
-disabled reasons at discard points, so unavailable offers use a generic label
-until the view supplies the reason.
+the public choosing status without a pile grid. Each unavailable offer shows
+the server's reason from the searching seat's `you.disabled`: the city
+already has a building of that name.
 
 The sixth ordinary turn has an explicit last-turn note. A card the engine has
 already kept gets its own locked ribbon while another special decision runs.
 At the last-card point it opens the ordinary full card sheet. The header says
-Extra turn instead of showing a seventh ordinary turn. The view currently does
-not identify a prospective kept card before the sixth turn resolves, so the
-screen does not guess which card will be kept from a draft.
+Extra turn instead of showing a seventh ordinary turn. On the sixth turn, a
+choice whose `kept` names a card keeps it for an extra turn: the card sheet
+says so (once for the whole card when every choice keeps the same card, or
+under each choice that does), and once that choice is drafted the hand
+marks the kept card. Only the choosing seat's view carries `kept`.
 
 A free-build badge shows a chain for chaining, a discard symbol for a discard
 build, and a wonder for the three wonder abilities. The card sheet states the
