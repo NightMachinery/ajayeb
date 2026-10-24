@@ -36,8 +36,7 @@ const (
 // and bots and the room's own changes are never charged.
 //
 // A room that leaves memory hands its buckets that are not full to its
-// kind's BudgetCache, and takes them back when it is loaded again, so
-// only a restart of the server starts every user full.
+// kind's BudgetCache, and takes them back when it is loaded again.
 type Budget struct {
 	burst    int
 	interval time.Duration
@@ -45,9 +44,11 @@ type Budget struct {
 	// again (the theoretical arrival time of the generic cell rate
 	// algorithm). A user not in it is full, or full at floor.
 	full map[string]time.Time
-	// floor, while after now, is when every bucket is full at the latest:
-	// the room's buckets that the BudgetCache had to drop, unknown user by
-	// unknown user, were all full by then.
+	// floor, while after now, is when every bucket is full at the
+	// latest: the room's buckets that the BudgetCache had to drop, unknown
+	// user by unknown user, were all full by then. The table's high-water
+	// mark may have been dropped with them, so while it stands a new point
+	// fills nothing (Refill).
 	floor time.Time
 }
 
@@ -82,8 +83,13 @@ func (b *Budget) fullAt(user string, now time.Time) time.Time {
 	return at
 }
 
-// Refill fills every user's bucket.
-func (b *Budget) Refill() {
+// Refill fills every user's bucket, unless a floor stands at now: then
+// the point may not be new at all (its mark may have been dropped), and
+// every bucket stays as it is until the floor has passed.
+func (b *Budget) Refill(now time.Time) {
+	if b.floor.After(now) {
+		return
+	}
 	clear(b.full)
 	b.floor = time.Time{}
 }
@@ -104,12 +110,13 @@ func (b *Budget) prune(now time.Time) {
 //
 // A dropped entry leaves a note of when its buckets would all have been
 // full (and its high-water mark), and the room's next load starts every
-// user's bucket full only from then: no one gets back a token they would
-// not have had. Past size notes, the notes that would expire first are
-// dropped, and until the last of them would have expired every load that
-// finds neither an entry nor a note starts from its time. Tables and
-// Lobbies each own a cache for the life of the server, so a restart is
-// the one thing that starts every budget full.
+// user's bucket full only from then (the budget's floor). Past size notes,
+// the notes that would expire first are dropped, and until the last of
+// them would have expired every load that finds neither an entry nor a
+// note starts from its time, its mark unknown. While a floor stands a new
+// point fills nothing, so a dropped mark cannot make an old point refill
+// before the floor has passed. Tables and Lobbies each own a cache for
+// the life of the server.
 type BudgetCache struct {
 	mu    sync.Mutex
 	size  int

@@ -39,7 +39,7 @@ func TestBudget(t *testing.T) {
 	if spend("u", now.Add(999*time.Millisecond)) || !spend("u", now.Add(time.Second)) || spend("u", now.Add(time.Second)) {
 		t.Fatal("one token per interval")
 	}
-	b.Refill()
+	b.Refill(now.Add(time.Second))
 	for i := range 3 {
 		if !spend("u", now.Add(time.Second)) {
 			t.Fatalf("token %d after a refill refused", i)
@@ -113,7 +113,7 @@ func TestBudgetCache(t *testing.T) {
 // from when the dropped buckets would all have been: the deepest debt it
 // held. Once the notes of dropped entries overflow too, every room
 // without an entry or a note starts from the latest dropped note. A new
-// point's refill fills it all.
+// point's refill fills nothing until the floor has passed.
 func TestBudgetCacheOverflow(t *testing.T) {
 	const burst = 4
 	c := NewBudgetCache(3, burst*time.Second)
@@ -179,11 +179,22 @@ func TestBudgetCacheOverflow(t *testing.T) {
 	if got := tokens(b, "u", t0.Add(burst*time.Second+time.Millisecond)); got != burst {
 		t.Fatalf("once the dropped note would have expired: %d tokens", got)
 	}
+	// A refill under a standing floor fills nothing; once the floor has
+	// passed it fills every bucket.
 	b = NewBudget(burst, time.Second)
-	c.Take("R0", b, at)
-	b.Refill()
-	if got := tokens(b, "u", at); got != burst {
-		t.Fatalf("after a refill: %d tokens", got)
+	mid := t0.Add(2 * time.Second)
+	c.Take("R0", b, mid)
+	if got := tokens(b, "u", mid); got != 1 {
+		t.Fatalf("two seconds after R0's burst: %d tokens, want 1", got)
+	}
+	b.Refill(mid)
+	if got := tokens(b, "u", mid); got != 0 {
+		t.Fatalf("a refill under the floor: %d tokens, want 0", got)
+	}
+	past := t0.Add(burst*time.Second + 100*time.Millisecond)
+	b.Refill(past)
+	if got := tokens(b, "u", past); got != burst {
+		t.Fatalf("a refill once the floor has passed: %d tokens", got)
 	}
 }
 

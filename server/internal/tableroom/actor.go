@@ -1178,7 +1178,7 @@ func (a *actor) commit(op string, cand Record, g game, by *room.Client) error {
 	// undo is not new.
 	if n := len(cand.Batches); n > a.reached {
 		a.reached = n
-		a.budget.Refill()
+		a.budget.Refill(a.now())
 	}
 	return nil
 }
