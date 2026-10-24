@@ -272,10 +272,17 @@ canonical history is the `ajayeb-log/2` download.
   with an eviction between them; and no engine resolution for a refused
   completing confirmation or a refused switch that hands a bot a
   completing pick (counted by the `Resolving` hook, with a positive check a
-  second later). The cache that keeps budgets across loads has a unit test
-  (expiry, size bound, one take), and the table keeps a spent budget across
-  three evictions under memory pressure (`newTHRooms`, `evict`) and an idle
-  unload, and starts full after a restart. `conns_test.go` refuses a user's
+  second later). The cache that keeps budgets across loads has unit tests:
+  one take, each entry expiring when its last bucket is full, the size bound
+  dropping the entry that would expire first, and an overflow (a dropped
+  entry's note giving every user of its room only what refilled since the
+  deepest debt it held, the notes' own overflow doing the same for every
+  room, a refill clearing it). At the served size, 2048 other rooms'
+  entries leave an exhausted user exhausted, whether they are nearly full
+  or deeper. The table keeps a spent budget across three evictions under
+  memory pressure (`newTHRooms`, `evict`, `push`), an idle unload and an
+  eviction whose entry the cache then drops, and starts full after a
+  restart. `conns_test.go` refuses a user's
   ninth connection, seated or watching, with `room-full`, and walks a
   seven-seat table through twelve reseatings, promotions, switches to bots
   and a resignation, checking after every step that each user holds at
@@ -286,7 +293,8 @@ canonical history is the `ajayeb-log/2` download.
   and checks that the bot's search waits for it, then that the key falls
   back to the next attached player, the creator and the smallest attached
   participant. In `lobbyroom`, `budget_test.go` covers the same budget for
-  lobby edits and across two evictions, and `conns_test.go` the ninth
+  lobby edits, across two evictions and across an eviction whose entry the
+  cache then drops, and `conns_test.go` the ninth
   connection, a player with a slot getting into a lobby that watchers have
   filled while a new watcher is refused, the same bounds through slot
   edits, a smaller seat count and Start (counted at the table from the

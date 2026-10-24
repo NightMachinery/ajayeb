@@ -1451,12 +1451,25 @@ file cap is a constant of the store.
   tab sends again are duplicates. A room that leaves memory (when idle, or
   evicted to make room for another) hands each user's budget that is not
   full, and a table the most batches it reached when an undo left it below
-  that, to a cache of its kind (`tableroom.BudgetCache`), and its next load
-  takes them back. An entry lasts 16 seconds, by when every budget in it
-  would have filled anyway, and the cache holds at most 4096 budgets,
-  dropping first the entries that would expire first. So evicting a room and
-  loading it again restores its budgets. Only a restart of the server starts
-  every budget full, and no user can cause one.
+  that (its mark), to a cache of its kind (`tableroom.BudgetCache`), and its
+  next load takes them back. An entry lasts until its last budget is full
+  again (at most 16 seconds), or, if it holds a mark, at least 16 seconds.
+  The cache holds at most 4096 budgets and past that drops first the entries
+  that would expire first, so a nearly full budget never pushes out a spent
+  one. A dropped entry leaves a note of when its budgets would all have been
+  full, and the room's next load starts every user's budget, known or not,
+  full only from then. So after an overflow a returning user gets at most
+  the tokens they would have had if the cache had kept the entry, and at
+  least those that refilled since the drop; never a fresh burst. The cache
+  keeps at most 4096 notes, dropping first those that would expire first;
+  until the last dropped note would have expired (16 seconds at most), every
+  room loaded with neither an entry nor a note starts its budgets the same
+  way, which can slow users of other rooms but gives no one a token. Neither
+  an eviction nor an overflow fills a spent budget: only a restart of the
+  server starts every budget full, and no user can cause one. One loss
+  remains, past both overflows: a table whose note was dropped forgets its
+  mark, so at a table that allows undo (one human against bots) a point
+  reached again after an undo can fill that human's budget.
 - **Liveness:** a ping every 25 seconds; dropped at the tick after two pings
   in a row went unanswered.
 - **Writes:** each frame must be written within 10 seconds, or the socket is
