@@ -102,11 +102,20 @@ func TestRecordClientFrames(t *testing.T) {
 		clients[id], users[id] = c, user
 		settle()
 	}
+	// seatOf is the seat of the client's latest frame, which the Session
+	// names in its picks.
+	seatOf := func(id string) *int {
+		if s := latest[id].You.Seat; s != nil {
+			v := *s
+			return &v
+		}
+		return nil
+	}
 	// pick is a pick as the Session sends it: the next seq, on the point
-	// of the client's latest frame.
+	// and for the seat of the client's latest frame.
 	pick := func(id, key string, confirm bool) wire.TablePick {
 		seqs[id]++
-		picks[id] = wire.TablePick{T: "table-pick", Code: code, Seq: seqs[id], Point: latest[id].Point.Ref, Key: key, Confirm: confirm}
+		picks[id] = wire.TablePick{T: "table-pick", Code: code, Seq: seqs[id], Point: latest[id].Point.Ref, Key: key, Confirm: confirm, Seat: seatOf(id)}
 		return picks[id]
 	}
 	choice := func(id string, i int) string {
@@ -144,7 +153,7 @@ func TestRecordClientFrames(t *testing.T) {
 	barrier()
 	seqs["seat-1"]++
 	send("seat-1", false, wire.TablePick{T: "table-pick", Code: code, Seq: seqs["seat-1"], Point: closing.Point.Ref,
-		Key: closing.View.You.Choices[1].Key, Confirm: true})
+		Key: closing.View.You.Choices[1].Key, Confirm: true, Seat: seatOf("seat-1")})
 	settle()
 	// Seat 0 repeats its last seq: the answer is its current frame,
 	// acknowledging it.

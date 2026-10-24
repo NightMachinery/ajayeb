@@ -105,7 +105,8 @@ describe('picks', () => {
       seq: 1,
       point: { id: 'age-1-turn-1', revision: 1 },
       key: KEY,
-      confirm: false
+      confirm: false,
+      seat: 0
     });
     // One request in flight at a time.
     expect(session.canPick).toBe(false);
@@ -373,7 +374,13 @@ describe('former-controller tabs', () => {
   it('resigns, then watches', () => {
     const { session, connection } = setup();
     expect(session.resign()).toBe(true);
-    expect(connection.last()).toEqual({ t: 'table-resign', code: CODE, seq: 1, confirm: true });
+    expect(connection.last()).toEqual({
+      t: 'table-resign',
+      code: CODE,
+      seq: 1,
+      confirm: true,
+      seat: 0
+    });
     connection.frame(
       tableFrame({ ack: { clientId: 'tab', seq: 1 }, history: [], revision: 2 << 20 }, null)
     );
@@ -620,10 +627,22 @@ describe('admin requests and undo', () => {
     const solo = { allowUndo: true, startingHumanCount: 1, batch: 1, revision: 3 << 20 };
     const { session, connection } = setup(tableFrame(solo));
     expect(session.undo()).toBe(true);
-    expect(connection.last()).toEqual({ t: 'table-undo', code: CODE, seq: 1, base: 3 << 20 });
+    expect(connection.last()).toEqual({
+      t: 'table-undo',
+      code: CODE,
+      seq: 1,
+      base: 3 << 20,
+      seat: 0
+    });
     connection.frame(tableFrame({ ...solo, revision: 4 << 20 }));
     connection.frame({ t: 'table-reject', seq: 1, code: 'stale' });
-    expect(connection.last()).toEqual({ t: 'table-undo', code: CODE, seq: 1, base: 4 << 20 });
+    expect(connection.last()).toEqual({
+      t: 'table-undo',
+      code: CODE,
+      seq: 1,
+      base: 4 << 20,
+      seat: 0
+    });
     connection.frame({ t: 'table-reject', seq: 1, code: 'stale' });
     expect(session.pending).toBeNull();
     expect(session.notice?.code).toBe('stale');

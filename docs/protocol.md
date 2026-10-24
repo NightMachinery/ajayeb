@@ -947,8 +947,8 @@ its way, the table refuses it with `forbidden` and changes nothing. Without
 `seat`, such a request would act on the sender's new seat: a resignation
 meant for one seat would resign another, and a pick would land on the new
 seat whenever its key is offered there too. `seat` never selects a seat to
-act for; it only lets a request fail when its seat changed. A request
-without it is judged as before.
+act for; it only lets a request fail when its seat changed. The web client
+always sends it; a request without it is judged as before.
 
 - `table-pick` adds `point: {id, revision}`, `key` and `confirm`. `id` is the
   logical point's string id, such as `age-1-turn-1`; `revision` is the table's

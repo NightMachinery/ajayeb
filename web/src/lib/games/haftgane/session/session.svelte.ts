@@ -37,10 +37,12 @@
 // before the notice shows.
 //
 // A request the seat itself makes (a pick, an undo, a resignation) names
-// no seat: the table applies it to the sender's seat when it arrives. So
-// each is bound to the seat it was chosen for, and is never sent again once
-// the latest frame shows this connection anywhere else (another seat, or
-// watching); a pick, also only at the same point. Reconnecting and a `rate`
+// the seat it was chosen for, and the table refuses it with forbidden when
+// this connection no longer controls that seat on arrival (an admin moved
+// it while the request was on its way); it never acts on another seat. It
+// is also never sent again once the latest frame shows this connection
+// anywhere else (another seat, or watching); a pick, also only at the same
+// point. Reconnecting and a `rate`
 // retry ask the same question (#stillValid), and a frame that moves this
 // connection to another place drops such a request at once (a pick whose
 // point merely closed waits for its answer, decision-closed or the ack).
@@ -332,7 +334,8 @@ export class TableSession {
         seq: this.#nextSeq(),
         point: { id: f.point.ref.id, revision: f.point.ref.revision },
         key,
-        confirm
+        confirm,
+        seat
       },
       seat
     );
@@ -354,10 +357,11 @@ export class TableSession {
   /** Asks to take back the last batch (the sole original human only). */
   undo(): boolean {
     const f = this.table;
-    if (!this.canUndo || !f) return false;
+    const seat = this.seat;
+    if (!this.canUndo || !f || seat === null) return false;
     this.#request(
-      { t: 'table-undo', code: this.code, seq: this.#nextSeq(), base: f.revision },
-      this.seat
+      { t: 'table-undo', code: this.code, seq: this.#nextSeq(), base: f.revision, seat },
+      seat
     );
     return true;
   }
@@ -401,10 +405,11 @@ export class TableSession {
 
   /** Hands this seat to a bot and watches. */
   resign(): boolean {
-    if (!this.canResign) return false;
+    const seat = this.seat;
+    if (!this.canResign || seat === null) return false;
     this.#request(
-      { t: 'table-resign', code: this.code, seq: this.#nextSeq(), confirm: true },
-      this.seat
+      { t: 'table-resign', code: this.code, seq: this.#nextSeq(), confirm: true, seat },
+      seat
     );
     return true;
   }
