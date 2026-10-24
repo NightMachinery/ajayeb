@@ -981,7 +981,7 @@ one. Revisions never wrap or repeat. Only the logical id enters canonical
 batches and bot entropy.
 
 Sequence deduplication is per authenticated user/client. The actor
-remembers the latest accepted seq of a bounded number of clients (32) for
+remembers the latest accepted seq of a bounded number of clients (16) for
 each user, and a user's new client pushes out only that user's client
 whose last accepted request is oldest. Users never push out each other's
 clients, so nothing another user does changes the answer a user gets.
@@ -994,9 +994,10 @@ changed it: the seq that last did. For a client the memory has forgotten,
 that same seq again answers the acknowledging frame, and an older one
 answers `stale`, so a forgotten seq never overwrites a newer accepted pick.
 The floor is found by the client's presence, not compared with a default,
-because seq 0 is a valid seq. A pick keeps floors for at most 32 clients of
-each user. Until the point resolves, a change of that pick from a further
-client answers `rate` and changes nothing: forgetting a floor instead would
+because seq 0 is a valid seq. A pick keeps floors for at most 8 clients of
+each user, and for at most 8 users (each who controlled the seat during
+the point and changed the pick). Until the point resolves, a change of
+that pick from a further client or user answers `rate` and changes nothing: forgetting a floor instead would
 let an old seq overwrite a newer pick. The user's tabs that already have a
 floor can still change the pick. Every write is checked against the same
 bounds a restart checks, so the table never saves a record it could not
@@ -1406,11 +1407,19 @@ file cap is a constant of the store.
   address's bot waits for at most one search to end (`ai.Pool`). The room
   never waits for the pool itself: the search runs in its own goroutine.
 - **Room files:** the store reads a room file of at most 704 KiB
-  (`store.MaxFileBytes`), four times the most that a room file can hold
-  (189 actions, the 64 entries of the room log, and the 32 remembered
-  clients). A larger file, which this server never writes, is refused
-  unread (`store.ErrTooLarge`): the room is not found, and its log
-  download answers 500. The file stays on disk for a look.
+  (`store.MaxFileBytes`), four times the most that a Duel room file can
+  hold (189 actions, the 64 entries of the room log, and the 32 remembered
+  clients). A larger file is refused unread (`store.ErrTooLarge`): the
+  room is not found, and its log download answers 500. The file stays on
+  disk for a look. The store also refuses to write a lobby or table record
+  over the cap (the request answers `storage`), and the bounds keep the
+  largest lobby and table records under three quarters of it (under 500
+  KB each, every list full and every string at its longest). For that, a
+  lobby and a table remember a client id of more than 40 characters, or
+  one with a character outside `A-Z`, `a-z`, `0-9`, `-` and `_`, by a
+  digest of 44 characters; the web client's ids (UUIDs) are kept as they
+  are. Before, an admin with puppet users could grow a table or a lobby
+  past the cap, after which it could not be saved again or loaded.
 - **The identity secret:** `<data>/secret.key` must be a regular file (a
   symbolic link is refused, not followed) of exactly 32 bytes. If its
   group or other users may read or write it, the server sets its mode to

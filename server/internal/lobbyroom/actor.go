@@ -594,7 +594,7 @@ func (a *actor) refuse(c *room.Client, seq int, op, outcome string) string {
 // seen answers a seq at or below the client's remembered one with its
 // current frame acknowledging it; nothing changes.
 func (a *actor) seen(c *room.Client, seq int) bool {
-	last, ok := seqLast(a.rec.Seqs, a.userOf(c), c.ClientID)
+	last, ok := seqLast(a.rec.Seqs, a.userOf(c), tableroom.ClientKey(c.ClientID))
 	if ok && seq <= last {
 		c.Out.Push(a.frame(c, &wire.PlatformAck{ClientID: c.ClientID, Seq: seq}))
 		a.note("seq", outDuplicate)
@@ -607,7 +607,7 @@ func (a *actor) seen(c *room.Client, seq int) bool {
 // revision, brings the roles up to date, retires users who lost all
 // authority, persists and publishes to everyone, the sender with an ack.
 func (a *actor) apply(c *room.Client, op string, seq int, cand Record) string {
-	seqPut(&cand.Seqs, SeqRecord{User: a.userOf(c), Client: c.ClientID, Seq: seq}, a.l.cfg.SeqClients)
+	seqPut(&cand.Seqs, SeqRecord{User: a.userOf(c), Client: tableroom.ClientKey(c.ClientID), Seq: seq}, a.l.cfg.SeqClients)
 	cand.Revision++
 	log := cand.Roles.Carry(a.rolesAhead, 0)
 	more, next := cand.Roles.Check(a.now(), a.connected, a.candidates(&cand), 0)

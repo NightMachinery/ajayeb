@@ -658,7 +658,7 @@ func (a *actor) duplicate(c *room.Client, op string, seat int, seq int) string {
 }
 
 func (a *actor) seqKey(c *room.Client) SeqRecord {
-	return SeqRecord{User: a.userOf(c), Client: c.ClientID}
+	return SeqRecord{User: a.userOf(c), Client: ClientKey(c.ClientID)}
 }
 
 // submit applies one {seq, point, key, confirm} submission, checking in

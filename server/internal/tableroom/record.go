@@ -119,7 +119,7 @@ const (
 	maxRoomLog  = 512
 	// maxSlotUsers bounds the users whose floors one pending pick keeps:
 	// each user who controlled the seat during the point and changed it.
-	maxSlotUsers = 16
+	maxSlotUsers = 8
 	// editBits is the room a frame revision leaves for a seat's own edits
 	// between two public changes; a seat past maxEdits is refused with
 	// rate until the next public change.

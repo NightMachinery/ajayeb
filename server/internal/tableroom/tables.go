@@ -39,10 +39,13 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
 
-// Defaults for the zero fields of Config.
+// Defaults for the zero fields of Config. DefaultSeqClients and
+// DefaultPickClients, with the record's other bounds, keep the largest
+// record a table can hold within three quarters of the store's read cap
+// (TestLargestRecordFitsTheStore); larger values may not.
 const (
-	DefaultSeqClients  = 32
-	DefaultPickClients = 32
+	DefaultSeqClients  = 16
+	DefaultPickClients = 8
 	DefaultMaxClients  = 32
 	DefaultIdleTimeout = 30 * time.Minute
 	DefaultInboxSize   = 64

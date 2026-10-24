@@ -38,10 +38,12 @@ import (
 )
 
 // DefaultSeqClients bounds the remembered client seqs of each user, and
-// DefaultPickClients the floors each user's clients keep on a pick.
+// DefaultPickClients the floors each user's clients keep on a pick, as the
+// table's own defaults do (tableroom.DefaultSeqClients and
+// DefaultPickClients).
 const (
-	DefaultSeqClients  = 32
-	DefaultPickClients = 32
+	DefaultSeqClients  = 16
+	DefaultPickClients = 8
 )
 
 // Store persists the table's record. Save writes atomically, or not at all.
