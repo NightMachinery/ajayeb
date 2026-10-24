@@ -450,8 +450,14 @@ func TestLobbyEditsAndStart(t *testing.T) {
 	if g, err := f.st.Game(code); err != nil || g != tableroom.Game {
 		t.Fatalf("the room file after Start: %q %v", g, err)
 	}
-	if f.lobbies.lookup(code) != nil {
-		t.Fatal("the lobby's actor still runs")
+	// The lobby's actor leaves when its goroutine ends, which may come
+	// after the table's first frames.
+	deadline := time.Now().Add(wait)
+	for f.lobbies.lookup(code) != nil {
+		if time.Now().After(deadline) {
+			t.Fatal("the lobby's actor still runs")
+		}
+		time.Sleep(time.Millisecond)
 	}
 	// Lobby order seating: slot s is seat s. The roles came along.
 	f.m.Leave(ks[3].c, code)
