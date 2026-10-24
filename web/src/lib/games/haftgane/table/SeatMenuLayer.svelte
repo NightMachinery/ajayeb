@@ -50,6 +50,7 @@
     : name}
   occupant={who}
   {levels}
+  bot={frame.seats.find((s) => s.seat === seat && s.kind === 'bot')?.bot ?? null}
   spectators={seatable(frame)}
   roles={who ? roleActions(frame, who.userId) : { promote: false, demote: false }}
   temporary={isTemporary(frame)}

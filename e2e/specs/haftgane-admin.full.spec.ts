@@ -11,8 +11,9 @@
 // - the creator's seat menu offers the bot levels the frame lists, and
 //   gives that seat back to a bot: the former player reads that a bot
 //   plays their seat (the frame names the seat, so a fresh tab reads it
-//   too), and the creator's seat menu names the seat they held, while a
-//   non-admin's menu offers no seat and no hint;
+//   too); that bot's seat menu offers the other levels, and one of them
+//   replaces the bot; and the creator's seat menu names the seat they
+//   held, while a non-admin's menu offers no seat and no hint;
 // - the creator seats them again, promotes and demotes them (the role
 //   tag follows), promotes them again; they step down, then resign to a
 //   bot from the game menu;
@@ -232,6 +233,19 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
         'true'
       );
       expect((await frame(a)).seats[seatB]).toMatchObject({ kind: 'bot', bot: 'normal' });
+
+      // A bot's seat offers the table's other levels, and taking one
+      // changes the seat's bot (the server's seat switch).
+      await a.locator(`[data-act="seat-menu:${seatB}"]`).click();
+      expect(
+        await a
+          .locator(`[data-seat-menu="${seatB}"] [data-act^="seat-bot:${seatB}:"]`)
+          .evaluateAll((els) => els.map((el) => el.getAttribute('data-act')))
+      ).toEqual(levels.filter((l) => l !== 'normal').map((l) => `seat-bot:${seatB}:${l}`));
+      await seatAction(a, seatB, `seat-bot:${seatB}:easy`);
+      await expect
+        .poll(async () => (await frame(a)).seats[seatB])
+        .toMatchObject({ kind: 'bot', bot: 'easy' });
 
       // The admin's seat menu names the seat the former player held; a
       // non-admin's frames never carry it.

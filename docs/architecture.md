@@ -490,7 +490,8 @@ a reload mends a client and a server that disagree.
   menu (`TableMenu`) lists every seat with Manage, which opens the seat's
   admin menu (`AdminSeatMenu`, connected by `SeatMenuLayer`) over it; the
   city sheet offers Manage too. A human's seat goes to a bot at any of the
-  levels the table froze at Start (the frame's `botLevels`), and any seat
+  levels the table froze at Start (the frame's `botLevels`), a bot's seat
+  to a bot at any other of those levels, and any seat
   takes a connected spectator, with the hint beside a former player; a real
   admin also gets the occupant's role buttons. The game menu lists the spectators
   (`SpectatorList`) with their role buttons, and offers "Stop being admin"

@@ -132,6 +132,7 @@
       ? { userId: 'u-bo', name: 'Bo', role: 'admin', connected: false }
       : null}
     levels={botLevels(['easy', 'normal', 'hard'])}
+    bot={menu === 'human' ? null : 'normal'}
     spectators={people.filter((p) => p.connected)}
     roles={menu === 'human' ? { promote: false, demote: true } : { promote: false, demote: false }}
     onaction={noop}

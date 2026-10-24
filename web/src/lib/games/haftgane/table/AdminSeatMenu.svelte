@@ -1,8 +1,8 @@
 <script lang="ts">
   // An admin's menu on one seat in a game (phone-layout.md section 3,
   // "Admin controls in a game"). A human's seat offers "Give the seat to a
-  // bot", at any of the table's bot levels; every seat offers "Seat a
-  // spectator here", listing the connected spectators with the
+  // bot", at any of the table's bot levels, and a bot's seat offers the
+  // other levels; every seat offers "Seat a spectator here", listing the connected spectators with the
   // previous-seat hint beside a former player (the frame names it only to
   // admins). A real admin also gets the occupant's role buttons. Every
   // action first shows what will change and waits for Confirm. The menu
@@ -23,8 +23,10 @@
     crestTip: string;
     /** The human in the seat, or null for a bot. */
     occupant: SeatPerson | null;
-    /** The bot levels to offer a human's seat, with their persona names. */
+    /** The table's bot levels, with their persona names. */
     levels: readonly { level: string; persona: string }[];
+    /** The level of the bot in the seat, or null for a human's seat. */
+    bot?: string | null;
     /** Connected spectators who may take the seat. */
     spectators: readonly SeatPerson[];
     /** The role buttons for the occupant. */
@@ -43,6 +45,7 @@
     crestTip,
     occupant,
     levels,
+    bot = null,
     spectators,
     roles,
     temporary = false,
@@ -55,6 +58,9 @@
   let asking = $state<{ action: SeatAction; text: string } | null>(null);
   const number = $derived(seat + 1);
   const titleId = $derived(`hg-seat-menu-${seat}`);
+  // A human's seat may go to a bot of any level; a bot's, to another level.
+  const offered = $derived(occupant ? levels : levels.filter((l) => l.level !== bot));
+  const persona = $derived(levels.find((l) => l.level === bot)?.persona ?? null);
 
   function ask(action: SeatAction): void {
     asking = { action, text: describe(action) };
@@ -117,6 +123,8 @@
                 {@attach tooltip({ text: ht('hg.admin.away.tip', { name: occupant.name }) })}
                 >{ht('hg.admin.away')}</span
               >{/if}
+          {:else if persona}
+            {ht('hg.admin.seat.botLevel', { bot: persona })}
           {:else}
             {ht('hg.admin.seat.bot')}
           {/if}
@@ -140,11 +148,13 @@
         onback={() => (asking = null)}
       />
     {:else}
-      {#if occupant}
+      {#if offered.length > 0}
         <section class="part" aria-labelledby="{titleId}-bot">
-          <h3 id="{titleId}-bot">{ht('hg.admin.seat.toBot')}</h3>
+          <h3 id="{titleId}-bot">
+            {ht(occupant ? 'hg.admin.seat.toBot' : 'hg.admin.seat.changeLevel')}
+          </h3>
           <div class="row">
-            {#each levels as l (l.level)}
+            {#each offered as l (l.level)}
               <Button
                 variant="secondary"
                 {disabled}
