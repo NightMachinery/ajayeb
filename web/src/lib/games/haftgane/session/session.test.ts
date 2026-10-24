@@ -670,45 +670,6 @@ describe('admin requests and undo', () => {
     watcher.connection.frame(tableFrame({ ...solo, undoOff: true, revision: 2 << 20 }, null));
     expect(watcher.session.notice).toBeNull();
   });
-
-  it('remembers the seat it held while it watches, and the one it holds after', () => {
-    const { session, connection } = setup();
-    expect(session.held).toBe(0);
-    connection.frame(moved(null));
-    expect(session.seat).toBeNull();
-    expect(session.held).toBe(0);
-    connection.frame(moved(1));
-    expect(session.held).toBe(1);
-    expect(setup(tableFrame({}, null)).session.held).toBeNull();
-  });
-
-  it('keeps the seat it held across a reload, in its held-seat store', () => {
-    const kept = new Map<string, number>();
-    const heldSeats = {
-      get: (code: string) => kept.get(code) ?? null,
-      set: (code: string, seat: number) => void kept.set(code, seat)
-    };
-    const make = (first: TableState) => {
-      const connection = new FakeConnection();
-      connection.latest = first;
-      const session = new TableSession({
-        connection,
-        code: CODE,
-        claim: null,
-        clientId: 'tab',
-        seqs: new SeqCounters(),
-        heldSeats
-      });
-      return { session, connection };
-    };
-    const first = make(tableFrame({}, 2));
-    expect(kept.get(CODE)).toBe(2);
-    first.connection.frame(moved(null));
-    // The reload: a new Session whose first frame shows the page watching.
-    const again = make(moved(null));
-    expect(again.session.seat).toBeNull();
-    expect(again.session.held).toBe(2);
-  });
 });
 
 describe('the lobby', () => {

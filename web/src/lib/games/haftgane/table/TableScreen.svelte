@@ -102,7 +102,7 @@
   // The seat a spectator follows. Until they pick one, a former player's
   // ring centres on the seat they held, anyone else's on seat 0.
   let follow = $state<number | null>(null);
-  const former = $derived(formerOf(frame, session.held));
+  const former = $derived(formerOf(frame));
   const around = $derived(ring(view.seats, follow ?? former?.seat ?? null));
   const columns = $derived(farColumns(around?.far ?? []));
   const mine = $derived(view.you);

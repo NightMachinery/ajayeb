@@ -24,7 +24,7 @@
   const name = $derived(seatName(frame, seat));
   const place = $derived(frame.view.seats.find((v) => v.seat === seat));
   const who = $derived(occupant(frame, seat));
-  const levels = botLevels();
+  const levels = $derived(botLevels(frame.botLevels));
 
   function act(action: SeatAction): void {
     switch (action.kind) {

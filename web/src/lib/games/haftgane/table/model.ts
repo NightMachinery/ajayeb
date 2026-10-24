@@ -137,8 +137,9 @@ export function previousSeatOf(frame: TableState, userId: string): number | null
 /**
  * The role buttons this viewer gets for another user, read from the roles
  * the frame lists, as the lobby reads them: a real admin may make any human
- * who is not one an admin, and may remove an admin they promoted, or, as
- * the creator, any admin but the creator. A temporary admin gets none. The
+ * who is not one an admin while the frame says the admin cap has room
+ * (you.canPromote), and may remove an admin they promoted, or, as the
+ * creator, any admin but the creator. A temporary admin gets none. The
  * server checks every request again.
  */
 export function roleActions(
@@ -150,7 +151,8 @@ export function roleActions(
   if (!me?.admin || !them || them.userId === me.userId || frame.status !== 'playing')
     return { promote: false, demote: false };
   return {
-    promote: !them.admin,
+    // canPromote: the server's admin cap still has room.
+    promote: !them.admin && frame.you.canPromote === true,
     demote: them.admin && !them.creator && (me.creator || them.promotedBy === me.userId)
   };
 }

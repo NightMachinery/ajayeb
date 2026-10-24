@@ -1,6 +1,7 @@
 // What the admin menus, the role tags and the spectator list read from a
 // frame: each person's name, role, presence and (for an admin only) the
-// seat they held earlier. The frame's roles and seats say who may do what;
+// seat they held earlier, the table's bot levels, and the seat the viewer
+// held before it watched. The frame's roles and seats say who may do what;
 // the server checks every request again, and nothing here adds a rule.
 
 import type { PlatformHuman, TableState } from '$lib/wire/platform.gen';
@@ -22,13 +23,10 @@ export type SeatAction =
   | { kind: 'promote'; userId: string }
   | { kind: 'demote'; userId: string };
 
-/** The bot levels a table offers: every table freezes these three when it
- *  is created (server/internal/tableroom/botpresets.go), as the lobby's
- *  bot level control offers them. */
-export const BOT_LEVELS = ['easy', 'normal', 'hard'] as const;
-
-export function botLevels(): { level: string; persona: string }[] {
-  return BOT_LEVELS.map((level) => ({ level, persona: persona(level) }));
+/** The bot levels a seat accepts (the frame's botLevels, the ones the
+ *  table froze at its start), in order, each with its persona name. */
+export function botLevels(levels: readonly string[]): { level: string; persona: string }[] {
+  return levels.map((level) => ({ level, persona: persona(level) }));
 }
 
 export function person(frame: TableState, h: PlatformHuman): SeatPerson {
@@ -71,19 +69,15 @@ export function roleMap(frame: TableState): Record<string, { promote: boolean; d
 
 /**
  * Who plays the seat this viewer held, while the viewer watches a game in
- * play (once it is over, nobody can seat them again). `held` is
- * the seat this connection last held (the Session's memory); an admin's
- * frame also names it (you.previousSeats). Null while the viewer is seated
- * or never held a seat that this page knows of.
+ * play: the server names that seat in the viewer's own frame
+ * (you.formerSeat), on every tab and device, and only while the game is in
+ * play and the viewer holds no seat. Null otherwise.
  */
 export function formerOf(
-  frame: TableState,
-  held: number | null
+  frame: TableState
 ): { seat: number; by: 'bot' | 'human'; name: string } | null {
-  if (frame.status !== 'playing') return null;
-  if (frame.you.seat !== undefined && frame.you.seat !== null) return null;
-  const seat = previousSeatOf(frame, frame.you.userId) ?? held;
-  if (seat === null) return null;
+  const seat = frame.you.formerSeat;
+  if (seat === undefined || frame.status !== 'playing') return null;
   const s = frame.seats.find((x) => x.seat === seat);
   if (!s) return null;
   const h = humanAt(frame, seat);

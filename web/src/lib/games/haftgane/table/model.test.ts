@@ -249,10 +249,16 @@ describe('roles and spectators', () => {
   });
 
   it('offers role buttons as the roles allow', () => {
-    // u0 is the creator and an admin; u1 a player; w a spectator.
-    const creator = tableFrame({}, 0);
+    // u0 is the creator and an admin; u1 a player; w a spectator. The
+    // server tells each real admin whether the admin cap has room.
+    const f = tableFrame({}, 0);
+    const creator = { ...f, you: { ...f.you, canPromote: true } };
     expect(roleActions(creator, 'u1')).toEqual({ promote: true, demote: false });
     expect(roleActions(creator, 'u0')).toEqual({ promote: false, demote: false });
+    // A full cap, or a frame that does not say, offers no promotion.
+    const full = { ...f, you: { ...f.you, canPromote: false } };
+    expect(roleActions(full, 'u1')).toEqual({ promote: false, demote: false });
+    expect(roleActions(f, 'u1')).toEqual({ promote: false, demote: false });
     const promoted = tableFrame(
       {
         humans: creator.humans.map((h) =>
@@ -264,7 +270,7 @@ describe('roles and spectators', () => {
     expect(roleActions(promoted, 'u1')).toEqual({ promote: false, demote: true });
     // u1, promoted by u0, may not remove the creator, and may remove only
     // the admins u1 promoted.
-    const asU1 = { ...promoted, you: { userId: 'u1', seat: 1 } };
+    const asU1 = { ...promoted, you: { userId: 'u1', seat: 1, canPromote: true } };
     expect(roleActions(asU1, 'u0')).toEqual({ promote: false, demote: false });
     expect(roleActions(asU1, 'w')).toEqual({ promote: true, demote: false });
     const third = {

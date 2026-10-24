@@ -46,19 +46,24 @@ describe('admin reads', () => {
     expect(isAdmin(asTemp)).toBe(true);
     expect(isTemporary(asTemp)).toBe(true);
     expect(roleMap(asTemp)['w']).toEqual({ promote: false, demote: false });
-    expect(roleMap(tableFrame({}, 0))['w']).toEqual({ promote: true, demote: false });
+    const creator = tableFrame({}, 0);
+    expect(roleMap({ ...creator, you: { ...creator.you, canPromote: true } })['w']).toEqual({
+      promote: true,
+      demote: false
+    });
   });
 
-  it('says who plays a former player seat, from memory or an admin frame', () => {
+  it('says who plays the seat the frame says the viewer held', () => {
     // Seat 2 is a bot's; seat 1 is Bo's.
     const watching = tableFrame({}, null);
-    expect(formerOf(watching, null)).toBeNull();
-    expect(formerOf(watching, 2)).toEqual({ seat: 2, by: 'bot', name: '' });
-    expect(formerOf(watching, 1)).toEqual({ seat: 1, by: 'human', name: 'Bo' });
+    expect(formerOf(watching)).toBeNull();
+    const at = (seat: number) => ({ ...watching, you: { ...watching.you, formerSeat: seat } });
+    expect(formerOf(at(2))).toEqual({ seat: 2, by: 'bot', name: '' });
+    expect(formerOf(at(1))).toEqual({ seat: 1, by: 'human', name: 'Bo' });
+    // Only formerSeat names it, not an admin's list of previous seats.
     const admin = { ...watching, you: { userId: 'w', previousSeats: [{ userId: 'w', seat: 2 }] } };
-    expect(formerOf(admin, null)).toEqual({ seat: 2, by: 'bot', name: '' });
-    // A seated viewer is no former player, and a finished game has none.
-    expect(formerOf(tableFrame({}, 0), 1)).toBeNull();
-    expect(formerOf({ ...watching, status: 'finished' }, 2)).toBeNull();
+    expect(formerOf(admin)).toBeNull();
+    // A finished game has none.
+    expect(formerOf({ ...at(2), status: 'finished' })).toBeNull();
   });
 });

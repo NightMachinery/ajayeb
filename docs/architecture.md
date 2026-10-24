@@ -484,14 +484,15 @@ a reload mends a client and a server that disagree.
   crown alone on a far chip), the spectators (the humans who hold no
   seat), the previous-seat hint (`you.previousSeats`, sent to admins
   only), and the role buttons, which follow the lobby's rule: a real admin
-  may promote anyone who is not an admin, and may demote an admin they
-  promoted, or, as the creator, any admin but the creator. An admin's game
+  may promote anyone who is not an admin while the frame says the admin
+  cap has room (`you.canPromote`), and may demote an admin they promoted,
+  or, as the creator, any admin but the creator. An admin's game
   menu (`TableMenu`) lists every seat with Manage, which opens the seat's
   admin menu (`AdminSeatMenu`, connected by `SeatMenuLayer`) over it; the
   city sheet offers Manage too. A human's seat goes to a bot at any of the
-  three levels every table freezes, and any seat takes a connected
-  spectator, with the hint beside a former player; a real admin also gets
-  the occupant's role buttons. The game menu lists the spectators
+  levels the table froze at Start (the frame's `botLevels`), and any seat
+  takes a connected spectator, with the hint beside a former player; a real
+  admin also gets the occupant's role buttons. The game menu lists the spectators
   (`SpectatorList`) with their role buttons, and offers "Stop being admin"
   to a real admin and "Resign to a bot" to a seated player. Every action
   shows what it changes first (`AdminConfirm`). Undo moves to the top bar
@@ -501,9 +502,9 @@ a reload mends a client and a server that disagree.
   `SpectatorPanel`: seat buttons that centre the ring on the seat followed
   (`ring(seats, follow)`), the turn recap, and the spectators. A former player first reads who plays their
   seat now, and their ring centres on that seat until they follow another.
-  The seat comes from an admin's own hint or from what this tab held
-  (`TableSession.held`, kept across a reload in sessionStorage by
-  `session/held-seats.ts`), since no other frame names it.
+  The seat is the frame's `you.formerSeat`, which the server sends only to
+  that viewer, only while they hold no seat in a game in play, so every
+  tab and device of theirs reads it.
 - **The reveal, the turn recap and the hand pass** (M18.reveal-and-recap)
   are phone-layout.md's section 4. `table/recap.ts` reads one resolved
   batch from the Session's `history`, as the server filtered it for this

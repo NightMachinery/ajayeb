@@ -86,7 +86,6 @@ import type {
 } from '$lib/wire/platform.gen';
 import type { HgKey } from '../i18n/messages.svelte';
 import { parseFrame, type SessionFrame } from './frames';
-import type { HeldSeats } from './held-seats';
 
 /** The connection as the player sees it: 'open' once welcomed. */
 export type ConnState = 'connecting' | 'open' | 'reconnecting' | 'offline';
@@ -145,8 +144,6 @@ export interface TableSessionOptions {
   seqs?: SeqCounters;
   /** Where rooms seen are remembered for Home; none in tests. */
   rooms?: Pick<SavedRooms, 'remember' | 'forget'> | null;
-  /** Where the seat this page last held is kept across reloads; none in tests. */
-  heldSeats?: HeldSeats | null;
   slowMs?: number;
   rateRetryMs?: number;
   rateRetries?: number;
@@ -209,13 +206,6 @@ export class TableSession {
 
   /** This connection's seat, or null while it watches. */
   seat: number | null = $derived(this.table?.you.seat ?? this.lobby?.you.seat ?? null);
-  /**
-   * The last game seat this page held, kept while it watches and across a
-   * reload (heldSeats), so a former player can read who plays their seat
-   * now. Only an admin's frame names it (you.previousSeats), so this
-   * page's memory is what the others have.
-   */
-  held = $state<number | null>(null);
   /** This connection's user, as the latest frame lists them. */
   me: PlatformHuman | null = $derived.by(() => {
     const f = this.table ?? this.lobby;
@@ -257,7 +247,6 @@ export class TableSession {
   #connection: RoomConnection;
   #clientId: string;
   #rooms: Pick<SavedRooms, 'remember' | 'forget'> | null;
-  #heldSeats: HeldSeats | null;
   #slowMs: number;
   #rateRetryMs: number;
   #rateRetries: number;
@@ -286,8 +275,6 @@ export class TableSession {
     this.#clientId = opts.clientId;
     this.#seqs = opts.seqs ?? entrySeqs();
     this.#rooms = opts.rooms ?? null;
-    this.#heldSeats = opts.heldSeats ?? null;
-    this.held = this.#heldSeats?.get(this.code) ?? null;
     this.#slowMs = opts.slowMs ?? 300;
     this.#rateRetryMs = opts.rateRetryMs ?? 250;
     this.#rateRetries = opts.rateRetries ?? 3;
@@ -629,10 +616,6 @@ export class TableSession {
     }
     const seatNow = frame.you.seat ?? null;
     const seatBefore = prev ? (prev.you.seat ?? null) : seatNow;
-    if (seatNow !== null && seatNow !== this.held) {
-      this.held = seatNow;
-      this.#heldSeats?.set(this.code, seatNow);
-    }
     if (prev && seatNow !== seatBefore) {
       this.notice =
         seatNow === null

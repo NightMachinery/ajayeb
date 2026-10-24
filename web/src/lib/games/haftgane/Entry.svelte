@@ -18,7 +18,6 @@
   import TableScreen from './table/TableScreen.svelte';
   import { TablePresenter } from './session/presenter.svelte';
   import { TableSession } from './session/session.svelte';
-  import { sessionHeldSeats } from './session/held-seats';
   import { installTableHook } from './session/test-hook';
 
   let { connection, code, claim }: EntryProps = $props();
@@ -32,8 +31,7 @@
       code,
       claim: claim ?? null,
       clientId: entryIdentity().clientId,
-      rooms: savedRooms(),
-      heldSeats: sessionHeldSeats()
+      rooms: savedRooms()
     });
     return { session, presenter: new TablePresenter(session) };
   });
