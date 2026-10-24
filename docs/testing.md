@@ -263,20 +263,34 @@ canonical history is the `ajayeb-log/2` download.
   the last human leaving cancels the job and frees its permit, a restart
   resumes from the durable work rows) and undo's policy and refusals.
 - `budget_test.go` (M16.table-request-budget) covers the per-user request
-  budget: its bucket arithmetic; two tabs of one user sharing it, a
-  request past it refused with `rate` while the record's bytes, the pick
-  and every other connection's frames stay as they were, and the same seq
-  accepted a second later; a relink, seat switches, a role change and a
-  pick drawing on one budget; a new point filling every budget; and an
-  undo followed by the same point again filling nothing. `conns_test.go`
-  refuses a user's ninth connection, seated or watching, with
-  `room-full`. `poolkey_test.go` holds the point's player's address in
-  the pool and checks that the bot's search waits for it, then that the
-  key falls back to the next attached player, the creator and the
-  smallest attached participant. In `lobbyroom`, `budget_test.go` covers
-  the same budget for lobby edits, and `conns_test.go` the ninth
-  connection and a player with a slot getting into a lobby that watchers
-  have filled, while a new watcher is refused.
+  budget: its bucket arithmetic, asking without taking; two tabs of one
+  user sharing it, a request past it refused with `rate` while the record's
+  bytes, the pick and every other connection's frames stay as they were,
+  and the same seq accepted a second later; a relink, seat switches, a role
+  change and a pick drawing on one budget; a new point filling every
+  budget; an undo followed by the same point again filling nothing, also
+  with an eviction between them; and no engine resolution for a refused
+  completing confirmation or a refused switch that hands a bot a
+  completing pick (counted by the `Resolving` hook, with a positive check a
+  second later). The cache that keeps budgets across loads has a unit test
+  (expiry, size bound, one take), and the table keeps a spent budget across
+  three evictions under memory pressure (`newTHRooms`, `evict`) and an idle
+  unload, and starts full after a restart. `conns_test.go` refuses a user's
+  ninth connection, seated or watching, with `room-full`, and walks a
+  seven-seat table through twelve reseatings, promotions, switches to bots
+  and a resignation, checking after every step that each user holds at
+  most 8 connections, that watching connections number at most 32 plus
+  seven less the players and that the table holds at most 88, and that
+  the connections closed got `room-full` while each user kept their
+  oldest. `poolkey_test.go` holds the point's player's address in the pool
+  and checks that the bot's search waits for it, then that the key falls
+  back to the next attached player, the creator and the smallest attached
+  participant. In `lobbyroom`, `budget_test.go` covers the same budget for
+  lobby edits and across two evictions, and `conns_test.go` the ninth
+  connection, a player with a slot getting into a lobby that watchers have
+  filled while a new watcher is refused, the same bounds through slot
+  edits, a smaller seat count and Start (counted at the table from the
+  clients' side), and in a rematch lobby.
 - `leaks_test.go` passes every frame of whole games, for every seat and the
   spectator under both end policies, to the leak oracle
   (`tabletest/leakcheck`). First each frame's **envelope** is checked

@@ -863,7 +863,10 @@ it again with the same `seq`.
   user who already has 32 there. Spectators can never lock a player out.
   A table or a lobby takes at most 8 connections of one user, seated or
   watching, and a user without a seat (at a lobby, without a slot taken or
-  reserved for them) only while it has fewer than 32.
+  reserved for them) only while it has fewer than 32. When a seat switch,
+  a resignation or a lobby edit takes a user's place while its watching
+  connections are full, the user's connections past the allowance, never
+  their oldest, receive `room-full` and are detached.
 - `forbidden`: this user may not do that in this room: join another user's
   hot-seat or `ai` room, ask for a rematch as a spectator, or create a room
   with settings the server refuses.
@@ -1425,27 +1428,35 @@ file cap is a constant of the store.
 - **Undo:** 60 per minute per client address, as a token bucket of 60; an
   `undo` over it gets `reject rate` with its `seq`. Every applied undo
   replays and rewrites the room file.
-- **Requests at tables and lobbies:** each user has a budget of 16
-  requests that change the room, shared by all of their connections there,
-  refilled one a second (`tableroom.Budget`). A table also fills every
-  budget when its game reaches a point it had not reached before; reaching
-  a point again after an undo does not. A request past the budget gets
-  `table-reject rate` or `lobby-reject rate` with its seq and changes
-  nothing: nothing is applied, saved or sent to anyone else, and its seq is
-  not used up, so the web client sends it again (after 250, 500 and 750
-  ms). At a table, what is charged is an accepted pick (a changed key or a
-  confirmation turning on or off), an undo, a seat switch, a role change, a
-  resignation and a relink that resets a seat's claim; at a lobby, every
-  accepted edit and Start. A duplicate, a refused request, a bot's pick and
-  the room's own changes (its timers, a bot confirming a pick it inherited)
-  cost nothing. A `rematch` is not charged: the room creation limits bound
-  it, and a game has at most one successor. The numbers fit real play: a
-  player changing and confirming a pick spends a few tokens at each point,
-  an admin reseating all seven seats spends seven, and the requests a
-  reconnecting tab sends again are duplicates. Budgets live in memory only:
-  a room loaded again (after a restart, or after it left memory, which
-  needs it to have had no connection) starts every user full, at most one
-  more burst per load.
+- **Requests at tables and lobbies:** each user has a budget of 16 requests
+  that change the room, shared by all of their connections there, refilled
+  one a second (`tableroom.Budget`). A table also fills every budget when
+  its game reaches a point it had not reached before; reaching a point again
+  after an undo does not. A request is checked against the budget once it
+  has passed the room's other checks and before the room works on it (a pick
+  that would complete a batch is not resolved), and charged only once it is
+  applied. A request past the budget gets `table-reject rate` or
+  `lobby-reject rate` with its seq and changes nothing: nothing is applied,
+  saved or sent to anyone else, and its seq is not used up, so the web
+  client sends it again (after 250, 500 and 750 ms). At a table, what is
+  charged is an accepted pick (a changed key or a confirmation turning on or
+  off), an undo, a seat switch, a role change, a resignation and a relink
+  that resets a seat's claim; at a lobby, every accepted edit, and Start is
+  checked. A duplicate, a refused request, a bot's pick and the room's own
+  changes (its timers, a bot confirming a pick it inherited) cost nothing. A
+  `rematch` is not charged: the room creation limits bound it, and a game
+  has at most one successor. The numbers fit real play: a player changing
+  and confirming a pick spends a few tokens at each point, an admin
+  reseating all seven seats spends seven, and the requests a reconnecting
+  tab sends again are duplicates. A room that leaves memory (when idle, or
+  evicted to make room for another) hands each user's budget that is not
+  full, and a table the most batches it reached when an undo left it below
+  that, to a cache of its kind (`tableroom.BudgetCache`), and its next load
+  takes them back. An entry lasts 16 seconds, by when every budget in it
+  would have filled anyway, and the cache holds at most 4096 budgets,
+  dropping first the entries that would expire first. So evicting a room and
+  loading it again restores its budgets. Only a restart of the server starts
+  every budget full, and no user can cause one.
 - **Liveness:** a ping every 25 seconds; dropped at the tick after two pings
   in a row went unanswered.
 - **Writes:** each frame must be written within 10 seconds, or the socket is
@@ -1466,12 +1477,19 @@ file cap is a constant of the store.
   connections of one user, seated or watching, and a user without a seat (at
   a lobby, without a slot taken or reserved for them) only while it has
   fewer than 32 connections, so a player who reconnects is never locked out
-  by watchers. Either holds at most 88 connections: 32 watchers admitted
-  before the players connected, and 8 for each of seven players. Each room's
-  inbox holds 64 messages; a room with no connection for 30 minutes leaves
-  memory and is reloaded from disk on the next `join`. A bot searches only
-  while its room has a connection: the last connection to leave cancels the
-  search, and the next one to join starts it again.
+  by watchers. When a seat switch, a resignation or a lobby edit takes a
+  user's place while the room's watching connections (those of users without
+  a place) would number more than 32, the room closes that user's newest
+  connections until they do not, but never their oldest: each gets `error
+  room-full` and is detached. So a table or a lobby has at most 32 watching
+  connections plus one for each of its seven places that holds no player,
+  and at most 32 + 7 + 7 x 7 = 88 connections in all (8 for each of seven
+  players, and 32 + 0 watching); Start carries a lobby's connections to its
+  table within the same bound. Each room's inbox holds 64 messages; a room
+  with no connection for 30 minutes leaves memory and is reloaded from disk
+  on the next `join`. A bot searches only while its room has a connection:
+  the last connection to leave cancels the search, and the next one to join
+  starts it again.
 - **Bot searches:** at most 2 run at once across the server
   (`-bot-searches`), and one client address (an IPv4 address or an IPv6 /64,
   the key of the limits above) holds at most 2 of them at once
@@ -1532,18 +1550,22 @@ Known gaps, each left for a larger design change:
 - **Table and lobby writes and fan-out:** a table or a lobby saves its
   record after every applied request, a private pick change included, and a
   confirmation turning on or off, a seat switch and a role change each send
-  a new frame to every connection. The request budget bounds this per user,
-  whatever their connections: 16 at a new point and then one a second. Only
-  a player (with a seat, or at a lobby a slot) or an admin has anything to
-  spend it on, so a room's writes are bounded by its seven players and at
-  most 32 admins, who need an admin to promote them, and each public change
-  reaches at most 88 connections (measured before the cap, by
+  a new frame to every connection, at most 88 (measured before the cap, by
   M16.haftgane-security-review: 225 connections took about 1.6 MB and 17 ms
-  under the race detector per change). Writes are not coalesced. An
-  acknowledged request must survive a restart, so a burst of private pick
-  changes could share one write only by holding every acknowledgement until
-  a group write, which the actor does not do; acknowledging first would lose
-  an acknowledged pick in a crash.
+  under the race detector per change). The request budget bounds this per
+  user, whatever their connections: 16 at a new point and then one a second.
+  It does not bound it per person: user ids cost nothing, only a player
+  (with a seat, or at a lobby a slot) or an admin has anything to spend, and
+  an admin can seat or promote ids they control. Seven players and 32 admins
+  (the most a room has at once) together make about 39 writes a second once
+  their bursts are spent, but that is an estimate for a fixed group, not a
+  ceiling: every id newly seated or promoted brings a fresh burst of 16, and
+  the admin cap bounds the admins at one time, not how many ids pass through
+  over a game. Writes are not coalesced. An acknowledged request must
+  survive a restart, so a burst of private pick changes could share one
+  write only by holding every acknowledgement until a group write, which the
+  actor does not do; acknowledging first would lose an acknowledged pick in
+  a crash.
 - **Admins see the seats they take:** an admin may seat any spectator,
   themselves included, in any seat (D42), and then sees that seat's hand,
   pending pick and remembered knowledge, as its player would. The switch
