@@ -2249,6 +2249,23 @@ something. The page may log no console error or failed request. Its
 screenshots and `probes-*.json` go to `HG_TABLE_SHOTS_DIR` (default
 `.cache/e2e/hg-table-shots`).
 
+`ux/short-screens.spec.ts` (filter `--grep "short screens"`) checks a phone
+whose browser shares the screen with another app (M18.short-screen-status): a
+live Duel game, Duel's age summary (the starter choice, the same summary
+peeked at the board, and the summary that begins an age) and a live table of
+five at 390x480, 390x560, 390x620, 360x520 and each game's floor (460 px for
+Duel, 480 for Haftgane), light and dark, and light in Persian. Each required
+part (both players' status, the own science symbols, the structure or hand,
+the turn bar or peek bar, an open dialog's pinned actions) must be on screen,
+not clipped by a scrolling ancestor and not covered at any of its corners
+(`elementFromPoint`), and the page must not scroll sideways. One pixel under
+the floor, the too-short notice must cover the screen instead. A dialogs
+group opens one sheet of each kind (new game, join, card sheet, token and
+destroy choices, game over) at the same sizes. `SHORT_SWEEP=1` adds an
+unchecked sweep every 20 px from 360 to 640 px high and at narrow landscape
+sizes, for remeasuring the floors. Screenshots and probe JSON go to
+`SHORT_SHOTS_DIR` (default `.cache/e2e/short-screens`).
+
 `ux/haftgane-polish.spec.ts` (filter `--grep "haftgane table polish"`)
 captures the M18.table-polish fixes over live tables from Home: tables of
 3, 5 and 7 seats in English and one of 7 in Persian, both themes. On the
