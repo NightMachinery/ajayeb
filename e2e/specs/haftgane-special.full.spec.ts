@@ -58,12 +58,6 @@ function chooseKey(f: TableState, olympiaNight: boolean): Choice {
     cs[0]!
   );
 }
-/**
- * Plays the choice through the screen. A card's sheet names the card each
- * of its choices keeps on the sixth turn (the choices' `kept`), and once
- * the choice is drafted the hand marks that card. Returns whether the
- * sheet showed a kept card.
- */
 /** The phone and desktop captures in both themes, for the screens that show
  *  the view's own new fields, with `focus` scrolled into view. The theme
  *  follows the emulated system. */
@@ -83,6 +77,12 @@ async function themedShots(p: Page, out: string, id: string, focus?: string): Pr
   await p.emulateMedia({ colorScheme: 'light' });
 }
 
+/**
+ * Plays the choice through the screen. A card's sheet names the card each
+ * of its choices keeps on the sixth turn (the choices' `kept`), and once
+ * the choice is drafted the hand marks that card. Returns whether the
+ * sheet showed a kept card.
+ */
 async function submit(page: Page, c: Choice, choices: readonly Choice[]): Promise<boolean> {
   const special = c.kind === 'side' || c.kind === 'build-discarded';
   let previewed = false;
