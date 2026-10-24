@@ -74,7 +74,12 @@ func TestNoteOverflowCannotRefillAnOldPoint(t *testing.T) {
 	// first point's search by the eviction, so both releases below go to
 	// the first point's searches once it is loaded again.
 	waitFor(t, "the cancelled search", func() bool { _, _, c := work.Counts(); return c > cancelled })
+	started, _, _ := work.Counts()
 	h.until(me, "the first point again", func(st wire.TableState) bool { return st.Batch == 0 && st.Point != nil })
+	// The first point's search starts only once the cancelled one has
+	// reported back, which may come after the state; evicted before it
+	// starts, the table would have no search to cancel.
+	waitFor(t, "the first point's search", func() bool { s, _, _ := work.Counts(); return s > started })
 	_, _, cancelled = work.Counts()
 	h.push(24)
 	// Every filler is due to refill after the table's entry, so the table's
