@@ -228,9 +228,25 @@ const tableState = shape(
   }
 );
 
+const hintSettings = shape({
+  prices: bool,
+  economy: bool,
+  science: bool,
+  military: bool,
+  threats: bool,
+  tempo: bool,
+  wonders: bool,
+  tokens: bool,
+  scoring: bool,
+  counting: bool,
+  recap: bool,
+  advisor: bool,
+  advisorStrength: oneOf('', 'quick', 'twoStage', 'deep')
+});
 const lobbyOptions = shape(
   {},
   {
+    hints: hintSettings,
     seating: oneOf('random', 'lobby'),
     sides: oneOf('choose', 'day', 'random'),
     firstPlayer: oneOf(0, 1),

@@ -49,7 +49,7 @@ export const hints = {
   // The editor (HintSettingsEditor.svelte).
   'hints.title': 'Hints',
   'hints.sameForBoth': 'Both players play with the same hints.',
-  'hints.readOnly': 'Only the player who created the game can change them.',
+  'hints.readOnly': 'Only game admins can change them.',
   'hints.on': 'On',
   'hints.off': 'Off',
   'hints.saving': 'Saving…',
@@ -625,7 +625,7 @@ export const hints = {
   'hints.status.label': 'Hints in this game',
   'hints.status.tip': 'Hints in this game: {summary}. {setBy}',
   'hints.status.setByYou': 'You can change them in the game menu.',
-  'hints.status.setByCreator': 'The player who created the game sets them.',
+  'hints.status.setByCreator': 'Game admins set them.',
 
   // The rules reference's "Hint glyphs" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules

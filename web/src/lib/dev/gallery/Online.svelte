@@ -14,7 +14,6 @@
   import JoinSheet from '$lib/components/screens/JoinSheet.svelte';
   import Lobby from '$lib/components/screens/Lobby.svelte';
   import NamePrompt from '$lib/components/screens/NamePrompt.svelte';
-  import OnlineSheet from '$lib/components/screens/OnlineSheet.svelte';
   import RoomError from '$lib/components/screens/RoomError.svelte';
   import type { SeatInfo } from '$lib/wire';
   import Identity from './Identity.svelte';
@@ -28,7 +27,6 @@
     { seat: 1, name: '', kind: 'open', connected: false, you: false, nameNo: 0 }
   ];
 
-  let onlineOpen = $state(false);
   let joinOpen = $state(false);
 
   const noop = () => {};
@@ -76,15 +74,8 @@
   </section>
 
   <section class="flex flex-col gap-2">
-    <h3 class="text-sm font-semibold text-fg-muted">OnlineSheet and JoinSheet <!-- i18n-ok --></h3>
+    <h3 class="text-sm font-semibold text-fg-muted">JoinSheet <!-- i18n-ok --></h3>
     <div class="flex flex-wrap gap-2">
-      <button
-        type="button"
-        class="min-h-11 w-fit rounded-control border border-rule bg-panel px-4 text-sm font-semibold text-fg"
-        onclick={() => (onlineOpen = true)}
-      >
-        {t('home.playOnline')}
-      </button>
       <button
         type="button"
         class="min-h-11 w-fit rounded-control border border-rule bg-panel px-4 text-sm font-semibold text-fg"
@@ -93,16 +84,6 @@
         {t('home.joinCode')}
       </button>
     </div>
-    <OnlineSheet
-      bind:open={onlineOpen}
-      name={NAMES[0]}
-      suggestion="Roxana"
-      onStart={noop}
-      onJoin={() => {
-        onlineOpen = false;
-        joinOpen = true;
-      }}
-    />
     <JoinSheet bind:open={joinOpen} initial="k7q x2" onJoin={noop} />
   </section>
 

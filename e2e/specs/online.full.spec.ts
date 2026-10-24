@@ -35,6 +35,7 @@ import { watchHygiene } from '../fixtures/hygiene';
 import { checkLeaks, describeLeaks } from '../fixtures/leak-check';
 import {
   createOnlineGame,
+  startOnlineGame,
   FrameLog,
   joinByLink,
   newDeviceContext,
@@ -72,6 +73,7 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const pageB = await ctxB.newPage();
       const log = new FrameLog(pageB, 'reload');
       await joinByLink(pageB, invite.link, 'Babak');
+      await startOnlineGame(pageA);
       const driver = new GameDriver(pageB);
       const before = await driver.snapshot();
       const initial = log.sockets;
@@ -148,10 +150,10 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const logA = new FrameLog(pageA, 'A');
       connectionLogs.push(logA);
       const crest: Crest = isMobile ? 'Moon' : 'Sun';
-      const seatA = crest === 'Sun' ? 0 : 1;
-      const seatB = 1 - seatA;
+      const seatA = 0;
+      const seatB = 1;
       const code = await createOnlineGame(pageA, 'Roxana', crest);
-      await expect(pageA.locator(`[data-lobby-seat="${seatB}"][data-open]`)).toBeVisible();
+      await expect(pageA.locator(`[data-seat="${seatB}"][data-kind="open"]`)).toBeVisible();
       const invite = await readInvite(pageA);
       expect(invite.code).toBe(code);
 
@@ -163,15 +165,14 @@ test.describe('online', { tag: ['@mobile', '@full'] }, () => {
       const logB = new FrameLog(pageB, 'B');
       connectionLogs.push(logB);
       await joinByLink(pageB, invite.link, 'Babak');
+      await startOnlineGame(pageA);
 
       // The lobby gives way to the draft on both sides.
       await expect(pageA.locator('[data-lobby]')).toHaveCount(0);
       const roomA = await hook(pageA, () => window.__ajayeb?.room() ?? null);
       expect(roomA?.mode).toBe('online');
       expect(roomA?.status).toBe('playing');
-      expect(roomA?.seats.map((s) => s.name)).toEqual(
-        seatA === 0 ? ['Roxana', 'Babak'] : ['Babak', 'Roxana']
-      );
+      expect(roomA?.seats.map((s) => s.name)).toEqual(['Roxana', 'Babak']);
       expect(await hook(pageA, () => window.__ajayeb?.you()?.seats)).toEqual([seatA]);
       expect(await hook(pageB, () => window.__ajayeb?.you()?.seats)).toEqual([seatB]);
 

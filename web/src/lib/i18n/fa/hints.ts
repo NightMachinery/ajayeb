@@ -54,7 +54,7 @@ export const hints = {
   // The editor (HintSettingsEditor.svelte).
   'hints.title': 'راهنماها',
   'hints.sameForBoth': 'هر دو بازیکن با راهنماهای یکسان بازی می‌کنند.',
-  'hints.readOnly': 'فقط بازیکنی که بازی را ساخته می‌تواند آن‌ها را تغییر دهد.',
+  'hints.readOnly': 'فقط مدیران بازی می‌توانند آن‌ها را تغییر دهند.',
   'hints.on': 'روشن',
   'hints.off': 'خاموش',
   'hints.saving': 'در حال ذخیره…',
@@ -591,7 +591,7 @@ export const hints = {
   'hints.status.label': 'راهنماهای این بازی',
   'hints.status.tip': 'راهنماهای این بازی: {summary}. {setBy}',
   'hints.status.setByYou': 'می‌توانید از منوی بازی آن‌ها را تغییر دهید.',
-  'hints.status.setByCreator': 'بازیکنی که بازی را ساخته آن‌ها را تعیین می‌کند.',
+  'hints.status.setByCreator': 'مدیران بازی آن‌ها را تنظیم می‌کنند.',
 
   // The rules reference's "Hint glyphs" section (rules/sections.ts,
   // components/hints/HintGlyphLegend.svelte). Under rules.* so the rules

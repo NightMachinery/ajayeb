@@ -16,7 +16,7 @@ import { test } from '../fixtures/base';
 import { GameDriver } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
-  createOnlineGame,
+  createLegacyOnlineGame,
   joinByLink,
   newDeviceContext,
   onlinePolicy,
@@ -114,7 +114,7 @@ test.describe('who is who', () => {
         contexts.push(ctxA);
         const pageA = await ctxA.newPage();
         const problemsA = watchHygiene(pageA);
-        await createOnlineGame(pageA, 'Roxana', 'Sun');
+        await createLegacyOnlineGame(pageA, 'Roxana', 'Sun');
         // The lobby already offers the admin's own link.
         await expect(
           pageA.locator('[data-lobby] [data-control="device-link"][data-seat="0"]')
@@ -244,7 +244,7 @@ test.describe('who is who', () => {
       const ctxA = await newDeviceContext(browser, testInfo, { clipboard: true });
       contexts.push(ctxA);
       const pageA = await ctxA.newPage();
-      await createOnlineGame(pageA, 'Sara', 'Sun');
+      await createLegacyOnlineGame(pageA, 'Sara', 'Sun');
       const invite = await readInvite(pageA);
 
       const ctxB = await newDeviceContext(browser, testInfo);

@@ -217,3 +217,26 @@ it('ends the entry when the session finds a frame it cannot read', () => {
   vi.runAllTimers();
   expect(sockets).toHaveLength(1);
 });
+
+it('hands a started Duel back to discovery without forwarding its private stream to the lobby', () => {
+  const { bootstrap, sockets, snapshots } = setup();
+  const socket = sockets[0]!;
+  socket.open();
+  socket.message({ t: 'welcome', v: 2 });
+  socket.message({ t: 'lobby-state', game: 'lobby', code: 'REGAAA' });
+  const message = vi.fn();
+  bootstrap.attach({ message, status: () => {}, joined: () => {} });
+  socket.message({ t: 'state', code: 'OTHER', version: 1 });
+  expect(snapshots).toHaveBeenCalledTimes(1);
+  message.mockClear();
+  const duel = { t: 'state', code: 'REGAAA', version: 1 };
+  socket.message(duel);
+  expect(bootstrap.latest).toEqual(duel);
+  expect(snapshots).toHaveBeenCalledTimes(2);
+  expect(message).not.toHaveBeenCalled();
+  socket.message({ ...duel, version: 2 });
+  expect(bootstrap.latest).toEqual({ ...duel, version: 2 });
+  expect(message).not.toHaveBeenCalled();
+  expect(socket.readyState).toBe(1); // Membership stays until the ordinary v1 join succeeds.
+  bootstrap.close();
+});

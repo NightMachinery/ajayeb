@@ -22,7 +22,7 @@ export function snapshotKind(value: unknown): 'duel' | 'haftgane' | 'lobby' | nu
 }
 /** A game Session that took over the connection (attach). */
 export interface RoomListener {
-  /** Every frame after the handover except welcome and error. */
+  /** Every frame after attach except welcome, error and a Duel-family handoff. */
   message(message: unknown): void;
   /** The link's state, as the bootstrap reports it. */
   status(status: TransportStatus): void;
@@ -124,6 +124,18 @@ export class RoomBootstrap {
         this.#listener?.joined();
       } else if (raw['t'] === 'error' && typeof raw['code'] === 'string') {
         this.#fail(raw['code']);
+      } else if (
+        this.#welcomed &&
+        this.#listener &&
+        raw['code'] === this.#options.code &&
+        snapshotKind(message) === 'duel'
+      ) {
+        // A two-seat Start changes the room family. Discovery mounts Duel's
+        // ordinary v1 Session; retain this membership until its first state.
+        clearTimeout(this.#deadline);
+        this.#listener = null;
+        this.latest = message;
+        this.#options.snapshot();
       } else if (this.#listener) {
         if (raw['code'] === this.#options.code && snapshotKind(message))
           clearTimeout(this.#deadline);

@@ -35,6 +35,7 @@ import { GameDriver, type Snapshot } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
   createOnlineGame,
+  startOnlineGame,
   joinByLink,
   newDeviceContext,
   onlinePolicy,
@@ -128,6 +129,7 @@ test.describe('production smoke', { tag: ['@prod'] }, () => {
       const pageB = await ctxB.newPage();
       const problemsB = watchHygiene(pageB);
       await joinByLink(pageB, invite.link, 'Babak');
+      await startOnlineGame(pageA);
 
       await expect(pageA.locator('[data-lobby]')).toHaveCount(0);
       const roomA = await hook(pageA, () => window.__ajayeb?.room() ?? null);

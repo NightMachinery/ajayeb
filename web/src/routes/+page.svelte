@@ -10,7 +10,7 @@
   import Sheet from '$lib/components/shell/Sheet.svelte';
   import Home from '$lib/components/screens/Home.svelte';
   import { savedRooms } from '$lib/session/saved-rooms.svelte';
-  import { loadName, saveName } from '$lib/session/identity';
+  import { loadName } from '$lib/session/identity';
   import { suggestName } from '$lib/ui/online';
   import { offersTutorial, tips } from '$lib/ui/tips.svelte';
   import { page } from '$app/state';
@@ -28,15 +28,15 @@
   let aiSheet = $state.raw<Promise<typeof import('$lib/components/screens/NewGameSheet.svelte')>>();
   let hotseatSheet =
     $state.raw<Promise<typeof import('$lib/components/screens/HotseatSheet.svelte')>>();
-  let onlineSheet =
-    $state.raw<Promise<typeof import('$lib/components/screens/OnlineSheet.svelte')>>();
   let joinSheet = $state.raw<Promise<typeof import('$lib/components/screens/JoinSheet.svelte')>>();
   let settingsSheet =
     $state.raw<Promise<typeof import('$lib/components/screens/Settings.svelte')>>();
 
   let newTableSheet = $state.raw<Promise<typeof import('$lib/lobby/NewTableSheet.svelte')>>();
   let tableOpen = $state(false);
-  function openTable(): void {
+  let tableSeats = $state<2 | 4>(4);
+  function openLobby(seats: 2 | 4): void {
+    tableSeats = seats;
     newTableSheet ??= import('$lib/lobby/NewTableSheet.svelte');
     tableOpen = true;
   }
@@ -58,9 +58,11 @@
     hotseatSheet ??= import('$lib/components/screens/HotseatSheet.svelte');
     hotseatOpen = true;
   }
+  function openTable(): void {
+    openLobby(4);
+  }
   function openOnline(): void {
-    onlineSheet ??= import('$lib/components/screens/OnlineSheet.svelte');
-    onlineOpen = true;
+    openLobby(2);
   }
   function openSettings(): void {
     settingsSheet ??= import('$lib/components/screens/Settings.svelte');
@@ -70,7 +72,6 @@
   // ?play=ai (the tutorial's New game) opens the vs-AI sheet.
   let aiOpen = $state(browser && page.url.searchParams.get('play') === 'ai');
   let hotseatOpen = $state(false);
-  let onlineOpen = $state(false);
   let joinOpen = $state(false);
   let settingsOpen = $state(false);
 
@@ -126,27 +127,12 @@
     await toRoom(code);
   }
 
-  async function startOnline(opts: { name: string; seat: SeatChoice }) {
-    storedName = saveName(opts.name);
-    const { session } = await liveGame();
-    // The hello name is the one a joined seat gets; the create names it too.
-    session.setName(storedName);
-    const code = await session.create({
-      mode: 'online',
-      seat: opts.seat,
-      names: [storedName, storedName]
-    });
-    onlineOpen = false;
-    await toRoom(code);
-  }
-
   function joinRoom(code: string): Promise<void> {
     joinOpen = false;
     return toRoom(code);
   }
 
   function openJoin(): void {
-    onlineOpen = false;
     joinSheet ??= import('$lib/components/screens/JoinSheet.svelte');
     joinOpen = true;
   }
@@ -186,17 +172,6 @@
     <HotseatSheet bind:open={hotseatOpen} onStart={startHotseat} />
   {/await}
 {/if}
-{#if onlineSheet}
-  {#await onlineSheet then { default: OnlineSheet }}
-    <OnlineSheet
-      bind:open={onlineOpen}
-      name={storedName}
-      {suggestion}
-      onStart={startOnline}
-      onJoin={openJoin}
-    />
-  {/await}
-{/if}
 {#if joinSheet}
   {#await joinSheet then { default: JoinSheet }}
     <JoinSheet bind:open={joinOpen} onJoin={joinRoom} />
@@ -217,6 +192,12 @@
 
 {#if newTableSheet}
   {#await newTableSheet then { default: NewTableSheet }}
-    <NewTableSheet bind:open={tableOpen} name={storedName} {suggestion} onStart={startTable} />
+    <NewTableSheet
+      seats={tableSeats}
+      bind:open={tableOpen}
+      name={storedName}
+      {suggestion}
+      onStart={startTable}
+    />
   {/await}
 {/if}

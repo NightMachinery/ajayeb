@@ -531,6 +531,29 @@ browser and no server:
   of requests the Session would never make change nothing; and the
   Presenter plays only the resolution.
 
+### Duel through the shared lobby
+
+`shared-lobby.full.spec.ts` runs on desktop and mobile with `@full`. A filled
+lobby remains a lobby until Start. Two tabs of one guest and a promoted
+spectator follow the same-code Duel handoff; frozen admins can change shared
+hints, including a spectator, but cannot mint the other seat's device link.
+Reload preserves the guest's seat and hint permission. A separate case
+switches two/three-seat panels, preserves the starter, changes an existing
+bot's Duel level and starts its online game without Undo. The bootstrap unit
+regression verifies that Duel snapshots return to discovery without reaching
+the old lobby Session; the v2 membership stays until the v1 state arrives.
+
+`make shots PW_ARGS=--grep=shared.lobby.geometry` checks the two-seat panel at
+360x740, 390x844, 844x390 and 1280x800 in English and Persian, both themes.
+It requires no horizontal overflow, controls at least 44 px, instant
+Animation-off changes and clean console/network probes.
+`SHARED_LOBBY_SHOTS_DIR` selects the captures and probe directory.
+
+D61 and legacy device-link regressions use the explicit
+`createLegacyOnlineGame` compatibility fixture through `/dev/new`, so stored
+legacy rooms retain their original v1 entry and creator link permissions.
+The online playthrough and production smoke use Home's new shared lobby.
+
 ### Home and the Haftgane lobby
 
 `make e2e PW_ARGS='--project=desktop --project=mobile specs/home-lobby.full.spec.ts'`
@@ -1233,13 +1256,13 @@ projects. Each player, and later the spectator, has a browser context of
 their own in the one browser: their own storage (so their own identity
 token and name) and their own network switch.
 
-- Context A opens Home, Play online, types a name, picks a crest (the Sun
-  on the desktop project, the Moon on the mobile one) and creates the
-  game. In the lobby it presses Copy link and reads the clipboard, which
+- Context A opens Home, Play online, types a name and creates a two-seat
+  shared lobby. It chooses who starts (Sun on desktop, Moon on mobile). In the lobby it presses Copy link and reads the clipboard, which
   must be the link the lobby shows and end in `/play/<code>` with the code
   the lobby shows in large type.
 - Context B opens that link, answers the name prompt ("Play as …") and
-  takes the open seat. Both lobbies give way to the draft; the room is
+  takes the open seat. A explicitly presses Start, then both lobbies give
+  way to the draft; the room is
   `online` and `playing`, with both names on the right seats.
 - The two pages play the game to the end with the online policy and the
   confirm step, each only on its own turn: before every move the other
@@ -1486,10 +1509,10 @@ flags are added.
 2. Home renders in both themes (`light`, `dark`) with no console error, page
    error, failed request or HTTP error response, and no horizontal scroll.
 3. Two isolated browser contexts play a short online game: context A creates
-   it through the UI (Home, Play online, a name, a crest, Create), reads the
+   it through the UI (Home, Play online, a name, Create), reads the
    invite the way a player would (Copy link, then the clipboard: see "The
    clipboard permission" below), and context B opens that link, answers the
-   name prompt and takes the open seat. They then play at least five moves
+   name prompt and takes the open seat. A presses Start. They then play at least five moves
    (the wonder-draft picks count) through the confirm step online rooms use,
    each only on its own turn (the other side's `canAct` and `choices()` are
    checked false first), and both pages are checked to agree on the room's

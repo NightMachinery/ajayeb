@@ -48,7 +48,7 @@ The Go module lives in `server/` (`github.com/NightMachinery/ajayeb/server`). De
 - **`internal/ai`**: the bots. A bot receives an `Observation`, never the real state (see below). Its `Pool` bounds the searches running at once and shares them fairly between client addresses, so one address's many bot rooms cannot hold up another's bot.
 - **`internal/room`**: one actor goroutine per room with an inbox channel, so room logic needs no locks. It owns the seats and the mode, deduplicates client sequence numbers, checks versions, schedules bot turns, implements undo and the forfeit (`resign:<seat>`, a terminal action never offered in `choices`), keeps each applied action's events for the history (rebuilt by replay on load), and writes the room file after every accepted action.
 - **`internal/tableroom`**: Haftgane's table room kind, a separate actor beside Duel's (see "The table actor" below). Its concrete engine seam binds Haftgane rules and whitelisted views.
-- **`internal/lobbyroom`**: the shared lobby room kind (D60), where a group gathers before a game; its Start hands a filled table to `tableroom` under the same code (see "The shared lobby" below).
+- **`internal/lobbyroom`**: the shared lobby room kind (D60), where a group gathers before a game; its Start hands two filled seats to Duel, or a larger table to `tableroom`, under the same code (see "The shared lobby" below).
 - **`internal/roles`**: the admin roles of D42, shared by the lobby and the table: real admins and who promoted them, demotion and stepping down, and the temporary admin of the five-minute rule, all persisted, with the clock passed in.
 - **`internal/store`**: one JSON file per room, written atomically (temporary file, sync, rename), plus a reaper for old rooms with an injectable clock. It refuses to read a room file larger than a cap derived from what a room can hold.
 - **`internal/ident`**: the server secret and the HMAC-derived user ids. The secret file must be a regular file, and one other users could read is tightened to mode 0600.
@@ -373,12 +373,14 @@ a reload mends a client and a server that disagree.
   game and is shown without playing events. A frame that only refreshes
   presence replaces the one on screen in place, and a backlog fast-forwards
   to the newest frame.
-- **Home and the lobby** (`lib/lobby`) add a game picker while leaving Duel's
-  starts intact. Haftgane's New table sheet submits a name before its short
-  v2 creation connection, then enters the ordinary room route. Tables default
-  to four seats and the lobby offers three through seven. The lazy lobby
-  renders the actor's roster, presence, role tags, seating, final reveal and
-  undo policy. Its edits and role changes use the Session's existing sequenced
+- **Home and the lobby** (`lib/lobby`) keep Duel's one-tap bot, tutorial and
+  pass-and-play starts. Play online opens the shared New table sheet with two
+  seats; Haftgane's New table defaults to four. The sheet submits a name before
+  its short v2 creation connection, then enters the ordinary room route. The
+  lobby offers two through seven seats. At two it shows Duel's starter
+  (random by default), bot levels and the chosen hint settings; at three or
+  more it shows Haftgane's seating, final reveal and undo policy. The former
+  online sheet is retired. Joining fills a seat but never starts a game. Its edits and role changes use the Session's existing sequenced
   retry lane; Start uses the server's `canStart` and explicitly fills open
   seats with Apprentice bots. Reservations block Start until their humans
   return or an admin opens them. Side selection awaits the engine-contract
@@ -387,6 +389,10 @@ a reload mends a client and a server that disagree.
   drag handles. A finished participant can request the rematch lobby; its
   private device claim stays in the successor URL fragment. Saved lobbies
   and live tables return through Home's Continue list with a Haftgane label.
+  On a two-seat Start, the lazy bootstrap returns the Duel snapshot to
+  discovery instead of passing it to the attached lobby Session. Discovery
+  mounts Duel's ordinary Session and keeps the v2 membership until the v1
+  join receives its first state, including when that socket already exists.
   Lobby-only English and Persian messages load with the lobby or its New
   table sheet, while Home loads only its picker labels. Native lobby selects
   set their fixed-option values through local attachments. This avoids extra

@@ -17,6 +17,7 @@ import {
   type TestInfo
 } from '@playwright/test';
 import { installMotionOff } from './base';
+import { lobbyReady } from './lobby';
 import { hotseatPolicy, type Policy } from './driver';
 import { dataDir } from './global-setup';
 import type { CapturedFrame, ViewerStream } from './leak-check';
@@ -197,23 +198,47 @@ export class FrameLog implements ViewerStream {
 
 export type Crest = 'Sun' | 'Moon';
 
-/** Home, Play online, a name and a crest, Create: the lobby of a new room. Returns its code. */
-export async function createOnlineGame(page: Page, name: string, crest: Crest): Promise<string> {
+/** Home's shared online lobby. Joining a friend never starts the game. */
+export async function createOnlineGame(page: Page, name: string, starter?: Crest): Promise<string> {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: 'Ajayeb' })).toBeVisible();
-  await page.getByRole('button', { name: /Play online/ }).click();
-  const sheet = page.locator('dialog[open]').filter({ has: page.locator('[data-online-sheet]') });
-  await expect(sheet.getByRole('heading', { name: 'Play online' })).toBeVisible();
-  await sheet.locator('[data-name-input]').fill(name);
-  await sheet.getByText(crest, { exact: true }).click();
-  await expect(sheet.getByRole('radio', { name: crest, exact: true })).toBeChecked();
-  await sheet.locator('[data-control="online-create"]').click();
+  await page.locator('[data-act="home-mode:online"]').click();
+  await page.locator('[data-new-table] [data-name-input]').fill(name);
+  await page.locator('[data-act="lobby-create"]').click();
   await page.waitForURL(/\/play\/[A-Z0-9]+$/);
-  const lobby = page.locator('[data-lobby]');
-  await expect(lobby).toBeVisible();
-  const code = await lobby.getAttribute('data-lobby');
-  if (!code) throw new Error('the lobby names no room');
-  return code;
+  await expect(page.locator('[data-lobby]')).toBeVisible();
+  await lobbyReady(page);
+  await expect(page.locator('[data-act="lobby-seats"]')).toHaveValue('2');
+  if (starter) {
+    await page
+      .locator('[data-act="lobby-first-player"]')
+      .selectOption(starter === 'Sun' ? '0' : '1');
+    await lobbyReady(page);
+  }
+  return new URL(page.url()).pathname.split('/').at(-1)!;
+}
+
+/** Explicit Start, after all intended humans joined (or with open bot fill). */
+export async function startOnlineGame(page: Page): Promise<void> {
+  await lobbyReady(page);
+  await page.locator('[data-act="lobby-start"]').click();
+  await page.waitForFunction(() => window.__ajayeb?.ready() === true, null, { timeout: 20_000 });
+}
+
+/**
+ * Compatibility fixture for D61, old stored rooms and legacy device-link
+ * permissions. Uses the existing development creation path, not retired UI.
+ */
+export async function createLegacyOnlineGame(
+  page: Page,
+  name: string,
+  crest: Crest
+): Promise<string> {
+  await page.goto('/');
+  await page.evaluate((name) => localStorage.setItem('ajayeb:name', name), name);
+  await page.goto(`/dev/new?mode=online&seat=${crest === 'Sun' ? 0 : 1}`);
+  await page.waitForURL(/\/play\/[A-Z0-9]+$/);
+  await expect(page.locator('[data-lobby]')).toBeVisible();
+  return new URL(page.url()).pathname.split('/').at(-1)!;
 }
 
 /**
@@ -223,6 +248,15 @@ export async function createOnlineGame(page: Page, name: string, crest: Crest): 
  */
 export async function readInvite(page: Page): Promise<{ code: string; link: string }> {
   const lobby = page.locator('[data-lobby]');
+  if (await lobby.locator('[data-act="lobby-copy"]').count()) {
+    const code = (await lobby.getAttribute('data-lobby'))!;
+    const shown = await lobby.locator('[data-invite-url]').inputValue();
+    await lobby.locator('[data-act="lobby-copy"]').click();
+    const link = await page.evaluate(() => navigator.clipboard.readText());
+    expect(link).toBe(shown);
+    expect(new URL(link).pathname).toBe(`/play/${code}`);
+    return { code, link };
+  }
   const code = (await lobby.locator('[data-room-code]').getAttribute('data-room-code')) ?? '';
   await expect(lobby.locator('[data-room-code]')).toHaveText(code);
   const shown = await lobby.locator('[data-invite-link]').inputValue();
@@ -243,7 +277,13 @@ export async function joinByLink(page: Page, link: string, name: string): Promis
   await expect(prompt.locator('[data-control="name-submit"]')).toHaveText(`Play as ${name}`);
   await prompt.locator('[data-control="name-submit"]').click();
   await expect(prompt).toHaveCount(0);
-  await page.waitForFunction(() => window.__ajayeb?.ready() === true, null, { timeout: 20_000 });
+  await page.waitForFunction(
+    () =>
+      window.__ajayeb?.ready() === true ||
+      (window.__ajayebTable?.lobby() !== null && window.__ajayebTable?.ready() === true),
+    null,
+    { timeout: 20_000 }
+  );
 }
 
 /** The server's room file (server/internal/store), read once the game is over. */

@@ -1,4 +1,7 @@
 export const lobby = {
+  'lobby.duelLobby': 'Duel lobby',
+  'lobby.firstPlayer': 'Who starts',
+
   'lobby.duel': 'Duel',
   'lobby.haftgane': 'Haftgane',
   'lobby.chooseGame': 'Choose a game',

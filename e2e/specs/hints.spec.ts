@@ -16,7 +16,7 @@ import { test } from '../fixtures/base';
 import { GameDriver } from '../fixtures/driver';
 import { watchHygiene } from '../fixtures/hygiene';
 import {
-  createOnlineGame,
+  createLegacyOnlineGame,
   joinByLink,
   newDeviceContext,
   onlinePolicy,
@@ -122,7 +122,7 @@ test.describe('hint settings', { tag: ['@mobile'] }, () => {
       contexts.push(ctxA);
       const pageA = await ctxA.newPage();
       const problemsA = watchHygiene(pageA);
-      await createOnlineGame(pageA, 'Roxana', 'Sun');
+      await createLegacyOnlineGame(pageA, 'Roxana', 'Sun');
 
       // The lobby says which hints the game has.
       const summary = pageA.locator('[data-lobby] [data-hints-summary]');
@@ -160,7 +160,7 @@ test.describe('hint settings', { tag: ['@mobile'] }, () => {
         'readonly'
       );
       await expect(hintsB.getByRole('switch')).toHaveCount(1); // the local board-marks switch only
-      await expect(hintsB).toContainText('Only the player who created the game can change them.');
+      await expect(hintsB).toContainText('Only game admins can change them.');
       await closeSheet(pageB, hintsB);
 
       // The admin switches Threats off.

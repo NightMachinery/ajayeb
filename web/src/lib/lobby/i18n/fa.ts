@@ -2,6 +2,9 @@ import type { lobby as en } from './en';
 import type { Translation } from '$lib/i18n/types';
 
 export const lobby = {
+  'lobby.duelLobby': 'لابی دوئل',
+  'lobby.firstPlayer': 'شروع‌کننده',
+
   'lobby.duel': 'دوئل',
   'lobby.haftgane': 'هفتگانه',
   'lobby.chooseGame': 'بازی را انتخاب کنید',

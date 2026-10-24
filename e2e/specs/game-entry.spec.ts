@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
-import { createOnlineGame, newDeviceContext, readRoomFile } from '../fixtures/online';
+import { createLegacyOnlineGame, newDeviceContext, readRoomFile } from '../fixtures/online';
 import { GameDriver } from '../fixtures/driver';
 import { openHotseatRoom, playKey } from '../fixtures/scenario';
 import { watchHygiene } from '../fixtures/hygiene';
@@ -95,7 +95,7 @@ test('cold invite sends no hello or join and claims no seat before name submissi
         }
       }).observe(document, { subtree: true, childList: true, characterData: true });
     });
-    const code = await createOnlineGame(owner, 'Creator', 'Sun');
+    const code = await createLegacyOnlineGame(owner, 'Creator', 'Sun');
     expect(ownerFrames.frames.filter((m) => m.t === 'hello').map((m) => m.v)).toEqual([1]);
     const page = await visitor.newPage();
     const requested: string[] = [];
@@ -166,7 +166,7 @@ test('ordinary Duel entry, duplicate tabs and reconnect preserve the same Duel s
     visitor = await newDeviceContext(browser, info);
   try {
     const owner = await creator.newPage();
-    const code = await createOnlineGame(owner, 'Creator', 'Sun');
+    const code = await createLegacyOnlineGame(owner, 'Creator', 'Sun');
     const page = await visitor.newPage();
     await page.goto(`/play/${code}`);
     await page.locator('[data-name-input]').fill('Visitor');
@@ -249,7 +249,7 @@ test('name-gated handoff keeps the submitted name when name storage is blocked @
     visitor = await newDeviceContext(browser, info);
   try {
     const owner = await creator.newPage();
-    const code = await createOnlineGame(owner, 'Creator', 'Sun');
+    const code = await createLegacyOnlineGame(owner, 'Creator', 'Sun');
     await visitor.addInitScript(() => {
       const write = Storage.prototype.setItem;
       Storage.prototype.setItem = function (key, value) {
@@ -284,7 +284,7 @@ test('a stale Haftgane tag keeps discovery attached until the first v1 Duel stat
   try {
     const owner = await creator.newPage(),
       presence = seatPresence(owner);
-    const code = await createOnlineGame(owner, 'Creator', 'Sun');
+    const code = await createLegacyOnlineGame(owner, 'Creator', 'Sun');
     await visitor.addInitScript((code) => {
       localStorage.setItem('ajayeb:name', 'Visitor');
       localStorage.setItem(
@@ -364,7 +364,7 @@ test('rematch reuses Room and its v1 socket @mobile', async ({ page }) => {
 
 test('a device fragment change reuses Room and its v1 socket @mobile', async ({ page }) => {
   const log = sentFrames(page);
-  const code = await createOnlineGame(page, 'Creator', 'Sun');
+  const code = await createLegacyOnlineGame(page, 'Creator', 'Sun');
   const lobby = await page.locator('[data-lobby]').elementHandle();
   await page.locator('[data-lobby] [data-control="device-link"][data-seat="0"]').click();
   const link = await page.locator('dialog[open] input[data-device-link]').inputValue();

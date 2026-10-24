@@ -8,8 +8,15 @@
   import Button from '$lib/components/shell/Button.svelte';
   import Sheet from '$lib/components/shell/Sheet.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import HintsSummary from '$lib/components/hints/HintsSummary.svelte';
+  import { defaultHints } from '$lib/hints/families';
   import { qrPath } from '$lib/ui/online';
-  import type { PlatformHuman, LobbyEdit, LobbyOptions } from '$lib/wire/platform.gen';
+  import type {
+    PlatformHuman,
+    PlatformSeat,
+    LobbyEdit,
+    LobbyOptions
+  } from '$lib/wire/platform.gen';
   import type { TableSession } from '$lib/games/haftgane/session/session.svelte';
 
   let { session }: { session: TableSession } = $props();
@@ -93,6 +100,28 @@
   const qrCode = $derived(showQr ? qr(url) : null);
 </script>
 
+{#snippet botLevel(seat: PlatformSeat)}
+  <label class="flex flex-wrap items-center justify-between gap-2">
+    <span>{t('lobby.botLevel')}</span>
+    <select
+      class="min-h-11 rounded-control border border-rule bg-panel px-3 text-fg"
+      {@attach selectValue(
+        seat.kind === 'bot' ? (seat.bot ?? 'easy') : (botLevels[seat.seat] ?? 'easy')
+      )}
+      disabled={!ready}
+      data-act={`lobby-bot-level:${seat.seat}`}
+      onchange={(e) => {
+        const bot = e.currentTarget.value;
+        if (seat.kind === 'bot') edit({ op: 'add-bot', seat: seat.seat, bot });
+        else botLevels[seat.seat] = bot;
+      }}
+    >
+      <option value="easy">{uiT('game.persona.easy')}</option>
+      <option value="normal">{uiT('game.persona.normal')}</option>
+      {#if lobby.seatCount === 2}<option value="hard">{uiT('game.persona.hard')}</option>{/if}
+    </select>
+  </label>
+{/snippet}
 {#snippet person(h: PlatformHuman)}
   <span class="min-w-0 font-semibold break-words" dir="auto">{name(h)}</span>
   <span class="flex flex-wrap gap-1 text-xs text-fg-muted" data-role-tags={h.userId}>
@@ -124,12 +153,16 @@
   {/if}
 {/snippet}
 
-<main class="h-full overflow-y-auto bg-table text-fg" data-lobby>
+<main class="h-full overflow-y-auto bg-table text-fg" data-lobby={lobby.code}>
   <div class="mx-auto flex max-w-5xl flex-col gap-5 p-4 sm:p-6 short:gap-3">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h1 class="font-display text-2xl">{t('lobby.title')}</h1>
-        <p class="font-mono text-sm text-fg-muted">{t('lobby.code', { code: lobby.code })}</p>
+        <h1 class="font-display text-2xl">
+          {t(lobby.seatCount === 2 ? 'lobby.duelLobby' : 'lobby.title')}
+        </h1>
+        <p class="font-mono text-sm text-fg-muted" data-room-code={lobby.code}>
+          {t('lobby.code', { code: lobby.code })}
+        </p>
       </div>
       <a
         href={resolve('/')}
@@ -172,11 +205,11 @@
               }}
               data-act="lobby-seats"
             >
-              {#each [3, 4, 5, 6, 7] as n (n)}<option value={n}>{formatNumber(n)}</option>{/each}
+              {#each [2, 3, 4, 5, 6, 7] as n (n)}<option value={n}>{formatNumber(n)}</option>{/each}
             </select>
           </label>
         </div>
-        <p class="mt-2 text-xs text-fg-muted">{t('lobby.order')}</p>
+        {#if lobby.seatCount > 2}<p class="mt-2 text-xs text-fg-muted">{t('lobby.order')}</p>{/if}
         <ol class="mt-4 flex flex-col gap-2">
           {#each lobby.seats as seat (seat.seat)}
             {@const h = lobby.humans.find((h) => h.userId === seat.userId)}
@@ -212,17 +245,7 @@
                   >
                   <div class="flex flex-col gap-2 pt-2">
                     {#if session.admin && seat.kind === 'open'}
-                      <label class="flex flex-wrap items-center justify-between gap-2"
-                        ><span>{t('lobby.botLevel')}</span><select
-                          class="min-h-11 rounded-control border border-rule bg-panel px-3 text-fg"
-                          {@attach selectValue(botLevels[seat.seat] ?? 'easy')}
-                          data-act={`lobby-bot-level:${seat.seat}`}
-                          onchange={(e) => (botLevels[seat.seat] = e.currentTarget.value)}
-                          ><option value="easy">{uiT('game.persona.easy')}</option><option
-                            value="normal">{uiT('game.persona.normal')}</option
-                          ></select
-                        ></label
-                      >
+                      {@render botLevel(seat)}
                       <Button
                         variant="secondary"
                         disabled={!ready}
@@ -247,6 +270,7 @@
                           >{t('lobby.seatHuman', { name: name(sp) })}</Button
                         >{/each}
                     {:else if session.admin && seat.kind === 'bot'}
+                      {#if lobby.seatCount === 2}{@render botLevel(seat)}{/if}
                       <Button
                         variant="secondary"
                         disabled={!ready}
@@ -335,48 +359,77 @@
         >
           <h2 id="lobby-settings" class="font-display text-xl">{t('lobby.settings')}</h2>
           <div class="mt-3 flex flex-col gap-3">
-            <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
-              ><span>{t('lobby.seating')}</span>
-              <select
-                class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
-                data-act="lobby-seating"
-                disabled={!ready || !session.admin}
-                {@attach selectValue(lobby.options.seating ?? 'random')}
-                onchange={(e) => option({ seating: e.currentTarget.value as 'random' | 'lobby' })}
-                ><option value="random">{t('lobby.random')}</option><option value="lobby"
-                  >{t('lobby.listed')}</option
-                ></select
-              >
-            </label>
-            <!-- SIDES CONTROL SLOT: engine-contract owns LobbyOptions.sides and the
+            {#if lobby.seatCount === 2}
+              <div class="flex flex-col gap-3" data-duel-settings>
+                <label class="flex flex-wrap items-center justify-between gap-2 font-semibold">
+                  <span>{t('lobby.firstPlayer')}</span>
+                  <select
+                    class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
+                    disabled={!ready || !session.admin}
+                    data-act="lobby-first-player"
+                    {@attach selectValue(lobby.options.firstPlayer ?? 'random')}
+                    onchange={(e) => {
+                      const first = e.currentTarget.value;
+                      const options = { ...lobby.options };
+                      if (first === 'random') delete options.firstPlayer;
+                      else options.firstPlayer = first === '0' ? 0 : 1;
+                      edit({ op: 'options', options });
+                    }}
+                  >
+                    <option value="random">{t('lobby.random')}</option>
+                    <option value="0">{uiT('online.crest.sun')}</option>
+                    <option value="1">{uiT('online.crest.moon')}</option>
+                  </select>
+                </label>
+                <HintsSummary hints={lobby.options.hints ?? defaultHints('online')} />
+              </div>
+            {:else}
+              <div class="flex flex-col gap-3" data-haftgane-settings>
+                <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
+                  ><span>{t('lobby.seating')}</span>
+                  <select
+                    class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
+                    data-act="lobby-seating"
+                    disabled={!ready || !session.admin}
+                    {@attach selectValue(lobby.options.seating ?? 'random')}
+                    onchange={(e) =>
+                      option({ seating: e.currentTarget.value as 'random' | 'lobby' })}
+                    ><option value="random">{t('lobby.random')}</option><option value="lobby"
+                      >{t('lobby.listed')}</option
+                    ></select
+                  >
+                </label>
+                <!-- SIDES CONTROL SLOT: engine-contract owns LobbyOptions.sides and the
                  Start setup mapping. Wire Each picks / Day / Random here once it lands. -->
-            <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
-              ><span>{t('lobby.end')}</span>
-              <select
-                class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
-                data-act="lobby-reveal"
-                disabled={!ready || !session.admin}
-                {@attach selectValue(String(lobby.options.finalReveal ?? true))}
-                onchange={(e) => option({ finalReveal: e.currentTarget.value === 'true' })}
-                ><option value="true">{t('lobby.reveal')}</option><option value="false"
-                  >{t('lobby.hidden')}</option
-                ></select
-              >
-            </label>
-            <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
-              ><span>{t('lobby.undo')}</span>
-              <select
-                class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
-                data-act="lobby-undo"
-                disabled={!ready || !session.admin || !undoEligible}
-                {@attach selectValue(String(undoEligible && (lobby.options.allowUndo ?? true)))}
-                onchange={(e) => option({ allowUndo: e.currentTarget.value === 'true' })}
-                ><option value="true">{t('lobby.on')}</option><option value="false"
-                  >{t('lobby.off')}</option
-                ></select
-              >
-            </label>
-            <p class="text-xs text-fg-muted">{t('lobby.undoNote')}</p>
+                <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
+                  ><span>{t('lobby.end')}</span>
+                  <select
+                    class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
+                    data-act="lobby-reveal"
+                    disabled={!ready || !session.admin}
+                    {@attach selectValue(String(lobby.options.finalReveal ?? true))}
+                    onchange={(e) => option({ finalReveal: e.currentTarget.value === 'true' })}
+                    ><option value="true">{t('lobby.reveal')}</option><option value="false"
+                      >{t('lobby.hidden')}</option
+                    ></select
+                  >
+                </label>
+                <label class="flex flex-wrap items-center justify-between gap-2 font-semibold"
+                  ><span>{t('lobby.undo')}</span>
+                  <select
+                    class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
+                    data-act="lobby-undo"
+                    disabled={!ready || !session.admin || !undoEligible}
+                    {@attach selectValue(String(undoEligible && (lobby.options.allowUndo ?? true)))}
+                    onchange={(e) => option({ allowUndo: e.currentTarget.value === 'true' })}
+                    ><option value="true">{t('lobby.on')}</option><option value="false"
+                      >{t('lobby.off')}</option
+                    ></select
+                  >
+                </label>
+                <p class="text-xs text-fg-muted">{t('lobby.undoNote')}</p>
+              </div>
+            {/if}
           </div>
         </section>
         <details class="rounded-panel border border-rule bg-panel p-4" data-spectators>

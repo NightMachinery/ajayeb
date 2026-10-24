@@ -496,9 +496,8 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
     await page.getByRole('button', { name: /Play online/ }).click();
     const online = page.locator('dialog[open]');
     await online.locator('[data-name-input]').fill('First');
-    await online.getByText('Sun', { exact: true }).click();
     await page.screenshot({ path: info.outputPath('online-sheet.png') });
-    await online.locator('[data-control="online-create"]').click();
+    await online.locator('[data-act="lobby-create"]').click();
     await page.waitForURL(/\/play\/[A-Z0-9]+$/);
     await expect(page.locator('[data-lobby]')).toBeVisible();
     const code = await page.locator('[data-lobby]').getAttribute('data-lobby');
@@ -513,6 +512,7 @@ test.describe('Home loading', { tag: '@mobile' }, () => {
       await joiner.locator('dialog[open] [data-control="join-submit"]').click();
       await joiner.waitForURL((url) => url.pathname === `/play/${code}`);
       await joinByLink(joiner, joiner.url(), 'Second');
+      await page.locator('[data-act="lobby-start"]').click();
       await new GameDriver(page).waitReady();
       await new GameDriver(joiner).waitReady();
       expect(await page.evaluate(() => window.__ajayeb?.room()?.status)).toBe('playing');
