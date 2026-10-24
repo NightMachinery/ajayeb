@@ -1411,7 +1411,10 @@ file cap is a constant of the store.
   `join`); only when every room in memory has a connection is the answer
   `error busy`. A room admits a new spectator only while it has fewer than
   32 connections, and a seated user only while that user has fewer than 32
-  connections there (`error room-full`); each room's inbox holds 64
+  connections there (`error room-full`). A table admits them the same
+  way, so it holds at most 256 connections (32 spectators admitted before
+  the seats filled, and 32 for each of seven seated users); a lobby admits
+  anyone only while it has fewer than 32. Each room's inbox holds 64
   messages; a room with no connection for 30 minutes leaves memory and is
   reloaded from disk on the next `join`. A bot searches only while its
   room has a connection: the last connection to leave cancels the search,
@@ -1420,9 +1423,11 @@ file cap is a constant of the store.
   (`-bot-searches`), and one client address (an IPv4 address or an IPv6
   /64, the key of the limits above) holds at most 2 of them at once
   (`-bot-searches-per-address`). A bot room's search counts under the
-  address of the person playing it. Further searches wait without holding
-  a slot, and a search whose room is left, evicted or undone leaves the
-  queue at once. When a slot frees up it goes to a waiting search whose
+  address of the person playing it, and a table's under the smallest
+  address among its attached human players, which need not be the address
+  of the player whose move the bot answers. Further searches wait without
+  holding a slot, and a search whose room is left, evicted or undone leaves
+  the queue at once. When a slot frees up it goes to a waiting search whose
   address holds the fewest slots, and among those to the address that got
   one longest ago, so however many bot rooms one address runs, another
   address's bot waits for at most one search to end (`ai.Pool`). The room
@@ -1460,6 +1465,29 @@ Known gaps, each left for a larger design change:
   space.
 - **Room codes:** guessable from many addresses, as described under joins
   above.
+- **Table and lobby writes and fan-out:** a table or a lobby saves its
+  record after every applied request, a private pick change included, and
+  a confirmation turning on or off, a seat switch and a role change each
+  send a new frame to every connection. Nothing bounds this per user
+  beyond each connection's frame rate, and a seated user may hold 32
+  connections, so one player can drive a record write and a fan-out per
+  frame, up to 320 a second from two addresses. Unlike a Duel room's acts,
+  which end with the game, a table's confirmations and pick changes are
+  never used up, so no rooms need to be banked. Measured
+  (M16.haftgane-security-review): at a seven-seat table with 225
+  connections one public change sends 225 frames, about 1.6 MB in all,
+  and takes about 17 ms under the race detector. A request budget per user
+  across connections, and coalesced writes, are left to a later decision.
+- **Admins see the seats they take:** an admin may seat any spectator,
+  themselves included, in any seat (D42), and then sees that seat's hand,
+  pending pick and remembered knowledge, as its player would. The switch
+  is public (the room log, everyone's game log) but not prevented. A
+  device link no longer gives an admin another seat's view unseen: only a
+  seat's own user may link it.
+- **Stable user ids:** table and lobby frames name each human by user id,
+  which admin requests need. A browser has the same user id in every room,
+  so anyone who sees two rooms can tell that the same browser is in both.
+  Per-room pseudonyms are left to a later decision.
 
 ## HTTP endpoints
 
