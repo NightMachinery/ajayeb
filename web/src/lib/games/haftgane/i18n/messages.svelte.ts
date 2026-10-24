@@ -23,6 +23,7 @@
 
 import { formatNumber, i18n, type Locale, type Messages, type PluralForms } from '$lib/i18n';
 import { city } from './en/city';
+import { end } from './en/end';
 import { names } from './en/names';
 import { rules } from './en/rules';
 import { screen } from './en/screen';
@@ -31,6 +32,7 @@ import { table } from './en/table';
 /** Haftgane's English message set. */
 export const hgEn = {
   ...city,
+  ...end,
   ...names,
   ...rules,
   ...screen,
