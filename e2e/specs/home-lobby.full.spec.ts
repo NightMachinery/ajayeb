@@ -3,6 +3,7 @@ import { test } from '../fixtures/base';
 import { newDeviceContext } from '../fixtures/online';
 import { watchHygiene } from '../fixtures/hygiene';
 import { createTableFromHome, lobbyAction, lobbyReady } from '../fixtures/lobby';
+import { choose } from '../fixtures/table';
 
 async function userId(page: Page): Promise<string> {
   return page.evaluate(() => window.__ajayebTable!.lobby()!.you.userId);
@@ -174,7 +175,10 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
       await lobbyAction(page, 'lobby-start');
       await lobbyReady(guest);
       const previousSeat = await guest.evaluate(() => window.__ajayebTable!.latest()!.you.seat!);
-      await lobbyAction(page, `seat-bot:${previousSeat}`);
+      // The table screen's admin controls are in its game menu, and a
+      // card's choices show once its hand card is tapped: choose() does both.
+      await choose(page, `seat-bot:${previousSeat}`);
+      await choose(page, 'menu-close');
       await expect(guest.locator('[data-watching]')).toBeVisible();
       for (let i = 0; i < 200; i++) {
         await lobbyReady(page);
@@ -184,12 +188,11 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
         for (const tab of [page, guest]) {
           const key = await tab.evaluate(() => {
             const f = window.__ajayebTable!.latest();
-            return f?.view.you?.choices[0]?.key ?? null;
+            return f?.pending?.confirm ? null : (f?.view.you?.choices[0]?.key ?? null);
           });
           if (key) {
-            await lobbyAction(tab, key);
-            if (await tab.locator('[data-act="confirm"]').isEnabled())
-              await lobbyAction(tab, 'confirm');
+            await choose(tab, key);
+            await choose(tab, 'confirm');
           }
         }
       }
