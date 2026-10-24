@@ -165,4 +165,92 @@ test.describe('shared online lobby', { tag: ['@full', '@mobile'] }, () => {
       .toBeGreaterThan(0);
     expect(problems).toEqual([]);
   });
+
+  test("a finished game's rematch opens a successor lobby that reserves both players", async ({
+    browser
+  }, info) => {
+    const contexts: BrowserContext[] = [];
+    try {
+      for (let i = 0; i < 3; i++) contexts.push(await newDeviceContext(browser, info));
+      const owner = await contexts[0]!.newPage(),
+        guest = await contexts[1]!.newPage(),
+        watch = await contexts[2]!.newPage();
+      const problems = [owner, guest, watch].map(watchHygiene);
+      const code = await createOnlineGame(owner, 'Host');
+      await joinByLink(guest, owner.url(), 'Guest');
+      await joinByLink(watch, owner.url(), 'Watcher');
+      const lobby = (page: Page) => page.evaluate(() => window.__ajayebTable!.lobby()!);
+      const ownerId = (await lobby(owner)).you.userId;
+      const guestId = (await lobby(guest)).you.userId;
+      // A promotion in the first game, which the successor does not keep.
+      await menu(owner, 1);
+      await lobbyAction(owner, `lobby-promote:${guestId}`);
+      await startOnlineGame(owner);
+      for (const page of [owner, guest, watch]) await new GameDriver(page).waitReady();
+
+      // The guest forfeits at once, and the result shows on every page.
+      const driver = new GameDriver(guest);
+      await driver.dismissToasts();
+      await driver.visible('[data-control="menu"]').click();
+      await driver.visible('[data-game-menu] [data-control="menu-forfeit"]').click();
+      await guest.locator('dialog[open] [data-control="forfeit-confirm"]').click();
+      for (const page of [owner, guest])
+        await expect(page.locator('[data-game-over] dialog[open] [data-rematch]')).toBeVisible();
+      await expect(watch.locator('[data-game-over] dialog[open]')).toBeVisible();
+
+      // The owner asks for the rematch and lands in its lobby, which holds
+      // the owner's seat and reserves the guest's.
+      await owner.locator('dialog[open] [data-rematch]').click();
+      await owner.waitForURL(
+        (url) => /^\/play\/[A-Z0-9]+$/.test(url.pathname) && !url.pathname.endsWith(`/${code}`)
+      );
+      const next = owner.url().split('/').at(-1)!;
+      await expect(owner.locator('[data-lobby]')).toBeVisible();
+      await lobbyReady(owner);
+      const reserved = await lobby(owner);
+      expect(reserved.code).toBe(next);
+      expect(reserved.seatCount).toBe(2);
+      expect(reserved.canStart).toBe(false);
+      expect(reserved.seats.map((s) => [s.kind, s.userId])).toEqual([
+        ['human', ownerId],
+        ['reserved', guestId]
+      ]);
+      expect((readRoomFile(next) as unknown as { game: string }).game).toBe('lobby');
+
+      // The guest and the spectator follow it from their result screens.
+      for (const page of [guest, watch]) {
+        await page.locator('dialog[open] [data-rematch]').click();
+        await page.waitForURL(new RegExp(`/play/${next}$`));
+        await expect(page.locator('[data-lobby]')).toBeVisible();
+        await lobbyReady(page);
+      }
+      await expect
+        .poll(async () => (await lobby(owner)).seats[1])
+        .toMatchObject({ kind: 'human', userId: guestId });
+      expect((await lobby(watch)).you.seat).toBeUndefined();
+      // The roles start over: the owner, who asked, is the only admin.
+      const humans = (await lobby(owner)).humans;
+      expect(humans.find((h) => h.userId === ownerId)).toMatchObject({
+        creator: true,
+        admin: true
+      });
+      expect(humans.find((h) => h.userId === guestId)).toMatchObject({
+        creator: false,
+        admin: false
+      });
+
+      // Its Start begins the next game under the successor's code.
+      await startOnlineGame(owner);
+      for (const page of [owner, guest, watch]) {
+        await new GameDriver(page).waitReady();
+        expect(new URL(page.url()).pathname).toBe(`/play/${next}`);
+        await expect(page.locator('[data-lobby]')).toHaveCount(0);
+      }
+      expect(await guest.evaluate(() => window.__ajayeb!.you()!.seats)).toEqual([1]);
+      expect((readRoomFile(next) as unknown as { mode: string }).mode).toBe('online');
+      for (const errors of problems) expect(errors).toEqual([]);
+    } finally {
+      for (const context of contexts) await context.close();
+    }
+  });
 });
