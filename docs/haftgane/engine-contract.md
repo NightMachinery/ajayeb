@@ -60,7 +60,11 @@ values serialized to an average 468,707 JSON bytes per table; the largest
 single role's view plus history was 61,513 bytes. These are distinct measures:
 heap includes the actor and connections, while JSON counts just the cached
 view and history values, without the full frame envelope. Finished caches stay
-resident until eviction because no later batch invalidates them. The capacity
+resident while the table has a connection, because no later batch invalidates
+them. The last connection to leave drops them (M16.haftgane-security-review), so
+a table that stays in memory with no one watching, for up to the idle timeout,
+holds no cached view, and the cache is bounded by the sockets attached: each
+holds one role's view at most, about 61 KB of JSON at the largest. The capacity
 slice will decide whether histories should instead live only for a broadcast.
 One seven-seat game averaged 5.79 ms per resolved last-confirmation transaction
 across 19 batches, including storage, projections and driver overhead. Its

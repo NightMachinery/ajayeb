@@ -398,6 +398,11 @@ func (a *actor) dropped() {
 	}
 	if len(a.conns) == 0 {
 		a.emptySince = a.now()
+		// No one watches, so the views and histories cached for this
+		// position go too: for a finished seven-seat table about 560 KB
+		// of heap against a record of about 15 KB, kept for up to the idle
+		// timeout. The next join rebuilds its role's.
+		a.engineViews = nil
 	}
 	a.armIdle()
 	a.publishIdle()
