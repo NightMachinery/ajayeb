@@ -3,7 +3,7 @@ import { test } from '../fixtures/base';
 import { newDeviceContext } from '../fixtures/online';
 import { watchHygiene } from '../fixtures/hygiene';
 import { createTableFromHome, lobbyAction, lobbyReady } from '../fixtures/lobby';
-import { choose } from '../fixtures/table';
+import { choose, dismissMilitary } from '../fixtures/table';
 
 async function userId(page: Page): Promise<string> {
   return page.evaluate(() => window.__ajayebTable!.lobby()!.you.userId);
@@ -197,6 +197,9 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
         }
       }
       await expect(page.locator('[data-finished]')).toBeVisible();
+      // The last Age's conflicts open first; the score sheet with the
+      // rematch control follows.
+      await dismissMilitary(guest);
       await lobbyAction(guest, 'lobby-rematch');
       await guest.waitForURL(
         (url) => /\/play\//.test(url.pathname) && !url.pathname.endsWith(code)

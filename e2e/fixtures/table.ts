@@ -38,12 +38,27 @@ export async function latest(page: Page): Promise<TableState> {
 }
 
 /**
+ * Closes the end-of-Age military dialog when it is open. It opens by itself
+ * at the end of each Age and is modal, so the next Age's first decision
+ * waits behind it; at the end of the game the score sheet follows it.
+ */
+export async function dismissMilitary(page: Page): Promise<void> {
+  const close = page.locator('[data-age-military] [data-act="military-close"]');
+  if (await close.isVisible()) {
+    await close.click();
+    await expect(page.locator('[data-age-military]')).toHaveCount(0);
+  }
+}
+
+/**
  * Clicks the control with this data-act. A choice of a hand card shows in
  * the pick list once its card is selected, so the card is tapped first;
- * a seat control is in the game menu, so the menu is opened first.
+ * a seat control is in the game menu, so the menu is opened first. An open
+ * military dialog is closed first.
  */
 export async function choose(page: Page, act: string): Promise<void> {
   await ready(page);
+  await dismissMilitary(page);
   const target = page.locator(`[data-act="${act}"]`).first();
   if (!(await target.isVisible())) {
     const design = await page.evaluate(

@@ -7,7 +7,7 @@ import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { quiet } from '../fixtures/layout-probes';
 import { probeCardSheet } from '../fixtures/card-sheet-probe';
-import { choose, latest, openBotTable, ready } from '../fixtures/table';
+import { choose, dismissMilitary, latest, openBotTable, ready } from '../fixtures/table';
 
 for (const [locale, theme] of [
   ['en', 'light'],
@@ -49,6 +49,7 @@ for (const [locale, theme] of [
       const out = process.env.HG_SHEET_LIVE_SHOTS_DIR ?? '../.cache/e2e/hg-sheet-live-shots';
       mkdirSync(out, { recursive: true });
       const probes = [];
+      await dismissMilitary(page);
       for (const choice of [trade!, alternate!]) {
         await page.locator(`[data-act="hand:${choice.design}"]`).first().click();
         await page.locator(`[data-card-sheet] [data-pick="${choice.key}"]`).click();

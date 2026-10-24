@@ -4,12 +4,13 @@ import { expect, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { newDeviceContext } from '../fixtures/online';
 import { createTableFromHome, lobbyReady } from '../fixtures/lobby';
-import { latest, pendingOwnership, ready, traffic } from '../fixtures/table';
+import { dismissMilitary, latest, pendingOwnership, ready, traffic } from '../fixtures/table';
 import { watchHygiene } from '../fixtures/hygiene';
 import type { Choice } from '../../web/src/lib/wire/haftgane.gen';
 
 async function open(page: Page, c: Choice): Promise<void> {
   await ready(page);
+  await dismissMilitary(page);
   await page.locator(`[data-act="hand:${c.design}"]`).first().click();
   await expect(page.locator('[data-card-sheet]')).toBeVisible();
   if (c.kind === 'build') {
@@ -98,6 +99,7 @@ test('five seats play payments, stages, sales and Change through the sheet @full
         pick ??= cs.find((x) => x.kind === 'build') ?? cs[0];
         expect(pick).toBeDefined();
         if (pick!.kind === 'side' || pick!.kind === 'build-discarded') {
+          await dismissMilitary(page);
           await page.locator(`[data-act="${pick!.key}"]`).click();
           await ready(page);
           await page.locator('[data-act="confirm"]').click();
