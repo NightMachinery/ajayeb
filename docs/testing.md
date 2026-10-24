@@ -2103,6 +2103,24 @@ checks are soft, so a run on an older build captures every state and
 reports each problem; screenshots and `report-*.json` go to
 `HG_POLISH_SHOTS_DIR` (default `.cache/e2e/hg-polish-shots`).
 
+`ux/haftgane-persian.spec.ts` (filter `--grep "haftgane in Persian"`)
+plays one 7-seat table in Persian from Home's lobby, with sides chosen
+by each player and a second device watching. In Age II the admin seats
+that device in a bot's seat and gives the seat back to a bot, so the
+device watches as a former player, and then asks to resign and goes back.
+It captures every table screen at 360x740 and 1280x800 in both themes:
+the lobby, the side choice, the table, the card sheet, the own and
+another city, the game menu, a bot's seat menu, the spectators, the
+rules, the recap, Seen hands, the spectator's view, the admin's
+confirmation, the former player's watching view, the resignation's
+confirmation, both conflicts dialogs, the scores, the final board, the
+revealed cards, and any special decision the deal gives the user. On each, and in
+the tooltip of every anchor on the first turn's table at 1280x800, it
+collects the Latin text outside people's names (`dir="auto"`) and the
+room code, and any Latin comma or semicolon beside Persian letters (Persian
+writes «،» and «؛»), and requires none. Screenshots and `report-persian.json` go
+to `HG_PERSIAN_SHOTS_DIR` (default `.cache/e2e/hg-persian-shots`).
+
 `ux/haftgane-city.spec.ts` (filter `--grep "haftgane city"`) does the same for the city sheet and Seen hands. One
 live table each of 3, 5 and 7 seats is played to three moments: the first
 turn (Seen hands empty), Age II's second turn (Seen hands with two Ages of
