@@ -4,7 +4,8 @@
   // everything the city makes and one for its science symbols; its colour
   // counts (the colours it holds); and its wonder with one pill per stage.
   // For a spectator it is seat 0's city, without the "You" tag. With
-  // `onopen` the crest and name form a button that opens the city.
+  // `onopen` the crest and name form a button that opens the city. An
+  // admin's role tag follows the name.
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Seat } from '$lib/wire/haftgane.gen';
@@ -12,11 +13,12 @@
   import ColourCounts from './ColourCounts.svelte';
   import HgGlyph from './HgGlyph.svelte';
   import ResourceTile from './ResourceTile.svelte';
+  import RoleTag from './RoleTag.svelte';
   import SeatCrest from './SeatCrest.svelte';
   import StagePills from './StagePills.svelte';
   import StatPill from './StatPill.svelte';
   import StatusBadge from './StatusBadge.svelte';
-  import { makings, stagesOf, type SeatStatus } from './model';
+  import { makings, stagesOf, type Role, type SeatStatus } from './model';
 
   interface Props {
     seat: Seat;
@@ -27,11 +29,23 @@
     status: SeatStatus;
     /** The next stage may be built this turn (the view offers a stage). */
     stageOpen?: boolean;
+    /** The role of the human in the seat. */
+    role?: Role | null;
     /** Opens this seat's city. */
     onopen?: () => void;
   }
 
-  let { seat, name, where, own, bot, status, stageOpen = false, onopen }: Props = $props();
+  let {
+    seat,
+    name,
+    where,
+    own,
+    bot,
+    status,
+    stageOpen = false,
+    role = null,
+    onopen
+  }: Props = $props();
 
   const stages = $derived(stagesOf(seat));
   const made = $derived(makings(seat));
@@ -94,6 +108,7 @@
     {:else}
       <span class="who">{@render who()}</span>
     {/if}
+    {#if role}<RoleTag {role} {name} />{/if}
     <StatusBadge {status} {name} />
     <span class="pills">
       <StatPill

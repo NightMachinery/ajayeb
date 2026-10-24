@@ -2,14 +2,15 @@
   // A seat beyond the viewer's neighbours: crest, name, points, coins and
   // shields, with its status badge on the top corner. The desktop layout
   // adds the colours it holds. With `onopen` the whole chip is a button
-  // that opens the seat's city.
+  // that opens the seat's city. An admin's crown follows the name.
   import type { Seat } from '$lib/wire/haftgane.gen';
   import { ht } from '../i18n/messages.svelte';
   import ColourCounts from './ColourCounts.svelte';
   import SeatCrest from './SeatCrest.svelte';
   import StatPill from './StatPill.svelte';
+  import RoleTag from './RoleTag.svelte';
   import StatusBadge from './StatusBadge.svelte';
-  import type { SeatStatus } from './model';
+  import type { Role, SeatStatus } from './model';
 
   interface Props {
     seat: Seat;
@@ -18,11 +19,13 @@
     where: string;
     bot: boolean;
     status: SeatStatus;
+    /** The role of the human in the seat. */
+    role?: Role | null;
     /** Opens this seat's city. */
     onopen?: () => void;
   }
 
-  let { seat, name, where, bot, status, onopen }: Props = $props();
+  let { seat, name, where, bot, status, role = null, onopen }: Props = $props();
 </script>
 
 <article
@@ -55,6 +58,7 @@
       botTip={ht('hg.screen.botBadge')}
     />
     <span class="name" dir="auto">{name}</span>
+    {#if role}<RoleTag {role} {name} compact />{/if}
   </span>
   <span class="stats">
     <StatPill

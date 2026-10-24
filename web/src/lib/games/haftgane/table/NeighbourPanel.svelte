@@ -7,6 +7,7 @@
   // the wonder's stage pills and the city's card names by colour.
   // A spectator's view carries no trading facts, so those parts stay empty.
   // With `onopen` the crest and name form a button that opens the city.
+  // An admin's crown follows the name.
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Neighbour, Seat } from '$lib/wire/haftgane.gen';
@@ -15,12 +16,13 @@
   import HgGlyph from './HgGlyph.svelte';
   import MilitaryOutlook from './MilitaryOutlook.svelte';
   import PassMark from './PassMark.svelte';
+  import RoleTag from './RoleTag.svelte';
   import SeatCrest from './SeatCrest.svelte';
   import StagePills from './StagePills.svelte';
   import StatPill from './StatPill.svelte';
   import StatusBadge from './StatusBadge.svelte';
   import TradeChip from './TradeChip.svelte';
-  import { COLOURS, design, stagesOf, type SeatStatus } from './model';
+  import { COLOURS, design, stagesOf, type Role, type SeatStatus } from './model';
 
   interface Props {
     seat: Seat;
@@ -34,6 +36,8 @@
     /** The viewer's own shields, for the outlook's tooltip. */
     yourShields?: number;
     pass: string;
+    /** The role of the human in the seat. */
+    role?: Role | null;
     /** Opens this seat's city. */
     onopen?: () => void;
   }
@@ -48,6 +52,7 @@
     trade,
     yourShields = 0,
     pass,
+    role = null,
     onopen
   }: Props = $props();
 
@@ -84,6 +89,7 @@
     {:else}
       <span class="who">{@render who()}</span>
     {/if}
+    {#if role}<RoleTag {role} {name} compact />{/if}
     <StatusBadge {status} {name} />
   </div>
   <div class="stats">

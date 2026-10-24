@@ -3,7 +3,8 @@
   // from its crest, far chip or neighbour panel, with ring tabs that move
   // between cities without closing the sheet. The viewer's own city adds
   // what only the viewer may know; the end reveal, when the table allows
-  // it, adds the cards under every wonder.
+  // it, adds the cards under every wonder. For an admin, Manage opens the
+  // shown seat's admin menu.
   import { i18n } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import Sheet from '$lib/components/shell/Sheet.svelte';
@@ -28,6 +29,8 @@
     active: number;
     onselect: (seat: number) => void;
     onclose: () => void;
+    /** Opens a seat's admin menu, when the viewer is an admin. */
+    onmanage?: (seat: number) => void;
   }
 
   let {
@@ -39,7 +42,8 @@
     revealed = null,
     active,
     onselect,
-    onclose
+    onclose,
+    onmanage
   }: Props = $props();
 
   let open = $state(true);
@@ -93,6 +97,18 @@
         revealed={revealed?.[seat.seat] ?? null}
       >
         {#snippet actions()}
+          {#if onmanage}
+            {@const tip = ht('hg.admin.seat.open', { name: nameOf(seat) })}
+            <button
+              type="button"
+              class="manage"
+              data-act="seat-menu:{seat.seat}"
+              aria-label={tip}
+              onclick={() => onmanage(seat.seat)}
+              {@attach tooltip({ text: tip, actionable: true })}
+              >{ht('hg.admin.seats.manage')}</button
+            >
+          {/if}
           <button
             type="button"
             class="close"
@@ -117,6 +133,19 @@
     flex-direction: column;
     gap: 0.8rem;
     padding: 0.4rem 0.75rem 1.2rem;
+  }
+  .manage {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding-inline: 0.75rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--shape-control);
+    background: var(--panel);
+    color: var(--fg);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
   }
   .close {
     display: grid;
