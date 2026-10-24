@@ -429,11 +429,15 @@ room counts against the requester's room creation limits, like a `create`.
 A request answered with a rematch code that already exists counts nothing.
 A connection that joined the old room with a claim receives, in its
 `created` frame, the claim of its seat in the rematch room, since its own
-identity holds no seat there.
+identity holds no seat there. A game started from a shared lobby answers
+the same request with a successor lobby instead, under the same refusals
+(see [Shared lobby, Start and rematch](#shared-lobby-start-and-rematch)).
 
 ### hints
 
-Replaces the game's hint settings. Only the game's admin may send it.
+Replaces the game's hint settings. Only the game's admin may send it, or,
+in a game started from a shared lobby, one of its frozen hint admins (see
+[Shared lobby, Start and rematch](#shared-lobby-start-and-rematch)).
 
 ```json
 {"t": "hints", "code": "K7QX2M", "seq": 19, "hints": {"prices": true, "economy": true, "science": true, "military": true, "threats": false, "tempo": true, "wonders": true, "tokens": true, "scoring": true, "counting": true, "recap": true, "advisor": true, "advisorStrength": "twoStage"}}
@@ -466,7 +470,8 @@ Replaces the game's hint settings. Only the game's admin may send it.
   `twoStage`.
 
 The room checks, in order: the connection has joined (else `bad-request`)
-and is not a spectator (else `not-admin`); the `seq` is new (a repeated one
+and is not a spectator, unless a frozen hint admin (else `not-admin`); the
+`seq` is new (a repeated one
 only gets the current `state` with an `ack`); the sender is the admin (else
 `not-admin`); the game is not over (else `game-over`). Then it stores the
 settings, adds an entry to the room log (see `roomLog` under `state`), and
@@ -486,9 +491,10 @@ bad-request`) and is not a spectator (else `reject not-admin`); device
 links are on for this server (else `reject bad-request`); a human holds the
 seat (else `reject bad-request`: the seat is open or a bot's); the
 connection acts as that seat's user or as the game's admin (else `reject
-not-admin`). All these rejects carry seq 0. The answer is a `linked` frame,
-to this connection alone. Nothing else changes: no other connection hears of
-it, and the room version stays.
+not-admin`). In a game started from a shared lobby, only the seat's own user
+may: no admin has another seat's link there. All these rejects carry seq 0.
+The answer is a `linked` frame, to this connection alone. Nothing else
+changes: no other connection hears of it, and the room version stays.
 
 ### relink
 
@@ -618,7 +624,13 @@ full game view described under "The view and its events" below.
   room, one for a player, none for a spectator), and `you.canAct` says
   whether one of them has a legal action now. `you.admin` says whether this
   connection's user is the game's admin, who may send `hints`; it is never
-  true for a spectator.
+  true for a spectator. In a game started from a shared lobby it says
+  instead whether the user is one of the game's frozen hint admins, a
+  spectator included, and grants hint editing only.
+- `you.linkAdmin` is optional. It is `false` in a game started from a shared
+  lobby, where `you.admin` gives no right to another seat's device link, and
+  absent in every other game, whose admin may have each seat's link as
+  before.
 - `canUndo` says whether an `undo` with this frame's version as its base
   would be accepted now. It is never true when `room.allowUndo` is false.
   `undoUnavailable` is present exactly when `canUndo` is false, with the
@@ -885,11 +897,15 @@ Version 2 adds these frozen client families: `table-pick`, `table-undo`,
 `platform.gen.ts`. The Haftgane table kind (its codec, restore and actor,
 `internal/tableroom`, since M16.haftgane-room-actor) and the shared lobby kind
 (`internal/lobbyroom`, since M16.haftgane-lobby-and-roles) are registered, so
-saved tables and lobbies load, play and archive. Creating either stays behind
-the server's `-haftgane-tables` switch until the lobby's client ships. Without
-it, `lobby-create` answers `forbidden`. With it, `lobby-create` makes a lobby
-whose Start makes the table (below), and the development path
-(`POST /api/dev/tables`) still makes a filled table directly.
+saved tables and lobbies load, play and archive. Creating a table, or a
+lobby of three or more seats, stays behind the server's `-haftgane-tables`
+switch until Haftgane ships. Without it, `lobby-create` with three or more
+seats, a `seats` edit to three or more, and the Start of a lobby that has
+three or more answer `forbidden`; a two-seat lobby, which is how Home starts
+Duel's online game, and a shared Duel game's rematch need no switch. With
+it, a lobby of three or more seats starts a table (below), and the
+development path (`POST /api/dev/tables`) still makes a filled table
+directly.
 
 A v1 table/lobby request or a v1 join of any non-Duel room receives the
 existing `error` with `code: "protocol"`. Join refuses before admission,
@@ -991,13 +1007,21 @@ offered), then the pick's floor (duplicate, `stale` or `rate`). Other viewers
 receive neither the pending key nor any revision or metadata change that
 reveals private edit frequency.
 
-`lobby-create` carries `t`, `seatCount` (2 through 7) and `options`. It creates
+`lobby-create` carries `t`, `seatCount` (2 through 7, at most the
+server's `maxSeats`) and `options`. It creates
 a shared lobby, not a client-selected game. Start selects Duel for two seats,
 Haftgane for three through seven. Options replace the complete platform
 options object: optional `seating` (`random` or `lobby`, default random),
 `firstPlayer` (Duel seat 0/1, absent means random), `allowUndo` (default true),
-`finalReveal` (default true), and `sides` (`choose`, `day` or `random`,
-default day). `sides` applies to Haftgane; a two-seat Duel start ignores it.
+`finalReveal` (default true), `sides` (`choose`, `day` or `random`,
+default day), and `hints`. `hints` is the complete hint settings object of
+the `hints` request, the same shape, for Duel's initial settings (D23: the
+creating device's defaults); an empty or absent `advisorStrength` keeps the
+default, and any other unknown strength is refused. Absent, Duel starts with
+the defaults of an online `create`. An `options` edit replaces the whole
+object as well, so a client that changes one field sends the others again
+(`sides`, `seating`, `firstPlayer`, `allowUndo`, `finalReveal` and `hints`)
+to keep them. `sides` applies to Haftgane; a two-seat Duel start ignores it.
 `choose` opens a simultaneous side point before Age I is dealt; `day` and
 `random` open Age I directly, with random sides determined by the setup seed.
 Absent side rules in older lobby records retain the day default. Start
@@ -1008,7 +1032,8 @@ Other lobby requests carry `t`, `code` and nonnegative `seq`:
 
 - `lobby-edit` carries `op` and exactly that operation's payload:
   `seats` requires `seatCount`; `options` requires `options`; `add-bot`
-  requires `seat` and `bot`; `remove-bot` requires `seat`; `seat` requires
+  requires `seat` and `bot`, and at two seats may also change the level of
+  that slot's existing bot; `remove-bot` requires `seat`; `seat` requires
   `seat` and `userId`; `remove-human` requires `userId`; `release` has no
   payload; `open-reservation` requires `seat`. Except releasing one's own
   slot, these are admin operations. Unrelated known fields are refused.
@@ -1025,8 +1050,9 @@ who joins takes the slot reserved for them, or else the first open slot,
 unless they released their slot or were removed earlier in this lobby:
 then, like everyone who finds no open slot, they watch until an admin
 seats them. A joiner whose name is invalid also watches, unless a slot is
-reserved for them, which keeps its reserved name. `add-bot` and
-`seat` fill an open slot only; `remove-bot`, `remove-human`, `release` and
+reserved for them, which keeps its reserved name. `seat` fills an open slot
+only, and so does `add-bot`, except that at two seats it may also replace a
+bot's level in place; `remove-bot`, `remove-human`, `release` and
 `open-reservation` open one. `seats` changes the count: slots past a
 smaller count go, and their humans watch. Roles follow `table-role`'s
 policy, temporary admin included, and the lobby's `roomLog` records the
@@ -1037,15 +1063,41 @@ claim the rematch handed out (below) acts as that claim's user, in the
 lobby and in the game it starts.
 
 `canStart` tells the viewer whether they may start now: a seated admin, real
-or temporary, at three to seven seats, with no reserved slot left (open
-slots are fine, since `fillBots` can fill them). Start answers `forbidden`
-when that does not hold or when open slots remain without `fillBots`. Two
-seats answer `forbidden` until Duel's create path exists
-(M18.shared-lobby). Start writes the table in place of the lobby under the
-same code and hands every connection over: each connection's next frame is
-the table's first, the sender's included, which acknowledges Start in
+or temporary, at two to seven seats, at most `maxSeats`, with no reserved
+slot left (open slots are fine, since `fillBots` can fill them, with bots of
+the lowest level). Start answers `forbidden` when that does not hold or when
+open slots remain without `fillBots`.
+
+At two seats, Start makes Duel's online game, with no switch needed. Home's
+online play goes through this lobby: the creator takes a slot, a friend who
+opens the invite takes the other, and the game begins only when an admin
+sends `lobby-start`; a friend's join does not start it, as it does in a room
+made with `create`. Start writes, in place of the lobby and under the same
+code, an ordinary online Duel room, the same schema 1 record a `create` makes,
+with its seats assigned: they are the lobby's two slots in order (`seating`
+does not apply), humans with their names and their claims' epochs, bots at
+their levels. `firstPlayer` picks who moves first, and `hints` gives the
+initial hint settings. Every connection is handed over with its claim: its
+next frame is the Duel game's first `state`, the sender's included in place
+of an `ack`, sent on its version 2 connection under the Duel contract above.
+The client then hands the room to its version 1 Duel session, which joins the
+same code, and every later join of the code is an ordinary Duel join.
+
+Such a game stores the lobby's effective admins at Start, its real admins
+and its temporary one, as its frozen `hintAdmins`. Those users, promoted
+spectators included, may send `hints`, and their `you.admin` is true; they
+have no role or seat power. Nobody is promoted, demoted or made a temporary
+admin once the game has started, so the set never changes. Each player may
+`link` and `relink` only their own seat, admin or not. Its frames carry
+`you.linkAdmin: false`; a game made with `create` omits the field, and its
+creator keeps the hint and device-link rights described above.
+
+At three to seven seats, Start writes the table in place of the lobby under
+the same code and hands every connection over: each connection's next frame
+is the table's first, the sender's included, which acknowledges Start in
 place of an `ack`. The table's seats follow the lobby's slots under
-`seating: lobby`, and are drawn at random otherwise. Its roles, promoters
+`seating: lobby`, and are drawn at random otherwise; its side rule is the
+effective one, day when the lobby's options name none. Its roles, promoters
 and temporary status are the lobby's.
 
 A finished table has at most one rematch. Any human who held a seat at
@@ -1062,6 +1114,20 @@ runs, or with no lobby kind registered, answers `bad-request`; from a
 human who was not seated at Start, or with creation switched off,
 `forbidden`; past the limits, `rate`. Refusals come as `table-reject` with
 seq 0.
+
+A finished Duel game started from a shared lobby answers Duel's `rematch`
+with a successor lobby, under one reserved code: two seats, the game's
+starter rule (`firstPlayer`) and current hint settings, each bot slot at
+its level, each original human's slot reserved for them, and the requester
+its creator and only initial admin. The finished game stores the code it
+reserved, then, once the lobby exists, keeps that code as its one successor:
+every later request, also after a reload and after the successor lobby has
+started its own game, answers the same code with `created` frames, as a
+legacy Duel rematch does. The code goes out only once the game has stored
+it as its successor: when that write fails, the request answers `error
+busy` and no `created` frame goes out, and the next request writes it again
+before answering. Its refusals are those of Duel's `rematch`. A Duel game
+made with `create` keeps the rematch described there.
 
 ### Platform snapshots and rejects
 
@@ -1106,9 +1172,12 @@ reveals hidden events in history. Events never carry submitted keys.
 Collections are JSON arrays, never null.
 
 `lobby-state` carries `t`, `game: "lobby"`, `code`, `revision`, `seatCount`,
-`options`, `seats`, `humans`, `you`, `canStart`, `roomLog`, and optional `ack`.
-It is a full snapshot with the same role metadata. Start replaces the lobby
-under the same code; the next snapshot's family selects the game entry.
+`maxSeats`, `options`, `seats`, `humans`, `you`, `canStart`, `roomLog`, and
+optional `ack`. It is a full snapshot with the same role metadata. Start
+replaces the lobby under the same code; the next snapshot's family selects
+the game entry. `maxSeats` is the most seats this server lets a lobby have
+and start: 7 with `-haftgane-tables`, otherwise 2. A client offers seat
+counts up to it, keeping a larger lobby's own count, and none when it is 2.
 
 Both snapshots use these fixed metadata shapes:
 
@@ -1235,13 +1304,17 @@ way: each connection using one receives `error` with `bad-claim` and is
 detached. A connection that relinks the seat it joined with a claim for
 keeps its place under the new claim. A lobby has no `link` or `relink`; its
 only claims are those a rematch hands out, with epoch 0, which the slot
-reserved for their user accepts, and so does the table it starts.
+reserved for their user accepts, and so does the table it starts. In a Duel
+game started from a shared lobby, only a seat's own user may `link` or
+`relink` it; its seats keep the epochs their lobby slots had, so the claims
+the lobby accepted still work there.
 
 **Security.** A device link is a password for that seat in that room:
 whoever holds it plays as that player there (as the admin too, for the
 admin's seat), until the seat's link is reset. It gives nothing outside the
 room. Share it like a password, and reset it when it may have leaked. Only
-the seat's own user and the game's admin may see or reset a seat's link.
+the seat's own user and the game's admin may see or reset a seat's link (in
+a Duel game started from a shared lobby, only the seat's own user).
 
 ## Limits
 
