@@ -671,7 +671,7 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 		cand.Options = cloneOptions(*f.Options)
 	case "add-bot":
 		i, ok := slot()
-		if !ok || f.Bot == nil || !validLevel(*f.Bot) || r.Slots[i].Kind != SlotOpen {
+		if !ok || f.Bot == nil || !validLevel(*f.Bot) || (r.Slots[i].Kind != SlotOpen && (r.SeatCount != 2 || r.Slots[i].Kind != SlotBot)) {
 			return bad()
 		}
 		cand.Slots[i] = Slot{Kind: SlotBot, Bot: *f.Bot}
