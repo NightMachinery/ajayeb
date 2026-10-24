@@ -434,14 +434,16 @@ test.describe('app shell', { tag: '@mobile' }, () => {
     };
     expect(manifest.icons.map((i) => i.src)).toEqual([
       '/icons/icon-192.png',
-      '/icons/icon-512.png'
+      '/icons/icon-512.png',
+      '/icons/icon-maskable-512.png'
     ]);
     for (const path of [
       '/service-worker.js',
       '/favicon.svg',
       '/icons/apple-touch-icon.png',
       '/icons/icon-192.png',
-      '/icons/icon-512.png'
+      '/icons/icon-512.png',
+      '/icons/icon-maskable-512.png'
     ]) {
       const res = await request.get(path);
       expect(res.status(), path).toBe(200);

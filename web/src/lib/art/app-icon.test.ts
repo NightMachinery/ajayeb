@@ -15,13 +15,15 @@ function pngSize(path: string): { width: number; height: number } {
 }
 
 interface WebManifest {
+  id: string;
   name: string;
   short_name: string;
   start_url: string;
+  scope: string;
   display: string;
   theme_color: string;
   background_color: string;
-  icons: { src: string; sizes: string; type: string }[];
+  icons: { src: string; sizes: string; type: string; purpose: string }[];
 }
 
 const manifest = JSON.parse(read('static/manifest.webmanifest').toString('utf8')) as WebManifest;
@@ -29,9 +31,11 @@ const appHtml = read('src/app.html').toString('utf8');
 
 describe('the web app manifest', () => {
   it('names the app and opens it standalone at the root', () => {
+    expect(manifest.id).toBe('/');
     expect(manifest.name).toBe('Ajayeb');
     expect(manifest.short_name).toBe('Ajayeb');
     expect(manifest.start_url).toBe('/');
+    expect(manifest.scope).toBe('/');
     expect(manifest.display).toBe('standalone');
   });
 
@@ -45,9 +49,9 @@ describe('the web app manifest', () => {
     expect(manifest.background_color).toBe(light);
   });
 
-  it('lists the 192 and 512 px PNG icons, and they are those sizes', () => {
-    const sizes = manifest.icons.map((i) => i.sizes).sort();
-    expect(sizes).toEqual(['192x192', '512x512']);
+  it('lists the 192 and 512 px PNG icons and a maskable 512, and they are those sizes', () => {
+    const icons = manifest.icons.map((i) => `${i.purpose} ${i.sizes}`).sort();
+    expect(icons).toEqual(['any 192x192', 'any 512x512', 'maskable 512x512']);
     for (const icon of manifest.icons) {
       expect(icon.type).toBe('image/png');
       const [w, h] = icon.sizes.split('x').map(Number);
