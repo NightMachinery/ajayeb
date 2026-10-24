@@ -165,7 +165,7 @@
       <p class="text-sm text-cinnabar-ink" role="alert">{failure}</p>
     {/if}
 
-    <Button type="submit" variant="primary" full disabled={starting}>
+    <Button type="submit" variant="primary" full disabled={starting} data-sheet-actions>
       {t('home.hotseat.start')}
     </Button>
   </form>

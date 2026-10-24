@@ -153,6 +153,7 @@
             full
             disabled={!canAct}
             data-control="wonder-build"
+            data-sheet-actions
             onclick={() => onbuild(slug)}
           >
             {t('game.wonder.build')}

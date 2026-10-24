@@ -81,7 +81,14 @@
       </span>
     </div>
 
-    <Button type="submit" variant="primary" full disabled={!valid} data-control="join-submit">
+    <Button
+      type="submit"
+      variant="primary"
+      full
+      disabled={!valid}
+      data-control="join-submit"
+      data-sheet-actions
+    >
       {t('online.join.submit')}
     </Button>
   </form>

@@ -70,6 +70,7 @@
           class="inline-flex h-[52px] w-full items-center justify-center rounded-control bg-accent px-5 text-[15px]
             font-semibold text-on-accent hover:brightness-105 active:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
           data-act={actKey}
+          data-sheet-actions
           disabled={!canAct}
           onclick={() => {
             open = false;

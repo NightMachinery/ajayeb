@@ -70,6 +70,8 @@
     />
     {#if seats === 2}<HintsSection bind:value={hints} />{/if}
     {#if failed}<p role="alert">{t('lobby.failed')}</p>{/if}
-    <Button type="submit" disabled={starting} data-act="lobby-create">{t('lobby.create')}</Button>
+    <Button type="submit" disabled={starting} data-act="lobby-create" data-sheet-actions
+      >{t('lobby.create')}</Button
+    >
   </form>
 </Sheet>

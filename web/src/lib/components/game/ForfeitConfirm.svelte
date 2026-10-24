@@ -38,7 +38,7 @@
     </div>
     <p class="text-sm text-fg">{t('game.forfeit.consequence', { name: winner })}</p>
     <p class="text-sm text-fg-muted">{t('game.forfeit.final')}</p>
-    <div class="mt-1 flex flex-col gap-2 split:flex-row-reverse">
+    <div class="mt-1 flex flex-col gap-2 split:flex-row-reverse" data-sheet-actions>
       <Button
         variant="primary"
         full

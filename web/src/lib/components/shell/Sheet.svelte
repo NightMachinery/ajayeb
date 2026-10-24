@@ -30,7 +30,11 @@
     centered?: boolean;
     class?: string;
     children: Snippet;
-    /** Actions kept outside the scrolling detail body. */
+    /** Actions kept outside the scrolling detail body. A sheet without one
+     *  marks its primary action row `data-sheet-actions` instead, and the
+     *  sheet pins that row to its bottom edge while the rest scrolls; the
+     *  row must sit directly in the content's one wrapper (a form or a
+     *  div), which spans the whole content. */
     footer?: Snippet;
     /** Stable caller hooks encompass both the details and the footer. */
     panelData?: Record<`data-${string}`, string | undefined>;
@@ -211,6 +215,23 @@
   }
   .sheet-body[data-scroll-more] {
     mask-image: linear-gradient(black calc(100% - 1.25rem), transparent);
+  }
+  /* A short window must never hide a sheet's primary action below the
+     fold (M18.short-screen-status). Pinned, the row stops at the panel's
+     bottom padding; its shadows cover a ring around it and that padding
+     below it, so nothing shows through as the rest scrolls under. */
+  .sheet-panel:not(.has-footer) :global([data-sheet-actions]) {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 1;
+    box-shadow:
+      0 0 0 0.5rem var(--panel),
+      0 var(--sheet-bottom-padding) 0 0.5rem var(--panel);
+  }
+  /* A marked row (not a lone button, which keeps its own fill) covers what
+     scrolls under the gaps between its buttons. */
+  .sheet-panel:not(.has-footer) :global(:not(button)[data-sheet-actions]) {
+    background: var(--panel);
   }
   .sheet-footer {
     flex-shrink: 0;
