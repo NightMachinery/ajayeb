@@ -1,6 +1,7 @@
 <script lang="ts">
   // The lobby renders public roster and role metadata. The actor owns every
   // permission, option and seat change, including concurrent edits and Start.
+  import type { Attachment } from 'svelte/attachments';
   import { resolve } from '$app/paths';
   import { t as uiT, formatNumber } from '$lib/i18n';
   import { t } from './i18n/messages';
@@ -36,6 +37,15 @@
   let showQr = $state(false);
   let botLevels = $state<Record<number, string>>({});
   let confirmation = $state<(() => void) | null>(null);
+
+  // These selects have fixed options. Keep value updates in this lazy chunk:
+  // select value attributes export extra shared-runtime helpers and rename
+  // imports throughout Duel, increasing its gzip size without adding modules.
+  function selectValue(value: string | number): Attachment<HTMLSelectElement> {
+    return (node) => {
+      node.value = String(value);
+    };
+  }
 
   function name(h: PlatformHuman | undefined): string {
     return h ? h.name + (h.nameNo > 1 ? ` ${formatNumber(h.nameNo)}` : '') : '';
@@ -153,7 +163,7 @@
             <span class="sr-only">{t('lobby.seats')}</span>
             <select
               class="min-h-11 min-w-16 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
-              value={lobby.seatCount}
+              {@attach selectValue(lobby.seatCount)}
               disabled={!ready || !session.admin}
               onchange={(e) => {
                 const next = Number(e.currentTarget.value);
@@ -205,7 +215,7 @@
                       <label class="flex flex-wrap items-center justify-between gap-2"
                         ><span>{t('lobby.botLevel')}</span><select
                           class="min-h-11 rounded-control border border-rule bg-panel px-3 text-fg"
-                          value={botLevels[seat.seat] ?? 'easy'}
+                          {@attach selectValue(botLevels[seat.seat] ?? 'easy')}
                           data-act={`lobby-bot-level:${seat.seat}`}
                           onchange={(e) => (botLevels[seat.seat] = e.currentTarget.value)}
                           ><option value="easy">{uiT('game.persona.easy')}</option><option
@@ -331,7 +341,7 @@
                 class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
                 data-act="lobby-seating"
                 disabled={!ready || !session.admin}
-                value={lobby.options.seating ?? 'random'}
+                {@attach selectValue(lobby.options.seating ?? 'random')}
                 onchange={(e) => option({ seating: e.currentTarget.value as 'random' | 'lobby' })}
                 ><option value="random">{t('lobby.random')}</option><option value="lobby"
                   >{t('lobby.listed')}</option
@@ -346,7 +356,7 @@
                 class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
                 data-act="lobby-reveal"
                 disabled={!ready || !session.admin}
-                value={String(lobby.options.finalReveal ?? true)}
+                {@attach selectValue(String(lobby.options.finalReveal ?? true))}
                 onchange={(e) => option({ finalReveal: e.currentTarget.value === 'true' })}
                 ><option value="true">{t('lobby.reveal')}</option><option value="false"
                   >{t('lobby.hidden')}</option
@@ -359,7 +369,7 @@
                 class="min-h-11 rounded-control border border-rule bg-panel-sunken px-3 text-fg"
                 data-act="lobby-undo"
                 disabled={!ready || !session.admin || !undoEligible}
-                value={String(undoEligible && (lobby.options.allowUndo ?? true))}
+                {@attach selectValue(String(undoEligible && (lobby.options.allowUndo ?? true)))}
                 onchange={(e) => option({ allowUndo: e.currentTarget.value === 'true' })}
                 ><option value="true">{t('lobby.on')}</option><option value="false"
                   >{t('lobby.off')}</option

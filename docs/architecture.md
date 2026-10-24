@@ -353,7 +353,10 @@ a reload mends a client and a server that disagree.
   private device claim stays in the successor URL fragment. Saved lobbies
   and live tables return through Home's Continue list with a Haftgane label.
   Lobby-only English and Persian messages load with the lobby or its New
-  table sheet, while Home loads only its picker labels. The development
+  table sheet, while Home loads only its picker labels. Native lobby selects
+  set their fixed-option values through local attachments. This avoids extra
+  shared Svelte runtime exports whose import aliases otherwise increase Duel's
+  compressed chunks despite an unchanged eager module set. The development
   creation route `/dev/table` is retired. Running tables still use
   `dev/TableDev.svelte` until the parallel table-screen slice lands.
 

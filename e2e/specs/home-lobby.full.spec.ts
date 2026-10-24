@@ -33,13 +33,30 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
       const hygiene = [host, guest, watcher].map(watchHygiene);
       const code = await createTableFromHome(host);
       expect(await host.locator('[data-act="lobby-seats"]').inputValue()).toBe('4');
+      await expect(host.locator('[data-act="lobby-seating"]')).toHaveValue('random');
+      await expect(host.locator('[data-act="lobby-reveal"]')).toHaveValue('true');
+      await expect(host.locator('[data-act="lobby-undo"]')).toHaveValue('true');
+      await host.locator('[data-act="lobby-undo"]').selectOption('false');
+      await lobbyReady(host);
+      expect(await host.evaluate(() => window.__ajayebTable!.lobby()!.options.allowUndo)).toBe(
+        false
+      );
+      await expect(host.locator('[data-act="lobby-undo"]')).toHaveValue('false');
+      await host.locator('[data-act="lobby-undo"]').selectOption('true');
+      await lobbyReady(host);
+      expect(await host.evaluate(() => window.__ajayebTable!.lobby()!.options.allowUndo)).toBe(
+        true
+      );
       await menu(host, 1);
       await host.locator('[data-act="lobby-bot-level:1"]').selectOption('normal');
+      await expect(host.locator('[data-act="lobby-bot-level:1"]')).toHaveValue('normal');
       await lobbyAction(host, 'lobby-add-bot:1');
       await expect(host.locator('[data-seat="1"]')).toHaveAttribute('data-kind', 'bot');
       await menu(host, 1);
       await lobbyAction(host, 'lobby-remove-bot:1');
       await expect(host.locator('[data-seat="1"]')).toHaveAttribute('data-kind', 'open');
+      await menu(host, 1);
+      await expect(host.locator('[data-act="lobby-bot-level:1"]')).toHaveValue('normal');
       await guest.goto(`/play/${code}`);
       await expect(guest.locator('[data-lobby]')).toBeVisible();
       await lobbyReady(guest);
@@ -72,6 +89,7 @@ test.describe('Home and shared Haftgane lobby', { tag: ['@full', '@mobile'] }, (
       await expect(guest.locator('[data-act="lobby-seating"]')).toHaveValue('lobby');
       await expect(guest.locator('[data-act="lobby-reveal"]')).toHaveValue('false');
       await expect(host.locator('[data-act="lobby-undo"]')).toBeDisabled();
+      await expect(host.locator('[data-act="lobby-undo"]')).toHaveValue('false');
       await host.locator('[data-act="lobby-roles"]').click();
       await lobbyAction(host, 'lobby-step-down');
       await expect(host.locator('[data-act="lobby-seating"]')).toBeDisabled();
