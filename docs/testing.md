@@ -662,7 +662,14 @@ hints, including a spectator, but cannot mint the other seat's device link.
 Reload preserves the guest's seat and hint permission. A separate case
 switches two/three-seat panels, round-trips Each picks, Day and Random in
 Haftgane's side-rule control while preserving the starter and hint settings,
-hides that control at two seats, changes an existing bot's Duel level and starts its online game without Undo. The bootstrap unit
+hides that control at two seats, changes an existing bot's Duel level and starts its online game without Undo.
+A third case finishes a shared game by the guest's forfeit and rematches
+from the result screen: the owner who asks lands in a two-seat successor
+lobby that holds the owner's seat and reserves the guest's, the guest and
+the spectator follow it from their own result screens, the guest takes the
+reserved seat, only the owner is an admin there (the guest's promotion in
+the first game is not kept), and its Start begins the next game under the
+successor's code. The bootstrap unit
 regression verifies that Duel snapshots return to discovery without reaching
 the old lobby Session; the v2 membership stays until the v1 state arrives.
 
@@ -789,7 +796,9 @@ locally and on CI, never the installed Google Chrome (D26). CI splits the
 suite into three shards (`--shard=1/3` to `--shard=3/3`), each a job with its
 own server, and keeps each shard's report and traces when it fails or runs
 out of time. The shards leave out the `@perf` case, which runs in its own
-job, `e2e-perf`, described under `animation.spec.ts` below. There are two projects: `desktop` (Desktop Chrome, a mouse) runs the standard specs, and `mobile`
+job, `e2e-perf`, described under `animation.spec.ts` below, and the
+`@slow` case, which waits out a five-minute server rule in real time
+(`haftgane-playthrough.full.spec.ts`) and runs locally on demand. There are two projects: `desktop` (Desktop Chrome, a mouse) runs the standard specs, and `mobile`
 (Pixel 7, touch) runs the specs tagged `@mobile`.
 
 Run them through the guard, which holds the machine's one browser lock:
@@ -1498,10 +1507,10 @@ and duration. For a bounded local run, select files with
 `make e2e PW_ARGS='specs/online.full.spec.ts'`. After a successful build,
 subsequent batches may use `E2E_BUILD=0` while those build inputs stay unchanged.
 
-### `haftgane-table.full.spec.ts` (`@full @haftgane-table`)
+### `haftgane-table.full.spec.ts` (`@full @mobile @haftgane-table`)
 
 A Haftgane table over the real server and the table screen, on desktop
-only, in three browser contexts. A choice of a hand card is clicked after
+and mobile, in three browser contexts. A choice of a hand card is clicked after
 its card (the pick list shows a selected card's choices), and the admin's
 seat controls are in the game menu; `fixtures/table.ts` holds these steps,
 the table hook's waits and the oracle below, shared with the next spec.
@@ -1512,9 +1521,15 @@ joins the running table. The creator confirms a pick and reloads, and the
 pick comes back confirmed; it withdraws, changes and confirms again. The
 second human drafts a pick and changes it, drops off the network
 (`setOffline`) and comes back to the changed draft, then confirms last,
-which resolves the point for every page. Finally the creator gives the
+which resolves the point for every page. Then the creator gives the
 second human's seat to a bot, and that tab shows the watching notice and a
-spectator's view with no pending pick.
+spectator's view with no pending pick. The switch goes the other way too:
+the creator seats that human again, then seats the spectator in the
+human's seat, and the human watches, with the notice and the former seat.
+Last, the creator, the table's only real admin, steps down, and the
+temporary admin is made at once: the creator, the connected human who has
+held a seat longest, whose frames carry the temporary role and no admin
+cap, and whose seat shows the hollow role tag on every page.
 
 The leak boundary is checked while both of the second human's drafts are
 pending: the spec picks two of its choices that no page of the others has
@@ -1537,7 +1552,7 @@ server restores the pending pick, a new pick is applied, and Start and the
 two picks carry three rising seqs.
 
 Both run in CI's shards but not in `make e2e-smoke`; run them alone with
-`make e2e GREP=@haftgane-table`.
+`make e2e GREP=@haftgane-table` (which also runs the two specs below).
 
 ### `haftgane-table-screen.full.spec.ts` (`@full @haftgane-table`)
 
@@ -1625,7 +1640,10 @@ AJAYEB_SCORES_BROWSER_FRAMES="$D/frames-revealed.json:$D/frames-hidden.json" \
 The admin controls, resignation and spectator view over a live five-seat
 table, on three devices. The creator starts it alone with bots from Home's
 lobby (`openBotTable`), so undo is on, and plays a turn: the top bar shows
-Undo. Two friends open the running table and watch: their hand region is
+Undo. The creator undoes the turn: the frame goes back to the first batch,
+the hand is whole again, the point reopens under a new reference with no
+pending pick, and Undo goes until the creator plays the turn again. Two
+friends open the running table and watch: their hand region is
 the spectator panel, with the turn recap and the spectators, and one of
 them follows a seat, so the ring's neighbours become that seat's. A
 non-admin's game menu offers no seat. Through the seat's admin menu
@@ -1706,6 +1724,96 @@ table waits on, hears their turn once; the batch then sounds one flip on
 both pages. A mutation probe that removes the table's sound call fails
 the spec. Nothing depends on a deal, and no console error or failed
 request is allowed.
+
+### `haftgane-playthrough.full.spec.ts` (`@full @mobile @haftgane-playthrough`)
+
+M18's acceptance playthroughs that no earlier spec held. The creator opens
+a seven-seat table alone from Home, so Start gives the six other seats
+bots, once under each end policy, and a spectator joins the running table.
+The creator plays every point the table waits on it for: a card build
+when one is offered, else a sale, else the point's first choice (a side).
+It builds no stage, so no wonder decision of its own follows, and nothing
+depends on the deal. Both pages reach the score sheet, with a row and
+the right total for every seat. Every frame passes the pending-ownership
+oracle, and no console error or failed request is allowed. The spec
+writes each run's frames and room record to `HG_PLAYTHROUGH_LIVE_DIR`
+(default `.cache/e2e/hg-playthrough-live`) as
+`frames-7-<policy>-<project>.json`, in the format of the scores spec's
+files, so `TestScoresBrowserFrames` runs the Go leak oracle over every
+frame of the seated player and the spectator:
+
+```sh
+D=$PWD/.cache/e2e/hg-playthrough-live
+AJAYEB_SCORES_BROWSER_FRAMES="$D/frames-7-revealed-desktop.json:$D/frames-7-hidden-desktop.json" \
+  make test-go GO_PKGS=./internal/tableroom GO_RUN=TestScoresBrowserFrames
+```
+
+Its last test, tagged `@slow`, waits out the temporary-admin rule in real
+time. `roles.AwayLimit` is a five-minute constant, and no test clock or
+development endpoint can shorten it, so the e2e server gets no such
+backdoor. The creator and a second human start a four-seat table with
+bots, and the creator's tab closes. Once the room has seen the creator
+away for five minutes (the spec checks that at least 290 s passed), the
+second human is the temporary admin: the hollow role tag shows, the
+frames carry no admin cap, a bot's seat takes another level through the
+seat menu, and the away creator's seat menu offers seat powers and no
+role button. The creator opens the table again, and the temporary admin
+is demoted at once. CI leaves `@slow` out (`--grep-invert '@perf|@slow'`);
+run it with `make e2e GREP=@slow`, about six minutes per project.
+
+### M18 acceptance: the spec or test behind each line
+
+The M18 acceptance list in [the roadmap](dev/roadmap.md), line by line,
+with what proves it (M18.table-playthroughs). Every spec named here reads
+its seats and choices from the frames, so it holds whatever the e2e
+server's seed counter deals.
+
+- The creator alone with six bots: `haftgane-playthrough.full.spec.ts`,
+  under each end policy.
+- Two humans in isolated contexts with bots and a spectator:
+  `haftgane-table.full.spec.ts` holds the reload that restores a
+  confirmed pick, the pick changed before the last confirmation, the
+  offline blip, both directions of the admin seat switch, a spectator
+  seated in a human's seat, and the temporary admin made at once when
+  the last real admin steps down. `haftgane-admin.full.spec.ts` holds the
+  promotion, the demotion, the step-down and the resignation (and a
+  spectator seated in a bot's seat). The temporary admin made after five
+  minutes away and demoted on the creator's return is the `@slow` test
+  above; Go covers the same rule with a fake clock
+  (`TestRolesAndTemporaryAdmin` in `internal/tableroom`,
+  `TestTemporaryAdmin` in `internal/roles`, `TestLobbyRolesAcrossRestart`
+  in `internal/lobbyroom`).
+- An undo in a solo game: `haftgane-admin.full.spec.ts`.
+- Every special decision: `haftgane-special.full.spec.ts`
+  ([special-decisions.md](haftgane/special-decisions.md)), now on mobile
+  too.
+- A shared Duel rematch from the result screen into its successor lobby:
+  `shared-lobby.full.spec.ts`, whose rematch test has the guest forfeit,
+  the owner ask for the rematch, the guest and the spectator follow it,
+  the successor reserve the guest's seat and keep only the owner as
+  admin, and its Start begin the next game under the new code.
+- The leak oracle over seven seats and a spectator under both end
+  policies: `TestFramesLeakNothing` in `internal/tableroom` (3 to 7 seats,
+  every client's every frame, both policies, in `make verify-quick`), and
+  `TestScoresBrowserFrames` over the browser frames of the seven-seat
+  playthrough above.
+- Layout at 3 to 7 seats, four viewports, both themes and right to left:
+  `ux/haftgane-table.spec.ts` (`make shots PW_ARGS='--grep "haftgane table
+  geometry"'`), which also fails on any console error or failed request.
+- Tooltip coverage, the i18n lint and the logical-CSS lint:
+  `web/scripts/lint-ui.mjs` in `make lint-web` (no hard-coded text, no
+  physical CSS property, no native `title`), and the untipped-glyph probe
+  of the Haftgane UX specs. Animation off: the geometry spec's motion
+  count and the scores and recap specs' running-animation checks.
+- Both cold-entry budgets: `ux/platform-baselines.spec.ts`
+  (`make shots PW_ARGS=--grep=platform`).
+- A deploy in mid-game: the deploy test in `shell.spec.ts`.
+- Duel unchanged except its online start, and a two-seat Start equal to
+  a legacy online game: `TestSharedLobbyDuelAssignedFileMatchesLegacy`
+  and `TestSharedLobbyDuelStart` in `internal/lobbyroom` (the room file
+  and the first frames, byte for byte, apart from the claim epoch and the
+  hint admins), and `shared-lobby.full.spec.ts`, where no lobby and no
+  role tags show once the game starts.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 
@@ -2075,8 +2183,8 @@ separate directories to preserve before and after evidence. Never point
 `SHOTS_DIR` at a directory holding other screenshot runs you need to keep.
 
 `ux/haftgane-table.spec.ts` (filter `--grep haftgane`) checks the
-Haftgane table screen's geometry outside that matrix: tables of 3, 5 and 7
-seats at 360x740, 390x844, 844x390 and 1280x800, light and dark, English
+Haftgane table screen's geometry outside that matrix: tables of 3, 4, 5,
+6 and 7 seats at 360x740, 390x844, 844x390 and 1280x800, light and dark, English
 and Persian, each with a full hand and nothing selected. Its probe runs
 two frames after each resize, without waiting for motion to end, and
 requires no horizontal overflow, no control under 44 px, no seat, hand
