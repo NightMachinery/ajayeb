@@ -16,6 +16,10 @@
   // because they are the table seen from the anchor's chair; the top bar,
   // the middle column, the notice and the menu follow the locale's
   // direction, as Duel's areas do.
+  //
+  // A spectator's ring centres on the seat they follow, and the spectator
+  // panel takes the hand's place. An admin's seat menu opens from the game
+  // menu or a city sheet; what each viewer may do comes from the frame.
   import '../theme.css';
   import type { Snippet } from 'svelte';
   import { goto } from '$app/navigation';
@@ -26,6 +30,8 @@
   import type { TablePresenter } from '../session/presenter.svelte';
   import type { TableSession } from '../session/session.svelte';
   import FarSeatChip from './FarSeatChip.svelte';
+  import SeatMenuLayer from './SeatMenuLayer.svelte';
+  import SpectatorPanel from './SpectatorPanel.svelte';
   import HandGrid from './HandGrid.svelte';
   import NeighbourPanel from './NeighbourPanel.svelte';
   import PassFlow from './PassFlow.svelte';
@@ -51,13 +57,16 @@
   import {
     chosenCount,
     farColumns,
+    humanAt,
     ring,
+    roleOf,
     seatStatus,
     stageOpen,
     afford,
     cardChoices,
     TURNS_PER_AGE
   } from './model';
+  import { formerOf, isAdmin, roleMap, watchers } from './admin';
   import { isBot, seatName, where } from './seat-names';
 
   interface Props {
@@ -73,7 +82,9 @@
 
   const view = $derived(frame.view);
   const n = $derived(view.seats.length);
-  const around = $derived(ring(view.seats));
+  // The seat a spectator follows; null centres on seat 0.
+  let follow = $state<number | null>(null);
+  const around = $derived(ring(view.seats, follow));
   const columns = $derived(farColumns(around?.far ?? []));
   const mine = $derived(view.you);
   const mySeat = $derived(frame.you.seat ?? null);
@@ -162,6 +173,10 @@
   // The city sheet's seat, and whether the Seen hands sheet is open.
   let citySeat = $state<number | null>(null);
   let seenOpen = $state(false);
+  // The seat whose admin menu is open.
+  let seatMenu = $state<number | null>(null);
+  const admin = $derived(!finished && isAdmin(frame));
+  const roleAt = (seat: number) => roleOf(humanAt(frame, seat));
 
   // The end of an Age and of the game (phone-layout.md, section 6). The
   // military dialog opens by itself while the newest conflicts are fresh,
@@ -260,6 +275,7 @@
       passTo={passTo ? nameOf(passTo.seat) : ''}
       {finished}
       onmenu={() => (menuOpen = true)}
+      onundo={ready && session.canUndo ? () => session.undo() : null}
     />
   </div>
 
@@ -299,6 +315,7 @@
                 where={where(s, n)}
                 bot={isBot(frame, s.seat)}
                 status={seatStatus(frame, s.seat)}
+                role={roleAt(s.seat)}
                 onopen={() => (citySeat = s.seat)}
               />
             </div>
@@ -320,6 +337,7 @@
           trade={neighbourTrade(side)}
           yourShields={around.own ? around.anchor.shields : 0}
           pass={view.pass}
+          role={roleAt(s.seat)}
           onopen={() => (citySeat = s.seat)}
         />
       </div>
@@ -335,6 +353,7 @@
           bot={isBot(frame, around.anchor.seat)}
           status={seatStatus(frame, around.anchor.seat)}
           stageOpen={deciding && stageOpen(choices)}
+          role={roleAt(around.anchor.seat)}
           onopen={() => (citySeat = around.anchor.seat)}
         />
       </div>
@@ -376,7 +395,21 @@
           {/if}
         </div>
       {:else}
-        <div class="hand"><p class="empty" data-watching-note>{ht('hg.screen.watching')}</p></div>
+        <div class="hand">
+          <SpectatorPanel
+            seats={view.seats}
+            {names}
+            bots={view.seats.filter((s) => isBot(frame, s.seat)).map((s) => s.seat)}
+            follow={around.anchor.seat}
+            onfollow={(s) => (follow = s)}
+            people={watchers(frame)}
+            you={frame.you.userId}
+            roles={roleMap(frame)}
+            disabled={!ready || !session.canControl}
+            onrole={(a) => session.role(a.kind, a.userId)}
+            former={formerOf(frame, session.held)}
+          />
+        </div>
       {/if}
       {#if specialWaiting}<p class="special-note" role="status" data-special-wait>
           {specialWaiting}
@@ -470,6 +503,7 @@
       active={citySeat}
       onselect={(s) => (citySeat = s)}
       onclose={() => (citySeat = null)}
+      onmanage={admin ? (s) => (seatMenu = s) : undefined}
     />
   {/if}
   {#if seenOpen && mine}
@@ -534,7 +568,13 @@
         {ready}
         onmilitary={newest ? openMilitary : undefined}
         onclose={() => (menuOpen = false)}
+        onmanage={(s) => (seatMenu = s)}
       />
+    </div>
+  {/if}
+  {#if seatMenu !== null && admin}
+    <div dir={i18n.dir}>
+      <SeatMenuLayer {session} {frame} {ready} seat={seatMenu} onclose={() => (seatMenu = null)} />
     </div>
   {/if}
 </div>
