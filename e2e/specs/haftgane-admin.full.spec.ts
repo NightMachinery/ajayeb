@@ -109,7 +109,7 @@ async function playTurn(page: Page): Promise<void> {
   await expect.poll(async () => (await frame(page)).batch).toBeGreaterThan(before);
 }
 
-test.describe('Haftgane admin controls', { tag: ['@full', '@haftgane-admin'] }, () => {
+test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-admin'] }, () => {
   test('seat switches, roles, resignation, undo and the spectator view', async ({
     browser
   }, info) => {
