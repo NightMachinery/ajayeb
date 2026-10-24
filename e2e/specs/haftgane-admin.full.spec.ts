@@ -143,7 +143,7 @@ test.describe('Haftgane admin controls', { tag: ['@full', '@mobile', '@haftgane-
       }
       const userB = (await frame(b)).you.userId;
       const userC = (await frame(c)).you.userId;
-      await expect(b.locator('[data-last-plays]')).toBeVisible();
+      await expect(b.locator('[data-spectator-panel] [data-turn-recap]')).toBeVisible();
       await expect(b.locator(`[data-spectator="${userB}"]`)).toBeVisible();
       await expect(b.locator(`[data-spectator="${userC}"]`)).toBeVisible();
 

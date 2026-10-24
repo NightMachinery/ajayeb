@@ -38,9 +38,10 @@ export async function latest(page: Page): Promise<TableState> {
   return frame!;
 }
 
-/** Opens the game menu, unless it is open, closing an open military dialog first. */
+/** Opens the game menu, unless it is open, closing an open recap or military dialog first. */
 export async function openMenu(page: Page): Promise<void> {
   if (!(await page.locator('[data-table-menu]').isVisible())) {
+    await dismissRecap(page);
     await dismissMilitary(page);
     await page.locator('[data-act="table-menu"]').click();
   }
@@ -82,6 +83,19 @@ export async function menuAction(page: Page, act: string): Promise<void> {
 }
 
 /**
+ * Closes the turn recap when it is open. It opens by itself after each
+ * reveal when Settings' "Show opponent move" is on (the base fixture turns
+ * it off), and any tap closes it and is swallowed, as Escape does.
+ */
+export async function dismissRecap(page: Page): Promise<void> {
+  const layer = page.locator('[data-recap-layer]');
+  if (await layer.isVisible()) {
+    await page.keyboard.press('Escape');
+    await expect(layer).toHaveCount(0);
+  }
+}
+
+/**
  * Closes the end-of-Age military dialog when it is open. It opens by itself
  * at the end of each Age and is modal, so the next Age's first decision
  * waits behind it; at the end of the game the score sheet follows it.
@@ -113,13 +127,14 @@ export async function toFinalBoard(page: Page): Promise<void> {
  * the pick list once its card is selected, so the card is tapped first.
  * A seat control (`seat-bot:N`, `seat-user:N:userId`) goes through the
  * seat's admin menu, and `resign` through the game menu, each with its
- * Confirm. An open military dialog is closed first.
+ * Confirm. An open turn recap or military dialog is closed first.
  */
 export async function choose(page: Page, act: string): Promise<void> {
   const seat = /^seat-(?:bot|user):(\d+)/.exec(act);
   if (seat) return seatAction(page, Number(seat[1]), act);
   if (act === 'resign' || act === 'step-down') return menuAction(page, act);
   await ready(page);
+  await dismissRecap(page);
   await dismissMilitary(page);
   const target = page.locator(`[data-act="${act}"]`).first();
   if (!(await target.isVisible())) {
