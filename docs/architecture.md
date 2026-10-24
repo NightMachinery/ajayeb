@@ -384,7 +384,9 @@ a reload mends a client and a server that disagree.
   A frame with history, or one that changes this tab's seat, restates the
   game and is shown without playing events. A frame that only refreshes
   presence replaces the one on screen in place, and a backlog fast-forwards
-  to the newest frame.
+  to the newest frame. A change without events (a seat confirming, a pick
+  withdrawn) reaches a `still` hook after the swap, which nothing waits
+  for.
 - **Home and the lobby** (`lib/lobby`) keep Duel's one-tap bot, tutorial and
   pass-and-play starts. Play online opens the shared New table sheet with two
   seats; Haftgane's New table defaults to four. The sheet submits a name before
@@ -522,6 +524,24 @@ a reload mends a client and a server that disagree.
   and the scores wait until the recap closes. The top bar's recap button
   reopens it, the spectator panel shows it inline, and a polite live
   region speaks it. A reload restates no reveal.
+- **Sound and motion** (M18.sound-and-motion). `table/cues.ts` is the
+  pure mapper from a live frame and the one before it to cues and a
+  vibration pattern, as Duel's `fx/cues.ts` is. A frame with history,
+  another room's or seat's, the first one, or one whose revision does not
+  move forward plays nothing. Seven seats resolving at once make one
+  grouped cue per kind: a flip for the reveal, a drum for the conflicts,
+  the next Age's deal, the result. A seated viewer adds only their own
+  moments: their play, coins they gain, the new hand, their confirmation,
+  a decision that opens for them alone, the table waiting only on them
+  while another person sits at it, and a kept last card. At most three
+  cues sound, 90 ms apart. `table/sound.ts` plays the plan from the
+  Presenter's play and still hooks with the app's player (`$lib/fx`), the
+  same CC0 files, fallbacks, settings and test hook as Duel's, through
+  `table/sound-player.ts`, a lazy chunk loaded once a table shows with
+  Sound on; vibration calls `navigator.vibrate` itself. The game menu has
+  the Sound switch. A new Age sweeps the pass chip and the pass flow
+  once, a confirmed pick shows a check, and the chosen dots fill
+  smoothly; with Animation off each is simply there.
 - **The development screen** (`dev/TableDev.svelte`) now shows only what
   comes before a table's first frame.
 
@@ -539,7 +559,10 @@ every page loads, and `theme.css` (the seat and resource colours) ships
 in Haftgane's chunk. It adds no Svelte feature that Duel and the
 entry do not already use (such as transitions, a `<select>` value or
 `bind:group`), whose runtime helpers would join the shared runtime chunk
-and rename Duel's imports. A module Haftgane shares with another lazy route becomes a chunk
+and rename Duel's imports. The table reaches Duel's sound player only
+through a lazy module of its own (`table/sound-player.ts`) that imports
+names the player's chunk already exports, so that chunk keeps its
+content. A module Haftgane shares with another lazy route becomes a chunk
 of its own, whose name the app's route map and the play page's preload
 list carry, so the gallery imports the table's leaves dynamically.
 `make shots PW_ARGS=--grep=platform` measures Home and Duel cold bytes

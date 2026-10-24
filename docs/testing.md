@@ -572,8 +572,20 @@ browser and no server:
   `haftgane` hint.
 - `src/lib/games/haftgane/session/presenter.test.ts`: the TablePresenter
   plays a resolution's events in order, shows a frame with history or a
-  changed seat without playing it, replaces a presence refresh in place
-  and fast-forwards a backlog.
+  changed seat without playing it, replaces a presence refresh in place,
+  fast-forwards a backlog, and tells its still hook of a change without
+  events (a seat confirming) but never of a restatement or a refresh.
+- `src/lib/games/haftgane/table/cues.test.ts`: the table's cue mapper.
+  Every event kind (a flip for the plays and the sides, a drum for the
+  conflicts, the Age's deal, the result as a fanfare, a defeat or a
+  spectator's chime, the viewer's own play, coins and trade receipts, the
+  new hand, a kept card, a build from the pile and an empty pile look),
+  the no-replay rule (a history, the first frame, another room or seat, a
+  revision that does not move forward), the budget over the engine's own
+  seven-seat view fixtures, the decisions that notify one viewer (a
+  special decision opening, the table waiting on them alone when another
+  person sits at it), the viewer's own confirmation and the vibration
+  patterns.
 - `src/lib/games/haftgane/session/recorded.test.ts`: the same two over the
   frames the real table actor sent (`TestRecordClientFrames`, above).
   Every frame parses; each client's Session, driven through its own API by
@@ -1584,6 +1596,28 @@ in its events, its history or a seat's `last` play, gives no seat a field
 outside the public seat and no page another seat's private view. Nothing
 animates with Animation off, nothing depends on a deal, and no console
 error or failed request is allowed.
+
+### `haftgane-sound.full.spec.ts` (`@full @mobile @haftgane-sound`)
+
+The table's sound wiring over a live three-seat table from Home's lobby,
+read from the page's fx test hook (`window.__ajayebFx`), as Duel's
+`sound.spec.ts` does; the mapper itself is unit-tested above. The creator
+starts the table alone with bots and a friend watches. Through the end of
+Age I, for every batch the spec reads the batch's events from each page's
+history and checks: each page records the batch's cues once, tagged with
+the batch, at most three and 90 ms apart, none twice; the spectator hears
+exactly the shared cues (one flip for the reveal, the drum of the Age's
+conflicts, the next Age's deal); the creator hears those plus only cues
+of their own, including their own play whenever the budget leaves room,
+and their confirmation before the batch resolves is one tick at most.
+Then a reload records nothing on either page and the next batch sounds
+again; the spectator's table menu turns Sound off, the next batch records
+nothing for them while the creator hears it, the switch survives a
+reload, and turning it back on brings the cues back; and with Sound off
+in Settings the creator's table never requests the lazy player chunk and
+records nothing. A mutation probe that removes the table's sound call
+fails it. Nothing depends on a deal, and no console error or failed
+request is allowed.
 
 ## Production smoke (`make e2e-prod`, `prod.smoke.spec.ts`, `@prod`)
 

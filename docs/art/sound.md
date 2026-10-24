@@ -56,6 +56,11 @@ Home's initial JavaScript or its install precache. Event-to-cue wiring,
 90 ms spacing without animation, animation timing and haptics remain the
 caller's responsibility.
 
+Haftgane reuses the same 17 cues and this player; it adds no sound. Its
+table maps each batch to cues itself (`games/haftgane/table/cues.ts`) and
+loads the player in a lazy chunk only once a table shows with Sound on,
+so audio still waits for a gesture and nothing joins the precache.
+
 The gallery sound board has separate file and synth buttons for every cue,
 plus the existing busy-move sequence and volume steps. A file-only audition reports
 when its file is unavailable, rather than silently playing the synth. `sound-files.spec.ts`
