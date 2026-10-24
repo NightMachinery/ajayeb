@@ -144,7 +144,7 @@ test-go: ## Go tests with -shuffle=on (AJAYEB_SWEEP games in the playout sweep, 
 	AJAYEB_SWEEP=$(AJAYEB_SWEEP) $(HEAVY) run --kind test -- \
 	  go -C server test -shuffle=on -timeout $(TEST_TIMEOUT) $(if $(GO_RUN),-run '$(GO_RUN)') $(GO_PKGS)
 
-test-race: ## go test -race -short on RACE_DIRS: the room, ws, tableroom, lobbyroom and roles packages (-short skips timing tests and the exhaustive arrival orders, which verify-quick runs)
+test-race: ## go test -race -short on RACE_DIRS: the room, ws, tableroom, lobbyroom and roles packages (-short skips timing tests and the exhaustive arrival orders, and tableroom's race build plays its seat-count sweeps at 3 and 7 seats; verify-quick runs them all)
 	@pkgs=; for d in $(RACE_DIRS); do \
 	  if [ -n "$$(find server/$$d -name '*_test.go' 2>/dev/null | head -n 1)" ]; then pkgs="$$pkgs ./$$d/..."; fi; \
 	done; \

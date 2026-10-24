@@ -335,6 +335,41 @@ repository root:
 
     python3 tools/heavy.py run --kind test -- go -C server test -race -short -run WebSocket ./internal/tableroom/
 
+**The race build's budget** (M16.tableroom-race-budget). The race detector
+slows this package's long tests two to eight times, so its race build plays
+the long sweeps on a sample. `RaceEnabled` (`race_enabled_test.go`,
+set by the `race` build tag that `-race` adds) tells the tests apart:
+
+- the seat-count sweeps play 3 and 7 seats (`SweepSeats`):
+  `TestDriverInProcess`, `TestDifferentialAgainstDirect`,
+  `TestDifferentialSwitches`, `TestFramesLeakNothing`,
+  `TestMergedFramesPassTheOracle` (whose full set is 3, 5 and 7) and
+  `TestWebSocketTables`; `TestWebSocketLobbyToTable` plays 4 and 7, an even
+  and an odd count, so both end policies;
+- `TestEngineContractSidesAndReplay` plays its seven-seat game under
+  `choose` only, beside all three rules at three seats;
+- `TestEngineContractFinishedMemory` measures two finished tables, not
+  eight (the measurement is the plain build's);
+- `TestEveryArrivalOrderInProcess` is skipped, as `-short` skips it.
+
+The counts and games dropped add game size, not concurrency: the same
+goroutines and code paths run at every count. Everything concurrent keeps
+its full form under the race detector: actor schedules, restarts, pending
+subsets, the bots and every socket test. No assertion changed, and the full
+sweeps run without the race detector, in `make verify-quick` and CI's go
+job. `TestDifferentialAgainstDirect` and `TestEveryArrivalOrderInProcess`
+run in parallel with each other, since each has its own fixtures and
+deadlines of minutes. The other tests stay sequential: the socket tests
+count the process's goroutines when they clean up, the in-process sweeps
+give each game 20 seconds, and the measurement tests read process-wide
+clocks and memory.
+
+Measured on the development machine, the race build with `-short`, as
+`make test-race` runs it, went from about 680 to 347 seconds; without
+`-short`, as CI runs it with every other package in the go job's race step,
+it takes 384 seconds. The full run without the race detector is no slower
+(about four minutes; the parallel pair overlaps).
+
 `TestRecordClientFrames` (`clientframes_test.go`) records, in order, what
 four clients of one table send and receive through the Manager: three
 humans and a spectator. Seat 0 drafts, changes, confirms, withdraws and
