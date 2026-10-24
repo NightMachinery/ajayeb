@@ -675,3 +675,11 @@ server, restore `.self-host/bin/ajayeb.prev` to `.self-host/bin/ajayeb`, and
 `start` it again.
 
 A rollback to a pre-D28 binary still checks stored hashes strictly: rooms whose hashes the new binary refreshed or saved may archive on load. Preserve a copy of current data and pair that old binary with a matching pre-upgrade rooms backup when recovering; restoring that backup also gives up moves made afterward.
+
+A rollback past the shared lobby (M18.shared-lobby, which moved Home's online Duel onto two-seat lobbies) strands the games it started. Two-seat lobbies still waiting load but can never start, because the older lobby starts only tables of three or more seats. The older binary loads an online Duel game started from a lobby as an ordinary online room, and its first save of that room drops the game's frozen `hintAdmins` (and an unused `rematchReserved`), which rolling forward again does not restore:
+
+- a game with a bot seat stops, because the older server moves a bot only in a bot game;
+- the creator regains sole hint editing and the other seat's device link, and the other hint admins, promoted players or spectators, lose theirs;
+- a finished game's rematch makes an old-style online room, unless its rematch lobby was already made.
+
+Before rolling back past it, let running online games finish, or pair the old binary with a pre-upgrade rooms backup as above.

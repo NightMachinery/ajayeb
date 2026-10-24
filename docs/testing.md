@@ -360,6 +360,16 @@ only the explicit new link-permission marker. The frozen-admin regression
 covers promoted spectators, a creator who stepped down, D23 hint preferences,
 other-seat link refusals and persistence. A complete-game rematch checks
 reservations, fresh roles, a reserved-code collision and restart idempotency.
+Another asks for the rematch again after its lobby has started its own game,
+loaded and after a restart, and gets the same code. A complete online game
+with a bot seat survives a restart in the middle of the bot's turn (the bot
+resumes when its player attaches), and its rematch lobby keeps the bot's
+slot and level. `TestSharedLobbyDuelWithoutTableCreation` runs the lobbies as
+production does, without `-haftgane-tables`: a two-seat lobby is created,
+started, played and rematched, `maxSeats` is 2, and creating, editing to or
+starting three or more seats is refused, including a lobby made larger while
+creation was on. The store's `TestHintAdminsChecked` refuses to save a damaged
+frozen admin set and archives a file holding one as `replay-failed`.
 Store tests separately refuse missing, damaged, foreign, archived or already
 started targets without changing their bytes, and race two conditional Starts.
 These extend the tests below; Duel protocol and bot goldens are not regenerated.
