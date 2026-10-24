@@ -557,7 +557,10 @@ The online playthrough and production smoke use Home's new shared lobby.
 The leak checker removes only the lobby's fixed `options.hints` vocabulary,
 like Duel's `room.hints`, because `economy` also names a progress token.
 A negative canary preserves a planted token name in every other lobby field;
-whole-game checks continue scanning all lobby and game frames.
+whole-game checks continue scanning all lobby and game frames. The legacy
+waiting lobby loads its hint summary lazily; cold running-Duel measurements
+therefore exclude the waiting-only component even when the shared lobby
+reuses it. The ordinary game menu still needs its hint-summary text helper.
 
 ### Home and the Haftgane lobby
 

@@ -23,7 +23,6 @@
   import { seatDisplayName } from '$lib/view/display-name';
   import type { HintSettings, SeatInfo } from '$lib/wire';
   import { tryGameContext } from '../choices/room';
-  import HintsSummary from '../hints/HintsSummary.svelte';
   import SeatLink from '../identity/SeatLink.svelte';
   import SelfCrest from '../identity/SelfCrest.svelte';
   import SelfMark from '../identity/SelfMark.svelte';
@@ -249,7 +248,9 @@
     </section>
 
     {#if shownHints}
-      <HintsSummary hints={shownHints} title={t('hints.lobby.title')} />
+      {#await import('../hints/HintsSummary.svelte') then { default: HintsSummary }}
+        <HintsSummary hints={shownHints} title={t('hints.lobby.title')} />
+      {/await}
     {/if}
 
     <p class="mt-auto text-center text-xs text-fg-muted">{t('online.lobby.homeHint')}</p>

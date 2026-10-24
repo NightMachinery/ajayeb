@@ -399,7 +399,9 @@ a reload mends a client and a server that disagree.
   set their fixed-option values through local attachments. This avoids extra
   shared Svelte runtime exports whose import aliases otherwise increase Duel's
   compressed chunks despite an unchanged eager module set. The development
-  creation route `/dev/table` is retired.
+  creation route `/dev/table` is retired. The legacy Duel waiting lobby
+  loads `HintsSummary` only when its hint panel is shown. Its reuse in the
+  shared lobby must not make a running hot-seat room fetch that panel.
 - **The table screen** (`table/TableScreen.svelte`, M18.table-screen)
   draws [phone-layout.md](haftgane/phone-layout.md)'s main screen from the
   Presenter's frame: the top bar with the game menu, the Age and turn and
