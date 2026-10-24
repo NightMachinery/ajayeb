@@ -365,6 +365,11 @@ func undoRefill(t *testing.T, evict bool) {
 	work.Release()
 	work.Release()
 	h.until(me, "the first batch", func(st wire.TableState) bool { return st.Batch == 1 })
+	// The first point's two searches and the second point's, which holds
+	// now, so the next search to start is the one after the undo.
+	for range 3 {
+		nextStart(t, work)
+	}
 	// The budget is full again at the second point: spend 13, then undo.
 	s := h.snap(me)
 	seqs := map[tabletest.ClientID]uint64{me: 1}
@@ -380,6 +385,9 @@ func undoRefill(t *testing.T, evict bool) {
 	waitFor(t, "the cancelled search", func() bool { _, _, c := work.Counts(); return c > cancelled })
 	fr = h.until(me, "the first point again", func(st wire.TableState) bool { return st.Batch == 0 && st.Point != nil })
 	if evict {
+		// Evicted before the first point's search starts, which waits for
+		// the cancelled one's report, the table has no search to cancel.
+		nextStart(t, work)
 		_, _, cancelled = work.Counts()
 		h.evict(24)
 		waitFor(t, "the search cancelled by the eviction", func() bool { _, _, c := work.Counts(); return c > cancelled })
