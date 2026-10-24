@@ -9,7 +9,8 @@
 //   shields from the frame's seats, the human's own two conflicts, and each
 //   seat's military points; after a reload it opens again;
 // - at the end, the score sheet after the last conflicts: the verdict, the
-//   rows in the server's rank order, and every category of every seat;
+//   rows in the server's rank order, and every category of every seat; a
+//   row opens that seat's city over it;
 // - the log download: the file under the revealed end, and under the hidden
 //   end no button, the note, and the endpoint's refusal;
 // - the final board with its buttons, and the revealed cards when shown;
@@ -298,6 +299,14 @@ for (const reveal of [true, false]) {
       expect(end.view.canDownload).toBe(reveal);
       const sheet = await checkScores(page, end);
       await checkScores(watcher, await latest(watcher));
+
+      // A row opens that seat's city over the sheet, which stays open.
+      const other = end.view.seats.find((s) => s.seat !== end.you.seat)!.seat;
+      await sheet.locator(`[data-act="score-city:${other}"]`).click();
+      await expect(page.locator(`[data-city-sheet="${other}"]`)).toBeVisible();
+      await page.locator('[data-act="city-close"]').click();
+      await expect(page.locator('[data-city-sheet]')).toHaveCount(0);
+      await expect(sheet).toBeVisible();
 
       if (reveal) {
         const [download] = await Promise.all([
