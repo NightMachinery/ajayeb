@@ -1,4 +1,12 @@
 {
+  "card/bazar": {
+    "subject": "a covered bazaar: a merchant seated in one arched shop opening of a plain vaulted brick arcade, its shelves stocked with glass vessels, blank paper rolls and folded bolts of plain striped cloth, takes gold coins from a standing buyer; the arcade has plain brick arches and no inscription band, sign or frieze",
+    "accent": "yellow"
+  },
+  "card/castrum": {
+    "subject": "a compact army camp seen from slightly above: a square earthen rampart topped by a low timber fence, a plain timber gate guarded by two sentries with spears, and inside the rampart neat rows of plain white tents; no banners, no flags, no emblems",
+    "accent": "red"
+  },
   "card/clay-pit": {
     "subject": "two workers in one shallow open pit: one carries a basket of wet ochre clay up the bank, the other prises lumps of rust-red iron ore, glinting with dark metallic flecks, from a seam exposed in the pit wall; the clay and the ore both clearly visible as two different materials",
     "accent": "brown"
@@ -19,6 +27,14 @@
     "subject": "a weaver seated at a simple upright wooden loom, drawing a shuttle through the warp threads of a broad, half-woven cloth in rose and lapis stripes, a folded bolt of the same striped cloth on a low stool beside the loom",
     "accent": "grey"
   },
+  "card/ludus": {
+    "subject": "a training school run as a business: in a plain sandy courtyard a trainer in a simple tunic, a wooden practice sword under his arm, receives a pouch of gold coins from a merchant, beside a wooden practice post scarred by sword strokes and a rack of wooden practice swords; no soldiers, no uniforms, no spears, no armour, no banners",
+    "accent": "yellow"
+  },
+  "card/marketplace": {
+    "subject": "an open-air market square with no awning, canopy or stall: two traders, one arriving from the left and one from the right, meet over a plain mat spread on the paving and trade manufactured goods, the left one setting down a pair of green glass flasks, the right one a blank papyrus roll and a folded bolt of plain striped cloth, with a small heap of gold coins on the mat between them",
+    "accent": "yellow"
+  },
   "card/mine": {
     "subject": "two miners at a squared mine entrance cut into a grey rock hill, its lintel one slab of stone: one carries a squared block of pale stone out on his shoulder, the other tips a basket of rust-red iron ore, glinting with dark metallic flecks onto a heap; a stack of pale stone blocks and a heap of rust-red ore lie apart in front of the entrance, clearly two different materials",
     "accent": "brown"
@@ -34,5 +50,13 @@
   "card/tree-farm": {
     "subject": "two workers at one small tree farm: one ties a bundle of straight cut poles taken from a neat row of slender young poplars, the other digs wet ochre clay from a low bank at the edge of the grove into a basket; the bundled wooden poles and the ochre clay both clearly visible as two different materials",
     "accent": "brown"
+  },
+  "card/vineyard": {
+    "subject": "a vintner beneath a low wooden vine trellis heavy with dark grape bunches hands a full basket of grapes to a woodcutter, who carries a bundle of logs on his back and pays him with a few gold coins; rows of vines behind them, no cups or drinking",
+    "accent": "yellow"
+  },
+  "card/well": {
+    "subject": "two townspeople at a low round stone well with a plain wooden crossbeam and a rope: one hauls up a dripping water jar by the rope, the other waits beside the well with an empty water jar on her shoulder; a ring of plain turquoise tiles around the well's foot",
+    "accent": "blue"
   }
 }

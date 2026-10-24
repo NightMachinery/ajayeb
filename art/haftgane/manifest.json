@@ -2,6 +2,54 @@
   "game": "haftgane",
   "generatedFrom": "tools/art/manifest.mjs",
   "assets": {
+    "card/bazar": {
+      "id": "card/bazar",
+      "kind": "card",
+      "out": "haftgane/cards/bazar",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a covered bazaar: a merchant seated in one arched shop opening of a plain vaulted brick arcade, its shelves stocked with glass vessels, blank paper rolls and folded bolts of plain striped cloth, takes gold coins from a standing buyer; the arcade has plain brick arches and no inscription band, sign or frieze",
+      "accent": "yellow",
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Paint every folded bolt and stacked roll in solid colour with only plain straight stripes along its length; no strokes, squiggles, flecks or marks inside any band or on any bolt face. Leave the vault above the shop opening as plain brick.",
+      "bytes": {
+        "bazar.avif": 15872,
+        "bazar@thumb.avif": 5476
+      },
+      "approvedAttempt": 2,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 1.6).",
+        "No text at native size or 2x: the counter and shelf bolts carry plain straight stripes, the paper rolls are blank, the red hanging cloth has plain pinstripes, the arch is a plain brick vault with no frieze, band or sign; a striped bolster's narrow bands carry kilim-like repeated hooks and dots, ornament rather than script even at 3x to 4x.",
+        "Reads at 120 px as a covered shop: a merchant in a brick-arched opening with shelves of blue and green glass and stacked cloth takes coins from a standing buyer.",
+        "Batch check: Bazar (an enclosed arched shop with shelves), Marketplace (two traders kneeling on an open mat) and the reused Forum (an outdoor stall under an awning) read as three different places at 120 px.",
+        "Two figures, no background kiosk, a clear ivory margin; style matches the Duel neighbours, with slightly more naturalistic bricks. Reviewer: a fresh in-process subagent that did not write the prompts and had not seen round 1."
+      ]
+    },
+    "card/castrum": {
+      "id": "card/castrum",
+      "kind": "card",
+      "out": "haftgane/cards/castrum",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a compact army camp seen from slightly above: a square earthen rampart topped by a low timber fence, a plain timber gate guarded by two sentries with spears, and inside the rampart neat rows of plain white tents; no banners, no flags, no emblems",
+      "accent": "red",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "castrum.avif": 16626,
+        "castrum@thumb.avif": 5368
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 4.5).",
+        "No text, banners, flags or emblems: the large tent's valance is a repeated scallop with white dots, the paper the commander holds is blank, the finials plain knobs.",
+        "Reads clearly at 120 px as an army camp seen from above: a square earthen rampart with a low timber fence, a timber gate between two spear-carrying sentries, rows of white tents.",
+        "Batch check: the only aerial view among the red cards, copying none of them (Barracks sparring before a wall, Stockade raising stakes, Walls masonry).",
+        "Small figures, as the subject requires; the rampart spans wide but the gate passes; palette and ink line match the Duel red neighbours. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
     "card/clay-pit": {
       "id": "card/clay-pit",
       "kind": "card",
@@ -119,6 +167,54 @@
         "One small domed garden kiosk, no minaret, mosque, emblem or animals; generic period dress. The cloth reads as woven cloth on a loom (white warp above the woven edge, boat shuttle in hand), not a carpet, rug or banner. Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     },
+    "card/ludus": {
+      "id": "card/ludus",
+      "kind": "card",
+      "out": "haftgane/cards/ludus",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a training school run as a business: in a plain sandy courtyard a trainer in a simple tunic, a wooden practice sword under his arm, receives a pouch of gold coins from a merchant, beside a wooden practice post scarred by sword strokes and a rack of wooden practice swords; no soldiers, no uniforms, no spears, no armour, no banners",
+      "accent": "yellow",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "ludus.avif": 17861,
+        "ludus@thumb.avif": 5672
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 2.6).",
+        "No text at native size or 2x: the pavilion's eave and base are geometric and floral tiles, the practice post carries random hack scars, and the robes carry small irregular leafy sprigs with dots, not fleurs-de-lis (checked again at 3x by the integrator). A gold-domed pavilion the subject does not name stands at left, against the card template, but it carries no marks and the training gear still dominates, so it is not a rejection.",
+        "Reads at 120 px as a training yard, not two men talking: a tall scarred practice post with a rope collar, a rack of wooden practice swords, and a man with a wooden sword taking a coin pouch from a merchant.",
+        "Batch check: no soldiers, red uniforms, spears, armour or banners, so it does not read as the reused Training Ground, Barracks or another red card; distinct from the yellow Arena's tiered seating.",
+        "Two large figures, clean margins; style matches the Duel neighbours. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/marketplace": {
+      "id": "card/marketplace",
+      "kind": "card",
+      "out": "haftgane/cards/marketplace",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "an open-air market square with no awning, canopy or stall: two traders, one arriving from the left and one from the right, meet over a plain mat spread on the paving and trade manufactured goods, the left one setting down a pair of green glass flasks, the right one a blank papyrus roll and a folded bolt of plain striped cloth, with a small heap of gold coins on the mat between them",
+      "accent": "yellow",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "marketplace.avif": 20481,
+        "marketplace@thumb.avif": 6440
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 3.7).",
+        "No text at native size or 2x: plain blue and cream stripes on the bolt, a blank papyrus roll, plain coins. A small domed kiosk the subject does not name sits at top right, against the card template, but its parapet panels are symmetric rosette sprigs and its eave a uniform beaded strip with no pseudo-writing at 2x or 3x, and it does not hurt the read, so it is not a rejection.",
+        "Reads at 120 px as open-air trade: two traders kneeling on a plain mat exchange green flasks, a roll and a striped bolt over a heap of coins, with no awning, canopy or stall.",
+        "Batch check: the open mat (Marketplace), the canopied stall (the reused Forum) and the arched brick shop (Bazar) are three different places at 120 px.",
+        "Two large figures; the mat runs wide but the gate passes and the vignette feathers cleanly; style matches the Duel yellow neighbours. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
     "card/mine": {
       "id": "card/mine",
       "kind": "card",
@@ -210,6 +306,54 @@
         "Wood and clay are distinct and balanced at 120 px: the left half is a row of young poplars and a rope-tied bundle of peeled poles, the right half a cut ochre clay bank, a shovel load and a full basket.",
         "Two large figures, uncrowded; line, gouache, pastel rocks and density match Duel's lumber-yard and clay-pool.",
         "Distinct within the family: its pale vertical grove is unique, unlike Duel's lumber-yard (a felled giant tree by a stream) and the clay-pit (a deep pit with an ore seam). Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/vineyard": {
+      "id": "card/vineyard",
+      "kind": "card",
+      "out": "haftgane/cards/vineyard",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a vintner beneath a low wooden vine trellis heavy with dark grape bunches hands a full basket of grapes to a woodcutter, who carries a bundle of logs on his back and pays him with a few gold coins; rows of vines behind them, no cups or drinking",
+      "accent": "yellow",
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Build the vine trellis as a flat pergola: plain upright posts that stop at the overhead beams, with no post rising above the leaves and no short crossbar fixed across a single post. No shape anywhere in the scene may form a cross.",
+      "bytes": {
+        "vineyard.avif": 23169,
+        "vineyard@thumb.avif": 6878
+      },
+      "approvedAttempt": 2,
+      "reasons": [
+        "Passes the gate (band 95.0%, dE00 3.3).",
+        "No cross anywhere: both pergola posts stop under one continuous beam across the full width, so the frame reads as a flat pergola at native size, 3x and 120 px; the woodcutter's carrying frame has a tilted pole above a crosspiece, but it sits against the log stack, not the paper, and reads as a carrying frame (checked again at 2x by the integrator).",
+        "No text or emblems at native size or 2x: the robes carry small leafy sprigs and rosettes, the coins are plain, and there are no cups.",
+        "Reads at once at 120 px as a vineyard: a pergola heavy with lapis grape clusters, a vintner holding out a basket, and a woodcutter with a log bundle paying coins; clearly not the reused Tavern, Caravansery or Forum.",
+        "Two large figures, calm ivory margins; line, palette and vignette match the Duel neighbours. Reviewer: a fresh in-process subagent that did not write the prompts and had not seen round 1."
+      ]
+    },
+    "card/well": {
+      "id": "card/well",
+      "kind": "card",
+      "out": "haftgane/cards/well",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two townspeople at a low round stone well with a plain wooden crossbeam and a rope: one hauls up a dripping water jar by the rope, the other waits beside the well with an empty water jar on her shoulder; a ring of plain turquoise tiles around the well's foot",
+      "accent": "blue",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "well.avif": 17684,
+        "well@thumb.avif": 5656
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Passes the gate (band 100%, dE00 3.4).",
+        "No text, emblems or watermark at native size or 2x: the robes carry small dot-rosettes and leafy sprigs and the turquoise tiles are plain; a row of tiny dashes on the woman's headband reads as repeated ornament at 2x and turns stroke-like only at 4x to 6x.",
+        "Reads at once at 120 px as a round stone well with a wooden crossbeam and rope, one figure hauling a dripping jar and the other waiting with a jar on her shoulder: a calm civic scene, not production or trade.",
+        "Distinct from the reused blue Statue, Aqueduct and Baths; two large figures, no building, wide paper margins.",
+        "Ink line, gouache palette and density match the Duel blue neighbours. Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     }
   }
