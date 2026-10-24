@@ -461,20 +461,22 @@
     {#each [around.left, around.right] as s, i (s.seat)}
       {@const side = i === 0 ? 'left' : 'right'}
       <div class="neighbour {side}">
-        <NeighbourPanel
-          seat={s}
-          {side}
-          name={nameOf(s.seat)}
-          where={where(s, n)}
-          bot={isBot(frame, s.seat)}
-          status={seatStatus(frame, s.seat)}
-          trade={neighbourTrade(side)}
-          yourShields={around.own ? around.anchor.shields : 0}
-          pass={view.pass}
-          role={roleAt(s.seat)}
-          onopen={() => (citySeat = s.seat)}
-        />
-        {@render tag(s.seat)}
+        <div class="hang">
+          <NeighbourPanel
+            seat={s}
+            {side}
+            name={nameOf(s.seat)}
+            where={where(s, n)}
+            bot={isBot(frame, s.seat)}
+            status={seatStatus(frame, s.seat)}
+            trade={neighbourTrade(side)}
+            yourShields={around.own ? around.anchor.shields : 0}
+            pass={view.pass}
+            role={roleAt(s.seat)}
+            onopen={() => (citySeat = s.seat)}
+          />
+          {@render tag(s.seat)}
+        </div>
       </div>
     {/each}
 
@@ -797,12 +799,21 @@
     max-width: 11rem;
   }
   .neighbour {
-    position: relative;
     display: flex;
     flex-direction: column;
     min-width: 0;
   }
   .neighbour > :global(*) {
+    flex: 1 1 auto;
+  }
+  /* The panel and its reveal tag, which hangs from the panel itself. */
+  .hang {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .hang > :global(*) {
     flex: 1 1 auto;
   }
   .left {
@@ -996,6 +1007,12 @@
     .pick {
       padding-inline: 0;
     }
+    /* Stacked chips leave no gap to hang in: the tag sits inside the
+       bottom corner instead. */
+    .reveal {
+      inset-block-end: 0.15rem;
+      justify-content: flex-end;
+    }
   }
 
   /* A desktop (Duel's split: variant without the short case): full side
@@ -1018,7 +1035,7 @@
     }
     .neighbour {
       overflow-y: auto;
-      padding-block-end: 0.6rem;
+      padding-block-end: 1rem;
     }
     .neighbour > :global(*) {
       flex: 0 0 auto;
