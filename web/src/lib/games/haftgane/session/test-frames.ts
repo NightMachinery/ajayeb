@@ -78,6 +78,7 @@ export function tableFrame(
     allowUndo: false,
     undoOff: false,
     finalReveal: true,
+    botLevels: ['easy', 'normal', 'hard'],
     point: {
       ref: { id: 'age-1-turn-1', revision: 1 },
       kind: 'play',

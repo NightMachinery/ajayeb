@@ -64,7 +64,12 @@ const human = shape(
 );
 const you = shape(
   { userId: str },
-  { seat: seat, previousSeats: list(shape({ userId: str, seat: seat })) }
+  {
+    seat: seat,
+    previousSeats: list(shape({ userId: str, seat: seat })),
+    formerSeat: seat,
+    canPromote: bool
+  }
 );
 const logEntry = shape(
   { kind: oneOf('seat', 'role', 'resign', 'link'), at: count, by: str },
@@ -116,20 +121,23 @@ const city = shape(
   },
   { last: tablePlay }
 );
-const choice = shape({
-  key: str,
-  kind: str,
-  design: str,
-  side: str,
-  stage: int,
-  left: int,
-  right: int,
-  printed: int,
-  total: int,
-  gain: int,
-  free: str,
-  witness: list(shape({ resource: str, source: str, producer: int, price: int }))
-});
+const choice = shape(
+  {
+    key: str,
+    kind: str,
+    design: str,
+    side: str,
+    stage: int,
+    left: int,
+    right: int,
+    printed: int,
+    total: int,
+    gain: int,
+    free: str,
+    witness: list(shape({ resource: str, source: str, producer: int, price: int }))
+  },
+  { kept: str }
+);
 const seen = shape({ point: str, hand: list(str), played: str, action: str });
 const bounds = shape({ certain: count, atMost: count });
 const privateView = shape({
@@ -169,7 +177,13 @@ const privateView = shape({
     })
   )
 });
-const result = shape({ scores: list(score), rank: list(int), winners: list(seat) });
+const result = shape({
+  scores: list(score),
+  rank: list(int),
+  winners: list(seat),
+  tieBreak: oneOf('', 'coins', 'shared'),
+  tied: list(seat)
+});
 const reveal = shape({
   tucked: list(list(str)),
   pile: list(str),
@@ -216,6 +230,7 @@ const tableState = shape(
     allowUndo: bool,
     undoOff: bool,
     finalReveal: bool,
+    botLevels: list(str),
     events: list(tableEvent),
     roomLog: list(logEntry),
     view: tableView

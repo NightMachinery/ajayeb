@@ -38,6 +38,7 @@ const snapshots = [
     allowUndo: true,
     undoOff: false,
     finalReveal: true,
+    botLevels: [],
     events: [],
     roomLog: [],
     view: { phase: 'turn', age: 1, turn: 1, pass: 'left', pile: 0, seats: [], canDownload: false }
