@@ -629,6 +629,39 @@ describe('admin requests and undo', () => {
     expect(session.notice?.code).toBe('stale');
     expect(setup(tableFrame({ ...solo, undoOff: true })).session.canUndo).toBe(false);
   });
+
+  it('tells the sole human once that undo is gone when a second human sits down', () => {
+    const solo = { allowUndo: true, startingHumanCount: 1, batch: 1, revision: 3 << 20 };
+    const { session, connection } = setup(tableFrame(solo));
+    expect(session.canUndo).toBe(true);
+    connection.frame(tableFrame({ ...solo, undoOff: true, revision: 4 << 20 }));
+    expect(session.canUndo).toBe(false);
+    expect(session.notice).toEqual({ kind: 'undo-off', code: 'undo-off' });
+    session.dismissNotice();
+    connection.frame(tableFrame({ ...solo, undoOff: true, revision: 5 << 20 }));
+    expect(session.notice).toBeNull();
+  });
+
+  it('says nothing about undo to a table that never had it, or to a spectator', () => {
+    const { session, connection } = setup(tableFrame());
+    connection.frame(tableFrame({ undoOff: true, revision: 2 << 20 }));
+    expect(session.notice).toBeNull();
+    const solo = { allowUndo: true, startingHumanCount: 1, batch: 1 };
+    const watcher = setup(tableFrame(solo, null));
+    watcher.connection.frame(tableFrame({ ...solo, undoOff: true, revision: 2 << 20 }, null));
+    expect(watcher.session.notice).toBeNull();
+  });
+
+  it('remembers the seat it held while it watches, and the one it holds after', () => {
+    const { session, connection } = setup();
+    expect(session.held).toBe(0);
+    connection.frame(moved(null));
+    expect(session.seat).toBeNull();
+    expect(session.held).toBe(0);
+    connection.frame(moved(1));
+    expect(session.held).toBe(1);
+    expect(setup(tableFrame({}, null)).session.held).toBeNull();
+  });
 });
 
 describe('the lobby', () => {

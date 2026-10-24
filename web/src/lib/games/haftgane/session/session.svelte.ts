@@ -114,11 +114,16 @@ export interface PendingRequest {
 
 type RejectKey = Extract<HgKey, `hg.table.reject.${string}`>;
 
-/** The last refusal or seat change, until the next request or dismissNotice(). */
+/**
+ * The last refusal, seat change or loss of undo, until the next request or
+ * dismissNotice(). `undo-off` tells the sole human of a table that undo is
+ * gone for good, because a second human took a seat.
+ */
 export type Notice =
   | { readonly kind: 'reject'; readonly code: string; readonly message: RejectKey }
   | { readonly kind: 'watching'; readonly code: 'watching' }
-  | { readonly kind: 'seated'; readonly code: 'seated'; readonly seat: number };
+  | { readonly kind: 'seated'; readonly code: 'seated'; readonly seat: number }
+  | { readonly kind: 'undo-off'; readonly code: 'undo-off' };
 
 export class TableSessionError extends Error {
   constructor(readonly code: string) {
@@ -199,6 +204,12 @@ export class TableSession {
 
   /** This connection's seat, or null while it watches. */
   seat: number | null = $derived(this.table?.you.seat ?? this.lobby?.you.seat ?? null);
+  /**
+   * The last game seat this page held, kept while it watches, so a former
+   * player can read who plays their seat now. Only an admin's frame names
+   * it (you.previousSeats), so this page's memory is what the others have.
+   */
+  held = $state<number | null>(null);
   /** This connection's user, as the latest frame lists them. */
   me: PlatformHuman | null = $derived.by(() => {
     const f = this.table ?? this.lobby;
@@ -606,11 +617,21 @@ export class TableSession {
     }
     const seatNow = frame.you.seat ?? null;
     const seatBefore = prev ? (prev.you.seat ?? null) : seatNow;
+    if (seatNow !== null) this.held = seatNow;
     if (prev && seatNow !== seatBefore) {
       this.notice =
         seatNow === null
           ? { kind: 'watching', code: 'watching' }
           : { kind: 'seated', code: 'seated', seat: seatNow };
+    } else if (
+      prev &&
+      seatNow !== null &&
+      frame.undoOff &&
+      !prev.undoOff &&
+      prev.allowUndo &&
+      prev.startingHumanCount === 1
+    ) {
+      this.notice = { kind: 'undo-off', code: 'undo-off' };
     }
     this.#answer(frame.ack);
     // Start has no ack: the table's first frame answers it.

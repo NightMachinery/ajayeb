@@ -75,6 +75,8 @@
           {ht('hg.table.seat.seated', { seat: session.notice.seat })}
         {:else if session.notice.kind === 'watching'}
           {ht('hg.table.seat.watching')}
+        {:else if session.notice.kind === 'undo-off'}
+          {ht('hg.admin.undoOff')}
         {:else}
           {ht(session.notice.message)}
         {/if}
