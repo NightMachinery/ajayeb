@@ -518,7 +518,7 @@
           {/if}
           <SeenHandsButton onopen={() => (seenOpen = true)} />
         </div>
-        <div class="hand">
+        <div class="hand" class:sixth={view.phase === 'turn' && view.turn === TURNS_PER_AGE}>
           {#if view.phase === 'turn' && view.turn === TURNS_PER_AGE}
             <p class="special-note" data-sixth-turn>{ht('hg.special.sixth')}</p>
           {/if}
@@ -549,7 +549,7 @@
           {/key}
         </div>
       {:else}
-        <div class="hand">
+        <div class="hand watch">
           <SpectatorPanel
             seats={view.seats}
             {names}
@@ -773,7 +773,10 @@
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    /* The middle keeps at least its content, the hand's minimum included
+       (HandGrid), and the neighbour panels take what is left, up to
+       their own height. */
+    grid-template-rows: auto auto minmax(0, auto) minmax(min-content, 1fr);
     grid-template-areas:
       'top top'
       'far far'
@@ -810,10 +813,17 @@
     min-width: 0;
     max-width: 11rem;
   }
+  /* A neighbour panel taller than its row scrolls. The padding holds the
+     pass mark and the reveal tag, which hang below the panel, inside the
+     scroller; the negative margin keeps them hanging over the gap. */
   .neighbour {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    min-height: 0;
+    margin-block-end: -0.75rem;
+    padding-block-end: 0.75rem;
+    overflow-y: auto;
   }
   .neighbour > :global(*) {
     flex: 1 1 auto;
@@ -931,6 +941,11 @@
     font-size: 0.8rem;
     line-height: 1.3;
   }
+  /* A spectator's panel scrolls inside the room it is given, and asks
+     the screen for none. */
+  .watch {
+    contain: size;
+  }
   .empty {
     margin: auto;
     color: var(--fg-muted);
@@ -976,7 +991,7 @@
   @media (orientation: landscape) and (max-height: 32rem) {
     .screen {
       grid-template-columns: 10.5rem minmax(0, 1fr) 10.5rem;
-      grid-template-rows: auto minmax(0, 1fr) auto;
+      grid-template-rows: auto minmax(0, 1fr) minmax(0, auto);
       grid-template-areas:
         'top top top'
         'fars mid fare'
@@ -1014,6 +1029,20 @@
     .right {
       padding-inline-end: 0.3rem;
     }
+    .neighbour {
+      margin-block-end: 0;
+    }
+    /* The sixth turn's note sits beside the last two cards, not above
+       them, so the cards keep the hand's whole height. */
+    .hand.sixth {
+      flex-direction: row-reverse;
+      gap: 0.4rem;
+    }
+    .hand.sixth .special-note {
+      flex: 1 1 0;
+      align-self: flex-start;
+      padding-inline: 0;
+    }
     .strip,
     .hand,
     .pick {
@@ -1046,7 +1075,7 @@
       flex-basis: 11rem;
     }
     .neighbour {
-      overflow-y: auto;
+      margin-block-end: 0;
       padding-block-end: 1rem;
     }
     .neighbour > :global(*) {

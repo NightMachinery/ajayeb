@@ -238,6 +238,8 @@
       white-space: nowrap;
     }
   }
+  /* On a card too narrow for the tag on one line, it wraps between its
+     words rather than spilling past the card's edges. */
   .pick-tag {
     z-index: 1;
     display: inline-flex;
@@ -246,14 +248,16 @@
     align-self: start;
     justify-self: center;
     gap: 0.2em;
+    max-width: calc(100% - 4cqi);
     margin-block-start: 3cqi;
     padding: 0.15em 0.45em;
-    border-radius: 9999px;
+    border-radius: 1em;
     background: var(--lapis);
     color: var(--paper-bright);
     font-size: max(10px, 10cqi);
     font-weight: 700;
-    white-space: nowrap;
+    line-height: 1.15;
+    text-align: center;
   }
   .name {
     overflow: hidden;
