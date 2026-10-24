@@ -1484,6 +1484,7 @@
 <FirstTips
   {view}
   seat={summarySeat}
+  touch={coarsePointer.current}
   families={boardHints?.families ?? shownFamilies}
   boardMarks={!!boardHints?.boardMarks}
   {names}

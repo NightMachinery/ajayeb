@@ -588,6 +588,9 @@ export const hints = {
   'hints.tip.denyPair':
     'This card would complete {name}’s science pair, and they would pick a progress token. Taking it keeps it from them.',
   'hints.tip.win': 'A crown marks a card that wins the game if you build it.',
+  // Touch screens only, pointing at a real mark (ui/tips.svelte.ts longPress).
+  'hints.tip.longPress':
+    'Press and hold a mark like this one to read what it means. Tapping the card lists its marks too.',
   'hints.tip.winOpp': 'An outlined crown marks a card that would win the game for {name}.',
   'hints.tip.loot':
     'This card’s shields would push the pawn onto a looting token, and the other player would lose coins.',
@@ -632,7 +635,7 @@ export const hints = {
   // sections can name it; it lives here with the other hint words.
   'rules.hints.title': 'Hint glyphs',
   'rules.hints.intro':
-    'Hint marks state facts about a card as the board stands now, never advice. Each card shows at most one mark at its top corner.',
+    'Hint marks state facts about a card as the board stands now, never advice. Each card shows at most one mark at its top corner. Point at a mark to read it; on a touch screen, press and hold it, or tap the card, whose sheet lists its marks.',
   'rules.hints.win': 'Crown: building this card wins the game.',
   'rules.hints.pair':
     'Progress-token rosette with an equals sign: building this card completes a science pair, so its builder picks a progress token. Its tooltip names the symbol.',

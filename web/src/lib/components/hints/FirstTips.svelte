@@ -5,7 +5,8 @@
   // Only on the player's own turn, with nothing else open over the board
   // (the caller's `canShow`), so it never lands on the other player's turn
   // on a shared hot-seat device. A tip counts as seen once it is closed.
-  // Besides the pips (M10.F3): the Law laurel, a looting token within
+  // On a touch screen the first of them says to press and hold a mark
+  // (longPress, M18.card-sheet-signals). Besides the pips (M10.F3): the Law laurel, a looting token within
   // reach, the wonder hourglass, the chain badge and the guild back; and
   // the concept tips (M10.tutorial-client): the pawn off centre, the first
   // science symbol, choosing who starts the next age and a new age.
@@ -26,9 +27,11 @@
     names: readonly [string, string];
     /** The player's own turn, with no sheet, popup or pass screen open. */
     canShow: boolean;
+    /** A touch screen, where a mark's tooltip needs a long-press. */
+    touch?: boolean;
   }
 
-  let { view, seat, families, boardMarks, names, canShow }: Props = $props();
+  let { view, seat, families, boardMarks, names, canShow, touch = false }: Props = $props();
 
   // The ply a tip was last closed at: one tip per turn.
   let closedAt = $state<number | null>(null);
@@ -75,7 +78,7 @@
     const next =
       !view || seat === null || !canShow || closedAt === view.ply
         ? null
-        : dueTip(tipsInView(view, seat, families, boardMarks), tips.value);
+        : dueTip(tipsInView(view, seat, families, boardMarks, touch), tips.value);
     if (!next || dialogOpen()) return null;
     return next;
   });
@@ -83,6 +86,8 @@
   function text(id: TipId): string {
     const name = seat === null ? '' : names[seat === 0 ? 1 : 0];
     switch (id) {
+      case 'longPress':
+        return t('hints.tip.longPress');
       case 'pair':
         return t('hints.tip.pair');
       case 'denyPair':

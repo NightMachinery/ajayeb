@@ -233,6 +233,24 @@ describe('which tip is due', () => {
 
   it("points at the board pip's attributes", () => {
     expect(tipSelector('denyPair')).toBe('[data-hint="pair"][data-hint-side="opp"]');
+    expect(tipSelector('longPress')).toBe('.card-structure [data-hint][data-hint-side]');
+  });
+
+  it('on a touch screen says first, once, to press and hold a mark (M18.card-sheet-signals)', () => {
+    const v = view([{ codes: [['pair'], []] }]);
+    expect(tipsInView(v, 0, ALL, true, true)).toEqual(['longPress', 'pair']);
+    // Never on a fine pointer, and never without a pip on the board.
+    expect(tipsInView(v, 0, ALL, true, false)).toEqual(['pair']);
+    expect(tipsInView(v, 0, ALL, false, true)).toEqual([]);
+    expect(
+      tipsInView(view([{ state: 'faceDown', codes: [['pair'], []] }]), 0, ALL, true, true)
+    ).toEqual([]);
+    const storage = memory();
+    const store = new TipsStore(storage);
+    const inView = tipsInView(v, 0, ALL, true, true);
+    expect(dueTip(inView, store.value)).toBe('longPress');
+    store.markSeen('longPress');
+    expect(dueTip(inView, new TipsStore(storage).value)).toBe('pair');
   });
 });
 

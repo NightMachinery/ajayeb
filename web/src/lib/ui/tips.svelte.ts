@@ -22,6 +22,12 @@
 // sixth symbol (lawLaurel). The chain badge and the guild back are drawn
 // whatever the hint settings, so their tips need no family.
 //
+// On a touch screen a mark's tooltip needs a long-press, because the mark
+// sits on a card a tap opens. So the first time a pip shows there, one
+// more tip comes before the pip's own (longPress, M18.card-sheet-signals):
+// press and hold a mark like this one, or tap the card, whose sheet lists
+// its marks. It never shows on a fine pointer, where hovering finds them.
+//
 // Three concept tips (M10.tutorial-client) explain a game concept rather
 // than a mark, the first time it comes up on this device: the pawn off
 // centre (track), the seat's first science symbol (science) and a new age
@@ -42,6 +48,7 @@ export const TIPS_KEY = 'ajayeb:tips';
 
 /** Every tip, in priority order: the one that shows when several are due. */
 export const TIP_IDS = [
+  'longPress',
   'win',
   'pair',
   'denyPair',
@@ -171,9 +178,12 @@ export interface TipSpec {
   readonly side?: 'own' | 'opp';
   /** The rules section of "More in Rules". */
   readonly rules: RuleSectionId;
+  /** Only on a touch screen, and only while a pip tip's mark shows. */
+  readonly touch?: boolean;
 }
 
 export const TIPS: Readonly<Record<TipId, TipSpec>> = {
+  longPress: { boardMark: true, touch: true, rules: 'hints' },
   win: { family: 'threats', boardMark: true, code: 'win', side: 'own', rules: 'hints' },
   pair: { family: 'science', boardMark: true, code: 'pair', side: 'own', rules: 'science' },
   denyPair: { family: 'science', boardMark: true, code: 'pair', side: 'opp', rules: 'science' },
@@ -220,6 +230,8 @@ export function tipSelector(id: TipId, view?: TipView, seat: 0 | 1 = 0): string 
   const s = TIPS[id];
   if (s.code && s.side) return `[data-hint="${s.code}"][data-hint-side="${s.side}"]`;
   switch (id) {
+    case 'longPress':
+      return '.card-structure [data-hint][data-hint-side]';
     case 'lawLaurel':
       return '.progress-token-row [data-hint="law"]';
     case 'ghostLoot': {
@@ -465,12 +477,15 @@ function defaultTip(opts: TipOptions): TipPlacement {
  * seat), in priority order: a face-up card whose hints carry the tip's
  * code for that seat (own) or the other one (opp), in a family the screen
  * shows, while hint marks are on the board. None once the game is over.
+ * On a touch screen (`touch`), longPress comes first while a pip tip is in
+ * view.
  */
 export function tipsInView(
   view: TipView,
   seat: 0 | 1,
   families: ReadonlySet<HintFamily>,
-  boardMarks: boolean
+  boardMarks: boolean,
+  touch = false
 ): TipId[] {
   if (view.result) return [];
   const has = (code: 'win' | 'pair' | 'loot', who: 0 | 1): boolean =>
@@ -478,13 +493,15 @@ export function tipsInView(
       (slot) => slot.state === 'faceUp' && !!slot.hints?.[who].codes.includes(code)
     );
   const other = seat === 0 ? 1 : 0;
-  return TIP_IDS.filter((id) => {
+  const shown = TIP_IDS.filter((id) => {
     const s = TIPS[id];
+    if (s.touch) return false;
     if (s.boardMark && !boardMarks) return false;
     if (s.family && !families.has(s.family)) return false;
     if (s.code && s.side) return has(s.code, s.side === 'own' ? seat : other);
     return markInView(id, view, seat);
   });
+  return touch && shown.some((id) => TIPS[id].code) ? ['longPress', ...shown] : shown;
 }
 
 /** The tip to show next: the first of `inView` not seen yet, or null (also when tips are off). */
