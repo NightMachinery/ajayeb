@@ -121,8 +121,10 @@
           class="min-h-11 rounded-control px-3 text-sm font-semibold text-accent hover:bg-panel-sunken"
           data-tip-more
           onclick={() => {
-            onclose();
+            // More first: closing the tip ends the container's due tip,
+            // which its More handler reads to find the rules section.
             onmore?.();
+            onclose();
           }}
         >
           {t('hints.tip.more')}
