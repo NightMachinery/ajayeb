@@ -31,7 +31,8 @@ export const admin = {
   'hg.admin.confirm.toBot':
     '{bot} plays seat {seat} from now on. {name} watches, and their pick, confirmed or not, is played by the bot.',
   'hg.admin.confirm.botToBot': '{bot} plays seat {seat} from now on.',
-  'hg.admin.confirm.seat': '{name} plays seat {seat} from now on.',
+  'hg.admin.confirm.seat':
+    "{name} plays seat {seat} from now on. The bot's pick stays until {name} changes it.",
   'hg.admin.confirm.seatReplace':
     '{name} plays seat {seat} from now on, and {old} watches. Their pick stays until {name} changes it.',
   'hg.admin.confirm.promote':
