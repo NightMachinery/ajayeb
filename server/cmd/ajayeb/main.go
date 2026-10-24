@@ -141,7 +141,7 @@ func parseFlags(args []string, stderr io.Writer) (options, error) {
 	fset.StringVar(&opts.staticDir, "static", "", "serve the web build from this `directory` instead of the embedded one")
 	fset.BoolVar(&opts.dev, "dev", false, "development mode: debug logging and loopback WebSocket origins")
 	fset.BoolVar(&opts.devEndpoints, "dev-endpoints", false, "enable the test-only /api/dev/ endpoints (requires -dev)")
-	fset.BoolVar(&opts.tables, "haftgane-tables", false, "allow creating Haftgane tables through POST /api/dev/tables and shared lobbies with lobby-create, until the lobby's client ships (requires -dev and -dev-endpoints)")
+	fset.BoolVar(&opts.tables, "haftgane-tables", false, "allow creating Haftgane tables through POST /api/dev/tables and shared lobbies of three or more seats, until Haftgane ships; two-seat lobbies (Duel's online game) need no flag (requires -dev and -dev-endpoints)")
 	fset.Var(listValue{&origins}, "origin", "allowed site `origin` such as https://example.org (repeatable or comma separated)")
 	fset.Var(listValue{&proxies}, "trust-proxy", "trusted reverse proxy `IPs or CIDRs` whose X-Forwarded-For is believed (repeatable or comma separated)")
 	fset.DurationVar(&opts.botDelay, "bot-delay", defaultBotDelay, "minimum think `time` before a bot move (0 for tests)")

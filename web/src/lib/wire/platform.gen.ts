@@ -78,6 +78,11 @@ export interface LobbyState {
   code: string;
   revision: number /* int */;
   seatCount: number /* int */;
+  /**
+   * MaxSeats is the most seats this server lets a lobby have and start:
+   * 2 while Haftgane table creation is off, so only Duel's online game.
+   */
+  maxSeats: number /* int */;
   options: LobbyOptions;
   seats: PlatformSeat[];
   humans: PlatformHuman[];

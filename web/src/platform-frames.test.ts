@@ -48,6 +48,7 @@ const snapshots = [
     code: 'REGAAA',
     revision: 0,
     seatCount: 3,
+    maxSeats: 7,
     options: {},
     seats: [],
     humans: [],

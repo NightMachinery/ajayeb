@@ -60,18 +60,21 @@ type LobbyStart struct {
 // LobbyState is a full shared-lobby snapshot. The next snapshot after Start
 // selects the game entry by its frame family under the same room code.
 type LobbyState struct {
-	T         string             `json:"t" tstype:"'lobby-state'"`
-	Game      string             `json:"game" tstype:"'lobby'"`
-	Code      string             `json:"code"`
-	Revision  int                `json:"revision"`
-	SeatCount int                `json:"seatCount"`
-	Options   LobbyOptions       `json:"options"`
-	Seats     []PlatformSeat     `json:"seats"`
-	Humans    []PlatformHuman    `json:"humans"`
-	You       PlatformYou        `json:"you"`
-	CanStart  bool               `json:"canStart"`
-	Ack       *PlatformAck       `json:"ack,omitempty"`
-	RoomLog   []PlatformLogEntry `json:"roomLog"`
+	T         string `json:"t" tstype:"'lobby-state'"`
+	Game      string `json:"game" tstype:"'lobby'"`
+	Code      string `json:"code"`
+	Revision  int    `json:"revision"`
+	SeatCount int    `json:"seatCount"`
+	// MaxSeats is the most seats this server lets a lobby have and start:
+	// 2 while Haftgane table creation is off, so only Duel's online game.
+	MaxSeats int                `json:"maxSeats"`
+	Options  LobbyOptions       `json:"options"`
+	Seats    []PlatformSeat     `json:"seats"`
+	Humans   []PlatformHuman    `json:"humans"`
+	You      PlatformYou        `json:"you"`
+	CanStart bool               `json:"canStart"`
+	Ack      *PlatformAck       `json:"ack,omitempty"`
+	RoomLog  []PlatformLogEntry `json:"roomLog"`
 }
 
 // LobbyReject is private; it never discloses reservation secrets or claims.

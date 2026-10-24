@@ -651,6 +651,9 @@ func (a *actor) edit(c *room.Client, f wire.LobbyEdit) string {
 		if f.SeatCount == nil || *f.SeatCount < MinSeats || *f.SeatCount > MaxSeats || *f.SeatCount == r.SeatCount {
 			return bad()
 		}
+		if !a.l.allows(*f.SeatCount) {
+			return a.refuse(c, f.Seq, f.Op, outForbidden)
+		}
 		n := *f.SeatCount
 		for _, s := range cand.Slots[min(n, len(cand.Slots)):] {
 			if s.Kind == SlotHuman {
@@ -751,11 +754,12 @@ func (a *actor) role(c *room.Client, f wire.LobbyRole) string {
 }
 
 // canStart reports whether u could Start now: a seated admin (real or
-// temporary), two or more seats
-// and no reservation still waiting.
+// temporary), two or more seats that Config.Creation allows (a lobby of
+// three or more made while it was on waits for it), and no reservation
+// still waiting.
 func (a *actor) canStart(u string) bool {
 	r := &a.rec
-	return a.isAdmin(u) && slotOf(r, u, SlotHuman) >= 0 && r.SeatCount >= MinSeats &&
+	return a.isAdmin(u) && slotOf(r, u, SlotHuman) >= 0 && r.SeatCount >= MinSeats && a.l.allows(r.SeatCount) &&
 		!slices.ContainsFunc(r.Slots, func(s Slot) bool { return s.Kind == SlotReserved })
 }
 

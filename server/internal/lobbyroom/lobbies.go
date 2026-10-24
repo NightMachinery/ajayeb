@@ -13,14 +13,17 @@
 // with the lobby's connections handed over and swaps it in
 // (room.Manager.Swap), so the next frame each client receives is the
 // game's. Three to seven seats start a Haftgane table (package tableroom);
-// two start assigned Duel rooms through room.Manager.StartDuel, and
-// are refused until then. A finished table's rematch is a new lobby made
-// here (Rematch).
+// two start an assigned online Duel game through room.Manager.StartDuel.
+// A finished table's rematch, and a finished shared Duel game's, is a new
+// lobby made here (Rematch, RematchDuel).
 //
 // Every change is a transaction, as in the table: clone the record,
 // validate the operation, write the candidate atomically, then swap it in
-// and publish. Creating a lobby is behind the same switch as creating
-// tables (Config.Creation); loading a saved one is not.
+// and publish. A two-seat lobby, Duel's online game, can always be
+// created, started and rematched. A lobby of three or more seats, which
+// starts a Haftgane table, is behind the same switch as creating tables
+// (Config.Creation): creating one, growing a lobby to three or more seats,
+// starting one and a table's rematch. Loading a saved one is not.
 package lobbyroom
 
 import (
@@ -64,8 +67,11 @@ type Config struct {
 	Logger *slog.Logger // default: discard
 	// Tables starts the Haftgane games.
 	Tables *tableroom.Tables
-	// Creation allows creating lobbies (lobby-create and rematches). It is
-	// off in production until the lobby's client ships (-haftgane-tables).
+	// Creation allows lobbies of three or more seats, which start Haftgane
+	// tables: lobby-create and a seats edit to three or more, their Start,
+	// and a table's rematch. It is off in production until Haftgane ships
+	// (-haftgane-tables). Two-seat lobbies, which start Duel's online game,
+	// and Duel's shared rematches do not depend on it.
 	Creation bool
 	// SeqClients bounds, for each user, the clients whose last accepted
 	// seq the lobby remembers.
@@ -155,14 +161,27 @@ func (unbound) CreateGame(string, string, []byte) ([]byte, error) { return nil, 
 func (l *Lobbies) create(m *room.Manager, c *room.Client, msg wire.ClientMessage) (string, error) {
 	req, ok := msg.(wire.LobbyCreate)
 	switch {
-	case !l.cfg.Creation:
-		return "", room.ErrForbidden
 	case !ok || req.SeatCount < MinSeats || req.SeatCount > MaxSeats || !validOptions(req.Options) || !validName(c.Name):
 		return "", room.ErrInvalidSpec
+	case !l.allows(req.SeatCount):
+		return "", room.ErrForbidden
 	}
 	r := newRecord(req.SeatCount, req.Options, c.UserID)
 	r.Slots[0] = Slot{Kind: SlotHuman, UserID: c.UserID, Name: c.Name}
 	return l.save(m, r)
+}
+
+// allows reports whether a lobby may have seats seats under Config.Creation.
+func (l *Lobbies) allows(seats int) bool {
+	return seats <= MinSeats || l.cfg.Creation
+}
+
+// maxSeats is the most seats a lobby may have under Config.Creation.
+func (l *Lobbies) maxSeats() int {
+	if l.cfg.Creation {
+		return MaxSeats
+	}
+	return MinSeats
 }
 
 // Reserve returns a fresh code for a finished table's rematch lobby
@@ -172,6 +191,13 @@ func (l *Lobbies) Reserve(m *room.Manager) (string, error) {
 	if !l.cfg.Creation {
 		return "", room.ErrForbidden
 	}
+	return m.FreshCode()
+}
+
+// ReserveDuel returns a fresh code for a finished shared Duel game's
+// rematch lobby (room.DuelSuccessors), which the game writes down before
+// RematchDuel makes the lobby. A two-seat lobby needs no Creation.
+func (l *Lobbies) ReserveDuel(m *room.Manager) (string, error) {
 	return m.FreshCode()
 }
 
@@ -211,11 +237,10 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 	return l.saveRematch(m, code, r)
 }
 
-// RematchDuel creates the two-seat successor lobby of a shared-lobby Duel game.
+// RematchDuel creates the two-seat successor lobby of a shared-lobby Duel
+// game under the code ReserveDuel gave, as Rematch does for a table; it
+// needs no Creation.
 func (l *Lobbies) RematchDuel(m *room.Manager, code string, rm room.DuelRematch) error {
-	if !l.cfg.Creation {
-		return room.ErrForbidden
-	}
 	opts := wire.LobbyOptions{Hints: &rm.Hints}
 	switch rm.FirstPlayer {
 	case engine.FirstPlayerSeat0:

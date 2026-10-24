@@ -14,6 +14,7 @@ func (a *actor) frame(c *room.Client, ack *wire.PlatformAck) wire.LobbyState {
 	st := wire.NewLobbyState(a.code)
 	st.Revision = r.Revision
 	st.SeatCount = r.SeatCount
+	st.MaxSeats = a.l.maxSeats()
 	st.Options = cloneOptions(r.Options)
 	st.Seats, st.Humans = a.meta()
 	user := a.userOf(c)

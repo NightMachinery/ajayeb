@@ -105,9 +105,14 @@ families.
 creating one is switched off. A lobby's Start makes a table under the lobby's
 code (`StartTable`, below). The Go API `CreateTable` (a filled seat list,
 optional seed, roles and prefix batches) and the development endpoint
-`POST /api/dev/tables` make one directly. Creating a lobby, or a table
-directly, is refused unless the server runs with `-haftgane-tables` (which
-needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
+`POST /api/dev/tables` make one directly. Creating a table directly, or a
+lobby of three or more seats (creating one, growing a lobby to that size or
+starting one), is refused unless the server runs with `-haftgane-tables`
+(which needs `-dev` and `-dev-endpoints`), until Haftgane ships. A two-seat
+lobby, which is how Home starts Duel's online game, and a shared Duel game's
+rematch lobby need no switch, so production can make them. The lobby frame's
+`maxSeats` (2 without the switch, 7 with it) tells the client which seat
+counts to offer.
 
 - **Engine contract.** `engine.go` binds concrete `haftgane/rules` and
   `haftgane/view` values. The actor accepts only engine-offered keys and

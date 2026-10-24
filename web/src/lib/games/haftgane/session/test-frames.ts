@@ -150,6 +150,7 @@ export function lobbyFrame(overrides: Partial<LobbyState> = {}): LobbyState {
     code: CODE,
     revision: 1,
     seatCount: 3,
+    maxSeats: 7,
     options: {},
     seats: [
       { seat: 0, kind: 'human', userId: 'u0' },

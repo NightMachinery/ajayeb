@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -418,4 +419,100 @@ func TestSharedLobbyDuelRematchReservesHumansAndResetsRoles(t *testing.T) {
 	if err != nil || third != next {
 		t.Fatalf("restart created another successor: %s %v", third, err)
 	}
+}
+
+// finishDuel plays a two-human shared Duel game to its end, each turn's
+// player taking their first legal action.
+func finishDuel(t *testing.T, f *fixture, code string, players []*conn) {
+	t.Helper()
+	for seq := 100; seq < 600; seq++ {
+		snap, err := f.m.Snapshot(f.ctx(), code)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if snap.Status == store.StatusFinished {
+			return
+		}
+		keys := engine.LegalActions(&snap.State, nil)
+		k := players[int(snap.State.ToMove)]
+		if err := f.m.Act(f.ctx(), k.c, wire.NewAct(code, seq, snap.Version, keys[0].Key(), nil)); err != nil {
+			t.Fatal(err)
+		}
+		duelAck(k, seq)
+	}
+	t.Fatal("Duel did not finish")
+}
+
+// TestSharedLobbyDuelWithoutTableCreation: a production server runs
+// without -haftgane-tables (Config.Creation off). Home's online Duel still
+// creates its two-seat lobby, starts it and rematches it, and the frames
+// say two seats is the most; three or more are refused, whether created,
+// edited to or started from a lobby made while creation was on.
+func TestSharedLobbyDuelWithoutTableCreation(t *testing.T) {
+	f := newFixture(t, nil)
+	early := f.conn(user(0), "e", "A")
+	big, err := f.m.CreatePlatform(f.ctx(), early.c, wire.LobbyCreate{T: "lobby-create", SeatCount: 4, Options: wire.LobbyOptions{}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st := early.lobby("the creator's frame", any2); st.MaxSeats != MaxSeats {
+		t.Fatalf("with creation on, maxSeats %d", st.MaxSeats)
+	}
+	f.close()
+	f.noCreation = true
+	f.start()
+	a := f.conn(user(0), "a", "A")
+	b := f.conn(user(1), "b", "B")
+	if _, err := f.m.CreatePlatform(f.ctx(), a.c, wire.LobbyCreate{T: "lobby-create", SeatCount: 4, Options: wire.LobbyOptions{}}); !errors.Is(err, room.ErrForbidden) {
+		t.Fatalf("four-seat lobby-create without creation: %v", err)
+	}
+	code := f.create(a, 2, wire.LobbyOptions{})
+	f.join(b, code)
+	st := a.lobby("both seated", func(st wire.LobbyState) bool { return st.CanStart && slotOf2(st, user(1)) })
+	if st.MaxSeats != MinSeats {
+		t.Fatalf("without creation, maxSeats %d", st.MaxSeats)
+	}
+	seats := edit(code, 1, "seats")
+	seats.SeatCount = ptr(4)
+	f.send(a, seats)
+	if got := a.reject(1); got != outForbidden {
+		t.Fatalf("seats edit to 4 without creation: %s", got)
+	}
+	if r := f.record(code); r.SeatCount != 2 {
+		t.Fatalf("refused edit changed the lobby: %d seats", r.SeatCount)
+	}
+	f.send(a, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 2})
+	duelFrame(a)
+	duelFrame(b)
+	finishDuel(t, f, code, []*conn{a, b})
+	next, err := f.m.Rematch(f.ctx(), b.c, code)
+	if err != nil {
+		t.Fatalf("Duel rematch without creation: %v", err)
+	}
+	if game, _ := f.st.Game(next); game != Game {
+		t.Fatalf("Duel rematch made %q, not a lobby", game)
+	}
+	f.join(a, next)
+	f.join(b, next)
+	b.lobby("both seated in the successor", func(st wire.LobbyState) bool { return st.CanStart })
+	f.send(b, wire.LobbyStart{T: "lobby-start", Code: next, Seq: 1})
+	duelFrame(a)
+	duelFrame(b)
+	// The four-seat lobby made earlier loads, but nobody can start it.
+	f.join(a, big)
+	st = a.lobby("the earlier four-seat lobby", func(st wire.LobbyState) bool { return st.Code == big })
+	if st.CanStart || st.MaxSeats != MinSeats || st.SeatCount != 4 {
+		t.Fatalf("earlier four-seat lobby: canStart %v maxSeats %d seats %d", st.CanStart, st.MaxSeats, st.SeatCount)
+	}
+	f.send(a, wire.LobbyStart{T: "lobby-start", Code: big, Seq: 10, FillBots: true})
+	if got := a.reject(10); got != outForbidden {
+		t.Fatalf("four-seat Start without creation: %s", got)
+	}
+	if game, _ := f.st.Game(big); game != Game {
+		t.Fatalf("refused Start replaced the lobby with %q", game)
+	}
+}
+
+func slotOf2(st wire.LobbyState, u string) bool {
+	return slices.ContainsFunc(st.Seats, func(s wire.PlatformSeat) bool { return s.Kind == SlotHuman && s.UserID != nil && *s.UserID == u })
 }

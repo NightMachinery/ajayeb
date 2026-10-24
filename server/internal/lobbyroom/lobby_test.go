@@ -35,6 +35,9 @@ type fixture struct {
 	lobbies  *Lobbies
 	// replaceFails makes the tables' next ReplaceGame fail.
 	replaceFails bool
+	// noCreation starts the tables and lobbies as production does, without
+	// -haftgane-tables (Config.Creation off).
+	noCreation bool
 	// saves holds, for a code or a game, how many of its next writes pass
 	// and how many after them fail (failSaves).
 	mu    sync.Mutex
@@ -138,8 +141,8 @@ func (s failingStore) ReplaceGame(code, from, game string, data []byte) error {
 
 func (f *fixture) start() {
 	f.t.Helper()
-	f.tables = tableroom.New(tableroom.Config{Clock: f.clock, Creation: true})
-	f.lobbies = New(Config{Clock: f.clock, Tables: f.tables, Creation: true})
+	f.tables = tableroom.New(tableroom.Config{Clock: f.clock, Creation: !f.noCreation})
+	f.lobbies = New(Config{Clock: f.clock, Tables: f.tables, Creation: !f.noCreation})
 	kinds, err := room.NewKinds(room.DuelKind(), f.tables.Kind(), f.lobbies.Kind())
 	if err != nil {
 		f.t.Fatal(err)

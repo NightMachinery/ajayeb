@@ -18,10 +18,12 @@ type DuelRematch struct {
 	Hints           view.HintSettings
 }
 
-// DuelSuccessors is the shared lobby's narrow rematch seam. ErrExists means
-// another room took a reserved code; all other errors leave that code for retry.
+// DuelSuccessors is the shared lobby's narrow rematch seam. ReserveDuel
+// gives a fresh code, which the game stores before RematchDuel makes the
+// lobby under it. ErrExists from RematchDuel means another room took the
+// reserved code; all other errors leave that code for retry.
 type DuelSuccessors interface {
-	Reserve(*Manager) (string, error)
+	ReserveDuel(*Manager) (string, error)
 	RematchDuel(*Manager, string, DuelRematch) error
 }
 
@@ -48,7 +50,7 @@ func (r *Room) rematchLobby(c *Client, mem member) (string, error) {
 			if c.AllowCreate != nil && !c.AllowCreate() {
 				return "", ErrRateLimited
 			}
-			code, err := maker.Reserve(r.m)
+			code, err := maker.ReserveDuel(r.m)
 			if err != nil {
 				return "", err
 			}

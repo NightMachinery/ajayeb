@@ -261,6 +261,7 @@ const lobbyState = shape(
     code: str,
     revision: count,
     seatCount: count,
+    maxSeats: count,
     options: lobbyOptions,
     seats: list(platformSeat),
     humans: list(human),
