@@ -41,10 +41,13 @@ viewports, three seat counts, English and Persian, and both themes. It checks
 
 ## Browser privacy proof
 
-`make e2e GREP=@haftgane-special` creates two seven-seat tables through Home
+`make e2e GREP=@haftgane-special` creates seven-seat tables through Home
 and their shared lobbies, with seven independent players and a spectator. The
 host's seating edit also carries the existing choose-side wire option until the
-parallel lobby control lands. The test plays actual offered keys through the
+parallel lobby control lands. It funds the ability stages, tries at most four
+Home tables per side until the required decisions are covered, and logs each
+actual seed in `attempts.json`. It does not assume a particular server seed
+counter value. The test plays actual offered keys through the
 side, discard and ordinary card-sheet controls. Its test policy funds
 Halikarnassos before the sixth turn, so a discard point and a locked kept card
 can overlap. Captures retain deciding and confirmed waiting views.
