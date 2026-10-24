@@ -68,6 +68,11 @@
       ? offered[0]!.kept!
       : null
   );
+  // The footer leads with the outcome the seat has drafted here, or the
+  // build when it has drafted nothing here, and names it with the card;
+  // the other outcomes follow in the sheet's order.
+  const chosen = $derived(offered.find((c) => c.key === pendingKey) ?? build);
+  const actions = $derived(chosen ? [chosen, ...offered.filter((c) => c !== chosen)] : offered);
   const why = $derived(cc.disabled.find((x) => x.kind === 'build'));
   const stageCost = $derived(stage ? stagesOf(seat)[stage.stage - 1]?.cost : undefined);
   const chainSources = $derived(
@@ -314,28 +319,23 @@
   </div>
   {#snippet footer()}
     <div class="actions" dir={i18n.dir}>
-      {#each [build, stage, sale] as c, i (i)}
-        {#if c}
-          <Button
-            variant={i === 0 ? 'primary' : 'secondary'}
-            class="sheet-action relative isolate overflow-hidden"
-            data-act={c.key}
-            data-kind={c.kind}
-            data-armed={armedKey === c.key ? '' : undefined}
-            disabled={locked}
-            onclick={() => act(c)}
-          >
-            {#if armedKey === c.key}
-              <span class="confirm-ring" aria-hidden="true"></span>
-            {/if}
-            {armedKey === c.key
-              ? t('shell.confirmArmed', { label: i === 0 ? choiceLabel(c) : choiceAction(c) })
-              : i === 0
-                ? choiceLabel(c)
-                : choiceAction(c)}
-          </Button>
-        {:else if i === 0}<Button disabled class="sheet-action">{ht('hg.sheet.cannotBuild')}</Button
-          >{/if}
+      {#if !chosen}<Button disabled class="sheet-action">{ht('hg.sheet.cannotBuild')}</Button>{/if}
+      {#each actions as c (c.key)}
+        {@const label = c === chosen ? choiceLabel(c) : choiceAction(c)}
+        <Button
+          variant={c === chosen ? 'primary' : 'secondary'}
+          class="sheet-action relative isolate overflow-hidden"
+          data-act={c.key}
+          data-kind={c.kind}
+          data-armed={armedKey === c.key ? '' : undefined}
+          disabled={locked}
+          onclick={() => act(c)}
+        >
+          {#if armedKey === c.key}
+            <span class="confirm-ring" aria-hidden="true"></span>
+          {/if}
+          {armedKey === c.key ? t('shell.confirmArmed', { label }) : label}
+        </Button>
       {/each}
     </div>
   {/snippet}

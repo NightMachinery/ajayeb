@@ -26,7 +26,11 @@ double-tap guard) and reuses the shell Button and confirmation label.
 Importing ConfirmButton itself would extract it from Duel's existing cold
 chunk, adding a request and compressed bytes despite this sheet being lazy.
 Changing the selected payment resets an armed button. Stage payments use
-the same radio list, and the sale displays the server's gain. The footer
+the same radio list, and the sale displays the server's gain. The footer's
+first, primary button is the outcome drafted from this sheet (a build, a
+wonder stage or the sale), named with the card and the server's price or
+gain, or the build when nothing here is drafted; the other outcomes follow
+as secondary buttons in the sheet's order. The footer
 stays visible while the details scroll. Short landscape and desktop place
 the card and choices in separate columns, with the actions in one row.
 
