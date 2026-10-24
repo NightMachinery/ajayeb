@@ -70,12 +70,10 @@ samples are not peak-capacity claims.
 
 ## Bots and verification
 
-Room bots still use a deterministic exact-offered-key fallback, versioned
-`offered-key-1`. `M17.fixed-preset-room-bots` must bind the released preset
-policies to permitted observations, choose only offered keys, and version
-persisted work rows/allowances explicitly. It must not receive the setup root.
-The existing cancellation, work ledger, stale-result checks and pool seam stay
-in use.
+Room bots use the released Random, Apprentice and Greedy policies under
+frozen versioned work rows, through the existing pool and cancellation seam.
+[Room bots](room-bots.md) describes the internal level mapping, compatibility,
+privacy boundary, watchdog and acceptance checks.
 
 The fake engine stays as isolated test infrastructure for its own rules,
 small reference model and fault fixtures. The actor's differential model,

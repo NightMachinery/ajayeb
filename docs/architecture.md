@@ -130,7 +130,8 @@ needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
   two revision counters, the open point's reference, the pending block (each
   required seat's key, confirmed flag and per-client seq floors, bounded per
   user), the seq memory (bounded per user and kept only for users with
-  authority, plus a bounded list of retired ones), the bots' work rows, the
+  authority, plus a bounded list of retired ones), frozen bot presets and the
+  open point's work rows, bounded fallback diagnostics, the
   room log and the rematch's code. The format field names the record's
   semantics: a reader refuses a newer format and leaves the file untouched,
   and upgrades an older one explicitly instead of relying on unknown-field
@@ -158,7 +159,7 @@ needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
   across a restart, and it never counts anyone's private edits.
 - **Frames.** Each broadcast builds one frame per role (a seated viewer, or
   the one spectator role) through the engine's whitelist view and caches it
-  for that broadcast; a connection's frame adds only its own pending pick and
+  for the current engine fingerprint; a connection's frame adds only its own pending pick and
   ack, and an admin's adds the previous-seat hint. Events and history carry
   public outcomes only, redacted for the viewer's seat; a connection's first
   frame after its seat changes carries its whole history again.
@@ -175,6 +176,12 @@ needs `-dev` and `-dev-endpoints`), until the lobby's client ships.
   the open point's work rows, stops or starts the bot, and logs a public
   entry. A resignation hands the sender's seat to a bot of the lowest level.
   Either revokes the device links of the seat's former user.
+- **Fixed bot presets.** Table record format 2 freezes the released policy,
+  preset, algorithm and deterministic bounds for every internal level. The
+  actor calls the observation-only Haftgane package directly, one job per room,
+  through existing pool permits. Cancellation waits for physical completion;
+  late results must match the actor incarnation and task. [Room bots](haftgane/room-bots.md)
+  describes level mapping, compatibility, watchdog diagnostics and tests.
 - **Links and rematch.** A connection joining with a seat's claim acts as
   that seat's user. A claim's epoch is the public revision when the seat's
   human took it or relinked it, so a relink or a change of the seat's user

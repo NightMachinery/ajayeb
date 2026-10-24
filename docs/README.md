@@ -20,9 +20,9 @@ These docs explain the current implementation, its rules and the tools used to b
 - [rules/wonders-tokens.md](rules/wonders-tokens.md): wonders, progress tokens and their choices.
 - [rules/ages-scoring.md](rules/ages-scoring.md): age transitions, scoring and ties.
 
-## The second game (design)
+## The second game
 
-- [haftgane/](haftgane/README.md): the design of Haftgane, Ajayeb's second game, an unofficial version of 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words and the platform, engine, bot, screen and art designs. The design is accepted: its decisions are D30 to D61 in [dev/decisions.md](dev/decisions.md) and its build plan is M13 to M23 in [dev/roadmap.md](dev/roadmap.md). Nothing in it is built yet.
+- [haftgane/](haftgane/README.md): the design of Haftgane, Ajayeb's second game, an unofficial version of 7 Wonders (second edition) for 3 to 7 players, from milestone M12: its rules in our own words and the platform, engine, bot, screen and art designs. The design is accepted: its decisions are D30 to D61 in [dev/decisions.md](dev/decisions.md) and its build plan is M13 to M23 in [dev/roadmap.md](dev/roadmap.md). Its rules engine, room actors and internal bots are implemented; public release still waits for the sampled Scholar policy and release gates.
 
 ## Package guides
 
@@ -50,3 +50,6 @@ Contributors and coding agents should also read [../AGENTS.md](../AGENTS.md), th
 
 The [Haftgane engine contract](haftgane/engine-contract.md) describes real room
 setup, replay, privacy bounds and measurements.
+
+The [fixed-preset room bots](haftgane/room-bots.md) guide covers internal levels,
+durable work rows and cancellation.

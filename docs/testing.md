@@ -2802,8 +2802,38 @@ latency gates. See [the contract](haftgane/engine-contract.md) for a sample.
 Run it with `make test-go GO_PKGS=./internal/tableroom
 GO_RUN=TestEngineContractMeasurements GOFLAGS=-count=1`.
 
-Race sweeps give every real game its own bounded context. The socket sweep
+Race sweeps give every real game its own bounded context. The differential
+uses two minutes per game, including all viewers, to accommodate race and
+memory-pressure overhead. The socket sweep
 uses five minutes per seat count, including three games and privacy checks;
 the full lobby/game/rematch scenario uses five minutes per game. The merged
 frame test retains every assertion and drains at 2, 3, 7, 31 and 127 pushes,
 so cosmetic traffic cannot keep its multi-resolution canary unreachable.
+
+
+## Fixed-preset Haftgane room bots
+
+The actor uses the released bot package with frozen versioned work and the
+existing permit pool. `TestFixedPresetsRejectUnsupportedWork` corrupts each
+version, algorithm, allowance and bound independently. No unsupported row may
+be interpreted as the current default. The table's three level presets freeze
+before any bot starts, including levels selected by later switches.
+
+`TestBotEveryPendingSubsetRestarts` cold-loads every subset of six accepted bot
+picks, preserving every full work row and searching only missing seats. It also
+checks human absent, drafted and confirmed variants. The sole fully confirmed
+case must already have resolved and is rejected as an open point.
+`TestRoomPolicyRepeatabilityAndForbiddenFacts` exchanges real future packets
+without changing permitted inputs and compares complete decisions/counters,
+then changes another seat's private pending pick. `TestReleasedRoomPoliciesAtSideAndAbilities`
+checks actual actor policy calls at side, discard-build and last-card points.
+
+`TestBotSchedulesAndRestartSameBatch` compares actual accepted keys and
+complete counters between human-first play and a private draft, three bot
+commits, restart and human-last play. The lifecycle tests cover kept-pick
+switches, undo equality, late messages
+across actor incarnations, unrelated role revisions, cancelled cleanup before
+replacement admission, queued waiter removal, active cancellation and a safe
+persisted watchdog reason. Full tables exercise zero to six starting bots and
+seven-bot continuation. Measurements and their scope are in
+[room bots](haftgane/room-bots.md); ordinary workloads require zero watchdogs.
