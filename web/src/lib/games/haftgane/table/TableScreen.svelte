@@ -82,9 +82,11 @@
 
   const view = $derived(frame.view);
   const n = $derived(view.seats.length);
-  // The seat a spectator follows; null centres on seat 0.
+  // The seat a spectator follows. Until they pick one, a former player's
+  // ring centres on the seat they held, anyone else's on seat 0.
   let follow = $state<number | null>(null);
-  const around = $derived(ring(view.seats, follow));
+  const former = $derived(formerOf(frame, session.held));
+  const around = $derived(ring(view.seats, follow ?? former?.seat ?? null));
   const columns = $derived(farColumns(around?.far ?? []));
   const mine = $derived(view.you);
   const mySeat = $derived(frame.you.seat ?? null);
@@ -409,7 +411,7 @@
             roles={roleMap(frame)}
             disabled={!ready || !session.canControl}
             onrole={(a) => session.role(a.kind, a.userId)}
-            former={formerOf(frame, session.held)}
+            {former}
           />
         </div>
       {/if}
