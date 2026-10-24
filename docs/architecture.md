@@ -240,8 +240,29 @@ connection move together. A detach that reaches the lobby during the swap is
 forwarded to the table, and a detach always takes effect before a later join
 of the same connection, so leaving and quickly joining again leaves it
 attached; a join that arrives after it is retried on the
-table, and a lobby request is refused, so nothing is lost or applied twice. Two seats are refused until Duel's create
-path exists (M18.shared-lobby). A table's rematch is a new lobby made here,
+started game, and a lobby request is refused, so nothing is lost or applied
+twice. At two seats Start instead calls `room.Manager.StartDuel`: it builds
+Duel's ordinary schema-1 game with both seats assigned, carries their claim
+epochs, conditionally replaces only a clean live lobby (`store.ReplaceDuel`),
+and swaps in the Duel actor. Humans, their other tabs and spectators keep
+the same code and assignments. A filled bot slot uses Duel's existing bot
+factory while the online game retains its no-undo policy. An unsuccessful
+write leaves the lobby intact; a late lobby request cannot change Duel.
+
+Duel stores the lobby's effective admin set as optional `hintAdmins`, frozen
+at Start. Those users, including promoted spectators, may edit hints, but
+have no role or seat powers and may manage only their own device links.
+Shared-game frames send `you.linkAdmin: false`; legacy frames omit it and
+retain their existing creator-owned hint and device-link rights. Initial
+Duel hint settings can travel in `LobbyOptions.hints` for D23's device defaults.
+The engine, replay hash and old protocol fixtures are unchanged. A shared
+Duel rematch also returns to a two-seat lobby with original humans reserved
+and the requester its only initial admin; old one-tap rematches stay as they
+were. The parent saves its reserved successor code before the lobby is made,
+so a retry or restart finds the same successor. Another room that takes that
+code is preserved and a new code is reserved.
+
+A table's rematch is a new lobby made here,
 with the original humans' slots reserved for them: `Lobbies.Rematch` makes
 it under the code the table reserved with the store's conditional create, so
 checking the code and writing the lobby are one step: it finds the lobby

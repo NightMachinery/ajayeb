@@ -231,7 +231,7 @@ func (m *Manager) Swap(old, next *Handle) error {
 	case m.closed:
 		return ErrClosed
 	case old == nil || next == nil || old.owner != m || next.owner != m || next.code != old.code ||
-		m.rooms[old.code] != old || next.duel != nil || old == next:
+		m.rooms[old.code] != old || old == next:
 		return ErrInvalidSpec
 	}
 	if _, ok := m.cfg.Kinds.entries[next.kind]; !ok {

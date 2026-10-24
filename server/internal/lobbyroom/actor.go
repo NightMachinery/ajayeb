@@ -10,6 +10,7 @@ import (
 
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
+	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
 )
@@ -750,11 +751,11 @@ func (a *actor) role(c *room.Client, f wire.LobbyRole) string {
 }
 
 // canStart reports whether u could Start now: a seated admin (real or
-// temporary), three or more seats (two start Duel from M18.shared-lobby)
+// temporary), two or more seats
 // and no reservation still waiting.
 func (a *actor) canStart(u string) bool {
 	r := &a.rec
-	return a.isAdmin(u) && slotOf(r, u, SlotHuman) >= 0 && r.SeatCount >= tableroom.MinSeats &&
+	return a.isAdmin(u) && slotOf(r, u, SlotHuman) >= 0 && r.SeatCount >= MinSeats &&
 		!slices.ContainsFunc(r.Slots, func(s Slot) bool { return s.Kind == SlotReserved })
 }
 
@@ -778,7 +779,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	case !a.canStart(user) || !f.FillBots && slices.ContainsFunc(r.Slots, func(s Slot) bool { return s.Kind == SlotOpen }):
 		a.refuse(c, f.Seq, "start", outForbidden)
 		return false
-	case a.l.cfg.Tables == nil:
+	case r.SeatCount >= tableroom.MinSeats && a.l.cfg.Tables == nil:
 		a.refuse(c, f.Seq, "start", outBad)
 		return false
 	}
@@ -825,7 +826,33 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		}
 		members = append(members, mb)
 	}
-	started, err := a.l.cfg.Tables.StartTable(a.m, a.code, Game, spec, members)
+	var started tableroom.Started
+	var err error
+	if r.SeatCount == 2 {
+		duel := room.DuelStart{Creator: r.Roles.Creator, FirstPlayer: r.Options.FirstPlayer, Hints: r.Options.Hints}
+		for _, ad := range rs.Admins {
+			duel.HintAdmins = append(duel.HintAdmins, ad.UserID)
+		}
+		if rs.Temporary != "" {
+			duel.HintAdmins = append(duel.HintAdmins, rs.Temporary)
+		}
+		for i, p := range spec.Participants {
+			if p.UserID != "" {
+				duel.Seats[i] = store.Seat{Kind: store.SeatKindHuman, UserID: p.UserID, Name: p.Name, Epoch: r.Slots[i].Epoch}
+			} else {
+				duel.Seats[i] = store.Seat{Kind: store.SeatKindBot, Bot: store.BotLevel(p.Bot)}
+			}
+		}
+		handoff := make([]room.StartMember, 0, len(members))
+		for _, mb := range members {
+			handoff = append(handoff, room.StartMember{Client: mb.Client, Claim: mb.Claim})
+		}
+		var next room.StartedDuel
+		next, err = a.m.StartDuel(a.code, Game, duel, handoff)
+		started = tableroom.Started{Handle: next.Handle, Detach: next.Detach, Abort: next.Abort}
+	} else {
+		started, err = a.l.cfg.Tables.StartTable(a.m, a.code, Game, spec, members)
+	}
 	if err != nil {
 		a.mu.Unlock()
 		a.refuse(c, f.Seq, "start", outStorage)

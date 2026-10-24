@@ -419,11 +419,18 @@ export interface YouInfo {
   seats: number /* int */[];
   canAct: boolean; // a legal action exists for one of Seats right now
   /**
-   * Admin says this connection's user is the game's admin, who may change
-   * the hint settings (the hints frame) and ask for and reset any seat's
-   * device link (link, relink): the player who created the game.
+   * Admin says this connection's user may change the game's hint settings.
+   * Shared-lobby Duel games freeze that set at Start, spectators included.
+   * Legacy games also let their creator manage every seat's device link;
+   * LinkAdmin can override that additional permission.
    */
   admin: boolean;
+  /**
+   * LinkAdmin overrides Admin for other-seat device links. Shared-lobby Duel
+   * games send false: their admins have hint powers only. Absent in legacy
+   * frames, which retain their existing creator-owned link permission.
+   */
+  linkAdmin?: boolean;
 }
 /**
  * Ack acknowledges the act or undo this state frame is a direct response

@@ -348,12 +348,29 @@ review the diff, because the web client's replay test reads it.
 
 ## `internal/lobbyroom`: the shared lobby
 
+`shared_duel_test.go` covers two-seat Start under the same code, spectator and
+multi-tab handoff, restart and carried device-link epochs, stale lobby requests,
+failed-write preservation, and an online bot using the chosen Duel level.
+A fixed-clock, fixed-seed comparison checks the new room against the legacy
+online create/join path, with only the carried claim epochs, frozen admin set
+and optional link capability accounted for. The existing assigned-seat Duel
+constructor gives a second full-file byte comparison with identical epochs.
+The legacy and new engine/view frame payloads are byte-identical after removing
+only the explicit new link-permission marker. The frozen-admin regression
+covers promoted spectators, a creator who stepped down, D23 hint preferences,
+other-seat link refusals and persistence. A complete-game rematch checks
+reservations, fresh roles, a reserved-code collision and restart idempotency.
+Store tests separately refuse missing, damaged, foreign, archived or already
+started targets without changing their bytes, and race two conditional Starts.
+These extend the tests below; Duel protocol and bot goldens are not regenerated.
+
+
 `lobby_test.go` runs lobbies in process through the real Manager and store,
 beside the table kind. `TestLobbyEditsAndStart` walks a lobby from creation
 to Start (joins, a removed human staying out, bots, a seated spectator, a
 seat count change, a release, the refusal order, a repeated seq) and checks
 that Start hands every connection the table under the same code with the
-roles carried on. `TestStartRefusals` covers two seats, a reservation not yet
+roles carried on. `TestStartRefusals` covers an open slot without explicit bot filling, a reservation not yet
 opened and a failed write that leaves the lobby as it was.
 `TestLobbyRolesAcrossRestart` persists promotions, the temporary admin and
 the unseated list across a restart, and lets the temporary admin start.

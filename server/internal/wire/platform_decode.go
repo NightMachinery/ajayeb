@@ -279,6 +279,11 @@ func platformRole(op string, user *string) error {
 	}
 }
 func platformOptions(o LobbyOptions) error {
+	if o.Hints != nil {
+		if err := checkAdvisorStrength("options.hints", o.Hints.AdvisorStrength); err != nil {
+			return err
+		}
+	}
 	if o.Sides != nil && *o.Sides != "choose" && *o.Sides != "day" && *o.Sides != "random" {
 		return fmt.Errorf("unknown side rule")
 	}

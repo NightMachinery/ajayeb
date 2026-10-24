@@ -96,7 +96,7 @@ func (r *Room) link(c *Client, seat int, reset bool) {
 		c.Out.Push(wire.NewReject(0, wire.RejectCodeBadRequest, "no player holds that seat"))
 		return
 	}
-	if mem.user != s.UserID && mem.user != r.file.Admin {
+	if mem.user != s.UserID && (len(r.file.HintAdmins) > 0 || mem.user != r.file.Admin) {
 		c.Out.Push(wire.NewReject(0, wire.RejectCodeNotAdmin, "only a seat's player or the game's admin may have its link"))
 		return
 	}

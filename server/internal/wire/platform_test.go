@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/NightMachinery/ajayeb/server/internal/view"
 )
 
 var platformExamples = []string{
@@ -206,6 +208,30 @@ func TestPlatformServerEnvelopes(t *testing.T) {
 		}
 		if strings.Join(got, " ") != want {
 			t.Fatalf("%s fields %v, want %s", typ, got, want)
+		}
+	}
+}
+
+func TestSharedLobbyDuelHintOptionsDecoder(t *testing.T) {
+	hints, err := json.Marshal(view.HintSettings{Prices: true, AdvisorStrength: "twoStage"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := `{"t":"lobby-create","seatCount":2,"options":{"hints":` + string(hints) + `}}`
+	message, err := DecodeClientVersion([]byte(base), PlatformProtocolVersion)
+	if err != nil || message.(LobbyCreate).Options.Hints == nil {
+		t.Fatalf("complete hints refused: %v", err)
+	}
+	cases := []string{
+		strings.Replace(base, `"counting":false,`, "", 1),
+		strings.Replace(base, `"prices":true`, `"prices":null`, 1),
+		strings.Replace(base, `"prices":true`, `"prices":true,"prices":false`, 1),
+		strings.Replace(base, `"prices":true`, `"unknown":true`, 1),
+		strings.Replace(base, `"twoStage"`, `"unbounded"`, 1),
+	}
+	for _, raw := range cases {
+		if _, err := DecodeClientVersion([]byte(raw), PlatformProtocolVersion); err == nil {
+			t.Fatalf("invalid hints accepted: %s", raw)
 		}
 	}
 }

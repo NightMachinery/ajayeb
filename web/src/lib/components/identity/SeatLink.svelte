@@ -37,7 +37,7 @@
     if (!frame || info?.kind !== 'human') return false;
     if (frame.you.seats.length === 0) return false;
     if (frame.room.mode === 'hotseat' && seat !== 0) return false;
-    return own || frame.you.admin;
+    return own || (frame.you.linkAdmin ?? frame.you.admin);
   });
 
   let open = $state(false);

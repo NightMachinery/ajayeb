@@ -42,11 +42,12 @@ type Manager struct {
 	// A restore can rewrite its old hash. Serialize disk restores through actor
 	// registration so a second restore cannot overwrite an actor's newer save.
 	// In-memory requests bypass this lock.
-	restoreMu sync.Mutex
-	mu        sync.Mutex
-	rooms     map[string]*Handle
-	pending   int // rooms being created or loaded, counted against MaxRooms
-	closed    bool
+	restoreMu      sync.Mutex
+	mu             sync.Mutex
+	duelSuccessors DuelSuccessors // guarded by mu, bound by the shared lobby
+	rooms          map[string]*Handle
+	pending        int // rooms being created or loaded, counted against MaxRooms
+	closed         bool
 }
 
 // NewManager returns a Manager. cfg.Store is required.

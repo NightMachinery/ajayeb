@@ -52,6 +52,7 @@ type Room struct {
 	cancel context.CancelFunc
 
 	// Owned by the actor goroutine.
+	handoff    bool         // publish handed-over lobby connections when this actor starts
 	file       *store.File  // header, seats, action log; written after every change
 	state      engine.State // file's seed and options replayed through file's actions
 	hist       []histEntry  // by action of file.Actions: its ply, the seat that took it and its events
@@ -170,6 +171,10 @@ func (r *Room) run() {
 	defer r.exit()
 	r.armIdle()
 	r.publishIdle()
+	if r.handoff {
+		r.broadcast(nil, nil, nil, allHistory)
+		r.maybeStartBot()
+	}
 	for {
 		select {
 		case <-r.ctx.Done():
@@ -744,6 +749,9 @@ func (r *Room) doRematch(c *Client) (string, error) {
 	}
 	if !r.state.Over() {
 		return "", ErrNotOver
+	}
+	if len(r.file.HintAdmins) > 0 {
+		return r.rematchLobby(c, mem)
 	}
 	if r.rematch == "" {
 		// Creating a room counts against the requester's creation limits,

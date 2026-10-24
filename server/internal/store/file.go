@@ -153,6 +153,11 @@ type File struct {
 	// existed, and in a room made with open seats (a development room)
 	// until its first player claims a seat; package room then decides.
 	Admin string `json:"admin,omitempty"`
+	// HintAdmins is the frozen lobby admin set for a Duel game started there.
+	// Empty means a legacy room, whose single Admin retains its existing powers.
+	// These users gain hint edits only, without lobby roles or seat powers.
+	HintAdmins []string `json:"hintAdmins,omitempty"`
+
 	// Hints are the game's hint settings (docs/dev/decisions.md D23). They
 	// are not part of the game (the replay and Hash ignore them). nil in a
 	// file written before the field existed: package room then uses the

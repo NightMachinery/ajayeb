@@ -2,6 +2,7 @@ package room
 
 import (
 	"context"
+	"slices"
 
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/view"
@@ -95,7 +96,7 @@ func (r *Room) setHints(c *Client, m wire.Hints) {
 		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeBadRequest, "join the room first"))
 		return
 	}
-	if mem.role == roleSpectator {
+	if mem.role == roleSpectator && !r.hintAdmin(mem) {
 		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeNotAdmin, "only the game's admin may change its hints"))
 		return
 	}
@@ -104,7 +105,7 @@ func (r *Room) setHints(c *Client, m wire.Hints) {
 		r.sendState(c, mem, ack, false)
 		return
 	}
-	if mem.user != r.file.Admin {
+	if !r.hintAdmin(mem) {
 		c.Out.Push(wire.NewReject(m.Seq, wire.RejectCodeNotAdmin, "only the game's admin may change its hints"))
 		return
 	}
@@ -213,4 +214,16 @@ func wireRoomLog(log []store.LogEntry) []wire.RoomLogEntry {
 		out = append(out, w)
 	}
 	return out
+}
+
+// hintAdmin keeps legacy ownership and gives shared-lobby games precisely the
+// frozen Start-time set, including promoted spectators, with no role updates.
+func (r *Room) hintAdmin(mem member) bool {
+	if mem.user == "" {
+		return false
+	}
+	if len(r.file.HintAdmins) > 0 {
+		return slices.Contains(r.file.HintAdmins, mem.user)
+	}
+	return mem.role != roleSpectator && mem.user == r.file.Admin
 }

@@ -40,7 +40,7 @@ func botSeed(roomSeed uint64, ply uint16) uint64 { return ai.MixSeed(roomSeed, u
 // pool on a game nobody is watching (detach cancels the search, and the
 // next attach starts it again).
 func (r *Room) maybeStartBot() {
-	if r.file.Mode != store.ModeAI || r.status() != store.StatusPlaying || len(r.clients) == 0 {
+	if !r.hasBotMode() || r.status() != store.StatusPlaying || len(r.clients) == 0 {
 		return
 	}
 	seat := r.state.ToMove
@@ -134,7 +134,7 @@ func (r *Room) botResult(m msgBotResult) {
 		return
 	}
 	r.cancelBot()
-	if r.file.Mode != store.ModeAI || r.status() != store.StatusPlaying ||
+	if !r.hasBotMode() || r.status() != store.StatusPlaying ||
 		r.file.Seats[r.state.ToMove].Kind != store.SeatKindBot {
 		r.dropped++
 		return
@@ -198,4 +198,10 @@ func (j botJob) run(ctx context.Context) {
 	case j.inbox <- msgBotResult{gen: j.gen, version: j.version, action: a, err: err}:
 	case <-j.done:
 	}
+}
+
+// hasBotMode preserves one-tap bot rooms and also runs an assigned bot in a
+// two-seat online lobby game. Unrelated legacy online records do not opt in.
+func (r *Room) hasBotMode() bool {
+	return r.file.Mode == store.ModeAI || r.file.Mode == store.ModeOnline && len(r.file.HintAdmins) > 0
 }

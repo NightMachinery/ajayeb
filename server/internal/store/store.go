@@ -92,7 +92,7 @@ func (st *Store) path(code string) (string, error) {
 // cost is O(actions so far), which stays small for one game of 7 Wonders
 // Duel.
 func (st *Store) Save(f *File) error {
-	return st.save(f, false)
+	return st.save(f, false, "")
 }
 
 // Create writes f as its code's first file, as Save does, except that the
@@ -102,10 +102,20 @@ func (st *Store) Save(f *File) error {
 // wrapping ErrExists, so two creators that drew the same code cannot
 // overwrite each other's rooms, whatever their kinds.
 func (st *Store) Create(f *File) error {
-	return st.save(f, true)
+	return st.save(f, true, "")
 }
 
-func (st *Store) save(f *File, create bool) error {
+// ReplaceDuel writes the fully assigned Duel game in place of a clean live
+// schema-2 lobby of from, atomically under the code's lock. Unlike Save's
+// damaged-file repair, Start never replaces missing, damaged or started games.
+func (st *Store) ReplaceDuel(from string, f *File) error {
+	if from == "" || from == "duel" || f.Status != StatusPlaying {
+		return fmt.Errorf("store: replace %s: %w: invalid Duel handoff", f.Code, ErrGame)
+	}
+	return st.save(f, false, from)
+}
+
+func (st *Store) save(f *File, create bool, from string) error {
 	if err := checkSchema(f); err != nil {
 		return err
 	}
@@ -115,7 +125,30 @@ func (st *Store) save(f *File, create bool) error {
 	}
 	unlock := st.lockRoom(f.Code)
 	defer unlock()
-	if create {
+	if from != "" {
+		if _, err := os.Stat(st.archivePath(f.Code)); err == nil {
+			return fmt.Errorf("store: replace %s: %w", f.Code, ErrArchived)
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			return err
+		}
+		old, data, err := st.codecs.read(path)
+		if err != nil {
+			return fmt.Errorf("store: replace %s: %w", f.Code, err)
+		}
+		schema, game, err := fileKind(data)
+		if err != nil || schema != 2 || game != from || old.Retention().Code != f.Code {
+			return fmt.Errorf("store: replace %s: %w: not this lobby", f.Code, ErrGame)
+		}
+		if old.Retention().Status == StatusArchived {
+			return fmt.Errorf("store: replace %s: %w", f.Code, ErrArchived)
+		}
+		if old.Retention().Status != StatusLobby {
+			return fmt.Errorf("store: replace %s: %w: not a live lobby", f.Code, ErrGame)
+		}
+		if _, err := old.Check(); err != nil {
+			return fmt.Errorf("store: replace %s: %w", f.Code, err)
+		}
+	} else if create {
 		if err := st.vacant(f.Code, path); err != nil {
 			return err
 		}

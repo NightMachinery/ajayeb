@@ -222,7 +222,11 @@ func (r *Room) you(mem member) wire.YouInfo {
 	}
 	canAct := r.status() == store.StatusPlaying && mem.holds(r.state.ToMove)
 	you := wire.NewYouInfo(seats, canAct)
-	you.Admin = mem.role != roleSpectator && mem.user != "" && mem.user == r.file.Admin
+	you.Admin = r.hintAdmin(mem)
+	if len(r.file.HintAdmins) > 0 {
+		disabled := false
+		you.LinkAdmin = &disabled
+	}
 	return you
 }
 

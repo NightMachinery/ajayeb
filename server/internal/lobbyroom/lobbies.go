@@ -13,7 +13,7 @@
 // with the lobby's connections handed over and swaps it in
 // (room.Manager.Swap), so the next frame each client receives is the
 // game's. Three to seven seats start a Haftgane table (package tableroom);
-// two will start Duel once M18.shared-lobby adds Duel's create path, and
+// two start assigned Duel rooms through room.Manager.StartDuel, and
 // are refused until then. A finished table's rematch is a new lobby made
 // here (Rematch).
 //
@@ -31,6 +31,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/engine"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -125,6 +126,7 @@ func (l *Lobbies) Bind(m *room.Manager, st Storage) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.m, l.st = m, st
+	m.SetDuelSuccessors(l)
 }
 
 var errUnbound = errors.New("lobbyroom: no Manager and store bound")
@@ -206,13 +208,49 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 		}
 	}
 	r.Code, r.Parent = code, rm.Parent
+	return l.saveRematch(m, code, r)
+}
+
+// RematchDuel creates the two-seat successor lobby of a shared-lobby Duel game.
+func (l *Lobbies) RematchDuel(m *room.Manager, code string, rm room.DuelRematch) error {
+	if !l.cfg.Creation {
+		return room.ErrForbidden
+	}
+	opts := wire.LobbyOptions{Hints: &rm.Hints}
+	switch rm.FirstPlayer {
+	case engine.FirstPlayerSeat0:
+		v := 0
+		opts.FirstPlayer = &v
+	case engine.FirstPlayerSeat1:
+		v := 1
+		opts.FirstPlayer = &v
+	}
+	r := newRecord(2, opts, rm.Creator)
+	for i, s := range rm.Seats {
+		if s.Kind == store.SeatKindHuman {
+			r.Slots[i] = Slot{Kind: SlotReserved, UserID: s.UserID, Name: s.Name}
+		} else {
+			r.Slots[i] = Slot{Kind: SlotBot, Bot: string(s.Bot)}
+		}
+	}
+	r.Code, r.Parent = code, rm.Parent
+	if err := l.saveRematch(m, code, r); errors.Is(err, tableroom.ErrCodeTaken) {
+		return store.ErrExists
+	} else {
+		return err
+	}
+}
+
+// saveRematch shares the conditional create and parent-idempotency transaction
+// between both games, while their wrappers supply their own setup options.
+func (l *Lobbies) saveRematch(m *room.Manager, code string, r Record) error {
 	now := l.cfg.Clock.Now().UTC()
 	r.Created, r.Updated = now, now
-	if rm.Parent == "" || validate(&r, l.cfg.SeqClients) != nil {
+	if r.Parent == "" || validate(&r, l.cfg.SeqClients) != nil {
 		return room.ErrInvalidSpec
 	}
 	successor := func(data []byte) error {
-		if old, err := decodeRecord(data); err == nil && old.Parent == rm.Parent {
+		if old, err := decodeRecord(data); err == nil && old.Parent == r.Parent {
 			return nil
 		}
 		return tableroom.ErrCodeTaken
@@ -235,7 +273,7 @@ func (l *Lobbies) Rematch(m *room.Manager, code string, rm tableroom.Rematch) er
 		l.log.Warn("lobby rematch failed", "room", code, "err", err)
 		return room.ErrStorage
 	}
-	l.log.Info("lobby created", "room", code, "seats", r.SeatCount, "parent", rm.Parent)
+	l.log.Info("lobby created", "room", code, "seats", r.SeatCount, "parent", r.Parent)
 	return nil
 }
 

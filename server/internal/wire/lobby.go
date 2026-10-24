@@ -1,14 +1,18 @@
 package wire
 
+import "github.com/NightMachinery/ajayeb/server/internal/view"
+
 // LobbyOptions replaces the lobby's complete platform options. Absent values
 // mean random seating, random Duel starter, undo enabled, final reveal on and day sides.
 // Sides applies to Haftgane; a two-seat Duel start ignores it.
 type LobbyOptions struct {
-	Sides       *string `json:"sides,omitempty" tstype:"'choose' | 'day' | 'random'"`
-	Seating     *string `json:"seating,omitempty" tstype:"'random' | 'lobby'"`
-	FirstPlayer *int    `json:"firstPlayer,omitempty" tstype:"0 | 1"`
-	AllowUndo   *bool   `json:"allowUndo,omitempty"`
-	FinalReveal *bool   `json:"finalReveal,omitempty"`
+	// Hints seeds Duel's display settings from the creating device (D23).
+	Hints       *view.HintSettings `json:"hints,omitempty"`
+	Sides       *string            `json:"sides,omitempty" tstype:"'choose' | 'day' | 'random'"`
+	Seating     *string            `json:"seating,omitempty" tstype:"'random' | 'lobby'"`
+	FirstPlayer *int               `json:"firstPlayer,omitempty" tstype:"0 | 1"`
+	AllowUndo   *bool              `json:"allowUndo,omitempty"`
+	FinalReveal *bool              `json:"finalReveal,omitempty"`
 }
 
 // LobbyCreate opens the shared lobby, without choosing a game package. Start

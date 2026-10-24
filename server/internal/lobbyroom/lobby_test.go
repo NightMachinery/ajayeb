@@ -23,14 +23,16 @@ const wait = 20 * time.Second
 // lobby and table codecs, a Manager with Duel, the table kind and the
 // lobby kind, and device links on.
 type fixture struct {
-	t       *testing.T
-	dir     string
-	clock   room.Clock
-	secret  ident.Secret
-	st      *store.Store
-	m       *room.Manager
-	tables  *tableroom.Tables
-	lobbies *Lobbies
+	t        *testing.T
+	dir      string
+	clock    room.Clock
+	secret   ident.Secret
+	st       *store.Store
+	m        *room.Manager
+	duelSeed func() uint64
+	duelBot  room.BotFactory
+	tables   *tableroom.Tables
+	lobbies  *Lobbies
 	// replaceFails makes the tables' next ReplaceGame fail.
 	replaceFails bool
 	// saves holds, for a code or a game, how many of its next writes pass
@@ -73,6 +75,13 @@ func (s failingStore) SaveGame(code, game string, data []byte) error {
 type codeStore struct {
 	*store.Store
 	f *fixture
+}
+
+func (s codeStore) ReplaceDuel(from string, f *store.File) error {
+	if s.f.replaceFails {
+		return errors.New("injected Duel replacement failure")
+	}
+	return s.Store.ReplaceDuel(from, f)
 }
 
 func (s codeStore) NewCode() (string, error) {
@@ -138,7 +147,7 @@ func (f *fixture) start() {
 	if f.st, err = store.OpenWithCodecs(f.dir, nil, kinds.Codecs()); err != nil {
 		f.t.Fatal(err)
 	}
-	f.m, err = room.NewManager(room.Config{Store: codeStore{Store: f.st, f: f}, Kinds: kinds, KindOf: f.st.Game, Claims: f.secret, Clock: f.clock})
+	f.m, err = room.NewManager(room.Config{Store: codeStore{Store: f.st, f: f}, Kinds: kinds, KindOf: f.st.Game, Claims: f.secret, Clock: f.clock, Seed: f.duelSeed, NewBot: f.duelBot})
 	if err != nil {
 		f.t.Fatal(err)
 	}
@@ -439,16 +448,16 @@ func TestLobbyEditsAndStart(t *testing.T) {
 	}
 }
 
-// TestStartRefusals: two seats wait for Duel's side of the lobby, a
+// TestStartRefusals: an open slot needs explicit bot filling, a
 // reservation must be opened first, and a failed write leaves the lobby
 // as it was.
 func TestStartRefusals(t *testing.T) {
 	f := newFixture(t, nil)
 	k := f.conn(user(0), "c0", "P0")
 	code := f.create(k, 2, wire.LobbyOptions{})
-	f.send(k, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1, FillBots: true})
+	f.send(k, wire.LobbyStart{T: "lobby-start", Code: code, Seq: 1})
 	if got := k.reject(1); got != outForbidden {
-		t.Fatalf("a two-seat Start: %s", got)
+		t.Fatalf("a Start with an open slot and no fill: %s", got)
 	}
 	sc := edit(code, 2, "seats")
 	sc.SeatCount = ptr(3)
