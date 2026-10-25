@@ -413,6 +413,8 @@ Acceptance:
 
 ## M18: The Haftgane client
 
+Status: done on 2026-10-25. All fourteen planned slices landed; the two FULL ones, `M18.table-session` and `M18.shared-lobby`, were reviewed before they merged. Seven more came on the way: the view fields the screens needed (`M18.view-fields-for-screens`), an install that leaves out the dev pages (`M18.precache-without-dev-pages`, the amendment to D51), a steadier perf report (`M18.perf-report-stable`), a polish pass over the table (`M18.table-polish`), and three slices from the owner's first phone playtest: each player's status, the science symbols and every dialog's action kept on screen at short heights, with a playable floor and a notice below it (`M18.short-screen-status`); install and fullscreen controls, with light as the default theme (`M18.installable-and-fullscreen`); and the wonder button's emphasis when a stage can be built, with the hint marks explained in the card sheet, a one-time long-press tip on touch screens and a legend in the rules (`M18.card-sheet-signals`). [testing.md](../testing.md) maps each acceptance line to its spec or test. Left for later: a native check of the new Persian messages, and Haftgane in phone landscape under 667x340, which now shows the too-short notice instead of a broken layout.
+
 Needs: M14 slice 5; M16 slice 2 for the first screens (fake engine) and for slice 13, and M16 slice 3 for real play. Procedural placeholders stand in for art until M19, as in M5. The platform design lists the client as one FULL slice; it is split here so that only the hidden-information boundary is FULL and the screens are LIGHT.
 
 Scope (components as named in [phone-layout.md](../haftgane/phone-layout.md)):
