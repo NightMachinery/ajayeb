@@ -113,6 +113,11 @@ The engine is the single source of truth for the rules, so it must be determinis
 
 - Commit no personal information: no absolute home-directory paths (write `~/...` or repo-relative paths), no email addresses, no machine hostnames, no usernames other than the GitHub organization `NightMachinery`, no tokens or keys.
 - **Private run state lives outside the repo** in `~/tmp/agents/ajayeb/` (override with `AJAYEB_RUN_DIR`): `USER-VERBATIM.md` (owner instructions, verbatim), `STATE.md` (progress, newest first), `NOTES.md` (iteration notes and learnings), `mode.json`, and the `heavy/`, `logs/`, `results/`, `briefs/`, `patches/`, `shots/`, `art-work/`, `reports/`, `design/` and `workflows/` directories. Never copy any of it into the repo.
+- **Delete bulky temporary files once their slice is merged or abandoned,** so the disk does not fill up (the run directory once grew to 36 GB, nearly all of it regenerable).
+  - At the merge, the coordinator deletes the slice's `scratch/<slice>/` and `shots/<slice>/` directories, and the screenshots, Playwright traces (`*.zip`), performance and probe JSON and build copies it left under `reports/` and `logs/`.
+  - Workers delete a passing run's traces and per-test screenshots once they have checked them, and keep only the captures their result cites until the merge.
+  - Keep the text and the state: result files, briefs, written reports (`.md`, `.org`, `.txt`), `STATE.md`, `NOTES.md`, `USER-VERBATIM.md`, `agents.txt`, `mode.json`, `heavy/` and `scripts/`, and any generated art not committed yet, which costs quota to make again.
+  - At each milestone's end, the coordinator checks `du -sh ~/tmp/agents/ajayeb` and deletes text logs older than a week.
 
 ## Commits
 
