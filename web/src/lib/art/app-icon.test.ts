@@ -21,6 +21,7 @@ interface WebManifest {
   start_url: string;
   scope: string;
   display: string;
+  launch_handler: { client_mode: string };
   theme_color: string;
   background_color: string;
   icons: { src: string; sizes: string; type: string; purpose: string }[];
@@ -37,6 +38,10 @@ describe('the web app manifest', () => {
     expect(manifest.start_url).toBe('/');
     expect(manifest.scope).toBe('/');
     expect(manifest.display).toBe('standalone');
+  });
+
+  it('opens a room link it catches in the open app window, not a second one', () => {
+    expect(manifest.launch_handler).toEqual({ client_mode: 'navigate-existing' });
   });
 
   it('uses the light table colour of the theme-color meta', () => {
