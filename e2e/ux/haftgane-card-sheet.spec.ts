@@ -1,3 +1,10 @@
+import {
+  reviewCapture,
+  reviewHygiene,
+  reviewFixtureSeats,
+  reviewVariants,
+  reviewViewports
+} from './haftgane-review';
 // Real-engine captured sheet states, all seat counts, viewports, themes and
 // directions. The scrolling body may scroll vertically; its sticky actions
 // remain reachable, and every control keeps its 44 px target.
@@ -122,3 +129,59 @@ test('Haftgane card-sheet confirmation guards double taps and expires', async ({
   await action.click();
   await expect(sheet).toHaveCount(0);
 });
+
+// The review pass reuses the same legal-game gallery specimens above and
+// records shared probes without aborting on a product finding.
+for (const [locale, theme] of reviewVariants)
+  for (const seats of reviewFixtureSeats)
+    for (const viewport of reviewViewports) {
+      // Full variants at the densest table; every other seat count covers
+      // every specimen once. Live tables cover the full seat/variant matrix.
+      if (seats !== 7 && (locale !== 'en' || theme !== 'light' || viewport.width !== 390)) continue;
+      test.describe(`haftgane review sheets ${seats}p ${locale} ${theme} ${viewport.width}`, () => {
+        test.use({
+          appLocale: locale,
+          viewport,
+          isMobile: viewport.width < 1000,
+          hasTouch: viewport.width < 1000,
+          deviceScaleFactor: 1
+        });
+        test('payment and card outcomes', async ({ page }, info) => {
+          test.setTimeout(180_000);
+          const hygiene = reviewHygiene(page);
+          await page.addInitScript((t) => localStorage.setItem('ajayeb:theme', t), theme);
+          for (const state of ['trade', 'stage', 'sale', 'chain', 'free', 'blocked']) {
+            await page.goto(`/dev/gallery?hgSheet=${state}&seats=${seats}`);
+            const sheet = page.locator('[data-card-sheet]');
+            await expect(sheet).toBeVisible();
+            if (state === 'stage' || state === 'sale')
+              await sheet
+                .locator(state === 'stage' ? '#hg-stage-title' : '#hg-sale-title')
+                .scrollIntoViewIfNeeded();
+            await reviewCapture(
+              page,
+              info,
+              `hg-card-${state}`,
+              seats,
+              hygiene,
+              'dialog[open]',
+              'fixture'
+            );
+            if (state === 'trade') {
+              const options = sheet.locator('[data-pick^="build:"]');
+              expect(await options.count()).toBeGreaterThan(1);
+              await options.last().click();
+              await reviewCapture(
+                page,
+                info,
+                'hg-payment-alternate',
+                seats,
+                hygiene,
+                'dialog[open]',
+                'fixture'
+              );
+            }
+          }
+        });
+      });
+    }

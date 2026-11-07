@@ -1,3 +1,10 @@
+import {
+  reviewCapture,
+  reviewHygiene,
+  reviewFixtureSeats,
+  reviewVariants,
+  reviewViewports
+} from './haftgane-review';
 // Legal-game ViewFor captures: all special choices, own and waiting views.
 import { expect } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -128,3 +135,61 @@ for (const locale of ['en', 'fa'] as const)
       });
     });
   }
+
+for (const [locale, theme] of reviewVariants)
+  for (const seats of reviewFixtureSeats)
+    for (const viewport of reviewViewports) {
+      // Full variants at the densest table; every other seat count covers
+      // every specimen once. Live tables cover the full seat/variant matrix.
+      if (seats !== 7 && (locale !== 'en' || theme !== 'light' || viewport.width !== 390)) continue;
+      test.describe(`haftgane review special ${seats}p ${locale} ${theme} ${viewport.width}`, () => {
+        test.use({
+          appLocale: locale,
+          viewport,
+          isMobile: viewport.width < 1000,
+          hasTouch: viewport.width < 1000,
+          deviceScaleFactor: 1
+        });
+        test('own and waiting special decisions', async ({ page }, info) => {
+          test.setTimeout(240_000);
+          const hygiene = reviewHygiene(page);
+          await page.addInitScript((t) => localStorage.setItem('ajayeb:theme', t), theme);
+          for (const state of [
+            'side',
+            'discard',
+            'sixth',
+            'kept',
+            'last',
+            'first-colour',
+            'first-turn',
+            'last-turn'
+          ]) {
+            for (const waiting of [false, true]) {
+              await page.goto(
+                `/dev/gallery?hgSpecial=${state}&seats=${seats}&waiting=${waiting ? 1 : 0}`
+              );
+              await expect(page.locator('[data-gallery-special]')).toBeVisible();
+              if (!waiting && (state === 'side' || state === 'discard')) {
+                const sheet = page.locator(
+                  state === 'side' ? '[data-side-picker]' : '[data-discard-picker]'
+                );
+                await sheet
+                  .locator('[data-pick], button[data-card]:not([aria-disabled="true"])')
+                  .first()
+                  .click();
+                await expect(sheet.locator('[data-special-confirm]')).toBeEnabled();
+              }
+              await reviewCapture(
+                page,
+                info,
+                `hg-special-${state}-${waiting ? 'waiting' : 'own'}`,
+                seats,
+                hygiene,
+                'document',
+                'fixture'
+              );
+            }
+          }
+        });
+      });
+    }

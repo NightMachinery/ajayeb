@@ -3487,3 +3487,36 @@ forbidden state changes. Other tests pin bounded failure, zero allocations and
 saved exhaustion/pending-point regressions. `FuzzMatchesObservation` checks
 legal generated prefixes through the same replay oracle. Commands, evidence
 and the limits of these comparisons are in [the sampler guide](haftgane/sampler.md).
+
+### Haftgane review round (M20)
+
+The existing table, card-sheet and special-decision UX specs also provide a
+review pass. Run it through `make shots` with
+`PW_ARGS='--grep "haftgane review|run budgets|platform entry" --global-timeout 1800000'`
+and set `SHOTS_DIR` to a fresh directory. It stays outside ordinary e2e runs.
+
+Live games cover every seat count from three to seven in English and Persian,
+with real touch-phone (390x844) and pointer-desktop (1280x800) contexts, both
+light and dark. They capture the lobby, each Age, live card sheets, own,
+neighbour and distant cities (including wonders), empty and remembered Seen
+hands, the rules overlay and page, all military summaries, final scores and
+board, and the rematch lobby and new table. The fixture pass reuses the legal
+engine gallery specimens: trade (including an alternate payment), stage,
+sale, chain, free build, blocked build, and each own/waiting special decision.
+Every fixture is captured at three, five and seven seats on the light English phone;
+the seven-seat fixtures additionally cover every theme, direction and device.
+This representative fixture matrix keeps the round practical; existing full
+geometry matrices still provide narrow-phone and landscape regression checks.
+
+Every review PNG feeds the shared scroll, target-size, covered-action, axe,
+console and network probes. Product findings remain observations so the round
+continues; an unreachable screen fails its test. Review target-size findings
+use P2 for both the 24px minimum and 44px recommendation, retaining the counts.
+The standard Home/Duel budgets remain available through the filter above;
+the live seven-seat Age III table also records its 2,500-node DOM budget.
+
+`manifest.json` lists each captured screen, seat count, theme, direction,
+viewport, source (fixture or live), PNG and contact sheet. `screen-hg-*.html`
+provides one contact sheet per screen, with full-resolution links and findings.
+`index.html`, `summary.md` and `probes.json` retain the existing report format.
+Use a new output directory per round to preserve prior evidence.

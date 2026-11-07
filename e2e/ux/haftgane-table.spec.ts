@@ -1,3 +1,5 @@
+import { installMotionOff } from '../fixtures/base';
+import { reviewCapture, reviewHygiene, reviewSeats, reviewViewports } from './haftgane-review';
 // Haftgane's table screen geometry (M18.table-screen): tables of 3 to 7
 // seats, the page's user and bots, at 360x740, 390x844, 844x390 and
 // 1280x800, in both themes, left to right and right to left. At each size,
@@ -16,7 +18,7 @@ import path from 'node:path';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
 import { useSettings } from '../fixtures/anim';
-import { choose, latest, openBotTable, ready } from '../fixtures/table';
+import { choose, dismissMilitary, latest, openBotTable, openMenu, ready } from '../fixtures/table';
 
 const sizes = [
   [360, 740],
@@ -229,3 +231,166 @@ test.describe('haftgane table motion control', () => {
     expect(problems).toEqual([]);
   });
 });
+
+// One real game per seat count and direction; the review photographs each
+// state in both themes and at phone/desktop size without replaying the game.
+for (const seats of reviewSeats)
+  for (const locale of ['en', 'fa'] as const) {
+    test.describe(`haftgane review live ${seats}p ${locale}`, () => {
+      test.use({ appLocale: locale, deviceScaleFactor: 1 });
+      test('lobby through rematch with shared probes', async ({ browser, baseURL }, info) => {
+        test.setTimeout(300_000);
+        // Separate touch and pointer contexts are necessary: resizing alone
+        // does not emulate the phone's input or its layout viewport.
+        for (const viewport of reviewViewports) {
+          const context = await browser.newContext({
+            viewport,
+            baseURL,
+            isMobile: viewport.width < 1000,
+            hasTouch: viewport.width < 1000,
+            deviceScaleFactor: 1,
+            serviceWorkers: 'block'
+          });
+          try {
+            await installMotionOff(context);
+            await context.addInitScript((locale) => {
+              const settings = JSON.parse(localStorage.getItem('ajayeb:settings') ?? '{}');
+              localStorage.setItem('ajayeb:settings', JSON.stringify({ ...settings, locale }));
+              localStorage.setItem('ajayeb:theme', 'system');
+            }, locale);
+            const page = await context.newPage();
+            const hygiene = reviewHygiene(page);
+            const capture = async (screen: string, scope = 'document') => {
+              for (const theme of ['light', 'dark'] as const) {
+                await page.emulateMedia({ colorScheme: theme });
+                await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+                await expect(page.locator('html')).toHaveAttribute(
+                  'dir',
+                  locale === 'fa' ? 'rtl' : 'ltr'
+                );
+                await reviewCapture(page, info, screen, seats, hygiene, scope);
+              }
+            };
+            await openBotTable(page, seats, 'Player', async () => capture('hg-lobby'));
+            await pastSides(page);
+            const ages = new Set<number>();
+            let seenMemory = false;
+            for (let step = 0; step < 100; step++) {
+              if (await page.locator('[data-age-military]').isVisible()) {
+                const age = await page
+                  .locator('[data-age-military]')
+                  .getAttribute('data-age-military');
+                await capture(`hg-end-age${age}`);
+                await dismissMilitary(page);
+              }
+              const f = await latest(page);
+              if (f.status === 'finished') break;
+              if (f.view.phase === 'turn' && !ages.has(f.view.age)) {
+                ages.add(f.view.age);
+                await capture(`hg-table-age${f.view.age}`);
+                if (seats === 7 && f.view.age === 3) {
+                  const nodes = await page.locator('*').count();
+                  await info.attach('ux-budgets', {
+                    contentType: 'application/json',
+                    body: JSON.stringify([
+                      {
+                        name: `haftgane-age3-dom-7p-${viewport.width}x${viewport.height}-${locale}`,
+                        value: nodes,
+                        limit: 2500,
+                        unit: 'nodes',
+                        details: { seats, age: 3, locale }
+                      }
+                    ])
+                  });
+                }
+                const card = f.view.you!.hand[0]!;
+                await page.locator(`[data-act="hand:${card}"]`).first().click();
+                await expect(page.locator('[data-card-sheet]')).toBeVisible();
+                await capture(`hg-live-card-age${f.view.age}`);
+                await page.locator('[data-act="pick-close"]').click();
+                await page.locator('[data-act="seen-hands"]').click();
+                await expect(page.locator('[data-seen-sheet]')).toBeVisible();
+                await capture(f.view.age === 1 ? 'hg-seen-empty' : `hg-seen-age${f.view.age}`);
+                await page.locator('[data-act="seen-close"]').click();
+                if (f.view.age === 2) {
+                  for (const relation of ['self', 'left', ...(seats > 3 ? ['other'] : [])]) {
+                    const seat =
+                      relation === 'self'
+                        ? f.you.seat!
+                        : f.view.seats.find((s) => s.relation === relation)!.seat;
+                    await page.locator(`[data-act="city:${seat}"]`).first().click();
+                    await expect(page.locator('[data-city-sheet]')).toBeVisible();
+                    await capture(`hg-city-${relation}`);
+                    await page.locator('[data-act="city-close"]').click();
+                  }
+                  await openMenu(page);
+                  await page.locator('[data-act="rules"]').click();
+                  await expect(page.locator('[data-rules-overlay]')).toBeVisible();
+                  await capture('hg-rules-game');
+                  await page.locator('[data-control="rules-close"]').click();
+                  if (await page.locator('[data-act="menu-close"]').isVisible())
+                    await page.locator('[data-act="menu-close"]').click();
+                }
+              }
+              if (!seenMemory && f.view.age === 1 && f.view.turn >= 3) {
+                seenMemory = true;
+                await page.locator('[data-act="seen-hands"]').click();
+                await expect(page.locator('[data-seen-sheet]')).toBeVisible();
+                await capture('hg-seen-memory');
+                await page.locator('[data-act="seen-close"]').click();
+              }
+              const ref = f.point!.ref;
+              if (f.point!.required.includes(f.you.seat!) && !f.pending?.confirm) {
+                const cs = f.view.you!.choices;
+                const pick =
+                  (f.view.phase === 'sides' ? cs.find((c) => c.key === 'side:day') : undefined) ??
+                  cs.find((c) => c.kind === 'stage') ??
+                  cs.find((c) => c.kind === 'build') ??
+                  cs[0]!;
+                if (f.view.phase === 'discard-build') {
+                  await page
+                    .locator(`[data-discard-picker] [data-act="${pick.key}"]`)
+                    .first()
+                    .click();
+                  await ready(page);
+                  await page.locator('[data-discard-picker] [data-special-confirm]').click();
+                } else {
+                  await choose(page, pick.key);
+                  await choose(page, 'confirm');
+                }
+              }
+              await expect
+                .poll(async () => {
+                  const g = await latest(page);
+                  return (
+                    g.status === 'finished' ||
+                    g.point?.ref.id !== ref.id ||
+                    g.point?.ref.revision !== ref.revision
+                  );
+                })
+                .toBe(true);
+            }
+            expect([...ages]).toEqual([1, 2, 3]);
+            expect((await latest(page)).status).toBe('finished');
+            await dismissMilitary(page);
+            await expect(page.locator('[data-score-sheet]')).toBeVisible();
+            await capture('hg-final-scores');
+            await page.locator('[data-act="final-board"]').click();
+            await capture('hg-final-board');
+            await page.locator('[data-act="lobby-rematch"]').click();
+            await expect(page.locator('[data-lobby]')).toBeVisible();
+            await capture('hg-rematch-lobby');
+            await choose(page, 'lobby-start');
+            await expect(page.locator('[data-table-screen]')).toBeVisible();
+            await pastSides(page);
+            await capture('hg-rematch-table');
+            await page.goto('/rules/haftgane#trade');
+            await expect(page.locator('[data-rules-page="haftgane"]')).toBeVisible();
+            await capture('hg-rules-page');
+          } finally {
+            await context.close();
+          }
+        }
+      });
+    });
+  }

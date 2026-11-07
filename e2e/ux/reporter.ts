@@ -18,7 +18,7 @@ export default class ShotsReporter implements Reporter {
   onBegin(): void {
     fs.mkdirSync(shotsDir, { recursive: true });
     for (const name of fs.readdirSync(shotsDir)) {
-      if (/^[a-z0-9-]+__\d+x\d+__(light|dark)__(en|fa)\.png$/.test(name))
+      if (/^[a-z0-9-]+__(?:[3-7]p__)?\d+x\d+__(light|dark)__(en|fa)\.png$/.test(name))
         fs.unlinkSync(path.join(shotsDir, name));
     }
   }
@@ -74,6 +74,30 @@ export default class ShotsReporter implements Reporter {
     fs.writeFileSync(path.join(shotsDir, 'summary.md'), summary);
     const screens = [...new Set(this.captures.map((c) => c.screen))];
     fs.writeFileSync(
+      path.join(shotsDir, 'manifest.json'),
+      JSON.stringify(
+        {
+          durationSeconds: (Date.now() - this.start) / 1000,
+          status: result.status,
+          unreachable: this.broken,
+          shots: this.captures.map((c) => ({
+            screen: c.screen,
+            seats: c.seats ?? null,
+            theme: c.theme,
+            direction: c.direction ?? (c.locale === 'fa' ? 'rtl' : 'ltr'),
+            viewport: c.viewport,
+            locale: c.locale,
+            sourceKind: c.sourceKind ?? 'fixture',
+            source: c.source,
+            file: c.file,
+            contactSheet: `screen-${c.screen}.html`
+          }))
+        },
+        null,
+        2
+      ) + '\n'
+    );
+    fs.writeFileSync(
       path.join(shotsDir, 'index.html'),
       `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Ajayeb UX captures</title><style>body{font:15px system-ui;background:#eee;color:#222;margin:1rem}nav{display:flex;gap:1rem;flex-wrap:wrap}section{border-top:2px solid #888;margin-top:2rem}.captures{display:flex;flex-wrap:wrap;align-items:start;gap:1rem}figure{margin:0;width:320px;background:white;padding:10px;overflow-wrap:anywhere}img{width:100%;height:auto}li{margin:.3em 0}pre{white-space:pre-wrap}</style><h1>Ajayeb UX captures</h1><p>${this.captures.length} captures. Probe findings are observations, not test failures.</p><nav>${screens.map((s) => `<a href="#${s}">${s}</a>`).join('')}</nav><details><summary>Budgets and run summary</summary><pre>${escape(summary)}\n${escape(JSON.stringify(this.budgets, null, 2))}</pre></details>${screens
         .map(
@@ -85,11 +109,24 @@ export default class ShotsReporter implements Reporter {
                   .update(fs.readFileSync(path.join(shotsDir, c.file)))
                   .digest('hex')
                   .slice(0, 10);
-                return `<figure><a href="${c.file}?v=${hash}"><img loading="lazy" src="${c.file}?v=${hash}" alt="${c.screen} ${c.viewport} ${c.theme} ${c.locale}"></a><figcaption><strong>${c.viewport} / ${c.theme} / ${c.locale}</strong><p>${escape(c.source)}, axe: ${escape(c.axeScope)}</p><ul>${c.failures.map((f) => `<li>P${f.severity} ${escape(f.message)}</li>`).join('') || '<li>No probe findings</li>'}</ul></figcaption></figure>`;
+                return `<figure><a href="${c.file}?v=${hash}"><img loading="lazy" src="${c.file}?v=${hash}" alt="${c.screen} ${c.viewport} ${c.theme} ${c.locale}"></a><figcaption><strong>${c.seats ? `${c.seats} seats / ` : ''}${c.viewport} / ${c.theme} / ${c.locale}</strong><p>${escape(c.source)}, axe: ${escape(c.axeScope)}</p><ul>${c.failures.map((f) => `<li>P${f.severity} ${escape(f.message)}</li>`).join('') || '<li>No probe findings</li>'}</ul></figcaption></figure>`;
               })
               .join('')}</div></section>`
         )
         .join('')}</html>`
     );
+    // A separate, readable contact sheet for each screen, with full-size links.
+    const index = fs.readFileSync(path.join(shotsDir, 'index.html'), 'utf8');
+    for (const screen of screens) {
+      const start = index.indexOf(`<section id="${screen}">`);
+      const end = index.indexOf('</section>', start) + '</section>'.length;
+      fs.writeFileSync(
+        path.join(shotsDir, `screen-${screen}.html`),
+        index.slice(0, index.indexOf('<h1>')) +
+          `<h1>${escape(screen)}</h1><a href="index.html">All screens</a>` +
+          index.slice(start, end) +
+          '</html>'
+      );
+    }
   }
 }

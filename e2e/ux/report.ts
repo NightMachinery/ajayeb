@@ -4,6 +4,9 @@ import type { PageProbe } from '../../tools/chrome/probe.mjs';
 export const shotsDir = path.resolve(process.env.SHOTS_DIR ?? 'ux-out');
 export interface Capture {
   screen: string;
+  seats?: number;
+  direction?: string;
+  sourceKind?: 'live' | 'fixture';
   viewport: string;
   theme: string;
   locale: string;
