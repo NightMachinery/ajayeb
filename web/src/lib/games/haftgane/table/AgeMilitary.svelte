@@ -6,7 +6,7 @@
   // `military` event the server sent, and the points are each seat's score
   // from the view. Closing it is local: the next Age's first decision is
   // already open behind it.
-  import { ageLabel, formatNumber } from '$lib/i18n';
+  import { ageLabel, formatNumber, i18n } from '$lib/i18n';
   import Sheet from '$lib/components/shell/Sheet.svelte';
   import Button from '$lib/components/shell/Button.svelte';
   import { tooltip } from '$lib/ui/tooltip.svelte';
@@ -116,10 +116,15 @@
     {#if neighbours.length > 0}
       <section class="yours-part" aria-labelledby="hg-military-yours">
         <h3 id="hg-military-yours">{ht('hg.end.military.yours')}</h3>
-        <div class="yours">
+        <div class="yours" dir="ltr">
           {#each neighbours as nb (nb.side)}
             {@const them = nameOf(nb.seat.seat)}
-            <div class="duel {nb.result}" data-my-conflict={nb.side} data-result={nb.result}>
+            <div
+              class="duel {nb.result}"
+              dir={i18n.dir}
+              data-my-conflict={nb.side}
+              data-result={nb.result}
+            >
               <div class="against">
                 <SeatCrest seat={nb.seat.seat} tip={them} />
                 <span class="label">
