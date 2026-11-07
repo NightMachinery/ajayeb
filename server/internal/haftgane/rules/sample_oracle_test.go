@@ -2,6 +2,7 @@ package rules
 
 import (
 	"math"
+	"os"
 	"testing"
 
 	"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng"
@@ -237,6 +238,10 @@ func samplerReplayOracle(root Game, batches []Batch, cards [NumAges][MaxSeats][H
 
 func TestSamplerEnumerableReplay(t *testing.T) {
 	run := samplerSkipRun(t)
+	trials := 256
+	if os.Getenv("HAFTGANE_SAMPLER_GAMES") != "" {
+		trials = 2048
+	}
 	// Inspect both sides of each skip, the later addition, the pending rebuild
 	// and the completed rebuild, from an owner and a nonowner's knowledge.
 	for prefix := 3; prefix < len(run.games); prefix++ {
@@ -333,7 +338,7 @@ func TestSamplerEnumerableReplay(t *testing.T) {
 			}
 			enumerate(0)
 			seen := map[string]int{}
-			for seed := uint64(0); seed < 2048; seed++ {
+			for seed := uint64(0); seed < uint64(trials); seed++ {
 				m := initial
 				r := rng.NewRNG(seed)
 				if !m.sources(0, &r) {
@@ -357,14 +362,14 @@ func TestSamplerEnumerableReplay(t *testing.T) {
 			if len(accepted) != len(seen) {
 				t.Fatal("sampler missed accepted worlds", prefix, seat, len(accepted), len(seen))
 			}
-			lo, hi := 2048, 0
+			lo, hi := trials, 0
 			tv := 0.0
 			for _, count := range seen {
 				lo = min(lo, count)
 				hi = max(hi, count)
-				tv += math.Abs(float64(count)/2048-1/float64(len(seen))) / 2
+				tv += math.Abs(float64(count)/float64(trials)-1/float64(len(seen))) / 2
 			}
-			t.Logf("prefix%d seat%d places%d support%d trials2048 frequency_min%d max%d empirical_TV_uniform=%.5f", prefix, seat, len(variable), len(seen), lo, hi, tv)
+			t.Logf("prefix%d seat%d places%d support%d trials%d frequency_min%d max%d empirical_TV_uniform=%.5f", prefix, seat, len(variable), len(seen), trials, lo, hi, tv)
 		}
 	}
 }

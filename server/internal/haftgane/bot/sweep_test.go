@@ -90,6 +90,13 @@ func assertBotPair(t *testing.T, a, b *rules.Game, seat rules.Seat) {
 	if oa != ob || !reflect.DeepEqual(ca, cb) {
 		t.Fatal("pair changed permitted inputs")
 	}
+	for _, budget := range []int{0, rules.MaxSamplerChecks} {
+		sa, ea := SampleRoot(context.Background(), oa, ca, 0x68756464656e, budget)
+		sb, eb := SampleRoot(context.Background(), ob, cb, 0x68756464656e, budget)
+		if ea != nil || eb != nil || sa != sb {
+			t.Fatal("forbidden facts changed sample/fallback diagnostics", budget, ea, eb)
+		}
+	}
 	for _, level := range []Level{Random, Greedy, Apprentice} {
 		da, ea := Choose(context.Background(), level, oa, ca, 0x68756464656e, DefaultWork())
 		db, eb := Choose(context.Background(), level, ob, cb, 0x68756464656e, DefaultWork())

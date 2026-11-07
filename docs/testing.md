@@ -3531,3 +3531,14 @@ forbidden state changes. Other tests pin bounded failure, zero allocations and
 saved exhaustion/pending-point regressions. `FuzzMatchesObservation` checks
 legal generated prefixes through the same replay oracle. Commands, evidence
 and the limits of these comparisons are in [the sampler guide](haftgane/sampler.md).
+
+`TestSamplerSupportSweep` adds true-world completeness at every seat/prefix and
+random conditional pile-entry enumeration across Ages, including rebuild
+sources. It defaults to ten games per player count; the sampler's sweep
+variable scales it. `TestSamplerControlledIdentityAndStop` checks exact world
+and RNG identity for uninterrupted control, injected stops, budget outcomes
+and zero allocations. `TestSamplerCancellationMeasurements` is opt-in via
+`HAFTGANE_SAMPLER_MEASURE=1` and measures saved constrained positions with
+idle/two-worker CPU load and cancellation inside search. Root preparation,
+Greedy failure diagnostics, actor responsiveness/cancellation and the tabletest
+leak oracle are covered independently; no released level uses sampling yet.

@@ -88,6 +88,15 @@ no fixed policy allowance and no watchdog time. No new deployment-wide
 scheduler or speculative capacity reservation is introduced; host-wide
 room-work admission belongs to the measured capacity-release slice.
 
+The dormant `bot.SampleRoot` preparation API is for this admitted worker path,
+not the actor. It accepts the same permitted observation/offer boundary and
+creates its root State only through the engine sampler. No room level selects
+it yet. A room test pauses inside sampling, proves actor responsiveness, then
+checks structural cancellation without accepting a fallback. Its sampler
+failure diagnostics are separate from exceptional watchdog fallback and do
+not change stored records. [The sampler guide](sampler.md) gives measured
+cost and cancellation results.
+
 A job receives neither a Game nor a State, seed, other seat's pending pick,
 wire revision or task generation. Entropy uses a domain-separated policy root,
 logical point, seat, permitted-observation fingerprint and frozen versions.

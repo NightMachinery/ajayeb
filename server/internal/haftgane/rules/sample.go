@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	samplePlaces = NumAges*MaxSeats*HandSize + MaxBoxGuilds
-	sampleGroups = NumAges * (HandSize + 1)
+	samplerPollChecks = 16
+	samplePlaces      = NumAges*MaxSeats*HandSize + MaxBoxGuilds
+	sampleGroups      = NumAges * (HandSize + 1)
 )
 
 // World is a state and a private witness, never an authoritative Game. The
@@ -36,6 +37,8 @@ type sampleOpportunity struct {
 	blocked catalog.DesignSet
 }
 type sampleModel struct {
+	stop           func() bool
+	stopped        bool
 	floor          [samplePlaces]catalog.DesignID
 	places         [samplePlaces]samplePlace
 	groups         [sampleGroups]sampleGroup
@@ -55,18 +58,46 @@ func Determinize(o Observation, r *rng.RNG) (World, bool) {
 	return w, ok
 }
 
-func determinize(o Observation, r *rng.RNG, limit int) (World, int, bool) {
+// SamplerCost describes deterministic work and why no world was returned.
+// Stopped means the caller withdrew the work; Exhausted means its check budget
+// ran out. Neither outcome may expose a partial world.
+type SamplerCost struct {
+	Checks             int
+	Stopped, Exhausted bool
+}
+
+// DeterminizeControlled is the worker-facing sampler. limit is clamped to
+// [0, MaxSamplerChecks]. stop may be nil; otherwise it is queried before work,
+// at most every 16 feasibility/source checks, and around final materialization.
+// A false stop callback preserves Determinize's exact world and random tape.
+// The callback is caller-supplied input, not a clock or context read by rules.
+func DeterminizeControlled(o Observation, r *rng.RNG, limit int, stop func() bool) (World, SamplerCost, bool) {
 	var m sampleModel
-	m.limit = limit
+	m.limit, m.stop = min(max(limit, 0), MaxSamplerChecks), stop
+	if stop != nil && stop() {
+		return World{}, SamplerCost{Stopped: true}, false
+	}
 	if r == nil || !m.prepare(&o) || !m.sources(0, r) {
-		return World{}, m.checks, false
+		return World{}, SamplerCost{Checks: m.checks, Stopped: m.stopped, Exhausted: m.checks >= m.limit && !m.stopped}, false
+	}
+	if stop != nil && stop() {
+		return World{}, SamplerCost{Checks: m.checks, Stopped: true}, false
 	}
 	m.shuffleClasses(r)
 	w, ok := m.world(&o)
-	if !ok {
-		return World{}, m.checks, false
+	if stop != nil && stop() {
+		return World{}, SamplerCost{Checks: m.checks, Stopped: true}, false
 	}
-	return w, m.checks, true
+	cost := SamplerCost{Checks: m.checks}
+	if !ok {
+		return World{}, cost, false
+	}
+	return w, cost, true
+}
+
+func determinize(o Observation, r *rng.RNG, limit int) (World, int, bool) {
+	w, cost, ok := DeterminizeControlled(o, r, limit, nil)
+	return w, cost.Checks, ok
 }
 
 func sampleMoment(age, turn uint8) uint8 { return (age-1)*8 + turn }
@@ -312,6 +343,13 @@ func (m *sampleModel) chronology(o *Observation) bool {
 }
 
 func (m *sampleModel) charge() bool {
+	if m.stopped {
+		return false
+	}
+	if m.stop != nil && m.checks%samplerPollChecks == 0 && m.stop() {
+		m.stopped = true
+		return false
+	}
 	if m.checks >= m.limit {
 		return false
 	}
@@ -390,7 +428,7 @@ func (m *sampleModel) sources(index int, r *rng.RNG) bool {
 			return true
 		}
 		m.places[i].death, m.places[i].fixed = 0, fixed
-		if m.checks >= m.limit {
+		if m.stopped || m.checks >= m.limit {
 			break
 		}
 	}
@@ -641,7 +679,7 @@ func (m *sampleModel) draw(r *rng.RNG) bool {
 		}
 		p.value = 0
 		m.floor[p.class] = floor
-		if m.checks >= m.limit {
+		if m.stopped || m.checks >= m.limit {
 			break
 		}
 	}
@@ -868,7 +906,7 @@ func (m *sampleModel) pendingSource(index int, r *rng.RNG) bool {
 			return true
 		}
 		m.places[i].base = base
-		if m.checks >= m.limit {
+		if m.stopped || m.checks >= m.limit {
 			break
 		}
 	}

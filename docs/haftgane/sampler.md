@@ -41,9 +41,24 @@ This removes equivalent failed permutations while retaining witness support.
 counts, including failed branches. All loops, arrays and recursion depth are
 also bounded by game dimensions. The bound limits deterministic work, not
 elapsed time. A false return is exactly `(World{}, false)`, with no partial
-world. A future sampled bot must fall back to the existing legal Greedy policy;
-it must never relax a constraint or read authoritative hidden cards. No bot
-integration is part of this slice.
+world. A sampled bot must fall back to the existing legal Greedy policy;
+it must never relax a constraint or read authoritative hidden cards. The
+worker integration below provides that fallback without enabling a level.
+
+`DeterminizeControlled(o, rng, limit, stop)` is the worker-facing variant.
+The caller's budget is clamped to 0 through `MaxSamplerChecks`. Its
+`SamplerCost` reports checks, a stop, or budget exhaustion separately. A pure
+stop callback is polled before setup, every 16 source/flow checks, and around
+final materialization. A stopped call returns a zero world. An uninterrupted
+false callback preserves the ordinary sampler's exact world and RNG tape, with
+zero allocations. Rules code reads no context or clock. The caller supplies
+cancellation as input.
+
+A callback was chosen instead of resumable search state: the worker needs only
+a prompt abort, and preserving recursive branch stacks across calls would
+complicate ownership, RNG continuation and scratch storage. An explicit check
+budget still supports deterministic fallback experiments. The original
+`Determinize` API remains the non-cancellable convenience wrapper.
 
 `MatchesObservation(o, w)` is the separate debug/test oracle. It reconstructs a
 complete setup from the private witness, replays checked `Game.Resolve` batches,
@@ -73,8 +88,9 @@ permutation. Its independent side rebuilds full deals and replays legal keys;
 it shares no packet, skip or pile-look constraint code. Both sides accept the
 same assignments at ten owner/nonowner prefixes covering two nonempty
 all-duplicate skips, later additions, a pending rebuild and its completion.
-Support sizes are 12, 2, 6, 1, 2, 1, 2, 1, 2 and 4. Each case also draws 2,048
-tapes; every accepted assignment is reached and no outside assignment is drawn.
+Support sizes are 12, 2, 6, 1, 2, 1, 2, 1, 2 and 4. The recorded measurement
+draws 2,048 tapes per case (the default suite now uses 256); every accepted
+assignment is reached and no outside assignment is drawn.
 The empirical distance from uniform ranges from 0 to 0.04297 in those cases.
 Sampling error contributes to those distances; these measurements neither
 establish uniformity nor bound bias for other observations. The conditional
@@ -124,4 +140,83 @@ HEAVY_NOTIFY=auto GOTOOLCHAIN=go1.26.3 \
   python3 tools/heavy.py run --kind fuzz --wait 3600 -- \
   go -C server test ./internal/haftgane/rules -run '^$' \
     -fuzz '^FuzzMatchesObservation$' -fuzztime=60s -parallel=1
+```
+
+## Worker integration and cancellation evidence
+
+`bot.SampleRoot` accepts only the seated observation, exact offer, independent
+policy entropy and a deterministic check budget. It consumes the controlled
+sampler and `World.State()` by value. Its ready state belongs to the root
+worker; a future simulated-seat policy must receive `Project` only. On a
+no-world or budget-out result it invokes the existing exact Greedy once, with
+separate attempts, worlds, checks, no-world fallback and budget fallback
+counters. Cancellation returns no root state or replacement key. No released
+policy, frozen preset, stored game or frame changes in this integration slice.
+The new path remains dormant until the rollout slice supplies a decision rule.
+
+The room worker hook test pauses inside sampling while the actor serves a
+request, then changes the bot's controller and verifies physical cancellation,
+no accepted replacement and no watchdog diagnostic. The baseline policies keep
+their observation-only boundary; only the root preparation file may name a
+sampled State. Forbidden-information pairs now compare successful samples and
+budget fallback diagnostics as well as baseline choices. The tabletest leak
+oracle also checks sampling counters with an injected-seed negative control.
+
+The review identified a real conflict: the fixed check bound did not make a
+single call promptly cancellable. A measured natural call took 256 ms, and
+running to the bound could take seconds. Polling resolves cancellation without
+reducing an uninterrupted decision's prescribed work. It does not make full
+samples cheap.
+
+A guarded arm64 measurement used `GOMAXPROCS=4`, one test job, and 64 tapes at
+each of nine saved seat/position fixtures. External desktop load was not
+controlled. The two earlier five/six-seat regressions averaged 2.580 and
+2.464 ms per completed call. At the seven-seat tail position, the seven seats'
+means were 10.490, 170.731, 5.873, 15.824, 13.193, 14.310 and 12.409 ms. Seat
+1's median was 203.640 ms, p95 221.674 ms, maximum 228.181 ms, and its largest
+check count was 157,271. Other seats' maxima ranged from 20.157 to 30.946 ms.
+These costs are at discard-constrained positions, unlike the initial/later
+unconstrained benchmarks above.
+
+Cancellation was injected after 32 checks inside search, deliberately allowing
+one entire polling interval before the callback reported it. Across 576 calls
+per load condition, cancellation-to-return latency was:
+
+- No test-local CPU workers: p50 0.055 ms, p95 0.252 ms, p99 0.415 ms,
+  maximum 1.309 ms.
+- Two additional continuously computing goroutines: p50 0.044 ms,
+  p95 0.177 ms, p99 0.302 ms, maximum 0.514 ms.
+
+Both observed p99 values meet the 50 ms target under those stated conditions;
+this is not a universal host-latency guarantee. Every cancelled call returned
+no world. The CPU workers are joined before the test exits.
+
+At the costly seat's observed mean, 16 full samples cost about 2.73 seconds
+per decision before rollouts; six serialized bots would spend about 16.4 seconds
+on sampling alone. These are arithmetic estimates from the measured mean, not
+an approved preset. Scholar cannot assume tens of samples are cheap at every
+position. Calibration must measure tails and full-table waits at one fixed
+preset, or improve the sampler, before enabling a level. It must not silently
+reduce work for six bots or use elapsed time to select completed comparisons.
+
+The strengthened support probe fixes the entire real world at every seat and
+prefix, then separately varies random pile entries across all Ages, including
+potential rebuild sources. Its default ten games per player count checked
+5,088 true-world cases and 337,140 assignments in 27.32 s. The larger
+80-game-per-count run accepted all 40,879 true worlds and found exact replay
+agreement on 2,264,520 assignments (12,445 accepted) across 3,500 conditional
+universes, with 1,430 varied potential rebuild sources. That probe took
+206.55 s; measurements plus probe took 222.990 s. The older fixed fixture's
+exhaustive assignments remain; only its default empirical tape count was
+reduced to keep ordinary validation short.
+
+Reproduce both the larger probe and measurements with:
+
+```sh
+HEAVY_NOTIFY=auto HAFTGANE_SAMPLER_GAMES=80 HAFTGANE_SAMPLER_MEASURE=1 \
+  GOMAXPROCS=4 GOTOOLCHAIN=go1.26.3 \
+  python3 tools/heavy.py run --kind test --wait 3600 -- \
+  go -C server test ./internal/haftgane/rules \
+    -run '^TestSampler(SupportSweep|CancellationMeasurements)$' \
+    -count=1 -v -timeout=20m
 ```

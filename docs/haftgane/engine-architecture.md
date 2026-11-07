@@ -477,10 +477,11 @@ The `Game` methods are thin wrappers: `Legal` calls `LegalState` on the frozen s
 ### Sampled worlds (before the public release)
 
 Implemented in M21.haftgane-sampler. [sampler.md](sampler.md) records the
-constraint search, its limitations, support tests and measurements. Bot
-integration and level calibration remain separate slices.
+constraint search, its limitations, support tests and measurements.
+M21.sampler-integration adds cancellable root preparation and Greedy fallback;
+rollouts and level calibration remain later slices.
 
-`Determinize(o, rng) (World, bool)` fills every hidden place consistently with the observation's whole history. A `World` is opaque: its `State()` (seed zero) is what search uses, and it also holds the sampled history that justifies that state (every Age's full deal, the identity of every hidden pick and leftover, and the box, about 300 bytes). Only `MatchesObservation` and tests read the history; the bot never receives a fabricated record.
+`Determinize(o, rng) (World, bool)` fills every hidden place consistently with the observation's whole history. A `World` is opaque: its `State()` (seed zero) is what search uses, and it also holds the sampled history that justifies that state (every Age's full deal, the identity of every hidden pick and leftover, and the box; 1,200 bytes including the state on the measured arm64 build). Only `MatchesObservation` and tests read the history; the bot never receives a fabricated record.
 
 **Groups.** Every hidden copy sits in a place created by something public: another seat's private pick (a sale or a tucked card), a sixth-turn leftover or kept card, a card still in a hand, an undealt deal, a guild in the box. Every copy of an Age is dealt into one packet, so the places split into groups, each a set of places with a known multiset supply of the same size:
 
@@ -724,7 +725,7 @@ The FULL review (M12.engine-review: four majors, three minors, no blockers) is a
 - **Major 1, quote cache.** The free decision (chain, Olympia conditions, building versus stage) is made per action before any cache; only the ordinary nonfree solver answer is cached, by seat and cost; Pay debits the per-action effective quote, so a free design pays no printed coins (sections 7 and 8). The three regressions the review asks for are in slice haftgane-turn-resolution.
 - **Major 2, skipped discard opportunities.** A built discard stage with no discard build is a public constraint on every pile entry present then, enforced with discard builds and pile looks in the sampler's search. `MatchesObservation` replays each world with the real rules, and the enumerable-world oracle compares the sampler's support with an independent replay, including all-duplicate piles, several skips, later additions and rebuilds (section 11, slice haftgane-sampler).
 - **Major 3, observation shape.** `Observation` is its own whitelist type: no seed field, the pile as a public count, the per-design pile only while its owner decides a discard build and as remembered looks, no derived caches, and an explicit canonical encoding defined before hashing. Paired-history tests check the normalized fields directly (section 11, slice haftgane-views-and-observation).
-- **Major 4, state-only core.** `LegalState`, `ResolveState`, `Project` and `QuoteState` are published, with the `Game` methods as wrappers. `Determinize` returns an opaque `World` whose `State()` search uses and whose sampled history, about 300 bytes, only `MatchesObservation` reads. The old `Observe(Determinize(o)) == o` property is replaced (section 11).
+- **Major 4, state-only core.** `LegalState`, `ResolveState`, `Project` and `QuoteState` are published, with the `Game` methods as wrappers. `Determinize` returns an opaque `World` whose `State()` search uses and whose sampled history only `MatchesObservation` reads (1,200 bytes for the whole world including the state on the measured arm64 build). The old `Observe(Determinize(o)) == o` property is replaced (section 11).
 - **Minor 1, hand sizes by phase,** in section 6, shared by `CheckInvariants` and the scenario builder, and checked right after a turn resolves into an ability point.
 - **Minor 2, D28.** Representation-only changes keep the rules version and take the platform's refresh path; `Replay` returns the game and the codec owns the fingerprint comparison (sections 3 and 12).
 - **Minor 3 and the release sequence.** Slices list prerequisites; each Duel extraction lands just before its first caller, and the seed mixer waits for the first bot that needs it; release A ships rules, views and Greedy and Apprentice, and the sampler and sampled difficulties form release B. Expansion seams are reduced to reserved bits and the exhaustiveness tests (sections 3 and 14).

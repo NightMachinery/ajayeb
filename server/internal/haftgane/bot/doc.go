@@ -4,4 +4,7 @@
 // State, setup seed, other seat's hand or runtime scheduling metadata.
 // Exact scores, placements and prices come from the rules observation API;
 // forward-looking features are explicit fixed-point policy estimates.
+// SampleRoot is dormant preparation for later sampled root search. It creates
+// a private root State only through the observation-only engine sampler, with
+// cancellation and deterministic Greedy fallback. No released level uses it.
 package bot

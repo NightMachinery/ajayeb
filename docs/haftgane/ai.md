@@ -32,9 +32,12 @@ The rules engine now supplies observation-only `Determinize`, opaque `World`
 values and an independent `MatchesObservation` replay checker. The bounded
 constraint search includes skipped opportunities, open discard points and
 private pile looks. Its support, nonuniform distribution, work bound and
-measurements are documented in [sampler.md](sampler.md). No baseline policy or
-room level consumes it yet; sampler integration and Scholar calibration are
-later slices.
+measurements are documented in [sampler.md](sampler.md). `bot.SampleRoot` now
+prepares a cancellable sampled root or exact Greedy fallback, with per-call
+diagnostics. This worker-only entry point remains
+dormant: no baseline policy or room level consumes samples until the rollout
+and calibration slices. See the sampler guide for the measured constrained
+cost and cancellation p99, including its stated CPU-load conditions.
 
 ## Policy and preset version 1
 
