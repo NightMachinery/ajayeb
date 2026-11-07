@@ -79,7 +79,9 @@
   const chosen = $derived(offered.find((c) => c.key === pendingKey) ?? build);
   const actions = $derived(chosen ? [chosen, ...offered.filter((c) => c !== chosen)] : offered);
   const why = $derived(cc.disabled.find((x) => x.kind === 'build'));
-  const stageCost = $derived(stage ? stagesOf(seat)[stage.stage - 1]?.cost : undefined);
+  const stageWhy = $derived(cc.disabled.find((x) => x.kind === 'stage'));
+  const stageNumber = $derived(stage?.stage ?? stageWhy?.stage);
+  const stageCost = $derived(stageNumber ? stagesOf(seat)[stageNumber - 1]?.cost : undefined);
   const chainSources = $derived(
     d?.chainIn ? hgDesignSlugs.filter((slug) => design(slug)?.chainOut?.includes(d.chainIn!)) : []
   );
@@ -143,12 +145,13 @@
     if (c?.kind === 'stage') stageKey = key;
     ondraft(key);
   }
-  function blocked(): string {
+  function blocked(why: Disabled | undefined): string {
     if (why?.reason === 'insufficient-coins')
       return ht('hg.sheet.blocked.insufficient-coins', {
         count: why.shortBy,
         cheapest: why.cheapest
       });
+    if (why?.reason === 'wonder-complete') return ht('hg.sheet.blocked.wonder-complete');
     if (why?.reason === 'already-built') return ht('hg.sheet.blocked.already-built');
     if (why?.reason === 'cannot-cover') return ht('hg.sheet.blocked.cannot-cover');
     return ht('hg.sheet.blocked.other');
@@ -274,18 +277,20 @@
               onselect={draft}
             />
           {/if}
-        {:else}<p class="blocked" data-cannot-build>{blocked()}</p>{/if}
+        {:else}<p class="blocked" data-cannot-build>{blocked(why)}</p>{/if}
         {#if build?.kept && !keptByAll}{@render keptNote(build.kept, false)}{/if}
         <p class="note">{ht('hg.sheet.coins', { count: seat.coins })} {discounts.join(' ')}</p>
       </section>
       <section aria-labelledby="hg-stage-title">
         <h3 id="hg-stage-title">
-          {stage ? ht('hg.sheet.stage', { stage: stage.stage }) : ht('hg.sheet.cannotStage')}
+          {stageNumber && stageWhy?.reason !== 'wonder-complete'
+            ? ht('hg.sheet.stage', { stage: stageNumber })
+            : ht('hg.sheet.cannotStage')}
         </h3>
+        {#if stageCost}<div class="cost">
+            <span>{ht('hg.sheet.cost')}</span><CostPips cost={stageCost} />
+          </div>{/if}
         {#if stage}
-          {#if stageCost}<div class="cost">
-              <span>{ht('hg.sheet.cost')}</span><CostPips cost={stageCost} />
-            </div>{/if}
           <PaymentList
             choices={cc.stages}
             selected={stage.key}
@@ -297,6 +302,10 @@
           />
           <p class="note">{ht('hg.sheet.hiddenStage')}</p>
           {#if stage.kept && !keptByAll}{@render keptNote(stage.kept, false)}{/if}
+        {:else if stageWhy}
+          <p class="blocked" data-cannot-stage={stageWhy.reason}>
+            {blocked(stageWhy)}
+          </p>
         {/if}
       </section>
       {#if sale}

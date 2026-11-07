@@ -89,3 +89,11 @@ pending-ownership oracle. The existing reload, reconnect and foreign-pending
 canaries remain in the table specs. The platform baseline test measures
 Home and Duel separately so a shared-runtime dependency cannot hide in
 Haftgane's lazy entry.
+
+Unavailable wonder stages retain their stage number and printed catalog cost.
+Their disabled entry supplies the explanation: missing production, a completed
+wonder, or the server's cheapest payment and coin shortfall. The sheet neither
+calculates a quote nor invents an actionable stage key. The `stage-shortfall`
+gallery case is a legal three-seat night-side capture from Age I turn 2,
+Alexandria holding Stone Pit, with Clay Pool selected. Its disabled entry sends
+stage 1, `insufficient-coins`, `cheapest: 4`, and `shortBy: 1`.

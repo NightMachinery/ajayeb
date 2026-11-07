@@ -263,6 +263,7 @@ export const screen = {
   'hg.sheet.blocked.insufficient-coins': 'Short by {count} coins. Cheapest payment: {cheapest}.',
   'hg.sheet.blocked.cannot-cover': 'Your production and your neighbours cannot cover this cost.',
   'hg.sheet.blocked.already-built': 'You already own this building.',
+  'hg.sheet.blocked.wonder-complete': 'All wonder stages are already built.',
   'hg.sheet.blocked.other': 'The server offers no build for this card.',
   'hg.sheet.chain': 'Free with {card}',
   'hg.sheet.chainOwned': 'Free with {card} (yours)',

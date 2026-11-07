@@ -242,6 +242,7 @@ export const screen = {
   'hg.sheet.blocked.insufficient-coins': '{count} سکه کم دارید. ارزان‌ترین پرداخت: {cheapest}.',
   'hg.sheet.blocked.cannot-cover': 'تولید شما و همسایه‌هایتان نمی‌تواند این هزینه را بپوشاند.',
   'hg.sheet.blocked.already-built': 'این ساختمان را دارید.',
+  'hg.sheet.blocked.wonder-complete': 'همه‌ی مراحل شگفتی ساخته شده‌اند.',
   'hg.sheet.blocked.other': 'سرور ساختی برای این کارت پیشنهاد نمی‌کند.',
   'hg.sheet.chain': 'رایگان با {card}',
   'hg.sheet.chainOwned': 'رایگان با {card} (که دارید)',

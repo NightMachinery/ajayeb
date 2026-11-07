@@ -2271,5 +2271,141 @@
         "outlook": 5
       }
     ]
+  },
+  {
+    "kind": "stage-shortfall",
+    "seats": 3,
+    "card": "clay-pool",
+    "seat": {
+      "seat": 2,
+      "board": "alexandria",
+      "side": "night",
+      "stages": 0,
+      "built": ["stone-pit"],
+      "coins": 3,
+      "victories": [0, 0, 0],
+      "defeats": 0,
+      "shields": 0,
+      "handSize": 6,
+      "hasKept": false,
+      "relative": 0,
+      "relation": "self",
+      "last": {
+        "kind": "build",
+        "design": "stone-pit",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0
+      },
+      "score": {
+        "wonder": 0,
+        "treasure": 1,
+        "military": 0,
+        "blue": 0,
+        "yellow": 0,
+        "green": 0,
+        "purple": 0,
+        "total": 1
+      },
+      "science": {
+        "counts": [0, 0, 0],
+        "choices": [0, 0, 0],
+        "points": 0
+      }
+    },
+    "choices": [
+      {
+        "key": "build:clay-pool:0:0",
+        "kind": "build",
+        "design": "clay-pool",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 0,
+        "free": "",
+        "witness": []
+      },
+      {
+        "key": "sell:clay-pool",
+        "kind": "sell",
+        "design": "clay-pool",
+        "side": "",
+        "stage": 0,
+        "left": 0,
+        "right": 0,
+        "printed": 0,
+        "total": 0,
+        "gain": 3,
+        "free": "",
+        "witness": []
+      }
+    ],
+    "disabled": [
+      {
+        "kind": "stage",
+        "design": "clay-pool",
+        "stage": 1,
+        "reason": "insufficient-coins",
+        "cheapest": 4,
+        "shortBy": 1
+      }
+    ],
+    "neighbours": [
+      {
+        "seat": 0,
+        "direction": "left",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "papyrus",
+                "price": 2
+              }
+            ]
+          },
+          {
+            "choice": true,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              },
+              {
+                "resource": "ore",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      },
+      {
+        "seat": 1,
+        "direction": "right",
+        "units": [
+          {
+            "choice": false,
+            "producer": 0,
+            "count": 1,
+            "options": [
+              {
+                "resource": "clay",
+                "price": 2
+              }
+            ]
+          }
+        ],
+        "outlook": 0
+      }
+    ]
   }
 ]
