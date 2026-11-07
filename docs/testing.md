@@ -3539,6 +3539,9 @@ variable scales it. `TestSamplerControlledIdentityAndStop` checks exact world
 and RNG identity for uninterrupted control, injected stops, budget outcomes
 and zero allocations. `TestSamplerCancellationMeasurements` is opt-in via
 `HAFTGANE_SAMPLER_MEASURE=1` and measures saved constrained positions with
-idle/two-worker CPU load and cancellation inside search. Root preparation,
+idle/two-worker CPU load and cancellation at one early search window.
+The same opt-in flag enables `TestSamplerPollGapMeasurements`, which records
+each complete call's maximum poll gap across saved fixtures and fresh game
+prefixes; the sampler sweep variable scales its fresh games. Root preparation,
 Greedy failure diagnostics, actor responsiveness/cancellation and the tabletest
 leak oracle are covered independently; no released level uses sampling yet.

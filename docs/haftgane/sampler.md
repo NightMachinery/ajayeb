@@ -178,23 +178,50 @@ check count was 157,271. Other seats' maxima ranged from 20.157 to 30.946 ms.
 These costs are at discard-constrained positions, unlike the initial/later
 unconstrained benchmarks above.
 
-Cancellation was injected after 32 checks inside search, deliberately allowing
-one entire polling interval before the callback reported it. Across 576 calls
-per load condition, cancellation-to-return latency was:
+The injected-stop measurement cancels after 32 checks inside search, then
+deliberately runs the next 16-check interval before the callback reports it.
+It measures that early interval plus stop unwinding, not later windows,
+preparation or the materialization tail. Across 576 calls per load condition,
+this early-window cancellation-to-return latency was:
 
 - No test-local CPU workers: p50 0.055 ms, p95 0.252 ms, p99 0.415 ms,
   maximum 1.309 ms.
 - Two additional continuously computing goroutines: p50 0.044 ms,
   p95 0.177 ms, p99 0.302 ms, maximum 0.514 ms.
 
-Both observed p99 values meet the 50 ms target under those stated conditions;
-this is not a universal host-latency guarantee. Every cancelled call returned
-no world. The CPU workers are joined before the test exits.
+Both early-window p99 values meet the 50 ms target under those stated
+conditions. Every cancelled call returned no world, and the CPU workers are
+joined before the test exits. These numbers alone do not describe the
+slowest polling interval of a call.
+
+The opt-in `TestSamplerPollGapMeasurements` timestamps every stop poll during
+complete calls and records the maximum gap per call, including entry to the
+first poll and the final poll to return. It covers all seats of the three
+saved fixtures with 64 tapes each, then every seat/prefix of fresh games.
+A cancellation just after a poll must wait for the next poll, so these gaps
+cover later search windows, preparation and materialization that the
+early-window injection omits. They measure the wait until the next poll;
+stop unwinding is exercised separately by the injected-stop test. Neither
+measurement is a universal host-latency guarantee.
+
+The guarded arm64 poll-gap run used `GOMAXPROCS=4`, no test-local CPU load
+workers and uncontrolled external desktop load. Across 21,629 complete calls
+(1,152 saved-fixture calls plus every seat/prefix of 40 fresh games per player
+count), the per-call maximum gaps had p50 0.136 ms, p99 0.264 ms, p99.9
+0.371 ms and maximum 1.270 ms. The maximum occurred at the saved seven-seat
+position, seat 1, tape 11; the slowest full call took 231.358 ms. These
+percentiles describe the distribution of each call's largest interval, rather
+than all individual intervals pooled together. The observed p99 is below the
+50 ms target under this stated load.
 
 At the costly seat's observed mean, 16 full samples cost about 2.73 seconds
-per decision before rollouts; six serialized bots would spend about 16.4 seconds
-on sampling alone. These are arithmetic estimates from the measured mean, not
-an approved preset. Scholar cannot assume tens of samples are cheap at every
+per decision before rollouts. For this measured table, with the human at seat
+0 and bots at seats 1 through 6, the corresponding serialized sum is
+`16 × (170.731 + 5.873 + 15.824 + 13.193 + 14.310 + 12.409)` ms, about
+3.72 seconds for all six bots. A 16.4-second total would be a hypothetical
+table where all six bots cost as much as the costliest seat; no such table
+was measured. These are arithmetic estimates from per-seat means, not an
+approved preset. Scholar cannot assume tens of samples are cheap at every
 position. Calibration must measure tails and full-table waits at one fixed
 preset, or improve the sampler, before enabling a level. It must not silently
 reduce work for six bots or use elapsed time to select completed comparisons.
@@ -219,4 +246,16 @@ HEAVY_NOTIFY=auto HAFTGANE_SAMPLER_GAMES=80 HAFTGANE_SAMPLER_MEASURE=1 \
   go -C server test ./internal/haftgane/rules \
     -run '^TestSampler(SupportSweep|CancellationMeasurements)$' \
     -count=1 -v -timeout=20m
+```
+
+To reproduce the complete-call poll-gap run and rerun the early-window stop
+measurement without the support sweep:
+
+```sh
+HEAVY_NOTIFY=auto HAFTGANE_SAMPLER_GAMES=40 HAFTGANE_SAMPLER_MEASURE=1 \
+  GOMAXPROCS=4 GOTOOLCHAIN=go1.26.3 \
+  python3 tools/heavy.py run --kind test --wait 3600 -- \
+  go -C server test ./internal/haftgane/rules \
+    -run '^TestSampler(Cancellation|PollGap)Measurements$' \
+    -count=1 -v -timeout=10m
 ```

@@ -2,9 +2,11 @@ package rules
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"runtime"
 	"slices"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -135,5 +137,89 @@ func TestSamplerCancellationMeasurements(t *testing.T) {
 		if p99 >= 50*time.Millisecond {
 			t.Fatal("cancellation p99 above target", load, p99)
 		}
+	}
+}
+
+// Complete calls expose every polling window, including preparation and the
+// materialization tail. Record the largest window per call rather than treating
+// a cancellation injected at one early poll as the slowest window of that call.
+func TestSamplerPollGapMeasurements(t *testing.T) {
+	if os.Getenv("HAFTGANE_SAMPLER_MEASURE") != "1" {
+		t.Skip("set HAFTGANE_SAMPLER_MEASURE=1")
+	}
+	games := 10
+	if text := os.Getenv("HAFTGANE_SAMPLER_GAMES"); text != "" {
+		n, err := strconv.Atoi(text)
+		if err != nil || n < 1 || n > 100000 {
+			t.Fatal("invalid HAFTGANE_SAMPLER_GAMES")
+		}
+		games = n
+	}
+	var gaps []time.Duration
+	var worst, slowest time.Duration
+	worstAt := ""
+	measure := func(label string, o Observation, r *rng.RNG) {
+		start := time.Now()
+		last, largest := start, time.Duration(0)
+		_, _, ok := DeterminizeControlled(o, r, MaxSamplerChecks, func() bool {
+			now := time.Now()
+			largest = max(largest, now.Sub(last))
+			last = now
+			return false
+		})
+		end := time.Now()
+		largest = max(largest, end.Sub(last))
+		if !ok {
+			t.Fatal("poll-gap no-world", label)
+		}
+		gaps = append(gaps, largest)
+		if largest > worst {
+			worst, worstAt = largest, label
+		}
+		slowest = max(slowest, end.Sub(start))
+	}
+	for _, fixture := range []struct {
+		n           uint8
+		seed, point int
+	}{{5, 172, 15}, {6, 1434, 16}, {7, 1218, 21}} {
+		setup := Setup{Seats: fixture.n, Seed: uint64(fixture.seed) + 0x517, Options: Options{Sides: SideRule(fixture.seed % 3), HideAtEnd: fixture.seed%2 == 1}}
+		run := samplerSweepPlay(t, setup, uint64(fixture.seed)+127, (fixture.seed/3)%3)
+		found := false
+		for _, g := range run.games {
+			if int(g.State.Points) != fixture.point {
+				continue
+			}
+			found = true
+			for seat := Seat(0); seat < Seat(fixture.n); seat++ {
+				for tape := uint64(0); tape < 64; tape++ {
+					r := rng.NewRNG2(tape, uint64(seat)+99)
+					measure(fmt.Sprintf("fixture n%d seed_index%d point%d seat%d tape%d", fixture.n, fixture.seed, fixture.point, seat, tape), g.Observe(seat), &r)
+				}
+			}
+		}
+		if !found {
+			t.Fatal("missing poll-gap fixture")
+		}
+	}
+	fixtureCalls := len(gaps)
+	for n := uint8(MinSeats); n <= MaxSeats; n++ {
+		for seed := 0; seed < games; seed++ {
+			setup := Setup{Seats: n, Seed: uint64(seed) + 0x3c3, Options: Options{Sides: SideRule(seed % 3)}}
+			run := samplerSweepPlay(t, setup, uint64(seed)+77, (seed/3)%3)
+			for _, g := range run.games {
+				for seat := Seat(0); seat < Seat(n); seat++ {
+					r := rng.NewRNG2(uint64(seed), uint64(g.State.Points)*8+uint64(seat))
+					measure(fmt.Sprintf("sweep n%d seed_index%d point%d seat%d", n, seed, g.State.Points, seat), g.Observe(seat), &r)
+				}
+			}
+		}
+	}
+	slices.Sort(gaps)
+	percentile := func(perThousand int) time.Duration {
+		return gaps[(len(gaps)*perThousand+999)/1000-1]
+	}
+	t.Logf("poll_gap GOMAXPROCS%d calls%d fixture_calls%d fresh_games_per_count%d p50_ms=%.3f p99_ms=%.3f p999_ms=%.3f max_ms=%.3f worst_at=%s slowest_call_ms=%.3f", runtime.GOMAXPROCS(0), len(gaps), fixtureCalls, games, float64(percentile(500))/1e6, float64(percentile(990))/1e6, float64(percentile(999))/1e6, float64(worst)/1e6, worstAt, float64(slowest)/1e6)
+	if percentile(990) >= 50*time.Millisecond {
+		t.Fatal("whole-call poll-gap p99 above target", percentile(990))
 	}
 }
