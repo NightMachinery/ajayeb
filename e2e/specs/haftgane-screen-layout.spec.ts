@@ -14,6 +14,32 @@ for (const locale of ['en', 'fa'] as const) {
         expect(status!.y).toBeGreaterThanOrEqual(name!.y + name!.height);
       });
     }
+    test('card sheets and Seen hands keep card anatomy left to right @mobile', async ({ page }) => {
+      await page.goto('/dev/gallery?hgSheet=chain&seats=7');
+      const face = page.locator('[data-card-sheet] [data-card]');
+      await expect(face).toBeVisible();
+      expect(await face.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+      expect(await face.locator('.name').evaluate((el) => getComputedStyle(el).direction)).toBe(
+        locale === 'fa' ? 'rtl' : 'ltr'
+      );
+      const cost = await face.locator('.cost').boundingBox();
+      const chains = await face.locator('.chains').boundingBox();
+      expect(cost!.x).toBeLessThan(chains!.x);
+      await page.goto('/dev/gallery');
+      await page
+        .locator('[data-gallery-city] .open')
+        .filter({ hasText: 'Open Seen hands, Age II' })
+        .click();
+      const mini = page.locator('[data-seen-sheet] .mini').first();
+      await expect(mini).toBeVisible();
+      expect(await mini.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+      const band = await mini.locator('.band').boundingBox();
+      const name = await mini.locator('.name').boundingBox();
+      expect(band!.x).toBeLessThan(name!.x);
+      expect(await mini.locator('.name').evaluate((el) => getComputedStyle(el).direction)).toBe(
+        locale === 'fa' ? 'rtl' : 'ltr'
+      );
+    });
     test('conflict panels retain physical neighbour positions @mobile', async ({ page }) => {
       await page.goto('/dev/gallery?hgEnd=military&seats=7');
       const left = page.locator('[data-my-conflict="left"]');

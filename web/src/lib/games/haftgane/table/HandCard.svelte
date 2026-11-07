@@ -5,7 +5,7 @@
   // name. A tap selects it (the pick list then shows the server's choices
   // for it); a long-press shows its tooltip.
   import { tooltip } from '$lib/ui/tooltip.svelte';
-  import { ageLabel, joinPhrases } from '$lib/i18n';
+  import { ageLabel, i18n, joinPhrases } from '$lib/i18n';
   import { ht } from '../i18n/messages.svelte';
   import AffordBadge from './AffordBadge.svelte';
   import CardArt from './CardArt.svelte';
@@ -75,7 +75,7 @@
     {#if picked}
       <span class="pick-tag" data-pick-tag={picked}>
         {#if picked === 'confirmed'}<HgGlyph name="badge-check" />{/if}
-        <span>{ht('hg.screen.pick.tag')}</span>
+        <span dir={i18n.dir}>{ht('hg.screen.pick.tag')}</span>
       </span>
     {/if}
     {#if keeps}
@@ -85,15 +85,16 @@
         {@attach tooltip({ text: ht('hg.special.kept.preview.tip') })}
       >
         <HgGlyph name="wonder" />
-        <span class="keep-text">{ht('hg.special.kept.preview.tag')}</span>
+        <span class="keep-text" dir={i18n.dir}>{ht('hg.special.kept.preview.tag')}</span>
       </span>
     {/if}
   </span>
-  <span class="name">{name}</span>
+  <span class="name" dir={i18n.dir}>{name}</span>
 {/snippet}
 {#if preview}
   <div
     class="card preview"
+    dir="ltr"
     style:--band="var(--card-{d?.colour ?? 'grey'})"
     data-card={slug}
     role="img"
@@ -106,6 +107,7 @@
   <button
     type="button"
     class="card"
+    dir="ltr"
     class:selected
     class:picked={picked !== null}
     style:--band="var(--card-{d?.colour ?? 'grey'})"

@@ -3,7 +3,7 @@
   // category glyph (so colour is never the only cue), its name and, when it
   // stands for several, a count. The card you played from a hand carries
   // what you did with it. The tooltip says what the card does.
-  import { formatNumber } from '$lib/i18n';
+  import { formatNumber, i18n } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
   import HgGlyph from './HgGlyph.svelte';
@@ -33,6 +33,7 @@
 
 <span
   class="mini"
+  dir="ltr"
   class:dim
   class:played={!!mark}
   style:--ink="var(--card-{d?.colour ?? 'brown'})"
@@ -41,9 +42,9 @@
   {@attach tooltip({ text: tip, lines: markTip ? [markTip] : [] })}
 >
   <span class="band"><HgGlyph name="category-{d?.colour ?? 'brown'}-sm" /></span>
-  <span class="name">{cardName(slug)}</span>
+  <span class="name" dir={i18n.dir}>{cardName(slug)}</span>
   {#if count > 1}<span class="count" dir="ltr">×{formatNumber(count)}</span>{/if}
-  {#if mark}<span class="mark">{mark}</span>{/if}
+  {#if mark}<span class="mark" dir={i18n.dir}>{mark}</span>{/if}
 </span>
 
 <style>
