@@ -169,8 +169,13 @@ fuzz-haftgane-rules: ## Haftgane's three rules fuzzers (FuzzPlayout, FuzzKeys, F
 	    || exit $$?; \
 	done
 
+# golangci-lint panics on the standard library of a Go newer than the one it was
+# built with, so the lint runs on the Go that CI pins (GO_VERSION in ci.yml), not
+# whatever Go the machine has moved to. go.mod is unaffected.
+LINT_GOTOOLCHAIN ?= go1.26.3
+
 lint-go: ## golangci-lint run in server/
-	cd server && $(HEAVY) run --kind lint -- golangci-lint run
+	cd server && GOTOOLCHAIN=$(LINT_GOTOOLCHAIN) $(HEAVY) run --kind lint -- golangci-lint run
 
 build-server: ## The Go server without the embedded web build, at server/bin/ajayeb
 	$(HEAVY) run --kind build -- go -C server build -o bin/ajayeb ./cmd/ajayeb
