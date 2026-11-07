@@ -222,3 +222,10 @@ threats checks this condition without extra simulations. A points win that
 depends on building rather than discarding the remaining card is still
 shown, as are military and science threats. This omission applies to both
 languages; the wire carries no new display text or fields.
+
+## Haftgane sampler
+
+Haftgane's observation-only sampler supplies opaque, history-consistent worlds
+for the later sampled bots. Its [sampler guide](haftgane/sampler.md) records
+constraints, bounded failure, replay oracles, measured distribution and cost.
+No room level changes in the sampler slice.

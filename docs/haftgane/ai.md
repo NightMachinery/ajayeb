@@ -26,6 +26,16 @@ current is a counterfactual for quotes, not a legal world or a point
 transition. It never advances hands, knowledge, military or ability timing.
 Only the engine's real offered set authorizes a move.
 
+## Sampled worlds
+
+The rules engine now supplies observation-only `Determinize`, opaque `World`
+values and an independent `MatchesObservation` replay checker. The bounded
+constraint search includes skipped opportunities, open discard points and
+private pile looks. Its support, nonuniform distribution, work bound and
+measurements are documented in [sampler.md](sampler.md). No baseline policy or
+room level consumes it yet; sampler integration and Scholar calibration are
+later slices.
+
 ## Policy and preset version 1
 
 Random chooses a hand design in proportion to its physical multiplicity,

@@ -53,3 +53,6 @@ setup, replay, privacy bounds and measurements.
 
 The [fixed-preset room bots](haftgane/room-bots.md) guide covers internal levels,
 durable work rows and cancellation.
+
+The [Haftgane sampler](haftgane/sampler.md) guide covers observation-only worlds,
+constraint search, bounded failure and replay/distribution evidence.
