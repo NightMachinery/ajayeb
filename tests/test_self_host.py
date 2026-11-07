@@ -1317,7 +1317,8 @@ class CrossCompileTests(unittest.TestCase):
 
     def test_go_build_cross_env_disables_cgo_and_sets_target(self):
         self.assertEqual(
-            self_host.go_build_cross_env("linux", "arm64"), {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "arm64"}
+            self_host.go_build_cross_env("linux", "arm64"),
+            {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "arm64", "GOTOOLCHAIN": self_host.GO_TOOLCHAIN},
         )
 
     def test_heavy_wrap_passes_through_when_heavy_py_is_absent(self):

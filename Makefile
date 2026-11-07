@@ -18,6 +18,13 @@
 # Written for GNU Make 3.81, the version macOS ships as /usr/bin/make.
 
 SHELL := /bin/sh
+
+# Every go command here runs on the Go that CI pins (GO_VERSION in ci.yml), not
+# whatever Go the machine has moved to, so tests, lint and builds agree. A newer
+# Go changes standard-library behaviour under them, and golangci-lint panics on
+# a standard library newer than the Go it was built with. Moving Go is its own
+# change: bump this, CI's GO_VERSION and GO_TOOLCHAIN in self_host.py together.
+export GOTOOLCHAIN ?= go1.26.3
 .DEFAULT_GOAL := help
 .NOTPARALLEL:
 .SUFFIXES:
@@ -169,13 +176,8 @@ fuzz-haftgane-rules: ## Haftgane's three rules fuzzers (FuzzPlayout, FuzzKeys, F
 	    || exit $$?; \
 	done
 
-# golangci-lint panics on the standard library of a Go newer than the one it was
-# built with, so the lint runs on the Go that CI pins (GO_VERSION in ci.yml), not
-# whatever Go the machine has moved to. go.mod is unaffected.
-LINT_GOTOOLCHAIN ?= go1.26.3
-
 lint-go: ## golangci-lint run in server/
-	cd server && GOTOOLCHAIN=$(LINT_GOTOOLCHAIN) $(HEAVY) run --kind lint -- golangci-lint run
+	cd server && $(HEAVY) run --kind lint -- golangci-lint run
 
 build-server: ## The Go server without the embedded web build, at server/bin/ajayeb
 	$(HEAVY) run --kind build -- go -C server build -o bin/ajayeb ./cmd/ajayeb

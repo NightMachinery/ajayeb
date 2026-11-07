@@ -1276,8 +1276,14 @@ def dist_binary_path(goos: str, goarch: str) -> Path:
     return DIST_DIR / f"ajayeb-{goos}-{goarch}"
 
 
+# The Go that CI tests and the Makefile runs, so a shipped binary is built by the
+# Go it was tested on, not whatever Go this machine has moved to. Bump together
+# with the Makefile's GOTOOLCHAIN and CI's GO_VERSION.
+GO_TOOLCHAIN = "go1.26.3"
+
+
 def go_build_cross_env(goos: str, goarch: str) -> dict[str, str]:
-    return {"CGO_ENABLED": "0", "GOOS": goos, "GOARCH": goarch}
+    return {"CGO_ENABLED": "0", "GOOS": goos, "GOARCH": goarch, "GOTOOLCHAIN": GO_TOOLCHAIN}
 
 
 def go_build_cross_command(version: str, goos: str, goarch: str) -> list[str]:
