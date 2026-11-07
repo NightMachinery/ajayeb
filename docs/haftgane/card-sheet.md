@@ -97,3 +97,8 @@ calculates a quote nor invents an actionable stage key. The `stage-shortfall`
 gallery case is a legal three-seat night-side capture from Age I turn 2,
 Alexandria holding Stone Pit, with Clay Pool selected. Its disabled entry sends
 stage 1, `insufficient-coins`, `cheapest: 4`, and `shortBy: 1`.
+
+The live sheet playthrough retries up to four fresh legal deals to find an
+alternate build payment. Room seeds depend on earlier tests, and one complete
+game can offer no such payment under the test's policy. The assertion still
+requires selecting and confirming a non-default payment through the live sheet.
