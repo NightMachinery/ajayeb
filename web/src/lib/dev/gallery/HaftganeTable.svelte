@@ -7,7 +7,7 @@
   // carries only the fields the leaves read. The headings are dev labels,
   // not shipped copy.
   import type { Choice, Neighbour, Seat, TradeUnit } from '$lib/wire/haftgane.gen';
-  import { hgBoardSlugs } from '$lib/wire/haftgane-catalog.gen';
+  import { hgBoardSlugs, hgDesignSlugs } from '$lib/wire/haftgane-catalog.gen';
   import FarSeatChip from '$lib/games/haftgane/table/FarSeatChip.svelte';
   import HandCard from '$lib/games/haftgane/table/HandCard.svelte';
   import HandGrid from '$lib/games/haftgane/table/HandGrid.svelte';
@@ -231,6 +231,11 @@
 
   <section class="flex flex-col gap-2">
     <h3 class="text-sm font-semibold text-fg-muted">Haftgane table: hand cards <!-- i18n-ok --></h3>
+    <div class="flex flex-wrap gap-2" data-gallery-all-cards>
+      {#each hgDesignSlugs as slug (slug)}
+        <div style="width: 72px; height: 110px"><HandCard {slug} afford={null} /></div>
+      {/each}
+    </div>
     <div class="flex flex-wrap gap-2">
       {#each affords as a (a.slug)}
         <div class="w-24">

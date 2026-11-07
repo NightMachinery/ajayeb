@@ -318,3 +318,11 @@ The owner's final answers, the same evening:
 - The Seen hands sheet with its statistics (section 8) and the matching server fields.
 - The open questions became the answers list.
 - The final answers: the shared lobby decided, any spectator in any seat with the previous-seat hint, the roles and their tags, the temporary admin after five minutes in place of the two-minute handover, and the server fields for them (sections 3 and 7).
+
+### Minimum card effect geometry
+
+Resource tiles in printed effects follow the card's typography. Effect groups
+wrap within their colour band when a short landscape hand reaches its 44 px
+minimum width. The card geometry browser spec measures every catalog design at
+44 px and 72 px, in English and Persian, including each effect's descendants.
+This catches clipped resource options even when the page itself has no overflow.

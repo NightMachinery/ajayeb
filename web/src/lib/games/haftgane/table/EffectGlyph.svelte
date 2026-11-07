@@ -75,14 +75,25 @@
 <style>
   .fx {
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 0.1em;
+    max-width: 100%;
+    min-width: 0;
     padding: 0.1em 0.2em;
     border-radius: 0.3em;
     background: var(--card-paper);
     color: var(--card-ink);
     font-weight: 700;
     line-height: 1;
+  }
+  /* Card typography follows its container. Fixed rem tiles would spill
+     beyond a phone card even when the surrounding effects can wrap. */
+  .fx :global([data-res]) {
+    width: 1.1em;
+    height: 1.1em;
+    font-size: inherit;
   }
   .sep {
     opacity: 0.6;
