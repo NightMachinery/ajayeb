@@ -82,12 +82,12 @@
     background: var(--panel);
   }
   .done {
-    border-color: var(--gold-deep);
+    border-color: var(--hg-wonder-ink);
     background: color-mix(in oklch, var(--gold) 14%, var(--panel));
   }
   .numeral {
     flex: 0 0 1.6rem;
-    color: var(--gold-deep);
+    color: var(--hg-wonder-ink);
     font: 700 1.1rem var(--type-display);
     text-align: center;
   }

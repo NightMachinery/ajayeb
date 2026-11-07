@@ -56,10 +56,10 @@
     font-size: 0.85rem;
   }
   .creator {
-    color: var(--gold-deep);
+    color: var(--hg-wonder-ink);
   }
   .admin {
-    color: var(--lapis);
+    color: var(--hg-link-ink);
   }
   .temporary {
     border-style: dashed;

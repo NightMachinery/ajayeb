@@ -3506,6 +3506,20 @@ provides one contact sheet per screen, with full-resolution links and findings.
 `index.html`, `summary.md` and `probes.json` retain the existing report format.
 Use a new output directory per round to preserve prior evidence.
 
+### Haftgane contrast and drawer coverage
+
+Haftgane text uses local theme-aware link and wonder inks, while pale defeat
+chips use a fixed paper ink in either theme. Reveal bands use their own custom
+property instead of reusing the shared text palette's `--ink`. Shared Duel
+palette tokens remain unchanged.
+
+The covered-action probe exempts only table controls underneath Haftgane's
+open desktop rules drawer. This nonmodal reference intentionally overlays
+part of the table; closing it restores those controls. The rules spec checks
+restoration and verifies that an unrelated blocker is still reported while
+the drawer is open. An obstruction inside the drawer is a separate positive
+control. Other popovers retain the normal probe checks.
+
 ### Icon paint comparison
 
 `specs/icons.spec.ts` compares decoded screenshot pixels of the inline SVGs

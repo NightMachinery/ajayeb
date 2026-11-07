@@ -40,7 +40,7 @@
   }
   .arrow {
     display: inline-block;
-    color: var(--lapis);
+    color: var(--hg-link-ink);
     font-weight: 700;
   }
   .flow[data-fresh] .arrow {
@@ -58,7 +58,7 @@
   .hand {
     display: inline-grid;
     place-items: center;
-    color: var(--lapis);
+    color: var(--hg-link-ink);
     font-size: 1.2rem;
   }
 </style>

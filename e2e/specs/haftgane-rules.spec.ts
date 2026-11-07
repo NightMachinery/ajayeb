@@ -15,6 +15,8 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { test } from '../fixtures/base';
 import { watchHygiene } from '../fixtures/hygiene';
+import { openBotTable, openMenu } from '../fixtures/table';
+import { probePage } from '../../tools/chrome/probe.mjs';
 
 /** The section ids of games/haftgane/rules/sections.ts, in order. */
 const SECTION_IDS = [
@@ -146,4 +148,88 @@ test.describe('Haftgane rules overlay', { tag: ['@haftgane-rules'] }, () => {
       expect(problems).toEqual([]);
     });
   }
+});
+
+test('the desktop rules drawer restores covered actions and the probe retains other blockers @haftgane-rules', async ({
+  page
+}) => {
+  await page.setViewportSize(DESKTOP);
+  await openBotTable(page, 3);
+  await openMenu(page);
+  await page.locator('[data-act="rules"]').click();
+  const drawer = page.locator(
+    '[data-rules-host="haftgane"] [data-rules-overlay="drawer"]:popover-open'
+  );
+  await expect(drawer).toBeVisible();
+  const covered = await page.locator('button[data-act]:not(:disabled)').evaluateAll((buttons) =>
+    buttons
+      .filter((el) => {
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return (
+          r.width > 1 &&
+          r.height > 1 &&
+          !!hit?.closest('[data-rules-overlay="drawer"]:popover-open') &&
+          !el.closest('[data-rules-overlay="drawer"]')
+        );
+      })
+      .map((el) => el.getAttribute('data-act')!)
+  );
+  expect(covered.length).toBeGreaterThan(0);
+  expect((await page.evaluate(probePage)).covered).toEqual([]);
+  // An unrelated blocker on the exposed table must still be reported even
+  // while this drawer is open. Its close button remains reachable.
+  await page.locator('[data-act="table-menu"]').evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const block = document.createElement('div');
+    block.id = 'probe-unrelated-blocker';
+    Object.assign(block.style, {
+      position: 'fixed',
+      left: `${r.x}px`,
+      top: `${r.y}px`,
+      width: `${r.width}px`,
+      height: `${r.height}px`,
+      zIndex: '999999'
+    }); // physical-ok
+    document.body.append(block);
+  });
+  expect((await page.evaluate(probePage)).covered.some((c) => c.el.includes('table-menu'))).toBe(
+    true
+  );
+  await page.locator('#probe-unrelated-blocker').evaluate((el) => el.remove());
+  // The exemption must not conceal an obstruction inside the reference.
+  await drawer.evaluate((el) => {
+    const holder = document.createElement('div');
+    holder.id = 'probe-drawer-blocker';
+    Object.assign(holder.style, { position: 'relative', width: '60px', height: '44px' });
+    const button = document.createElement('button');
+    button.dataset.act = 'probe-inside-drawer';
+    button.textContent = 'Probe';
+    Object.assign(button.style, { width: '60px', height: '44px' });
+    const block = document.createElement('div');
+    Object.assign(block.style, { position: 'absolute', inset: '0' });
+    holder.append(button, block);
+    el.prepend(holder);
+  });
+  expect(
+    (await page.evaluate(probePage)).covered.some((c) => c.el.includes('probe-inside-drawer'))
+  ).toBe(true);
+  await page.locator('#probe-drawer-blocker').evaluate((el) => el.remove());
+
+  await drawer.locator('[data-control="rules-close"]').click();
+  await expect(drawer).toHaveCount(0);
+  for (const act of covered) {
+    const control = page.locator(`button[data-act="${act}"]`).first();
+    expect(
+      await control.evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return hit === el || (!!hit && el.contains(hit));
+      }),
+      act
+    ).toBe(true);
+  }
+  expect((await page.evaluate(probePage)).covered).toEqual([]);
+  await page.locator('[data-act^="city:"]').first().click();
+  await expect(page.locator('[data-city-sheet]')).toBeVisible();
 });

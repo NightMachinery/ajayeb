@@ -50,7 +50,7 @@
     padding-inline: 0.65rem;
     border: 1.5px solid var(--rule-strong);
     border-radius: 9999px;
-    color: var(--lapis);
+    color: var(--hg-link-ink);
     font-weight: 600;
     white-space: nowrap;
   }

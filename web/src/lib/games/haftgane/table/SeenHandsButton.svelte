@@ -34,7 +34,7 @@
     border: 0;
     border-radius: var(--shape-control);
     background: none;
-    color: var(--lapis);
+    color: var(--hg-link-ink);
     font: inherit;
     font-size: 0.875rem;
     font-weight: 600;

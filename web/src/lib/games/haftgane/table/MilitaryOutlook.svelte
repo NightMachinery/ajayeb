@@ -83,7 +83,7 @@
   }
   .lose .token {
     background: var(--afford-short-bg);
-    color: var(--cinnabar-ink);
+    color: var(--hg-defeat-ink);
   }
   .tie {
     border-style: dashed;

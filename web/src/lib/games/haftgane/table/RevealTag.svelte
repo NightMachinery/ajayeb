@@ -42,7 +42,8 @@
         return 'wonder';
     }
   });
-  const ink = $derived(
+  // Keep the band colour separate from the shared --ink text palette.
+  const bandInk = $derived(
     act?.kind === 'build' || act?.kind === 'build-discarded'
       ? `var(--card-${design(card)?.colour ?? 'brown'})`
       : act?.kind === 'sell'
@@ -56,7 +57,7 @@
   <span
     class="tag"
     class:pop
-    style:--ink={ink}
+    style:--reveal-band={bandInk}
     data-reveal-tag={line.seat}
     data-reveal-act={act.kind}
     data-reveal-card={card || undefined}
@@ -76,7 +77,7 @@
     min-width: 0;
     padding-block: 0.1rem;
     padding-inline: 0.1rem 0.4rem;
-    border: 1.5px solid var(--ink);
+    border: 1.5px solid var(--reveal-band);
     border-radius: 0.45rem;
     background: var(--panel);
     box-shadow: var(--shadow);
@@ -90,7 +91,7 @@
     place-items: center;
     height: 1.1rem;
     border-radius: 0.3rem;
-    background: var(--ink);
+    background: var(--reveal-band);
     color: var(--paper-bright);
     font-size: 0.75rem;
   }

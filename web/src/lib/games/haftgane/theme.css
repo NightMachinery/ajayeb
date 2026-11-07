@@ -1,6 +1,6 @@
 /*
  * Haftgane's own colour tokens: the seven seat colours and the ore and cloth
- * resources, in OKLCH like web/src/lib/styles/tokens.css.
+ * resources and text inks, in OKLCH like web/src/lib/styles/tokens.css.
  *
  * Haftgane-only. The table screen (table/TableScreen.svelte) imports it, so it
  * ships in Haftgane's lazy chunk, and Duel's tokens.css and app.css, which
@@ -10,6 +10,13 @@
  */
 
 :root {
+  /* Text on table/panel surfaces needs 4.5:1, rather than the 3:1 of
+     decorative palette fills. Keep these local to Haftgane. */
+  --hg-link-ink: var(--lapis);
+  --hg-wonder-ink: oklch(0.48 0.09 75);
+  /* Defeat tokens stay pale in both themes, like card faces. */
+  --hg-defeat-ink: var(--cinnabar-paper-ink);
+
   /* Seats: one colour per seat, fixed by table position like the crests
      (crest-0 to crest-6). Each colours its crest's ring, the crest glyph
      inside it and the outline of the player's own strip. Every value keeps
@@ -39,6 +46,8 @@
 }
 
 :root[data-theme='dark'] {
+  --hg-link-ink: oklch(0.78 0.1 262);
+  --hg-wonder-ink: var(--gold);
   --seat-0: oklch(0.76 0.15 352);
   --seat-1: oklch(0.8 0.15 125);
   --seat-2: oklch(0.74 0.14 290);

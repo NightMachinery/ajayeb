@@ -118,6 +118,12 @@ export function probePage() {
     }
     if (clippedCentre) continue;
     const at = document.elementFromPoint(x, y);
+    // Haftgane's desktop rules reference intentionally overlays the table.
+    // Closing its nonmodal drawer restores these controls. Exempt only an
+    // outside control hit by that open drawer, never blockers within it or
+    // another popover (haftgane-rules.spec.ts exercises both boundaries).
+    const rulesDrawer = at?.closest('[data-rules-host="haftgane"] [data-rules-overlay="drawer"]:popover-open');
+    if (rulesDrawer && !rulesDrawer.contains(el)) continue;
     if (!at || (at !== el && !el.contains(at))) covered.push({ el: describe(el), by: at ? describe(at) : null });
   }
   return {
