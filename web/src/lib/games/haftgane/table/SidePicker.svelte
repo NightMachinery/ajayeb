@@ -12,7 +12,11 @@
   import WonderBoard from './WonderBoard.svelte';
   import HgGlyph from './HgGlyph.svelte';
 
+  import PickConnection from './PickConnection.svelte';
+  import type { ConnState } from '../session/session.svelte';
+
   interface Props {
+    conn?: ConnState;
     boardId: string;
     choices: readonly Choice[];
     pendingKey: string | null;
@@ -21,7 +25,16 @@
     onconfirm: (key: string) => void;
     onclose: () => void;
   }
-  let { boardId, choices, pendingKey, locked, ondraft, onconfirm, onclose }: Props = $props();
+  let {
+    conn = 'open',
+    boardId,
+    choices,
+    pendingKey,
+    locked,
+    ondraft,
+    onconfirm,
+    onclose
+  }: Props = $props();
   let open = $state(true);
   const b = $derived(board(boardId));
   const sides = $derived(choices.filter((c) => c.kind === 'side'));
@@ -86,6 +99,7 @@
     >
   </div>
   {#snippet footer()}<div dir={i18n.dir}>
+      {#if selected}<PickConnection {conn} />{/if}
       <Button
         class="confirm"
         data-act={selected?.key ?? 'side-confirm'}

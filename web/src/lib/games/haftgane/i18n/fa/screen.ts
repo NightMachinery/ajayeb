@@ -207,6 +207,8 @@ export const screen = {
   'hg.screen.bar.over': 'بازی تمام شد.',
   'hg.screen.bar.chosen': '{done}/{of}',
   'hg.screen.bar.chosen.tip': '{done} بازیکن از {of} بازیکن تأیید کرده‌اند.',
+  'hg.screen.connection.kept':
+    'انتخاب شما محفوظ است. پس از وصل شدن دوباره می‌توانید آن را تأیید کنید.',
   'hg.screen.confirm': 'تأیید',
   'hg.screen.change': 'تغییر',
 

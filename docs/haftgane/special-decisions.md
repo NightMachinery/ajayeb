@@ -79,3 +79,8 @@ These recordings are private, ignored test output; they are never fixtures.
 
 The kept card's status sits below its complete face, including the name strip.
 The locked and playable states use the same placement in both directions.
+
+A disconnected draft keeps its confirmation disabled and shows the session's
+connection state next to it, with a translated explanation that the choice is
+kept and confirmation resumes on reconnection. This feedback appears in the
+normal turn bar, the card sheet, and both special-decision sheet footers.

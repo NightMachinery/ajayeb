@@ -8,7 +8,11 @@
   import { cardName } from './labels';
   import { COLOURS, design } from './model';
   import HandCard from './HandCard.svelte';
+  import PickConnection from './PickConnection.svelte';
+  import type { ConnState } from '../session/session.svelte';
+
   interface Props {
+    conn?: ConnState;
     offer: readonly OfferEntry[];
     choices: readonly Choice[];
     disabled: readonly Disabled[];
@@ -18,8 +22,17 @@
     onconfirm: (key: string) => void;
     onclose: () => void;
   }
-  let { offer, choices, disabled, pendingKey, locked, ondraft, onconfirm, onclose }: Props =
-    $props();
+  let {
+    conn = 'open',
+    offer,
+    choices,
+    disabled,
+    pendingKey,
+    locked,
+    ondraft,
+    onconfirm,
+    onclose
+  }: Props = $props();
   let open = $state(true);
   let filter = $state<HgColour | null>(null);
   const cards = $derived(
@@ -93,6 +106,7 @@
     >
   </div>
   {#snippet footer()}<div dir={i18n.dir}>
+      {#if selected}<PickConnection {conn} />{/if}
       <Button
         class="confirm"
         data-act={selected?.key ?? 'discard-confirm'}

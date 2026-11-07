@@ -9,7 +9,11 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import { ht } from '../i18n/messages.svelte';
 
+  import PickConnection from './PickConnection.svelte';
+  import type { ConnState } from '../session/session.svelte';
+
   interface Props {
+    conn?: ConnState;
     /** The status line, already translated. */
     text: string;
     chosen: { done: number; of: number };
@@ -23,6 +27,7 @@
   }
 
   let {
+    conn = 'open',
     text,
     chosen,
     pending,
@@ -50,6 +55,7 @@
           >{/if}{pendingLabel}</span
       >
     {/if}
+    {#if pending && !pending.confirm}<PickConnection {conn} />{/if}
   </div>
   {#if pending && !pending.confirm}
     <button

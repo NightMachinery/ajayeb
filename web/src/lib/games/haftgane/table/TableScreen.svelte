@@ -586,6 +586,7 @@
       {/if}
       <div class="foot">
         <TurnBar
+          conn={session.conn}
           text={statusText}
           chosen={chosenCount(frame)}
           pending={deciding ? pending : null}
@@ -613,6 +614,7 @@
     {#key decisionKey}
       {#if view.phase === 'sides'}
         <SidePicker
+          conn={session.conn}
           boardId={around.anchor.board}
           {choices}
           pendingKey={pending?.key ?? null}
@@ -623,6 +625,7 @@
         />
       {:else}
         <DiscardPicker
+          conn={session.conn}
           offer={mine.offer}
           {choices}
           disabled={mine.disabled}
@@ -638,6 +641,7 @@
   {#if selected && mine && around}
     {#key `${decisionKey}:${selected}`}
       <CardSheet
+        conn={session.conn}
         card={selected}
         {choices}
         disabled={mine.disabled}

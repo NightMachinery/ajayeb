@@ -219,6 +219,7 @@ export const screen = {
   'hg.screen.bar.over': 'The game is over.',
   'hg.screen.bar.chosen': '{done}/{of}',
   'hg.screen.bar.chosen.tip': '{done} of {of} players have confirmed.',
+  'hg.screen.connection.kept': 'Your choice is kept. You can confirm when the connection returns.',
   'hg.screen.confirm': 'Confirm',
   'hg.screen.change': 'Change',
 

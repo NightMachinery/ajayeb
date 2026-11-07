@@ -16,7 +16,11 @@
   import ResourceTile from './ResourceTile.svelte';
   import PaymentList from './PaymentList.svelte';
 
+  import PickConnection from './PickConnection.svelte';
+  import type { ConnState } from '../session/session.svelte';
+
   interface Props {
+    conn?: ConnState;
     card: string;
     choices: readonly Choice[];
     disabled: readonly Disabled[];
@@ -31,6 +35,7 @@
     onclose: () => void;
   }
   let {
+    conn = 'open',
     card,
     choices,
     disabled,
@@ -318,6 +323,7 @@
     </div>
   </div>
   {#snippet footer()}
+    {#if pendingKey}<PickConnection {conn} />{/if}
     <div class="actions" dir={i18n.dir}>
       {#if !chosen}<Button disabled class="sheet-action">{ht('hg.sheet.cannotBuild')}</Button>{/if}
       {#each actions as c (c.key)}
