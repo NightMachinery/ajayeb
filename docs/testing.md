@@ -857,9 +857,14 @@ The shared console check ignores two specific browser notices only in WebKit:
 the development server's report-only CSP missing a `report-to` directive, and
 the unsupported `interactive-widget` viewport key. Fixed message prefixes and
 the CSP notice's exact report-only explanation keep actual violations failing.
-Every other console error, page exception, failed request and HTTP error stays
-fatal. The smoke spec exercises the collector with browser-free event sources
-to prove an unrelated WebKit error still fails and Chromium keeps both notices.
+Every other console error and page exception stays fatal. Request failures
+ignore only exact browser cancellation codes for same-origin GETs under
+`/art/`, `/fonts/`, `/icons/`, `/sfx/` and `/_app/immutable/`. Replaced images
+and idle prefetches may legitimately abandon those static assets. Cancelled
+API, health and WebSocket requests, other origins, connection failures and
+every HTTP error response still fail. The smoke spec exercises the collector
+with browser-free event sources, including cancellation codes from WebKit,
+Chromium and Firefox, so these boundaries are checked even without WebKit.
 
 The audio spec observes native AudioContext creation, decode results and source
 starts without replacing WebAudio behavior. It verifies no audio context,

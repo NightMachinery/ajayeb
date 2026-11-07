@@ -49,6 +49,63 @@ test.describe('smoke', { tag: ['@smoke', '@mobile'] }, () => {
     expect(await res.json()).toMatchObject({ ok: true });
   });
 
+  test('hygiene ignores only cancelled same-origin static assets', () => {
+    const origin = 'https://game.example';
+    const cancellations = ['Load request cancelled', 'net::ERR_ABORTED', 'NS_BINDING_ABORTED'];
+    for (const browser of ['webkit', 'chromium', 'firefox', undefined]) {
+      const events = new EventEmitter();
+      const page = Object.assign(events, {
+        url: () => `${origin}/room/ABC123`,
+        context: () => ({
+          browser: () => (browser ? { browserType: () => ({ name: () => browser }) } : null)
+        })
+      }) as unknown as Page;
+      const problems = watchHygiene(page);
+      const fail = (url: string, errorText: string | undefined, method = 'GET') => {
+        events.emit('requestfailed', {
+          url: () => url,
+          method: () => method,
+          failure: () => (errorText ? { errorText } : null)
+        });
+      };
+      for (const error of cancellations) {
+        for (const path of [
+          '/art/cards/arsenal.avif?v=1234',
+          '/fonts/text.woff2',
+          '/icons/icon-192.png',
+          '/sfx/coin.m4a?v=1234',
+          '/_app/immutable/assets/page.css',
+          '/_app/immutable/chunks/page.js'
+        ]) {
+          fail(`${origin}${path}`, error);
+        }
+      }
+      expect(problems).toEqual([]);
+
+      const expected: string[] = [];
+      const mustFail = (url: string, error: string | undefined, method = 'GET') => {
+        fail(url, error, method);
+        expected.push(`request failed: ${url} (${error ?? 'unknown'})`);
+      };
+      for (const error of cancellations) {
+        for (const path of ['/api/rooms', '/api/art/picture.avif', '/health', '/ws', '/room/X']) {
+          mustFail(`${origin}${path}`, error);
+        }
+        mustFail('wss://game.example/ws', error);
+        mustFail('https://other.example/art/cards/arsenal.avif', error);
+        mustFail('http://game.example/art/cards/arsenal.avif', error);
+        mustFail('https://game.example:8443/art/cards/arsenal.avif', error);
+        mustFail(`${origin}/art/cards/arsenal.avif`, error, 'POST');
+      }
+      for (const error of ['net::ERR_CONNECTION_RESET', 'Load request failed', undefined]) {
+        mustFail(`${origin}/art/cards/arsenal.avif`, error);
+      }
+      events.emit('response', { status: () => 404, url: () => `${origin}/art/missing.avif` });
+      expected.push(`HTTP 404: ${origin}/art/missing.avif`);
+      expect(problems).toEqual(expected);
+    }
+  });
+
   for (const colorScheme of ['light', 'dark'] as const) {
     test.describe(`home with a ${colorScheme} system theme`, () => {
       test.use({ colorScheme });

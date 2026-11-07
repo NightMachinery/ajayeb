@@ -2,7 +2,7 @@
 // requests and HTTP error answers, collected as one list of problems that a
 // spec expects to stay empty.
 
-import type { Page } from '@playwright/test';
+import type { Page, Request } from '@playwright/test';
 
 function isWebKitNotice(text: string): boolean {
   // WebKit reports these browser notices as errors. The test server's CSP is
@@ -16,6 +16,27 @@ function isWebKitNotice(text: string): boolean {
   );
 }
 
+function isCancelledStaticAsset(page: Page, req: Request): boolean {
+  // Replaced images and idle prefetches may be abandoned. Match only the
+  // browsers' cancellation codes, never connection failures or HTTP errors.
+  const error = req.failure()?.errorText;
+  if (
+    !['Load request cancelled', 'net::ERR_ABORTED', 'NS_BINDING_ABORTED'].includes(error ?? '') ||
+    req.method() !== 'GET'
+  ) {
+    return false;
+  }
+  try {
+    const url = new URL(req.url());
+    return (
+      url.origin === new URL(page.url()).origin &&
+      /^\/(?:art|fonts|icons|sfx|_app\/immutable)\//.test(url.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 /** Starts collecting a page's problems; the returned array fills as they happen. */
 export function watchHygiene(page: Page): string[] {
   const problems: string[] = [];
@@ -27,9 +48,10 @@ export function watchHygiene(page: Page): string[] {
     problems.push(`console error: ${text}`);
   });
   page.on('pageerror', (err) => problems.push(`uncaught: ${err.message}`));
-  page.on('requestfailed', (req) =>
-    problems.push(`request failed: ${req.url()} (${req.failure()?.errorText ?? 'unknown'})`)
-  );
+  page.on('requestfailed', (req) => {
+    if (isCancelledStaticAsset(page, req)) return;
+    problems.push(`request failed: ${req.url()} (${req.failure()?.errorText ?? 'unknown'})`);
+  });
   page.on('response', (res) => {
     if (res.status() >= 400) problems.push(`HTTP ${res.status()}: ${res.url()}`);
   });
