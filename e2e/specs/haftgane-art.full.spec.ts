@@ -78,7 +78,7 @@ test.describe('Haftgane art', { tag: ['@full', '@haftgane-table'] }, () => {
             .locator('.painting img')
             .evaluate((img: HTMLImageElement) => ({
               fit: getComputedStyle(img).objectFit,
-              ratio: img.naturalWidth / img.naturalHeight
+              ratio: Number(img.getAttribute('width')) / Number(img.getAttribute('height'))
             }));
           expect(picture).toEqual({ fit: 'contain', ratio: 1.5 });
           await expect(board.locator('[data-stage-built="true"]')).toHaveCount(
