@@ -48,8 +48,8 @@ worker integration below provides that fallback without enabling a level.
 `DeterminizeControlled(o, rng, limit, stop)` is the worker-facing variant.
 The caller's budget is clamped to 0 through `MaxSamplerChecks`. Its
 `SamplerCost` reports checks, a stop, or budget exhaustion separately. A pure
-stop callback is polled before setup, every 16 source/flow checks, and around
-final materialization. A stopped call returns a zero world. An uninterrupted
+stop callback is polled before setup, before every source/flow check, within
+matching traversals, and around final materialization. A stopped call returns a zero world. An uninterrupted
 false callback preserves the ordinary sampler's exact world and RNG tape, with
 zero allocations. Rules code reads no context or clock. The caller supplies
 cancellation as input.
@@ -180,8 +180,8 @@ check count was 157,271. Other seats' maxima ranged from 20.157 to 30.946 ms.
 These costs are at discard-constrained positions, unlike the initial/later
 unconstrained benchmarks above.
 
-The injected-stop measurement cancels after 32 checks inside search, then
-deliberately runs the next 16-check interval before the callback reports it.
+That injected-stop measurement cancelled after 32 checks inside search, then
+deliberately ran the then-current 16-check interval before reporting the stop.
 It measures that early interval plus stop unwinding, not later windows,
 preparation or the materialization tail. Across 576 calls per load condition,
 this early-window cancellation-to-return latency was:

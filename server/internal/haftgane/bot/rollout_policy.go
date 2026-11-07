@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"bytes"
 	"context"
 
 	"github.com/NightMachinery/ajayeb/server/internal/enginekit/rng"
@@ -24,48 +25,47 @@ const (
 type seatPolicy func(context.Context, rules.Observation, []rules.Choice, rolloutPreference, uint64) (rules.Action, error)
 
 func rolloutPolicy(ctx context.Context, o rules.Observation, offered []rules.Choice, preference rolloutPreference, entropy uint64) (rules.Action, error) {
-	var buf [rules.MaxTurnChoices]Ranked
-	ranked, _, err := Rank(ctx, o, offered, buf[:0])
+	if len(offered) == 0 || len(offered) > rules.MaxTurnChoices || !o.Now.Seat.Valid(o.Now.Seats) {
+		return rules.Action{}, ErrInput
+	}
+	var counts Counters
+	e, err := prepare(ctx, o, &counts)
 	if err != nil {
 		return rules.Action{}, err
 	}
-	var keys [rules.MaxTurnChoices]string
-	for i, c := range offered {
-		keys[i] = c.Key()
-	}
 	var chosen rules.Action
 	var best int64
-	bestKey := ""
-	for _, x := range ranked {
+	var key, bestKey [rules.MaxKeyBytes]byte
+	bestLen := 0
+	for _, choice := range offered {
 		if err := ctx.Err(); err != nil {
 			return rules.Action{}, err
 		}
-		var choice rules.Choice
-		for i, key := range keys[:len(offered)] {
-			if key == x.Key {
-				choice = offered[i]
-				break
-			}
+		features, err := e.evaluate(ctx, choice, &counts)
+		if err != nil {
+			return rules.Action{}, err
 		}
-		value := x.Value
+		encoded := choice.AppendKey(key[:0])
+		value := features.Total()
 		switch preference {
 		case economicPreference:
-			value += x.Features.Economy + x.Features.Liquidity + x.Features.Affordability + x.Features.Chains
+			value += features.Economy + features.Liquidity + features.Affordability + features.Chains
 		case sciencePreference:
-			value += x.Features.Science
+			value += features.Science
 			if sciencePlacement(choice) {
-				value += x.Features.Points
+				value += features.Points
 			}
 		case militaryPreference:
-			value += x.Features.Military
+			value += features.Military
 		}
 		// Key-indexed noise shares a draw for a common action even when a
 		// different candidate changes the offered set or its ranking order.
-		r := rng.NewRNG2(entropy, rng.Digest([]byte(x.Key)))
+		r := rng.NewRNG2(entropy, rng.Digest(encoded))
 		value += int64(r.IntN(2*ApprenticeTemperature+1) - ApprenticeTemperature)
-		if bestKey == "" || value > best || value == best && x.Key < bestKey {
+		if bestLen == 0 || value > best || value == best && bytes.Compare(encoded, bestKey[:bestLen]) < 0 {
 			chosen = choice.Action
-			best, bestKey = value, x.Key
+			best = value
+			bestLen = copy(bestKey[:], encoded)
 		}
 	}
 	if err := ctx.Err(); err != nil {
@@ -77,12 +77,17 @@ func rolloutPolicy(ctx context.Context, o rules.Observation, offered []rules.Cho
 // cutoffValue estimates this seat's final score from its own observation.
 // At the terminal point all future terms disappear and exact scoring wins.
 func cutoffValue(o rules.Observation) (int64, int16, bool) {
+	value, coins, err := cutoffValueControlled(context.Background(), o)
+	return value, coins, err == nil
+}
+
+func cutoffValueControlled(ctx context.Context, o rules.Observation) (int64, int16, error) {
 	var counts Counters
-	e, ok := prepare(o, &counts)
-	if !ok {
-		return 0, 0, false
+	e, err := prepare(ctx, o, &counts)
+	if err != nil {
+		return 0, 0, err
 	}
-	return int64(e.own.Score.Total)*1000 + e.before.Total(), o.Now.Cities[o.Now.Seat].Coins, true
+	return int64(e.own.Score.Total)*1000 + e.before.Total(), o.Now.Cities[o.Now.Seat].Coins, nil
 }
 
 // Each term is exact at this scale for N=3..7 and every possible winner tie.

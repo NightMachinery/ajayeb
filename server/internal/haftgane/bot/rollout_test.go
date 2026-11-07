@@ -135,10 +135,11 @@ func TestAgeFrozenRoundAndHorizon(t *testing.T) {
 		return a, err
 	}
 	var counts AgeCounters
-	if _, err := simulateAge(context.Background(), g.State, 0, g.Observe(0).Know, root, 914, policy, &counts); err != nil {
+	var scratch [rules.MaxTurnChoices]rules.Choice
+	if _, err := simulateAge(context.Background(), g.State, 0, g.Observe(0).Know, root, 914, policy, &counts, scratch[:0]); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := simulateAge(context.Background(), g.State, 0, g.Observe(0).Know, g.Legal(0)[1].Action, 914, policy, &counts); err != nil {
+	if _, err := simulateAge(context.Background(), g.State, 0, g.Observe(0).Know, g.Legal(0)[1].Action, 914, policy, &counts, scratch[:0]); err != nil {
 		t.Fatal(err)
 	}
 	for s := rules.Seat(1); s < 7; s++ {
@@ -262,7 +263,8 @@ func TestAgeRootMemoryAndSides(t *testing.T) {
 		return rolloutPolicy(ctx, o, cs, pref, entropy)
 	}
 	var counts AgeCounters
-	if _, err := simulateAge(context.Background(), g.State, 0, own, g.Legal(0)[0].Action, 51, policy, &counts); err != nil || !rootSeen || !opponentSeen {
+	var scratch [rules.MaxTurnChoices]rules.Choice
+	if _, err := simulateAge(context.Background(), g.State, 0, own, g.Legal(0)[0].Action, 51, policy, &counts, scratch[:0]); err != nil || !rootSeen || !opponentSeen {
 		t.Fatal("memory boundary", rootSeen, opponentSeen, err)
 	}
 	sides := history[0]
@@ -277,7 +279,7 @@ func TestAgeRootMemoryAndSides(t *testing.T) {
 		return rolloutPolicy(ctx, o, cs, pref, entropy)
 	}
 	counts = AgeCounters{}
-	if _, err := simulateAge(context.Background(), sides.State, 0, sides.Observe(0).Know, sides.Legal(0)[0].Action, 51, policy, &counts); err != nil || count != 6 {
+	if _, err := simulateAge(context.Background(), sides.State, 0, sides.Observe(0).Know, sides.Legal(0)[0].Action, 51, policy, &counts, scratch[:0]); err != nil || count != 6 {
 		t.Fatal("side boundary", count, err)
 	}
 }
@@ -306,7 +308,8 @@ func TestAgeTerminalResolutionAndWorkValidation(t *testing.T) {
 		return pick(cs), nil
 	}
 	var counts AgeCounters
-	reward, err := simulateAge(context.Background(), final.State, 0, final.Observe(0).Know, pick(final.Legal(0)), 51, policy, &counts)
+	var scratch [rules.MaxTurnChoices]rules.Choice
+	reward, err := simulateAge(context.Background(), final.State, 0, final.Observe(0).Know, pick(final.Legal(0)), 51, policy, &counts, scratch[:0])
 	if err != nil {
 		t.Fatal(err)
 	}

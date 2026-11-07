@@ -6,9 +6,8 @@ import (
 )
 
 const (
-	samplerPollChecks = 16
-	samplePlaces      = NumAges*MaxSeats*HandSize + MaxBoxGuilds
-	sampleGroups      = NumAges * (HandSize + 1)
+	samplePlaces = NumAges*MaxSeats*HandSize + MaxBoxGuilds
+	sampleGroups = NumAges * (HandSize + 1)
 )
 
 // World is a state and a private witness, never an authoritative Game. The
@@ -68,7 +67,8 @@ type SamplerCost struct {
 
 // DeterminizeControlled is the worker-facing sampler. limit is clamped to
 // [0, MaxSamplerChecks]. stop may be nil; otherwise it is queried before work,
-// at most every 16 feasibility/source checks, and around final materialization.
+// before every feasibility/source check, within matching traversals, and around
+// final materialization.
 // A false stop callback preserves Determinize's exact world and random tape.
 // The callback is caller-supplied input, not a clock or context read by rules.
 func DeterminizeControlled(o Observation, r *rng.RNG, limit int, stop func() bool) (World, SamplerCost, bool) {
@@ -342,12 +342,20 @@ func (m *sampleModel) chronology(o *Observation) bool {
 	return true
 }
 
-func (m *sampleModel) charge() bool {
+// poll also splits individual matching checks, without charging extra work
+// or changing their search order. A stopped partial matching is never exposed.
+func (m *sampleModel) poll() bool {
 	if m.stopped {
 		return false
 	}
-	if m.stop != nil && m.checks%samplerPollChecks == 0 && m.stop() {
+	if m.stop != nil && m.stop() {
 		m.stopped = true
+		return false
+	}
+	return true
+}
+func (m *sampleModel) charge() bool {
+	if !m.poll() {
 		return false
 	}
 	if m.checks >= m.limit {
@@ -559,6 +567,9 @@ func (m *sampleModel) feasible(index int, bucket bool) bool {
 }
 
 func (m *sampleModel) augment(place int, copies []catalog.DesignID, matched []int, seen *[samplePlaces]bool) bool {
+	if !m.poll() {
+		return false
+	}
 	for j, id := range copies {
 		if seen[j] || !m.permits(&m.places[place], id) {
 			continue
@@ -567,6 +578,9 @@ func (m *sampleModel) augment(place int, copies []catalog.DesignID, matched []in
 		if matched[j] < 0 || m.augment(matched[j], copies, matched, seen) {
 			matched[j] = place
 			return true
+		}
+		if m.stopped {
+			return false
 		}
 	}
 	return false
@@ -810,6 +824,9 @@ func (m *sampleModel) margins() bool {
 			queue[0] = source
 			tail := 1
 			for head := 0; head < tail && parent[sink] < 0; head++ {
+				if !m.poll() {
+					return false
+				}
 				from := queue[head]
 				for to := 0; to <= sink; to++ {
 					if parent[to] < 0 && capacity[from][to] > 0 {

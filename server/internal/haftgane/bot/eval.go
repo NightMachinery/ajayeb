@@ -26,17 +26,20 @@ func remaining(c *rules.Current) int {
 	}
 	return max(0, (3-int(c.Age))*6+6-min(int(c.Turn), 6))
 }
-func prepare(o rules.Observation, counters *Counters) (evaluation, bool) {
+func prepare(ctx context.Context, o rules.Observation, counters *Counters) (evaluation, error) {
+	if err := ctx.Err(); err != nil {
+		return evaluation{}, err
+	}
 	e := evaluation{o: o, stats: o.Statistics()}
 	var ok bool
 	e.own, ok = o.Now.Facts(o.Now.Seat)
 	if !ok {
-		return e, false
+		return e, ErrInput
 	}
 	for i, s := range [2]rules.Seat{o.Now.Seat.Left(o.Now.Seats), o.Now.Seat.Right(o.Now.Seats)} {
 		e.neighbours[i], ok = o.Now.Facts(s)
 		if !ok {
-			return e, false
+			return e, ErrInput
 		}
 	}
 	add := func(cost catalog.Cost) {
@@ -65,8 +68,9 @@ func prepare(o rules.Observation, counters *Counters) (evaluation, bool) {
 		d, _ := catalog.DesignByID(id)
 		add(d.Cost)
 	}
-	e.before = e.snapshot(o.Now, e.own, counters)
-	return e, true
+	var err error
+	e.before, err = e.snapshot(ctx, o.Now, e.own, counters)
+	return e, err
 }
 
 // Rank does exactly one pass over the supplied bounded set. It returns only
@@ -80,43 +84,18 @@ func Rank(ctx context.Context, o rules.Observation, offered []rules.Choice, dst 
 	if err := ctx.Err(); err != nil {
 		return dst, counts, err
 	}
-	e, ok := prepare(o, &counts)
-	if !ok {
-		return dst, counts, ErrInput
+	e, err := prepare(ctx, o, &counts)
+	if err != nil {
+		return dst, counts, err
 	}
 	start := len(dst)
 	for _, c := range offered {
 		if err := ctx.Err(); err != nil {
 			return dst[:start], counts, err
 		}
-		if !c.Valid() {
-			return dst[:start], counts, ErrInput
-		}
-		after, facts, ok := o.Preview(c)
-		counts.Previews++
-		if !ok {
-			return dst[:start], counts, ErrInput
-		}
-		f := subtract(e.snapshot(after, facts, &counts), e.before)
-		f.Points = int64(facts.Score.Total-e.own.Score.Total) * 1000
-		f.Passing = e.denial(c)
-		if c.Kind == rules.ActStage {
-			city := after.Cities[after.Seat]
-			board, _ := catalog.BoardByID(city.Board)
-			for _, effect := range board.Sides[city.Side-1].Stages[city.Stages-1].Effects {
-				if effect.Kind == catalog.EffBuildFromDiscard {
-					f.Wonder += min(int64(5500), int64(o.Now.Pile)*250+2000)
-				}
-			}
-		}
-		for side, paid := range [2]uint8{c.Left, c.Right} {
-			// Same own payment can enrich a different rival. A public leader's
-			// liquidity is worth more; no hidden hand or human-targeting bonus.
-			premium := int64(160)
-			if e.neighbours[side].Score.Total > e.own.Score.Total {
-				premium += min(int64(250), int64(e.neighbours[side].Score.Total-e.own.Score.Total)*12)
-			}
-			f.Externality -= int64(paid) * premium
+		f, err := e.evaluate(ctx, c, &counts)
+		if err != nil {
+			return dst[:start], counts, err
 		}
 		dst = append(dst, Ranked{Key: c.Key(), Value: f.Total(), Features: f})
 		counts.Ranked++
@@ -129,10 +108,52 @@ func Rank(ctx context.Context, o rules.Observation, offered []rules.Choice, dst 
 	counts.Iterations = 1
 	return dst, counts, nil
 }
+
+// evaluate is shared by public rankings and the allocation-free rollout
+// policy. Every feature and quote remains the same bounded calculation.
+func (e *evaluation) evaluate(ctx context.Context, c rules.Choice, counts *Counters) (Features, error) {
+	if !c.Valid() {
+		return Features{}, ErrInput
+	}
+	after, facts, ok := e.o.Preview(c)
+	counts.Previews++
+	if !ok {
+		return Features{}, ErrInput
+	}
+	snapshot, err := e.snapshot(ctx, after, facts, counts)
+	if err != nil {
+		return Features{}, err
+	}
+	f := subtract(snapshot, e.before)
+	f.Points = int64(facts.Score.Total-e.own.Score.Total) * 1000
+	f.Passing = e.denial(c)
+	if c.Kind == rules.ActStage {
+		city := after.Cities[after.Seat]
+		board, _ := catalog.BoardByID(city.Board)
+		for _, effect := range board.Sides[city.Side-1].Stages[city.Stages-1].Effects {
+			if effect.Kind == catalog.EffBuildFromDiscard {
+				f.Wonder += min(int64(5500), int64(e.o.Now.Pile)*250+2000)
+			}
+		}
+	}
+	for side, paid := range [2]uint8{c.Left, c.Right} {
+		// Same own payment can enrich a different rival. A public leader's
+		// liquidity is worth more; no hidden hand or human-targeting bonus.
+		premium := int64(160)
+		if e.neighbours[side].Score.Total > e.own.Score.Total {
+			premium += min(int64(250), int64(e.neighbours[side].Score.Total-e.own.Score.Total)*12)
+		}
+		f.Externality -= int64(paid) * premium
+	}
+	return f, nil
+}
 func subtract(a, b Features) Features {
 	return Features{Points: a.Points - b.Points, Military: a.Military - b.Military, Science: a.Science - b.Science, Economy: a.Economy - b.Economy, Liquidity: a.Liquidity - b.Liquidity, Chains: a.Chains - b.Chains, Wonder: a.Wonder - b.Wonder, Affordability: a.Affordability - b.Affordability}
 }
-func (e *evaluation) snapshot(c rules.Current, f rules.PublicFacts, counts *Counters) Features {
+func (e *evaluation) snapshot(ctx context.Context, c rules.Current, f rules.PublicFacts, counts *Counters) (Features, error) {
+	if err := ctx.Err(); err != nil {
+		return Features{}, err
+	}
 	out := Features{}
 	remain := remaining(&c)
 	me := c.Seat
@@ -156,7 +177,7 @@ func (e *evaluation) snapshot(c rules.Current, f rules.PublicFacts, counts *Coun
 		if c.Phase == rules.PhaseTurn && c.Turn == 6 && f.Abilities&rules.AbilityPlayLastCard != 0 {
 			out.Wonder = 4000
 		}
-		return out
+		return out, nil
 	}
 	// Only unearned science growth, beyond the exact current green score.
 	science := int(f.ScienceChoices)
@@ -224,6 +245,11 @@ func (e *evaluation) snapshot(c rules.Current, f rules.PublicFacts, counts *Coun
 	quoted := c
 	quoted.Cities[me].Coins = 30000
 	for _, cost := range e.probes[:e.numProbes] {
+		// Each payment quote is bounded, but a complete probe set can span
+		// several scheduler quanta under load. Poll between individual quotes.
+		if err := ctx.Err(); err != nil {
+			return Features{}, err
+		}
 		q := quoted.Quote(me, cost)
 		counts.Quotes++
 		value := int64(-6000)
@@ -235,7 +261,7 @@ func (e *evaluation) snapshot(c rules.Current, f rules.PublicFacts, counts *Coun
 	if e.numProbes > 0 {
 		out.Affordability = out.Affordability * int64(remain) / int64(18*e.numProbes*3)
 	}
-	return out
+	return out, nil
 }
 func (e *evaluation) wonder(c rules.Current, f rules.PublicFacts) int64 {
 	city := c.Cities[c.Seat]

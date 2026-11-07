@@ -25,7 +25,7 @@ func TestSamplerControlledIdentityAndStop(t *testing.T) {
 				r := rng.NewRNG(71)
 				calls := 0
 				w, cost, ok := DeterminizeControlled(o, &r, MaxSamplerChecks, func() bool { calls++; return calls >= at })
-				if ok || w != (World{}) || !cost.Stopped || cost.Exhausted {
+				if ok || w != (World{}) || !cost.Stopped || cost.Exhausted || cost.Checks > max(0, at-2) {
 					t.Fatal("stopped call exposed a world", seat, at, cost)
 				}
 			}

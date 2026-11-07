@@ -129,12 +129,13 @@ func TestRepeatabilityWorkAndExactFallback(t *testing.T) {
 // Err is queried at deterministic candidate boundaries, with no clock race.
 type cancelDuringRank struct {
 	context.Context
-	calls int
+	calls  int
+	stopAt int
 }
 
 func (c *cancelDuringRank) Err() error {
 	c.calls++
-	if c.calls >= 4 {
+	if c.stopAt > 0 && c.calls >= c.stopAt {
 		return context.Canceled
 	}
 	return nil
@@ -171,13 +172,29 @@ func TestOrderConcurrentRepeatabilityAndCancellation(t *testing.T) {
 	if o != before || !reflect.DeepEqual(original, cs) {
 		t.Fatal("policy mutated permitted inputs")
 	}
-	ctx := &cancelDuringRank{Context: context.Background()}
-	prefix := []Ranked{{Key: "caller-prefix"}}
-	ranked, counts, err := Rank(ctx, o, cs, prefix)
-	if !errors.Is(err, context.Canceled) || !reflect.DeepEqual(ranked, prefix) || counts.Ranked == 0 || counts.Iterations != 0 {
-		t.Fatal("cancelled rank exposed partial work", ranked, counts, err)
+	// Discover cancellation checkpoints, so finer internal polling cannot
+	// accidentally move a supposed mid-ranking cancellation into setup.
+	counter := &cancelDuringRank{Context: context.Background()}
+	if _, _, err := Rank(counter, o, cs, nil); err != nil {
+		t.Fatal(err)
 	}
-	ctx = &cancelDuringRank{Context: context.Background()}
+	prefix := []Ranked{{Key: "caller-prefix"}}
+	stopAt := 0
+	for checkpoint := 1; checkpoint <= counter.calls; checkpoint++ {
+		ctx := &cancelDuringRank{Context: context.Background(), stopAt: checkpoint}
+		ranked, counts, err := Rank(ctx, o, cs, prefix)
+		if !errors.Is(err, context.Canceled) || !reflect.DeepEqual(ranked, prefix) || counts.Iterations != 0 {
+			t.Fatal("cancelled rank exposed partial work", ranked, counts, err)
+		}
+		if counts.Ranked > 0 {
+			stopAt = checkpoint
+			break
+		}
+	}
+	if stopAt == 0 {
+		t.Fatal("did not cancel an in-progress ranking")
+	}
+	ctx := &cancelDuringRank{Context: context.Background(), stopAt: stopAt}
 	got, err := Choose(ctx, Greedy, o, cs, 91, DefaultWork())
 	if !errors.Is(err, context.Canceled) || got != (Decision{}) {
 		t.Fatal("cancelled choose exposed partial incumbent", got, err)

@@ -69,6 +69,7 @@ func chooseAge(ctx context.Context, o rules.Observation, offered []rules.Choice,
 	out := AgeDecision{ReferenceKey: ranked[0].Key}
 	out.Counters.GreedyRankings = 1
 	out.Counters.Excluded = len(offered) - len(chosen)
+	var legalScratch []rules.Choice
 	for attempt := uint16(0); attempt < work.Attempts; attempt++ {
 		if err := ctx.Err(); err != nil {
 			return AgeDecision{}, err
@@ -94,12 +95,17 @@ func chooseAge(ctx context.Context, o rules.Observation, offered []rules.Choice,
 			return AgeDecision{}, ErrInput
 		}
 		out.Counters.Worlds++
+		if legalScratch == nil {
+			// A policy receives a borrowed offer and returns an Action value. Reuse
+			// one bounded legal buffer for every seat, batch, candidate and attempt.
+			legalScratch = make([]rules.Choice, 0, rules.MaxTurnChoices)
+		}
 		var rewards [rules.MaxTurnChoices]int64
 		for i, c := range chosen {
 			if err := ctx.Err(); err != nil {
 				return AgeDecision{}, err
 			}
-			reward, err := simulateAge(ctx, st, o.Now.Seat, o.Know, c.Action, tape, policy, &out.Counters)
+			reward, err := simulateAge(ctx, st, o.Now.Seat, o.Know, c.Action, tape, policy, &out.Counters, legalScratch)
 			if err != nil {
 				return AgeDecision{}, err
 			}
@@ -195,7 +201,7 @@ func policyTape(sweep uint64, c rules.Current, seat rules.Seat) uint64 {
 	return rng.MixSeed(rng.MixSeed(sweep, point), uint64(seat)+0x73656174706f6c)
 }
 
-func simulateAge(ctx context.Context, st rules.State, focal rules.Seat, own rules.Knowledge, root rules.Action, tape uint64, policy seatPolicy, counts *AgeCounters) (int64, error) {
+func simulateAge(ctx context.Context, st rules.State, focal rules.Seat, own rules.Knowledge, root rules.Action, tape uint64, policy seatPolicy, counts *AgeCounters, legalScratch []rules.Choice) (int64, error) {
 	horizon := max(uint8(1), st.Age)
 	var memory [rules.MaxSeats]rules.Knowledge
 	memory[focal] = own
@@ -216,10 +222,10 @@ func simulateAge(ctx context.Context, st rules.State, focal rules.Seat, own rule
 					return 0, err
 				}
 				o := rules.Observation{Now: rules.Project(&st, seat), Know: memory[seat]}
-				var ok bool
-				values[seat], coins[seat], ok = cutoffValue(o)
-				if !ok {
-					return 0, ErrInput
+				var err error
+				values[seat], coins[seat], err = cutoffValueControlled(ctx, o)
+				if err != nil {
+					return 0, err
 				}
 			}
 			if err := ctx.Err(); err != nil {
@@ -232,7 +238,6 @@ func simulateAge(ctx context.Context, st rules.State, focal rules.Seat, own rule
 			observations[seat] = rules.Observation{Now: rules.Project(&st, seat), Know: memory[seat]}
 		}
 		var picks [rules.MaxSeats]rules.Action
-		var buf [rules.MaxTurnChoices]rules.Choice
 		for seat := rules.Seat(0); seat < rules.Seat(st.Seats); seat++ {
 			if err := ctx.Err(); err != nil {
 				return 0, err
@@ -241,7 +246,7 @@ func simulateAge(ctx context.Context, st rules.State, focal rules.Seat, own rule
 			if st.Phase != rules.PhaseTurn && st.Phase != rules.PhaseSides && st.Decider != seat {
 				continue
 			}
-			legal := rules.LegalState(&st, seat, buf[:0])
+			legal := rules.LegalState(&st, seat, legalScratch[:0])
 			if len(legal) == 0 {
 				return 0, ErrInput
 			}
