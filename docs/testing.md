@@ -103,6 +103,13 @@ The module's fuzz targets include:
 - `FuzzTableOps` (`server/internal/tableroom/fuzz_test.go`): fuzzed
   operations on one Haftgane table with the record, replay, revision and
   restart invariants checked after each (see "`internal/tableroom`" above).
+  An independent credit model tracks the per-user request budget across
+  tabs, accepted picks, control changes, undo and bot resolutions. A fake
+  clock exercises partial and complete refills without sleeps. Only a new
+  high-water point or a process restart fills every bucket; undo and
+  reconnect do not. A `rate` response with credit remaining fails unless
+  a pick has reached its separate client/user floor bound. The three
+  request-budget crashers remain regression seeds.
 
 Their seeds, and the crashers that were fixed, run as ordinary tests in
 every `make test-go`. To fuzz one locally, under the guard's `fuzz` kind

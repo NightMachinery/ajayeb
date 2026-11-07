@@ -1,0 +1,5 @@
+go test fuzz v1
+uint64(19)
+byte('`')
+byte('\x13')
+[]byte("A01Ba0A0A0A0a0A0A0a0A0A008A0A00A29")
