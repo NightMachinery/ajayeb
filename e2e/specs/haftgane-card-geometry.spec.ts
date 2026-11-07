@@ -34,12 +34,20 @@ for (const locale of ['en', 'fa'] as const) {
               r.right <= outer.right + 0.5 &&
               r.top >= outer.top - 0.5 &&
               r.bottom <= outer.bottom + 0.5;
-            const parts = [...card.querySelectorAll('[data-effect], [data-effect] *')];
+            // SVG definitions and paths are clipped within their own viewport;
+            // their raw geometry is not an HTML layout box. Check each outer
+            // SVG plus every tile and text box instead.
+            const parts = [
+              ...card.querySelectorAll('[data-effect], [data-effect] *, .top, .top *')
+            ].filter((el) => !(el instanceof SVGElement) || el.tagName === 'svg');
             return parts
-              .filter(
-                (el) =>
-                  !fits(el.getBoundingClientRect(), band) || !fits(el.getBoundingClientRect(), face)
-              )
+              .filter((el) => {
+                const outer = el.closest('.top')?.getBoundingClientRect() ?? band;
+                return (
+                  !fits(el.getBoundingClientRect(), outer) ||
+                  !fits(el.getBoundingClientRect(), face)
+                );
+              })
               .map(
                 (el) =>
                   `${card.getAttribute('data-card')}: ${el.getAttribute('data-effect') ?? el.tagName}`

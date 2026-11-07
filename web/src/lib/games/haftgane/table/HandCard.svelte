@@ -130,7 +130,8 @@
   .card {
     container-type: inline-size;
     display: grid;
-    grid-template-rows: auto auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: max-content max-content minmax(0, 1fr) max-content;
     width: 100%;
     height: 100%;
     min-height: 44px;
@@ -164,6 +165,7 @@
   }
   .top {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.1rem;
@@ -176,11 +178,13 @@
   }
   .chains {
     display: inline-flex;
+    margin-inline-start: auto;
     flex-shrink: 0;
     color: var(--card-ink);
   }
   .band {
     display: flex;
+    min-width: 0;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
@@ -189,6 +193,15 @@
     padding: 2cqi;
     background: var(--band);
     font-size: max(10px, 11cqi);
+  }
+  /* At the 44 px landscape minimum, compact the printed symbols while
+     keeping the name readable. Both header and band retain their full
+     content height; only the painting gives up space. */
+  @container (max-width: 3.5rem) {
+    .top,
+    .band {
+      font-size: max(8px, 11cqi);
+    }
   }
   .picture {
     position: relative;
