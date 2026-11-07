@@ -57,3 +57,7 @@ const (
 	MaxViewStringBytes = MaxKeyBytes
 	MaxViewJSONBytes   = 604948
 )
+
+// MaxSamplerChecks bounds feasibility checks and discard-source branches in a
+// call, including failed branches. Exhaustion returns (World{}, false).
+const MaxSamplerChecks = 1 << 20

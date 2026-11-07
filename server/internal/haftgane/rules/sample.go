@@ -5,10 +5,6 @@ import (
 	"github.com/NightMachinery/ajayeb/server/internal/haftgane/catalog"
 )
 
-// MaxSamplerChecks bounds feasibility checks and discard-source branches in a
-// call, including failed branches. Exhaustion returns (World{}, false).
-const MaxSamplerChecks = 1 << 20
-
 const (
 	samplePlaces = NumAges*MaxSeats*HandSize + MaxBoxGuilds
 	sampleGroups = NumAges * (HandSize + 1)
