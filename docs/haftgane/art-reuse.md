@@ -322,7 +322,9 @@ The drafts as this plan proposed them. They were accepted on 2026-10-21 as D57 t
 
 The client binds the 58 reused card designs through 56 aliases in
 `art/haftgane/aliases.json`, using 55 distinct Duel paintings. Glassworks and
-Press share across Ages, and the two trading posts share Customs House. The
+Press share across Ages, and the two trading posts share Customs House. Their
+live discount bands retain directional arrows from the public catalog scope,
+with the translated names and effect tooltips distinguishing the two. The
 seven wonder aliases serve both sides. Three Age-back aliases are available;
 the table does not include the guild-back alias. These bindings adapt only the
 display association: no painting, crop, derivative, source id or hash changes.
@@ -350,7 +352,42 @@ or a recorded production subject; remaining subjects retain the category
 placeholder until their own approval and index regeneration. The test does not
 assume any particular painting is still pending.
 
-Implementation validation and visual evidence are recorded after the checks.
+All 21 new paintings are now approved alongside the reuse aliases: the
+regenerated index has 77 card bindings for 80 designs, seven wonder bindings
+and three ordinary backs (87 entries). The card bindings use 76 distinct
+paintings. `index.mjs --check` passes for both games; Duel's manifest, originals,
+shipped card bytes and generated index are unchanged.
+
+`make verify-quick` passes. The live art playthrough and all affected Haftgane
+browser specs pass, including image hygiene, across all three Ages. Review
+captures cover phone portrait, phone landscape and desktop in both themes,
+including built neutral stage tabs; there is no concealed-card surface to
+capture. The browser-rendered 12, 16 and 24 px comparison separates cloth from
+the anvil, the tablet from the chain scroll, and conflict pennants from cloth's
+fringe in both themes. No vectors were changed.
+
+The needed icon closure measures 29,297 raw and 5,828 gzip bytes, under its
+40 KiB / 10 KiB gates. Paired cold-load builds, repeated twice with identical
+results, measure Home at 110,862 versus 110,928 gzip bytes (+66), and Duel at
+269,727 versus 270,048 (+321). Neither initial closure contains Haftgane art,
+its catalog or its alias bindings. The extra Duel bytes are the existing
+`art/prefetch.ts` planner and idle runner plus lookup/image-loading helpers
+moving into shared chunks when Haftgane starts using them. The Svelte runtime
+chunk stays identical. Both platform budgets pass; the per-slice increase
+exceeds the approximate 100-byte target and is retained to keep one shared
+pipeline rather than duplicate it.
+
+For the public full plan in Age I, file selection at 390 CSS px / DPR 3 is
+169 distinct files totalling 2,204,393 bytes; at 1280 CSS px / DPR 1 it is
+86 files totalling 560,676 bytes. These are sequential idle requests, not the
+initial load. The Save-Data plans before Ages II and III use 132,732 and
+177,501 bytes, within 200 KiB. Earlier Age decks are omitted on later turns.
+
+The unrelated original-icon pixel-equality spec remains order-sensitive:
+on the final base it fails in both projects in the combined suite, while the
+isolated mobile invocation passes both tests. This slice changes no Duel
+vector geometry, icon renderer, gallery or global styles. The full captures,
+load manifests, logs and contact sheet remain in the private run artifacts.
 
 
 This proposal enumerates every design, all fourteen board sides and all 24 chain symbols. File inventory confirms approved source art exists for every reuse id and that all seven wonders have all three shipped sizes. All seven wonder originals and the key cross-name or changed-role candidates were inspected directly; the other reuse judgements use approved subjects and manifest critiques. This is an art-reuse design audit, not a new full-set visual certification.

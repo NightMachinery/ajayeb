@@ -33,8 +33,14 @@
         res={r}
       />{/each}
   {:else if effect.kind === 'trade-discount'}
+    {#if effect.scope?.includes('left')}<span class="trade-direction" dir="ltr" aria-hidden="true"
+        >←</span
+      >{/if}
     <HgGlyph name="trade" />
     {#each effect.res ?? [] as r (r)}<ResourceTile res={r} size="xs" />{/each}
+    {#if effect.scope?.includes('right')}<span class="trade-direction" dir="ltr" aria-hidden="true"
+        >→</span
+      >{/if}
   {:else if effect.kind === 'shields'}
     {#each copies as i (i)}<HgGlyph name="shield" />{/each}
   {:else if effect.kind === 'science'}
