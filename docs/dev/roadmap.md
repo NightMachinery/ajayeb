@@ -444,6 +444,8 @@ Acceptance:
 
 ## M19: Art for Haftgane
 
+Status: done on 2026-11-07. All ten slices landed. Every one of the 80 card designs now shows an approved painting (21 new, the rest reused from Duel through aliases with their URLs and hashes unchanged), seven wonder paintings serve the fourteen sides, and every concealed card follows its public Age, so the guild back never reaches a table. The prefetch plan is built from the public catalog and the public Age alone; two viewers with different hands get the same plan. Cold Duel rose by 312 gzip bytes and cold Home by 49, above the slice goal of about 100 because shared art helpers moved between chunks; both stay within the platform gate, and no Haftgane art, catalog or alias table is in either initial load.
+
 Needs: M13's verified names for the bitmap subjects; nothing else. Runs beside M15 to M18. Bitmaps are generated one at a time under `heavy.py --kind codex`; vectors are drawn by Opus agents in the render and critique loop (D18).
 
 Scope (counts from [art-reuse.md](../haftgane/art-reuse.md), plus the crests of phone-layout.md):
