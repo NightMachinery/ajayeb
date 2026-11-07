@@ -3473,21 +3473,6 @@ persisted watchdog reason. Full tables exercise zero to six starting bots and
 seven-bot continuation. Measurements and their scope are in
 [room bots](haftgane/room-bots.md); ordinary workloads require zero watchdogs.
 
-## Haftgane sampler
-
-`TestSamplerSweep` samples every seat at every prefix across three to seven
-players, then checks the full independent replay and certain notebook
-statistics. `HAFTGANE_SAMPLER_GAMES=2000` expands it to 10,000 games; the small
-suite runs by default. `TestSamplerEnumerableReplay` enumerates conditional
-six-place universes against a separate full-deal replay, including multiple
-duplicate-only skips, later pile additions and rebuilds. Distribution checks
-measure the randomized search without promising uniformity after a discard
-opportunity. Noninterference compares entire worlds and RNG tapes after
-forbidden state changes. Other tests pin bounded failure, zero allocations and
-saved exhaustion/pending-point regressions. `FuzzMatchesObservation` checks
-legal generated prefixes through the same replay oracle. Commands, evidence
-and the limits of these comparisons are in [the sampler guide](haftgane/sampler.md).
-
 ### Haftgane review round (M20)
 
 The existing table, card-sheet and special-decision UX specs also provide a
@@ -3531,3 +3516,18 @@ channel delta of 18. The comparison allows at most eight changed pixels and
 at most 20 levels per channel, both absolute limits. Dimensions must match.
 Removing the coin drawing is a positive control and must fail the comparison;
 local clipping references and unique paint ids keep their separate checks.
+
+## Haftgane sampler
+
+`TestSamplerSweep` samples every seat at every prefix across three to seven
+players, then checks the full independent replay and certain notebook
+statistics. `HAFTGANE_SAMPLER_GAMES=2000` expands it to 10,000 games; the small
+suite runs by default. `TestSamplerEnumerableReplay` enumerates conditional
+six-place universes against a separate full-deal replay, including multiple
+duplicate-only skips, later pile additions and rebuilds. Distribution checks
+measure the randomized search without promising uniformity after a discard
+opportunity. Noninterference compares entire worlds and RNG tapes after
+forbidden state changes. Other tests pin bounded failure, zero allocations and
+saved exhaustion/pending-point regressions. `FuzzMatchesObservation` checks
+legal generated prefixes through the same replay oracle. Commands, evidence
+and the limits of these comparisons are in [the sampler guide](haftgane/sampler.md).
