@@ -3520,3 +3520,14 @@ viewport, source (fixture or live), PNG and contact sheet. `screen-hg-*.html`
 provides one contact sheet per screen, with full-resolution links and findings.
 `index.html`, `summary.md` and `probes.json` retain the existing report format.
 Use a new output directory per round to preserve prior evidence.
+
+### Icon paint comparison
+
+`specs/icons.spec.ts` compares decoded screenshot pixels of the inline SVGs
+and their original sprite forms in both themes and tones. Chromium's
+antialiasing can change isolated coverage pixels between the two forms: the
+reproduced failure changed six pixels in a million-pixel grid, with a maximum
+channel delta of 18. The comparison allows at most eight changed pixels and
+at most 20 levels per channel, both absolute limits. Dimensions must match.
+Removing the coin drawing is a positive control and must fail the comparison;
+local clipping references and unique paint ids keep their separate checks.

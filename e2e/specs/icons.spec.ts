@@ -1,7 +1,7 @@
 // Direct icon rendering must match the original sprite paint, including local
 // clip paths, at both theme inks and with explicit two-tone colours.
 import { readFileSync } from 'node:fs';
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 import { ICON_NAMES } from '../../web/src/lib/icons/names';
 import { test } from '../fixtures/base';
 
@@ -18,6 +18,50 @@ const symbols = ICON_NAMES.map((name) => {
   const inner = raw.slice(raw.indexOf('>') + 1, raw.lastIndexOf('</svg>'));
   return `<symbol id="reference-${name}" viewBox="${viewBox}">${inner}</symbol>`;
 }).join('');
+
+// Chromium can rasterize an inline SVG and a use shadow tree a few coverage
+// levels apart. Two failing mobile pairs differed in only six of 1,014,930
+// pixels: five border pixels by one level, one antialiased edge by at most 18.
+// Decode PNGs before comparing paint, with an absolute (not percentage) cap.
+async function paintDifference(page: Page, actual: Buffer, reference: Buffer) {
+  return page.evaluate(
+    async ([a, b]) => {
+      const images = await Promise.all(
+        [a!, b!].map(async (data) => {
+          const image = new Image();
+          image.src = `data:image/png;base64,${data}`;
+          await image.decode();
+          return image;
+        })
+      );
+      const [first, second] = images as [HTMLImageElement, HTMLImageElement];
+      if (first.width !== second.width || first.height !== second.height)
+        return { changedPixels: Infinity, maxChannelDelta: Infinity };
+      const canvas = document.createElement('canvas');
+      canvas.width = first.width;
+      canvas.height = first.height;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+      const pixels = images.map((image) => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0);
+        return ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      });
+      let changedPixels = 0,
+        maxChannelDelta = 0;
+      for (let i = 0; i < pixels[0]!.length; i += 4) {
+        let delta = 0;
+        for (let c = 0; c < 4; c++)
+          delta = Math.max(delta, Math.abs(pixels[0]![i + c]! - pixels[1]![i + c]!));
+        if (delta > 0) changedPixels++;
+        maxChannelDelta = Math.max(maxChannelDelta, delta);
+      }
+      return { changedPixels, maxChannelDelta };
+    },
+    [actual.toString('base64'), reference.toString('base64')]
+  );
+}
+const samePaint = (diff: { changedPixels: number; maxChannelDelta: number }) =>
+  diff.changedPixels <= 8 && diff.maxChannelDelta <= 20;
 
 test('original icons retain their pixels and local clipping @mobile', async ({ page }, info) => {
   await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Tester'));
@@ -76,10 +120,27 @@ test('original icons retain their pixels and local clipping @mobile', async ({ p
         body: reference,
         contentType: 'image/png'
       });
+      const difference = await paintDifference(page, actual, reference);
       expect(
-        actual.equals(reference),
-        `all icons match original sprite: ${theme}, two-tone=${twoTone}`
+        samePaint(difference),
+        `all icons match original sprite: ${theme}, two-tone=${twoTone}, ${JSON.stringify(difference)}`
       ).toBe(true);
+      if (theme === 'light' && !twoTone) {
+        // Positive control: a missing drawing must not fit the raster allowance.
+        const icon = grid.locator('svg[data-icon="coin"]');
+        const markup = await icon.innerHTML();
+        await icon.evaluate((svg) => {
+          svg.innerHTML = '';
+        });
+        const missing = await grid.screenshot({ animations: 'disabled' });
+        expect(
+          samePaint(await paintDifference(page, actual, missing)),
+          'a missing coin fails'
+        ).toBe(false);
+        await icon.evaluate((svg, markup) => {
+          svg.innerHTML = markup;
+        }, markup);
+      }
       await grid.locator('svg[data-icon]').evaluateAll(
         (icons, originals) =>
           icons.forEach((svg, i) => {
