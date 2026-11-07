@@ -368,8 +368,8 @@ fringe in both themes. No vectors were changed.
 
 The needed icon closure measures 29,297 raw and 5,828 gzip bytes, under its
 40 KiB / 10 KiB gates. Paired cold-load builds, repeated twice with identical
-results, measure Home at 110,862 versus 110,928 gzip bytes (+66), and Duel at
-269,727 versus 270,048 (+321). Neither initial closure contains Haftgane art,
+results, measure Home at 110,862 versus 110,911 gzip bytes (+49), and Duel at
+269,727 versus 270,039 (+312). Neither initial closure contains Haftgane art,
 its catalog or its alias bindings. The extra Duel bytes are the existing
 `art/prefetch.ts` planner and idle runner plus lookup/image-loading helpers
 moving into shared chunks when Haftgane starts using them. The Svelte runtime
