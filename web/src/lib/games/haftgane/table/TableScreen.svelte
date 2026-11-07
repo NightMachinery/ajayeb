@@ -160,6 +160,9 @@
   const names = $derived(
     Object.fromEntries(view.seats.map((s) => [s.seat, seatName(frame, s.seat)]))
   );
+  const botNames = $derived(
+    Object.fromEntries(view.seats.map((s) => [s.seat, botName(frame, s.seat)]))
+  );
   const confirmMoves = $derived(settings.value.confirmMoves !== 'never');
 
   function select(card: string): void {
@@ -557,6 +560,7 @@
       {:else}
         <div class="hand watch">
           <SpectatorPanel
+            {botNames}
             seats={view.seats}
             {names}
             bots={view.seats.filter((s) => isBot(frame, s.seat)).map((s) => s.seat)}
@@ -660,7 +664,7 @@
 
   {#if citySeat !== null}
     <CitySheet
-      botNames={Object.fromEntries(view.seats.map((s) => [s.seat, botName(frame, s.seat)]))}
+      {botNames}
       seats={view.seats}
       {names}
       bots={view.seats.filter((s) => isBot(frame, s.seat)).map((s) => s.seat)}
@@ -704,6 +708,7 @@
   {#if militaryOpen && military}
     <div dir={i18n.dir}>
       <AgeMilitary
+        {botNames}
         age={military.age}
         ages={ages.map((a) => a.age)}
         conflicts={military.conflicts}
@@ -738,6 +743,7 @@
   {#if revealOpen && view.reveal}
     <div dir={i18n.dir}>
       <FinalReveal
+        {botNames}
         reveal={view.reveal}
         seats={view.seats}
         {names}

@@ -13,14 +13,18 @@
   import CardChip from './CardChip.svelte';
   import SeatCrest from './SeatCrest.svelte';
 
+  import SeatName from './SeatName.svelte';
+  import type { BotName } from './seat-names';
+
   interface Props {
+    botNames?: Readonly<Record<number, BotName | null>>;
     reveal: Reveal;
     seats: readonly Seat[];
     names: Readonly<Record<number, string>>;
     onclose: () => void;
   }
 
-  let { reveal, seats, names, onclose }: Props = $props();
+  let { botNames = {}, reveal, seats, names, onclose }: Props = $props();
 
   let open = $state(true);
   const tucked = $derived(
@@ -73,7 +77,13 @@
       {#each tucked as t (t.seat)}
         <div class="seat" data-reveal-seat={t.seat}>
           <SeatCrest seat={t.seat} tip={names[t.seat] ?? ''} />
-          <span class="name" dir="auto">{names[t.seat] ?? ''}</span>
+          <span class="name" dir="auto"
+            ><SeatName
+              name={names[t.seat] ?? ''}
+              generated={botNames[t.seat]}
+              actionable={false}
+            /></span
+          >
           <span class="chips">
             {#each t.cards as slug, i (`${slug}:${i}`)}<CardChip {slug} />{/each}
           </span>
@@ -89,7 +99,13 @@
         {#each a.cards as l (`${l.seat}:${l.design}:${l.kept}`)}
           <div class="seat" data-reveal-seat={l.seat}>
             <SeatCrest seat={l.seat} tip={names[l.seat] ?? ''} />
-            <span class="name" dir="auto">{names[l.seat] ?? ''}</span>
+            <span class="name" dir="auto"
+              ><SeatName
+                name={names[l.seat] ?? ''}
+                generated={botNames[l.seat]}
+                actionable={false}
+              /></span
+            >
             <span class="chips">
               <CardChip slug={l.design} />
               {#if l.kept}<span class="kept">{ht('hg.end.reveal.kept')}</span>{/if}

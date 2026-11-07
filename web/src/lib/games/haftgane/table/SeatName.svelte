@@ -4,11 +4,12 @@
   interface Props {
     name: string;
     generated?: BotName | null;
+    actionable?: boolean;
   }
-  let { name, generated = null }: Props = $props();
+  let { name, generated = null, actionable = true }: Props = $props();
 </script>
 
-<span class="identity" dir="auto" {@attach tooltip({ text: name, actionable: true })}>
+<span class="identity" dir="auto" {@attach tooltip({ text: name, actionable })}>
   <span class="label">{generated?.label ?? name}</span>
   {#if generated?.suffix}<span class="suffix" data-bot-suffix>{generated.suffix}</span>{/if}
 </span>

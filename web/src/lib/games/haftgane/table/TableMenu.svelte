@@ -21,8 +21,10 @@
   import SeatCrest from './SeatCrest.svelte';
   import SpectatorList from './SpectatorList.svelte';
   import { isAdmin, occupant, roleMap, watchers } from './admin';
-  import { seatName, where } from './seat-names';
+  import { botName, seatName, where } from './seat-names';
   import { setTableSound } from './sound';
+
+  import SeatName from './SeatName.svelte';
 
   interface Props {
     session: TableSession;
@@ -123,7 +125,9 @@
                 bot={s.kind === 'bot'}
                 botTip={ht('hg.screen.botBadge')}
               />
-              <span class="name" dir="auto">{name}</span>
+              <span class="name" dir="auto"
+                ><SeatName {name} generated={botName(frame, s.seat)} actionable={false} /></span
+              >
               {#if who?.role}<RoleTag role={who.role} name={who.name} compact />{/if}
               <button
                 type="button"

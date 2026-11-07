@@ -15,7 +15,11 @@
   import type { SeatAction, SeatPerson } from './admin';
   import type { Recap } from './recap';
 
+  import SeatName from './SeatName.svelte';
+  import type { BotName } from './seat-names';
+
   interface Props {
+    botNames?: Readonly<Record<number, BotName | null>>;
     /** Every seat, in seat order. */
     seats: readonly Seat[];
     names: Readonly<Record<number, string>>;
@@ -37,6 +41,7 @@
   }
 
   let {
+    botNames = {},
     seats,
     names,
     bots,
@@ -82,7 +87,7 @@
           bot={bots.includes(s.seat)}
           botTip={ht('hg.screen.botBadge')}
         />
-        <span class="name" dir="auto">{name}</span>
+        <span class="name" dir="auto"><SeatName {name} generated={botNames[s.seat]} /></span>
       </button>
     {/each}
   </div>

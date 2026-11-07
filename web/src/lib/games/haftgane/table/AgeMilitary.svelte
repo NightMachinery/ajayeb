@@ -17,7 +17,11 @@
   import SeatCrest from './SeatCrest.svelte';
   import { conflictBetween, resultFor, shieldsFor, type Conflict } from './end';
 
+  import SeatName from './SeatName.svelte';
+  import type { BotName } from './seat-names';
+
   interface Props {
+    botNames?: Readonly<Record<number, BotName | null>>;
     age: number;
     /** Every Age whose conflicts are known so far, oldest first. */
     ages: readonly number[];
@@ -33,7 +37,18 @@
     onclose: () => void;
   }
 
-  let { age, ages, conflicts, seats, names, you, latest, onage, onclose }: Props = $props();
+  let {
+    botNames = {},
+    age,
+    ages,
+    conflicts,
+    seats,
+    names,
+    you,
+    latest,
+    onage,
+    onclose
+  }: Props = $props();
 
   let open = $state(true);
   const MINUS = '−';
@@ -133,7 +148,13 @@
                       ? ht('hg.end.military.left')
                       : ht('hg.end.military.right')}</span
                   >
-                  <span class="name" dir="auto">{them}</span>
+                  <span class="name" dir="auto"
+                    ><SeatName
+                      name={them}
+                      generated={botNames[nb.seat.seat]}
+                      actionable={false}
+                    /></span
+                  >
                 </span>
               </div>
               <div class="outcome">

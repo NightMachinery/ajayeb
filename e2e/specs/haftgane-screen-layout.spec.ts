@@ -1,9 +1,34 @@
 import { expect } from '@playwright/test';
 import { test } from '../fixtures/base';
+import { openBotTable } from '../fixtures/table';
 
 for (const locale of ['en', 'fa'] as const) {
   test.describe(`Haftgane screen layout ${locale}`, () => {
     test.use({ appLocale: locale });
+    test('generated bot numbers stay visible in seats and city tabs @mobile', async ({ page }) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await openBotTable(page, 7, 'Human 42');
+      const suffixes = page.locator('[data-table-screen] [data-bot-suffix]');
+      await expect(suffixes).toHaveCount(5);
+      async function clipped(scope: typeof suffixes): Promise<number> {
+        return scope.evaluateAll(
+          (els) =>
+            els.filter((el) => {
+              const r = el.getBoundingClientRect();
+              const name = el.parentElement!.parentElement!.getBoundingClientRect();
+              return r.width === 0 || r.left < name.left - 0.5 || r.right > name.right + 0.5;
+            }).length
+        );
+      }
+      expect(await clipped(suffixes)).toBe(0);
+      await page.locator('[data-relation="left"] [data-act^="city:"]').first().click();
+      const tabs = page.locator('[data-city-sheet] [data-bot-suffix]');
+      await expect(tabs).toHaveCount(5);
+      expect(await clipped(tabs)).toBe(0);
+      const heading = page.locator('#hg-city-title');
+      expect(await heading.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+      await expect(heading).toHaveAttribute('dir', 'auto');
+    });
     for (const state of ['kept', 'last']) {
       test(`kept status clears the card name: ${state} @mobile`, async ({ page }) => {
         await page.goto(`/dev/gallery?hgSpecial=${state}&seats=7`);

@@ -340,3 +340,6 @@ Full card faces keep costs at the physical left and chains at the right in
 hands, kept cards and card-sheet previews. Seen hands' compact faces also keep
 their category band at the physical left. Localized names and status text retain
 the locale's direction inside that structure.
+
+The same separate bot suffix is used in spectator follow buttons, the seat
+management list, the viewer's conflict panels and the final reveal's seat labels.
