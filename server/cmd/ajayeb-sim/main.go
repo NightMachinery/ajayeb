@@ -9,6 +9,7 @@
 //	ajayeb-sim levels [-games N] [-seed S] [-moves N] [-fixed] [-scale F]
 //	ajayeb-sim weights
 //	ajayeb-sim bench [-games N] [-seed S] [-p N] [-positions N] [-playouts N]
+//	ajayeb-sim scholar-calibrate [flags]
 //	ajayeb-sim replay [-q] FILE...
 //
 // match plays N games between bot A and bot B with paired seeds: each deal
@@ -90,6 +91,7 @@ const usage = `Usage:
   ajayeb-sim weights             print the default evaluation weights as JSON
   ajayeb-sim bench [flags]       time the engine and the bots, play short tournaments
   ajayeb-sim replay FILE...      replay ajayeb-log/1 files and check their final hash
+  ajayeb-sim scholar-calibrate   offline experimental Scholar work calibration
 Run ajayeb-sim <subcommand> -help for the flags.
 `
 
@@ -107,6 +109,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	}
 	var err error
 	switch args[0] {
+	case "scholar-calibrate":
+		err = runScholarCalibration(args[1:], stdout, stderr)
 	case "tournament":
 		err = runTournament(args[1:], stdout, stderr)
 	case "tournament-tally":
