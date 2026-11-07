@@ -1,0 +1,118 @@
+<script lang="ts">
+  // Seven intact paintings, shared by both sides. Rules stay in live text
+  // and stage cells; the scene is never stretched or cropped into a panorama.
+  import { tooltip } from '$lib/ui/tooltip.svelte';
+  import type { HgStage } from '$lib/wire/haftgane-catalog.gen';
+  import { ht } from '../i18n/messages.svelte';
+  import Painting from '../art/Painting.svelte';
+  import { wonderArtId, WONDER_ART_SIZES } from '../art/catalog';
+  import { board } from './model';
+  import HgGlyph from './HgGlyph.svelte';
+  import ResourceTile from './ResourceTile.svelte';
+  import CityStages from './CityStages.svelte';
+
+  let {
+    boardId,
+    side = '',
+    stages = [],
+    built = 0,
+    under = null
+  }: {
+    boardId: string;
+    side?: string;
+    stages?: readonly HgStage[];
+    built?: number;
+    under?: { cards: readonly string[]; own: boolean } | null;
+  } = $props();
+  const b = $derived(board(boardId));
+  const name = $derived(ht(`hg.board.${boardId}` as 'hg.board.gizah'));
+  const sideLabel = $derived(
+    side === 'day' || side === 'night' ? ht(`hg.screen.side.${side}`) : ''
+  );
+</script>
+
+<div class="board" data-wonder-board={boardId} data-wonder-side={side || undefined}>
+  <div class="scene">
+    <div class="label">
+      <span class="name">{name}</span>
+      {#if sideLabel}
+        <span class="side" {@attach tooltip({ text: sideLabel })}>
+          <HgGlyph name={side === 'day' ? 'crest-sun' : 'crest-moon'} />{sideLabel}
+        </span>
+      {/if}
+    </div>
+    <span class="painting" role="img" aria-label={name} {@attach tooltip({ text: name })}>
+      <Painting id={wonderArtId(boardId)} sizes={WONDER_ART_SIZES}>
+        {#snippet fallback()}<HgGlyph name="wonder" />{/snippet}
+      </Painting>
+    </span>
+    {#if b}
+      <span
+        class="start"
+        role="img"
+        aria-label={ht('hg.special.side.start') + ' ' + ht(`hg.resource.${b.start}`)}
+        {@attach tooltip({
+          text: ht('hg.special.side.start'),
+          lines: [ht(`hg.resource.${b.start}`)]
+        })}
+      >
+        <ResourceTile res={b.start} />
+      </span>
+    {/if}
+  </div>
+  {#if stages.length}<CityStages {stages} {built} {under} compact />{/if}
+</div>
+
+<style>
+  .board {
+    overflow: hidden;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--shape-panel);
+    background: var(--panel-sunken);
+  }
+  .scene {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    align-items: center;
+    padding: 0.4rem;
+    gap: 0.3rem;
+  }
+  .label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding-inline: 0.3rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .name {
+    font: 600 1.1rem/1.2 var(--type-display);
+  }
+  .side {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+  }
+  .painting {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 3 / 2;
+    width: 100%;
+    max-width: 360px;
+    justify-self: center;
+  }
+  .start {
+    justify-self: center;
+    font-size: 1.5rem;
+  }
+  @media (max-width: 26rem) {
+    .name {
+      font-size: 0.9rem;
+    }
+    .side {
+      font-size: 0.75rem;
+    }
+  }
+</style>

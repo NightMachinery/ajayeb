@@ -318,6 +318,41 @@ The drafts as this plan proposed them. They were accepted on 2026-10-21 as D57 t
 
 ## Completion evidence and remaining gates
 
+### Live bindings (M19.art-wiring)
+
+The client binds the 58 reused card designs through 56 aliases in
+`art/haftgane/aliases.json`, using 55 distinct Duel paintings. Glassworks and
+Press share across Ages, and the two trading posts share Customs House. The
+seven wonder aliases serve both sides. Three Age-back aliases are available;
+the table does not include the guild-back alias. These bindings adapt only the
+display association: no painting, crop, derivative, source id or hash changes.
+The existing CC BY 4.0 attribution and source notice remain applicable.
+
+The city sheet shows an intact 3:2 wonder painting between live name, side and
+starting-resource labels, above equal-width stage cells in LTR order. The side
+picker shows the same intact painting; the main strip has a small preview.
+Sun and moon markers reuse the existing crest drawings. Built stages use
+identical neutral CSS tabs, with no card identity, Age or guild category.
+
+The table currently has no individual concealed-card surface: other hands are
+counts, commitments are status badges, and the discard pile is a count.
+Concealed backs are selected from the public view Age alone wherever such a
+surface is added; Age III always means the ordinary Age III back. Mixed-age
+piles and tucked marks stay procedural. The binding and table-source tests
+exclude a guild back without requiring new server fields.
+
+Idle prefetch mounts only inside the Haftgane table. Its input is the public
+Age and complete catalog, including every Age III guild, never a hand or the
+selected guild subset. It includes current and later Ages, the seven wonder
+paintings and ordinary Age backs, preserving Save-Data, idle scheduling,
+visibility pause and cancellation on exit. Every design must have approved art
+or a recorded production subject; remaining subjects retain the category
+placeholder until their own approval and index regeneration. The test does not
+assume any particular painting is still pending.
+
+Implementation validation and visual evidence are recorded after the checks.
+
+
 This proposal enumerates every design, all fourteen board sides and all 24 chain symbols. File inventory confirms approved source art exists for every reuse id and that all seven wonders have all three shipped sizes. All seven wonder originals and the key cross-name or changed-role candidates were inspected directly; the other reuse judgements use approved subjects and manifest critiques. This is an art-reuse design audit, not a new full-set visual certification.
 
 No owner answer is needed to continue the recommended design. Before implementation release, verify card-data licensing/values through the data milestone, approve the board composition in the UI slice, inspect new optical variants in context, measure byte/download gates and complete the generation critique rounds. Those are future acceptance gates; no new artwork, browser render, build, performance result or product-code change is claimed here.

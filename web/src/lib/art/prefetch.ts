@@ -24,7 +24,8 @@
 // The idle, visibility and cancellation machinery serves every game. What
 // differs per game is its public lists (a PrefetchCatalog: Duel's is
 // duelPrefetchCatalog) and its own art index; the ...For functions build a
-// plan from those and a stage alone. Only Duel's screens prefetch so far.
+// plan from those and a stage alone. Haftgane mounts its own public-catalog
+// plan only after entering its table.
 
 import { cardBySlug, cardSlugs, tokenSlugs, wonderSlugs } from '$lib/catalog';
 import type { Back } from '$lib/wire';

@@ -7,7 +7,6 @@
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { HgStage } from '$lib/wire/haftgane-catalog.gen';
   import { ht } from '../i18n/messages.svelte';
-  import HgGlyph from './HgGlyph.svelte';
   import ResourceTile from './ResourceTile.svelte';
 
   interface Props {
@@ -59,7 +58,7 @@
     >
       <span class="numeral">{numeral(i)}</span>
       {#if state === 'built'}
-        <HgGlyph name="badge-check" />
+        <span class="tuck" aria-hidden="true"></span>
       {:else}
         {#each grouped(st.cost.res) as g (g.res)}
           <span class="cost"
@@ -99,8 +98,12 @@
   .built {
     background: var(--panel-sunken);
   }
-  .built :global(svg) {
-    color: var(--afford-ok);
+  .tuck {
+    width: 0.8rem;
+    height: 0.5rem;
+    border: 1.5px solid var(--rule-strong);
+    border-radius: 0.1rem;
+    background: var(--panel-sunken);
   }
   .open {
     border: 2.5px dashed var(--lapis);

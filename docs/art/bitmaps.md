@@ -160,6 +160,15 @@ A game's asset list comes from its catalog. Duel's is the engine's
 presentation catalog plus `STATIC_ASSETS`; until Haftgane has a public
 catalog of its own, its list is the ids in `art/haftgane/subjects.json`.
 
+Haftgane's live renderer uses the public catalog's current and later Ages
+for its idle plan, with all Age III guilds treated as part of that public
+catalog. The plan is mounted only on the table screen. Its image frames and
+prefetch share display-size strings in
+`web/src/lib/games/haftgane/art/catalog.ts`; the game-specific approved index
+resolves both original subjects and unchanged Duel URLs. Wonder paintings stay
+intact in live panels, and neutral stage marks carry no painted backs. See
+[the binding evidence](../haftgane/art-reuse.md#live-bindings-m19art-wiring).
+
 **Aliases** let a game reuse a painting that already exists, possibly
 another game's, without copying a file. `art/<game>/aliases.json` maps one
 of the game's ids to a qualified id:
@@ -279,8 +288,8 @@ the card ids of a set of decks, the back of a deck, and the rest of its
 art in order. A catalog holds public lists only, so every game's plan
 keeps the property above. `duelPrefetchCatalog` is Duel's, and Duel's
 `prefetchPlan`, `fullPrefetchPlan` and `artPrefetchPlan` are those builders
-on it, with the same plans as before. No other game's screen prefetches
-yet.
+on it, with the same plans as before. Haftgane's game-local catalog omits
+earlier Ages and mounts the same idle runner only inside its table screen.
 
 ## Running it, step by step
 

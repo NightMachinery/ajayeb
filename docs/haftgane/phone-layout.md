@@ -4,6 +4,15 @@
 
 Built so far (@Opus5.5 [2026-10-24 Sat]): the main screen of section 1, by M18.table-screen, the card sheet of section 2, by M18.card-sheet-and-payments, the special decisions of section 5, by M18.special-decisions ([special-decisions.md](special-decisions.md)), the end of Age military and the final scores of section 6, by M18.age-military-and-scores ([end-of-age-and-scores.md](end-of-age-and-scores.md), which lists the two fields still waiting on the server), the city sheet and Seen hands of section 8, by M18.city-sheet-and-notebook, the admin controls, roles, resignation and spectator view of section 3 and "Known gaps", by M18.admin-controls-resign-and-spectator, the reveal, the turn recap and the hand pass of section 4, by M18.reveal-and-recap, and the table's sound and the rest of its motion, by M18.sound-and-motion, in `web/src/lib/games/haftgane/table/` ([architecture.md](../architecture.md) describes them). A tap on a chip or panel already opens that seat's city, so a seat's admin menu opens from Manage, in the city sheet or beside the seat in the game menu. The spectator panel shows the turn recap, with the seat switches and role changes made during the turn. The new components carry the names proposed under [Components](#components), except that the seat ring is the table screen's own grid rather than a `SeatRing` component, and the leaves are written for this game instead of extending Duel's (Duel's components stay out of Haftgane's chunk, see "Chunks" in architecture.md).
 
+Art wiring (M19.art-wiring): the main strip now previews its wonder painting;
+the city sheet presents the intact painting in a live panel with side and
+starting resource, above an LTR stage strip. The side picker reuses the same
+painting and the existing sun and moon crests. Card faces resolve approved
+paintings through game-specific aliases and keep category placeholders for
+unapproved subjects. Built stages have identical neutral tabs. Other hands
+remain counts, so there is no new concealed-card surface. See
+[art-reuse.md](art-reuse.md#live-bindings-m19art-wiring) for bindings and checks.
+
 ## Summary
 
 A phone in portrait shows the whole table at once, with nothing scrolling sideways and every control at least 44 px:

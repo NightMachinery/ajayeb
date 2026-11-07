@@ -8,24 +8,25 @@
   import type { HgStage } from '$lib/wire/haftgane-catalog.gen';
   import { ht } from '../i18n/messages.svelte';
   import CostPips from './CostPips.svelte';
-  import HgGlyph from './HgGlyph.svelte';
+  import EffectGlyph from './EffectGlyph.svelte';
   import { effectText } from './effect-text';
   import { cardName } from './labels';
 
   interface Props {
     stages: readonly HgStage[];
     built: number;
+    compact?: boolean;
     /** The cards under this wonder, when the viewer may know them. */
     under?: { cards: readonly string[]; own: boolean } | null;
   }
 
-  let { stages, built, under = null }: Props = $props();
+  let { stages, built, under = null, compact = false }: Props = $props();
 
   const numeral = (i: number) =>
     ht(`hg.screen.stageNumeral.${Math.min(i + 1, 4)}` as 'hg.screen.stageNumeral.1');
 </script>
 
-<ol class="stages" data-city-stages>
+<ol class="stages" class:compact style:--stages={stages.length} dir="ltr" data-city-stages>
   {#each stages as st, i (i)}
     {@const done = i < built}
     {@const label = ht('hg.city.stage.label', { stage: numeral(i) })}
@@ -34,7 +35,11 @@
         >{numeral(i)}</span
       >
       <span class="text">
-        <span class="effect">{st.effects.map(effectText).join(' ')}</span>
+        <span class="effect">
+          {#if compact}{#each st.effects as fx, j (j)}<EffectGlyph
+                effect={fx}
+              />{/each}{:else}{st.effects.map(effectText).join(' ')}{/if}
+        </span>
         <span class="state">{done ? ht('hg.city.stage.built') : ht('hg.city.stage.notBuilt')}</span>
       </span>
       {#if done}
@@ -43,11 +48,10 @@
           role="img"
           aria-label={ht('hg.city.stage.built')}
           {@attach tooltip({ text: ht('hg.city.stage.built') })}
-          ><HgGlyph name="badge-check" /></span
+          ><span class="tuck" aria-hidden="true"></span></span
         >
-      {:else}
-        <span class="cost"><CostPips cost={st.cost} /></span>
       {/if}
+      {#if !done || compact}<span class="cost"><CostPips cost={st.cost} /></span>{/if}
     </li>
   {/each}
 </ol>
@@ -109,6 +113,49 @@
   }
   .cost {
     flex-shrink: 0;
+  }
+  .tuck {
+    display: block;
+    width: 1.2rem;
+    height: 0.65rem;
+    border: 2px solid var(--rule-strong);
+    border-radius: 0.15rem;
+    background: var(--panel-sunken);
+  }
+  .compact {
+    grid-template-columns: repeat(var(--stages), minmax(0, 1fr));
+    gap: 0;
+    border-block-start: 1px solid var(--rule-strong);
+  }
+  .compact .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    justify-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.2rem;
+    border: 0;
+    border-inline-end: 1px solid var(--rule);
+    border-radius: 0;
+  }
+  .compact .stage:last-child {
+    border-inline-end: 0;
+  }
+  .compact .text {
+    align-items: center;
+    text-align: center;
+  }
+  .compact .effect {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.2rem;
+  }
+  .compact .state {
+    font-size: 0.7rem;
+  }
+  .compact .cost {
+    font-size: 0.9rem;
   }
   .under {
     margin: 0.4rem 0 0;

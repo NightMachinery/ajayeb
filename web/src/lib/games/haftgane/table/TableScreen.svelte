@@ -31,6 +31,7 @@
   // nothing and every step is instant; the tags stay until the viewer
   // starts choosing again. A screen reader hears the recap.
   import '../theme.css';
+  import ArtPrefetch from '../art/ArtPrefetch.svelte';
   import type { Snippet } from 'svelte';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -394,6 +395,8 @@
     pendingChoice ? ht('hg.screen.pick.picked', { what: choiceLabel(pendingChoice) }) : ''
   );
 </script>
+
+<ArtPrefetch age={view.age} />
 
 <div
   class="screen"

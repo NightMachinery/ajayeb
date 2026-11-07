@@ -41,8 +41,8 @@
 // approved gets the target's own entry, the same content-hashed paths of
 // the same files (an alias never copies or re-encodes a painting); an
 // alias whose target is not approved yet is left out, so its placeholder
-// draws. The prefetch plan report is Duel's only, until another game's
-// screens prefetch.
+// draws. This tool reports Duel's prefetch bytes; Haftgane's game-local
+// plan is measured with its live frames.
 //
 // Usage:
 //   node tools/art/index.mjs
@@ -321,7 +321,7 @@ async function report(entries, quiet) {
   const out = (line) => process.stdout.write(`index.mjs: ${line}\n`);
   out(`shipped: ${shipped.length} files, ${(total / 1024 / 1024).toFixed(2)} MB (per-image budgets only; no total cap)`);
   if (game.name === 'duel') await duelPlanReport(entries, out);
-  else out(`prefetch plan: not reported for ${game.name}; only Duel's screens prefetch so far`);
+  else out(`prefetch plan: not reported for ${game.name}; measure its game-local plan with the live frames`);
 
   for (const kind of Object.keys(KIND_SPEC)) {
     const c = hiDpiCheck(kind);

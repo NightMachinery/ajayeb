@@ -9,6 +9,8 @@
   import { effectText } from './effect-text';
   import CostPips from './CostPips.svelte';
   import ResourceTile from './ResourceTile.svelte';
+  import WonderBoard from './WonderBoard.svelte';
+  import HgGlyph from './HgGlyph.svelte';
 
   interface Props {
     boardId: string;
@@ -52,6 +54,7 @@
           ><ResourceTile res={b.start} /></span
         >
       </p>{/if}
+    <WonderBoard {boardId} />
     <div class="sides">
       {#each sides as c (c.key)}
         <section class:selected={selected?.key === c.key}>
@@ -62,6 +65,8 @@
             aria-pressed={selected?.key === c.key}
             disabled={locked}
             onclick={() => ondraft(c.key)}
+            ><span class="side-mark"
+              ><HgGlyph name={c.side === 'day' ? 'crest-sun' : 'crest-moon'} /></span
             >{ht(`hg.screen.side.${c.side}` as 'hg.screen.side.day')}</button
           >
           <ol>
@@ -146,6 +151,9 @@
     color: var(--fg);
     font: 600 1.1rem var(--type-display);
     cursor: pointer;
+  }
+  .side-mark {
+    margin-inline-end: 0.35rem;
   }
   ol {
     padding: 0;

@@ -13,7 +13,7 @@
   import type { Seat } from '$lib/wire/haftgane.gen';
   import { ht } from '../i18n/messages.svelte';
   import CityRows from './CityRows.svelte';
-  import CityStages from './CityStages.svelte';
+  import WonderBoard from './WonderBoard.svelte';
   import HgGlyph from './HgGlyph.svelte';
   import ResourceTile from './ResourceTile.svelte';
   import SeatCrest from './SeatCrest.svelte';
@@ -233,7 +233,7 @@
   {#if stages.length > 0}
     <section class="part" aria-labelledby="{titleId}-stages">
       <h3 id="{titleId}-stages">{ht('hg.city.stages')}</h3>
-      <CityStages {stages} built={seat.stages} {under} />
+      <WonderBoard boardId={seat.board} side={seat.side} {stages} built={seat.stages} {under} />
     </section>
   {/if}
 

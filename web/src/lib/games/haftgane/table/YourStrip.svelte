@@ -9,6 +9,8 @@
   import { formatNumber } from '$lib/i18n';
   import { tooltip } from '$lib/ui/tooltip.svelte';
   import type { Seat } from '$lib/wire/haftgane.gen';
+  import Painting from '../art/Painting.svelte';
+  import { wonderArtId, WONDER_STRIP_SIZES } from '../art/catalog';
   import { ht } from '../i18n/messages.svelte';
   import ColourCounts from './ColourCounts.svelte';
   import HgGlyph from './HgGlyph.svelte';
@@ -171,7 +173,11 @@
   </div>
   <div class="row">
     <span class="wonder" role="img" aria-label={wonderTip} {@attach tooltip({ text: wonderTip })}>
-      <HgGlyph name="wonder" />
+      <span class="wonder-picture"
+        ><Painting id={wonderArtId(seat.board)} sizes={WONDER_STRIP_SIZES}
+          >{#snippet fallback()}<HgGlyph name="wonder" />{/snippet}</Painting
+        ></span
+      >
       <span class="wonder-text">
         <span class="wonder-name">{ht(`hg.board.${seat.board}` as 'hg.board.gizah')}</span>
         {#if sideName}
@@ -302,6 +308,13 @@
   .wonder > :global(svg) {
     font-size: 1.3rem;
     color: var(--gild);
+  }
+  .wonder-picture {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    aspect-ratio: 3 / 2;
+    flex-shrink: 0;
   }
   .wonder-text {
     display: flex;
