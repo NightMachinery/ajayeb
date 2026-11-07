@@ -71,6 +71,48 @@
         "Brown accent fits; style, density and figure scale match the anchor and Duel's clay-pool and brickyard; one domed pavilion, no minaret, emblem or animals. Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     },
+    "card/craftsmens-guild": {
+      "id": "card/craftsmens-guild",
+      "kind": "card",
+      "out": "haftgane/cards/craftsmens-guild",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a glass artisan and a weaver seated at a low guild table inspect their finished manufactured wares: the artisan holds up a large translucent turquoise glass flask and the weaver unfolds a broad textile of plain rose and violet stripes beside a blank rolled papyrus sheet; plain violet robes, a small glass-blowing pipe resting below the table, no coins, no buyers, no raw logs or stone, no weapons; leave out the background pavilion entirely, behind the scene only ivory paper",
+      "accent": "violet",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "craftsmens-guild.avif": 19459,
+        "craftsmens-guild@thumb.avif": 6094
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Raised glass flask and broad striped textile identify manufactured wares at 120px.",
+        "Distinct from Workers and coin-trading Merchants; cloth and papyrus are clean."
+      ]
+    },
+    "card/decorators-guild": {
+      "id": "card/decorators-guild",
+      "kind": "card",
+      "out": "haftgane/cards/decorators-guild",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two artisans in plain violet tunics inspect the finished entrance of a completed secular monument: a compact plain stone doorway with a tall vivid floral tile panel on each jamb and a small gold decorative bud finial at its top; one artisan stands back appraising the complete work while the other touches the gleaming finished tile panel; complete paving and clean polished surfaces, no scaffolding, no ladder, no construction tools or loose blocks, no inscription or glyph band, only large simple flowers and leaves in the tilework, no other building or background pavilion",
+      "accent": "violet",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "decorators-guild.avif": 16601,
+        "decorators-guild@thumb.avif": 5414
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Finished floral panels and appraising poses read clearly at 120px.",
+        "Completed paving, no scaffolding or tools, secular doorway."
+      ]
+    },
     "card/excavation": {
       "id": "card/excavation",
       "kind": "card",
@@ -141,6 +183,27 @@
         "One material in quantity, as the card produces two ore: two large rust-red heaps with dark and silver glints, a basket tipping more into the furnace, and ore glowing in its mouth; the dark moulds and ingots read as cast metal, not as a second material.",
         "The ingots and moulds are matte and ink-outlined like Duel brickyard's bricks; two large figures, uncluttered.",
         "Distinct in the family: the only furnace, fire and ingots. Reviewer: a fresh in-process subagent that did not write the prompts and had not seen earlier rounds."
+      ]
+    },
+    "card/lodge": {
+      "id": "card/lodge",
+      "kind": "card",
+      "out": "haftgane/cards/lodge",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two scholars seated inside a small open-front timber learning lodge, its simple sloping roof supported by plain wooden posts; one opens a large plain brass drafting compass over a blank sheet on a low table while the other steadies the sheet; the instrument and their hands large and clear, robes plain malachite and ivory; no shelves of books, no celestial instrument, no other building in the background, no sign or inscription, no projecting crossbars",
+      "accent": "malachite",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "lodge.avif": 17778,
+        "lodge@thumb.avif": 5539
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Large drafting compass, blank sheet and timber roof remain legible at 120px.",
+        "Distinct from Academy, University, Study and Library; no writing or accidental crosses found."
       ]
     },
     "card/loom": {
@@ -260,6 +323,50 @@
         "One domed garden kiosk, no minaret, emblem or animals; figure scale and density match Duel's stone-pit and quarry. Reviewer: a fresh in-process subagent that did not write the prompts."
       ]
     },
+    "card/philosophers-guild": {
+      "id": "card/philosophers-guild",
+      "kind": "card",
+      "out": "haftgane/cards/philosophers-guild",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two philosophers seated face to face on low cushions in a quiet open garden court, debating with clearly opposed open hand gestures over one closed plain malachite book on a low violet stool; one leans forward with an open palm, the other raises one finger in reply; robes plain violet and ivory, a single small leafy shrub at the edge; no scientific instrument, no measuring tool, no scrolls, no shelves, no background building, no coins, no writing on the blank book cover",
+      "accent": "violet",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "philosophers-guild.avif": 18280,
+        "philosophers-guild@thumb.avif": 5579
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Opposed conversational gestures and a closed blank book communicate debate at 120px.",
+        "Distinct from instrument-based Scientists; no writing or prohibited emblems."
+      ]
+    },
+    "card/spies-guild": {
+      "id": "card/spies-guild",
+      "kind": "card",
+      "out": "haftgane/cards/spies-guild",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "two discreet unarmed scouts in plain violet travel cloaks crouch together behind a low plain stone wall; one compares a completely blank folded route sheet while the other peers around the wall toward a distant compact military camp made of two plain vermilion tents and a rack of lowered spears, no people in the distance; alert quiet poses, no raised weapon, no armour, no banners or emblems, no other building, no marks on the sheet or wall",
+      "accent": "violet",
+      "status": "approved",
+      "attempt": 2,
+      "promptAmend": "Remove the domed pavilion entirely. Behind the crouching scouts show only a low pastel hillside, the two plain vermilion tents and the stored spear rack. No other architecture, parapets, eaves, inscription bands or decorative friezes.",
+      "bytes": {
+        "spies-guild.avif": 15536,
+        "spies-guild@thumb.avif": 5060
+      },
+      "approvedAttempt": 2,
+      "reasons": [
+        "Blank folded sheet, plain tents and floral robes contain no visible pseudo-writing.",
+        "No prohibited emblems or accidental cross; spears stored in rack, none wielded.",
+        "Crouched lookout and companion consulting sheet communicate scouting at 120px.",
+        "Fine outlines, decorative perspective, violet cloaks and feathered ivory margins fit miniature style."
+      ]
+    },
     "card/timber-yard": {
       "id": "card/timber-yard",
       "kind": "card",
@@ -354,6 +461,27 @@
         "Reads at once at 120 px as a round stone well with a wooden crossbeam and rope, one figure hauling a dripping jar and the other waiting with a jar on her shoulder: a calm civic scene, not production or trade.",
         "Distinct from the reused blue Statue, Aqueduct and Baths; two large figures, no building, wide paper margins.",
         "Ink line, gouache palette and density match the Duel blue neighbours. Reviewer: a fresh in-process subagent that did not write the prompts."
+      ]
+    },
+    "card/workers-guild": {
+      "id": "card/workers-guild",
+      "kind": "card",
+      "out": "haftgane/cards/workers-guild",
+      "gen": "1536x1024",
+      "crop": "4:3",
+      "subject": "a quarry worker in a short plain tunic, a heavy stone mallet resting at his feet, and a timber worker carrying a broad adze confer beside a low guild bench holding a large pale squared stone block and a bundle of thick cut cedar logs; the workers stand and point at the raw materials, with a small basket of ochre clay and rust-red metallic ore below the bench; plain violet sashes, no coins, no merchant, no glass or cloth goods; leave out the background pavilion entirely, behind the scene only a low pastel hill and ivory paper",
+      "accent": "violet",
+      "status": "approved",
+      "attempt": 1,
+      "promptAmend": "",
+      "bytes": {
+        "workers-guild.avif": 15699,
+        "workers-guild@thumb.avif": 5137
+      },
+      "approvedAttempt": 1,
+      "reasons": [
+        "Stone, logs and work tools identify raw-material workers at 120px.",
+        "Distinct from Craftsmens and Traders; robe patterns are floral."
       ]
     }
   }

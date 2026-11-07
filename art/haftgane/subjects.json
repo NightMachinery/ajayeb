@@ -11,6 +11,14 @@
     "subject": "two workers in one shallow open pit: one carries a basket of wet ochre clay up the bank, the other prises lumps of rust-red iron ore, glinting with dark metallic flecks, from a seam exposed in the pit wall; the clay and the ore both clearly visible as two different materials",
     "accent": "brown"
   },
+  "card/craftsmens-guild": {
+    "subject": "a glass artisan and a weaver seated at a low guild table inspect their finished manufactured wares: the artisan holds up a large translucent turquoise glass flask and the weaver unfolds a broad textile of plain rose and violet stripes beside a blank rolled papyrus sheet; plain violet robes, a small glass-blowing pipe resting below the table, no coins, no buyers, no raw logs or stone, no weapons; leave out the background pavilion entirely, behind the scene only ivory paper",
+    "accent": "violet"
+  },
+  "card/decorators-guild": {
+    "subject": "two artisans in plain violet tunics inspect the finished entrance of a completed secular monument: a compact plain stone doorway with a tall vivid floral tile panel on each jamb and a small gold decorative bud finial at its top; one artisan stands back appraising the complete work while the other touches the gleaming finished tile panel; complete paving and clean polished surfaces, no scaffolding, no ladder, no construction tools or loose blocks, no inscription or glyph band, only large simple flowers and leaves in the tilework, no other building or background pavilion",
+    "accent": "violet"
+  },
   "card/excavation": {
     "subject": "two diggers in one stepped excavation cut into a low hillside: on the upper ledge one levers out a squared block of pale limestone, on the floor below the other shovels soft ochre clay into a basket; the pale stone above and the ochre clay below both clearly visible as two different materials",
     "accent": "brown"
@@ -22,6 +30,10 @@
   "card/foundry": {
     "subject": "two metalworkers at a squat round smelting furnace glowing at its mouth: one tips a basket of rust-red iron ore, glinting with dark metallic flecks into the furnace, the other pours a glowing orange melt from a crucible into a row of plain ingot moulds; two large heaps of the same rust-red ore lie beside the furnace, and a few finished dark iron ingots, plain and unmarked, rest beside the moulds; one material only, no weapons, no blades, no armour",
     "accent": "brown"
+  },
+  "card/lodge": {
+    "subject": "two scholars seated inside a small open-front timber learning lodge, its simple sloping roof supported by plain wooden posts; one opens a large plain brass drafting compass over a blank sheet on a low table while the other steadies the sheet; the instrument and their hands large and clear, robes plain malachite and ivory; no shelves of books, no celestial instrument, no other building in the background, no sign or inscription, no projecting crossbars",
+    "accent": "malachite"
   },
   "card/loom": {
     "subject": "a weaver seated at a simple upright wooden loom, drawing a shuttle through the warp threads of a broad, half-woven cloth in rose and lapis stripes, a folded bolt of the same striped cloth on a low stool beside the loom",
@@ -43,6 +55,14 @@
     "subject": "a miner with a short pick prising lumps of rust-red iron ore, glinting with dark metallic flecks, from a narrow seam that runs through a pale rock face, and dropping them into a shallow basket at his feet",
     "accent": "brown"
   },
+  "card/philosophers-guild": {
+    "subject": "two philosophers seated face to face on low cushions in a quiet open garden court, debating with clearly opposed open hand gestures over one closed plain malachite book on a low violet stool; one leans forward with an open palm, the other raises one finger in reply; robes plain violet and ivory, a single small leafy shrub at the edge; no scientific instrument, no measuring tool, no scrolls, no shelves, no background building, no coins, no writing on the blank book cover",
+    "accent": "violet"
+  },
+  "card/spies-guild": {
+    "subject": "two discreet unarmed scouts in plain violet travel cloaks crouch together behind a low plain stone wall; one compares a completely blank folded route sheet while the other peers around the wall toward a distant compact military camp made of two plain vermilion tents and a rack of lowered spears, no people in the distance; alert quiet poses, no raised weapon, no armour, no banners or emblems, no other building, no marks on the sheet or wall",
+    "accent": "violet"
+  },
   "card/timber-yard": {
     "subject": "a small timber yard on level ground: one worker stacks squared cedar beams on a low wooden rack, the other dresses a pale limestone block with a mallet and chisel beside a few finished blocks; the stack of beams and the pale stone blocks both clearly visible as two different materials; no tree felling, no stream",
     "accent": "brown"
@@ -58,5 +78,9 @@
   "card/well": {
     "subject": "two townspeople at a low round stone well with a plain wooden crossbeam and a rope: one hauls up a dripping water jar by the rope, the other waits beside the well with an empty water jar on her shoulder; a ring of plain turquoise tiles around the well's foot",
     "accent": "blue"
+  },
+  "card/workers-guild": {
+    "subject": "a quarry worker in a short plain tunic, a heavy stone mallet resting at his feet, and a timber worker carrying a broad adze confer beside a low guild bench holding a large pale squared stone block and a bundle of thick cut cedar logs; the workers stand and point at the raw materials, with a small basket of ochre clay and rust-red metallic ore below the bench; plain violet sashes, no coins, no merchant, no glass or cloth goods; leave out the background pavilion entirely, behind the scene only a low pastel hill and ivory paper",
+    "accent": "violet"
   }
 }
