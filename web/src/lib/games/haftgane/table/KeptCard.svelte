@@ -41,7 +41,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
-    margin: -2rem -0.3rem 0;
+    margin: 0.35rem 0 0;
     padding: 0.5rem 0.3rem;
     border: 1px solid var(--rule-strong);
     border-radius: var(--shape-control);

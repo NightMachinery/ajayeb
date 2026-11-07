@@ -76,3 +76,6 @@ from the stored setup and batches, runs the whole-frame leak oracle on every
 viewer stream, and requires that a planted pile in a waiting viewer's frame is
 rejected. The browser also checks pending-pick ownership for every frame.
 These recordings are private, ignored test output; they are never fixtures.
+
+The kept card's status sits below its complete face, including the name strip.
+The locked and playable states use the same placement in both directions.
