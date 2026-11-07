@@ -289,10 +289,8 @@
   }
   h2 {
     margin: 0;
-    overflow: hidden;
+    overflow-wrap: anywhere;
     font: 600 1.6rem/1.15 var(--type-display);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   .where {
     margin: 0.1rem 0 0;

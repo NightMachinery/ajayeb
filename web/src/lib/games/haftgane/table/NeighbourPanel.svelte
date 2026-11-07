@@ -24,10 +24,14 @@
   import TradeChip from './TradeChip.svelte';
   import { COLOURS, design, stagesOf, type Role, type SeatStatus } from './model';
 
+  import SeatName from './SeatName.svelte';
+  import type { BotName } from './seat-names';
+
   interface Props {
     seat: Seat;
     side: 'left' | 'right';
     name: string;
+    generatedName?: BotName | null;
     where: string;
     bot: boolean;
     status: SeatStatus;
@@ -46,6 +50,7 @@
     seat,
     side,
     name,
+    generatedName = null,
     where,
     bot,
     status,
@@ -168,7 +173,7 @@
 
 {#snippet who()}
   <SeatCrest seat={seat.seat} tip={crestTip} {bot} botTip={ht('hg.screen.botBadge')} size="md" />
-  <span class="name" dir="auto">{name}</span>
+  <span class="name" dir="auto"><SeatName {name} generated={generatedName} /></span>
 {/snippet}
 
 <style>

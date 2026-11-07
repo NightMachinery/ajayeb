@@ -14,13 +14,14 @@
   import RingTabs from './RingTabs.svelte';
   import { ringOrder } from './city';
   import type { SeatStatus } from './model';
-  import { where } from './seat-names';
+  import { type BotName, where } from './seat-names';
 
   interface Props {
     seats: readonly Seat[];
     names: Readonly<Record<number, string>>;
     /** The seats a bot plays. */
     bots: readonly number[];
+    botNames?: Readonly<Record<number, BotName | null>>;
     statuses: Readonly<Record<number, SeatStatus>>;
     /** The viewer's private facts, when the viewer holds a seat. */
     own?: { seat: number; tucked: readonly string[]; kept: string } | null;
@@ -37,6 +38,7 @@
     seats,
     names,
     bots,
+    botNames = {},
     statuses,
     own = null,
     revealed = null,
@@ -55,7 +57,8 @@
       seat: s.seat,
       name: s.relation === 'self' ? ht('hg.screen.you') : nameOf(s),
       tip: ht('hg.screen.crest.tip', { name: nameOf(s), where: where(s, n) }),
-      bot: bots.includes(s.seat)
+      bot: bots.includes(s.seat),
+      generatedName: s.relation === 'self' ? null : botNames[s.seat]
     }))
   );
   const seat = $derived(seats.find((s) => s.seat === active) ?? order[0]!);

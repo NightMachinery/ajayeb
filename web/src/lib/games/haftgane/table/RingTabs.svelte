@@ -4,6 +4,7 @@
   // seat's crest and name. They follow the page direction, as the sheet
   // does; the arrow keys move between them, as tabs do.
   import { tooltip } from '$lib/ui/tooltip.svelte';
+  import SeatName from './SeatName.svelte';
   import SeatCrest from './SeatCrest.svelte';
   import type { RingTab } from './city';
 
@@ -56,7 +57,8 @@
       {@attach tooltip({ text: tab.tip, actionable: true })}
     >
       <SeatCrest seat={tab.seat} tip={tab.tip} bot={tab.bot} {botTip} />
-      <span class="name" dir="auto">{tab.name}</span>
+      <span class="name" dir="auto"><SeatName name={tab.name} generated={tab.generatedName} /></span
+      >
     </button>
   {/each}
 </div>

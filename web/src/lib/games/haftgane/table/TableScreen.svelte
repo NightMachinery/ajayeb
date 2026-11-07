@@ -85,7 +85,7 @@
   import { formerOf, isAdmin, roleMap, watchers } from './admin';
   import { dealOf, latestRecap, lineOf, recapWorthy } from './recap';
   import { actText, coinText, recapSpeech } from './recap-text';
-  import { humanName, isBot, seatName, where } from './seat-names';
+  import { botName, humanName, isBot, seatName, where } from './seat-names';
 
   interface Props {
     session: TableSession;
@@ -458,6 +458,7 @@
               <FarSeatChip
                 seat={s}
                 name={nameOf(s.seat)}
+                generatedName={botName(frame, s.seat)}
                 where={where(s, n)}
                 bot={isBot(frame, s.seat)}
                 status={seatStatus(frame, s.seat)}
@@ -479,6 +480,7 @@
             seat={s}
             {side}
             name={nameOf(s.seat)}
+            generatedName={botName(frame, s.seat)}
             where={where(s, n)}
             bot={isBot(frame, s.seat)}
             status={seatStatus(frame, s.seat)}
@@ -498,6 +500,7 @@
         <YourStrip
           seat={around.anchor}
           name={nameOf(around.anchor.seat)}
+          generatedName={botName(frame, around.anchor.seat)}
           where={where(around.anchor, n)}
           own={around.own}
           bot={isBot(frame, around.anchor.seat)}
@@ -653,6 +656,7 @@
 
   {#if citySeat !== null}
     <CitySheet
+      botNames={Object.fromEntries(view.seats.map((s) => [s.seat, botName(frame, s.seat)]))}
       seats={view.seats}
       {names}
       bots={view.seats.filter((s) => isBot(frame, s.seat)).map((s) => s.seat)}

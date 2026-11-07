@@ -32,14 +32,24 @@ export function humanName(h: { name: string; nameNo: number }): string {
   return numbered(h.name, h.nameNo);
 }
 
+/** Generated bot identity, kept separate from its full accessible name. */
+export interface BotName {
+  label: string;
+  suffix: string;
+}
+
+export function botName(frame: TableState, seat: number): BotName | null {
+  const p = frame.seats[seat];
+  if (p?.kind !== 'bot') return null;
+  const n = frame.seats.filter((s) => s.seat <= seat && s.kind === 'bot' && s.bot === p.bot).length;
+  return { label: persona(p.bot), suffix: n > 1 ? formatNumber(n) : '' };
+}
+
 /** A seat's display name. Bots of one level share a persona name, so each
  *  after the first in seat order takes a number, as humans' names do. */
 export function seatName(frame: TableState, seat: number): string {
-  const p = frame.seats[seat];
-  if (p?.kind === 'bot') {
-    const same = frame.seats.filter((s) => s.seat <= seat && s.kind === 'bot' && s.bot === p.bot);
-    return numbered(persona(p.bot), same.length);
-  }
+  const bot = botName(frame, seat);
+  if (bot) return bot.label + (bot.suffix ? ` ${bot.suffix}` : '');
   const h = humanAt(frame, seat);
   if (h) return humanName(h);
   return ht('hg.screen.seat', { seat: seat + 1 });

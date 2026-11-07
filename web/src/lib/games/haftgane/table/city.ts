@@ -6,6 +6,7 @@
 
 import type { Notebook, PileLook, Seat, SeenEntry } from '$lib/wire/haftgane.gen';
 import type { HgColour } from '$lib/wire/haftgane-catalog.gen';
+import type { BotName } from './seat-names';
 import { COLOURS, design, ring, TURNS_PER_AGE } from './model';
 
 /** Every seat from the anchor round the table: the anchor, its left
@@ -23,6 +24,7 @@ export interface RingTab {
   /** Name and position, already translated. */
   tip: string;
   bot: boolean;
+  generatedName?: BotName | null;
 }
 
 /** One row of a city: a colour and its cards in the order the view lists them. */

@@ -22,9 +22,13 @@
   import StatusBadge from './StatusBadge.svelte';
   import { makings, stagesOf, type Role, type SeatStatus } from './model';
 
+  import SeatName from './SeatName.svelte';
+  import type { BotName } from './seat-names';
+
   interface Props {
     seat: Seat;
     name: string;
+    generatedName?: BotName | null;
     where: string;
     own: boolean;
     bot: boolean;
@@ -40,6 +44,7 @@
   let {
     seat,
     name,
+    generatedName = null,
     where,
     own,
     bot,
@@ -202,7 +207,7 @@
     botTip={ht('hg.screen.botBadge')}
     size="md"
   />
-  <span class="name" dir="auto">{name}</span>
+  <span class="name" dir="auto"><SeatName {name} generated={generatedName} /></span>
   {#if own}<span class="you">{ht('hg.screen.you')}</span>{/if}
 {/snippet}
 
