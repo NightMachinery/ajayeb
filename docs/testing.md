@@ -3520,6 +3520,21 @@ restoration and verifies that an unrelated blocker is still reported while
 the drawer is open. An obstruction inside the drawer is a separate positive
 control. Other popovers retain the normal probe checks.
 
+### Live wonder-art setup
+
+`specs/haftgane-art.full.spec.ts` uses five human test contexts in a real
+Home-created table, with day sides. The four partners sell cards while
+preserving the Age II double-resource producer required by the viewer's
+first stage. The viewer saves coins, builds that producer when offered,
+then prefers a stage. Every packet reaches the viewer within five turns,
+so the producer is built by Age II turn five and the stage before the
+Age III wonder capture. The test checks the built stage and its concealed
+card tuck. It uses no fixed seed or retry and stays independent of the
+server's game-creation counter.
+
+Run it alongside the earlier game-creating admin spec to verify that order:
+`make e2e PW_ARGS='specs/haftgane-admin.full.spec.ts specs/haftgane-art.full.spec.ts --project desktop --repeat-each 5'`.
+
 ### Icon paint comparison
 
 `specs/icons.spec.ts` compares decoded screenshot pixels of the inline SVGs
