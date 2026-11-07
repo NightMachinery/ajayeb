@@ -1312,7 +1312,9 @@ class CrossCompileTests(unittest.TestCase):
                 go_cmd, go_cwd, go_env = steps[2]
                 self.assertEqual(go_cmd[0], "/fake/go")
                 self.assertEqual(go_cwd, self_host.SERVER_DIR)
-                self.assertEqual(go_env, {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "amd64"})
+                self.assertEqual(
+            go_env, {"CGO_ENABLED": "0", "GOOS": "linux", "GOARCH": "amd64", "GOTOOLCHAIN": self_host.GO_TOOLCHAIN}
+        )
                 mocks["sync_webdist"].assert_called_once_with()
 
     def test_go_build_cross_env_disables_cgo_and_sets_target(self):
