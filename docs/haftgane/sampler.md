@@ -152,7 +152,9 @@ no-world or budget-out result it invokes the existing exact Greedy once, with
 separate attempts, worlds, checks, no-world fallback and budget fallback
 counters. Cancellation returns no root state or replacement key. No released
 policy, frozen preset, stored game or frame changes in this integration slice.
-The new path remains dormant until the rollout slice supplies a decision rule.
+The dormant `ChooseAge` runner now supplies paired Age comparisons;
+[the rollout guide](rollouts.md) explains multi-sample failure aggregation and
+its remaining calibration gates. No level is enabled.
 
 The room worker hook test pauses inside sampling while the actor serves a
 request, then changes the bot's controller and verifies physical cancellation,

@@ -95,7 +95,11 @@ it yet. A room test pauses inside sampling, proves actor responsiveness, then
 checks structural cancellation without accepting a fallback. Its sampler
 failure diagnostics are separate from exceptional watchdog fallback and do
 not change stored records. [The sampler guide](sampler.md) gives measured
-cost and cancellation results.
+cost and cancellation results. The dormant `bot.ChooseAge` runner uses this
+same admitted-worker boundary. Its worker test pauses inside a rollout and
+checks actor responsiveness and structural cancellation. [The rollout
+guide](rollouts.md) records paired sweeps, bounded memory and whole-call poll
+gaps; released room levels and durable work rows are unchanged.
 
 A job receives neither a Game nor a State, seed, other seat's pending pick,
 wire revision or task generation. Entropy uses a domain-separated policy root,

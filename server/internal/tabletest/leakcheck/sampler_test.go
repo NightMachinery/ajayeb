@@ -33,6 +33,18 @@ func TestSamplerDiagnosticsLeakOracle(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			age, err := bot.ChooseAge(context.Background(), g.Observe(seat), g.Legal(seat), 91, bot.AgeWork{Attempts: 2, Candidates: 4, SamplerChecks: budget})
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Calibration exports counters, not raw root keys or simulated cards.
+			ageData, err := json.Marshal(age.Counters)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if leaks := checker.Check(leakcheck.Doc{Kind: leakcheck.Frame, Viewer: int(seat), Data: ageData}); len(leaks) != 0 {
+				t.Fatal("Age diagnostics", leaks)
+			}
 			if leaks := checker.Check(leakcheck.Doc{Kind: leakcheck.Frame, Viewer: int(seat), Data: data}); len(leaks) != 0 {
 				t.Fatal(leaks)
 			}

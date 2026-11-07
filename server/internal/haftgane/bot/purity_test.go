@@ -88,10 +88,17 @@ func TestObservationOnlyPolicyBoundary(t *testing.T) {
 			t.Fatal(err)
 		}
 		bad, err := forbiddenEngineSelectors(src)
-		if path == "sample.go" {
+		if path != "sample.go" && path != "rollout.go" {
+			root, parseErr := forbiddenRunnerReferences(src)
+			if parseErr != nil || len(root) != 0 {
+				t.Error(path, root, parseErr)
+			}
+		}
+		if path == "sample.go" || path == "rollout.go" {
 			var rest []string
 			for _, name := range bad {
-				if name != "State" && name != "DeterminizeControlled" {
+				allowed := name == "State" || path == "sample.go" && name == "DeterminizeControlled" || path == "rollout.go" && (name == "LegalState" || name == "ResolveState")
+				if !allowed {
 					rest = append(rest, name)
 				}
 			}
@@ -106,6 +113,36 @@ func TestObservationOnlyPolicyBoundary(t *testing.T) {
 		bad, err := forbiddenEngineSelectors(src)
 		if err != nil || len(bad) != 1 {
 			t.Error("boundary probe accepted", selector, bad, err)
+		}
+	}
+}
+
+// Policies cannot evade the State selector ban through a local runner factory
+// or a RootSample alias. Only the two orchestration files own these names.
+func forbiddenRunnerReferences(src []byte) ([]string, error) {
+	f, err := parser.ParseFile(token.NewFileSet(), "policy.go", src, 0)
+	if err != nil {
+		return nil, err
+	}
+	var bad []string
+	ast.Inspect(f, func(n ast.Node) bool {
+		id, ok := n.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		switch id.Name {
+		case "SampleRoot", "RootSample", "sampledState", "stateSampler", "ChooseAge", "chooseAge", "simulateAge", "rememberRound":
+			bad = append(bad, id.Name)
+		}
+		return true
+	})
+	return bad, nil
+}
+func TestPolicyCannotAcquireRunnerState(t *testing.T) {
+	for _, name := range []string{"SampleRoot", "RootSample", "sampledState", "stateSampler", "ChooseAge", "chooseAge", "simulateAge", "rememberRound"} {
+		bad, err := forbiddenRunnerReferences([]byte("package x; var _ = " + name))
+		if err != nil || len(bad) != 1 {
+			t.Fatal("policy factory escape", name, bad, err)
 		}
 	}
 }

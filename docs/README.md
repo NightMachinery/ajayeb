@@ -56,3 +56,6 @@ durable work rows and cancellation.
 
 The [Haftgane sampler](haftgane/sampler.md) guide covers observation-only worlds,
 constraint search, bounded failure and replay/distribution evidence.
+
+The [paired Age rollout guide](haftgane/rollouts.md) describes dormant sampled
+search, simulated-seat privacy, failure accounting and cost/cancellation evidence.

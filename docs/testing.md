@@ -3545,3 +3545,20 @@ each complete call's maximum poll gap across saved fixtures and fresh game
 prefixes; the sampler sweep variable scales its fresh games. Root preparation,
 Greedy failure diagnostics, actor responsiveness/cancellation and the tabletest
 leak oracle are covered independently; no released level uses sampling yet.
+
+
+`TestAgeSweep` checks legal paired Age comparisons for every required seat and
+prefix at N=3..7, independently replaying every sampled witness. One game per
+count runs by default; `HAFTGANE_ROLLOUT_GAMES` expands it. Unit tests cover
+once-per-decision Greedy fallback, partial sampling failure, complete-sweep
+statistics, frozen simultaneous picks, retained own memory, restricted side
+choices, exact terminal scoring and cancellation without a partial incumbent.
+The memory tracker is compared against checked Game history, including private
+pile looks and kept-card abilities. Existing forbidden-information pairs now
+also compare the full Age ranking and each simulated-seat preference policy.
+AST guards reject state APIs and runner factories from policy files; tabletest
+checks safe aggregate diagnostics, and the worker hook pauses inside rollout
+execution while proving actor responsiveness and structural cancellation.
+`HAFTGANE_ROLLOUT_MEASURE=1` enables whole-call poll gaps under idle/two-worker
+load, paired-noise measurements and storage probes. See [the rollout
+guide](haftgane/rollouts.md) for guarded evidence and reproduction commands.

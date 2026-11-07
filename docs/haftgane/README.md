@@ -2,7 +2,7 @@
 
 @Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: design accepted in M12; card and wonder data verified in M13, with Babylon's night side still provisional; the layers it shares with Duel have run in production since M14, with only Duel registered.** Its decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Little of Haftgane itself is built yet (see "In the app so far"), and every timing, size and strength figure in these documents is a target or an estimate until a build slice measures it.
+**Status: the rules engine, table actors and baseline bots are implemented; paired Age rollouts remain dormant pending Scholar calibration and release gates.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
 
 ## What it is and why
 
@@ -15,6 +15,11 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 - **Decided:** pass-the-phone (hot-seat) play is deferred.
 - **Decided:** the base game only, with cheap extension points for expansions.
 - **Decided:** one shared online lobby of 2 to 7 seats; two seats at Start make a Duel game, three to seven a Haftgane game (D60).
+
+Current implementation guides: [the baseline bots](ai.md), [observation-only
+sampling](sampler.md) and [paired Age rollouts](rollouts.md). The rollout runner
+is dormant pending Scholar calibration; these guides distinguish measurements
+from the original design estimates.
 
 ## The design in one page
 

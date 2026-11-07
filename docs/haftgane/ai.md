@@ -34,10 +34,12 @@ constraint search includes skipped opportunities, open discard points and
 private pile looks. Its support, nonuniform distribution, work bound and
 measurements are documented in [sampler.md](sampler.md). `bot.SampleRoot` now
 prepares a cancellable sampled root or exact Greedy fallback, with per-call
-diagnostics. This worker-only entry point remains
-dormant: no baseline policy or room level consumes samples until the rollout
-and calibration slices. See the sampler guide for the measured constrained
-cost and cancellation p99, including its stated CPU-load conditions.
+diagnostics. `bot.ChooseAge` adds paired root sweeps and observation-limited
+simultaneous policies through the current Age. Both worker APIs remain
+dormant until calibration: no baseline policy or room level consumes samples.
+[The rollout guide](rollouts.md) covers partial failures, memory, paired noise,
+work/allocations and whole-call cancellation measurements. The sampler guide
+records the constrained sampling costs and stated CPU-load conditions.
 
 ## Policy and preset version 1
 

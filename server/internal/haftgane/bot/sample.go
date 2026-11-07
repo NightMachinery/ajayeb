@@ -39,19 +39,13 @@ func SampleRoot(ctx context.Context, o rules.Observation, offered []rules.Choice
 	if !o.Now.Seat.Valid(o.Now.Seats) || len(offered) == 0 || len(offered) > rules.MaxTurnChoices || maxChecks < 0 || maxChecks > rules.MaxSamplerChecks {
 		return RootSample{}, ErrInput
 	}
-	hash, err := strconv.ParseUint(o.Fingerprint(), 16, 64)
+	state, cost, ok, err := sampledState(ctx, o, entropy, maxChecks)
 	if err != nil {
-		return RootSample{}, ErrInput
-	}
-	// A separate domain keeps future sampling independent of baseline noise.
-	r := rng.NewRNG2(rng.MixSeed(entropy, 0x73616d706c657631), hash)
-	w, cost, ok := rules.DeterminizeControlled(o, &r, maxChecks, func() bool { return ctx.Err() != nil })
-	if err := ctx.Err(); err != nil {
 		return RootSample{}, err
 	}
 	out := RootSample{Counters: SampleCounters{Attempts: 1, Checks: cost.Checks}}
 	if ok {
-		out.state, out.Ready = w.State(), true
+		out.state, out.Ready = state, true
 		out.Counters.Worlds = 1
 		return out, nil
 	}
@@ -64,4 +58,25 @@ func SampleRoot(ctx context.Context, o rules.Observation, offered []rules.Choice
 		return RootSample{}, err
 	}
 	return out, nil
+}
+
+// sampledState deliberately performs no Greedy work. A multi-sample decision
+// aggregates failures and invokes its whole-decision fallback at most once.
+func sampledState(ctx context.Context, o rules.Observation, entropy uint64, maxChecks int) (rules.State, rules.SamplerCost, bool, error) {
+	if err := ctx.Err(); err != nil {
+		return rules.State{}, rules.SamplerCost{}, false, err
+	}
+	hash, err := strconv.ParseUint(o.Fingerprint(), 16, 64)
+	if err != nil {
+		return rules.State{}, rules.SamplerCost{}, false, ErrInput
+	}
+	r := rng.NewRNG2(rng.MixSeed(entropy, 0x73616d706c657631), hash)
+	w, cost, ok := rules.DeterminizeControlled(o, &r, maxChecks, func() bool { return ctx.Err() != nil })
+	if err := ctx.Err(); err != nil {
+		return rules.State{}, rules.SamplerCost{}, false, err
+	}
+	if !ok {
+		return rules.State{}, cost, false, nil
+	}
+	return w.State(), cost, true, nil
 }

@@ -3,6 +3,8 @@ package tableroom
 import (
 	"context"
 	"errors"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,6 +19,12 @@ import (
 // another request, then structurally cancel the seat. No sampled work belongs
 // on the actor, and cancellation must not accept even a Greedy replacement.
 func TestSamplerWorkerActorResponsiveAndCancelled(t *testing.T) {
+	testSampleWorkerCancellation(t, false)
+}
+func TestAgeWorkerActorResponsiveAndCancelled(t *testing.T) { testSampleWorkerCancellation(t, true) }
+
+func testSampleWorkerCancellation(t *testing.T, age bool) {
+	t.Helper()
 	input := make(chan botInput, 1)
 	started := make(chan struct{}, 1)
 	reports := make(chan BotReport, 8)
@@ -32,10 +40,21 @@ func TestSamplerWorkerActorResponsiveAndCancelled(t *testing.T) {
 		case <-ctx.Done():
 			return ctx.Err()
 		}
-		controlled := &actorSampleContext{Context: ctx, started: started}
-		result, err := bot.SampleRoot(controlled, in.observation, in.offered, in.entropy, rules.MaxSamplerChecks)
-		if result != (bot.RootSample{}) {
-			err = errors.New("cancelled root exposed result")
+		var err error
+		if age {
+			controlled := &actorAgeContext{Context: ctx, started: started}
+			var result bot.AgeDecision
+			result, err = bot.ChooseAge(controlled, in.observation, in.offered, in.entropy, bot.AgeWork{Attempts: 2, Candidates: 4, SamplerChecks: rules.MaxSamplerChecks})
+			if result != (bot.AgeDecision{}) {
+				err = errors.New("cancelled Age rollout exposed result")
+			}
+		} else {
+			controlled := &actorSampleContext{Context: ctx, started: started}
+			var result bot.RootSample
+			result, err = bot.SampleRoot(controlled, in.observation, in.offered, in.entropy, rules.MaxSamplerChecks)
+			if result != (bot.RootSample{}) {
+				err = errors.New("cancelled root exposed result")
+			}
 		}
 		returned <- err
 		return err
@@ -94,6 +113,35 @@ func (c *actorSampleContext) Err() error {
 	if c.calls == 4 {
 		c.started <- struct{}{}
 		<-c.Done()
+	}
+	return c.Context.Err()
+}
+
+// Test-only stack inspection pauses in the actual rollout rather than at an
+// input-ranking or sampling poll. Production policies import no runtime API.
+type actorAgeContext struct {
+	context.Context
+	started chan<- struct{}
+	paused  bool
+}
+
+func (c *actorAgeContext) Err() error {
+	if !c.paused {
+		var pcs [24]uintptr
+		n := runtime.Callers(2, pcs[:])
+		frames := runtime.CallersFrames(pcs[:n])
+		for {
+			frame, more := frames.Next()
+			if strings.HasSuffix(frame.Function, "/bot.simulateAge") {
+				c.paused = true
+				c.started <- struct{}{}
+				<-c.Done()
+				break
+			}
+			if !more {
+				break
+			}
+		}
 	}
 	return c.Context.Err()
 }
