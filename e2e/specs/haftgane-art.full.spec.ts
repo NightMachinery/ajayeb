@@ -16,7 +16,7 @@ async function images(page: Page) {
             const r = el.getBoundingClientRect();
             return r.width && r.height && r.top < innerHeight && r.bottom > 0;
           })
-          .every((el) => el.complete && el.naturalWidth > 0)
+          .every((el) => el instanceof HTMLImageElement && el.complete && el.naturalWidth > 0)
       )
     )
     .toBe(true);
