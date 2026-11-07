@@ -98,7 +98,9 @@ test.describe('Haftgane art', { tag: ['@full', '@haftgane-table'] }, () => {
         choices.find((c) => c.kind === 'build') ??
         choices[0]!;
       await choose(page, pick.key);
-      await choose(page, 'confirm');
+      if (pick.kind === 'side' || pick.kind === 'build-discarded') {
+        await page.locator('[data-special-confirm]').click();
+      } else await choose(page, 'confirm');
       if (pick.kind === 'stage') tucked = true;
       await expect.poll(async () => (await latest(page)).point?.ref.id).not.toBe(f.point!.ref.id);
     }

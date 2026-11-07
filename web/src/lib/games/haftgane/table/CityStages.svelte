@@ -158,7 +158,8 @@
     font-size: 0.9rem;
   }
   .under {
-    margin: 0.4rem 0 0;
+    margin: 0;
+    padding: 0.5rem;
     color: var(--fg-muted);
     font-size: 0.85rem;
     line-height: 1.4;
