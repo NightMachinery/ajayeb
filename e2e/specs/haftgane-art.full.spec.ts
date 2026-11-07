@@ -110,3 +110,45 @@ test.describe('Haftgane art', { tag: ['@full', '@haftgane-table'] }, () => {
     expect(problems).toEqual([]);
   });
 });
+
+// All seven real headers, including the longest name in both locales, at
+// the smallest supported phone width. A single text range must stay on one
+// line and inside its panel, so nowrap cannot hide an overflowing name.
+for (const [locale, longest] of [
+  ['en', 'Halikarnassos'],
+  ['fa', 'هالیکارناسوس']
+] as const) {
+  test.describe(`wonder names ${locale}`, { tag: ['@full', '@haftgane-table'] }, () => {
+    test.use({ appLocale: locale });
+    test('all board names stay unbroken at 360px', async ({ page }) => {
+      const problems = watchHygiene(page);
+      await page.setViewportSize({ width: 360, height: 844 });
+      await page.addInitScript(() => localStorage.setItem('ajayeb:name', 'Painter'));
+      await page.goto('/dev/gallery');
+      const boards = page.locator('[data-gallery-wonder-boards] [data-wonder-board]');
+      await expect(boards).toHaveCount(7);
+      await expect(boards.locator('[data-wonder-name]').filter({ hasText: longest })).toHaveCount(
+        1
+      );
+      await page.evaluate(() => document.fonts.ready);
+      for (const board of await boards.all()) {
+        await board.scrollIntoViewIfNeeded();
+        const name = board.locator('[data-wonder-name]');
+        const probe = await name.evaluate((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const rects = [...range.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
+          const box = el.closest('[data-wonder-board]')!.getBoundingClientRect();
+          return {
+            text: el.textContent,
+            lines: new Set(rects.map((r) => Math.round(r.top))).size,
+            inside: rects.every((r) => r.left >= box.left && r.right <= box.right)
+          };
+        });
+        expect(probe.lines, probe.text ?? '').toBe(1);
+        expect(probe.inside, probe.text ?? '').toBe(true);
+      }
+      expect(problems).toEqual([]);
+    });
+  });
+}

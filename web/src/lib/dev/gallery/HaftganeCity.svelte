@@ -10,6 +10,8 @@
   import { ht } from '$lib/games/haftgane/i18n/messages.svelte';
   import CitySheet from '$lib/games/haftgane/table/CitySheet.svelte';
   import CityView from '$lib/games/haftgane/table/CityView.svelte';
+  import WonderBoard from '$lib/games/haftgane/table/WonderBoard.svelte';
+  import { hgBoardSlugs } from '$lib/wire/haftgane-catalog.gen';
   import MiniCard from '$lib/games/haftgane/table/MiniCard.svelte';
   import RingTabs from '$lib/games/haftgane/table/RingTabs.svelte';
   import SeenHandsButton from '$lib/games/haftgane/table/SeenHandsButton.svelte';
@@ -60,6 +62,11 @@
 
 <section class="gallery" data-gallery-city>
   <h3>City sheet and Seen hands <!-- i18n-ok --></h3>
+  <div class="stack" data-gallery-wonder-boards>
+    {#each hgBoardSlugs as boardId (boardId)}
+      <WonderBoard {boardId} side="day" />
+    {/each}
+  </div>
   <div class="row">
     <button type="button" class="open" onclick={() => (city = own.seat)}
       >Open the city sheet <!-- i18n-ok --></button

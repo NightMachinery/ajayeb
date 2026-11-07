@@ -330,8 +330,11 @@ the table does not include the guild-back alias. These bindings adapt only the
 display association: no painting, crop, derivative, source id or hash changes.
 The existing CC BY 4.0 attribution and source notice remain applicable.
 
-The city sheet shows an intact 3:2 wonder painting between live name, side and
-starting-resource labels, above equal-width stage cells in LTR order. The side
+The city sheet shows the live name, side and starting resource in a header
+above the intact 3:2 wonder painting and equal-width stage cells in LTR order.
+All seven English and Persian board names stay on one line at 360 px, including
+Halikarnassos. The header can move metadata to another row without splitting a
+name inside a word. The side
 picker shows the same intact painting; the main strip has a small preview.
 Sun and moon markers reuse the existing crest drawings. Built stages use
 identical neutral CSS tabs, with no card identity, Age or guild category.

@@ -32,20 +32,13 @@
 </script>
 
 <div class="board" data-wonder-board={boardId} data-wonder-side={side || undefined}>
-  <div class="scene">
-    <div class="label">
-      <span class="name">{name}</span>
-      {#if sideLabel}
-        <span class="side" {@attach tooltip({ text: sideLabel })}>
-          <HgGlyph name={side === 'day' ? 'crest-sun' : 'crest-moon'} />{sideLabel}
-        </span>
-      {/if}
-    </div>
-    <span class="painting" role="img" aria-label={name} {@attach tooltip({ text: name })}>
-      <Painting id={wonderArtId(boardId)} sizes={WONDER_ART_SIZES}>
-        {#snippet fallback()}<HgGlyph name="wonder" />{/snippet}
-      </Painting>
-    </span>
+  <div class="heading">
+    <span class="name" data-wonder-name>{name}</span>
+    {#if sideLabel}
+      <span class="side" {@attach tooltip({ text: sideLabel })}>
+        <HgGlyph name={side === 'day' ? 'crest-sun' : 'crest-moon'} />{sideLabel}
+      </span>
+    {/if}
     {#if b}
       <span
         class="start"
@@ -60,6 +53,13 @@
       </span>
     {/if}
   </div>
+  <div class="scene">
+    <span class="painting" role="img" aria-label={name} {@attach tooltip({ text: name })}>
+      <Painting id={wonderArtId(boardId)} sizes={WONDER_ART_SIZES}>
+        {#snippet fallback()}<HgGlyph name="wonder" />{/snippet}
+      </Painting>
+    </span>
+  </div>
   {#if stages.length}<CityStages {stages} {built} {under} compact />{/if}
 </div>
 
@@ -70,23 +70,23 @@
     border-radius: var(--shape-panel);
     background: var(--panel-sunken);
   }
-  .scene {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
-    align-items: center;
-    padding: 0.4rem;
-    gap: 0.3rem;
-  }
-  .label {
+  .heading {
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    padding-inline: 0.3rem;
-    min-width: 0;
-    overflow-wrap: anywhere;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    padding: 0.6rem 0.75rem 0;
   }
   .name {
+    flex: 1 0 auto;
+    white-space: nowrap;
+    overflow-wrap: normal;
     font: 600 1.1rem/1.2 var(--type-display);
+  }
+  .scene {
+    display: grid;
+    place-items: center;
+    padding: 0.4rem;
   }
   .side {
     display: inline-flex;
@@ -99,7 +99,7 @@
     display: grid;
     place-items: center;
     aspect-ratio: 3 / 2;
-    width: 100%;
+    width: 50%;
     max-width: 360px;
     justify-self: center;
   }
