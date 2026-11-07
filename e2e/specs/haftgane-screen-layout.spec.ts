@@ -16,7 +16,17 @@ for (const locale of ['en', 'fa'] as const) {
             els.filter((el) => {
               const r = el.getBoundingClientRect();
               const name = el.parentElement!.parentElement!.getBoundingClientRect();
-              return r.width === 0 || r.left < name.left - 0.5 || r.right > name.right + 0.5;
+              const status = el
+                .closest('[data-seat]')
+                ?.querySelector('[data-status]')
+                ?.getBoundingClientRect();
+              const covered =
+                status &&
+                Math.min(r.right, status.right) > Math.max(r.left, status.left) &&
+                Math.min(r.bottom, status.bottom) > Math.max(r.top, status.top);
+              return (
+                r.width === 0 || r.left < name.left - 0.5 || r.right > name.right + 0.5 || !!covered
+              );
             }).length
         );
       }

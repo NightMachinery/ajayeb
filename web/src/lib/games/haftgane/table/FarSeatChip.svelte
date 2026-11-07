@@ -129,6 +129,8 @@
     background: var(--panel-sunken);
   }
   .head {
+    /* Leave the hanging status badge its own space above the name. */
+    padding-inline-end: 1.25rem;
     display: flex;
     align-items: center;
     gap: 0.3rem;
