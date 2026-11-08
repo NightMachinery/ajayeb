@@ -270,6 +270,9 @@ func (a *actor) connected(u string) bool {
 }
 
 func (a *actor) nameOf(u string) string {
+	if assigned := a.rec.Names.Get(u); assigned.UserID != "" {
+		return assigned.Name
+	}
 	for _, c := range a.conns {
 		if a.userOf(c) == u {
 			return c.Name
@@ -311,6 +314,21 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		if n >= a.l.cfg.MaxUserClients || !a.holdsSlot(user) && len(a.conns) >= a.l.cfg.MaxClients {
 			return room.ErrRoomFull
 		}
+	}
+	nameChanged := false
+	if claim == nil && validName(c.Name) {
+		cand := a.rec.clone()
+		if cand.rename(user, c.Name) {
+			if a.rec.Names.Get(user).UserID != "" {
+				cand.Revision++
+			}
+			if err := a.commit("name", cand); err != nil {
+				return room.ErrStorage
+			}
+			nameChanged = true
+		}
+	}
+	if !already {
 		a.conns = append(a.conns, c)
 		if claim != nil {
 			a.claims[c] = claimed{claim: *claim, user: user}
@@ -320,7 +338,7 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		a.publish(nil, nil)
 	} else {
 		c.Out.Push(a.frame(c, nil))
-		if !wasConnected {
+		if !wasConnected || nameChanged {
 			a.broadcastExcept(c)
 		}
 	}
@@ -890,6 +908,8 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 	rs := r.Roles.Clone()
 	rs.Carry(a.rolesAhead, 0)
 	spec.Roles = &rs
+	names := r.Names.Clone()
+	spec.Names = &names
 	for _, s := range r.Slots {
 		switch s.Kind {
 		case SlotHuman:
@@ -933,7 +953,7 @@ func (a *actor) start(c *room.Client, f wire.LobbyStart) bool {
 		}
 		for i, p := range spec.Participants {
 			if p.UserID != "" {
-				duel.Seats[i] = store.Seat{Kind: store.SeatKindHuman, UserID: p.UserID, Name: p.Name, Epoch: r.Slots[i].Epoch}
+				duel.Seats[i] = store.Seat{Kind: store.SeatKindHuman, UserID: p.UserID, Name: p.Name, NameNo: r.Names.Get(p.UserID).Number, Epoch: r.Slots[i].Epoch}
 			} else {
 				duel.Seats[i] = store.Seat{Kind: store.SeatKindBot, Bot: store.BotLevel(p.Bot)}
 			}

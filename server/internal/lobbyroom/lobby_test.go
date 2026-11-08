@@ -510,6 +510,7 @@ func TestStartRefusals(t *testing.T) {
 	if err := a.call(f.ctx(), func() {
 		cand := a.rec.clone()
 		cand.Slots[2] = Slot{Kind: SlotReserved, UserID: "someone", Name: "S"}
+		cand.assignSlotNames()
 		if err := a.commit("test", cand); err != nil {
 			t.Error(err)
 		}

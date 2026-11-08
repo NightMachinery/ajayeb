@@ -316,6 +316,9 @@ func (a *actor) connected(userID string) bool {
 
 // nameOf is a connected user's display name.
 func (a *actor) nameOf(userID string) string {
+	if assigned := a.st.rec.Names.Get(userID); assigned.UserID != "" {
+		return assigned.Name
+	}
 	for _, c := range a.conns {
 		if a.userOf(c) == userID {
 			return c.Name
@@ -372,6 +375,21 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 		if n >= a.t.cfg.MaxUserClients || a.seatOf(user) < 0 && len(a.conns) >= a.t.cfg.MaxClients {
 			return room.ErrRoomFull
 		}
+	}
+	nameChanged := false
+	if claim == nil && validName(c.Name) {
+		cand := a.st.rec.clone()
+		if cand.rename(user, c.Name) {
+			if a.st.rec.Names.Get(user).UserID != "" {
+				bumpPublic(&cand)
+			}
+			if err := a.commit("name", cand, a.st.game, nil); err != nil {
+				return room.ErrStorage
+			}
+			nameChanged = true
+		}
+	}
+	if !already {
 		a.conns = append(a.conns, c)
 		if claim != nil {
 			a.claims[c] = claimed{claim: *claim, user: user}
@@ -379,8 +397,10 @@ func (a *actor) attach(c *room.Client, claim *string) error {
 	}
 	b := a.newBroadcast(false)
 	c.Out.Push(b.frame(c, nil, true))
-	if !wasConnected {
+	if !wasConnected || nameChanged {
 		a.broadcastExcept(b, c)
+	}
+	if !wasConnected {
 		a.checkRoles()
 	}
 	a.armIdle()

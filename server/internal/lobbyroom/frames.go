@@ -39,17 +39,12 @@ func (a *actor) meta() ([]wire.PlatformSeat, []wire.PlatformHuman) {
 		if slices.ContainsFunc(humans, func(h wire.PlatformHuman) bool { return h.UserID == userID }) {
 			return
 		}
+		if assigned := r.Names.Get(userID); assigned.UserID != "" {
+			name = assigned.Name
+		}
 		h := wire.PlatformHuman{UserID: userID, Name: name, Connected: a.connected(userID), Creator: userID == r.Roles.Creator,
 			Admin: r.Roles.Real(userID), Temporary: r.Roles.Temporary == userID && a.isAdmin(userID), PromotedBy: r.Roles.PromotedBy(userID)}
-		same := 0
-		for _, o := range humans {
-			if o.Name == name {
-				same++
-			}
-		}
-		if same > 0 {
-			h.NameNo = same + 1
-		}
+		h.NameNo = r.Names.Get(userID).Number
 		humans = append(humans, h)
 	}
 	for i, s := range r.Slots {

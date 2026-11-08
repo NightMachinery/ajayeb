@@ -1,0 +1,136 @@
+{
+  "schema": 2,
+  "game": "haftgane",
+  "rules": 1,
+  "format": 3,
+  "code": "2R462Z",
+  "status": "playing",
+  "created": "2026-11-08T13:07:46.682555Z",
+  "updated": "2026-11-08T13:07:46.682555Z",
+  "setup": {
+    "seed": 313,
+    "seats": 3,
+    "randomSeating": false,
+    "hideAtEnd": false,
+    "sides": "day"
+  },
+  "assignment": [
+    0,
+    1,
+    2
+  ],
+  "original": [
+    "user-0",
+    "user-1",
+    "user-2"
+  ],
+  "seats": [
+    {
+      "seat": 0,
+      "kind": "human",
+      "userId": "user-0",
+      "name": "River",
+      "bot": "",
+      "taken": 0,
+      "epoch": 0
+    },
+    {
+      "seat": 1,
+      "kind": "human",
+      "userId": "user-1",
+      "name": "river",
+      "bot": "",
+      "taken": 0,
+      "epoch": 0
+    },
+    {
+      "seat": 2,
+      "kind": "human",
+      "userId": "user-2",
+      "name": "P2",
+      "bot": "",
+      "taken": 0,
+      "epoch": 0
+    }
+  ],
+  "start": [
+    {
+      "userId": "user-0",
+      "name": "River",
+      "bot": ""
+    },
+    {
+      "userId": "user-1",
+      "name": "river",
+      "bot": ""
+    },
+    {
+      "userId": "user-2",
+      "name": "P2",
+      "bot": ""
+    }
+  ],
+  "successor": "",
+  "reserved": "",
+  "rematcher": "",
+  "roles": {
+    "creator": "user-0",
+    "admins": [
+      {
+        "userId": "user-0"
+      }
+    ],
+    "temporary": "",
+    "away": []
+  },
+  "previous": [],
+  "retired": [],
+  "startingHumans": 3,
+  "allowUndo": false,
+  "undoOff": false,
+  "batches": [],
+  "hash": "305752d7ca36cfbb",
+  "public": 1,
+  "edits": [
+    0,
+    0,
+    0
+  ],
+  "point": {
+    "id": "age-1-turn-1",
+    "revision": 1
+  },
+  "pending": [],
+  "seqs": [],
+  "work": [],
+  "botPresets": [
+    {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "easy",
+      "algorithm": "apprentice",
+      "allowance": 1,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 0,
+      "samplerChecks": 0
+    },
+    {
+      "policy": "haftgane-bot-3",
+      "policyVersion": 1,
+      "preset": 1,
+      "level": "normal",
+      "algorithm": "scholar",
+      "allowance": 2,
+      "maxChoices": 217,
+      "maxProbes": 12,
+      "maxQuotes": 2616,
+      "candidates": 8,
+      "samplerChecks": 1048576
+    }
+  ],
+  "botFallbacks": [],
+  "roomLog": []
+}

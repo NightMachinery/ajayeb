@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/tableroom"
@@ -24,9 +25,9 @@ const Schema = 2
 
 // recordFormat is the format this build writes. decodeRecord upgrades
 // format 1 (before slots had claim epochs) and format 2 (before clients
-// were remembered by tableroom.ClientKey) and refuses any other, so a
-// newer build's lobby is left as it is.
-const recordFormat = 3
+// were remembered by tableroom.ClientKey), and format 3 (before the name
+// ledger). A newer format is refused and left as it is.
+const recordFormat = 4
 
 // Seat counts: two seats start Duel (M18.shared-lobby), three to seven
 // Haftgane.
@@ -71,6 +72,8 @@ type Record struct {
 	Options   wire.LobbyOptions `json:"options"`
 	// Slots are the lobby's slots in lobby order, SeatCount of them.
 	Slots []Slot `json:"slots"`
+	// Names is the room-lifetime display-name ledger, including departed users.
+	Names namenum.Ledger `json:"names"`
 	// Roles are the lobby's roles (package roles), carried into the game.
 	Roles roles.Roles `json:"roles"`
 	// Unseated are the users who released their slot or were removed from
@@ -116,6 +119,7 @@ type SeqRecord struct {
 
 func (r *Record) clone() Record {
 	c := *r
+	c.Names = r.Names.Clone()
 	if r.ArchivedAt != nil {
 		at := *r.ArchivedAt
 		c.ArchivedAt = &at
@@ -177,18 +181,22 @@ func (r *Record) encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append(data, '\n'), nil
+	data = append(data, '\n')
+	if len(data) > store.MaxFileBytes {
+		return nil, store.ErrTooLarge
+	}
+	return data, nil
 }
 
 // decodeRecord decodes a record and validates its header. Unknown fields
-// are ignored, as for the other room files; format 1 is upgraded and any
-// other format refused.
+// are ignored, as for the other room files; older known formats are
+// upgraded and newer formats refused.
 func decodeRecord(data []byte) (*Record, error) {
 	var r Record
 	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, fmt.Errorf("lobbyroom: decoding the record: %w", err)
 	}
-	if r.Format == 1 || r.Format == 2 {
+	if r.Format >= 1 && r.Format < recordFormat {
 		upgrade(&r)
 	}
 	switch {
@@ -204,12 +212,13 @@ func decodeRecord(data []byte) (*Record, error) {
 	return &r, nil
 }
 
-// upgrade reads a format-1 or format-2 record. Format 1's slots had no
+// upgrade reads a format-1, format-2 or format-3 record. Format 1's slots had no
 // claim epochs: a reservation keeps epoch 0, and a human the epoch of the
 // revision they took their slot at, so a rematch claim from before fails
 // closed rather than outliving a removal. Both kept each client's id as
 // sent, so the seq acknowledgements are re-keyed by tableroom.ClientKey,
 // once: format 3 marks the keys, which ClientKey must not see again.
+// Format 4 adds the name ledger, initialized in current slot order.
 func upgrade(r *Record) {
 	if r.Format == 1 {
 		for i := range r.Slots {
@@ -218,9 +227,13 @@ func upgrade(r *Record) {
 			}
 		}
 	}
-	for i := range r.Seqs {
-		r.Seqs[i].Client = tableroom.ClientKey(r.Seqs[i].Client)
+	if r.Format < 3 {
+		for i := range r.Seqs {
+			r.Seqs[i].Client = tableroom.ClientKey(r.Seqs[i].Client)
+		}
 	}
+	r.Names = namenum.Ledger{}
+	r.assignSlotNames()
 	r.Format = recordFormat
 }
 
@@ -260,6 +273,9 @@ func invalid(format string, args ...any) error {
 // seat count and slots, the options, the roles, the bounded lists and the
 // seq acknowledgements, each user's at most acks clients.
 func validate(r *Record, acks int) error {
+	if r.Names.Valid() != nil {
+		return invalid("the name ledger")
+	}
 	if r.SeatCount < MinSeats || r.SeatCount > MaxSeats || len(r.Slots) != r.SeatCount {
 		return invalid("seat count %d with %d slots", r.SeatCount, len(r.Slots))
 	}
@@ -276,6 +292,9 @@ func validate(r *Record, acks int) error {
 		case SlotReserved, SlotHuman:
 			if s.UserID == "" || len(s.UserID) > maxNameLen || users[s.UserID] || !validName(s.Name) || s.Bot != "" {
 				return invalid("slot %d", i)
+			}
+			if r.Names.Get(s.UserID).Name != s.Name {
+				return invalid("slot %d name assignment", i)
 			}
 			users[s.UserID] = true
 		case SlotBot:

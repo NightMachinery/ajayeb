@@ -7,6 +7,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
 	"github.com/NightMachinery/ajayeb/server/internal/wire"
@@ -61,6 +62,8 @@ type Record struct {
 	// are empty once Successor is set.
 	Reserved  string `json:"reserved"`
 	Rematcher string `json:"rematcher"`
+	// Names is the room-lifetime display-name ledger, including departed users.
+	Names namenum.Ledger `json:"names"`
 	// Roles are the table's roles (package roles), carried on from the
 	// lobby at Start.
 	Roles roles.Roles `json:"roles"`
@@ -208,8 +211,9 @@ type StartSlot struct {
 // Format 2 freezes algorithm/preset/bounds for future switches and points.
 // Older records without supported frozen presets fail closed on load.
 // Format 3 remembers each client by its ClientKey; the formats before it
-// kept the id as sent, which upgrade re-keys once.
-const recordFormat = 3
+// kept the id as sent, which upgrade re-keys once. Format 4 adds the
+// room-lifetime name ledger, initialized in current seat order on upgrade.
+const recordFormat = 4
 
 // BatchRecord is one complete batch: the logical point id and one key per
 // required seat, sorted by seat.
@@ -261,6 +265,7 @@ const (
 // the committed record.
 func (r *Record) clone() Record {
 	c := *r
+	c.Names = r.Names.Clone()
 	if r.ArchivedAt != nil {
 		at := *r.ArchivedAt
 		c.ArchivedAt = &at
@@ -321,7 +326,11 @@ func (r *Record) encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return append(data, '\n'), nil
+	data = append(data, '\n')
+	if len(data) > store.MaxFileBytes {
+		return nil, store.ErrTooLarge
+	}
+	return data, nil
 }
 
 // decodeRecord decodes a record and validates its header. Unknown fields
@@ -360,20 +369,25 @@ func decodeRecord(data []byte) (*Record, error) {
 // it must run once only, since a key is itself an id that ClientKey may
 // hash again, so format 3 marks the keys. It preserves format-1 and
 // format-2 metadata, and reads a format-0 record (upgradeDev). No bot
-// presets are invented; records without supported frozen configuration
+// presets are invented. Format 3 keeps its client keys and gains a name
+// ledger in current seat order. Records without supported frozen configuration
 // fail validation.
 func upgrade(r *Record) {
 	if r.Format == 0 {
 		upgradeDev(r)
 	}
-	for i := range r.Seqs {
-		r.Seqs[i].Client = ClientKey(r.Seqs[i].Client)
-	}
-	for i := range r.Pending {
-		for j := range r.Pending[i].Seqs {
-			r.Pending[i].Seqs[j].Client = ClientKey(r.Pending[i].Seqs[j].Client)
+	if r.Format < 3 {
+		for i := range r.Seqs {
+			r.Seqs[i].Client = ClientKey(r.Seqs[i].Client)
+		}
+		for i := range r.Pending {
+			for j := range r.Pending[i].Seqs {
+				r.Pending[i].Seqs[j].Client = ClientKey(r.Pending[i].Seqs[j].Client)
+			}
 		}
 	}
+	r.Names = namenum.Ledger{}
+	r.assignSeatNames()
 	r.Format = recordFormat
 }
 
@@ -524,6 +538,9 @@ func restore(r *Record, b seqBounds) (*state, bool, error) {
 // and every write on the value its transaction produced, so nothing is
 // saved that would not restore.
 func validate(r *Record, g *game, b seqBounds) error {
+	if r.Names.Valid() != nil {
+		return invalid("the name ledger")
+	}
 	n := r.Setup.Seats
 	if n < MinSeats || n > MaxSeats {
 		return invalid("seat count %d", n)
@@ -545,6 +562,11 @@ func validate(r *Record, g *game, b seqBounds) error {
 		}
 		if t, e := r.Seats[s].Taken, r.Seats[s].Epoch; t < 0 || t > r.Public || e < 0 || e > r.Public {
 			return invalid("when seat %d was taken or linked", s)
+		}
+	}
+	for _, s := range r.Seats {
+		if s.Kind == SeatHuman && r.Names.Get(s.UserID).Name != s.Name {
+			return invalid("seat name assignment")
 		}
 	}
 	if err := checkSeats(r); err != nil {

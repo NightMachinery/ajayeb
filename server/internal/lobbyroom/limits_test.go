@@ -78,6 +78,7 @@ func TestLargestLobbyFitsTheStore(t *testing.T) {
 			n++
 		}
 	}
+	r.assignSlotNames()
 	if err := validate(&r, defaultSeqClients); err != nil {
 		t.Fatalf("the largest lobby is not one a restart accepts: %v", err)
 	}

@@ -33,6 +33,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/NightMachinery/ajayeb/server/internal/ai"
+	"github.com/NightMachinery/ajayeb/server/internal/namenum"
 	"github.com/NightMachinery/ajayeb/server/internal/roles"
 	"github.com/NightMachinery/ajayeb/server/internal/room"
 	"github.com/NightMachinery/ajayeb/server/internal/store"
@@ -305,15 +306,17 @@ type Participant struct {
 // the creator (if any) is the one admin. Prefix, for tests and development
 // only, starts the table with these complete batches already resolved.
 type Spec struct {
-	Sides         string        `json:"sides"` // day (default), random, or choose
-	Participants  []Participant `json:"participants"`
-	RandomSeating bool          `json:"randomSeating"`
-	HideAtEnd     bool          `json:"hideAtEnd"`
-	AllowUndo     bool          `json:"allowUndo"`
-	Creator       string        `json:"creator"`
-	Roles         *roles.Roles  `json:"roles,omitempty"`
-	Seed          *uint64       `json:"seed,omitempty"`
-	Prefix        []BatchRecord `json:"prefix"`
+	// Names is the lobby ledger carried at Start, including observers and departed users.
+	Names         *namenum.Ledger `json:"-"`
+	Sides         string          `json:"sides"` // day (default), random, or choose
+	Participants  []Participant   `json:"participants"`
+	RandomSeating bool            `json:"randomSeating"`
+	HideAtEnd     bool            `json:"hideAtEnd"`
+	AllowUndo     bool            `json:"allowUndo"`
+	Creator       string          `json:"creator"`
+	Roles         *roles.Roles    `json:"roles,omitempty"`
+	Seed          *uint64         `json:"seed,omitempty"`
+	Prefix        []BatchRecord   `json:"prefix"`
 }
 
 // CreateTable starts a filled table from a seat list and returns its code:
@@ -456,7 +459,13 @@ func (t *Tables) newRecord(spec Spec) (Record, game, error) {
 	for _, b := range spec.Prefix {
 		base.Batches = append(base.Batches, BatchRecord{Point: b.Point, Picks: append([]PickRecord{}, b.Picks...)})
 	}
+	if spec.Names != nil {
+		base.Names = spec.Names.Clone()
+	}
 	for i, p := range spec.Participants {
+		if p.UserID != "" {
+			base.Names.Assign(p.UserID, p.Name)
+		}
 		base.Start[i] = StartSlot{UserID: p.UserID, Name: p.Name, Bot: p.Bot}
 	}
 	for s := range n {

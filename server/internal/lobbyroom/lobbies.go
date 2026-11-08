@@ -293,6 +293,7 @@ func (l *Lobbies) RematchDuel(m *room.Manager, code string, rm room.DuelRematch)
 func (l *Lobbies) saveRematch(m *room.Manager, code string, r Record) error {
 	now := l.cfg.Clock.Now().UTC()
 	r.Created, r.Updated = now, now
+	r.assignSlotNames()
 	if r.Parent == "" || validate(&r, l.cfg.SeqClients) != nil {
 		return room.ErrInvalidSpec
 	}
@@ -337,6 +338,7 @@ func newRecord(seats int, opts wire.LobbyOptions, creator string) Record {
 // save gives a new lobby record a fresh code, writes it and starts its
 // actor.
 func (l *Lobbies) save(m *room.Manager, base Record) (string, error) {
+	base.assignSlotNames()
 	if err := validate(&base, l.cfg.SeqClients); err != nil {
 		return "", room.ErrInvalidSpec
 	}
