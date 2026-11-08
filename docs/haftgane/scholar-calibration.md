@@ -1,13 +1,148 @@
-# Experimental Scholar calibration
+# Scholar calibration evidence
 
-@OpenAI, 2026-11-07/08. The experimental candidate is frozen at two
-attempts, eight candidates and 1,048,576 sampler checks per attempt. The
+@OpenAI, 2026-11-08. Scholar passed the frozen held-out strength gate.
+The experimental row is fixed at two attempts, eight candidates and 1,048,576 sampler checks per attempt. The
 existing 3/4 rank plus 1/4 win reward, four rollout preferences and 1,500
-key-indexed policy noise are unchanged. No preset is exposed to rooms. The offline `scholar-calibrate` command measures explicit `AgeWork`
-rows, independently of released levels. [The bot plan](bot-plan.md) defines
+key-indexed policy noise are unchanged. No preset is exposed to rooms. The
+offline `scholar-calibrate` command measures explicit `AgeWork` rows,
+independently of released levels. [The bot plan](bot-plan.md) defines
 the gates; [the rollout guide](rollouts.md) describes the search.
 
-## Current development evidence
+## Held-out strength gate: passed
+
+The frozen epoch-one gate completed all 500 count-blocks and 11,300 unique
+games: 100 independent deals at each player count, with every main, inverse
+and mixed treatment. The strength results were inspected once after the
+complete run. No held-out outcome was used to tune the row. These seeds are
+spent; an informed policy or work change needs a fresh held-out epoch.
+
+The chosen row is `a2-c8`: two attempts, at most eight candidates and
+1,048,576 sampler checks per attempt, in full for every bot. Reward remains
+3/4 rank plus 1/4 win (scale 3,360), with the balanced, economic, science and
+military rollout preferences and key-indexed noise 1,500. The frozen source
+is `e12d08f9`; the preserved binary SHA-256 is
+`d6f5453fc239e5570f32bcaea30368a0d2c64de5ce149d9e2c687a45b632f5d2`
+and catalog SHA-256 is
+`613971b06c4616f0e41c4fb6515735042019432a993ccd9608ee3a1a89976ecb`.
+
+Below, rank reward measures the focal seat's relative finish, and win credit
+shares tied wins. Paired rank improvement subtracts the same seat's Greedy
+result on the paired deal. The inverse candidate is an all-Scholar table,
+so averaging every focal seat gives exactly 0.5 rank and 1/N win credit in
+every block. Its paired improvement still measures the effect of replacing
+Greedy and has a nondegenerate interval. The 0.65 and 1/N+0.10 thresholds
+apply only to main-field means; inverse and mixed require nonnegative mean
+paired improvement at every count. All intervals below use 5,000 deal-block
+bootstrap resamples, retaining correlated seat rotations and reflections.
+
+### 3 seats
+
+100 independent blocks; main rank target 0.65 and main win target 0.433333.
+
+- Main: rank 0.731667 (95% interval 0.691667 to 0.770000);
+  win credit 0.590000 (95% interval 0.536667 to 0.646667);
+  paired rank improvement 0.231667 (95% interval 0.191667 to 0.270000).
+- Inverse: rank 0.500000 (95% interval 0.500000 to 0.500000);
+  win credit 0.333333 (95% interval 0.333333 to 0.333333);
+  paired rank improvement 0.096667 (95% interval 0.056667 to 0.138333).
+- Mixed: rank 0.548333 (95% interval 0.528333 to 0.569167);
+  win credit 0.383333 (95% interval 0.361667 to 0.405000);
+  paired rank improvement 0.164167 (95% interval 0.135000 to 0.195000).
+
+Main mean targets and the positive paired-interval gate pass. Inverse and
+mixed mean non-regression gates pass; their complete paired intervals are
+also above zero.
+
+### 4 seats
+
+100 independent blocks; main rank target 0.65 and main win target 0.350000.
+
+- Main: rank 0.771667 (95% interval 0.740833 to 0.802500);
+  win credit 0.562500 (95% interval 0.512500 to 0.615000);
+  paired rank improvement 0.271667 (95% interval 0.240833 to 0.302500).
+- Inverse: rank 0.500000 (95% interval 0.500000 to 0.500000);
+  win credit 0.250000 (95% interval 0.250000 to 0.250000);
+  paired rank improvement 0.072500 (95% interval 0.035833 to 0.109167).
+- Mixed: rank 0.524167 (95% interval 0.511944 to 0.536389);
+  win credit 0.269167 (95% interval 0.257500 to 0.280833);
+  paired rank improvement 0.138472 (95% interval 0.118333 to 0.158333).
+
+Main mean targets and the positive paired-interval gate pass. Inverse and
+mixed mean non-regression gates pass; their complete paired intervals are
+also above zero.
+
+### 5 seats
+
+100 independent blocks; main rank target 0.65 and main win target 0.300000.
+
+- Main: rank 0.744500 (95% interval 0.724000 to 0.765500);
+  win credit 0.442000 (95% interval 0.406000 to 0.482000);
+  paired rank improvement 0.244500 (95% interval 0.224000 to 0.265500).
+- Inverse: rank 0.500000 (95% interval 0.500000 to 0.500000);
+  win credit 0.200000 (95% interval 0.200000 to 0.200000);
+  paired rank improvement 0.068000 (95% interval 0.040500 to 0.095500).
+- Mixed: rank 0.554250 (95% interval 0.536500 to 0.573000);
+  win credit 0.240000 (95% interval 0.219000 to 0.262000);
+  paired rank improvement 0.179500 (95% interval 0.155250 to 0.204375).
+
+Main mean targets and the positive paired-interval gate pass. Inverse and
+mixed mean non-regression gates pass; their complete paired intervals are
+also above zero.
+
+### 6 seats
+
+100 independent blocks; main rank target 0.65 and main win target 0.266667.
+
+- Main: rank 0.729833 (95% interval 0.707000 to 0.753167);
+  win credit 0.398333 (95% interval 0.356667 to 0.440000);
+  paired rank improvement 0.229833 (95% interval 0.207000 to 0.253167).
+- Inverse: rank 0.500000 (95% interval 0.500000 to 0.500000);
+  win credit 0.166667 (95% interval 0.166667 to 0.166667);
+  paired rank improvement 0.102667 (95% interval 0.077000 to 0.127167).
+- Mixed: rank 0.529100 (95% interval 0.521233 to 0.536967);
+  win credit 0.175833 (95% interval 0.166667 to 0.185000);
+  paired rank improvement 0.139033 (95% interval 0.125233 to 0.152600).
+
+Main mean targets and the positive paired-interval gate pass. Inverse and
+mixed mean non-regression gates pass; their complete paired intervals are
+also above zero.
+
+### 7 seats
+
+100 independent blocks; main rank target 0.65 and main win target 0.242857.
+
+- Main: rank 0.717262 (95% interval 0.697619 to 0.736667);
+  win credit 0.358571 (95% interval 0.321429 to 0.395714);
+  paired rank improvement 0.217262 (95% interval 0.197619 to 0.236667).
+- Inverse: rank 0.500000 (95% interval 0.500000 to 0.500000);
+  win credit 0.142857 (95% interval 0.142857 to 0.142857);
+  paired rank improvement 0.094643 (95% interval 0.071905 to 0.117381).
+- Mixed: rank 0.565000 (95% interval 0.551190 to 0.578333);
+  win credit 0.173214 (95% interval 0.155714 to 0.190714);
+  paired rank improvement 0.169940 (95% interval 0.152262 to 0.187798).
+
+Main mean targets and the positive paired-interval gate pass. Inverse and
+mixed mean non-regression gates pass; their complete paired intervals are
+also above zero.
+
+### Combined suite
+
+Equal weight across player counts and then the three fields gives rank
+0.594385 (95% interval 0.589140 to 0.599837), win credit
+0.312387 (95% interval 0.304552 to 0.320673), and paired rank improvement
+0.161368 (95% interval 0.152365 to 0.170322).
+The combined interval is wholly above zero, passing its gate. All per-count
+strength gates pass. This is an offline strength result, not room release
+approval.
+
+The run started at 01:01 and ended at 09:06 local time on 2026-11-08,
+about 8.1 hours against the final 5.79-hour (about 5.8-hour) preflight
+forecast. The completed summary's own full-gate projection is 8.05 hours,
+above the approximate eight-hour planning limit. The forecast underestimated
+the completed run; desktop load was uncontrolled, so these measurements do
+not establish a cause for the difference.
+
+## Development selection before freezing
 
 Two candidate rows were screened on three development blocks per player
 count: one attempt with four candidates (`1x4`), and two attempts with eight
@@ -95,17 +230,44 @@ same table. Whole-game compute time includes engine and harness work but
 excludes human thought, actor persistence, pool admission, transport and
 presentation. It is not an end-to-end room wait.
 
-In the nine-block `2x8` development sample, six-bot decision p50/p95/p99 was
-42.30/152.86/247.95 ms (988 calls). Serialized per-point service was
-235.78/880.35/1468.42 ms (178 points). Whole-game p50/p95/p99 was
-5.60/9.45/9.45 seconds (nine games). Nine games do not estimate a stable
-population p99. These are measured sums, not the costliest seat multiplied
-by six. Allocation counters include full-game engine/harness work;
-heap-after-game samples are not peak RSS. Across the nine six-bot games,
-whole-game allocation p50/max was 74,813,776/99,600,416 bytes in
-875,800/1,097,799 allocations. The largest heap-after-game sample was
-3,980,008 bytes. Those small live-heap samples do not remove the substantial
-allocation churn or its contribution to game time.
+The held-out six-bot sample is the seven-seat lineup with seat zero as
+an instant Greedy human proxy and six Scholars, with 100 independent games.
+Quantiles are nearest-rank sample quantiles; 100 games provide limited
+precision in a population p99. All times below include normal desktop load,
+with no added load, normal GC (`GOGC=100`), no memory-limit override,
+`GOMAXPROCS=1`, Go 1.26.3 and an Apple M2 (arm64). This is a single-thread
+CPU-budget proxy, not a phone measurement.
+
+The sequence in each line is p50 / p95 / p99 / maximum:
+
+- Scholar decision across all seven-seat fields (191,965 calls):
+  45.196 / 163.129 / 246.990 / 2,577.305 ms.
+- Decision at the six-bot table (10,982 calls):
+  47.457 / 178.734 / 273.930 / 625.421 ms.
+- Serialized six-bot service per turn or decision point (1,982 points):
+  255.711 / 1,042.702 / 1,608.108 / 3,286.261 ms.
+- Total six-bot decision service over a whole game (100 games):
+  6.274 / 11.016 / 11.745 / 19.832 seconds.
+- Whole one-human-table game compute, including engine and harness
+  (100 games): 6.281 / 11.029 / 11.765 / 19.847 seconds.
+
+Whole-game bot service is derived by summing actual Scholar decisions in
+each saved game, not multiplying a slow seat by six. The game-compute clock
+also includes the instant Greedy proxy and engine/harness overhead. Neither
+includes human thought, actor persistence, pool admission, network or UI.
+The two game figures are different clocks on the same 100 games, not
+independent samples.
+
+For those same 100 six-bot games, whole-game allocated bytes were
+2,116,496 / 2,203,888 / 2,216,384 / 2,222,680, in
+8,180 / 9,162 / 9,451 / 9,513 allocations. Heap-after-game bytes were
+3,690,176 / 5,215,080 / 5,501,536 / 5,774,392. These counters include engine
+and harness work. Across all 11,300 unique games, allocations totalled
+14,442,493,472 bytes in 61,827,957 objects; the maximum sampled heap after a
+game was 22,071,560 bytes. Heap-after-game is not peak heap or RSS. Before
+the storage optimization, nine development six-bot games had median/max
+allocation 74,813,776/99,600,416 bytes in 875,800/1,097,799 allocations;
+those older timings and allocations do not describe the frozen binary.
 
 The cancellation acceptance probe takes the largest poll gap over each
 complete call, including entry/first poll and last poll/return. Its fixed
@@ -155,7 +317,18 @@ p99/max was 30.070/52.407 ms. One loaded maximum exceeded 50 ms; the declared
 p99 target passed. Separate timer-cancel p99 was 0.021 ms across 105 loaded
 cancelled calls, with 23 calls completing before the timer. The maximum-gap
 result remains the acceptance measure. No diagnostic GC settings were used
-in this final probe. `make verify-quick` passed. The held-out gate remains pending.
+in this final probe. `make verify-quick` passed.
+
+The held-out run additionally measured complete-call poll gaps with normal
+GC and no added load across actual tournament roots. At three through seven
+seats, p99 was 0.638 / 5.205 / 4.921 / 21.391 / 8.558 ms; maxima were
+36.240 / 316.219 / 140.819 / 307.799 / 447.258 ms. These broader roots and
+uncontrolled desktop conditions differ from the controlled loaded probe.
+They do not change its declared p99 pass, but the observed long gaps mean
+there is no 50 ms worst-case cancellation guarantee. Across all held-out
+Scholar decisions there were zero Greedy sample fallbacks, zero budget-out
+samples and zero no-world samples. Those simulator counters do not measure
+room watchdogs; the separate shadow worker probe below does.
 
 ## Measured rollout approximations
 
@@ -232,7 +405,7 @@ on resume. Missing, corrupt, renamed or incompatible blocks are refused.
 The private ledger contains accepted keys for replay and must not be sent
 in ordinary client frames or bot diagnostics.
 
-For a future frozen held-out run, use `-partition heldout -frozen`, one
+For a fresh frozen held-out epoch, use `-partition heldout -frozen`, one
 nonzero profile, `-blocks 100`, counts 3 through 7 and `-suite all`. The full
 manifest has 800/1600/2200/3700/3000 unique games, respectively, or 11,300 in
 total. Ten shards assign `(profile, count, block)` ordinals modulo ten and
@@ -274,7 +447,7 @@ passed under the race detector with zero fallbacks; its slower clocks are
 not used for latency estimates. No other tables or artificial CPU workers
 competed for the one pool permit.
 
-## Frozen held-out plan
+## Frozen preflight and release recommendation
 
 The final implementation repeated one development block at each count
 (113 games) and matched every accepted batch, final result and final hash
@@ -284,10 +457,18 @@ game took 4.62 seconds; its decision p50/p95/p99 was 34.25/121.10/134.72 ms
 (108 calls), and actual per-point service was 190.44/765.81/765.81 ms
 (18 points). These are a preflight, not a reliable game-tail estimate.
 
-The row above is fixed before any held-out play. The plan is 100 independent
-blocks per count at three through seven seats, epoch one, all treatments,
+The row above was fixed before any held-out play. The completed plan used
+100 independent blocks per count at three through seven seats, epoch one, all treatments,
 11,300 unique games, one preserved binary and ten resumable shards. Normal
-GC, `GOMAXPROCS=1` and zero additional CPU workers apply throughout. The
-strength look happens once, after all 500 count-blocks complete. Failure
-requires reporting the miss; any subsequent informed change needs fresh
-held-out seeds. Neither the candidate nor this experiment enables a level.
+GC, `GOMAXPROCS=1` and zero additional CPU workers applied throughout. The
+strength look happened once, after all 500 count-blocks completed. Any
+subsequent informed change needs fresh held-out seeds.
+
+Retain the measured row as the Scholar strength candidate. Its six-bot turn
+p99 of 1.61 seconds and game-compute p99 of 11.76 seconds go to the owner
+before Scholar is offered. Keeping full work preserves the demonstrated
+strength at the measured wait. Fewer samples or different budgets by Age
+could reduce waits, but change the measured preset and require fresh
+validation and held-out evidence. No room Level or preset is enabled by
+this slice; owner review of waits and the remaining release gates come
+first.

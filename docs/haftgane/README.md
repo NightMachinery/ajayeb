@@ -2,7 +2,9 @@
 
 @Opus5.5 [2026-10-21 Wed]. The entry point to the design of Haftgane, Ajayeb's second game, written in milestone M12, updated the same day for the owner's answers, and updated in M13 once the card and wonder data was verified.
 
-**Status: the rules engine, table actors and baseline bots are implemented; paired Age rollouts remain dormant pending Scholar calibration and release gates.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
+**Status: the rules engine, table actors and baseline bots are implemented.
+Scholar passed its frozen held-out strength gate. Paired Age rollouts remain
+dormant pending owner review of six-bot waits and the remaining release gates.** The accepted design's decisions are D30 to D61 in [decisions.md](../dev/decisions.md), and its build plan is M13 to M23 in the [roadmap](../dev/roadmap.md). Original design figures remain proposals unless an implementation guide records a measurement.
 
 ## What it is and why
 
@@ -19,7 +21,8 @@ Ajayeb today is a finished web version of 7 Wonders Duel for two players. The se
 Current implementation guides: [the baseline bots](ai.md), [observation-only
 sampling](sampler.md), [paired Age rollouts](rollouts.md) and
 [Scholar calibration](scholar-calibration.md). The rollout runner
-is dormant pending Scholar calibration; these guides distinguish measurements
+remains dormant after calibration, pending owner review of waits and release
+gates; these guides distinguish measurements
 from the original design estimates.
 
 ## The design in one page
