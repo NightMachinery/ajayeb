@@ -1648,8 +1648,17 @@ Known gaps, each left for a larger design change:
 
 Beside the socket, the server answers plain HTTP:
 
-- `GET /health` answers `{"ok": true, "version": "dev"}`, with the build
-  version.
+- `GET /health` answers `{"ok": true, "version": "dev",
+  "haftganeCreation": false}`, with the build version and whether this
+  server lets visitors create Haftgane lobbies and tables (the
+  `-haftgane-tables` release switch; off by default). It is sent with
+  `Cache-Control: no-store`. Home offers Haftgane only on an explicit
+  `true`; it waits for the answer for at most 1.5 s before enabling its
+  buttons, so the layout never moves after they are usable. Haftgane bots
+  are admitted one table at a time (`-haftgane-bot-rooms`, default 1)
+  before the shared bot pool; a table waiting for that turn holds no pool
+  permit, so Duel's bots are never queued behind it
+  ([docs/haftgane/capacity.md](haftgane/capacity.md)).
 - `/ws` is the WebSocket endpoint above.
 - `GET /api/rooms/{code}/log` downloads the game log of a finished game
   (see "The game log"). The log holds the seed, which determines every
